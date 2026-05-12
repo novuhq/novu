@@ -66,6 +66,25 @@ function wrapMsgId(id: string): string {
 }
 
 /**
+ * Thrown by `ChatSdkService.processEmailAction` when a failure is provably pre-dispatch —
+ * i.e. token validation, agent-config lookup, or chat/adapter setup failed before the chat
+ * SDK had a chance to invoke the agent's `onAction` handler. Callers can safely retry these
+ * via single-use token release. Any other error (including raw exceptions out of
+ * `chat.processAction`) MUST be treated as potentially post-dispatch and not replayed.
+ */
+export class AgentActionPreDispatchError extends Error {
+  readonly preDispatch = true as const;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.name = 'AgentActionPreDispatchError';
+    if (cause !== undefined) {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
+
+/**
  * Extracts the recipient email address from an encoded email thread ID. The email adapter's
  * ThreadResolver encodes thread IDs as `email:<encodedRecipient>:<rootMessageIdHash>`; we
  * reverse that here so the token claims can carry the recipient as the `platformUserId` used
@@ -201,26 +220,43 @@ export class ChatSdkService implements OnModuleDestroy {
    * Dispatches a verified email-button click into the chat SDK so it flows through the same
    * `chat.onAction` → `AgentInboundHandler.handleAction` → bridge `onAction` path that
    * inbound platforms (Slack/Teams) already use. Called from the public email-action endpoint
-   * after JWT verification and single-use replay protection.
+   * after token verification and single-use replay protection.
+   *
+   * The implementation is split into a *pre-dispatch* phase (config resolution, chat-instance
+   * lookup, adapter availability check) and a *dispatch* phase (`chat.processAction`). Errors
+   * raised by the pre-dispatch phase are wrapped in `AgentActionPreDispatchError` so the
+   * controller can safely release the single-use token and let the user retry. Errors raised
+   * by the dispatch phase propagate as-is — by then the chat SDK may have already invoked the
+   * agent's `onAction` handler with partial side effects, and re-releasing the token would
+   * permit a replay that duplicates non-idempotent downstream work.
    */
   async processEmailAction(claims: AgentEmailActionClaims): Promise<void> {
     const { agentId, integrationIdentifier } = claims;
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
 
-    if (config.platform !== AgentPlatformEnum.EMAIL) {
-      throw new BadRequestException(
-        `Agent ${agentId} integration ${integrationIdentifier} is not configured for the email platform`
-      );
+    let chat: Chat;
+    let emailAdapter: ReturnType<Chat['getAdapter']>;
+    try {
+      const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+      if (config.platform !== AgentPlatformEnum.EMAIL) {
+        throw new BadRequestException(
+          `Agent ${agentId} integration ${integrationIdentifier} is not configured for the email platform`
+        );
+      }
+
+      const instanceKey = `${agentId}:${integrationIdentifier}`;
+      chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+      emailAdapter = chat.getAdapter(AgentPlatformEnum.EMAIL);
+      if (!emailAdapter) {
+        throw new BadRequestException(`Email adapter not available for agent ${agentId}`);
+      }
+    } catch (err) {
+      throw new AgentActionPreDispatchError('Failed to resolve agent context before dispatching email action', err);
     }
 
-    const instanceKey = `${agentId}:${integrationIdentifier}`;
-    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
-
-    const emailAdapter = chat.getAdapter(AgentPlatformEnum.EMAIL);
-    if (!emailAdapter) {
-      throw new BadRequestException(`Email adapter not available for agent ${agentId}`);
-    }
-
+    // From here on, the chat SDK may have already invoked the user's `onAction` handler by
+    // the time an error is raised — do NOT retry these failures via token re-release.
     await chat.processAction(
       {
         adapter: emailAdapter,

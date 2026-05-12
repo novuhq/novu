@@ -3,11 +3,14 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { PinoLogger } from '@novu/application-generic';
 import { Response } from 'express';
 import {
+  AgentEmailActionCacheUnavailableError,
   AgentEmailActionClaims,
   AgentEmailActionStyle,
   AgentEmailActionTokenService,
+  ConsumedActionToken,
+  PeekedActionToken,
 } from './services/agent-email-action-token.service';
-import { ChatSdkService } from './services/chat-sdk.service';
+import { AgentActionPreDispatchError, ChatSdkService } from './services/chat-sdk.service';
 
 const EXECUTE_PATH = '/v1/agents/email/actions/execute';
 
@@ -55,7 +58,19 @@ export class AgentEmailActionsController {
       return;
     }
 
-    const peeked = await this.tokenService.peekActionToken(token);
+    let peeked: PeekedActionToken | null;
+    try {
+      peeked = await this.tokenService.peekActionToken(token);
+    } catch (err) {
+      if (err instanceof AgentEmailActionCacheUnavailableError) {
+        this.logger.warn(err, 'Cache unavailable while peeking agent email action token');
+        this.sendHtml(res, HttpStatus.SERVICE_UNAVAILABLE, renderTryAgainPage());
+
+        return;
+      }
+      throw err;
+    }
+
     if (!peeked) {
       this.sendHtml(
         res,
@@ -95,8 +110,21 @@ export class AgentEmailActionsController {
 
     // Atomic single-use claim: consume returns the entry exactly once across all concurrent
     // callers (Redis GETDEL). Any other click — prefetcher, refresh, second tab — receives
-    // null and is shown the "already submitted" page.
-    const consumed = await this.tokenService.consumeActionToken(token);
+    // null and is shown the "already submitted" page. A *cache* failure is distinct from a
+    // null result and surfaces as a typed error so we don't silently drop valid clicks.
+    let consumed: ConsumedActionToken | null;
+    try {
+      consumed = await this.tokenService.consumeActionToken(token);
+    } catch (err) {
+      if (err instanceof AgentEmailActionCacheUnavailableError) {
+        this.logger.warn(err, 'Cache unavailable while consuming agent email action token');
+        this.sendHtml(res, HttpStatus.SERVICE_UNAVAILABLE, renderTryAgainPage());
+
+        return;
+      }
+      throw err;
+    }
+
     if (!consumed) {
       this.sendHtml(res, HttpStatus.OK, renderAlreadySubmittedPage());
 
@@ -109,12 +137,19 @@ export class AgentEmailActionsController {
       await this.chatSdkService.processEmailAction(claims);
     } catch (err) {
       this.logger.error(err, `Failed to process agent email action ${claims.actionId} for agent ${claims.agentId}`);
-      // Re-store the entry so the user can retry from the same email link instead of seeing
-      // "Already submitted". The remaining TTL is preserved against the original `expiresAt`
-      // so a token can never outlive its natural expiry.
-      await this.tokenService.releaseActionToken(token, consumed).catch((releaseErr) => {
-        this.logger.warn(releaseErr, `Failed to release agent email action token after dispatch error`);
-      });
+
+      // Only re-release the token when the failure is provably *pre-dispatch* (token
+      // validation, config resolution, adapter setup) — at which point no user-facing side
+      // effects have run and a retry is safe. For any other error, the agent's onAction
+      // handler may have executed partial work; replaying the token would let that
+      // non-idempotent work run twice, so the user is shown a terminal error and must
+      // recover via a fresh email if needed.
+      if (err instanceof AgentActionPreDispatchError) {
+        await this.tokenService.releaseActionToken(token, consumed).catch((releaseErr) => {
+          this.logger.warn(releaseErr, `Failed to release agent email action token after pre-dispatch failure`);
+        });
+      }
+
       this.sendHtml(
         res,
         HttpStatus.OK,
@@ -583,6 +618,21 @@ function renderAlreadySubmittedPage(): string {
 </div>`;
 
   return pageShell('Already submitted', body);
+}
+
+/** Rendered when the action-token cache is unreachable (Redis outage). Distinct from the
+ *  "Already submitted" terminal page — the token is *not* consumed, so the user can refresh
+ *  this page once service is restored and the link will still work. */
+function renderTryAgainPage(): string {
+  const body = `
+<div class="card" data-state="try-again">
+  <div class="info-icon" aria-hidden="true">↻</div>
+  <h1 class="message-heading">We're having trouble right now</h1>
+  <p class="intro">Please try again in a moment. Your action link is still valid — no need to come back to the email.</p>
+  <a class="secondary" href="javascript:void(0)" onclick="location.reload();return false;">Try again</a>
+</div>`;
+
+  return pageShell("We're having trouble right now", body);
 }
 
 function renderErrorPage(params: { title: string; message: string }): string {

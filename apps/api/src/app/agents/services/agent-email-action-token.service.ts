@@ -68,6 +68,24 @@ export interface PeekedActionToken {
 
 export type ConsumedActionToken = PeekedActionToken;
 
+/**
+ * Thrown when the Redis-backed action-token cache is unreachable. Distinguishable from a
+ * null `peek`/`consume` result (which means "expired or already used") so the controller
+ * can render a retryable "try again" page instead of the terminal "already submitted"
+ * page that would otherwise silently drop valid clicks during a cache outage.
+ */
+export class AgentEmailActionCacheUnavailableError extends Error {
+  readonly cacheUnavailable = true as const;
+
+  constructor(operation: 'peek' | 'consume' | 'release', cause?: unknown) {
+    super(`Agent email action token cache unavailable during ${operation}`);
+    this.name = 'AgentEmailActionCacheUnavailableError';
+    if (cause !== undefined) {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
+
 @Injectable()
 export class AgentEmailActionTokenService {
   private readonly ttlSeconds: number;
@@ -133,9 +151,18 @@ export class AgentEmailActionTokenService {
   /**
    * Reads the claims **without** consuming the token. Used by the GET preview route so a
    * URL prefetcher (or repeated browser visit) doesn't burn the single-use reservation.
+   *
+   * @throws AgentEmailActionCacheUnavailableError when Redis is unreachable — distinct from
+   *   a `null` return (which means "expired or already used") so the controller can render
+   *   a retryable error instead of silently dropping the click.
    */
   async peekActionToken(token: string): Promise<PeekedActionToken | null> {
-    const raw = await this.cacheService.get(this.storageKey(token));
+    let raw: string | null | undefined;
+    try {
+      raw = await this.cacheService.get(this.storageKey(token));
+    } catch (err) {
+      throw new AgentEmailActionCacheUnavailableError('peek', err);
+    }
     if (!raw) return null;
 
     const entry = this.parseEntry(raw);
@@ -148,17 +175,24 @@ export class AgentEmailActionTokenService {
    * caller wins per token; later callers see `null` and the controller renders the
    * "already submitted" page. If downstream dispatch fails transiently, call
    * `releaseActionToken` to put the entry back so the user can retry from the same link.
+   *
+   * @throws AgentEmailActionCacheUnavailableError when Redis is unreachable — distinct from
+   *   a `null` return so the controller can render a retryable error instead of silently
+   *   dropping valid clicks during an outage.
    */
   async consumeActionToken(token: string): Promise<ConsumedActionToken | null> {
     const client = this.cacheService.client;
     if (!client) {
-      this.logger.error('Cache client unavailable — cannot consume agent email action token');
-
-      return null;
+      throw new AgentEmailActionCacheUnavailableError('consume');
     }
 
     // GETDEL: atomic read+delete (Redis 6.2+, native ioredis support).
-    const raw = await client.getdel(this.storageKey(token));
+    let raw: string | null;
+    try {
+      raw = await client.getdel(this.storageKey(token));
+    } catch (err) {
+      throw new AgentEmailActionCacheUnavailableError('consume', err);
+    }
     if (!raw) return null;
 
     const entry = this.parseEntry(raw);
