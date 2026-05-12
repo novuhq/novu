@@ -12,5 +12,5 @@ packages:
   - 'playground/*'
 
 # Pnpm configuration
-# Wait 24 hours (1440 minutes) before allowing packages to be installed
+# Wait 3 days (4320 minutes) before allowing packages to be installed
 minimumReleaseAge: 4320
