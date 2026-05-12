@@ -8,8 +8,9 @@ import {
   listAgentIntegrations,
   listAgents,
 } from '@/api/agents';
+import { getConversationsList } from '@/api/conversations';
+import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useFetchConversations } from '@/hooks/use-fetch-conversations';
 
 export type DispatchSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
 
@@ -74,8 +75,20 @@ export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
-  const conversationsQuery = useFetchConversations({ limit: 1 });
-  const hasAnyConversation = conversationsQuery.totalCount > 0 || conversationsQuery.conversations.length > 0;
+  const conversationsQuery = useQuery({
+    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, 'dispatch-setup-steps'],
+    queryFn: ({ signal }) =>
+      getConversationsList({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        limit: 1,
+        signal,
+      }),
+    enabled: !!currentEnvironment,
+    retry: false,
+  });
+
+  const hasAnyConversation =
+    (conversationsQuery.data?.totalCount ?? 0) > 0 || (conversationsQuery.data?.data?.length ?? 0) > 0;
 
   const steps = useMemo<DispatchSetupStep[]>(() => {
     const addAgentCompleted = hasAgent;
@@ -117,8 +130,8 @@ export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
   }, [agents.length, hasAgent, hasAnyConversation, hasConnectedChannelOnOnlyAgent, onlyAgent?.identifier]);
 
   const isComplete = steps.every((step) => step.status === 'completed');
-  const isLoading =
-    agentsQuery.isLoading || conversationsQuery.isLoading || (Boolean(onlyAgent) && agentIntegrationsQuery.isLoading);
+  // Only block on agents loading — conversations / integrations errors should never hide the section.
+  const isLoading = agentsQuery.isLoading;
 
   return { steps, isComplete, isLoading };
 }
