@@ -4,7 +4,6 @@ import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriber
 import { ClickHouseService, DetailEnum, QueryBuilder, Trace, TraceLogRepository } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
-  EnvironmentRepository,
   ExecutionDetailsRepository,
   IntegrationRepository,
   JobRepository,
@@ -61,7 +60,6 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
   const integrationRepository = new IntegrationRepository();
   const jobRepository = new JobRepository();
   const executionDetailsRepository = new ExecutionDetailsRepository();
-  const environmentRepository = new EnvironmentRepository();
   const tenantRepository = new TenantRepository();
   let novuClient: Novu;
 
@@ -2701,16 +2699,10 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         expect(messages.length).to.be.equal(1);
         expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
 
-        const prodEnv = await environmentRepository.findOne({
-          name: 'Production',
-          _organizationId: session.organization._id,
-        });
-
         const payload: CreateIntegrationRequestDto = {
           providerId: EmailProviderIdEnum.Mailgun,
           channel: 'email',
           credentials: { apiKey: '123', secretKey: 'abc' },
-          environmentId: prodEnv?._id,
           active: true,
           check: false,
         };

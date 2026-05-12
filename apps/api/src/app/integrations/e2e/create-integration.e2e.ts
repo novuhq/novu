@@ -652,11 +652,12 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
   describe('API key authentication is scoped to the key environment', () => {
     it('should forbid creating with a different `_environmentId` when authenticated via API key', async () => {
       const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
 
       const payload = {
         providerId: EmailProviderIdEnum.SendGrid,
         channel: ChannelTypeEnum.EMAIL,
-        _environmentId: prodEnv?._id,
+        _environmentId: prodEnv!._id,
         check: false,
       };
 

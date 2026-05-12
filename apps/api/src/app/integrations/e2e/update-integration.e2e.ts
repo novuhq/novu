@@ -1033,9 +1033,10 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
         _environmentId: session.environment._id,
       });
       const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
 
       const payload = {
-        _environmentId: prodEnv?._id,
+        _environmentId: prodEnv!._id,
         check: false,
       };
 
@@ -1084,6 +1085,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
 
     it('should forbid updating an integration that lives in a different environment when authenticated via API key', async () => {
       const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
       const otherEnvironmentIntegration = await integrationRepository.create({
         name: 'OtherEnv',
         identifier: 'other-env-update-api-key',
@@ -1116,6 +1118,7 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
 
     it('should still allow JWT-authenticated requests to update integrations in another environment', async () => {
       const prodEnv = await envRepository.findOne({ name: 'Production', _organizationId: session.organization._id });
+      expect(prodEnv?._id, 'Expected Production environment fixture').to.exist;
       const otherEnvironmentIntegration = await integrationRepository.create({
         name: 'OtherEnv',
         identifier: 'other-env-update-jwt',
