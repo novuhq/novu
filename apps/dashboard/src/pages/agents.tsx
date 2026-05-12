@@ -411,10 +411,6 @@ export function AgentsPage() {
   const track = useTelemetry();
 
   useEffect(() => {
-    if (!isDispatchApp) {
-      return;
-    }
-
     track(isDispatchApp ? TelemetryEvent.DISPATCH_AGENTS_PAGE_VISITED : TelemetryEvent.AGENTS_PAGE_VISITED);
   }, [isDispatchApp, track]);
 
