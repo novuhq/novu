@@ -6,6 +6,10 @@ const KEY_PREFIX = 'agent:email:action:';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 3; // 3 days
 /** 256 bits of entropy. Encoded as base64url → 43 URL-safe characters. */
 const TOKEN_BYTES = 32;
+/** Hosts where plaintext HTTP is acceptable because the link never leaves the developer's
+ *  loopback interface. Every other host must use https — the action token is bearer
+ *  authority and intercepting it in transit is equivalent to dispatching the action. */
+const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
 
 /**
  * Action context forwarded to the agent's `onAction` handler when a recipient clicks an
@@ -75,13 +79,40 @@ export class AgentEmailActionTokenService {
 
     await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: this.ttlSeconds });
 
-    const base = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
-    if (!base) {
-      throw new Error('API_ROOT_URL is not configured — cannot build email action URL');
-    }
-    const url = `${base}/v1/agents/email/actions/preview?t=${encodeURIComponent(token)}`;
+    const url = `${this.resolveApiBaseUrl()}/v1/agents/email/actions/preview?t=${encodeURIComponent(token)}`;
 
     return { token, url };
+  }
+
+  /**
+   * Resolves and validates the API base URL from `API_ROOT_URL`. Throws when the env var
+   * is unset, malformed, or carries a non-https scheme on a non-loopback host — the latter
+   * because the action token in the URL grants action-execution authority and must not
+   * travel over plaintext HTTP. Loopback hosts are exempted so local development works
+   * with `API_ROOT_URL=http://127.0.0.1:3000`.
+   */
+  private resolveApiBaseUrl(): string {
+    const baseRaw = (process.env.API_ROOT_URL ?? '').replace(/\/$/, '');
+    if (!baseRaw) {
+      throw new Error('API_ROOT_URL is not configured — cannot build email action URL');
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(baseRaw);
+    } catch {
+      throw new Error(`API_ROOT_URL is not a valid URL: ${baseRaw}`);
+    }
+
+    const isLoopback = LOOPBACK_HOSTS.has(parsed.hostname);
+    if (parsed.protocol !== 'https:' && !(parsed.protocol === 'http:' && isLoopback)) {
+      throw new Error(
+        `API_ROOT_URL must use https:// (got ${parsed.protocol}//${parsed.hostname}). ` +
+          'Email action tokens grant action-execution authority and must not travel over plaintext HTTP.'
+      );
+    }
+
+    return baseRaw;
   }
 
   /**
