@@ -67,9 +67,6 @@ export type ChannelPreference = {
   enabled: boolean;
 };
 
-/** Channels that carry end-user notifications and support subscriber preferences. */
-export type NotificationChannelTypeEnum = ChannelTypeEnum;
-
 export type WorkflowPreferences = {
   /**
    * A preference for the workflow.
@@ -82,7 +79,7 @@ export type WorkflowPreferences = {
    *
    * If no preference is specified for a channel, the `all` preference will be used.
    */
-  channels: Record<NotificationChannelTypeEnum, ChannelPreference>;
+  channels: Record<ChannelTypeEnum, ChannelPreference>;
 };
 
 /** A partial set of workflow preferences. */

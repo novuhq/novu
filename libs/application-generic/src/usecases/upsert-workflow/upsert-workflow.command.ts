@@ -1,7 +1,7 @@
 import { ClientSession } from '@novu/dal';
 import {
+  ChannelTypeEnum,
   MAX_NAME_LENGTH,
-  NotificationChannelTypeEnum,
   ResourceOriginEnum,
   SeverityLevelEnum,
   StepTypeEnum,
@@ -44,7 +44,7 @@ export class WorkflowPreferencesUpsertData {
 
   @IsObject()
   @ValidateNested({ each: true })
-  channels: Record<NotificationChannelTypeEnum, ChannelPreferenceData>;
+  channels: Record<ChannelTypeEnum, ChannelPreferenceData>;
 }
 
 export class PreferencesRequestUpsertDataCommand {

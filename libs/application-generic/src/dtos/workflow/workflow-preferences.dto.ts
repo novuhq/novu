@@ -1,5 +1,5 @@
 import { ApiExtraModels, ApiProperty, getSchemaPath } from '@nestjs/swagger';
-import { ChannelTypeEnum, NotificationChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
 import { ChannelPreferenceDto } from './channel-preference.dto';
@@ -33,5 +33,5 @@ export class WorkflowPreferencesDto {
   })
   @ValidateNested()
   @Type(() => ChannelPreferenceDto)
-  channels: Record<NotificationChannelTypeEnum, ChannelPreferenceDto>;
+  channels: Record<ChannelTypeEnum, ChannelPreferenceDto>;
 }

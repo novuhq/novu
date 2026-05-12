@@ -1,12 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EnvironmentRepository, EnvironmentVariableRepository } from '@novu/dal';
 import { ContextResolved } from '@novu/framework/internal';
-import {
-  EnvironmentSystemVariables,
-  NotificationChannelTypeEnum,
-  ResourceOriginEnum,
-  StepTypeEnum,
-} from '@novu/shared';
+import { ChannelTypeEnum, EnvironmentSystemVariables, ResourceOriginEnum, StepTypeEnum } from '@novu/shared';
 import { get, set } from 'es-toolkit/compat';
 import { PinoLogger } from 'nestjs-pino';
 import { GeneratePreviewResponseDto } from '../../dtos/workflow/generate-preview-response.dto';
@@ -107,7 +102,7 @@ export class PreviewUsecase {
         return {
           result: {
             preview: executeOutput.outputs as Record<string, unknown>,
-            type: context.stepData.type as unknown as NotificationChannelTypeEnum,
+            type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
           schema: context.variableSchema,
@@ -128,7 +123,7 @@ export class PreviewUsecase {
           return {
             result: {
               preview: {},
-              type: context.stepData.type as unknown as NotificationChannelTypeEnum,
+              type: context.stepData.type as unknown as ChannelTypeEnum,
               error: this.errorHandler.extractErrorContent(error),
             },
             previewPayloadExample: cleanedPayloadExample,
@@ -140,7 +135,7 @@ export class PreviewUsecase {
         return {
           result: {
             preview: {},
-            type: context.stepData.type as unknown as NotificationChannelTypeEnum,
+            type: context.stepData.type as unknown as ChannelTypeEnum,
           },
           previewPayloadExample: cleanedPayloadExample,
           schema: context.variableSchema,
