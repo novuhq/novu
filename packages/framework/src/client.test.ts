@@ -702,7 +702,7 @@ describe('Novu Client', () => {
       expect(body).toContain('dog');
     });
 
-    it('should preserve JSON-stringified control values whose Liquid output contains double quotes (NV-7638)', async () => {
+    it('should preserve JSON-stringified control values whose Liquid output contains double quotes', async () => {
       const mailyBody = {
         type: 'doc',
         content: [
@@ -711,7 +711,7 @@ describe('Novu Client', () => {
             content: [
               {
                 type: 'text',
-                text: "{% assign payload = steps.digest-step.events | map: 'payload' %}{% for item in payload limit:5 %}RFI #{{item.rfi.rfiNumber}}: {{item.rfi.question | truncate: 100}} | {% endfor %}",
+                text: "{% assign payload = steps.digest-step.events | map: 'payload' %}{% for item in payload limit:5 %}#{{item.id}}: {{item.title | truncate: 100}} | {% endfor %}",
               },
             ],
           },
@@ -719,7 +719,7 @@ describe('Novu Client', () => {
       };
 
       const newWorkflow = workflow(
-        'test-workflow-nv-7638',
+        'test-workflow-json-quote',
         async ({ step }) => {
           await step.digest('digest-step', async () => ({ amount: 1, unit: 'hours' }));
           await step.email(
@@ -755,7 +755,7 @@ describe('Novu Client', () => {
       const event: Event = {
         action: PostActionEnum.EXECUTE,
         payload: {},
-        workflowId: 'test-workflow-nv-7638',
+        workflowId: 'test-workflow-json-quote',
         stepId: 'send-email',
         subscriber: {},
         state: [
@@ -766,12 +766,12 @@ describe('Novu Client', () => {
                 {
                   id: 'evt-1',
                   time: '2026-01-01T00:00:00Z',
-                  payload: { rfi: { rfiNumber: 5, question: 'Where is the "important" file?' } },
+                  payload: { id: 1, title: 'Comment on "design draft" was posted' },
                 },
                 {
                   id: 'evt-2',
                   time: '2026-01-01T00:01:00Z',
-                  payload: { rfi: { rfiNumber: 6, question: "John's note" } },
+                  payload: { id: 2, title: "Sam's review is ready" },
                 },
               ],
             },
@@ -792,13 +792,13 @@ describe('Novu Client', () => {
       expect(subject).toBe('Digest summary');
       expect(typeof body).toBe('string');
 
-      // The body must still be a valid JSON string after compileControls, even though the digest
-      // payload contained a `"` character. Before NV-7638's fix, the inner quote would be left
-      // unescaped and `JSON.parse(body)` would throw.
+      // The body must still be a valid JSON string after compileControls, even though a digest
+      // payload string contained a `"` character. Before the fix, the inner quote was left
+      // unescaped and `JSON.parse(body)` threw.
       const parsedBody = JSON.parse(body as string);
       const renderedText = parsedBody.content[0].content[0].text;
-      expect(renderedText).toContain('RFI #5: Where is the "important" file?');
-      expect(renderedText).toContain("RFI #6: John's note");
+      expect(renderedText).toContain('#1: Comment on "design draft" was posted');
+      expect(renderedText).toContain("#2: Sam's review is ready");
     });
 
     it('should compile array control variables to a string with single quotes', async () => {
