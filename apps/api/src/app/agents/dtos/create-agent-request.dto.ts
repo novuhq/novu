@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   AgentCreationSourceEnum,
   AgentRuntime,
@@ -9,7 +9,6 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
-  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
@@ -20,26 +19,26 @@ import {
 import { ManagedRuntimeDto } from './agent-runtime-config.dto';
 
 export class CreateAgentRequestDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     description:
-      'Required when not adopting an existing managed agent (i.e. when managedRuntime.externalAgentId is absent).',
+      'Required when not adopting an existing managed agent (i.e. when managedRuntime.externalAgentId is absent). ' +
+      'Optional in adopt mode where the name is resolved from the provider.',
   })
-  @ValidateIf((o) => !o.managedRuntime?.externalAgentId)
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  name?: string;
+  name: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description:
-      'Required when not adopting an existing managed agent. Auto-generated from the provider agent name when omitted.',
+      'Required when not adopting an existing managed agent. ' +
+      'Auto-generated from the provider agent name when omitted in adopt mode.',
   })
-  @ValidateIf((o) => !o.managedRuntime?.externalAgentId)
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @Matches(SLUG_IDENTIFIER_REGEX, {
     message: slugIdentifierFormatMessage('identifier'),
   })
-  identifier?: string;
+  identifier: string;
 
   @ApiPropertyOptional()
   @IsString()

@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import { AnalyticsService, shortId, slugifyOrRandom } from '@novu/application-generic';
 import { AgentRepository } from '@novu/dal';
 import { trackAgentCreated } from '../../agent-analytics';
@@ -23,7 +23,13 @@ export class CreateAgent {
     const isAdoptMode = command.runtime === 'managed' && !!command.managedRuntime?.externalAgentId;
 
     if (!isAdoptMode) {
-      // For non-adopt flows the identifier is required and must be unique
+      if (!command.name) {
+        throw new BadRequestException('name is required when not adopting an existing managed agent.');
+      }
+      if (!command.identifier) {
+        throw new BadRequestException('identifier is required when not adopting an existing managed agent.');
+      }
+
       const existing = await this.agentRepository.findOne(
         {
           identifier: command.identifier,
