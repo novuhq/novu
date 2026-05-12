@@ -74,6 +74,59 @@ export class JobRepository extends BaseRepository<JobDBModel, JobEntity, Enforce
     );
   }
 
+  /**
+   * Atomically transition a job from QUEUED/DELAYED to RUNNING.
+   *
+   * This guards against duplicate execution under at-least-once queue delivery
+   * (SQS visibility-timeout redelivery, BullMQ stalled-job recovery, retries).
+   * Only one concurrent caller can win the transition; the others get `null`
+   * and must exit silently to avoid duplicate side effects (e.g. duplicate
+   * notifications).
+   *
+   * Returns the updated job, or `null` if the job is already RUNNING /
+   * COMPLETED / FAILED / CANCELED / SKIPPED / MERGED.
+   */
+  public async claimAsRunning(environmentId: string, jobId: string): Promise<JobEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _id: jobId,
+        status: { $in: [JobStatusEnum.QUEUED, JobStatusEnum.DELAYED] },
+      },
+      {
+        $set: {
+          status: JobStatusEnum.RUNNING,
+        },
+      },
+      { new: true }
+    );
+  }
+
+  /**
+   * Atomically claim the next child job (by `_parentId`) by transitioning it
+   * from PENDING to QUEUED. Used to fence child-job enqueueing so a redelivered
+   * parent does not re-queue an already-claimed child.
+   *
+   * Returns the claimed child, or `null` if there is no PENDING child for this
+   * parent (either because the workflow ends here, or the child has already
+   * been claimed by another invocation).
+   */
+  public async claimNextChildAsQueued(environmentId: string, parentJobId: string): Promise<JobEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _environmentId: environmentId,
+        _parentId: parentJobId,
+        status: JobStatusEnum.PENDING,
+      },
+      {
+        $set: {
+          status: JobStatusEnum.QUEUED,
+        },
+      },
+      { new: true }
+    );
+  }
+
   public async setError(organizationId: string, jobId: string, error: any): Promise<void> {
     const result = await this._model.updateOne(
       {

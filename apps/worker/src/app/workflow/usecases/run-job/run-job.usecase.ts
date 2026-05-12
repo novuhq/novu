@@ -93,10 +93,6 @@ export class RunJob {
       throw new PlatformException(`Job with id ${command.jobId} not found`);
     }
 
-    await this.stepRunRepository.create(job, {
-      status: JobStatusEnum.RUNNING,
-    });
-
     this.assignLogger(job);
 
     const { canceled, activeDigestFollower } = await this.delayedEventIsCanceled(job);
@@ -117,6 +113,28 @@ export class RunJob {
       job = this.assignNewDigestExecutor(activeDigestFollower);
       this.assignLogger(job);
     }
+
+    /*
+     * Atomic claim: transition QUEUED|DELAYED -> RUNNING in a single doc op so
+     * concurrent deliveries (SQS at-least-once redelivery, BullMQ stalled-job
+     * recovery, retries after partial success) cannot both pass through. Only
+     * the winning caller proceeds; the others exit silently to avoid duplicate
+     * `sendMessage` calls and duplicate child-job enqueueing.
+     */
+    const claimed = await this.jobRepository.claimAsRunning(job._environmentId, job._id);
+    if (!claimed) {
+      this.logger.info(
+        { nv: { jobId: job._id, currentStatus: job.status } },
+        'Skipping job: could not atomically claim (already running, completed, or canceled by another worker)'
+      );
+
+      return;
+    }
+    job = claimed;
+
+    await this.stepRunRepository.create(job, {
+      status: JobStatusEnum.RUNNING,
+    });
 
     nr.addCustomAttributes({
       transactionId: job.transactionId,
@@ -251,7 +269,7 @@ export class RunJob {
         return;
       }
 
-      await this.jobRepository.updateStatus(job._environmentId, job._id, JobStatusEnum.RUNNING);
+      // Status is already RUNNING from the atomic claim at the top of execute().
 
       await this.storageHelperService.getAttachments(job.payload?.attachments);
 
@@ -480,10 +498,14 @@ export class RunJob {
           return;
         }
 
-        nextJob = await this.jobRepository.findOne({
-          _environmentId: currentJob._environmentId,
-          _parentId: currentJob._id,
-        });
+        /*
+         * Atomic child claim: transition the child PENDING -> QUEUED in one
+         * doc op. A redelivered parent that re-enters this loop cannot find a
+         * still-PENDING child (the first run already claimed it), so it cannot
+         * re-enqueue the same logical step. addJobUsecase.execute() below will
+         * then re-set the status to QUEUED/DELAYED idempotently.
+         */
+        nextJob = await this.jobRepository.claimNextChildAsQueued(currentJob._environmentId, currentJob._id);
 
         if (!nextJob) {
           if (!hasCurrentJobError) {

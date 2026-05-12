@@ -238,7 +238,10 @@ describe('Standard Worker', () => {
       _userId,
       _subscriberId,
       subscriberId: subscriber.subscriberId,
-      status: JobStatusEnum.PENDING,
+      // RunJob's atomic claim only transitions QUEUED|DELAYED -> RUNNING. AddJobUsecase
+      // sets the status to QUEUED before pushing to the queue in the real flow; this test
+      // bypasses AddJobUsecase, so we set QUEUED here directly.
+      status: JobStatusEnum.QUEUED,
       _templateId,
       digest: undefined,
       type: StepTypeEnum.TRIGGER,
@@ -300,7 +303,10 @@ describe('Standard Worker', () => {
       _userId,
       _subscriberId,
       subscriberId: subscriber.subscriberId,
-      status: JobStatusEnum.PENDING,
+      // RunJob's atomic claim only transitions QUEUED|DELAYED -> RUNNING. AddJobUsecase
+      // sets the status to QUEUED before pushing to the queue in the real flow; this test
+      // bypasses AddJobUsecase, so we set QUEUED here directly.
+      status: JobStatusEnum.QUEUED,
       _templateId,
       digest: undefined,
       type: StepTypeEnum.TRIGGER,
@@ -402,6 +408,125 @@ describe('Standard Worker', () => {
       workerName: 'standard',
       workerIsPaused: false,
       workerIsRunning: true,
+    });
+  });
+
+  describe('atomic job claim', () => {
+    const buildJob = (
+      status: JobStatusEnum,
+      overrides: Partial<Omit<JobEntity, '_id'>> = {}
+    ): Omit<JobEntity, '_id'> => {
+      const _environmentId = environment._id;
+      const _organizationId = organization._id;
+      const _userId = user._id;
+      const _subscriberId = subscriber._id;
+      const _templateId = NotificationTemplateRepository.createObjectId();
+      const _notificationId = NotificationRepository.createObjectId();
+
+      return {
+        identifier: 'atomic-claim-test',
+        payload: {},
+        overrides: {},
+        step: {
+          template: {
+            _environmentId,
+            _organizationId,
+            _creatorId: _userId,
+            type: StepTypeEnum.TRIGGER,
+            content: '',
+          } as MessageTemplateEntity,
+          _templateId,
+        },
+        transactionId: uuid(),
+        _notificationId,
+        _environmentId,
+        _organizationId,
+        _userId,
+        _subscriberId,
+        subscriberId: subscriber.subscriberId,
+        status,
+        _templateId,
+        digest: undefined,
+        type: StepTypeEnum.TRIGGER,
+        providerId: 'sendgrid',
+        createdAt: formatISO(Date.now()),
+        updatedAt: formatISO(Date.now()),
+        ...overrides,
+      };
+    };
+
+    it('claimAsRunning transitions QUEUED -> RUNNING and returns the updated job', async () => {
+      const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
+
+      const claimed = await jobRepository.claimAsRunning(created._environmentId, created._id);
+
+      expect(claimed).to.not.equal(null);
+      expect(claimed?.status).to.equal(JobStatusEnum.RUNNING);
+
+      const fresh = await jobRepository.findOne({ _id: created._id, _environmentId: created._environmentId });
+      expect(fresh?.status).to.equal(JobStatusEnum.RUNNING);
+    });
+
+    it('claimAsRunning transitions DELAYED -> RUNNING (covers digest/delay/throttle redelivery)', async () => {
+      const created = await jobRepository.create(buildJob(JobStatusEnum.DELAYED));
+
+      const claimed = await jobRepository.claimAsRunning(created._environmentId, created._id);
+
+      expect(claimed?.status).to.equal(JobStatusEnum.RUNNING);
+    });
+
+    it('claimAsRunning returns null when the job is not in a claimable state', async () => {
+      const completed = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
+      const running = await jobRepository.create(buildJob(JobStatusEnum.RUNNING));
+      const canceled = await jobRepository.create(buildJob(JobStatusEnum.CANCELED));
+
+      expect(await jobRepository.claimAsRunning(completed._environmentId, completed._id)).to.equal(null);
+      expect(await jobRepository.claimAsRunning(running._environmentId, running._id)).to.equal(null);
+      expect(await jobRepository.claimAsRunning(canceled._environmentId, canceled._id)).to.equal(null);
+    });
+
+    it('claimAsRunning is exclusive under concurrent callers (only one wins)', async () => {
+      const created = await jobRepository.create(buildJob(JobStatusEnum.QUEUED));
+
+      const concurrency = 8;
+      const results = await Promise.all(
+        Array.from({ length: concurrency }, () => jobRepository.claimAsRunning(created._environmentId, created._id))
+      );
+
+      const winners = results.filter((res) => res !== null);
+      expect(winners.length).to.equal(1);
+      expect(winners[0]?.status).to.equal(JobStatusEnum.RUNNING);
+    });
+
+    it('claimNextChildAsQueued transitions a child PENDING -> QUEUED exactly once', async () => {
+      const parent = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
+      const child = await jobRepository.create({
+        ...buildJob(JobStatusEnum.PENDING, { _notificationId: parent._notificationId }),
+        _parentId: parent._id,
+      });
+
+      const concurrency = 6;
+      const results = await Promise.all(
+        Array.from({ length: concurrency }, () =>
+          jobRepository.claimNextChildAsQueued(parent._environmentId, parent._id)
+        )
+      );
+
+      const winners = results.filter((res) => res !== null);
+      expect(winners.length).to.equal(1);
+      expect(winners[0]?._id).to.equal(child._id);
+      expect(winners[0]?.status).to.equal(JobStatusEnum.QUEUED);
+
+      const fresh = await jobRepository.findOne({ _id: child._id, _environmentId: child._environmentId });
+      expect(fresh?.status).to.equal(JobStatusEnum.QUEUED);
+    });
+
+    it('claimNextChildAsQueued returns null when no PENDING child exists', async () => {
+      const parent = await jobRepository.create(buildJob(JobStatusEnum.COMPLETED));
+
+      const result = await jobRepository.claimNextChildAsQueued(parent._environmentId, parent._id);
+
+      expect(result).to.equal(null);
     });
   });
 });
