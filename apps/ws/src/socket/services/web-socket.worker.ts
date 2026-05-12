@@ -32,13 +32,14 @@ export class WebSocketWorker extends WebSocketsWorkerService {
     this.initWorker(this.getWorkerProcessor(), this.getWorkerOpts(), true);
 
     /*
-     * Match BullMQ semantics on the SQS path: WS jobs are enqueued with
-     * `attempts: 1` + `removeOnFail: true`, so a failure on BullMQ is logged
-     * once and the job is dropped from Redis with no retry. WS payloads are
-     * point-in-time UI hints (unseen-count changes, in-app updates) - replaying
-     * them 90s+ later is harmful (target socket may be gone, a fresher emit or
-     * client poll has already healed the UI). Acking the SQS message on any
-     * failure prevents poison-message accumulation in the WS DLQ.
+     * WS jobs run at-most-once: any failure here is acked. WS payloads
+     * are point-in-time UI hints (unseen-count changes, in-app updates);
+     * replaying them after the visibility timeout is harmful — the
+     * target socket may be gone, or a fresher emit / client poll has
+     * already healed the UI.
+     *
+     * Backed at the infra level by `RedrivePolicy.maxReceiveCount=1` on
+     * the WS SQS queue.
      */
     this.setSqsFailedHandler(async (job: Job<IWebSocketDataDto, void, string>, error: Error): Promise<boolean> => {
       Logger.warn(

@@ -31,12 +31,11 @@ const LOG_CONTEXT = 'WorkerService';
 const TRANSIENT_4XX_STATUSES = new Set<number>([408, 429]);
 
 /**
- * Decides whether a processor error represents a permanent client-side failure
- * that cannot succeed on retry. Mirrors the BullMQ `removeOnFail: true` default
- * for the workflow/subscriber-process/ws workers, which do not register their
- * own `sqsFailedHandler`. Without this, SQS keeps redelivering 4xx failures
- * (bad payload, missing subscriberId, etc.) every visibility timeout until the
- * message hits `maxReceiveCount` and falls into the DLQ.
+ * Decides whether a processor error represents a permanent client-side
+ * failure that cannot succeed on retry. Used as the default policy when
+ * a worker has not registered its own `sqsFailedHandler`: 4xx failures
+ * (bad payload, missing fields, validation, etc.) are acked and
+ * everything else is re-thrown for SQS to redeliver.
  */
 export function isPermanentClientError(error: unknown): boolean {
   if (error instanceof BadRequestException) {
@@ -227,12 +226,13 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
           }
         } else if (isPermanentClientError(error)) {
           /*
-           * Default behaviour for workers that have not registered a custom
-           * `sqsFailedHandler` (workflow, subscriber-process, ws). 4xx errors
-           * cannot succeed on retry, so ack the message to mirror BullMQ's
-           * `removeOnFail: true` semantics. Without this, SQS would keep
-           * redelivering the same bad payload every visibility timeout until
-           * the message is poison-pilled into the DLQ.
+           * Defensive fallback for any SQS-backed worker that has not
+           * registered its own `sqsFailedHandler`. 4xx errors cannot
+           * succeed on retry, so ack the message instead of letting SQS
+           * redeliver it every visibility timeout until it hits the DLQ.
+           * The four production SQS workers (workflow, subscriber-
+           * process, ws, standard) all register explicit handlers; this
+           * branch protects future additions that forget to.
            */
           Logger.warn(
             {
