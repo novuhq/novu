@@ -11,7 +11,8 @@ import {
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { buildRoute } from '@/utils/routes';
 
 type ConnectedProvidersSectionProps = {
   agent: AgentResponse;
@@ -73,6 +74,7 @@ function ProviderCardSkeleton() {
 export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionProps) {
   const { currentEnvironment } = useEnvironment();
   const location = useLocation();
+  const agentRoutes = useAgentRoutes();
 
   const integrationsQuery = useQuery({
     queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
@@ -85,7 +87,7 @@ export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionPr
     enabled: Boolean(currentEnvironment && agent.identifier),
   });
 
-  const integrationsTabPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+  const integrationsTabPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',

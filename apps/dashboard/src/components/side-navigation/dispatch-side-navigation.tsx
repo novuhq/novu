@@ -20,7 +20,7 @@ export const DispatchSideNavigation = () => {
         <nav className="flex h-full flex-1 flex-col overflow-auto">
           <div className="flex flex-col gap-4">
             <NavigationGroup>
-              <NavigationLink to={buildEnvRoute(ROUTES.DISPATCH_HOME)}>
+              <NavigationLink to={buildEnvRoute(ROUTES.DISPATCH_HOME)} isExact>
                 <RiDashboardLine className="size-4" />
                 <span>Dashboard</span>
               </NavigationLink>
