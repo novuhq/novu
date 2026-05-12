@@ -31,6 +31,7 @@ const agentSchema = new Schema<AgentDBModel>(
     runtime: {
       type: Schema.Types.String,
       enum: ['self-hosted', 'managed'],
+      default: 'self-hosted',
     },
     managedRuntime: {
       providerId: Schema.Types.String,
@@ -59,6 +60,7 @@ const agentSchema = new Schema<AgentDBModel>(
 
 agentSchema.index({ _environmentId: 1 });
 agentSchema.index({ identifier: 1, _environmentId: 1 }, { unique: true });
+agentSchema.index({ 'managedRuntime._integrationId': 1 }, { sparse: true });
 
 export const Agent =
   (mongoose.models.Agent as mongoose.Model<AgentDBModel>) || mongoose.model<AgentDBModel>('Agent', agentSchema);

@@ -1,6 +1,6 @@
 import { AGENT_RUNTIME_PROVIDERS, FeatureFlagsKeysEnum, IntegrationKindEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   RiArrowRightSLine,
   RiCheckLine,
@@ -33,7 +33,7 @@ type ManagedRuntimeSetupGuideProps = {
 
 type StepId = 'choose' | 'managed-config';
 
-const anthropicProvider = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === 'anthropic')!;
+const anthropicProvider = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === 'anthropic');
 
 export function ManagedRuntimeSetupGuide({
   onSelfHostedSelected,
@@ -105,9 +105,13 @@ export function ManagedRuntimeSetupGuide({
     },
   });
 
-  if (!isManagedEnabled) {
-    onSelfHostedSelected();
+  useEffect(() => {
+    if (!isManagedEnabled) {
+      onSelfHostedSelected();
+    }
+  }, [isManagedEnabled, onSelfHostedSelected]);
 
+  if (!isManagedEnabled) {
     return null;
   }
 
@@ -298,7 +302,9 @@ function RuntimeChooser({ onSelect }: { onSelect: (choice: RuntimeChoice) => voi
 function ProviderCapabilities({ providerId }: { providerId: string }) {
   const provider = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);
 
-  if (!provider) return null;
+  if (!provider) {
+    return null;
+  }
 
   const capabilities = Object.entries(provider.capabilities)
     .filter(([, supported]) => supported)

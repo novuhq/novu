@@ -58,7 +58,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
     }
 
     if (err instanceof APIError) {
-      const requestId = err.headers?.['request-id'] as string | undefined;
+      const requestId = err.requestID ?? err.headers?.get?.('request-id') ?? undefined;
 
       if (err.status === 401) {
         throw new AgentRuntimeUnauthorizedError(err.message, PROVIDER_ID, requestId);
@@ -70,7 +70,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
         throw new AgentRuntimeNotFoundError(err.message, PROVIDER_ID, requestId);
       }
       if (err.status === 429) {
-        const retryAfterMs = parseRetryAfter(err.headers?.['retry-after'] as string | undefined);
+        const retryAfterMs = parseRetryAfter(err.headers?.get?.('retry-after') ?? undefined);
 
         throw new AgentRuntimeRateLimitedError(err.message, PROVIDER_ID, retryAfterMs, requestId);
       }
@@ -115,25 +115,25 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   async createAgent(input: CreateAgentInput): Promise<CreateAgentResult> {
     const client = this.buildClient();
 
-    return this.withRetry(async () => {
-      try {
-        const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
-        const agent = await (client as any).beta.agents.create({
-          name: input.name,
-          model: input.model ?? DEFAULT_MODEL,
-          ...(input.systemPrompt ? { system: input.systemPrompt } : {}),
-          ...(input.mcpServers && input.mcpServers.length > 0
-            ? { mcp_servers: input.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url })) }
-            : {}),
-          ...(toolsPayload.length > 0 ? { tools: toolsPayload } : {}),
-          ...(input.skills && input.skills.length > 0 ? { skills: input.skills.map(toSkillParam) } : {}),
-        });
+    // Not retried: agent creation is not idempotent and a retry after a
+    // dropped response would create a duplicate billable agent upstream.
+    try {
+      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
+      const agent = await (client as any).beta.agents.create({
+        name: input.name,
+        model: input.model ?? DEFAULT_MODEL,
+        ...(input.systemPrompt ? { system: input.systemPrompt } : {}),
+        ...(input.mcpServers && input.mcpServers.length > 0
+          ? { mcp_servers: input.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url })) }
+          : {}),
+        ...(toolsPayload.length > 0 ? { tools: toolsPayload } : {}),
+        ...(input.skills && input.skills.length > 0 ? { skills: input.skills.map(toSkillParam) } : {}),
+      });
 
-        return { externalAgentId: agent.id as string };
-      } catch (err) {
-        this.normaliseError(err);
-      }
-    });
+      return { externalAgentId: agent.id as string };
+    } catch (err) {
+      this.normaliseError(err);
+    }
   }
 
   async getAgent(externalAgentId: string): Promise<GetAgentResult> {
@@ -194,9 +194,16 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
         if (patch.mcpServers !== undefined) {
           updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
         }
+        // For tools/mcpServers, fetch current state and merge so a one-sided
+        // PATCH doesn't wipe out the side the caller didn't touch.
         if (patch.tools !== undefined || patch.mcpServers !== undefined) {
-          const toolTypes = patch.tools?.map((t) => t.name);
-          const mcpServers = patch.mcpServers?.map((s) => ({ name: s.name, url: s.url }));
+          const current = await this.getConfig(externalAgentId);
+          const toolTypes =
+            patch.tools !== undefined ? patch.tools.map((t) => t.name) : current.tools.map((t) => t.name);
+          const mcpServers =
+            patch.mcpServers !== undefined
+              ? patch.mcpServers.map((s) => ({ name: s.name, url: s.url }))
+              : current.mcpServers.map((s) => ({ name: s.name, url: s.url }));
           const toolsPayload = buildToolsPayload(toolTypes, mcpServers);
 
           if (toolsPayload.length > 0) updatePayload.tools = toolsPayload;
@@ -217,24 +224,23 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   async provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult> {
     const client = this.buildClient();
 
-    return this.withRetry(async () => {
-      try {
-        const env = await (client as any).beta.environments.create({
-          name: `nv-${input.integrationName}`,
-          config: {
-            type: 'cloud',
-            networking: { type: 'unrestricted' },
-          },
-        });
+    // Not retried: environment creation is not idempotent.
+    try {
+      const env = await (client as any).beta.environments.create({
+        name: `nv-${input.integrationName}`,
+        config: {
+          type: 'cloud',
+          networking: { type: 'unrestricted' },
+        },
+      });
 
-        return {
-          credentialsUpdate: { externalEnvironmentId: env.id as string },
-          metadata: {},
-        };
-      } catch (err) {
-        this.normaliseError(err);
-      }
-    });
+      return {
+        credentialsUpdate: { externalEnvironmentId: env.id as string },
+        metadata: {},
+      };
+    } catch (err) {
+      this.normaliseError(err);
+    }
   }
 
   async deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void> {
@@ -262,10 +268,14 @@ export function createAnthropicProvider(apiKey: string): AnthropicAgentRuntimePr
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
-function parseRetryAfter(header: string | undefined): number {
+function parseRetryAfter(header: string | undefined | null): number {
   if (!header) return 60_000;
   const seconds = parseFloat(header);
   if (!Number.isNaN(seconds)) return Math.round(seconds * 1000);
+
+  // RFC 9110 allows HTTP-date form
+  const dateMs = Date.parse(header);
+  if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
 
   return 60_000;
 }
@@ -348,6 +358,13 @@ function buildToolsPayload(
   toolTypes?: string[],
   mcpServers?: Array<{ name: string; url: string }>
 ): Record<string, unknown>[] {
+  const hasTools = Array.isArray(toolTypes) && toolTypes.length > 0;
+  const hasMcpServers = Array.isArray(mcpServers) && mcpServers.length > 0;
+
+  if (!hasTools && !hasMcpServers) {
+    return [];
+  }
+
   const payload: Record<string, unknown>[] = [];
 
   const enabledSet = new Set(toolTypes ?? []);

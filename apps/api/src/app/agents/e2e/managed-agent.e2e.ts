@@ -5,7 +5,6 @@ import {
   AgentRuntimeRateLimitedError,
   AgentRuntimeUnauthorizedError,
   decryptCredentials,
-  encryptCredentials,
 } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
@@ -56,8 +55,25 @@ describe('Managed Agents API #novu-v2', () => {
   const createdAgentIdentifiers: string[] = [];
   const createdIntegrationIds: string[] = [];
 
+  const previousConversationalAgentsFlag = process.env.IS_CONVERSATIONAL_AGENTS_ENABLED;
+  const previousManagedRuntimeFlag = process.env.IS_MANAGED_AGENT_RUNTIME_ENABLED;
+
   before(() => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+    process.env.IS_MANAGED_AGENT_RUNTIME_ENABLED = 'true';
+  });
+
+  after(() => {
+    if (previousConversationalAgentsFlag === undefined) {
+      delete process.env.IS_CONVERSATIONAL_AGENTS_ENABLED;
+    } else {
+      process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = previousConversationalAgentsFlag;
+    }
+    if (previousManagedRuntimeFlag === undefined) {
+      delete process.env.IS_MANAGED_AGENT_RUNTIME_ENABLED;
+    } else {
+      process.env.IS_MANAGED_AGENT_RUNTIME_ENABLED = previousManagedRuntimeFlag;
+    }
   });
 
   beforeEach(async () => {

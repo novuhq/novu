@@ -39,11 +39,21 @@ export type AgentRuntimeConfig = {
   skills?: AgentSkill[];
 };
 
+// For PATCH payloads, externalId may be absent when creating a new entry —
+// the provider assigns it. Other fields stay the same shape as the read DTO.
+export type PatchAgentMcpServer = Omit<AgentMcpServer, 'externalId'> & {
+  externalId?: string;
+};
+
+export type PatchAgentTool = Omit<AgentTool, 'externalId'> & {
+  externalId?: string;
+};
+
 export type PatchAgentRuntimeConfigBody = {
   model?: string;
   systemPrompt?: string;
-  mcpServers?: AgentMcpServer[];
-  tools?: AgentTool[];
+  mcpServers?: PatchAgentMcpServer[];
+  tools?: PatchAgentTool[];
   skills?: AgentSkill[];
 };
 

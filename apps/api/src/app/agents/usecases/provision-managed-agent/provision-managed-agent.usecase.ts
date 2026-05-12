@@ -61,48 +61,44 @@ export class ProvisionManagedAgent {
     let externalAgentId: string;
     let adoptedName: string | undefined;
 
-    try {
-      if (command.externalAgentId) {
-        // ── Adopt mode ────────────────────────────────────────────────────────
-        // A single getAgent() call validates both auth (401) and existence (404).
-        const agentInfo = await runtimeProvider.getAgent(command.externalAgentId);
+    if (command.externalAgentId) {
+      // ── Adopt mode ────────────────────────────────────────────────────────
+      // A single getAgent() call validates both auth (401) and existence (404).
+      const agentInfo = await runtimeProvider.getAgent(command.externalAgentId);
 
-        externalAgentId = agentInfo.externalAgentId;
-        adoptedName = agentInfo.name;
-      } else {
-        // ── Provision mode ────────────────────────────────────────────────────
-        await runtimeProvider.validateCredentials(resolvedApiKey);
+      externalAgentId = agentInfo.externalAgentId;
+      adoptedName = agentInfo.name;
+    } else {
+      // ── Provision mode ────────────────────────────────────────────────────
+      await runtimeProvider.validateCredentials(resolvedApiKey);
 
-        const resolvedMcpServers = command.mcpServers?.map((serverId) => {
-          const catalogServer = CLAUDE_MCP_SERVERS.find((s) => s.id === serverId);
+      const resolvedMcpServers = command.mcpServers?.map((serverId) => {
+        const catalogServer = CLAUDE_MCP_SERVERS.find((s) => s.id === serverId);
 
-          if (!catalogServer) {
-            throw new BadRequestException(
-              `Unknown MCP server ID "${serverId}". Must be one of the supported catalog entries.`
-            );
-          }
+        if (!catalogServer) {
+          throw new BadRequestException(
+            `Unknown MCP server ID "${serverId}". Must be one of the supported catalog entries.`
+          );
+        }
 
-          return { name: catalogServer.name, url: catalogServer.url };
-        });
+        return { name: catalogServer.name, url: catalogServer.url };
+      });
 
-        const response = await runtimeProvider.createAgent({
-          name: command.name ?? '',
-          model: command.model,
-          systemPrompt: command.systemPrompt,
-          tools: command.tools,
-          mcpServers: resolvedMcpServers,
-          skills: command.skills,
-        });
+      const response = await runtimeProvider.createAgent({
+        name: command.name ?? '',
+        model: command.model,
+        systemPrompt: command.systemPrompt,
+        tools: command.tools,
+        mcpServers: resolvedMcpServers,
+        skills: command.skills,
+      });
 
-        externalAgentId = response.externalAgentId;
-      }
-    } catch (providerError) {
-      throw providerError;
+      externalAgentId = response.externalAgentId;
     }
 
     // Persist the managed runtime identifiers on the agent.
     try {
-      await this.agentRepository.update(
+      const updateResult = await this.agentRepository.update(
         {
           _id: command.agentId,
           _environmentId: command.environmentId,
@@ -120,6 +116,12 @@ export class ProvisionManagedAgent {
         },
         session ? { session } : {}
       );
+
+      if (updateResult?.matched === 0) {
+        throw new Error(
+          `Agent "${command.agentId}" no longer exists; aborting managed-runtime provision to avoid orphaning the provider resource.`
+        );
+      }
     } catch (mongoError) {
       this.logger.error({ err: mongoError }, 'Failed to persist managed runtime on agent after provisioning');
 

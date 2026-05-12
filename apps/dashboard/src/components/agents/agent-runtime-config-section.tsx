@@ -1,4 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { RiExternalLinkLine, RiRefreshLine, RiRobot2Line } from 'react-icons/ri';
 import { type AgentRuntimeConfig, getAgentRuntimeConfig, getAgentRuntimeConfigQueryKey } from '@/api/agent-runtime';
 import type { AgentResponse } from '@/api/agents';
@@ -106,12 +107,12 @@ export function AgentRuntimeConfigSection({ agent, onDrift, onUnauthorized }: Ag
   const config: AgentRuntimeConfig | undefined = configQuery.data;
   const error = configQuery.error;
 
-  // Trigger parent callbacks for specific error codes
-  if (error) {
+  useEffect(() => {
+    if (!error) return;
     const code = (error as unknown as Record<string, unknown>)?.code;
     if (code === 'AGENT_RUNTIME_DRIFT') onDrift?.();
     if (code === 'AGENT_RUNTIME_UNAUTHORIZED') onUnauthorized?.();
-  }
+  }, [error, onDrift, onUnauthorized]);
 
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">

@@ -1,6 +1,7 @@
-import type { AgentRuntimeProviderIdEnum, AgentSkillDto } from '@novu/shared';
+import type { AgentSkillDto } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class ProvisionManagedAgentCommand {
   @IsNotEmpty()
@@ -20,6 +21,7 @@ export class ProvisionManagedAgentCommand {
   externalAgentId?: string;
 
   @IsNotEmpty()
+  @IsEnum(AgentRuntimeProviderIdEnum)
   providerId: AgentRuntimeProviderIdEnum;
 
   /** ID of an existing Novu integration that holds the provider API key and environment. */

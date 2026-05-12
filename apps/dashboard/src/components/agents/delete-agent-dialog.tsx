@@ -1,5 +1,5 @@
 import { Cross2Icon } from '@radix-ui/react-icons';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { RiAlertFill } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import {
@@ -40,8 +40,16 @@ export function DeleteAgentDialog({
   const novuOnlyId = useId();
   const providerAndNovuId = useId();
 
+  // Reset scope when dialog is closed (or when the agent is no longer managed)
+  // so a stale 'provider-and-novu' value doesn't leak into the next open.
+  useEffect(() => {
+    if (!open || !isManagedAgent) {
+      setScope('novu-only');
+    }
+  }, [open, isManagedAgent]);
+
   function handleConfirm() {
-    onConfirm(scope === 'provider-and-novu');
+    onConfirm(isManagedAgent ? scope === 'provider-and-novu' : false);
   }
 
   function handleOpenChange(nextOpen: boolean) {
