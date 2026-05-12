@@ -1,8 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import { CLAUDE_MCP_SERVERS } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
+import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
 export type ProvisionManagedAgentOptions = {
@@ -72,17 +72,7 @@ export class ProvisionManagedAgent {
       // ── Provision mode ────────────────────────────────────────────────────
       await runtimeProvider.validateCredentials(resolvedApiKey);
 
-      const resolvedMcpServers = command.mcpServers?.map((serverId) => {
-        const catalogServer = CLAUDE_MCP_SERVERS.find((s) => s.id === serverId);
-
-        if (!catalogServer) {
-          throw new BadRequestException(
-            `Unknown MCP server ID "${serverId}". Must be one of the supported catalog entries.`
-          );
-        }
-
-        return { name: catalogServer.name, url: catalogServer.url };
-      });
+      const resolvedMcpServers = command.mcpServers ? resolveMcpServersById(command.mcpServers) : undefined;
 
       const response = await runtimeProvider.createAgent({
         name: command.name ?? '',
