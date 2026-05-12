@@ -43,6 +43,7 @@ export interface ICredentials {
   state?: string;
   externalLink?: string;
   phoneNumberIdentification?: string;
+  businessAccountId?: string;
   channelId?: string;
   apiVersion?: string;
   appSid?: string;

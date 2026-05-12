@@ -101,6 +101,8 @@ export enum FeatureFlagsKeysEnum {
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
   /** Enable Domain Connect auto-configuration for inbound email domains. */
   IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED = 'IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED',
+  /** Enable the new app-rail dashboard shell with the Dispatch app surface. */
+  IS_DISPATCH_DASHBOARD_ENABLED = 'IS_DISPATCH_DASHBOARD_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

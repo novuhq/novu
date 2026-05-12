@@ -28,7 +28,7 @@ describe('ChatSdkService', () => {
       setContext: sinon.stub(),
     };
 
-    return new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any);
+    return new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any, {} as any);
   }
 
   describe('prepareContentForDelivery', () => {
@@ -348,7 +348,7 @@ describe('ChatSdkService', () => {
         info: sinon.stub(),
         setContext: sinon.stub(),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any);
+      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any, {} as any);
 
       const result = await (service as any).prepareContentForDelivery(
         {
@@ -376,7 +376,7 @@ describe('ChatSdkService', () => {
         info: sinon.stub(),
         setContext: sinon.stub(),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any);
+      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any, {} as any);
 
       const result = await (service as any).prepareContentForDelivery(
         {
@@ -417,7 +417,14 @@ describe('ChatSdkService', () => {
           active: true,
         }),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, integrationRepository as any);
+      const service = new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        integrationRepository as any,
+        {} as any
+      );
       const sendEmail = (service as any).buildSendEmailCallback(
         {
           environmentId: 'env-id',
@@ -478,7 +485,14 @@ describe('ChatSdkService', () => {
           active: true,
         }),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, integrationRepository as any);
+      const service = new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        integrationRepository as any,
+        {} as any
+      );
       const sendEmail = (service as any).buildSendEmailCallback(
         {
           environmentId: 'env-id',

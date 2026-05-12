@@ -6,7 +6,7 @@ import { Actions, agent, Button, Card, CardText } from '@novu/framework';
  * in a connected channel (Slack, Teams, in-app, etc.).
  */
 export const supportAgent = agent('support-agent', {
-  onMessage: async ({ message, ctx }) => {
+  onMessage: async (message, ctx) => {
     const firstName = ctx.subscriber?.firstName;
     const text = (message.text ?? '').toLowerCase();
 
@@ -48,11 +48,11 @@ export const supportAgent = agent('support-agent', {
   },
 
   // Return a string or card to reply; return nothing to silently acknowledge the click
-  onAction: async ({ actionId, value, ctx }) => {
-    if (actionId.startsWith('topic-') && value) {
-      ctx.metadata.set('topic', value);
+  onAction: async (action, ctx) => {
+    if (action.id.startsWith('topic-') && action.value) {
+      ctx.metadata.set('topic', action.value);
 
-      return `Topic set to **${value}**. Describe your issue and I'll help.`;
+      return `Topic set to **${action.value}**. Describe your issue and I'll help.`;
     }
   },
 });

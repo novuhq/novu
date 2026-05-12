@@ -24,13 +24,14 @@ interface NavLinkProps {
   isExternal?: boolean;
   className?: string;
   children: React.ReactNode;
+  isExact?: boolean;
 }
 
-export function NavigationLink({ to, matchPaths, isExternal, className, children }: NavLinkProps) {
+export function NavigationLink({ to, matchPaths, isExternal, className, children, isExact = false }: NavLinkProps) {
   const { pathname } = useLocation();
   const isSelected =
     pathname === to ||
-    (to && pathname.startsWith(to)) ||
+    (to && pathname.startsWith(to) && !isExact) ||
     matchPaths?.some((path) => pathname.startsWith(path));
   const variant = isSelected ? 'selected' : 'default';
   const classNames = cn(linkVariants({ variant, className }));
