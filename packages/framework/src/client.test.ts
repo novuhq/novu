@@ -702,6 +702,105 @@ describe('Novu Client', () => {
       expect(body).toContain('dog');
     });
 
+    it('should preserve JSON-stringified control values whose Liquid output contains double quotes (NV-7638)', async () => {
+      const mailyBody = {
+        type: 'doc',
+        content: [
+          {
+            type: 'paragraph',
+            content: [
+              {
+                type: 'text',
+                text: "{% assign payload = steps.digest-step.events | map: 'payload' %}{% for item in payload limit:5 %}RFI #{{item.rfi.rfiNumber}}: {{item.rfi.question | truncate: 100}} | {% endfor %}",
+              },
+            ],
+          },
+        ],
+      };
+
+      const newWorkflow = workflow(
+        'test-workflow-nv-7638',
+        async ({ step }) => {
+          await step.digest('digest-step', async () => ({ amount: 1, unit: 'hours' }));
+          await step.email(
+            'send-email',
+            async (controls) => ({
+              body: controls.body,
+              subject: controls.subject,
+            }),
+            {
+              controlSchema: {
+                type: 'object',
+                properties: {
+                  body: { type: 'string' },
+                  subject: { type: 'string' },
+                },
+                required: ['body', 'subject'],
+                additionalProperties: false,
+              } as const,
+            }
+          );
+        },
+        {
+          payloadSchema: {
+            type: 'object',
+            properties: {},
+            additionalProperties: true,
+          } as const,
+        }
+      );
+
+      await client.addWorkflows([newWorkflow]);
+
+      const event: Event = {
+        action: PostActionEnum.EXECUTE,
+        payload: {},
+        workflowId: 'test-workflow-nv-7638',
+        stepId: 'send-email',
+        subscriber: {},
+        state: [
+          {
+            stepId: 'digest-step',
+            outputs: {
+              events: [
+                {
+                  id: 'evt-1',
+                  time: '2026-01-01T00:00:00Z',
+                  payload: { rfi: { rfiNumber: 5, question: 'Where is the "important" file?' } },
+                },
+                {
+                  id: 'evt-2',
+                  time: '2026-01-01T00:01:00Z',
+                  payload: { rfi: { rfiNumber: 6, question: "John's note" } },
+                },
+              ],
+            },
+            state: { status: 'completed', error: undefined },
+          },
+        ],
+        controls: {
+          body: JSON.stringify(mailyBody),
+          subject: 'Digest summary',
+        },
+        context: {},
+        env: testEventEnv,
+      };
+
+      const result = await client.executeWorkflow(event);
+      const { body, subject } = result.outputs;
+
+      expect(subject).toBe('Digest summary');
+      expect(typeof body).toBe('string');
+
+      // The body must still be a valid JSON string after compileControls, even though the digest
+      // payload contained a `"` character. Before NV-7638's fix, the inner quote would be left
+      // unescaped and `JSON.parse(body)` would throw.
+      const parsedBody = JSON.parse(body as string);
+      const renderedText = parsedBody.content[0].content[0].text;
+      expect(renderedText).toContain('RFI #5: Where is the "important" file?');
+      expect(renderedText).toContain("RFI #6: John's note");
+    });
+
     it('should compile array control variables to a string with single quotes', async () => {
       const newWorkflow = workflow(
         'test-workflow',
