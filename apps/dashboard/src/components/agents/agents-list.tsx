@@ -1,8 +1,8 @@
 import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AGENTS_LIST_QUERY_KEY,
   type AgentResponse,
@@ -53,7 +53,39 @@ export function AgentsList() {
   const [before, setBefore] = useState<string | undefined>();
   const [limit, setLimit] = useState(12);
   const [createOpen, setCreateOpen] = useState(false);
+  const [initialCreateValues, setInitialCreateValues] = useState<{ name?: string; description?: string }>({});
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Allow external links (e.g. dispatch dashboard) to open the create dialog with prefilled values
+  // via `?create=1&name=...&description=...`. Consume the params once and strip them from the URL.
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+
+    const nextName = searchParams.get('name') ?? undefined;
+    const nextDescription = searchParams.get('description') ?? undefined;
+
+    setInitialCreateValues({ name: nextName, description: nextDescription });
+    setCreateOpen(true);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('create');
+    nextParams.delete('name');
+    nextParams.delete('description');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleCreateOpenChange = useCallback((next: boolean) => {
+    setCreateOpen(next);
+
+    if (!next) {
+      setInitialCreateValues({});
+    }
+  }, []);
+
+  const memoizedInitialName = useMemo(() => initialCreateValues.name, [initialCreateValues.name]);
+  const memoizedInitialDescription = useMemo(() => initialCreateValues.description, [initialCreateValues.description]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -99,7 +131,7 @@ export function AgentsList() {
     onSuccess: async (createdAgent) => {
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       showSuccessToast('Agent created', 'Your agent is ready to use.');
-      setCreateOpen(false);
+      handleCreateOpenChange(false);
 
       track(
         isDispatchApp
@@ -253,9 +285,11 @@ export function AgentsList() {
         />
         <CreateAgentDialog
           open={createOpen}
-          onOpenChange={setCreateOpen}
+          onOpenChange={handleCreateOpenChange}
           onSubmit={handleCreateSubmit}
           isSubmitting={createMutation.isPending}
+          initialName={memoizedInitialName}
+          initialDescription={memoizedInitialDescription}
         />
       </>
     );
@@ -340,9 +374,11 @@ export function AgentsList() {
 
       <CreateAgentDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={handleCreateOpenChange}
         onSubmit={handleCreateSubmit}
         isSubmitting={createMutation.isPending}
+        initialName={memoizedInitialName}
+        initialDescription={memoizedInitialDescription}
       />
 
       <DeleteAgentDialog

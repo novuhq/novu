@@ -1,6 +1,6 @@
 import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage, slugify } from '@novu/shared';
 import type { FormEvent, ReactNode } from 'react';
-import { useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiExternalLinkLine, RiInformationFill } from 'react-icons/ri';
 import type { CreateAgentBody } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
@@ -27,6 +27,8 @@ type CreateAgentDialogProps = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (body: CreateAgentBody) => Promise<void>;
   isSubmitting: boolean;
+  initialName?: string;
+  initialDescription?: string;
 };
 
 type FormErrors = {
@@ -45,7 +47,14 @@ function RequiredFieldLabel({ htmlFor, children }: { htmlFor: string; children: 
   );
 }
 
-export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }: CreateAgentDialogProps) {
+export function CreateAgentDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  isSubmitting,
+  initialName,
+  initialDescription,
+}: CreateAgentDialogProps) {
   const formId = useId();
   const nameId = `${formId}-name`;
   const identifierId = `${formId}-identifier`;
@@ -64,12 +73,23 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
     };
   }, [currentOrganization?.name]);
 
-  const [name, setName] = useState('');
-  const [identifier, setIdentifier] = useState('');
-  const [description, setDescription] = useState('');
+  const [name, setName] = useState(initialName ?? '');
+  const [identifier, setIdentifier] = useState(initialName ? slugify(initialName) : '');
+  const [description, setDescription] = useState(initialDescription ?? '');
   const [errors, setErrors] = useState<FormErrors>({});
   // Once the user edits the identifier manually, stop auto-syncing it from the name.
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
+
+  // Seed the form fields from initial props when the dialog opens.
+  useEffect(() => {
+    if (!open) return;
+
+    setName(initialName ?? '');
+    setIdentifier(initialName ? slugify(initialName) : '');
+    setDescription(initialDescription ?? '');
+    setIsIdentifierTouched(false);
+    setErrors({});
+  }, [open, initialName, initialDescription]);
 
   const reset = () => {
     setName('');
