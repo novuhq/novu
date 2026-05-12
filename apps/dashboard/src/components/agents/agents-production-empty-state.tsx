@@ -1,9 +1,10 @@
 import { RiArrowRightSLine, RiBookMarkedLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
-import { Button } from '../primitives/button';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { Button } from '../primitives/button';
 
 function ProductionIllustration() {
   return (
@@ -33,10 +34,11 @@ function ProductionIllustration() {
 export function AgentsProductionEmptyState() {
   const navigate = useNavigate();
   const { oppositeEnvironment } = useEnvironment();
+  const agentRoutes = useAgentRoutes();
 
   const handleSwitchToDevelopment = () => {
     if (!oppositeEnvironment?.slug) return;
-    navigate(buildRoute(ROUTES.AGENTS, { environmentSlug: oppositeEnvironment.slug }));
+    navigate(buildRoute(agentRoutes.list, { environmentSlug: oppositeEnvironment.slug }));
   };
 
   return (
