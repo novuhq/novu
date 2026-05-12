@@ -43,7 +43,6 @@ import { buildSlackAppMention, signSlackRequest } from './helpers/providers/slac
 import {
   getChannelHistory,
   getThreadReplies,
-  resetEmulator,
   startSlackEmulator,
   stopSlackEmulator,
 } from './helpers/slack-emulator';
@@ -167,15 +166,27 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     // gates on a SSRF check that rejects loopback IPs, so we update the entity
     // directly via the repository — we're testing the runtime contract, not the
     // PATCH validation.
+    //
+    // Disable `acknowledgeOnReceived` because the chain awaits
+    // `thread.startTyping('Thinking...')`, which calls
+    // `assistant.threads.setStatus` on Slack. The emulator returns 404 for
+    // that endpoint, and `@slack/web-api` retries with exponential backoff up
+    // to 10 times over 30 minutes — long enough to deadlock the handler.
+    // The acknowledge behavior is exercised separately by Scenario C.
     await agentRepository.update(
       { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
-      { $set: { bridgeUrl: bridge.url } }
+      { $set: { bridgeUrl: bridge.url, 'behavior.acknowledgeOnReceived': false } }
     );
 
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
     bridgeStub = stubBridgeExecutorWithRealHttp(bridgeExecutor);
 
-    resetEmulator();
+    // Note: we deliberately do NOT call `resetEmulator()` between tests. The
+    // emulator's seeded user/channel IDs are randomly generated per `seed()`
+    // invocation, so resetting would invalidate the cached `channel`/`user`
+    // looked up in the suite-level `before()` hook. Each test uses a fresh
+    // `thread_ts` and the test isolates bridge state via per-test agents +
+    // integrations, which is enough.
   });
 
   afterEach(async () => {
@@ -221,9 +232,12 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
 
     expect(res.status, JSON.stringify(res.body)).to.equal(200);
 
-    // Wait for the stubbed bridge executor to dispatch into the in-process
-    // bridge. The bridge handler runs as a fire-and-forget promise after the
-    // ack response, so we then poll the emulator for the resulting message.
+    // Slack's `chat.handleWebhook` returns 200 the instant the payload is
+    // accepted; the real `handleMessageEvent` → bridge dispatch → bridge stub
+    // chain runs as a fire-and-forget promise. Poll for the stub to fire
+    // before we await `drain()`.
+    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
+
     await Promise.race([
       bridgeStub.drain(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('Bridge drain timed out')), BRIDGE_DRAIN_TIMEOUT_MS)),
@@ -287,6 +301,8 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
       .set(headers)
       .set('content-type', 'application/json')
       .send(body);
+
+    await pollFor(async () => (bridgeStub.calls.length > 0 ? true : null), BRIDGE_DRAIN_TIMEOUT_MS);
 
     await Promise.race([
       bridgeStub.drain(),

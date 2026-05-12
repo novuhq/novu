@@ -133,7 +133,17 @@ function patchWebClient(): void {
   PatchedWebClient.prototype = Original.prototype;
   Object.setPrototypeOf(PatchedWebClient, Original);
 
-  webApi.WebClient = PatchedWebClient as unknown as typeof Original;
+  // `@slack/web-api`'s CJS export defines `WebClient` as a getter via
+  // `Object.defineProperty(exports, 'WebClient', { get: ... })` to support
+  // ESM tree-shaking, so plain `webApi.WebClient = …` throws a TypeError.
+  // Redefining the descriptor as a writable data property both swaps in our
+  // patched constructor and lets later code (re-)assign it if needed.
+  Object.defineProperty(webApi, 'WebClient', {
+    value: PatchedWebClient as unknown as typeof Original,
+    writable: true,
+    configurable: true,
+    enumerable: true,
+  });
 
   type WebClientInstance = {
     slackApiUrl?: string;
