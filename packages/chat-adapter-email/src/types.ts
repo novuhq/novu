@@ -16,12 +16,17 @@ export interface NovuEmailAdapterConfig {
   actionUrlBuilder?: ActionUrlBuilder;
 }
 
+export type ActionButtonStyle = 'primary' | 'danger' | 'default';
+
 export type ActionUrlBuilder = (params: {
   threadId: string;
   messageId: string;
   actionId: string;
   value?: string;
   label?: string;
+  /** Echoes the `<Button style="…">` prop so the click-confirmation page can render a
+   *  destructive variant (red button + warning copy) when appropriate. */
+  style?: ActionButtonStyle;
 }) => Promise<string>;
 
 export type EmailAlternative = IEmailAlternative;

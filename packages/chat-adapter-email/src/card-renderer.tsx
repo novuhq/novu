@@ -12,7 +12,7 @@ import {
 } from '@react-email/components';
 import { render } from '@react-email/render';
 import React from 'react';
-import type { ActionUrlBuilder } from './types.js';
+import type { ActionButtonStyle, ActionUrlBuilder } from './types.js';
 
 /**
  * Matches the Chat SDK CardElement / CardChild shapes.
@@ -79,6 +79,13 @@ function getNodeLabel(node: CardNode): string | undefined {
   return typeof propsLabel === 'string' ? propsLabel : undefined;
 }
 
+function getNodeStyle(node: CardNode): ActionButtonStyle | undefined {
+  const raw = typeof node.style === 'string' ? node.style : node.props?.style;
+  if (raw === 'primary' || raw === 'danger' || raw === 'default') return raw;
+
+  return undefined;
+}
+
 function collectActionButtons(node: CardNode, out: CardNode[]): void {
   if (node.type === 'button' && getNodeId(node) && !safeUrl(node.url)) {
     out.push(node);
@@ -109,6 +116,7 @@ async function resolveActionUrls(
         actionId: getNodeId(node) as string,
         value: getNodeValue(node),
         label: getNodeLabel(node),
+        style: getNodeStyle(node),
       });
 
       return [node, url] as const;

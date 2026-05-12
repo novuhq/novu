@@ -1104,11 +1104,12 @@ export class ChatSdkService implements OnModuleDestroy {
             senderName,
             signingSecret: credentials.secretKey,
             sendEmail: this.buildSendEmailCallback(config, outboundIntegrationId),
-            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label }) => {
+            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
               const userIdentifier = extractRecipientFromThreadId(threadId);
               const { url } = await this.actionTokenService.signActionToken({
                 agentId,
                 agentIdentifier: config.agentIdentifier,
+                agentName: config.agentName,
                 integrationIdentifier: config.integrationIdentifier,
                 environmentId: config.environmentId,
                 organizationId: config.organizationId,
@@ -1117,6 +1118,7 @@ export class ChatSdkService implements OnModuleDestroy {
                 actionId,
                 value,
                 label,
+                style,
                 userIdentifier,
               });
 

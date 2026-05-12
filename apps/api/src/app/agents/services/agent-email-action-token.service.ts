@@ -18,11 +18,15 @@ const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '::1', '[::1]']);
  * recipient address (`userIdentifier`) would otherwise be readable by any party that sees
  * the link (corporate email scanners, server logs, browser history, mail archives).
  */
+export type AgentEmailActionStyle = 'primary' | 'danger' | 'default';
+
 export interface AgentEmailActionClaims {
   /** Mongo `_id` of the agent. Used to look up cached chat instance + resolve config. */
   agentId: string;
   /** Stable agent identifier slug (mirrors what the dashboard URLs use). */
   agentIdentifier: string;
+  /** Human-readable agent display name; shown on the confirmation page. */
+  agentName: string;
   integrationIdentifier: string;
   environmentId: string;
   organizationId: string;
@@ -36,6 +40,9 @@ export interface AgentEmailActionClaims {
   value?: string;
   /** Display label shown on the confirmation page; not security-sensitive. */
   label?: string;
+  /** Echoes the source `<Button style="…">`. Drives the destructive-action UI on the
+   *  confirmation page (red button + "cannot be undone" copy) when `'danger'`. */
+  style?: AgentEmailActionStyle;
   /** Email address of the recipient — used as `platformUserId` for subscriber resolution. */
   userIdentifier: string;
 }
@@ -45,14 +52,21 @@ interface StoredEntry {
   /** Epoch seconds when the entry was due to naturally expire. Used to recompute the
    *  remaining TTL when a token is restored after a transient dispatch failure. */
   expiresAt: number;
+  /** Epoch seconds when the token was minted. Surfaced through peek/consume so the
+   *  confirmation page can show a relative "Sent N min ago" footer. */
+  mintedAt: number;
 }
 
-/** Returned from `consumeActionToken`; carries `expiresAt` so a transient failure can
- *  re-store the entry without extending its lifetime past the original expiry. */
-export interface ConsumedActionToken {
+/** Returned from `peekActionToken` and `consumeActionToken`. Carries `expiresAt` so a
+ *  transient failure can re-store the entry without extending its lifetime past the
+ *  original expiry, and `mintedAt` for relative-time rendering. */
+export interface PeekedActionToken {
   claims: AgentEmailActionClaims;
   expiresAt: number;
+  mintedAt: number;
 }
+
+export type ConsumedActionToken = PeekedActionToken;
 
 @Injectable()
 export class AgentEmailActionTokenService {
@@ -74,8 +88,9 @@ export class AgentEmailActionTokenService {
    */
   async signActionToken(claims: AgentEmailActionClaims): Promise<{ token: string; url: string }> {
     const token = randomBytes(TOKEN_BYTES).toString('base64url');
-    const expiresAt = Math.floor(Date.now() / 1000) + this.ttlSeconds;
-    const entry: StoredEntry = { claims, expiresAt };
+    const mintedAt = Math.floor(Date.now() / 1000);
+    const expiresAt = mintedAt + this.ttlSeconds;
+    const entry: StoredEntry = { claims, expiresAt, mintedAt };
 
     await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: this.ttlSeconds });
 
@@ -119,11 +134,13 @@ export class AgentEmailActionTokenService {
    * Reads the claims **without** consuming the token. Used by the GET preview route so a
    * URL prefetcher (or repeated browser visit) doesn't burn the single-use reservation.
    */
-  async peekActionToken(token: string): Promise<AgentEmailActionClaims | null> {
+  async peekActionToken(token: string): Promise<PeekedActionToken | null> {
     const raw = await this.cacheService.get(this.storageKey(token));
     if (!raw) return null;
 
-    return this.parseEntry(raw)?.claims ?? null;
+    const entry = this.parseEntry(raw);
+
+    return entry ? { claims: entry.claims, expiresAt: entry.expiresAt, mintedAt: entry.mintedAt } : null;
   }
 
   /**
@@ -146,7 +163,7 @@ export class AgentEmailActionTokenService {
 
     const entry = this.parseEntry(raw);
 
-    return entry ? { claims: entry.claims, expiresAt: entry.expiresAt } : null;
+    return entry ? { claims: entry.claims, expiresAt: entry.expiresAt, mintedAt: entry.mintedAt } : null;
   }
 
   /**
@@ -159,7 +176,11 @@ export class AgentEmailActionTokenService {
     const remaining = consumed.expiresAt - Math.floor(Date.now() / 1000);
     if (remaining <= 0) return;
 
-    const entry: StoredEntry = { claims: consumed.claims, expiresAt: consumed.expiresAt };
+    const entry: StoredEntry = {
+      claims: consumed.claims,
+      expiresAt: consumed.expiresAt,
+      mintedAt: consumed.mintedAt,
+    };
     await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: remaining });
   }
 
@@ -169,12 +190,18 @@ export class AgentEmailActionTokenService {
 
   private parseEntry(raw: string): StoredEntry | null {
     try {
-      const parsed = JSON.parse(raw) as StoredEntry;
-      if (!parsed || typeof parsed !== 'object' || !parsed.claims || typeof parsed.expiresAt !== 'number') {
+      const parsed = JSON.parse(raw) as Partial<StoredEntry>;
+      if (
+        !parsed ||
+        typeof parsed !== 'object' ||
+        !parsed.claims ||
+        typeof parsed.expiresAt !== 'number' ||
+        typeof parsed.mintedAt !== 'number'
+      ) {
         return null;
       }
 
-      return parsed;
+      return parsed as StoredEntry;
     } catch (err) {
       this.logger.warn({ err }, 'Failed to parse stored agent email action token entry');
 
