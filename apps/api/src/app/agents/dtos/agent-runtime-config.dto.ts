@@ -1,7 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsEnum, IsIn, IsOptional, IsString, ValidateIf, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsIn, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class AgentMcpServerDto {
   @ApiProperty()
@@ -131,23 +131,14 @@ export class ManagedRuntimeDto {
   @IsEnum(AgentRuntimeProviderIdEnum)
   providerId: AgentRuntimeProviderIdEnum;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description:
-      'ID of an existing Novu integration that holds the provider API key. ' +
-      'Mutually exclusive with apiKey. Exactly one of integrationId or apiKey must be provided.',
+      'ID of an existing Novu integration (channel: AGENT_RUNTIME) that holds the provider API key and ' +
+      'provisioned environment. Create the integration first via POST /integrations.',
   })
-  @ValidateIf((o) => !o.apiKey)
+  @IsNotEmpty()
   @IsString()
-  integrationId?: string;
-
-  @ApiPropertyOptional({
-    description:
-      'Raw provider API key. When provided, the API auto-creates an Integration and a Claude environment. ' +
-      'Mutually exclusive with integrationId. Exactly one of integrationId or apiKey must be provided.',
-  })
-  @ValidateIf((o) => !o.integrationId)
-  @IsString()
-  apiKey?: string;
+  integrationId: string;
 
   @ApiPropertyOptional({
     description:

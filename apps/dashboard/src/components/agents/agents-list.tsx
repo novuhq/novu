@@ -1,4 +1,4 @@
-import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import { ChannelTypeEnum, DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
@@ -12,6 +12,7 @@ import {
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { createIntegration } from '@/api/integrations';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
@@ -90,24 +91,40 @@ export function AgentsList() {
     mutationFn: async (body: CreateAgentDialogSubmitBody) => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
-      // The API handles Integration + Claude environment creation when apiKey is provided.
-      // No separate createIntegration call is needed.
-      const { apiKey: _apiKey, ...agentBody } = body;
+      const { apiKey, ...agentBody } = body;
 
-      if (body.runtime === 'managed' && body.apiKey) {
+      if (body.runtime === 'managed' && apiKey) {
         const { managedRuntime } = agentBody;
+        const providerId = managedRuntime?.providerId ?? 'anthropic';
 
+        // Step 1: Create the integration + provision the Claude environment
+        const integrationResponse = await createIntegration(
+          {
+            providerId,
+            channel: ChannelTypeEnum.AGENT_RUNTIME,
+            credentials: { apiKey },
+            configurations: {},
+            name: `${providerId}-managed`,
+            active: true,
+            _environmentId: environment._id,
+          },
+          environment
+        );
+
+        const integrationId = integrationResponse.data._id;
+
+        // Step 2: Create the agent referencing the provisioned integration
         return createAgent(environment, {
           ...agentBody,
           managedRuntime: {
-            providerId: managedRuntime?.providerId ?? 'anthropic',
+            providerId,
             ...managedRuntime,
-            apiKey: body.apiKey,
-          },
+            integrationId,
+          } satisfies import('@/api/agents').CreateManagedRuntimeBody,
         });
       }
 
-      return createAgent(environment, agentBody);
+      return createAgent(environment, agentBody as import('@/api/agents').CreateAgentBody);
     },
     onSuccess: async (createdAgent) => {
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });

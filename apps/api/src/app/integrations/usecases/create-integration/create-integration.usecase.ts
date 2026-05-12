@@ -4,7 +4,10 @@ import {
   areNovuEmailCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
+  decryptCredentials,
   encryptCredentials,
+  getAgentRuntimeProvider,
+  PinoLogger,
 } from '@novu/application-generic';
 import {
   DalException,
@@ -14,6 +17,7 @@ import {
   IntegrationRepository,
 } from '@novu/dal';
 import {
+  AgentRuntimeProviderIdEnum,
   CHANNELS_WITH_PRIMARY,
   ChannelTypeEnum,
   ChatProviderIdEnum,
@@ -36,8 +40,11 @@ export class CreateIntegration {
   constructor(
     private integrationRepository: IntegrationRepository,
     private analyticsService: AnalyticsService,
-    private environmentRepository: EnvironmentRepository
-  ) {}
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(CreateIntegration.name);
+  }
 
   private async calculatePriorityAndPrimary(command: CreateIntegrationCommand) {
     const result: { primary: boolean; priority: number } = {
@@ -188,12 +195,69 @@ export class CreateIntegration {
 
       const integrationEntity = await this.integrationRepository.create(query);
 
+      if (command.channel === ChannelTypeEnum.AGENT_RUNTIME) {
+        await this.provisionAgentRuntimeIntegration(integrationEntity._id, identifier, command);
+      }
+
       return integrationEntity;
     } catch (e) {
       if (e instanceof DalException) {
         throw new BadRequestException(e.message);
       }
       throw e;
+    }
+  }
+
+  private async provisionAgentRuntimeIntegration(
+    integrationId: string,
+    integrationName: string,
+    command: CreateIntegrationCommand
+  ): Promise<void> {
+    const decrypted = decryptCredentials(encryptCredentials(command.credentials ?? {}));
+    const apiKey = decrypted.apiKey as string | undefined;
+
+    if (!apiKey) {
+      return;
+    }
+
+    const providerId = command.providerId as AgentRuntimeProviderIdEnum;
+    const provider = getAgentRuntimeProvider(providerId, apiKey);
+
+    try {
+      const result = await provider.provisionIntegration({ integrationName });
+
+      const updatedCredentials = encryptCredentials({
+        ...(command.credentials ?? {}),
+        ...result.credentialsUpdate,
+      });
+
+      await this.integrationRepository.update(
+        {
+          _id: integrationId,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        { $set: { credentials: updatedCredentials } }
+      );
+    } catch (provisionError) {
+      this.logger.error(
+        { err: provisionError, integrationId, providerId: command.providerId },
+        'Failed to provision agent runtime integration; rolling back integration record'
+      );
+
+      try {
+        await this.integrationRepository.delete({
+          _id: integrationId,
+          _organizationId: command.organizationId,
+        });
+      } catch (deleteError) {
+        this.logger.error(
+          { err: deleteError, integrationId },
+          'Failed to delete integration during rollback — manual cleanup required'
+        );
+      }
+
+      throw provisionError;
     }
   }
 }

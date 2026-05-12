@@ -137,11 +137,19 @@ function RuntimeCard({ selected, onClick, disabled, icon, title, description }: 
   );
 }
 
-export type CreateAgentDialogSubmitBody = Omit<CreateAgentBody, 'name' | 'identifier'> & {
+/**
+ * Body emitted by the Create Agent dialog.
+ * `managedRuntime.integrationId` is intentionally absent — the dialog collects the raw `apiKey`
+ * instead, and the caller (agents-list.tsx) creates the integration first then fills in the id.
+ */
+export type CreateAgentDialogSubmitBody = Omit<CreateAgentBody, 'name' | 'identifier' | 'managedRuntime'> & {
   name?: string;
   identifier?: string;
-  /** Encrypted Anthropic API key; used by the caller to create an integration before creating the agent. */
+  /** Raw Anthropic API key; used by the caller to create an AGENT_RUNTIME integration before calling POST /agents. */
   apiKey?: string;
+  managedRuntime?: Omit<import('@/api/agents').CreateManagedRuntimeBody, 'integrationId'> & {
+    integrationId?: string;
+  };
 };
 
 type CreateAgentDialogProps = {

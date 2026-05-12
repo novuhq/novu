@@ -21,11 +21,10 @@ import {
 import type {
   CreateAgentInput,
   CreateAgentResult,
-  CreateEnvironmentInput,
-  CreateEnvironmentResult,
   GetAgentResult,
-  GetEnvironmentResult,
   IAgentRuntimeProvider,
+  ProvisionIntegrationInput,
+  ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
 } from '../i-agent-runtime-provider';
 
@@ -215,41 +214,36 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
     });
   }
 
-  async createEnvironment(input: CreateEnvironmentInput): Promise<CreateEnvironmentResult> {
+  async provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult> {
     const client = this.buildClient();
 
     return this.withRetry(async () => {
       try {
         const env = await (client as any).beta.environments.create({
-          name: input.name,
+          name: `nv-${input.integrationName}`,
           config: {
             type: 'cloud',
             networking: { type: 'unrestricted' },
           },
         });
 
-        return { externalEnvironmentId: env.id as string };
+        return {
+          credentialsUpdate: { externalEnvironmentId: env.id as string },
+          metadata: {},
+        };
       } catch (err) {
         this.normaliseError(err);
       }
     });
   }
 
-  async getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult> {
-    const client = this.buildClient();
+  async deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void> {
+    const externalEnvironmentId = credentialsUpdate.externalEnvironmentId as string | undefined;
 
-    return this.withRetry(async () => {
-      try {
-        const env = await (client as any).beta.environments.retrieve(externalEnvironmentId);
+    if (!externalEnvironmentId) {
+      return;
+    }
 
-        return { externalEnvironmentId: env.id as string };
-      } catch (err) {
-        this.normaliseError(err);
-      }
-    });
-  }
-
-  async archiveEnvironment(externalEnvironmentId: string): Promise<void> {
     const client = this.buildClient();
 
     await this.withRetry(async () => {

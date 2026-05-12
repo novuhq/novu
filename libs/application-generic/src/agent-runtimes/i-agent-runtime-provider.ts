@@ -36,17 +36,19 @@ export type UpdateAgentRuntimeConfigInput = {
   skills?: AgentSkillDto[];
 };
 
-export type CreateEnvironmentInput = {
-  /** Human-readable name; must be unique within the provider workspace. */
-  name: string;
+export type ProvisionIntegrationInput = {
+  /** Human-readable name for the integration; used as the environment/resource name on the provider. */
+  integrationName: string;
 };
 
-export type CreateEnvironmentResult = {
-  externalEnvironmentId: string;
-};
-
-export type GetEnvironmentResult = {
-  externalEnvironmentId: string;
+export type ProvisionIntegrationResult = {
+  /**
+   * Credential fields to merge into the integration's existing credentials.
+   * For Anthropic this includes `externalEnvironmentId`.
+   */
+  credentialsUpdate: Record<string, unknown>;
+  /** Optional provider-specific metadata (not stored in credentials). */
+  metadata?: Record<string, unknown>;
 };
 
 export interface IAgentRuntimeProvider {
@@ -94,21 +96,16 @@ export interface IAgentRuntimeProvider {
   updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto>;
 
   /**
-   * Create a new runtime environment on the provider side.
-   * Environments are container configurations (packages, networking) used when starting sessions.
-   * Returns the stable external environment ID we persist on Integration.credentials.
+   * Provision any provider-side resources needed for an AGENT_RUNTIME integration
+   * (e.g. a Claude environment). Called by CreateIntegration after the integration
+   * record is saved. Returns a credentialsUpdate that is merged into the integration.
    */
-  createEnvironment(input: CreateEnvironmentInput): Promise<CreateEnvironmentResult>;
+  provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult>;
 
   /**
-   * Fetch basic info for an existing environment from the provider.
-   * Used to verify the environment still exists before starting a session.
-   */
-  getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult>;
-
-  /**
-   * Archive (soft-delete) the environment on the provider side.
+   * Tear down provider-side resources created by provisionIntegration.
+   * Receives the same credentialsUpdate that provisionIntegration returned.
    * Best-effort — callers should still proceed with local cleanup on error.
    */
-  archiveEnvironment(externalEnvironmentId: string): Promise<void>;
+  deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
 }
