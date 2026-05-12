@@ -31,8 +31,8 @@ jobs:
         id: output-variables
         run: |
           echo "date_humanized=$(date +'%Y-%m-%d %H:%M')" >> "$GITHUB_OUTPUT"
-          echo "days_back=${{ github.event.inputs.days_back || '7' }}" >> "$GITHUB_OUTPUT"
-          echo "since_date=$(date -d '${{ github.event.inputs.days_back || '7' }} days ago' --iso-8601)" >> "$GITHUB_OUTPUT"
+          echo "days_back=$DAYS_BACK" >> "$GITHUB_OUTPUT"
+          echo "since_date=$(date -d '$DAYS_BACK days ago' --iso-8601)" >> "$GITHUB_OUTPUT"
 
       - name: Fetch recent production PRs
         id: fetch-prs

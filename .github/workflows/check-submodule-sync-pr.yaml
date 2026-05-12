@@ -57,6 +57,7 @@ jobs:
           chmod +x .github/workflows/scripts/validate-submodule-sync.sh
 
           # Run the script with arguments
-          .github/workflows/scripts/validate-submodule-sync.sh ${{ github.base_ref }}
+          .github/workflows/scripts/validate-submodule-sync.sh "$BASE_REF"
         env:
+          BASE_REF: ${{ github.base_ref }}
           SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
