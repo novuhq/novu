@@ -2,10 +2,7 @@ import { Body, Controller, Get, HttpStatus, Post, Query, Res } from '@nestjs/com
 import { ApiExcludeController } from '@nestjs/swagger';
 import { PinoLogger } from '@novu/application-generic';
 import { Response } from 'express';
-import {
-  AgentEmailActionTokenService,
-  type VerifiedAgentEmailActionClaims,
-} from './services/agent-email-action-token.service';
+import { AgentEmailActionTokenService } from './services/agent-email-action-token.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 
 const EXECUTE_PATH = '/v1/agents/email/actions/execute';
@@ -15,11 +12,17 @@ const EXECUTE_PATH = '/v1/agents/email/actions/execute';
  * rendered inside agent-sent emails. The click flow is intentionally two-step to defeat
  * URL-prefetchers in email clients (Outlook Safe Links, Mimecast, etc.):
  *
- *   GET  /v1/agents/email/actions/preview?t=<jwt>  — verify token, render confirm HTML.
- *                                                    Does NOT mutate any state.
- *   POST /v1/agents/email/actions/execute          — verify, single-use claim, dispatch
- *                                                    to chat SDK's processAction, render
- *                                                    animated success HTML.
+ *   GET  /v1/agents/email/actions/preview?t=<token>  — peek (read-only), render confirm HTML.
+ *                                                      Does NOT mutate any state, so a
+ *                                                      prefetcher's GET can't burn the token.
+ *   POST /v1/agents/email/actions/execute            — atomic single-use consume, dispatch
+ *                                                      to chat SDK's processAction, render
+ *                                                      animated success HTML. Re-stores the
+ *                                                      token on transient dispatch failure.
+ *
+ * The URL carries only an opaque random token — the action context (agent/environment/org
+ * IDs, recipient address, action id/value) lives server-side in Redis so it never ends up
+ * in third-party email scanner logs, browser history, or proxy access logs.
  */
 @Controller('/agents/email/actions')
 @ApiExcludeController()
@@ -44,25 +47,29 @@ export class AgentEmailActionsController {
       return;
     }
 
-    try {
-      const claims = this.tokenService.verifyActionToken(token);
+    const claims = await this.tokenService.peekActionToken(token);
+    if (!claims) {
       this.sendHtml(
         res,
         HttpStatus.OK,
-        renderConfirmPage({
-          label: claims.label || claims.actionId,
-          token,
-          executeUrl: EXECUTE_PATH,
-        })
+        renderErrorPage(
+          'Link expired',
+          'This action link is no longer valid. It may have expired or already been used.'
+        )
       );
-    } catch (err) {
-      this.logger.debug({ err }, 'Rejecting agent email action preview');
-      this.sendHtml(
-        res,
-        HttpStatus.OK,
-        renderErrorPage('Link expired', 'This action link is no longer valid. It may have expired.')
-      );
+
+      return;
     }
+
+    this.sendHtml(
+      res,
+      HttpStatus.OK,
+      renderConfirmPage({
+        label: claims.label || claims.actionId,
+        token,
+        executeUrl: EXECUTE_PATH,
+      })
+    );
   }
 
   @Post('/execute')
@@ -73,37 +80,27 @@ export class AgentEmailActionsController {
       return;
     }
 
-    let claims: VerifiedAgentEmailActionClaims;
-    try {
-      claims = this.tokenService.verifyActionToken(token);
-    } catch (err) {
-      this.logger.debug({ err }, 'Rejecting agent email action execute');
-      this.sendHtml(
-        res,
-        HttpStatus.OK,
-        renderErrorPage('Link expired', 'This action link is no longer valid. It may have expired.')
-      );
+    // Atomic single-use claim: consume returns the entry exactly once across all concurrent
+    // callers (Redis GETDEL). Any other click — prefetcher, refresh, second tab — receives
+    // null and is shown the "already submitted" page.
+    const consumed = await this.tokenService.consumeActionToken(token);
+    if (!consumed) {
+      this.sendHtml(res, HttpStatus.OK, renderAlreadySubmittedPage());
 
       return;
     }
 
-    const claimed = await this.tokenService.claimSingleUse(claims.jti, claims.exp);
-    if (!claimed) {
-      this.sendHtml(res, HttpStatus.OK, renderAlreadySubmittedPage({ label: claims.label || claims.actionId }));
-
-      return;
-    }
+    const { claims } = consumed;
 
     try {
       await this.chatSdkService.processEmailAction(claims);
     } catch (err) {
       this.logger.error(err, `Failed to process agent email action ${claims.actionId} for agent ${claims.agentId}`);
-      // Release the single-use claim so the user can retry from the same email link instead of
-      // seeing "Already submitted". The claim is taken *before* dispatch (not after) to keep
-      // the prefetcher/double-click race window closed; rolling back on transient failure is
-      // the safer of the two trade-offs.
-      await this.tokenService.releaseSingleUse(claims.jti).catch((releaseErr) => {
-        this.logger.warn(releaseErr, `Failed to release single-use claim for ${claims.jti} after dispatch error`);
+      // Re-store the entry so the user can retry from the same email link instead of seeing
+      // "Already submitted". The remaining TTL is preserved against the original `expiresAt`
+      // so a token can never outlive its natural 3-day expiry.
+      await this.tokenService.releaseActionToken(token, consumed).catch((releaseErr) => {
+        this.logger.warn(releaseErr, `Failed to release agent email action token after dispatch error`);
       });
       this.sendHtml(
         res,
@@ -277,12 +274,12 @@ function renderSuccessPage(params: { label: string }): string {
   return pageShell('Action submitted', body);
 }
 
-function renderAlreadySubmittedPage(params: { label: string }): string {
+function renderAlreadySubmittedPage(): string {
   const body = `
 <div class="card">
   <div class="info-icon" aria-hidden="true">✓</div>
   <h1>Already submitted</h1>
-  <p>The action <strong>${escapeHtml(params.label)}</strong> has already been received. You can close this tab.</p>
+  <p>This action has already been received. You can close this tab.</p>
 </div>`;
 
   return pageShell('Already submitted', body);

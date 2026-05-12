@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import {
   ChannelConnectionRepository,
   ChannelEndpointRepository,
@@ -24,14 +23,7 @@ import { ChatSdkService } from './services/chat-sdk.service';
 import { USE_CASES } from './usecases';
 
 @Module({
-  imports: [
-    SharedModule,
-    AuthModule,
-    EventsModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-    }),
-  ],
+  imports: [SharedModule, AuthModule, EventsModule],
   controllers: [AgentsController, AgentsWebhookController, AgentEmailActionsController],
   providers: [
     ...USE_CASES,
