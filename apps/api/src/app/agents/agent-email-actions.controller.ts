@@ -98,6 +98,13 @@ export class AgentEmailActionsController {
       await this.chatSdkService.processEmailAction(claims);
     } catch (err) {
       this.logger.error(err, `Failed to process agent email action ${claims.actionId} for agent ${claims.agentId}`);
+      // Release the single-use claim so the user can retry from the same email link instead of
+      // seeing "Already submitted". The claim is taken *before* dispatch (not after) to keep
+      // the prefetcher/double-click race window closed; rolling back on transient failure is
+      // the safer of the two trade-offs.
+      await this.tokenService.releaseSingleUse(claims.jti).catch((releaseErr) => {
+        this.logger.warn(releaseErr, `Failed to release single-use claim for ${claims.jti} after dispatch error`);
+      });
       this.sendHtml(
         res,
         HttpStatus.OK,
@@ -114,7 +121,13 @@ export class AgentEmailActionsController {
   }
 
   private sendHtml(res: Response, status: HttpStatus, body: string): void {
-    res.status(status).type('text/html; charset=utf-8').send(body);
+    res
+      .status(status)
+      .setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private')
+      .setHeader('Pragma', 'no-cache')
+      .setHeader('Expires', '0')
+      .type('text/html; charset=utf-8')
+      .send(body);
   }
 }
 

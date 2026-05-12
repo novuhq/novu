@@ -162,9 +162,7 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     const buildActionUrl = this.config.actionUrlBuilder;
     const rendered = await renderMessage({
       ...normalized,
-      ...(normalized.card && buildActionUrl
-        ? { actionContext: { threadId, messageId, buildActionUrl } }
-        : {}),
+      ...(normalized.card && buildActionUrl ? { actionContext: { threadId, messageId, buildActionUrl } } : {}),
     });
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
     const storedSubject = await this.threadResolver.getSubject(threadId);
@@ -187,6 +185,14 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
     const sentMessageId = result.messageId || messageId;
     await this.threadResolver.trackMessage(threadId, sentMessageId);
+    // Action tokens embedded in the email body are bound to the locally minted `messageId`.
+    // When a provider rewrites Message-ID, `sentMessageId` differs — track the minted ID too
+    // so the action-token's correlation survives (the user's `onAction(action, ctx)` receives
+    // `action.sourceMessageId = messageId`, and any platform-message lookup keyed on either
+    // value resolves back to the same thread).
+    if (sentMessageId !== messageId) {
+      await this.threadResolver.trackMessage(threadId, messageId);
+    }
 
     const raw: NovuEmailRawMessage = {
       id: sentMessageId,

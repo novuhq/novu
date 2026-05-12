@@ -90,8 +90,21 @@ export class AgentEmailActionTokenService {
   async claimSingleUse(jti: string, exp: number): Promise<boolean> {
     const nowSeconds = Math.floor(Date.now() / 1000);
     const ttl = Math.max(60, exp - nowSeconds);
-    const result = await this.cacheService.setIfNotExist(`agent:email:action:used:${jti}`, '1', { ttl });
+    const result = await this.cacheService.setIfNotExist(this.singleUseKey(jti), '1', { ttl });
 
     return result === 'OK';
+  }
+
+  /**
+   * Releases a single-use reservation made by `claimSingleUse`. Called after a transient
+   * dispatch failure so the user can retry the action via the same link instead of seeing
+   * "Already submitted". Safe to call even if the key has already expired.
+   */
+  async releaseSingleUse(jti: string): Promise<void> {
+    await this.cacheService.del(this.singleUseKey(jti));
+  }
+
+  private singleUseKey(jti: string): string {
+    return `agent:email:action:used:${jti}`;
   }
 }
