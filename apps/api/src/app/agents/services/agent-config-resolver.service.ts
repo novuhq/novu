@@ -45,6 +45,8 @@ export interface ResolvedAgentConfig {
   environmentId: string;
   organizationId: string;
   agentIdentifier: string;
+  /** Human-readable display name; used in email-action confirmation UI. */
+  agentName: string;
   integrationIdentifier: string;
   integrationId: string;
   acknowledgeOnReceived: boolean;
@@ -188,6 +190,7 @@ export class AgentConfigResolver {
       environmentId,
       organizationId,
       agentIdentifier: agent.identifier,
+      agentName: agent.name,
       integrationIdentifier,
       integrationId: integration._id,
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
