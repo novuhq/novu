@@ -253,7 +253,7 @@ describe('Managed Agents API #novu-v2', () => {
       expect(createAgentArg.tools).to.deep.equal(['web_search']);
       expect(createAgentArg.mcpServers).to.be.an('array').with.length(1);
       expect(createAgentArg.mcpServers[0].name).to.equal('Slack');
-      expect(createAgentArg.mcpServers[0].url).to.equal('https://mcp.slack.com/sse');
+      expect(createAgentArg.mcpServers[0].url).to.equal('https://mcp.slack.com/mcp');
     });
 
     it('should return 422 when runtime=managed but managedRuntime is omitted', async () => {
