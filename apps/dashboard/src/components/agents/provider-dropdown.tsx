@@ -37,9 +37,11 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { APP_IDS } from '@/utils/apps';
 import { QueryKeys } from '@/utils/query-keys';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -161,6 +163,8 @@ export function ProviderDropdown({
   const navigate = useNavigate();
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
   const track = useTelemetry();
+  const currentApp = useCurrentApp();
+  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
 
   const { supported: allSupported, comingSoon } = useMemo(
     () => buildDropdownItems(CONVERSATIONAL_PROVIDERS, integrations),
@@ -313,12 +317,17 @@ export function ProviderDropdown({
       if (item.providerId === EmailProviderIdEnum.NovuAgent) {
         const link = await addAgentIntegrationMutation.mutateAsync({ providerId: item.providerId });
         showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
-        track(TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD, {
-          agentIdentifier,
-          providerId: item.providerId,
-          integrationIdentifier: link.integration.identifier,
-          mode: 'novu_email',
-        });
+        track(
+          isDispatchApp
+            ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
+            : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
+          {
+            agentIdentifier,
+            providerId: item.providerId,
+            integrationIdentifier: link.integration.identifier,
+            mode: 'novu_email',
+          }
+        );
         onSelect(item.providerId, link.integration as unknown as IIntegration);
         closeDropdown();
       } else if (item.integration) {
@@ -328,12 +337,17 @@ export function ProviderDropdown({
           try {
             await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: item.integration.identifier });
             showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
-            track(TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD, {
-              agentIdentifier,
-              providerId: item.providerId,
-              integrationIdentifier: item.integration.identifier,
-              mode: 'existing_integration',
-            });
+            track(
+              isDispatchApp
+                ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
+                : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
+              {
+                agentIdentifier,
+                providerId: item.providerId,
+                integrationIdentifier: item.integration.identifier,
+                mode: 'existing_integration',
+              }
+            );
           } catch (linkErr) {
             if (!isAlreadyLinkedToAgentConflict(linkErr)) {
               throw linkErr;
@@ -353,12 +367,17 @@ export function ProviderDropdown({
         });
         await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: created.identifier });
         showSuccessToast('Integration linked', `${created.name} was added to this agent.`);
-        track(TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD, {
-          agentIdentifier,
-          providerId: item.providerId,
-          integrationIdentifier: created.identifier,
-          mode: 'new_integration_then_link',
-        });
+        track(
+          isDispatchApp
+            ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
+            : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
+          {
+            agentIdentifier,
+            providerId: item.providerId,
+            integrationIdentifier: created.identifier,
+            mode: 'new_integration_then_link',
+          }
+        );
         onSelect(item.providerId, created);
         closeDropdown();
       }
@@ -525,7 +544,9 @@ export function ProviderDropdown({
                   {isLocked ? (
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <div tabIndex={0} role="button">{rowContent}</div>
+                        <div tabIndex={0} role="button">
+                          {rowContent}
+                        </div>
                       </TooltipTrigger>
                       <TooltipContent
                         side="right"
