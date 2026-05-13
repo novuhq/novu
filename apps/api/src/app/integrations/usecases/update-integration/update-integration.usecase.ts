@@ -1,9 +1,17 @@
-import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, encryptCredentials, PinoLogger } from '@novu/application-generic';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { AnalyticsService, decryptCredentials, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
 
 @Injectable()
@@ -101,6 +109,14 @@ export class UpdateIntegration {
       throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
     }
 
+    if (command.restrictToUserEnvironment && existingIntegration._environmentId !== command.userEnvironmentId) {
+      throw new ForbiddenException(
+        'API key authentication is scoped to a single environment and cannot update an integration ' +
+          "that belongs to a different environment. Use an API key from the integration's environment, " +
+          'or authenticate with a session token.'
+      );
+    }
+
     if (command.environmentId && command.environmentId !== existingIntegration._environmentId) {
       const targetEnvironment = await this.environmentRepository.findByIdAndOrganization(
         command.environmentId,
@@ -165,7 +181,15 @@ export class UpdateIntegration {
     }
 
     if (command.credentials) {
-      updatePayload.credentials = encryptCredentials(command.credentials);
+      const existingCredentials = existingIntegration.credentials
+        ? decryptCredentials(existingIntegration.credentials)
+        : undefined;
+      const managedCredentials = ensureWhatsAppManagedCredentials({
+        providerId: existingIntegration.providerId,
+        nextCredentials: command.credentials,
+        existingCredentials,
+      });
+      updatePayload.credentials = encryptCredentials(managedCredentials);
     }
 
     if (command.configurations) {
@@ -182,7 +206,8 @@ export class UpdateIntegration {
 
     const haveConditions = updatePayload.conditions && updatePayload.conditions?.length > 0;
 
-    const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
+    const isChannelSupportsPrimary =
+      !!existingIntegration.channel && CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isActiveChanged && isChannelSupportsPrimary) {
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,

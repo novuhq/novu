@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ChannelTypeEnum } from '@novu/shared';
+import { ChannelTypeEnum, IntegrationKindEnum } from '@novu/shared';
 import { ConfigurationsDto } from './configurations.dto';
 import { CredentialsDto } from './credentials.dto';
 import { StepFilterDto } from './step-filter-dto';
@@ -43,18 +43,28 @@ export class IntegrationResponseDto {
   })
   providerId: string;
 
-  @ApiProperty({
-    description: 'The channel type for the integration, which defines how it communicates (e.g., email, SMS).',
+  @ApiPropertyOptional({
+    description:
+      'The channel type for the integration, which defines how it communicates (e.g., email, SMS). Not set for agent-kind integrations.',
     enum: ChannelTypeEnum,
   })
-  channel: ChannelTypeEnum;
+  channel?: ChannelTypeEnum;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description:
-      'The credentials required for the integration to function, including API keys and other sensitive information.',
+      'Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not have a channel.',
+    enum: IntegrationKindEnum,
+  })
+  kind?: IntegrationKindEnum;
+
+  @ApiPropertyOptional({
+    description:
+      'The decrypted credentials required for the integration to function (e.g. provider API keys, signing secrets). ' +
+      'Only returned to dashboard/session-token callers; API-key authenticated callers receive the integration ' +
+      'metadata without this field to avoid amplifying API-key leaks into provider-credential leaks.',
     type: () => CredentialsDto,
   })
-  credentials: CredentialsDto;
+  credentials?: CredentialsDto;
 
   @ApiPropertyOptional({
     description: 'The configurations required for enabling the additional configurations of the integration.',

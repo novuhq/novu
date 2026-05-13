@@ -1,5 +1,5 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useOrganization, useUser } from '@clerk/clerk-react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiCalendarEventLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';

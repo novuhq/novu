@@ -26,6 +26,18 @@ async function loadEmojiNames(): Promise<Set<string>> {
   return cachedEmojiNames;
 }
 
+/**
+ * Where the call into `AgentConfigResolver.resolve` is coming from.
+ *
+ * - `'webhook_verification'` — platform is performing a verification
+ *   handshake (e.g. WhatsApp/Meta GET challenge). No real event yet.
+ * - `'webhook_message'` — platform is delivering a real inbound webhook
+ *   message. Used to mark the agent–integration link as connected.
+ *
+ * Outbound flows (replies, DMs, reactions) call `resolve` without a source.
+ */
+export type AgentConfigResolveSource = 'webhook_verification' | 'webhook_message';
+
 export interface ResolvedAgentConfig {
   platform: AgentPlatformEnum;
   credentials: ICredentialsEntity;
@@ -33,6 +45,8 @@ export interface ResolvedAgentConfig {
   environmentId: string;
   organizationId: string;
   agentIdentifier: string;
+  /** Human-readable display name; used in email-action confirmation UI. */
+  agentName: string;
   integrationIdentifier: string;
   integrationId: string;
   acknowledgeOnReceived: boolean;
@@ -76,7 +90,11 @@ export class AgentConfigResolver {
     this.logger.setContext(this.constructor.name);
   }
 
-  async resolve(agentId: string, integrationIdentifier: string): Promise<ResolvedAgentConfig> {
+  async resolve(
+    agentId: string,
+    integrationIdentifier: string,
+    options: { source?: AgentConfigResolveSource } = {}
+  ): Promise<ResolvedAgentConfig> {
     const agent = await this.agentRepository.findByIdForWebhook(agentId);
     if (!agent) {
       throw new NotFoundException(`Agent ${agentId} not found`);
@@ -139,9 +157,13 @@ export class AgentConfigResolver {
       connectionAccessToken = connection.auth.accessToken;
     }
 
-    const hadConnectedAt = Boolean(agentIntegration.connectedAt);
+    // `connectedAt` is set the first time the platform actually delivers a
+    // real inbound message. Verification handshakes and outbound flows
+    // (replies, reactions, DMs) also call `resolve`, so we gate the write
+    // on the caller's declared source.
+    const isFirstInboundMessage = options.source === 'webhook_message' && !agentIntegration.connectedAt;
 
-    if (!hadConnectedAt) {
+    if (isFirstInboundMessage) {
       await this.agentIntegrationRepository.updateOne(
         {
           _id: agentIntegration._id,
@@ -168,6 +190,7 @@ export class AgentConfigResolver {
       environmentId,
       organizationId,
       agentIdentifier: agent.identifier,
+      agentName: agent.name,
       integrationIdentifier,
       integrationId: integration._id,
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,

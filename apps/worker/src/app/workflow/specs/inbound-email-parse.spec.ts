@@ -4,6 +4,7 @@ import {
   CompileTemplate,
   HttpClientService,
   InboundDomainRouteDelivery,
+  PinoLogger,
   SendWebhookMessage,
 } from '@novu/application-generic';
 
@@ -66,6 +67,7 @@ describe('Should handle the new arrived mail', () => {
         { provide: IntegrationRepository, useValue: sandbox.createStubInstance(IntegrationRepository) },
         { provide: AgentIntegrationRepository, useValue: sandbox.createStubInstance(AgentIntegrationRepository) },
         { provide: AttachmentRehydrator, useValue: attachmentRehydrator },
+        { provide: PinoLogger, useValue: sandbox.createStubInstance(PinoLogger) },
       ],
     }).compile();
 

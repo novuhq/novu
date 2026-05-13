@@ -10,8 +10,8 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import { createVerify } from 'crypto';
 import nodemailer, { SendMailOptions } from 'nodemailer';
+import MessageValidator from 'sns-validator';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 import { SESConfig } from './ses.config';
@@ -315,8 +315,8 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
       };
     }
 
-    // Validate signature version
-    if (snsMessage.SignatureVersion !== '1') {
+    // sns-validator accepts SignatureVersion 1 (RSA-SHA1) and 2 (RSA-SHA256).
+    if (snsMessage.SignatureVersion !== '1' && snsMessage.SignatureVersion !== '2') {
       return {
         success: false,
         message: `Unsupported signature version: ${snsMessage.SignatureVersion}`,
@@ -341,7 +341,9 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   }
 
   /**
-   * Validates that the certificate URL is from AWS
+   * Validates that the certificate URL is from AWS SNS.
+   * AWS hosts SNS signing certs only at sns.<region>.amazonaws.com under the
+   * canonical /SimpleNotificationService-*.pem path — never on s3.amazonaws.com.
    */
   private isValidAwsCertificateUrl(url: string): boolean {
     if (!url) return false;
@@ -349,18 +351,17 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
     try {
       const parsedUrl = new URL(url);
 
-      // Must be HTTPS
       if (parsedUrl.protocol !== 'https:') {
         return false;
       }
 
-      // Must be from AWS SNS certificate domains - exact matches only to prevent subdomain injection
-      const validExactDomains = [
-        'sns.amazonaws.com',
-        's3.amazonaws.com', // SNS certificates are also served from S3
-      ];
+      const hostnameAllowed =
+        parsedUrl.hostname === 'sns.amazonaws.com' || this.isValidSnsRegionalEndpoint(parsedUrl.hostname);
+      if (!hostnameAllowed) {
+        return false;
+      }
 
-      return validExactDomains.includes(parsedUrl.hostname) || this.isValidSnsRegionalEndpoint(parsedUrl.hostname);
+      return /^\/SimpleNotificationService(-[A-Za-z0-9]+)?\.pem$/.test(parsedUrl.pathname);
     } catch {
       return false;
     }
@@ -407,49 +408,24 @@ export class SESEmailProvider extends BaseProvider implements IEmailProvider {
   private async verifyCryptographicSignature(
     snsMessage: Record<string, unknown>
   ): Promise<{ success: boolean; message?: string }> {
-    try {
-      const { SigningCertURL, Signature, Type } = snsMessage;
+    return new Promise((resolve) => {
+      // Restrict the SigningCertURL host to AWS SNS endpoints. sns-validator's default
+      // pattern allows any sns.*.amazonaws.com host; we still rely on
+      // performAdditionalSecurityChecks for path-pinning to /SimpleNotificationService-*.pem.
+      const validator = new MessageValidator(/^sns\.[a-zA-Z0-9-]{3,}\.amazonaws\.com(\.cn)?$/);
 
-      // Download the certificate
-      const response = await fetch(SigningCertURL as string);
-      if (!response.ok) {
-        return { success: false, message: 'Failed to download certificate' };
-      }
-      const certificate = await response.text();
+      validator.validate(snsMessage, (err) => {
+        if (err) {
+          resolve({
+            success: false,
+            message: `Signature verification failed: ${err.message}`,
+          });
+          return;
+        }
 
-      // Build the string to sign based on message type
-      const stringToSign =
-        Type === 'SubscriptionConfirmation'
-          ? this.buildSubscriptionStringToSign(snsMessage)
-          : this.buildNotificationStringToSign(snsMessage);
-
-      // Verify the signature
-      const verify = createVerify('sha1WithRSAEncryption');
-      verify.update(stringToSign, 'utf8');
-      const isValid = verify.verify(certificate, Signature as string, 'base64');
-
-      return isValid
-        ? { success: true, message: 'Cryptographic signature verification successful' }
-        : { success: false, message: 'Invalid signature' };
-    } catch (error) {
-      return {
-        success: false,
-        message: `Signature verification failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      };
-    }
-  }
-
-  private buildNotificationStringToSign(msg: Record<string, unknown>): string {
-    const { Message, MessageId, Subject, Timestamp, TopicArn, Type } = msg;
-    let str = `Message\n${Message}\nMessageId\n${MessageId}\n`;
-    if (Subject) str += `Subject\n${Subject}\n`;
-    str += `Timestamp\n${Timestamp}\nTopicArn\n${TopicArn}\nType\n${Type}\n`;
-    return str;
-  }
-
-  private buildSubscriptionStringToSign(msg: Record<string, unknown>): string {
-    const { Message, MessageId, SubscribeURL, Timestamp, Token, TopicArn, Type } = msg;
-    return `Message\n${Message}\nMessageId\n${MessageId}\nSubscribeURL\n${SubscribeURL}\nTimestamp\n${Timestamp}\nToken\n${Token}\nTopicArn\n${TopicArn}\nType\n${Type}\n`;
+        resolve({ success: true, message: 'Cryptographic signature verification successful' });
+      });
+    });
   }
 
   private buildMessageId(body: Record<string, unknown>): string | undefined {

@@ -360,6 +360,7 @@ export class SubscriberJobBound {
       );
 
       for (const integration of integrations) {
+        if (!integration.channel) continue;
         if (!providers[integration.channel]) {
           providers[integration.channel] = integration.providerId as ProvidersIdEnum;
         }

@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentIntegrationRepository, DomainEntity, DomainRouteEntity, IntegrationRepository } from '@novu/dal';
 import {
   ChannelTypeEnum,
@@ -10,13 +10,12 @@ import {
 } from '@novu/shared';
 import { IFrom, IHeaders, IInboundParseAttachment, ITo } from '../../dtos/inbound-parse-job.dto';
 import { decryptSecret } from '../../encryption/encrypt-provider';
+import { PinoLogger } from '../../logging';
 import { HttpClientService } from '../../services/http-client/http-client.service';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
 import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
 import { AttachmentRehydrator } from './attachment-rehydrator';
-
-const LOG_CONTEXT = 'InboundDomainRouteDelivery';
 
 export interface RoutableDomain
   extends Pick<
@@ -73,8 +72,11 @@ export class InboundDomainRouteDelivery {
     private readonly httpClientService: HttpClientService,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly attachmentRehydrator: AttachmentRehydrator
-  ) {}
+    private readonly attachmentRehydrator: AttachmentRehydrator,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   buildDomainRouteWebhookPayload(
     domain: RoutableDomain,
@@ -144,6 +146,8 @@ export class InboundDomainRouteDelivery {
     mail: InboundDomainRouteMailInput;
     toAddress: string;
   }): Promise<{ httpStatus: number; body: unknown; latencyMs: number }> {
+    this.logger.info({ toAddress: params.toAddress }, 'Delivering inbound email to agent');
+
     const started = Date.now();
     const agentId = params.route.destination;
 
@@ -174,12 +178,6 @@ export class InboundDomainRouteDelivery {
       headers: { 'novu-signature': signature, 'content-type': 'application/json' },
       timeout: 30_000,
     });
-
-    Logger.log(
-      { toAddress: params.toAddress, agentId, integrationIdentifier },
-      'Forwarded inbound email to agent webhook',
-      LOG_CONTEXT
-    );
 
     return {
       httpStatus: response.statusCode,
@@ -266,7 +264,7 @@ export class InboundDomainRouteDelivery {
   }
 
   private throwError(error: string): never {
-    Logger.error(error, LOG_CONTEXT);
+    this.logger.error({ err: error }, 'Error delivering inbound email to agent');
     throw new BadRequestException(error);
   }
 }

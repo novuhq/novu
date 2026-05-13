@@ -1,23 +1,24 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { InboundDomainRouteDelivery } from '@novu/application-generic';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InboundDomainRouteDelivery, PinoLogger } from '@novu/application-generic';
 import { DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
-
-const LOG_CONTEXT = 'DomainRouteStrategy';
 
 @Injectable()
 export class DomainRouteStrategy {
   constructor(
     private domainRepository: DomainRepository,
     private domainRouteRepository: DomainRouteRepository,
-    private inboundDomainRouteDelivery: InboundDomainRouteDelivery
-  ) {}
+    private inboundDomainRouteDelivery: InboundDomainRouteDelivery,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: InboundEmailParseCommand): Promise<void> {
     const toAddress = command.to[0].address;
 
-    Logger.log({ toAddress }, 'Processing domain-route email', LOG_CONTEXT);
+    this.logger.info({ toAddress }, 'Processing domain-route email');
 
     const [rawLocalPart, rawDomainName] = toAddress.split('@');
     const localPart = rawLocalPart?.toLowerCase();
@@ -50,7 +51,7 @@ export class DomainRouteStrategy {
     const route = routes.find((r) => r.address === localPart) ?? routes.find((r) => r.address === '*');
 
     if (!route) {
-      Logger.log({ toAddress, domain: domain.name }, 'No route matched the inbound email', LOG_CONTEXT);
+      this.logger.info({ toAddress, domain: domain.name }, 'No route matched the inbound email');
 
       return;
     }
@@ -66,7 +67,7 @@ export class DomainRouteStrategy {
         mail,
       });
 
-      Logger.log({ toAddress, domain: domain.name }, 'Fired email.received webhook event', LOG_CONTEXT);
+      this.logger.info({ toAddress, domain: domain.name }, 'Fired email.received webhook event');
 
       return;
     }
@@ -78,6 +79,8 @@ export class DomainRouteStrategy {
         mail,
         toAddress,
       });
+
+      this.logger.info({ toAddress, domain: domain.name }, 'Fired email.received agent event');
     }
   }
 
@@ -99,7 +102,7 @@ export class DomainRouteStrategy {
   }
 
   private throwError(error: string): never {
-    Logger.error(error, LOG_CONTEXT);
+    this.logger.error({ err: error }, 'Error processing domain-route email');
     throw new BadRequestException(error);
   }
 }

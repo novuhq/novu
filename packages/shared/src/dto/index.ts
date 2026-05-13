@@ -1,3 +1,4 @@
+export * from './agent';
 export * from './bridge';
 export * from './environment-variable';
 export * from './environments';

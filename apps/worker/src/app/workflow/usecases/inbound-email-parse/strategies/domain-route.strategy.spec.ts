@@ -1,4 +1,4 @@
-import { InboundDomainRouteDelivery } from '@novu/application-generic';
+import { InboundDomainRouteDelivery, PinoLogger } from '@novu/application-generic';
 import { DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
@@ -62,6 +62,7 @@ describe('DomainRouteStrategy', () => {
   let domainRepository: sinon.SinonStubbedInstance<DomainRepository>;
   let domainRouteRepository: sinon.SinonStubbedInstance<DomainRouteRepository>;
   let inboundDomainRouteDelivery: sinon.SinonStubbedInstance<InboundDomainRouteDelivery>;
+  let logger: sinon.SinonStubbedInstance<PinoLogger>;
   let strategy: DomainRouteStrategy;
   let sandbox: sinon.SinonSandbox;
 
@@ -70,6 +71,7 @@ describe('DomainRouteStrategy', () => {
     domainRepository = sandbox.createStubInstance(DomainRepository);
     domainRouteRepository = sandbox.createStubInstance(DomainRouteRepository);
     inboundDomainRouteDelivery = sandbox.createStubInstance(InboundDomainRouteDelivery);
+    logger = sandbox.createStubInstance(PinoLogger);
 
     inboundDomainRouteDelivery.deliverToAgent.resolves({ httpStatus: 200, body: {}, latencyMs: 1 });
     inboundDomainRouteDelivery.deliverToWebhook.resolves({ latencyMs: 1, skipped: false });
@@ -77,7 +79,8 @@ describe('DomainRouteStrategy', () => {
     strategy = new DomainRouteStrategy(
       domainRepository as any,
       domainRouteRepository as any,
-      inboundDomainRouteDelivery as any
+      inboundDomainRouteDelivery as any,
+      logger as any
     );
   });
 

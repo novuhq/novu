@@ -25,9 +25,10 @@ import {
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
 type AgentsTableProps = {
@@ -158,6 +159,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
   const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
   const { currentEnvironment, readOnly } = useEnvironment();
   const location = useLocation();
+  const agentRoutes = useAgentRoutes();
 
   return (
     <Table isLoading={isLoading} loadingRowsCount={5} loadingRow={<AgentsTableSkeletonRow />}>
@@ -175,7 +177,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
       {!isLoading && (
         <TableBody>
           {agents.map((agent) => {
-            const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+            const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
               environmentSlug: currentEnvironment?.slug ?? '',
               agentIdentifier: encodeURIComponent(agent.identifier),
               agentTab: 'overview',

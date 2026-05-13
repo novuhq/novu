@@ -3,9 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAlertFill } from 'react-icons/ri';
+import { RiAlertFill, RiInformationFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
 import { getAgentDetailQueryKey, updateAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
@@ -21,10 +20,12 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
 type AgentSidebarWidgetProps = {
@@ -98,8 +99,7 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                Set the public URL of your deployed agent server so it can receive messages outside of local
-                mode
+                Set the public URL of your deployed agent server so it can receive messages outside of local mode
               </TooltipContent>
             </Tooltip>
           )}
@@ -169,7 +169,28 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
         </div>
       </div>
       {!readOnly && (
-        <DetailsSidebarRow label="Bridge">
+        <DetailsSidebarRow
+          label={
+            <>
+              Bridge
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="What is Bridge?"
+                    className="text-foreground-400 inline-flex cursor-help rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <RiInformationFill className="size-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  The bridge connects Novu to your hosted agent handler. Switch to Local to route messages to a tunnel
+                  on your machine.
+                </TooltipContent>
+              </Tooltip>
+            </>
+          }
+        >
           <div className="flex items-center gap-1.5">
             <Badge variant="lighter" color={!agent.devBridgeActive ? 'green' : 'gray'} size="sm">
               DEVELOPMENT
@@ -198,6 +219,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   const has = useHasPermission();
   const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
   const canEditFields = canWrite && !readOnly;
+  const agentRoutes = useAgentRoutes();
 
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
 
@@ -289,7 +311,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
           onCtaClick={() => {
             if (!oppositeEnvironment?.slug) return;
             navigate(
-              buildRoute(ROUTES.AGENT_DETAILS, {
+              buildRoute(agentRoutes.details, {
                 environmentSlug: oppositeEnvironment.slug,
                 agentIdentifier: encodeURIComponent(agent.identifier),
               })

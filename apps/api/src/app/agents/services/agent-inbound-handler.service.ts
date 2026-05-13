@@ -497,7 +497,7 @@ export class AgentInboundHandler {
       participantId,
       participantType,
       platformUserId: userId,
-      firstMessageText: `[action:${action.actionId}]`,
+      firstMessageText: `[action:${action.id}]`,
     });
 
     const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
@@ -517,7 +517,7 @@ export class AgentInboundHandler {
       integrationIdentifier: config.integrationIdentifier,
       platform: config.platform,
       conversationId: conversation._id,
-      actionId: action.actionId,
+      actionId: action.id,
     });
 
     const [subscriber, history] = await Promise.all([

@@ -4,6 +4,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Post,
@@ -27,6 +28,7 @@ import {
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import {
+  ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   FeatureFlagsKeysEnum,
@@ -55,6 +57,7 @@ import { GenerateLinkUserOauthUrlRequestDto } from './dtos/generate-link-user-oa
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
+import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
 import { AzureSetupOauthCallbackCommand } from './usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.command';
@@ -94,6 +97,8 @@ import { SlackQuickSetupCommand } from './usecases/slack-quick-setup/slack-quick
 import { SlackQuickSetup } from './usecases/slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
+import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
+import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
 
 @ApiCommonResponses()
 @Controller('/integrations')
@@ -123,6 +128,7 @@ export class IntegrationsController {
     private generateAzureSetupOauthUrlUsecase: GenerateAzureSetupOauthUrl,
     private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
+    private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
     private logger: PinoLogger
   ) {
     this.logger.setContext(IntegrationsController.name);
@@ -149,6 +155,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -175,6 +182,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -223,6 +231,8 @@ export class IntegrationsController {
     @Body() body: CreateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
+      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.createIntegrationUsecase.execute(
         CreateIntegrationCommand.create({
@@ -233,6 +243,7 @@ export class IntegrationsController {
           organizationId: user.organizationId,
           providerId: body.providerId,
           channel: body.channel,
+          kind: body.kind,
           credentials: body.credentials,
           active: body.active ?? false,
           check: body.check ?? false,
@@ -276,6 +287,8 @@ export class IntegrationsController {
     @Body() body: UpdateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
+      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.updateIntegrationUsecase.execute(
         UpdateIntegrationCommand.create({
@@ -291,6 +304,7 @@ export class IntegrationsController {
           check: body.check ?? false,
           conditions: body.conditions,
           configurations: body.configurations,
+          restrictToUserEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
         })
       );
 
@@ -766,6 +780,31 @@ export class IntegrationsController {
     res.redirect(result.result);
   }
 
+  @Post('/whatsapp/validate-token')
+  @ApiResponse(WhatsAppValidateTokenResponseDto, 200)
+  @ApiOperation({
+    summary: 'Validate WhatsApp Business credentials inline',
+    description:
+      'Calls the Meta Graph API to validate a WhatsApp Cloud API access token (and optional phone number ID) before the user saves the integration. Returns the available scopes and resolves the WhatsApp Business Account ID, used by the dashboard onboarding flow to surface friendly inline errors.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async validateWhatsAppToken(
+    @UserSession() user: UserSessionData,
+    @Body() body: WhatsAppValidateTokenRequestDto
+  ): Promise<WhatsAppValidateTokenResponseDto> {
+    return this.whatsAppValidateTokenUsecase.execute(
+      WhatsAppValidateTokenCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        accessToken: body.accessToken,
+        phoneNumberIdentification: body.phoneNumberIdentification,
+        businessAccountId: body.businessAccountId,
+      })
+    );
+  }
+
   @Post('/:integrationId/slack-quick-setup')
   @ApiResponse(SlackQuickSetupResponseDto, 201)
   @ApiOperation({
@@ -794,7 +833,30 @@ export class IntegrationsController {
     );
   }
 
+  private assertEnvironmentScopedForApiKey(user: UserSessionData, requestedEnvironmentId?: string): void {
+    if (user.scheme !== ApiAuthSchemeEnum.API_KEY) {
+      return;
+    }
+
+    if (requestedEnvironmentId && requestedEnvironmentId !== user.environmentId) {
+      throw new ForbiddenException(
+        'API key authentication is scoped to a single environment and cannot target a different `_environmentId`. ' +
+          'Use an API key from the target environment, or authenticate with a session token.'
+      );
+    }
+  }
+
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
+    /*
+     * API-key auth must never receive decrypted provider credentials, regardless of RBAC state.
+     * API keys grant ALL_PERMISSIONS in `community.auth.service.ts`, which would otherwise
+     * allow the RBAC path below to succeed and leak every stored provider secret to any
+     * caller holding an environment API key.
+     */
+    if (user.scheme === ApiAuthSchemeEnum.API_KEY) {
+      return false;
+    }
+
     const organization = await this.organizationRepository.findOne({
       _id: user.organizationId,
     });

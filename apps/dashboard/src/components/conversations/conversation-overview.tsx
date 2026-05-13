@@ -3,8 +3,9 @@ import { Link } from 'react-router-dom';
 import { ConversationDto } from '@/api/conversations';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
 
@@ -25,6 +26,7 @@ function MetaRow({ label, children, isLast }: { label: string; children: React.R
 
 export function ConversationOverview({ conversation }: ConversationOverviewProps) {
   const { currentEnvironment } = useEnvironment();
+  const agentRoutes = useAgentRoutes();
   const participants = conversation.participants ?? [];
   const channels = conversation.channels ?? [];
   const subscriber = participants.find((p) => p.type === 'subscriber');
@@ -33,7 +35,7 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
   const agentIdentifier = agent?.agent?.identifier ?? agent?.id;
   const agentLink =
     agentIdentifier && currentEnvironment?.slug
-      ? buildRoute(ROUTES.AGENT_DETAILS, { environmentSlug: currentEnvironment.slug, agentIdentifier })
+      ? buildRoute(agentRoutes.details, { environmentSlug: currentEnvironment.slug, agentIdentifier })
       : undefined;
   const platforms = [...new Set(channels.map((c) => c.platform))];
 
@@ -53,10 +55,17 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
           </MetaRow>
           <MetaRow label="Thread started">
             <TimeDisplayHoverCard date={conversation.createdAt} className="font-normal">
-              {conversation.createdAt ? new Date(conversation.createdAt).toLocaleString('en-US', {
-                month: 'short', day: 'numeric', year: 'numeric',
-                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
-              }) : '—'}
+              {conversation.createdAt
+                ? new Date(conversation.createdAt).toLocaleString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false,
+                  })
+                : '—'}
             </TimeDisplayHoverCard>
           </MetaRow>
           <MetaRow label="Agent">

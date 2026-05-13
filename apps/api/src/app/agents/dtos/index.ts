@@ -3,6 +3,7 @@ export * from './agent-behavior.dto';
 export * from './agent-integration-response.dto';
 export * from './agent-integration-summary.dto';
 export * from './agent-response.dto';
+export * from './agent-runtime-config.dto';
 export * from './create-agent-request.dto';
 export * from './list-agent-integrations-query.dto';
 export * from './list-agent-integrations-response.dto';
