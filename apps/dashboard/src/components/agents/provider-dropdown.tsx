@@ -633,19 +633,44 @@ export function ProviderDropdown({
   const expandedList = expandedProvider && (
     <Command>
       {/* Back header */}
-      <button
-        type="button"
-        onClick={() => setExpandedProviderId(null)}
-        className="bg-bg-weak border-stroke-weak hover:bg-bg-soft flex w-full items-center gap-1.5 border-b px-2 py-1.5 transition-colors"
-      >
-        <RiArrowLeftSLine className="text-text-soft size-3.5 shrink-0" />
-        <ProviderIcon
-          providerId={expandedProvider.providerId}
-          providerDisplayName={expandedProvider.displayName}
-          className="size-4 shrink-0"
-        />
-        <span className="text-text-sub text-label-xs font-medium leading-4">{expandedProvider.displayName}</span>
-      </button>
+      <div className="bg-bg-weak border-stroke-weak flex w-full items-center border-b">
+        <button
+          type="button"
+          onClick={() => setExpandedProviderId(null)}
+          className="hover:bg-bg-soft flex flex-1 items-center gap-1.5 px-2 py-1.5 transition-colors"
+        >
+          <RiArrowLeftSLine className="text-text-soft size-3.5 shrink-0" />
+          <ProviderIcon
+            providerId={expandedProvider.providerId}
+            providerDisplayName={expandedProvider.displayName}
+            className="size-4 shrink-0"
+          />
+          <span className="text-text-sub text-label-xs font-medium leading-4">{expandedProvider.displayName}</span>
+        </button>
+        <button
+          type="button"
+          disabled={isBusy}
+          aria-label={`Create another ${expandedProvider.displayName} integration`}
+          onClick={() => {
+            void handleSelect(
+              {
+                providerId: expandedProvider.providerId,
+                displayName: expandedProvider.displayName,
+                comingSoon: false,
+                requiresBusinessTier: expandedProvider.requiresBusinessTier,
+              },
+              expandedProvider.integrations.length
+            );
+          }}
+          className="hover:bg-bg-soft flex items-center justify-center px-2 py-1.5 transition-colors disabled:opacity-60"
+        >
+          {pendingItemKey === `${expandedProvider.providerId}-new-${expandedProvider.integrations.length}` ? (
+            <RiLoader4Line className="text-text-soft size-3.5 shrink-0 animate-spin" aria-hidden />
+          ) : (
+            <RiAddLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+          )}
+        </button>
+      </div>
 
       <CommandList className="max-h-[260px] p-1">
         <CommandEmpty className="text-text-soft text-label-xs py-4">No integrations found.</CommandEmpty>
