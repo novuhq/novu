@@ -1,15 +1,6 @@
 import type { IconType } from 'react-icons';
-import {
-  RiArrowRightUpLine,
-  RiBookMarkedLine,
-  RiBookmark2Line,
-  RiBookOpenLine,
-  RiCalendarEventLine,
-  RiGithubFill,
-  RiGithubLine,
-  RiGroup2Line,
-} from 'react-icons/ri';
-import { BOOK_DEMO_URL, docsUrl } from '@/components/header-navigation/support-drawer-constants';
+import { RiArrowRightUpLine, RiBookMarkedLine, RiGithubLine, RiGroup2Line } from 'react-icons/ri';
+import { docsUrl } from '@/components/header-navigation/support-drawer-constants';
 import { LinkIcon } from '@/components/icons/link';
 
 type ResourceLink = {

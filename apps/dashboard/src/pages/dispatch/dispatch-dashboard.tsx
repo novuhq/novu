@@ -11,14 +11,13 @@ import { PageMeta } from '@/components/page-meta';
 
 export function DispatchDashboardPage() {
   const { isComplete, isLoading } = useDispatchSetupSteps();
-  const showSetThingsUp = !isLoading && !isComplete;
 
   return (
     <>
       <PageMeta title="Dispatch · Dashboard" />
       <DashboardLayout>
         <div className="flex flex-col gap-2.5 p-2.5">
-          <DispatchWelcomeHeading completedOnboarding={!showSetThingsUp} />
+          <DispatchWelcomeHeading completedOnboarding={isComplete} />
           <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-[minmax(0,1fr)_375px]">
             <div className="flex min-w-0 flex-col gap-2.5">
               <SetThingsUpSection isLoading={isLoading} />

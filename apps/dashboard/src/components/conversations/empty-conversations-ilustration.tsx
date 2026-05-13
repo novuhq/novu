@@ -45,9 +45,9 @@ export const EmptyConversationsIlustration = () => {
       />
       <path
         fill="#cacfd8"
-        fill-rule="evenodd"
+        fillRule="evenodd"
         d="M91.24 129.31a.36.36 0 0 1-.617.251l-4.62-4.721A6 6 0 0 1 88 124.5c1.194 0 2.305.349 3.24.949zm1.68-2.245v2.245c0 1.828-2.22 2.733-3.498 1.426l-4.968-5.077A6 6 0 0 0 82 130.5c0 1.278.4 2.462 1.08 3.435v-2.233c0-1.828 2.22-2.733 3.498-1.426l4.96 5.07A5.99 5.99 0 0 0 94 130.5c0-1.278-.4-2.462-1.08-3.435m-7.543 4.386 4.61 4.712A6 6 0 0 1 88 136.5a6 6 0 0 1-3.24-.949v-3.849a.36.36 0 0 1 .617-.251"
-        clip-rule="evenodd"
+        clipRule="evenodd"
       />
       <path stroke="#e1e4ea" strokeLinecap="round" strokeLinejoin="bevel" strokeWidth=".75" d="M58.875 130.5h18.25" />
       <rect width="204" height="54" x="186.5" y="103.5" stroke="#f2f5f8" rx="7.5" />
