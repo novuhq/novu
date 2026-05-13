@@ -81,6 +81,9 @@ const conversationSchema = new Schema<ConversationDBModel>(
     lastMessagePreview: {
       type: Schema.Types.String,
     },
+    externalSessionId: {
+      type: Schema.Types.String,
+    },
     lastActivityAt: {
       type: Schema.Types.String,
     },
