@@ -1,18 +1,20 @@
+import { decryptChannelConnectionAuth } from '@novu/application-generic';
 import { ChannelConnectionEntity } from '@novu/dal';
 import { GetChannelConnectionResponseDto } from './get-channel-connection-response.dto';
 
 /**
  * Maps a stored `ChannelConnectionEntity` into the public-facing response DTO.
  *
- * Crucially, the response NEVER echoes back the stored `auth.accessToken` — that value is a
- * provider bearer token (Slack / MS Teams / etc.) which would give any caller with
- * `INTEGRATION_READ` permission third-party platform access if exfiltrated.
- * Instead we expose a presence-only flag so the dashboard / SDK can render "Connected"
- * state without leaking the secret. To rotate the token, callers send a new value via PATCH.
+ * `auth` is encrypted at rest (see `encryptChannelConnectionAuth` on the write path),
+ * so we decrypt here to preserve the existing API contract — callers still receive the
+ * plaintext access token they wrote. The decrypt helper is idempotent, so legacy
+ * unencrypted records pass through unchanged.
  */
 export function mapChannelConnectionEntityToDto(
   channelConnection: ChannelConnectionEntity
 ): GetChannelConnectionResponseDto {
+  const decryptedAuth = decryptChannelConnectionAuth(channelConnection.auth);
+
   return {
     identifier: channelConnection.identifier,
     channel: channelConnection.channel,
@@ -22,7 +24,7 @@ export function mapChannelConnectionEntityToDto(
     contextKeys: channelConnection.contextKeys || [],
     workspace: channelConnection.workspace,
     auth: {
-      hasAccessToken: !!channelConnection.auth?.accessToken,
+      accessToken: decryptedAuth?.accessToken ?? '',
     },
     createdAt: channelConnection.createdAt,
     updatedAt: channelConnection.updatedAt,

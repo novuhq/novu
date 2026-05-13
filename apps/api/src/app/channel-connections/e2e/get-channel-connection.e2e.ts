@@ -41,9 +41,7 @@ describe('Get Channel Connection - /channel-connections/:identifier (GET) #novu-
     expect(result.integrationIdentifier).to.equal(integration.identifier);
     expect(result.subscriberId).to.equal(subscriber.subscriberId);
     expect(result.workspace.id).to.equal('T123456');
-    const auth = result.auth as unknown as Record<string, unknown>;
-    expect(auth.hasAccessToken).to.equal(true);
-    expect(auth.accessToken).to.be.undefined;
+    expect(result.auth.accessToken).to.equal('xoxb-test-token');
   });
 
   it('should return 404 when connection does not exist', async () => {

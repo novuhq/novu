@@ -43,9 +43,7 @@ describe('Update Channel Connection - /channel-connections/:identifier (PATCH) #
     expect(result.identifier).to.equal(identifier);
     expect(result.workspace.id).to.equal('T789012');
     expect(result.workspace.name).to.equal('Updated Workspace');
-    const auth = result.auth as unknown as Record<string, unknown>;
-    expect(auth.hasAccessToken).to.equal(true);
-    expect(auth.accessToken).to.be.undefined;
+    expect(result.auth.accessToken).to.equal('xoxb-updated-token');
   });
 
   it('should return 404 when connection does not exist', async () => {

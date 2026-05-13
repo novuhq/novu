@@ -39,9 +39,7 @@ describe('Create Channel Connection - /channel-connections (POST) #novu-v2', () 
     expect(result.subscriberId).to.equal(subscriber.subscriberId);
     expect(result.workspace.id).to.equal('T123456');
     expect(result.workspace.name).to.equal('Test Workspace');
-    const auth = result.auth as unknown as Record<string, unknown>;
-    expect(auth.hasAccessToken).to.equal(true);
-    expect(auth.accessToken).to.be.undefined;
+    expect(result.auth.accessToken).to.equal('xoxb-test-token');
     expect(result.contextKeys).to.be.an('array').that.is.empty;
   });
 

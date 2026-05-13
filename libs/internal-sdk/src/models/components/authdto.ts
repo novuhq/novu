@@ -11,10 +11,6 @@ export type AuthDto = {
   accessToken: string;
 };
 
-export type AuthResponseDto = {
-  hasAccessToken: boolean;
-};
-
 /** @internal */
 export const AuthDto$inboundSchema: z.ZodType<AuthDto, z.ZodTypeDef, unknown> =
   z.object({
@@ -44,40 +40,5 @@ export function authDtoFromJSON(
     jsonString,
     (x) => AuthDto$inboundSchema.parse(JSON.parse(x)),
     `Failed to parse 'AuthDto' from JSON`,
-  );
-}
-
-/** @internal */
-export const AuthResponseDto$inboundSchema: z.ZodType<
-  AuthResponseDto,
-  z.ZodTypeDef,
-  unknown
-> = z.object({
-  hasAccessToken: z.boolean(),
-});
-/** @internal */
-export type AuthResponseDto$Outbound = {
-  hasAccessToken: boolean;
-};
-
-/** @internal */
-export const AuthResponseDto$outboundSchema: z.ZodType<
-  AuthResponseDto$Outbound,
-  z.ZodTypeDef,
-  AuthResponseDto
-> = z.object({
-  hasAccessToken: z.boolean(),
-});
-
-export function authResponseDtoToJSON(authResponseDto: AuthResponseDto): string {
-  return JSON.stringify(AuthResponseDto$outboundSchema.parse(authResponseDto));
-}
-export function authResponseDtoFromJSON(
-  jsonString: string,
-): SafeParseResult<AuthResponseDto, SDKValidationError> {
-  return safeParse(
-    jsonString,
-    (x) => AuthResponseDto$inboundSchema.parse(JSON.parse(x)),
-    `Failed to parse 'AuthResponseDto' from JSON`,
   );
 }
