@@ -328,7 +328,8 @@
       "react-icons",
       "sharp",
       "unrs-resolver",
-      "workerd"
+      "workerd",
+      "@novu/thalamus"
     ]
   }
 }
