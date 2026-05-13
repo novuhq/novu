@@ -1,7 +1,17 @@
+import { IconType } from 'react-icons';
+import { RiUserAddLine } from 'react-icons/ri';
+import { BotIcon } from '@/components/icons/bot';
+
 export type AgentTemplate = {
   label: string;
   name: string;
   instructions: string;
+};
+
+export type WhatsNextTemplate = {
+  id: string;
+  label: string;
+  icon: IconType;
 };
 
 export const AGENT_TEMPLATES: AgentTemplate[] = [
@@ -28,5 +38,18 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     name: 'Docs Helper',
     instructions:
       'You are a documentation assistant. Help users find information, clarify concepts, and cite sources accurately.',
+  },
+];
+
+export const WHATS_NEXT: WhatsNextTemplate[] = [
+  {
+    id: 'invite',
+    label: 'Invite teammates',
+    icon: RiUserAddLine,
+  },
+  {
+    id: 'agent',
+    label: 'Set up new agent',
+    icon: BotIcon,
   },
 ];

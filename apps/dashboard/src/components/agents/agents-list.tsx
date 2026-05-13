@@ -262,13 +262,13 @@ export function AgentsList() {
   const isProductionEnv =
     Boolean(currentEnvironment) && (readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV);
 
-  if (showEmptyBlank) {
-    if (isProductionEnv) {
-      return <AgentsProductionEmptyState />;
-    }
+  const renderContent = () => {
+    if (showEmptyBlank) {
+      if (isProductionEnv) {
+        return <AgentsProductionEmptyState />;
+      }
 
-    return (
-      <>
+      return (
         <AgentsEmptyTeaser
           cta={
             <PermissionButton
@@ -283,94 +283,92 @@ export function AgentsList() {
             </PermissionButton>
           }
         />
-        <CreateAgentDialog
-          open={createOpen}
-          onOpenChange={handleCreateOpenChange}
-          onSubmit={handleCreateSubmit}
-          isSubmitting={createMutation.isPending}
-          initialName={memoizedInitialName}
-          initialDescription={memoizedInitialDescription}
-        />
-      </>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-2 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <FacetedFormFilter
+            type="text"
+            size="small"
+            title="Search"
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by identifier..."
+          />
+          {isProductionEnv ? (
+            <Tooltip>
+              <TooltipTrigger className="cursor-not-allowed">
+                <Button size="xs" variant="primary" className="gap-1.5" leadingIcon={RiRobot2Line} disabled>
+                  Add Agent
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-60">
+                {'Add agents in your development environment. '}
+                <a
+                  href="https://docs.novu.co/platform/agents"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="underline"
+                >
+                  Learn More ↗
+                </a>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <PermissionButton
+              permission={PermissionsEnum.AGENT_WRITE}
+              size="xs"
+              variant="primary"
+              mode="gradient"
+              className="gap-1.5"
+              leadingIcon={RiRobot2Line}
+              onClick={() => setCreateOpen(true)}
+            >
+              Add Agent
+            </PermissionButton>
+          )}
+        </div>
+
+        {listQuery.isError ? (
+          <div className="text-error-base text-label-sm">Could not load agents. Try again later.</div>
+        ) : null}
+
+        {showNoResults ? (
+          <ListNoResults
+            title="No agents found"
+            description="Try a different identifier search."
+            onClearFilters={() => setSearch('')}
+          />
+        ) : null}
+
+        {!listQuery.isError && !showNoResults ? (
+          <AgentsTable
+            agents={agents}
+            isLoading={isLoading}
+            onRequestDelete={setAgentToDelete}
+            paginationProps={{
+              pageSize: limit,
+              pageSizeOptions: PAGE_SIZE_OPTIONS,
+              currentItemsCount: agents.length,
+              onPreviousPage: handlePreviousPage,
+              onNextPage: handleNextPage,
+              onPageSizeChange: handlePageSizeChange,
+              hasPreviousPage: Boolean(data?.previous),
+              hasNextPage: Boolean(data?.next),
+              totalCount: data?.totalCount,
+              totalCountCapped: data?.totalCountCapped,
+            }}
+          />
+        ) : null}
+      </div>
     );
-  }
+  };
 
   return (
-    <div className="flex flex-col gap-2 py-2">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <FacetedFormFilter
-          type="text"
-          size="small"
-          title="Search"
-          value={search}
-          onChange={setSearch}
-          placeholder="Search by identifier..."
-        />
-        {isProductionEnv ? (
-          <Tooltip>
-            <TooltipTrigger className="cursor-not-allowed">
-              <Button size="xs" variant="primary" className="gap-1.5" leadingIcon={RiRobot2Line} disabled>
-                Add Agent
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-60">
-              {'Add agents in your development environment. '}
-              <a
-                href="https://docs.novu.co/platform/agents"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="underline"
-              >
-                Learn More ↗
-              </a>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <PermissionButton
-            permission={PermissionsEnum.AGENT_WRITE}
-            size="xs"
-            variant="primary"
-            mode="gradient"
-            className="gap-1.5"
-            leadingIcon={RiRobot2Line}
-            onClick={() => setCreateOpen(true)}
-          >
-            Add Agent
-          </PermissionButton>
-        )}
-      </div>
-
-      {listQuery.isError ? (
-        <div className="text-error-base text-label-sm">Could not load agents. Try again later.</div>
-      ) : null}
-
-      {showNoResults ? (
-        <ListNoResults
-          title="No agents found"
-          description="Try a different identifier search."
-          onClearFilters={() => setSearch('')}
-        />
-      ) : null}
-
-      {!listQuery.isError && !showNoResults ? (
-        <AgentsTable
-          agents={agents}
-          isLoading={isLoading}
-          onRequestDelete={setAgentToDelete}
-          paginationProps={{
-            pageSize: limit,
-            pageSizeOptions: PAGE_SIZE_OPTIONS,
-            currentItemsCount: agents.length,
-            onPreviousPage: handlePreviousPage,
-            onNextPage: handleNextPage,
-            onPageSizeChange: handlePageSizeChange,
-            hasPreviousPage: Boolean(data?.previous),
-            hasNextPage: Boolean(data?.next),
-            totalCount: data?.totalCount,
-            totalCountCapped: data?.totalCountCapped,
-          }}
-        />
-      ) : null}
+    <>
+      {renderContent()}
 
       <CreateAgentDialog
         open={createOpen}
@@ -397,6 +395,6 @@ export function AgentsList() {
         agentIdentifier={agentToDelete?.identifier ?? ''}
         isDeleting={deleteMutation.isPending}
       />
-    </div>
+    </>
   );
 }

@@ -11,6 +11,7 @@ import {
 import { getConversationsList } from '@/api/conversations';
 import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { DISPATCH_ONBOARDING_COMPLETED } from '@/utils/constants';
 
 export type DispatchSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
 
@@ -90,13 +91,14 @@ export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
   const hasAnyConversation =
     (conversationsQuery.data?.totalCount ?? 0) > 0 || (conversationsQuery.data?.data?.length ?? 0) > 0;
 
-  const steps = useMemo<DispatchSetupStep[]>(() => {
-    const addAgentCompleted = hasAgent;
-    const setupChannelCompleted = hasAgent && hasConnectedChannelOnOnlyAgent;
-    const sendMessageCompleted = hasAnyConversation;
-    const setupChannelCtaAvailable = agents.length === 1 && !hasConnectedChannelOnOnlyAgent;
+  const addAgentCompleted = hasAgent;
+  const setupChannelCompleted = hasAgent && hasConnectedChannelOnOnlyAgent;
+  const sendMessageCompleted = hasAnyConversation;
+  const setupChannelCtaAvailable = agents.length === 1 && !hasConnectedChannelOnOnlyAgent;
+  const agentSetupComplete = addAgentCompleted && setupChannelCompleted;
 
-    return [
+  const steps = useMemo<DispatchSetupStep[]>(
+    () => [
       {
         id: 'create-account',
         title: 'Create your account',
@@ -126,12 +128,18 @@ export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
         status: sendMessageCompleted ? 'completed' : 'pending',
         ctaAvailable: false,
       },
-    ];
-  }, [agents.length, hasAgent, hasAnyConversation, hasConnectedChannelOnOnlyAgent, onlyAgent?.identifier]);
+    ],
+    [addAgentCompleted, onlyAgent?.identifier, sendMessageCompleted, setupChannelCompleted, setupChannelCtaAvailable]
+  );
 
-  const isComplete = steps.every((step) => step.status === 'completed');
   // Only block on agents loading — conversations / integrations errors should never hide the section.
+  // The persisted `DISPATCH_ONBOARDING_COMPLETED` flag is written from `agent-details.tsx` once the
+  // user finishes setting up an agent there; here we only read it to keep the section hidden.
   const isLoading = agentsQuery.isLoading;
 
-  return { steps, isComplete, isLoading };
+  return {
+    steps,
+    isComplete: localStorage.getItem(DISPATCH_ONBOARDING_COMPLETED) === 'true' || agentSetupComplete,
+    isLoading: isLoading || !agentsQuery.data,
+  };
 }
