@@ -1,7 +1,7 @@
 import { providers as novuProviders } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader } from 'lucide-react';
-import { type ReactNode, useEffect, useRef, useState, useCallback } from 'react';
+import { type ReactNode, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
@@ -328,7 +328,7 @@ export function IntegrationCredentialsSidebar({
   integrationId: string;
   isOpen: boolean;
   onClose: () => void;
-  onSaveSuccess?: (meta?: { botUsername?: string }) => void;
+  onSaveSuccess?: () => void;
   agentOnboarding?: boolean;
   submitLabel?: string;
 }) {
@@ -336,11 +336,6 @@ export function IntegrationCredentialsSidebar({
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
   const [searchParams, setSearchParams] = useSearchParams();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
-  const botUsernameRef = useRef<string | undefined>(undefined);
-
-  const handleBotUsernameExtracted = useCallback((username: string) => {
-    botUsernameRef.current = username;
-  }, []);
 
   const integration = integrations?.find((i) => i._id === integrationId);
   const provider = novuProviders?.find((p) => p.id === integration?.providerId);
@@ -385,7 +380,7 @@ export function IntegrationCredentialsSidebar({
       });
 
       showSuccessToast('Integration updated successfully');
-      onSaveSuccess?.({ botUsername: botUsernameRef.current });
+      onSaveSuccess?.();
       onClose();
     } catch (error: unknown) {
       handleIntegrationError(error, 'update');
@@ -404,7 +399,6 @@ export function IntegrationCredentialsSidebar({
           mode="update"
           agentOnboarding={agentOnboarding}
           onFormStateChange={setFormState}
-          onBotUsernameExtracted={handleBotUsernameExtracted}
         />
       </div>
 

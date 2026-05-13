@@ -51,7 +51,6 @@ type IntegrationConfigurationProps = {
   isReadOnly?: boolean;
   agentOnboarding?: boolean;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
-  onBotUsernameExtracted?: (username: string) => void;
 };
 
 function generateSlug(name: string): string {
@@ -73,7 +72,6 @@ export function IntegrationSettings({
   isReadOnly,
   agentOnboarding,
   onFormStateChange,
-  onBotUsernameExtracted,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -277,7 +275,6 @@ export function IntegrationSettings({
                           control={control}
                           setValue={setValue}
                           isReadOnly={isReadOnly}
-                          onBotUsernameExtracted={onBotUsernameExtracted}
                         />
                       )}
                       <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">

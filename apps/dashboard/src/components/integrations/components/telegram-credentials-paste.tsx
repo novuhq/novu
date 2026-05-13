@@ -1,11 +1,8 @@
 import { CredentialsKeyEnum } from '@novu/shared';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { type Control, type UseFormSetValue, useWatch } from 'react-hook-form';
-import { RiAtLine, RiCheckLine, RiCloseLine, RiInformationLine, RiQrCodeLine, RiSendPlaneLine } from 'react-icons/ri';
-import QRCode from 'react-qr-code';
-import { Input } from '@/components/primitives/input';
+import { RiCheckLine, RiCloseLine, RiInformationLine } from 'react-icons/ri';
 import { Label } from '@/components/primitives/label';
-import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { Textarea } from '@/components/primitives/textarea';
 import { cn } from '@/utils/ui';
 import type { IntegrationFormData } from '../types';
@@ -26,71 +23,20 @@ type TelegramCredentialsPasteProps = {
   control: Control<IntegrationFormData>;
   setValue: UseFormSetValue<IntegrationFormData>;
   isReadOnly?: boolean;
-  onBotUsernameExtracted?: (username: string) => void;
 };
-
-function BotQrPopover({ username }: { username: string }) {
-  const url = `https://t.me/${username}`;
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="text-text-sub border-stroke-soft hover:bg-bg-weak inline-flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
-        >
-          <RiQrCodeLine className="size-3.5 shrink-0" />
-          Scan QR to open bot
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="flex w-auto min-w-0 flex-col items-center gap-3 p-4" side="top" align="start">
-        <PopoverArrow />
-        <div className="rounded-lg bg-white p-2">
-          <QRCode value={url} size={150} />
-        </div>
-        <p className="text-text-sub text-label-xs text-center leading-4">
-          Scan to open <span className="text-text-strong font-medium">@{username}</span> in Telegram
-        </p>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-text-sub text-label-xs underline underline-offset-2"
-        >
-          Open in Telegram
-        </a>
-      </PopoverContent>
-    </Popover>
-  );
-}
 
 /**
  * Smart-paste affordance for the Telegram agent onboarding credentials form.
  *
  * Renders a labeled textarea. When the user pastes (or types) the full
- * BotFather confirmation message, it extracts the HTTP API token and the
- * bot username automatically — no button click needed. The token is written
- * directly into the react-hook-form `apiToken` credential field; the bot
- * username surfaces as a QR / link so the user can immediately open a chat.
+ * BotFather confirmation message, it extracts the HTTP API token automatically
+ * — no button click needed. The token is written directly into the
+ * react-hook-form `apiToken` credential field.
  */
-export function TelegramCredentialsPaste({ control, setValue, isReadOnly, onBotUsernameExtracted }: TelegramCredentialsPasteProps) {
+export function TelegramCredentialsPaste({ control, setValue, isReadOnly }: TelegramCredentialsPasteProps) {
   const credentials = useWatch({ control, name: 'credentials' });
   const [outcome, setOutcome] = useState<ApplyOutcome | null>(null);
   const [draft, setDraft] = useState('');
-  const [manualUsername, setManualUsername] = useState('');
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-  const notifyUsername = useCallback(
-    (username: string) => {
-      const cleaned = username.replace(/^@/, '').trim();
-      setManualUsername(cleaned);
-
-      if (cleaned) {
-        onBotUsernameExtracted?.(cleaned);
-      }
-    },
-    [onBotUsernameExtracted]
-  );
 
   const apply = useCallback(
     (text: string): ApplyOutcome => {
@@ -108,13 +54,9 @@ export function TelegramCredentialsPaste({ control, setValue, isReadOnly, onBotU
         });
       }
 
-      if (botUsername) {
-        notifyUsername(botUsername);
-      }
-
       return { token, botUsername, recognized: true };
     },
-    [credentials, setValue, notifyUsername]
+    [credentials, setValue]
   );
 
   const handleChange = useCallback(
@@ -147,13 +89,6 @@ export function TelegramCredentialsPaste({ control, setValue, isReadOnly, onBotU
     [apply]
   );
 
-  const handleUsernameChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      notifyUsername(event.target.value);
-    },
-    [notifyUsername]
-  );
-
   const dismiss = useCallback(() => setOutcome(null), []);
 
   if (isReadOnly) return null;
@@ -163,7 +98,6 @@ export function TelegramCredentialsPaste({ control, setValue, isReadOnly, onBotU
       <div className="border-stroke-weak bg-bg-white mb-3 flex flex-col gap-2 overflow-hidden rounded-lg border p-3">
         <Label className="text-label-xs text-text-strong font-medium">BotFather confirmation message</Label>
         <Textarea
-          ref={textareaRef}
           value={draft}
           onChange={handleChange}
           onPaste={handlePaste}
@@ -180,25 +114,6 @@ export function TelegramCredentialsPaste({ control, setValue, isReadOnly, onBotU
         {outcome && (
           <PasteOutcome outcome={outcome} onDismiss={dismiss} />
         )}
-      </div>
-
-      <div className="mb-3 flex flex-col gap-1.5">
-        <Label className="text-label-xs text-text-strong font-medium" htmlFor="telegram-bot-username">
-          Bot username
-          <span className="text-destructive ml-0.5">*</span>
-        </Label>
-        <Input
-          id="telegram-bot-username"
-          type="text"
-          value={manualUsername}
-          onChange={handleUsernameChange}
-          placeholder="YourBot_bot"
-          leadingIcon={RiAtLine}
-          required
-        />
-        <p className="text-text-soft text-label-xs leading-4">
-          Auto-filled from the BotFather message above, or enter it manually.
-        </p>
       </div>
     </>
   );

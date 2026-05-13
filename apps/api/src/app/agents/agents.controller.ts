@@ -401,7 +401,9 @@ export class AgentsController {
   @ApiOperation({
     summary: 'Configure Telegram bot webhook',
     description:
-      'Registers the Novu agent webhook URL with Telegram for the specified integration, generates a cryptographic secret token for webhook verification, and persists it on the integration. Re-running rotates the secret.',
+      `Registers the Novu agent webhook URL with Telegram for the specified integration,
+       generates a cryptographic secret token for webhook verification,
+       and persists it on the integration. Re-running rotates the secret.`,
   })
   @ApiNotFoundResponse({
     description: 'The agent, integration, or agent-integration link was not found.',

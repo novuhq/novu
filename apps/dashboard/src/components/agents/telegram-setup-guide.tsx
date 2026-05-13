@@ -280,9 +280,8 @@ export function TelegramSetupGuide({
           integrationId={integrationId}
           isOpen={isCredentialsSidebarOpen}
           onClose={() => setIsCredentialsSidebarOpen(false)}
-          onSaveSuccess={(meta) => {
+          onSaveSuccess={() => {
             setCredentialsSavedLocally(true);
-            if (meta?.botUsername) setBotUsername(meta.botUsername);
             configureTelegram();
           }}
           agentOnboarding
@@ -300,9 +299,8 @@ export function TelegramSetupGuide({
         integrationId={integrationId}
         isOpen={isCredentialsSidebarOpen}
         onClose={() => setIsCredentialsSidebarOpen(false)}
-        onSaveSuccess={(meta) => {
+        onSaveSuccess={() => {
           setCredentialsSavedLocally(true);
-          if (meta?.botUsername) setBotUsername(meta.botUsername);
           configureTelegram();
         }}
         agentOnboarding

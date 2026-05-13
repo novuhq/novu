@@ -152,7 +152,7 @@ function getProviderSendDescription(providerId: string | undefined, agentName: s
   }
 }
 
-function CopySlackMessageButton({ agentName }: { agentName: string }) {
+export function CopySlackMessageButton({ agentName }: { agentName: string }) {
   const [copied, setCopied] = useState(false);
   const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
