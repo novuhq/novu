@@ -88,12 +88,12 @@ export class ProcessManagedAgentTurn {
       throw new Error(`Agent ${command.agentId} is not a managed agent`);
     }
 
-    const integration = await this.integrationRepository.findOne(
-      { _id: agent.managedRuntime._integrationId, _environmentId: command.environmentId },
-      '*'
-    );
+    const integration = await this.integrationRepository.findOne({
+      _id: agent.managedRuntime._integrationId,
+      _environmentId: command.environmentId,
+    });
     if (!integration?.credentials) {
-      throw new Error(`Integration ${agent.managedRuntime._integrationId} not found`);
+      throw new Error(`Integration ${agent.managedRuntime._integrationId} not found or has no credentials`);
     }
 
     const creds = decryptCredentials(integration.credentials);
@@ -198,8 +198,6 @@ export class ProcessManagedAgentTurn {
     sessionId: string | undefined
   ): Promise<ThalamusResponse> {
     return Promise.race([
-      // TODO: how and when to send back to API? should we even sendback to API?
-      // each stream part has to render something to user probably, call HTTP call back to reply usecase after each?
       provider.stream({ messages, sessionId }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Agent turn timed out')), MAX_TURN_MS)),
     ]);

@@ -33,8 +33,13 @@ export class ManagedAgentWorker extends WorkerBaseService {
 
   public getWorkerProcessor() {
     return async ({ data }: { data: IManagedAgentJobData }) => {
-      Logger.verbose({ agentId: data.agentId }, 'Processing managed agent job', LOG_CONTEXT);
-      await this.processManagedAgentTurn.execute(ProcessManagedAgentTurnCommand.create({ ...data }));
+      try {
+        Logger.verbose({ agentId: data.agentId }, 'Processing managed agent job', LOG_CONTEXT);
+        await this.processManagedAgentTurn.execute(ProcessManagedAgentTurnCommand.create({ ...data }));
+      } catch (err) {
+        Logger.error(err, `Managed agent job failed for agent ${data.agentId}`, LOG_CONTEXT);
+        throw err;
+      }
     };
   }
 }
