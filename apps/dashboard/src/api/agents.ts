@@ -1,4 +1,4 @@
-import type { AgentRuntime, ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
+import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
 import { del, get, patch, post } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
@@ -39,12 +39,6 @@ export type AgentBehavior = {
   reactionOnResolved?: string | null;
 };
 
-export type ManagedRuntimeInfo = {
-  providerId: string;
-  integrationId: string;
-  externalAgentId: string;
-};
-
 export type AgentResponse = {
   _id: string;
   name: string;
@@ -55,10 +49,6 @@ export type AgentResponse = {
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
-  /** Present on managed-runtime agents */
-  runtime?: AgentRuntime;
-  /** Present when runtime === 'managed' */
-  managedRuntime?: ManagedRuntimeInfo;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;
@@ -74,37 +64,11 @@ export type ListAgentsResponse = {
   totalCountCapped: boolean;
 };
 
-export type CreateManagedRuntimeBody = {
-  providerId: string;
-  /**
-   * ID of an existing Novu integration (kind: 'agent') that holds the provider
-   * API key and provisioned environment. Create it first via POST /integrations.
-   */
-  integrationId: string;
-  /**
-   * When set, Novu links to this existing provider agent instead of creating a new one.
-   * The agent's name and Novu identifier are auto-generated from the provider.
-   */
-  externalAgentId?: string;
-  model?: string;
-  systemPrompt?: string;
-  /** Tool `type` strings to enable on the new agent (e.g. 'web_search_20260209'). */
-  tools?: string[];
-  /** MCP server IDs to attach to the new agent. */
-  mcpServers?: string[];
-  /** Anthropic-managed or custom skills to attach to the new agent. Maximum 20. */
-  skills?: Array<{ type: 'anthropic' | 'custom'; skillId: string; version?: string | null }>;
-};
-
 export type CreateAgentBody = {
-  /** Required unless adopting an existing managed agent via managedRuntime.externalAgentId. */
-  name?: string;
-  /** Required unless adopting an existing managed agent via managedRuntime.externalAgentId. */
-  identifier?: string;
+  name: string;
+  identifier: string;
   description?: string;
   active?: boolean;
-  runtime?: AgentRuntime;
-  managedRuntime?: CreateManagedRuntimeBody;
 };
 
 export type UpdateAgentBody = {
@@ -200,14 +164,8 @@ export async function updateAgent(
   return response.data;
 }
 
-export function deleteAgent(
-  environment: IEnvironment,
-  identifier: string,
-  options?: { deleteFromProvider?: boolean }
-): Promise<void> {
-  const params = options?.deleteFromProvider ? '?deleteFromProvider=true' : '';
-
-  return del(`/agents/${encodeURIComponent(identifier)}${params}`, { environment });
+export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
+  return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
 }
 
 /** Picked integration fields on an agent–integration link (matches API `integration`). */

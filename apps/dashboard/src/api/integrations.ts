@@ -1,4 +1,4 @@
-import { ChannelTypeEnum, IEnvironment, IIntegration, IntegrationKindEnum } from '@novu/shared';
+import { ChannelTypeEnum, IEnvironment, IIntegration } from '@novu/shared';
 import { del, get, post, put } from './api.client';
 
 export type HealthCheckStatus = 'ready' | 'pending' | 'failed';
@@ -13,8 +13,7 @@ export type MsTeamsHealthCheckResult = {
 
 export type CreateIntegrationData = {
   providerId: string;
-  channel?: ChannelTypeEnum;
-  kind?: IntegrationKindEnum;
+  channel: ChannelTypeEnum;
   credentials: Record<string, unknown>;
   configurations: Record<string, string>;
   name: string;
