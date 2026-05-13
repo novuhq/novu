@@ -147,4 +147,46 @@ describe('ParseSlugIdPipe', () => {
       expect(pipe.transform(shortIdentifier, {} as ArgumentMetadata)).to.equal(shortIdentifier);
     });
   });
+
+  /**
+   * Regression: prior implementation blindly base62-decoded the trailing 16
+   * characters of any input ≥ 16 chars long. For user-supplied workflow IDs
+   * whose last 16 characters were pure alphanumeric, this produced a
+   * 24-character hex string that accidentally matched the Mongo ObjectId
+   * pattern, and the value was returned as if it were an internal id —
+   * causing GET /v2/workflows/{workflowId} to 404 for code-based workflows.
+   *
+   * The fix only attempts decoding when the input matches the slug shape
+   * `<name>_<prefix>_<16 base62 chars>` produced by `buildSlug`.
+   */
+  describe('User-supplied workflow IDs that resemble base62 trailers', () => {
+    it('should NOT mangle long code-based workflow IDs whose last 16 chars are pure base62', () => {
+      // Exact ID reported by the customer in Plain thread T-3568.
+      // Last 16 chars are "ctedWithoutReaso" — pure base62, no underscore separator,
+      // therefore must NOT be decoded.
+      const customerWorkflowId = 'UP018A_CompanyConnectionRejectedWithoutReaso';
+      expect(pipe.transform(customerWorkflowId, {} as ArgumentMetadata)).to.equal(customerWorkflowId);
+    });
+
+    it('should NOT mangle workflow IDs whose trailing 16 chars decode to a valid-looking ObjectId', () => {
+      // 16 base62 chars at the tail with NO `_<prefix>_` separator before them.
+      // Even though decoding would produce a 24-hex string, the input is not a
+      // slug and must be returned untouched.
+      const workflowId = 'MyWorkflowAbCdEfGhIjKlMnOp';
+      expect(pipe.transform(workflowId, {} as ArgumentMetadata)).to.equal(workflowId);
+    });
+
+    it('should NOT mangle workflow IDs whose trailing chars are camelCase only', () => {
+      const workflowId = 'orderConfirmationEmailNotification';
+      expect(pipe.transform(workflowId, {} as ArgumentMetadata)).to.equal(workflowId);
+    });
+
+    it('should still decode well-formed slugs even when the resource name resembles a workflow id', () => {
+      // Sanity check: real slugs continue to work after the fix.
+      const internalId = '6615943e7ace93b0540ae377';
+      const encodedId = encodeBase62(internalId);
+      const slugId = `up018a-companyconnectionrejectedwithoutreaso_wf_${encodedId}`;
+      expect(pipe.transform(slugId, {} as ArgumentMetadata)).to.equal(internalId);
+    });
+  });
 });

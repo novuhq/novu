@@ -6,6 +6,27 @@ const INTERNAL_ID_LENGTH = 24;
 const ENCODED_ID_LENGTH = 16;
 
 /**
+ * Strict slug shape produced by `buildSlug` in `utils/build-slug.ts`:
+ *   `<slugified-name>_<short-prefix>_<16-char base62 ID>`
+ *
+ * We only attempt to base62-decode the trailing segment when the input matches
+ * this exact shape. Without this guard, any string ≥ 16 characters whose last
+ * 16 characters happen to be pure base62 (alphanumeric) would be decoded —
+ * and because base62-decoding 16 alphanumeric characters frequently yields a
+ * 24-character hex string that passes the Mongo ObjectId check, the function
+ * would silently return a fabricated "internal id" and the downstream lookup
+ * would fail with 404 (customer-supplied code-based workflow IDs like
+ * `UP018A_CompanyConnectionRejectedWithoutReaso` were being mis-parsed into
+ * non-existent ObjectIds).
+ *
+ * The `_<letters>_` separator before the 16-char trailer is what differentiates
+ * a real slug from a user-supplied identifier. Slugified names never contain
+ * underscores (`slugifyOrRandom` lowercases and uses `-` as separator), so the
+ * underscore right before the prefix is a reliable signal.
+ */
+const SLUG_PATTERN = /_[A-Za-z]+_[0-9A-Za-z]{16}$/;
+
+/**
  * Checks if the value is a short resource identifier (less than encoded ID length)
  * Examples: 'welcome-email', 'my-template', 'newsletter-topic'
  */
@@ -45,6 +66,8 @@ function lookoutForResourceId(value: string): string | null {
  * - Short identifier: 'welcome-email' → 'welcome-email'
  * - Slug format: 'welcome-email_wf_1A2B3C4D5E6F7890' → '6615943e7ace93b0540ae377' (decoded)
  * - Invalid format: 'invalid-slug_bad_encoding' → 'invalid-slug_bad_encoding' (unchanged)
+ * - User-supplied code workflow IDs (e.g. 'UP018A_CompanyConnectionRejectedWithoutReaso')
+ *   → returned unchanged so downstream lookup can match on `triggers.identifier`.
  *
  * @param value - The input value to parse
  * @returns The parsed internal ID or original value if parsing fails
@@ -58,6 +81,13 @@ export function parseSlugId(value: string): InternalId {
   const validId = lookoutForResourceId(value);
   if (validId) {
     return validId;
+  }
+
+  // Only treat the input as an encoded slug when it matches the shape that
+  // `buildSlug` produces. This prevents arbitrary user identifiers from being
+  // accidentally decoded into a valid-looking ObjectId.
+  if (!SLUG_PATTERN.test(value)) {
+    return value;
   }
 
   // Try to extract and decode the base62 encoded part from the end
