@@ -26,8 +26,7 @@ export function ensureWhatsAppManagedCredentials({
     return nextCredentials;
   }
 
-  const existingToken =
-    typeof existingCredentials?.token === 'string' ? existingCredentials.token.trim() : '';
+  const existingToken = typeof existingCredentials?.token === 'string' ? existingCredentials.token.trim() : '';
 
   return {
     ...nextCredentials,

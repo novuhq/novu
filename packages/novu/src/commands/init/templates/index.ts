@@ -254,6 +254,7 @@ export const installTemplate = async ({
 
   if (isAgentTemplate) {
     const cliTag = resolveCliTag();
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4000`;
     scripts['dev:novu'] = `npx novu@${cliTag} dev -p 4000 --no-studio --run "next dev --port=4000"`;
   }
 

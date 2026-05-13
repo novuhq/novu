@@ -155,6 +155,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -181,6 +182,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -241,6 +243,7 @@ export class IntegrationsController {
           organizationId: user.organizationId,
           providerId: body.providerId,
           channel: body.channel,
+          kind: body.kind,
           credentials: body.credentials,
           active: body.active ?? false,
           check: body.check ?? false,
@@ -844,6 +847,16 @@ export class IntegrationsController {
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
+    /*
+     * API-key auth must never receive decrypted provider credentials, regardless of RBAC state.
+     * API keys grant ALL_PERMISSIONS in `community.auth.service.ts`, which would otherwise
+     * allow the RBAC path below to succeed and leak every stored provider secret to any
+     * caller holding an environment API key.
+     */
+    if (user.scheme === ApiAuthSchemeEnum.API_KEY) {
+      return false;
+    }
+
     const organization = await this.organizationRepository.findOne({
       _id: user.organizationId,
     });
