@@ -1,4 +1,11 @@
-import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
+import type {
+  AgentCreationSourceEnum,
+  AgentRuntime,
+  AgentRuntimeProviderIdEnum,
+  ChannelTypeEnum,
+  DirectionEnum,
+  IEnvironment,
+} from '@novu/shared';
 import { del, get, patch, post } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
@@ -64,11 +71,32 @@ export type ListAgentsResponse = {
   totalCountCapped: boolean;
 };
 
+type AgentSkillInputDto = {
+  type: 'anthropic' | 'custom';
+  skillId: string;
+  version?: string | null;
+};
+
+type ManagedRuntimeDto = {
+  providerId: AgentRuntimeProviderIdEnum;
+  integrationId: string;
+  externalAgentId?: string;
+  externalEnvironmentId?: string;
+  model?: string;
+  systemPrompt?: string;
+  tools?: string[];
+  mcpServers?: string[];
+  skills?: AgentSkillInputDto[];
+};
+
 export type CreateAgentBody = {
   name: string;
   identifier: string;
   description?: string;
   active?: boolean;
+  runtime?: AgentRuntime;
+  managedRuntime?: ManagedRuntimeDto;
+  creationSource?: AgentCreationSourceEnum;
 };
 
 export type UpdateAgentBody = {
