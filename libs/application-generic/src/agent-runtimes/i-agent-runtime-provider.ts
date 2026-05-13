@@ -84,7 +84,7 @@ export interface IAgentRuntimeProvider {
   /**
    * Fetch environment information.
    */
-  getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult | undefined>;
+  getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult>;
 
   /**
    * Permanently delete the agent on the provider side.

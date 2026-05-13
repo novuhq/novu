@@ -60,15 +60,9 @@ export class ProvisionManagedAgent {
 
     if (command.externalEnvironmentId && command.externalEnvironmentId !== decryptedCredentials.externalEnvironmentId) {
       const providerEnvironment = await runtimeProvider.getEnvironment(command.externalEnvironmentId);
-      if (!providerEnvironment) {
-        throw new BadRequestException(
-          `The external provider environment id "${command.externalEnvironmentId}" is invalid.`
-        );
-      }
-
       const nextCredentials = encryptCredentials({
         ...decryptedCredentials,
-        externalEnvironmentId: command.externalEnvironmentId,
+        externalEnvironmentId: providerEnvironment.id,
       });
 
       await this.integrationRepository.update(

@@ -151,7 +151,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
     });
   }
 
-  async getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult | undefined> {
+  async getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult> {
     const client = this.buildClient();
 
     try {
