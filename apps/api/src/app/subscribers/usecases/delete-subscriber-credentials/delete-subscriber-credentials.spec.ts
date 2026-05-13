@@ -9,7 +9,6 @@ import { CheckIntegrationEMail } from '../../../integrations/usecases/check-inte
 import { CreateIntegrationCommand } from '../../../integrations/usecases/create-integration/create-integration.command';
 import { CreateIntegration } from '../../../integrations/usecases/create-integration/create-integration.usecase';
 import { SharedModule } from '../../../shared/shared.module';
-import { GetSubscriber } from '../get-subscriber/get-subscriber.usecase';
 import { DeleteSubscriberCredentialsCommand } from './delete-subscriber-credentials.command';
 import { DeleteSubscriberCredentials } from './delete-subscriber-credentials.usecase';
 
@@ -25,7 +24,6 @@ describe('Delete subscriber provider credentials', () => {
       providers: [
         DeleteSubscriberCredentials,
         UpdateSubscriberChannel,
-        GetSubscriber,
         CreateIntegration,
         CheckIntegration,
         CheckIntegrationEMail,

@@ -60,8 +60,12 @@ const CLAUDE_PREBUILT_SKILLS: ClaudeAnthropicSkill[] = [
 /**
  * Open-source skills published by Anthropic in https://github.com/anthropics/skills.
  * These must be uploaded via POST /v1/skills before they can be referenced by skill_id.
+ *
+ * TODO: integrate once the /v1/skills upload flow is implemented. Until then this
+ * catalog is parked here so we can add it to CLAUDE_ANTHROPIC_SKILLS in one step.
  */
-const CLAUDE_OPENSOURCE_SKILLS: ClaudeAnthropicSkill[] = [
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _CLAUDE_OPENSOURCE_SKILLS: ClaudeAnthropicSkill[] = [
   {
     skillId: 'claude-api',
     name: 'Claude API',

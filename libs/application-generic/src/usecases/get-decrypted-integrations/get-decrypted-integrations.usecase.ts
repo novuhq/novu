@@ -13,6 +13,10 @@ export class GetDecryptedIntegrations {
       _organizationId: command.organizationId,
     };
 
+    if (command.scopeToEnvironment) {
+      query._environmentId = command.environmentId;
+    }
+
     if (command.active) {
       query.active = command.active;
     }

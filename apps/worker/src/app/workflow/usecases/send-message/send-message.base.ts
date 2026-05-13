@@ -91,7 +91,7 @@ export abstract class SendMessageBase extends SendMessageType {
       integration.providerId === ChatProviderIdEnum.Novu
     ) {
       integration.credentials = await this.getNovuProviderCredentials.execute({
-        channelType: integration.channel,
+        channelType: this.channelType,
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,

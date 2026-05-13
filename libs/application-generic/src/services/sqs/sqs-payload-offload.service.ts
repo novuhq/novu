@@ -7,7 +7,7 @@ import { SQS_DEFAULT_PAYLOAD_SIZE_THRESHOLD } from './types';
 
 const LOG_CONTEXT = 'SqsPayloadOffloadService';
 
-const SQS_LARGE_PAYLOAD_MARKER = '__sqsLargePayload';
+export const SQS_LARGE_PAYLOAD_MARKER = '__sqsLargePayload';
 
 interface ISqsLargePayloadReference {
   [SQS_LARGE_PAYLOAD_MARKER]: {

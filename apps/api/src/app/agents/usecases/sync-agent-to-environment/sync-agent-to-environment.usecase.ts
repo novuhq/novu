@@ -113,6 +113,7 @@ export class SyncAgentToEnvironment {
         stubIntegration = await this.integrationRepository.create({
           providerId: sourceIntegration.providerId,
           channel: sourceIntegration.channel,
+          kind: sourceIntegration.kind,
           name: sourceIntegration.name,
           identifier: sourceIntegration.identifier,
           credentials: {},

@@ -1,6 +1,7 @@
-import type { AgentRuntimeProviderIdEnum, AgentSkillDto } from '@novu/shared';
+import type { AgentSkillDto } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsArray, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsEnum, IsNotEmpty, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 export class ProvisionManagedAgentCommand {
   @IsNotEmpty()
@@ -20,24 +21,13 @@ export class ProvisionManagedAgentCommand {
   externalAgentId?: string;
 
   @IsNotEmpty()
+  @IsEnum(AgentRuntimeProviderIdEnum)
   providerId: AgentRuntimeProviderIdEnum;
 
-  /**
-   * ID of an existing Novu integration. Mutually exclusive with `apiKey`.
-   * Exactly one of `integrationId` or `apiKey` must be provided.
-   */
-  @IsOptional()
+  /** ID of an existing Novu integration that holds the provider API key and environment. */
+  @IsNotEmpty()
   @IsString()
-  integrationId?: string;
-
-  /**
-   * Raw provider API key. When provided, the usecase auto-creates an Integration
-   * and a Claude environment before provisioning the agent.
-   * Mutually exclusive with `integrationId`.
-   */
-  @IsOptional()
-  @IsString()
-  apiKey?: string;
+  integrationId: string;
 
   @IsOptional()
   @IsString()

@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, ICredentials } from '@novu/shared';
-import { IsDefined, IsString } from 'class-validator';
+import { IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 
 export class CheckIntegrationCommand extends EnvironmentCommand {
@@ -7,8 +7,9 @@ export class CheckIntegrationCommand extends EnvironmentCommand {
   @IsString()
   providerId: string;
 
-  @IsDefined()
-  channel: ChannelTypeEnum;
+  /** Optional because agent-kind integrations do not have a delivery channel. */
+  @IsOptional()
+  channel?: ChannelTypeEnum;
 
   @IsDefined()
   credentials?: ICredentials;

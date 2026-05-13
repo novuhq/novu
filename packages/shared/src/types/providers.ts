@@ -163,6 +163,12 @@ export enum AgentRuntimeProviderIdEnum {
   Anthropic = 'anthropic',
 }
 
+/** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
+export enum IntegrationKindEnum {
+  DELIVERY = 'delivery',
+  AGENT = 'agent',
+}
+
 export type ProvidersIdEnum =
   | EmailProviderIdEnum
   | SmsProviderIdEnum

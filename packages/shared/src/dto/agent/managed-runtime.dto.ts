@@ -5,11 +5,11 @@ export type AgentRuntime = 'self-hosted' | 'managed';
 /**
  * Identifies which section of the Novu Dashboard was used to create the agent.
  * - `'platform'` – created from the standard Platform section (default).
- * - `'dispatch'` – created from the Dispatch feature (under development).
+ * - `'connect'` – created from the Connect section.
  */
 export enum AgentCreationSourceEnum {
   PLATFORM = 'platform',
-  DISPATCH = 'dispatch',
+  CONNECT = 'connect',
 }
 
 export type ManagedRuntimeConfigDto = {
@@ -32,16 +32,13 @@ export type AgentSkillDto = {
 
 /**
  * Payload shape used when creating a new managed-runtime agent.
- * Exactly one of `integrationId` or `apiKey` must be provided.
- * When `apiKey` is given, the API auto-creates an Integration and a Claude environment.
- * When `integrationId` is given, the API reuses the existing Integration (and its environment).
+ * The integration (holding the encrypted API key and provisioned provider environment)
+ * must be created first via POST /integrations with kind 'agent'.
  */
 export type CreateManagedRuntimeDto = {
   providerId: AgentRuntimeProviderIdEnum;
-  /** Use an existing Novu integration. Mutually exclusive with `apiKey`. */
-  integrationId?: string;
-  /** Raw provider API key. The API will create the Integration + Environment automatically. Mutually exclusive with `integrationId`. */
-  apiKey?: string;
+  /** ID of an existing Novu integration that holds the provider API key and environment. */
+  integrationId: string;
   model?: string;
   systemPrompt?: string;
   /** Tool `type` strings to enable on the new agent (e.g. 'web_search'). */
