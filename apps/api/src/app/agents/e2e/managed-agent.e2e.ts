@@ -21,6 +21,7 @@ const FAKE_EXTERNAL_AGENT_ID = 'ext-agent-e2e-123';
 const FAKE_ADOPT_AGENT_ID = 'agent_01XJ5AdoptE2E';
 const FAKE_ADOPT_AGENT_NAME = 'My Existing Claude Agent';
 const FAKE_EXTERNAL_ENV_ID = 'env_01XJ5FakeEnvE2E';
+const FAKE_NEW_EXTERNAL_ENV_ID = 'env_01XJ5NewEnvE2E';
 
 const agentRepository = new AgentRepository();
 const integrationRepository = new IntegrationRepository();
@@ -33,6 +34,7 @@ function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> =
     createAgent: sinon.stub().resolves({ externalAgentId: FAKE_EXTERNAL_AGENT_ID }),
     deleteAgent: sinon.stub().resolves(),
     getAgent: sinon.stub().resolves({ externalAgentId: FAKE_ADOPT_AGENT_ID, name: FAKE_ADOPT_AGENT_NAME }),
+    getEnvironment: sinon.stub().resolves({ id: FAKE_EXTERNAL_ENV_ID, name: 'Default Env' }),
     getConfig: sinon.stub().resolves({
       model: 'claude-3-5-sonnet-20241022',
       systemPrompt: '',
@@ -353,6 +355,135 @@ describe('Managed Agents API #novu-v2', () => {
 
       expect(res.status).to.equal(400);
       expect(mockProvider.createAgent.called, 'createAgent should NOT be called for an unknown catalog ID').to.be.false;
+    });
+  });
+
+  // ─── POST /v1/agents — externalEnvironmentId rebinding ─────────────────────
+  // When the caller supplies a managedRuntime.externalEnvironmentId that
+  // differs from the integration's stored value, the use-case validates it
+  // against the provider and persists the new value back into the integration
+  // credentials. When it matches, both the validation call and the update are
+  // skipped. When the provider rejects it, no mutation happens and the agent
+  // creation is rolled back.
+  describe('POST /v1/agents — externalEnvironmentId rebinding', () => {
+    it('should validate and persist a new externalEnvironmentId into the integration credentials', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+      const identifier = `e2e-rebind-env-${Date.now()}`;
+      createdAgentIdentifiers.push(identifier);
+
+      mockProvider.getEnvironment.resolves({ id: FAKE_NEW_EXTERNAL_ENV_ID, name: 'Production' });
+
+      const res = await session.testAgent.post('/v1/agents').send(
+        managedBody(identifier, integrationId, {
+          managedRuntime: {
+            providerId: AgentRuntimeProviderIdEnum.Anthropic,
+            integrationId,
+            externalEnvironmentId: FAKE_NEW_EXTERNAL_ENV_ID,
+          },
+        })
+      );
+
+      expect(res.status).to.equal(201);
+      expect(mockProvider.getEnvironment.calledOnce, 'getEnvironment should be called once').to.be.true;
+      expect(mockProvider.getEnvironment.getCall(0).args[0]).to.equal(FAKE_NEW_EXTERNAL_ENV_ID);
+
+      const integration = await integrationRepository.findOne(
+        {
+          _id: integrationId,
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+        },
+        ['credentials']
+      );
+
+      if (!integration) throw new Error('integration should exist after rebinding');
+      const decrypted = decryptCredentials(integration.credentials);
+
+      expect(decrypted.externalEnvironmentId, 'externalEnvironmentId should be rebound').to.equal(
+        FAKE_NEW_EXTERNAL_ENV_ID
+      );
+      expect(decrypted.apiKey, 'apiKey must remain intact and decryptable').to.equal(FAKE_API_KEY);
+    });
+
+    it('should NOT call getEnvironment and NOT mutate credentials when externalEnvironmentId matches the stored value', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+      const identifier = `e2e-rebind-noop-${Date.now()}`;
+      createdAgentIdentifiers.push(identifier);
+
+      const res = await session.testAgent.post('/v1/agents').send(
+        managedBody(identifier, integrationId, {
+          managedRuntime: {
+            providerId: AgentRuntimeProviderIdEnum.Anthropic,
+            integrationId,
+            externalEnvironmentId: FAKE_EXTERNAL_ENV_ID,
+          },
+        })
+      );
+
+      expect(res.status).to.equal(201);
+      expect(mockProvider.getEnvironment.called, 'getEnvironment should NOT be called when env id is unchanged').to.be
+        .false;
+
+      const integration = await integrationRepository.findOne(
+        {
+          _id: integrationId,
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+        },
+        ['credentials']
+      );
+
+      if (!integration) throw new Error('integration should exist for no-op test');
+      const decrypted = decryptCredentials(integration.credentials);
+      expect(decrypted.externalEnvironmentId).to.equal(FAKE_EXTERNAL_ENV_ID);
+    });
+
+    it('should return 400 and leave credentials untouched when getEnvironment resolves to undefined', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+      const identifier = `e2e-rebind-invalid-${Date.now()}`;
+
+      mockProvider.getEnvironment.resolves(undefined);
+
+      const res = await session.testAgent.post('/v1/agents').send(
+        managedBody(identifier, integrationId, {
+          managedRuntime: {
+            providerId: AgentRuntimeProviderIdEnum.Anthropic,
+            integrationId,
+            externalEnvironmentId: 'env_does_not_exist',
+          },
+        })
+      );
+
+      expect(res.status).to.equal(400);
+      expect(mockProvider.getEnvironment.calledOnce).to.be.true;
+      expect(mockProvider.createAgent.called, 'createAgent must not run when env validation fails').to.be.false;
+
+      const integration = await integrationRepository.findOne(
+        {
+          _id: integrationId,
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+        },
+        ['credentials']
+      );
+
+      if (!integration) throw new Error('integration should still exist after env validation failure');
+      const decrypted = decryptCredentials(integration.credentials);
+
+      expect(decrypted.externalEnvironmentId, 'credentials must not be mutated when validation fails').to.equal(
+        FAKE_EXTERNAL_ENV_ID
+      );
+
+      const leftover = await agentRepository.findOne(
+        {
+          identifier,
+          _environmentId: session.environment._id,
+          _organizationId: session.organization._id,
+        },
+        ['_id']
+      );
+
+      expect(leftover, 'agent document should be rolled back when env validation fails').to.equal(null);
     });
   });
 
