@@ -88,7 +88,12 @@ export function IntegrationsList({ onItemClick, excludeIntegrationIds, variant =
       ?.filter((i) => i.providerId !== EmailProviderIdEnum.NovuAgent)
       .reduce(
         (acc, integration) => {
-          const channel = integration.channel;
+          const { channel } = integration;
+
+          // Skip integrations without a channel (e.g. agent-runtime integrations).
+          if (!channel) {
+            return acc;
+          }
 
           if (!acc[channel]) {
             acc[channel] = [];

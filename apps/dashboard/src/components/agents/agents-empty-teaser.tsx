@@ -30,8 +30,8 @@ type AgentsEmptyTeaserProps = {
 
 export function AgentsEmptyTeaser({ cta }: AgentsEmptyTeaserProps) {
   return (
-    <div className="flex min-h-[min(720px,calc(100vh-8rem))] flex-col items-center justify-center px-4 py-10 md:px-8">
-      <div className="flex w-full max-w-[1133px] flex-col items-stretch gap-12">
+    <div className="flex h-full flex-col items-center justify-center px-4 py-10 md:px-8">
+      <div className="flex w-full max-w-[800px] flex-col items-stretch gap-12">
         <img
           src="/images/agents-teaser.svg"
           alt=""

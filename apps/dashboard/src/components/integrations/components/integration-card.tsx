@@ -58,7 +58,7 @@ export function IntegrationCard({
         identifier: integration.identifier,
         provider: provider.displayName,
         providerId: provider.id,
-        channel: integration.channel,
+        channel: integration.channel ?? provider.channel,
         environment: environment.name,
         active: integration.active,
       });
