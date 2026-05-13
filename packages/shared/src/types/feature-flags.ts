@@ -39,7 +39,6 @@ export enum FeatureFlagsKeysEnum {
   IS_USAGE_ALERTS_ENABLED = 'IS_USAGE_ALERTS_ENABLED',
   IS_USE_MERGED_DIGEST_ID_ENABLED = 'IS_USE_MERGED_DIGEST_ID_ENABLED',
   IS_V2_ENABLED = 'IS_V2_ENABLED',
-  IS_SLACK_TEAMS_ENABLED = 'IS_SLACK_TEAMS_ENABLED',
 
   IS_WORKFLOW_NODE_PREVIEW_ENABLED = 'IS_WORKFLOW_NODE_PREVIEW_ENABLED',
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
@@ -92,14 +91,20 @@ export enum FeatureFlagsKeysEnum {
   IS_USAGE_REPORT_DELAY_ENABLED = 'IS_USAGE_REPORT_DELAY_ENABLED',
   IS_STEP_RESOLVER_ENABLED = 'IS_STEP_RESOLVER_ENABLED',
   IS_ACTION_STEP_RESOLVER_ENABLED = 'IS_ACTION_STEP_RESOLVER_ENABLED',
-  IS_HTTP_REQUEST_STEP_ENABLED = 'IS_HTTP_REQUEST_STEP_ENABLED',
-  IS_VARIABLES_PAGE_ENABLED = 'IS_VARIABLES_PAGE_ENABLED',
   /** Enable conversational Agents UI in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_CONVERSATIONAL_AGENTS_ENABLED` when self-hosted. */
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
+  /** Enable managed-runtime mode for Agents (e.g. Claude Platform). Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MANAGED_AGENT_RUNTIME_ENABLED` when self-hosted. */
+  IS_MANAGED_AGENT_RUNTIME_ENABLED = 'IS_MANAGED_AGENT_RUNTIME_ENABLED',
+  /** Enable Microsoft Teams Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MSTEAMS_QUICK_SETUP_ENABLED` when self-hosted. */
+  IS_MSTEAMS_QUICK_SETUP_ENABLED = 'IS_MSTEAMS_QUICK_SETUP_ENABLED',
+  /** Enable Slack Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_SLACK_QUICK_SETUP_ENABLED` when self-hosted. */
+  IS_SLACK_QUICK_SETUP_ENABLED = 'IS_SLACK_QUICK_SETUP_ENABLED',
   /** Enable the Domains management page in the dashboard. */
   IS_DOMAINS_PAGE_ENABLED = 'IS_DOMAINS_PAGE_ENABLED',
   /** Enable Domain Connect auto-configuration for inbound email domains. */
   IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED = 'IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED',
+  /** Enable the new app-rail dashboard shell with the Dispatch app surface. */
+  IS_DISPATCH_DASHBOARD_ENABLED = 'IS_DISPATCH_DASHBOARD_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

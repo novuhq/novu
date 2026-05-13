@@ -12,7 +12,13 @@ import {
   IntegrationEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum, ConnectionMode, ContextPayload, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
+import {
+  ChannelTypeEnum,
+  ChatProviderIdEnum,
+  ConnectionMode,
+  ContextPayload,
+  SLACK_AGENT_OAUTH_SCOPES,
+} from '@novu/shared';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
@@ -228,6 +234,7 @@ export class GenerateSlackOauthUrl {
     }
 
     const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
+
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }
 
@@ -250,7 +257,7 @@ export class GenerateSlackOauthUrl {
   private async getDemoNovuSlackCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
     return await this.getNovuProviderCredentials.execute(
       GetNovuProviderCredentialsCommand.create({
-        channelType: integration.channel,
+        channelType: integration.channel ?? ChannelTypeEnum.CHAT,
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,

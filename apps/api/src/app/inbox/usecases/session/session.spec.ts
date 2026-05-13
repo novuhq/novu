@@ -19,7 +19,7 @@ import {
   NotificationTemplateRepository,
   PreferencesRepository,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, ChannelTypeEnum, InAppProviderIdEnum, SeverityLevelEnum } from '@novu/shared';
+import { ApiServiceLevelEnum, ChannelTypeEnum, EnvironmentTypeEnum, InAppProviderIdEnum, SeverityLevelEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AuthService } from '../../../auth/services/auth.service';
@@ -134,6 +134,85 @@ describe('Session', () => {
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
+  });
+
+  it('should set isDevelopmentMode to false for live (prod type) environment regardless of display name', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        subscriberHash: 'hash',
+      },
+    };
+
+    const environment = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      name: 'Third environment',
+      type: EnvironmentTypeEnum.PROD,
+      apiKeys: [{ key: 'api-key' }],
+    };
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 0, filter: {} }] };
+    const token = 'token';
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    organizationRepository.findById.resolves(organization as any);
+    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+
+    const response: SubscriberSessionResponseDto = await session.execute(command);
+
+    expect(response.isDevelopmentMode).to.equal(false);
+  });
+
+  it('should fall back to legacy name check when environment type is unset', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: { subscriberId: 'subscriber-id' },
+        subscriberHash: 'hash',
+      },
+    };
+
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const subscriber = { _id: 'subscriber-id' };
+    const notificationCount = { data: [{ count: 0, filter: {} }] };
+    const token = 'token';
+
+    const legacyProdNamed = {
+      _id: 'env-id',
+      _organizationId: 'org-id',
+      name: 'Production',
+      apiKeys: [{ key: 'api-key' }],
+    };
+
+    environmentRepository.findEnvironmentByIdentifier.resolves(legacyProdNamed as any);
+    organizationRepository.findById.resolves(organization as any);
+    selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
+    createSubscriber.execute.resolves(subscriber as any);
+    notificationsCount.execute.resolves(notificationCount);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+
+    const prodResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(prodResponse.isDevelopmentMode).to.equal(false);
+
+    const legacyDevNamed = { ...legacyProdNamed, name: 'Staging' };
+    environmentRepository.findEnvironmentByIdentifier.resolves(legacyDevNamed as any);
+
+    const devResponse: SubscriberSessionResponseDto = await session.execute(command);
+    expect(devResponse.isDevelopmentMode).to.equal(true);
   });
 
   it('should throw an error if the environment is not found', async () => {

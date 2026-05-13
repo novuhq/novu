@@ -25,9 +25,10 @@ import {
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
 type AgentsTableProps = {
@@ -156,8 +157,9 @@ function AgentsTableSkeletonRow() {
 export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProps }: AgentsTableProps) {
   const has = useHasPermission();
   const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const location = useLocation();
+  const agentRoutes = useAgentRoutes();
 
   return (
     <Table isLoading={isLoading} loadingRowsCount={5} loadingRow={<AgentsTableSkeletonRow />}>
@@ -175,7 +177,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
       {!isLoading && (
         <TableBody>
           {agents.map((agent) => {
-            const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+            const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
               environmentSlug: currentEnvironment?.slug ?? '',
               agentIdentifier: encodeURIComponent(agent.identifier),
               agentTab: 'overview',
@@ -220,11 +222,16 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                 >
                   <span className="text-label-sm">{formatDateSimple(agent.updatedAt)}</span>
                 </AgentNavTableCell>
-                <TableCell className="p-3 text-right align-middle">
+                <AgentNavTableCell className="w-1 p-3 text-right align-middle">
                   {canWrite ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <CompactButton size="md" variant="ghost" icon={RiMore2Fill} className="z-10">
+                        <CompactButton
+                          variant="ghost"
+                          icon={RiMore2Fill}
+                          className="z-10 h-8 w-8 p-0"
+                          disabled={readOnly}
+                        >
                           <span className="sr-only">Open menu</span>
                         </CompactButton>
                       </DropdownMenuTrigger>
@@ -240,7 +247,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                       </DropdownMenuContent>
                     </DropdownMenu>
                   ) : null}
-                </TableCell>
+                </AgentNavTableCell>
               </TableRow>
             );
           })}

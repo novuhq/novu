@@ -365,6 +365,8 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
       [onChangeRef]
     );
 
+    const safeValue = typeof value === 'string' ? value : '';
+
     return (
       <CodeMirror
         ref={ref}
@@ -373,7 +375,7 @@ export const Editor = React.forwardRef<ReactCodeMirrorRef, EditorProps>(
         height="auto"
         placeholder={placeholder}
         basicSetup={basicSetup}
-        value={value}
+        value={safeValue}
         onChange={onChangeCallback}
         theme={theme}
         {...restCodeMirrorProps}

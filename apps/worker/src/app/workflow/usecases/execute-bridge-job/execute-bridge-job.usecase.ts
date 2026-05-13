@@ -238,6 +238,14 @@ export class ExecuteBridgeJob {
       environmentId,
       organizationId,
       stepResolverHash,
+      // Stateless flow: the bridgeUrl was attached by the trigger caller and
+      // travelled with the queued job. Re-apply the DNS-pinned SSRF guard on
+      // every step's EXECUTE so the worker cannot be coerced into reaching
+      // internal hosts even if a job slips past the API-side validation
+      // (e.g. queued by an older API release before the guard landed).
+      // Stateful jobs (no `statelessBridgeUrl`) target the environment's
+      // configured bridge URL, which is validated when it is set.
+      enforceSsrfProtection: !!statelessBridgeUrl,
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

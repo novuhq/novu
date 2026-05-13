@@ -12,18 +12,20 @@ type ResourceSelection = {
 type UseResourceDependenciesResult = {
   workflows: IResourceDiffResult[];
   layouts: IResourceDiffResult[];
+  agents: IResourceDiffResult[];
   dependencyMap: Map<string, IResourceDependency[]>;
   calculateDependencyState: (selection: ResourceSelection) => ResourceSelection;
 };
 
 export function useResourceDependencies(diffData: IEnvironmentDiffResponse | undefined): UseResourceDependenciesResult {
-  const { workflows, layouts, dependencyMap } = useMemo(() => {
+  const { workflows, layouts, agents, dependencyMap } = useMemo(() => {
     if (!diffData?.resources) {
-      return { workflows: [], layouts: [], dependencyMap: new Map() };
+      return { workflows: [], layouts: [], agents: [], dependencyMap: new Map() };
     }
 
     const workflowResources = diffData.resources.filter((r: IResourceDiffResult) => r.resourceType === 'workflow');
     const layoutResources = diffData.resources.filter((r: IResourceDiffResult) => r.resourceType === 'layout');
+    const agentResources = diffData.resources.filter((r: IResourceDiffResult) => r.resourceType === 'agent');
 
     // Build dependency map for quick lookup (include both workflows and layouts)
     const depMap = new Map<string, IResourceDependency[]>();
@@ -53,6 +55,7 @@ export function useResourceDependencies(diffData: IEnvironmentDiffResponse | und
     return {
       workflows: workflowResources,
       layouts: layoutResources,
+      agents: agentResources,
       dependencyMap: depMap,
     };
   }, [diffData]);
@@ -129,6 +132,7 @@ export function useResourceDependencies(diffData: IEnvironmentDiffResponse | und
   return {
     workflows,
     layouts,
+    agents,
     dependencyMap,
     calculateDependencyState,
   };

@@ -9,6 +9,8 @@ export const ROUTES = {
   SSO_SIGN_IN: '/auth/sso',
   VERIFY_EMAIL: '/auth/verify-email',
   USECASE_SELECT: '/onboarding/usecase',
+  AGENTS_USECASE: '/onboarding/agents',
+  AGENTS_SETUP: '/onboarding/agents/setup',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',
   INBOX_EMBED_SUCCESS: '/onboarding/inbox/success',
@@ -80,6 +82,16 @@ export const ROUTES = {
   AGENT_DETAILS_INTEGRATIONS_DETAIL:
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
+  DISPATCH_HOME: '/env/:environmentSlug/dispatch',
+  DISPATCH_AGENTS: '/env/:environmentSlug/dispatch/agents',
+  DISPATCH_AGENT_DETAILS: '/env/:environmentSlug/dispatch/agents/:agentIdentifier',
+  /** Must be registered before DISPATCH_AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
+  DISPATCH_AGENT_DETAILS_INTEGRATIONS_DETAIL:
+    '/env/:environmentSlug/dispatch/agents/:agentIdentifier/integrations/:integrationIdentifier',
+  DISPATCH_AGENT_DETAILS_TAB: '/env/:environmentSlug/dispatch/agents/:agentIdentifier/:agentTab',
+  DISPATCH_CONVERSATIONS: '/env/:environmentSlug/dispatch/conversations',
+  DISPATCH_API_KEYS: '/env/:environmentSlug/dispatch/api-keys',
+  DISPATCH_SETTINGS: '/env/:environmentSlug/dispatch/settings',
 } as const;
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';

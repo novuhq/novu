@@ -93,7 +93,7 @@ const BottomSection = ({
   );
 };
 
-export const SideNavigation = () => {
+export const LegacySideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
   const isTrialActive = subscription?.trial.isActive;
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
@@ -101,7 +101,6 @@ export const SideNavigation = () => {
   const isDomainsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DOMAINS_PAGE_ENABLED);
   const isHttpLogsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_HTTP_LOGS_PAGE_ENABLED, false);
   const isAnalyticsPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_ANALYTICS_PAGE_ENABLED, false);
-  const isVariablesPageEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_VARIABLES_PAGE_ENABLED, false);
 
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
 
@@ -111,7 +110,7 @@ export const SideNavigation = () => {
   };
 
   return (
-    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] shrink-0 flex-col">
+    <aside className="relative flex h-full w-[275px] shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown
@@ -143,7 +142,12 @@ export const SideNavigation = () => {
                 }
               >
                 <RiRobot2Line className="size-4" />
-                <span>Agents</span>
+                <span>
+                  Agents{' '}
+                  <Badge variant="lighter" className="text-xs">
+                    BETA
+                  </Badge>
+                </span>
               </NavigationLink>
             </NavigationGroup>
 
@@ -226,6 +230,16 @@ export const SideNavigation = () => {
                           })
                         : undefined
                     }
+                    matchPaths={
+                      currentEnvironment?.slug
+                        ? [
+                            buildRoute(ROUTES.ACTIVITY_FEED, { environmentSlug: currentEnvironment.slug }),
+                            buildRoute(ROUTES.ACTIVITY_WORKFLOW_RUNS, { environmentSlug: currentEnvironment.slug }),
+                            buildRoute(ROUTES.ACTIVITY_REQUESTS, { environmentSlug: currentEnvironment.slug }),
+                            buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug }),
+                          ]
+                        : undefined
+                    }
                   >
                     <RiBarChartBoxLine className="size-4" />
                     <span>Activity Feed</span>
@@ -287,7 +301,7 @@ export const SideNavigation = () => {
                     </NavigationLink>
                   </Protect>
                 )}
-                {isDomainsPageEnabled && !IS_SELF_HOSTED && (
+                {isDomainsPageEnabled && (!IS_SELF_HOSTED || IS_ENTERPRISE) && (
                   <NavigationLink
                     to={
                       currentEnvironment?.slug
@@ -309,18 +323,16 @@ export const SideNavigation = () => {
                   <RiDatabase2Line className="size-4" />
                   <span>Environments</span>
                 </NavigationLink>
-                {isVariablesPageEnabled && (
-                  <NavigationLink
-                    to={
-                      currentEnvironment?.slug
-                        ? buildRoute(ROUTES.VARIABLES, { environmentSlug: currentEnvironment?.slug ?? '' })
-                        : undefined
-                    }
-                  >
-                    <RiCodeSSlashLine className="size-4" />
-                    <span>Variables</span>
-                  </NavigationLink>
-                )}
+                <NavigationLink
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.VARIABLES, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
+                >
+                  <RiCodeSSlashLine className="size-4" />
+                  <span>Variables</span>
+                </NavigationLink>
                 <Protect permission={PermissionsEnum.INTEGRATION_READ}>
                   <NavigationLink
                     to={

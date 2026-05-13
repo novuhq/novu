@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeControlData } from './normalize-controls.utils';
+import {
+  expandJsonStringControlValues,
+  JSON_STRING_WRAPPER_KEY,
+  normalizeControlData,
+  restoreJsonStringControlValues,
+} from './normalize-controls.utils';
 
 describe('normalizeControlData', () => {
   it('should keep valid JSON strings in data field as-is', () => {
@@ -137,6 +142,58 @@ describe('normalizeControlData', () => {
 
     expect(result.data).toBe('plain string');
     expect(result.body).toBe('test');
+  });
+
+  it('expandJsonStringControlValues should wrap JSON-stringified objects and arrays', () => {
+    const input = {
+      body: '{"type":"doc","content":[{"type":"text","text":"hi"}]}',
+      list: '["a","b"]',
+      subject: 'plain text',
+      url: 'https://example.com',
+      bare: '{not actually json',
+      empty: '{}',
+    };
+
+    const result = expandJsonStringControlValues(input) as Record<string, any>;
+
+    expect(result.body[JSON_STRING_WRAPPER_KEY]).toBe(true);
+    expect(result.body.value).toEqual({ type: 'doc', content: [{ type: 'text', text: 'hi' }] });
+    expect(result.list[JSON_STRING_WRAPPER_KEY]).toBe(true);
+    expect(result.list.value).toEqual(['a', 'b']);
+    expect(result.subject).toBe('plain text');
+    expect(result.url).toBe('https://example.com');
+    expect(result.bare).toBe('{not actually json');
+    expect(result.empty).toBe('{}'); // too short to be a meaningful JSON object
+  });
+
+  it('restoreJsonStringControlValues should re-stringify wrapped values', () => {
+    const input = {
+      body: {
+        [JSON_STRING_WRAPPER_KEY]: true,
+        value: { type: 'doc', content: [{ type: 'text', text: 'hi "there"' }] },
+      },
+      list: { [JSON_STRING_WRAPPER_KEY]: true, value: ['a', 'b'] },
+      subject: 'plain text',
+    };
+
+    const result = restoreJsonStringControlValues(input) as Record<string, unknown>;
+
+    expect(result.body).toBe('{"type":"doc","content":[{"type":"text","text":"hi \\"there\\""}]}');
+    expect(result.list).toBe('["a","b"]');
+    expect(result.subject).toBe('plain text');
+  });
+
+  it('expand + restore round-trip preserves JSON-stringified control values', () => {
+    const input = {
+      body: '{"type":"doc","content":[{"type":"text","text":"hi \\"there\\""}]}',
+      subject: 'plain',
+    };
+
+    const expanded = expandJsonStringControlValues(input);
+    const restored = restoreJsonStringControlValues(expanded) as Record<string, unknown>;
+
+    expect(restored.body).toBe(input.body);
+    expect(restored.subject).toBe(input.subject);
   });
 
   it('should repair JSON strings with single quotes inside string values (real-world scenario)', () => {

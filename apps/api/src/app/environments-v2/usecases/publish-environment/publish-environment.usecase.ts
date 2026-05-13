@@ -3,6 +3,7 @@ import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { BaseRepository } from '@novu/dal';
 import { EnvironmentValidationService } from '../../services';
 import { IPublishResult, ISyncContext, ISyncOptions, ISyncResult, ISyncStrategy } from '../../types/sync.types';
+import { AgentSyncStrategy } from '../sync-strategies/agent-sync.strategy';
 import { LayoutSyncStrategy } from '../sync-strategies/layout-sync.strategy';
 import { WorkflowSyncStrategy } from '../sync-strategies/workflow-sync.strategy';
 import { PublishEnvironmentCommand } from './publish-environment.command';
@@ -15,7 +16,8 @@ export class PublishEnvironmentUseCase {
     private logger: PinoLogger,
     private environmentValidationService: EnvironmentValidationService,
     private workflowSyncStrategy: WorkflowSyncStrategy,
-    private layoutSyncStrategy: LayoutSyncStrategy
+    private layoutSyncStrategy: LayoutSyncStrategy,
+    private agentSyncStrategy: AgentSyncStrategy
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -52,7 +54,7 @@ export class PublishEnvironmentUseCase {
 
       this.logger.info(`Starting environment publish from ${sourceEnvironmentId} to ${command.targetEnvironmentId}`);
 
-      const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy];
+      const strategies = [this.workflowSyncStrategy, this.layoutSyncStrategy, this.agentSyncStrategy];
 
       const results = await this.executeSync(strategies, syncContext);
 

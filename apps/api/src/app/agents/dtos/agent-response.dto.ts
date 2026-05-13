@@ -1,7 +1,20 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { AgentRuntime } from '@novu/shared';
+import { AgentCreationSourceEnum } from '@novu/shared';
 
 import { AgentBehaviorDto } from './agent-behavior.dto';
 import { AgentIntegrationSummaryDto } from './agent-integration-summary.dto';
+
+export class ManagedRuntimeResponseDto {
+  @ApiProperty()
+  providerId: string;
+
+  @ApiProperty()
+  integrationId: string;
+
+  @ApiProperty()
+  externalAgentId: string;
+}
 
 export class AgentResponseDto {
   @ApiProperty()
@@ -31,6 +44,18 @@ export class AgentResponseDto {
   @ApiPropertyOptional({ description: 'Whether the dev bridge override is active' })
   devBridgeActive?: boolean;
 
+  @ApiPropertyOptional({
+    enum: ['self-hosted', 'managed'],
+    description: 'Whether the agent brain is self-hosted (bridge) or managed by a third-party provider',
+  })
+  runtime?: AgentRuntime;
+
+  @ApiPropertyOptional({
+    type: ManagedRuntimeResponseDto,
+    description: 'Present when runtime is "managed". Contains provider and external identifiers.',
+  })
+  managedRuntime?: ManagedRuntimeResponseDto;
+
   @ApiProperty()
   _environmentId: string;
 
@@ -42,6 +67,12 @@ export class AgentResponseDto {
 
   @ApiProperty()
   updatedAt: string;
+
+  @ApiPropertyOptional({
+    enum: AgentCreationSourceEnum,
+    description: 'Which section of the Novu Dashboard was used to create this agent.',
+  })
+  creationSource?: AgentCreationSourceEnum;
 
   @ApiPropertyOptional({ type: [AgentIntegrationSummaryDto] })
   integrations?: AgentIntegrationSummaryDto[];

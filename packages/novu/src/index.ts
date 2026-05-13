@@ -78,6 +78,7 @@ program
   .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
   .option('-H, --headless', 'Run the Bridge in headless mode without opening the browser', false)
   .option('--no-studio', 'Skip starting the local Studio server')
+  .option('--run <command>', 'Spawn a local app server before opening the tunnel')
   .action(async (options: DevCommandOptions) => {
     analytics.track({
       identity: {

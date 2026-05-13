@@ -7,6 +7,7 @@ import {
   SelectIntegration,
 } from '@novu/application-generic';
 import { AutoConfigureIntegration } from './auto-configure-integration/auto-configure-integration.usecase';
+import { AzureSetupOauthCallback } from './azure-setup-oauth-callback/azure-setup-oauth-callback.usecase';
 import { ChatOauthCallback } from './chat-oauth-callback/chat-oauth-callback.usecase';
 import { MsTeamsOauthCallback } from './chat-oauth-callback/msteams-oauth-callback/msteams-oauth-callback.usecase';
 import { SlackOauthCallback } from './chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase';
@@ -14,17 +15,23 @@ import { CheckIntegration } from './check-integration/check-integration.usecase'
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
 import { CreateIntegration } from './create-integration/create-integration.usecase';
 import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-integrations.usecase';
+import { GenerateAzureSetupOauthUrl } from './generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.usecase';
 import { GenerateChatOauthUrl } from './generate-chat-oath-url/generate-chat-oauth-url.usecase';
 import { GenerateConnectOauthUrl } from './generate-chat-oath-url/generate-connect-oauth-url.usecase';
 import { GenerateLinkUserOauthUrl } from './generate-chat-oath-url/generate-link-user-oauth-url.usecase';
 import { GenerateMsTeamsOauthUrl } from './generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
 import { GenerateSlackOauthUrl } from './generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
+import { GenerateMsTeamsArmTemplate } from './generate-msteams-arm-template/generate-msteams-arm-template.usecase';
+import { GetMsTeamsArmTemplate } from './generate-msteams-arm-template/get-msteams-arm-template.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrations } from './get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
+import { MsTeamsHealthCheck } from './msteams-health-check/msteams-health-check.usecase';
 import { RemoveIntegration } from './remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
+import { SlackQuickSetup } from './slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
+import { WhatsAppValidateToken } from './whatsapp/whatsapp-validate-token.usecase';
 
 export const USE_CASES = [
   GetInAppActivated,
@@ -49,7 +56,14 @@ export const USE_CASES = [
   GenerateLinkUserOauthUrl,
   GenerateSlackOauthUrl,
   GenerateMsTeamsOauthUrl,
+  GenerateMsTeamsArmTemplate,
+  GetMsTeamsArmTemplate,
+  AzureSetupOauthCallback,
+  GenerateAzureSetupOauthUrl,
   SlackOauthCallback,
   MsTeamsOauthCallback,
   ChatOauthCallback,
+  MsTeamsHealthCheck,
+  SlackQuickSetup,
+  WhatsAppValidateToken,
 ];

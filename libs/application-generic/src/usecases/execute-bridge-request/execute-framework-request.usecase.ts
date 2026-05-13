@@ -117,6 +117,10 @@ export class ExecuteFrameworkRequest {
           limit: retriesLimit,
         },
         rejectUnauthorized: environment.name.toLowerCase() === 'production',
+        // Opt-in SSRF guard for user-supplied bridge URLs (sync / validate).
+        // The safe outbound layer pins the connection to a validated public
+        // IP and re-runs the policy on every redirect target.
+        enforceSsrfProtection: command.enforceSsrfProtection === true,
         onRetry: ({ statusCode, errorCode, delay }) => {
           if (statusCode) {
             this.logger.info(`Retryable status code ${statusCode} detected. Retrying in ${delay}ms`);
@@ -339,6 +343,19 @@ export class ExecuteFrameworkRequest {
               code: BRIDGE_EXECUTION_ERROR.RESPONSE_PARSE_ERROR.code,
               message: BRIDGE_EXECUTION_ERROR.RESPONSE_PARSE_ERROR.message(url),
               statusCode: HttpStatus.BAD_GATEWAY,
+            };
+            break;
+
+          case HttpClientErrorType.SSRF_BLOCKED:
+            // Log the full reason (including resolved IPs / redirect targets)
+            // server-side. Return a stable, client-safe message so the
+            // endpoint can't be used as an authenticated network-recon probe
+            // — see CodeRabbit review on PR #11047.
+            this.logger.warn({ err: error }, `Blocked outbound bridge request to \`${url}\``);
+            bridgeErrorData = {
+              code: error.networkCode || 'SSRF_BLOCKED',
+              message: 'The provided bridge URL is blocked by the outbound SSRF policy.',
+              statusCode: HttpStatus.BAD_REQUEST,
             };
             break;
 

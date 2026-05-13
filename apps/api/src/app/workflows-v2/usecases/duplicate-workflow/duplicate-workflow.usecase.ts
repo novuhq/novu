@@ -29,7 +29,9 @@ export class DuplicateWorkflowUseCase {
     private upsertWorkflowUseCase: UpsertWorkflowUseCase,
     private moduleRef: ModuleRef,
     private logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: DuplicateWorkflowCommand): Promise<WorkflowResponseDto> {

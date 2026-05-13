@@ -43,6 +43,7 @@ export interface ICredentials {
   state?: string;
   externalLink?: string;
   phoneNumberIdentification?: string;
+  businessAccountId?: string;
   channelId?: string;
   apiVersion?: string;
   appSid?: string;
@@ -55,4 +56,8 @@ export interface ICredentials {
   tenantId?: string;
   signingSecret?: string;
   outboundIntegrationId?: string;
+  useFromAddressOverride?: boolean;
+  fromAddressOverride?: string;
+  /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. */
+  externalEnvironmentId?: string;
 }

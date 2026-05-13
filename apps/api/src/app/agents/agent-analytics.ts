@@ -35,7 +35,7 @@ export function trackAgentIntegrationConnected(
     integrationId: string;
     integrationIdentifier: string;
     providerId: string;
-    channel: string;
+    channel?: string;
     connectionSource: 'existing_integration' | 'novu_email_provisioned';
   }
 ): void {

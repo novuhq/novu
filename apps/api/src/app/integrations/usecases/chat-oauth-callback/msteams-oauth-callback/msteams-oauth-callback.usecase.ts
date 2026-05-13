@@ -34,14 +34,18 @@ export class MsTeamsOauthCallback {
     private environmentRepository: EnvironmentRepository,
     private createChannelConnection: CreateChannelConnection,
     private createChannelEndpoint: CreateChannelEndpoint,
-    private logger: PinoLogger,
     private msTeamsTokenService: MsTeamsTokenService,
+    private logger: PinoLogger,
     private generateMsTeamsOauthUrl: GenerateMsTeamsOauthUrl
   ) {
     this.logger.setContext(MsTeamsOauthCallback.name);
   }
 
   async execute(command: MsTeamsOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
+    this.logger.info(
+      `MS Teams OAuth callback received: mode=${command.adminConsent ? 'admin_consent' : 'link_user'} tenant=${command.tenant ?? 'n/a'}`
+    );
+
     const stateData = await this.decodeMsTeamsState(command.state);
     const integration = await this.getIntegration(stateData);
     const credentials = await this.getIntegrationCredentials(integration);
@@ -50,16 +54,23 @@ export class MsTeamsOauthCallback {
       try {
         await this.linkUserEndpoint(command, stateData, integration, credentials);
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : 'An unexpected error occurred during bot installation.';
+        const message = error instanceof Error ? error.message : String(error);
 
-        return {
-          type: ResponseTypeEnum.HTML,
-          result: this.buildErrorHtml(message),
-        };
+        if (message.includes('MS Teams bot installation failed')) {
+          return { type: ResponseTypeEnum.HTML, result: this.buildErrorHtml(message) };
+        }
+
+        throw error;
       }
+
+      this.logger.info(
+        `MS Teams link_user completed successfully: subscriberId=${stateData.subscriberId} integrationId=${integration._id}`
+      );
     } else {
       await this.createAdminConsentConnection(command, stateData, integration);
+      this.logger.info(
+        `MS Teams admin consent connection created: tenant=${command.tenant} integrationId=${integration._id} identifier=${stateData.identifier}`
+      );
 
       /*
        * After admin consent, if autoLinkUser is explicitly true and a subscriberId is
@@ -174,15 +185,21 @@ export class MsTeamsOauthCallback {
   private async installBotForUser(oid: string, credentials: ICredentialsEntity): Promise<void> {
     const { clientId, secretKey, tenantId } = credentials;
 
+    this.logger.info(`MS Teams bot install: acquiring graph token for clientId=${clientId} tenantId=${tenantId}`);
+
     const graphToken = await this.msTeamsTokenService.getGraphToken(
       clientId as string,
       secretKey as string,
       tenantId as string
     );
 
+    this.logger.info(`MS Teams bot install: resolving Teams app catalog ID for clientId=${clientId}`);
     const teamsAppId = await this.resolveTeamsAppId(graphToken, clientId as string);
 
+    this.logger.info(`MS Teams bot install: installing app teamsAppId=${teamsAppId} for userOid=${oid}`);
     await this.installAppForUser(graphToken, oid, teamsAppId);
+
+    this.logger.info(`MS Teams bot install: app installed successfully for userOid=${oid} teamsAppId=${teamsAppId}`);
   }
 
   private async resolveTeamsAppId(graphToken: string, azureClientId: string): Promise<string> {
@@ -208,9 +225,8 @@ export class MsTeamsOauthCallback {
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 403) {
         throw new BadRequestException(
-          'MS Teams bot installation failed: missing Azure permissions. ' +
-            'Please grant AppCatalog.Read.All and TeamsAppInstallation.ReadWriteSelfForUser.All ' +
-            'application permissions in Azure Portal and re-run admin consent.'
+          'MS Teams bot installation failed: missing AppCatalog.Read.All permission. ' +
+            'Please grant AppCatalog.Read.All application permission in Azure Portal and re-run admin consent.'
         );
       }
 
@@ -257,14 +273,16 @@ export class MsTeamsOauthCallback {
         const status = error.response?.status;
 
         if (status === 409) {
+          this.logger.info(
+            `MS Teams bot install: app already installed for userOid=${userOid} (409 conflict — skipping)`
+          );
+
           return;
         }
 
         if (status === 403) {
           throw new BadRequestException(
-            'MS Teams bot installation failed: missing Azure permissions. ' +
-              'Please grant TeamsAppInstallation.ReadWriteSelfForUser.All ' +
-              'application permission in Azure Portal and re-run admin consent.'
+            'MS Teams bot installation failed: the TeamsAppInstallation.ReadWriteSelfForUser.All permission has not yet propagated.'
           );
         }
 
@@ -290,6 +308,16 @@ export class MsTeamsOauthCallback {
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
 
+    const isPermissionError =
+      message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') || message.includes('AppCatalog.Read.All');
+    const cachingNote = isPermissionError
+      ? `
+  <div class="cache-note">
+    <strong>Azure permission changes may take time to propagate.</strong>
+    If you have already granted the required permissions, Azure AD can take up to <strong>60 minutes</strong> to apply the changes. Wait a few minutes and then try to <strong>Link Teams Identity</strong> again.
+  </div>`
+      : '';
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -300,12 +328,13 @@ export class MsTeamsOauthCallback {
     .error-box { background: #fff3f3; border: 1px solid #f5c6c6; border-radius: 8px; padding: 1.5rem; max-width: 560px; }
     h2 { margin: 0 0 0.75rem; color: #c0392b; font-size: 1.1rem; }
     p { margin: 0; line-height: 1.5; }
+    .cache-note { margin-top: 1rem; padding: 0.75rem 1rem; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; font-size: 0.9rem; line-height: 1.5; color: #7a5c00; }
   </style>
 </head>
 <body>
   <div class="error-box">
     <h2>MS Teams Bot Installation Failed</h2>
-    <p>${escaped}</p>
+    <p>${escaped}</p>${cachingNote}
   </div>
 </body>
 </html>`;

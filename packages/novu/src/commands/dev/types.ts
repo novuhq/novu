@@ -11,6 +11,7 @@ export type DevCommandOptions = {
   tunnel: string;
   headless: boolean;
   studio: boolean;
+  run?: string;
 };
 
 export type LocalTunnelResponse = {

@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 
 type AgentDetailsHeaderProps = {
@@ -20,6 +21,7 @@ type AgentDetailsHeaderProps = {
 
 export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentDetailsHeaderProps) {
   const has = useHasPermission();
+  const { readOnly } = useEnvironment();
   const canWrite = has({ permission: PermissionsEnum.AGENT_WRITE });
 
   if (isLoading || !agent) {
@@ -74,6 +76,7 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
               <DropdownMenuContent align="end">
                 <DropdownMenuItem
                   className="text-destructive cursor-pointer"
+                  disabled={readOnly}
                   onClick={() => {
                     setTimeout(() => onRequestDelete(agent), 0);
                   }}

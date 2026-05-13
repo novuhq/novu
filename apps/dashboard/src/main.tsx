@@ -2,7 +2,7 @@ import '@novu/maily-core/style.css';
 import { PermissionsEnum } from '@novu/shared';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import './index.css';
 
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
@@ -30,6 +30,12 @@ import {
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
+import {
+  DispatchApiKeysPage,
+  DispatchConversationsPage,
+  DispatchDashboardPage,
+  DispatchSettingsPage,
+} from '@/pages/dispatch';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { Landing1SignUpPage } from '@/pages/landing-1-signup';
@@ -43,6 +49,8 @@ import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
 import { AgentsPage } from './pages/agents';
+import { AgentsSetupPage } from './pages/agents-setup-page';
+import { AgentsUsecasePage } from './pages/agents-usecase-page';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
@@ -67,9 +75,11 @@ import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
 import { UpsertVariablePage } from './pages/upsert-variable';
+import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
+import { DispatchProtectedRoute } from './routes/dispatch-protected-route';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
 import { ROUTES } from './utils/routes';
@@ -134,6 +144,18 @@ const router = createBrowserRouter([
         path: '/onboarding',
         element: <OnboardingParentRoute />,
         children: [
+          {
+            path: ROUTES.USECASE_SELECT,
+            element: <UsecaseSelectPage />,
+          },
+          {
+            path: ROUTES.AGENTS_USECASE,
+            element: <AgentsUsecasePage />,
+          },
+          {
+            path: ROUTES.AGENTS_SETUP,
+            element: <AgentsSetupPage />,
+          },
           {
             path: ROUTES.INBOX_USECASE,
             element: <InboxUsecasePage />,
@@ -383,11 +405,12 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.DOMAINS,
-                element: !IS_SELF_HOSTED ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                element: !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.DOMAIN_DETAIL,
-                element: !IS_SELF_HOSTED ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
+                element:
+                  !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
               },
               {
                 path: ROUTES.API_KEYS,
@@ -575,6 +598,45 @@ const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
+              {
+                path: ROUTES.DISPATCH_HOME,
+                element: (
+                  <DispatchProtectedRoute>
+                    <Outlet />
+                  </DispatchProtectedRoute>
+                ),
+                children: [
+                  { index: true, element: <DispatchDashboardPage /> },
+                  { path: ROUTES.DISPATCH_AGENTS, element: <AgentsPage /> },
+                  {
+                    path: ROUTES.DISPATCH_AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.DISPATCH_AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.DISPATCH_AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  { path: ROUTES.DISPATCH_CONVERSATIONS, element: <DispatchConversationsPage /> },
+                  { path: ROUTES.DISPATCH_API_KEYS, element: <DispatchApiKeysPage /> },
+                  { path: ROUTES.DISPATCH_SETTINGS, element: <DispatchSettingsPage /> },
+                ],
+              },
 
               {
                 path: '*',
@@ -664,7 +726,11 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+
+if (!rootElement) throw new Error('Root element not found');
+
+createRoot(rootElement).render(
   <StrictMode>
     <FeatureFlagsProvider>
       <RouterProvider router={router} />

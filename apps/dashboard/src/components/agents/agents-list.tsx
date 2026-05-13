@@ -1,4 +1,4 @@
-import { DirectionEnum, PermissionsEnum } from '@novu/shared';
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
@@ -14,17 +14,23 @@ import {
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
+import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
 import { CreateAgentDialog } from '@/components/agents/create-agent-dialog';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { ListNoResults } from '@/components/list-no-results';
+import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
+import { APP_IDS } from '@/utils/apps';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
@@ -33,10 +39,13 @@ export function AgentsList() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const has = useHasPermission();
   const track = useTelemetry();
+  const agentRoutes = useAgentRoutes();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
+  const currentApp = useCurrentApp();
+  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -92,13 +101,18 @@ export function AgentsList() {
       showSuccessToast('Agent created', 'Your agent is ready to use.');
       setCreateOpen(false);
 
-      track(TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD, {
-        agentIdentifier: createdAgent.identifier,
-        active: createdAgent.active,
-      });
+      track(
+        isDispatchApp
+          ? TelemetryEvent.DISPATCH_AGENT_CREATED_FROM_DASHBOARD
+          : TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD,
+        {
+          agentIdentifier: createdAgent.identifier,
+          active: createdAgent.active,
+        }
+      );
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const agentDetailsPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+      const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
         environmentSlug: environment.slug ?? '',
         agentIdentifier: encodeURIComponent(createdAgent.identifier),
         agentTab: AGENT_DETAILS_DEFAULT_TAB,
@@ -120,7 +134,12 @@ export function AgentsList() {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
 
-      track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
+      track(
+        isDispatchApp
+          ? TelemetryEvent.DISPATCH_AGENT_DELETED_FROM_DASHBOARD
+          : TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD,
+        { agentIdentifier: identifier }
+      );
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const listKey = getAgentsListQueryKey(environment._id, {
@@ -208,7 +227,14 @@ export function AgentsList() {
   const showEmptyBlank = !listQuery.isError && !isLoading && !hasFilters && agents.length === 0;
   const showNoResults = !listQuery.isError && !isLoading && hasFilters && agents.length === 0;
 
+  const isProductionEnv =
+    Boolean(currentEnvironment) && (readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV);
+
   if (showEmptyBlank) {
+    if (isProductionEnv) {
+      return <AgentsProductionEmptyState />;
+    }
+
     return (
       <>
         <AgentsEmptyTeaser
@@ -246,17 +272,38 @@ export function AgentsList() {
           onChange={setSearch}
           placeholder="Search by identifier..."
         />
-        <PermissionButton
-          permission={PermissionsEnum.AGENT_WRITE}
-          size="xs"
-          variant="primary"
-          mode="gradient"
-          className="gap-1.5"
-          leadingIcon={RiRobot2Line}
-          onClick={() => setCreateOpen(true)}
-        >
-          Add Agent
-        </PermissionButton>
+        {isProductionEnv ? (
+          <Tooltip>
+            <TooltipTrigger className="cursor-not-allowed">
+              <Button size="xs" variant="primary" className="gap-1.5" leadingIcon={RiRobot2Line} disabled>
+                Add Agent
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-60">
+              {'Add agents in your development environment. '}
+              <a
+                href="https://docs.novu.co/platform/agents"
+                target="_blank"
+                rel="noreferrer noopener"
+                className="underline"
+              >
+                Learn More ↗
+              </a>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <PermissionButton
+            permission={PermissionsEnum.AGENT_WRITE}
+            size="xs"
+            variant="primary"
+            mode="gradient"
+            className="gap-1.5"
+            leadingIcon={RiRobot2Line}
+            onClick={() => setCreateOpen(true)}
+          >
+            Add Agent
+          </PermissionButton>
+        )}
       </div>
 
       {listQuery.isError ? (

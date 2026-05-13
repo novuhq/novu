@@ -171,7 +171,7 @@ export function InboundAddressConfig({
         </button>
       </div>
 
-      <p className="text-text-soft text-label-xs font-medium leading-4">
+      <p className="text-text-soft text-label-xs font-medium leading-4 max-w-[400px]">
         <Link to={domainsPath} className="text-text-sub underline">
           Configure custom domains
         </Link>

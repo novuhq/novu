@@ -13,11 +13,15 @@ import {
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
+import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { APP_IDS } from '@/utils/apps';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -215,13 +219,15 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly, oppositeEnvironment } = useEnvironment();
   const has = useHasPermission();
   const track = useTelemetry();
+  const agentRoutes = useAgentRoutes();
+  const currentApp = useCurrentApp();
+  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
+  const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
 
-  const canRemoveAgentIntegration = has({ permission: PermissionsEnum.AGENT_WRITE });
-
-  const integrationsHubPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+  const integrationsHubPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',
@@ -235,7 +241,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL, {
+      `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         integrationIdentifier: encodeURIComponent(nextIntegrationIdentifier),
@@ -288,7 +294,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL, {
+      `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         integrationIdentifier: encodeURIComponent(firstIntegrationIdentifier),
@@ -297,6 +303,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     );
   }, [
     agent.identifier,
+    agentRoutes.integrationDetail,
     currentEnvironment?.slug,
     linkedRows,
     listQuery.isSuccess,
@@ -330,11 +337,16 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       const name = removed?.integration.name ?? 'Integration';
 
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
-      track(TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD, {
-        agentIdentifier: agent.identifier,
-        agentIntegrationId,
-        integrationIdentifier: removed?.integration.identifier,
-      });
+      track(
+        isDispatchApp
+          ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD
+          : TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD,
+        {
+          agentIdentifier: agent.identifier,
+          agentIntegrationId,
+          integrationIdentifier: removed?.integration.identifier,
+        }
+      );
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
@@ -400,8 +412,25 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   return (
     <div className="flex min-w-0 w-full gap-6 px-6 pt-4">
       <aside className="w-[300px] shrink-0">
-        <div className="flex flex-col gap-4">
-          <div className="bg-bg-weak flex flex-col gap-2 rounded-[10px] p-1">
+        <div className="flex flex-col gap-2.5">
+          {readOnly && (
+            <InlineToast
+              variant="soft-warning"
+              description="Viewing in production"
+              ctaLabel="Switch to dev"
+              onCtaClick={() => {
+                if (!oppositeEnvironment?.slug) return;
+                navigate(
+                  buildRoute(agentRoutes.detailsTab, {
+                    environmentSlug: oppositeEnvironment.slug,
+                    agentIdentifier: encodeURIComponent(agent.identifier),
+                    agentTab: 'integrations',
+                  })
+                );
+              }}
+            />
+          )}
+          <div className="bg-bg-weak flex flex-col gap-2 rounded p-1 py-1.5">
             <p className="text-text-sub px-1 pt-1 text-label-xs font-medium leading-4">Connected providers</p>
             {isLoading ? (
               <>
@@ -468,26 +497,29 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
 
                 {links.length > 0 ? <div className="bg-stroke-weak h-px" role="presentation" /> : null}
 
-                <ProviderDropdown
-                  agentIdentifier={agent.identifier}
-                  selectedIntegrationId={selectedIntegration?.integration._id}
-                  linkedIntegrationIds={linkedIntegrationIdSet}
-                  excludeLinked
-                  onSelect={handleProviderDropdownSelect}
-                  renderTrigger={({ isBusy }) => (
-                    <button
-                      type="button"
-                      disabled={isBusy}
-                      className="bg-bg-white border-stroke-weak hover:border-stroke-soft text-text-sub flex h-auto w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left font-medium transition-colors disabled:opacity-60"
-                    >
-                      <span className="flex items-center gap-1.5">
-                        <RiAddLine className="size-4 shrink-0" aria-hidden />
-                        <span className="text-label-sm leading-5">Add provider</span>
-                      </span>
-                      <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
-                    </button>
-                  )}
-                />
+                {!readOnly && (
+                  <ProviderDropdown
+                    agentIdentifier={agent.identifier}
+                    agentName={agent.name}
+                    selectedIntegrationId={selectedIntegration?.integration._id}
+                    linkedIntegrationIds={linkedIntegrationIdSet}
+                    excludeLinked
+                    onSelect={handleProviderDropdownSelect}
+                    renderTrigger={({ isBusy }) => (
+                      <button
+                        type="button"
+                        disabled={isBusy}
+                        className="bg-bg-white border-stroke-weak hover:border-stroke-soft text-text-sub flex h-auto w-full items-center justify-between gap-1.5 rounded-md border px-2 py-1.5 text-left font-medium transition-colors disabled:opacity-60"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <RiAddLine className="size-4 shrink-0" aria-hidden />
+                          <span className="text-label-sm leading-5">Add provider</span>
+                        </span>
+                        <RiArrowRightSLine className="text-text-soft size-4 shrink-0" aria-hidden />
+                      </button>
+                    )}
+                  />
+                )}
               </>
             )}
           </div>

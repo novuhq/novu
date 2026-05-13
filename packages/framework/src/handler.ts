@@ -21,8 +21,16 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
-import type { Agent, AgentBridgeRequest, MessageContent } from './resources/agent';
-import { AgentContextImpl, AgentEventEnum } from './resources/agent';
+import type {
+  Agent,
+  AgentActionContext,
+  AgentBridgeRequest,
+  AgentMessageContext,
+  AgentReactionContext,
+  AgentResolveContext,
+  MessageContent,
+} from './resources/agent';
+import { AgentContextImpl, AgentDeliveryError, AgentEventEnum } from './resources/agent';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
 import { createHmacSubtle, initApiClient } from './utils';
 
@@ -226,7 +234,11 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         const ctx = new AgentContextImpl(body as AgentBridgeRequest, this.client.secretKey);
 
         const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
-          console.error(`[agent:${agentId}] Handler error:`, err);
+          if (err instanceof AgentDeliveryError) {
+            console.error(`[agent:${agentId}] ${err.message}`);
+          } else {
+            console.error(`[agent:${agentId}] Handler error:`, err);
+          }
         });
 
         if (waitUntil) {
@@ -305,21 +317,31 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   }
 
   private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
-    const handlerMap: Partial<Record<AgentEventEnum, (ctx: AgentContextImpl) => Awaitable<MessageContent | void>>> = {
-      [AgentEventEnum.ON_MESSAGE]: registeredAgent.handlers.onMessage,
-      [AgentEventEnum.ON_REACTION]: registeredAgent.handlers.onReaction,
-      [AgentEventEnum.ON_ACTION]: registeredAgent.handlers.onAction,
-      [AgentEventEnum.ON_RESOLVE]: registeredAgent.handlers.onResolve,
+    const replyIfPresent = async (result: MessageContent | void) => {
+      if (result != null) await ctx.reply(result);
     };
 
-    if (!Object.prototype.hasOwnProperty.call(handlerMap, event)) {
-      throw new InvalidActionError(event, AgentEventEnum);
-    }
-
-    const handler = handlerMap[event as AgentEventEnum];
-    if (handler) {
-      const result = await handler(ctx);
-      if (result != null) await ctx.reply(result);
+    switch (event) {
+      case AgentEventEnum.ON_MESSAGE:
+        await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
+        break;
+      case AgentEventEnum.ON_ACTION:
+        if (registeredAgent.handlers.onAction) {
+          await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));
+        }
+        break;
+      case AgentEventEnum.ON_REACTION:
+        if (registeredAgent.handlers.onReaction) {
+          await replyIfPresent(await registeredAgent.handlers.onReaction(ctx.reaction!, ctx as AgentReactionContext));
+        }
+        break;
+      case AgentEventEnum.ON_RESOLVE:
+        if (registeredAgent.handlers.onResolve) {
+          await replyIfPresent(await registeredAgent.handlers.onResolve(ctx as AgentResolveContext));
+        }
+        break;
+      default:
+        throw new InvalidActionError(event, AgentEventEnum);
     }
 
     await ctx.flush();

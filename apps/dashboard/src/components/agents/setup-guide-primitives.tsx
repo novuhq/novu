@@ -4,7 +4,8 @@ import { CheckCircle2, Loader } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
-import { RiArrowRightUpLine } from 'react-icons/ri';
+import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
+import { useSearchParams } from 'react-router-dom';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
@@ -19,6 +20,43 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { cn } from '@/utils/ui';
 import type { StepStatus } from './setup-guide-step-utils';
+
+export type SetupMode = 'quick' | 'manual';
+
+export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange: (m: SetupMode) => void }) {
+  return (
+    <div className="inline-flex w-fit items-start gap-px rounded-[5px] bg-bg-weak p-px">
+      <button
+        type="button"
+        aria-pressed={mode === 'quick'}
+        onClick={() => onChange('quick')}
+        className={cn(
+          'flex items-center gap-1.5 rounded-[4px] py-1 pl-1.5 pr-2 text-label-xs font-medium transition-colors',
+          mode === 'quick'
+            ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]'
+            : 'text-text-sub hover:text-text-strong'
+        )}
+      >
+        <RiFlashlightLine className="size-3.5" />
+        Quick Setup
+      </button>
+      <button
+        type="button"
+        aria-pressed={mode === 'manual'}
+        onClick={() => onChange('manual')}
+        className={cn(
+          'flex items-center gap-1.5 rounded-[4px] py-1 pl-1.5 pr-2 text-label-xs font-medium transition-colors',
+          mode === 'manual'
+            ? 'bg-bg-white text-text-strong shadow-[0_0_0_1px_rgba(0,0,0,0.08),0_1px_2px_-1px_rgba(0,0,0,0.08),0_2px_4px_0_rgba(0,0,0,0.04)]'
+            : 'text-text-sub hover:text-text-strong'
+        )}
+      >
+        <RiListCheck2 className="size-3.5" />
+        Manual Setup
+      </button>
+    </div>
+  );
+}
 
 function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
   if (status === 'completed') {
@@ -46,33 +84,38 @@ export function SetupStep({
   description,
   rightContent,
   extraContent,
+  fullWidthContent,
 }: {
   index: number;
   status: StepStatus;
   sectionLabel?: string;
-  title: string;
+  title: ReactNode;
   description: ReactNode;
   rightContent?: ReactNode;
   extraContent?: ReactNode;
+  fullWidthContent?: ReactNode;
 }) {
   return (
-    <div className="relative flex gap-5 pl-6">
+    <div className="relative flex flex-col gap-4 pl-6">
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
-      <div className="flex w-[400px] shrink-0 flex-col pr-12">
-        <div className="flex flex-col gap-2">
-          {sectionLabel && (
-            <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">
-              {sectionLabel}
-            </p>
-          )}
-          <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
-          <div className="text-text-soft text-label-xs font-medium leading-4">{description}</div>
+      <div className="flex gap-20">
+        <div className="flex min-w-0 max-w-[400px] flex-1 flex-col">
+          <div className="flex flex-col gap-2">
+            {sectionLabel && (
+              <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">
+                {sectionLabel}
+              </p>
+            )}
+            <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
+            <div className="text-text-soft text-label-xs font-medium leading-4">{description}</div>
+          </div>
+          {extraContent}
         </div>
-        {extraContent}
+        {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
       </div>
-      {rightContent && <div className="flex min-h-0 min-w-0 flex-1 flex-col items-start">{rightContent}</div>}
+      {fullWidthContent}
     </div>
   );
 }
@@ -247,7 +290,7 @@ export function ListeningStatus({
           />,
           document.body
         )}
-      <div className="flex flex-col gap-2 py-4 pl-8">
+      <div className="flex flex-col gap-2 py-4 pl-6">
         <div className="flex flex-col gap-3">
           {connectedAt ? (
             <div className="flex items-center gap-1">
@@ -279,18 +322,43 @@ export function IntegrationCredentialsSidebar({
   isOpen,
   onClose,
   onSaveSuccess,
+  agentOnboarding,
 }: {
   integrationId: string;
   isOpen: boolean;
   onClose: () => void;
   onSaveSuccess?: () => void;
+  agentOnboarding?: boolean;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
 
   const integration = integrations?.find((i) => i._id === integrationId);
   const provider = novuProviders?.find((p) => p.id === integration?.providerId);
+
+  useEffect(() => {
+    if (!agentOnboarding) {
+      return;
+    }
+
+    const hasAgentOnboardingParam = searchParams.get('agent_onboarding') === 'true';
+
+    if ((isOpen && hasAgentOnboardingParam) || (!isOpen && !searchParams.has('agent_onboarding'))) {
+      return;
+    }
+
+    const nextSearchParams = new URLSearchParams(searchParams);
+
+    if (isOpen) {
+      nextSearchParams.set('agent_onboarding', 'true');
+    } else {
+      nextSearchParams.delete('agent_onboarding');
+    }
+
+    setSearchParams(nextSearchParams, { replace: true });
+  }, [agentOnboarding, isOpen, searchParams, setSearchParams]);
 
   async function onSubmit(data: IntegrationFormData) {
     if (!integration) return;
@@ -327,6 +395,7 @@ export function IntegrationCredentialsSidebar({
           integration={integration}
           onSubmit={onSubmit}
           mode="update"
+          agentOnboarding={agentOnboarding}
           onFormStateChange={setFormState}
         />
       </div>
