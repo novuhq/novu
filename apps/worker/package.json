@@ -34,7 +34,7 @@
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/shared": "workspace:*",
-    "@novu/thalamus": "github:novuhq/thalamus#47ae86d58924599f114300fcbd2ed04bc95b6ebf",
+    "@novu/thalamus": "github:novuhq/thalamus#fae2d5c",
     "@novu/stateless": "workspace:*",
     "@novu/testing": "workspace:*",
     "@sentry/browser": "^8.33.1",

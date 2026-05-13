@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { ManagedAgentQueueService, PinoLogger } from '@novu/application-generic';
-import type { AgentEntity } from '@novu/dal';
 import type { AgentExecutionParams } from './bridge-executor.service';
 
 @Injectable()
@@ -12,7 +11,7 @@ export class ManagedExecutorService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(context: AgentExecutionParams, agent: AgentEntity): Promise<void> {
+  async execute(context: AgentExecutionParams, agent: { _id: string }): Promise<void> {
     await this.managedAgentQueue.add({
       name: String(agent._id),
       data: {

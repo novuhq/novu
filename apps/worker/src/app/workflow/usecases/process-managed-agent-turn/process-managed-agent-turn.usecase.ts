@@ -15,10 +15,13 @@ import {
 } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import {
+  CredentialExpiredError,
+  McpServerError,
   type Message,
   MessageRole,
   type Provider,
   SessionExpiredError,
+  ThalamusError,
   type Response as ThalamusResponse,
   thalamus,
 } from '@novu/thalamus';
@@ -43,7 +46,7 @@ export class ProcessManagedAgentTurn {
   async execute(command: ProcessManagedAgentTurnCommand): Promise<void> {
     const provider = await this.resolveProvider(command);
     const conversation = await this.loadConversation(command);
-    const response = await this.runTurn(provider, conversation, command);
+    const response = await this.runTurnOrFallback(provider, conversation, command);
 
     if (response.sessionId) {
       await this.conversationRepository.setExternalSessionIdIfMissing(
@@ -54,6 +57,24 @@ export class ProcessManagedAgentTurn {
     }
 
     await this.deliverReply(command, response.content);
+  }
+
+  private async runTurnOrFallback(
+    provider: Provider,
+    conversation: { _id: string; externalSessionId?: string | null },
+    command: ProcessManagedAgentTurnCommand
+  ): Promise<ThalamusResponse> {
+    try {
+      return await this.runTurn(provider, conversation, command);
+    } catch (err) {
+      if (err instanceof ThalamusError && err.isRetryable) {
+        throw err;
+      }
+
+      this.logger.error(err, `Managed agent turn failed for agent ${command.agentId}`);
+
+      return { content: this.buildErrorMessage(err), finishReason: 'error' };
+    }
   }
 
   private async resolveProvider(command: ProcessManagedAgentTurnCommand): Promise<Provider> {
@@ -138,6 +159,17 @@ export class ProcessManagedAgentTurn {
     return this.streamWithTimeout(provider, messagesWithHistory, undefined);
   }
 
+  private buildErrorMessage(err: unknown): string {
+    if (err instanceof CredentialExpiredError) {
+      return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
+    }
+    if (err instanceof McpServerError) {
+      return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
+    }
+
+    return 'The agent is temporarily unavailable. Please try again later.';
+  }
+
   private async buildMessagesWithHistory(command: ProcessManagedAgentTurnCommand): Promise<Message[]> {
     const history = await this.conversationActivityRepository.findByConversation(
       command.environmentId,
@@ -166,6 +198,8 @@ export class ProcessManagedAgentTurn {
     sessionId: string | undefined
   ): Promise<ThalamusResponse> {
     return Promise.race([
+      // TODO: how and when to send back to API? should we even sendback to API?
+      // each stream part has to render something to user probably, call HTTP call back to reply usecase after each?
       provider.stream({ messages, sessionId }),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Agent turn timed out')), MAX_TURN_MS)),
     ]);

@@ -28,7 +28,6 @@ export class ManagedAgentQueueService extends QueueBaseService {
         backoff: { delay: 5000, type: 'exponential' },
         removeOnComplete: true,
         removeOnFail: true,
-        timeout: 3 * 60 * 1000,
       },
     };
   }

@@ -311,7 +311,11 @@ export class AgentInboundHandler {
       this.conversationService.getHistory(config.environmentId, conversation._id),
     ]);
 
-    const agent = await this.agentRepository.findById(agentId, ['_id', 'runtime', 'managedRuntime']);
+    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+      '_id',
+      'runtime',
+      'managedRuntime',
+    ]);
     const executionContext = {
       event,
       config,
