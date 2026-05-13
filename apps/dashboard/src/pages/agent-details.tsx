@@ -40,6 +40,7 @@ import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS } from '@/utils/apps';
+import { DISPATCH_ONBOARDING_COMPLETED } from '@/utils/constants';
 import {
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
@@ -169,6 +170,16 @@ export function AgentDetailsPage() {
 
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
+
+  // Persist Dispatch onboarding completion once the user has finished setting up the agent
+  // (i.e. the agent has at least one connected integration on this page)
+  useEffect(() => {
+    if (!hasConnectedIntegration) {
+      return;
+    }
+
+    localStorage.setItem(DISPATCH_ONBOARDING_COMPLETED, 'true');
+  }, [hasConnectedIntegration]);
 
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
