@@ -206,7 +206,8 @@ export class UpdateIntegration {
 
     const haveConditions = updatePayload.conditions && updatePayload.conditions?.length > 0;
 
-    const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
+    const isChannelSupportsPrimary =
+      !!existingIntegration.channel && CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel);
     if (isActiveChanged && isChannelSupportsPrimary) {
       const { primary, priority } = await this.calculatePriorityAndPrimary({
         existingIntegration,

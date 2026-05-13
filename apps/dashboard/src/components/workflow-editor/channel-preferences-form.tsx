@@ -51,10 +51,7 @@ const CHANNEL_LABELS_LOOKUP: Record<`${ChannelTypeEnum}` | 'all', string> = {
   all: 'All',
 };
 
-const checkHasEveryChannelSameValue = (
-  channels: Record<ChannelTypeEnum, { enabled: boolean }>,
-  checkForEnabled: boolean
-) => {
+const checkHasEveryChannelSameValue = (channels: Record<string, { enabled: boolean }>, checkForEnabled: boolean) => {
   return Object.values(channels).every((channel) => channel.enabled === checkForEnabled);
 };
 

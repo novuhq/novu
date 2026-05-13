@@ -243,6 +243,7 @@ export class IntegrationsController {
           organizationId: user.organizationId,
           providerId: body.providerId,
           channel: body.channel,
+          kind: body.kind,
           credentials: body.credentials,
           active: body.active ?? false,
           check: body.check ?? false,

@@ -1,6 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { CredentialsDto, StepFilterDto } from '@novu/application-generic';
-import { ChannelTypeEnum, ICreateIntegrationBodyDto } from '@novu/shared';
+import { ChannelTypeEnum, ICreateIntegrationBodyDto, IntegrationKindEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -30,18 +30,27 @@ export class CreateIntegrationRequestDto implements ICreateIntegrationBodyDto {
   @IsMongoId()
   _environmentId?: string;
 
-  @ApiProperty({ type: String, description: 'The provider ID for the integration' })
+  @ApiPropertyOptional({ type: String, description: 'The provider ID for the integration' })
   @IsDefined()
   @IsString()
   providerId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     enum: ChannelTypeEnum,
-    description: 'The channel type for the integration',
+    description: 'The channel type for the integration. Not required for agent-kind integrations.',
   })
-  @IsDefined()
+  @IsOptional()
   @IsEnum(ChannelTypeEnum)
-  channel: ChannelTypeEnum;
+  channel?: ChannelTypeEnum;
+
+  @ApiPropertyOptional({
+    enum: IntegrationKindEnum,
+    description:
+      'Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not require a channel.',
+  })
+  @IsOptional()
+  @IsEnum(IntegrationKindEnum)
+  kind?: IntegrationKindEnum;
 
   @ApiPropertyOptional({
     type: CredentialsDto,

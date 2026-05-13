@@ -1,11 +1,12 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useOrganization, useUser } from '@clerk/clerk-react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiCalendarEventLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
 import { AgentBridgeConnectedIllustration } from '@/components/onboarding/agent-bridge-connected-illustration';
 import { AgentSetupIllustration } from '@/components/onboarding/agent-setup-illustration';
+import { ManagedRuntimeSetupGuide } from '@/components/onboarding/managed-runtime-setup-guide';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingSetupGuide } from '@/components/onboarding/onboarding-setup-guide';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
@@ -57,8 +58,11 @@ function useAgentEnvLoading(organizationId?: string) {
   return phase;
 }
 
+type OnboardingPath = 'undecided' | 'self-hosted' | 'managed';
+
 export function AgentsSetupPage() {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
   const navigate = useNavigate();
   const { user } = useUser();
   const { organization } = useOrganization();
@@ -87,6 +91,8 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.AGENTS_SETUP_PAGE_VIEWED);
   }, [telemetry]);
 
+  // When managed runtime flag is disabled, go straight to self-hosted path
+  const [onboardingPath, setOnboardingPath] = useState<OnboardingPath>(isManagedEnabled ? 'undecided' : 'self-hosted');
   const [bridgeConnected, setBridgeConnected] = useState(false);
 
   if (!isAgentsEnabled) {
@@ -156,9 +162,17 @@ export function AgentsSetupPage() {
         </div>
       </div>
 
-      <OnboardingSetupGuide onBridgeConnected={() => setBridgeConnected(true)} />
+      {/* Runtime chooser + managed config, or self-hosted bridge setup */}
+      {onboardingPath !== 'self-hosted' && (
+        <ManagedRuntimeSetupGuide
+          onSelfHostedSelected={() => setOnboardingPath('self-hosted')}
+          onManagedAgentCreated={() => setOnboardingPath('managed')}
+        />
+      )}
 
-      {bridgeConnected && (
+      {onboardingPath === 'self-hosted' && <OnboardingSetupGuide onBridgeConnected={() => setBridgeConnected(true)} />}
+
+      {(bridgeConnected || onboardingPath === 'managed') && (
         <div className="mt-6 pb-10">
           <Button
             className="text-label-xs gap-1 rounded-lg p-2"
@@ -177,7 +191,8 @@ export function AgentsSetupPage() {
     </>
   );
 
-  const rightContent = bridgeConnected ? <AgentBridgeConnectedIllustration /> : <AgentSetupIllustration />;
+  const rightContent =
+    bridgeConnected || onboardingPath === 'managed' ? <AgentBridgeConnectedIllustration /> : <AgentSetupIllustration />;
 
   return <OnboardingShell left={leftContent} right={rightContent} maxLeftWidth="860px" alignLeft="top" />;
 }

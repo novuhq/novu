@@ -1454,3 +1454,23 @@ export const cmTelecomConfig: IConfigCredential[] = [
   },
   ...smsConfigBase,
 ];
+
+// ─── Agent Runtime Providers ─────────────────────────────────────────────────
+
+export const anthropicAgentConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'Anthropic API Key',
+    description: 'Your Anthropic API key. Used to authenticate with the Anthropic platform.',
+    placeholder: 'sk-ant-...',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ExternalEnvironmentId,
+    displayName: 'Anthropic Environment ID',
+    description: 'The Anthropic environment ID auto-provisioned for this integration. Read-only.',
+    type: 'string',
+    required: false,
+  },
+];
