@@ -27,15 +27,15 @@ import {
 import type { AgentBridgeRequest } from '@novu/framework';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import sinon from 'sinon';
-import { BridgeExecutorParams, BridgeExecutorService, NoBridgeUrlError } from '../../services/bridge-executor.service';
+import { AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from '../../services/bridge-executor.service';
 
 interface BridgeExecutorInternals {
   resolveBridgeUrl: (
-    config: BridgeExecutorParams['config'],
+    config: AgentExecutionParams['config'],
     agentIdentifier: string,
-    event: BridgeExecutorParams['event']
+    event: AgentExecutionParams['event']
   ) => string | null;
-  buildPayload: (params: BridgeExecutorParams) => Promise<AgentBridgeRequest>;
+  buildPayload: (params: AgentExecutionParams) => Promise<AgentBridgeRequest>;
   getDecryptedSecretKey: GetDecryptedSecretKey;
 }
 
@@ -43,16 +43,16 @@ export interface BridgeExecutorStubHandle {
   /** Resolves once every dispatched bridge call has settled (success or failure). */
   drain: () => Promise<void>;
   /** Recorded params for assertions. */
-  calls: BridgeExecutorParams[];
+  calls: AgentExecutionParams[];
 }
 
 export function stubBridgeExecutorWithRealHttp(bridgeExecutor: BridgeExecutorService): BridgeExecutorStubHandle {
-  const calls: BridgeExecutorParams[] = [];
+  const calls: AgentExecutionParams[] = [];
   const inflight = new Set<Promise<unknown>>();
 
   const internals = bridgeExecutor as unknown as BridgeExecutorInternals;
 
-  sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: BridgeExecutorParams) => {
+  sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {
     calls.push(params);
 
     const agentIdentifier = params.config.agentIdentifier;

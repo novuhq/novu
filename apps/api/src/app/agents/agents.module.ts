@@ -22,7 +22,7 @@ import { AgentInboundHandler } from './services/agent-inbound-handler.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
 import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
-import { ManagedRuntimeService } from './services/managed-runtime.service';
+import { ManagedExecutorService } from './services/managed-executor.service';
 import { USE_CASES } from './usecases';
 
 @Module({
@@ -43,7 +43,7 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
-    ManagedRuntimeService,
+    ManagedExecutorService,
     ChatSdkService,
   ],
   exports: [...USE_CASES, ChatSdkService],
