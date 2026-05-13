@@ -142,7 +142,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'List all integrations',
     description:
-      'List all the channels integrations created in the organization. Only integration metadata is returned, no credentials.',
+      'List all the channels integrations created in the organization. Only integration metadata is returned, credentials are not returned.',
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -169,7 +169,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'List active integrations',
     description:
-      'List all the active integrations created in the organization. Only integration metadata is returned, no credentials.',
+      'List all the active integrations created in the organization. Only integration metadata is returned, credentials are not returned.',
   })
   @ExternalApiAccessible()
   @SdkMethodName('listActive')
@@ -223,7 +223,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Create an integration',
     description: `Create an integration for the current environment the user is based on the API key provided. 
-    Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, no credentials.`,
+    Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials are not returned.`,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -278,7 +278,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Update an integration',
     description: `Update an integration by its unique key identifier **integrationId**. 
-    Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, no credentials.`,
+    Each provider supports different credentials, check the provider documentation for more details. Only integration metadata is returned, credentials are not returned.`,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -334,7 +334,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Auto-configure an integration for inbound webhooks',
     description: `Auto-configure an integration by its unique key identifier **integrationId** for inbound webhook support. 
-    This will automatically generate required webhook signing keys and configure webhook endpoints. Only integration metadata is returned, no credentials.`,
+    This will automatically generate required webhook signing keys and configure webhook endpoints. Only integration metadata is returned, credentials are not returned.`,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -364,7 +364,7 @@ export class IntegrationsController {
     description: `Update an integration as **primary** by its unique key identifier **integrationId**. 
     This API will set the integration as primary for that channel in the current environment. 
     Primary integration is used to deliver notification for sms and email channels in the workflow. 
-    Only integration metadata is returned, no credentials.`,
+    Only integration metadata is returned, credentials are not returned.`,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -398,7 +398,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Delete an integration',
     description: `Delete an integration by its unique key identifier **integrationId**. 
-    This action is irreversible. Only integration metadata is returned, no credentials.`,
+    This action is irreversible. Only integration metadata is returned, credentials are not returned.`,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
