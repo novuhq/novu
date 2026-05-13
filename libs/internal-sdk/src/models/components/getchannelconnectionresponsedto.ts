@@ -7,7 +7,10 @@ import { safeParse } from "../../lib/schemas.js";
 import { ClosedEnum } from "../../types/enums.js";
 import { Result as SafeParseResult } from "../../types/fp.js";
 import { SDKValidationError } from "../errors/sdkvalidationerror.js";
-import { AuthDto, AuthDto$inboundSchema } from "./authdto.js";
+import {
+  AuthResponseDto,
+  AuthResponseDto$inboundSchema,
+} from "./authdto.js";
 import { WorkspaceDto, WorkspaceDto$inboundSchema } from "./workspacedto.js";
 
 /**
@@ -141,7 +144,7 @@ export type GetChannelConnectionResponseDto = {
    */
   contextKeys: Array<string>;
   workspace: WorkspaceDto;
-  auth: AuthDto;
+  auth: AuthResponseDto;
   /**
    * The timestamp indicating when the channel endpoint was created, in ISO 8601 format.
    */
@@ -173,7 +176,7 @@ export const GetChannelConnectionResponseDto$inboundSchema: z.ZodType<
   subscriberId: z.nullable(z.string()),
   contextKeys: z.array(z.string()),
   workspace: WorkspaceDto$inboundSchema,
-  auth: AuthDto$inboundSchema,
+  auth: AuthResponseDto$inboundSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
 });
