@@ -1,6 +1,6 @@
 import { FeatureFlagsKeysEnum, SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage, slugify } from '@novu/shared';
 import type { FormEvent, ReactNode } from 'react';
-import { useId, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import {
   RiArrowRightSLine,
   RiArrowRightUpLine,
@@ -145,9 +145,18 @@ type CreateAgentDialogProps = {
   onOpenChange: (open: boolean) => void;
   onSubmit: (body: CreateAgentForm) => Promise<void>;
   isSubmitting: boolean;
+  initialName?: string;
+  initialInstructions?: string;
 };
 
-export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }: CreateAgentDialogProps) {
+export function CreateAgentDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  isSubmitting,
+  initialName,
+  initialInstructions,
+}: CreateAgentDialogProps) {
   const formId = useId();
   const nameId = `${formId}-name`;
   const identifierId = `${formId}-identifier`;
@@ -157,9 +166,9 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
 
   const [runtime, setRuntime] = useState<RuntimeType>('scratch');
   const [mode, setMode] = useState<CreateAgentMode>('create');
-  const [name, setName] = useState('');
-  const [identifier, setIdentifier] = useState('');
-  const [instructions, setInstructions] = useState('');
+  const [name, setName] = useState(initialName ?? '');
+  const [identifier, setIdentifier] = useState(initialName ? slugify(initialName) : '');
+  const [instructions, setInstructions] = useState(initialInstructions ?? '');
   const [apiKey, setApiKey] = useState('');
   const [externalAgentId, setExternalAgentId] = useState('');
   const [externalEnvironmentId, setExternalEnvironmentId] = useState('');
@@ -173,6 +182,17 @@ export function CreateAgentDialog({ open, onOpenChange, onSubmit, isSubmitting }
   };
 
   const visibleTemplates = AGENT_TEMPLATES.slice(templateOffset, templateOffset + 4);
+
+  // Seed the form fields from initial props when the dialog opens.
+  useEffect(() => {
+    if (!open) return;
+
+    setName(initialName ?? '');
+    setIdentifier(initialName ? slugify(initialName) : '');
+    setInstructions(initialInstructions ?? '');
+    setIsIdentifierTouched(false);
+    setErrors({});
+  }, [open, initialName, initialInstructions]);
 
   const reset = () => {
     setRuntime('scratch');

@@ -1,11 +1,17 @@
 {
   "version": 1,
   "skills": {
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
     "linear-release-setup": {
       "source": "linear/linear-release",
       "sourceType": "github",
       "skillPath": "skills/linear-release-setup/SKILL.md",
-      "computedHash": "4af0fca2bc5abe8847eb74eee5e5372ada84ca674ee7c84a75f5809bbb7367a8"
+      "computedHash": "f6e1b7c9779323210fd4800a10049b30c87bc34bf254acbae606d6dea3f4478d"
     }
   }
 }

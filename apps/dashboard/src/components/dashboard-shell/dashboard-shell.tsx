@@ -127,7 +127,7 @@ export function DashboardShell({
             hideRestItems
           />
         ) : (
-          <Breadcrumb className="min-w-0 my-3 mx-2.5">
+          <Breadcrumb className="min-w-0 py-3 px-2.5 pb-[10px] border-b border-b-neutral-200">
             <BreadcrumbList>
               {dispatchBreadcrumbItems.map((item, index) => {
                 const isLast = index === dispatchLastIndex;
