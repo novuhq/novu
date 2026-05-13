@@ -155,4 +155,27 @@ describe('uploadAttachmentsToS3', () => {
     const signedUrlCall = getSignedUrlStub.getCall(0);
     expect(signedUrlCall.args[2].expiresIn).to.equal(customTtl);
   });
+
+  it('produces deterministic storage keys across retries for the same messageId and filename', async () => {
+    const attachment = { filename: 'doc.pdf', contentType: 'application/pdf', content: Buffer.from('data') };
+
+    const first = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [attachment]);
+    const second = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [attachment]);
+
+    expect(first.uploaded[0].storagePath).to.equal(second.uploaded[0].storagePath);
+  });
+
+  it('drops attachment with unsupported content shape without throwing', async () => {
+    const attachment = {
+      filename: 'weird.bin',
+      contentType: 'application/octet-stream',
+      content: { unexpected: 'shape' } as unknown as Buffer,
+    };
+
+    const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [attachment]);
+
+    expect(result.uploaded).to.have.length(0);
+    expect(result.failedCount).to.equal(0);
+    sinon.assert.notCalled(s3SendStub);
+  });
 });

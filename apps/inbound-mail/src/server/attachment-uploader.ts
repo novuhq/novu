@@ -1,6 +1,5 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { randomUUID } from 'crypto';
 import pino from 'pino';
 
 const logger = pino();
@@ -17,6 +16,11 @@ export interface UploadedAttachment {
   storagePath: string;
 }
 
+interface SerializedBuffer {
+  type: 'Buffer';
+  data: number[];
+}
+
 function buildS3Client(): S3Client {
   return new S3Client({
     region: process.env.S3_REGION,
@@ -29,12 +33,17 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 200);
 }
 
+/*
+ * SMTP MTAs retry delivery with the same Message-ID, so the storage key MUST
+ * be a deterministic function of (messageId, filename). Using a random UUID
+ * or wall-clock date would create duplicate S3 objects on retry instead of
+ * idempotently overwriting via PutObject.
+ */
 function buildStorageKey(messageId: string, filename: string): string {
-  const date = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-  const uuid = randomUUID();
-  const safe = sanitizeFilename(filename || 'attachment');
+  const safeFilename = sanitizeFilename(filename || 'attachment');
+  const safeMessageId = sanitizeFilename(messageId);
 
-  return `inbound-mail/${date}/${sanitizeFilename(messageId)}/${uuid}-${safe}`;
+  return `inbound-mail/${safeMessageId}/${safeFilename}`;
 }
 
 function getTtlSeconds(): number {
@@ -47,16 +56,24 @@ function getTtlSeconds(): number {
   return MAX_PRESIGNED_URL_TTL_SECONDS;
 }
 
+function isSerializedBuffer(value: unknown): value is SerializedBuffer {
+  if (typeof value !== 'object' || value === null) {
+    return false;
+  }
+
+  const candidate = value as { type?: unknown; data?: unknown };
+
+  return candidate.type === 'Buffer' && Array.isArray(candidate.data);
+}
+
 async function uploadSingle(
   s3: S3Client,
   bucket: string,
   messageId: string,
-  attachment: { filename?: string; contentType?: string; content?: Buffer | { type: 'Buffer'; data: number[] } }
+  attachment: { filename?: string; contentType?: string; content?: Buffer | SerializedBuffer | string }
 ): Promise<UploadedAttachment | null> {
   const filename = attachment.filename || 'attachment';
   const contentType = attachment.contentType || 'application/octet-stream';
-
-  let content: Buffer;
 
   if (!attachment.content) {
     logger.warn({ context: LOG_CONTEXT, filename }, 'Attachment has no content, skipping upload');
@@ -64,12 +81,18 @@ async function uploadSingle(
     return null;
   }
 
+  let content: Buffer;
+
   if (Buffer.isBuffer(attachment.content)) {
     content = attachment.content;
-  } else if (attachment.content && (attachment.content as { type: string; data: number[] }).type === 'Buffer') {
-    content = Buffer.from((attachment.content as { type: string; data: number[] }).data);
+  } else if (isSerializedBuffer(attachment.content)) {
+    content = Buffer.from(attachment.content.data);
+  } else if (typeof attachment.content === 'string') {
+    content = Buffer.from(attachment.content);
   } else {
-    content = Buffer.from(attachment.content as unknown as string);
+    logger.warn({ context: LOG_CONTEXT, filename }, 'Attachment content has unsupported shape, skipping upload');
+
+    return null;
   }
 
   const storagePath = buildStorageKey(messageId, filename);
@@ -123,7 +146,7 @@ export async function uploadAttachmentsToS3(
           s3,
           bucket,
           messageId,
-          attachment as { filename?: string; contentType?: string; content?: Buffer }
+          attachment as { filename?: string; contentType?: string; content?: Buffer | SerializedBuffer | string }
         );
       } catch (err) {
         failedCount += 1;

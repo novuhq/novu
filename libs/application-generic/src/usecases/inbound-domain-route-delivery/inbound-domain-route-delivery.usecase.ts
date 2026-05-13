@@ -18,12 +18,13 @@ import { AttachmentRehydrator } from './attachment-rehydrator';
 
 const LOG_CONTEXT = 'InboundDomainRouteDelivery';
 
-export type RoutableDomain = Pick<
-  DomainEntity,
-  '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
->;
+export interface RoutableDomain
+  extends Pick<
+    DomainEntity,
+    '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
+  > {}
 
-export type InboundDomainRouteMailInput = {
+export interface InboundDomainRouteMailInput {
   from: IFrom[];
   to: ITo[];
   subject: string;
@@ -36,9 +37,9 @@ export type InboundDomainRouteMailInput = {
   references?: string | string[];
   date: Date;
   cc?: unknown[];
-};
+}
 
-export type DomainRouteWebhookPayload = {
+export interface DomainRouteWebhookPayload {
   domain: {
     id: string;
     name: string;
@@ -63,7 +64,7 @@ export type DomainRouteWebhookPayload = {
     date: Date;
     cc?: unknown[];
   };
-};
+}
 
 @Injectable()
 export class InboundDomainRouteDelivery {

@@ -292,6 +292,21 @@ class Mailin extends events.EventEmitter {
                         { context: LOG_CONTEXT, connectionId: connection.id, failedCount },
                         `${connection.id} ${failedCount} attachment(s) failed to upload to S3 and were dropped`
                       );
+
+                      /*
+                       * When INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true, signal a transient
+                       * SMTP failure (4xx) so the sending MTA retries delivery rather than
+                       * silently dropping attachments. Because buildStorageKey is deterministic
+                       * by (messageId, filename), retries idempotently overwrite the same S3
+                       * key on success.
+                       */
+                      if (process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true') {
+                        const error: Error & { responseCode?: number } = new Error(
+                          `Attachment upload failed: ${failedCount} attachment(s) could not be stored`
+                        );
+                        error.responseCode = 451;
+                        throw error;
+                      }
                     }
                   }
 
