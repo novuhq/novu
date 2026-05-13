@@ -11,13 +11,13 @@ import { decryptApiKey, encryptApiKey } from './encrypt-provider';
  */
 const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken', 'signingSecret', 'clientSecret'] as const;
 
-export type ChannelConnectionAuth = {
+export interface ChannelConnectionAuth {
   accessToken?: string;
   refreshToken?: string;
   signingSecret?: string;
   clientSecret?: string;
   [key: string]: unknown;
-};
+}
 
 function transformSecureFields<T extends object>(auth: T, transform: (value: string) => string): T {
   const result: Record<string, unknown> = { ...(auth as Record<string, unknown>) };

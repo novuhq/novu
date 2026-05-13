@@ -19,8 +19,9 @@ describe('Channel Connection auth security — token redaction & at-rest encrypt
 
   /**
    * Regression for the GHSA-cg43-fcgr-x9m8 advisory — a caller with INTEGRATION_READ
-   * must never receive the raw provider access token from any of the 5 channel-connection
-   * endpoints. We assert at the response level that the body shape is presence-only.
+   * must never receive the raw provider access token. We cover all 4 endpoints that
+   * actually emit a body (retrieve, list, create, update); the 5th endpoint (delete)
+   * returns 204 with no body, so there is no auth shape to assert on.
    */
   describe('Layer 2 — DTO redaction', () => {
     it('GET /channel-connections/:id does not echo accessToken in plaintext', async () => {
