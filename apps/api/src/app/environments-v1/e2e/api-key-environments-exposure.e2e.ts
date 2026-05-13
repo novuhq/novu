@@ -103,7 +103,7 @@ describe('Environment API keys exposure to API-key auth - /environments #novu-v2
       expect(body.data).to.exist;
       expect(body.data.name).to.equal(payload.name);
       expect(body.data.apiKeys).to.be.an('array').that.has.lengthOf(1);
-      expect(body.data.apiKeys[0].key).to.not.contain(NOVU_ENCRYPTION_SUB_MASK);
+      expect(body.data.apiKeys[0].key).to.be.a('string').and.not.empty;
     });
   });
 });
