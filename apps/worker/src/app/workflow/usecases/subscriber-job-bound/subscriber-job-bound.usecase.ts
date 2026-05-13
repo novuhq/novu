@@ -168,7 +168,12 @@ export class SubscriberJobBound {
     }
 
     if (topics && topics.length > 0) {
-      const evaluatedTopics = await this.evaluateTopicPreferences(command, topics, template._id);
+      const evaluatedTopics = await this.evaluateTopicPreferences(
+        command,
+        topics,
+        template._id,
+        subscriberProcessed._id
+      );
 
       if (evaluatedTopics === null) {
         return;
@@ -373,7 +378,8 @@ export class SubscriberJobBound {
   private async evaluateTopicPreferences(
     command: SubscriberJobBoundCommand,
     topics: SubscriberTopicPreference[],
-    templateId: string
+    templateId: string,
+    subscriberId: string
   ): Promise<SubscriberTopicPreference[] | null> {
     const evaluatedTopics: SubscriberTopicPreference[] = [];
     let filteredCount = 0;
@@ -388,7 +394,8 @@ export class SubscriberJobBound {
         command,
         topic._topicSubscriptionId,
         topic.subscriptionIdentifier,
-        templateId
+        templateId,
+        subscriberId
       );
 
       if (!evaluationResult.result) {
@@ -424,7 +431,8 @@ export class SubscriberJobBound {
     command: SubscriberJobBoundCommand,
     internalSubscriptionId: string,
     subscriptionIdentifier: string,
-    templateId: string
+    templateId: string,
+    subscriberId: string
   ): Promise<TopicPreferenceEvaluation> {
     try {
       const useContextFiltering = await this.featureFlagsService.getFlag({
@@ -437,9 +445,12 @@ export class SubscriberJobBound {
         enabled: useContextFiltering,
       });
 
+      // Defense in depth: scope the preference lookup to the authenticated subscriber
+      // so any cross-bound (forged) records that may exist in the database are ignored.
       const subscriptionPreference = await this.preferencesRepository.findOne({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
+        _subscriberId: subscriberId,
         _templateId: templateId,
         _topicSubscriptionId: internalSubscriptionId,
         type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,

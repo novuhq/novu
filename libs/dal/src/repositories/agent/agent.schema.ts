@@ -43,7 +43,7 @@ const agentSchema = new Schema<AgentDBModel>(
     },
     creationSource: {
       type: Schema.Types.String,
-      enum: ['platform', 'dispatch'],
+      enum: ['platform', 'connect'],
       default: 'platform',
     },
     _organizationId: {

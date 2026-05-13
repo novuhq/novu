@@ -1,22 +1,22 @@
-import { DirectionEnum, EnvironmentTypeEnum, IntegrationKindEnum, PermissionsEnum } from '@novu/shared';
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AGENTS_LIST_QUERY_KEY,
   type AgentResponse,
+  type CreateAgentBody,
   createAgent,
   deleteAgent,
   getAgentsListQueryKey,
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { createIntegration } from '@/api/integrations';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
-import { CreateAgentDialog, type CreateAgentDialogSubmitBody } from '@/components/agents/create-agent-dialog';
+import { CreateAgentDialog } from '@/components/agents/create-agent-dialog';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { ListNoResults } from '@/components/list-no-results';
 import { Button } from '@/components/primitives/button';
@@ -53,7 +53,39 @@ export function AgentsList() {
   const [before, setBefore] = useState<string | undefined>();
   const [limit, setLimit] = useState(12);
   const [createOpen, setCreateOpen] = useState(false);
+  const [initialCreateValues, setInitialCreateValues] = useState<{ name?: string; description?: string }>({});
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Allow external links (e.g. dispatch dashboard) to open the create dialog with prefilled values
+  // via `?create=1&name=...&description=...`. Consume the params once and strip them from the URL.
+  useEffect(() => {
+    if (searchParams.get('create') !== '1') return;
+
+    const nextName = searchParams.get('name') ?? undefined;
+    const nextDescription = searchParams.get('description') ?? undefined;
+
+    setInitialCreateValues({ name: nextName, description: nextDescription });
+    setCreateOpen(true);
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('create');
+    nextParams.delete('name');
+    nextParams.delete('description');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const handleCreateOpenChange = useCallback((next: boolean) => {
+    setCreateOpen(next);
+
+    if (!next) {
+      setInitialCreateValues({});
+    }
+  }, []);
+
+  const memoizedInitialName = useMemo(() => initialCreateValues.name, [initialCreateValues.name]);
+  const memoizedInitialDescription = useMemo(() => initialCreateValues.description, [initialCreateValues.description]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -94,48 +126,12 @@ export function AgentsList() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (body: CreateAgentDialogSubmitBody) => {
-      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-
-      const { apiKey, ...agentBody } = body;
-
-      if (body.runtime === 'managed' && apiKey) {
-        const { managedRuntime } = agentBody;
-        const providerId = managedRuntime?.providerId ?? 'anthropic';
-
-        // Step 1: Create the integration + provision the Claude environment
-        const integrationResponse = await createIntegration(
-          {
-            providerId,
-            kind: IntegrationKindEnum.AGENT,
-            credentials: { apiKey },
-            configurations: {},
-            name: `${providerId}-managed`,
-            active: true,
-            _environmentId: environment._id,
-          },
-          environment
-        );
-
-        const integrationId = integrationResponse.data._id;
-
-        // Step 2: Create the agent referencing the provisioned integration
-        return createAgent(environment, {
-          ...agentBody,
-          managedRuntime: {
-            providerId,
-            ...managedRuntime,
-            integrationId,
-          } satisfies import('@/api/agents').CreateManagedRuntimeBody,
-        });
-      }
-
-      return createAgent(environment, agentBody as import('@/api/agents').CreateAgentBody);
-    },
+    mutationFn: (body: CreateAgentBody) =>
+      createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body),
     onSuccess: async (createdAgent) => {
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       showSuccessToast('Agent created', 'Your agent is ready to use.');
-      setCreateOpen(false);
+      handleCreateOpenChange(false);
 
       track(
         isDispatchApp
@@ -164,11 +160,9 @@ export function AgentsList() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider: boolean }) =>
-      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
-        deleteFromProvider,
-      }),
-    onSuccess: async (_, { identifier }) => {
+    mutationFn: (identifier: string) =>
+      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
+    onSuccess: async (_, identifier) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
 
@@ -179,7 +173,34 @@ export function AgentsList() {
         { agentIdentifier: identifier }
       );
 
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+      const listKey = getAgentsListQueryKey(environment._id, {
+        after,
+        before,
+        limit,
+        identifier: debouncedSearch,
+      });
+
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+
+      const refreshed = await queryClient.fetchQuery({
+        queryKey: listKey,
+        queryFn: () =>
+          listAgents({
+            environment,
+            limit,
+            after,
+            before,
+            orderBy: 'updatedAt',
+            orderDirection: DirectionEnum.DESC,
+            identifier: debouncedSearch || undefined,
+          }),
+      });
+
+      if (refreshed.data.length === 0 && refreshed.previous) {
+        setBefore(refreshed.previous);
+        setAfter(undefined);
+      }
     },
     onError: (err: Error) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not delete agent.';
@@ -217,7 +238,7 @@ export function AgentsList() {
   }, []);
 
   const handleCreateSubmit = useCallback(
-    async (body: CreateAgentDialogSubmitBody) => {
+    async (body: CreateAgentBody) => {
       await createMutation.mutateAsync(body);
     },
     [createMutation]
@@ -241,13 +262,13 @@ export function AgentsList() {
   const isProductionEnv =
     Boolean(currentEnvironment) && (readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV);
 
-  if (showEmptyBlank) {
-    if (isProductionEnv) {
-      return <AgentsProductionEmptyState />;
-    }
+  const renderContent = () => {
+    if (showEmptyBlank) {
+      if (isProductionEnv) {
+        return <AgentsProductionEmptyState />;
+      }
 
-    return (
-      <>
+      return (
         <AgentsEmptyTeaser
           cta={
             <PermissionButton
@@ -262,98 +283,100 @@ export function AgentsList() {
             </PermissionButton>
           }
         />
-        <CreateAgentDialog
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          onSubmit={handleCreateSubmit}
-          isSubmitting={createMutation.isPending}
-        />
-      </>
+      );
+    }
+
+    return (
+      <div className="flex flex-col gap-2 py-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <FacetedFormFilter
+            type="text"
+            size="small"
+            title="Search"
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by identifier..."
+          />
+          {isProductionEnv ? (
+            <Tooltip>
+              <TooltipTrigger className="cursor-not-allowed">
+                <Button size="xs" variant="primary" className="gap-1.5" leadingIcon={RiRobot2Line} disabled>
+                  Add Agent
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-60">
+                {'Add agents in your development environment. '}
+                <a
+                  href="https://docs.novu.co/platform/agents"
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="underline"
+                >
+                  Learn More ↗
+                </a>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <PermissionButton
+              permission={PermissionsEnum.AGENT_WRITE}
+              size="xs"
+              variant="primary"
+              mode="gradient"
+              className="gap-1.5"
+              leadingIcon={RiRobot2Line}
+              onClick={() => setCreateOpen(true)}
+            >
+              Add Agent
+            </PermissionButton>
+          )}
+        </div>
+
+        {listQuery.isError ? (
+          <div className="text-error-base text-label-sm">Could not load agents. Try again later.</div>
+        ) : null}
+
+        {showNoResults ? (
+          <ListNoResults
+            title="No agents found"
+            description="Try a different identifier search."
+            onClearFilters={() => setSearch('')}
+          />
+        ) : null}
+
+        {!listQuery.isError && !showNoResults ? (
+          <AgentsTable
+            agents={agents}
+            isLoading={isLoading}
+            onRequestDelete={setAgentToDelete}
+            paginationProps={{
+              pageSize: limit,
+              pageSizeOptions: PAGE_SIZE_OPTIONS,
+              currentItemsCount: agents.length,
+              onPreviousPage: handlePreviousPage,
+              onNextPage: handleNextPage,
+              onPageSizeChange: handlePageSizeChange,
+              hasPreviousPage: Boolean(data?.previous),
+              hasNextPage: Boolean(data?.next),
+              totalCount: data?.totalCount,
+              totalCountCapped: data?.totalCountCapped,
+            }}
+          />
+        ) : null}
+      </div>
     );
-  }
+  };
 
   return (
-    <div className="flex flex-col gap-2 py-2">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <FacetedFormFilter
-          type="text"
-          size="small"
-          title="Search"
-          value={search}
-          onChange={setSearch}
-          placeholder="Search by identifier..."
-        />
-        {isProductionEnv ? (
-          <Tooltip>
-            <TooltipTrigger className="cursor-not-allowed">
-              <Button size="xs" variant="primary" className="gap-1.5" leadingIcon={RiRobot2Line} disabled>
-                Add Agent
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-60">
-              {'Add agents in your development environment. '}
-              <a
-                href="https://docs.novu.co/platform/agents"
-                target="_blank"
-                rel="noreferrer noopener"
-                className="underline"
-              >
-                Learn More ↗
-              </a>
-            </TooltipContent>
-          </Tooltip>
-        ) : (
-          <PermissionButton
-            permission={PermissionsEnum.AGENT_WRITE}
-            size="xs"
-            variant="primary"
-            mode="gradient"
-            className="gap-1.5"
-            leadingIcon={RiRobot2Line}
-            onClick={() => setCreateOpen(true)}
-          >
-            Add Agent
-          </PermissionButton>
-        )}
-      </div>
-
-      {listQuery.isError ? (
-        <div className="text-error-base text-label-sm">Could not load agents. Try again later.</div>
-      ) : null}
-
-      {showNoResults ? (
-        <ListNoResults
-          title="No agents found"
-          description="Try a different identifier search."
-          onClearFilters={() => setSearch('')}
-        />
-      ) : null}
-
-      {!listQuery.isError && !showNoResults ? (
-        <AgentsTable
-          agents={agents}
-          isLoading={isLoading}
-          onRequestDelete={setAgentToDelete}
-          paginationProps={{
-            pageSize: limit,
-            pageSizeOptions: PAGE_SIZE_OPTIONS,
-            currentItemsCount: agents.length,
-            onPreviousPage: handlePreviousPage,
-            onNextPage: handleNextPage,
-            onPageSizeChange: handlePageSizeChange,
-            hasPreviousPage: Boolean(data?.previous),
-            hasNextPage: Boolean(data?.next),
-            totalCount: data?.totalCount,
-            totalCountCapped: data?.totalCountCapped,
-          }}
-        />
-      ) : null}
+    <>
+      {renderContent()}
 
       <CreateAgentDialog
         open={createOpen}
-        onOpenChange={setCreateOpen}
+        onOpenChange={handleCreateOpenChange}
         onSubmit={handleCreateSubmit}
         isSubmitting={createMutation.isPending}
+        initialName={memoizedInitialName}
+        initialDescription={memoizedInitialDescription}
       />
 
       <DeleteAgentDialog
@@ -363,16 +386,15 @@ export function AgentsList() {
             setAgentToDelete(null);
           }
         }}
-        onConfirm={(deleteFromProvider) => {
+        onConfirm={() => {
           if (agentToDelete) {
-            deleteMutation.mutate({ identifier: agentToDelete.identifier, deleteFromProvider });
+            deleteMutation.mutate(agentToDelete.identifier);
           }
         }}
         agentName={agentToDelete?.name ?? ''}
         agentIdentifier={agentToDelete?.identifier ?? ''}
         isDeleting={deleteMutation.isPending}
-        isManagedAgent={agentToDelete?.runtime === 'managed'}
       />
-    </div>
+    </>
   );
 }

@@ -1,0 +1,145 @@
+import { DirectionEnum } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import {
+  type AgentResponse,
+  getAgentIntegrationsQueryKey,
+  getAgentsListQueryKey,
+  listAgentIntegrations,
+  listAgents,
+} from '@/api/agents';
+import { getConversationsList } from '@/api/conversations';
+import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { DISPATCH_ONBOARDING_COMPLETED } from '@/utils/constants';
+
+export type DispatchSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
+
+export type DispatchSetupStepStatus = 'completed' | 'pending';
+
+export type DispatchSetupStep = {
+  id: DispatchSetupStepId;
+  title: string;
+  description: string;
+  status: DispatchSetupStepStatus;
+  /**
+   * Whether this step is associated with an actionable CTA in the UI.
+   * `setup-channel` is only actionable when there is exactly one agent and zero connected channels.
+   */
+  ctaAvailable: boolean;
+  /** The agent identifier to use for the CTA when `ctaAvailable` is true. Only set for `setup-channel`. */
+  agentIdentifier?: string;
+};
+
+export type UseDispatchSetupStepsResult = {
+  steps: DispatchSetupStep[];
+  isComplete: boolean;
+  isLoading: boolean;
+};
+
+const AGENTS_PEEK_PARAMS = { after: undefined, before: undefined, limit: 2, identifier: '' };
+
+export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
+  const { currentEnvironment } = useEnvironment();
+
+  const agentsQuery = useQuery({
+    queryKey: getAgentsListQueryKey(currentEnvironment?._id, AGENTS_PEEK_PARAMS),
+    queryFn: () =>
+      listAgents({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        limit: 2,
+        orderBy: 'updatedAt',
+        orderDirection: DirectionEnum.DESC,
+      }),
+    enabled: !!currentEnvironment,
+  });
+
+  const agents: AgentResponse[] = agentsQuery.data?.data ?? [];
+  const hasAgent = agents.length > 0;
+  const onlyAgent = agents.length === 1 ? agents[0] : undefined;
+
+  const agentIntegrationsQuery = useQuery({
+    queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, onlyAgent?.identifier),
+    queryFn: () =>
+      listAgentIntegrations({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        // biome-ignore lint/style/noNonNullAssertion: guarded by `enabled` below
+        agentIdentifier: onlyAgent!.identifier,
+        limit: 50,
+      }),
+    enabled: !!currentEnvironment && !!onlyAgent,
+  });
+
+  const hasConnectedChannelOnOnlyAgent = useMemo(() => {
+    const links = agentIntegrationsQuery.data?.data ?? [];
+
+    return links.some((link) => Boolean(link.connectedAt));
+  }, [agentIntegrationsQuery.data?.data]);
+
+  const conversationsQuery = useQuery({
+    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, 'dispatch-setup-steps'],
+    queryFn: ({ signal }) =>
+      getConversationsList({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        limit: 1,
+        signal,
+      }),
+    enabled: !!currentEnvironment,
+    retry: false,
+  });
+
+  const hasAnyConversation =
+    (conversationsQuery.data?.totalCount ?? 0) > 0 || (conversationsQuery.data?.data?.length ?? 0) > 0;
+
+  const addAgentCompleted = hasAgent;
+  const setupChannelCompleted = hasAgent && hasConnectedChannelOnOnlyAgent;
+  const sendMessageCompleted = hasAnyConversation;
+  const setupChannelCtaAvailable = agents.length === 1 && !hasConnectedChannelOnOnlyAgent;
+  const agentSetupComplete = addAgentCompleted && setupChannelCompleted;
+
+  const steps = useMemo<DispatchSetupStep[]>(
+    () => [
+      {
+        id: 'create-account',
+        title: 'Create your account',
+        description: "You're signed in and ready to set up Dispatch.",
+        status: 'completed',
+        ctaAvailable: false,
+      },
+      {
+        id: 'add-agent',
+        title: 'Add an agent',
+        description: 'Create your first agent to start conversing with subscribers.',
+        status: addAgentCompleted ? 'completed' : 'pending',
+        ctaAvailable: !addAgentCompleted,
+      },
+      {
+        id: 'setup-channel',
+        title: 'Setup a channel',
+        description: 'Connect a provider so your agent can send and receive messages.',
+        status: setupChannelCompleted ? 'completed' : 'pending',
+        ctaAvailable: setupChannelCtaAvailable,
+        agentIdentifier: setupChannelCtaAvailable ? onlyAgent?.identifier : undefined,
+      },
+      {
+        id: 'send-first-message',
+        title: 'Send your first message',
+        description: 'Start a conversation with one of your subscribers.',
+        status: sendMessageCompleted ? 'completed' : 'pending',
+        ctaAvailable: false,
+      },
+    ],
+    [addAgentCompleted, onlyAgent?.identifier, sendMessageCompleted, setupChannelCompleted, setupChannelCtaAvailable]
+  );
+
+  // Only block on agents loading — conversations / integrations errors should never hide the section.
+  // The persisted `DISPATCH_ONBOARDING_COMPLETED` flag is written from `agent-details.tsx` once the
+  // user finishes setting up an agent there; here we only read it to keep the section hidden.
+  const isLoading = agentsQuery.isLoading;
+
+  return {
+    steps,
+    isComplete: localStorage.getItem(DISPATCH_ONBOARDING_COMPLETED) === 'true' || agentSetupComplete,
+    isLoading: isLoading || !agentsQuery.data,
+  };
+}
