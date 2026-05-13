@@ -28,7 +28,11 @@ export class GetMyEnvironments {
     return environments.map((environment) => {
       const processedEnvironment = { ...environment };
 
-      processedEnvironment.apiKeys = command.returnApiKeys ? this.decryptApiKeys(environment.apiKeys) : [];
+      const isApiKeysEnvironmentMatch =
+        !command.apiKeysEnvironmentId || environment._id === command.apiKeysEnvironmentId;
+
+      processedEnvironment.apiKeys =
+        command.returnApiKeys && isApiKeysEnvironmentMatch ? this.decryptApiKeys(environment.apiKeys) : [];
 
       const shortEnvName = shortenEnvironmentName(processedEnvironment.name);
 

@@ -4,9 +4,9 @@ import { expect } from 'chai';
 
 /**
  * Regression coverage for NV-7641 (originally fixed in NV-2380 / PR #3640):
- * An environment-scoped API key must never receive decrypted API keys for any
- * environment, regardless of RBAC state. A Development API key calling
- * GET /v1/environments must not be able to recover the Production API key.
+ * An environment-scoped API key must only receive the decrypted API key for
+ * its own environment - never for sibling environments. A Development API key
+ * calling GET /v1/environments must not be able to recover the Production API key.
  *
  * Session-token (JWT/dashboard) callers must keep receiving decrypted API keys
  * for every environment in the organization so the env switcher continues to work.
@@ -20,13 +20,25 @@ describe('Environment API keys exposure to API-key auth - /environments #novu-v2
   });
 
   describe('GET /v1/environments', () => {
-    it('should return empty apiKeys for every environment when authenticated with an API key', async () => {
+    it('should return the decrypted apiKey only for the caller environment when authenticated with an API key', async () => {
       const { body } = await session.testAgent.get('/v1/environments').set('authorization', `ApiKey ${session.apiKey}`);
 
       expect(body.data.length).to.be.greaterThanOrEqual(2);
-      for (const environment of body.data) {
-        expect(environment.apiKeys).to.be.an('array');
-        expect(environment.apiKeys).to.have.lengthOf(0);
+
+      const callerEnvironment = body.data.find(
+        (environment: { _id: string }) => environment._id === session.environment._id
+      );
+      const siblingEnvironments = body.data.filter(
+        (environment: { _id: string }) => environment._id !== session.environment._id
+      );
+
+      expect(callerEnvironment, 'Expected caller environment in response').to.exist;
+      expect(callerEnvironment.apiKeys).to.be.an('array').that.has.lengthOf(1);
+      expect(callerEnvironment.apiKeys[0].key).to.not.contain(NOVU_ENCRYPTION_SUB_MASK);
+
+      expect(siblingEnvironments.length).to.be.greaterThanOrEqual(1);
+      for (const environment of siblingEnvironments) {
+        expect(environment.apiKeys).to.be.an('array').that.has.lengthOf(0);
       }
     });
 
@@ -38,6 +50,7 @@ describe('Environment API keys exposure to API-key auth - /environments #novu-v2
       );
 
       expect(productionEnvironment, 'Expected Production environment fixture').to.exist;
+      expect(productionEnvironment._id).to.not.equal(session.environment._id);
       expect(productionEnvironment.apiKeys).to.be.an('array').that.has.lengthOf(0);
     });
 
