@@ -18,6 +18,7 @@ import {
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import {
+  ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
@@ -232,6 +233,17 @@ export class EnvironmentsControllerV1 {
   }
 
   private async canUserAccessApiKeys(user: UserSessionData): Promise<boolean> {
+    /*
+     * API-key auth must never receive decrypted API keys (own or sibling environments),
+     * regardless of RBAC state. API keys grant ALL_PERMISSIONS in `community.auth.service.ts`,
+     * which would otherwise allow the RBAC path below to succeed and leak Production API keys
+     * to any caller holding a Development API key. Restores the environment isolation boundary
+     * that was originally fixed in NV-2380.
+     */
+    if (user.scheme === ApiAuthSchemeEnum.API_KEY) {
+      return false;
+    }
+
     const organization = await this.organizationRepository.findOne({
       _id: user.organizationId,
     });
