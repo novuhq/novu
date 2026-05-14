@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Lint GitHub Actions workflows for two footguns:
+Lint GitHub Actions workflows for three footguns:
 
   1. Long-lived AWS credentials (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY).
      Must use OIDC (`role-to-assume`) except for files in STATIC_AWS_ALLOWLIST.
@@ -12,14 +12,22 @@ Lint GitHub Actions workflows for two footguns:
      the shell source. This check emits warnings by default; pass `--strict` to
      make it blocking once the rest of the repo has been cleaned up.
 
+  3. Unpinned `uses:` references. Every external action must be pinned to a
+     full 40-character commit SHA (with the human-readable tag preserved as a
+     trailing `# vX.Y.Z` comment) so a hijacked tag cannot silently inject
+     code into our CI. Local refs (`./...`) and docker refs (`docker://...`)
+     are exempt. This check is ALWAYS blocking.
+
 Run locally:  python3 .github/workflows/scripts/check-workflow-security.py
-CI:           same; exits 1 only if an AWS static-key regression sneaks in.
+CI:           same; exits 1 only if an AWS static-key regression or
+              unpinned-action regression sneaks in.
 Strict mode:  python3 .github/workflows/scripts/check-workflow-security.py --strict
 """
 from __future__ import annotations
 import argparse, pathlib, re, sys
 
 WORKFLOW_DIR = pathlib.Path(".github/workflows")
+COMPOSITE_ACTION_DIR = pathlib.Path(".github/actions")
 
 # Files that are allowed to keep static AWS keys for now.
 STATIC_AWS_ALLOWLIST = {
@@ -35,6 +43,9 @@ UNSAFE_EXPR = re.compile(
     r"\$\{\{\s*(github\.event\.inputs\.[A-Za-z0-9_]+|inputs\.[A-Za-z0-9_]+|"
     r"github\.event\.(issue|pull_request|comment|head_commit)\.[A-Za-z0-9_.]+)\s*}}"
 )
+
+USES_RE = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)")
+SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
 def find_run_block_ranges(lines: list[str]) -> list[tuple[int, int]]:
@@ -64,6 +75,31 @@ def find_run_block_ranges(lines: list[str]) -> list[tuple[int, int]]:
     return ranges
 
 
+def check_action_pinning(path: pathlib.Path, lines: list[str], errors: list[str]) -> None:
+    """Every external `uses:` ref must be pinned to a 40-char commit SHA."""
+    for idx, line in enumerate(lines, start=1):
+        m = USES_RE.match(line)
+        if not m:
+            continue
+        ref = m.group(1)
+        if ref.startswith(("./", "../")) or ref.startswith("docker://"):
+            continue
+        if "@" not in ref:
+            errors.append(
+                f"{path}:{idx}: `uses: {ref}` is missing an `@<sha>` pin "
+                f"\u2014 use `owner/repo@<40-char-sha> # tag` instead"
+            )
+            continue
+        _, sha = ref.rsplit("@", 1)
+        if not SHA_RE.match(sha):
+            errors.append(
+                f"{path}:{idx}: `uses: {ref}` is not pinned to a 40-char commit "
+                f"SHA \u2014 use `owner/repo@<40-char-sha> # {sha}` instead "
+                f"(see https://docs.github.com/en/actions/security-guides/"
+                f"security-hardening-for-github-actions#using-third-party-actions)"
+            )
+
+
 def check_file(path: pathlib.Path) -> tuple[list[str], list[str]]:
     """Returns (errors, warnings) for a single workflow file."""
     errors: list[str] = []
@@ -78,6 +114,8 @@ def check_file(path: pathlib.Path) -> tuple[list[str], list[str]]:
                         f"{path}:{idx}: static AWS credential `{pat.pattern}` "
                         f"found \u2014 use OIDC (role-to-assume) instead"
                     )
+
+    check_action_pinning(path, lines, errors)
 
     for start, end in find_run_block_ranges(lines):
         for idx in range(start, end + 1):
@@ -103,9 +141,13 @@ def main() -> int:
         print(f"No workflow directory at {WORKFLOW_DIR}", file=sys.stderr)
         return 2
 
+    paths: list[pathlib.Path] = list(WORKFLOW_DIR.glob("*.y*ml"))
+    if COMPOSITE_ACTION_DIR.is_dir():
+        paths.extend(COMPOSITE_ACTION_DIR.rglob("action.y*ml"))
+
     all_errors: list[str] = []
     all_warnings: list[str] = []
-    for path in sorted(WORKFLOW_DIR.glob("*.y*ml")):
+    for path in sorted(set(paths)):
         errs, warns = check_file(path)
         all_errors.extend(errs)
         all_warnings.extend(warns)
@@ -128,7 +170,7 @@ def main() -> int:
         return 1
 
     print(
-        f"OK: no static AWS credential regressions "
+        f"OK: no static AWS credential or unpinned-action regressions "
         f"({len(all_warnings)} injection warnings not failing the build)."
     )
     return 0
