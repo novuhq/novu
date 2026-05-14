@@ -132,12 +132,30 @@ jobs:
           write_var REACT_APP_NEW_DASHBOARD_URL          "$REACT_APP_NEW_DASHBOARD_URL"
           write_var REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID  "$REACT_APP_PLAIN_SUPPORT_CHAT_APP_ID"
 
-          # Append extra environment variables if provided
+          # Append extra environment variables if provided.
+          # Each entry is validated against KEY=VALUE (and must be single-line)
+          # so malformed input cannot smuggle additional lines into the
+          # generated .env file.
           if [ -n "$INPUT_EXTRA_ENV_VARIABLES" ]; then
             echo "Adding extra environment variables..."
             IFS='|' read -ra VARS <<< "$INPUT_EXTRA_ENV_VARIABLES"
             for var in "${VARS[@]}"; do
-              printf '%s\n' "$var" >> .env
+              # Trim leading/trailing whitespace.
+              var="${var#"${var%%[![:space:]]*}"}"
+              var="${var%"${var##*[![:space:]]}"}"
+              if [ -z "$var" ]; then
+                continue
+              fi
+              if [[ "$var" == *$'\n'* ]] || [[ "$var" == *$'\r'* ]]; then
+                echo "Error: extra env variable entry must be single-line: '$var'"
+                exit 1
+              fi
+              if [[ "$var" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]]; then
+                printf '%s\n' "$var" >> .env
+              else
+                echo "Error: invalid extra env variable entry (expected KEY=VALUE): '$var'"
+                exit 1
+              fi
             done
           fi
       - name: Envsetup

@@ -78,6 +78,7 @@ jobs:
     steps:
       - name: Validate Selected Services
         env:
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
           INPUT_DEPLOY_API: ${{ github.event.inputs.deploy_api }}
           INPUT_DEPLOY_WORKER: ${{ github.event.inputs.deploy_worker }}
           INPUT_DEPLOY_WS: ${{ github.event.inputs.deploy_ws }}
@@ -95,13 +96,13 @@ jobs:
 
           # webhook and inbound-mail only have infra in staging-eu, prod-us, prod-eu.
           # Fail fast if someone selects them with an unsupported environment.
-          if [ "${{ github.event.inputs.deploy_webhook }}" = "true" ] || \
-             [ "${{ github.event.inputs.deploy_inbound_mail }}" = "true" ]; then
-            case "${{ github.event.inputs.environment }}" in
+          if [ "$INPUT_DEPLOY_WEBHOOK" = "true" ] || \
+             [ "$INPUT_DEPLOY_INBOUND_MAIL" = "true" ]; then
+            case "$INPUT_ENVIRONMENT" in
               staging|production-us|production-eu|production-us-and-eu) ;;
               *)
                 echo "Error: webhook and inbound-mail can only deploy to staging, production-us, production-eu, or production-us-and-eu."
-                echo "Selected environment: ${{ github.event.inputs.environment }}"
+                echo "Selected environment: $INPUT_ENVIRONMENT"
                 exit 1
                 ;;
             esac
@@ -117,6 +118,7 @@ jobs:
           INPUT_DEPLOY_WORKER: ${{ github.event.inputs.deploy_worker }}
           INPUT_DEPLOY_WS: ${{ github.event.inputs.deploy_ws }}
           INPUT_DEPLOY_WEBHOOK: ${{ github.event.inputs.deploy_webhook }}
+          INPUT_DEPLOY_INBOUND_MAIL: ${{ github.event.inputs.deploy_inbound_mail }}
         run: |
           envs=()
           services=()
@@ -178,7 +180,7 @@ jobs:
           if [ "$INPUT_DEPLOY_WEBHOOK" == "true" ]; then
             services+=("\"webhook\"")
           fi
-          if [ "${{ github.event.inputs.deploy_inbound_mail }}" == "true" ]; then
+          if [ "$INPUT_DEPLOY_INBOUND_MAIL" == "true" ]; then
             services+=("\"inbound-mail\"")
           fi
 

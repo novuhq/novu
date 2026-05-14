@@ -48,12 +48,21 @@ USES_RE = re.compile(r"^\s*-?\s*uses:\s*([^\s#]+)")
 SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
 
+RUN_BLOCK_RE = re.compile(r"(\s*)(-\s+)?run:\s*[|>][+-]?\s*$")
+RUN_INLINE_RE = re.compile(r"\s*(-\s+)?run:\s+(.+\S)\s*$")
+
+
 def find_run_block_ranges(lines: list[str]) -> list[tuple[int, int]]:
-    """Return (start, end) 0-based inclusive indices for each `run: |` body."""
+    """Return (start, end) 0-based inclusive indices for each `run:` body.
+
+    Captures both multiline `run: |` / `run: >` bodies and single-line inline
+    `run: echo ...` commands (returned as start == end == that line index) so
+    downstream injection scans cover both forms.
+    """
     ranges: list[tuple[int, int]] = []
     i = 0
     while i < len(lines):
-        m = re.match(r"(\s*)(-\s+)?run:\s*[|>][+-]?\s*$", lines[i])
+        m = RUN_BLOCK_RE.match(lines[i])
         if m:
             indent = len(m.group(1))
             start = i + 1
@@ -71,6 +80,8 @@ def find_run_block_ranges(lines: list[str]) -> list[tuple[int, int]]:
                 ranges.append((start, j - 1))
             i = j
             continue
+        if RUN_INLINE_RE.match(lines[i]):
+            ranges.append((i, i))
         i += 1
     return ranges
 

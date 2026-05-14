@@ -96,6 +96,7 @@ jobs:
     steps:
       - name: Validate Selected Services
         env:
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
           INPUT_ROLLBACK_API: ${{ github.event.inputs.rollback_api }}
           INPUT_ROLLBACK_WORKER: ${{ github.event.inputs.rollback_worker }}
           INPUT_ROLLBACK_WS: ${{ github.event.inputs.rollback_ws }}
@@ -112,13 +113,13 @@ jobs:
           fi
 
           # webhook and inbound-mail only have infra in staging-eu, prod-us, prod-eu.
-          if [ "${{ github.event.inputs.rollback_webhook }}" = "true" ] || \
-             [ "${{ github.event.inputs.rollback_inbound_mail }}" = "true" ]; then
-            case "${{ github.event.inputs.environment }}" in
+          if [ "$INPUT_ROLLBACK_WEBHOOK" = "true" ] || \
+             [ "$INPUT_ROLLBACK_INBOUND_MAIL" = "true" ]; then
+            case "$INPUT_ENVIRONMENT" in
               staging|production-us|production-eu|production-us-and-eu) ;;
               *)
                 echo "Error: webhook and inbound-mail can only rollback in staging, production-us, production-eu, or production-us-and-eu."
-                echo "Selected environment: ${{ github.event.inputs.environment }}"
+                echo "Selected environment: $INPUT_ENVIRONMENT"
                 exit 1
                 ;;
             esac
@@ -134,6 +135,7 @@ jobs:
           INPUT_ROLLBACK_WORKER: ${{ github.event.inputs.rollback_worker }}
           INPUT_ROLLBACK_WS: ${{ github.event.inputs.rollback_ws }}
           INPUT_ROLLBACK_WEBHOOK: ${{ github.event.inputs.rollback_webhook }}
+          INPUT_ROLLBACK_INBOUND_MAIL: ${{ github.event.inputs.rollback_inbound_mail }}
         run: |
           envs=()
           services=()
@@ -192,7 +194,7 @@ jobs:
           if [ "$INPUT_ROLLBACK_WEBHOOK" == "true" ]; then
             services+=("\"webhook\"")
           fi
-          if [ "${{ github.event.inputs.rollback_inbound_mail }}" == "true" ]; then
+          if [ "$INPUT_ROLLBACK_INBOUND_MAIL" == "true" ]; then
             services+=("\"inbound-mail\"")
           fi
 
