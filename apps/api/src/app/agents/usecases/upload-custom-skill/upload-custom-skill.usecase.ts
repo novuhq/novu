@@ -2,29 +2,45 @@ import { BadRequestException, Injectable, NotFoundException, UnprocessableEntity
 import {
   decryptCredentials,
   getAgentRuntimeProvider,
+  type IAgentRuntimeProvider,
   PinoLogger,
   type UploadSkillFile,
 } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 
+import type { UploadCustomSkillSourceType } from '../../dtos/upload-custom-skill.dto';
 import {
+  assertRepoSlug,
+  buildRepoSkillDisplayTitle,
   buildSkillDisplayTitle,
+  type DiscoveredSkillBundle,
+  discoverSkillBundles,
   downloadGithubTarball,
   extractSkillBundle,
   parseGithubUrl,
+  parseSkillNameFromFrontmatter,
 } from '../../utils/github-skill-bundle';
 import { buildInlineSkillBundle } from '../../utils/inline-skill-bundle';
 import { UploadCustomSkillCommand, type UploadCustomSkillSource } from './upload-custom-skill.command';
 
-export type UploadCustomSkillResult = {
+export type UploadedSkillEntry = {
   skillId: string;
-  /** Latest version identifier returned by the provider, when available. */
   version: string | null;
+  source: {
+    type: UploadCustomSkillSourceType;
+    path?: string;
+    name?: string;
+  };
+};
+
+export type UploadCustomSkillResult = {
+  skills: UploadedSkillEntry[];
 };
 
 type ResolvedSkillBundle = {
   files: UploadSkillFile[];
   displayTitle: string | undefined;
+  source: UploadedSkillEntry['source'];
 };
 
 @Injectable()
@@ -58,47 +74,106 @@ export class UploadCustomSkill {
       );
     }
 
-    const bundle = await this.resolveBundle(command.source);
+    const bundles = await this.resolveBundles(command.source);
 
     const provider = getAgentRuntimeProvider(integration.providerId, decryptedCredentials.apiKey);
-
-    const result = await provider.uploadSkill({
-      files: bundle.files,
-      displayTitle: bundle.displayTitle,
-    });
+    const uploaded = await this.uploadBundlesStrict(provider, bundles);
 
     this.logger.info(
       {
         integrationId: command.integrationId,
         providerId: integration.providerId,
         sourceType: command.source.type,
-        skillId: result.skillId,
-        version: result.version,
+        uploaded: uploaded.length,
       },
-      'Uploaded custom skill'
+      'Uploaded custom skill(s)'
     );
 
-    return { skillId: result.skillId, version: result.version };
+    return { skills: uploaded };
   }
 
-  private async resolveBundle(source: UploadCustomSkillSource): Promise<ResolvedSkillBundle> {
+  private async resolveBundles(source: UploadCustomSkillSource): Promise<ResolvedSkillBundle[]> {
     switch (source.type) {
-      case 'github': {
+      case 'github-url': {
         const parsed = this.parseSourceUrl(source.url);
         const tarball = await this.downloadTarball(parsed);
         const files = await this.extractFiles(tarball, parsed.subPath);
+        const name = this.readBundleName(files);
 
-        return { files, displayTitle: buildSkillDisplayTitle(parsed) };
+        return [
+          {
+            files,
+            displayTitle: buildSkillDisplayTitle(parsed),
+            source: {
+              type: 'github-url',
+              path: parsed.subPath.length > 0 ? parsed.subPath : undefined,
+              name: name ?? undefined,
+            },
+          },
+        ];
       }
-      case 'inline':
-        return buildInlineSkillBundle(source.content);
+      case 'github-repo': {
+        const { owner, repo } = this.parseRepoSlug(source.repo);
+        const tarball = await this.downloadTarball({ owner, repo, ref: 'HEAD', subPath: '' });
+        const discovered = await this.discoverBundles(tarball, source.skills);
+
+        return discovered.map((bundle) => ({
+          files: bundle.files,
+          displayTitle: buildRepoSkillDisplayTitle(owner, repo, bundle.path),
+          source: {
+            type: 'github-repo',
+            path: bundle.path.length > 0 ? bundle.path : undefined,
+            name: bundle.name ?? undefined,
+          },
+        }));
+      }
+      case 'inline': {
+        const inline = buildInlineSkillBundle(source.content);
+
+        return [
+          {
+            files: inline.files,
+            displayTitle: inline.displayTitle,
+            source: {
+              type: 'inline',
+              name: inline.name ?? undefined,
+            },
+          },
+        ];
+      }
       default: {
-        // Exhaustiveness check — class-validator should have rejected unknown
-        // discriminators before this line, but the compiler can't prove that.
         const exhaustiveCheck: never = source;
         throw new BadRequestException(`Unsupported skill source type: ${JSON.stringify(exhaustiveCheck)}`);
       }
     }
+  }
+
+  /**
+   * Uploads bundles sequentially, in input order. The first per-skill failure
+   * aborts the batch with no rollback — already-uploaded skills remain on the
+   * provider. Subsequent re-uploads will auto-version them (see Anthropic's
+   * `isDuplicateDisplayTitleError` branch in the provider).
+   */
+  private async uploadBundlesStrict(
+    provider: IAgentRuntimeProvider,
+    bundles: ResolvedSkillBundle[]
+  ): Promise<UploadedSkillEntry[]> {
+    const results: UploadedSkillEntry[] = [];
+
+    for (const bundle of bundles) {
+      const result = await provider.uploadSkill({
+        files: bundle.files,
+        displayTitle: bundle.displayTitle,
+      });
+
+      results.push({
+        skillId: result.skillId,
+        version: result.version,
+        source: bundle.source,
+      });
+    }
+
+    return results;
   }
 
   private parseSourceUrl(url: string) {
@@ -110,7 +185,16 @@ export class UploadCustomSkill {
     }
   }
 
-  private async downloadTarball(parsed: ReturnType<typeof parseGithubUrl>) {
+  private parseRepoSlug(repo: string) {
+    try {
+      return assertRepoSlug(repo);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Invalid GitHub repository slug.';
+      throw new BadRequestException(`Invalid GitHub repository slug: ${message}`);
+    }
+  }
+
+  private async downloadTarball(parsed: { owner: string; repo: string; ref: string; subPath: string }) {
     try {
       return await downloadGithubTarball(parsed);
     } catch (err) {
@@ -126,5 +210,24 @@ export class UploadCustomSkill {
       const message = err instanceof Error ? err.message : 'Failed to extract skill bundle.';
       throw new BadRequestException(message);
     }
+  }
+
+  private async discoverBundles(tarball: Buffer, basenames?: string[]): Promise<DiscoveredSkillBundle[]> {
+    try {
+      return await discoverSkillBundles(tarball, { basenames });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to discover skill bundles.';
+      throw new BadRequestException(message);
+    }
+  }
+
+  private readBundleName(files: UploadSkillFile[]): string | null {
+    const skillMd = files.find((f) => f.path === 'SKILL.md');
+
+    if (!skillMd) {
+      return null;
+    }
+
+    return parseSkillNameFromFrontmatter(skillMd.content.toString('utf8'));
   }
 }

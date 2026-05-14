@@ -30,6 +30,10 @@ description: A PDF helper skill used in e2e tests.
 Helpful instructions go here.
 `;
 
+function buildSkillMd(name: string): string {
+  return `---\nname: ${name}\ndescription: ${name} skill.\n---\n\n# ${name}\n`;
+}
+
 const integrationRepository = new IntegrationRepository();
 
 type ProviderStubs = Partial<Record<string, sinon.SinonStub>>;
@@ -69,12 +73,8 @@ function buildMockProvider(overrides: ProviderStubs = {}) {
     createAgent: sinon.stub().resolves({ externalAgentId: 'ext-agent-skill' }),
     deleteAgent: sinon.stub().resolves(),
     getAgent: sinon.stub().resolves({ externalAgentId: 'ext-agent-skill', name: 'agent' }),
-    getConfig: sinon
-      .stub()
-      .resolves({ model: 'claude-sonnet-4-5', systemPrompt: '', mcpServers: [], tools: [] }),
-    updateConfig: sinon
-      .stub()
-      .resolves({ model: 'claude-sonnet-4-5', systemPrompt: '', mcpServers: [], tools: [] }),
+    getConfig: sinon.stub().resolves({ model: 'claude-sonnet-4-5', systemPrompt: '', mcpServers: [], tools: [] }),
+    updateConfig: sinon.stub().resolves({ model: 'claude-sonnet-4-5', systemPrompt: '', mcpServers: [], tools: [] }),
     provisionIntegration: sinon
       .stub()
       .resolves({ credentialsUpdate: { externalEnvironmentId: FAKE_EXTERNAL_ENV_ID }, metadata: {} }),
@@ -126,8 +126,7 @@ function buildFetchResponse(body: Buffer, status: number): Response {
     ok: status >= 200 && status < 300,
     status,
     statusText: '',
-    arrayBuffer: () =>
-      Promise.resolve(body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)),
+    arrayBuffer: () => Promise.resolve(body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)),
   } as unknown as Response;
 }
 
@@ -205,135 +204,254 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
     return fetchStub;
   }
 
-  // ─── Happy path ─────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // github-url source
+  // ═══════════════════════════════════════════════════════════════════════════
 
-  describe('happy path', () => {
-    it('should download the tarball, upload the bundle to the provider, and return the skillId', async () => {
-      const integrationId = await createAgentRuntimeIntegration();
-      const tarball = await buildSkillTarball([
-        { path: 'SKILL.md', content: VALID_SKILL_MD },
-        { path: 'lib/helpers.py', content: 'print("hi")\n' },
-      ]);
-      const fetch = stubGithubFetch(tarball);
+  describe('github-url source', () => {
+    describe('happy path', () => {
+      it('should download the tarball, upload the bundle to the provider, and return one skill entry', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'SKILL.md', content: VALID_SKILL_MD },
+          { path: 'lib/helpers.py', content: 'print("hi")\n' },
+        ]);
+        const fetch = stubGithubFetch(tarball);
 
-      const res = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: { type: 'github', url: 'https://github.com/anthropics/skills' },
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/anthropics/skills' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(res.body.data.skills).to.be.an('array').with.length(1);
+        expect(res.body.data.skills[0].skillId).to.equal(FAKE_SKILL_ID);
+        expect(res.body.data.skills[0].source.type).to.equal('github-url');
+        expect(res.body.data.skills[0].source.name).to.equal('my-pdf-skill');
+
+        expect(fetch.calledOnce, 'fetch should be called exactly once').to.be.true;
+        const fetchUrl = fetch.getCall(0).args[0] as string;
+        expect(fetchUrl).to.match(/^https:\/\/api\.github\.com\/repos\/anthropics\/skills\/tarball\/HEAD/);
+
+        expect(mockProvider.uploadSkill.calledOnce, 'provider.uploadSkill should be called').to.be.true;
+        const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
+        expect(uploadArg.displayTitle).to.equal('anthropics-skills');
+        expect(uploadArg.files).to.be.an('array').with.length(2);
+
+        const paths = uploadArg.files.map((f: { path: string }) => f.path).sort();
+        expect(paths).to.deep.equal(['SKILL.md', 'lib/helpers.py']);
+
+        const skillMd = uploadArg.files.find((f: { path: string }) => f.path === 'SKILL.md');
+        expect(Buffer.isBuffer(skillMd.content), 'SKILL.md content should be a Buffer').to.be.true;
+        expect(skillMd.content.toString('utf8')).to.equal(VALID_SKILL_MD);
       });
 
-      expect(res.status, JSON.stringify(res.body)).to.equal(201);
-      expect(res.body.data.skillId).to.equal(FAKE_SKILL_ID);
+      it('should extract files scoped to the sub-path, derive the display title, and return source.path', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'README.md', content: '# root readme — should be excluded' },
+          { path: 'document-skills/pdf/SKILL.md', content: VALID_SKILL_MD },
+          { path: 'document-skills/pdf/lib/helpers.py', content: 'pass\n' },
+          { path: 'document-skills/other/SKILL.md', content: 'unrelated — should be excluded' },
+        ]);
+        const fetch = stubGithubFetch(tarball);
 
-      expect(fetch.calledOnce, 'fetch should be called exactly once').to.be.true;
-      const fetchUrl = fetch.getCall(0).args[0] as string;
-      expect(fetchUrl).to.match(/^https:\/\/api\.github\.com\/repos\/anthropics\/skills\/tarball\/HEAD/);
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: {
+            type: 'github-url',
+            url: 'https://github.com/anthropics/skills/tree/main/document-skills/pdf',
+          },
+        });
 
-      expect(mockProvider.uploadSkill.calledOnce, 'provider.uploadSkill should be called').to.be.true;
-      const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
-      expect(uploadArg.displayTitle).to.equal('anthropics-skills');
-      expect(uploadArg.files).to.be.an('array').with.length(2);
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(res.body.data.skills).to.have.length(1);
+        expect(res.body.data.skills[0].skillId).to.equal(FAKE_SKILL_ID);
+        expect(res.body.data.skills[0].source).to.deep.include({
+          type: 'github-url',
+          path: 'document-skills/pdf',
+          name: 'my-pdf-skill',
+        });
 
-      const paths = uploadArg.files.map((f: { path: string }) => f.path).sort();
-      expect(paths).to.deep.equal(['SKILL.md', 'lib/helpers.py']);
+        const fetchUrl = fetch.getCall(0).args[0] as string;
+        expect(fetchUrl).to.match(/^https:\/\/api\.github\.com\/repos\/anthropics\/skills\/tarball\/main/);
 
-      const skillMd = uploadArg.files.find((f: { path: string }) => f.path === 'SKILL.md');
-      expect(Buffer.isBuffer(skillMd.content), 'SKILL.md content should be a Buffer').to.be.true;
-      expect(skillMd.content.toString('utf8')).to.equal(VALID_SKILL_MD);
+        const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
+        expect(uploadArg.displayTitle).to.equal('anthropics-pdf');
+
+        const paths = uploadArg.files.map((f: { path: string }) => f.path).sort();
+        expect(paths, 'only files inside the sub-path should be included').to.deep.equal([
+          'SKILL.md',
+          'lib/helpers.py',
+        ]);
+      });
+
+      it('should surface the version returned by the provider in the response', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/anthropics/skills' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(res.body.data.skills[0].skillId).to.equal(FAKE_SKILL_ID);
+        expect(res.body.data.skills[0].version).to.equal(FAKE_SKILL_VERSION);
+      });
+
+      it('should treat a re-upload as success when the provider returns an existing skillId with a new version', async () => {
+        // Simulate the auto-version-on-collision result from the Anthropic
+        // provider: re-uploading the same source returns the same stable
+        // skillId paired with a freshly-bumped version on each call.
+        const existingSkillId = 'skill_existing_e2e';
+        mockProvider.uploadSkill = sinon
+          .stub()
+          .onFirstCall()
+          .resolves({ skillId: existingSkillId, version: 'v1' })
+          .onSecondCall()
+          .resolves({ skillId: existingSkillId, version: 'v2' });
+
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        const url = 'https://github.com/anthropics/skills';
+
+        stubGithubFetch(tarball);
+
+        const firstRes = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url },
+        });
+        const secondRes = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url },
+        });
+
+        expect(firstRes.status, JSON.stringify(firstRes.body)).to.equal(201);
+        expect(secondRes.status, JSON.stringify(secondRes.body)).to.equal(201);
+        expect(firstRes.body.data.skills[0].skillId).to.equal(existingSkillId);
+        expect(secondRes.body.data.skills[0].skillId).to.equal(existingSkillId);
+        expect(firstRes.body.data.skills[0].version).to.equal('v1');
+        expect(secondRes.body.data.skills[0].version).to.equal('v2');
+        expect(mockProvider.uploadSkill.callCount, 'provider.uploadSkill should be called twice').to.equal(2);
+      });
     });
 
-    it('should extract files scoped to the sub-path and derive the display title from its basename', async () => {
-      const integrationId = await createAgentRuntimeIntegration();
-      const tarball = await buildSkillTarball([
-        { path: 'README.md', content: '# root readme — should be excluded' },
-        { path: 'document-skills/pdf/SKILL.md', content: VALID_SKILL_MD },
-        { path: 'document-skills/pdf/lib/helpers.py', content: 'pass\n' },
-        { path: 'document-skills/other/SKILL.md', content: 'unrelated — should be excluded' },
-      ]);
-      const fetch = stubGithubFetch(tarball);
+    describe('URL validation', () => {
+      const cases: Array<{ name: string; url: string }> = [
+        { name: 'non-github host', url: 'https://example.com/foo/bar' },
+        { name: 'insecure http scheme', url: 'http://github.com/foo/bar' },
+        { name: 'malformed URL', url: 'not-a-url' },
+        { name: 'missing repository segment', url: 'https://github.com/foo' },
+        { name: 'unsupported sub-resource (wiki)', url: 'https://github.com/foo/bar/wiki/Home' },
+        { name: 'tree path missing a ref', url: 'https://github.com/foo/bar/tree' },
+      ];
 
-      const res = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: {
-          type: 'github',
-          url: 'https://github.com/anthropics/skills/tree/main/document-skills/pdf',
-        },
-      });
+      for (const { name, url } of cases) {
+        it(`should return 400 for a ${name}`, async () => {
+          const integrationId = await createAgentRuntimeIntegration();
 
-      expect(res.status, JSON.stringify(res.body)).to.equal(201);
-      expect(res.body.data.skillId).to.equal(FAKE_SKILL_ID);
+          const res = await session.testAgent.post('/v1/agents/skills').send({
+            integrationId,
+            source: { type: 'github-url', url },
+          });
 
-      const fetchUrl = fetch.getCall(0).args[0] as string;
-      expect(fetchUrl).to.match(/^https:\/\/api\.github\.com\/repos\/anthropics\/skills\/tarball\/main/);
-
-      const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
-      expect(uploadArg.displayTitle).to.equal('anthropics-pdf');
-
-      const paths = uploadArg.files.map((f: { path: string }) => f.path).sort();
-      expect(paths, 'only files inside the sub-path should be included').to.deep.equal([
-        'SKILL.md',
-        'lib/helpers.py',
-      ]);
+          expect(res.status, `url=${url} -> ${JSON.stringify(res.body)}`).to.equal(400);
+          expect(mockProvider.uploadSkill.called, 'uploadSkill must not be reached').to.be.false;
+        });
+      }
     });
 
-    it('should surface the version returned by the provider in the response', async () => {
-      const integrationId = await createAgentRuntimeIntegration();
-      const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
-      stubGithubFetch(tarball);
+    describe('extraction errors', () => {
+      it('should return 400 when the GitHub tarball endpoint returns 404', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        stubGithubFetch(Buffer.alloc(0), 404);
 
-      const res = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: { type: 'github', url: 'https://github.com/anthropics/skills' },
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/some/missing-repo' },
+        });
+
+        expect(res.status).to.equal(400);
+        expect(mockProvider.uploadSkill.called).to.be.false;
       });
 
-      expect(res.status, JSON.stringify(res.body)).to.equal(201);
-      expect(res.body.data.skillId).to.equal(FAKE_SKILL_ID);
-      expect(res.body.data.version).to.equal(FAKE_SKILL_VERSION);
+      it('should return 400 when the GitHub tarball endpoint returns a 5xx', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        stubGithubFetch(Buffer.alloc(0), 500);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status).to.equal(400);
+      });
+
+      it('should return 400 when the bundle has no SKILL.md at its root', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'README.md', content: '# Hello' },
+          { path: 'lib/helpers.py', content: 'pass\n' },
+        ]);
+        stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status).to.equal(400);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+      });
+
+      it('should return 400 when the sub-path has no files inside the tarball', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: {
+            type: 'github-url',
+            url: 'https://github.com/foo/bar/tree/main/skills/missing',
+          },
+        });
+
+        expect(res.status).to.equal(400);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+      });
     });
 
-    it('should treat a re-upload as success when the provider returns an existing skillId with a new version', async () => {
-      // Simulate the auto-version-on-collision result from the Anthropic
-      // provider: re-uploading the same source returns the same stable
-      // skillId paired with a freshly-bumped version on each call.
-      const existingSkillId = 'skill_existing_e2e';
-      mockProvider.uploadSkill = sinon
-        .stub()
-        .onFirstCall()
-        .resolves({ skillId: existingSkillId, version: 'v1' })
-        .onSecondCall()
-        .resolves({ skillId: existingSkillId, version: 'v2' });
+    describe('provider errors', () => {
+      it('should map AgentRuntimeBadRequestError from the provider to a 400 with AGENT_RUNTIME_BAD_REQUEST', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        stubGithubFetch(tarball);
 
-      const integrationId = await createAgentRuntimeIntegration();
-      const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
-      const url = 'https://github.com/anthropics/skills';
+        mockProvider.uploadSkill.rejects(
+          new AgentRuntimeBadRequestError('Skill name mismatch', AgentRuntimeProviderIdEnum.Anthropic)
+        );
 
-      stubGithubFetch(tarball);
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
 
-      const firstRes = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: { type: 'github', url },
+        expect(res.status).to.equal(400);
+        expect(res.body.code).to.equal('AGENT_RUNTIME_BAD_REQUEST');
       });
-      const secondRes = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: { type: 'github', url },
-      });
-
-      expect(firstRes.status, JSON.stringify(firstRes.body)).to.equal(201);
-      expect(secondRes.status, JSON.stringify(secondRes.body)).to.equal(201);
-      expect(firstRes.body.data.skillId).to.equal(existingSkillId);
-      expect(secondRes.body.data.skillId).to.equal(existingSkillId);
-      expect(firstRes.body.data.version).to.equal('v1');
-      expect(secondRes.body.data.version).to.equal('v2');
-      expect(mockProvider.uploadSkill.callCount, 'provider.uploadSkill should be called twice').to.equal(2);
     });
   });
 
-  // ─── Integration validation ─────────────────────────────────────────────────
+  // ─── Integration validation (cross-variant) ─────────────────────────────────
 
   describe('integration validation', () => {
     it('should return 404 when the integration does not exist', async () => {
       const res = await session.testAgent.post('/v1/agents/skills').send({
         integrationId: '000000000000000000000099',
-        source: { type: 'github', url: 'https://github.com/anthropics/skills' },
+        source: { type: 'github-url', url: 'https://github.com/anthropics/skills' },
       });
 
       expect(res.status).to.equal(404);
@@ -350,7 +468,7 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
 
       const res = await session.testAgent.post('/v1/agents/skills').send({
         integrationId,
-        source: { type: 'github', url: 'https://github.com/anthropics/skills' },
+        source: { type: 'github-url', url: 'https://github.com/anthropics/skills' },
       });
 
       expect(res.status).to.equal(422);
@@ -358,124 +476,12 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
     });
   });
 
-  // ─── URL validation ─────────────────────────────────────────────────────────
-
-  describe('URL validation', () => {
-    const cases: Array<{ name: string; url: string }> = [
-      { name: 'non-github host', url: 'https://example.com/foo/bar' },
-      { name: 'insecure http scheme', url: 'http://github.com/foo/bar' },
-      { name: 'malformed URL', url: 'not-a-url' },
-      { name: 'missing repository segment', url: 'https://github.com/foo' },
-      { name: 'unsupported sub-resource (wiki)', url: 'https://github.com/foo/bar/wiki/Home' },
-      { name: 'tree path missing a ref', url: 'https://github.com/foo/bar/tree' },
-    ];
-
-    for (const { name, url } of cases) {
-      it(`should return 400 for a ${name}`, async () => {
-        const integrationId = await createAgentRuntimeIntegration();
-
-        const res = await session.testAgent.post('/v1/agents/skills').send({
-          integrationId,
-          source: { type: 'github', url },
-        });
-
-        expect(res.status, `url=${url} -> ${JSON.stringify(res.body)}`).to.equal(400);
-        expect(mockProvider.uploadSkill.called, 'uploadSkill must not be reached').to.be.false;
-      });
-    }
-  });
-
-  // ─── Tarball / extraction errors ────────────────────────────────────────────
-
-  describe('extraction errors', () => {
-    it('should return 400 when the GitHub tarball endpoint returns 404', async () => {
-      const integrationId = await createAgentRuntimeIntegration();
-      stubGithubFetch(Buffer.alloc(0), 404);
-
-      const res = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: { type: 'github', url: 'https://github.com/some/missing-repo' },
-      });
-
-      expect(res.status).to.equal(400);
-      expect(mockProvider.uploadSkill.called).to.be.false;
-    });
-
-    it('should return 400 when the GitHub tarball endpoint returns a 5xx', async () => {
-      const integrationId = await createAgentRuntimeIntegration();
-      stubGithubFetch(Buffer.alloc(0), 500);
-
-      const res = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: { type: 'github', url: 'https://github.com/foo/bar' },
-      });
-
-      expect(res.status).to.equal(400);
-    });
-
-    it('should return 400 when the bundle has no SKILL.md at its root', async () => {
-      const integrationId = await createAgentRuntimeIntegration();
-      const tarball = await buildSkillTarball([
-        { path: 'README.md', content: '# Hello' },
-        { path: 'lib/helpers.py', content: 'pass\n' },
-      ]);
-      stubGithubFetch(tarball);
-
-      const res = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: { type: 'github', url: 'https://github.com/foo/bar' },
-      });
-
-      expect(res.status).to.equal(400);
-      expect(mockProvider.uploadSkill.called).to.be.false;
-    });
-
-    it('should return 400 when the sub-path has no files inside the tarball', async () => {
-      const integrationId = await createAgentRuntimeIntegration();
-      const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
-      stubGithubFetch(tarball);
-
-      const res = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: {
-          type: 'github',
-          url: 'https://github.com/foo/bar/tree/main/skills/missing',
-        },
-      });
-
-      expect(res.status).to.equal(400);
-      expect(mockProvider.uploadSkill.called).to.be.false;
-    });
-  });
-
-  // ─── Provider error mapping ─────────────────────────────────────────────────
-
-  describe('provider errors', () => {
-    it('should map AgentRuntimeBadRequestError from the provider to a 400 with AGENT_RUNTIME_BAD_REQUEST', async () => {
-      const integrationId = await createAgentRuntimeIntegration();
-      const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
-      stubGithubFetch(tarball);
-
-      mockProvider.uploadSkill.rejects(
-        new AgentRuntimeBadRequestError('Skill name mismatch', AgentRuntimeProviderIdEnum.Anthropic)
-      );
-
-      const res = await session.testAgent.post('/v1/agents/skills').send({
-        integrationId,
-        source: { type: 'github', url: 'https://github.com/foo/bar' },
-      });
-
-      expect(res.status).to.equal(400);
-      expect(res.body.code).to.equal('AGENT_RUNTIME_BAD_REQUEST');
-    });
-  });
-
-  // ─── Request body validation ────────────────────────────────────────────────
+  // ─── Request body validation (cross-variant) ────────────────────────────────
 
   describe('request validation', () => {
     it('should return 422 when integrationId is missing', async () => {
       const res = await session.testAgent.post('/v1/agents/skills').send({
-        source: { type: 'github', url: 'https://github.com/foo/bar' },
+        source: { type: 'github-url', url: 'https://github.com/foo/bar' },
       });
 
       expect(res.status).to.equal(422);
@@ -489,7 +495,7 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
       expect(res.status).to.equal(422);
     });
 
-    it('should return 422 when source.type is not "github"', async () => {
+    it('should return 422 when source.type is unknown', async () => {
       const integrationId = await createAgentRuntimeIntegration();
 
       const res = await session.testAgent.post('/v1/agents/skills').send({
@@ -500,23 +506,335 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
       expect(res.status).to.equal(422);
     });
 
-    it('should return 422 when source.url is missing', async () => {
+    it('should return 422 when github-url source.url is missing', async () => {
       const integrationId = await createAgentRuntimeIntegration();
 
       const res = await session.testAgent.post('/v1/agents/skills').send({
         integrationId,
-        source: { type: 'github' },
+        source: { type: 'github-url' },
+      });
+
+      expect(res.status).to.equal(422);
+    });
+
+    it('should return 422 when github-repo source.repo is missing', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+
+      const res = await session.testAgent.post('/v1/agents/skills').send({
+        integrationId,
+        source: { type: 'github-repo' },
+      });
+
+      expect(res.status).to.equal(422);
+    });
+
+    it('should return 422 when github-repo source.skills is not an array', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+
+      const res = await session.testAgent.post('/v1/agents/skills').send({
+        integrationId,
+        source: { type: 'github-repo', repo: 'owner/repo', skills: 'not-an-array' },
       });
 
       expect(res.status).to.equal(422);
     });
   });
 
-  // ─── Inline source ──────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // github-repo source
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  describe('github-repo source', () => {
+    describe('happy path', () => {
+      it('should upload a single named skill, returning one entry with source.path populated', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'README.md', content: '# root' },
+          { path: 'skills/golang-benchmark/SKILL.md', content: buildSkillMd('golang-benchmark') },
+          { path: 'skills/golang-benchmark/lib/helpers.py', content: 'pass\n' },
+          { path: 'skills/golang-fmt/SKILL.md', content: buildSkillMd('golang-fmt') },
+        ]);
+        const fetch = stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: {
+            type: 'github-repo',
+            repo: 'samber/cc-skills-golang',
+            skills: ['golang-benchmark'],
+          },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(res.body.data.skills).to.have.length(1);
+        expect(res.body.data.skills[0].source).to.deep.include({
+          type: 'github-repo',
+          path: 'skills/golang-benchmark',
+          name: 'golang-benchmark',
+        });
+
+        const fetchUrl = fetch.getCall(0).args[0] as string;
+        expect(fetchUrl).to.match(/^https:\/\/api\.github\.com\/repos\/samber\/cc-skills-golang\/tarball\/HEAD/);
+
+        expect(mockProvider.uploadSkill.callCount).to.equal(1);
+        const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
+        expect(uploadArg.displayTitle).to.equal('samber-golang-benchmark');
+        const paths = uploadArg.files.map((f: { path: string }) => f.path).sort();
+        expect(paths).to.deep.equal(['SKILL.md', 'lib/helpers.py']);
+      });
+
+      it('should upload multiple named skills in input order', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'skills/golang-benchmark/SKILL.md', content: buildSkillMd('golang-benchmark') },
+          { path: 'skills/golang-fmt/SKILL.md', content: buildSkillMd('golang-fmt') },
+          { path: 'skills/golang-vet/SKILL.md', content: buildSkillMd('golang-vet') },
+        ]);
+        stubGithubFetch(tarball);
+
+        mockProvider.uploadSkill = sinon.stub().callsFake(async (input: UploadSkillInput) => {
+          validateSkillBundleFrontmatter(input.files);
+          return { skillId: `skill_${input.displayTitle}`, version: 'v1' };
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: {
+            type: 'github-repo',
+            repo: 'samber/cc-skills-golang',
+            skills: ['golang-vet', 'golang-benchmark', 'golang-fmt'],
+          },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(res.body.data.skills).to.have.length(3);
+        const orderedPaths = res.body.data.skills.map((s: { source: { path: string } }) => s.source.path);
+        expect(orderedPaths).to.deep.equal(['skills/golang-vet', 'skills/golang-benchmark', 'skills/golang-fmt']);
+        expect(mockProvider.uploadSkill.callCount).to.equal(3);
+      });
+
+      it('should auto-discover every SKILL.md when `skills` is omitted', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'document-skills/pdf/SKILL.md', content: buildSkillMd('pdf') },
+          { path: 'document-skills/pdf/lib/parser.py', content: 'pass\n' },
+          { path: 'creative-skills/figma/SKILL.md', content: buildSkillMd('figma') },
+        ]);
+        stubGithubFetch(tarball);
+
+        mockProvider.uploadSkill = sinon.stub().callsFake(async (input: UploadSkillInput) => {
+          validateSkillBundleFrontmatter(input.files);
+          return { skillId: `skill_${input.displayTitle}`, version: 'v1' };
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-repo', repo: 'anthropics/claude-skills' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(res.body.data.skills).to.have.length(2);
+        const paths = res.body.data.skills.map((s: { source: { path: string } }) => s.source.path).sort();
+        expect(paths).to.deep.equal(['creative-skills/figma', 'document-skills/pdf']);
+      });
+
+      it('should treat an empty `skills` array the same as omitted (auto-discover)', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'skills/a/SKILL.md', content: buildSkillMd('a') },
+          { path: 'skills/b/SKILL.md', content: buildSkillMd('b') },
+        ]);
+        stubGithubFetch(tarball);
+
+        mockProvider.uploadSkill = sinon.stub().callsFake(async (input: UploadSkillInput) => {
+          validateSkillBundleFrontmatter(input.files);
+          return { skillId: `skill_${input.displayTitle}`, version: 'v1' };
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-repo', repo: 'owner/repo', skills: [] },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(res.body.data.skills).to.have.length(2);
+      });
+
+      it('should silently dedupe repeated names in `skills`', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'skills/a/SKILL.md', content: buildSkillMd('a') },
+          { path: 'skills/b/SKILL.md', content: buildSkillMd('b') },
+        ]);
+        stubGithubFetch(tarball);
+
+        mockProvider.uploadSkill = sinon.stub().callsFake(async (input: UploadSkillInput) => {
+          validateSkillBundleFrontmatter(input.files);
+          return { skillId: `skill_${input.displayTitle}`, version: 'v1' };
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-repo', repo: 'owner/repo', skills: ['a', 'a', 'b'] },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(res.body.data.skills).to.have.length(2);
+      });
+    });
+
+    describe('repo slug validation', () => {
+      const invalidRepos = [
+        'samber',
+        'samber/',
+        '/cc-skills',
+        'samber//cc-skills',
+        'samber/cc skills',
+        'samber/cc-skills/extra',
+        'https://github.com/samber/cc-skills',
+        'samber/../malicious',
+        'sam ber/skills',
+      ];
+
+      for (const repo of invalidRepos) {
+        it(`should return 400 for invalid repo slug "${repo}"`, async () => {
+          const integrationId = await createAgentRuntimeIntegration();
+
+          const res = await session.testAgent.post('/v1/agents/skills').send({
+            integrationId,
+            source: { type: 'github-repo', repo },
+          });
+
+          expect(res.status, `repo=${repo} -> ${JSON.stringify(res.body)}`).to.equal(400);
+          expect(mockProvider.uploadSkill.called, 'uploadSkill must not be reached').to.be.false;
+        });
+      }
+    });
+
+    describe('discovery errors', () => {
+      it('should return 400 when no SKILL.md is found anywhere in the repository', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'README.md', content: '# nothing here' },
+          { path: 'src/main.go', content: 'package main\n' },
+        ]);
+        stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-repo', repo: 'owner/repo' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+      });
+
+      it('should return 400 listing available skills when a requested basename is not found', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'skills/golang-benchmark/SKILL.md', content: buildSkillMd('golang-benchmark') },
+          { path: 'skills/golang-fmt/SKILL.md', content: buildSkillMd('golang-fmt') },
+        ]);
+        stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: {
+            type: 'github-repo',
+            repo: 'owner/repo',
+            skills: ['totally-missing-skill'],
+          },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        const message = String(res.body.message ?? '');
+        expect(message).to.match(/totally-missing-skill/);
+        expect(message).to.match(/golang-benchmark/);
+        expect(message).to.match(/golang-fmt/);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+      });
+
+      it('should return 400 listing conflicting paths when a basename is ambiguous', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'document-skills/pdf/SKILL.md', content: buildSkillMd('pdf-a') },
+          { path: 'creative-skills/pdf/SKILL.md', content: buildSkillMd('pdf-b') },
+        ]);
+        stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-repo', repo: 'owner/repo', skills: ['pdf'] },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        const message = String(res.body.message ?? '');
+        expect(message).to.match(/document-skills\/pdf/);
+        expect(message).to.match(/creative-skills\/pdf/);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+      });
+
+      it('should return 400 when the GitHub tarball endpoint returns 404 for a github-repo upload', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        stubGithubFetch(Buffer.alloc(0), 404);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-repo', repo: 'owner/missing' },
+        });
+
+        expect(res.status).to.equal(400);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+      });
+    });
+
+    describe('partial failure', () => {
+      it('should abort the batch on the first per-skill failure and NOT roll back earlier successes', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'skills/a/SKILL.md', content: buildSkillMd('a') },
+          { path: 'skills/b/SKILL.md', content: buildSkillMd('b') },
+          { path: 'skills/c/SKILL.md', content: buildSkillMd('c') },
+        ]);
+        stubGithubFetch(tarball);
+
+        const uploadStub = sinon
+          .stub()
+          .onFirstCall()
+          .resolves({ skillId: 'skill_first', version: 'v1' })
+          .onSecondCall()
+          .rejects(
+            new AgentRuntimeBadRequestError('intentional mid-batch failure', AgentRuntimeProviderIdEnum.Anthropic)
+          )
+          .onThirdCall()
+          .resolves({ skillId: 'skill_third_should_not_be_used', version: 'v1' });
+
+        mockProvider.uploadSkill = uploadStub;
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-repo', repo: 'owner/repo' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        expect(res.body.code).to.equal('AGENT_RUNTIME_BAD_REQUEST');
+
+        expect(uploadStub.callCount, 'uploadSkill should be called exactly twice (1st success + 2nd failure)').to.equal(
+          2
+        );
+        // No rollback path exists; the provider stub never sees a delete call because we don't expose one.
+        expect(mockProvider.deleteAgent.called, 'no rollback delete should be issued').to.be.false;
+      });
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // inline source
+  // ═══════════════════════════════════════════════════════════════════════════
 
   describe('inline source', () => {
     describe('happy path', () => {
-      it('should wrap the pasted text as a single-file bundle and return the skillId', async () => {
+      it('should wrap the pasted text as a single-file bundle and return one skill entry', async () => {
         const integrationId = await createAgentRuntimeIntegration();
 
         const res = await session.testAgent.post('/v1/agents/skills').send({
@@ -525,7 +843,13 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
         });
 
         expect(res.status, JSON.stringify(res.body)).to.equal(201);
-        expect(res.body.data.skillId).to.equal(FAKE_SKILL_ID);
+        expect(res.body.data.skills).to.have.length(1);
+        expect(res.body.data.skills[0].skillId).to.equal(FAKE_SKILL_ID);
+        expect(res.body.data.skills[0].source).to.deep.include({
+          type: 'inline',
+          name: 'my-pdf-skill',
+        });
+        expect(res.body.data.skills[0].source.path).to.be.oneOf([undefined, null]);
 
         // The inline path never hits the network — guard against accidental fetch calls.
         expect(fetchStub, 'fetch should not be stubbed/called for inline source').to.equal(null);

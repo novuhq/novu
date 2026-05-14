@@ -598,15 +598,24 @@ export class AgentsController {
   @HttpCode(HttpStatus.CREATED)
   @ApiResponse(UploadCustomSkillResponseDto, 201)
   @ApiOperation({
-    summary: 'Upload a custom skill from a source repository',
+    summary: 'Upload one or more custom skills from a source',
     description:
-      'Downloads the supplied source (currently a public GitHub repository or sub-path), ' +
-      'uploads it to the integration provider as a custom skill, and returns the provider-assigned ' +
-      'skill ID. The returned `skillId` can be passed via `managedRuntime.skills` on POST /agents ' +
-      'or on PATCH /agents/:identifier/runtime/config as `{ type: "custom", skillId }`. ' +
-      'Re-uploading the same source onto an integration that already has a skill with the same ' +
-      'derived display title appends a new version to that skill rather than failing — the response ' +
-      'returns the existing `skillId` and the new `version`.',
+      'Downloads the supplied source, uploads each resulting bundle to the integration provider ' +
+      'as a custom skill, and returns the provider-assigned skill IDs as a uniform `skills[]` array. ' +
+      'Three source variants are supported:\n\n' +
+      '- `type: "github-url"` — full `https://github.com/...` URL. Always uploads exactly one skill; ' +
+      'use this form to pin a ref or to disambiguate when multiple repo directories share a basename. ' +
+      'Accepts `/`, `/tree/{ref}`, or `/tree/{ref}/{path}` shapes.\n' +
+      '- `type: "github-repo"` — `owner/repo` slug fetched from the default branch (HEAD). ' +
+      'Pass an optional `skills` array of directory basenames to upload only those, or omit `skills` ' +
+      '(or pass `[]`) to auto-discover and upload every directory in the repo containing a `SKILL.md`.\n' +
+      '- `type: "inline"` — raw `SKILL.md` text pasted by the caller, wrapped server-side as a single-file bundle.\n\n' +
+      'Each returned `skillId` can be passed via `managedRuntime.skills` on POST /agents or ' +
+      'PATCH /agents/:identifier/runtime/config as `{ type: "custom", skillId }`. ' +
+      'Re-uploading a source whose derived display title matches an existing custom skill appends a new ' +
+      'version to it rather than failing — the entry returns the existing `skillId` and the new `version`. ' +
+      'When a multi-skill `github-repo` upload partially fails, the request is aborted at the first ' +
+      'error and earlier successful uploads are NOT rolled back (they will auto-version on retry).',
   })
   @ApiNotFoundResponse({ description: 'The integration was not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)

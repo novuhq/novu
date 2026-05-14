@@ -30,15 +30,21 @@ type CreateIntegrationResponse = {
   data: { _id: string; identifier: string };
 };
 
+type UploadedSkillEntry = {
+  skillId: string;
+  version?: string | null;
+  source?: { type?: string; path?: string; name?: string };
+};
+
 type UploadCustomSkillResponse = {
-  data: { skillId: string };
+  data: { skills: UploadedSkillEntry[] };
 };
 
 type CreateAgentResponse = {
   data: { _id: string; identifier: string };
 };
 
-type SkillSourceMode = 'github' | 'inline';
+type SkillSourceMode = 'github-url' | 'github-repo' | 'inline';
 
 const SKILL_MD_PLACEHOLDER = `---
 name: my-pdf-skill
@@ -50,17 +56,26 @@ description: A PDF helper skill.
 Instructions go here.
 `;
 
+type SkillUploadSource =
+  | { type: 'github-url'; url: string }
+  | { type: 'github-repo'; repo: string; skills?: string[] }
+  | { type: 'inline'; content: string };
+
 export function ManagedAgentDebugPage() {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
   const formId = useId();
   const apiKeyId = `${formId}-api-key`;
   const githubUrlId = `${formId}-github-url`;
+  const repoSlugId = `${formId}-repo-slug`;
+  const repoSkillsId = `${formId}-repo-skills`;
   const skillMdId = `${formId}-skill-md`;
 
   const [apiKey, setApiKey] = useState('');
-  const [mode, setMode] = useState<SkillSourceMode>('github');
+  const [mode, setMode] = useState<SkillSourceMode>('github-url');
   const [githubUrl, setGithubUrl] = useState('');
+  const [repoSlug, setRepoSlug] = useState('');
+  const [repoSkillsCsv, setRepoSkillsCsv] = useState('');
   const [skillMd, setSkillMd] = useState('');
 
   const navigateBackToAgents = () => {
@@ -77,16 +92,18 @@ export function ManagedAgentDebugPage() {
     mutationFn: async () => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected.');
       const trimmedApiKey = apiKey.trim();
-      const trimmedGithubUrl = githubUrl.trim();
 
       const timestamp = Date.now();
       const generatedName = `Debug Agent ${timestamp}`;
       const generatedIdentifier = `${slugify(generatedName)}-${timestamp}`;
 
-      const skillSource =
-        mode === 'github'
-          ? { type: 'github' as const, url: trimmedGithubUrl }
-          : { type: 'inline' as const, content: skillMd };
+      const skillSource: SkillUploadSource = buildSkillSource({
+        mode,
+        githubUrl,
+        repoSlug,
+        repoSkillsCsv,
+        skillMd,
+      });
 
       // Step 1: provision an Anthropic agent-runtime integration with the provided API key.
       const integrationResponse = await post<CreateIntegrationResponse>('/integrations', {
@@ -103,7 +120,7 @@ export function ManagedAgentDebugPage() {
       });
       const integrationId = integrationResponse.data._id;
 
-      // Step 2: upload the custom skill from the selected source.
+      // Step 2: upload the custom skill bundle(s) from the selected source.
       const uploadResponse = await post<UploadCustomSkillResponse>('/agents/skills', {
         body: {
           integrationId,
@@ -111,9 +128,13 @@ export function ManagedAgentDebugPage() {
         },
         environment,
       });
-      const { skillId } = uploadResponse.data;
+      const uploadedSkills = uploadResponse.data.skills ?? [];
 
-      // Step 3: create the managed agent referencing the uploaded skill.
+      if (uploadedSkills.length === 0) {
+        throw new Error('Skill upload returned no skills.');
+      }
+
+      // Step 3: create the managed agent referencing every uploaded skill.
       const agentResponse = await post<CreateAgentResponse>('/agents', {
         body: {
           name: generatedName,
@@ -122,16 +143,21 @@ export function ManagedAgentDebugPage() {
           managedRuntime: {
             providerId: AgentRuntimeProviderIdEnum.Anthropic,
             integrationId,
-            skills: [{ type: 'custom', skillId }],
+            skills: uploadedSkills.map((s) => ({ type: 'custom', skillId: s.skillId })),
           },
         },
         environment,
       });
 
-      return { agentIdentifier: agentResponse.data.identifier, environmentSlug: environment.slug ?? '' };
+      return {
+        agentIdentifier: agentResponse.data.identifier,
+        environmentSlug: environment.slug ?? '',
+        uploadedCount: uploadedSkills.length,
+      };
     },
-    onSuccess: ({ agentIdentifier, environmentSlug }) => {
-      showSuccessToast('Managed agent created with custom skill.', 'Debug agent ready');
+    onSuccess: ({ agentIdentifier, environmentSlug, uploadedCount }) => {
+      const skillsWord = uploadedCount === 1 ? 'skill' : 'skills';
+      showSuccessToast(`Managed agent created with ${uploadedCount} custom ${skillsWord}.`, 'Debug agent ready');
       navigate(buildRoute(ROUTES.AGENT_DETAILS, { environmentSlug, agentIdentifier }));
     },
     onError: (err) => {
@@ -149,8 +175,14 @@ export function ManagedAgentDebugPage() {
       return;
     }
 
-    if (mode === 'github' && !githubUrl.trim()) {
+    if (mode === 'github-url' && !githubUrl.trim()) {
       showErrorToast('GitHub repository URL is required.', 'Missing fields');
+
+      return;
+    }
+
+    if (mode === 'github-repo' && !repoSlug.trim()) {
+      showErrorToast('GitHub repository slug (owner/repo) is required.', 'Missing fields');
 
       return;
     }
@@ -187,8 +219,8 @@ export function ManagedAgentDebugPage() {
             Debug: create managed agent with custom skill
           </DialogTitle>
           <DialogDescription className="text-text-soft text-label-xs leading-4">
-            Provisions an Anthropic agent-runtime integration, uploads a custom skill from the supplied source, and
-            creates a managed agent that references the resulting <code>skillId</code>.
+            Provisions an Anthropic agent-runtime integration, uploads one or more custom skills from the supplied
+            source, and creates a managed agent that references every uploaded <code>skillId</code>.
           </DialogDescription>
         </div>
 
@@ -215,13 +247,14 @@ export function ManagedAgentDebugPage() {
                 <span className="text-text-strong text-label-xs font-medium">Skill source</span>
                 <SegmentedControl value={mode} onValueChange={(v) => setMode(v as SkillSourceMode)}>
                   <SegmentedControlList>
-                    <SegmentedControlTrigger value="github">GitHub URL</SegmentedControlTrigger>
+                    <SegmentedControlTrigger value="github-url">GitHub URL</SegmentedControlTrigger>
+                    <SegmentedControlTrigger value="github-repo">Repo + skills</SegmentedControlTrigger>
                     <SegmentedControlTrigger value="inline">SKILL.md text</SegmentedControlTrigger>
                   </SegmentedControlList>
                 </SegmentedControl>
               </div>
 
-              {mode === 'github' ? (
+              {mode === 'github-url' ? (
                 <div className="flex flex-col gap-1">
                   <label htmlFor={githubUrlId} className="text-text-strong text-label-xs font-medium">
                     GitHub repository URL
@@ -236,10 +269,53 @@ export function ManagedAgentDebugPage() {
                   />
                   <p className="text-text-soft text-paragraph-xs leading-4">
                     Must point at a public folder containing <code>SKILL.md</code> at its root. Accepts repo root,{' '}
-                    <code>/tree/&#123;ref&#125;</code>, or <code>/tree/&#123;ref&#125;/&#123;path&#125;</code>.
+                    <code>/tree/&#123;ref&#125;</code>, or <code>/tree/&#123;ref&#125;/&#123;path&#125;</code>. Uploads
+                    exactly one skill.
                   </p>
                 </div>
-              ) : (
+              ) : null}
+
+              {mode === 'github-repo' ? (
+                <>
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor={repoSlugId} className="text-text-strong text-label-xs font-medium">
+                      Repository (owner/repo)
+                    </label>
+                    <Input
+                      id={repoSlugId}
+                      size="2xs"
+                      className="font-mono"
+                      value={repoSlug}
+                      onChange={(e) => setRepoSlug(e.target.value)}
+                      placeholder="samber/cc-skills-golang"
+                    />
+                    <p className="text-text-soft text-paragraph-xs leading-4">
+                      Public repo slug only — no host, no <code>.git</code> suffix, no path. Always uses the default
+                      branch (HEAD); to pin a ref, use the GitHub URL mode instead.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-1">
+                    <label htmlFor={repoSkillsId} className="text-text-strong text-label-xs font-medium">
+                      Skills (optional, comma-separated)
+                    </label>
+                    <Input
+                      id={repoSkillsId}
+                      size="2xs"
+                      className="font-mono"
+                      value={repoSkillsCsv}
+                      onChange={(e) => setRepoSkillsCsv(e.target.value)}
+                      placeholder="golang-benchmark, golang-fmt"
+                    />
+                    <p className="text-text-soft text-paragraph-xs leading-4">
+                      Directory basenames of the skill bundles to upload. Leave empty to auto-discover and upload every
+                      directory in the repo that contains a <code>SKILL.md</code>.
+                    </p>
+                  </div>
+                </>
+              ) : null}
+
+              {mode === 'inline' ? (
                 <div className="flex flex-col gap-1">
                   <label htmlFor={skillMdId} className="text-text-strong text-label-xs font-medium">
                     SKILL.md content
@@ -258,7 +334,7 @@ export function ManagedAgentDebugPage() {
                     bundle folder name.
                   </p>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -266,13 +342,7 @@ export function ManagedAgentDebugPage() {
             <Button variant="secondary" mode="ghost" size="xs" type="button" onClick={navigateBackToAgents}>
               Cancel
             </Button>
-            <Button
-              variant="secondary"
-              mode="gradient"
-              size="xs"
-              type="submit"
-              isLoading={createMutation.isPending}
-            >
+            <Button variant="secondary" mode="gradient" size="xs" type="submit" isLoading={createMutation.isPending}>
               Create managed agent
             </Button>
           </div>
@@ -280,4 +350,31 @@ export function ManagedAgentDebugPage() {
       </DialogContent>
     </Dialog>
   );
+}
+
+function buildSkillSource(args: {
+  mode: SkillSourceMode;
+  githubUrl: string;
+  repoSlug: string;
+  repoSkillsCsv: string;
+  skillMd: string;
+}): SkillUploadSource {
+  if (args.mode === 'github-url') {
+    return { type: 'github-url', url: args.githubUrl.trim() };
+  }
+
+  if (args.mode === 'github-repo') {
+    const skills = args.repoSkillsCsv
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+
+    return {
+      type: 'github-repo',
+      repo: args.repoSlug.trim(),
+      ...(skills.length > 0 ? { skills } : {}),
+    };
+  }
+
+  return { type: 'inline', content: args.skillMd };
 }

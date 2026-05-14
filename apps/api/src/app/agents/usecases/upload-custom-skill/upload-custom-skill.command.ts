@@ -1,16 +1,45 @@
 import { Type } from 'class-transformer';
-import { IsIn, IsNotEmpty, IsObject, IsString, MaxLength, ValidateNested } from 'class-validator';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  MaxLength,
+  ValidateNested,
+} from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { MAX_INLINE_SKILL_CONTENT_LENGTH } from '../../dtos/upload-custom-skill.dto';
+import {
+  MAX_GITHUB_REPO_SKILLS_PER_REQUEST,
+  MAX_INLINE_SKILL_CONTENT_LENGTH,
+  type UploadCustomSkillSourceType,
+} from '../../dtos/upload-custom-skill.dto';
 
-export class GithubSkillSourceCommand {
-  @IsIn(['github'])
-  type: 'github';
+export class GithubUrlSkillSourceCommand {
+  @IsIn(['github-url'])
+  type: 'github-url';
 
   @IsNotEmpty()
   @IsString()
   url: string;
+}
+
+export class GithubRepoSkillSourceCommand {
+  @IsIn(['github-repo'])
+  type: 'github-repo';
+
+  @IsNotEmpty()
+  @IsString()
+  repo: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_GITHUB_REPO_SKILLS_PER_REQUEST)
+  @IsString({ each: true })
+  skills?: string[];
 }
 
 export class InlineSkillSourceCommand {
@@ -23,12 +52,15 @@ export class InlineSkillSourceCommand {
   content: string;
 }
 
-export type UploadCustomSkillSource = GithubSkillSourceCommand | InlineSkillSourceCommand;
+export type UploadCustomSkillSource =
+  | GithubUrlSkillSourceCommand
+  | GithubRepoSkillSourceCommand
+  | InlineSkillSourceCommand;
 
 /** Discriminator base for command-level `@Type` polymorphism on `source`. */
 class BaseSkillSourceCommand {
-  @IsIn(['github', 'inline'])
-  type: 'github' | 'inline';
+  @IsIn(['github-url', 'github-repo', 'inline'])
+  type: UploadCustomSkillSourceType;
 }
 
 export class UploadCustomSkillCommand extends EnvironmentWithUserCommand {
@@ -42,7 +74,8 @@ export class UploadCustomSkillCommand extends EnvironmentWithUserCommand {
     discriminator: {
       property: 'type',
       subTypes: [
-        { name: 'github', value: GithubSkillSourceCommand },
+        { name: 'github-url', value: GithubUrlSkillSourceCommand },
+        { name: 'github-repo', value: GithubRepoSkillSourceCommand },
         { name: 'inline', value: InlineSkillSourceCommand },
       ],
     },
