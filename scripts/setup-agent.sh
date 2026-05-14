@@ -1,52 +1,27 @@
 #!/usr/bin/env bash
-set -e
+# One-time bootstrap for the Cursor Background Agent base snapshot.
+#
+# Runs ONCE during environment/snapshot creation in the Cursor dashboard.
+# After the snapshot is captured, every subsequent agent boot reuses it and
+# only re-runs the lightweight `install` and `start` hooks from
+# .cursor/environment.json.
+#
+# This script owns the work that should NOT repeat on every boot:
+#   1. .cursor/scripts/install.sh   - shared with per-boot install hook
+#   2. pnpm build                   - heavy; cached in the snapshot
+#   3. .cursor/scripts/start.sh     - shared with per-boot start hook
+#                                     (services + CH migrations + seed)
+#
+# Target environment: Cursor cloud agent VM (Ubuntu, Docker preinstalled
+# from .cursor/Dockerfile). Not intended for local developer machines.
 
-ensure_docker() {
-  if docker info >/dev/null 2>&1; then
-    echo "Docker is ready."
-    return
-  fi
+set -euo pipefail
 
-  echo "Starting Docker daemon..."
-  if [[ "$(uname)" == "Linux" ]]; then
-    sudo systemctl start docker 2>/dev/null || sudo service docker start 2>/dev/null || sudo dockerd &
-    sleep 3
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT"
 
-    if ! docker info >/dev/null 2>&1; then
-      echo "Granting Docker socket access to current user..."
-      sudo usermod -aG docker "$USER" 2>/dev/null || true
-      sudo chmod 666 /var/run/docker.sock 2>/dev/null || true
-    fi
-  elif [[ "$(uname)" == "Darwin" ]]; then
-    open -a Docker
-    echo "Waiting for Docker Desktop to start..."
-  fi
+bash .cursor/scripts/install.sh
 
-  for i in $(seq 1 30); do
-    docker info >/dev/null 2>&1 && break
-    sleep 2
-  done
-
-  if ! docker info >/dev/null 2>&1; then
-    echo "Error: Docker daemon did not start within 60s."
-    exit 1
-  fi
-
-  echo "Docker is ready."
-}
-
-git submodule update --init --recursive
-git config --global submodule.recurse true
-
-pnpm install:with-ee
 pnpm build
 
-cp apps/api/src/.env.agent apps/api/src/.env
-cp apps/dashboard/.env.agent apps/dashboard/.env
-cp apps/worker/src/.env.agent apps/worker/src/.env
-
-ensure_docker
-docker compose -f docker/local/docker-compose.agent.yml down --remove-orphans 2>/dev/null || true
-docker compose -f docker/local/docker-compose.agent.yml up -d
-
-pnpm seed:agent
+bash .cursor/scripts/start.sh
