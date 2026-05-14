@@ -20,6 +20,7 @@ import {
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { deleteIntegration } from '@/api/integrations';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
@@ -272,6 +273,8 @@ export function AgentsList() {
           identifier,
         };
 
+        let integrationId: string;
+
         try {
           const { data: integration } = await createIntegration({
             active: true,
@@ -282,34 +285,48 @@ export function AgentsList() {
             identifier,
           });
 
-          if (isExistingMode) {
-            request.runtime = 'managed';
-            request.managedRuntime = {
-              integrationId: integration._id,
-              providerId: AgentRuntimeProviderIdEnum.Anthropic,
-              externalAgentId,
-              externalEnvironmentId,
-            };
-          } else {
-            request.runtime = 'managed';
-            request.managedRuntime = {
-              integrationId: integration._id,
-              providerId: AgentRuntimeProviderIdEnum.Anthropic,
-              model: 'claude-opus-4-5',
-              systemPrompt: instructions || undefined,
-              tools: CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
-            };
-          }
-
-          await createMutation.mutateAsync(request);
+          integrationId = integration._id;
         } catch (err) {
-          const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+          const message = err instanceof NovuApiError ? err.message : 'Could not create integration.';
 
           showErrorToast(message, 'Create failed');
+
+          return;
         }
+
+        if (isExistingMode) {
+          request.runtime = 'managed';
+          request.managedRuntime = {
+            integrationId,
+            providerId: AgentRuntimeProviderIdEnum.Anthropic,
+            externalAgentId,
+            externalEnvironmentId,
+          };
+        } else {
+          request.runtime = 'managed';
+          request.managedRuntime = {
+            integrationId,
+            providerId: AgentRuntimeProviderIdEnum.Anthropic,
+            model: 'claude-opus-4-5',
+            systemPrompt: instructions || undefined,
+            tools: CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
+          };
+        }
+
+        const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+
+        createMutation.mutate(request, {
+          onError: async () => {
+            try {
+              await deleteIntegration({ id: integrationId, environment });
+            } catch {
+              // Best-effort cleanup; the global onError toast already informed the user.
+            }
+          },
+        });
       }
     },
-    [createMutation, createIntegration]
+    [createMutation, createIntegration, currentEnvironment]
   );
 
   if (!canReadAgents) {

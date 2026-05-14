@@ -217,6 +217,7 @@ export function CreateAgentDialog({
     setName(template.name);
     if (!isIdentifierTouched) {
       setIdentifier(slugify(template.name));
+      setErrors((prev) => ({ ...prev, identifier: undefined }));
     }
     setInstructions(template.instructions);
     setErrors((prev) => ({ ...prev, name: undefined }));
@@ -261,20 +262,24 @@ export function CreateAgentDialog({
     const trimmedName = name.trim();
     const trimmedIdentifier = identifier.trim();
     const trimmedApiKey = apiKey.trim();
-    const trimmedExternalAgentId = apiKey.trim();
-    const trimmedExternalEnvironmentId = apiKey.trim();
+    const trimmedExternalAgentId = externalAgentId.trim();
+    const trimmedExternalEnvironmentId = externalEnvironmentId.trim();
 
-    await onSubmit({
-      name: trimmedName,
-      identifier: trimmedIdentifier,
-      instructions: trimmedInstructions,
-      apiKey: trimmedApiKey,
-      runtime,
-      isExistingMode,
-      externalAgentId: trimmedExternalAgentId,
-      externalEnvironmentId: trimmedExternalEnvironmentId,
-    });
-    handleOpenChange(false);
+    try {
+      await onSubmit({
+        name: trimmedName,
+        identifier: trimmedIdentifier,
+        instructions: trimmedInstructions,
+        apiKey: trimmedApiKey,
+        runtime,
+        isExistingMode,
+        externalAgentId: trimmedExternalAgentId,
+        externalEnvironmentId: trimmedExternalEnvironmentId,
+      });
+      handleOpenChange(false);
+    } catch {
+      // Caller surfaces a toast; keep the dialog open so the user can retry.
+    }
   };
 
   const isClaudeSelected = runtime === 'claude';
@@ -397,7 +402,12 @@ export function CreateAgentDialog({
                     aria-describedby={errors.apiKey ? `${apiKeyId}-error` : undefined}
                     className="font-mono"
                     inlineTrailingNode={
-                      <button type="button" onClick={toggleSecretVisibility}>
+                      <button
+                        type="button"
+                        onClick={toggleSecretVisibility}
+                        aria-label={showSecret ? 'Hide API key' : 'Show API key'}
+                        aria-pressed={showSecret}
+                      >
                         {showSecret ? (
                           <RiEyeOffLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
                         ) : (
