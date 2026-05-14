@@ -32,6 +32,8 @@ const DOCS_AGENTS_LEARN_MORE_HREF = 'https://docs.novu.co';
 const ANTHROPIC_API_KEY_HREF = 'https://console.anthropic.com/settings/keys';
 const CLAUDE_AGENT_ID_HREF = 'https://docs.claude.com/en/api/agents-list';
 const CLAUDE_ENVIRONMENT_ID_HREF = 'https://docs.claude.com/en/api/agents-list';
+const CLAUDE_WORKSPACE_HREF = 'https://console.anthropic.com/settings/workspaces';
+const DEFAULT_CLAUDE_WORKSPACE_ID = 'default';
 
 type RuntimeType = 'scratch' | 'claude' | 'vertex';
 
@@ -138,6 +140,11 @@ export type CreateAgentForm = {
   isExistingMode: boolean;
   externalAgentId?: string;
   externalEnvironmentId?: string;
+  /**
+   * Optional Anthropic workspace id. Empty/omitted means "use the default workspace".
+   * Custom workspaces are identified by a `wrkspc_…` id.
+   */
+  externalWorkspaceId?: string;
 };
 
 type CreateAgentDialogProps = {
@@ -162,6 +169,7 @@ export function CreateAgentDialog({
   const identifierId = `${formId}-identifier`;
   const instructionsId = `${formId}-instructions`;
   const apiKeyId = `${formId}-api-key`;
+  const workspaceIdInputId = `${formId}-workspace-id`;
   const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
 
   const [runtime, setRuntime] = useState<RuntimeType>('scratch');
@@ -170,6 +178,7 @@ export function CreateAgentDialog({
   const [identifier, setIdentifier] = useState(initialName ? slugify(initialName) : '');
   const [instructions, setInstructions] = useState(initialInstructions ?? '');
   const [apiKey, setApiKey] = useState('');
+  const [externalWorkspaceId, setExternalWorkspaceId] = useState('');
   const [externalAgentId, setExternalAgentId] = useState('');
   const [externalEnvironmentId, setExternalEnvironmentId] = useState('');
   const [errors, setErrors] = useState<FormErrors>({});
@@ -201,6 +210,7 @@ export function CreateAgentDialog({
     setIdentifier('');
     setInstructions('');
     setApiKey('');
+    setExternalWorkspaceId('');
     setExternalAgentId('');
     setExternalEnvironmentId('');
     setErrors({});
@@ -264,6 +274,7 @@ export function CreateAgentDialog({
     const trimmedApiKey = apiKey.trim();
     const trimmedExternalAgentId = externalAgentId.trim();
     const trimmedExternalEnvironmentId = externalEnvironmentId.trim();
+    const trimmedExternalWorkspaceId = externalWorkspaceId.trim();
 
     try {
       await onSubmit({
@@ -275,6 +286,7 @@ export function CreateAgentDialog({
         isExistingMode,
         externalAgentId: trimmedExternalAgentId,
         externalEnvironmentId: trimmedExternalEnvironmentId,
+        externalWorkspaceId: trimmedExternalWorkspaceId || undefined,
       });
       handleOpenChange(false);
     } catch {
@@ -288,7 +300,7 @@ export function CreateAgentDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="border-stroke-soft max-w-[600px] gap-0 overflow-hidden rounded-12 border p-0 shadow-xl sm:rounded-12"
+        className="border-stroke-soft max-w-[600px] gap-0 overflow-hidden rounded-12 border p-0 shadow-xl sm:rounded-12 min-w-[400px]"
         hideCloseButton
       >
         {/* Header */}
@@ -421,6 +433,45 @@ export function CreateAgentDialog({
                       {errors.apiKey}
                     </p>
                   ) : null}
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-px">
+                    <label htmlFor={workspaceIdInputId} className="text-text-sub text-label-xs font-medium">
+                      Workspace ID
+                    </label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
+                          <RiInformation2Line className="size-3.5" aria-hidden />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-xs">
+                        The Anthropic workspace your API key is scoped to. Leave empty for the Default Workspace. For
+                        custom workspaces, paste the `wrkspc_…` id from the Claude Console (Settings → Workspaces). Used
+                        for the in-product &quot;Open in Claude&quot; deep link.
+                      </TooltipContent>
+                    </Tooltip>
+                    <div className="ml-auto">
+                      <a
+                        href={CLAUDE_WORKSPACE_HREF}
+                        target="_blank"
+                        rel="noreferrer noopener"
+                        className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium"
+                      >
+                        Find Workspace ID
+                        <RiArrowRightUpLine className="size-3.5" aria-hidden />
+                      </a>
+                    </div>
+                  </div>
+                  <Input
+                    id={workspaceIdInputId}
+                    size="xs"
+                    value={externalWorkspaceId}
+                    onChange={(e) => setExternalWorkspaceId(e.target.value)}
+                    placeholder={DEFAULT_CLAUDE_WORKSPACE_ID}
+                    className="font-mono"
+                  />
                 </div>
 
                 <div className="border-stroke-weak border-t" />
@@ -556,7 +607,7 @@ export function CreateAgentDialog({
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row">
                   <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <RequiredFieldLabel htmlFor={nameId}>Agent name</RequiredFieldLabel>
                     <Input

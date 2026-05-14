@@ -60,4 +60,13 @@ export interface ICredentials {
   fromAddressOverride?: string;
   /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. */
   externalEnvironmentId?: string;
+  /**
+   * Claude Managed Agents: id of the Anthropic workspace used in console deep links.
+   *
+   * Defaults to `"default"` (every org's auto-created Default Workspace, which has no real id).
+   * For custom workspaces, set this to the workspace identifier (e.g. `wrkspc_01JwQvzr7rXLA5AGx3HKfFUJ`).
+   * The Anthropic public SDK does not expose workspaces, so we cannot auto-detect this — it has to be
+   * configured per-integration when the customer is not on the default workspace.
+   */
+  externalWorkspaceId?: string;
 }

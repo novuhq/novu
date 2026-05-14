@@ -14,6 +14,26 @@ export class ManagedRuntimeResponseDto {
 
   @ApiProperty()
   externalAgentId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The provider-side environment that hosts this agent. ' +
+      'Hydrated from the linked integration credentials. Absent when the integration has not been provisioned.',
+  })
+  externalEnvironmentId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The provider-side workspace id used in console deep links. ' +
+      "Defaults to `'default'` (the auto-created Default Workspace). " +
+      'Hydrated from the linked integration credentials.',
+  })
+  externalWorkspaceId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Deep link to the agent in the provider console (e.g. platform.claude.com).',
+  })
+  consoleUrl?: string;
 }
 
 export class AgentResponseDto {

@@ -654,6 +654,38 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.status).to.equal(404);
     });
 
+    it('should forward tools to updateConfig and surface the updated tools in the response', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+      const identifier = `e2e-patch-tools-${Date.now()}`;
+      createdAgentIdentifiers.push(identifier);
+
+      await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
+
+      mockProvider.updateConfig.resolves({
+        model: 'claude-3-5-sonnet-20241022',
+        systemPrompt: '',
+        mcpServers: [],
+        tools: [{ externalId: 'bash', name: 'bash', type: 'builtin' }],
+      });
+
+      const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`).send({
+        tools: [{ externalId: 'bash', name: 'Bash', type: 'builtin' }],
+      });
+
+      expect(res.status).to.equal(200);
+      expect(res.body.data.tools).to.be.an('array').with.length(1);
+      expect(res.body.data.tools[0].externalId).to.equal('bash');
+      expect(res.body.data.tools[0].type).to.equal('builtin');
+
+      const patchArg = mockProvider.updateConfig.getCall(0).args[1];
+      // The use-case must pass tools through as full DTOs so the provider can read
+      // the externalId (the actual provider tool `type`) — not just the display name.
+      expect(patchArg.tools).to.be.an('array').with.length(1);
+      expect(patchArg.tools[0].externalId).to.equal('bash');
+      expect(patchArg.tools[0].name).to.equal('Bash');
+      expect(patchArg.tools[0].type).to.equal('builtin');
+    });
+
     it('should forward skills to updateConfig', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-patch-skills-${Date.now()}`;

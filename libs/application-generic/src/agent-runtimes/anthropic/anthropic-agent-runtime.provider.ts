@@ -142,7 +142,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
 
     return this.withRetry(async () => {
       try {
-        const agent = await (client as any).beta.agents.retrieve(externalAgentId);
+        const agent = await client.beta.agents.retrieve(externalAgentId);
 
         return { externalAgentId: agent.id as string, name: agent.name as string };
       } catch (err) {
@@ -203,23 +203,33 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
 
     return this.withRetry(async () => {
       try {
-        const updatePayload: Record<string, unknown> = {};
+        // Retrieve the current agent once: we need its `version` for the optimistic
+        // concurrency control the Anthropic API requires on every update, and its
+        // `tools` / `mcp_servers` to merge partial patches without clearing the
+        // side the caller didn't touch.
+        const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
+
+        const updatePayload: Record<string, unknown> = {
+          version: currentAgent.version,
+        };
 
         if (patch.model !== undefined) updatePayload.model = patch.model;
         if (patch.systemPrompt !== undefined) updatePayload.system = patch.systemPrompt;
         if (patch.mcpServers !== undefined) {
           updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
         }
-        // For tools/mcpServers, fetch current state and merge so a one-sided
-        // PATCH doesn't wipe out the side the caller didn't touch.
         if (patch.tools !== undefined || patch.mcpServers !== undefined) {
-          const current = await this.getConfig(externalAgentId);
+          const currentTools = ((currentAgent.tools as any[]) ?? []).flatMap(mapToolset);
+          const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
+          // Use externalId (the provider tool `type`, e.g. "bash"), not the display `name`
+          // (e.g. "Bash") — the latter never matches CLAUDE_BUILTIN_TOOLS, leaving every
+          // tool disabled in the toolset payload.
           const toolTypes =
-            patch.tools !== undefined ? patch.tools.map((t) => t.name) : current.tools.map((t) => t.name);
+            patch.tools !== undefined ? patch.tools.map((t) => t.externalId) : currentTools.map((t) => t.externalId);
           const mcpServers =
             patch.mcpServers !== undefined
               ? patch.mcpServers.map((s) => ({ name: s.name, url: s.url }))
-              : current.mcpServers.map((s) => ({ name: s.name, url: s.url }));
+              : currentMcpServers.map((s) => ({ name: s.name, url: s.url }));
           const toolsPayload = buildToolsPayload(toolTypes, mcpServers);
 
           if (toolsPayload.length > 0) updatePayload.tools = toolsPayload;
@@ -228,9 +238,15 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
           updatePayload.skills = patch.skills.map(toSkillParam);
         }
 
-        await (client as any).beta.agents.update(externalAgentId, updatePayload);
+        const updated = await (client as any).beta.agents.update(externalAgentId, updatePayload);
 
-        return this.getConfig(externalAgentId);
+        return {
+          model: updated.model?.id ?? updated.model ?? DEFAULT_MODEL,
+          systemPrompt: updated.system ?? '',
+          mcpServers: ((updated.mcp_servers as any[]) ?? []).map(mapMcpServer),
+          tools: ((updated.tools as any[]) ?? []).flatMap(mapToolset),
+          skills: ((updated.skills as any[]) ?? []).map(mapSkill),
+        };
       } catch (err) {
         this.normaliseError(err);
       }

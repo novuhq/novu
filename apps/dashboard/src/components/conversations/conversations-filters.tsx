@@ -1,9 +1,14 @@
 import { useOrganization } from '@clerk/clerk-react';
+import { DirectionEnum, PermissionsEnum } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
 import { CalendarIcon } from 'lucide-react';
 import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
+import { getAgentsListQueryKey, listAgents } from '@/api/agents';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useDebouncedForm } from '@/hooks/use-debounced-form';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
+import { useHasPermission } from '@/hooks/use-has-permission';
 import { ConversationFiltersData } from '@/types/conversation';
 import { buildActivityDateFilters } from '@/utils/activityFilters';
 import { cn } from '@/utils/ui';
@@ -12,6 +17,9 @@ import { Button } from '../primitives/button';
 import { FacetedFormFilter } from '../primitives/form/faceted-filter/facated-form-filter';
 import { Form, FormField, FormItem, FormRoot } from '../primitives/form/form';
 import { PROVIDER_OPTIONS } from './constants';
+
+const AGENT_FILTER_LIMIT = 100;
+const AGENT_FILTER_PARAMS = { after: undefined, before: undefined, limit: AGENT_FILTER_LIMIT, identifier: '' };
 
 type ConversationFiltersProps = {
   filters: ConversationFiltersData;
@@ -30,6 +38,9 @@ export function ConversationFilters({
 }: ConversationFiltersProps) {
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
+  const { currentEnvironment } = useEnvironment();
+  const has = useHasPermission();
+  const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
 
   const form = useForm<ConversationFiltersData>({
     values: filters,
@@ -51,6 +62,28 @@ export function ConversationFilters({
       apiServiceLevel: subscription?.apiServiceLevel,
     });
   }, [organization, subscription]);
+
+  const agentsQuery = useQuery({
+    queryKey: getAgentsListQueryKey(currentEnvironment?._id, AGENT_FILTER_PARAMS),
+    queryFn: () =>
+      listAgents({
+        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
+        limit: AGENT_FILTER_LIMIT,
+        orderBy: 'updatedAt',
+        orderDirection: DirectionEnum.DESC,
+      }),
+    enabled: Boolean(currentEnvironment) && canReadAgents,
+    staleTime: 60_000,
+  });
+
+  const agentOptions = useMemo(() => {
+    const agents = agentsQuery.data?.data ?? [];
+
+    return agents.map((agent) => ({
+      label: agent.name || agent.identifier,
+      value: agent.identifier,
+    }));
+  }, [agentsQuery.data?.data]);
 
   const handleReset = () => {
     if (onReset) {
@@ -99,6 +132,26 @@ export function ConversationFilters({
             </FormItem>
           )}
         />
+
+        {canReadAgents && (
+          <FormField
+            control={form.control}
+            name="agentId"
+            render={({ field }) => (
+              <FormItem>
+                <FacetedFormFilter
+                  size="small"
+                  type="single"
+                  title="Agent"
+                  options={agentOptions}
+                  selected={field.value ? [field.value] : []}
+                  onSelect={(values) => setValue('agentId', values[0] ?? '')}
+                  isLoading={agentsQuery.isLoading}
+                />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}
