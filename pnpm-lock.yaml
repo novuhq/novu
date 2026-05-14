@@ -1520,8 +1520,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/testing
       '@novu/thalamus':
-        specifier: https://github.com/novuhq/thalamus.git#3fb3bd8
-        version: https://codeload.github.com/novuhq/thalamus/tar.gz/3fb3bd84507934c70f7300a72e846b4a316f478e(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.3.14)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))
+        specifier: https://github.com/novuhq/thalamus.git#4ad9073
+        version: https://codeload.github.com/novuhq/thalamus/tar.gz/4ad9073a150896bfdbf6a6d65d19261d44066b22(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.3.14)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))
       '@sentry/browser':
         specifier: ^8.33.1
         version: 8.55.0
@@ -8727,8 +8727,8 @@ packages:
     resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
     engines: {node: '>=18.0.0'}
 
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/3fb3bd84507934c70f7300a72e846b4a316f478e':
-    resolution: {tarball: https://codeload.github.com/novuhq/thalamus/tar.gz/3fb3bd84507934c70f7300a72e846b4a316f478e}
+  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/4ad9073a150896bfdbf6a6d65d19261d44066b22':
+    resolution: {tarball: https://codeload.github.com/novuhq/thalamus/tar.gz/4ad9073a150896bfdbf6a6d65d19261d44066b22}
     version: 0.1.0
     peerDependencies:
       '@anthropic-ai/aws-sdk': '>=0.86.0'
@@ -34748,7 +34748,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/3fb3bd84507934c70f7300a72e846b4a316f478e(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.3.14)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))':
+  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/4ad9073a150896bfdbf6a6d65d19261d44066b22(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.3.14)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.95.1(zod@4.3.6)
       '@aws-crypto/sha256-js': 5.2.0
