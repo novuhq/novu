@@ -782,13 +782,20 @@ function filterByBasenames(discovered: DiscoveredSkillBundle[], basenames: strin
  */
 export function parseSkillNameFromFrontmatter(content: string): string | null {
   const normalized = content.replace(/^\uFEFF/, '');
-  const frontmatter = normalized.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+  // Use `[ \t]*` (not `\s*`) so the pre-newline whitespace class does not overlap
+  // with `\r?\n`. Overlapping whitespace classes can trigger polynomial
+  // backtracking on adversarial input (flagged by CodeQL js/polynomial-redos).
+  const frontmatter = normalized.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---/);
 
   if (!frontmatter) {
     return null;
   }
 
-  const nameMatch = frontmatter[1].match(/^[ \t]*name[ \t]*:[ \t]*(.+?)[ \t]*$/m);
+  // Capture the rest of the line greedily and `.trim()` in JS to strip
+  // surrounding whitespace. Previously this used `[ \t]*(.+?)[ \t]*$`, whose
+  // overlapping `[ \t]*` groups around a lazy capture allowed polynomial
+  // backtracking on inputs like `name:\t\t…` (CodeQL js/polynomial-redos).
+  const nameMatch = frontmatter[1].match(/^[ \t]*name[ \t]*:[ \t]*(.*)$/m);
 
   if (!nameMatch) {
     return null;

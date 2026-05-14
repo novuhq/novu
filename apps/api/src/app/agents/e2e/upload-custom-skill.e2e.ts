@@ -36,7 +36,9 @@ function buildSkillMd(name: string): string {
 
 const integrationRepository = new IntegrationRepository();
 
-type ProviderStubs = Partial<Record<string, sinon.SinonStub>>;
+interface ProviderStubs {
+  [key: string]: sinon.SinonStub | undefined;
+}
 
 /**
  * Replicates the Anthropic provider's real frontmatter check inside the mock so
@@ -55,9 +57,12 @@ function validateSkillBundleFrontmatter(files: UploadSkillFile[]): void {
   }
 
   const content = skillMd.content.toString('utf8').replace(/^\uFEFF/, '');
-  const frontmatter = content.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+  // Mirror the ReDoS-safe regexes used by `parseSkillNameFromFrontmatter` —
+  // `[ \t]*` instead of `\s*` before the newline, and a greedy capture instead
+  // of `(.+?)[ \t]*$` (CodeQL js/polynomial-redos).
+  const frontmatter = content.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---/);
 
-  if (!frontmatter || !frontmatter[1].match(/^[ \t]*name[ \t]*:[ \t]*(.+?)[ \t]*$/m)) {
+  if (!frontmatter || !frontmatter[1].match(/^[ \t]*name[ \t]*:[ \t]*(.*)$/m)) {
     throw new AgentRuntimeBadRequestError(
       'SKILL.md must declare a `name` in its YAML frontmatter — Anthropic requires the bundle folder name to match it.',
       AgentRuntimeProviderIdEnum.Anthropic
@@ -190,11 +195,15 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
   }
 
   function stubGithubFetch(buffer: Buffer, status = 200, headers?: Record<string, string>): sinon.SinonStub {
+    // Construct a fresh `Response` per invocation: the production code streams
+    // `response.body` via `Readable.fromWeb(...)`, which locks the underlying
+    // `ReadableStream`. Re-using a single `Response` would cause the second
+    // call from any "upload twice" test to fail with "ReadableStream is locked".
     // Cast through `any` because lib.dom's `fetch` typing on globalThis breaks the
     // `sinon.stub(obj, method)` signature inference in the test compiler config.
     fetchStub = sinon
       .stub(globalThis as unknown as { fetch: typeof fetch }, 'fetch')
-      .resolves(buildFetchResponse(buffer, status, headers));
+      .callsFake(async () => buildFetchResponse(buffer, status, headers));
 
     return fetchStub;
   }

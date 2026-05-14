@@ -620,7 +620,7 @@ export class AgentsController {
   @ApiNotFoundResponse({ description: 'The integration was not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   @UseFilters(AgentRuntimeExceptionFilter)
-  uploadCustomSkill(
+  createCustomSkill(
     @UserSession() user: UserSessionData,
     @Body() body: UploadCustomSkillRequestDto
   ): Promise<UploadCustomSkillResponseDto> {

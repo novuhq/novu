@@ -281,9 +281,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
     }
 
     const client = this.buildClient();
-    const files = await Promise.all(
-      input.files.map((file) => toFile(file.content, `${directoryName}/${file.path}`))
-    );
+    const files = await Promise.all(input.files.map((file) => toFile(file.content, `${directoryName}/${file.path}`)));
     const displayTitle = input.displayTitle
       ? truncateWithEllipsis(input.displayTitle, MAX_DISPLAY_TITLE_LENGTH)
       : undefined;
@@ -441,13 +439,20 @@ function extractSkillNameFromBundle(files: UploadSkillFile[]): string | null {
   }
 
   const content = skillMd.content.toString('utf8').replace(/^\uFEFF/, '');
-  const frontmatter = content.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+  // Use `[ \t]*` (not `\s*`) so the pre-newline whitespace class does not overlap
+  // with `\r?\n`. Overlapping whitespace classes can trigger polynomial
+  // backtracking on adversarial input (flagged by CodeQL js/polynomial-redos).
+  const frontmatter = content.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---/);
 
   if (!frontmatter) {
     return null;
   }
 
-  const nameMatch = frontmatter[1].match(/^[ \t]*name[ \t]*:[ \t]*(.+?)[ \t]*$/m);
+  // Capture the rest of the line greedily and `.trim()` in JS to strip
+  // surrounding whitespace. Previously this used `[ \t]*(.+?)[ \t]*$`, whose
+  // overlapping `[ \t]*` groups around a lazy capture allowed polynomial
+  // backtracking on inputs like `name:\t\t…` (CodeQL js/polynomial-redos).
+  const nameMatch = frontmatter[1].match(/^[ \t]*name[ \t]*:[ \t]*(.*)$/m);
 
   if (!nameMatch) {
     return null;
@@ -455,10 +460,7 @@ function extractSkillNameFromBundle(files: UploadSkillFile[]): string | null {
 
   let value = nameMatch[1].trim();
 
-  if (
-    (value.startsWith('"') && value.endsWith('"')) ||
-    (value.startsWith("'") && value.endsWith("'"))
-  ) {
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
     value = value.slice(1, -1).trim();
   }
 
@@ -492,7 +494,9 @@ function isDuplicateDisplayTitleError(err: unknown): boolean {
   const errorBody = (err as unknown as { error?: unknown }).error;
   const serializedBody = errorBody ? safeStringify(errorBody) : '';
 
-  return /reuse an existing display_title/i.test(directMessage) || /reuse an existing display_title/i.test(serializedBody);
+  return (
+    /reuse an existing display_title/i.test(directMessage) || /reuse an existing display_title/i.test(serializedBody)
+  );
 }
 
 function safeStringify(value: unknown): string {
