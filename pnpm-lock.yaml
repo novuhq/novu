@@ -23,7 +23,7 @@ overrides:
   postcss@<8.5.10: ^8.5.10
   proxy-agent@<6.3.1: ^6.3.1
   semver@>=7.0.0 <7.5.2: ^7.5.2
-  systeminformation@<5.31.0: ^5.31.3
+  systeminformation@<5.31.6: ^5.31.6
   tar: 7.5.13
   tar-fs: '>=3.1.1'
   tough-cookie@<4.1.3: ^4.1.3
@@ -25510,8 +25510,8 @@ packages:
     resolution: {integrity: sha512-MeQTA1r0litLUf0Rp/iisCaL8761lKAZHaimlbGK4j0HysC4PLfqygQj9srcs0m2RdtDYnF8UuYyKpbjHYp7Jw==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  systeminformation@5.31.3:
-    resolution: {integrity: sha512-vX0eeI7oGIr79NLiJRWnK8SyxDjyiNOEanaQnHRNyb5ep8QcpD8QMDvrukdrxV4pV4AKjwUDfaypXnWHMC/65A==}
+  systeminformation@5.31.6:
+    resolution: {integrity: sha512-Uv2b2uGGM6ns+26czgW2cYRabYdnswM0ddSOOlryHOaelzsmDSet1iM/NT7VOYxW8x/BW+HkY+b1Ve2pLTSGSA==}
     engines: {node: '>=8.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
@@ -35400,7 +35400,7 @@ snapshots:
   '@opentelemetry/host-metrics@0.35.5(@opentelemetry/api@1.9.0)':
     dependencies:
       '@opentelemetry/api': 1.9.0
-      systeminformation: 5.31.3
+      systeminformation: 5.31.6
 
   '@opentelemetry/instrumentation-amqplib@0.46.1(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -56981,7 +56981,7 @@ snapshots:
     dependencies:
       '@pkgr/core': 0.2.9
 
-  systeminformation@5.31.3: {}
+  systeminformation@5.31.6: {}
 
   table-layout@1.0.2:
     dependencies:
