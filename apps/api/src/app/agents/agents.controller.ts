@@ -49,6 +49,8 @@ import {
   UpdateAgentBridgeRequestDto,
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
+  UploadCustomSkillRequestDto,
+  UploadCustomSkillResponseDto,
 } from './dtos';
 import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
 import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
@@ -90,6 +92,8 @@ import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integrati
 import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfigCommand } from './usecases/update-agent-runtime-config/update-agent-runtime-config.command';
 import { UpdateAgentRuntimeConfig } from './usecases/update-agent-runtime-config/update-agent-runtime-config.usecase';
+import { UploadCustomSkillCommand } from './usecases/upload-custom-skill/upload-custom-skill.command';
+import { UploadCustomSkill } from './usecases/upload-custom-skill/upload-custom-skill.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -114,6 +118,7 @@ export class AgentsController {
     private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage,
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly updateAgentRuntimeConfigUsecase: UpdateAgentRuntimeConfig,
+    private readonly uploadCustomSkillUsecase: UploadCustomSkill,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate
   ) {}
@@ -585,6 +590,38 @@ export class AgentsController {
         mcpServers: body.mcpServers,
         tools: body.tools,
         skills: body.skills,
+      })
+    );
+  }
+
+  @Post('/skills')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiResponse(UploadCustomSkillResponseDto, 201)
+  @ApiOperation({
+    summary: 'Upload a custom skill from a source repository',
+    description:
+      'Downloads the supplied source (currently a public GitHub repository or sub-path), ' +
+      'uploads it to the integration provider as a custom skill, and returns the provider-assigned ' +
+      'skill ID. The returned `skillId` can be passed via `managedRuntime.skills` on POST /agents ' +
+      'or on PATCH /agents/:identifier/runtime/config as `{ type: "custom", skillId }`. ' +
+      'Re-uploading the same source onto an integration that already has a skill with the same ' +
+      'derived display title appends a new version to that skill rather than failing — the response ' +
+      'returns the existing `skillId` and the new `version`.',
+  })
+  @ApiNotFoundResponse({ description: 'The integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  uploadCustomSkill(
+    @UserSession() user: UserSessionData,
+    @Body() body: UploadCustomSkillRequestDto
+  ): Promise<UploadCustomSkillResponseDto> {
+    return this.uploadCustomSkillUsecase.execute(
+      UploadCustomSkillCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationId: body.integrationId,
+        source: body.source,
       })
     );
   }

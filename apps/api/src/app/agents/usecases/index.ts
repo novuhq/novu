@@ -19,6 +19,7 @@ import { SyncAgentToEnvironment } from './sync-agent-to-environment/sync-agent-t
 import { UpdateAgent } from './update-agent/update-agent.usecase';
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfig } from './update-agent-runtime-config/update-agent-runtime-config.usecase';
+import { UploadCustomSkill } from './upload-custom-skill/upload-custom-skill.usecase';
 
 export const USE_CASES = [
   CreateAgent,
@@ -27,6 +28,7 @@ export const USE_CASES = [
   ListAgents,
   UpdateAgent,
   UpdateAgentRuntimeConfig,
+  UploadCustomSkill,
   DeleteAgent,
   AddAgentIntegration,
   CleanupNovuEmail,

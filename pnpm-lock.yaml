@@ -593,6 +593,9 @@ importers:
       swagger-ui-express:
         specifier: ^4.4.0
         version: 4.6.2(express@5.0.1)
+      tar:
+        specifier: 7.5.13
+        version: 7.5.13
       tldts:
         specifier: ^7.0.28
         version: 7.0.30

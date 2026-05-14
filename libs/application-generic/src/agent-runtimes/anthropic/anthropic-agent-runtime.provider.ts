@@ -1,4 +1,4 @@
-import Anthropic, { APIConnectionError, APIConnectionTimeoutError, APIError } from '@anthropic-ai/sdk';
+import Anthropic, { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
 import type { AgentMcpServerDto, AgentRuntimeConfigDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
 import {
   AGENT_RUNTIME_PROVIDERS,
@@ -26,6 +26,9 @@ import type {
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
+  UploadSkillFile,
+  UploadSkillInput,
+  UploadSkillResult,
 } from '../i-agent-runtime-provider';
 
 const PROVIDER_ID = AgentRuntimeProviderIdEnum.Anthropic;
@@ -34,6 +37,8 @@ const DEFAULT_MODEL = 'claude-sonnet-4-5';
 const RETRY_JITTER_MS = 500;
 /** Timeout for config calls in ms */
 const REQUEST_TIMEOUT_MS = 10_000;
+/** Anthropic enforces a 64-char cap on `display_title` for `beta.skills.create`. */
+const MAX_DISPLAY_TITLE_LENGTH = 64;
 
 export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   readonly providerId = PROVIDER_ID;
@@ -260,6 +265,128 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
       }
     });
   }
+
+  async uploadSkill(input: UploadSkillInput): Promise<UploadSkillResult> {
+    // Anthropic requires every file to live under a single common top-level
+    // directory whose name matches the `name` declared in SKILL.md's YAML
+    // frontmatter. Anything else (e.g. an owner-derived display title) is
+    // rejected with a 400: `The folder name 'X' must match the skill name 'Y'`.
+    const directoryName = extractSkillNameFromBundle(input.files);
+
+    if (!directoryName) {
+      throw new AgentRuntimeBadRequestError(
+        'SKILL.md must declare a `name` in its YAML frontmatter — Anthropic requires the bundle folder name to match it.',
+        PROVIDER_ID
+      );
+    }
+
+    const client = this.buildClient();
+    const files = await Promise.all(
+      input.files.map((file) => toFile(file.content, `${directoryName}/${file.path}`))
+    );
+    const displayTitle = input.displayTitle
+      ? truncateWithEllipsis(input.displayTitle, MAX_DISPLAY_TITLE_LENGTH)
+      : undefined;
+
+    // Not retried: skill creation is not idempotent and a retry after a
+    // dropped response would create a duplicate billable skill upstream.
+    try {
+      const skill = await (client as any).beta.skills.create({
+        ...(displayTitle ? { display_title: displayTitle } : {}),
+        files,
+      });
+
+      return {
+        skillId: skill.id as string,
+        version: ((skill.latest_version as string | null | undefined) ?? null) as string | null,
+      };
+    } catch (err) {
+      // Anthropic rejects `beta.skills.create` with a 400 when a custom skill
+      // already exists with the same `display_title` in this environment.
+      // Treat the re-upload as an update: find the existing skill and push the
+      // freshly-built bundle as a new version, returning the stable skillId.
+      if (displayTitle && isDuplicateDisplayTitleError(err)) {
+        const existingSkillId = await this.findExistingSkillIdByDisplayTitle(client, displayTitle);
+
+        if (existingSkillId) {
+          // Not retried: version creation is not idempotent and a retry after
+          // a dropped response would create a duplicate billable version.
+          try {
+            const version = await this.createSkillVersion(client, existingSkillId, input.files, directoryName);
+
+            return {
+              skillId: existingSkillId,
+              version: ((version.version as string | null | undefined) ?? null) as string | null,
+            };
+          } catch (versionErr) {
+            this.normaliseError(versionErr);
+          }
+        }
+      }
+
+      this.normaliseError(err);
+    }
+  }
+
+  /**
+   * Iterate the auto-paginating `beta.skills.list` cursor until a custom skill
+   * with a matching `display_title` is found. Returns `null` if no match is
+   * found across all pages — callers should treat that as "no recovery
+   * possible" and surface the original duplicate-title error.
+   */
+  private async findExistingSkillIdByDisplayTitle(client: Anthropic, displayTitle: string): Promise<string | null> {
+    try {
+      const iterator = (client as any).beta.skills.list({ source: 'custom' }) as AsyncIterable<{
+        id: string;
+        display_title: string | null;
+      }>;
+
+      for await (const skill of iterator) {
+        if (skill.display_title === displayTitle) {
+          return skill.id;
+        }
+      }
+
+      return null;
+    } catch {
+      // Lookup failures are best-effort: the caller will fall back to surfacing
+      // the original duplicate-title error so the user sees the real cause.
+      return null;
+    }
+  }
+
+  /**
+   * Append a new version to an existing skill by calling the underlying HTTP
+   * endpoint directly. We can't use `client.beta.skills.versions.create` here
+   * because @anthropic-ai/sdk@0.95.x defaults `stripFilenames` to `true` for
+   * that endpoint, which strips directory components from the multipart form
+   * `filename` parts. The Anthropic API then can't locate `SKILL.md` inside
+   * a top-level folder and rejects the bundle.
+   *
+   *   skills.create        → multipartFormRequestOptions(..., false) → sends "my-skill/SKILL.md"
+   *   skills.versions.create → multipartFormRequestOptions(...)      → sends "SKILL.md" (broken)
+   *
+   * Building the FormData ourselves and passing it to `client.post` bypasses
+   * the SDK's stripping logic entirely (BaseAnthropic#buildBody hands any
+   * FormData body straight through to fetch).
+   */
+  private async createSkillVersion(
+    client: Anthropic,
+    skillId: string,
+    files: UploadSkillFile[],
+    directoryName: string
+  ): Promise<{ version: string | null }> {
+    const formData = new FormData();
+
+    for (const file of files) {
+      formData.append('files[]', new File([new Uint8Array(file.content)], `${directoryName}/${file.path}`));
+    }
+
+    return (await (client as any).post(`/v1/skills/${encodeURIComponent(skillId)}/versions?beta=true`, {
+      body: formData,
+      headers: { 'anthropic-beta': 'skills-2025-10-02' },
+    })) as { version: string | null };
+  }
 }
 
 export function createAnthropicProvider(apiKey: string): AnthropicAgentRuntimeProvider {
@@ -284,6 +411,60 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Defensive truncation for upstream-bound string fields. If `value` is longer
+ * than `max`, trims it and appends a single-character ellipsis `…` so the
+ * caller can see the value was shortened. Returns `value` unchanged otherwise.
+ */
+function truncateWithEllipsis(value: string, max: number): string {
+  if (value.length <= max) {
+    return value;
+  }
+
+  return `${value.slice(0, max - 1)}…`;
+}
+
+/**
+ * Reads the `name` field out of the YAML frontmatter of the `SKILL.md` at the
+ * root of an uploaded skill bundle. Anthropic enforces that the bundle's
+ * top-level folder name equals this value, so we use it verbatim as the
+ * directory prefix when packaging files for `beta.skills.create`.
+ *
+ * Returns `null` when SKILL.md is missing, has no frontmatter, or has no
+ * `name` field — callers should surface that as a bad-request condition.
+ */
+function extractSkillNameFromBundle(files: UploadSkillFile[]): string | null {
+  const skillMd = files.find((f) => f.path === 'SKILL.md');
+
+  if (!skillMd) {
+    return null;
+  }
+
+  const content = skillMd.content.toString('utf8').replace(/^\uFEFF/, '');
+  const frontmatter = content.match(/^---\s*\r?\n([\s\S]*?)\r?\n---/);
+
+  if (!frontmatter) {
+    return null;
+  }
+
+  const nameMatch = frontmatter[1].match(/^[ \t]*name[ \t]*:[ \t]*(.+?)[ \t]*$/m);
+
+  if (!nameMatch) {
+    return null;
+  }
+
+  let value = nameMatch[1].trim();
+
+  if (
+    (value.startsWith('"') && value.endsWith('"')) ||
+    (value.startsWith("'") && value.endsWith("'"))
+  ) {
+    value = value.slice(1, -1).trim();
+  }
+
+  return value.length > 0 ? value : null;
+}
+
 function isTransient(err: unknown): boolean {
   return (
     err instanceof AgentRuntimeServiceUnavailableError ||
@@ -291,6 +472,35 @@ function isTransient(err: unknown): boolean {
     err instanceof AgentRuntimeNetworkError ||
     err instanceof AgentRuntimeOverloadedError
   );
+}
+
+/**
+ * True when Anthropic rejects `beta.skills.create` because another custom
+ * skill in the same environment already uses the requested `display_title`.
+ *
+ * Detection is by substring because the SDK only surfaces the upstream message
+ * as a string — there is no structured error code. Both the top-level
+ * `err.message` (which embeds the JSON body) and the parsed `err.error`
+ * payload are checked so we tolerate either shape.
+ */
+function isDuplicateDisplayTitleError(err: unknown): boolean {
+  if (!(err instanceof APIError) || err.status !== 400) {
+    return false;
+  }
+
+  const directMessage = err.message ?? '';
+  const errorBody = (err as unknown as { error?: unknown }).error;
+  const serializedBody = errorBody ? safeStringify(errorBody) : '';
+
+  return /reuse an existing display_title/i.test(directMessage) || /reuse an existing display_title/i.test(serializedBody);
+}
+
+function safeStringify(value: unknown): string {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return '';
+  }
 }
 
 function mapSkill(raw: Record<string, unknown>): AgentSkillDto {
