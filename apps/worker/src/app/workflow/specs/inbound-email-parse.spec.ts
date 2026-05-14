@@ -151,8 +151,14 @@ describe('Should handle the new arrived mail', () => {
     const callArgs = safeRequestStub.getCall(0).args[0] as { body: IUserWebhookPayload };
     const mailPayload = callArgs.body.mail;
 
-    // Rehydrator should have been called with the slim queue attachment
-    sinon.assert.calledOnceWithExactly(attachmentRehydrator.rehydrate, [slimAttachment]);
+    // Rehydrator should have been called with the slim queue attachment. We compare by
+    // shape rather than reference because @Type(() => InboundParseAttachmentCommand) on
+    // the command field causes plainToInstance to build a class instance, so the arg is
+    // not === the original plain object.
+    sinon.assert.calledOnce(attachmentRehydrator.rehydrate);
+    const rehydrateArg = attachmentRehydrator.rehydrate.firstCall.args[0]!;
+    expect(rehydrateArg).to.have.length(1);
+    expect(rehydrateArg[0]).to.deep.include(slimAttachment);
 
     // Webhook should carry BOTH the new url/size AND the legacy content for backward compatibility
     expect(mailPayload.attachments).to.have.length(1);
