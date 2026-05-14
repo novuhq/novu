@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { RiArrowRightLine, RiCheckboxCircleFill, RiRobot2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import type { ConversationDto } from '@/api/conversations';
+import { ConversationDetailSheet } from '@/components/conversations/conversation-detail-sheet';
 import { ConversationStatusBadge } from '@/components/conversations/conversation-status-badge';
 import { ConversationsUpgradeCta } from '@/components/conversations/conversations-upgrade-cta';
 import { SubscriberFallbackAvatar } from '@/components/conversations/subscriber-fallback-avatar';
@@ -20,6 +22,7 @@ type RecentConversationsSectionProps = {
 
 export function RecentConversationsSection({ agent }: RecentConversationsSectionProps) {
   const { currentEnvironment } = useEnvironment();
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
 
   const conversationsPath = currentEnvironment?.slug
     ? buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug })
@@ -44,18 +47,31 @@ export function RecentConversationsSection({ agent }: RecentConversationsSection
 
       <div className="bg-bg-white flex h-[300px] flex-col overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
         {!IS_SELF_HOSTED || IS_ENTERPRISE ? (
-          <RecentConversationsContent agent={agent} />
+          <RecentConversationsContent agent={agent} onSelectConversation={setActiveConversationId} />
         ) : (
           <ConversationsUpgradeCta source="agent-overview" variant="compact" />
         )}
       </div>
+
+      <ConversationDetailSheet
+        conversationId={activeConversationId}
+        isOpen={Boolean(activeConversationId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveConversationId(null);
+          }
+        }}
+      />
     </div>
   );
 }
 
-function RecentConversationsContent({ agent }: { agent: AgentResponse }) {
-  const { currentEnvironment } = useEnvironment();
+type RecentConversationsContentProps = {
+  agent: AgentResponse;
+  onSelectConversation: (conversationId: string) => void;
+};
 
+function RecentConversationsContent({ agent, onSelectConversation }: RecentConversationsContentProps) {
   const { conversations, isLoading, isError } = useFetchConversations({
     limit: RECENT_CONVERSATIONS_DISPLAY_LIMIT,
     filters: { agentId: agent.identifier },
@@ -89,7 +105,7 @@ function RecentConversationsContent({ agent }: { agent: AgentResponse }) {
     <ul className="flex flex-1 flex-col divide-y divide-stroke-soft overflow-auto">
       {conversations.map((conversation) => (
         <li key={conversation._id}>
-          <RecentConversationItem conversation={conversation} environmentSlug={currentEnvironment?.slug} />
+          <RecentConversationItem conversation={conversation} onSelect={onSelectConversation} />
         </li>
       ))}
     </ul>
@@ -98,21 +114,26 @@ function RecentConversationsContent({ agent }: { agent: AgentResponse }) {
 
 type RecentConversationItemProps = {
   conversation: ConversationDto;
-  environmentSlug: string | undefined;
+  onSelect: (conversationId: string) => void;
 };
 
-function RecentConversationItem({ conversation, environmentSlug }: RecentConversationItemProps) {
+function RecentConversationItem({ conversation, onSelect }: RecentConversationItemProps) {
   const subscriber = getSubscriberLabel(conversation);
   const subscriberParticipant = (conversation.participants ?? []).find((p) => p.type === 'subscriber');
   const subscriberAvatar = subscriberParticipant?.subscriber?.avatar;
   const isFailed = conversation.status === 'failed';
 
-  const baseClassName = 'flex flex-col gap-1.5 px-3 py-2';
-  const interactiveClassName =
-    'group transition-colors hover:bg-neutral-50 focus-visible:bg-neutral-50 focus-visible:outline-none';
+  const handleSelect = () => onSelect(conversation.identifier);
 
-  const content = (
-    <>
+  return (
+    <button
+      type="button"
+      onClick={handleSelect}
+      className={cn(
+        'group flex w-full flex-col gap-1.5 px-3 py-2 text-left transition-colors',
+        'hover:bg-neutral-50 focus-visible:bg-neutral-50 focus-visible:outline-none'
+      )}
+    >
       <div className="flex items-center gap-8">
         <div className="flex min-w-0 flex-1 items-center gap-1">
           <RiCheckboxCircleFill
@@ -151,19 +172,7 @@ function RecentConversationItem({ conversation, environmentSlug }: RecentConvers
           <ConversationStatusBadge status={conversation.status} />
         </div>
       </div>
-    </>
-  );
-
-  if (!environmentSlug) {
-    return <div className={baseClassName}>{content}</div>;
-  }
-
-  const detailPath = `${buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug })}?conversationItemId=${encodeURIComponent(conversation.identifier)}`;
-
-  return (
-    <Link to={detailPath} className={cn(baseClassName, interactiveClassName)}>
-      {content}
-    </Link>
+    </button>
   );
 }
 
