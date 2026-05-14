@@ -150,14 +150,21 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
   });
 
   describe('happy path', () => {
-    it('returns the new skillId and version when create succeeds', async () => {
+    it('returns the new skillId and version when create succeeds and no existing skill is found', async () => {
+      mockClient.beta.skills.list.mockReturnValue(asPagedAsyncIterable([]));
       mockClient.beta.skills.create.mockResolvedValue({ id: 'skill_new', latest_version: 'v1' });
 
       const result = await provider.uploadSkill(buildInput());
 
       expect(result).to.deep.equal({ skillId: 'skill_new', version: 'v1' });
+      // Proactive lookup always runs once before `create` so the duplicate path
+      // is exercised regardless of which source type triggered the upload.
+      // We intentionally do NOT pass `{ source: 'custom' }` here — Anthropic's
+      // server-side source filter is broken (truncates and lies with
+      // `has_more: false`); see provider for the full explanation.
+      expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(1);
+      expect(mockClient.beta.skills.list.mock.calls[0][0]).to.deep.equal({ limit: 100 });
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(0);
       expect(mockClient.post.mock.calls).to.have.lengthOf(0);
 
       const createArgs = mockClient.beta.skills.create.mock.calls[0][0];
@@ -166,14 +173,13 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
     });
   });
 
-  describe('duplicate display_title — auto-version', () => {
-    it('looks up the existing skill and pushes a new version via direct client.post', async () => {
-      mockClient.beta.skills.create.mockRejectedValue(buildDuplicateDisplayTitleError());
+  describe('proactive lookup — version existing skill', () => {
+    it('skips create and pushes a new version when the lookup finds a matching display_title', async () => {
       mockClient.beta.skills.list.mockReturnValue(
         asPagedAsyncIterable([
           [
-            { id: 'skill_other', display_title: 'something-else' },
-            { id: 'skill_existing', display_title: 'samber-golang-benchmark' },
+            { id: 'skill_other', display_title: 'something-else', source: 'custom' },
+            { id: 'skill_existing', display_title: 'samber-golang-benchmark', source: 'custom' },
           ],
         ])
       );
@@ -190,9 +196,11 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
 
       expect(result).to.deep.equal({ skillId: 'skill_existing', version: 'v17' });
 
-      expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(1);
+      // The proactive path skips create entirely — both `github-url` and
+      // `github-repo` re-uploads converge on the same version-append branch.
+      expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(0);
       expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(1);
-      expect(mockClient.beta.skills.list.mock.calls[0][0]).to.deep.equal({ source: 'custom' });
+      expect(mockClient.beta.skills.list.mock.calls[0][0]).to.deep.equal({ limit: 100 });
 
       expect(mockClient.post.mock.calls).to.have.lengthOf(1);
       const [pathArg, optsArg] = mockClient.post.mock.calls[0];
@@ -207,12 +215,11 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
     });
 
     it('walks multiple pages to find the matching display_title', async () => {
-      mockClient.beta.skills.create.mockRejectedValue(buildDuplicateDisplayTitleError());
       mockClient.beta.skills.list.mockReturnValue(
         asPagedAsyncIterable([
-          [{ id: 'skill_a', display_title: 'unrelated-a' }],
-          [{ id: 'skill_b', display_title: 'unrelated-b' }],
-          [{ id: 'skill_match', display_title: 'samber-golang-benchmark' }],
+          [{ id: 'skill_a', display_title: 'unrelated-a', source: 'custom' }],
+          [{ id: 'skill_b', display_title: 'unrelated-b', source: 'custom' }],
+          [{ id: 'skill_match', display_title: 'samber-golang-benchmark', source: 'custom' }],
         ])
       );
       mockClient.post.mockResolvedValue({ id: 'sv_42', version: 'v42' });
@@ -220,13 +227,38 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
       const result = await provider.uploadSkill(buildInput());
 
       expect(result).to.deep.equal({ skillId: 'skill_match', version: 'v42' });
+      expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(0);
       expect(mockClient.post.mock.calls[0][0]).to.equal('/v1/skills/skill_match/versions?beta=true');
     });
 
-    it('re-throws the original duplicate error as a bad-request when no skill matches', async () => {
-      mockClient.beta.skills.create.mockRejectedValue(buildDuplicateDisplayTitleError());
+    it('ignores Anthropic built-ins and falls through to create when the only matching skill has source !== "custom"', async () => {
+      // Regression test for the Anthropic source-filter workaround: since we
+      // now list unfiltered, built-in skills (`pdf`, `xlsx`, ...) appear in
+      // the iterator and we must never try to version-append them.
       mockClient.beta.skills.list.mockReturnValue(
-        asPagedAsyncIterable([[{ id: 'skill_other', display_title: 'something-else' }]])
+        asPagedAsyncIterable([
+          [
+            { id: 'pdf', display_title: 'samber-golang-benchmark', source: 'anthropic' },
+            { id: 'skill_unrelated', display_title: 'something-else', source: 'custom' },
+          ],
+        ])
+      );
+      mockClient.beta.skills.create.mockResolvedValue({ id: 'skill_new', latest_version: 'v1' });
+
+      const result = await provider.uploadSkill(buildInput());
+
+      expect(result).to.deep.equal({ skillId: 'skill_new', version: 'v1' });
+      expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(1);
+      expect(mockClient.post.mock.calls).to.have.lengthOf(0);
+    });
+
+    it('surfaces a versions endpoint failure from the proactive path as a bad-request', async () => {
+      mockClient.beta.skills.list.mockReturnValue(
+        asPagedAsyncIterable([[{ id: 'skill_existing', display_title: 'samber-golang-benchmark', source: 'custom' }]])
+      );
+      const versionBody = { type: 'error', error: { type: 'invalid_request_error', message: 'Bundle malformed' } };
+      mockClient.post.mockRejectedValue(
+        new APIError(400, versionBody, JSON.stringify(versionBody), undefined as unknown as Headers)
       );
 
       let thrown: unknown;
@@ -236,11 +268,50 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
         thrown = err;
       }
 
+      expect(thrown).to.be.instanceOf(AgentRuntimeBadRequestError);
+      expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(0);
+    });
+  });
+
+  describe('race fallback — duplicate error after lookup', () => {
+    it('versions the existing skill when create races and a concurrent upload wins', async () => {
+      // First list call (proactive): miss. Second list call (race fallback):
+      // finds the skill another caller just created.
+      mockClient.beta.skills.list
+        .mockReturnValueOnce(asPagedAsyncIterable([]))
+        .mockReturnValueOnce(
+          asPagedAsyncIterable([[{ id: 'skill_existing', display_title: 'samber-golang-benchmark', source: 'custom' }]])
+        );
+      mockClient.beta.skills.create.mockRejectedValue(buildDuplicateDisplayTitleError());
+      mockClient.post.mockResolvedValue({ id: 'sv_99', version: 'v99' });
+
+      const result = await provider.uploadSkill(buildInput());
+
+      expect(result).to.deep.equal({ skillId: 'skill_existing', version: 'v99' });
+      expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(2);
+      expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(1);
+      expect(mockClient.post.mock.calls).to.have.lengthOf(1);
+      expect(mockClient.post.mock.calls[0][0]).to.equal('/v1/skills/skill_existing/versions?beta=true');
+    });
+
+    it('re-throws the original duplicate error when neither lookup finds the skill', async () => {
+      mockClient.beta.skills.list.mockReturnValue(asPagedAsyncIterable([]));
+      mockClient.beta.skills.create.mockRejectedValue(buildDuplicateDisplayTitleError());
+
+      let thrown: unknown;
+      try {
+        await provider.uploadSkill(buildInput());
+      } catch (err) {
+        thrown = err;
+      }
+
       expect(thrown, 'should reject').to.be.instanceOf(AgentRuntimeBadRequestError);
+      expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(2);
       expect(mockClient.post.mock.calls).to.have.lengthOf(0);
     });
 
-    it('surfaces a non-duplicate 400 directly without listing or versioning', async () => {
+    it('surfaces a non-duplicate 400 from create directly without a fallback lookup', async () => {
+      mockClient.beta.skills.list.mockReturnValue(asPagedAsyncIterable([]));
       // Same APIError shape used in the existing e2e mapping test (see
       // `provider errors` describe in `upload-custom-skill.e2e.ts`).
       const otherBody = {
@@ -259,28 +330,10 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
       }
 
       expect(thrown).to.be.instanceOf(AgentRuntimeBadRequestError);
-      expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(0);
+      // Only the proactive lookup ran — the race-fallback lookup is reserved
+      // for duplicate-title errors so non-duplicate 400s short-circuit.
+      expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(1);
       expect(mockClient.post.mock.calls).to.have.lengthOf(0);
-    });
-
-    it('surfaces a versions endpoint failure as a bad-request without falling back to a stale skillId', async () => {
-      mockClient.beta.skills.create.mockRejectedValue(buildDuplicateDisplayTitleError());
-      mockClient.beta.skills.list.mockReturnValue(
-        asPagedAsyncIterable([[{ id: 'skill_existing', display_title: 'samber-golang-benchmark' }]])
-      );
-      const versionBody = { type: 'error', error: { type: 'invalid_request_error', message: 'Bundle malformed' } };
-      mockClient.post.mockRejectedValue(
-        new APIError(400, versionBody, JSON.stringify(versionBody), undefined as unknown as Headers)
-      );
-
-      let thrown: unknown;
-      try {
-        await provider.uploadSkill(buildInput());
-      } catch (err) {
-        thrown = err;
-      }
-
-      expect(thrown).to.be.instanceOf(AgentRuntimeBadRequestError);
     });
   });
 

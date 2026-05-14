@@ -281,10 +281,25 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
     }
 
     const client = this.buildClient();
-    const files = await Promise.all(input.files.map((file) => toFile(file.content, `${directoryName}/${file.path}`)));
     const displayTitle = input.displayTitle
       ? truncateWithEllipsis(input.displayTitle, MAX_DISPLAY_TITLE_LENGTH)
       : undefined;
+
+    // Proactive lookup: when a `display_title` is supplied, check whether a
+    // custom skill with the same title already exists in this environment and
+    // route to version-append BEFORE attempting create. This gives every
+    // upload source (`github-url`, `github-repo`, inline) the same re-upload
+    // semantics: re-submitting an identical payload is always a version bump,
+    // never a 400 — without depending on the catch-block fallback to fire.
+    if (displayTitle) {
+      const existingSkillId = await this.findExistingSkillIdByDisplayTitle(client, displayTitle);
+
+      if (existingSkillId) {
+        return this.appendSkillVersion(client, existingSkillId, input.files, directoryName);
+      }
+    }
+
+    const files = await Promise.all(input.files.map((file) => toFile(file.content, `${directoryName}/${file.path}`)));
 
     // Not retried: skill creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable skill upstream.
@@ -299,26 +314,15 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
         version: ((skill.latest_version as string | null | undefined) ?? null) as string | null,
       };
     } catch (err) {
-      // Anthropic rejects `beta.skills.create` with a 400 when a custom skill
-      // already exists with the same `display_title` in this environment.
-      // Treat the re-upload as an update: find the existing skill and push the
-      // freshly-built bundle as a new version, returning the stable skillId.
+      // Race fallback: a concurrent caller (or eventual-consistency on the
+      // list endpoint) can hide an existing skill from our proactive lookup.
+      // When create still comes back with a duplicate-title 400, retry the
+      // lookup and route to the same version-append path.
       if (displayTitle && isDuplicateDisplayTitleError(err)) {
         const existingSkillId = await this.findExistingSkillIdByDisplayTitle(client, displayTitle);
 
         if (existingSkillId) {
-          // Not retried: version creation is not idempotent and a retry after
-          // a dropped response would create a duplicate billable version.
-          try {
-            const version = await this.createSkillVersion(client, existingSkillId, input.files, directoryName);
-
-            return {
-              skillId: existingSkillId,
-              version: ((version.version as string | null | undefined) ?? null) as string | null,
-            };
-          } catch (versionErr) {
-            this.normaliseError(versionErr);
-          }
+          return this.appendSkillVersion(client, existingSkillId, input.files, directoryName);
         }
       }
 
@@ -327,20 +331,56 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
   }
 
   /**
-   * Iterate the auto-paginating `beta.skills.list` cursor until a custom skill
-   * with a matching `display_title` is found. Returns `null` if no match is
-   * found across all pages — callers should treat that as "no recovery
-   * possible" and surface the original duplicate-title error.
+   * Append a freshly-built bundle as a new version of an existing skill and
+   * return the stable `skillId` alongside the new version label. Errors from
+   * the underlying versions endpoint are surfaced via {@link normaliseError},
+   * so the caller can rely on a thrown `AgentRuntime*Error` rather than a
+   * stale `skillId` on partial failure.
+   */
+  private async appendSkillVersion(
+    client: Anthropic,
+    skillId: string,
+    files: UploadSkillFile[],
+    directoryName: string
+  ): Promise<UploadSkillResult> {
+    // Not retried: version creation is not idempotent and a retry after a
+    // dropped response would create a duplicate billable version.
+    try {
+      const version = await this.createSkillVersion(client, skillId, files, directoryName);
+
+      return {
+        skillId,
+        version: ((version.version as string | null | undefined) ?? null) as string | null,
+      };
+    } catch (versionErr) {
+      this.normaliseError(versionErr);
+    }
+  }
+
+  /**
+   * Walk the `beta.skills.list` cursor looking for a custom skill whose
+   * `display_title` matches the supplied target. Returns the matching
+   * `skillId` or `null` when no custom skill with that title exists.
+   *
+   * IMPORTANT: this intentionally does NOT pass `{ source: 'custom' }`.
+   * Anthropic's server-side source filter is broken — with the filter the
+   * API caps the response at the default 20-item page and returns
+   * `has_more: false`, hiding custom skills that genuinely exist. Empirically:
+   * filtered → 20 items, unfiltered → 61 items including the missing
+   * `source: 'custom'` skill. We list unfiltered with a larger page size and
+   * apply `source === 'custom'` client-side so we never accidentally try to
+   * version-append an Anthropic built-in (`pdf`, `xlsx`, `pptx`, `docx`).
    */
   private async findExistingSkillIdByDisplayTitle(client: Anthropic, displayTitle: string): Promise<string | null> {
     try {
-      const iterator = (client as any).beta.skills.list({ source: 'custom' }) as AsyncIterable<{
+      const iterator = (client as any).beta.skills.list({ limit: 100 }) as AsyncIterable<{
         id: string;
         display_title: string | null;
+        source?: string;
       }>;
 
       for await (const skill of iterator) {
-        if (skill.display_title === displayTitle) {
+        if (skill.display_title === displayTitle && skill.source === 'custom') {
           return skill.id;
         }
       }
