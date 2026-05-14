@@ -551,6 +551,11 @@ jobs:
   linear_release_cloud:
     # Cloud uses two continuous Linear pipelines: staging and production.
     # Each successful deploy syncs a completed release to the matching pipeline.
+    #
+    # The release `name` is date-based (`YYYY-MM-DD HH:MM UTC · <environment>`),
+    # so releases are easy to scan in the Linear UI. The commit SHA is preserved
+    # on the release via the `version` field (the Linear Release Action has no
+    # `description` input — see https://github.com/linear/linear-release-action).
     name: Linear Release (Cloud)
     needs: [deploy, prepare-matrix]
     runs-on: ubuntu-latest
@@ -570,6 +575,14 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Compute date-based release name
+        id: release_meta
+        env:
+          DEPLOY_ENVIRONMENT: ${{ github.event.inputs.environment }}
+        run: |
+          release_name="$(date -u +'%Y-%m-%d %H:%M UTC') · ${DEPLOY_ENVIRONMENT}"
+          echo "name=${release_name}" >> "$GITHUB_OUTPUT"
+
       - name: Sync staging release to Linear
         if: |
           github.event.inputs.environment == 'staging' ||
@@ -577,6 +590,7 @@ jobs:
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_STAGING }}
+          name: ${{ steps.release_meta.outputs.name }}
           version: ${{ github.sha }}
 
       - name: Sync production release to Linear
@@ -584,4 +598,5 @@ jobs:
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_PROD }}
+          name: ${{ steps.release_meta.outputs.name }}
           version: ${{ github.sha }}
