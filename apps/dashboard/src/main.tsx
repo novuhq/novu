@@ -48,7 +48,6 @@ import { ChannelPreferences } from './components/workflow-editor/channel-prefere
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
-import { ManagedAgentDebugPage } from './pages/agents-managed-debug';
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { AgentsUsecasePage } from './pages/agents-usecase-page';
@@ -379,12 +378,6 @@ const router = createBrowserRouter([
               {
                 path: ROUTES.AGENTS,
                 element: <AgentsPage />,
-              },
-              {
-                /* DO NOT MERGE — debug-only route. Must be registered before AGENT_DETAILS so the literal
-                 * `/agents/debug-managed-runtime` path is not matched as `:agentIdentifier`. */
-                path: ROUTES.AGENTS_DEBUG_MANAGED,
-                element: <ManagedAgentDebugPage />,
               },
               {
                 path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,

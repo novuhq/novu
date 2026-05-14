@@ -77,11 +77,6 @@ export const ROUTES = {
   VARIABLES: '/env/:environmentSlug/variables',
   VARIABLES_CREATE: '/env/:environmentSlug/variables/create',
   AGENTS: '/env/:environmentSlug/agents',
-  /**
-   * DO NOT MERGE — debug-only route used by the managed-runtime debug modal.
-   * Delete this route along with the agents-managed-debug.tsx page.
-   */
-  AGENTS_DEBUG_MANAGED: '/env/:environmentSlug/agents/debug-managed-runtime',
   AGENT_DETAILS: '/env/:environmentSlug/agents/:agentIdentifier',
   /** Must be registered before AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
   AGENT_DETAILS_INTEGRATIONS_DETAIL:
