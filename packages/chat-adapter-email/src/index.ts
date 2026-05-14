@@ -3,6 +3,8 @@ import { NovuEmailAdapterImpl } from './adapter.js';
 import type { NovuEmailAdapterConfig, NovuEmailRawMessage, NovuEmailThreadId } from './types.js';
 
 export type {
+  ActionButtonStyle,
+  ActionUrlBuilder,
   EmailWebhookPayload,
   NovuEmailAdapterConfig,
   NovuEmailAttachment,

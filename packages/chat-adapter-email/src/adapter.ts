@@ -147,7 +147,6 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<NovuEmailRawMessage>> {
     const normalized = this.normalizeMessage(message);
     const decoded = this.threadResolver.decodeThreadId(threadId);
-    const rendered = await renderMessage(normalized);
 
     const agentAddress = await this.threadResolver.getAgentAddress(threadId);
     if (!agentAddress) {
@@ -156,7 +155,15 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
     const fromHeader = this.config.senderName ? `${this.config.senderName} <${agentAddress}>` : agentAddress;
 
+    // Mint the Message-ID before rendering so action-button URLs in the email body can sign
+    // a token bound to this specific email; the chat SDK's processAction lookup later in the
+    // click handler uses the same Message-ID to locate the originating thread/message.
     const messageId = generateMessageId(agentAddress);
+    const buildActionUrl = this.config.actionUrlBuilder;
+    const rendered = await renderMessage({
+      ...normalized,
+      ...(normalized.card && buildActionUrl ? { actionContext: { threadId, messageId, buildActionUrl } } : {}),
+    });
     const replyHeaders = await this.threadResolver.getReplyHeaders(threadId);
     const storedSubject = await this.threadResolver.getSubject(threadId);
     const subject = storedSubject
@@ -178,6 +185,14 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
 
     const sentMessageId = result.messageId || messageId;
     await this.threadResolver.trackMessage(threadId, sentMessageId);
+    // Action tokens embedded in the email body are bound to the locally minted `messageId`.
+    // When a provider rewrites Message-ID, `sentMessageId` differs — track the minted ID too
+    // so the action-token's correlation survives (the user's `onAction(action, ctx)` receives
+    // `action.sourceMessageId = messageId`, and any platform-message lookup keyed on either
+    // value resolves back to the same thread).
+    if (sentMessageId !== messageId) {
+      await this.threadResolver.trackMessage(threadId, messageId);
+    }
 
     const raw: NovuEmailRawMessage = {
       id: sentMessageId,

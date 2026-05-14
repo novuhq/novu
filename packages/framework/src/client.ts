@@ -42,7 +42,11 @@ import type {
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, resolveApiUrl, resolveSecretKey, sanitizeHtmlInObject } from './utils';
 import { createLiquidEngine } from './utils/liquid.utils';
-import { normalizeControlData } from './utils/normalize-controls.utils';
+import {
+  expandJsonStringControlValues,
+  normalizeControlData,
+  restoreJsonStringControlValues,
+} from './utils/normalize-controls.utils';
 import { deepMerge } from './utils/object.utils';
 import { validateData } from './validators';
 
@@ -717,7 +721,19 @@ export class Client {
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
     try {
-      let templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      /**
+       * Some control values (notably the Maily email `body`) are JSON.stringified before reaching
+       * the framework. If we feed them through `JSON.stringify(templateControls)` as-is, their
+       * `"` characters get doubly escaped while Liquid only single-escapes its outputs, so any
+       * rendered variable that contains a `"` corrupts the inner JSON (NV-7638).
+       *
+       * Expanding those JSON strings into real objects flattens the escaping to a single level
+       * before Liquid renders, and `restoreJsonStringControlValues` re-stringifies them after
+       * parsing the rendered template.
+       */
+      const expandedControls = expandJsonStringControlValues(templateControls) as Record<string, unknown>;
+
+      let templateString = this.preprocessTranslationPatterns(JSON.stringify(expandedControls));
       templateString = this.preprocessFilterTranslationArgs(templateString);
       const parsedTemplate = this.templateEngine.parse(templateString);
       const discoveredWorkflow = this.getWorkflow(event.workflowId);
@@ -744,9 +760,10 @@ export class Client {
       // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
       const repairedString = jsonrepair(withMarkers);
       const parsedControls = JSON.parse(repairedString);
+      const restoredControls = restoreJsonStringControlValues(parsedControls) as Record<string, unknown>;
       // Normalize string values in the data field that contain invalid JSON (e.g., from Liquid template variables)
       // This handles cases where Liquid outputs JavaScript object notation instead of valid JSON
-      return normalizeControlData(parsedControls);
+      return normalizeControlData(restoredControls);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }

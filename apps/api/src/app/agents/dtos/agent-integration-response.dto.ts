@@ -17,8 +17,12 @@ export class AgentIntegrationResponseIntegrationDto {
   @ApiProperty()
   providerId: string;
 
-  @ApiProperty({ enum: ChannelTypeEnum, enumName: 'ChannelTypeEnum' })
-  channel: ChannelTypeEnum;
+  @ApiPropertyOptional({
+    description: 'Delivery channel; not set for agent-runtime integrations.',
+    enum: ChannelTypeEnum,
+    enumName: 'ChannelTypeEnum',
+  })
+  channel?: ChannelTypeEnum;
 
   @ApiProperty()
   active: boolean;

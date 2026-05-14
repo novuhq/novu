@@ -5,7 +5,7 @@ description: Sets up a Redis Cluster instance needed to run the tests
 runs:
   using: composite
   steps:
-    - uses: vishnudxb/redis-cluster@1.0.5
+    - uses: vishnudxb/redis-cluster@b8d87ca4b6704ea41731a583f980ad4366a741ff # 1.0.5
       with:
         master1-port: 7000
         master2-port: 7001

@@ -62,35 +62,47 @@ jobs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Validate Selected Services
+        env:
+          INPUT_BUILD_API: ${{ github.event.inputs.build_api }}
+          INPUT_BUILD_WORKER: ${{ github.event.inputs.build_worker }}
+          INPUT_BUILD_DASHBOARD: ${{ github.event.inputs.build_dashboard }}
+          INPUT_BUILD_WS: ${{ github.event.inputs.build_ws }}
+          INPUT_BUILD_INBOUND_MAIL: ${{ github.event.inputs.build_inbound_mail }}
         run: |
-          if [ "${{ github.event.inputs.build_api }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_worker }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_dashboard }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_ws }}" != "true" ] && \
-             [ "${{ github.event.inputs.build_inbound_mail }}" != "true" ]; then
+          if [ "$INPUT_BUILD_API" != "true" ] && \
+             [ "$INPUT_BUILD_WORKER" != "true" ] && \
+             [ "$INPUT_BUILD_DASHBOARD" != "true" ] && \
+             [ "$INPUT_BUILD_WS" != "true" ] && \
+             [ "$INPUT_BUILD_INBOUND_MAIL" != "true" ]; then
             echo "Error: At least one service must be selected for building."
             exit 1
           fi
 
       - name: Generate Build Matrix
         id: set-matrix
+        env:
+          INPUT_BUILD_API: ${{ github.event.inputs.build_api }}
+          INPUT_BUILD_WORKER: ${{ github.event.inputs.build_worker }}
+          INPUT_BUILD_DASHBOARD: ${{ github.event.inputs.build_dashboard }}
+          INPUT_BUILD_WS: ${{ github.event.inputs.build_ws }}
+          INPUT_BUILD_INBOUND_MAIL: ${{ github.event.inputs.build_inbound_mail }}
         run: |
           services=()
 
-          if [ "${{ github.event.inputs.build_api }}" == "true" ]; then
+          if [ "$INPUT_BUILD_API" == "true" ]; then
             services+=("\"api-ee\"")
           fi
-          if [ "${{ github.event.inputs.build_worker }}" == "true" ]; then
+          if [ "$INPUT_BUILD_WORKER" == "true" ]; then
             services+=("\"worker-ee\"")
           fi
-          if [ "${{ github.event.inputs.build_dashboard }}" == "true" ]; then
+          if [ "$INPUT_BUILD_DASHBOARD" == "true" ]; then
             services+=("\"dashboard-ee-clerk\"")
             services+=("\"dashboard-ee-betterauth\"")
           fi
-          if [ "${{ github.event.inputs.build_ws }}" == "true" ]; then
+          if [ "$INPUT_BUILD_WS" == "true" ]; then
             services+=("\"ws-ee\"")
           fi
-          if [ "${{ github.event.inputs.build_inbound_mail }}" == "true" ]; then
+          if [ "$INPUT_BUILD_INBOUND_MAIL" == "true" ]; then
             services+=("\"inbound-mail-ee\"")
           fi
 
@@ -110,7 +122,7 @@ jobs:
         name: ${{ fromJson(needs.setup_matrix.outputs.matrix) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           submodules: true
           fetch-depth: 0
@@ -118,9 +130,15 @@ jobs:
 
       - name: Variables
         shell: bash
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version }}
         run: |
+          if ! [[ "$INPUT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$ ]]; then
+            echo "Error: version must be semver (e.g. 1.2.3 or 1.2.3-rc.1), got: $INPUT_VERSION"
+            exit 1
+          fi
           SERVICE_NAME="${{ matrix.name }}"
-          LATEST_VERSION="${{ github.event.inputs.version }}"
+          LATEST_VERSION="$INPUT_VERSION"
 
           # Extract auth provider if present
           if [[ "$SERVICE_NAME" == *"-clerk" ]]; then
@@ -152,13 +170,13 @@ jobs:
           fi
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
         with:
           version: 10.33.0
           run_install: false
 
       - name: Setup Node Version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22.22.1"
           cache: "pnpm"
@@ -172,7 +190,7 @@ jobs:
         run: pnpm symlink:submodules
 
       - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
         with:
           driver-opts: "image=moby/buildkit:v0.13.1"
 
@@ -180,15 +198,15 @@ jobs:
         run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
+          role-session-name: gha-ee-release-${{ github.run_id }}
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419 # v2
 
       - name: Build, tag, and push image to Amazon ECR
         shell: bash
@@ -261,7 +279,7 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
 
@@ -273,14 +291,14 @@ jobs:
           echo "LINEAR_RELEASE_VERSION=$ver" >> "$GITHUB_ENV"
 
       - name: Sync release to Linear
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}
           name: v${{ env.LINEAR_RELEASE_VERSION }}
           version: ${{ env.LINEAR_RELEASE_VERSION }}
 
       - name: Complete release in Linear
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_ENTERPRISE }}
           command: complete

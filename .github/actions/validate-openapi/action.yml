@@ -6,7 +6,7 @@ runs:
   using: composite
 
   steps:
-    - uses: mansagroup/nrwl-nx-action@v3
+    - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
       env:
         PORT: '1336'
       with:

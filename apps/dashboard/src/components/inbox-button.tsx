@@ -20,7 +20,13 @@ declare global {
   }
 }
 
-const InboxInner = () => {
+const InboxInner = ({
+  align = 'end',
+  side = 'bottom',
+}: {
+  align?: 'start' | 'center' | 'end';
+  side?: 'top' | 'bottom' | 'left' | 'right';
+}) => {
   const [open, setOpen] = useState(false);
   const [jingle, setJingle] = useState(false);
   const { isWorkflowEditorPage } = useWorkflowEditorPage();
@@ -77,7 +83,7 @@ const InboxInner = () => {
         />
       </PopoverTrigger>
       <PopoverPortal>
-        <PopoverContent side="bottom" align="end" className="h-[550px] w-[350px] overflow-hidden p-0">
+        <PopoverContent side={side} align={align} className="h-[550px] w-[350px] overflow-hidden p-0">
           <InboxContent />
         </PopoverContent>
       </PopoverPortal>
@@ -85,7 +91,13 @@ const InboxInner = () => {
   );
 };
 
-export const InboxButton = () => {
+export const InboxButton = ({
+  align,
+  side,
+}: {
+  align?: 'start' | 'center' | 'end';
+  side?: 'top' | 'bottom' | 'left' | 'right';
+}) => {
   const { user } = useUser();
   const { currentEnvironment } = useEnvironment();
   const { isWorkflowEditorPage: isTestPage } = useWorkflowEditorPage();
@@ -141,7 +153,7 @@ export const InboxButton = () => {
       socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
       localization={localization}
     >
-      <InboxInner />
+      <InboxInner align={align} side={side} />
     </Inbox>
   );
 };

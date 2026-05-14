@@ -17,8 +17,11 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { APP_IDS } from '@/utils/apps';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -219,10 +222,12 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const { currentEnvironment, readOnly, oppositeEnvironment } = useEnvironment();
   const has = useHasPermission();
   const track = useTelemetry();
-
+  const agentRoutes = useAgentRoutes();
+  const currentApp = useCurrentApp();
+  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
   const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
 
-  const integrationsHubPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+  const integrationsHubPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',
@@ -236,7 +241,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL, {
+      `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         integrationIdentifier: encodeURIComponent(nextIntegrationIdentifier),
@@ -289,7 +294,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL, {
+      `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         integrationIdentifier: encodeURIComponent(firstIntegrationIdentifier),
@@ -298,6 +303,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     );
   }, [
     agent.identifier,
+    agentRoutes.integrationDetail,
     currentEnvironment?.slug,
     linkedRows,
     listQuery.isSuccess,
@@ -331,11 +337,16 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       const name = removed?.integration.name ?? 'Integration';
 
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
-      track(TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD, {
-        agentIdentifier: agent.identifier,
-        agentIntegrationId,
-        integrationIdentifier: removed?.integration.identifier,
-      });
+      track(
+        isDispatchApp
+          ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD
+          : TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD,
+        {
+          agentIdentifier: agent.identifier,
+          agentIntegrationId,
+          integrationIdentifier: removed?.integration.identifier,
+        }
+      );
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
@@ -410,7 +421,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
               onCtaClick={() => {
                 if (!oppositeEnvironment?.slug) return;
                 navigate(
-                  buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+                  buildRoute(agentRoutes.detailsTab, {
                     environmentSlug: oppositeEnvironment.slug,
                     agentIdentifier: encodeURIComponent(agent.identifier),
                     agentTab: 'integrations',

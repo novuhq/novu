@@ -18,6 +18,11 @@ const integrationSchema = new Schema<IntegrationDBModel>(
     },
     providerId: Schema.Types.String,
     channel: Schema.Types.String,
+    kind: {
+      type: Schema.Types.String,
+      enum: ['delivery', 'agent'],
+      default: 'delivery',
+    },
     credentials: {
       apiVersion: Schema.Types.String,
       apiKey: Schema.Types.String,
@@ -75,6 +80,7 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       AppIOSubscriptionId: Schema.Types.String,
       AppIOBearerToken: Schema.Types.String,
       AppIOOriginalSignature: Schema.Types.String,
+      externalEnvironmentId: Schema.Types.String,
     },
     configurations: {
       inboundWebhookEnabled: Schema.Types.Boolean,

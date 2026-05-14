@@ -60,6 +60,9 @@ export class ConversationEntity {
   /** Truncated preview of the most recent message (max 200 chars) */
   lastMessagePreview?: string;
 
+  /** Provider-side session ID (e.g. Anthropic conversation_id) managed by thalamus */
+  externalSessionId?: string;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

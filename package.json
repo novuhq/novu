@@ -175,7 +175,7 @@
       "postcss@<8.5.10": "^8.5.10",
       "proxy-agent@<6.3.1": "^6.3.1",
       "semver@>=7.0.0 <7.5.2": "^7.5.2",
-      "systeminformation@<5.31.0": "^5.31.3",
+      "systeminformation@<5.31.6": "^5.31.6",
       "tar": "7.5.13",
       "tar-fs": ">=3.1.1",
       "tough-cookie@<4.1.3": "^4.1.3",
@@ -199,11 +199,11 @@
       "node-forge@<1.4.0": "^1.4.0",
       "ws@>=8.0.0 <8.17.1": "^8.17.1",
       "nextjs>next": "15.5.15",
-      "next@<16.2.3": "^16.2.3",
+      "next@<16.2.6": "^16.2.6",
       "fast-xml-parser@>=4.0.0 <5.0.0": "5.7.3",
       "fast-xml-parser@>=5.0.0 <5.7.3": "5.7.3",
       "basic-ftp@<5.3.1": "^5.3.1",
-      "axios@>=1.0.0 <1.15.2": "^1.15.2",
+      "axios@>=1.0.0 <1.16.0": "^1.16.0",
       "seroval@<1.4.1": "^1.4.1",
       "h3@<1.15.9": "^1.15.9",
       "immutable@>=4.0.0 <4.3.8": "^4.3.8",
@@ -239,7 +239,7 @@
       "@octokit/request-error@<5.1.1": "^5.1.1",
       "@octokit/plugin-paginate-rest@<9.2.2": "^9.2.2",
       "@octokit/request@<8.4.1": "^8.4.1",
-      "kysely@>=0.26.0 <0.28.14": "0.28.14",
+      "kysely@>=0.26.0 <0.28.17": "0.28.17",
       "undici@>=5.0.0 <5.30.0": "^6.24.0",
       "markdown-it@>=13.0.0 <14.1.1": "^14.1.1",
       "mdast-util-to-hast@>=13.0.0 <13.2.1": "^13.2.1",
@@ -265,7 +265,7 @@
       "path-to-regexp@>=8.0.0 <8.4.0": "^8.4.0",
       "svelte@<5.53.5": "5.53.5",
       "@sveltejs/kit@<=2.57.0": "^2.57.1",
-      "langsmith@<=0.5.18": "^0.5.19",
+      "langsmith@<0.6.0": "^0.6.3",
       "devalue@<5.6.4": "5.6.4",
       "picomatch@<2.3.2": "^2.3.2",
       "picomatch@>=4.0.0 <4.0.4": "^4.0.4",
@@ -280,10 +280,18 @@
       "@clerk/shared@>=2.20.17 <2.22.1": "^2.22.1",
       "@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5": "^3.47.5",
       "@tootallnate/once@<3.0.1": "^3.0.1",
-      "protobufjs@<7.5.5": "^7.5.5",
-      "protobufjs@>=8.0.0 <8.0.1": "^8.0.1",
+      "protobufjs@<7.5.6": "^7.5.6",
+      "protobufjs@>=8.0.0 <8.0.2": "^8.0.2",
+      "ip-address@<10.1.1": "^10.1.1",
       "mongoose@>=8.0.0 <8.22.1": "^8.22.1",
-      "newrelic": "13.19.2"
+      "newrelic": "13.19.2",
+      "fast-uri@<3.1.2": "^3.1.2",
+      "@babel/plugin-transform-modules-systemjs@<7.29.4": "^7.29.4",
+      "uuid@>=11.0.0 <11.1.1": "^11.1.1",
+      "uuid@>=13.0.0 <13.0.1": "^13.0.1",
+      "@opentelemetry/exporter-prometheus@<0.217.0": "^0.217.0",
+      "@opentelemetry/sdk-node@<0.217.0": "^0.217.0",
+      "@opentelemetry/auto-instrumentations-node@<0.75.0": "^0.75.0"
     },
     "onlyBuiltDependencies": [
       "@clerk/shared",
@@ -320,7 +328,8 @@
       "react-icons",
       "sharp",
       "unrs-resolver",
-      "workerd"
+      "workerd",
+      "@novu/thalamus"
     ]
   }
 }
