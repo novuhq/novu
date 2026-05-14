@@ -121,13 +121,8 @@ async function buildSkillTarball(
   }
 }
 
-function buildFetchResponse(body: Buffer, status: number): Response {
-  return {
-    ok: status >= 200 && status < 300,
-    status,
-    statusText: '',
-    arrayBuffer: () => Promise.resolve(body.buffer.slice(body.byteOffset, body.byteOffset + body.byteLength)),
-  } as unknown as Response;
+function buildFetchResponse(body: Buffer, status: number, headers?: Record<string, string>): Response {
+  return new Response(new Uint8Array(body), { status, headers });
 }
 
 describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
@@ -194,12 +189,12 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
     return integrationId;
   }
 
-  function stubGithubFetch(buffer: Buffer, status = 200): sinon.SinonStub {
+  function stubGithubFetch(buffer: Buffer, status = 200, headers?: Record<string, string>): sinon.SinonStub {
     // Cast through `any` because lib.dom's `fetch` typing on globalThis breaks the
     // `sinon.stub(obj, method)` signature inference in the test compiler config.
     fetchStub = sinon
       .stub(globalThis as unknown as { fetch: typeof fetch }, 'fetch')
-      .resolves(buildFetchResponse(buffer, status));
+      .resolves(buildFetchResponse(buffer, status, headers));
 
     return fetchStub;
   }
@@ -443,6 +438,153 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
         expect(res.body.code).to.equal('AGENT_RUNTIME_BAD_REQUEST');
       });
     });
+
+    describe('per-file size cap', () => {
+      it('should silently skip files larger than the per-file size cap', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        // 2 MB exceeds the 1 MB per-file cap; the SKILL.md still passes through.
+        const oversized = Buffer.alloc(2 * 1024 * 1024, 'x');
+        const tarball = await buildSkillTarball([
+          { path: 'SKILL.md', content: VALID_SKILL_MD },
+          { path: 'huge-asset.bin', content: oversized },
+          { path: 'small.txt', content: 'still in\n' },
+        ]);
+        stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
+        const paths = uploadArg.files.map((f: { path: string }) => f.path).sort();
+        expect(paths, 'oversized file should be skipped').to.deep.equal(['SKILL.md', 'small.txt']);
+      });
+
+      it('should silently skip entries inside well-known noisy directories', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([
+          { path: 'SKILL.md', content: VALID_SKILL_MD },
+          { path: 'node_modules/junk/index.js', content: 'module.exports = {};\n' },
+          { path: 'dist/output.js', content: 'console.log("nope");\n' },
+          { path: 'lib/keep.py', content: 'pass\n' },
+        ]);
+        stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
+        const paths = uploadArg.files.map((f: { path: string }) => f.path).sort();
+        expect(paths, 'node_modules and dist entries should be skipped').to.deep.equal(['SKILL.md', 'lib/keep.py']);
+      });
+    });
+
+    describe('authentication', () => {
+      const previousGithubToken = process.env.GITHUB_API_TOKEN;
+
+      afterEach(() => {
+        if (previousGithubToken === undefined) {
+          delete process.env.GITHUB_API_TOKEN;
+        } else {
+          process.env.GITHUB_API_TOKEN = previousGithubToken;
+        }
+      });
+
+      it('should send a Bearer Authorization header when GITHUB_API_TOKEN is set', async () => {
+        process.env.GITHUB_API_TOKEN = 'ghp_test_token';
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        const fetch = stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        const init = fetch.getCall(0).args[1] as RequestInit;
+        const headers = init.headers as Record<string, string>;
+        expect(headers.Authorization, 'authorization header should be present').to.equal('Bearer ghp_test_token');
+      });
+
+      it('should NOT send an Authorization header when GITHUB_API_TOKEN is unset', async () => {
+        delete process.env.GITHUB_API_TOKEN;
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        const fetch = stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        const init = fetch.getCall(0).args[1] as RequestInit;
+        const headers = init.headers as Record<string, string>;
+        expect(headers.Authorization, 'authorization header should not be set').to.equal(undefined);
+      });
+    });
+
+    describe('rate limiting', () => {
+      it('should return 400 with a "rate limit exceeded" message on 403 + x-ratelimit-remaining: 0', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        stubGithubFetch(Buffer.alloc(0), 403, {
+          'x-ratelimit-remaining': '0',
+          'retry-after': '60',
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        const message = String(res.body.message ?? '');
+        expect(message).to.match(/rate limit exceeded/i);
+        expect(message).to.match(/60s/);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+      });
+
+      it('should return 400 with a "rate limit exceeded" message on 429', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        stubGithubFetch(Buffer.alloc(0), 429, {
+          'retry-after': '30',
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        const message = String(res.body.message ?? '');
+        expect(message).to.match(/rate limit exceeded/i);
+        expect(message).to.match(/30s/);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+      });
+
+      it('should treat 403 without x-ratelimit-remaining: 0 as a generic HTTP error', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        stubGithubFetch(Buffer.alloc(0), 403, {
+          'x-ratelimit-remaining': '4999',
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        const message = String(res.body.message ?? '');
+        expect(message, 'should not be mapped as rate limit').to.not.match(/rate limit exceeded/i);
+        expect(message).to.match(/HTTP 403/);
+      });
+    });
   });
 
   // ─── Integration validation (cross-variant) ─────────────────────────────────
@@ -538,6 +680,30 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
 
       expect(res.status).to.equal(422);
     });
+
+    it('should return 422 when github-repo source.skills is missing', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+
+      const res = await session.testAgent.post('/v1/agents/skills').send({
+        integrationId,
+        source: { type: 'github-repo', repo: 'owner/repo' },
+      });
+
+      expect(res.status).to.equal(422);
+      expect(mockProvider.uploadSkill.called).to.be.false;
+    });
+
+    it('should return 422 when github-repo source.skills is an empty array', async () => {
+      const integrationId = await createAgentRuntimeIntegration();
+
+      const res = await session.testAgent.post('/v1/agents/skills').send({
+        integrationId,
+        source: { type: 'github-repo', repo: 'owner/repo', skills: [] },
+      });
+
+      expect(res.status).to.equal(422);
+      expect(mockProvider.uploadSkill.called).to.be.false;
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -613,53 +779,6 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
         expect(mockProvider.uploadSkill.callCount).to.equal(3);
       });
 
-      it('should auto-discover every SKILL.md when `skills` is omitted', async () => {
-        const integrationId = await createAgentRuntimeIntegration();
-        const tarball = await buildSkillTarball([
-          { path: 'document-skills/pdf/SKILL.md', content: buildSkillMd('pdf') },
-          { path: 'document-skills/pdf/lib/parser.py', content: 'pass\n' },
-          { path: 'creative-skills/figma/SKILL.md', content: buildSkillMd('figma') },
-        ]);
-        stubGithubFetch(tarball);
-
-        mockProvider.uploadSkill = sinon.stub().callsFake(async (input: UploadSkillInput) => {
-          validateSkillBundleFrontmatter(input.files);
-          return { skillId: `skill_${input.displayTitle}`, version: 'v1' };
-        });
-
-        const res = await session.testAgent.post('/v1/agents/skills').send({
-          integrationId,
-          source: { type: 'github-repo', repo: 'anthropics/claude-skills' },
-        });
-
-        expect(res.status, JSON.stringify(res.body)).to.equal(201);
-        expect(res.body.data.skills).to.have.length(2);
-        const paths = res.body.data.skills.map((s: { source: { path: string } }) => s.source.path).sort();
-        expect(paths).to.deep.equal(['creative-skills/figma', 'document-skills/pdf']);
-      });
-
-      it('should treat an empty `skills` array the same as omitted (auto-discover)', async () => {
-        const integrationId = await createAgentRuntimeIntegration();
-        const tarball = await buildSkillTarball([
-          { path: 'skills/a/SKILL.md', content: buildSkillMd('a') },
-          { path: 'skills/b/SKILL.md', content: buildSkillMd('b') },
-        ]);
-        stubGithubFetch(tarball);
-
-        mockProvider.uploadSkill = sinon.stub().callsFake(async (input: UploadSkillInput) => {
-          validateSkillBundleFrontmatter(input.files);
-          return { skillId: `skill_${input.displayTitle}`, version: 'v1' };
-        });
-
-        const res = await session.testAgent.post('/v1/agents/skills').send({
-          integrationId,
-          source: { type: 'github-repo', repo: 'owner/repo', skills: [] },
-        });
-
-        expect(res.status, JSON.stringify(res.body)).to.equal(201);
-        expect(res.body.data.skills).to.have.length(2);
-      });
-
       it('should silently dedupe repeated names in `skills`', async () => {
         const integrationId = await createAgentRuntimeIntegration();
         const tarball = await buildSkillTarball([
@@ -702,7 +821,7 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
 
           const res = await session.testAgent.post('/v1/agents/skills').send({
             integrationId,
-            source: { type: 'github-repo', repo },
+            source: { type: 'github-repo', repo, skills: ['placeholder'] },
           });
 
           expect(res.status, `repo=${repo} -> ${JSON.stringify(res.body)}`).to.equal(400);
@@ -722,7 +841,7 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
 
         const res = await session.testAgent.post('/v1/agents/skills').send({
           integrationId,
-          source: { type: 'github-repo', repo: 'owner/repo' },
+          source: { type: 'github-repo', repo: 'owner/repo', skills: ['anything'] },
         });
 
         expect(res.status, JSON.stringify(res.body)).to.equal(400);
@@ -780,7 +899,7 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
 
         const res = await session.testAgent.post('/v1/agents/skills').send({
           integrationId,
-          source: { type: 'github-repo', repo: 'owner/missing' },
+          source: { type: 'github-repo', repo: 'owner/missing', skills: ['anything'] },
         });
 
         expect(res.status).to.equal(400);
@@ -813,7 +932,7 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
 
         const res = await session.testAgent.post('/v1/agents/skills').send({
           integrationId,
-          source: { type: 'github-repo', repo: 'owner/repo' },
+          source: { type: 'github-repo', repo: 'owner/repo', skills: ['a', 'b', 'c'] },
         });
 
         expect(res.status, JSON.stringify(res.body)).to.equal(400);

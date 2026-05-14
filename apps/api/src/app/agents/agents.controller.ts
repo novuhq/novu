@@ -607,8 +607,8 @@ export class AgentsController {
       'use this form to pin a ref or to disambiguate when multiple repo directories share a basename. ' +
       'Accepts `/`, `/tree/{ref}`, or `/tree/{ref}/{path}` shapes.\n' +
       '- `type: "github-repo"` — `owner/repo` slug fetched from the default branch (HEAD). ' +
-      'Pass an optional `skills` array of directory basenames to upload only those, or omit `skills` ' +
-      '(or pass `[]`) to auto-discover and upload every directory in the repo containing a `SKILL.md`.\n' +
+      'Pass a required, non-empty `skills` array of directory basenames to upload. Each name must ' +
+      'match exactly one directory containing a `SKILL.md`; ambiguous names are rejected with a 400.\n' +
       '- `type: "inline"` — raw `SKILL.md` text pasted by the caller, wrapped server-side as a single-file bundle.\n\n' +
       'Each returned `skillId` can be passed via `managedRuntime.skills` on POST /agents or ' +
       'PATCH /agents/:identifier/runtime/config as `{ type: "custom", skillId }`. ' +

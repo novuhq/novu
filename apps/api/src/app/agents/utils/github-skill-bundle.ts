@@ -1,4 +1,6 @@
 import { posix } from 'node:path';
+import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import type { UploadSkillFile } from '@novu/application-generic';
 import { Parser } from 'tar';
 
@@ -17,6 +19,38 @@ const MAX_SKILL_BUNDLE_BYTES = 5 * 1024 * 1024;
 
 /** A single request may not extract more than this many file entries across all bundles. */
 const MAX_SKILL_BUNDLE_ENTRIES = 500;
+
+/**
+ * Hard wall-clock budget for the GitHub tarball fetch + parse pipeline.
+ * When exceeded, the AbortController tears down the network socket and the
+ * caller sees a user-facing "timed out" error instead of an indefinite hang.
+ */
+const REQUEST_TIMEOUT_MS = 30_000;
+
+/**
+ * Per-file size cap, checked against `entry.size` BEFORE any bytes are consumed.
+ * Skill files are markdown + small scripts; anything larger is almost certainly
+ * a checked-in binary / vendored asset that shouldn't blow the per-bundle cap.
+ */
+const PER_FILE_BYTES_CAP = 1 * 1024 * 1024;
+
+/**
+ * Directories that never contain skill content. Any tar entry with one of these
+ * names as a path segment is skipped at the header without buffering its bytes —
+ * defensive against repos that accidentally check in vendored / build output.
+ */
+const SKIP_DIR_SEGMENTS = new Set([
+  '.git',
+  'node_modules',
+  'dist',
+  'build',
+  '.next',
+  '__pycache__',
+  '.venv',
+  'venv',
+  '.idea',
+  '.vscode',
+]);
 
 /** Charset for `owner` and `repo` segments in the `github-repo` form. */
 const REPO_SLUG_REGEX = /^[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+$/;
@@ -184,67 +218,144 @@ function truncateWithEllipsis(value: string, max: number): string {
   return `${value.slice(0, max - 1)}…`;
 }
 
+// ─── GitHub HTTP plumbing ───────────────────────────────────────────────────
+
 /**
- * Downloads a GitHub repository tarball. Public repos only.
+ * Builds outgoing request headers for GitHub's REST API.
  *
- * Throws `Error` with a user-facing message on non-2xx status; callers should wrap
- * in a `BadRequestException`.
+ * When `GITHUB_API_TOKEN` is set (production), the call authenticates at the
+ * 5,000 req/hr-per-identity tier. When unset (local dev), it falls back to the
+ * 60 req/hr anonymous tier and emits a one-time warning so developers notice.
+ *
+ * The token is read at request time, not at module load, so a token rotation
+ * via env-var swap takes effect on the next request without a process restart.
  */
-export async function downloadGithubTarball(parsed: ParsedGithubUrl): Promise<Buffer> {
-  const url = buildGithubTarballUrl(parsed);
+function buildGithubHeaders(): HeadersInit {
+  const token = process.env.GITHUB_API_TOKEN?.trim();
 
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'novu-agents-skill-uploader',
-      Accept: 'application/vnd.github+json',
-    },
-    redirect: 'follow',
-  });
+  return {
+    'User-Agent': 'novu-agents-skill-uploader',
+    Accept: 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
 
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new Error(`GitHub repository or ref not found (${parsed.owner}/${parsed.repo}@${parsed.ref}).`);
-    }
+let warnedAboutMissingToken = false;
 
-    throw new Error(`Failed to download GitHub tarball (HTTP ${response.status}).`);
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-
-  return Buffer.from(arrayBuffer);
+function maybeWarnMissingToken(): void {
+  if (warnedAboutMissingToken) return;
+  if (process.env.GITHUB_API_TOKEN?.trim()) return;
+  warnedAboutMissingToken = true;
+  // eslint-disable-next-line no-console -- bundle util is plain TS, no logger injected
+  console.warn(
+    '[github-skill-bundle] GITHUB_API_TOKEN is not set — GitHub tarball downloads will use the 60 req/hr anonymous tier. Set GITHUB_API_TOKEN to a fine-grained PAT (public repository read) in production.'
+  );
 }
 
 /**
- * Parses a gzipped tar archive (as returned by GitHub's tarball endpoint) and returns
- * the regular files at — and below — `subPath` relative to the archive's top-level
- * directory. The top-level directory itself is stripped from each returned `path`.
- *
- * Validates that `SKILL.md` exists at the resolved root.
+ * RFC 9110-compatible `Retry-After` parser. Returns the wait in milliseconds.
+ * Mirrors the helper in `anthropic-agent-runtime.provider.ts`; kept local here
+ * to avoid a cross-package dep until a third call site appears.
  */
-export async function extractSkillBundle(tarball: Buffer, subPath: string): Promise<UploadSkillFile[]> {
-  const collected: UploadSkillFile[] = [];
-  let totalBytes = 0;
-  let topLevelDir: string | null = null;
+function parseRetryAfter(header: string | undefined | null): number {
+  if (!header) return 60_000;
+  const seconds = parseFloat(header);
+  if (!Number.isNaN(seconds)) return Math.round(seconds * 1000);
+
+  const dateMs = Date.parse(header);
+  if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
+
+  return 60_000;
+}
+
+/**
+ * Maps a non-2xx GitHub tarball response to a user-facing `Error`. Differentiates
+ * 404 (bad repo/ref), primary rate-limit exhaustion (`403 + x-ratelimit-remaining: 0`),
+ * secondary rate-limit (`429`), and generic non-2xx.
+ */
+function mapGithubHttpError(res: Response, parsed: ParsedGithubUrl): Error {
+  if (res.status === 404) {
+    return new Error(`GitHub repository or ref not found (${parsed.owner}/${parsed.repo}@${parsed.ref}).`);
+  }
+
+  const remaining = res.headers.get('x-ratelimit-remaining');
+  if (res.status === 429 || (res.status === 403 && remaining === '0')) {
+    const retryAfterSec = Math.ceil(parseRetryAfter(res.headers.get('retry-after')) / 1000);
+
+    return new Error(`GitHub rate limit exceeded — retry in ~${retryAfterSec}s.`);
+  }
+
+  return new Error(`Failed to download GitHub tarball (HTTP ${res.status}).`);
+}
+
+// ─── Streaming tar pipeline ────────────────────────────────────────────────
+
+type TarEntry = NodeJS.ReadableStream & { path: string; type?: string; size?: number };
+
+export type EntryContext = {
+  /** The raw tar entry stream. Attach `data`/`end`/`error` listeners to buffer its bytes. */
+  entry: TarEntry;
+  /** Path inside the archive's top-level directory (top-level prefix already stripped). */
+  repoPath: string;
+  /** Path as it appears in the archive, before stripping the top-level dir. */
+  entryPath: string;
+  /**
+   * Abort the entire stream and propagate `err` to the caller of
+   * {@link streamTarballToParser}. Use from inside `data`/`end` handlers when
+   * a per-bundle aggregate budget (e.g. byte total, entry count) is exceeded.
+   */
+  fail: (err: Error) => void;
+};
+
+/**
+ * Streams a GitHub repository tarball through `tar`'s `Parser`, invoking
+ * `onEntry` for every regular file entry that passes safety checks
+ * (single-top-level-dir invariant, no `..` traversal, not in `SKIP_DIR_SEGMENTS`,
+ * not larger than `PER_FILE_BYTES_CAP`).
+ *
+ * The `onEntry` callback owns deciding whether to buffer the entry's bytes
+ * (attach `data`/`end` listeners) or discard it (call `entry.resume()`).
+ *
+ * Network + parse are overlapped via `pipeline()` so peak memory stays bounded
+ * to one in-flight entry's bytes regardless of archive size. A 30 s
+ * `AbortSignal` enforces a wall-clock budget; any logical failure inside
+ * `onEntry` should call `ctx.fail(err)` to abort the stream and surface `err`
+ * as the rejection reason.
+ */
+async function streamTarballToParser(parsed: ParsedGithubUrl, onEntry: (ctx: EntryContext) => void): Promise<void> {
   let aborted: Error | null = null;
+  let topLevelDir: string | null = null;
 
-  const targetSubPath = subPath.replace(/^\/+|\/+$/g, '');
+  const controller = new AbortController();
+  const fail = (err: Error) => {
+    if (!aborted) aborted = err;
+    if (!controller.signal.aborted) controller.abort(err);
+  };
 
-  await new Promise<void>((resolve, reject) => {
+  const timeoutHandle = setTimeout(() => {
+    fail(new Error('GitHub tarball download timed out.'));
+  }, REQUEST_TIMEOUT_MS);
+
+  try {
+    maybeWarnMissingToken();
+
+    const response = await fetch(buildGithubTarballUrl(parsed), {
+      signal: controller.signal,
+      headers: buildGithubHeaders(),
+      redirect: 'follow',
+    });
+
+    if (!response.ok) {
+      throw mapGithubHttpError(response, parsed);
+    }
+    if (!response.body) {
+      throw new Error('GitHub tarball response had no body.');
+    }
+
     const parser = new Parser();
 
-    const fail = (error: Error) => {
-      if (!aborted) {
-        aborted = error;
-      }
-      try {
-        parser.abort?.(error);
-      } catch {
-        // ignore — abort is best-effort
-      }
-      reject(error);
-    };
-
-    parser.on('entry', (entry: NodeJS.ReadableStream & { path: string; type?: string; size?: number }) => {
+    parser.on('entry', (entry: TarEntry) => {
       if (aborted) {
         entry.resume();
 
@@ -252,7 +363,6 @@ export async function extractSkillBundle(tarball: Buffer, subPath: string): Prom
       }
 
       const isFile = entry.type === undefined || entry.type === 'File';
-
       if (!isFile) {
         entry.resume();
 
@@ -274,65 +384,140 @@ export async function extractSkillBundle(tarball: Buffer, subPath: string): Prom
       if (topLevelDir === null) {
         topLevelDir = entryTopDir;
       } else if (entryTopDir !== topLevelDir) {
-        // GitHub tarballs always have a single top-level dir; bail on a malformed archive.
         fail(new Error('Skill bundle archive must have a single top-level directory.'));
         entry.resume();
 
         return;
       }
 
-      const prefix = targetSubPath.length > 0 ? `${topLevelDir}/${targetSubPath}/` : `${topLevelDir}/`;
-
-      if (!entryPath.startsWith(prefix)) {
+      if (firstSlash === -1) {
         entry.resume();
 
         return;
       }
 
-      const relativePath = entryPath.slice(prefix.length);
-
-      if (relativePath.length === 0) {
+      const repoPath = entryPath.slice(firstSlash + 1);
+      if (repoPath.length === 0) {
         entry.resume();
 
         return;
       }
 
-      if (collected.length >= MAX_SKILL_BUNDLE_ENTRIES) {
-        fail(new Error(`Skill bundle exceeds the maximum of ${MAX_SKILL_BUNDLE_ENTRIES} files.`));
+      const segments = repoPath.split('/');
+      if (segments.some((seg) => SKIP_DIR_SEGMENTS.has(seg))) {
         entry.resume();
 
         return;
       }
 
-      const chunks: Buffer[] = [];
+      if (typeof entry.size === 'number' && entry.size > PER_FILE_BYTES_CAP) {
+        entry.resume();
 
-      entry.on('data', (chunk: Buffer) => {
-        if (aborted) return;
-        totalBytes += chunk.length;
+        return;
+      }
 
-        if (totalBytes > MAX_SKILL_BUNDLE_BYTES) {
-          fail(new Error(`Skill bundle exceeds the maximum size of ${MAX_SKILL_BUNDLE_BYTES} bytes.`));
-
-          return;
-        }
-
-        chunks.push(chunk);
-      });
-
-      entry.on('end', () => {
-        if (aborted) return;
-        collected.push({ path: relativePath, content: Buffer.concat(chunks) });
-      });
-
-      entry.on('error', (err: Error) => fail(err));
+      try {
+        onEntry({ entry, repoPath, entryPath, fail });
+      } catch (err) {
+        fail(err instanceof Error ? err : new Error(String(err)));
+        entry.resume();
+      }
     });
 
     parser.on('error', (err: Error) => fail(err));
-    parser.on('end', () => {
-      if (!aborted) resolve();
+
+    try {
+      await pipeline(Readable.fromWeb(response.body as never), parser);
+    } catch (err) {
+      if (aborted) throw aborted;
+      if (err instanceof Error && err.name === 'AbortError') {
+        throw new Error('GitHub tarball download timed out.');
+      }
+      throw err;
+    }
+
+    if (aborted) throw aborted;
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
+}
+
+// ─── Public entry points ───────────────────────────────────────────────────
+
+/**
+ * Downloads a GitHub repository tarball and extracts the regular files at — and
+ * below — `parsed.subPath` relative to the archive's top-level directory.
+ *
+ * Streams the archive: peak memory is one in-flight entry's bytes regardless of
+ * repo size. Validates that `SKILL.md` exists at the resolved root.
+ *
+ * Throws `Error` with a user-facing message on non-2xx HTTP, timeout, rate
+ * limit, validation, or extraction failures — callers should wrap in a
+ * `BadRequestException`.
+ */
+export async function fetchAndExtractSkillBundle(parsed: ParsedGithubUrl): Promise<UploadSkillFile[]> {
+  const targetSubPath = parsed.subPath.replace(/^\/+|\/+$/g, '');
+  const collected: UploadSkillFile[] = [];
+  let totalBytes = 0;
+  let bundleFailed = false;
+
+  await streamTarballToParser(parsed, ({ entry, repoPath, fail }) => {
+    let relativePath: string;
+    if (targetSubPath.length > 0) {
+      if (repoPath === targetSubPath) {
+        relativePath = '';
+      } else if (repoPath.startsWith(`${targetSubPath}/`)) {
+        relativePath = repoPath.slice(targetSubPath.length + 1);
+      } else {
+        entry.resume();
+
+        return;
+      }
+    } else {
+      relativePath = repoPath;
+    }
+
+    if (relativePath.length === 0) {
+      entry.resume();
+
+      return;
+    }
+
+    if (collected.length >= MAX_SKILL_BUNDLE_ENTRIES) {
+      bundleFailed = true;
+      fail(new Error(`Skill bundle exceeds the maximum of ${MAX_SKILL_BUNDLE_ENTRIES} files.`));
+      entry.resume();
+
+      return;
+    }
+
+    const chunks: Buffer[] = [];
+
+    entry.on('data', (chunk: Buffer) => {
+      if (bundleFailed) return;
+      totalBytes += chunk.length;
+
+      if (totalBytes > MAX_SKILL_BUNDLE_BYTES) {
+        bundleFailed = true;
+        fail(new Error(`Skill bundle exceeds the maximum size of ${MAX_SKILL_BUNDLE_BYTES} bytes.`));
+
+        return;
+      }
+
+      chunks.push(chunk);
     });
 
-    parser.end(tarball);
+    entry.on('end', () => {
+      if (bundleFailed) return;
+      collected.push({ path: relativePath, content: Buffer.concat(chunks) });
+    });
+
+    entry.on('error', (err: Error) => {
+      if (!bundleFailed) {
+        bundleFailed = true;
+        fail(err);
+      }
+    });
   });
 
   if (collected.length === 0) {
@@ -357,7 +542,8 @@ type RawTarEntry = {
 };
 
 /**
- * Discovers every skill bundle in a GitHub tarball.
+ * Discovers the skill bundles named by `basenames` in a GitHub repository
+ * tarball.
  *
  * A "skill bundle" is any directory inside the repo that contains a `SKILL.md`
  * file directly. The repo root is also treated as a bundle when a top-level
@@ -369,136 +555,102 @@ type RawTarEntry = {
  *   `parent/nested/helpers.py`              → bundle `parent/nested`
  * This means nested SKILL.md files don't pollute the parent bundle's file list.
  *
- * When `opts.basenames` is supplied, the returned list is filtered to bundles
- * whose directory basename matches one of the supplied names:
+ * Streaming filter: only tar entries whose `repoPath` has at least one segment
+ * matching the supplied `basenames` set are buffered. This bounds memory to
+ * "files plausibly belonging to a requested skill" rather than "every file in
+ * the repo." Returned bundles are filtered to those whose directory basename
+ * matches one of the supplied names:
  *   - 0 matches for a name           → throws (listing available skills)
  *   - multiple matches for a name    → throws (listing conflicting paths)
  *   - duplicates in `basenames`      → silently deduplicated
  *   - result order                   → matches the order of `basenames`
  *
- * When `opts.basenames` is omitted or empty, every discovered bundle is
- * returned, sorted by path for determinism.
+ * `basenames` must be non-empty (enforced upstream by the DTO).
  *
  * Throws `Error` with user-facing messages on validation failures — callers
  * should wrap in `BadRequestException`.
  */
-export async function discoverSkillBundles(
-  tarball: Buffer,
-  opts: { basenames?: string[] } = {}
+export async function fetchAndDiscoverSkillBundles(
+  parsed: ParsedGithubUrl,
+  basenames: string[]
 ): Promise<DiscoveredSkillBundle[]> {
-  const entries: RawTarEntry[] = [];
-  let totalBytes = 0;
-  let topLevelDir: string | null = null;
-  let aborted: Error | null = null;
-
-  await new Promise<void>((resolve, reject) => {
-    const parser = new Parser();
-
-    const fail = (error: Error) => {
-      if (!aborted) {
-        aborted = error;
-      }
-      try {
-        parser.abort?.(error);
-      } catch {
-        // ignore — abort is best-effort
-      }
-      reject(error);
-    };
-
-    parser.on('entry', (entry: NodeJS.ReadableStream & { path: string; type?: string; size?: number }) => {
-      if (aborted) {
-        entry.resume();
-
-        return;
-      }
-
-      const isFile = entry.type === undefined || entry.type === 'File';
-
-      if (!isFile) {
-        entry.resume();
-
-        return;
-      }
-
-      const entryPath = posix.normalize(entry.path);
-
-      if (entryPath.startsWith('/') || entryPath.startsWith('..') || entryPath.includes('/../')) {
-        fail(new Error(`Skill bundle entry has unsafe path: ${entry.path}`));
-        entry.resume();
-
-        return;
-      }
-
-      const firstSlash = entryPath.indexOf('/');
-      const entryTopDir = firstSlash === -1 ? entryPath : entryPath.slice(0, firstSlash);
-
-      if (topLevelDir === null) {
-        topLevelDir = entryTopDir;
-      } else if (entryTopDir !== topLevelDir) {
-        fail(new Error('Skill bundle archive must have a single top-level directory.'));
-        entry.resume();
-
-        return;
-      }
-
-      if (entries.length >= MAX_SKILL_BUNDLE_ENTRIES) {
-        fail(new Error(`Skill bundle exceeds the maximum of ${MAX_SKILL_BUNDLE_ENTRIES} files.`));
-        entry.resume();
-
-        return;
-      }
-
-      // Path relative to the top-level dir (e.g. `skills/golang-benchmark/SKILL.md`).
-      // Files that ARE the top-level dir entry itself (no slash) are skipped.
-      const repoPath = firstSlash === -1 ? '' : entryPath.slice(firstSlash + 1);
-
-      if (repoPath.length === 0) {
-        entry.resume();
-
-        return;
-      }
-
-      const chunks: Buffer[] = [];
-
-      entry.on('data', (chunk: Buffer) => {
-        if (aborted) return;
-        totalBytes += chunk.length;
-
-        if (totalBytes > MAX_SKILL_BUNDLE_BYTES) {
-          fail(new Error(`Skill bundle exceeds the maximum size of ${MAX_SKILL_BUNDLE_BYTES} bytes.`));
-
-          return;
-        }
-
-        chunks.push(chunk);
-      });
-
-      entry.on('end', () => {
-        if (aborted) return;
-        entries.push({ repoPath, content: Buffer.concat(chunks) });
-      });
-
-      entry.on('error', (err: Error) => fail(err));
-    });
-
-    parser.on('error', (err: Error) => fail(err));
-    parser.on('end', () => {
-      if (!aborted) resolve();
-    });
-
-    parser.end(tarball);
-  });
-
-  if (entries.length === 0) {
-    throw new Error('No files found in the GitHub repository.');
+  if (!Array.isArray(basenames) || basenames.length === 0) {
+    throw new Error('At least one skill basename is required.');
   }
 
-  // Set of bundle root paths: directories that contain a SKILL.md directly.
-  // `''` means the repo root (top-level SKILL.md).
+  const wanted = new Set<string>();
+  for (const raw of basenames) {
+    const name = typeof raw === 'string' ? raw.trim() : '';
+    if (name.length === 0) {
+      throw new Error('Skill basenames may not be empty strings.');
+    }
+    wanted.add(name);
+  }
+
+  const candidates: RawTarEntry[] = [];
+  let totalBytes = 0;
+  let bundleFailed = false;
+
+  await streamTarballToParser(parsed, ({ entry, repoPath, fail }) => {
+    const segments = repoPath.split('/');
+    // Keep the entry if either:
+    //   1. A path segment matches one of the user-requested basenames (the actual content), OR
+    //   2. The entry is a `SKILL.md` anywhere in the repo — buffered cheaply so
+    //      `filterByBasenames` below can produce a "not found / ambiguous"
+    //      error that lists the repo's available skill basenames.
+    const isSkillMd = posix.basename(repoPath) === 'SKILL.md';
+    const matchesBasename = segments.some((seg) => wanted.has(seg));
+
+    if (!isSkillMd && !matchesBasename) {
+      entry.resume();
+
+      return;
+    }
+
+    if (candidates.length >= MAX_SKILL_BUNDLE_ENTRIES) {
+      bundleFailed = true;
+      fail(new Error(`Skill bundle exceeds the maximum of ${MAX_SKILL_BUNDLE_ENTRIES} files.`));
+      entry.resume();
+
+      return;
+    }
+
+    const chunks: Buffer[] = [];
+
+    entry.on('data', (chunk: Buffer) => {
+      if (bundleFailed) return;
+      totalBytes += chunk.length;
+
+      if (totalBytes > MAX_SKILL_BUNDLE_BYTES) {
+        bundleFailed = true;
+        fail(new Error(`Skill bundle exceeds the maximum size of ${MAX_SKILL_BUNDLE_BYTES} bytes.`));
+
+        return;
+      }
+
+      chunks.push(chunk);
+    });
+
+    entry.on('end', () => {
+      if (bundleFailed) return;
+      candidates.push({ repoPath, content: Buffer.concat(chunks) });
+    });
+
+    entry.on('error', (err: Error) => {
+      if (!bundleFailed) {
+        bundleFailed = true;
+        fail(err);
+      }
+    });
+  });
+
+  if (candidates.length === 0) {
+    throw new Error('No skill bundles found — the repository contains no matching `SKILL.md` files.');
+  }
+
   const bundleRoots = new Set<string>();
 
-  for (const entry of entries) {
+  for (const entry of candidates) {
     if (posix.basename(entry.repoPath) === 'SKILL.md') {
       const parent = posix.dirname(entry.repoPath);
       bundleRoots.add(parent === '.' ? '' : parent);
@@ -506,27 +658,23 @@ export async function discoverSkillBundles(
   }
 
   if (bundleRoots.size === 0) {
-    throw new Error('No skill bundles found — the repository contains no `SKILL.md` files.');
+    throw new Error(
+      'No skill bundles found — the repository contains no `SKILL.md` files matching the requested skills.'
+    );
   }
 
   const sortedRoots = Array.from(bundleRoots).sort();
-
-  // For each entry, find the deepest bundle root that owns it.
   const bundles = new Map<string, UploadSkillFile[]>();
 
   for (const root of sortedRoots) {
     bundles.set(root, []);
   }
 
-  for (const entry of entries) {
+  for (const entry of candidates) {
     const owningRoot = findDeepestBundleRoot(entry.repoPath, sortedRoots);
-
-    if (owningRoot === null) {
-      continue;
-    }
+    if (owningRoot === null) continue;
 
     const relativePath = owningRoot === '' ? entry.repoPath : entry.repoPath.slice(owningRoot.length + 1);
-
     bundles.get(owningRoot)?.push({ path: relativePath, content: entry.content });
   }
 
@@ -538,17 +686,13 @@ export async function discoverSkillBundles(
 
       return { path, files, name };
     })
-    .filter((b) => b.files.length > 0);
+    .filter((b) => b.files.length > 0 && b.files.some((f) => f.path === 'SKILL.md'));
 
   if (discovered.length === 0) {
-    throw new Error('No skill bundles found — the repository contains no `SKILL.md` files.');
+    throw new Error('No skill bundles found — the repository contains no matching `SKILL.md` files.');
   }
 
-  if (!opts.basenames || opts.basenames.length === 0) {
-    return discovered;
-  }
-
-  return filterByBasenames(discovered, opts.basenames);
+  return filterByBasenames(discovered, basenames);
 }
 
 function findDeepestBundleRoot(entryPath: string, sortedRoots: string[]): string | null {

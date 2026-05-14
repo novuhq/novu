@@ -58,7 +58,7 @@ Instructions go here.
 
 type SkillUploadSource =
   | { type: 'github-url'; url: string }
-  | { type: 'github-repo'; repo: string; skills?: string[] }
+  | { type: 'github-repo'; repo: string; skills: string[] }
   | { type: 'inline'; content: string };
 
 export function ManagedAgentDebugPage() {
@@ -187,6 +187,12 @@ export function ManagedAgentDebugPage() {
       return;
     }
 
+    if (mode === 'github-repo' && !repoSkillsCsv.trim()) {
+      showErrorToast('At least one skill name is required.', 'Missing fields');
+
+      return;
+    }
+
     if (mode === 'inline' && !skillMd.trim()) {
       showErrorToast('SKILL.md content is required.', 'Missing fields');
 
@@ -297,7 +303,7 @@ export function ManagedAgentDebugPage() {
 
                   <div className="flex flex-col gap-1">
                     <label htmlFor={repoSkillsId} className="text-text-strong text-label-xs font-medium">
-                      Skills (optional, comma-separated)
+                      Skills (comma-separated, required)
                     </label>
                     <Input
                       id={repoSkillsId}
@@ -305,11 +311,11 @@ export function ManagedAgentDebugPage() {
                       className="font-mono"
                       value={repoSkillsCsv}
                       onChange={(e) => setRepoSkillsCsv(e.target.value)}
-                      placeholder="golang-benchmark, golang-fmt"
+                      placeholder="task-coordination-strategies, fastapi-templates"
                     />
                     <p className="text-text-soft text-paragraph-xs leading-4">
-                      Directory basenames of the skill bundles to upload. Leave empty to auto-discover and upload every
-                      directory in the repo that contains a <code>SKILL.md</code>.
+                      Directory basenames of the skill bundles to upload. Each name must match exactly one directory in
+                      the repo that contains a <code>SKILL.md</code>.
                     </p>
                   </div>
                 </>
@@ -372,7 +378,7 @@ function buildSkillSource(args: {
     return {
       type: 'github-repo',
       repo: args.repoSlug.trim(),
-      ...(skills.length > 0 ? { skills } : {}),
+      skills,
     };
   }
 

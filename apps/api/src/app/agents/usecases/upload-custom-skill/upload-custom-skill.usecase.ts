@@ -14,9 +14,8 @@ import {
   buildRepoSkillDisplayTitle,
   buildSkillDisplayTitle,
   type DiscoveredSkillBundle,
-  discoverSkillBundles,
-  downloadGithubTarball,
-  extractSkillBundle,
+  fetchAndDiscoverSkillBundles,
+  fetchAndExtractSkillBundle,
   parseGithubUrl,
   parseSkillNameFromFrontmatter,
 } from '../../utils/github-skill-bundle';
@@ -96,8 +95,7 @@ export class UploadCustomSkill {
     switch (source.type) {
       case 'github-url': {
         const parsed = this.parseSourceUrl(source.url);
-        const tarball = await this.downloadTarball(parsed);
-        const files = await this.extractFiles(tarball, parsed.subPath);
+        const files = await this.fetchSingleBundle(parsed);
         const name = this.readBundleName(files);
 
         return [
@@ -114,8 +112,12 @@ export class UploadCustomSkill {
       }
       case 'github-repo': {
         const { owner, repo } = this.parseRepoSlug(source.repo);
-        const tarball = await this.downloadTarball({ owner, repo, ref: 'HEAD', subPath: '' });
-        const discovered = await this.discoverBundles(tarball, source.skills);
+
+        if (!source.skills?.length) {
+          throw new BadRequestException('At least one skill name is required for `github-repo` uploads.');
+        }
+
+        const discovered = await this.fetchMultipleBundles({ owner, repo, ref: 'HEAD', subPath: '' }, source.skills);
 
         return discovered.map((bundle) => ({
           files: bundle.files,
@@ -194,27 +196,21 @@ export class UploadCustomSkill {
     }
   }
 
-  private async downloadTarball(parsed: { owner: string; repo: string; ref: string; subPath: string }) {
+  private async fetchSingleBundle(parsed: { owner: string; repo: string; ref: string; subPath: string }) {
     try {
-      return await downloadGithubTarball(parsed);
+      return await fetchAndExtractSkillBundle(parsed);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to download GitHub tarball.';
+      const message = err instanceof Error ? err.message : 'Failed to fetch skill bundle from GitHub.';
       throw new BadRequestException(message);
     }
   }
 
-  private async extractFiles(tarball: Buffer, subPath: string) {
+  private async fetchMultipleBundles(
+    parsed: { owner: string; repo: string; ref: string; subPath: string },
+    basenames: string[]
+  ): Promise<DiscoveredSkillBundle[]> {
     try {
-      return await extractSkillBundle(tarball, subPath);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to extract skill bundle.';
-      throw new BadRequestException(message);
-    }
-  }
-
-  private async discoverBundles(tarball: Buffer, basenames?: string[]): Promise<DiscoveredSkillBundle[]> {
-    try {
-      return await discoverSkillBundles(tarball, { basenames });
+      return await fetchAndDiscoverSkillBundles(parsed, basenames);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to discover skill bundles.';
       throw new BadRequestException(message);

@@ -1,11 +1,11 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsIn,
   IsNotEmpty,
   IsObject,
-  IsOptional,
   IsString,
   MaxLength,
   ValidateNested,
@@ -35,11 +35,11 @@ export class GithubRepoSkillSourceCommand {
   @IsString()
   repo: string;
 
-  @IsOptional()
   @IsArray()
+  @ArrayMinSize(1)
   @ArrayMaxSize(MAX_GITHUB_REPO_SKILLS_PER_REQUEST)
   @IsString({ each: true })
-  skills?: string[];
+  skills: string[];
 }
 
 export class InlineSkillSourceCommand {

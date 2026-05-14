@@ -18,8 +18,8 @@ export type InlineSkillBundle = {
 /**
  * Wraps the user-pasted SKILL.md text as a single-file skill bundle suitable for
  * `IAgentRuntimeProvider.uploadSkill`. Mirrors the shape produced by
- * {@link extractSkillBundle} in `github-skill-bundle.ts`, but for the inline
- * source variant where no archive download is involved.
+ * {@link fetchAndExtractSkillBundle} in `github-skill-bundle.ts`, but for the
+ * inline source variant where no archive download is involved.
  *
  * The `displayTitle` is derived from the YAML frontmatter `name` so that
  * repeated inline uploads of the same skill collide on the provider's

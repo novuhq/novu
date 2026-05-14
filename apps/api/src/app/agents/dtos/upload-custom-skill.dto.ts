@@ -2,11 +2,11 @@ import { ApiExtraModels, ApiProperty, ApiPropertyOptional, getSchemaPath } from 
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsIn,
   IsNotEmpty,
   IsObject,
-  IsOptional,
   IsString,
   MaxLength,
   ValidateNested,
@@ -56,21 +56,21 @@ export class GithubRepoSkillSourceDto extends BaseSkillSourceDto {
   @IsString()
   repo: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     description:
-      'Optional list of skill directory basenames to upload from the repository (e.g. `golang-benchmark`). ' +
-      'When omitted or empty, every directory in the repo that contains a `SKILL.md` is uploaded. ' +
-      'A basename must match exactly one directory across the repo; ambiguous names are rejected with a 400 — ' +
-      'use `type: "github-url"` with a `/tree/{ref}/{path}` URL to disambiguate.',
-    example: ['golang-benchmark', 'golang-fmt'],
+      'List of skill directory basenames to upload from the repository (e.g. `task-coordination-strategies`). ' +
+      'Must be non-empty. Each name must match exactly one directory across the repo containing a `SKILL.md`; ' +
+      'ambiguous names are rejected with a 400 — use `type: "github-url"` with a `/tree/{ref}/{path}` URL to disambiguate.',
+    example: ['task-coordination-strategies', 'fastapi-templates'],
     type: [String],
+    minItems: 1,
     maxItems: MAX_GITHUB_REPO_SKILLS_PER_REQUEST,
   })
-  @IsOptional()
   @IsArray()
+  @ArrayMinSize(1)
   @ArrayMaxSize(MAX_GITHUB_REPO_SKILLS_PER_REQUEST)
   @IsString({ each: true })
-  skills?: string[];
+  skills: string[];
 }
 
 export class InlineSkillSourceDto extends BaseSkillSourceDto {
@@ -102,7 +102,7 @@ export class UploadCustomSkillRequestDto {
 
   @ApiProperty({
     description:
-      'Source of the skill bundle. One of: a single-skill GitHub URL (`type: "github-url"`), an `owner/repo` slug with optional skill basenames (`type: "github-repo"`), or raw `SKILL.md` text pasted inline (`type: "inline"`).',
+      'Source of the skill bundle. One of: a single-skill GitHub URL (`type: "github-url"`), an `owner/repo` slug with one or more required skill basenames (`type: "github-repo"`), or raw `SKILL.md` text pasted inline (`type: "inline"`).',
     oneOf: [
       { $ref: getSchemaPath(GithubUrlSkillSourceDto) },
       { $ref: getSchemaPath(GithubRepoSkillSourceDto) },
@@ -184,8 +184,8 @@ export class UploadCustomSkillResponseDto {
   @ApiProperty({
     description:
       'Skills uploaded by this request. Length is always at least 1; ' +
-      'always 1 for `inline` and `github-url` sources, and 1+ for `github-repo` depending on ' +
-      'how many bundles were selected or auto-discovered.',
+      'always 1 for `inline` and `github-url` sources, and 1+ for `github-repo` ' +
+      'matching the number of `skills` basenames supplied in the request.',
     type: [UploadedSkillEntryDto],
   })
   skills: UploadedSkillEntryDto[];
