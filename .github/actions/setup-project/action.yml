@@ -22,7 +22,7 @@ runs:
     - name: Install pnpm
       uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3
       with:
-        version: 10.33.0
+        version: 11.0.9
 
     - uses: useblacksmith/setup-node@65c6ca86fdeb0ab3d85e78f57e4f6a7e4780b391 # v5
       name: ⚙️ Setup Node Version
