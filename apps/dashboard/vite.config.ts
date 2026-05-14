@@ -117,6 +117,9 @@ export default defineConfig(({ mode }) => {
       headers: {
         'Document-Policy': 'js-profiling',
       },
+      watch: {
+        ignored: ['**/.env'],
+      },
     },
     optimizeDeps: {
       include: ['@novu/api'],

@@ -181,6 +181,60 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     expect(update2.body.data.enabled).to.equal(false);
   });
 
+  it('should reject attempts to plant preferences on another subscriber\'s subscription (IDOR)', async () => {
+    const topicKey = `topic-${Date.now()}`;
+    const victimSubscriptionIdentifier = `victim-subscription-${Date.now()}`;
+    const workflow = await session.createTemplate({
+      noFeedId: true,
+      steps: [
+        {
+          type: StepTypeEnum.IN_APP,
+          content: 'Test notification content',
+        },
+      ],
+    });
+
+    // Victim (the default session subscriber) creates a topic subscription
+    const subscriptionResponse = await createSubscription({
+      session,
+      topicKey,
+      body: { identifier: victimSubscriptionIdentifier },
+    });
+    expect(subscriptionResponse.status, 'Victim subscription should be created').to.equal(201);
+
+    // An attacker (a different authenticated subscriber in the same env) initializes a session
+    const attackerSubscriberId = `attacker-${Date.now()}`;
+    const attackerInit = await session.testAgent.post('/v1/widgets/session/initialize').send({
+      applicationIdentifier: session.environment.identifier,
+      subscriberId: attackerSubscriberId,
+      firstName: 'Attacker',
+    });
+    expect(attackerInit.status, 'Attacker should be able to initialize an inbox session').to.equal(201);
+    const attackerToken = attackerInit.body.data.token;
+
+    // The attacker attempts to plant a preference against the victim's subscription
+    const attack = await session.testAgent
+      .patch(`/v1/inbox/subscriptions/${victimSubscriptionIdentifier}/preferences/${workflow._id}`)
+      .send({ enabled: false })
+      .set('Authorization', `Bearer ${attackerToken}`);
+
+    expect(attack.status, 'Cross-subscriber preference write must be rejected').to.equal(404);
+
+    // The victim's preference must remain unaffected (still default-enabled)
+    const victimList = await session.testAgent
+      .get(`/v1/inbox/topics/${topicKey}/subscriptions`)
+      .set('Authorization', `Bearer ${session.subscriberToken}`);
+    const victimSubscription: SubscriptionResponseDto = victimList.body.data[0];
+
+    if (victimSubscription.preferences && victimSubscription.preferences.length > 0) {
+      const planted = victimSubscription.preferences.find((p) => p.workflow?.id === workflow._id);
+      expect(
+        planted?.enabled,
+        'Victim subscription must not have a preference planted by another subscriber'
+      ).to.not.equal(false);
+    }
+  });
+
   it('should return external subscriptionIdentifier (not internal MongoDB ID) in response', async () => {
     const topicKey = `topic-${Date.now()}`;
     const subscriptionIdentifier = `subscription-${Date.now()}`;
