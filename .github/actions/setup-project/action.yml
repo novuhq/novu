@@ -54,4 +54,11 @@ runs:
 
     - name: Install wait-on plugin
       shell: bash
-      run: pnpm i -g wait-on
+      # pnpm v11 defaults the global bin directory to "$PNPM_HOME/bin" instead of
+      # "$PNPM_HOME" (the v10 behavior). pnpm/action-setup only adds $PNPM_HOME
+      # itself to PATH, so without overriding global-bin-dir, `pnpm i -g` fails
+      # with "global bin directory ... is not in PATH". Pin global-bin-dir back
+      # to $PNPM_HOME so installed binaries stay discoverable on PATH.
+      run: |
+        pnpm config set global-bin-dir "$PNPM_HOME"
+        pnpm i -g wait-on
