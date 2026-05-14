@@ -148,6 +148,13 @@ export class ManagedRuntimeDto {
   @IsString()
   externalAgentId?: string;
 
+  @ApiPropertyOptional({
+    description: 'ID of an existing environment on the provider platform. When set, Novu adopts the environment.',
+  })
+  @IsOptional()
+  @IsString()
+  externalEnvironmentId?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

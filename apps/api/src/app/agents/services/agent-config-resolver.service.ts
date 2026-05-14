@@ -1,5 +1,11 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  decryptChannelConnectionAuth,
+  decryptCredentials,
+  FeatureFlagsService,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -154,7 +160,8 @@ export class AgentConfigResolver {
       integrationIdentifier,
     });
     if (connection) {
-      connectionAccessToken = connection.auth.accessToken;
+      const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
+      connectionAccessToken = decryptedAuth?.accessToken;
     }
 
     // `connectedAt` is set the first time the platform actually delivers a

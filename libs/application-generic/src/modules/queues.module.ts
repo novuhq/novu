@@ -5,6 +5,7 @@ import { featureFlagsService } from '../custom-providers';
 import {
   ActiveJobsMetricQueueServiceHealthIndicator,
   InboundParseQueueServiceHealthIndicator,
+  ManagedAgentQueueHealthIndicator,
   StandardQueueServiceHealthIndicator,
   SubscriberProcessQueueHealthIndicator,
   WebSocketsQueueServiceHealthIndicator,
@@ -20,6 +21,7 @@ import {
 import {
   ActiveJobsMetricQueueService,
   InboundParseQueueService,
+  ManagedAgentQueueService,
   StandardQueueService,
   SubscriberProcessQueueService,
   WebSocketsQueueService,
@@ -91,6 +93,11 @@ export class QueuesModule implements OnApplicationShutdown {
           healthIndicators.push(SubscriberProcessQueueHealthIndicator);
           tokenList.push(SubscriberProcessQueueService);
           DYNAMIC_PROVIDERS.push(SubscriberProcessQueueService, SubscriberProcessQueueHealthIndicator);
+          break;
+        case JobTopicNameEnum.MANAGED_AGENT:
+          healthIndicators.push(ManagedAgentQueueHealthIndicator);
+          tokenList.push(ManagedAgentQueueService);
+          DYNAMIC_PROVIDERS.push(ManagedAgentQueueService, ManagedAgentQueueHealthIndicator);
           break;
         case JobTopicNameEnum.ACTIVE_JOBS_METRIC:
           healthIndicators.push(ActiveJobsMetricQueueServiceHealthIndicator);

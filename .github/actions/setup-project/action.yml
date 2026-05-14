@@ -20,11 +20,11 @@ runs:
   using: composite
   steps:
     - name: Install pnpm
-      uses: pnpm/action-setup@v3
+      uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3
       with:
         version: 10.33.0
 
-    - uses: useblacksmith/setup-node@v5
+    - uses: useblacksmith/setup-node@65c6ca86fdeb0ab3d85e78f57e4f6a7e4780b391 # v5
       name: ⚙️ Setup Node Version
       with:
         node-version: '22.22.1'
@@ -32,17 +32,17 @@ runs:
 
     - name: 💵 Start Redis
       if: ${{ inputs.slim == 'false' }}
-      uses: supercharge/redis-github-action@1.5.0
+      uses: supercharge/redis-github-action@f63fe516254d0af5df91755a4488274c2e71e38c # 1.5.0
 
     - name: 📚 Start MongoDB
       if: ${{ inputs.slim == 'false' }}
-      uses: supercharge/mongodb-github-action@1.11.0
+      uses: supercharge/mongodb-github-action@5a87bd81f88e2a8b195f8b7b656f5cda1350815a # 1.11.0
       with:
         mongodb-version: 8.0
 
     - name: 🔍 Start ClickHouse
       if: ${{ inputs.slim == 'false' }}
-      uses: praneeth527/clickhouse-server-action@v1.0.0
+      uses: praneeth527/clickhouse-server-action@f09502165f8075d2a11c4fbc9e93ccea9b2a821b # v1.0.0
       env:
         CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
       with:

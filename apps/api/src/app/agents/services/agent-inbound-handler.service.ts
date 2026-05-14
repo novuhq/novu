@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
+  AgentRepository,
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
@@ -17,6 +18,7 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
+import { ManagedExecutorService } from './managed-executor.service';
 
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
@@ -152,6 +154,8 @@ export class AgentInboundHandler {
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
+    private readonly managedExecutor: ManagedExecutorService,
+    private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly analyticsService: AnalyticsService,
@@ -307,21 +311,28 @@ export class AgentInboundHandler {
       this.conversationService.getHistory(config.environmentId, conversation._id),
     ]);
 
+    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+      '_id',
+      'runtime',
+      'managedRuntime',
+    ]);
+    const executionContext = {
+      event,
+      config,
+      conversation,
+      subscriber,
+      history,
+      message,
+      platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
+      storedAttachments: message.attachments?.length ? storedAttachments : undefined,
+    };
+
     try {
-      await this.bridgeExecutor.execute({
-        event,
-        config,
-        conversation,
-        subscriber,
-        history,
-        message,
-        platformContext: {
-          threadId: platformThreadId,
-          channelId: thread.channelId,
-          isDM: thread.isDM,
-        },
-        storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-      });
+      if (agent?.runtime === 'managed' && agent.managedRuntime) {
+        await this.managedExecutor.execute(executionContext, agent);
+      } else {
+        await this.bridgeExecutor.execute(executionContext);
+      }
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
         applyPlatformThreadIdToThread(thread, platformThreadId);

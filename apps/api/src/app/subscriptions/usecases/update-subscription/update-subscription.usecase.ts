@@ -80,6 +80,7 @@ export class UpdateSubscriptionUsecase {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       _topicId: topic._id,
+      ...(command._subscriberId && { _subscriberId: command._subscriberId }),
       ...contextQuery,
     });
 
