@@ -621,8 +621,9 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
 
     let reverseResults = false;
 
+    let cursorOr: Record<string, unknown>[] | undefined;
     if (before) {
-      paginationQuery.$or = [
+      cursorOr = [
         {
           [sortBy]: isDesc
             ? { [includeCursor ? '$gte' : '$gt']: before.sortBy }
@@ -641,7 +642,7 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
       ];
       reverseResults = true;
     } else if (after) {
-      paginationQuery.$or = [
+      cursorOr = [
         {
           [sortBy]: isDesc
             ? { [includeCursor ? '$lte' : '$lt']: after.sortBy }
@@ -658,6 +659,21 @@ export class BaseRepositoryV2<T_DBModel, T_MappedEntity, T_Enforcement> {
           ],
         },
       ];
+    }
+
+    if (cursorOr) {
+      // Combine the cursor-walking `$or` with any pre-existing top-level `$or`
+      // from the caller's query under `$and`, so neither is silently dropped.
+      if (paginationQuery.$or) {
+        paginationQuery.$and = [
+          ...(paginationQuery.$and ?? []),
+          { $or: paginationQuery.$or },
+          { $or: cursorOr },
+        ];
+        delete paginationQuery.$or;
+      } else {
+        paginationQuery.$or = cursorOr;
+      }
     }
 
     // When a select is provided, silently inject the pagination fields so cursor

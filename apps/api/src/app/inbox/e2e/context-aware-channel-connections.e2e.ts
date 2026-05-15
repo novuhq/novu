@@ -14,6 +14,7 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
   let session: UserSession;
   let contextAToken: string;
   let contextBToken: string;
+  let noContextToken: string;
   let slackIntegrationIdentifier: string;
 
   beforeEach(async () => {
@@ -40,6 +41,10 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
     const sessionB = await initializeSessionWithContext(session, CONTEXT_B);
     expect(sessionB.status).to.equal(201);
     contextBToken = sessionB.body.data.token;
+
+    const sessionNoContext = await initializeSessionWithContext(session);
+    expect(sessionNoContext.status).to.equal(201);
+    noContextToken = sessionNoContext.body.data.token;
   });
 
   describe('Channel connections', () => {
@@ -94,6 +99,28 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
       expect(getB.body.data.identifier).to.equal(connectionB.identifier);
     });
 
+    it('should not leak other-context channel connections when cursor pagination is used', async () => {
+      const connectionDefault = await createConnection(session, slackIntegrationIdentifier, []);
+      const connectionB1 = await createConnection(session, slackIntegrationIdentifier, [
+        'project:project-b',
+        'tenant:tenant-b',
+      ]);
+      const connectionB2 = await createConnection(session, slackIntegrationIdentifier, [
+        'project:project-b',
+        'tenant:tenant-b',
+      ]);
+
+      const listNoContext = await session.testAgent
+        .get(`/v1/inbox/channel-connections?limit=10&after=${connectionB2._id}`)
+        .set('Authorization', `Bearer ${noContextToken}`);
+
+      expect(listNoContext.status).to.equal(200);
+      const identifiers = (listNoContext.body.data as Array<{ identifier: string }>).map((d) => d.identifier);
+      expect(identifiers).to.not.include(connectionB1.identifier);
+      expect(identifiers).to.not.include(connectionB2.identifier);
+      expect(identifiers).to.include(connectionDefault.identifier);
+    });
+
     it('should not allow deleting a channel connection from another context', async () => {
       const connectionB = await createConnection(session, slackIntegrationIdentifier, [
         'project:project-b',
@@ -142,6 +169,28 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
       expect(listB.status).to.equal(200);
       expect(listB.body.data).to.have.lengthOf(1);
       expect(listB.body.data[0].identifier).to.equal(endpointB.identifier);
+    });
+
+    it('should not leak other-context channel endpoints when cursor pagination is used', async () => {
+      const endpointDefault = await createEndpoint(session, slackIntegrationIdentifier, []);
+      const endpointB1 = await createEndpoint(session, slackIntegrationIdentifier, [
+        'project:project-b',
+        'tenant:tenant-b',
+      ]);
+      const endpointB2 = await createEndpoint(session, slackIntegrationIdentifier, [
+        'project:project-b',
+        'tenant:tenant-b',
+      ]);
+
+      const listNoContext = await session.testAgent
+        .get(`/v1/inbox/channel-endpoints?limit=10&after=${endpointB2._id}`)
+        .set('Authorization', `Bearer ${noContextToken}`);
+
+      expect(listNoContext.status).to.equal(200);
+      const identifiers = (listNoContext.body.data as Array<{ identifier: string }>).map((d) => d.identifier);
+      expect(identifiers).to.not.include(endpointB1.identifier);
+      expect(identifiers).to.not.include(endpointB2.identifier);
+      expect(identifiers).to.include(endpointDefault.identifier);
     });
 
     it('should not allow deleting a channel endpoint from another context', async () => {
