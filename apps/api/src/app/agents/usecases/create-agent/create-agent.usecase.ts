@@ -211,24 +211,21 @@ export class CreateAgent {
   ): Promise<void> {
     if (!isAgentSharedInboxEnabled()) return;
 
-    const environment = await this.environmentRepository.findOne(
-      { _id: environmentId, _organizationId: organizationId },
-      ['type']
-    );
-    if (!environment) {
-      return;
-    }
-    if (environment.type === EnvironmentTypeEnum.PROD) {
-      return;
-    }
-
-    const organization = await this.organizationRepository.findById(organizationId);
-    const tier = organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
-    if (!getFeatureForTierAsBoolean(FeatureNameEnum.AGENT_EMAIL_INTEGRATION, tier)) {
-      return;
-    }
-
     try {
+      const environment = await this.environmentRepository.findOne(
+        { _id: environmentId, _organizationId: organizationId },
+        ['type']
+      );
+      if (!environment || environment.type === EnvironmentTypeEnum.PROD) {
+        return;
+      }
+
+      const organization = await this.organizationRepository.findById(organizationId);
+      const tier = organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
+      if (!getFeatureForTierAsBoolean(FeatureNameEnum.AGENT_EMAIL_INTEGRATION, tier)) {
+        return;
+      }
+
       await this.findOrCreateNovuEmail.execute(agentId, environmentId, organizationId);
     } catch (err) {
       this.logger.warn(
