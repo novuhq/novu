@@ -68,13 +68,8 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
           {agent.runtime === 'managed' &&
           agent.managedRuntime?.consoleUrl &&
           agent.managedRuntime.providerId === 'anthropic' ? (
-            <Button variant="secondary" mode="outline" size="xs" className="gap-1.5">
-              <a
-                href={agent.managedRuntime.consoleUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="flex items-center gap-1.5"
-              >
+            <Button variant="secondary" mode="outline" size="xs" className="gap-1.5" asChild>
+              <a href={agent.managedRuntime.consoleUrl} target="_blank" rel="noreferrer noopener">
                 <span>Open in</span>
                 <ClaudeIcon className="size-3.5 shrink-0" aria-hidden />
                 <span>Claude</span>

@@ -15,7 +15,6 @@ import { Button } from '@/components/primitives/button';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
-import { Tag } from '@/components/primitives/tag';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { McpsSheet } from './mcps-sheet';
 

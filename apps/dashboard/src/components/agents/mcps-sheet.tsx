@@ -24,7 +24,6 @@ import {
 } from '@/components/primitives/sheet';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
-import { Tag } from '@/components/primitives/tag';
 import { ExternalLink } from '@/components/shared/external-link';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 

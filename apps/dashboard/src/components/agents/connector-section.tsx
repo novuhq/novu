@@ -136,7 +136,7 @@ export function ConnectorSection({ agent }: ConnectorSectionProps) {
         </Tooltip>
       </Row>
 
-      <Row label="Connecter ID">
+      <Row label="Connector ID">
         <Tooltip>
           <TooltipTrigger asChild>
             <span className="text-text-sub font-code text-label-xs cursor-default tracking-tight">
