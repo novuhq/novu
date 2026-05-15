@@ -15,6 +15,21 @@ import {
 import { DalException } from '../shared';
 
 /**
+ * Merge a cursor-walking `$or` clause into `target` without dropping an existing
+ * top-level `$or` from the caller's query. When both are present, both are
+ * preserved by moving each under an entry in `$and` (which Mongo evaluates as
+ * an implicit AND with the rest of the query).
+ */
+function mergeTopLevelOr(target: Record<string, any>, incomingOr: Record<string, unknown>[]): void {
+  if (target.$or) {
+    target.$and = [...(target.$and ?? []), { $or: target.$or }, { $or: incomingOr }];
+    delete target.$or;
+  } else {
+    target.$or = incomingOr;
+  }
+}
+
+/**
  * @deprecated Use BaseRepositoryV2 instead. BaseRepositoryV2 enforces required
  * field selection via a mandatory `select` parameter and provides auto-inferred
  * return types based on the selected fields (Pick<Entity, Keys>).
@@ -575,18 +590,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     }
 
     if (cursorOr) {
-      // Combine the cursor-walking `$or` with any pre-existing top-level `$or`
-      // from the caller's query under `$and`, so neither is silently dropped.
-      if (paginationQuery.$or) {
-        paginationQuery.$and = [
-          ...(paginationQuery.$and ?? []),
-          { $or: paginationQuery.$or },
-          { $or: cursorOr },
-        ];
-        delete paginationQuery.$or;
-      } else {
-        paginationQuery.$or = cursorOr;
-      }
+      mergeTopLevelOr(paginationQuery, cursorOr);
     }
 
     let builder = this.MongooseModel.find(paginationQuery)
@@ -651,7 +655,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     if (before) {
       const nextQuery: any = { ...query };
 
-      nextQuery.$or = [
+      mergeTopLevelOr(nextQuery, [
         {
           [sortBy]: isDesc ? { $lt: lastItem[sortBy] } : { $gt: lastItem[sortBy] },
         },
@@ -663,7 +667,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
             },
           ],
         },
-      ];
+      ]);
 
       const maybeNext = await this.MongooseModel.findOne(nextQuery)
         .sort({ [sortBy]: sortValue, [paginateField]: sortValue })
@@ -676,7 +680,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
     } else {
       const prevQuery: any = { ...query };
 
-      prevQuery.$or = [
+      mergeTopLevelOr(prevQuery, [
         {
           [sortBy]: isDesc ? { $gt: firstItem[sortBy] } : { $lt: firstItem[sortBy] },
         },
@@ -686,7 +690,7 @@ export class BaseRepository<T_DBModel, T_MappedEntity, T_Enforcement> {
             { [paginateField]: isDesc ? { $gt: firstItem[paginateField] } : { $lt: firstItem[paginateField] } },
           ],
         },
-      ];
+      ]);
 
       const maybePrev = await this.MongooseModel.findOne(prevQuery)
         .sort({ [sortBy]: sortValue, [paginateField]: sortValue })

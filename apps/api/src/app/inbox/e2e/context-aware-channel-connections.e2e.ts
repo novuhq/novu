@@ -16,8 +16,10 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
   let contextBToken: string;
   let noContextToken: string;
   let slackIntegrationIdentifier: string;
+  let previousContextPrefFlag: string | undefined;
 
   beforeEach(async () => {
+    previousContextPrefFlag = process.env.IS_CONTEXT_PREFERENCES_ENABLED;
     (process.env as Record<string, string>).IS_CONTEXT_PREFERENCES_ENABLED = 'true';
 
     session = new UserSession();
@@ -45,6 +47,15 @@ describe('Context-aware inbox channel resources - /inbox/channel-* #novu-v2', ()
     const sessionNoContext = await initializeSessionWithContext(session);
     expect(sessionNoContext.status).to.equal(201);
     noContextToken = sessionNoContext.body.data.token;
+  });
+
+  afterEach(() => {
+    const env = process.env as Record<string, string | undefined>;
+    if (previousContextPrefFlag === undefined) {
+      delete env.IS_CONTEXT_PREFERENCES_ENABLED;
+    } else {
+      env.IS_CONTEXT_PREFERENCES_ENABLED = previousContextPrefFlag;
+    }
   });
 
   describe('Channel connections', () => {
@@ -267,7 +278,6 @@ async function ensureInAppIntegrationActive(environmentId: string, organizationI
       _organizationId: organizationId,
       providerId: InAppProviderIdEnum.Novu,
       channel: ChannelTypeEnum.IN_APP,
-      active: true,
     },
     {
       $set: {
