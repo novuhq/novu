@@ -175,6 +175,7 @@ const IMPORTS = [
     JobTopicNameEnum.WORKFLOW,
     JobTopicNameEnum.INBOUND_PARSE_MAIL,
     JobTopicNameEnum.STANDARD,
+    JobTopicNameEnum.MANAGED_AGENT,
   ]),
   LoggerModule.forRoot(
     createNestLoggingModuleOptions({

@@ -21,14 +21,17 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
   });
 
   describe('GET /v1/integrations', () => {
-    it('should not return credentials when authenticated with an API key', async () => {
+    it('should return an empty credentials object when authenticated with an API key', async () => {
       const { body } = await session.testAgent
         .get('/v1/integrations')
         .set('authorization', `ApiKey ${session.apiKey}`);
 
       expect(body.data.length).to.be.greaterThan(0);
       for (const integration of body.data) {
-        expect(integration).to.not.have.property('credentials');
+        // Older `@novu/api` SDKs declare `credentials` as a required object in
+        // their zod schema. Returning `{}` keeps those clients working without
+        // exposing any actual credential values to API-key callers.
+        expect(integration.credentials).to.deep.equal({});
       }
     });
 
@@ -49,14 +52,14 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
   });
 
   describe('GET /v1/integrations/active', () => {
-    it('should not return credentials when authenticated with an API key', async () => {
+    it('should return an empty credentials object when authenticated with an API key', async () => {
       const { body } = await session.testAgent
         .get('/v1/integrations/active')
         .set('authorization', `ApiKey ${session.apiKey}`);
 
       expect(body.data.length).to.be.greaterThan(0);
       for (const integration of body.data) {
-        expect(integration).to.not.have.property('credentials');
+        expect(integration.credentials).to.deep.equal({});
       }
     });
 

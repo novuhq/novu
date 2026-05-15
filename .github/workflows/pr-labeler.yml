@@ -11,15 +11,15 @@ jobs:
       statuses: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: PR Labels
-        uses: actions/labeler@v4
+        uses: actions/labeler@ac9175f8a1f3625fd0d4fb234536d26811351594 # v4
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: PR Metrics
-        uses: microsoft/PR-Metrics@v1.5.7
+        uses: microsoft/PR-Metrics@e86b71aff6f8115577697864c63856d151bb6b33 # v1.5.7
         env:
           PR_METRICS_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
