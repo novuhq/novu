@@ -1,20 +1,10 @@
 import { type IIntegration } from '@novu/shared';
 import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  RiAlertFill,
-  RiArrowRightSLine,
-  RiExpandUpDownLine,
-  RiFileCopyLine,
-  RiInformation2Line,
-} from 'react-icons/ri';
+import { RiAlertFill, RiArrowRightSLine, RiExpandUpDownLine, RiFileCopyLine, RiInformation2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/primitives/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -64,11 +54,13 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
   const [slugError, setSlugError] = useState<string | null>(null);
   const [isToggling, setIsToggling] = useState(false);
   const credentialsRef = useRef<Record<string, unknown>>(serverCredentials as Record<string, unknown>);
+  const activeRef = useRef(emailIntegration.active !== false);
 
   useEffect(() => {
     credentialsRef.current = serverCredentials as Record<string, unknown>;
+    activeRef.current = emailIntegration.active !== false;
     setSlug((current) => (current === '' ? serverSlug : current));
-  }, [serverCredentials, serverSlug]);
+  }, [serverCredentials, serverSlug, emailIntegration.active]);
 
   const enabled = emailIntegration.active !== false;
   const showDemoNote = !serverOutboundId;
@@ -82,35 +74,44 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
 
   async function persistCredentials(patch: Record<string, unknown>): Promise<void> {
     const merged = { ...credentialsRef.current, ...patch };
-    credentialsRef.current = merged;
 
     await updateIntegration({
       integrationId: emailIntegration._id,
       data: {
         name: emailIntegration.name,
         identifier: emailIntegration.identifier,
-        active: emailIntegration.active,
+        active: activeRef.current,
         primary: emailIntegration.primary ?? false,
         credentials: merged,
         configurations: {},
         check: false,
       },
     });
+
+    credentialsRef.current = merged;
   }
 
   async function persistActive(nextActive: boolean): Promise<void> {
-    await updateIntegration({
-      integrationId: emailIntegration._id,
-      data: {
-        name: emailIntegration.name,
-        identifier: emailIntegration.identifier,
-        active: nextActive,
-        primary: emailIntegration.primary ?? false,
-        credentials: credentialsRef.current,
-        configurations: {},
-        check: false,
-      },
-    });
+    const previousActive = activeRef.current;
+
+    try {
+      await updateIntegration({
+        integrationId: emailIntegration._id,
+        data: {
+          name: emailIntegration.name,
+          identifier: emailIntegration.identifier,
+          active: nextActive,
+          primary: emailIntegration.primary ?? false,
+          credentials: credentialsRef.current,
+          configurations: {},
+          check: false,
+        },
+      });
+      activeRef.current = nextActive;
+    } catch (err) {
+      activeRef.current = previousActive;
+      throw err;
+    }
   }
 
   async function handleToggle(nextValue: boolean) {
@@ -174,11 +175,7 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
       <SectionHeader>EMAIL INBOX</SectionHeader>
 
       <div className="bg-bg-white flex flex-col overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
-        <CardRow
-          title="Enable email inbox"
-          description="Let users reach this agent via email."
-          divider
-        >
+        <CardRow title="Enable email inbox" description="Let users reach this agent via email." divider>
           <div className="flex justify-end">
             <Switch checked={enabled} disabled={isToggling} onCheckedChange={handleToggle} />
           </div>
@@ -236,9 +233,7 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
               />
             </div>
 
-            {slugError ? (
-              <p className="text-error-base text-paragraph-xs">{slugError}</p>
-            ) : null}
+            {slugError ? <p className="text-error-base text-paragraph-xs">{slugError}</p> : null}
 
             <div className="flex items-center justify-between pt-1">
               <Link
@@ -303,9 +298,7 @@ function DomainSelect({
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[280px] p-2">
         <div className="flex flex-col gap-1">
-          <div className="text-text-soft text-paragraph-xs px-1 pb-1">
-            Default
-          </div>
+          <div className="text-text-soft text-paragraph-xs px-1 pb-1">Default</div>
           <div className="text-text-sub bg-bg-weak rounded px-2 py-1.5 font-mono text-[12px]">
             {sharedDomain || '(unavailable)'}
           </div>
@@ -329,11 +322,9 @@ function DemoProviderNote() {
       <div className="bg-bg-weak border-stroke-weak relative flex items-stretch gap-3 overflow-hidden rounded-lg border px-3 py-2.5">
         <div className="bg-warning-base w-1 shrink-0 rounded-full" aria-hidden />
         <div className="text-text-sub text-paragraph-xs flex-1 leading-4">
-          <span className="text-text-strong font-medium">Note:</span>{' '}
-          Agent uses{' '}
-          <NovuEmailDemoBadge />{' '}
-          to send. The demo integration is intended for testing purposes only and recommended to add a provider for
-          uninterrupted delivery at scale.
+          <span className="text-text-strong font-medium">Note:</span> Agent uses <NovuEmailDemoBadge /> to send. The
+          demo integration is intended for testing purposes only and recommended to add a provider for uninterrupted
+          delivery at scale.
         </div>
         <Link
           to={ROUTES.INTEGRATIONS}
@@ -353,9 +344,7 @@ function NovuEmailDemoBadge() {
     <span className="bg-bg-weak text-text-sub inline-flex items-center gap-1 align-middle">
       <span className="bg-primary-base inline-block size-3.5 rounded-sm" aria-hidden />
       <span>Novu Email</span>
-      <span className="bg-away-lighter text-away-base rounded px-1 py-px text-[11px] font-medium uppercase">
-        Demo
-      </span>
+      <span className="bg-away-lighter text-away-base rounded px-1 py-px text-[11px] font-medium uppercase">Demo</span>
     </span>
   );
 }

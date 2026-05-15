@@ -1,18 +1,13 @@
+import { BadRequestException, ConflictException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import {
-  BadRequestException,
-  ConflictException,
-  Injectable,
-  Logger,
-  UnprocessableEntityException,
-} from '@nestjs/common';
-import { AnalyticsService, isAgentSharedInboxEnabled, shortId, slugifyOrRandom } from '@novu/application-generic';
+  AnalyticsService,
+  isAgentSharedInboxEnabled,
+  PinoLogger,
+  shortId,
+  slugifyOrRandom,
+} from '@novu/application-generic';
 import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
-import {
-  ApiServiceLevelEnum,
-  EnvironmentTypeEnum,
-  FeatureNameEnum,
-  getFeatureForTierAsBoolean,
-} from '@novu/shared';
+import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { trackAgentCreated } from '../../agent-analytics';
 import type { AgentResponseDto } from '../../dtos';
 import { toAgentResponse } from '../../mappers/agent-response.mapper';
@@ -26,16 +21,17 @@ const ADOPT_PLACEHOLDER = '__adopt_pending__';
 
 @Injectable()
 export class CreateAgent {
-  private readonly logger = new Logger(CreateAgent.name);
-
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly analyticsService: AnalyticsService,
     private readonly provisionManagedAgentUsecase: ProvisionManagedAgent,
     private readonly findOrCreateNovuEmail: FindOrCreateNovuEmail,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly organizationRepository: CommunityOrganizationRepository
-  ) {}
+    private readonly organizationRepository: CommunityOrganizationRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: CreateAgentCommand): Promise<AgentResponseDto> {
     const isAdoptMode = command.runtime === 'managed' && !!command.managedRuntime?.externalAgentId;
@@ -219,7 +215,10 @@ export class CreateAgent {
       { _id: environmentId, _organizationId: organizationId },
       ['type']
     );
-    if (environment?.type === EnvironmentTypeEnum.PROD) {
+    if (!environment) {
+      return;
+    }
+    if (environment.type === EnvironmentTypeEnum.PROD) {
       return;
     }
 

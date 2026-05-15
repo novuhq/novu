@@ -89,11 +89,7 @@ export class FindOrCreateNovuEmail {
    * to a random short id if the identifier slugifies to something the slug
    * regex would reject (empty, longer than 32 chars after sanitization, etc.).
    */
-  private async deriveEmailSlugPrefix(
-    agentId: string,
-    environmentId: string,
-    organizationId: string
-  ): Promise<string> {
+  private async deriveEmailSlugPrefix(agentId: string, environmentId: string, organizationId: string): Promise<string> {
     const agent = await this.agentRepository.findOne(
       { _id: agentId, _environmentId: environmentId, _organizationId: organizationId },
       ['identifier', 'name']
@@ -104,7 +100,18 @@ export class FindOrCreateNovuEmail {
       return candidate;
     }
 
-    return `agent-${shortid.generate().toLowerCase()}`.slice(0, 32).replace(/-+$/, '');
+    // Fallback: shortid + sanitize. shortid uses URL-safe chars that include
+    // `_` and `~` which our slug regex rejects, so we sanitize the result and
+    // retry a small number of times before falling back to a deterministic
+    // last-resort slug derived from the agent id (always passes the regex).
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const fallback = sanitizeSlug(`agent-${shortid.generate().toLowerCase()}`);
+      if (fallback && isValidAgentEmailSlugPrefix(fallback)) {
+        return fallback;
+      }
+    }
+
+    return `agent-${agentId.slice(-8)}`;
   }
 
   async findExistingLink(

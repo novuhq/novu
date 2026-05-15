@@ -44,11 +44,26 @@ export function getSharedAgentDomain(): string {
   return domain;
 }
 
+/**
+ * RFC-1123-ish hostname: total length 1–253, labels 1–63 chars of
+ * [a-z0-9-] with no leading/trailing dash, at least one dot. Underscores,
+ * spaces, `@`, and other invalid hostname characters are rejected so a
+ * misconfigured env var (e.g. `bad@domain` or `foo bar`) disables the
+ * feature instead of producing un-deliverable inbox addresses.
+ */
+const SHARED_DOMAIN_REGEX = /^(?=.{1,253}$)(?!-)[a-z0-9-]{1,63}(?<!-)(\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/i;
+
 function getSharedAgentDomainOrNull(): string | null {
   const raw = process.env[SHARED_AGENT_DOMAIN_ENV];
   const trimmed = raw?.trim();
+  if (!trimmed) return null;
 
-  return trimmed ? trimmed.toLowerCase() : null;
+  const normalized = trimmed.toLowerCase();
+  if (!SHARED_DOMAIN_REGEX.test(normalized)) {
+    return null;
+  }
+
+  return normalized;
 }
 
 /**

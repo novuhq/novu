@@ -906,6 +906,12 @@ export class ChatSdkService implements OnModuleDestroy {
       outboundIntegrationId: c.outboundIntegrationId ?? null,
       useFromAddressOverride: c.useFromAddressOverride ?? null,
       fromAddressOverride: c.fromAddressOverride ?? null,
+      // Email-specific fields closed over by the sendEmail callback (demo path):
+      // a slug rename or sender rebrand must rebuild the cached adapter
+      // otherwise the agent keeps replying from the stale From/Reply-To
+      // address until the LRU TTL expires.
+      emailSlugPrefix: c.emailSlugPrefix ?? null,
+      senderName: c.senderName ?? null,
     });
   }
 

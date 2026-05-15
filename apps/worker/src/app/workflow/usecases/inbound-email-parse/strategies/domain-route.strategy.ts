@@ -3,8 +3,8 @@ import {
   getSharedAgentDomain,
   InboundDomainRouteDelivery,
   isAgentSharedInboxEnabled,
-  parseAgentSharedInboxLocalPart,
   PinoLogger,
+  parseAgentSharedInboxLocalPart,
 } from '@novu/application-generic';
 import { AgentRepository, DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
@@ -122,7 +122,10 @@ export class DomainRouteStrategy {
 
     const parsed = parseAgentSharedInboxLocalPart(localPart);
     if (!parsed) {
-      this.logger.info({ toAddress, localPart }, 'Shared agent domain: local part did not match {slug}-{24hex} - dropping');
+      this.logger.info(
+        { toAddress, localPart },
+        'Shared agent domain: local part did not match {slug}-{24hex} - dropping'
+      );
 
       return;
     }
@@ -172,10 +175,21 @@ export class DomainRouteStrategy {
       });
       this.logger.info({ toAddress, agentId: agent._id }, 'Forwarded shared-domain inbound email to agent webhook');
     } catch (err) {
-      this.logger.warn(
-        { toAddress, agentId: agent._id, err },
-        'Shared agent domain: deliverToAgent threw - dropping (likely integration inactive or missing)'
-      );
+      // BadRequestException is thrown by InboundDomainRouteDelivery for non-retriable
+      // routing failures (no integration linked, integration inactive, missing secret,
+      // missing API_ROOT_URL). Drop the message silently so the queue doesn't retry.
+      // Any other error (HTTP timeout, transient API outage, etc.) is rethrown so the
+      // worker queue can retry per the standard inbound-parse retry policy.
+      if (err instanceof BadRequestException) {
+        this.logger.warn(
+          { toAddress, agentId: agent._id, err },
+          'Shared agent domain: deliverToAgent rejected - dropping (integration inactive or misconfigured)'
+        );
+
+        return;
+      }
+
+      throw err;
     }
   }
 

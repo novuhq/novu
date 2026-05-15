@@ -37,36 +37,45 @@ function withEnv(vars: Record<string, string | undefined>, run: () => void) {
 describe('agent-shared-inbox helpers', () => {
   describe('isAgentSharedInboxEnabled', () => {
     it('is enabled when enterprise=true, self-hosted!=true, and the domain is set', () => {
-      withEnv(
-        { [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false', [ENV_KEY]: 'agentconnect.sh' },
-        () => {
-          expect(isAgentSharedInboxEnabled()).toBe(true);
-        }
-      );
+      withEnv({ [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false', [ENV_KEY]: 'agentconnect.sh' }, () => {
+        expect(isAgentSharedInboxEnabled()).toBe(true);
+      });
     });
 
     it('is disabled when not enterprise', () => {
-      withEnv(
-        { [NOVU_ENTERPRISE_KEY]: 'false', [IS_SELF_HOSTED_KEY]: 'false', [ENV_KEY]: 'agentconnect.sh' },
-        () => {
-          expect(isAgentSharedInboxEnabled()).toBe(false);
-        }
-      );
+      withEnv({ [NOVU_ENTERPRISE_KEY]: 'false', [IS_SELF_HOSTED_KEY]: 'false', [ENV_KEY]: 'agentconnect.sh' }, () => {
+        expect(isAgentSharedInboxEnabled()).toBe(false);
+      });
     });
 
     it('is disabled when self-hosted', () => {
-      withEnv(
-        { [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'true', [ENV_KEY]: 'agentconnect.sh' },
-        () => {
-          expect(isAgentSharedInboxEnabled()).toBe(false);
-        }
-      );
+      withEnv({ [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'true', [ENV_KEY]: 'agentconnect.sh' }, () => {
+        expect(isAgentSharedInboxEnabled()).toBe(false);
+      });
     });
 
     it('is disabled when the shared domain env var is not set', () => {
       withEnv({ [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false', [ENV_KEY]: undefined }, () => {
         expect(isAgentSharedInboxEnabled()).toBe(false);
       });
+    });
+
+    it('is disabled when the shared domain env var is not a valid hostname', () => {
+      const invalidDomains = [
+        'foo bar',
+        'bad@domain',
+        '-leadingdash.com',
+        'trailingdash-.com',
+        'no-tld',
+        '..double.dot',
+        'has_underscore.com',
+        ' ',
+      ];
+      for (const invalid of invalidDomains) {
+        withEnv({ [NOVU_ENTERPRISE_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'false', [ENV_KEY]: invalid }, () => {
+          expect(isAgentSharedInboxEnabled()).toBe(false);
+        });
+      }
     });
   });
 
@@ -79,6 +88,15 @@ describe('agent-shared-inbox helpers', () => {
 
     it('throws when not set', () => {
       withEnv({ [ENV_KEY]: undefined }, () => {
+        expect(() => getSharedAgentDomain()).toThrow();
+      });
+    });
+
+    it('throws when the value is not a valid hostname', () => {
+      withEnv({ [ENV_KEY]: 'foo bar' }, () => {
+        expect(() => getSharedAgentDomain()).toThrow();
+      });
+      withEnv({ [ENV_KEY]: 'bad@domain' }, () => {
         expect(() => getSharedAgentDomain()).toThrow();
       });
     });
