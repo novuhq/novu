@@ -1,5 +1,5 @@
 FROM node:22.22-alpine3.23 AS dev_base
-RUN apk --update --no-cache add curl g++ make py3-pip
+RUN apk --update --no-cache add curl g++ make py3-pip git
 ENV NX_DAEMON=false
 
 
