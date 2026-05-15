@@ -72,14 +72,14 @@ describe('AnthropicAgentRuntimeProvider', () => {
       expect(toolset).toBeDefined();
 
       const bashConfig = toolset?.configs?.find((c) => c.name === 'bash');
-      expect(bashConfig, 'bash entry must be in the toolset payload by its externalId').toBeDefined();
-      expect(bashConfig?.enabled, 'bash must be enabled when present in patch.tools').toBe(true);
+      expect(bashConfig).toBeDefined();
+      expect(bashConfig?.enabled).toBe(true);
 
       const allBuiltinTypes = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
       const otherToolsDisabled = toolset?.configs
         ?.filter((c) => c.name !== 'bash')
         .every((c) => allBuiltinTypes.includes(c.name) && c.enabled === false);
-      expect(otherToolsDisabled, 'tools not in patch must be emitted with enabled=false').toBe(true);
+      expect(otherToolsDisabled).toBe(true);
 
       expect(result.tools).toEqual([{ externalId: 'bash', name: 'bash', type: 'builtin' }]);
     });

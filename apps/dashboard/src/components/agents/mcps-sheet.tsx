@@ -26,6 +26,7 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Switch } from '@/components/primitives/switch';
 import { ExternalLink } from '@/components/shared/external-link';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useDataRef } from '@/hooks/use-data-ref';
 
 type McpsSheetProps = {
   agent: AgentResponse;
@@ -54,13 +55,14 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => buildSelectedIds(currentMcpServers));
+  const currentMcpServersRef = useDataRef(currentMcpServers);
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedIds(buildSelectedIds(currentMcpServers));
+      setSelectedIds(buildSelectedIds(currentMcpServersRef.current));
       setSearch('');
     }
-  }, [isOpen, currentMcpServers]);
+  }, [currentMcpServersRef, isOpen]);
 
   const filteredMcps = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -109,11 +111,17 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
   };
 
   const handleSave = () => {
-    const next: AgentMcpServer[] = CLAUDE_MCP_SERVERS.filter((entry) => selectedIds.has(entry.id)).map((entry) => ({
-      externalId: entry.id,
-      name: entry.name,
-      url: entry.url,
-    }));
+    const fromCatalog: AgentMcpServer[] = CLAUDE_MCP_SERVERS.filter((entry) => selectedIds.has(entry.id)).map(
+      (entry) => ({
+        externalId: entry.id,
+        name: entry.name,
+        url: entry.url,
+      })
+    );
+    const unknown = currentMcpServers.filter(
+      (server) => !CLAUDE_MCP_SERVERS.some((entry) => entry.id === server.externalId || entry.url === server.url)
+    );
+    const next: AgentMcpServer[] = [...fromCatalog, ...unknown];
 
     updateMcps.mutate(next);
   };
