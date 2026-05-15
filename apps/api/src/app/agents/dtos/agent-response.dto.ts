@@ -94,6 +94,19 @@ export class AgentResponseDto {
   })
   creationSource?: AgentCreationSourceEnum;
 
+  @ApiPropertyOptional({
+    description:
+      'Computed shared inbox address (`{emailSlugPrefix}-{_id}@<shared-domain>`). ' +
+      'Sourced from the agent NovuAgent integration credentials; only present when the shared inbox ' +
+      'feature is enabled and the integration is active.',
+  })
+  defaultInboundAddress?: string;
+
+  @ApiPropertyOptional({
+    description: 'The shared inbound domain that hosts the default inbox. Only present on cloud.',
+  })
+  defaultDomain?: string;
+
   @ApiPropertyOptional({ type: [AgentIntegrationSummaryDto] })
   integrations?: AgentIntegrationSummaryDto[];
 }

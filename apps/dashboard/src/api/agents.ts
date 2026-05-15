@@ -73,6 +73,15 @@ export type AgentResponse = {
   devBridgeActive?: boolean;
   runtime?: AgentRuntime;
   managedRuntime?: ManagedRuntimeResponse;
+  /**
+   * Cloud only. Pre-computed default inbox address on the shared agent
+   * domain (`{emailSlugPrefix}-{_id}@agentconnect.sh`). Undefined when:
+   * the shared inbox feature is disabled, the agent has no NovuAgent
+   * integration linked, or the integration is inactive.
+   */
+  defaultInboundAddress?: string;
+  /** Cloud only. The shared inbound domain (e.g. `agentconnect.sh`). */
+  defaultDomain?: string;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;

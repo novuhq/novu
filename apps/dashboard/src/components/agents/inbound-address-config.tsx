@@ -151,7 +151,7 @@ export function InboundAddressConfig({
                     }}
                     className="flex items-center gap-2 rounded-md p-1"
                   >
-                    <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">Add domain</span>
+                    <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">Add custom domain</span>
                     <RiAddLine className="text-text-soft size-3 shrink-0" />
                   </CommandItem>
                 </CommandGroup>

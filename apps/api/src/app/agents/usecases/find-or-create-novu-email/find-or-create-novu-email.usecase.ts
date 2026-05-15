@@ -1,8 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { encryptSecret } from '@novu/application-generic';
+import { encryptSecret, isValidAgentEmailSlugPrefix } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
+  AgentRepository,
   CommunityOrganizationRepository,
   IntegrationEntity,
   IntegrationRepository,
@@ -27,12 +28,17 @@ export type FindOrCreateNovuEmailResult = {
   provisionedNewLink: boolean;
 };
 
+function sanitizeSlug(input: string): string {
+  return slugify(input).slice(0, 32).replace(/^-+/, '').replace(/-+$/, '');
+}
+
 @Injectable()
 export class FindOrCreateNovuEmail {
   constructor(
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly organizationRepository: CommunityOrganizationRepository
+    private readonly organizationRepository: CommunityOrganizationRepository,
+    private readonly agentRepository: AgentRepository
   ) {}
 
   /**
@@ -45,6 +51,8 @@ export class FindOrCreateNovuEmail {
     const existing = await this.findExistingLink(agentId, environmentId, organizationId);
     if (existing) return { response: existing, provisionedNewLink: false };
 
+    const emailSlugPrefix = await this.deriveEmailSlugPrefix(agentId, environmentId, organizationId);
+
     return this.agentIntegrationRepository.withTransaction(async (session) => {
       const recheck = await this.findExistingLink(agentId, environmentId, organizationId);
       if (recheck) return { response: recheck, provisionedNewLink: false };
@@ -56,7 +64,10 @@ export class FindOrCreateNovuEmail {
         {
           providerId: EmailProviderIdEnum.NovuAgent,
           channel: ChannelTypeEnum.EMAIL,
-          credentials: { secretKey: encryptSecret(randomBytes(32).toString('hex')) },
+          credentials: {
+            secretKey: encryptSecret(randomBytes(32).toString('hex')),
+            emailSlugPrefix,
+          },
           configurations: {},
           name: displayName,
           identifier,
@@ -71,6 +82,29 @@ export class FindOrCreateNovuEmail {
 
       return { response, provisionedNewLink: true };
     });
+  }
+
+  /**
+   * Build the per-agent slug prefix from the agent's identifier. Falls back
+   * to a random short id if the identifier slugifies to something the slug
+   * regex would reject (empty, longer than 32 chars after sanitization, etc.).
+   */
+  private async deriveEmailSlugPrefix(
+    agentId: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<string> {
+    const agent = await this.agentRepository.findOne(
+      { _id: agentId, _environmentId: environmentId, _organizationId: organizationId },
+      ['identifier', 'name']
+    );
+
+    const candidate = sanitizeSlug(agent?.identifier ?? agent?.name ?? '');
+    if (candidate && isValidAgentEmailSlugPrefix(candidate)) {
+      return candidate;
+    }
+
+    return `agent-${shortid.generate().toLowerCase()}`.slice(0, 32).replace(/-+$/, '');
   }
 
   async findExistingLink(

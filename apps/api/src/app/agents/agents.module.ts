@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CalculateLimitNovuIntegration } from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   ChannelEndpointRepository,
@@ -45,6 +46,7 @@ import { USE_CASES } from './usecases';
     BridgeExecutorService,
     ManagedExecutorService,
     ChatSdkService,
+    CalculateLimitNovuIntegration,
   ],
   exports: [...USE_CASES, ChatSdkService],
 })

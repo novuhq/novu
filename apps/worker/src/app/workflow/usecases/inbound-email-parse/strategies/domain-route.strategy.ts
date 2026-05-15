@@ -1,6 +1,12 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InboundDomainRouteDelivery, PinoLogger } from '@novu/application-generic';
-import { DomainRepository, DomainRouteRepository } from '@novu/dal';
+import {
+  getSharedAgentDomain,
+  InboundDomainRouteDelivery,
+  isAgentSharedInboxEnabled,
+  parseAgentSharedInboxLocalPart,
+  PinoLogger,
+} from '@novu/application-generic';
+import { AgentRepository, DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 
@@ -10,6 +16,7 @@ export class DomainRouteStrategy {
     private domainRepository: DomainRepository,
     private domainRouteRepository: DomainRouteRepository,
     private inboundDomainRouteDelivery: InboundDomainRouteDelivery,
+    private agentRepository: AgentRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -26,6 +33,12 @@ export class DomainRouteStrategy {
 
     if (!domainName) {
       this.throwError(`No domain found for address ${toAddress}`);
+    }
+
+    if (isAgentSharedInboxEnabled() && domainName === getSharedAgentDomain()) {
+      await this.deliverSharedAgentInbox(command, toAddress, localPart);
+
+      return;
     }
 
     const domain = await this.domainRepository.findByName(domainName);
@@ -81,6 +94,88 @@ export class DomainRouteStrategy {
       });
 
       this.logger.info({ toAddress, domain: domain.name }, 'Fired email.received agent event');
+    }
+  }
+
+  /**
+   * Inbound email arrived at the shared agent domain (e.g. `agentconnect.sh`).
+   * The local-part encodes the agent id as the trailing 24 hex chars (see
+   * `parseAgentSharedInboxLocalPart`). We resolve the agent unscoped, then
+   * reuse the existing `InboundDomainRouteDelivery.deliverToAgent` pipeline -
+   * which enforces `Integration.active=true` and signs/forwards the payload
+   * to the API webhook just like the standard per-tenant flow.
+   *
+   * Unknown agent ids, malformed local-parts, and agents whose NovuAgent
+   * integration is disabled all result in silently dropping the message
+   * (after logging).
+   */
+  private async deliverSharedAgentInbox(
+    command: InboundEmailParseCommand,
+    toAddress: string,
+    localPart: string | undefined
+  ): Promise<void> {
+    if (!localPart) {
+      this.logger.info({ toAddress }, 'Shared agent domain: missing local part - dropping');
+
+      return;
+    }
+
+    const parsed = parseAgentSharedInboxLocalPart(localPart);
+    if (!parsed) {
+      this.logger.info({ toAddress, localPart }, 'Shared agent domain: local part did not match {slug}-{24hex} - dropping');
+
+      return;
+    }
+
+    const agent = await this.agentRepository.findByIdForWebhook(parsed.agentId);
+    if (!agent) {
+      this.logger.info({ toAddress, agentId: parsed.agentId }, 'Shared agent domain: no agent found for id - dropping');
+
+      return;
+    }
+
+    if (agent.active === false) {
+      this.logger.info({ toAddress, agentId: agent._id }, 'Shared agent domain: agent is inactive - dropping');
+
+      return;
+    }
+
+    const syntheticDomain = {
+      _id: agent._id,
+      name: getSharedAgentDomain(),
+      status: DomainStatusEnum.VERIFIED,
+      mxRecordConfigured: true,
+      _environmentId: agent._environmentId,
+      _organizationId: agent._organizationId,
+      data: {},
+    };
+
+    const syntheticRoute = {
+      _id: agent._id,
+      _domainId: agent._id,
+      address: localPart,
+      destination: agent._id,
+      type: DomainRouteTypeEnum.AGENT,
+      data: {},
+      _environmentId: agent._environmentId,
+      _organizationId: agent._organizationId,
+      createdAt: agent.createdAt,
+      updatedAt: agent.updatedAt,
+    } as Parameters<typeof this.inboundDomainRouteDelivery.deliverToAgent>[0]['route'];
+
+    try {
+      await this.inboundDomainRouteDelivery.deliverToAgent({
+        domain: syntheticDomain,
+        route: syntheticRoute,
+        mail: this.commandToMail(command),
+        toAddress,
+      });
+      this.logger.info({ toAddress, agentId: agent._id }, 'Forwarded shared-domain inbound email to agent webhook');
+    } catch (err) {
+      this.logger.warn(
+        { toAddress, agentId: agent._id, err },
+        'Shared agent domain: deliverToAgent threw - dropping (likely integration inactive or missing)'
+      );
     }
   }
 

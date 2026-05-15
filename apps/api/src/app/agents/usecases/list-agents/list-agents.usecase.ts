@@ -1,10 +1,14 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { DirectionEnum } from '@novu/shared';
+import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationSummaryDto } from '../../dtos/agent-integration-summary.dto';
 import { ListAgentsResponseDto } from '../../dtos/list-agents-response.dto';
-import { toAgentIntegrationSummary, toAgentResponse } from '../../mappers/agent-response.mapper';
+import {
+  type NovuAgentEmailHydration,
+  toAgentIntegrationSummary,
+  toAgentResponse,
+} from '../../mappers/agent-response.mapper';
 import { ListAgentsCommand } from './list-agents.command';
 
 @Injectable()
@@ -33,7 +37,7 @@ export class ListAgents {
       identifier: command.identifier,
     });
 
-    const integrationsByAgentId = await this.loadIntegrationsForAgents(
+    const { summariesByAgentId, emailIntegrationByAgentId } = await this.loadIntegrationsForAgents(
       command.environmentId,
       command.organizationId,
       pagination.agents
@@ -41,8 +45,8 @@ export class ListAgents {
 
     return {
       data: pagination.agents.map((agent) => ({
-        ...toAgentResponse(agent),
-        integrations: integrationsByAgentId.get(agent._id) ?? [],
+        ...toAgentResponse(agent, undefined, emailIntegrationByAgentId.get(agent._id) ?? null),
+        integrations: summariesByAgentId.get(agent._id) ?? [],
       })),
       next: pagination.next,
       previous: pagination.previous,
@@ -55,11 +59,15 @@ export class ListAgents {
     environmentId: string,
     organizationId: string,
     agents: { _id: string }[]
-  ): Promise<Map<string, AgentIntegrationSummaryDto[]>> {
-    const result = new Map<string, AgentIntegrationSummaryDto[]>();
+  ): Promise<{
+    summariesByAgentId: Map<string, AgentIntegrationSummaryDto[]>;
+    emailIntegrationByAgentId: Map<string, NovuAgentEmailHydration>;
+  }> {
+    const summariesByAgentId = new Map<string, AgentIntegrationSummaryDto[]>();
+    const emailIntegrationByAgentId = new Map<string, NovuAgentEmailHydration>();
 
     if (agents.length === 0) {
-      return result;
+      return { summariesByAgentId, emailIntegrationByAgentId };
     }
 
     const agentIds = agents.map((a) => a._id);
@@ -73,10 +81,10 @@ export class ListAgents {
 
     if (integrationIds.length === 0) {
       for (const id of agentIds) {
-        result.set(id, []);
+        summariesByAgentId.set(id, []);
       }
 
-      return result;
+      return { summariesByAgentId, emailIntegrationByAgentId };
     }
 
     const integrations = await this.integrationRepository.find(
@@ -85,10 +93,11 @@ export class ListAgents {
         _environmentId: environmentId,
         _organizationId: organizationId,
       },
-      '_id identifier name providerId channel active'
+      '_id identifier name providerId channel active credentials'
     );
 
     const summaryByIntegrationId = new Map(integrations.map((i) => [i._id, toAgentIntegrationSummary(i)] as const));
+    const integrationByIntegrationId = new Map(integrations.map((i) => [i._id, i] as const));
 
     const seen = new Map<string, Set<string>>();
 
@@ -111,23 +120,34 @@ export class ListAgents {
       }
 
       dedupe.add(summary.integrationId);
-      const list = result.get(link._agentId) ?? [];
+      const list = summariesByAgentId.get(link._agentId) ?? [];
       list.push(summary);
 
-      result.set(link._agentId, list);
-    }
+      summariesByAgentId.set(link._agentId, list);
 
-    for (const id of agentIds) {
-      if (!result.has(id)) {
-        result.set(id, []);
-      } else {
-        const list = result.get(id) ?? [];
-        const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
-
-        result.set(id, sorted);
+      const integration = integrationByIntegrationId.get(link._integrationId);
+      if (integration?.providerId === EmailProviderIdEnum.NovuAgent && !emailIntegrationByAgentId.has(link._agentId)) {
+        emailIntegrationByAgentId.set(link._agentId, {
+          _id: integration._id,
+          providerId: integration.providerId,
+          channel: integration.channel,
+          active: integration.active,
+          credentials: integration.credentials,
+        });
       }
     }
 
-    return result;
+    for (const id of agentIds) {
+      if (!summariesByAgentId.has(id)) {
+        summariesByAgentId.set(id, []);
+      } else {
+        const list = summariesByAgentId.get(id) ?? [];
+        const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
+
+        summariesByAgentId.set(id, sorted);
+      }
+    }
+
+    return { summariesByAgentId, emailIntegrationByAgentId };
   }
 }

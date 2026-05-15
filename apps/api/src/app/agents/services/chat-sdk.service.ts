@@ -4,14 +4,17 @@ import * as https from 'node:https';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import {
   assertSafeOutboundUrl,
+  buildAgentSharedInbox,
   CacheService,
+  CalculateLimitNovuIntegration,
   decryptCredentials,
+  isAgentSharedInboxEnabled,
   isPrivateIp,
   MailFactory,
   PinoLogger,
   SsrfBlockedError,
 } from '@novu/application-generic';
-import { IntegrationRepository } from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
@@ -177,7 +180,8 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly inboundHandler: AgentInboundHandler,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly actionTokenService: AgentEmailActionTokenService
+    private readonly actionTokenService: AgentEmailActionTokenService,
+    private readonly calculateLimitNovuIntegration: CalculateLimitNovuIntegration
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -923,11 +927,18 @@ export class ChatSdkService implements OnModuleDestroy {
     messageId?: string;
   }) => Promise<{ messageId?: string }> {
     return async (params) => {
+      // No user-attached outbound provider: fall back to the Novu demo sender on the
+      // shared agent inbox domain. Cloud-only - self-hosted keeps the legacy "must
+      // configure outbound" error to preserve existing behavior.
       if (!outboundIntegrationId) {
-        throw new BadRequestException(
-          'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
-            'Configure one in the agent email setup.'
-        );
+        if (!isAgentSharedInboxEnabled() || !config.credentials.emailSlugPrefix) {
+          throw new BadRequestException(
+            'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
+              'Configure one in the agent email setup.'
+          );
+        }
+
+        return this.sendViaNovuDemoProvider(config, params);
       }
 
       const integration = await this.integrationRepository.findOne({
@@ -991,7 +1002,9 @@ export class ChatSdkService implements OnModuleDestroy {
       // outbound From is rewritten to the sending provider's configured sender (or a per-agent
       // override). When neither override nor outbound.from is set, we fall back to the agent
       // address for From and skip Reply-To — preserving the legacy behavior.
-      const agentInboundAddress = params.from;
+      // Prefer the shared-inbox address (cloud) so Reply-To always routes back to the agent
+      // even when the SDK has no DomainRoute-derived address handy.
+      const agentInboundAddress = this.resolveAgentInboundAddress(config, params.from);
       const overrideFrom = config.credentials.useFromAddressOverride
         ? config.credentials.fromAddressOverride?.trim() || undefined
         : undefined;
@@ -1024,6 +1037,107 @@ export class ChatSdkService implements OnModuleDestroy {
 
       return { messageId: result?.id || params.messageId || '' };
     };
+  }
+
+  /**
+   * Resolve the canonical inbound address used for Reply-To. When the cloud
+   * shared-inbox feature is enabled and the agent has an `emailSlugPrefix`,
+   * we always use `{slug}-{agentId}@<shared-domain>` so replies route through
+   * the Novu-managed inbound MX even when the outbound `From` is rewritten.
+   * Falls back to whatever the chat-adapter-email SDK supplied (today's
+   * behavior on self-hosted).
+   */
+  private resolveAgentInboundAddress(config: ResolvedAgentConfig, fallback: string): string {
+    const slug = config.credentials.emailSlugPrefix;
+    if (isAgentSharedInboxEnabled() && slug) {
+      try {
+        return buildAgentSharedInbox(slug, config.agentId);
+      } catch (err) {
+        this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
+      }
+    }
+
+    return fallback;
+  }
+
+  /**
+   * Outbound demo path: no user-attached email provider is configured. We
+   * send via the Novu demo provider with `From = {slug}-{agentId}@<shared-domain>`
+   * so replies route back to the same inbox. Quota-gated by the same
+   * per-environment 300/month cap as workflow notification emails.
+   */
+  private async sendViaNovuDemoProvider(
+    config: ResolvedAgentConfig,
+    params: {
+      from: string;
+      to: string;
+      subject: string;
+      html: string;
+      text?: string;
+      alternatives?: Array<{ contentType: string; content: string | Buffer }>;
+      inReplyTo?: string;
+      references?: string;
+      messageId?: string;
+    }
+  ): Promise<{ messageId?: string }> {
+    const limit = await this.calculateLimitNovuIntegration.execute({
+      channelType: ChannelTypeEnum.EMAIL,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    });
+    if (limit && limit.count >= limit.limit) {
+      throw new BadRequestException(
+        `Novu demo email quota exhausted for this environment (${limit.count}/${limit.limit} this month). Attach an outbound email provider (e.g. SendGrid) to remove this cap.`
+      );
+    }
+
+    const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix!, config.agentId);
+
+    const syntheticIntegration: IntegrationEntity = {
+      _id: 'novu-demo-synthetic',
+      _environmentId: config.environmentId,
+      _organizationId: config.organizationId,
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
+      name: 'Novu Email (demo)',
+      identifier: 'novu-demo-synthetic',
+      active: true,
+      primary: false,
+      credentials: {
+        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        from,
+        senderName: config.credentials.senderName || 'Novu',
+        ipPoolName: 'Demo',
+      },
+      configurations: {},
+      deleted: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    } as unknown as IntegrationEntity;
+
+    const mailFactory = new MailFactory();
+    const handler = mailFactory.getHandler(syntheticIntegration, from);
+
+    const mailOptions: IEmailOptions = {
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+      alternatives: params.alternatives,
+      from,
+      senderName: config.credentials.senderName || undefined,
+      headers: {
+        ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
+        ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
+        ...(params.references
+          ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') }
+          : {}),
+      },
+    };
+
+    const result = await handler.send(mailOptions).catch(toDeliveryError);
+
+    return { messageId: result?.id || params.messageId || '' };
   }
 
   private async createChatInstance(

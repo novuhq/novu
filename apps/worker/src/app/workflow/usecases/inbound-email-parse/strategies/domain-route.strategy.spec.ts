@@ -1,5 +1,5 @@
 import { InboundDomainRouteDelivery, PinoLogger } from '@novu/application-generic';
-import { DomainRepository, DomainRouteRepository } from '@novu/dal';
+import { AgentRepository, DomainRepository, DomainRouteRepository } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -62,6 +62,7 @@ describe('DomainRouteStrategy', () => {
   let domainRepository: sinon.SinonStubbedInstance<DomainRepository>;
   let domainRouteRepository: sinon.SinonStubbedInstance<DomainRouteRepository>;
   let inboundDomainRouteDelivery: sinon.SinonStubbedInstance<InboundDomainRouteDelivery>;
+  let agentRepository: sinon.SinonStubbedInstance<AgentRepository>;
   let logger: sinon.SinonStubbedInstance<PinoLogger>;
   let strategy: DomainRouteStrategy;
   let sandbox: sinon.SinonSandbox;
@@ -71,6 +72,7 @@ describe('DomainRouteStrategy', () => {
     domainRepository = sandbox.createStubInstance(DomainRepository);
     domainRouteRepository = sandbox.createStubInstance(DomainRouteRepository);
     inboundDomainRouteDelivery = sandbox.createStubInstance(InboundDomainRouteDelivery);
+    agentRepository = sandbox.createStubInstance(AgentRepository);
     logger = sandbox.createStubInstance(PinoLogger);
 
     inboundDomainRouteDelivery.deliverToAgent.resolves({ httpStatus: 200, body: {}, latencyMs: 1 });
@@ -80,6 +82,7 @@ describe('DomainRouteStrategy', () => {
       domainRepository as any,
       domainRouteRepository as any,
       inboundDomainRouteDelivery as any,
+      agentRepository as any,
       logger as any
     );
   });
@@ -192,5 +195,110 @@ describe('DomainRouteStrategy', () => {
     } catch (e) {
       expect((e as Error).message).to.include('MX records');
     }
+  });
+
+  describe('shared agent domain branch', () => {
+    const SHARED_DOMAIN = 'agentconnect.sh';
+    const AGENT_ID = '65a3f1d2b8e4c7a9f3b2c1d0';
+
+    function makeSharedCommand(localPart: string): InboundEmailParseCommand {
+      return {
+        ...makeCommand('ignored'),
+        to: [{ address: `${localPart}@${SHARED_DOMAIN}`, name: '' }],
+      } as InboundEmailParseCommand;
+    }
+
+    function makeAgent() {
+      return {
+        _id: AGENT_ID,
+        name: 'Wine Bot',
+        identifier: 'wine-bot',
+        active: true,
+        _environmentId: ENV_ID,
+        _organizationId: ORG_ID,
+        createdAt: '2025-01-01T00:00:00Z',
+        updatedAt: '2025-01-01T00:00:00Z',
+      };
+    }
+
+    const sharedEnvKey = 'NOVU_AGENT_SHARED_INBOUND_DOMAIN';
+    const enterpriseKey = 'NOVU_ENTERPRISE';
+    const selfHostedKey = 'IS_SELF_HOSTED';
+    const apiRootKey = 'API_ROOT_URL';
+    let prevShared: string | undefined;
+    let prevEnterprise: string | undefined;
+    let prevSelfHosted: string | undefined;
+    let prevApiRoot: string | undefined;
+
+    beforeEach(() => {
+      prevShared = process.env[sharedEnvKey];
+      prevEnterprise = process.env[enterpriseKey];
+      prevSelfHosted = process.env[selfHostedKey];
+      prevApiRoot = process.env[apiRootKey];
+      process.env[sharedEnvKey] = SHARED_DOMAIN;
+      process.env[enterpriseKey] = 'true';
+      process.env[selfHostedKey] = 'false';
+      process.env[apiRootKey] = 'http://localhost:3000';
+    });
+
+    afterEach(() => {
+      if (prevShared === undefined) delete process.env[sharedEnvKey];
+      else process.env[sharedEnvKey] = prevShared;
+      if (prevEnterprise === undefined) delete process.env[enterpriseKey];
+      else process.env[enterpriseKey] = prevEnterprise;
+      if (prevSelfHosted === undefined) delete process.env[selfHostedKey];
+      else process.env[selfHostedKey] = prevSelfHosted;
+      if (prevApiRoot === undefined) delete process.env[apiRootKey];
+      else process.env[apiRootKey] = prevApiRoot;
+    });
+
+    it('parses {slug}-{mongoId} and delegates to deliverToAgent', async () => {
+      agentRepository.findByIdForWebhook.resolves(makeAgent() as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${AGENT_ID}`));
+
+      sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
+      const call = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
+      expect(call.args[0].route.destination).to.equal(AGENT_ID);
+      expect(call.args[0].domain.name).to.equal(SHARED_DOMAIN);
+      sinon.assert.notCalled(domainRepository.findByName as any);
+    });
+
+    it('drops mail when local-part has no recognizable agent id', async () => {
+      await strategy.execute(makeSharedCommand('garbage-localpart'));
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+      sinon.assert.notCalled(agentRepository.findByIdForWebhook as any);
+    });
+
+    it('drops mail when no agent exists for the parsed id', async () => {
+      agentRepository.findByIdForWebhook.resolves(null);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${AGENT_ID}`));
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+    });
+
+    it('drops mail when agent.active is false', async () => {
+      agentRepository.findByIdForWebhook.resolves({ ...makeAgent(), active: false } as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${AGENT_ID}`));
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+    });
+
+    it('falls through to the legacy Domain lookup when not cloud', async () => {
+      process.env[enterpriseKey] = 'false';
+      domainRepository.findByName.resolves(null);
+
+      try {
+        await strategy.execute(makeSharedCommand(`wine-bot-${AGENT_ID}`));
+      } catch {
+        // Expected throw - legacy path can't find domain
+      }
+
+      sinon.assert.notCalled(agentRepository.findByIdForWebhook as any);
+      sinon.assert.calledOnce(domainRepository.findByName as any);
+    });
   });
 });

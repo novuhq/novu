@@ -58,6 +58,14 @@ export interface ICredentials {
   outboundIntegrationId?: string;
   useFromAddressOverride?: boolean;
   fromAddressOverride?: string;
+  /**
+   * Agent default shared inbox: the slug prefix used in
+   * `{emailSlugPrefix}-{agentId}@<shared-domain>`. Only meaningful on the
+   * NovuAgent email integration. Snapshotted from the linked agent's
+   * identifier at provisioning time; editable by the user. Validated against
+   * `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$` server-side.
+   */
+  emailSlugPrefix?: string;
   /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. */
   externalEnvironmentId?: string;
   /**

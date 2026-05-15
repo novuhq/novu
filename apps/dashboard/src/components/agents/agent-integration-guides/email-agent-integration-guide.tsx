@@ -1,7 +1,10 @@
 import { EmailProviderIdEnum } from '@novu/shared';
+import { useMemo } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { EmailConfigurationCard } from '@/components/agents/email-configuration-card';
+import { EmailInboxCard } from '@/components/agents/email-inbox-card';
 import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 
 type EmailAgentIntegrationGuideProps = {
@@ -25,6 +28,19 @@ export function EmailAgentIntegrationGuide({
 }: EmailAgentIntegrationGuideProps) {
   const isConnected = Boolean(integrationLink?.connectedAt);
   const integrationId = integrationLink?.integration?._id;
+  const { integrations } = useFetchIntegrations();
+
+  // The shared-inbox feature is gated on the API exposing `defaultDomain`.
+  // When set, the cloud auto-provision path is active; show the new card.
+  const isSharedInboxEnabled = Boolean(agent.defaultDomain);
+
+  const emailIntegration = useMemo(
+    () =>
+      integrationId && integrations
+        ? integrations.find((i) => i._id === integrationId && i.providerId === EmailProviderIdEnum.NovuAgent)
+        : undefined,
+    [integrationId, integrations]
+  );
 
   return (
     <AgentIntegrationGuideLayout
@@ -38,6 +54,9 @@ export function EmailAgentIntegrationGuide({
       onRequestRemoveIntegration={onRequestRemoveIntegration}
       isRemovingIntegration={isRemovingIntegration}
     >
+      {isSharedInboxEnabled && emailIntegration ? (
+        <EmailInboxCard agent={agent} emailIntegration={emailIntegration} />
+      ) : null}
       {integrationId && <EmailConfigurationCard agent={agent} integrationId={integrationId} />}
       {!isConnected && integrationId && <EmailSetupGuide agent={agent} integrationId={integrationId} embedded />}
     </AgentIntegrationGuideLayout>
