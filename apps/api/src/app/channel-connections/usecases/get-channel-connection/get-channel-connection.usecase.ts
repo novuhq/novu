@@ -21,6 +21,14 @@ export class GetChannelConnection {
       identifier: command.identifier,
     };
 
+    if (command.subscriberId) {
+      query.subscriberId = command.subscriberId;
+    }
+
+    if (command.contextKeys !== undefined) {
+      Object.assign(query, this.channelConnectionRepository.buildContextExactMatchQuery(command.contextKeys));
+    }
+
     const channelConnection = await this.channelConnectionRepository.findOne(query);
 
     if (!channelConnection) {
