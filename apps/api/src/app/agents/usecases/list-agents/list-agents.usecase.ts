@@ -1,14 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
+import { DirectionEnum } from '@novu/shared';
 import type { AgentIntegrationSummaryDto } from '../../dtos/agent-integration-summary.dto';
 import { ListAgentsResponseDto } from '../../dtos/list-agents-response.dto';
-import {
-  type NovuAgentEmailHydration,
-  toAgentIntegrationSummary,
-  toAgentResponse,
-} from '../../mappers/agent-response.mapper';
+import { toAgentIntegrationSummary, toAgentResponse } from '../../mappers/agent-response.mapper';
 import { ListAgentsCommand } from './list-agents.command';
 
 @Injectable()
@@ -37,7 +33,7 @@ export class ListAgents {
       identifier: command.identifier,
     });
 
-    const { summariesByAgentId, emailIntegrationByAgentId } = await this.loadIntegrationsForAgents(
+    const summariesByAgentId = await this.loadIntegrationsForAgents(
       command.environmentId,
       command.organizationId,
       pagination.agents
@@ -45,7 +41,7 @@ export class ListAgents {
 
     return {
       data: pagination.agents.map((agent) => ({
-        ...toAgentResponse(agent, undefined, emailIntegrationByAgentId.get(agent._id) ?? null),
+        ...toAgentResponse(agent),
         integrations: summariesByAgentId.get(agent._id) ?? [],
       })),
       next: pagination.next,
@@ -59,15 +55,11 @@ export class ListAgents {
     environmentId: string,
     organizationId: string,
     agents: { _id: string }[]
-  ): Promise<{
-    summariesByAgentId: Map<string, AgentIntegrationSummaryDto[]>;
-    emailIntegrationByAgentId: Map<string, NovuAgentEmailHydration>;
-  }> {
+  ): Promise<Map<string, AgentIntegrationSummaryDto[]>> {
     const summariesByAgentId = new Map<string, AgentIntegrationSummaryDto[]>();
-    const emailIntegrationByAgentId = new Map<string, NovuAgentEmailHydration>();
 
     if (agents.length === 0) {
-      return { summariesByAgentId, emailIntegrationByAgentId };
+      return summariesByAgentId;
     }
 
     const agentIds = agents.map((a) => a._id);
@@ -84,7 +76,7 @@ export class ListAgents {
         summariesByAgentId.set(id, []);
       }
 
-      return { summariesByAgentId, emailIntegrationByAgentId };
+      return summariesByAgentId;
     }
 
     const integrations = await this.integrationRepository.find(
@@ -93,11 +85,10 @@ export class ListAgents {
         _environmentId: environmentId,
         _organizationId: organizationId,
       },
-      '_id identifier name providerId channel active credentials'
+      '_id identifier name providerId channel active'
     );
 
     const summaryByIntegrationId = new Map(integrations.map((i) => [i._id, toAgentIntegrationSummary(i)] as const));
-    const integrationByIntegrationId = new Map(integrations.map((i) => [i._id, i] as const));
 
     const seen = new Map<string, Set<string>>();
 
@@ -124,17 +115,6 @@ export class ListAgents {
       list.push(summary);
 
       summariesByAgentId.set(link._agentId, list);
-
-      const integration = integrationByIntegrationId.get(link._integrationId);
-      if (integration?.providerId === EmailProviderIdEnum.NovuAgent && !emailIntegrationByAgentId.has(link._agentId)) {
-        emailIntegrationByAgentId.set(link._agentId, {
-          _id: integration._id,
-          providerId: integration.providerId,
-          channel: integration.channel,
-          active: integration.active,
-          credentials: integration.credentials,
-        });
-      }
     }
 
     for (const id of agentIds) {
@@ -148,6 +128,6 @@ export class ListAgents {
       }
     }
 
-    return { summariesByAgentId, emailIntegrationByAgentId };
+    return summariesByAgentId;
   }
 }

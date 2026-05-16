@@ -109,7 +109,7 @@ export class AddAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      '_id identifier name providerId channel active'
+      '_id identifier name providerId channel active credentials'
     );
 
     if (!integration) {
@@ -151,7 +151,7 @@ export class AddAgentIntegration {
       _organizationId: command.organizationId,
     });
 
-    const response = toAgentIntegrationResponse(link, integration);
+    const response = toAgentIntegrationResponse(link, integration, { _id: agentId });
 
     trackAgentIntegrationConnected(this.analyticsService, {
       userId: command.userId,

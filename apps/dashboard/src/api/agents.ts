@@ -73,15 +73,6 @@ export type AgentResponse = {
   devBridgeActive?: boolean;
   runtime?: AgentRuntime;
   managedRuntime?: ManagedRuntimeResponse;
-  /**
-   * Cloud only. Pre-computed default inbox address on the shared agent
-   * domain (`{emailSlugPrefix}-{_id}@agentconnect.sh`). Undefined when:
-   * the shared inbox feature is disabled, the agent has no NovuAgent
-   * integration linked, or the integration is inactive.
-   */
-  defaultInboundAddress?: string;
-  /** Cloud only. The shared inbound domain (e.g. `agentconnect.sh`). */
-  defaultDomain?: string;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;
@@ -230,6 +221,18 @@ export type AgentIntegrationEmbedded = {
   providerId: string;
   channel: ChannelTypeEnum;
   active: boolean;
+  /**
+   * Cloud only. Computed shared inbox address for the linked NovuAgent
+   * email integration (`{emailSlugPrefix}-{agentId}@<shared-domain>`).
+   * Undefined when the shared-inbox feature is disabled, the integration
+   * is inactive, or the provider is not `novu-email-agent`.
+   */
+  defaultInboundAddress?: string;
+  /**
+   * Cloud only. The shared inbound domain that hosts the inbox (e.g.
+   * `agentconnect.sh`). Only set for NovuAgent email integrations.
+   */
+  defaultDomain?: string;
 };
 
 /** Agent–integration link row returned by GET /agents/:identifier/integrations */

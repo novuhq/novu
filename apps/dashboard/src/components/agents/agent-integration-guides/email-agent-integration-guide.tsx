@@ -30,9 +30,9 @@ export function EmailAgentIntegrationGuide({
   const integrationId = integrationLink?.integration?._id;
   const { integrations } = useFetchIntegrations();
 
-  // The shared-inbox feature is gated on the API exposing `defaultDomain`.
-  // When set, the cloud auto-provision path is active; show the new card.
-  const isSharedInboxEnabled = Boolean(agent.defaultDomain);
+  // The shared-inbox feature is gated on the API exposing `defaultDomain` on
+  // the linked integration. When set, the cloud auto-provision path is active.
+  const isSharedInboxEnabled = Boolean(integrationLink?.integration?.defaultDomain);
 
   const emailIntegration = useMemo(
     () =>
@@ -54,8 +54,12 @@ export function EmailAgentIntegrationGuide({
       onRequestRemoveIntegration={onRequestRemoveIntegration}
       isRemovingIntegration={isRemovingIntegration}
     >
-      {isSharedInboxEnabled && emailIntegration ? (
-        <EmailInboxCard agent={agent} emailIntegration={emailIntegration} />
+      {isSharedInboxEnabled && emailIntegration && integrationLink ? (
+        <EmailInboxCard
+          emailIntegration={emailIntegration}
+          defaultInboundAddress={integrationLink.integration.defaultInboundAddress}
+          defaultDomain={integrationLink.integration.defaultDomain}
+        />
       ) : null}
       {integrationId && <EmailConfigurationCard agent={agent} integrationId={integrationId} />}
       {!isConnected && integrationId && <EmailSetupGuide agent={agent} integrationId={integrationId} embedded />}

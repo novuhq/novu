@@ -120,7 +120,11 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
     const links = agentIntegrationsQuery.data?.data;
     if (!links?.length) return false;
 
-    return links.some((link) => Boolean(link.connectedAt));
+    // The novu-email-agent integration is auto-provisioned for every agent, so
+    // it must not count toward marking the provider setup step as completed.
+    return links.some(
+      (link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent
+    );
   }, [agentIntegrationsQuery.data?.data]);
 
   const [userExpandedProvider, setUserExpandedProvider] = useState(false);

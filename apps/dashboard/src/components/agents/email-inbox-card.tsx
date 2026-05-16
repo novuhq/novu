@@ -1,9 +1,7 @@
 import { type IIntegration } from '@novu/shared';
-import { type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useMemo, useRef, useState } from 'react';
 import { RiAlertFill, RiArrowRightSLine, RiExpandUpDownLine, RiFileCopyLine, RiInformation2Line } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import type { AgentResponse } from '@/api/agents';
-import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
@@ -13,16 +11,16 @@ import { useUpdateIntegration } from '@/hooks/use-update-integration';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
-/**
- * Lowercase letters, digits, dashes; 1-32 chars; no leading/trailing dash.
- * Mirrors the server-side validation in
- * `libs/application-generic/src/dtos/credentials.dto.ts`.
- */
-const EMAIL_SLUG_PREFIX_RE = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
-
 export type EmailInboxCardProps = {
-  agent: AgentResponse;
   emailIntegration: IIntegration;
+  /**
+   * Pre-computed shared inbox address (`{slug}-{agentId}@<shared-domain>`).
+   * Sourced from the agent–integration link response so the UI doesn't have
+   * to know the routing-key composition or the shared domain.
+   */
+  defaultInboundAddress?: string;
+  /** Cloud-only shared inbound domain hosting the inbox (e.g. `agentconnect.sh`). */
+  defaultDomain?: string;
 };
 
 /**
@@ -33,63 +31,44 @@ export type EmailInboxCardProps = {
  *  1. Master toggle - bound to `integration.active` via `useUpdateIntegration`.
  *     When off, the worker drops inbound mail to the shared address and outbound
  *     sends throw.
- *  2. Inbound address - editable slug prefix bound to
- *     `integration.credentials.emailSlugPrefix`. Domain dropdown defaults to the
- *     shared agent domain (e.g. `agentconnect.sh`) and links out to the Domains
- *     settings for custom domains.
+ *  2. Inbound address - read-only display of the auto-provisioned address
+ *     (`{emailSlugPrefix}-{agentId}@<shared-domain>`). The local part embeds
+ *     the agent id as a routing key, so we render the whole value statically
+ *     to match what the "Copy address" button puts on the clipboard.
  *  3. Demo provider note - visible only while the agent has no user-attached
  *     outbound provider (`credentials.outboundIntegrationId` unset). Linkifies
  *     directly into the existing outbound provider picker.
  */
-export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps) {
+export function EmailInboxCard({ emailIntegration, defaultInboundAddress, defaultDomain }: EmailInboxCardProps) {
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
 
   const serverCredentials = emailIntegration.credentials ?? {};
-  const serverSlug = typeof serverCredentials.emailSlugPrefix === 'string' ? serverCredentials.emailSlugPrefix : '';
   const serverOutboundId =
     typeof serverCredentials.outboundIntegrationId === 'string' ? serverCredentials.outboundIntegrationId : '';
 
-  const [slug, setSlug] = useState(serverSlug);
-  const [slugError, setSlugError] = useState<string | null>(null);
   const [isToggling, setIsToggling] = useState(false);
-  const credentialsRef = useRef<Record<string, unknown>>(serverCredentials as Record<string, unknown>);
   const activeRef = useRef(emailIntegration.active !== false);
-
-  useEffect(() => {
-    credentialsRef.current = serverCredentials as Record<string, unknown>;
-    activeRef.current = emailIntegration.active !== false;
-    setSlug((current) => (current === '' ? serverSlug : current));
-  }, [serverCredentials, serverSlug, emailIntegration.active]);
 
   const enabled = emailIntegration.active !== false;
   const showDemoNote = !serverOutboundId;
-  const defaultInboundAddress = agent.defaultInboundAddress;
-  const defaultDomain = agent.defaultDomain;
   const domainsPath = currentEnvironment?.slug
     ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
     : ROUTES.INTEGRATIONS;
 
   const sectionTwoDisabled = !enabled;
 
-  async function persistCredentials(patch: Record<string, unknown>): Promise<void> {
-    const merged = { ...credentialsRef.current, ...patch };
+  /**
+   * Local part of the inbox address, e.g. `asd-dddddd-6a08bc0bc52e2d385af58887`.
+   * Falls back to `undefined` when the address hasn't been provisioned yet so
+   * we can show a neutral placeholder rather than rendering "undefined".
+   */
+  const inboxLocalPart = useMemo(() => {
+    if (!defaultInboundAddress) return undefined;
+    const atIndex = defaultInboundAddress.lastIndexOf('@');
 
-    await updateIntegration({
-      integrationId: emailIntegration._id,
-      data: {
-        name: emailIntegration.name,
-        identifier: emailIntegration.identifier,
-        active: activeRef.current,
-        primary: emailIntegration.primary ?? false,
-        credentials: merged,
-        configurations: {},
-        check: false,
-      },
-    });
-
-    credentialsRef.current = merged;
-  }
+    return atIndex >= 0 ? defaultInboundAddress.slice(0, atIndex) : defaultInboundAddress;
+  }, [defaultInboundAddress]);
 
   async function persistActive(nextActive: boolean): Promise<void> {
     const previousActive = activeRef.current;
@@ -102,7 +81,7 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
           identifier: emailIntegration.identifier,
           active: nextActive,
           primary: emailIntegration.primary ?? false,
-          credentials: credentialsRef.current,
+          credentials: serverCredentials as Record<string, unknown>,
           configurations: {},
           check: false,
         },
@@ -123,34 +102,6 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
       showErrorToast(message, 'Settings not saved');
     } finally {
       setIsToggling(false);
-    }
-  }
-
-  async function handleSlugBlur() {
-    const trimmed = slug.trim().toLowerCase();
-    if (!trimmed) {
-      setSlugError('Slug cannot be empty');
-
-      return;
-    }
-    if (trimmed === serverSlug) {
-      setSlugError(null);
-
-      return;
-    }
-    if (!EMAIL_SLUG_PREFIX_RE.test(trimmed)) {
-      setSlugError('1-32 lowercase letters, digits, or dashes (no leading/trailing dash)');
-
-      return;
-    }
-    setSlugError(null);
-    try {
-      await persistCredentials({ emailSlugPrefix: trimmed });
-      setSlug(trimmed);
-    } catch (err) {
-      setSlug(serverSlug);
-      const message = err instanceof Error ? err.message : 'Could not save inbox address.';
-      showErrorToast(message, 'Settings not saved');
     }
   }
 
@@ -210,21 +161,7 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
         >
           <div className="flex flex-col gap-1.5">
             <div className="flex gap-1.5">
-              <InputRoot size="xs" className="max-w-[120px]" hasError={Boolean(slugError)}>
-                <InputWrapper>
-                  <InputPure
-                    value={slug}
-                    onChange={(event) => setSlug(event.target.value.toLowerCase())}
-                    onBlur={() => {
-                      void handleSlugBlur();
-                    }}
-                    disabled={sectionTwoDisabled}
-                    aria-label="Email inbox slug prefix"
-                    className="font-mono text-[12px]"
-                    spellCheck={false}
-                  />
-                </InputWrapper>
-              </InputRoot>
+              <StaticInboxLocalPart value={inboxLocalPart} disabled={sectionTwoDisabled} />
 
               <DomainSelect
                 sharedDomain={defaultDomain ?? ''}
@@ -232,8 +169,6 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
                 onSelectCustom={domainsPath}
               />
             </div>
-
-            {slugError ? <p className="text-error-base text-paragraph-xs">{slugError}</p> : null}
 
             <div className="flex items-center justify-between pt-1">
               <Link
@@ -259,6 +194,29 @@ export function EmailInboxCard({ agent, emailIntegration }: EmailInboxCardProps)
 
         {showDemoNote ? <DemoProviderNote /> : null}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Read-only display of the inbox local-part (everything before the `@`).
+ * The full address embeds the agent id as a routing key, so making it
+ * editable here would be misleading — users would expect to be able to
+ * change the entire local part but only `emailSlugPrefix` is configurable.
+ * Showing it as static text matches the value that "Copy address" puts on
+ * the clipboard.
+ */
+function StaticInboxLocalPart({ value, disabled }: { value: string | undefined; disabled: boolean }) {
+  return (
+    <div
+      className={cn(
+        'bg-bg-weak border-stroke-soft text-text-sub flex h-7 min-w-0 flex-1 items-center overflow-hidden rounded-md border px-2 py-1.5 shadow-xs',
+        'font-mono text-[12px] leading-4 tracking-tight',
+        disabled && 'opacity-50'
+      )}
+      title={value}
+    >
+      <span className="truncate">{value ?? 'Provisioning…'}</span>
     </div>
   );
 }

@@ -127,6 +127,8 @@ export class FindOrCreateNovuEmail {
     if (links.length === 0) return null;
 
     const linkedIntegrationIds = links.map((l) => l._integrationId);
+    // Include `credentials` so the mapper can derive the shared-inbox address
+    // from `emailSlugPrefix`. The field is plaintext (no decryption needed).
     const emailIntegration = await this.integrationRepository.findOne(
       {
         _id: { $in: linkedIntegrationIds } as unknown as string,
@@ -134,7 +136,7 @@ export class FindOrCreateNovuEmail {
         _organizationId: organizationId,
         providerId: EmailProviderIdEnum.NovuAgent,
       },
-      '_id identifier name providerId channel active'
+      '_id identifier name providerId channel active credentials'
     );
 
     if (!emailIntegration) return null;
@@ -142,12 +144,13 @@ export class FindOrCreateNovuEmail {
     const link = links.find((l) => l._integrationId === emailIntegration._id);
     if (!link) return null;
 
-    return toAgentIntegrationResponse(link, emailIntegration);
+    return toAgentIntegrationResponse(link, emailIntegration, { _id: agentId });
   }
 
   private async createLink(
     agentId: string,
-    integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>,
+    integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'> &
+      Partial<Pick<IntegrationEntity, 'credentials'>>,
     environmentId: string,
     organizationId: string,
     session: ClientSession | null
@@ -173,11 +176,12 @@ export class FindOrCreateNovuEmail {
         _integrationId: integration._id,
         _environmentId: environmentId,
         _organizationId: organizationId,
+        connectedAt: new Date(),
       },
       { session }
     );
 
-    return toAgentIntegrationResponse(link, integration);
+    return toAgentIntegrationResponse(link, integration, { _id: agentId });
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {

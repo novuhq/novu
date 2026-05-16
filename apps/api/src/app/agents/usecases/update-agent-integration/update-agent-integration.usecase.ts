@@ -48,7 +48,7 @@ export class UpdateAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      '_id identifier name providerId channel active'
+      '_id identifier name providerId channel active credentials'
     );
 
     if (!targetIntegration) {
@@ -56,7 +56,7 @@ export class UpdateAgentIntegration {
     }
 
     if (existingLink._integrationId === targetIntegration._id) {
-      return toAgentIntegrationResponse(existingLink, targetIntegration);
+      return toAgentIntegrationResponse(existingLink, targetIntegration, { _id: agent._id });
     }
 
     const duplicate = await this.agentIntegrationRepository.findOne(
@@ -96,6 +96,6 @@ export class UpdateAgentIntegration {
       throw new NotFoundException(`Agent-integration link "${command.agentIntegrationId}" was not found after update.`);
     }
 
-    return toAgentIntegrationResponse(updated, targetIntegration);
+    return toAgentIntegrationResponse(updated, targetIntegration, { _id: agent._id });
   }
 }

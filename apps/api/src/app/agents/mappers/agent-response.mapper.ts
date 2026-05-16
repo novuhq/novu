@@ -1,15 +1,30 @@
-import { buildAgentSharedInbox, getSharedAgentDomain, isAgentSharedInboxEnabled, isValidAgentEmailSlugPrefix } from '@novu/application-generic';
+import {
+  buildAgentSharedInbox,
+  getSharedAgentDomain,
+  isAgentSharedInboxEnabled,
+  isValidAgentEmailSlugPrefix,
+} from '@novu/application-generic';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, EmailProviderIdEnum, slugify } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 
 /**
- * The NovuAgent email integration shape needed to compute the agent's shared
- * inbox address. We accept a minimal `Pick` so call sites that already have
- * the integration in memory can pass it without an extra query.
+ * Minimal integration shape needed by the agent integration mapper to compute
+ * the shared inbox address. Only NovuAgent links need `credentials`; for every
+ * other provider the slug-related fields are ignored.
  */
-export type NovuAgentEmailHydration = Pick<IntegrationEntity, '_id' | 'providerId' | 'channel' | 'active' | 'credentials'>;
+type AgentIntegrationEmbeddedSource = Pick<
+  IntegrationEntity,
+  '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'
+> &
+  Partial<Pick<IntegrationEntity, 'credentials'>>;
+
+/**
+ * Minimal agent shape needed to compute the shared inbox local-part. Only the
+ * agent's id (the routing key) and slug fallback are required.
+ */
+type SharedInboxAgentContext = Pick<AgentEntity, '_id'> & Partial<Pick<AgentEntity, 'identifier' | 'name'>>;
 
 export type ManagedRuntimeHydration = {
   /** Provider-side environment id (decrypted from the linked integration credentials). */
@@ -40,11 +55,7 @@ function buildAgentConsoleUrl(
   return undefined;
 }
 
-export function toAgentResponse(
-  agent: AgentEntity,
-  hydration?: ManagedRuntimeHydration,
-  emailIntegration?: NovuAgentEmailHydration | null
-): AgentResponseDto {
+export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHydration): AgentResponseDto {
   const managedRuntime = agent.managedRuntime
     ? {
         providerId: agent.managedRuntime.providerId,
@@ -60,8 +71,6 @@ export function toAgentResponse(
       }
     : undefined;
 
-  const sharedInbox = resolveSharedInbox(agent, emailIntegration);
-
   return {
     _id: agent._id,
     name: agent.name,
@@ -75,8 +84,6 @@ export function toAgentResponse(
     runtime: agent.runtime,
     creationSource: agent.creationSource,
     managedRuntime,
-    defaultInboundAddress: sharedInbox.address,
-    defaultDomain: sharedInbox.domain,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,
     createdAt: agent.createdAt,
@@ -85,21 +92,21 @@ export function toAgentResponse(
 }
 
 /**
- * Compute the agent's default shared inbox address (`{slug}-{_id}@<shared-domain>`).
- *
- * Returns undefined for both `address` and `domain` when:
- *   - the cloud shared-inbox feature is disabled, OR
- *   - the NovuAgent email integration is missing, OR
- *   - the integration is inactive (per-agent kill switch off)
- *
- * `address` may still be undefined when the feature is enabled but the slug is
- * missing (legacy rows). The dashboard handles that case by falling back to
- * showing the agent identifier as a hint.
+ * Compute the shared inbox address (`{slug}-{_id}@<shared-domain>`) for an
+ * agent-integration link. Only the NovuAgent email provider has an address; all
+ * other providers return `{}`. The `domain` may still be present without an
+ * `address` when the feature is enabled but the link is inactive or the slug
+ * is missing — that lets the dashboard show the configured domain alongside an
+ * actionable empty state.
  */
 function resolveSharedInbox(
-  agent: AgentEntity,
-  emailIntegration: NovuAgentEmailHydration | null | undefined
+  agent: SharedInboxAgentContext,
+  integration: AgentIntegrationEmbeddedSource
 ): { address?: string; domain?: string } {
+  if (integration.providerId !== EmailProviderIdEnum.NovuAgent) {
+    return {};
+  }
+
   if (!isAgentSharedInboxEnabled()) {
     return {};
   }
@@ -111,11 +118,11 @@ function resolveSharedInbox(
     return {};
   }
 
-  if (!emailIntegration || emailIntegration.providerId !== EmailProviderIdEnum.NovuAgent || emailIntegration.active === false) {
+  if (integration.active === false) {
     return { domain };
   }
 
-  const rawSlug = emailIntegration.credentials?.emailSlugPrefix;
+  const rawSlug = integration.credentials?.emailSlugPrefix;
   const slug = rawSlug && isValidAgentEmailSlugPrefix(rawSlug) ? rawSlug : deriveFallbackSlug(agent);
 
   if (!slug) {
@@ -129,7 +136,7 @@ function resolveSharedInbox(
   }
 }
 
-function deriveFallbackSlug(agent: AgentEntity): string | undefined {
+function deriveFallbackSlug(agent: SharedInboxAgentContext): string | undefined {
   const candidate = slugify(agent.identifier ?? agent.name ?? '')
     .slice(0, 32)
     .replace(/^-+/, '')
@@ -153,8 +160,11 @@ export function toAgentIntegrationSummary(
 
 export function toAgentIntegrationResponse(
   link: AgentIntegrationEntity,
-  integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>
+  integration: AgentIntegrationEmbeddedSource,
+  agent: SharedInboxAgentContext
 ): AgentIntegrationResponseDto {
+  const sharedInbox = resolveSharedInbox(agent, integration);
+
   return {
     _id: link._id,
     _agentId: link._agentId,
@@ -165,6 +175,8 @@ export function toAgentIntegrationResponse(
       providerId: integration.providerId,
       channel: integration.channel,
       active: integration.active,
+      defaultInboundAddress: sharedInbox.address,
+      defaultDomain: sharedInbox.domain,
     },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,
