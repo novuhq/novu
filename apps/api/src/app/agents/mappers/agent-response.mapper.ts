@@ -92,47 +92,43 @@ export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHy
 }
 
 /**
- * Compute the shared inbox address (`{slug}-{_id}@<shared-domain>`) for an
- * agent-integration link. Only the NovuAgent email provider has an address; all
- * other providers return `{}`. The `domain` may still be present without an
- * `address` when the feature is enabled but the link is inactive or the slug
- * is missing — that lets the dashboard show the configured domain alongside an
- * actionable empty state.
+ * Compute the shared inbox address (`{slug}-{_id}@<shared-domain>`) for a
+ * NovuAgent email integration link. Returns `undefined` when the cloud
+ * shared-inbox feature is disabled, the provider is not NovuAgent, the shared
+ * domain isn't configured, or the slug can't be resolved. The result is
+ * deterministic given those inputs; the integration's `active` flag controls
+ * routing, not addressability, so the address is exposed regardless of toggle
+ * state so the dashboard can still show it while the inbox is paused.
  */
-function resolveSharedInbox(
+function resolveSharedInboxAddress(
   agent: SharedInboxAgentContext,
   integration: AgentIntegrationEmbeddedSource
-): { address?: string; domain?: string } {
+): string | undefined {
   if (integration.providerId !== EmailProviderIdEnum.NovuAgent) {
-    return {};
+    return undefined;
   }
 
   if (!isAgentSharedInboxEnabled()) {
-    return {};
+    return undefined;
   }
 
-  let domain: string;
   try {
-    domain = getSharedAgentDomain();
+    getSharedAgentDomain();
   } catch {
-    return {};
-  }
-
-  if (integration.active === false) {
-    return { domain };
+    return undefined;
   }
 
   const rawSlug = integration.credentials?.emailSlugPrefix;
   const slug = rawSlug && isValidAgentEmailSlugPrefix(rawSlug) ? rawSlug : deriveFallbackSlug(agent);
 
   if (!slug) {
-    return { domain };
+    return undefined;
   }
 
   try {
-    return { address: buildAgentSharedInbox(slug, agent._id), domain };
+    return buildAgentSharedInbox(slug, agent._id);
   } catch {
-    return { domain };
+    return undefined;
   }
 }
 
@@ -163,8 +159,6 @@ export function toAgentIntegrationResponse(
   integration: AgentIntegrationEmbeddedSource,
   agent: SharedInboxAgentContext
 ): AgentIntegrationResponseDto {
-  const sharedInbox = resolveSharedInbox(agent, integration);
-
   return {
     _id: link._id,
     _agentId: link._agentId,
@@ -175,8 +169,7 @@ export function toAgentIntegrationResponse(
       providerId: integration.providerId,
       channel: integration.channel,
       active: integration.active,
-      defaultInboundAddress: sharedInbox.address,
-      defaultDomain: sharedInbox.domain,
+      defaultInboundAddress: resolveSharedInboxAddress(agent, integration),
     },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,

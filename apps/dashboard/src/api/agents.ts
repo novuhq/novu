@@ -224,15 +224,11 @@ export type AgentIntegrationEmbedded = {
   /**
    * Cloud only. Computed shared inbox address for the linked NovuAgent
    * email integration (`{emailSlugPrefix}-{agentId}@<shared-domain>`).
-   * Undefined when the shared-inbox feature is disabled, the integration
-   * is inactive, or the provider is not `novu-email-agent`.
+   * Undefined when the shared-inbox feature is disabled or the provider
+   * is not `novu-email-agent`. Set even when the integration is paused
+   * so the dashboard can still display the address.
    */
   defaultInboundAddress?: string;
-  /**
-   * Cloud only. The shared inbound domain that hosts the inbox (e.g.
-   * `agentconnect.sh`). Only set for NovuAgent email integrations.
-   */
-  defaultDomain?: string;
 };
 
 /** Agent–integration link row returned by GET /agents/:identifier/integrations */

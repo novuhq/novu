@@ -30,9 +30,11 @@ export function EmailAgentIntegrationGuide({
   const integrationId = integrationLink?.integration?._id;
   const { integrations } = useFetchIntegrations();
 
-  // The shared-inbox feature is gated on the API exposing `defaultDomain` on
-  // the linked integration. When set, the cloud auto-provision path is active.
-  const isSharedInboxEnabled = Boolean(integrationLink?.integration?.defaultDomain);
+  // The shared-inbox feature is gated on the API computing a
+  // `defaultInboundAddress` for the linked integration. When set, the cloud
+  // auto-provision path is active; non-NovuAgent links and self-hosted
+  // deployments leave it undefined.
+  const isSharedInboxEnabled = Boolean(integrationLink?.integration?.defaultInboundAddress);
 
   const emailIntegration = useMemo(
     () =>
@@ -58,7 +60,6 @@ export function EmailAgentIntegrationGuide({
         <EmailInboxCard
           emailIntegration={emailIntegration}
           defaultInboundAddress={integrationLink.integration.defaultInboundAddress}
-          defaultDomain={integrationLink.integration.defaultDomain}
         />
       ) : null}
       {integrationId && <EmailConfigurationCard agent={agent} integrationId={integrationId} />}
