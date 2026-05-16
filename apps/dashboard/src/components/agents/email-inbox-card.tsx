@@ -23,22 +23,11 @@ export type EmailInboxCardProps = {
 };
 
 /**
- * The EMAIL INBOX card on the agent overview page (Figma node `7031:315278`).
- *
- * Three sections:
- *
- *  1. Master toggle - bound to `integration.active` via `useUpdateIntegration`.
- *     When off, the worker drops inbound mail to the shared address and outbound
- *     sends throw.
- *  2. Inbound address - read-only `Input` (with inline `CopyButton`) showing
- *     the full auto-provisioned address. Mirrors the inbound-webhook-url
- *     pattern used elsewhere in the dashboard. Custom domains are surfaced via
- *     the "Add custom domain" link below.
- *  3. Demo provider note - visible only while the agent has no user-attached
- *     outbound provider (`credentials.outboundIntegrationId` unset). Linkifies
- *     directly into the existing outbound provider picker.
+ * Inbound Novu email settings: enable inbox, inbound address + copy, optional
+ * demo-provider note. Renders as rows only — wrap in `EmailAgentIntegrationGuide`
+ * merged shell or a standalone card shell.
  */
-export function EmailInboxCard({ emailIntegration, defaultInboundAddress }: EmailInboxCardProps) {
+export function EmailInboxCardBody({ emailIntegration, defaultInboundAddress }: EmailInboxCardProps) {
   const { currentEnvironment } = useEnvironment();
   const { mutateAsync: updateIntegration } = useUpdateIntegration();
 
@@ -102,71 +91,67 @@ export function EmailInboxCard({ emailIntegration, defaultInboundAddress }: Emai
   );
 
   return (
-    <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
-      <SectionHeader>EMAIL INBOX</SectionHeader>
+    <>
+      <CardRow title="Enable email inbox" description="Let users reach this agent via email." divider>
+        <div className="flex justify-end">
+          <Switch checked={enabled} disabled={isToggling} onCheckedChange={handleToggle} />
+        </div>
+      </CardRow>
 
-      <div className="bg-bg-white flex flex-col overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
-        <CardRow title="Enable email inbox" description="Let users reach this agent via email." divider>
-          <div className="flex justify-end">
-            <Switch checked={enabled} disabled={isToggling} onCheckedChange={handleToggle} />
+      <CardRow
+        title={
+          <span className="flex items-center gap-1">
+            Inbound email to receive emails
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button type="button" aria-label="More info">
+                  <RiInformation2Line className="text-text-soft size-5" aria-hidden />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{tooltipCopy}</TooltipContent>
+            </Tooltip>
+          </span>
+        }
+        description="Users can email this address to talk to your agent."
+        tip={
+          <>
+            <span aria-hidden>💡</span> Tip: Configure{' '}
+            <Link to={domainsPath} className="text-text-sub underline underline-offset-2">
+              custom domains
+            </Link>{' '}
+            for custom agent address.
+          </>
+        }
+        divider
+        disabled={sectionTwoDisabled}
+      >
+        <div className="flex flex-col gap-1.5">
+          <Input
+            size="2xs"
+            value={inboxAddressValue}
+            readOnly
+            disabled={sectionTwoDisabled}
+            placeholder="Provisioning…"
+            aria-label="Agent inbound email address"
+            className={cn('cursor-default font-mono text-text-sub!', !defaultInboundAddress && 'text-text-soft!')}
+            title={defaultInboundAddress}
+            trailingNode={<CopyButton size="2xs" valueToCopy={inboxAddressValue} className="size-7 justify-center" />}
+          />
+
+          <div className="flex items-center pt-1">
+            <Link
+              to={domainsPath}
+              className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors"
+            >
+              <span>Add custom domain</span>
+              <RiArrowRightSLine className="size-4" aria-hidden />
+            </Link>
           </div>
-        </CardRow>
+        </div>
+      </CardRow>
 
-        <CardRow
-          title={
-            <span className="flex items-center gap-1">
-              Inbound email to receive emails
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button type="button" aria-label="More info">
-                    <RiInformation2Line className="text-text-soft size-5" aria-hidden />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>{tooltipCopy}</TooltipContent>
-              </Tooltip>
-            </span>
-          }
-          description="Users can email this address to talk to your agent."
-          tip={
-            <>
-              <span aria-hidden>💡</span> Tip: Configure{' '}
-              <Link to={domainsPath} className="text-text-sub underline underline-offset-2">
-                custom domains
-              </Link>{' '}
-              for custom agent address.
-            </>
-          }
-          divider
-          disabled={sectionTwoDisabled}
-        >
-          <div className="flex flex-col gap-1.5">
-            <Input
-              size="2xs"
-              value={inboxAddressValue}
-              readOnly
-              disabled={sectionTwoDisabled}
-              placeholder="Provisioning…"
-              aria-label="Agent inbound email address"
-              className={cn('cursor-default font-mono text-text-sub!', !defaultInboundAddress && 'text-text-soft!')}
-              title={defaultInboundAddress}
-              trailingNode={<CopyButton size="2xs" valueToCopy={inboxAddressValue} />}
-            />
-
-            <div className="flex items-center pt-1">
-              <Link
-                to={domainsPath}
-                className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 transition-colors"
-              >
-                <span>Add custom domain</span>
-                <RiArrowRightSLine className="size-4" aria-hidden />
-              </Link>
-            </div>
-          </div>
-        </CardRow>
-
-        {showDemoNote ? <DemoProviderNote /> : null}
-      </div>
-    </div>
+      {showDemoNote ? <DemoProviderNote /> : null}
+    </>
   );
 }
 
@@ -200,16 +185,6 @@ function NovuEmailDemoBadge() {
       <span>Novu Email</span>
       <span className="bg-away-lighter text-away-base rounded px-1 py-px text-[11px] font-medium uppercase">Demo</span>
     </span>
-  );
-}
-
-function SectionHeader({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex items-center px-2 py-1.5">
-      <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
-        {children}
-      </span>
-    </div>
   );
 }
 

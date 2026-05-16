@@ -14,7 +14,10 @@ export type EmailConfigurationCardProps = {
   integrationId: string;
 };
 
-export function EmailConfigurationCard({ agent, integrationId }: EmailConfigurationCardProps) {
+/**
+ * Outbound / sender rows for embedding inside a parent shell (merged email card).
+ */
+export function EmailConfigurationCardBody({ agent, integrationId }: EmailConfigurationCardProps) {
   const { integrations } = useFetchIntegrations();
   const emailIntegration = useMemo(
     () => integrations?.find((i) => i._id === integrationId && i.providerId === EmailProviderIdEnum.NovuAgent),
@@ -39,42 +42,29 @@ export function EmailConfigurationCard({ agent, integrationId }: EmailConfigurat
   if (!emailIntegration) return null;
 
   return (
-    <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
-      <SectionHeader>EMAIL CONFIGURATION</SectionHeader>
-      <div className="bg-bg-white flex flex-col overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
-        <CardRow
-          title="Providers to send emails"
-          description="Configure providers to send emails via Novu. Only providers configured in the Integration store will be available here."
-          divider
-        >
-          <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
-          <ManageLink to={ROUTES.INTEGRATIONS}>Manage email providers</ManageLink>
-        </CardRow>
+    <>
+      <CardRow
+        title="Providers to send emails"
+        description="Configure providers to send emails via Novu. Only providers configured in the Integration store will be available here."
+        divider
+      >
+        <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
+        <ManageLink to={ROUTES.INTEGRATIONS}>Manage email providers</ManageLink>
+      </CardRow>
 
-        <CardRow
-          title="Sender address"
-          description="By default, replies use your sending provider's From address. Override it to send from another address. Reply-To always routes back to the agent so subscriber replies stay in the thread."
-        >
-          <SenderAddressOverride
-            serverEnabled={serverUseFromAddressOverride}
-            serverValue={serverFromAddressOverride}
-            outboundFromAddress={outboundFromAddress}
-            inboundAddresses={inboundAddresses}
-            onSave={saveSenderOverride}
-          />
-        </CardRow>
-      </div>
-    </div>
-  );
-}
-
-function SectionHeader({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex items-center px-2 py-1.5">
-      <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
-        {children}
-      </span>
-    </div>
+      <CardRow
+        title="Sender address"
+        description="By default, replies use your sending provider's From address. Override it to send from another address. Reply-To always routes back to the agent so subscriber replies stay in the thread."
+      >
+        <SenderAddressOverride
+          serverEnabled={serverUseFromAddressOverride}
+          serverValue={serverFromAddressOverride}
+          outboundFromAddress={outboundFromAddress}
+          inboundAddresses={inboundAddresses}
+          onSave={saveSenderOverride}
+        />
+      </CardRow>
+    </>
   );
 }
 
