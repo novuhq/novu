@@ -8,7 +8,8 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-// @ts-expect-error CJS importing an ESM module, this fails only during the CJS build
+// biome-ignore lint/suspicious/noTsIgnore: @ts-expect-error breaks the ESM build (TS2578) because emailjs only errors under CJS module resolution
+// @ts-ignore CJS importing an ESM module, this fails only during the CJS build
 import type { Message, MessageAttachment, SMTPClient } from 'emailjs';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { IEmailJsConfig } from './emailjs.config';
