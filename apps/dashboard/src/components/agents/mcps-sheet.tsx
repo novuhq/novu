@@ -1,12 +1,15 @@
 import { CLAUDE_MCP_SERVERS, type ClaudeMcpServer } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import {
-  type AgentMcpServer,
+  type AgentMcpServerEnablement,
   type AgentResponse,
+  disableAgentMcpServer,
+  enableAgentMcpServer,
+  getAgentMcpServersQueryKey,
   getAgentRuntimeConfigQueryKey,
-  patchAgentRuntimeConfig,
+  listAgentMcpServers,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { getMcpIcon } from '@/components/icons/mcp';
@@ -26,43 +29,70 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Switch } from '@/components/primitives/switch';
 import { ExternalLink } from '@/components/shared/external-link';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useDataRef } from '@/hooks/use-data-ref';
 
 type McpsSheetProps = {
   agent: AgentResponse;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  currentMcpServers: AgentMcpServer[];
   consoleUrl?: string;
 };
 
-function buildSelectedIds(currentMcpServers: AgentMcpServer[]): Set<string> {
-  const selected = new Set<string>();
-
-  for (const server of currentMcpServers) {
-    const catalogEntry = CLAUDE_MCP_SERVERS.find((entry) => entry.id === server.externalId || entry.url === server.url);
-
-    if (catalogEntry) {
-      selected.add(catalogEntry.id);
-    }
+function renderRowStatus({
+  entry,
+  enablement,
+  isPending,
+}: {
+  entry: ClaudeMcpServer;
+  enablement: AgentMcpServerEnablement | undefined;
+  isPending: boolean;
+}) {
+  if (isPending) {
+    return <span className="text-text-soft text-paragraph-xs shrink-0">Saving…</span>;
   }
 
-  return selected;
+  if (enablement?.status === 'error') {
+    return <span className="text-error-base text-paragraph-xs shrink-0">Sync error</span>;
+  }
+
+  if (enablement?.enabled && entry.oauthMode === 'novu') {
+    return <span className="text-text-soft text-paragraph-xs shrink-0">Subscribers authorize on first use</span>;
+  }
+
+  if (enablement?.enabled && entry.oauthMode === 'provider') {
+    return <span className="text-text-soft text-paragraph-xs shrink-0">Provider-managed auth</span>;
+  }
+
+  return null;
 }
 
-export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, consoleUrl }: McpsSheetProps) {
+export function McpsSheet({ agent, isOpen, onOpenChange, consoleUrl }: McpsSheetProps) {
   const { currentEnvironment, readOnly } = useEnvironment();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => buildSelectedIds(currentMcpServers));
-  const currentMcpServersRef = useDataRef(currentMcpServers);
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  const enablementsQuery = useQuery({
+    queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
+    queryFn: ({ signal }) =>
+      listAgentMcpServers(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, signal),
+    enabled: isOpen && Boolean(currentEnvironment),
+    staleTime: 0,
+  });
+
+  const enablementByMcpId = useMemo(() => {
+    const map = new Map<string, AgentMcpServerEnablement>();
+    for (const row of enablementsQuery.data ?? []) {
+      map.set(row.mcpId, row);
+    }
+
+    return map;
+  }, [enablementsQuery.data]);
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedIds(buildSelectedIds(currentMcpServersRef.current));
       setSearch('');
     }
-  }, [currentMcpServersRef, isOpen]);
+  }, [isOpen]);
 
   const filteredMcps = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -77,53 +107,57 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
     );
   }, [search]);
 
-  const updateMcps = useMutation({
-    mutationFn: (mcpServers: AgentMcpServer[]) =>
-      patchAgentRuntimeConfig(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
-        mcpServers,
-      }),
-    onSuccess: (config) => {
-      queryClient.setQueryData(getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier), config);
-      showSuccessToast('MCP servers updated.');
-      onOpenChange(false);
-    },
-    onError: (err: Error) => {
-      const message = err instanceof NovuApiError ? err.message : 'Could not update MCP servers.';
-      showErrorToast(message, 'Update failed');
-    },
-  });
-
-  const canEdit = !readOnly;
-  const isMutating = updateMcps.isPending;
-
-  const handleToggle = (entry: ClaudeMcpServer, checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-
-      if (checked) {
-        next.add(entry.id);
-      } else {
-        next.delete(entry.id);
-      }
-
-      return next;
+  const invalidateEnablements = () => {
+    queryClient.invalidateQueries({
+      queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
+    });
+    queryClient.invalidateQueries({
+      queryKey: getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier),
     });
   };
 
-  const handleSave = () => {
-    const fromCatalog: AgentMcpServer[] = CLAUDE_MCP_SERVERS.filter((entry) => selectedIds.has(entry.id)).map(
-      (entry) => ({
-        externalId: entry.id,
-        name: entry.name,
-        url: entry.url,
-      })
-    );
-    const unknown = currentMcpServers.filter(
-      (server) => !CLAUDE_MCP_SERVERS.some((entry) => entry.id === server.externalId || entry.url === server.url)
-    );
-    const next: AgentMcpServer[] = [...fromCatalog, ...unknown];
+  const enableMutation = useMutation({
+    mutationFn: (mcpId: string) =>
+      enableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
+        mcpId,
+      }),
+    onSuccess: () => {
+      showSuccessToast('MCP enabled.');
+      invalidateEnablements();
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not enable MCP.';
+      showErrorToast(message, 'Update failed');
+    },
+    onSettled: () => setPendingId(null),
+  });
 
-    updateMcps.mutate(next);
+  const disableMutation = useMutation({
+    mutationFn: (mcpId: string) =>
+      disableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
+    onSuccess: () => {
+      showSuccessToast('MCP disabled.');
+      invalidateEnablements();
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not disable MCP.';
+      showErrorToast(message, 'Update failed');
+    },
+    onSettled: () => setPendingId(null),
+  });
+
+  const canEdit = !readOnly;
+  const isMutating = enableMutation.isPending || disableMutation.isPending;
+
+  const handleToggle = (entry: ClaudeMcpServer, checked: boolean) => {
+    if (!canEdit || pendingId) return;
+    setPendingId(entry.id);
+
+    if (checked) {
+      enableMutation.mutate(entry.id);
+    } else {
+      disableMutation.mutate(entry.id);
+    }
   };
 
   return (
@@ -157,8 +191,10 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
           ) : (
             <ul className="flex flex-col px-2 pb-2">
               {filteredMcps.map((entry) => {
-                const checked = selectedIds.has(entry.id);
+                const enablement = enablementByMcpId.get(entry.id);
+                const checked = Boolean(enablement?.enabled);
                 const Icon = getMcpIcon(entry.id);
+                const isPending = pendingId === entry.id && isMutating;
 
                 return (
                   <li
@@ -168,13 +204,14 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
                     <Switch
                       checked={checked}
                       onCheckedChange={(val) => handleToggle(entry, val)}
-                      disabled={!canEdit || isMutating}
+                      disabled={!canEdit || isMutating || enablementsQuery.isLoading}
                       aria-label={checked ? `Disable ${entry.name}` : `Enable ${entry.name}`}
                     />
                     {Icon ? <Icon className="size-5 shrink-0 -mr-2" aria-hidden /> : null}
                     <span className="text-text-strong text-label-sm min-w-0 flex-1 truncate font-medium">
                       {entry.name}
                     </span>
+                    {renderRowStatus({ entry, enablement, isPending })}
                   </li>
                 );
               })}
@@ -191,11 +228,10 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
             variant="secondary"
             mode="filled"
             size="xs"
-            isLoading={isMutating}
-            disabled={!canEdit || isMutating}
-            onClick={handleSave}
+            disabled={isMutating}
+            onClick={() => onOpenChange(false)}
           >
-            Save changes
+            Done
           </Button>
         </SheetFooter>
       </SheetContent>

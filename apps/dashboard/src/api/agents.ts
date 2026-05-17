@@ -319,7 +319,6 @@ export type AgentMcpServer = {
   externalId: string;
   name: string;
   url: string;
-  authToken?: string;
 };
 
 export type AgentTool = {
@@ -377,6 +376,123 @@ export async function patchAgentRuntimeConfig(
   const response = await patch<AgentRuntimeConfigEnvelope>(
     `/agents/${encodeURIComponent(agentIdentifier)}/runtime/config`,
     { environment, body }
+  );
+
+  return response.data;
+}
+
+export type McpConnectionScope = 'environment' | 'agent_mcp' | 'agent_mcp_subscriber';
+
+export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
+
+export type AgentMcpServerEnablement = {
+  id: string;
+  mcpId: string;
+  enabled: boolean;
+  defaultScope: McpConnectionScope;
+  defaultAuthMode: McpConnectionAuthMode;
+  status: 'active' | 'syncing' | 'error' | 'disabled';
+};
+
+export type ListAgentMcpServersResponse = {
+  data: AgentMcpServerEnablement[];
+};
+
+export const AGENT_MCP_SERVERS_QUERY_KEY = 'fetchAgentMcpServers' as const;
+
+export function getAgentMcpServersQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
+  return [AGENT_MCP_SERVERS_QUERY_KEY, environmentId, agentIdentifier] as const;
+}
+
+type ListAgentMcpServersEnvelope = { data: ListAgentMcpServersResponse };
+type AgentMcpServerEnablementEnvelope = { data: AgentMcpServerEnablement };
+
+export async function listAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentMcpServerEnablement[]> {
+  const response = await get<ListAgentMcpServersEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
+    { environment, signal }
+  );
+
+  return response.data.data;
+}
+
+export type EnableAgentMcpServerBody = {
+  mcpId: string;
+  defaultScope?: McpConnectionScope;
+  defaultAuthMode?: McpConnectionAuthMode;
+};
+
+export async function enableAgentMcpServer(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  body: EnableAgentMcpServerBody
+): Promise<AgentMcpServerEnablement> {
+  const response = await post<AgentMcpServerEnablementEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
+    { environment, body }
+  );
+
+  return response.data;
+}
+
+export function disableAgentMcpServer(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<void> {
+  return del(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}`, {
+    environment,
+  });
+}
+
+export type GenerateMcpOAuthUrlResponse = {
+  authorizeUrl: string;
+};
+
+export async function generateMcpOAuthUrl(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string,
+  body: { subscriberId: string }
+): Promise<GenerateMcpOAuthUrlResponse> {
+  const response = await post<{ data: GenerateMcpOAuthUrlResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}/oauth/url`,
+    { environment, body }
+  );
+
+  return response.data;
+}
+
+export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
+
+export type McpConnectionView = {
+  id: string;
+  mcpId: string;
+  scope: McpConnectionScope;
+  authMode: McpConnectionAuthMode;
+  status: McpConnectionStatus;
+  agentMcpServerId?: string;
+  subscriberId?: string;
+  providerVaultId?: string;
+  expiresAt?: string;
+  connectedAt?: string;
+};
+
+export async function getMcpConnectionStatus(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string,
+  subscriberId: string,
+  signal?: AbortSignal
+): Promise<McpConnectionView | null> {
+  const params = new URLSearchParams({ subscriberId });
+  const response = await get<{ data: McpConnectionView | null }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}/connection?${params.toString()}`,
+    { environment, signal }
   );
 
   return response.data;

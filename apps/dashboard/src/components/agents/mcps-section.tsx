@@ -5,9 +5,10 @@ import { RiAddLine, RiArrowRightUpLine } from 'react-icons/ri';
 import {
   type AgentMcpServer,
   type AgentResponse,
+  disableAgentMcpServer,
+  getAgentMcpServersQueryKey,
   getAgentRuntimeConfig,
   getAgentRuntimeConfigQueryKey,
-  patchAgentRuntimeConfig,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { getMcpIcon } from '@/components/icons/mcp';
@@ -87,13 +88,16 @@ export function McpsSection({ agent }: McpsSectionProps) {
     enabled: Boolean(currentEnvironment && agent.identifier && agent.runtime === 'managed'),
   });
 
-  const updateMcps = useMutation({
-    mutationFn: (mcpServers: AgentMcpServer[]) =>
-      patchAgentRuntimeConfig(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
-        mcpServers,
-      }),
-    onSuccess: (config) => {
-      queryClient.setQueryData(getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier), config);
+  const disableMcp = useMutation({
+    mutationFn: (mcpId: string) =>
+      disableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier),
+      });
+      queryClient.invalidateQueries({
+        queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
+      });
     },
     onError: (err: Error) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not update MCP servers.';
@@ -113,13 +117,12 @@ export function McpsSection({ agent }: McpsSectionProps) {
   }
 
   const handleToggleOff = (server: AgentMcpServer) => {
-    const next = mcpServers.filter(
-      (existing) => !(existing.externalId === server.externalId && existing.url === server.url)
-    );
-    updateMcps.mutate(next);
+    const catalog = resolveCatalogEntry(server);
+    const mcpId = catalog?.id ?? server.externalId;
+    disableMcp.mutate(mcpId);
   };
 
-  const isMutating = updateMcps.isPending;
+  const isMutating = disableMcp.isPending;
   const canEdit = !readOnly;
   const consoleUrl = agent.managedRuntime?.consoleUrl;
 
@@ -183,13 +186,7 @@ export function McpsSection({ agent }: McpsSectionProps) {
         ) : null}
       </SectionShell>
 
-      <McpsSheet
-        agent={agent}
-        isOpen={isSheetOpen}
-        onOpenChange={setIsSheetOpen}
-        currentMcpServers={mcpServers}
-        consoleUrl={consoleUrl}
-      />
+      <McpsSheet agent={agent} isOpen={isSheetOpen} onOpenChange={setIsSheetOpen} consoleUrl={consoleUrl} />
     </>
   );
 }

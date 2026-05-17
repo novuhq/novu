@@ -1,0 +1,183 @@
+import mongoose, { Schema } from 'mongoose';
+
+import { schemaOptions } from '../schema-default.options';
+import { McpConnectionDBModel } from './mcp-connection.entity';
+
+const authSchema = new Schema(
+  {
+    accessToken: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    refreshToken: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    expiresAt: {
+      type: Schema.Types.Date,
+      required: false,
+    },
+    tokenType: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    scopes: {
+      type: [Schema.Types.String],
+      required: false,
+    },
+  },
+  { _id: false }
+);
+
+const providerRefSchema = new Schema(
+  {
+    providerId: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    vaultId: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+      required: false,
+    },
+  },
+  { _id: false }
+);
+
+const oauthStateSchema = new Schema(
+  {
+    pkceVerifier: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    initiatedAt: {
+      type: Schema.Types.Date,
+      required: true,
+    },
+    expectedRedirectAt: {
+      type: Schema.Types.Date,
+      required: false,
+    },
+  },
+  { _id: false }
+);
+
+const lastErrorSchema = new Schema(
+  {
+    code: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    message: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    at: {
+      type: Schema.Types.Date,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
+const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
+  {
+    _organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: true,
+    },
+    _environmentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Environment',
+      required: true,
+    },
+    scope: {
+      type: Schema.Types.String,
+      required: true,
+      enum: ['environment', 'agent_mcp', 'agent_mcp_subscriber'],
+    },
+    mcpId: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    _agentMcpServerId: {
+      type: Schema.Types.ObjectId,
+      ref: 'AgentMcpServer',
+      required: false,
+      default: null,
+    },
+    _subscriberId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Subscriber',
+      required: false,
+      default: null,
+    },
+    authMode: {
+      type: Schema.Types.String,
+      required: true,
+      enum: ['novu', 'provider', 'none'],
+    },
+    status: {
+      type: Schema.Types.String,
+      required: true,
+      enum: ['pending_oauth', 'connected', 'expired', 'revoked', 'error'],
+    },
+    auth: {
+      type: authSchema,
+      required: false,
+    },
+    providerRef: {
+      type: providerRefSchema,
+      required: false,
+    },
+    oauthState: {
+      type: oauthStateSchema,
+      required: false,
+    },
+    lastError: {
+      type: lastErrorSchema,
+      required: false,
+    },
+    connectedAt: {
+      type: Schema.Types.Date,
+      required: false,
+      default: null,
+    },
+  },
+  schemaOptions
+);
+
+mcpConnectionSchema.index(
+  { _agentMcpServerId: 1, _subscriberId: 1, mcpId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { _agentMcpServerId: { $type: 'objectId' }, _subscriberId: { $type: 'objectId' } },
+  }
+);
+
+mcpConnectionSchema.index(
+  { _agentMcpServerId: 1, scope: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { _agentMcpServerId: { $type: 'objectId' }, scope: 'agent_mcp' },
+  }
+);
+
+mcpConnectionSchema.index(
+  { _environmentId: 1, scope: 1, mcpId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { scope: 'environment' },
+  }
+);
+
+mcpConnectionSchema.index({ _subscriberId: 1, _environmentId: 1 });
+mcpConnectionSchema.index({ _agentMcpServerId: 1 });
+
+export const McpConnection =
+  (mongoose.models.McpConnection as mongoose.Model<McpConnectionDBModel>) ||
+  mongoose.model<McpConnectionDBModel>('McpConnection', mcpConnectionSchema);

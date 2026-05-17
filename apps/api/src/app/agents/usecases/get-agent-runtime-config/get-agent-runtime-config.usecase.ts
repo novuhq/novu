@@ -1,15 +1,20 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
-import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
-import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
+import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AGENT_RUNTIME_PROVIDERS, CLAUDE_MCP_SERVERS } from '@novu/shared';
+import type {
+  AgentMcpServerDto,
+  AgentRuntimeCapabilitiesDto,
+  AgentRuntimeConfigResponseDto,
+} from '../../dtos/agent-runtime-config.dto';
 import { GetAgentRuntimeConfigCommand } from './get-agent-runtime-config.command';
 
 @Injectable()
 export class GetAgentRuntimeConfig {
   constructor(
     private readonly agentRepository: AgentRepository,
-    private readonly integrationRepository: IntegrationRepository
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository
   ) {}
 
   async execute(command: GetAgentRuntimeConfigCommand): Promise<AgentRuntimeConfigResponseDto> {
@@ -48,7 +53,29 @@ export class GetAgentRuntimeConfig {
     const decryptedCredentials = decryptCredentials(integration.credentials);
     const runtimeProvider = getAgentRuntimeProvider(providerId, decryptedCredentials.apiKey!);
 
-    const config = await runtimeProvider.getConfig(externalAgentId);
+    // Mongo is authoritative for the agent's MCP list. Other runtime fields
+    // (model, system prompt, tools, skills) still come live from the provider.
+    const [config, mcpRows] = await Promise.all([
+      runtimeProvider.getConfig(externalAgentId),
+      this.agentMcpServerRepository.findByAgent({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        agentId: agent._id,
+        enabledOnly: true,
+      }),
+    ]);
+
+    const mcpServers: AgentMcpServerDto[] = mcpRows
+      .map((row) => {
+        const catalog = CLAUDE_MCP_SERVERS.find((entry) => entry.id === row.mcpId);
+
+        if (!catalog) {
+          return null;
+        }
+
+        return { externalId: catalog.name, name: catalog.name, url: catalog.url };
+      })
+      .filter((entry): entry is AgentMcpServerDto => entry !== null);
 
     const providerEntry = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);
 
@@ -65,7 +92,7 @@ export class GetAgentRuntimeConfig {
     const result: AgentRuntimeConfigResponseDto = {
       model: config.model,
       systemPrompt: config.systemPrompt,
-      mcpServers: config.mcpServers,
+      mcpServers,
       tools: config.tools,
       ...(config.skills !== undefined ? { skills: config.skills } : {}),
       ...(capabilities !== undefined ? { capabilities } : {}),

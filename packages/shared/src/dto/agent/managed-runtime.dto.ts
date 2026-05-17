@@ -66,8 +66,71 @@ export type AgentMcpServerDto = {
   externalId: string;
   name: string;
   url: string;
-  /** Optional token used to authenticate with the MCP server */
-  authToken?: string;
+};
+
+/**
+ * Scope tier for an MCP OAuth connection. Mirrors `McpConnectionEntity.scope`
+ * in `@novu/dal`. Only `agent_mcp_subscriber` is implemented in v1; the
+ * remaining tiers are reserved for future shared-token flows.
+ */
+export enum McpConnectionScopeEnum {
+  Environment = 'environment',
+  AgentMcp = 'agent_mcp',
+  AgentMcpSubscriber = 'agent_mcp_subscriber',
+}
+
+/**
+ * Where the OAuth secret for an MCP connection lives.
+ *
+ * - `novu`     — Novu stores encrypted access/refresh tokens itself.
+ * - `provider` — Provider (e.g. Anthropic Vault) owns the secret. We only
+ *                store an opaque mapping (`providerVaultId`).
+ * - `none`     — MCP requires no auth.
+ */
+export enum McpConnectionAuthModeEnum {
+  Novu = 'novu',
+  Provider = 'provider',
+  None = 'none',
+}
+
+export enum McpConnectionStatusEnum {
+  PendingOAuth = 'pending_oauth',
+  Connected = 'connected',
+  Expired = 'expired',
+  Revoked = 'revoked',
+  Error = 'error',
+}
+
+export type McpConnectionDto = {
+  /** Mongo `_id` of the underlying `mcp_connection` row. */
+  id: string;
+  /** Catalog id (`ClaudeMcpServer.id`). */
+  mcpId: string;
+  scope: McpConnectionScopeEnum;
+  authMode: McpConnectionAuthModeEnum;
+  status: McpConnectionStatusEnum;
+  /** Mongo `_id` of the parent `agent_mcp_server` row when scope >= agent_mcp. */
+  agentMcpServerId?: string;
+  /** Mongo `Subscriber._id` when scope === `agent_mcp_subscriber`. */
+  subscriberId?: string;
+  /** Provider vault entity id when authMode === `provider`. */
+  providerVaultId?: string;
+  expiresAt?: string;
+  connectedAt?: string;
+};
+
+/**
+ * Per-agent enablement record for an MCP from the catalog.
+ * Returned by the new `/agents/:id/mcp-servers` endpoints.
+ */
+export type AgentMcpServerEnablementDto = {
+  id: string;
+  /** Catalog id (`ClaudeMcpServer.id`). */
+  mcpId: string;
+  enabled: boolean;
+  defaultScope: McpConnectionScopeEnum;
+  defaultAuthMode: McpConnectionAuthModeEnum;
+  status: 'active' | 'syncing' | 'error' | 'disabled';
 };
 
 export type AgentToolDto = {

@@ -15,11 +15,6 @@ export class AgentMcpServerDto {
   @ApiProperty()
   @IsString()
   url: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  authToken?: string;
 }
 
 export class AgentToolDto {

@@ -1,7 +1,14 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
-import { AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  CLAUDE_MCP_SERVERS,
+  type ClaudeMcpServerOAuthMode,
+  McpConnectionAuthModeEnum,
+  McpConnectionScopeEnum,
+} from '@novu/shared';
 import type { ClientSession } from 'mongoose';
+import { getMcpOAuthMode } from '../../utils/mcp-oauth-catalog';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
@@ -22,6 +29,7 @@ export class ProvisionManagedAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly logger: PinoLogger
   ) {}
 
@@ -130,6 +138,16 @@ export class ProvisionManagedAgent {
           `Agent "${command.agentId}" no longer exists; aborting managed-runtime provision to avoid orphaning the provider resource.`
         );
       }
+
+      // Mongo is the source of truth for the agent's MCP list. Mirror the
+      // initial set sent to the provider as `agent_mcp_server` rows so the
+      // dashboard and runtime config endpoints can read them directly.
+      // In adopt mode we do not know the authoritative set on the provider
+      // until a separate reconcile step (out of scope here), so skip
+      // seeding to avoid writing rows that disagree with the provider.
+      if (!command.externalAgentId && command.mcpServers?.length) {
+        await this.persistAgentMcpServers(command, session);
+      }
     } catch (mongoError) {
       this.logger.error({ err: mongoError }, 'Failed to persist managed runtime on agent after provisioning');
 
@@ -149,5 +167,58 @@ export class ProvisionManagedAgent {
     }
 
     return { externalAgentId, integrationId: resolvedIntegrationId, adoptedName };
+  }
+
+  private async persistAgentMcpServers(
+    command: ProvisionManagedAgentCommand,
+    session: ClientSession | null
+  ): Promise<void> {
+    if (!command.mcpServers?.length) {
+      return;
+    }
+
+    const syncedAt = new Date();
+    const writeOptions = session ? { session } : {};
+
+    for (const mcpId of command.mcpServers) {
+      const catalog = CLAUDE_MCP_SERVERS.find((entry) => entry.id === mcpId);
+
+      if (!catalog) {
+        continue;
+      }
+
+      const defaultAuthMode = deriveDefaultAuthMode(getMcpOAuthMode(mcpId));
+
+      await this.agentMcpServerRepository.create(
+        {
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
+          _agentId: command.agentId,
+          mcpId,
+          enabled: true,
+          defaultScope: McpConnectionScopeEnum.AgentMcpSubscriber,
+          defaultAuthMode,
+          status: 'active',
+          externalProjection: {
+            providerId: command.providerId,
+            mcpServerName: catalog.name,
+            syncedAt,
+          },
+        },
+        writeOptions
+      );
+    }
+  }
+}
+
+function deriveDefaultAuthMode(catalogMode: ClaudeMcpServerOAuthMode): McpConnectionAuthModeEnum {
+  switch (catalogMode) {
+    case 'provider':
+      return McpConnectionAuthModeEnum.Provider;
+    case 'none':
+      return McpConnectionAuthModeEnum.None;
+    case 'novu':
+    default:
+      return McpConnectionAuthModeEnum.Novu;
   }
 }

@@ -1,10 +1,13 @@
 import { Module } from '@nestjs/common';
 import {
+  AgentMcpServerRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   ConversationActivityRepository,
   ConversationRepository,
   IntegrationRepository,
+  McpConnectionRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
@@ -12,6 +15,7 @@ import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentEmailActionsController } from './agent-email-actions.controller';
 import { AgentsController } from './agents.controller';
+import { AgentsMcpOAuthController } from './agents-mcp-oauth.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
 import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
 import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
@@ -27,15 +31,18 @@ import { USE_CASES } from './usecases';
 
 @Module({
   imports: [SharedModule, AuthModule, EventsModule],
-  controllers: [AgentsController, AgentsWebhookController, AgentEmailActionsController],
+  controllers: [AgentsController, AgentsWebhookController, AgentEmailActionsController, AgentsMcpOAuthController],
   providers: [
     ...USE_CASES,
     AgentRuntimeExceptionFilter,
+    AgentMcpServerRepository,
     ChannelConnectionRepository,
     ChannelEndpointRepository,
     ConversationRepository,
     ConversationActivityRepository,
     IntegrationRepository,
+    McpConnectionRepository,
+    SubscriberRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
