@@ -50,10 +50,7 @@ export function EmailConfigurationCardBody({ agent, integrationId }: EmailConfig
         divider
       >
         <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
-        {isOutboundDemo ? <DemoProviderHint /> : null}
-        <ManageLink to={ROUTES.INTEGRATIONS}>
-          {isOutboundDemo ? 'Connect your own email provider' : 'Manage email providers'}
-        </ManageLink>
+        {isOutboundDemo ? <DemoProviderHint /> : <ManageLink to={ROUTES.INTEGRATIONS}>Manage email providers</ManageLink>}
       </CardRow>
 
       <CardRow

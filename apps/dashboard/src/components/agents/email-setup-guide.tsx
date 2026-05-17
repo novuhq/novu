@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { RiInformation2Fill, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { type AgentResponse, sendAgentTestEmail } from '@/api/agents';
+import { type AgentIntegrationLink, type AgentResponse, sendAgentTestEmail } from '@/api/agents';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -21,6 +21,14 @@ export type EmailSetupGuideProps = {
   stepOffset?: number;
   onStepsCompleted?: () => void;
   embedded?: boolean;
+  /**
+   * Optional agent–integration link, populated by callers that already have
+   * it. When present, the wizard counts the Novu shared inbox as a valid
+   * inbound address and uses it as the test-email target if no custom-domain
+   * routes are configured. When absent (legacy callers), the wizard falls
+   * back to the previous behavior of requiring a custom address.
+   */
+  integrationLink?: AgentIntegrationLink;
 };
 
 export function EmailSetupGuide({
@@ -29,6 +37,7 @@ export function EmailSetupGuide({
   stepOffset = 1,
   onStepsCompleted,
   embedded = false,
+  integrationLink,
 }: EmailSetupGuideProps) {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
@@ -54,12 +63,26 @@ export function EmailSetupGuide({
     removeAddress,
   } = useEmailSetupCredentials({ emailIntegration, integrations, agent });
 
+  /**
+   * Cloud-provisioned shared inbox address for this agent (e.g.
+   * `support-agent-x@agentconnect.sh`). Pulled from the link payload because
+   * computing it client-side would require the `NOVU_AGENT_SHARED_INBOUND_DOMAIN`
+   * env var, which is server-only.
+   */
+  const sharedInboundAddress = integrationLink?.integration?.sharedInboundAddress;
+  const sharedInboxDisabled = Boolean(integrationLink?.integration?.sharedInboxDisabled);
+  const hasSharedInbox = Boolean(sharedInboundAddress) && !sharedInboxDisabled;
+
   const testEmailMutation = useMutation({
     mutationFn: async () => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const first = configuredAddresses[0];
-      if (!first) throw new Error('No inbound address configured.');
-      const targetAddress = first.address === '*' ? `test@${first.domain}` : `${first.address}@${first.domain}`;
+      const customTarget = configuredAddresses[0];
+      const targetAddress = customTarget
+        ? customTarget.address === '*'
+          ? `test@${customTarget.domain}`
+          : `${customTarget.address}@${customTarget.domain}`
+        : sharedInboundAddress;
+      if (!targetAddress) throw new Error('No inbound address configured.');
       await sendAgentTestEmail(environment, agent.identifier, targetAddress);
     },
     onSuccess: () => showSuccessToast('Test email sent.'),
@@ -75,7 +98,10 @@ export function EmailSetupGuide({
   const inboundStepIndex = needsCredentialsStep ? base + 2 : base + 1;
   const testStepIndex = inboundStepIndex + 1;
 
-  const hasAddresses = configuredAddresses.length > 0;
+  // The Novu shared inbox satisfies the "configure inbound address" step out
+  // of the box on cloud; users can still add custom-domain routes for branded
+  // delivery, but they're no longer a hard prerequisite.
+  const hasAddresses = configuredAddresses.length > 0 || hasSharedInbox;
 
   // The "Setup providers to send emails" step starts complete: the agent
   // already has the Novu demo sender selected by default, and choosing a real

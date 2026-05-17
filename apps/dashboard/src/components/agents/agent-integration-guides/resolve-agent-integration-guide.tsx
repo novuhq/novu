@@ -184,7 +184,12 @@ export function ResolveAgentIntegrationGuide({
         onRequestRemoveIntegration={onRequestRemoveIntegration}
         isRemovingIntegration={isRemovingIntegration}
       >
-        <EmailSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
+        <EmailSetupGuide
+          agent={agent}
+          integrationId={integrationLink.integration._id}
+          embedded
+          integrationLink={integrationLink}
+        />
       </SetupGuideWithHeader>
     );
   }

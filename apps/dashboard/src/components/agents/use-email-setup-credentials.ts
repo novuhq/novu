@@ -7,7 +7,7 @@ import {
 } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { type AgentResponse } from '@/api/agents';
+import { type AgentResponse, getAgentIntegrationsQueryKey, setAgentInboxSharedDisabled } from '@/api/agents';
 import {
   createDomainRoute,
   type DomainResponse,
@@ -332,6 +332,36 @@ export function useEmailSetupCredentials({
     return saveCredentials({ useFromAddressOverride: enabled, fromAddressOverride: value });
   }
 
+  const setSharedDisabledMutation = useMutation({
+    mutationFn: ({ disabled }: { disabled: boolean }) =>
+      setAgentInboxSharedDisabled(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agent.identifier,
+        disabled
+      ),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
+      });
+      queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, currentEnvironment?._id] });
+    },
+  });
+
+  const setSharedInboxDisabled = useCallback(
+    (disabled: boolean) => {
+      setSharedDisabledMutation.mutate(
+        { disabled },
+        {
+          onError: (err) => {
+            const message = err instanceof Error ? err.message : 'Could not update shared inbox setting.';
+            showErrorToast(message, 'Settings not saved');
+          },
+        }
+      );
+    },
+    [setSharedDisabledMutation]
+  );
+
   const outboundFromAddress = (outboundIntegration?.credentials?.from as string | undefined) ?? '';
 
   return {
@@ -350,5 +380,7 @@ export function useEmailSetupCredentials({
     serverFromAddressOverride,
     outboundFromAddress,
     saveSenderOverride,
+    setSharedInboxDisabled,
+    isSharedToggleUpdating: setSharedDisabledMutation.isPending,
   };
 }

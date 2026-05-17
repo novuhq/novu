@@ -76,6 +76,16 @@ export interface ICredentials {
    * through the standard integration update endpoint.
    */
   inboxRoutingKey?: string;
+  /**
+   * Cloud-only kill switch for the Novu shared inbox
+   * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). When `true`, the
+   * inbound worker drops mail addressed to this agent on the shared domain;
+   * custom-domain routes for the same agent still deliver. Only meaningful on
+   * the NovuAgent email integration. Managed server-side via
+   * `PATCH /agents/:identifier/inbox/shared`; pinned through the generic
+   * integration update path.
+   */
+  sharedInboxDisabled?: boolean;
   /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. */
   externalEnvironmentId?: string;
   /**

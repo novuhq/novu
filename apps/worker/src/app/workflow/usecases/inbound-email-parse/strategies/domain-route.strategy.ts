@@ -159,6 +159,15 @@ export class DomainRouteStrategy {
       return;
     }
 
+    if (integration.credentials?.sharedInboxDisabled) {
+      this.logger.info(
+        { toAddress, integrationId: integration._id },
+        'Shared agent domain: shared inbox disabled for this agent - dropping'
+      );
+
+      return;
+    }
+
     const link = await this.agentIntegrationRepository.findOne(
       {
         _integrationId: integration._id,

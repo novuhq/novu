@@ -29,11 +29,28 @@ export class AgentIntegrationResponseIntegrationDto {
 
   @ApiPropertyOptional({
     description:
-      'Computed shared inbox address (`{emailSlugPrefix}-{agentId}@<shared-domain>`) for the linked NovuAgent ' +
-      'email integration. Only present on cloud when the shared-inbox feature is enabled; remains set even when ' +
-      'the integration is paused so the dashboard can still display the address.',
+      'The "headline" inbound address surfaced to the user. Resolves to ' +
+      '`credentials.primaryInboundAddress` when set and still valid, otherwise to the synthetic shared inbox ' +
+      '(`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). Only present on cloud when the shared-inbox ' +
+      'feature is enabled; remains set even when the integration is paused so the dashboard can still display ' +
+      'the address.',
   })
   defaultInboundAddress?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The Novu shared inbox address for this agent. Set whenever the cloud shared-inbox feature is enabled, ' +
+      'independent of which address is currently primary. The dashboard uses this to render the shared inbox ' +
+      'row in the inbox list manager even when the user has flipped a custom domain to primary.',
+  })
+  sharedInboundAddress?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, the worker drops inbound mail addressed to this agent on the shared `agentconnect.sh` domain. ' +
+      'Custom-domain routes still deliver. Only meaningful on cloud-enabled NovuAgent integrations.',
+  })
+  sharedInboxDisabled?: boolean;
 }
 
 export class AgentIntegrationResponseDto {

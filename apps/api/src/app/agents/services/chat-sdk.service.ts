@@ -907,11 +907,13 @@ export class ChatSdkService implements OnModuleDestroy {
       useFromAddressOverride: c.useFromAddressOverride ?? null,
       fromAddressOverride: c.fromAddressOverride ?? null,
       // Email-specific fields closed over by the sendEmail callback (demo path):
-      // a slug rename, routing-key rotation, or sender rebrand must rebuild the
-      // cached adapter otherwise the agent keeps replying from the stale
-      // From/Reply-To address until the LRU TTL expires.
+      // a slug rename, routing-key rotation, shared-inbox toggle, or sender
+      // rebrand must rebuild the cached adapter otherwise the agent keeps
+      // replying from the stale From/Reply-To address until the LRU TTL
+      // expires.
       emailSlugPrefix: c.emailSlugPrefix ?? null,
       inboxRoutingKey: c.inboxRoutingKey ?? null,
+      sharedInboxDisabled: c.sharedInboxDisabled ?? null,
       senderName: c.senderName ?? null,
     });
   }
@@ -936,7 +938,9 @@ export class ChatSdkService implements OnModuleDestroy {
     return async (params) => {
       // No user-attached outbound provider: fall back to the Novu demo sender on the
       // shared agent inbox domain. Cloud-only - self-hosted keeps the legacy "must
-      // configure outbound" error to preserve existing behavior.
+      // configure outbound" error to preserve existing behavior. The demo sender
+      // *requires* a usable shared inbox to round-trip replies, so we also refuse
+      // when the user has explicitly disabled the shared inbox for this agent.
       if (!outboundIntegrationId) {
         if (
           !isAgentSharedInboxEnabled() ||
@@ -946,6 +950,13 @@ export class ChatSdkService implements OnModuleDestroy {
           throw new BadRequestException(
             'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
               'Configure one in the agent email setup.'
+          );
+        }
+
+        if (config.credentials.sharedInboxDisabled) {
+          throw new BadRequestException(
+            'The Novu demo sender requires the shared inbox to be enabled. ' +
+              'Re-enable it or attach an outbound email provider.'
           );
         }
 
@@ -1051,18 +1062,26 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   /**
-   * Resolve the canonical inbound address used for Reply-To. When the cloud
-   * shared-inbox feature is enabled and the agent's NovuAgent integration has
-   * both an `emailSlugPrefix` and an `inboxRoutingKey`, we always use
-   * `{slug}-{inboxRoutingKey}@<shared-domain>` so replies route through the
-   * Novu-managed inbound MX even when the outbound `From` is rewritten.
-   * Falls back to whatever the chat-adapter-email SDK supplied (today's
-   * behavior on self-hosted).
+   * Resolve the canonical inbound address used for Reply-To. Preference order:
+   *
+   *   1. The synthetic shared inbox `{slug}-{inboxRoutingKey}@<shared-domain>`
+   *      when the cloud feature is enabled and the shared inbox itself is not
+   *      disabled. System-managed and always works.
+   *   2. The fallback supplied by the chat-adapter-email SDK — already a
+   *      custom-domain agent route configured by the user (the SDK builds it
+   *      from `DomainRoute` rows), or whatever the platform passed on
+   *      self-hosted.
+   *
+   * Replies must always reach an inbox the worker will actually process, so
+   * we deliberately do not return the shared inbox here when
+   * `sharedInboxDisabled` is set — the worker would drop those messages and
+   * we fall through to the SDK's custom-domain address instead.
    */
   private resolveAgentInboundAddress(config: ResolvedAgentConfig, fallback: string): string {
     const slug = config.credentials.emailSlugPrefix;
     const inboxRoutingKey = config.credentials.inboxRoutingKey;
-    if (isAgentSharedInboxEnabled() && slug && inboxRoutingKey) {
+    const sharedDisabled = Boolean(config.credentials.sharedInboxDisabled);
+    if (isAgentSharedInboxEnabled() && slug && inboxRoutingKey && !sharedDisabled) {
       try {
         return buildAgentSharedInbox(slug, inboxRoutingKey);
       } catch (err) {

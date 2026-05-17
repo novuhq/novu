@@ -69,14 +69,17 @@ export function EmailAgentIntegrationGuide({
             {showInboxSection ? (
               <EmailInboxCardBody
                 emailIntegration={emailIntegration}
-                defaultInboundAddress={integrationLink.integration.defaultInboundAddress}
+                integrationEmbedded={integrationLink.integration}
+                agent={agent}
               />
             ) : null}
             <EmailConfigurationCardBody agent={agent} integrationId={integrationId} />
           </div>
         </div>
       ) : null}
-      {!isConnected && integrationId && <EmailSetupGuide agent={agent} integrationId={integrationId} embedded />}
+      {!isConnected && integrationId && (
+        <EmailSetupGuide agent={agent} integrationId={integrationId} embedded integrationLink={integrationLink} />
+      )}
     </AgentIntegrationGuideLayout>
   );
 }

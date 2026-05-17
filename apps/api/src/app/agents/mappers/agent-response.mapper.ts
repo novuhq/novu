@@ -92,14 +92,18 @@ export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHy
 }
 
 /**
- * Compute the shared inbox address (`{slug}-{inboxRoutingKey}@<shared-domain>`)
- * for a NovuAgent email integration link. Returns `undefined` when the cloud
- * shared-inbox feature is disabled, the provider is not NovuAgent, the shared
- * domain isn't configured, the slug can't be resolved, or the routing key is
- * missing/invalid. The result is deterministic given those inputs; the
- * integration's `active` flag controls routing, not addressability, so the
- * address is exposed regardless of toggle state so the dashboard can still
- * show it while the inbox is paused.
+ * Compute the synthetic Novu shared inbox address
+ * (`{slug}-{inboxRoutingKey}@<shared-domain>`) for a NovuAgent email
+ * integration link. Returns `undefined` when the cloud shared-inbox feature is
+ * disabled, the provider is not NovuAgent, the shared domain isn't configured,
+ * the slug can't be resolved, or the routing key is missing/invalid. The
+ * result is deterministic given those inputs; the integration's `active` flag
+ * controls routing, not addressability, so the address is exposed regardless
+ * of toggle state so the dashboard can still display it while paused.
+ *
+ * Always returns the *shared* address — the user-facing "headline" address may
+ * be a custom-domain `primaryInboundAddress` instead; see
+ * `resolveDefaultInboundAddress`.
  */
 function resolveSharedInboxAddress(
   agent: SharedInboxAgentContext,
@@ -138,6 +142,7 @@ function resolveSharedInboxAddress(
   }
 }
 
+
 function deriveFallbackSlug(agent: SharedInboxAgentContext): string | undefined {
   const candidate = slugify(agent.identifier ?? agent.name ?? '')
     .slice(0, 32)
@@ -165,6 +170,8 @@ export function toAgentIntegrationResponse(
   integration: AgentIntegrationEmbeddedSource,
   agent: SharedInboxAgentContext
 ): AgentIntegrationResponseDto {
+  const sharedInboundAddress = resolveSharedInboxAddress(agent, integration);
+
   return {
     _id: link._id,
     _agentId: link._agentId,
@@ -175,7 +182,18 @@ export function toAgentIntegrationResponse(
       providerId: integration.providerId,
       channel: integration.channel,
       active: integration.active,
-      defaultInboundAddress: resolveSharedInboxAddress(agent, integration),
+      // `defaultInboundAddress` and `sharedInboundAddress` are the same value
+      // since there's no per-agent "primary override" concept anymore — every
+      // configured custom-domain route routes inbound, and the dashboard picks
+      // its own display headline. Keeping both fields for API stability;
+      // `defaultInboundAddress` also serves as the dashboard's feature-gate
+      // for "is the cloud shared-inbox auto-provision active for this row".
+      defaultInboundAddress: sharedInboundAddress,
+      sharedInboundAddress,
+      sharedInboxDisabled:
+        integration.providerId === EmailProviderIdEnum.NovuAgent
+          ? Boolean(integration.credentials?.sharedInboxDisabled)
+          : undefined,
     },
     _environmentId: link._environmentId,
     _organizationId: link._organizationId,

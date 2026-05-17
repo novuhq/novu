@@ -222,13 +222,27 @@ export type AgentIntegrationEmbedded = {
   channel: ChannelTypeEnum;
   active: boolean;
   /**
-   * Cloud only. Computed shared inbox address for the linked NovuAgent
-   * email integration (`{emailSlugPrefix}-{agentId}@<shared-domain>`).
-   * Undefined when the shared-inbox feature is disabled or the provider
-   * is not `novu-email-agent`. Set even when the integration is paused
-   * so the dashboard can still display the address.
+   * Cloud only. The "headline" inbound address surfaced to the user. Resolves
+   * to `credentials.primaryInboundAddress` when set, otherwise to the
+   * synthetic shared inbox (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`).
+   * Undefined when the shared-inbox feature is disabled, the provider is not
+   * `novu-email-agent`, or the user has disabled the shared inbox without
+   * choosing a custom primary. Set even when the integration is paused so the
+   * dashboard can still display the address.
    */
   defaultInboundAddress?: string;
+  /**
+   * Cloud only. The Novu shared inbox address for this agent, regardless of
+   * which address is currently primary. The dashboard uses this to render the
+   * shared inbox row in the inbox list manager.
+   */
+  sharedInboundAddress?: string;
+  /**
+   * Cloud only. When `true`, the worker drops inbound mail addressed to this
+   * agent on the shared `agentconnect.sh` domain. Custom-domain routes still
+   * deliver. Only meaningful on the NovuAgent integration.
+   */
+  sharedInboxDisabled?: boolean;
 };
 
 /** Agent–integration link row returned by GET /agents/:identifier/integrations */
@@ -385,6 +399,22 @@ export async function patchAgentRuntimeConfig(
   const response = await patch<AgentRuntimeConfigEnvelope>(
     `/agents/${encodeURIComponent(agentIdentifier)}/runtime/config`,
     { environment, body }
+  );
+
+  return response.data;
+}
+
+type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
+
+/** Enable or disable the Novu shared inbox for a single agent. */
+export async function setAgentInboxSharedDisabled(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  disabled: boolean
+): Promise<AgentIntegrationLink> {
+  const response = await patch<AgentIntegrationResponseEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/inbox/shared`,
+    { environment, body: { disabled } }
   );
 
   return response.data;

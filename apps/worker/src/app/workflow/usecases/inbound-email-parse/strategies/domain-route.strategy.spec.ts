@@ -329,6 +329,18 @@ describe('DomainRouteStrategy', () => {
       sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
     });
 
+    it('drops mail when the shared inbox is disabled on the integration', async () => {
+      const integration = makeIntegration();
+      integration.credentials = { ...integration.credentials, sharedInboxDisabled: true };
+      integrationRepository.findAgentInboundByInboxRoutingKey.resolves(integration as any);
+
+      await strategy.execute(makeSharedCommand(`wine-bot-${ROUTING_KEY}`));
+
+      sinon.assert.notCalled(inboundDomainRouteDelivery.deliverToAgent);
+      sinon.assert.notCalled(agentIntegrationRepository.findOne as any);
+      sinon.assert.notCalled(agentRepository.findByIdForWebhook as any);
+    });
+
     it('drops mail when no agent link exists for the integration', async () => {
       integrationRepository.findAgentInboundByInboxRoutingKey.resolves(makeIntegration() as any);
       agentIntegrationRepository.findOne.resolves(null);
