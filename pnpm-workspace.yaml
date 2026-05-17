@@ -164,6 +164,7 @@ overrides:
   '@opentelemetry/auto-instrumentations-node@<0.75.0': ^0.75.0
   mermaid@>=11.0.0-alpha.1 <11.15.0: ^11.15.0
   tsup@<8.3.5: ^8.3.5
+  sanitize-html@<2.17.4: ^2.17.4
 
 # allowBuilds replaces onlyBuiltDependencies (and other build-dependency settings) in pnpm v11.
 # Values map package names to `true` (always allow scripts) or `false` (always deny).
