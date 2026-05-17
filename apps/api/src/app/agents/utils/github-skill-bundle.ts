@@ -221,14 +221,13 @@ function truncateWithEllipsis(value: string, max: number): string {
 // ─── GitHub HTTP plumbing ───────────────────────────────────────────────────
 
 /**
- * Builds outgoing request headers for GitHub's REST API.
+ * Headers for GitHub's REST API. Reads `GITHUB_API_TOKEN` per-request, so an
+ * env-var rotation takes effect on the next call. Authenticated requests get
+ * a higher rate-limit tier; missing token falls back to the anonymous limit.
  *
- * When `GITHUB_API_TOKEN` is set (production), the call authenticates at the
- * 5,000 req/hr-per-identity tier. When unset (local dev), it falls back to the
- * 60 req/hr anonymous tier and emits a one-time warning so developers notice.
- *
- * The token is read at request time, not at module load, so a token rotation
- * via env-var swap takes effect on the next request without a process restart.
+ * Scope the token to public-repo read only. {@link assertPublicRepository}
+ * enforces this at the application layer, but operator scoping is the first
+ * line of defense.
  */
 function buildGithubHeaders(): HeadersInit {
   const token = process.env.GITHUB_API_TOKEN?.trim();
@@ -239,6 +238,60 @@ function buildGithubHeaders(): HeadersInit {
     'X-GitHub-Api-Version': '2022-11-28',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+}
+
+type GithubRepositoryMetadata = {
+  private?: boolean;
+  visibility?: string;
+};
+
+/**
+ * Refuses to download a tarball unless `GET /repos/{owner}/{repo}` confirms
+ * the target is unambiguously public — `private === false` and any explicit
+ * `visibility` is `"public"`. Without this, a caller with `AGENT_WRITE` could
+ * exfiltrate any private repo the `GITHUB_API_TOKEN` can read.
+ *
+ * 404, non-public metadata, and malformed bodies all surface the same error
+ * so private repos can't be enumerated via error-string differences.
+ */
+async function assertPublicRepository(parsed: ParsedGithubUrl, signal: AbortSignal): Promise<void> {
+  const url = `https://api.github.com/repos/${encodeURIComponent(parsed.owner)}/${encodeURIComponent(parsed.repo)}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      signal,
+      headers: buildGithubHeaders(),
+      redirect: 'follow',
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error('GitHub repository lookup timed out.');
+    }
+    throw err;
+  }
+
+  if (response.status === 404) {
+    throw new Error(`GitHub repository ${parsed.owner}/${parsed.repo} is not publicly accessible or does not exist.`);
+  }
+
+  if (!response.ok) {
+    throw mapGithubHttpError(response, parsed);
+  }
+
+  let metadata: GithubRepositoryMetadata;
+  try {
+    metadata = (await response.json()) as GithubRepositoryMetadata;
+  } catch {
+    throw new Error('GitHub repository metadata response was malformed.');
+  }
+
+  const isPublic =
+    metadata.private === false && (metadata.visibility === undefined || metadata.visibility === 'public');
+
+  if (!isPublic) {
+    throw new Error(`GitHub repository ${parsed.owner}/${parsed.repo} is not publicly accessible or does not exist.`);
+  }
 }
 
 let warnedAboutMissingToken = false;
@@ -339,6 +392,9 @@ async function streamTarballToParser(parsed: ParsedGithubUrl, onEntry: (ctx: Ent
 
   try {
     maybeWarnMissingToken();
+
+    // Refuse non-public repos before fetching any tarball bytes.
+    await assertPublicRepository(parsed, controller.signal);
 
     const response = await fetch(buildGithubTarballUrl(parsed), {
       signal: controller.signal,

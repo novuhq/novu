@@ -218,7 +218,19 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
     return integrationId;
   }
 
-  function stubGithubFetch(buffer: Buffer, status = 200, headers?: Record<string, string>): sinon.SinonStub {
+  /** Overrides for the `/repos/{owner}/{repo}` pre-check response; defaults to a public 200. */
+  type MetadataStubConfig = {
+    status?: number;
+    body?: unknown;
+    headers?: Record<string, string>;
+  };
+
+  function stubGithubFetch(
+    buffer: Buffer,
+    status = 200,
+    headers?: Record<string, string>,
+    options: { metadata?: MetadataStubConfig } = {}
+  ): sinon.SinonStub {
     // Construct a fresh `Response` per invocation: the production code streams
     // `response.body` via `Readable.fromWeb(...)`, which locks the underlying
     // `ReadableStream`. Re-using a single `Response` would cause the second
@@ -227,9 +239,30 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
     // `sinon.stub(obj, method)` signature inference in the test compiler config.
     fetchStub = sinon
       .stub(globalThis as unknown as { fetch: typeof fetch }, 'fetch')
-      .callsFake(async () => buildFetchResponse(buffer, status, headers));
+      .callsFake(async (input: RequestInfo | URL) => {
+        const url = typeof input === 'string' ? input : (input as URL).toString();
+
+        // Match the `/repos/owner/repo` metadata endpoint only — anything
+        // with a deeper path (e.g. `/tarball/`) falls through.
+        if (/^https:\/\/api\.github\.com\/repos\/[^/]+\/[^/]+$/.test(url)) {
+          const cfg = options.metadata ?? {};
+          const body = cfg.body === undefined ? { private: false, visibility: 'public' } : cfg.body;
+
+          return new Response(JSON.stringify(body), {
+            status: cfg.status ?? 200,
+            headers: { 'Content-Type': 'application/json', ...(cfg.headers ?? {}) },
+          });
+        }
+
+        return buildFetchResponse(buffer, status, headers);
+      });
 
     return fetchStub;
+  }
+
+  /** Locates the tarball call among the recorded `fetch` invocations. */
+  function findTarballCall(fetch: sinon.SinonStub): sinon.SinonSpyCall | undefined {
+    return fetch.getCalls().find((call) => /\/tarball\//.test(String(call.args[0])));
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -257,9 +290,13 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
         expect(res.body.data.skills[0].source.type).to.equal('github-url');
         expect(res.body.data.skills[0].source.name).to.equal('my-pdf-skill');
 
-        expect(fetch.calledOnce, 'fetch should be called exactly once').to.be.true;
-        const fetchUrl = fetch.getCall(0).args[0] as string;
-        expect(fetchUrl).to.match(/^https:\/\/api\.github\.com\/repos\/anthropics\/skills\/tarball\/HEAD/);
+        // Two calls: the public-repo pre-check then the tarball itself.
+        expect(fetch.callCount, 'fetch should be called twice (metadata pre-check + tarball)').to.equal(2);
+        const tarballCall = findTarballCall(fetch);
+        if (!tarballCall) throw new Error('Expected a tarball fetch');
+        expect(tarballCall.args[0] as string).to.match(
+          /^https:\/\/api\.github\.com\/repos\/anthropics\/skills\/tarball\/HEAD/
+        );
 
         expect(mockProvider.uploadSkill.calledOnce, 'provider.uploadSkill should be called').to.be.true;
         const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
@@ -301,8 +338,11 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
           name: 'my-pdf-skill',
         });
 
-        const fetchUrl = fetch.getCall(0).args[0] as string;
-        expect(fetchUrl).to.match(/^https:\/\/api\.github\.com\/repos\/anthropics\/skills\/tarball\/main/);
+        const tarballCall = findTarballCall(fetch);
+        if (!tarballCall) throw new Error('Expected a tarball fetch');
+        expect(tarballCall.args[0] as string).to.match(
+          /^https:\/\/api\.github\.com\/repos\/anthropics\/skills\/tarball\/main/
+        );
 
         const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
         expect(uploadArg.displayTitle).to.equal('anthropics-pdf');
@@ -389,6 +429,116 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
           expect(mockProvider.uploadSkill.called, 'uploadSkill must not be reached').to.be.false;
         });
       }
+    });
+
+    // Refuses to download a tarball unless `/repos/owner/repo` reports the
+    // target as unambiguously public. Without this, an over-scoped server
+    // token could be abused to fetch private repos.
+    describe('public repository guard', () => {
+      it('should return 400 when the repository metadata reports private: true', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        const fetch = stubGithubFetch(tarball, 200, undefined, {
+          metadata: { body: { private: true, visibility: 'private' } },
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/private' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        expect(String(res.body.message ?? '')).to.match(/not publicly accessible/i);
+        expect(mockProvider.uploadSkill.called, 'uploadSkill must not be reached').to.be.false;
+        expect(findTarballCall(fetch), 'tarball must not be fetched for private repos').to.be.undefined;
+      });
+
+      it('should return 400 when the repository visibility is "internal"', async () => {
+        // GHE "internal" repos report `private: false` but aren't publicly
+        // readable — the guard must reject on `visibility` too.
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        const fetch = stubGithubFetch(tarball, 200, undefined, {
+          metadata: { body: { private: false, visibility: 'internal' } },
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/internal' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        expect(String(res.body.message ?? '')).to.match(/not publicly accessible/i);
+        expect(mockProvider.uploadSkill.called, 'uploadSkill must not be reached').to.be.false;
+        expect(findTarballCall(fetch), 'tarball must not be fetched for internal repos').to.be.undefined;
+      });
+
+      it('should return 400 with a unified message when the metadata endpoint returns 404', async () => {
+        // Unified message across "missing" and "private" so error strings
+        // can't be used to enumerate private repos.
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        const fetch = stubGithubFetch(tarball, 200, undefined, {
+          metadata: { status: 404, body: { message: 'Not Found' } },
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/missing' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        expect(String(res.body.message ?? '')).to.match(/not publicly accessible or does not exist/i);
+        expect(mockProvider.uploadSkill.called, 'uploadSkill must not be reached').to.be.false;
+        expect(findTarballCall(fetch), 'tarball must not be fetched on metadata 404').to.be.undefined;
+      });
+
+      it('should return 400 when the metadata response body cannot be parsed', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        // Custom stub: 200 with non-JSON metadata body to hit the parse branch.
+        fetchStub = sinon
+          .stub(globalThis as unknown as { fetch: typeof fetch }, 'fetch')
+          .callsFake(async (input: RequestInfo | URL) => {
+            const url = typeof input === 'string' ? input : (input as URL).toString();
+
+            if (/^https:\/\/api\.github\.com\/repos\/[^/]+\/[^/]+$/.test(url)) {
+              return new Response('not-json-at-all', { status: 200 });
+            }
+
+            return buildFetchResponse(tarball, 200);
+          });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+        expect(findTarballCall(fetchStub), 'tarball must not be fetched on malformed metadata').to.be.undefined;
+      });
+
+      it('should hit the metadata endpoint before the tarball endpoint', async () => {
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'SKILL.md', content: VALID_SKILL_MD }]);
+        const fetch = stubGithubFetch(tarball);
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-url', url: 'https://github.com/foo/bar' },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(201);
+        expect(fetch.callCount, 'fetch should be called twice (metadata + tarball)').to.equal(2);
+
+        const firstUrl = String(fetch.getCall(0).args[0]);
+        const secondUrl = String(fetch.getCall(1).args[0]);
+        expect(firstUrl, 'metadata pre-check must run before tarball').to.match(
+          /^https:\/\/api\.github\.com\/repos\/foo\/bar$/
+        );
+        expect(secondUrl).to.match(/\/tarball\//);
+      });
     });
 
     describe('extraction errors', () => {
@@ -540,9 +690,21 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
         });
 
         expect(res.status, JSON.stringify(res.body)).to.equal(201);
-        const init = fetch.getCall(0).args[1] as RequestInit;
-        const headers = init.headers as Record<string, string>;
-        expect(headers.Authorization, 'authorization header should be present').to.equal('Bearer ghp_test_token');
+        // Assert against the tarball call specifically — it's the security-
+        // relevant fetch; the loop below covers the metadata call too.
+        const tarballCall = findTarballCall(fetch);
+        if (!tarballCall) throw new Error('Expected a tarball fetch');
+        const tarballHeaders = (tarballCall.args[1] as RequestInit).headers as Record<string, string>;
+        expect(tarballHeaders.Authorization, 'tarball request should carry the bearer token').to.equal(
+          'Bearer ghp_test_token'
+        );
+
+        for (const call of fetch.getCalls()) {
+          const callHeaders = (call.args[1] as RequestInit).headers as Record<string, string>;
+          expect(callHeaders.Authorization, 'every GitHub call should use the same auth header').to.equal(
+            'Bearer ghp_test_token'
+          );
+        }
       });
 
       it('should NOT send an Authorization header when GITHUB_API_TOKEN is unset', async () => {
@@ -557,9 +719,12 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
         });
 
         expect(res.status, JSON.stringify(res.body)).to.equal(201);
-        const init = fetch.getCall(0).args[1] as RequestInit;
-        const headers = init.headers as Record<string, string>;
-        expect(headers.Authorization, 'authorization header should not be set').to.equal(undefined);
+        for (const call of fetch.getCalls()) {
+          const callHeaders = (call.args[1] as RequestInit).headers as Record<string, string>;
+          expect(callHeaders.Authorization, 'no GitHub call should set an auth header without a token').to.equal(
+            undefined
+          );
+        }
       });
     });
 
@@ -772,8 +937,11 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
           name: 'golang-benchmark',
         });
 
-        const fetchUrl = fetch.getCall(0).args[0] as string;
-        expect(fetchUrl).to.match(/^https:\/\/api\.github\.com\/repos\/samber\/cc-skills-golang\/tarball\/HEAD/);
+        const tarballCall = findTarballCall(fetch);
+        if (!tarballCall) throw new Error('Expected a tarball fetch');
+        expect(tarballCall.args[0] as string).to.match(
+          /^https:\/\/api\.github\.com\/repos\/samber\/cc-skills-golang\/tarball\/HEAD/
+        );
 
         expect(mockProvider.uploadSkill.callCount).to.equal(1);
         const uploadArg = mockProvider.uploadSkill.getCall(0).args[0];
@@ -937,6 +1105,26 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
 
         expect(res.status).to.equal(400);
         expect(mockProvider.uploadSkill.called).to.be.false;
+      });
+
+      it('should also enforce the public repository guard for github-repo uploads', async () => {
+        // The guard lives in shared `streamTarballToParser`; pin the
+        // `github-repo` variant so it can't regress independently.
+        const integrationId = await createAgentRuntimeIntegration();
+        const tarball = await buildSkillTarball([{ path: 'skills/foo/SKILL.md', content: buildSkillMd('foo') }]);
+        const fetch = stubGithubFetch(tarball, 200, undefined, {
+          metadata: { body: { private: true, visibility: 'private' } },
+        });
+
+        const res = await session.testAgent.post('/v1/agents/skills').send({
+          integrationId,
+          source: { type: 'github-repo', repo: 'foo/private', skills: ['foo'] },
+        });
+
+        expect(res.status, JSON.stringify(res.body)).to.equal(400);
+        expect(String(res.body.message ?? '')).to.match(/not publicly accessible/i);
+        expect(mockProvider.uploadSkill.called).to.be.false;
+        expect(findTarballCall(fetch), 'tarball must not be fetched for private repos').to.be.undefined;
       });
     });
 

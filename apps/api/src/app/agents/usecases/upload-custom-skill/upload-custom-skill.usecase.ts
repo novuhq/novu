@@ -201,6 +201,12 @@ export class UploadCustomSkill {
       return await fetchAndExtractSkillBundle(parsed);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to fetch skill bundle from GitHub.';
+      if (/rate limit/i.test(message)) {
+        this.logger.warn(
+          { repo: `${parsed.owner}/${parsed.repo}` },
+          `GitHub API rate limit hit — ${message}. Set GITHUB_API_TOKEN to a fine-grained PAT (public repository read) to raise the limit to 5,000 req/hr.`
+        );
+      }
       throw new BadRequestException(message);
     }
   }
@@ -213,6 +219,12 @@ export class UploadCustomSkill {
       return await fetchAndDiscoverSkillBundles(parsed, basenames);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to discover skill bundles.';
+      if (/rate limit/i.test(message)) {
+        this.logger.warn(
+          { repo: `${parsed.owner}/${parsed.repo}` },
+          `GitHub API rate limit hit — ${message}. Set GITHUB_API_TOKEN to a fine-grained PAT (public repository read) to raise the limit to 5,000 req/hr.`
+        );
+      }
       throw new BadRequestException(message);
     }
   }
