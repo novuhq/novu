@@ -57,17 +57,37 @@ function validateSkillBundleFrontmatter(files: UploadSkillFile[]): void {
   }
 
   const content = skillMd.content.toString('utf8').replace(/^\uFEFF/, '');
-  // Mirror the ReDoS-safe regexes used by `parseSkillNameFromFrontmatter` —
-  // `[ \t]*` instead of `\s*` before the newline, and a greedy capture instead
-  // of `(.+?)[ \t]*$` (CodeQL js/polynomial-redos).
+  // Mirror the ReDoS-safe approach used by `parseSkillNameFromFrontmatter`:
+  // a single anchored regex for the frontmatter block, then a per-line
+  // string-ops scan for the `name:` key. CodeQL flagged the older single
+  // regex (`/^[ \t]*name[ \t]*:[ \t]*(.*)$/m`) under js/polynomial-redos
+  // because of its overlapping `[ \t]*` quantifiers.
   const frontmatter = content.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---/);
 
-  if (!frontmatter || !frontmatter[1].match(/^[ \t]*name[ \t]*:[ \t]*(.*)$/m)) {
+  if (!frontmatter || !hasNameKey(frontmatter[1])) {
     throw new AgentRuntimeBadRequestError(
       'SKILL.md must declare a `name` in its YAML frontmatter — Anthropic requires the bundle folder name to match it.',
       AgentRuntimeProviderIdEnum.Anthropic
     );
   }
+}
+
+function hasNameKey(frontmatter: string): boolean {
+  for (const rawLine of frontmatter.split('\n')) {
+    const line = rawLine.replace(/\r$/, '').replace(/^[ \t]+/, '');
+
+    if (!line.startsWith('name')) {
+      continue;
+    }
+
+    const afterName = line.slice(4).replace(/^[ \t]+/, '');
+
+    if (afterName.startsWith(':')) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 function buildMockProvider(overrides: ProviderStubs = {}) {
@@ -189,6 +209,10 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
 
     expect(res.status, `createAgentRuntimeIntegration failed: ${JSON.stringify(res.body)}`).to.equal(201);
     const integrationId: string = res.body._id ?? res.body.data?._id ?? res.body.data?.id;
+    // Fail fast: if the response shape changes and `_id`/`data._id`/`data.id`
+    // are all absent, we'd otherwise push `undefined` into the cleanup list
+    // and surface as confusing failures in unrelated assertions/cleanup.
+    expect(integrationId, `missing integration id in response: ${JSON.stringify(res.body)}`).to.be.a('string');
     createdIntegrationIds.push(integrationId);
 
     return integrationId;
