@@ -2,20 +2,12 @@ import { CredentialsKeyEnum } from '@novu/shared';
 import { useCallback, useState } from 'react';
 import { type Control, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { RiCheckLine, RiCloseLine, RiInformationLine } from 'react-icons/ri';
+import { TelegramMobileSetupCard } from '@/components/agents/telegram-mobile-setup-card';
 import { Label } from '@/components/primitives/label';
 import { Textarea } from '@/components/primitives/textarea';
+import { parseBotFatherMessage } from '@/utils/telegram-bot-token';
 import { cn } from '@/utils/ui';
 import type { IntegrationFormData } from '../types';
-
-function parseBotFatherMessage(text: string): { token: string | null; botUsername: string | null } {
-  const tokenMatch = text.match(/(\d{8,}:[A-Za-z0-9_-]{35,})/);
-  const usernameMatch = text.match(/t\.me\/([A-Za-z0-9_]+)/i);
-
-  return {
-    token: tokenMatch?.[1] ?? null,
-    botUsername: usernameMatch?.[1] ?? null,
-  };
-}
 
 type ApplyOutcome = { token: string | null; botUsername: string | null; recognized: boolean };
 
@@ -23,6 +15,13 @@ type TelegramCredentialsPasteProps = {
   control: Control<IntegrationFormData>;
   setValue: UseFormSetValue<IntegrationFormData>;
   isReadOnly?: boolean;
+  /**
+   * When both `agentIdentifier` and `integrationId` are present, the modal renders an
+   * inline mobile-setup QR card under the BotFather paste field so the user can finish
+   * the configuration from their phone instead.
+   */
+  agentIdentifier?: string;
+  integrationId?: string;
 };
 
 /**
@@ -33,7 +32,13 @@ type TelegramCredentialsPasteProps = {
  * — no button click needed. The token is written directly into the
  * react-hook-form `apiToken` credential field.
  */
-export function TelegramCredentialsPaste({ control, setValue, isReadOnly }: TelegramCredentialsPasteProps) {
+export function TelegramCredentialsPaste({
+  control,
+  setValue,
+  isReadOnly,
+  agentIdentifier,
+  integrationId,
+}: TelegramCredentialsPasteProps) {
   const credentials = useWatch({ control, name: 'credentials' });
   const [outcome, setOutcome] = useState<ApplyOutcome | null>(null);
   const [draft, setDraft] = useState('');
@@ -93,29 +98,48 @@ export function TelegramCredentialsPaste({ control, setValue, isReadOnly }: Tele
 
   if (isReadOnly) return null;
 
-  return (
-    <>
-      <div className="border-stroke-weak bg-bg-white mb-3 flex flex-col gap-2 overflow-hidden rounded-lg border p-3">
-        <Label className="text-label-xs text-text-strong font-medium">BotFather confirmation message</Label>
-        <Textarea
-          value={draft}
-          onChange={handleChange}
-          onPaste={handlePaste}
-          placeholder={
-            'Done! Congratulations on your new bot…\n\nUse this token to access the HTTP API:\n1234567890:AAFdT8_…\n\nYou will find it at t.me/YourBot_bot.'
-          }
-          rows={5}
-          className={cn('font-mono text-xs', outcome?.recognized && 'border-success-base')}
-        />
-        <p className="text-text-soft text-label-xs leading-4">
-          Copy the full confirmation message from BotFather and paste it here — the token is set automatically.
-        </p>
+  const canShowMobileSetup = Boolean(agentIdentifier && integrationId);
 
-        {outcome && (
-          <PasteOutcome outcome={outcome} onDismiss={dismiss} />
-        )}
-      </div>
-    </>
+  return (
+    <div className="border-stroke-weak bg-bg-white mb-3 flex flex-col gap-2 overflow-hidden rounded-lg border p-3">
+      <Label className="text-label-xs text-text-strong font-medium">BotFather confirmation message</Label>
+      <Textarea
+        value={draft}
+        onChange={handleChange}
+        onPaste={handlePaste}
+        placeholder={
+          'Done! Congratulations on your new bot…\n\nUse this token to access the HTTP API:\n1234567890:AAFdT8_…\n\nYou will find it at t.me/YourBot_bot.'
+        }
+        rows={5}
+        className={cn('font-mono text-xs', outcome?.recognized && 'border-success-base')}
+      />
+      <p className="text-text-soft text-label-xs leading-4">
+        Copy the full confirmation message from BotFather and paste it here — the token is set automatically.
+      </p>
+
+      {outcome && <PasteOutcome outcome={outcome} onDismiss={dismiss} />}
+
+      {canShowMobileSetup && (
+        <>
+          <OrDivider />
+          <TelegramMobileSetupCard
+            agentIdentifier={agentIdentifier as string}
+            integrationId={integrationId as string}
+            layout="inline"
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+function OrDivider() {
+  return (
+    <div className="text-text-soft my-1 flex items-center gap-2 text-label-xs">
+      <span className="bg-stroke-soft h-px flex-1" />
+      <span className="uppercase tracking-wide">or set up from your phone</span>
+      <span className="bg-stroke-soft h-px flex-1" />
+    </div>
   );
 }
 

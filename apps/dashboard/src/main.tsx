@@ -45,6 +45,7 @@ import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
+import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
@@ -98,6 +99,12 @@ const router = createBrowserRouter([
       {
         path: `${ROUTES.LANDING_1_SIGN_UP}/*`,
         element: <Landing1SignUpPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for Telegram. Mounted outside
+        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
+        path: ROUTES.AGENT_TELEGRAM_MOBILE_SETUP,
+        element: <AgentTelegramMobileSetupPage />,
       },
       {
         element: <AuthRoute />,

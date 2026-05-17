@@ -1,12 +1,11 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiKey2Line, RiQrCodeLine, RiRobot2Line, RiSendPlaneLine } from 'react-icons/ri';
+import { RiKey2Line, RiRobot2Line, RiSendPlaneLine } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
 import type { AgentResponse } from '@/api/agents';
 import { configureTelegramAgentWebhook, getAgentIntegrationsQueryKey } from '@/api/agents';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { Popover, PopoverArrow, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -14,50 +13,27 @@ import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus, hasIntegrationCredentials } from './setup-guide-step-utils';
 
-type TelegramQrPopoverProps = {
+type TelegramQrInlineProps = {
   url: string;
   username?: string;
-  label: string;
 };
 
-function TelegramQrPopover({ url, username, label }: TelegramQrPopoverProps) {
+function TelegramQrInline({ url, username }: TelegramQrInlineProps) {
   return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className="text-text-sub border-stroke-soft hover:bg-bg-weak inline-flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs font-medium transition-colors"
-        >
-          <RiQrCodeLine className="size-3.5 shrink-0" />
-          {label}
-        </button>
-      </PopoverTrigger>
-      <PopoverContent className="flex w-auto min-w-0 flex-col items-center gap-3 p-4" side="top" align="start">
-        <PopoverArrow />
-        <div className="rounded-lg bg-white p-2">
-          <QRCode value={url} size={160} />
-        </div>
-        <p className="text-text-sub text-label-xs text-center leading-4">
-          {username ? (
-            <>
-              Scan to open{' '}
-              <span className="text-text-strong font-medium">@{username}</span>{' '}
-              in Telegram
-            </>
-          ) : (
-            'Scan with your phone to open in Telegram'
-          )}
-        </p>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-text-sub text-label-xs underline underline-offset-2"
-        >
-          Open in Telegram
-        </a>
-      </PopoverContent>
-    </Popover>
+    <div className="border-stroke-soft mt-2 flex w-fit flex-col items-center gap-2 rounded-md border p-3">
+      <div className="rounded bg-white p-2">
+        <QRCode value={url} size={140} />
+      </div>
+      <p className="text-text-sub text-label-xs text-center leading-4">
+        {username ? (
+          <>
+            Scan to open <span className="text-text-strong font-medium">@{username}</span> in Telegram
+          </>
+        ) : (
+          'Scan with your phone to open in Telegram'
+        )}
+      </p>
+    </div>
   );
 }
 
@@ -118,7 +94,7 @@ export function TelegramSetupGuide({
       ),
     onSuccess: (result) => {
       setConfiguredWebhookUrl(result.webhookUrl);
-      setBotUsername(result.botUsername ?? null);
+      setBotUsername(result.botUsername);
       queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
@@ -150,6 +126,9 @@ export function TelegramSetupGuide({
     return base;
   }, [base, isCredentialsSaved, isWebhookConfigured, isConnected]);
 
+  const step1Status = deriveStepStatus(base, firstIncompleteStep);
+  const step3Status = deriveStepStatus(base + 2, firstIncompleteStep);
+
   const configureErrorMessage = useMemo(() => {
     if (!configureError) return null;
 
@@ -162,7 +141,7 @@ export function TelegramSetupGuide({
     <>
       <SetupStep
         index={base}
-        status={deriveStepStatus(base, firstIncompleteStep)}
+        status={step1Status}
         title="Create a bot with BotFather"
         description={
           <span>
@@ -181,17 +160,14 @@ export function TelegramSetupGuide({
           </span>
         }
         rightContent={
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col items-start gap-0">
             <SetupButton
               href="https://t.me/botfather"
               leadingIcon={<RiRobot2Line className="size-3.5" />}
             >
               Open BotFather
             </SetupButton>
-            <TelegramQrPopover
-              url="https://t.me/botfather"
-              label="Scan QR"
-            />
+            {step1Status === 'current' && <TelegramQrInline url="https://t.me/botfather" />}
           </div>
         }
       />
@@ -200,7 +176,7 @@ export function TelegramSetupGuide({
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
         title="Save the Bot Token in Novu"
-        description="Open the credentials form and paste the full BotFather confirmation message — the token is extracted and the webhook is registered automatically."
+        description="Open the credentials form to paste the full BotFather confirmation message — or scan the QR code inside the form to finish setup from the phone where BotFather sent the token."
         extraContent={
           <>
             {configureErrorMessage && (
@@ -214,18 +190,20 @@ export function TelegramSetupGuide({
           </>
         }
         rightContent={
-          <SetupButton
-            leadingIcon={<RiKey2Line className="size-3.5" />}
-            onClick={() => setIsCredentialsSidebarOpen(true)}
-          >
-            Configure credentials
-          </SetupButton>
+          <div className="flex flex-col items-start gap-0">
+            <SetupButton
+              leadingIcon={<RiKey2Line className="size-3.5" />}
+              onClick={() => setIsCredentialsSidebarOpen(true)}
+            >
+              Configure credentials
+            </SetupButton>
+          </div>
         }
       />
 
       <SetupStep
         index={base + 2}
-        status={deriveStepStatus(base + 2, firstIncompleteStep)}
+        status={step3Status}
         title="Send a test message"
         description={
           <span>
@@ -234,18 +212,16 @@ export function TelegramSetupGuide({
         }
         rightContent={
           botUsername ? (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-col items-start gap-0">
               <SetupButton
                 href={`https://t.me/${botUsername}`}
                 leadingIcon={<RiSendPlaneLine className="size-3.5" />}
               >
                 Open @{botUsername}
               </SetupButton>
-              <TelegramQrPopover
-                url={`https://t.me/${botUsername}`}
-                username={botUsername}
-                label="Scan QR"
-              />
+              {step3Status === 'current' && (
+                <TelegramQrInline url={`https://t.me/${botUsername}`} username={botUsername} />
+              )}
             </div>
           ) : null
         }
@@ -285,6 +261,7 @@ export function TelegramSetupGuide({
             configureTelegram();
           }}
           agentOnboarding
+          agentIdentifier={agent.identifier}
           submitLabel="Save & Connect"
         />
       </div>
@@ -304,6 +281,7 @@ export function TelegramSetupGuide({
           configureTelegram();
         }}
         agentOnboarding
+        agentIdentifier={agent.identifier}
         submitLabel="Save & Connect"
       />
     </>

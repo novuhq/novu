@@ -1028,21 +1028,10 @@ export class ChatSdkService implements OnModuleDestroy {
         };
       }
       case AgentPlatformEnum.TELEGRAM: {
-        if (!credentials.apiToken) {
-          throw new BadRequestException('Telegram agent integration requires a Bot Token');
-        }
-
-        // The upstream @chat-adapter/telegram handleWebhook fails open when
-        // secretToken is falsy — it logs a one-time warning and accepts every
-        // inbound request without verification. Enforce that the webhook secret
-        // token is present before building the adapter, matching the strict
-        // credential checks for SLACK, TEAMS, and WHATSAPP above.
-        // credentials.token is populated exclusively by ConfigureTelegramAgentWebhook,
-        // so this guard keeps the webhook dead until the customer completes that step.
-        if (!credentials.token) {
+        if (!credentials.apiToken || !credentials.token) {
           throw new BadRequestException(
-            'Telegram agent integration is not fully configured: webhook secret token is missing. ' +
-              'Run the "Configure webhook" step to provision it before this integration can receive messages.'
+            'Telegram agent integration requires a Bot Token and a webhook secret token. ' +
+              'Run the "Configure webhook" step to provision the webhook secret token before this integration can receive messages.'
           );
         }
 

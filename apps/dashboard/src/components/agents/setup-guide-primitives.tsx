@@ -323,6 +323,7 @@ export function IntegrationCredentialsSidebar({
   onClose,
   onSaveSuccess,
   agentOnboarding,
+  agentIdentifier,
   submitLabel,
 }: {
   integrationId: string;
@@ -330,6 +331,12 @@ export function IntegrationCredentialsSidebar({
   onClose: () => void;
   onSaveSuccess?: () => void;
   agentOnboarding?: boolean;
+  /**
+   * Agent identifier for agent-onboarding flows. Threaded through to
+   * provider-specific paste components so they can render agent-scoped UI
+   * (e.g. the Telegram mobile setup QR code) inside the modal.
+   */
+  agentIdentifier?: string;
   submitLabel?: string;
 }) {
   const { integrations } = useFetchIntegrations();
@@ -398,6 +405,7 @@ export function IntegrationCredentialsSidebar({
           onSubmit={onSubmit}
           mode="update"
           agentOnboarding={agentOnboarding}
+          agentIdentifier={agentIdentifier}
           onFormStateChange={setFormState}
         />
       </div>

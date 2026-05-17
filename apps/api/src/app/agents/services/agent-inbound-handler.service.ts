@@ -41,7 +41,7 @@ function buildNoBridgeReply(dashboardUrl?: string): CardElement {
 
 const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
 
-We were unable to reach the agent.`;
+The agent is unavailable right now. Please try again later.`;
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object') {

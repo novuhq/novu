@@ -50,6 +50,8 @@ type IntegrationConfigurationProps = {
   hasOtherProviders?: boolean;
   isReadOnly?: boolean;
   agentOnboarding?: boolean;
+  /** Agent identifier — only set during the agent-onboarding flow. */
+  agentIdentifier?: string;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
 };
 
@@ -71,6 +73,7 @@ export function IntegrationSettings({
   hasOtherProviders,
   isReadOnly,
   agentOnboarding,
+  agentIdentifier,
   onFormStateChange,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
@@ -275,6 +278,8 @@ export function IntegrationSettings({
                           control={control}
                           setValue={setValue}
                           isReadOnly={isReadOnly}
+                          agentIdentifier={agentIdentifier}
+                          integrationId={integration?._id}
                         />
                       )}
                       <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">

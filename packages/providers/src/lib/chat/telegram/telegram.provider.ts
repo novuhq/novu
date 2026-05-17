@@ -49,7 +49,7 @@ export class TelegramChatProvider extends BaseProvider implements IChatProvider 
 
     return {
       id: String(data.result.message_id),
-      date: new Date().toISOString(),
+      date: new Date(data.result.date != null ? data.result.date * 1000 : Date.now()).toISOString(),
     };
   }
 }

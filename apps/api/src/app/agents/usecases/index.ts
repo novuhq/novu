@@ -2,11 +2,14 @@ import { AddAgentIntegration } from './add-agent-integration/add-agent-integrati
 import { CleanupNovuEmail } from './cleanup-novu-email/cleanup-novu-email.usecase';
 import { ConfigureWhatsAppWebhook } from './configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { ConfigureTelegramAgentWebhook } from './configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
+import { ConsumeTelegramMobileLink } from './consume-telegram-mobile-link/consume-telegram-mobile-link.usecase';
 import { CreateAgent } from './create-agent/create-agent.usecase';
 import { DeleteAgent } from './delete-agent/delete-agent.usecase';
 import { FindOrCreateNovuEmail } from './find-or-create-novu-email/find-or-create-novu-email.usecase';
 import { GetAgent } from './get-agent/get-agent.usecase';
+import { GetTelegramMobileLinkStatus } from './get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
 import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
+import { IssueTelegramMobileLink } from './issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
 import { ListAgentEmoji } from './list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrations } from './list-agent-integrations/list-agent-integrations.usecase';
 import { ListAgents } from './list-agents/list-agents.usecase';
@@ -18,12 +21,14 @@ import { SyncAgentToEnvironment } from './sync-agent-to-environment/sync-agent-t
 import { UpdateAgent } from './update-agent/update-agent.usecase';
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
 
-export { ConfigureTelegramAgentWebhook };
+export { ConfigureTelegramAgentWebhook, ConsumeTelegramMobileLink, GetTelegramMobileLinkStatus, IssueTelegramMobileLink };
 
 export const USE_CASES = [
   CreateAgent,
   ConfigureTelegramAgentWebhook,
+  ConsumeTelegramMobileLink,
   GetAgent,
+  GetTelegramMobileLinkStatus,
   ListAgents,
   UpdateAgent,
   DeleteAgent,
@@ -31,6 +36,7 @@ export const USE_CASES = [
   CleanupNovuEmail,
   ConfigureWhatsAppWebhook,
   FindOrCreateNovuEmail,
+  IssueTelegramMobileLink,
   ListAgentEmoji,
   ListAgentIntegrations,
   UpdateAgentIntegration,

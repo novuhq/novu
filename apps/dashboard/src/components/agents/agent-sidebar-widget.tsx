@@ -3,7 +3,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useBridgeUrlFocus } from './bridge-url-focus-context';
 import { RiAlertFill, RiInformationFill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentResponse, UpdateAgentBody } from '@/api/agents';
@@ -59,31 +58,12 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
   const displayUrl = agent.devBridgeActive ? (agent.devBridgeUrl ?? '') : (agent.bridgeUrl ?? '');
   const [bridgeUrl, setBridgeUrl] = useState(displayUrl);
   const urlBeforeEditRef = useRef(displayUrl);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const focusCtx = useBridgeUrlFocus();
-
-  useEffect(() => {
-    focusCtx?.register(() => {
-      sectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-      if (!canWrite) return;
-
-      urlBeforeEditRef.current = bridgeUrl;
-      setIsEditing(true);
-      setTimeout(() => inputRef.current?.focus(), 200);
-    });
-
-    return () => focusCtx?.register(null);
-  }, [focusCtx, canWrite, bridgeUrl]);
-
-  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally only syncs when server data changes, not on every editing-state toggle — avoids resetting the typed value before the save mutation returns
   useEffect(() => {
     if (!isEditing) {
       setBridgeUrl(displayUrl);
     }
-  }, [displayUrl]);
+  }, [displayUrl, isEditing]);
 
   const persistBridgeUrl = useCallback(async () => {
     const trimmed = bridgeUrl.trim();
@@ -102,11 +82,11 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
     }
 
     setIsEditing(false);
-    await onUpdate(agent.devBridgeActive ? { devBridgeUrl: trimmed } : { bridgeUrl: trimmed });
-  }, [displayUrl, bridgeUrl, canWrite, onUpdate, agent.devBridgeActive]);
+    await onUpdate({ bridgeUrl: trimmed });
+  }, [displayUrl, bridgeUrl, canWrite, onUpdate]);
 
   return (
-    <div ref={sectionRef}>
+    <>
       <div className="flex h-8 items-center justify-between gap-2 px-1.5">
         <span className="text-text-soft text-label-xs font-medium shrink-0 flex items-center gap-0.5">
           Bridge URL
@@ -135,7 +115,6 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
                 className="absolute inset-0 flex items-center"
               >
                 <Input
-                  ref={inputRef}
                   placeholder="api.example.com/v1/api/novu"
                   value={bridgeUrl}
                   onChange={(e) => setBridgeUrl(e.target.value)}
@@ -228,7 +207,7 @@ function BridgeUrlSection({ agent, canWrite, isUpdatePending, onUpdate, readOnly
           </div>
         </DetailsSidebarRow>
       )}
-    </div>
+    </>
   );
 }
 

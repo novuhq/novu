@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
@@ -11,7 +11,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { BridgeUrlSetupStep } from './bridge-url-setup-step';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 
@@ -301,13 +300,10 @@ export function AgentCodeSetupSection({
 
   const bridgeConnected = useBridgeConnectionPolling(agent, onBridgeConnected);
 
-  const hasBridgeUrl = Boolean(agent.bridgeUrl || (agent.devBridgeActive && agent.devBridgeUrl));
-  const firstIncompleteStep = (() => {
-    if (bridgeConnected) return stepOffset + 4;
-    if (hasBridgeUrl) return stepOffset + 3;
-
-    return stepOffset;
-  })();
+  const firstIncompleteStep = useMemo(
+    () => (bridgeConnected ? stepOffset + 3 : stepOffset),
+    [bridgeConnected, stepOffset]
+  );
 
   return (
     <>
@@ -361,11 +357,9 @@ export function AgentCodeSetupSection({
         rightContent={<TerminalBlock displayCommand="npm run dev:novu" copyCommand="npm run dev:novu" />}
       />
 
-      <BridgeUrlSetupStep agent={agent} index={stepOffset + 2} firstIncompleteStep={firstIncompleteStep} />
-
       <SetupStep
-        index={stepOffset + 3}
-        status={deriveStepStatus(stepOffset + 3, firstIncompleteStep)}
+        index={stepOffset + 2}
+        status={deriveStepStatus(stepOffset + 2, firstIncompleteStep)}
         title={getProviderSendTitle(providerId)}
         description={getProviderSendDescription(providerId, agent.name)}
         rightContent={

@@ -141,13 +141,6 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
-  async updateAgentId(environmentId: string, organizationId: string, id: string, agentId: string): Promise<void> {
-    await this.update(
-      { _id: id, _environmentId: environmentId, _organizationId: organizationId },
-      { $set: { _agentId: agentId } }
-    );
-  }
-
   async updateChannelThread(
     environmentId: string,
     organizationId: string,
