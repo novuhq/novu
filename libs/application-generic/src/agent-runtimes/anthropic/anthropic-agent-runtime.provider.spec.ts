@@ -426,24 +426,24 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       tools: [{ externalId: 'bash', name: 'Bash', type: 'builtin' }],
     });
 
-    expect(update).toHaveBeenCalledTimes(1);
+    expect(update.mock.calls).to.have.lengthOf(1);
 
     const [, updatePayload] = update.mock.calls[0];
     const toolset = getToolsetPayload(updatePayload as { tools?: AgentToolsetPayloadEntry[] });
 
-    expect(toolset).toBeDefined();
+    expect(toolset, 'toolset payload should be present').to.not.equal(undefined);
 
     const bashConfig = toolset?.configs?.find((c) => c.name === 'bash');
-    expect(bashConfig).toBeDefined();
-    expect(bashConfig?.enabled).toBe(true);
+    expect(bashConfig, 'bash config should be present').to.not.equal(undefined);
+    expect(bashConfig?.enabled).to.equal(true);
 
     const allBuiltinTypes = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
     const otherToolsDisabled = toolset?.configs
       ?.filter((c) => c.name !== 'bash')
       .every((c) => allBuiltinTypes.includes(c.name) && c.enabled === false);
-    expect(otherToolsDisabled).toBe(true);
+    expect(otherToolsDisabled).to.equal(true);
 
-    expect(result.tools).toEqual([{ externalId: 'bash', name: 'bash', type: 'builtin' }]);
+    expect(result.tools).to.deep.equal([{ externalId: 'bash', name: 'bash', type: 'builtin' }]);
   });
 
   it('treats an empty tools array as "disable all tools" by emitting enabled=false for every catalog entry', async () => {
@@ -476,7 +476,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
     // With no enabled tools and no mcpServers, buildToolsPayload returns []
     // and we deliberately omit `tools` from the update payload entirely so
     // we don't clear the side the caller didn't touch.
-    expect((updatePayload as { tools?: unknown }).tools).toBeUndefined();
+    expect((updatePayload as { tools?: unknown }).tools).to.equal(undefined);
   });
 
   it('preserves currently-enabled tools (by externalId) when only mcpServers is patched', async () => {
@@ -523,7 +523,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
     const toolset = getToolsetPayload(updatePayload as { tools?: AgentToolsetPayloadEntry[] });
 
     const enabledNames = toolset?.configs?.filter((c) => c.enabled).map((c) => c.name) ?? [];
-    expect(enabledNames).toEqual(expect.arrayContaining(['bash', 'web_search']));
-    expect(enabledNames).not.toContain('read');
+    expect(enabledNames).to.include.members(['bash', 'web_search']);
+    expect(enabledNames).to.not.include('read');
   });
 });
