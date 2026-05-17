@@ -1,11 +1,20 @@
 import { randomBytes } from 'node:crypto';
-import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   encryptSecret,
   generateAgentInboxRoutingKey,
+  isAgentSharedInboxEnabled,
   isValidAgentEmailSlugPrefix,
 } from '@novu/application-generic';
 import {
+  type AgentEntity,
   AgentIntegrationRepository,
   AgentRepository,
   CommunityOrganizationRepository,
@@ -63,13 +72,22 @@ export class FindOrCreateNovuEmail {
   async execute(agentId: string, environmentId: string, organizationId: string): Promise<FindOrCreateNovuEmailResult> {
     await this.enforceEmailTier(organizationId);
 
-    const existing = await this.findExistingLink(agentId, environmentId, organizationId);
+    const agent = await this.agentRepository.findOne(
+      { _id: agentId, _environmentId: environmentId, _organizationId: organizationId },
+      ['_id', 'identifier', 'name']
+    );
+
+    if (!agent) {
+      throw new NotFoundException(`Agent "${agentId}" was not found.`);
+    }
+
+    const existing = await this.findExistingLink(agent, environmentId, organizationId);
     if (existing) return { response: existing, provisionedNewLink: false };
 
-    const emailSlugPrefix = await this.deriveEmailSlugPrefix(agentId, environmentId, organizationId);
+    const emailSlugPrefix = this.deriveEmailSlugPrefix(agent);
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
-      const recheck = await this.findExistingLink(agentId, environmentId, organizationId);
+      const recheck = await this.findExistingLink(agent, environmentId, organizationId);
       if (recheck) return { response: recheck, provisionedNewLink: false };
 
       const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
@@ -84,7 +102,7 @@ export class FindOrCreateNovuEmail {
         session,
       });
 
-      const response = await this.createLink(agentId, integration, environmentId, organizationId, session);
+      const response = await this.createLink(agent, integration, environmentId, organizationId, session);
 
       return { response, provisionedNewLink: true };
     });
@@ -150,13 +168,8 @@ export class FindOrCreateNovuEmail {
    * to a random short id if the identifier slugifies to something the slug
    * regex would reject (empty, longer than 32 chars after sanitization, etc.).
    */
-  private async deriveEmailSlugPrefix(agentId: string, environmentId: string, organizationId: string): Promise<string> {
-    const agent = await this.agentRepository.findOne(
-      { _id: agentId, _environmentId: environmentId, _organizationId: organizationId },
-      ['identifier', 'name']
-    );
-
-    const candidate = sanitizeSlug(agent?.identifier ?? agent?.name ?? '');
+  private deriveEmailSlugPrefix(agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>): string {
+    const candidate = sanitizeSlug(agent.identifier ?? agent.name ?? '');
     if (candidate && isValidAgentEmailSlugPrefix(candidate)) {
       return candidate;
     }
@@ -172,14 +185,15 @@ export class FindOrCreateNovuEmail {
       }
     }
 
-    return `agent-${agentId.slice(-8)}`;
+    return `agent-${agent._id.slice(-8)}`;
   }
 
-  async findExistingLink(
-    agentId: string,
+  private async findExistingLink(
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
     environmentId: string,
     organizationId: string
   ): Promise<AgentIntegrationResponseDto | null> {
+    const agentId = agent._id;
     const links = await this.agentIntegrationRepository.find(
       { _agentId: agentId, _environmentId: environmentId, _organizationId: organizationId },
       '*'
@@ -205,17 +219,18 @@ export class FindOrCreateNovuEmail {
     const link = links.find((l) => l._integrationId === emailIntegration._id);
     if (!link) return null;
 
-    return toAgentIntegrationResponse(link, emailIntegration, { _id: agentId });
+    return toAgentIntegrationResponse(link, emailIntegration, agent);
   }
 
   private async createLink(
-    agentId: string,
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
     integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'> &
       Partial<Pick<IntegrationEntity, 'credentials'>>,
     environmentId: string,
     organizationId: string,
     session: ClientSession | null
   ): Promise<AgentIntegrationResponseDto> {
+    const agentId = agent._id;
     const existingLink = await this.agentIntegrationRepository.findOne(
       {
         _agentId: agentId,
@@ -242,10 +257,14 @@ export class FindOrCreateNovuEmail {
       { session }
     );
 
-    return toAgentIntegrationResponse(link, integration, { _id: agentId });
+    return toAgentIntegrationResponse(link, integration, agent);
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
+    if (!isAgentSharedInboxEnabled()) {
+      throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
+    }
+
     const organization = await this.organizationRepository.findById(organizationId);
     const tier = organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
     const allowed = getFeatureForTierAsBoolean(FeatureNameEnum.AGENT_EMAIL_INTEGRATION, tier);
