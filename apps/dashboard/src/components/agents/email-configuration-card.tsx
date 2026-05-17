@@ -63,6 +63,8 @@ export function EmailConfigurationCardBody({ agent, integrationId }: EmailConfig
           outboundFromAddress={outboundFromAddress}
           inboundAddresses={inboundAddresses}
           onSave={saveSenderOverride}
+          disabled={isOutboundDemo}
+          disabledReason="Custom From addresses are only supported with your own email provider. Connect SendGrid, Resend, or another provider above to enable this."
         />
       </CardRow>
     </>

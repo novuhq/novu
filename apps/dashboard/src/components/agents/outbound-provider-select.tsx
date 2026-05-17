@@ -111,15 +111,9 @@ export function OutboundProviderSelect({
   );
 
   // The agent uses the Novu demo provider whenever no real outbound integration
-  // is attached. Mirror that in the UI: an empty/undefined selectedId surfaces
-  // as the demo being preselected, and legacy rows that point at a real Novu
-  // demo integration are normalized to the same display.
-  const isDemoSelected = useMemo(() => {
-    if (!selectedId) return true;
-    const integration = integrations?.find((i) => i._id === selectedId);
-
-    return integration?.providerId === EmailProviderIdEnum.Novu;
-  }, [integrations, selectedId]);
+  // is attached, so an empty/undefined selectedId surfaces as the demo being
+  // preselected.
+  const isDemoSelected = !selectedId;
 
   const selected = useMemo(() => {
     if (isDemoSelected) {

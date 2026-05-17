@@ -121,18 +121,6 @@ export class SendAgentTestEmail {
         throw new BadRequestException('Configured outbound integration not found or inactive.');
       }
 
-      if (configured.providerId === EmailProviderIdEnum.Novu) {
-        return {
-          ...configured,
-          credentials: {
-            apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
-            from: 'no-reply@novu.co',
-            senderName: 'Novu',
-            ipPoolName: 'Demo',
-          },
-        };
-      }
-
       return { ...configured, credentials: decryptCredentials(configured.credentials ?? {}) };
     }
 

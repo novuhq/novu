@@ -27,6 +27,7 @@ import {
   EmailProviderIdEnum,
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
+  NOVU_PROVIDERS,
   providers,
   slugify,
 } from '@novu/shared';
@@ -85,6 +86,10 @@ export class FindOrCreateNovuEmail {
     if (existing) return { response: existing, provisionedNewLink: false };
 
     const emailSlugPrefix = this.deriveEmailSlugPrefix(agent);
+    const defaultOutboundIntegrationId = await this.findActivePrimaryCustomEmailIntegrationId(
+      environmentId,
+      organizationId
+    );
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
       const recheck = await this.findExistingLink(agent, environmentId, organizationId);
@@ -97,6 +102,7 @@ export class FindOrCreateNovuEmail {
         displayName,
         identifier,
         emailSlugPrefix,
+        outboundIntegrationId: defaultOutboundIntegrationId,
         environmentId,
         organizationId,
         session,
@@ -119,6 +125,7 @@ export class FindOrCreateNovuEmail {
     displayName,
     identifier,
     emailSlugPrefix,
+    outboundIntegrationId,
     environmentId,
     organizationId,
     session,
@@ -126,6 +133,7 @@ export class FindOrCreateNovuEmail {
     displayName: string;
     identifier: string;
     emailSlugPrefix: string;
+    outboundIntegrationId: string | null;
     environmentId: string;
     organizationId: string;
     session: ClientSession | null;
@@ -142,6 +150,7 @@ export class FindOrCreateNovuEmail {
               secretKey: encryptSecret(randomBytes(32).toString('hex')),
               emailSlugPrefix,
               inboxRoutingKey,
+              ...(outboundIntegrationId ? { outboundIntegrationId } : {}),
             },
             configurations: {},
             name: displayName,
@@ -161,6 +170,31 @@ export class FindOrCreateNovuEmail {
     }
 
     throw lastError ?? new Error('Failed to mint a unique inboxRoutingKey after retries');
+  }
+
+  /**
+   * On first auto-provision, default the agent's outbound sender to the env's
+   * existing primary email integration when one is configured. Otherwise we
+   * leave `outboundIntegrationId` unset and let the dashboard / runtime fall
+   * back to the rate-limited Novu demo sender. Excludes Novu-owned providers
+   * (the demo provider and the inbound-only NovuAgent integration itself) so
+   * we never select a sender that can't actually deliver outbound mail at
+   * scale or, worse, points at the inbound side.
+   */
+  private async findActivePrimaryCustomEmailIntegrationId(
+    environmentId: string,
+    organizationId: string
+  ): Promise<string | null> {
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      channel: ChannelTypeEnum.EMAIL,
+      active: true,
+      primary: true,
+      providerId: { $nin: NOVU_PROVIDERS } as unknown as string,
+    });
+
+    return integration?._id ?? null;
   }
 
   /**

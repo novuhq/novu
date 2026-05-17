@@ -1,6 +1,5 @@
 import {
   DomainRouteTypeEnum,
-  EmailProviderIdEnum,
   emailProviders as emailProviderConfigs,
   type IEnvironment,
   type IIntegration,
@@ -165,9 +164,9 @@ export function useEmailSetupCredentials({
   // An empty outboundId is the API contract for "fall back to the Novu demo
   // sender" (see chat-sdk.service.ts and send-agent-test-email.usecase.ts), so
   // we surface it the same way to the UI as an explicitly-selected demo
-  // integration. Both shapes mean: no real outbound provider, no credentials
-  // step, rate-limited delivery.
-  const isOutboundDemo = !outboundId || outboundIntegration?.providerId === EmailProviderIdEnum.Novu;
+  // integration: no real outbound provider, no credentials step, rate-limited
+  // delivery.
+  const isOutboundDemo = !outboundId;
   const needsCredentialsStep = Boolean(outboundIntegration) && !isOutboundDemo;
   const hasOutboundCredentials = useMemo(() => {
     if (!outboundIntegration) return false;
