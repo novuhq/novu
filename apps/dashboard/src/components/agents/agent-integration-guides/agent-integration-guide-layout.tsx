@@ -1,6 +1,7 @@
 import { type ReactNode, useId } from 'react';
 import { RiArrowLeftSLine, RiMore2Fill } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -55,7 +56,7 @@ export function AgentIntegrationGuideHeader({
   onRequestRemoveIntegration,
   isRemovingIntegration = false,
 }: AgentIntegrationGuideHeaderProps) {
-  const isConnected = Boolean(integrationLink.connectedAt);
+  const isConnected = isAgentIntegrationConnected(integrationLink);
   const integrationIdentifier = integrationLink.integration.identifier;
   const createdAt = integrationLink.createdAt;
 

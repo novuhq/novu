@@ -4,6 +4,7 @@ import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { EmailConfigurationCardBody } from '@/components/agents/email-configuration-card';
 import { EmailInboxCardBody } from '@/components/agents/email-inbox-card';
 import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
+import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 
@@ -26,8 +27,7 @@ export function EmailAgentIntegrationGuide({
   onRequestRemoveIntegration,
   isRemovingIntegration,
 }: EmailAgentIntegrationGuideProps) {
-  const isNovuAgent = integrationLink?.integration?.providerId === EmailProviderIdEnum.NovuAgent;
-  const isConnected = Boolean(integrationLink?.connectedAt) || Boolean(integrationLink && isNovuAgent);
+  const isConnected = integrationLink ? isAgentIntegrationConnected(integrationLink) : false;
   const integrationId = integrationLink?.integration?._id;
   const { integrations } = useFetchIntegrations();
 
