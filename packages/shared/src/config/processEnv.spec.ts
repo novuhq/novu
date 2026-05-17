@@ -178,9 +178,7 @@ describe('resolveDotenvPath', () => {
       fileExists: existsFromSet(['apps/inbound-mail/.env.test', 'apps/inbound-mail/.env']),
       join,
     });
-
-    // Even with a generic override present, NODE_ENV=test only picks the
-    // per-env file.
+    
     expect(chosen).toBe('apps/inbound-mail/.env.test');
   });
 });
