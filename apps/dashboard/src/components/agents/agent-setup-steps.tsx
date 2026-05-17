@@ -11,8 +11,9 @@ import {
   sendAgentWelcomeMessage,
 } from '@/api/agents';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { EmailSetupGuide } from './email-setup-guide';
 import { ProviderDropdown } from './provider-dropdown';
@@ -86,6 +87,7 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
+  const agentRoutes = useAgentRoutes();
   const [searchParams, setSearchParams] = useSearchParams();
   // Tracks the last conversationId for which a bridge-connected message was sent,
   // scoping dedup per conversation rather than globally for the component lifetime.
@@ -204,16 +206,16 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
     if (!currentEnvironment?.slug) return;
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+      `${buildRoute(agentRoutes.detailsTab, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         agentTab: 'integrations',
       })}${location.search}`
     );
-  }, [agent.identifier, currentEnvironment?.slug, location.search, navigate]);
+  }, [agent.identifier, agentRoutes.detailsTab, currentEnvironment?.slug, location.search, navigate]);
 
   return (
-    <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6">
+    <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
       <div
         className="absolute bottom-0 left-[22px] top-0 w-px"
         style={{

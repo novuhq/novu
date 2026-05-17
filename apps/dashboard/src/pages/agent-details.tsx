@@ -15,10 +15,11 @@ import {
 import { NovuApiError } from '@/api/api.client';
 import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
-import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
+import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
+import { useSetDispatchBreadcrumbLeaf } from '@/components/dashboard-shell/use-dispatch-breadcrumb';
 import { PageMeta } from '@/components/page-meta';
 import { Badge } from '@/components/primitives/badge';
 import {
@@ -34,15 +35,18 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/primitives/tabs';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { APP_IDS } from '@/utils/apps';
+import { DISPATCH_ONBOARDING_COMPLETED } from '@/utils/constants';
 import {
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
   type AgentDetailsTab,
   buildRoute,
   parseAgentDetailsTab,
-  ROUTES,
 } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -90,12 +94,15 @@ export function AgentDetailsPage() {
   const queryClient = useQueryClient();
   const { currentEnvironment, readOnly } = useEnvironment();
   const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const currentApp = useCurrentApp();
+  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
+  const agentRoutes = useAgentRoutes();
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
   const [setupModalDismissed, setSetupModalDismissed] = useState(false);
   const track = useTelemetry();
   const lastAgentDetailsTelemetryKey = useRef<string | null>(null);
 
-  const agentsListPath = buildRoute(ROUTES.AGENTS, {
+  const agentsListPath = buildRoute(agentRoutes.list, {
     environmentSlug: currentEnvironment?.slug ?? '',
   });
 
@@ -105,13 +112,37 @@ export function AgentDetailsPage() {
     enabled: Boolean(currentEnvironment && agentIdentifier && isConversationalAgentsEnabled),
   });
 
+  let agentBreadcrumbLabel: string | null = null;
+
+  if (agentQuery.error instanceof NovuApiError && agentQuery.error.status === 404) {
+    agentBreadcrumbLabel = 'Not found';
+  } else if (agentQuery.data) {
+    agentBreadcrumbLabel = agentQuery.data.name;
+  }
+
+  const dispatchBreadcrumbLeaf = useMemo(() => {
+    if (!isDispatchApp || !agentBreadcrumbLabel) return null;
+
+    return {
+      label: agentBreadcrumbLabel,
+      icon: <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />,
+    };
+  }, [isDispatchApp, agentBreadcrumbLabel]);
+
+  useSetDispatchBreadcrumbLeaf(dispatchBreadcrumbLeaf);
+
   const deleteMutation = useMutation({
     mutationFn: (identifier: string) =>
       deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
     onSuccess: async (_, identifier) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
-      track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
+      track(
+        isDispatchApp
+          ? TelemetryEvent.DISPATCH_AGENT_DELETED_FROM_DASHBOARD
+          : TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD,
+        { agentIdentifier: identifier }
+      );
       await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
       navigate(agentsListPath);
     },
@@ -140,6 +171,16 @@ export function AgentDetailsPage() {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
+  // Persist Dispatch onboarding completion once the user has finished setting up the agent
+  // (i.e. the agent has at least one connected integration on this page)
+  useEffect(() => {
+    if (!hasConnectedIntegration) {
+      return;
+    }
+
+    localStorage.setItem(DISPATCH_ONBOARDING_COMPLETED, 'true');
+  }, [hasConnectedIntegration]);
+
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;
   const showSetupModal =
@@ -165,19 +206,35 @@ export function AgentDetailsPage() {
 
     lastAgentDetailsTelemetryKey.current = dedupeKey;
 
-    track(TelemetryEvent.AGENT_DETAILS_PAGE_VISITED, {
-      agentIdentifier: agentQuery.data.identifier,
-      tab: currentTab,
-      integrationIdentifier: integrationIdentifier ?? undefined,
-    });
+    track(
+      isDispatchApp ? TelemetryEvent.DISPATCH_AGENT_DETAILS_PAGE_VISITED : TelemetryEvent.AGENT_DETAILS_PAGE_VISITED,
+      {
+        agentIdentifier: agentQuery.data.identifier,
+        tab: currentTab,
+        integrationIdentifier: integrationIdentifier ?? undefined,
+      }
+    );
 
     if (integrationIdentifier) {
-      track(TelemetryEvent.AGENT_INTEGRATION_GUIDE_VIEWED, {
-        agentIdentifier: agentQuery.data.identifier,
-        integrationIdentifier,
-      });
+      track(
+        isDispatchApp
+          ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_GUIDE_VIEWED
+          : TelemetryEvent.AGENT_INTEGRATION_GUIDE_VIEWED,
+        {
+          agentIdentifier: agentQuery.data.identifier,
+          integrationIdentifier,
+        }
+      );
     }
-  }, [agentIdentifier, agentQuery.data, currentTab, integrationIdentifier, isConversationalAgentsEnabled, track]);
+  }, [
+    agentIdentifier,
+    agentQuery.data,
+    currentTab,
+    integrationIdentifier,
+    isDispatchApp,
+    isConversationalAgentsEnabled,
+    track,
+  ]);
 
   if (!isConversationalAgentsEnabled) {
     return <Navigate to={agentsListPath} replace />;
@@ -191,7 +248,7 @@ export function AgentDetailsPage() {
     return (
       <Navigate
         replace
-        to={`${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+        to={`${buildRoute(agentRoutes.detailsTab, {
           environmentSlug: currentEnvironment.slug,
           agentIdentifier: encodeURIComponent(agentIdentifier),
           agentTab: AGENT_DETAILS_DEFAULT_TAB,
@@ -220,7 +277,7 @@ export function AgentDetailsPage() {
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+      `${buildRoute(agentRoutes.detailsTab, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         agentTab: value,
@@ -308,7 +365,7 @@ export function AgentDetailsPage() {
                   Overview
                 </TabsTrigger>
                 <TabsTrigger variant="regular" value="integrations" size="xl">
-                  Integrations
+                  Channels
                 </TabsTrigger>
               </TabsList>
 

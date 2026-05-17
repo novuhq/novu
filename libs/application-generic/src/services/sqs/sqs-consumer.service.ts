@@ -4,7 +4,7 @@ import { JobTopicNameEnum } from '@novu/shared';
 import { Consumer } from 'sqs-consumer';
 import { PinoLogger } from '../../logging';
 import { SqsService } from './sqs.service';
-import { SqsPayloadOffloadService } from './sqs-payload-offload.service';
+import { SqsPayloadOffloadService, SQS_LARGE_PAYLOAD_MARKER } from './sqs-payload-offload.service';
 import {
   ISqsConsumerOptions,
   ISqsMessageMeta,
@@ -67,6 +67,65 @@ function isNonRetryableDeleteError(error: unknown): boolean {
 }
 
 export type SqsMessageProcessor<T = unknown> = (data: T, meta: ISqsMessageMeta) => Promise<void>;
+
+/**
+ * Best-effort extraction of identifying fields from the SQS message body for
+ * observability. Used in error logs to correlate failures with a specific
+ * trigger / tenant / job without dumping the full payload (which can contain
+ * PII).
+ *
+ * Returns `{}` when the body is missing, malformed, or not an object.
+ * Returns `{ payloadOffloaded: true }` when the body is an S3-offload pointer
+ * (we intentionally do not fetch from S3 just for a log line). Never throws.
+ *
+ * Supports the field naming used by all queue DTOs:
+ * - workflow / subscriber-process: `transactionId`, `identifier`,
+ *   `organizationId`, `environmentId`, `userId`, `requestId`, `templateId`
+ * - standard: `_id`, `_organizationId`, `_environmentId`, `_userId`
+ */
+export function extractSqsMessageContext(rawBody: string | undefined): Record<string, string | boolean> {
+  if (!rawBody) {
+    return {};
+  }
+
+  let data: Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(rawBody);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+    data = parsed as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+
+  if (SQS_LARGE_PAYLOAD_MARKER in data) {
+    return { payloadOffloaded: true };
+  }
+
+  const context: Record<string, string | boolean> = {};
+  const pickString = (target: string, ...sources: string[]) => {
+    for (const source of sources) {
+      const value = data[source];
+      if (typeof value === 'string' && value.length > 0) {
+        context[target] = value;
+
+        return;
+      }
+    }
+  };
+
+  pickString('transactionId', 'transactionId');
+  pickString('identifier', 'identifier');
+  pickString('requestId', 'requestId');
+  pickString('templateId', 'templateId');
+  pickString('organizationId', 'organizationId', '_organizationId');
+  pickString('environmentId', 'environmentId', '_environmentId');
+  pickString('userId', 'userId', '_userId');
+  pickString('jobId', '_id');
+
+  return context;
+}
 
 /**
  * In-memory concurrency pool that mirrors BullMQ's Worker.close() lifecycle.
@@ -253,6 +312,7 @@ export class SqsConsumerService {
             error: error instanceof Error ? error.message : String(error),
             messageId,
             topic: this.topic,
+            ...extractSqsMessageContext(message.Body),
           },
           'SQS message failed, will be retried via visibility timeout',
           LOG_CONTEXT
@@ -302,6 +362,7 @@ export class SqsConsumerService {
               attempt,
               maxAttempts: DELETE_MAX_ATTEMPTS,
               nonRetryable: isNonRetryable,
+              ...extractSqsMessageContext(message.Body),
             },
             'Failed to delete SQS message after successful processing',
             LOG_CONTEXT

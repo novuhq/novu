@@ -12,6 +12,8 @@ import {
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { formatDateSimple } from '@/utils/format-date';
+import { ClaudeIcon } from '../icons/claude';
 
 type AgentDetailsHeaderProps = {
   agent: AgentResponse | undefined;
@@ -28,11 +30,12 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
     return (
       <header className="px-4 pt-2 pb-2 md:px-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="flex min-w-0 flex-col gap-1">
-            <Skeleton className="h-6 w-[min(100%,20ch)]" />
-            <Skeleton className="h-4 w-[min(100%,24ch)]" />
+          <div className="flex flex-col gap-1">
+            <Skeleton className="h-6 w-[20ch]" />
+            <Skeleton className="h-4 w-[16ch]" />
           </div>
           <div className="flex shrink-0 gap-3">
+            <Skeleton className="size-8 min-w-36 shrink-0 rounded-md" />
             <Skeleton className="size-8 shrink-0 rounded-md" />
           </div>
         </div>
@@ -53,12 +56,26 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
             ) : null}
           </div>
           <div className="flex min-w-0 items-center gap-1">
-            <RiRobot2Line className="text-text-sub size-4 shrink-0" aria-hidden />
-            <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">{agent.identifier}</span>
+            <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">Created</span>
+            <span className="ml-1 text-text-sub font-mono text-label-xs leading-4 tracking-tight">
+              {' '}
+              {formatDateSimple(agent.createdAt)}
+            </span>
           </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
+          {agent.runtime === 'managed' &&
+          agent.managedRuntime?.consoleUrl &&
+          agent.managedRuntime.providerId === 'anthropic' ? (
+            <Button variant="secondary" mode="outline" size="xs" className="gap-1.5" asChild>
+              <a href={agent.managedRuntime.consoleUrl} target="_blank" rel="noreferrer noopener">
+                <span>Open in</span>
+                <ClaudeIcon className="size-3.5 shrink-0" aria-hidden />
+                <span>Claude</span>
+              </a>
+            </Button>
+          ) : null}
           {canWrite && onRequestDelete ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

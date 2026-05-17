@@ -1,5 +1,11 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  decryptChannelConnectionAuth,
+  decryptCredentials,
+  FeatureFlagsService,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -45,6 +51,8 @@ export interface ResolvedAgentConfig {
   environmentId: string;
   organizationId: string;
   agentIdentifier: string;
+  /** Human-readable display name; used in email-action confirmation UI. */
+  agentName: string;
   integrationIdentifier: string;
   integrationId: string;
   acknowledgeOnReceived: boolean;
@@ -167,7 +175,8 @@ export class AgentConfigResolver {
       integrationIdentifier,
     });
     if (connection) {
-      connectionAccessToken = connection.auth.accessToken;
+      const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
+      connectionAccessToken = decryptedAuth?.accessToken;
     }
 
     // `connectedAt` is set the first time the platform actually delivers a
@@ -203,6 +212,7 @@ export class AgentConfigResolver {
       environmentId,
       organizationId,
       agentIdentifier: agent.identifier,
+      agentName: agent.name,
       integrationIdentifier,
       integrationId: integration._id,
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,

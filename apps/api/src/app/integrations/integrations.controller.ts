@@ -4,6 +4,7 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Post,
@@ -27,6 +28,7 @@ import {
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import {
+  ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   FeatureFlagsKeysEnum,
@@ -153,6 +155,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -179,6 +182,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -227,6 +231,8 @@ export class IntegrationsController {
     @Body() body: CreateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
+      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.createIntegrationUsecase.execute(
         CreateIntegrationCommand.create({
@@ -237,6 +243,7 @@ export class IntegrationsController {
           organizationId: user.organizationId,
           providerId: body.providerId,
           channel: body.channel,
+          kind: body.kind,
           credentials: body.credentials,
           active: body.active ?? false,
           check: body.check ?? false,
@@ -280,6 +287,8 @@ export class IntegrationsController {
     @Body() body: UpdateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
+      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.updateIntegrationUsecase.execute(
         UpdateIntegrationCommand.create({
@@ -295,6 +304,7 @@ export class IntegrationsController {
           check: body.check ?? false,
           conditions: body.conditions,
           configurations: body.configurations,
+          restrictToUserEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
         })
       );
 
@@ -823,7 +833,30 @@ export class IntegrationsController {
     );
   }
 
+  private assertEnvironmentScopedForApiKey(user: UserSessionData, requestedEnvironmentId?: string): void {
+    if (user.scheme !== ApiAuthSchemeEnum.API_KEY) {
+      return;
+    }
+
+    if (requestedEnvironmentId && requestedEnvironmentId !== user.environmentId) {
+      throw new ForbiddenException(
+        'API key authentication is scoped to a single environment and cannot target a different `_environmentId`. ' +
+          'Use an API key from the target environment, or authenticate with a session token.'
+      );
+    }
+  }
+
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
+    /*
+     * API-key auth must never receive decrypted provider credentials, regardless of RBAC state.
+     * API keys grant ALL_PERMISSIONS in `community.auth.service.ts`, which would otherwise
+     * allow the RBAC path below to succeed and leak every stored provider secret to any
+     * caller holding an environment API key.
+     */
+    if (user.scheme === ApiAuthSchemeEnum.API_KEY) {
+      return false;
+    }
+
     const organization = await this.organizationRepository.findOne({
       _id: user.organizationId,
     });

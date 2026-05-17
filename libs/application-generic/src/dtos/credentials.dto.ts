@@ -273,4 +273,23 @@ export class CredentialsDto implements ICredentials {
   @ValidateIf((_, v) => typeof v === 'string' && v.trim().length > 0)
   @IsEmail()
   fromAddressOverride?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Claude Managed Agents: ID of the Anthropic environment tied to this integration. ' +
+      'Hydrated by the API at integration provisioning time.',
+  })
+  @IsString()
+  @IsOptional()
+  externalEnvironmentId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Claude Managed Agents: id of the Anthropic workspace used in console deep links. ' +
+      "Defaults to `'default'` (the Default Workspace). " +
+      'Set this when the API key is scoped to a custom workspace (e.g. `wrkspc_…`).',
+  })
+  @IsString()
+  @IsOptional()
+  externalWorkspaceId?: string;
 }

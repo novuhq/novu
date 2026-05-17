@@ -11,7 +11,8 @@ import {
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { buildRoute } from '@/utils/routes';
 
 type ConnectedProvidersSectionProps = {
   agent: AgentResponse;
@@ -54,7 +55,7 @@ function AddProviderCard({ to }: { to: string }) {
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">Add new provider</span>
+        <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">Add new channel</span>
         <RiArrowRightSLine className="text-text-sub size-4 shrink-0" />
       </div>
     </Link>
@@ -73,6 +74,7 @@ function ProviderCardSkeleton() {
 export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionProps) {
   const { currentEnvironment } = useEnvironment();
   const location = useLocation();
+  const agentRoutes = useAgentRoutes();
 
   const integrationsQuery = useQuery({
     queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
@@ -85,7 +87,7 @@ export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionPr
     enabled: Boolean(currentEnvironment && agent.identifier),
   });
 
-  const integrationsTabPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+  const integrationsTabPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',
@@ -96,15 +98,15 @@ export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionPr
 
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
-      <div className="flex items-center justify-between px-2 py-1.5">
+      <div className="flex items-center justify-between px-2 pt-1 pb-1.5">
         <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
-          Connected providers
+          Connected channels
         </span>
         <Link
           to={integrationsTabPath}
-          className="text-text-sub hover:text-text-strong flex items-center gap-0.5 rounded-lg p-1.5 text-label-xs font-medium transition-colors"
+          className="text-text-sub hover:text-text-strong flex items-center gap-0.5 rounded-lg text-label-xs font-medium transition-colors p-0"
         >
-          Manage integrations
+          Manage channels
           <RiArrowRightLine className="size-4" />
         </Link>
       </div>

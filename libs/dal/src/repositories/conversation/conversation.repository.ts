@@ -182,6 +182,32 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Atomically set externalSessionId only if not already set.
+   * Prevents race conditions when two concurrent first-messages
+   * try to create sessions simultaneously.
+   */
+  async setExternalSessionIdIfMissing(
+    environmentId: string,
+    conversationId: string,
+    sessionId: string
+  ): Promise<boolean> {
+    const result = await this.update(
+      {
+        _id: conversationId,
+        _environmentId: environmentId,
+        externalSessionId: { $exists: false },
+      },
+      { $set: { externalSessionId: sessionId } }
+    );
+
+    return result.matched > 0;
+  }
+
+  async clearExternalSessionId(environmentId: string, conversationId: string): Promise<void> {
+    await this.update({ _id: conversationId, _environmentId: environmentId }, { $unset: { externalSessionId: '' } });
+  }
+
   async listConversations({
     organizationId,
     environmentId,

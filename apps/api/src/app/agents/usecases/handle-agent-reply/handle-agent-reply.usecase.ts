@@ -39,6 +39,10 @@ export class HandleAgentReply {
   }
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
+    // TODO(managed-agents): When agent.runtime === 'managed', branch here to call
+    // IAgentRuntimeProvider.runConversationTurn(externalAgentId, userMessage) instead of
+    // routing through the self-hosted bridge. This is deferred to a future PR by the runtime team.
+
     if (command.reply && command.edit) {
       throw new BadRequestException('Only one of reply or edit can be provided');
     }

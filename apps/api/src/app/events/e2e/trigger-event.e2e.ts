@@ -4,7 +4,6 @@ import { SubscriberPayloadDto } from '@novu/api/src/models/components/subscriber
 import { ClickHouseService, DetailEnum, QueryBuilder, Trace, TraceLogRepository } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
-  EnvironmentRepository,
   ExecutionDetailsRepository,
   IntegrationRepository,
   JobRepository,
@@ -61,7 +60,6 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
   const integrationRepository = new IntegrationRepository();
   const jobRepository = new JobRepository();
   const executionDetailsRepository = new ExecutionDetailsRepository();
-  const environmentRepository = new EnvironmentRepository();
   const tenantRepository = new TenantRepository();
   let novuClient: Novu;
 
@@ -1950,6 +1948,99 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(body.error).to.equal('Unprocessable Entity');
     });
 
+    it('should reject trigger when to is an object with empty subscriberId', async () => {
+      const response = await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: { subscriberId: '' },
+          payload: {},
+        })
+        .expect(422);
+
+      expect(response.body.statusCode).to.equal(422);
+      expect(response.body.message).to.equal('Validation Error');
+    });
+
+    it('should reject trigger when to is an array containing an empty subscriberId', async () => {
+      const response = await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [{ subscriberId: subscriber.subscriberId }, { subscriberId: '' }],
+          payload: {},
+        })
+        .expect(422);
+
+      expect(response.body.statusCode).to.equal(422);
+      expect(response.body.message).to.equal('Validation Error');
+    });
+
+    it('should reject trigger when to is an empty string', async () => {
+      const response = await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: '',
+          payload: {},
+        })
+        .expect(422);
+
+      expect(response.body.statusCode).to.equal(422);
+      expect(response.body.message).to.equal('Validation Error');
+    });
+
+    it('should reject trigger when to array contains an empty string', async () => {
+      const response = await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [subscriber.subscriberId, ''],
+          payload: {},
+        })
+        .expect(422);
+
+      expect(response.body.statusCode).to.equal(422);
+      expect(response.body.message).to.equal('Validation Error');
+    });
+
+    it('should reject trigger when to is an empty array', async () => {
+      const response = await session.testAgent
+        .post('/v1/events/trigger')
+        .send({
+          name: template.triggers[0].identifier,
+          to: [],
+          payload: {},
+        })
+        .expect(422);
+
+      expect(response.body.statusCode).to.equal(422);
+      expect(response.body.message).to.equal('Validation Error');
+    });
+
+    it('should reject bulk trigger when any event has an empty subscriberId', async () => {
+      const response = await session.testAgent
+        .post('/v1/events/trigger/bulk')
+        .send({
+          events: [
+            {
+              name: template.triggers[0].identifier,
+              to: [subscriber.subscriberId],
+              payload: {},
+            },
+            {
+              name: template.triggers[0].identifier,
+              to: [{ subscriberId: '' }],
+              payload: {},
+            },
+          ],
+        })
+        .expect(422);
+
+      expect(response.body.statusCode).to.equal(422);
+      expect(response.body.message).to.equal('Validation Error');
+    });
+
     it('should trigger with given required variables', async () => {
       template = await session.createTemplate({
         steps: [
@@ -2701,16 +2792,10 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         expect(messages.length).to.be.equal(1);
         expect(messages[0].providerId).to.be.equal(EmailProviderIdEnum.SendGrid);
 
-        const prodEnv = await environmentRepository.findOne({
-          name: 'Production',
-          _organizationId: session.organization._id,
-        });
-
         const payload: CreateIntegrationRequestDto = {
           providerId: EmailProviderIdEnum.Mailgun,
           channel: 'email',
           credentials: { apiKey: '123', secretKey: 'abc' },
-          environmentId: prodEnv?._id,
           active: true,
           check: false,
         };

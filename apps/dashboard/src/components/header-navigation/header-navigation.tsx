@@ -21,10 +21,19 @@ type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
   hideBridgeUrl?: boolean;
   showMobileNav?: boolean;
   hideRestItems?: boolean;
+  hidePublish?: boolean;
 };
 
 export const HeaderNavigation = (props: HeaderNavigationProps) => {
-  const { startItems, hideBridgeUrl = false, showMobileNav = false, hideRestItems = false, className, ...rest } = props;
+  const {
+    startItems,
+    hideBridgeUrl = false,
+    showMobileNav = false,
+    hideRestItems = false,
+    hidePublish = false,
+    className,
+    ...rest
+  } = props;
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
   const canPublish = has({ permission: PermissionsEnum.ENVIRONMENT_WRITE });
@@ -63,7 +72,7 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
           <RiSearchLine className="size-3 text-text-sub" />
         </Button>
         <span className="hidden md:contents">
-          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && canPublish && <PublishButton />}
+          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && canPublish && !hidePublish && <PublishButton />}
           {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
         </span>
         {!hideRestItems && (

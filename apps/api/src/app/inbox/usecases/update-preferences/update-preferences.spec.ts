@@ -170,6 +170,44 @@ describe('UpdatePreferences', () => {
     });
   });
 
+  it('should throw NotFoundException when the subscriptionIdentifier is not owned by the authenticated subscriber', async () => {
+    const command = {
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      subscriberId: 'test-mockSubscriber',
+      contextKeys: [],
+      level: PreferenceLevelEnum.TEMPLATE,
+      workflowIdOrIdentifier: '6447aff3d89122e250412c28',
+      subscriptionIdentifier: 'someone-elses-subscription',
+      all: { enabled: false },
+      includeInactiveChannels: false,
+    };
+
+    subscriberRepositoryMock.findBySubscriberId.resolves(mockedSubscriber);
+    getWorkflowByIdsUsecase.execute.resolves(mockedWorkflow);
+    featureFlagsServiceMock.getFlag.resolves(false);
+    topicSubscribersRepositoryMock.buildContextExactMatchQuery = sinon.stub().returns({}) as any;
+    topicSubscribersRepositoryMock.findOne.resolves(null);
+
+    let caught: any;
+    try {
+      await updatePreferences.execute(command);
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).to.exist;
+    expect(caught.message).to.contain('someone-elses-subscription');
+    expect(upsertPreferencesMock.upsertTopicSubscriptionPreferences.called).to.equal(false);
+    expect(upsertPreferencesMock.upsertSubscriberWorkflowPreferences.called).to.equal(false);
+
+    const findOneCalls = topicSubscribersRepositoryMock.findOne.getCalls();
+    expect(findOneCalls.length).to.be.greaterThan(0);
+    for (const call of findOneCalls) {
+      expect(call.args[0]).to.have.property('_subscriberId', mockedSubscriber._id);
+    }
+  });
+
   it('should update subscriber preference when using workflow identifier', async () => {
     const command = {
       environmentId: 'env-1',

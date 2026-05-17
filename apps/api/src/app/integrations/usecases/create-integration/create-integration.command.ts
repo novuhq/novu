@@ -1,5 +1,5 @@
 import { MessageFilter } from '@novu/application-generic';
-import { ChannelTypeEnum, ICredentialsDto } from '@novu/shared';
+import { ChannelTypeEnum, ICredentialsDto, IntegrationKindEnum } from '@novu/shared';
 import { IsArray, IsDefined, IsEnum, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
@@ -17,9 +17,14 @@ export class CreateIntegrationCommand extends EnvironmentCommand {
   @IsString()
   providerId: string;
 
-  @IsDefined()
+  @IsOptional()
   @IsEnum(ChannelTypeEnum)
-  channel: ChannelTypeEnum;
+  channel?: ChannelTypeEnum;
+
+  /** Distinguishes delivery integrations from agent-runtime integrations. Defaults to 'delivery'. */
+  @IsOptional()
+  @IsEnum(IntegrationKindEnum)
+  kind?: IntegrationKindEnum;
 
   @IsOptional()
   credentials?: ICredentialsDto;

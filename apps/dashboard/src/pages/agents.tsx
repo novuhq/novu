@@ -29,8 +29,10 @@ import { Separator } from '@/components/primitives/separator';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { DismissButton, Icon as TagIcon, Root as TagRoot } from '@/components/primitives/tag';
 import { Textarea } from '@/components/primitives/textarea';
+import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { APP_IDS } from '@/utils/apps';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
@@ -404,15 +406,13 @@ function AgentsEarlyAccessDialog({ open, onOpenChange }: AgentsEarlyAccessDialog
 export function AgentsPage() {
   const [earlyAccessOpen, setEarlyAccessOpen] = useState(false);
   const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const currentApp = useCurrentApp();
+  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
   const track = useTelemetry();
 
   useEffect(() => {
-    if (!isConversationalAgentsEnabled) {
-      return;
-    }
-
-    track(TelemetryEvent.AGENTS_PAGE_VISITED);
-  }, [isConversationalAgentsEnabled, track]);
+    track(isDispatchApp ? TelemetryEvent.DISPATCH_AGENTS_PAGE_VISITED : TelemetryEvent.AGENTS_PAGE_VISITED);
+  }, [isDispatchApp, track]);
 
   return (
     <>

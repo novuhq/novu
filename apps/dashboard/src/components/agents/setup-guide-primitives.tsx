@@ -100,8 +100,8 @@ export function SetupStep({
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
-      <div className="flex gap-20">
-        <div className="flex min-w-0 max-w-[400px] flex-1 flex-col">
+      <div className="flex flex-col gap-4 md:flex-row md:gap-20">
+        <div className="flex min-w-0 flex-1 flex-col md:max-w-[400px]">
           <div className="flex flex-col gap-2">
             {sectionLabel && (
               <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">

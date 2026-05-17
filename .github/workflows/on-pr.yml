@@ -17,9 +17,9 @@ jobs:
     environment: Linting
     steps:
       - name: 'Checkout Repository'
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - name: 'Dependency Review'
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48 # v4
 
   find-flags:
     runs-on: blacksmith-4vcpu-ubuntu-2404
@@ -27,10 +27,10 @@ jobs:
     environment: Linting
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Find flags
-        uses: launchdarkly/find-code-references-in-pull-request@v2
+        uses: launchdarkly/find-code-references-in-pull-request@30f4c4ab2949bbf258b797ced2fbf6dea34df9ce # v2
         id: find-flags
         with:
           project-key: default
@@ -58,7 +58,7 @@ jobs:
       # Get current branch name
       - name: Get branch name
         id: branch-name
-        uses: tj-actions/branch-names@v9.0.0
+        uses: tj-actions/branch-names@e497ceb8ccd43fd9573cf2e375216625bc411d1f # v9.0.0
       # Get base branch name to compare with. Base branch on a PR, "main" branch on pushing.
       - name: Get base branch name
         id: get-base-branch-name
@@ -68,7 +68,7 @@ jobs:
           else
             echo "branch=main" >> $GITHUB_OUTPUT
           fi
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           # Fetch enough history to find the merge base between base and head
           # This is typically much faster than fetch-depth: 0
@@ -84,7 +84,7 @@ jobs:
       - uses: ./.github/actions/setup-project-minimal
       # Configure Nx to be able to detect changes between branches when we are in a PR
       - name: Derive appropriate SHAs for base and head for `nx affected` commands
-        uses: nrwl/nx-set-shas@v2
+        uses: nrwl/nx-set-shas@59075b03c42ae79986d96d761eeb15094df7a76e # v2
         with:
           main-branch-name: ${{steps.get-base-branch-name.outputs.branch}}
 
@@ -120,11 +120,11 @@ jobs:
     timeout-minutes: 80
     steps:
       - run: echo '${{ needs.get-affected.outputs.test-providers }}'
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
@@ -147,14 +147,14 @@ jobs:
       - name: Affected packages
         run: echo '${{ needs.get-affected.outputs.test-packages }}'
 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - uses: ./.github/actions/setup-project
         with:
           slim: 'true'
 
       - name: Build
-        uses: mansagroup/nrwl-nx-action@v3
+        uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
           LOG_LEVEL: 'info'
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
@@ -163,7 +163,7 @@ jobs:
           projects: '@novu/api'
 
       - name: Run Lint, Build, Test
-        uses: mansagroup/nrwl-nx-action@v3
+        uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
           LOG_LEVEL: 'info'
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
@@ -180,12 +180,12 @@ jobs:
     steps:
       - name: Affected libs
         run: echo '${{ needs.get-affected.outputs.test-libs }}'
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - uses: ./.github/actions/setup-project
 
       - name: Run Lint, Build, Test
-        uses: mansagroup/nrwl-nx-action@v3
+        uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
@@ -209,7 +209,7 @@ jobs:
       id-token: write
     steps:
       - run: echo ${{ matrix.projectName }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         name: Checkout with submodules
         with:
           submodules: true
@@ -221,7 +221,7 @@ jobs:
           slim: ${{ !contains(matrix.projectName, '@novu/api-service') && !contains(matrix.projectName, '@novu/worker') && !contains(matrix.projectName, '@novu/ws') && !contains(matrix.projectName, '@novu/inbound-mail')}}
 
       - uses: ./.github/actions/setup-redis-cluster
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         name: Lint and build and test
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
@@ -230,7 +230,7 @@ jobs:
           projects: '@novu/api'
           args: ''
 
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         name: Lint and build and test
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
@@ -251,7 +251,7 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
       - uses: ./.github/actions/setup-project
       - uses: ./.github/actions/setup-redis-cluster
       - uses: ./.github/actions/run-api
@@ -299,7 +299,7 @@ jobs:
       - test_e2e_api
     steps:
       - name: Checkout workflow source
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           # We only need the workflow file itself to validate the needs list.
           fetch-depth: 1
