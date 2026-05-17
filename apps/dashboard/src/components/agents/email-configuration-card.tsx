@@ -1,6 +1,6 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { type ReactNode, useMemo } from 'react';
-import { RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiInformation2Fill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { OutboundProviderSelect } from '@/components/agents/outbound-provider-select';
@@ -28,6 +28,7 @@ export function EmailConfigurationCardBody({ agent, integrationId }: EmailConfig
     outboundId,
     outboundFromAddress,
     configuredAddresses,
+    isOutboundDemo,
     serverUseFromAddressOverride,
     serverFromAddressOverride,
     onOutboundSelect,
@@ -44,12 +45,15 @@ export function EmailConfigurationCardBody({ agent, integrationId }: EmailConfig
   return (
     <>
       <CardRow
-        title="Providers to send emails"
-        description="Configure providers to send emails via Novu. Only providers configured in the Integration store will be available here."
+        title="Send emails via"
+        description="The Novu Email demo sender is used by default so your agent can reply out of the box. Switch to your own provider for higher volume and full deliverability control."
         divider
       >
         <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
-        <ManageLink to={ROUTES.INTEGRATIONS}>Manage email providers</ManageLink>
+        {isOutboundDemo ? <DemoProviderHint /> : null}
+        <ManageLink to={ROUTES.INTEGRATIONS}>
+          {isOutboundDemo ? 'Connect your own email provider' : 'Manage email providers'}
+        </ManageLink>
       </CardRow>
 
       <CardRow
@@ -65,6 +69,18 @@ export function EmailConfigurationCardBody({ agent, integrationId }: EmailConfig
         />
       </CardRow>
     </>
+  );
+}
+
+function DemoProviderHint() {
+  return (
+    <div className="bg-bg-weak border-stroke-weak text-text-sub flex items-start gap-2 rounded-md border px-2 py-1.5">
+      <RiInformation2Fill className="text-away-base mt-px size-3.5 shrink-0" aria-hidden />
+      <p className="text-paragraph-xs leading-4">
+        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider
+        to send at scale.
+      </p>
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
+import { RiInformation2Fill, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { type AgentResponse, sendAgentTestEmail } from '@/api/agents';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
@@ -45,6 +45,7 @@ export function EmailSetupGuide({
     outboundId,
     configuredAddresses,
     domains,
+    isOutboundDemo,
     needsCredentialsStep,
     hasOutboundCredentials,
     outboundProviderConfig,
@@ -76,16 +77,18 @@ export function EmailSetupGuide({
 
   const hasAddresses = configuredAddresses.length > 0;
 
+  // The "Setup providers to send emails" step starts complete: the agent
+  // already has the Novu demo sender selected by default, and choosing a real
+  // provider is an explicit upgrade rather than a prerequisite. For demo,
+  // `needsCredentialsStep` stays false so the credentials step is skipped
+  // naturally and the wizard advances straight to the inbound-address step.
   const firstIncompleteStep = useMemo(() => {
-    if (!outboundId) return base;
     if (needsCredentialsStep && !hasOutboundCredentials) return credentialsStepIndex;
     if (!hasAddresses) return inboundStepIndex;
     if (!testConnected) return testStepIndex;
 
     return testStepIndex + 1;
   }, [
-    base,
-    outboundId,
     needsCredentialsStep,
     hasOutboundCredentials,
     credentialsStepIndex,
@@ -101,16 +104,21 @@ export function EmailSetupGuide({
         index={base}
         status={deriveStepStatus(base, firstIncompleteStep)}
         sectionLabel="SETUP SENDING EMAILS"
-        title="Setup providers to send emails"
+        title="Send emails via"
         description={
           <span>
-            {'Choose which email provider sends outbound replies from your agent. '}
+            {'The Novu Email demo sender is selected by default. Switch to your own provider for higher volume. '}
             <Link to={ROUTES.INTEGRATIONS} className="text-text-sub underline underline-offset-2">
               Manage email providers
             </Link>
           </span>
         }
-        rightContent={<OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} />}
+        rightContent={
+          <div className="flex w-full flex-col gap-1.5">
+            <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} />
+            {isOutboundDemo ? <DemoProviderHint /> : null}
+          </div>
+        }
       />
 
       {needsCredentialsStep && (
@@ -231,5 +239,17 @@ export function EmailSetupGuide({
       {listening}
       {credentialsSidebar}
     </>
+  );
+}
+
+function DemoProviderHint() {
+  return (
+    <div className="bg-bg-weak border-stroke-weak text-text-sub flex items-start gap-2 rounded-md border px-2 py-1.5">
+      <RiInformation2Fill className="text-away-base mt-px size-3.5 shrink-0" aria-hidden />
+      <p className="text-paragraph-xs leading-4">
+        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider
+        to send at scale.
+      </p>
+    </div>
   );
 }
