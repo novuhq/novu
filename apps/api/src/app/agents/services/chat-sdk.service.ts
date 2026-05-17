@@ -1,8 +1,10 @@
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import * as https from 'node:https';
+import { randomUUID } from 'node:crypto';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import {
+  areNovuEmailCredentialsSet,
   assertSafeOutboundUrl,
   buildAgentSharedInbox,
   CacheService,
@@ -14,7 +16,7 @@ import {
   PinoLogger,
   SsrfBlockedError,
 } from '@novu/application-generic';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
@@ -181,7 +183,8 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly inboundHandler: AgentInboundHandler,
     private readonly integrationRepository: IntegrationRepository,
     private readonly actionTokenService: AgentEmailActionTokenService,
-    private readonly calculateLimitNovuIntegration: CalculateLimitNovuIntegration
+    private readonly calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    private readonly messageRepository: MessageRepository
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -1123,16 +1126,24 @@ export class ChatSdkService implements OnModuleDestroy {
       );
     }
 
+    if (!areNovuEmailCredentialsSet()) {
+      throw new BadRequestException(
+        'Novu demo email is not configured on this deployment. Attach an outbound email provider to send replies.'
+      );
+    }
+
     const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix!, config.credentials.inboxRoutingKey!);
 
+    const syntheticId = `synthetic-${config.environmentId}`;
+
     const syntheticIntegration: IntegrationEntity = {
-      _id: 'novu-demo-synthetic',
+      _id: syntheticId,
       _environmentId: config.environmentId,
       _organizationId: config.organizationId,
       providerId: EmailProviderIdEnum.Novu,
       channel: ChannelTypeEnum.EMAIL,
       name: 'Novu Email (demo)',
-      identifier: 'novu-demo-synthetic',
+      identifier: syntheticId,
       active: true,
       primary: false,
       credentials: {
@@ -1169,7 +1180,32 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const result = await handler.send(mailOptions).catch(toDeliveryError);
 
-    return { messageId: result?.id || params.messageId || '' };
+    const messageIdForReturn = result?.id || params.messageId || '';
+
+    try {
+      await this.messageRepository.create({
+        _environmentId: config.environmentId,
+        _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.EMAIL,
+        providerId: EmailProviderIdEnum.Novu,
+        email: params.to,
+        subject: params.subject,
+        transactionId: messageIdForReturn || randomUUID(),
+        payload: {
+          agentId: config.agentId,
+          html: params.html,
+          text: params.text,
+        },
+        tags: ['agent-demo-reply'],
+      });
+    } catch (err) {
+      this.logger.warn(
+        { err, environmentId: config.environmentId, agentId: config.agentId },
+        'Failed to persist Novu demo email message for quota accounting'
+      );
+    }
+
+    return { messageId: messageIdForReturn };
   }
 
   private async createChatInstance(

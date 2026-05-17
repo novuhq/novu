@@ -6,6 +6,7 @@ import {
   ConversationActivityRepository,
   ConversationRepository,
   IntegrationRepository,
+  MessageRepository,
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
@@ -37,6 +38,7 @@ import { USE_CASES } from './usecases';
     ConversationRepository,
     ConversationActivityRepository,
     IntegrationRepository,
+    MessageRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,

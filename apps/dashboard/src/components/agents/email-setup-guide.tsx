@@ -13,7 +13,27 @@ import { InboundAddressConfig } from './inbound-address-config';
 import { OutboundProviderSelect } from './outbound-provider-select';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
-import { useEmailSetupCredentials } from './use-email-setup-credentials';
+import { useEmailSetupCredentials, type ConfiguredAddress } from './use-email-setup-credentials';
+
+function resolveTestEmailTarget(
+  customTarget: ConfiguredAddress | undefined,
+  sharedInboundAddress: string | undefined,
+  hasSharedInbox: boolean
+): string | undefined {
+  if (customTarget) {
+    if (customTarget.address === '*') {
+      return `test@${customTarget.domain}`;
+    }
+
+    return `${customTarget.address}@${customTarget.domain}`;
+  }
+
+  if (hasSharedInbox) {
+    return sharedInboundAddress;
+  }
+
+  return undefined;
+}
 
 export type EmailSetupGuideProps = {
   agent: AgentResponse;
@@ -77,11 +97,7 @@ export function EmailSetupGuide({
     mutationFn: async () => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const customTarget = configuredAddresses[0];
-      const targetAddress = customTarget
-        ? customTarget.address === '*'
-          ? `test@${customTarget.domain}`
-          : `${customTarget.address}@${customTarget.domain}`
-        : sharedInboundAddress;
+      const targetAddress = resolveTestEmailTarget(customTarget, sharedInboundAddress, hasSharedInbox);
       if (!targetAddress) throw new Error('No inbound address configured.');
       await sendAgentTestEmail(environment, agent.identifier, targetAddress);
     },

@@ -48,6 +48,19 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
 
+function findLinkedNovuAgentIntegration(
+  linkedIntegrationIds: Set<string> | undefined,
+  integrations: IIntegration[] | undefined
+): IIntegration | undefined {
+  if (!linkedIntegrationIds?.size || !integrations?.length) {
+    return undefined;
+  }
+
+  return integrations.find(
+    (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds.has(i._id)
+  );
+}
+
 /** One row per provider type in the collapsed list. */
 type ProviderTypeItem = {
   providerId: string;
@@ -120,7 +133,7 @@ function buildDropdownItems(
       displayName,
       comingSoon: false,
       requiresBusinessTier: cp.requiresBusinessTier ?? false,
-      // NovuAgent is 1:1 per agent — never surface existing integrations from other agents.
+      // NovuAgent is 1:1 per agent — never list other agents' instances (see `findLinkedNovuAgentIntegration`).
       integrations: cp.providerId === EmailProviderIdEnum.NovuAgent ? [] : existing,
     });
   }
@@ -179,9 +192,7 @@ export function ProviderDropdown({
     // independent of the caller's `excludeLinked` preference (which only
     // controls whether *other providers'* already-linked instances are shown).
     if (linkedIntegrationIds?.size) {
-      const linkedNovuAgent = integrations?.find(
-        (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds.has(i._id)
-      );
+      const linkedNovuAgent = findLinkedNovuAgentIntegration(linkedIntegrationIds, integrations);
       if (linkedNovuAgent) {
         items = items.filter((item) => item.providerId !== EmailProviderIdEnum.NovuAgent);
       }

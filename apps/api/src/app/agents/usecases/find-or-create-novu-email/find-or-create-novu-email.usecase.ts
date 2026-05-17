@@ -33,6 +33,9 @@ import {
 import { ClientSession } from 'mongoose';
 import shortid from 'shortid';
 
+import type { AgentIntegrationResponseDto } from '../../dtos';
+import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
+
 /**
  * Max collision-retry attempts when minting the per-agent inbox routing key.
  * 8 chars from a 36-char alphabet gives ~2.8 × 10¹² combinations, so a duplicate
@@ -43,9 +46,6 @@ const ROUTING_KEY_MAX_ATTEMPTS = 5;
 
 /** Mongo duplicate-key error code. */
 const MONGO_DUPLICATE_KEY = 11000;
-
-import type { AgentIntegrationResponseDto } from '../../dtos';
-import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
 
 export type FindOrCreateNovuEmailResult = {
   response: AgentIntegrationResponseDto;
@@ -252,7 +252,6 @@ export class FindOrCreateNovuEmail {
         _integrationId: integration._id,
         _environmentId: environmentId,
         _organizationId: organizationId,
-        connectedAt: new Date(),
       },
       { session }
     );

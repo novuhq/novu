@@ -391,8 +391,7 @@ export class AgentsController {
     description:
       'Disabling drops inbound mail addressed to this agent on the shared `agentconnect.sh` domain — custom-domain ' +
       'routes continue to deliver. Refused when no custom-domain inbox is configured (would leave the agent with ' +
-      'zero inbound paths). When the disabled call clears the current primary, the oldest custom-domain route is ' +
-      'auto-promoted.',
+      'zero inbound paths).',
   })
   @ApiNotFoundResponse({ description: 'The agent or its Novu Email integration was not found.' })
   @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)

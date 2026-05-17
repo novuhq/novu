@@ -245,7 +245,7 @@ describe('DomainRouteStrategy', () => {
         credentials: {
           inboxRoutingKey: ROUTING_KEY,
           emailSlugPrefix: 'wine-bot',
-        },
+        } as { inboxRoutingKey: string; emailSlugPrefix: string; sharedInboxDisabled?: boolean },
       };
     }
 

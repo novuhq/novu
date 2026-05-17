@@ -222,19 +222,9 @@ export type AgentIntegrationEmbedded = {
   channel: ChannelTypeEnum;
   active: boolean;
   /**
-   * Cloud only. The "headline" inbound address surfaced to the user. Resolves
-   * to `credentials.primaryInboundAddress` when set, otherwise to the
-   * synthetic shared inbox (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`).
-   * Undefined when the shared-inbox feature is disabled, the provider is not
-   * `novu-email-agent`, or the user has disabled the shared inbox without
-   * choosing a custom primary. Set even when the integration is paused so the
-   * dashboard can still display the address.
-   */
-  defaultInboundAddress?: string;
-  /**
-   * Cloud only. The Novu shared inbox address for this agent, regardless of
-   * which address is currently primary. The dashboard uses this to render the
-   * shared inbox row in the inbox list manager.
+   * Cloud only. The Novu shared inbox address for this agent when the shared-inbox
+   * feature is enabled. The dashboard uses this as the headline inbound address and
+   * to render the shared inbox row in the inbox list.
    */
   sharedInboundAddress?: string;
   /**

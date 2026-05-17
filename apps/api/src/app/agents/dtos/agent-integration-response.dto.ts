@@ -29,19 +29,8 @@ export class AgentIntegrationResponseIntegrationDto {
 
   @ApiPropertyOptional({
     description:
-      'The "headline" inbound address surfaced to the user. Resolves to ' +
-      '`credentials.primaryInboundAddress` when set and still valid, otherwise to the synthetic shared inbox ' +
-      '(`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). Only present on cloud when the shared-inbox ' +
-      'feature is enabled; remains set even when the integration is paused so the dashboard can still display ' +
-      'the address.',
-  })
-  defaultInboundAddress?: string;
-
-  @ApiPropertyOptional({
-    description:
-      'The Novu shared inbox address for this agent. Set whenever the cloud shared-inbox feature is enabled, ' +
-      'independent of which address is currently primary. The dashboard uses this to render the shared inbox ' +
-      'row in the inbox list manager even when the user has flipped a custom domain to primary.',
+      'The Novu shared inbox address for this agent. Set whenever the cloud shared-inbox feature is enabled. ' +
+      'The dashboard uses this as the headline inbound address and to render the shared inbox row in the inbox list.',
   })
   sharedInboundAddress?: string;
 
@@ -70,7 +59,7 @@ export class AgentIntegrationResponseDto {
   _organizationId: string;
 
   @ApiPropertyOptional({
-    description: 'Set when the agent–integration link has been used (e.g. first credential resolution).',
+    description: 'Set when the agent–integration link received its first inbound webhook delivery.',
   })
   connectedAt?: string | null;
 

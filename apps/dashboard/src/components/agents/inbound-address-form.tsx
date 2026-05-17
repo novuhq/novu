@@ -17,10 +17,9 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
 /**
- * Valid local-part characters per RFC 5321 (dot-atom subset we accept). We
- * intentionally allow `*` as a single-char wildcard handled by the API.
+ * Valid local-part: bare `*` (wildcard) or lowercase dot-atom subset.
  */
-const LOCAL_PART_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+$/;
+const LOCAL_PART_REGEX = /^(\*|[a-z0-9._-]+)$/;
 
 type InboundAddressFormProps = {
   domains: DomainResponse[];

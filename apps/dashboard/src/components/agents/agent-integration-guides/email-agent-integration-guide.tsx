@@ -26,15 +26,12 @@ export function EmailAgentIntegrationGuide({
   onRequestRemoveIntegration,
   isRemovingIntegration,
 }: EmailAgentIntegrationGuideProps) {
-  const isConnected = Boolean(integrationLink?.connectedAt);
+  const isNovuAgent = integrationLink?.integration?.providerId === EmailProviderIdEnum.NovuAgent;
+  const isConnected = Boolean(integrationLink?.connectedAt) || Boolean(integrationLink && isNovuAgent);
   const integrationId = integrationLink?.integration?._id;
   const { integrations } = useFetchIntegrations();
 
-  // The shared-inbox feature is gated on the API computing a
-  // `defaultInboundAddress` for the linked integration. When set, the cloud
-  // auto-provision path is active; non-NovuAgent links and self-hosted
-  // deployments leave it undefined.
-  const isSharedInboxEnabled = Boolean(integrationLink?.integration?.defaultInboundAddress);
+  const isSharedInboxEnabled = Boolean(integrationLink?.integration?.sharedInboundAddress);
 
   const emailIntegration = useMemo(
     () =>

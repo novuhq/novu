@@ -66,23 +66,28 @@ export class UpdateAgentInboxShared {
       }
     }
 
-    const nextCredentials = {
-      ...(integration.credentials ?? {}),
-      sharedInboxDisabled: command.disabled,
-    } as Record<string, unknown>;
-
     await this.integrationRepository.update(
       {
         _id: integration._id,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      { $set: { credentials: nextCredentials } }
+      { $set: { 'credentials.sharedInboxDisabled': command.disabled } }
     );
+
+    const refreshed = await this.integrationRepository.findOne({
+      _id: integration._id,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
+
+    if (!refreshed) {
+      throw new NotFoundException('No Novu Email integration found for this agent.');
+    }
 
     return toAgentIntegrationResponse(
       link,
-      { ...integration, credentials: nextCredentials },
+      refreshed,
       { _id: agent._id, identifier: agent.identifier, name: agent.name }
     );
   }
