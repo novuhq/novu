@@ -83,6 +83,7 @@ export const ROUTES = {
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
   AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
+  INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',
   DISPATCH_HOME: '/env/:environmentSlug/dispatch',
   DISPATCH_AGENTS: '/env/:environmentSlug/dispatch/agents',
   DISPATCH_AGENT_DETAILS: '/env/:environmentSlug/dispatch/agents/:agentIdentifier',

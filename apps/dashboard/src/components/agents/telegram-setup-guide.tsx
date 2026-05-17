@@ -1,12 +1,12 @@
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiKey2Line, RiRobot2Line, RiSendPlaneLine } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
 import type { AgentResponse } from '@/api/agents';
 import { configureTelegramAgentWebhook, getAgentIntegrationsQueryKey } from '@/api/agents';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
@@ -75,7 +75,10 @@ export function TelegramSetupGuide({
     onStepsCompleted?.();
   }, [onStepsCompleted]);
 
-  const { integrations } = useFetchIntegrations();
+  const [shouldPollForMobileSubmit, setShouldPollForMobileSubmit] = useState(false);
+  const { integrations } = useFetchIntegrations({
+    refetchInterval: shouldPollForMobileSubmit ? 3000 : undefined,
+  });
 
   const selectedIntegration = useMemo(
     () => integrations?.find((i) => i._id === integrationId && i.providerId === ChatProviderIdEnum.Telegram),
@@ -84,6 +87,34 @@ export function TelegramSetupGuide({
 
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
+
+  // Poll for credentials only while the sidebar is open AND the user hasn't saved a token yet.
+  // Stops the moment the drawer closes or credentials appear.
+  useEffect(() => {
+    setShouldPollForMobileSubmit(isCredentialsSidebarOpen && !hasCredentials);
+  }, [isCredentialsSidebarOpen, hasCredentials]);
+
+  // Tracks whether the credentials drawer was opened while no token was set on the integration.
+  // Only then should we auto-close on the false to true credentials flip; this prevents the drawer
+  // from snapping shut when reopened to view already-saved credentials.
+  const wasMissingOnOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (isCredentialsSidebarOpen && !hasCredentials) {
+      wasMissingOnOpenRef.current = true;
+    } else if (!isCredentialsSidebarOpen) {
+      wasMissingOnOpenRef.current = false;
+    }
+  }, [isCredentialsSidebarOpen, hasCredentials]);
+
+  useEffect(() => {
+    if (isCredentialsSidebarOpen && hasCredentials && wasMissingOnOpenRef.current) {
+      wasMissingOnOpenRef.current = false;
+      setIsCredentialsSidebarOpen(false);
+      setCredentialsSavedLocally(true);
+      showSuccessToast('Bot token saved from your phone');
+    }
+  }, [hasCredentials, isCredentialsSidebarOpen]);
 
   const { mutate: configureTelegram, isPending: isConfiguring, error: configureError } = useMutation({
     mutationFn: () =>

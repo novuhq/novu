@@ -12,6 +12,7 @@ export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
 const USED_JTI_TTL_SECONDS = TELEGRAM_MOBILE_LINK_TTL_SECONDS + 60;
 
 const JWT_AUDIENCE = 'telegram-mobile-setup';
+const JWT_AUDIENCE_INTEGRATION_STORE = 'telegram-integration-mobile-setup';
 const JWT_ISSUER = 'novu';
 
 const USED_JTI_KEY_PREFIX = 'telegram_mobile_jti:';
@@ -30,6 +31,21 @@ export interface TelegramMobileLinkTokenPayload {
   /** Issued-at (seconds since epoch). */
   iat?: number;
   /** Expiry (seconds since epoch). */
+  exp?: number;
+  aud?: string;
+  iss?: string;
+}
+
+/**
+ * Payload for the agent-less integration-store flow. The consumer creates a
+ * brand-new Telegram integration on submit, so no integration or agent id is
+ * known at issue time.
+ */
+export interface IntegrationStoreTelegramMobileLinkPayload {
+  env: string;
+  org: string;
+  jti: string;
+  iat?: number;
   exp?: number;
   aud?: string;
   iss?: string;
@@ -105,6 +121,56 @@ export class TelegramMobileLinkTokenService {
       if (err instanceof InvalidTelegramMobileTokenError) throw err;
       const isExpired =
         typeof err === 'object' && err !== null && 'name' in err && (err as { name?: string }).name === 'TokenExpiredError';
+      throw new InvalidTelegramMobileTokenError(isExpired ? 'expired' : 'invalid');
+    }
+  }
+
+  async issueForIntegrationStore(params: {
+    environmentId: string;
+    organizationId: string;
+  }): Promise<IssuedTelegramMobileLink> {
+    const jti = randomUUID();
+
+    const payload: IntegrationStoreTelegramMobileLinkPayload = {
+      env: params.environmentId,
+      org: params.organizationId,
+      jti,
+    };
+
+    const token = this.jwtService.sign(payload, {
+      expiresIn: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
+      audience: JWT_AUDIENCE_INTEGRATION_STORE,
+      issuer: JWT_ISSUER,
+    });
+
+    const expiresAt = new Date(Date.now() + TELEGRAM_MOBILE_LINK_TTL_SECONDS * 1000).toISOString();
+
+    return { token, expiresAt };
+  }
+
+  verifyIntegrationStore(token: string): IntegrationStoreTelegramMobileLinkPayload {
+    if (!token || typeof token !== 'string') {
+      throw new InvalidTelegramMobileTokenError('invalid');
+    }
+
+    try {
+      const payload = this.jwtService.verify<IntegrationStoreTelegramMobileLinkPayload>(token, {
+        audience: JWT_AUDIENCE_INTEGRATION_STORE,
+        issuer: JWT_ISSUER,
+      });
+
+      if (!payload?.env || !payload?.org || !payload?.jti) {
+        throw new InvalidTelegramMobileTokenError('invalid');
+      }
+
+      return payload;
+    } catch (err) {
+      if (err instanceof InvalidTelegramMobileTokenError) throw err;
+      const isExpired =
+        typeof err === 'object' &&
+        err !== null &&
+        'name' in err &&
+        (err as { name?: string }).name === 'TokenExpiredError';
       throw new InvalidTelegramMobileTokenError(isExpired ? 'expired' : 'invalid');
     }
   }

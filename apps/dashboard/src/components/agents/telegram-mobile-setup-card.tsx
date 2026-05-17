@@ -3,6 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { RiFileCopyLine, RiQrCodeLine, RiRefreshLine, RiSmartphoneLine } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
 import { requestTelegramMobileLink, type TelegramMobileLink } from '@/api/agents';
+import {
+  requestIntegrationStoreTelegramMobileLink,
+  type IntegrationStoreTelegramMobileLink,
+} from '@/api/integrations';
 import { Button } from '@/components/primitives/button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -15,9 +19,13 @@ const MIN_MANUAL_REFRESH_AGE_MS = 60 * 1000;
 
 const MOBILE_LINK_QUERY_KEY = 'telegramMobileLink' as const;
 
-type TelegramMobileSetupCardProps = {
-  agentIdentifier: string;
-  integrationId: string;
+type CardLayout = 'stacked' | 'inline';
+
+type TelegramMobileSetupCardShellProps = {
+  link: TelegramMobileLink | undefined;
+  isRefreshing: boolean;
+  isError: boolean;
+  onRefresh: () => void;
   /** When true, the card is rendered in a "this step is already done" state and disables itself. */
   disabled?: boolean;
   className?: string;
@@ -25,42 +33,32 @@ type TelegramMobileSetupCardProps = {
    * `stacked` (default): vertical layout, QR centered above controls. Best when the parent is narrow.
    * `inline`: QR on the left, helper text + actions on the right. Best for wider containers like modals.
    */
-  layout?: 'stacked' | 'inline';
+  layout?: CardLayout;
 };
 
-export function TelegramMobileSetupCard({
-  agentIdentifier,
-  integrationId,
+/**
+ * Presentational shell that renders the QR / mobile-setup card UI but owns no
+ * network state. Wrappers (`AgentTelegramMobileSetupCard`,
+ * `IntegrationStoreTelegramMobileSetupCard`) drive the data via their own
+ * `useQuery` and pass results in.
+ */
+export function TelegramMobileSetupCardShell({
+  link,
+  isRefreshing,
+  isError,
+  onRefresh,
   disabled,
   className,
   layout = 'stacked',
-}: TelegramMobileSetupCardProps) {
-  const { currentEnvironment } = useEnvironment();
-  const environmentId = currentEnvironment?._id;
-
-  const linkQuery = useQuery<TelegramMobileLink>({
-    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, agentIdentifier, integrationId],
-    queryFn: () =>
-      requestTelegramMobileLink(
-        requireEnvironment(currentEnvironment, 'No environment selected'),
-        agentIdentifier,
-        integrationId
-      ),
-    enabled: !disabled && Boolean(environmentId && agentIdentifier && integrationId),
-    refetchInterval: REFRESH_INTERVAL_MS,
-    refetchOnWindowFocus: true,
-    staleTime: REFRESH_INTERVAL_MS,
-    meta: { showError: false },
-  });
-
+}: TelegramMobileSetupCardShellProps) {
   if (disabled) return null;
 
   if (layout === 'inline') {
     return (
       <div className={cn('border-stroke-soft bg-bg-weak/50 flex w-full flex-row gap-3 rounded-md border p-3', className)}>
         <div className="shrink-0">
-          {linkQuery.data ? (
-            <QrPreview link={linkQuery.data} isRefreshing={linkQuery.isFetching} hideMeta size={120} />
+          {link ? (
+            <QrPreview link={link} isRefreshing={isRefreshing} hideMeta size={120} />
           ) : (
             <QrSkeleton size={120} />
           )}
@@ -76,20 +74,20 @@ export function TelegramMobileSetupCard({
             </p>
           </div>
           <div className="flex flex-col items-start gap-1.5">
-            {linkQuery.data && (
+            {link && (
               <>
-                <ExpiresCountdown expiresAtMs={new Date(linkQuery.data.expiresAt).getTime()} />
+                <ExpiresCountdown expiresAtMs={new Date(link.expiresAt).getTime()} />
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <CopyLinkButton url={linkQuery.data.url} />
+                  <CopyLinkButton url={link.url} />
                   <RefreshLinkButton
-                    expiresAtMs={new Date(linkQuery.data.expiresAt).getTime()}
-                    isRefreshing={linkQuery.isFetching}
-                    onRefresh={() => linkQuery.refetch()}
+                    expiresAtMs={new Date(link.expiresAt).getTime()}
+                    isRefreshing={isRefreshing}
+                    onRefresh={onRefresh}
                   />
                 </div>
               </>
             )}
-            {linkQuery.isError && (
+            {isError && (
               <p className="text-error-base text-label-xs">Couldn&apos;t generate a setup link. Try refreshing.</p>
             )}
           </div>
@@ -109,21 +107,116 @@ export function TelegramMobileSetupCard({
       </p>
 
       <div className="mt-1 flex flex-col items-center gap-2">
-        {linkQuery.data ? (
-          <QrPreview
-            link={linkQuery.data}
-            isRefreshing={linkQuery.isFetching}
-            onRefresh={() => linkQuery.refetch()}
-          />
+        {link ? (
+          <QrPreview link={link} isRefreshing={isRefreshing} onRefresh={onRefresh} />
         ) : (
           <QrSkeleton />
         )}
       </div>
 
-      {linkQuery.isError && (
+      {isError && (
         <p className="text-error-base text-label-xs">Couldn&apos;t generate a setup link. Try refreshing.</p>
       )}
     </div>
+  );
+}
+
+type AgentTelegramMobileSetupCardProps = {
+  agentIdentifier: string;
+  integrationId: string;
+  disabled?: boolean;
+  className?: string;
+  layout?: CardLayout;
+};
+
+/**
+ * Agent-scoped variant — issues mobile setup links that bind the BotFather
+ * token to an existing agent–integration pair.
+ */
+export function AgentTelegramMobileSetupCard({
+  agentIdentifier,
+  integrationId,
+  disabled,
+  className,
+  layout = 'stacked',
+}: AgentTelegramMobileSetupCardProps) {
+  const { currentEnvironment } = useEnvironment();
+  const environmentId = currentEnvironment?._id;
+
+  const linkQuery = useQuery<TelegramMobileLink>({
+    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, agentIdentifier, integrationId],
+    queryFn: () =>
+      requestTelegramMobileLink(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agentIdentifier,
+        integrationId
+      ),
+    enabled: !disabled && Boolean(environmentId && agentIdentifier && integrationId),
+    refetchInterval: REFRESH_INTERVAL_MS,
+    refetchOnWindowFocus: true,
+    staleTime: REFRESH_INTERVAL_MS,
+    meta: { showError: false },
+  });
+
+  return (
+    <TelegramMobileSetupCardShell
+      link={linkQuery.data}
+      isRefreshing={linkQuery.isFetching}
+      isError={linkQuery.isError}
+      onRefresh={() => linkQuery.refetch()}
+      disabled={disabled}
+      className={className}
+      layout={layout}
+    />
+  );
+}
+
+/** @deprecated Prefer `AgentTelegramMobileSetupCard`. Re-exported for backwards compat. */
+export const TelegramMobileSetupCard = AgentTelegramMobileSetupCard;
+
+type IntegrationStoreTelegramMobileSetupCardProps = {
+  disabled?: boolean;
+  className?: string;
+  layout?: CardLayout;
+};
+
+/**
+ * Integration-store variant — issues mobile setup links for the Telegram
+ * provider in the "create integration" flow, before any integration or agent
+ * exists. The consume endpoint creates a brand-new Telegram integration on
+ * submit.
+ */
+export function IntegrationStoreTelegramMobileSetupCard({
+  disabled,
+  className,
+  layout = 'stacked',
+}: IntegrationStoreTelegramMobileSetupCardProps) {
+  const { currentEnvironment } = useEnvironment();
+  const environmentId = currentEnvironment?._id;
+
+  const linkQuery = useQuery<IntegrationStoreTelegramMobileLink>({
+    queryKey: [MOBILE_LINK_QUERY_KEY, 'integration-store', environmentId],
+    queryFn: () =>
+      requestIntegrationStoreTelegramMobileLink(
+        requireEnvironment(currentEnvironment, 'No environment selected')
+      ),
+    enabled: !disabled && Boolean(environmentId),
+    refetchInterval: REFRESH_INTERVAL_MS,
+    refetchOnWindowFocus: true,
+    staleTime: REFRESH_INTERVAL_MS,
+    meta: { showError: false },
+  });
+
+  return (
+    <TelegramMobileSetupCardShell
+      link={linkQuery.data}
+      isRefreshing={linkQuery.isFetching}
+      isError={linkQuery.isError}
+      onRefresh={() => linkQuery.refetch()}
+      disabled={disabled}
+      className={className}
+      layout={layout}
+    />
   );
 }
 

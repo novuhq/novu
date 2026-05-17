@@ -2,7 +2,10 @@ import { CredentialsKeyEnum } from '@novu/shared';
 import { useCallback, useState } from 'react';
 import { type Control, type UseFormSetValue, useWatch } from 'react-hook-form';
 import { RiCheckLine, RiCloseLine, RiInformationLine } from 'react-icons/ri';
-import { TelegramMobileSetupCard } from '@/components/agents/telegram-mobile-setup-card';
+import {
+  AgentTelegramMobileSetupCard,
+  IntegrationStoreTelegramMobileSetupCard,
+} from '@/components/agents/telegram-mobile-setup-card';
 import { Label } from '@/components/primitives/label';
 import { Textarea } from '@/components/primitives/textarea';
 import { parseBotFatherMessage } from '@/utils/telegram-bot-token';
@@ -11,17 +14,29 @@ import type { IntegrationFormData } from '../types';
 
 type ApplyOutcome = { token: string | null; botUsername: string | null; recognized: boolean };
 
+/**
+ * Discriminated union that picks which mobile-setup wrapper to render.
+ * - `agent`: existing agent + integration → the consumed link writes credentials
+ *   onto the existing integration via the agent-scoped public endpoint.
+ * - `integration-store`: no agent or integration yet → the consumed link creates
+ *   a new Telegram integration via the integration-store public endpoint.
+ */
+export type TelegramCredentialsPasteMobileSetup =
+  | { kind: 'agent'; agentIdentifier: string; integrationId: string }
+  | { kind: 'integration-store' };
+
 type TelegramCredentialsPasteProps = {
   control: Control<IntegrationFormData>;
   setValue: UseFormSetValue<IntegrationFormData>;
   isReadOnly?: boolean;
   /**
-   * When both `agentIdentifier` and `integrationId` are present, the modal renders an
-   * inline mobile-setup QR card under the BotFather paste field so the user can finish
-   * the configuration from their phone instead.
+   * When set, renders an inline mobile-setup QR card under the BotFather paste
+   * field so the user can finish configuration from their phone. The QR card
+   * is hidden the moment the form has an `apiToken` value (typed, pasted, or
+   * pre-filled from an existing integration), which also unmounts the link
+   * `useQuery` and stops generating JWTs.
    */
-  agentIdentifier?: string;
-  integrationId?: string;
+  mobileSetup?: TelegramCredentialsPasteMobileSetup;
 };
 
 /**
@@ -36,8 +51,7 @@ export function TelegramCredentialsPaste({
   control,
   setValue,
   isReadOnly,
-  agentIdentifier,
-  integrationId,
+  mobileSetup,
 }: TelegramCredentialsPasteProps) {
   const credentials = useWatch({ control, name: 'credentials' });
   const [outcome, setOutcome] = useState<ApplyOutcome | null>(null);
@@ -98,7 +112,9 @@ export function TelegramCredentialsPaste({
 
   if (isReadOnly) return null;
 
-  const canShowMobileSetup = Boolean(agentIdentifier && integrationId);
+  const hasApiTokenValue =
+    typeof credentials?.apiToken === 'string' && credentials.apiToken.trim().length > 0;
+  const canShowMobileSetup = Boolean(mobileSetup) && !hasApiTokenValue;
 
   return (
     <div className="border-stroke-weak bg-bg-white mb-3 flex flex-col gap-2 overflow-hidden rounded-lg border p-3">
@@ -119,14 +135,18 @@ export function TelegramCredentialsPaste({
 
       {outcome && <PasteOutcome outcome={outcome} onDismiss={dismiss} />}
 
-      {canShowMobileSetup && (
+      {canShowMobileSetup && mobileSetup && (
         <>
           <OrDivider />
-          <TelegramMobileSetupCard
-            agentIdentifier={agentIdentifier as string}
-            integrationId={integrationId as string}
-            layout="inline"
-          />
+          {mobileSetup.kind === 'agent' ? (
+            <AgentTelegramMobileSetupCard
+              agentIdentifier={mobileSetup.agentIdentifier}
+              integrationId={mobileSetup.integrationId}
+              layout="inline"
+            />
+          ) : (
+            <IntegrationStoreTelegramMobileSetupCard layout="inline" />
+          )}
         </>
       )}
     </div>

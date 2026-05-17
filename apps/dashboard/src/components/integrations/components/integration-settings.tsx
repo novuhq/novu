@@ -23,7 +23,7 @@ import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown'
 import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
-import { TelegramCredentialsPaste } from './telegram-credentials-paste';
+import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
@@ -130,7 +130,22 @@ export function IntegrationSettings({
   const isAgentOnboarding = agentOnboarding || searchParams.get('agent_onboarding') === 'true';
   const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
   const isWhatsAppOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.WhatsAppBusiness;
-  const isTelegramOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Telegram;
+  const isTelegramProvider = provider.id === ChatProviderIdEnum.Telegram;
+  const showTelegramPaste = isTelegramProvider && !isReadOnly;
+  // Picks the QR variant: agent flow when we already have agent + integration,
+  // integration-store flow in the create flow where neither exists yet, none
+  // otherwise (e.g. plain edit of a non-agent Telegram integration).
+  const telegramMobileVariant = useMemo<TelegramCredentialsPasteMobileSetup | undefined>(() => {
+    if (!showTelegramPaste) return undefined;
+
+    if (isAgentOnboarding && agentIdentifier && integration?._id) {
+      return { kind: 'agent', agentIdentifier, integrationId: integration._id };
+    }
+
+    if (mode === 'create') return { kind: 'integration-store' };
+
+    return undefined;
+  }, [showTelegramPaste, isAgentOnboarding, agentIdentifier, integration?._id, mode]);
   const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
     control,
     setValue,
@@ -273,13 +288,12 @@ export function IntegrationSettings({
                           <WhatsAppCredentialsValidator control={control} />
                         </>
                       )}
-                      {isTelegramOnboarding && (
+                      {showTelegramPaste && (
                         <TelegramCredentialsPaste
                           control={control}
                           setValue={setValue}
                           isReadOnly={isReadOnly}
-                          agentIdentifier={agentIdentifier}
-                          integrationId={integration?._id}
+                          mobileSetup={telegramMobileVariant}
                         />
                       )}
                       <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
@@ -287,7 +301,7 @@ export function IntegrationSettings({
                           <CredentialSection
                             key={`${credential.key}-${integration?._id || 'no-id'}`}
                             credential={
-                              isTelegramOnboarding && credential.key === CredentialsKeyEnum.ApiToken
+                              showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
                                 ? { ...credential, description: 'Auto-filled from the BotFather message above, or enter it manually.' }
                                 : credential
                             }
