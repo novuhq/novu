@@ -132,4 +132,4 @@ export const getUniqueOperators = (jsonLogic?: RQBJsonLogic): string[] => {
 };
 
 // Export shared configuration for use in other files
-export { customJsonLogicOperations, parseJsonLogicOptions };
+export { parseJsonLogicOptions };

@@ -4,18 +4,23 @@ import shell from 'shelljs';
 import Spamc from 'spamc';
 import logger from './logger';
 
+const LOG_CONTEXT = 'MailUtilities';
+
 const spamc = new Spamc();
 
 /* Verify Python availability. */
 const isPythonAvailable = shell.which('python');
 if (!isPythonAvailable) {
-  logger.warn('Python is not available. Dkim and spf checking is disabled.');
+  logger.warn({ context: LOG_CONTEXT }, 'Python is not available. Dkim and spf checking is disabled.');
 }
 
 /* Verify spamc/spamassassin availability. */
 let isSpamcAvailable = true;
 if (!shell.which('spamassassin') || !shell.which('spamc')) {
-  logger.warn('Either spamassassin or spamc are not available. Spam score computation is disabled.');
+  logger.warn(
+    { context: LOG_CONTEXT },
+    'Either spamassassin or spamc are not available. Spam score computation is disabled.'
+  );
   isSpamcAvailable = false;
 }
 
@@ -34,11 +39,11 @@ module.exports = {
     const verifyDkim = child_process.spawn('python', [verifyDkimPath]);
 
     verifyDkim.stdout.on('data', (data) => {
-      logger.verbose(data.toString());
+      logger.verbose({ context: LOG_CONTEXT }, data.toString());
     });
 
     verifyDkim.on('close', (code) => {
-      logger.verbose(`closed with return code ${code}`);
+      logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
 
       /* Convert return code to appropriate boolean. */
       return callback(null, !code);
@@ -58,13 +63,13 @@ module.exports = {
     const args = [verifySpfPath, ip, address, host];
 
     child_process.execFile(cmd, args, (err, stdout) => {
-      logger.verbose(stdout);
+      logger.verbose({ context: LOG_CONTEXT }, stdout);
       let code = 0;
       if (err) {
         code = err.code;
       }
 
-      logger.verbose(`closed with return code ${code}`);
+      logger.verbose({ context: LOG_CONTEXT }, `closed with return code ${code}`);
 
       /* Convert return code to appropriate boolean. */
       return callback(null, !code);
@@ -78,9 +83,12 @@ module.exports = {
     }
 
     spamc.report(rawEmail, (err, result) => {
-      logger.verbose(result);
-      if (err) logger.error(err);
-      if (err) return callback(new Error('Unable to compute spam score.'));
+      logger.verbose({ context: LOG_CONTEXT, result }, 'spamc report');
+      if (err) {
+        logger.error({ err, context: LOG_CONTEXT }, 'spamc reported an error');
+
+        return callback(new Error('Unable to compute spam score.'));
+      }
       callback(null, result.spamScore);
     });
   },

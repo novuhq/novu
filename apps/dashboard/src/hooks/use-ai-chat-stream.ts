@@ -16,7 +16,7 @@ import { getToken } from '@/utils/auth';
 import { useDataRef } from './use-data-ref';
 
 type UseAiChatOptions<D extends UIDataTypes = UIDataTypes, T extends UITools = UITools> = {
-  id: string;
+  id?: string;
   agentType: AiAgentTypeEnum;
   initialMessages?: UIMessage<unknown, D, T>[];
   onData?: ChatOnDataCallback<UIMessage>;

@@ -24,6 +24,10 @@ import { NovuError } from '../utils/errors';
 import type { BaseSocketInterface } from './base-socket';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
+
+const HIBERNATION_HEARTBEAT_MS = 25_000;
+const HIBERNATION_PING_PAYLOAD = 'ping';
+
 const NOTIFICATION_RECEIVED: NotificationReceivedEvent = 'notifications.notification_received';
 const UNSEEN_COUNT_CHANGED: NotificationUnseenEvent = 'notifications.unseen_count_changed';
 const UNREAD_COUNT_CHANGED: NotificationUnreadEvent = 'notifications.unread_count_changed';
@@ -129,6 +133,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   #partySocket: WebSocket | undefined;
   #socketUrl: string;
   #socketOptions?: Record<string, unknown>;
+  #hibernationHeartbeatIntervalId: ReturnType<typeof setInterval> | undefined;
 
   constructor({
     socketUrl,
@@ -195,6 +200,10 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
   };
 
   #handleMessage = (event: MessageEvent) => {
+    if (event.data === HIBERNATION_PING_PAYLOAD || event.data === 'pong') {
+      return;
+    }
+
     try {
       const data = JSON.parse(event.data);
 
@@ -216,6 +225,31 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
     }
   };
 
+  #clearHibernationHeartbeat(): void {
+    if (this.#hibernationHeartbeatIntervalId !== undefined) {
+      clearInterval(this.#hibernationHeartbeatIntervalId);
+      this.#hibernationHeartbeatIntervalId = undefined;
+    }
+  }
+
+  #startHibernationHeartbeat(): void {
+    this.#clearHibernationHeartbeat();
+
+    this.#hibernationHeartbeatIntervalId = setInterval(() => {
+      const socket = this.#partySocket;
+
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        return;
+      }
+
+      try {
+        socket.send(HIBERNATION_PING_PAYLOAD);
+      } catch {
+        // Socket may have closed between readyState check and send
+      }
+    }, HIBERNATION_HEARTBEAT_MS);
+  }
+
   async #initializeSocket(): Promise<void> {
     if (this.#partySocket) {
       return;
@@ -229,15 +263,27 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
 
     this.#partySocket = new WebSocket(url.toString(), undefined, this.#socketOptions);
 
-    this.#partySocket.addEventListener('open', () => {
+    const socket = this.#partySocket;
+
+    socket.addEventListener('open', () => {
+      this.#startHibernationHeartbeat();
       this.#emitter.emit('socket.connect.resolved', { args });
     });
 
-    this.#partySocket.addEventListener('error', (error) => {
+    socket.addEventListener('error', (error) => {
       this.#emitter.emit('socket.connect.resolved', { args, error });
     });
 
-    this.#partySocket.addEventListener('message', this.#handleMessage);
+    socket.addEventListener('close', () => {
+      if (socket !== this.#partySocket) {
+        return;
+      }
+
+      this.#clearHibernationHeartbeat();
+      this.#partySocket = undefined;
+    });
+
+    socket.addEventListener('message', this.#handleMessage);
   }
 
   async #handleConnectSocket(): Result<void> {
@@ -252,6 +298,7 @@ export class PartySocketClient extends BaseModule implements BaseSocketInterface
 
   async #handleDisconnectSocket(): Result<void> {
     try {
+      this.#clearHibernationHeartbeat();
       this.#partySocket?.close();
       this.#partySocket = undefined;
 

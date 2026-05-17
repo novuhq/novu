@@ -17,7 +17,9 @@ import {
   GetSubscriberSchedule,
   GetSubscriberTemplatePreference,
   GetTopicSubscribersUseCase,
+  InboundDomainRouteDelivery,
   InMemoryProviderService,
+  MsTeamsTokenService,
   NormalizeVariables,
   ProcessTenant,
   RedisThrottleService,
@@ -32,11 +34,16 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
+  AgentRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
   ContextRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
+  DomainRepository,
+  DomainRouteRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -67,7 +74,10 @@ import {
 } from './usecases';
 import { AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { DomainRouteStrategy } from './usecases/inbound-email-parse/strategies/domain-route.strategy';
+import { ReplyToStrategy } from './usecases/inbound-email-parse/strategies/reply-to.strategy';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
+import { ProcessManagedAgentTurn } from './usecases/process-managed-agent-turn/process-managed-agent-turn.usecase';
 import { ResolveChannelEndpoints } from './usecases/send-message/channel-endpoint-resolution/resolve-channel-endpoints.usecase';
 import { ExecuteCodeFirstCustomStep } from './usecases/send-message/execute-code-first-custom-step.usecase';
 import { ExecuteHttpRequestStep } from './usecases/send-message/execute-http-request-step.usecase';
@@ -98,6 +108,11 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 const REPOSITORIES = [
+  AgentRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
+  DomainRepository,
+  DomainRouteRepository,
   JobRepository,
   CommunityOrganizationRepository,
   PreferencesRepository,
@@ -192,14 +207,18 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
+  InboundDomainRouteDelivery,
+  ReplyToStrategy,
+  DomainRouteStrategy,
   ExecuteBridgeJob,
   ExecuteStepResolverRequest,
   GetPreferences,
   GetSubscriberSchedule,
   ResolveChannelEndpoints,
+  ProcessManagedAgentTurn,
 ];
 
-const PROVIDERS: Provider[] = [RedisThrottleService];
+const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService];
 const activeWorkersToken: any = {
   provide: 'ACTIVE_WORKERS',
   useFactory: (...args: any[]) => {

@@ -1,4 +1,4 @@
-import { type TagsFilter, SeverityLevelEnum } from '@novu/shared';
+import { SeverityLevelEnum, type TagsFilter } from '@novu/shared';
 import { IsBoolean, IsDefined, IsInt, IsMongoId, IsOptional, IsString, Max, Min } from 'class-validator';
 
 import { EnvironmentWithSubscriber } from '../../../shared/commands/project.command';

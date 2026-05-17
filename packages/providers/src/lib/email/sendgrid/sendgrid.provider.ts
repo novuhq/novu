@@ -17,6 +17,7 @@ import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
+type SendGridContent = NonNullable<MailDataRequired['content']>;
 
 export class SendgridEmailProvider extends BaseProvider implements IEmailProvider {
   id = EmailProviderIdEnum.SendGrid;
@@ -103,7 +104,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
       };
 
       if (attachment?.cid) {
-        attachmentJson.contentId = attachment?.cid;
+        attachmentJson['content_id'] = attachment?.cid;
       }
 
       if (attachment?.disposition) {
@@ -114,6 +115,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
 
       return attachmentJson;
     });
+    const content = this.buildContent(options);
 
     const mailData: Partial<MailDataRequired> = {
       from: {
@@ -124,7 +126,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
       to: options.to.map((email) => ({ email })),
       cc: options.cc?.map((ccItem) => ({ email: ccItem })),
       bcc: options.bcc?.map((ccItem) => ({ email: ccItem })),
-      html: options.html,
+      ...(content ? { content } : { html: options.html }),
       subject: options.subject,
       substitutions: {},
       category: options.notificationDetails?.workflowIdentifier,
@@ -154,6 +156,21 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
     }
 
     return mailData as MailDataRequired;
+  }
+
+  private buildContent(options: IEmailOptions): SendGridContent | undefined {
+    if (!options.alternatives?.length) {
+      return undefined;
+    }
+
+    return [
+      ...(options.text ? [{ type: 'text/plain', value: options.text }] : []),
+      { type: 'text/html', value: options.html },
+      ...options.alternatives.map((alternative) => ({
+        type: alternative.contentType,
+        value: Buffer.isBuffer(alternative.content) ? alternative.content.toString() : alternative.content,
+      })),
+    ] as SendGridContent;
   }
 
   private getIpPoolObject(options: IEmailOptions) {
@@ -229,6 +246,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
           open: true,
           click: true,
           bounce: true,
+          blocked: true,
           dropped: true,
           delivered: true,
         },
@@ -326,6 +344,8 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
         return EmailEventStatusEnum.OPENED;
       case 'bounce':
         return EmailEventStatusEnum.BOUNCED;
+      case 'blocked':
+        return EmailEventStatusEnum.BLOCKED;
       case 'click':
         return EmailEventStatusEnum.CLICKED;
       case 'dropped':

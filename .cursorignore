@@ -9,11 +9,9 @@ playground/
 
 # CI/CD, build infrastructure, and Docker configs
 .github/
-scripts/
 docker/
 
 # Inactive apps — no longer under active development
-apps/inbound-mail/
 apps/webhook/
 
 # Auto-generated code — do not read or modify directly
@@ -26,3 +24,6 @@ pnpm-lock.yaml
 
 # Generator templates — not production code
 libs/automation/
+
+# Cursor have a tendency to remove the minReleaseAge when he faces it
+pnpm-workspace.yaml

@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ICredentials } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsEmail, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
 import { TransformToBoolean } from '../decorators/to-boolean';
 
 export class CredentialsDto implements ICredentials {
@@ -251,4 +251,45 @@ export class CredentialsDto implements ICredentials {
   @IsOptional()
   @IsString()
   AppIOBaseUrl?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  signingSecret?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  outboundIntegrationId?: string;
+
+  @ApiPropertyOptional()
+  @TransformToBoolean()
+  @IsBoolean()
+  @IsOptional()
+  useFromAddressOverride?: boolean;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @ValidateIf((_, v) => typeof v === 'string' && v.trim().length > 0)
+  @IsEmail()
+  fromAddressOverride?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Claude Managed Agents: ID of the Anthropic environment tied to this integration. ' +
+      'Hydrated by the API at integration provisioning time.',
+  })
+  @IsString()
+  @IsOptional()
+  externalEnvironmentId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Claude Managed Agents: id of the Anthropic workspace used in console deep links. ' +
+      "Defaults to `'default'` (the Default Workspace). " +
+      'Set this when the API key is scoped to a custom workspace (e.g. `wrkspc_…`).',
+  })
+  @IsString()
+  @IsOptional()
+  externalWorkspaceId?: string;
 }

@@ -31,10 +31,7 @@ export default function Home() {
   return (
     <>
       <Title title="Render Bell props" />
-      <Inbox
-        {...novuConfig}
-        renderBell={(unreadCount) => <CustomBell unreadCount={Number(unreadCount)} />}
-      />
+      <Inbox {...novuConfig} renderBell={(unreadCount) => <CustomBell unreadCount={Number(unreadCount)} />} />
     </>
   );
 }

@@ -11,6 +11,7 @@ export enum JobTopicNameEnum {
   WEB_SOCKETS = 'ws_socket_queue',
   WORKFLOW = 'trigger-handler',
   PROCESS_SUBSCRIBER = 'process-subscriber',
+  MANAGED_AGENT = 'managed-agent',
 }
 
 export enum ObservabilityBackgroundTransactionEnum {
@@ -22,6 +23,7 @@ export enum ObservabilityBackgroundTransactionEnum {
   WS_SOCKET_HANDLE_DISCONNECT = 'ws_socket_handle_disconnect',
   CRON_JOB_QUEUE = 'cron-job-queue',
   CLICKHOUSE_BATCH_FLUSH = 'clickhouse-batch-flush',
+  INBOUND_MAIL_PROCESSING = 'inbound-mail-processing',
 }
 
 export enum JobCronNameEnum {

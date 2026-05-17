@@ -191,8 +191,6 @@ export {
   CommandList as List,
   CommandGroup as Group,
   CommandItem as Item,
-  CommandItemIcon as ItemIcon,
-  CommandEmpty as Empty,
   CommandFooter as Footer,
   CommandFooterKeyBox as FooterKeyBox,
 };

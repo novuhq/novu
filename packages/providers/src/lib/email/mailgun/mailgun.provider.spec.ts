@@ -33,6 +33,35 @@ test('should trigger mailgun correctly', async () => {
   api.done();
 });
 
+test('should forward custom headers as h: prefixed fields', async () => {
+  const provider = new MailgunEmailProvider(mockConfig);
+
+  const api = nock('https://api.mailgun.net');
+
+  api
+    .post('/v3/test.com/messages', (body) => {
+      expect(body.includes('name="h:In-Reply-To"')).toBeTruthy();
+      expect(body.includes('name="h:References"')).toBeTruthy();
+
+      return true;
+    })
+    .reply(200, {
+      message: 'Queued. Thank you.',
+      id: '<20111114174239.25659.5817@samples.mailgun.org>',
+    });
+
+  await provider.sendMessage({
+    ...mockNovuMessage,
+    headers: {
+      'In-Reply-To': '<original-message-id@example.com>',
+      References: '<original-message-id@example.com>',
+    },
+  });
+
+  expect(api.isDone()).toBeTruthy();
+  api.done();
+});
+
 test('should trigger mailgun correctly with custom baseUrl', async () => {
   const provider = new MailgunEmailProvider({
     ...mockConfig,

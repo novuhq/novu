@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import type { EnforceEnvOrOrgIds } from '@novu/dal';
 import { ChannelEndpointDBModel, ChannelEndpointEntity, ChannelEndpointRepository } from '@novu/dal';
@@ -12,6 +12,10 @@ export class ListChannelEndpoints {
 
   @InstrumentUsecase()
   async execute(command: ListChannelEndpointsCommand) {
+    if (command.before && command.after) {
+      throw new BadRequestException('Cannot specify both "before" and "after" cursors at the same time.');
+    }
+
     const filter: FilterQuery<ChannelEndpointDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: command.user.environmentId,
       _organizationId: command.user.organizationId,
@@ -38,8 +42,13 @@ export class ListChannelEndpoints {
     }
 
     if (command.contextKeys !== undefined) {
-      const contextQuery = this.channelEndpointRepository.buildContextExactMatchQuery(command.contextKeys);
-      filter.contextKeys = contextQuery.contextKeys;
+      // Apply context filter under `$and` so it survives the cursor-pagination
+      // helper, which sets its own top-level `$or` and would otherwise drop
+      // the `$or` form returned for the empty/default-context case.
+      filter.$and = [
+        ...(filter.$and ?? []),
+        this.channelEndpointRepository.buildContextExactMatchQuery(command.contextKeys),
+      ];
     }
 
     let channelEndpoint: ChannelEndpointEntity | null = null;

@@ -1,12 +1,12 @@
 lockVersion: 2.0.0
 id: 47485c62-299d-4bb9-8ec5-e9e1c5ead062
 management:
-  docChecksum: d5035ea9a54578d83c06a7b5dce6b0f0
-  docVersion: 3.14.0
-  speakeasyVersion: 1.759.3
-  generationVersion: 2.869.25
+  docChecksum: 181a873517a8ffb8800fdf2b89ee8e50
+  docVersion: 3.15.0
+  speakeasyVersion: 1.761.9
+  generationVersion: 2.881.4
   releaseVersion: 1.0.0
-  configChecksum: 195e8691f7ff803979803dd4aeef71dc
+  configChecksum: 25eb47514328bc87ca500cfa55ddb708
 persistentEdits:
   generation_id: 29aa1db5-d1d6-4bbc-a073-1aedf94308fd
   pristine_commit_hash: 19fe80088018936c3fc11bc13ff8d2d4603495f4
@@ -25,7 +25,7 @@ features:
 trackedFiles:
   novu_api_postman_collection.json:
     id: f80b59e13e5c
-    last_write_checksum: sha1:c7682810cfddfd22125bb7b988de8fa968fb009d
+    last_write_checksum: sha1:a99117b4e5e010096eb9a64f06f562d508206a62
     pristine_git_object: 5e1d2eedd7bc4934ecc1a374a7f4dd6b4fa15852
 examples:
   EventsController_trigger:
@@ -1718,7 +1718,7 @@ examples:
   ChannelConnectionsController_createChannelConnection:
     speakeasy-default-channel-connections-controller-create-channel-connection:
       requestBody:
-        application/json: {"identifier": "slack-prod-user123-abc4", "subscriberId": "subscriber-123", "integrationIdentifier": "slack-prod", "workspace": {"id": "T123456", "name": "Acme HQ"}, "auth": {"accessToken": "Workspace access token"}}
+        application/json: {"identifier": "slack-prod-user123-abc4", "subscriberId": "subscriber-123", "connectionMode": "shared", "integrationIdentifier": "slack-prod", "workspace": {"id": "T123456", "name": "Acme HQ"}, "auth": {"accessToken": "Workspace access token"}}
       responses:
         "201":
           application/json: {"identifier": "<value>", "channel": "sms", "providerId": "slack", "integrationIdentifier": "slack-prod", "subscriberId": "subscriber-123", "contextKeys": ["tenant:org-123", "region:us-east-1"], "workspace": {"id": "T123456", "name": "Acme HQ"}, "auth": {"accessToken": "Workspace access token"}, "createdAt": "1719812430207", "updatedAt": "1735628544115"}
@@ -1901,7 +1901,7 @@ examples:
   IntegrationsController_getChatOAuthUrl:
     speakeasy-default-integrations-controller-get-chat-O-auth-url:
       requestBody:
-        application/json: {"subscriberId": "subscriber-123", "integrationIdentifier": "<value>", "connectionIdentifier": "slack-connection-abc123", "scope": ["chat:write", "chat:write.public", "channels:read", "groups:read", "users:read", "users:read.email", "incoming-webhook"]}
+        application/json: {"subscriberId": "subscriber-123", "integrationIdentifier": "<value>", "connectionIdentifier": "slack-connection-abc123", "scope": ["chat:write", "chat:write.public", "channels:read", "groups:read", "users:read", "users:read.email", "incoming-webhook"], "userScope": ["identity.basic"], "mode": "link_user", "connectionMode": "shared", "autoLinkUser": true}
       responses:
         "201":
           application/json: {"url": "https://slack.com/oauth/v2/authorize?state=..."}
@@ -2004,6 +2004,7 @@ examples:
       parameters:
         path:
           variableId: "<id>"
+          variableKey: "BASE_URL"
       responses:
         "200":
           application/json: {"_id": "<id>", "_organizationId": "<id>", "key": "<key>", "type": "string", "isSecret": false, "values": [{"_environmentId": "<id>", "value": "<value>"}], "createdAt": "1710536460779", "updatedAt": "1735619742616"}
@@ -2024,6 +2025,7 @@ examples:
       parameters:
         path:
           variableId: "<id>"
+          variableKey: "BASE_URL"
       requestBody:
         application/json: {}
       responses:
@@ -2046,6 +2048,7 @@ examples:
       parameters:
         path:
           variableId: "<id>"
+          variableKey: "BASE_URL"
       responses:
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
@@ -2064,6 +2067,7 @@ examples:
       parameters:
         path:
           variableId: "<id>"
+          variableKey: "BASE_URL"
       responses:
         "200":
           application/json: {"workflows": [{"name": "Welcome Email", "workflowId": "welcome-email"}]}
@@ -2405,6 +2409,400 @@ examples:
       requestBody:
         application/json: {}
       responses:
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_listDomains:
+    speakeasy-default-domains-controller-list-domains:
+      parameters:
+        query:
+          limit: 10
+      responses:
+        "200":
+          application/json: {"data": [{"_id": "<id>", "name": "<value>", "status": "verified", "mxRecordConfigured": true, "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1709983742886", "updatedAt": "1735606707171", "expectedDnsRecords": [{"type": "MX", "name": "inbound", "content": "inbound-smtp.us-east-1.amazonaws.com", "ttl": "Auto", "priority": 10}]}], "next": "<value>", "previous": "<value>", "totalCount": 3816.97, "totalCountCapped": false}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_createDomain:
+    speakeasy-default-domains-controller-create-domain:
+      requestBody:
+        application/json: {"name": "<value>"}
+      responses:
+        "201":
+          application/json: {"_id": "<id>", "name": "<value>", "status": "verified", "mxRecordConfigured": false, "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1716949744625", "updatedAt": "1735624573515", "expectedDnsRecords": [{"type": "MX", "name": "inbound", "content": "inbound-smtp.us-east-1.amazonaws.com", "ttl": "Auto", "priority": 10}]}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_getDomain:
+    speakeasy-default-domains-controller-get-domain:
+      parameters:
+        path:
+          domain: "foolish-requirement.org"
+      responses:
+        "200":
+          application/json: {"_id": "<id>", "name": "<value>", "status": "pending", "mxRecordConfigured": true, "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1712440954138", "updatedAt": "1735628784965", "expectedDnsRecords": [{"type": "MX", "name": "inbound", "content": "inbound-smtp.us-east-1.amazonaws.com", "ttl": "Auto", "priority": 10}]}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_updateDomain:
+    speakeasy-default-domains-controller-update-domain:
+      parameters:
+        path:
+          domain: "ordinary-eternity.org"
+      requestBody:
+        application/json: {}
+      responses:
+        "200":
+          application/json: {"_id": "<id>", "name": "<value>", "status": "verified", "mxRecordConfigured": false, "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1711208292067", "updatedAt": "1735669961330", "expectedDnsRecords": [{"type": "MX", "name": "inbound", "content": "inbound-smtp.us-east-1.amazonaws.com", "ttl": "Auto", "priority": 10}]}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_deleteDomain:
+    speakeasy-default-domains-controller-delete-domain:
+      parameters:
+        path:
+          domain: "complicated-finer.org"
+      responses:
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_createDomainConnectApplyUrl:
+    speakeasy-default-domains-controller-create-domain-connect-apply-url:
+      parameters:
+        path:
+          domain: "delectable-accompanist.name"
+      requestBody:
+        application/json: {}
+      responses:
+        "201":
+          application/json: {"applyUrl": "https://passionate-waterspout.info/", "providerName": "<value>", "redirectUri": "https://rewarding-secrecy.name"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_getDomainConnectStatus:
+    speakeasy-default-domains-controller-get-domain-connect-status:
+      parameters:
+        path:
+          domain: "blue-rubric.biz"
+      responses:
+        "200":
+          application/json: {"available": false, "manualRecords": [{"type": "MX", "name": "inbound", "content": "inbound-smtp.us-east-1.amazonaws.com", "ttl": "Auto", "priority": 10}]}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_listDomainRoutes:
+    speakeasy-default-domains-controller-list-domain-routes:
+      parameters:
+        path:
+          domain: "fearless-fishery.com"
+        query:
+          limit: 10
+      responses:
+        "200":
+          application/json: {"data": [{"_id": "<id>", "_domainId": "<id>", "address": "1647 N 8th Street", "type": "webhook", "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1720291119048", "updatedAt": "1735661570949"}], "next": "<value>", "previous": "<value>", "totalCount": 3751.99, "totalCountCapped": false}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_createDomainRoute:
+    speakeasy-default-domains-controller-create-domain-route:
+      parameters:
+        path:
+          domain: "radiant-solvency.net"
+      requestBody:
+        application/json: {"address": "6581 Birch Road", "type": "webhook"}
+      responses:
+        "201":
+          application/json: {"_id": "<id>", "_domainId": "<id>", "address": "9570 Ferry Parks", "type": "agent", "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1725211289760", "updatedAt": "1735636554635"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_getDomainRoute:
+    speakeasy-default-domains-controller-get-domain-route:
+      parameters:
+        path:
+          domain: "adolescent-petal.net"
+          routeId: "<id>"
+          address: "68242 Harvey Courts"
+      responses:
+        "200":
+          application/json: {"_id": "<id>", "_domainId": "<id>", "address": "42531 Green Lane", "type": "agent", "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1734912116033", "updatedAt": "1735605308420"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_updateDomainRoute:
+    speakeasy-default-domains-controller-update-domain-route:
+      parameters:
+        path:
+          domain: "cavernous-cycle.com"
+          routeId: "<id>"
+          address: "20270 Carlotta Hills"
+      requestBody:
+        application/json: {}
+      responses:
+        "200":
+          application/json: {"_id": "<id>", "_domainId": "<id>", "address": "70213 Gerlach Rue", "type": "webhook", "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1708039771391", "updatedAt": "1735668165304"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_deleteDomainRoute:
+    speakeasy-default-domains-controller-delete-domain-route:
+      parameters:
+        path:
+          domain: "corrupt-avalanche.biz"
+          routeId: "<id>"
+          address: "13965 Tillman Track"
+      responses:
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_verifyDomain:
+    speakeasy-default-domains-controller-verify-domain:
+      parameters:
+        path:
+          domain: "formal-fork.com"
+      responses:
+        "200":
+          application/json: {"_id": "<id>", "name": "<value>", "status": "verified", "mxRecordConfigured": true, "_environmentId": "<id>", "_organizationId": "<id>", "createdAt": "1709440889064", "updatedAt": "1735651545144", "expectedDnsRecords": [{"type": "MX", "name": "inbound", "content": "inbound-smtp.us-east-1.amazonaws.com", "ttl": "Auto", "priority": 10}]}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_getDomainAutoConfigure:
+    speakeasy-default-domains-controller-get-domain-auto-configure:
+      parameters:
+        path:
+          domain: "hidden-subsidy.info"
+      responses:
+        "200":
+          application/json: {"available": false, "manualRecords": [{"type": "MX", "name": "inbound", "content": "inbound-smtp.us-east-1.amazonaws.com", "ttl": "Auto", "priority": 10}]}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_startDomainAutoConfigure:
+    speakeasy-default-domains-controller-start-domain-auto-configure:
+      parameters:
+        path:
+          domain: "criminal-other.name"
+      requestBody:
+        application/json: {}
+      responses:
+        "201":
+          application/json: {"applyUrl": "https://reckless-antelope.biz", "providerName": "<value>", "redirectUri": "https://shameless-roadway.info"}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  IntegrationsController_generateConnectOAuthUrl:
+    speakeasy-default-integrations-controller-generate-connect-O-auth-url:
+      requestBody:
+        application/json: {"subscriberId": "subscriber-123", "integrationIdentifier": "<value>", "connectionIdentifier": "slack-connection-abc123", "scope": ["chat:write", "chat:write.public", "channels:read"], "connectionMode": "shared", "autoLinkUser": true}
+      responses:
+        "201":
+          application/json: {"url": "https://slack.com/oauth/v2/authorize?state=..."}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  IntegrationsController_generateLinkUserOAuthUrl:
+    speakeasy-default-integrations-controller-generate-link-user-O-auth-url:
+      requestBody:
+        application/json: {"subscriberId": "subscriber-123", "integrationIdentifier": "<value>", "connectionIdentifier": "slack-connection-abc123", "userScope": ["identity.basic"]}
+      responses:
+        "201":
+          application/json: {"url": "https://slack.com/oauth/v2/authorize?state=..."}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_diagnoseDomain:
+    speakeasy-default-domains-controller-diagnose-domain:
+      parameters:
+        path:
+          domain: "alive-publication.biz"
+      responses:
+        "200":
+          application/json: {"ok": true, "runAt": "<value>", "checks": [{"code": "ns_unresolvable", "status": "skipped", "latencyMs": 2745.11}], "issues": []}
+        "414":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "400":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "422":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123", "errors": {"fieldName1": {"messages": ["Field is required", "Must be a valid email address"], "value": "invalidEmail"}, "fieldName2": {"messages": ["Must be at least 18 years old"], "value": 17}, "fieldName3": {"messages": ["Must be a boolean value"], "value": true}, "fieldName4": {"messages": ["Must be a valid object"], "value": {"key": "value"}}, "fieldName5": {"messages": ["Field is missing"], "value": null}, "fieldName6": {"messages": ["Undefined value"]}}}
+        "429":
+          application/json: "API rate limit exceeded"
+        "500":
+          application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
+        "503":
+          application/json: "Please wait some time, then try again."
+  DomainsController_testDomainRoute:
+    speakeasy-default-domains-controller-test-domain-route:
+      parameters:
+        path:
+          domain: "exalted-bonfire.com"
+          address: "90499 Rowan Close"
+      requestBody:
+        application/json: {"from": {"address": "58851 Konopelski Overpass"}, "subject": "<value>"}
+      responses:
+        "200":
+          application/json: {"matched": true, "dryRun": true}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":

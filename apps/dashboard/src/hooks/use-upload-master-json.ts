@@ -84,18 +84,3 @@ export function useUploadMasterJson({ onSuccess, onError }: UseUploadMasterJsonP
     triggerFileUpload,
   };
 }
-
-export function getImportSummary(result: ImportMasterJsonResponseDto) {
-  const { successful = [], failed = [] } = result;
-
-  return {
-    totalProcessed: successful.length + failed.length,
-    successCount: successful.length,
-    failureCount: failed.length,
-    successfulResources: successful,
-    failedResources: failed,
-    hasPartialSuccess: successful.length > 0 && failed.length > 0,
-    isCompleteSuccess: successful.length > 0 && failed.length === 0,
-    isCompleteFailure: successful.length === 0 && failed.length > 0,
-  };
-}

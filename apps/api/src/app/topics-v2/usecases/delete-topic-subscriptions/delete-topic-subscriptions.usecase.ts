@@ -325,19 +325,27 @@ export class DeleteTopicSubscriptionsUsecase {
     command: DeleteTopicSubscriptionsCommand,
     existingSubscriptions: TopicSubscribersEntity[]
   ): Promise<void> {
-    await this.topicSubscribersRepository.withTransaction(async () => {
+    await this.topicSubscribersRepository.withTransaction(async (session) => {
       const subscriptionIds = existingSubscriptions.map((sub) => sub._id);
 
-      await this.preferencesRepository.delete({
-        _environmentId: command.environmentId,
-        _topicSubscriptionId: { $in: subscriptionIds },
-        type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
-      });
+      await this.preferencesRepository.delete(
+        {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _topicSubscriptionId: { $in: subscriptionIds },
+          type: PreferencesTypeEnum.SUBSCRIPTION_SUBSCRIBER_WORKFLOW,
+        },
+        { session }
+      );
 
-      await this.topicSubscribersRepository.delete({
-        _organizationId: command.organizationId,
-        _id: { $in: subscriptionIds },
-      });
+      await this.topicSubscribersRepository.delete(
+        {
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          _id: { $in: subscriptionIds },
+        },
+        { session }
+      );
     });
   }
 }

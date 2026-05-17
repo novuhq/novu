@@ -5,31 +5,35 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildSubscribersPreferencesListQuery,
   prefetchSubscribersPreferencesList,
   queryKeySubscribersPreferencesList,
   SubscribersPreferencesListQueryData,
-} from './subscribersPreferencesList.core.js';
+} from "./subscribersPreferencesList.core.js";
 export {
   buildSubscribersPreferencesListQuery,
   prefetchSubscribersPreferencesList,
@@ -58,11 +62,21 @@ export type SubscribersPreferencesListQueryError =
  */
 export function useSubscribersPreferencesList(
   request: operations.SubscribersControllerGetSubscriberPreferencesRequest,
-  options?: QueryHookOptions<SubscribersPreferencesListQueryData, SubscribersPreferencesListQueryError>
-): UseQueryResult<SubscribersPreferencesListQueryData, SubscribersPreferencesListQueryError> {
+  options?: QueryHookOptions<
+    SubscribersPreferencesListQueryData,
+    SubscribersPreferencesListQueryError
+  >,
+): UseQueryResult<
+  SubscribersPreferencesListQueryData,
+  SubscribersPreferencesListQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildSubscribersPreferencesListQuery(client, request, options),
+    ...buildSubscribersPreferencesListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -76,11 +90,21 @@ export function useSubscribersPreferencesList(
  */
 export function useSubscribersPreferencesListSuspense(
   request: operations.SubscribersControllerGetSubscriberPreferencesRequest,
-  options?: SuspenseQueryHookOptions<SubscribersPreferencesListQueryData, SubscribersPreferencesListQueryError>
-): UseSuspenseQueryResult<SubscribersPreferencesListQueryData, SubscribersPreferencesListQueryError> {
+  options?: SuspenseQueryHookOptions<
+    SubscribersPreferencesListQueryData,
+    SubscribersPreferencesListQueryError
+  >,
+): UseSuspenseQueryResult<
+  SubscribersPreferencesListQueryData,
+  SubscribersPreferencesListQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildSubscribersPreferencesListQuery(client, request, options),
+    ...buildSubscribersPreferencesListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -95,7 +119,7 @@ export function setSubscribersPreferencesListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: SubscribersPreferencesListQueryData
+  data: SubscribersPreferencesListQueryData,
 ): SubscribersPreferencesListQueryData | undefined {
   const key = queryKeySubscribersPreferencesList(...queryKeyBase);
 
@@ -114,20 +138,20 @@ export function invalidateSubscribersPreferencesList(
       },
     ]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Preferences', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Preferences", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllSubscribersPreferencesList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Preferences', 'list'],
+    queryKey: ["@novu/api", "Preferences", "list"],
   });
 }

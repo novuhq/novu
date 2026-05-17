@@ -1,16 +1,27 @@
-import { ChannelTypeEnum, IEnvironment, IIntegration } from '@novu/shared';
+import { ChannelTypeEnum, IEnvironment, IIntegration, IntegrationKindEnum } from '@novu/shared';
 import { del, get, post, put } from './api.client';
+
+export type HealthCheckStatus = 'ready' | 'pending' | 'failed';
+
+export type MsTeamsHealthCheckResult = {
+  appRegistration: HealthCheckStatus | null;
+  azureBotCreated: HealthCheckStatus | null;
+  teamsAppCatalog: HealthCheckStatus | null;
+  permissions: HealthCheckStatus | null;
+  allReady: boolean;
+};
 
 export type CreateIntegrationData = {
   providerId: string;
-  channel: ChannelTypeEnum;
+  channel?: ChannelTypeEnum;
+  kind?: IntegrationKindEnum;
   credentials: Record<string, unknown>;
-  configurations: Record<string, string>;
+  configurations?: Record<string, string>;
   name: string;
-  identifier: string;
+  identifier?: string;
   active: boolean;
   primary?: boolean;
-  _environmentId: string;
+  _environmentId?: string;
 };
 
 export enum CheckIntegrationResponseEnum {
@@ -79,4 +90,60 @@ export async function updateIntegration(integrationId: string, data: UpdateInteg
     body: data,
     environment: environment,
   });
+}
+
+export type SlackQuickSetupParams = {
+  configToken: string;
+  agentId: string;
+  subscriberId?: string;
+  connectionIdentifier?: string;
+};
+
+export async function slackQuickSetup(
+  integrationId: string,
+  params: SlackQuickSetupParams,
+  environment: IEnvironment
+): Promise<void> {
+  await post(`/integrations/${integrationId}/slack-quick-setup`, {
+    body: params,
+    environment,
+  });
+}
+
+export async function getMsTeamsArmTemplateDeployUrl(
+  integrationId: string,
+  environment: IEnvironment
+): Promise<{ deployUrl: string }> {
+  const { data } = await get<{ data: { deployUrl: string } }>(
+    `/integrations/${integrationId}/msteams-arm-template/deploy-url`,
+    { environment }
+  );
+
+  return data;
+}
+
+export async function getAzureSetupOauthUrl(
+  integrationId: string,
+  environment: IEnvironment
+): Promise<{ url: string }> {
+  const { data } = await get<{ data: { url: string } }>(
+    `/integrations/${integrationId}/msteams-azure-setup/oauth-url`,
+    { environment }
+  );
+
+  return data;
+}
+
+export async function getMsTeamsHealthCheck(
+  integrationId: string,
+  environment: IEnvironment,
+  checks?: string[]
+): Promise<MsTeamsHealthCheckResult> {
+  const params = checks?.length ? `?checks=${checks.join(',')}` : '';
+  const { data } = await get<{ data: MsTeamsHealthCheckResult }>(
+    `/integrations/${integrationId}/msteams-health${params}`,
+    { environment }
+  );
+
+  return data;
 }

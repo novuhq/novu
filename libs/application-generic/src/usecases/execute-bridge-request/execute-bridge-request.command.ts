@@ -9,7 +9,7 @@ import {
   PostActionEnum,
 } from '@novu/framework/internal';
 import { ResourceOriginEnum } from '@novu/shared';
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDefined, IsOptional, IsString } from 'class-validator';
 import { EnvironmentLevelCommand } from '../../commands';
 
 export type BridgeError = {
@@ -48,6 +48,19 @@ export class ExecuteBridgeRequestCommand extends EnvironmentLevelCommand {
   @IsOptional()
   @IsString()
   stepResolverHash?: string;
+
+  /**
+   * Enforce SSRF protection on the outbound bridge HTTP call (DNS-pinned
+   * connect-time guard + redirect re-validation via `HttpClientService`).
+   *
+   * Use for endpoints that accept a user-controlled bridgeUrl (e.g.
+   * `/bridge/sync`, `/bridge/validate`) so attacker-controlled IP literals
+   * (loopback / RFC1918 / link-local / cloud metadata) cannot reach internal
+   * services. Leave undefined for trusted internal callers.
+   */
+  @IsOptional()
+  @IsBoolean()
+  enforceSsrfProtection?: boolean;
 }
 
 // will generate the output type based on the action

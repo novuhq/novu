@@ -46,12 +46,17 @@ export enum CredentialsKeyEnum {
   externalLink = 'externalLink',
   channelId = 'channelId',
   phoneNumberIdentification = 'phoneNumberIdentification',
+  businessAccountId = 'businessAccountId',
   ApiVersion = 'apiVersion',
   AppSid = 'appSid',
   SenderId = 'senderId',
   AppIOBaseUrl = 'AppIOBaseUrl',
   ServicePlanId = 'servicePlanId',
   TenantId = 'tenantId',
+  SigningSecret = 'signingSecret',
+  OutboundIntegrationId = 'outboundIntegrationId',
+  /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. Auto-populated by the API — never entered by the user. */
+  ExternalEnvironmentId = 'externalEnvironmentId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -78,6 +83,7 @@ export enum EmailProviderIdEnum {
   SparkPost = 'sparkpost',
   EmailWebhook = 'email-webhook',
   Braze = 'braze',
+  NovuAgent = 'novu-email-agent',
 }
 
 export enum SmsProviderIdEnum {
@@ -153,12 +159,23 @@ export enum InAppProviderIdEnum {
   Novu = 'novu',
 }
 
+export enum AgentRuntimeProviderIdEnum {
+  Anthropic = 'anthropic',
+}
+
+/** Distinguishes integrations used for notification delivery from those used as agent runtimes. */
+export enum IntegrationKindEnum {
+  DELIVERY = 'delivery',
+  AGENT = 'agent',
+}
+
 export type ProvidersIdEnum =
   | EmailProviderIdEnum
   | SmsProviderIdEnum
   | PushProviderIdEnum
   | InAppProviderIdEnum
-  | ChatProviderIdEnum;
+  | ChatProviderIdEnum
+  | AgentRuntimeProviderIdEnum;
 
 export const ProvidersIdEnumConst = {
   EmailProviderIdEnum,
@@ -166,4 +183,5 @@ export const ProvidersIdEnumConst = {
   PushProviderIdEnum,
   InAppProviderIdEnum,
   ChatProviderIdEnum,
+  AgentRuntimeProviderIdEnum,
 };

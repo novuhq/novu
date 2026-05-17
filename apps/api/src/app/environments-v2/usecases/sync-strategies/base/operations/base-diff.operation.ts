@@ -33,7 +33,7 @@ export abstract class BaseDiffOperation<T> {
     organizationId: string,
     userContext: UserSessionData
   ): Promise<IDiffResult[]> {
-    this.logger.info(this.getStartingDiffMessage(sourceEnvId, targetEnvId));
+    this.logger.debug(this.getStartingDiffMessage(sourceEnvId, targetEnvId));
 
     const resultBuilder = new DiffResultBuilder(this.getResourceType());
 
@@ -43,14 +43,14 @@ export abstract class BaseDiffOperation<T> {
         this.repositoryService.fetchSyncableResources(targetEnvId, organizationId),
       ]);
 
-      this.logger.info(
+      this.logger.debug(
         `Fetched ${sourceResources.length} source resources and ${targetResources.length} target resources`
       );
 
       await this.processResourceDiffs(sourceResources, targetResources, resultBuilder, userContext);
       await this.processDeletedResources(sourceResources, targetResources, resultBuilder);
 
-      this.logger.info(`Resource diff completed. Processed ${sourceResources.length} resources in batches.`);
+      this.logger.debug(`Resource diff completed. Processed ${sourceResources.length} resources in batches.`);
 
       return resultBuilder.build();
     } catch (error) {
@@ -70,7 +70,7 @@ export abstract class BaseDiffOperation<T> {
 
     const batches = this.createBatches(sourceResources, BaseDiffOperation.BATCH_SIZE);
 
-    this.logger.info(
+    this.logger.debug(
       `Processing ${sourceResources.length} resources in ${batches.length} batches of ${BaseDiffOperation.BATCH_SIZE}`
     );
 

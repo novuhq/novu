@@ -7,6 +7,7 @@ import {
   ChatProviderIdEnum,
   EmailProviderIdEnum,
   EnvironmentEnum,
+  EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
 } from '@novu/shared';
@@ -79,6 +80,18 @@ export class CreateNovuIntegrations {
       });
 
       const name = isV2Enabled ? 'Novu Inbox' : 'Novu In-App';
+
+      /*
+       * Default the Inbox (in-app) integration to HMAC-enabled for any
+       * non-dev environment. This is a secure-by-default posture so that
+       * production Inbox deployments cannot be initialized for an arbitrary
+       * subscriberId without a valid `subscriberHash` (see NV-7593). Dev
+       * environments – and ad-hoc/keyless flows that do not pass an
+       * environment type – keep the previous HMAC-off default so local
+       * development remains friction-free.
+       */
+      const shouldEnableHmacByDefault = command.environmentType === EnvironmentTypeEnum.PROD;
+
       await this.createIntegration.execute(
         CreateIntegrationCommand.create({
           name,
@@ -89,21 +102,14 @@ export class CreateNovuIntegrations {
           userId: command.userId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
+          credentials: shouldEnableHmacByDefault ? { hmac: true } : undefined,
         })
       );
     }
   }
 
   private async createSlackIntegration(command: CreateNovuIntegrationsCommand) {
-    const isSlackTeamsEnabled = await this.featureFlagService.getFlag({
-      user: { _id: command.userId } as UserEntity,
-      environment: { _id: command.environmentId } as EnvironmentEntity,
-      organization: { _id: command.organizationId } as OrganizationEntity,
-      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
-      defaultValue: false,
-    });
-
-    if (!areNovuSlackCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT || !isSlackTeamsEnabled) {
+    if (!areNovuSlackCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT) {
       return;
     }
 

@@ -65,19 +65,10 @@ export const envValidators = {
   SCHEDULER_URL: str({ default: undefined }),
   SCHEDULER_API_KEY: str({ default: undefined }),
   INTERNAL_CALLBACK_API_KEY: str({ default: undefined }),
-  // AI/LLM Configuration
-  AI_LLM_PROVIDER: str({ choices: ['openai', 'anthropic'], default: 'openai' }),
-  AI_LLM_API_KEY: str({ default: '' }),
-  AI_LLM_MODEL: str({ default: '' }),
-  AI_LLM_MAX_OUTPUT_TOKENS: num({ default: 8192 }),
-  AI_LLM_TEMPERATURE: num({ default: 0.7 }),
-  AI_LLM_MAX_RETRIES: num({ default: 3 }),
-  AI_LLM_SERVICE_TIER: str({ choices: ['auto', 'default', 'flex', 'priority'], default: 'priority' }),
-  AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
   STEP_RESOLVER_CF_ACCOUNT_ID: str({ default: undefined }),
   STEP_RESOLVER_CF_API_TOKEN: str({ default: undefined }),
   STEP_RESOLVER_CF_DISPATCH_NAMESPACE: str({ default: undefined }),
-  STEP_RESOLVER_DISPATCH_URL: url({ default: '' }),
+  STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
@@ -95,11 +86,22 @@ export const envValidators = {
       NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
       KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication', default: undefined }),
       KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication', default: undefined }),
-
+      // ClickHouse
       CLICK_HOUSE_URL: str({ default: '' }),
       CLICK_HOUSE_DATABASE: str({ default: '' }),
       CLICK_HOUSE_USER: str({ default: '' }),
       CLICK_HOUSE_PASSWORD: str({ default: '' }),
+      // AI/LLM Configuration
+      AI_LLM_PROVIDER: str({ choices: ['openai', 'anthropic'], default: 'openai' }),
+      AI_LLM_API_KEY: str({ default: '' }),
+      AI_LLM_MODEL: str({ default: '' }),
+      AI_LLM_MAX_OUTPUT_TOKENS: num({ default: 8192 }),
+      AI_LLM_TEMPERATURE: num({ default: 0.7 }),
+      AI_LLM_MAX_RETRIES: num({ default: 3 }),
+      AI_LLM_SERVICE_TIER: str({ choices: ['auto', 'default', 'flex', 'priority'], default: 'priority' }),
+      AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
+      // Brand enrichment
+      CONTEXT_DEV_API_KEY: str({ default: '' }),
     }),
 
   // Feature Flags

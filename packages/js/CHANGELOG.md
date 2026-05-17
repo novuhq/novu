@@ -1,3 +1,40 @@
+## v3.16.0 (2026-04-27)
+
+### 🚀 Features
+
+- **js:** create connect chat channel connections ([#10711](https://github.com/novuhq/novu/pull/10711))
+
+### 🩹 Fixes
+
+- **js:** correct rounding in formatToRelativeTime for relative time display ([#10769](https://github.com/novuhq/novu/pull/10769))
+- **js, react:** localize sub-minute relative time in inbox fixes NV-7345 ([#10712](https://github.com/novuhq/novu/pull/10712))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Paweł Tymczuk @LetItRock
+
+## v3.15.0 (2026-04-13)
+
+### 🚀 Features
+
+- **dashboard,api-service:** novu copilot suggestions on the new chat fixes NV-7321 ([#10542](https://github.com/novuhq/novu/pull/10542))
+- **api-service:** CNF inbox tag filters (AND of OR-groups) fixes NV-7090 ([#10466](https://github.com/novuhq/novu/pull/10466))
+- **api-service:** implement environment variables management fixes NV-7234 ([#10328](https://github.com/novuhq/novu/pull/10328))
+
+### 🩹 Fixes
+
+- **root:** resolve defu, vite, and @smithy/config-resolver vulnerabilities ([#10573](https://github.com/novuhq/novu/pull/10573))
+- **js:** bundle Solid ecosystem deps to prevent React is not defined error ([#10429](https://github.com/novuhq/novu/pull/10429))
+
+### ❤️ Thank You
+
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Hammad Khan @hammadxcm
+- Paweł Tymczuk @LetItRock
+
 ## v3.14.1 (2026-02-27)
 
 ### 🚀 Features

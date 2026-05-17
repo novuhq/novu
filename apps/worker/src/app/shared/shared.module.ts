@@ -27,6 +27,7 @@ import {
   MetricsModule,
   ProcessTenant,
   QueuesModule,
+  SafeOutboundHttpService,
   StepRunRepository,
   StorageHelperService,
   storageService,
@@ -38,6 +39,7 @@ import {
   WorkflowRunService,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
   ControlValuesRepository,
   DalService,
   EnvironmentRepository,
@@ -64,6 +66,7 @@ import { UNIQUE_WORKER_DEPENDENCIES } from '../../config/worker-init.config';
 import { ActiveJobsMetricService } from '../workflow/services';
 
 const DAL_MODELS = [
+  AgentIntegrationRepository,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   ExecutionDetailsRepository,
@@ -136,6 +139,7 @@ const PROVIDERS = [
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   HttpClientService,
+  SafeOutboundHttpService,
   ...ANALYTICS_PROVIDERS,
 ];
 

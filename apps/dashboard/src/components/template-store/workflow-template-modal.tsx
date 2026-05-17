@@ -1,7 +1,7 @@
-import { StepCreateDto } from '@novu/shared';
+import { FeatureFlagsKeysEnum, StepCreateDto } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
-import { RiArrowLeftSLine } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiSparklingFill } from 'react-icons/ri';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { RouteFill } from '@/components/icons/route-fill';
@@ -18,7 +18,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '
 import { ScrollArea, ScrollBar } from '@/components/primitives/scroll-area';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { WorkflowResults } from '@/components/template-store/components/workflow-results';
-import { IWorkflowSuggestion } from '@/components/template-store/types';
+import { IWorkflowSuggestion, TemplateCategory } from '@/components/template-store/types';
 import { WorkflowSidebar } from '@/components/template-store/workflow-sidebar';
 import TruncatedText from '@/components/truncated-text';
 import { CreateWorkflowForm } from '@/components/workflow-editor/create-workflow-form';
@@ -26,11 +26,16 @@ import { workflowSchema } from '@/components/workflow-editor/schema';
 import { showErrorToast } from '@/components/workflow-editor/toasts';
 import { WorkflowCanvas } from '@/components/workflow-editor/workflow-canvas';
 import { useCreateWorkflow } from '@/hooks/use-create-workflow';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useOnboardingWorkflowSuggestions } from '@/hooks/use-onboarding-workflow-suggestions';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useTemplateStore } from '@/hooks/use-template-store';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { Step } from '@/utils/types';
+
+const PERSONALIZED_CATEGORY_ID = 'personalized';
+const PERSONALIZED_CATEGORY_LABEL = 'Personalized';
 
 function mapTemplateStepsToSteps(templateSteps: StepCreateDto[]): Step[] {
   return templateSteps.map((step, index) => {
@@ -63,24 +68,48 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
   const [searchParams] = useSearchParams();
   const { submit: createFromTemplate, isLoading: isCreating } = useCreateWorkflow();
   const [selectedCategory, setSelectedCategory] = useState<string>('popular');
+  const [hasUserSelectedCategory, setHasUserSelectedCategory] = useState(false);
   const [internalSelectedTemplate, setInternalSelectedTemplate] = useState<IWorkflowSuggestion | null>(null);
 
   const selectedTemplate = props.selectedTemplate ?? internalSelectedTemplate;
 
   const { suggestions, isLoading } = useTemplateStore();
+  const isAiWorkflowGenerationEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_AI_WORKFLOW_GENERATION_ENABLED);
+  const { suggestions: personalizedSuggestions, hasPersonalizedSuggestions } = useOnboardingWorkflowSuggestions();
   const previewSteps = useMemo(() => {
     if (!selectedTemplate) return [] as Step[];
     return mapTemplateStepsToSteps(selectedTemplate.workflowDefinition.steps);
   }, [selectedTemplate]);
 
+  const personalizedCategory = useMemo<TemplateCategory | null>(() => {
+    if (!isAiWorkflowGenerationEnabled || !hasPersonalizedSuggestions) return null;
+
+    return {
+      id: PERSONALIZED_CATEGORY_ID,
+      label: PERSONALIZED_CATEGORY_LABEL,
+      icon: <RiSparklingFill className="h-3 w-3 text-purple-700" />,
+      bgColor: 'bg-purple-50',
+      tag: PERSONALIZED_CATEGORY_ID,
+    };
+  }, [isAiWorkflowGenerationEnabled, hasPersonalizedSuggestions]);
+
+  const extraCategories = useMemo(
+    () => (personalizedCategory ? [personalizedCategory] : undefined),
+    [personalizedCategory]
+  );
+
   const filteredSuggestions = useMemo(() => {
+    if (selectedCategory === PERSONALIZED_CATEGORY_ID) {
+      return personalizedSuggestions;
+    }
+
     if (selectedCategory === 'popular') {
       const popularWorkflows = suggestions.filter((suggestion) => suggestion.tags.includes('popular'));
       return popularWorkflows.length > 0 ? popularWorkflows : suggestions.slice(0, 12);
     }
 
     return suggestions.filter((suggestion) => suggestion.tags.includes(selectedCategory));
-  }, [selectedCategory, suggestions]);
+  }, [selectedCategory, suggestions, personalizedSuggestions]);
 
   useEffect(() => {
     if (props.open) {
@@ -101,6 +130,12 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
     const match = suggestions.find((s) => s.workflowDefinition.workflowId === templateId);
     if (match) setInternalSelectedTemplate(match);
   }, [templateId, suggestions, selectedTemplate]);
+
+  useEffect(() => {
+    if (hasUserSelectedCategory) return;
+    if (!isAiWorkflowGenerationEnabled || !hasPersonalizedSuggestions) return;
+    setSelectedCategory(PERSONALIZED_CATEGORY_ID);
+  }, [hasUserSelectedCategory, isAiWorkflowGenerationEnabled, hasPersonalizedSuggestions]);
 
   const handleCreateWorkflow = (values: z.infer<typeof workflowSchema>) => {
     if (!selectedTemplate) return;
@@ -143,6 +178,10 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
       return selectedTemplate.name;
     }
 
+    if (selectedCategory === PERSONALIZED_CATEGORY_ID) {
+      return `${PERSONALIZED_CATEGORY_LABEL} workflows`;
+    }
+
     return `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} workflows`;
   };
 
@@ -157,6 +196,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
 
   const handleCategorySelect = (category: string) => {
     setSelectedCategory(category);
+    setHasUserSelectedCategory(true);
     track(TelemetryEvent.TEMPLATE_CATEGORY_SELECTED, {
       category,
     });
@@ -234,7 +274,11 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
                   exit={{ opacity: 0, y: -6 }}
                   transition={{ duration: 0.18, ease: 'easeOut' }}
                 >
-                  <WorkflowSidebar selectedCategory={selectedCategory} onCategorySelect={handleCategorySelect} />
+                  <WorkflowSidebar
+                    selectedCategory={selectedCategory}
+                    onCategorySelect={handleCategorySelect}
+                    extraCategories={extraCategories}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>
@@ -249,7 +293,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
 
                 <ScrollArea className="h-[520px]">
                   <div className="pr-2">
-                    {!suggestions.length ? (
+                    {!suggestions.length && !filteredSuggestions.length ? (
                       <div className="grid grid-cols-3 gap-4">
                         <Skeleton className="h-[140px] w-full" />
                         <Skeleton className="h-[140px] w-full" />
@@ -268,7 +312,7 @@ export function WorkflowTemplateModal(props: WorkflowTemplateModalProps) {
             ) : (
               <div className="flex h-full w-full gap-4">
                 <div className="flex-1">
-                  <WorkflowCanvas isReadOnly showStepPreview steps={previewSteps} />
+                  <WorkflowCanvas isReadOnly areConditionsClickable={false} showStepPreview steps={previewSteps} />
                 </div>
                 <div className="border-stroke-soft w-full max-w-[300px] border-l p-3">
                   <CreateWorkflowForm onSubmit={handleCreateWorkflow} template={selectedTemplate.workflowDefinition} />

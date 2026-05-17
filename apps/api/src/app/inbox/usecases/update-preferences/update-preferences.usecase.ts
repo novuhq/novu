@@ -67,7 +67,7 @@ export class UpdatePreferences {
     if (!subscriber) throw new NotFoundException(`Subscriber with id: ${command.subscriberId} is not found`);
 
     const workflow = await this.getWorkflow(command);
-    const internalSubscriptionId = await this.getSubscriptionId(command);
+    const internalSubscriptionId = await this.getSubscriptionId(command, subscriber);
 
     let newPreference: InboxPreference | null = null;
 
@@ -112,7 +112,10 @@ export class UpdatePreferences {
     return workflow;
   }
 
-  private async getSubscriptionId(command: UpdatePreferencesCommand): Promise<string | undefined> {
+  private async getSubscriptionId(
+    command: UpdatePreferencesCommand,
+    subscriber: Pick<SubscriberEntity, '_id'>
+  ): Promise<string | undefined> {
     if (command.level !== PreferenceLevelEnum.TEMPLATE || !command.subscriptionIdentifier) {
       return undefined;
     }
@@ -138,25 +141,34 @@ export class UpdatePreferences {
       enabled: useContextFiltering,
     });
 
-    // Try to find by identifier first
+    // Enforce ownership: the subscription must belong to the authenticated subscriber.
+    // Without this filter, any authenticated subscriber could resolve another subscriber's
+    // topic subscription by identifier and plant preferences against it (CWE-639).
     let subscription = await this.topicSubscribersRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      _subscriberId: subscriber._id,
       identifier,
       ...contextQuery,
     });
 
-    // If not found by identifier, try by _id (in case subscriptionIdentifier is actually an _id)
     if (!subscription && BaseRepository.isInternalId(command.subscriptionIdentifier)) {
       subscription = await this.topicSubscribersRepository.findOne({
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
+        _subscriberId: subscriber._id,
         _id: command.subscriptionIdentifier,
         ...contextQuery,
       });
     }
 
-    return subscription?._id?.toString();
+    if (!subscription) {
+      throw new NotFoundException(
+        `Subscription with identifier: ${command.subscriptionIdentifier} is not found for the authenticated subscriber`
+      );
+    }
+
+    return subscription._id?.toString();
   }
 
   @Instrument()

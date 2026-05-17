@@ -20,12 +20,14 @@ export function NovuCopilotPanel({ hideHeader }: { hideHeader?: boolean }) {
     isReviewingChanges,
     inputText,
     lastUserMessageId,
+    newChatSuggestions,
     setInputText,
     handleSendMessage,
     handleKeepAll,
     handleTryAgain,
     handleRevertMessage,
     handleDiscard,
+    handleSuggestionClick,
   } = useAiChat();
 
   return (
@@ -97,7 +99,9 @@ export function NovuCopilotPanel({ hideHeader }: { hideHeader?: boolean }) {
               onDiscard={handleDiscard}
               onTryAgain={handleTryAgain}
               onRevertMessage={handleRevertMessage}
+              onSuggestionClick={handleSuggestionClick}
               lastUserMessageId={lastUserMessageId}
+              newChatSuggestions={newChatSuggestions}
             />
           </motion.div>
         )}

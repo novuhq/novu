@@ -21,7 +21,8 @@ export class CacheInMemoryProviderService {
   /**
    * Rules for the provider selection:
    * - For self hosted non-enterprise users we use a single node Redis instance.
-   * - For self hosted enterprise users we use Redis Master-Slave architecture.
+   * - For self hosted enterprise users we use Redis Master-Slave architecture by default,
+   *   but allow using Elasticache when it is explicitly configured.
    * - For Novu cloud we use Elasticache. We fallback to a Redis Cluster configuration
    * if Elasticache not configured properly. That's happening in the provider
    * mapping in the /in-memory-provider/providers/index.ts
@@ -32,6 +33,10 @@ export class CacheInMemoryProviderService {
     }
 
     if (process.env.IS_SELF_HOSTED === 'true' && process.env.NOVU_ENTERPRISE === 'true') {
+      if (process.env.ELASTICACHE_CLUSTER_SERVICE_HOST && process.env.ELASTICACHE_CLUSTER_SERVICE_PORT) {
+        return InMemoryProviderEnum.ELASTICACHE;
+      }
+
       return InMemoryProviderEnum.REDIS_MASTER_SLAVE;
     }
 

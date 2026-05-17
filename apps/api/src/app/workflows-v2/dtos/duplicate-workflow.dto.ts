@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
 import { IsArray, IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
 
 export class DuplicateWorkflowDto {
@@ -16,8 +17,8 @@ export class DuplicateWorkflowDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(/^[a-zA-Z0-9]+(?:[-_.][a-zA-Z0-9]+)*$/, {
-    message: 'workflowId must be a valid slug format (letters, numbers, hyphens, dot and underscores only)',
+  @Matches(SLUG_IDENTIFIER_REGEX, {
+    message: slugIdentifierFormatMessage('workflowId'),
   })
   workflowId?: string;
 

@@ -10,6 +10,7 @@ import { isClerkEnabled } from '@novu/shared';
 import { SentryModule } from '@sentry/nestjs/setup';
 import packageJson from '../package.json';
 import { ActivityModule } from './app/activity/activity.module';
+import { AgentsModule } from './app/agents/agents.module';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { AuthModule } from './app/auth/auth.module';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
@@ -19,6 +20,7 @@ import { ChannelConnectionsModule } from './app/channel-connections/channel-conn
 import { ChannelEndpointsModule } from './app/channel-endpoints/channel-endpoints.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { ContextsModule } from './app/contexts/contexts.module';
+import { DomainsModule } from './app/domains/domains.module';
 import { EnvironmentVariablesModule } from './app/environment-variables/environment-variables.module';
 import { EnvironmentsModuleV1 } from './app/environments-v1/environments-v1.module';
 import { EnvironmentsModule } from './app/environments-v2/environments.module';
@@ -82,6 +84,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-ai')?.AiModule);
     }
 
+    if (require('@novu/ee-api')?.ConversationsModule) {
+      modules.push(require('@novu/ee-api')?.ConversationsModule);
+    }
+
     modules.push(SupportModule);
     modules.push(OutboundWebhooksModule.forRoot());
   }
@@ -116,6 +122,8 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   ContentTemplatesModule,
   OrganizationModule,
   ActivityModule,
+  AgentsModule,
+  DomainsModule.forRoot(),
   UserModule,
   IntegrationModule,
   InternalModule,

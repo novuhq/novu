@@ -4,6 +4,7 @@
 
 import { NovuCore } from "../core.js";
 import { encodeFormQuery, encodeJSON, encodeSimple } from "../lib/encodings.js";
+import { matchStatusCode } from "../lib/http.js";
 import * as M from "../lib/matchers.js";
 import { compactMap } from "../lib/primitives.js";
 import { safeParse } from "../lib/schemas.js";
@@ -32,6 +33,8 @@ import { Result } from "../types/fp.js";
  * @remarks
  * Create a subscriber with the subscriber attributes.
  *       **subscriberId** is a required field, rest other fields are optional, if the subscriber already exists, it will be updated
+ *
+ * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */
 export function subscribersCreate(
   client: NovuCore,
@@ -127,7 +130,7 @@ async function $do(
   }));
 
   const securityInput = await extractSecurity(client._options.security);
-  const requestSecurity = resolveGlobalSecurity(securityInput);
+  const requestSecurity = resolveGlobalSecurity(securityInput, [1, 0]);
 
   const context = {
     options: client._options,
@@ -172,23 +175,8 @@ async function $do(
 
   const doResult = await client._do(req, {
     context,
-    errorCodes: [
-      "400",
-      "401",
-      "403",
-      "404",
-      "405",
-      "409",
-      "413",
-      "414",
-      "415",
-      "422",
-      "429",
-      "4XX",
-      "500",
-      "503",
-      "5XX",
-    ],
+    isErrorStatusCode: (statusCode: number) =>
+      matchStatusCode({ status: statusCode } as Response, ["4XX", "5XX"]),
     retryConfig: context.retryConfig,
     retryCodes: context.retryCodes,
   });

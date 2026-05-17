@@ -1,129 +1,32 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CompileTemplate, CompileTemplateCommand, createHash } from '@novu/application-generic';
-import {
-  JobEntity,
-  JobRepository,
-  MessageEntity,
-  MessageRepository,
-  NotificationEntity,
-  NotificationTemplateEntity,
-} from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
-import axios from 'axios';
+import { Injectable } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
-
-const LOG_CONTEXT = 'InboundEmailParse';
+import { DomainRouteStrategy } from './strategies/domain-route.strategy';
+import { ReplyToStrategy } from './strategies/reply-to.strategy';
 
 @Injectable()
 export class InboundEmailParse {
   constructor(
-    private jobRepository: JobRepository,
-    private messageRepository: MessageRepository,
-    private compileTemplate: CompileTemplate
-  ) {}
-
-  async execute(command: InboundEmailParseCommand) {
-    const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
-
-    Logger.log({ domain, transactionId, environmentId }, `Received new email to parse`, LOG_CONTEXT);
-
-    const { template, notification, subscriber, environment, job, message } = await this.getEntities(
-      transactionId,
-      environmentId
-    );
-
-    if (domain !== environment?.dns?.inboundParseDomain) {
-      this.throwMiddleware('Domain is not in environment white list');
-    }
-
-    const currentParseWebhook = template?.steps?.find((step) => step?._id?.toString() === job?.step?._id)?.replyCallback
-      ?.url;
-
-    if (!currentParseWebhook) {
-      this.throwMiddleware(
-        `Missing parse webhook on template ${template._id} job ${job._id} transactionId ${transactionId}.`
-      );
-    }
-
-    const compiledDomain = await this.compileTemplate.execute({
-      template: currentParseWebhook as string,
-      data: job.payload,
-    });
-
-    const userPayload: IUserWebhookPayload = {
-      hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
-      transactionId,
-      payload: job.payload,
-      templateIdentifier: job.identifier,
-      template,
-      notification,
-      message,
-      mail: command,
-    };
-
-    await axios.post(compiledDomain, userPayload);
+    private replyToStrategy: ReplyToStrategy,
+    private domainRouteStrategy: DomainRouteStrategy,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
   }
 
-  private splitTo(address: string) {
-    const userNameDelimiter = '-nv-e=';
+  async execute(command: InboundEmailParseCommand): Promise<void> {
+    const toAddress = command.to[0].address;
 
-    const [user, domain] = address.split('@');
-    const toMetaIds = user.split('+')[1];
-    if (!toMetaIds) {
-      this.throwMiddleware(`Missing metadata segment in address ${address}`);
-    }
-    const [transactionId, environmentId] = toMetaIds.split(userNameDelimiter);
+    this.logger.info({ toAddress }, 'Received new email to parse');
 
-    if (!transactionId) {
-      this.throwMiddleware(`Missing transactionId on address ${address}`);
+    if (this.isReplyToAddress(toAddress)) {
+      return this.replyToStrategy.execute(command);
     }
 
-    if (!domain) {
-      this.throwMiddleware(`Missing domain  on address ${address}`);
-    }
-
-    if (!environmentId) {
-      this.throwMiddleware(`Missing environmentId on address ${address}`);
-    }
-
-    return { domain, transactionId, environmentId };
+    return this.domainRouteStrategy.execute(command);
   }
 
-  private throwMiddleware(error: string) {
-    Logger.error(error, LOG_CONTEXT);
-
-    throw new BadRequestException(error);
+  private isReplyToAddress(address: string): boolean {
+    return address.includes('-nv-e=');
   }
-
-  private async getEntities(transactionId: string, environmentId: string) {
-    const partial: Partial<JobEntity> = { transactionId, _environmentId: environmentId, type: StepTypeEnum.EMAIL };
-
-    const { template, notification, subscriber, environment, ...job } = await this.jobRepository.findOnePopulate({
-      query: partial as JobEntity,
-      selectTemplate: 'steps',
-      selectSubscriber: 'subscriberId',
-      selectEnvironment: 'apiKeys dns',
-    });
-
-    const message = await this.messageRepository.findOne({
-      transactionId,
-      _environmentId: environment._id,
-      _subscriberId: subscriber._id,
-    });
-
-    return { template, notification, subscriber, environment, job, message };
-  }
-}
-
-class MailMetadata extends InboundEmailParseCommand {}
-
-export interface IUserWebhookPayload {
-  transactionId: string;
-  templateIdentifier: string;
-  payload: Record<string, unknown>;
-  template: NotificationTemplateEntity;
-  notification: NotificationEntity;
-  message: MessageEntity | null;
-  mail: MailMetadata;
-  hmac: string;
 }

@@ -225,6 +225,15 @@ describe('Subscriber Controller E2E API Testing #novu-v2', () => {
         expect(firstPage.next).to.exist;
         expect(firstPage.previous).to.not.exist;
       });
+
+      it('should return 400 when both before and after cursors are provided', async () => {
+        const response = await session.testAgent
+          .get('/v2/subscribers')
+          .query({ before: '000000000000000000000001', after: '000000000000000000000002' });
+
+        expect(response.status).to.equal(400);
+        expect(response.body.message).to.contain('Cannot specify both "before" and "after" cursors');
+      });
     });
 
     describe('List Subscriber Sorting', () => {

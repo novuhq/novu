@@ -4,8 +4,6 @@ export const MODE = import.meta.env.MODE;
 
 export const LAUNCH_DARKLY_CLIENT_SIDE_ID = import.meta.env.VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
-export const HUBSPOT_PORTAL_ID = import.meta.env.VITE_HUBSPOT_EMBED;
-
 export const EE_AUTH_PROVIDER = (window._env_?.VITE_EE_AUTH_PROVIDER ||
   import.meta.env.VITE_EE_AUTH_PROVIDER ||
   'clerk') as 'clerk' | 'better-auth';
@@ -45,6 +43,8 @@ export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
 export const IS_SELF_HOSTED = (window._env_?.VITE_SELF_HOSTED || import.meta.env.VITE_SELF_HOSTED) === 'true';
 
 export const IS_ENTERPRISE = (window._env_?.VITE_NOVU_ENTERPRISE || import.meta.env.VITE_NOVU_ENTERPRISE) === 'true';
+
+export const IS_AI_FEATURES_ENABLED = !(IS_SELF_HOSTED && IS_ENTERPRISE);
 
 if (!IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'clerk' && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');

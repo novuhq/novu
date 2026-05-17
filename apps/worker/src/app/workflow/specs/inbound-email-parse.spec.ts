@@ -1,54 +1,102 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CompileTemplate } from '@novu/application-generic';
-import { JobRepository, MessageRepository } from '@novu/dal';
+import {
+  CompileTemplate,
+  HttpClientService,
+  InboundDomainRouteDelivery,
+  PinoLogger,
+  SendWebhookMessage,
+} from '@novu/application-generic';
+
+// The top-level @novu/application-generic re-exports helpers via Object.defineProperty
+// getters, which sinon cannot replace. Stub the underlying source module instead — the
+// re-export getter delegates to it so backend code picks up the stub.
+const ssrfUrlValidationModule = require('@novu/application-generic/build/main/utils/ssrf-url-validation');
+
+import {
+  AgentIntegrationRepository,
+  DomainRepository,
+  DomainRouteRepository,
+  IntegrationRepository,
+  JobRepository,
+  MessageRepository,
+} from '@novu/dal';
 import axios, { AxiosResponse } from 'axios';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
-import { InboundEmailParse, IUserWebhookPayload } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { DomainRouteStrategy } from '../usecases/inbound-email-parse/strategies/domain-route.strategy';
+import { IUserWebhookPayload, ReplyToStrategy } from '../usecases/inbound-email-parse/strategies/reply-to.strategy';
 
 const axiosInstance = axios.create();
 
 const eventTriggerPath = '/v1/events/trigger';
 const USER_MAIL_DOMAIN = 'mail.domain.com';
-const USER_PARSE_WEBHOOK = 'user-parse.com/webhook/{{compiledVariable}}';
+const USER_PARSE_WEBHOOK = 'https://example.com/webhook/{{compiledVariable}}';
 
 describe('Should handle the new arrived mail', () => {
   let inboundEmailParseUsecase: InboundEmailParse;
+  let replyToStrategy: ReplyToStrategy;
+  let compileTemplate: sinon.SinonStubbedInstance<CompileTemplate>;
 
   let sandbox;
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
 
+    compileTemplate = sandbox.createStubInstance(CompileTemplate);
+
     const module: TestingModule = await Test.createTestingModule({
-      providers: [InboundEmailParse, JobRepository, MessageRepository, CompileTemplate],
+      providers: [
+        InboundEmailParse,
+        ReplyToStrategy,
+        DomainRouteStrategy,
+        { provide: JobRepository, useValue: sandbox.createStubInstance(JobRepository) },
+        { provide: MessageRepository, useValue: sandbox.createStubInstance(MessageRepository) },
+        { provide: DomainRepository, useValue: sandbox.createStubInstance(DomainRepository) },
+        { provide: DomainRouteRepository, useValue: sandbox.createStubInstance(DomainRouteRepository) },
+        { provide: InboundDomainRouteDelivery, useValue: sandbox.createStubInstance(InboundDomainRouteDelivery) },
+        { provide: SendWebhookMessage, useValue: sandbox.createStubInstance(SendWebhookMessage) },
+        { provide: CompileTemplate, useValue: compileTemplate },
+        { provide: HttpClientService, useValue: sandbox.createStubInstance(HttpClientService) },
+        { provide: IntegrationRepository, useValue: sandbox.createStubInstance(IntegrationRepository) },
+        { provide: AgentIntegrationRepository, useValue: sandbox.createStubInstance(AgentIntegrationRepository) },
+        { provide: PinoLogger, useValue: sandbox.createStubInstance(PinoLogger) },
+      ],
     }).compile();
 
     inboundEmailParseUsecase = module.get<InboundEmailParse>(InboundEmailParse);
+    replyToStrategy = module.get<ReplyToStrategy>(ReplyToStrategy);
   });
 
-  afterEach(async () => {
+  afterEach(() => {
     sandbox.restore();
   });
 
   it('should send webhook request to the users webhook', async () => {
     const mail = getMailData();
 
-    const axiosPostStub = sandbox.stub(axios, 'post').resolves();
-    const getEntitiesStub = sandbox.stub(inboundEmailParseUsecase, 'getEntities').resolves(getEntitiesStubObject);
+    const safeRequestStub = sandbox.stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest').resolves({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      body: {},
+    } as any);
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
+    compileTemplate.execute.resolves(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
 
     await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-    sinon.assert.calledOnce(axiosPostStub);
-    axiosPostStub.calledWith(sinon.match.array);
-    const { args } = axiosPostStub.getCall(0);
+    sinon.assert.calledOnce(safeRequestStub);
+    const callArgs = safeRequestStub.getCall(0).args[0] as {
+      url: string;
+      method: string;
+      body: IUserWebhookPayload;
+    };
 
-    const webhook: string = args[0];
-    const payload: IUserWebhookPayload = args[1];
-
-    // Should compile the payload variables
-    expect(webhook).to.equal(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+    expect(callArgs.url).to.equal(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+    expect(callArgs.method).to.equal('POST');
+    const payload = callArgs.body;
     expect(payload.mail).to.be.ok;
     expect(payload.payload).to.ok;
     expect(payload.template).to.ok;
@@ -61,7 +109,6 @@ describe('Should handle the new arrived mail', () => {
 
   it('should not send webhook request with missing transactionId', async () => {
     try {
-      // const message = await triggerEmail();
       const mail = getMailData({ skipTransactionId: true });
 
       await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
@@ -75,7 +122,7 @@ describe('Should handle the new arrived mail', () => {
   it('should not send webhook request with when domain white list', async () => {
     try {
       const mail = getMailData({ userDomain: 'invalid-domain.com' });
-      const getEntitiesStub = sandbox.stub(inboundEmailParseUsecase, 'getEntities').resolves(getEntitiesStubObject);
+      sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
 
       await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
@@ -91,9 +138,7 @@ describe('Should handle the new arrived mail', () => {
       entitiesWithMissingParseWebhook.template.steps[0].replyCallback = {} as any;
 
       const mail = getMailData();
-      const getEntitiesStub = sandbox
-        .stub(inboundEmailParseUsecase, 'getEntities')
-        .resolves(entitiesWithMissingParseWebhook);
+      sandbox.stub(replyToStrategy as any, 'getEntities').resolves(entitiesWithMissingParseWebhook);
 
       await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
@@ -141,7 +186,7 @@ const getEntitiesStubObject = {
         active: true,
         replyCallback: {
           active: true,
-          url: 'user-parse.com/webhook/{{compiledVariable}}',
+          url: 'https://example.com/webhook/{{compiledVariable}}',
         },
         shouldStopOnFail: false,
         filters: [],
@@ -208,7 +253,7 @@ const getEntitiesStubObject = {
     step: {
       replyCallback: {
         active: true,
-        url: 'user-parse.com/webhook/{{compiledVariable}}',
+        url: 'https://example.com/webhook/{{compiledVariable}}',
       },
       metadata: {
         timed: {

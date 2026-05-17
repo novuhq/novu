@@ -120,7 +120,6 @@ export function AnalyticsPage() {
 
   const workflowRunsCount = useMemo(() => {
     const trend = workflowCharts?.[ReportTypeEnum.WORKFLOW_RUNS_TREND] as WorkflowRunsTrendDataPoint[] | undefined;
-
     if (!trend) return undefined;
 
     return trend.reduce((sum, day) => sum + day.completed + day.error, 0);

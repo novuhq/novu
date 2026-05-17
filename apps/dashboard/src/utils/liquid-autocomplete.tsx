@@ -246,7 +246,7 @@ const createInfoPanel = ({ component }: { component: React.ReactNode }) => {
  *    - payload.* (any new field)
  *    - steps.{valid-step}.events.n.payload.* (any new field)
  */
-export const completions =
+const completions =
   (
     scopedVariables: LiquidVariable[],
     variables: LiquidVariable[],

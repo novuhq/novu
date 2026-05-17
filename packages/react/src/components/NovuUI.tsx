@@ -6,11 +6,11 @@ import { NovuUIProvider } from '../context/NovuUIContext';
 import { useRenderer } from '../context/RendererContext';
 import { useDataRef } from '../hooks/internal/useDataRef';
 import { adaptAppearanceForJs } from '../utils/appearance';
-import type { ReactInboxAppearance, ReactSubscriptionAppearance } from '../utils/types';
+import type { ReactAllAppearance, ReactInboxAppearance, ReactSubscriptionAppearance } from '../utils/types';
 import { ShadowRootDetector } from './ShadowRootDetector';
 
 export type NovuUIOptions = Omit<JsNovuUIOptions, 'appearance'> & {
-  appearance?: ReactInboxAppearance | ReactSubscriptionAppearance;
+  appearance?: ReactInboxAppearance | ReactSubscriptionAppearance | ReactAllAppearance;
 };
 
 type NovuUIProps = React.PropsWithChildren<{

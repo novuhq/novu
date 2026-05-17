@@ -22,6 +22,8 @@ export enum TelemetryEvent {
   SKIP_ONBOARDING_CLICKED = 'Skip onboarding clicked - [Onboarding]',
   ONBOARDING_COMPLETED = 'Onboarding completed - [Onboarding]',
   USECASE_SELECT_PAGE_VIEWED = 'Use case select page viewed - [Onboarding]',
+  AGENTS_USECASE_PAGE_VIEWED = 'Agents use case page viewed - [Onboarding]',
+  AGENTS_SETUP_PAGE_VIEWED = 'Agents setup page viewed - [Onboarding]',
   INBOX_USECASE_PAGE_VIEWED = 'Inbox use case page viewed - [Onboarding]',
   INBOX_EMBED_PAGE_VIEWED = 'Inbox embed page viewed - [Onboarding]',
   INBOX_EMBED_SUCCESS_PAGE_VIEWED = 'Inbox embed success page viewed - [Onboarding]',
@@ -108,6 +110,23 @@ export enum TelemetryEvent {
   COPILOT_GUIDED_SUBMIT = 'Copilot guided submit - [AI Copilot]',
   COPILOT_SUGGESTION_CLICKED = 'Copilot suggestion clicked - [AI Copilot]',
   COPILOT_TAB_SWITCHED = 'Copilot tab switched - [AI Copilot]',
+  COPILOT_SUGGESTIONS_REFRESHED = 'Copilot suggestions refreshed - [AI Copilot]',
 
   STEP_RESOLVER_CUSTOM_CODE_CLICKED = 'Custom code clicked - [Workflow Editor]',
+
+  AGENTS_PAGE_VISITED = 'Agents page visited',
+  AGENT_DETAILS_PAGE_VISITED = 'Agent details page visited',
+  AGENT_CREATED_FROM_DASHBOARD = 'Agent created from dashboard',
+  AGENT_DELETED_FROM_DASHBOARD = 'Agent deleted from dashboard',
+  AGENT_INTEGRATION_LINKED_FROM_DASHBOARD = 'Agent integration linked from dashboard',
+  AGENT_INTEGRATION_GUIDE_VIEWED = 'Agent integration setup guide viewed',
+  AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD = 'Agent integration removed from dashboard',
+
+  DISPATCH_AGENTS_PAGE_VISITED = 'Agents page visited - [Dispatch]',
+  DISPATCH_AGENT_DETAILS_PAGE_VISITED = 'Agent details page visited - [Dispatch]',
+  DISPATCH_AGENT_CREATED_FROM_DASHBOARD = 'Agent created from dashboard - [Dispatch]',
+  DISPATCH_AGENT_DELETED_FROM_DASHBOARD = 'Agent deleted from dashboard - [Dispatch]',
+  DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD = 'Agent integration linked from dashboard - [Dispatch]',
+  DISPATCH_AGENT_INTEGRATION_GUIDE_VIEWED = 'Agent integration setup guide viewed - [Dispatch]',
+  DISPATCH_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD = 'Agent integration removed from dashboard - [Dispatch]',
 }

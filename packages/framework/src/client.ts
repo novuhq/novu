@@ -19,6 +19,7 @@ import {
   WorkflowNotFoundError,
 } from './errors';
 import { mockSchema } from './jsonSchemaFaker';
+import type { Agent } from './resources/agent';
 import { prettyPrintDiscovery } from './resources/workflow/pretty-print-discovery';
 import type {
   ActionStep,
@@ -41,7 +42,11 @@ import type {
 import { WithPassthrough } from './types/provider.types';
 import { EMOJI, log, resolveApiUrl, resolveSecretKey, sanitizeHtmlInObject } from './utils';
 import { createLiquidEngine } from './utils/liquid.utils';
-import { normalizeControlData } from './utils/normalize-controls.utils';
+import {
+  expandJsonStringControlValues,
+  normalizeControlData,
+  restoreJsonStringControlValues,
+} from './utils/normalize-controls.utils';
 import { deepMerge } from './utils/object.utils';
 import { validateData } from './validators';
 
@@ -52,6 +57,7 @@ function isRuntimeInDevelopment() {
 export class Client {
   private discoveredWorkflows = new Map<string, DiscoverWorkflowOutput>();
   private discoverWorkflowPromises = new Map<string, Promise<void>>();
+  private registeredAgents = new Map<string, Agent>();
 
   private templateEngine: Liquid;
 
@@ -128,6 +134,16 @@ export class Client {
     }
   }
 
+  public addAgents(agents: Array<Agent>): void {
+    for (const a of agents) {
+      this.registeredAgents.set(a.id, a);
+    }
+  }
+
+  public getAgent(agentId: string): Agent | undefined {
+    return this.registeredAgents.get(agentId);
+  }
+
   private async addWorkflow(workflow: Workflow): Promise<void> {
     try {
       const definition = await workflow.discover();
@@ -183,6 +199,7 @@ export class Client {
   public discover(): DiscoverOutput {
     return {
       workflows: this.getRegisteredWorkflows(),
+      agents: Array.from(this.registeredAgents.keys()).map((id) => ({ agentId: id })),
     };
   }
 
@@ -402,12 +419,12 @@ export class Client {
   }
 
   public async executeWorkflow(event: Event): Promise<ExecuteOutput> {
-    const actionMessages = {
+    const actionMessages: Record<string, string> = {
       [PostActionEnum.EXECUTE]: 'Executing',
       [PostActionEnum.PREVIEW]: 'Previewing',
-    } as const;
+    };
 
-    const actionMessage = actionMessages[event.action];
+    const actionMessage = actionMessages[event.action] || event.action;
 
     const actionMessageFormatted = `${actionMessage} workflowId:`;
     this.log(`\n${log.bold(log.underline(actionMessageFormatted))} '${event.workflowId}'`);
@@ -495,11 +512,11 @@ export class Client {
     const elapsedTimeInMilliseconds = elapsedSeconds * 1_000 + elapsedNanoseconds / 1_000_000;
 
     const emoji = executionError ? EMOJI.ERROR : EMOJI.SUCCESS;
-    const resultMessages = {
+    const resultMessages: Record<string, string> = {
       [PostActionEnum.EXECUTE]: 'Executed',
       [PostActionEnum.PREVIEW]: 'Previewed',
-    } as const;
-    const resultMessage = resultMessages[event.action];
+    };
+    const resultMessage = resultMessages[event.action] || event.action;
 
     this.log(`${emoji} ${resultMessage} workflowId: \`${event.workflowId}\``);
 
@@ -547,11 +564,11 @@ export class Client {
     if (!this.verbose) return;
 
     const successPrefix = error ? EMOJI.ERROR : EMOJI.SUCCESS;
-    const actionMessages = {
+    const actionMessages: Record<string, string> = {
       [PostActionEnum.EXECUTE]: 'Executed',
       [PostActionEnum.PREVIEW]: 'Previewed',
-    } as const;
-    const actionMessage = actionMessages[event.action];
+    };
+    const actionMessage = actionMessages[event.action] || event.action;
     const message = error ? 'Failed to execute' : actionMessage;
     const executionLog = error ? log.error : log.success;
     const logMessage = `${successPrefix} ${message} workflowId: '${event.workflowId}`;
@@ -704,7 +721,19 @@ export class Client {
 
   private async compileControls(templateControls: Record<string, unknown>, event: Event) {
     try {
-      let templateString = this.preprocessTranslationPatterns(JSON.stringify(templateControls));
+      /**
+       * Some control values (notably the Maily email `body`) are JSON.stringified before reaching
+       * the framework. If we feed them through `JSON.stringify(templateControls)` as-is, their
+       * `"` characters get doubly escaped while Liquid only single-escapes its outputs, so any
+       * rendered variable that contains a `"` corrupts the inner JSON (NV-7638).
+       *
+       * Expanding those JSON strings into real objects flattens the escaping to a single level
+       * before Liquid renders, and `restoreJsonStringControlValues` re-stringifies them after
+       * parsing the rendered template.
+       */
+      const expandedControls = expandJsonStringControlValues(templateControls) as Record<string, unknown>;
+
+      let templateString = this.preprocessTranslationPatterns(JSON.stringify(expandedControls));
       templateString = this.preprocessFilterTranslationArgs(templateString);
       const parsedTemplate = this.templateEngine.parse(templateString);
       const discoveredWorkflow = this.getWorkflow(event.workflowId);
@@ -731,9 +760,10 @@ export class Client {
       // doesn't have escaped quotes like '"foo"' then compiled string '{"body":""foo""}' is not valid JSON and parse will fail
       const repairedString = jsonrepair(withMarkers);
       const parsedControls = JSON.parse(repairedString);
+      const restoredControls = restoreJsonStringControlValues(parsedControls) as Record<string, unknown>;
       // Normalize string values in the data field that contain invalid JSON (e.g., from Liquid template variables)
       // This handles cases where Liquid outputs JavaScript object notation instead of valid JSON
-      return normalizeControlData(parsedControls);
+      return normalizeControlData(restoredControls);
     } catch (error) {
       throw new StepControlCompilationFailedError(event.workflowId, event.stepId, error);
     }

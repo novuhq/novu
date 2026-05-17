@@ -7,7 +7,7 @@ import { EnvironmentVariableValueCommand } from '../create-environment-variable/
 export class UpdateEnvironmentVariableCommand extends OrganizationLevelWithUserCommand {
   @IsString()
   @IsNotEmpty()
-  variableId: string;
+  variableKey: string;
 
   @IsString()
   @Matches(/^[A-Za-z][A-Za-z0-9_]*$/)

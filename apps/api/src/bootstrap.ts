@@ -47,20 +47,28 @@ export async function bootstrap(
 ): Promise<{ app: INestApplication; document: any }> {
   BullMqService.haveProInstalled();
 
+  const agentRawBodyBuffer = (_req, _res, buffer, _encoding): void => {
+    if (buffer?.length) {
+      // eslint-disable-next-line no-param-reassign
+      (_req as any).rawBody = Buffer.from(buffer);
+    }
+  };
+
   let rawBodyBuffer: undefined | ((...args) => void);
-  let nestOptions: Record<string, boolean> = {};
+  /*
+   * Always disable NestJS's internal body-parser. The manual app.use(bodyParser.*)
+   * registrations below cover every route, so the internal parser is redundant.
+   *
+   * Keeping it on caused a latent double-parse: with @opentelemetry/instrumentation-express
+   * active, each body-parser layer is wrapped in AsyncLocalStorageContextManager.run().
+   * The internal parser would consume the request stream first; the manual parser then
+   * failed inside raw-body with `InternalServerError: stream is not readable`.
+   */
+  const nestOptions: Record<string, boolean> = { bodyParser: false };
 
   if (process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true') {
-    rawBodyBuffer = (_req, _res, buffer, _encoding): void => {
-      if (buffer?.length) {
-        // eslint-disable-next-line no-param-reassign
-        (_req as any).rawBody = Buffer.from(buffer);
-      }
-    };
-    nestOptions = {
-      bodyParser: false,
-      rawBody: true,
-    };
+    rawBodyBuffer = agentRawBodyBuffer;
+    nestOptions.rawBody = true;
   }
 
   const app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
@@ -105,6 +113,8 @@ export async function bootstrap(
 
   app.use(extendedBodySizeRoutes, bodyParser.json({ limit: '26mb' }));
   app.use(extendedBodySizeRoutes, bodyParser.urlencoded({ limit: '26mb', extended: true }));
+
+  app.use('/v1/agents', bodyParser.json({ limit: '8mb', verify: agentRawBodyBuffer }));
 
   // Add text/plain parser specifically for inbound webhooks (SNS confirmations)
   app.use(

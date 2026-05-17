@@ -1,10 +1,5 @@
-import type {
-  GeneratePreviewRequestDto,
-  GeneratePreviewResponseDto,
-  IEnvironment,
-  StepResponseDto,
-} from '@novu/shared';
-import { getV2, postV2 } from './api.client';
+import type { GeneratePreviewRequestDto, GeneratePreviewResponseDto, IEnvironment } from '@novu/shared';
+import { postV2 } from './api.client';
 
 export type TestHttpEndpointResponse = {
   statusCode: number;
@@ -17,22 +12,6 @@ export type TestHttpEndpointResponse = {
     headers?: Record<string, string>;
     body?: Record<string, unknown>;
   };
-};
-
-export const getStep = async ({
-  environment,
-  stepSlug,
-  workflowSlug,
-}: {
-  environment: IEnvironment;
-  stepSlug: string;
-  workflowSlug: string;
-}): Promise<StepResponseDto> => {
-  const { data } = await getV2<{ data: StepResponseDto }>(`/workflows/${workflowSlug}/steps/${stepSlug}`, {
-    environment,
-  });
-
-  return data;
 };
 
 export const previewStep = async ({

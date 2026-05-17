@@ -295,7 +295,7 @@ function TopicTabs(props: TopicTabsProps) {
   );
 }
 
-export const TopicListBlank = () => {
+const TopicListBlank = () => {
   return (
     <div className="mt-[100px] flex h-full w-full flex-col items-center justify-center gap-6">
       <EmptyTopicsIllustration />

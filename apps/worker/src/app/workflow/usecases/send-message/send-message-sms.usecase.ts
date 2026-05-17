@@ -149,7 +149,7 @@ export class SendMessageSms extends SendMessageBase {
     await this.sendSelectedIntegrationExecution(command.job, integration);
 
     const overrides = {
-      ...(command.overrides[integration?.channel] || {}),
+      ...(integration?.channel ? command.overrides[integration.channel] || {} : {}),
       ...(command.overrides[integration?.providerId] || {}),
     };
 

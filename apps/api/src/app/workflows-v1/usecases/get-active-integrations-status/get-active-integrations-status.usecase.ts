@@ -71,6 +71,8 @@ export class GetActiveIntegrationsStatus {
     for (const integration of activeIntegrations) {
       const channelType = integration.channel;
 
+      if (!channelType) continue;
+
       stateByChannelType[channelType].hasActiveIntegrations = integration.active;
       const isEmailChannel = channelType === ChannelTypeEnum.EMAIL;
       const isSmsChannel = channelType === ChannelTypeEnum.SMS;
@@ -158,6 +160,8 @@ export class GetActiveIntegrationsStatus {
 
     for (const primaryNovuProvider of primaryNovuProviders) {
       const channelType = primaryNovuProvider.channel;
+      if (!channelType) continue;
+
       let hasLimitReached = true;
       const limit = await this.calculateLimitNovuIntegrationUsecase.execute(
         CalculateLimitNovuIntegrationCommand.create({

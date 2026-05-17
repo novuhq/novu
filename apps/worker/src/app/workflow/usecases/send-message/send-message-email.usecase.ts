@@ -40,6 +40,7 @@ import {
   FeatureFlagsKeysEnum,
   IAttachmentOptions,
   IEmailOptions,
+  safeJsonStringify,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
@@ -168,10 +169,7 @@ export class SendMessageEmail extends SendMessageBase {
       step.template = template;
     }
 
-    const overrides: Record<string, any> = {
-      ...(command.overrides?.email || {}),
-      ...(command.overrides?.[integration?.providerId] || {}),
-    };
+    const overrides = this.buildEmailProviderOverrides(command, integration?.providerId, command.step?.stepId);
 
     let html;
     let subject = (bridgeOutputs as EmailOutput)?.subject || step?.template?.subject || '';
@@ -574,7 +572,8 @@ export class SendMessageEmail extends SendMessageBase {
           status: ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify(error) === '{}' ? JSON.stringify({ message: error.message }) : JSON.stringify(error),
+          raw:
+            safeJsonStringify(error) === '{}' ? JSON.stringify({ message: error.message }) : safeJsonStringify(error),
         })
       );
 
@@ -651,6 +650,39 @@ export class SendMessageEmail extends SendMessageBase {
         })
       );
     }
+  }
+
+  /**
+   * Builds the merged provider overrides object for email sending.
+   *
+   * Provider-specific fields (cc/bcc/from/replyTo/etc.) can arrive in three shapes:
+   *   1. Deprecated channel bucket:     `overrides.email`
+   *   2. Deprecated flat provider key:  `overrides.<providerId>`
+   *   3. Modern nested providers shape: `overrides.providers.<providerId>`
+   *                                     `overrides.steps.<stepId>.providers.<providerId>`
+   *
+   * All three are merged (step-level wins) so values like `cc` reach `createMailData`
+   * and downstream providers (e.g. SendGrid `personalizations[0].cc`).
+   */
+  private buildEmailProviderOverrides(
+    command: SendMessageChannelCommand,
+    providerId: string | undefined,
+    stepId: string | undefined
+  ): Record<string, unknown> {
+    const deprecatedFlatEmailOverride = command.overrides?.email || {};
+    const deprecatedFlatProviderOverride = providerId
+      ? (command.overrides as Record<string, Record<string, unknown>>)?.[providerId] || {}
+      : {};
+    const providerOverride = providerId ? command.overrides?.providers?.[providerId] || {} : {};
+    const stepProviderOverride =
+      providerId && stepId ? command.overrides?.steps?.[stepId]?.providers?.[providerId] || {} : {};
+
+    return {
+      ...deprecatedFlatEmailOverride,
+      ...deprecatedFlatProviderOverride,
+      ...providerOverride,
+      ...stepProviderOverride,
+    };
   }
 
   public buildFactoryIntegration(integration: IntegrationEntity) {

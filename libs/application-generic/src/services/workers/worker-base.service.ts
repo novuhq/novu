@@ -1,4 +1,4 @@
-import { Logger, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, HttpException, Logger, OnModuleDestroy } from '@nestjs/common';
 import { JobTopicNameEnum } from '@novu/shared';
 import {
   getSqsDefaultBatchSize,
@@ -14,6 +14,7 @@ import {
   ISqsConsumerOptions,
   ISqsMessageMeta,
   SQS_DEFAULT_BATCH_SIZE,
+  SQS_DEFAULT_DRAIN_TIMEOUT_MS,
   SQS_DEFAULT_MAX_CONCURRENCY,
   SQS_DEFAULT_VISIBILITY_TIMEOUT,
   SQS_DEFAULT_WAIT_TIME_SECONDS,
@@ -22,6 +23,33 @@ import {
 } from '../sqs';
 
 const LOG_CONTEXT = 'WorkerService';
+
+/**
+ * 4xx HTTP statuses that should still be retried because the underlying
+ * condition is transient: request timeout and rate limiting.
+ */
+const TRANSIENT_4XX_STATUSES = new Set<number>([408, 429]);
+
+/**
+ * Decides whether a processor error represents a permanent client-side
+ * failure that cannot succeed on retry. Used as the default policy when
+ * a worker has not registered its own `sqsFailedHandler`: 4xx failures
+ * (bad payload, missing fields, validation, etc.) are acked and
+ * everything else is re-thrown for SQS to redeliver.
+ */
+export function isPermanentClientError(error: unknown): boolean {
+  if (error instanceof BadRequestException) {
+    return true;
+  }
+
+  if (error instanceof HttpException) {
+    const status = error.getStatus();
+
+    return status >= 400 && status < 500 && !TRANSIENT_4XX_STATUSES.has(status);
+  }
+
+  return false;
+}
 
 export type WorkerProcessor = string | Processor<any, unknown, string> | undefined;
 
@@ -115,6 +143,17 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
       return;
     }
 
+    /*
+     * Precedence:
+     *   1. `getSqsDefaultConcurrency()` — `SQS_DEFAULT_CONCURRENCY` ENV. Global
+     *      ops lever to throttle every SQS consumer at runtime without a code
+     *      change (e.g. downstream incident, DynamoDB hot partition, etc.).
+     *   2. `options.concurrency` — per-worker value the worker declared (e.g.
+     *      WORKFLOW_WORKER_CONCURRENCY=200, WEB_SOCKET_WORKER_CONCURRENCY=400),
+     *      aligned with the BullMQ side via `getWorkerConcurrency`.
+     *   3. `SQS_DEFAULT_MAX_CONCURRENCY` — hardcoded final fallback when neither
+     *      a per-worker value nor the ENV is set.
+     */
     const sqsConcurrency = getSqsDefaultConcurrency() ?? options?.concurrency ?? SQS_DEFAULT_MAX_CONCURRENCY;
 
     const sqsConsumerOptions: ISqsConsumerOptions = {
@@ -185,6 +224,28 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
             );
             shouldRetry = true;
           }
+        } else if (isPermanentClientError(error)) {
+          /*
+           * Defensive fallback for any SQS-backed worker that has not
+           * registered its own `sqsFailedHandler`. 4xx errors cannot
+           * succeed on retry, so ack the message instead of letting SQS
+           * redeliver it every visibility timeout until it hits the DLQ.
+           * The four production SQS workers (workflow, subscriber-
+           * process, ws, standard) all register explicit handlers; this
+           * branch protects future additions that forget to.
+           */
+          Logger.warn(
+            {
+              error: error instanceof Error ? error.message : String(error),
+              jobId,
+              topic: this.topic,
+              attemptsMade: meta.receiveCount,
+            },
+            'SQS message has permanent client error, acking without retry',
+            LOG_CONTEXT
+          );
+
+          return;
         }
 
         if (shouldRetry) {
@@ -249,12 +310,13 @@ export class WorkerBaseService implements INovuWorker, OnModuleDestroy {
   public async gracefulShutdown(): Promise<void> {
     Logger.log({ topic: this.topic }, 'Shutting down worker service', LOG_CONTEXT);
 
-    await this.bullMqService.gracefulShutdown();
+    const shutdownPromises: Promise<void>[] = [this.bullMqService.gracefulShutdown()];
 
     if (this.sqsConsumer) {
-      await this.sqsConsumer.stop();
-      Logger.debug({ topic: this.topic }, 'SQS consumer stopped during shutdown', LOG_CONTEXT);
+      shutdownPromises.push(this.sqsConsumer.stop({ drainTimeoutMs: SQS_DEFAULT_DRAIN_TIMEOUT_MS }));
     }
+
+    await Promise.all(shutdownPromises);
 
     Logger.log({ topic: this.topic }, 'Worker service shutdown complete', LOG_CONTEXT);
   }

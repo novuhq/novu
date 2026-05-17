@@ -30,6 +30,13 @@ export class InboundEmailParseCommand extends BaseCommand implements IInboundPar
   @IsString()
   messageId: string;
 
+  @IsOptional()
+  @IsString()
+  inReplyTo?: string;
+
+  @IsOptional()
+  references?: string | string[];
+
   @IsDefined()
   @IsString()
   priority: string;
