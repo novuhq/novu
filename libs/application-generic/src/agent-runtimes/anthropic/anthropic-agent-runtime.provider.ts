@@ -529,8 +529,14 @@ function extractSkillNameFromBundle(files: UploadSkillFile[]): string | null {
  * placed two `[ \t]*` quantifiers around a lazy/greedy capture; even though
  * `name` is a fixed anchor between them, CodeQL flagged the shape as
  * `js/polynomial-redos`. Per-line string ops sidestep the static analyser
- * without changing observable semantics — each surviving regex is anchored
- * at exactly one end with no overlapping quantifier so it runs in linear time.
+ * without changing observable semantics.
+ *
+ * Trailing-whitespace trimming uses a manual backward scan rather than
+ * `/[ \t]+$/`: CodeQL also flags `+`-quantified character classes anchored
+ * at `$` because a backtracking engine can degrade to O(n²) when the
+ * surrounding text isn't a match. Leading trims keep their `/^[ \t]+/`
+ * form — `^`-anchored quantifiers are tried at exactly one position and
+ * are unambiguously linear.
  */
 function parseSkillNameLine(frontmatter: string): string | null {
   for (const rawLine of frontmatter.split('\n')) {
@@ -547,10 +553,7 @@ function parseSkillNameLine(frontmatter: string): string | null {
       continue;
     }
 
-    let value = afterName
-      .slice(1)
-      .replace(/^[ \t]+/, '')
-      .replace(/[ \t]+$/, '');
+    let value = trimTrailingSpacesAndTabs(afterName.slice(1).replace(/^[ \t]+/, ''));
 
     if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
       value = value.slice(1, -1).trim();
@@ -560,6 +563,25 @@ function parseSkillNameLine(frontmatter: string): string | null {
   }
 
   return null;
+}
+
+/**
+ * Linear-time trim of trailing ASCII space and tab characters. Used in
+ * place of `String.prototype.replace(/[ \t]+$/, '')` to avoid CodeQL's
+ * `js/polynomial-redos` warning on `+`-quantified, `$`-anchored character
+ * classes.
+ */
+function trimTrailingSpacesAndTabs(value: string): string {
+  let end = value.length;
+  while (end > 0 && isSpaceOrTab(value[end - 1])) {
+    end -= 1;
+  }
+
+  return end === value.length ? value : value.slice(0, end);
+}
+
+function isSpaceOrTab(char: string): boolean {
+  return char === ' ' || char === '\t';
 }
 
 function isTransient(err: unknown): boolean {
