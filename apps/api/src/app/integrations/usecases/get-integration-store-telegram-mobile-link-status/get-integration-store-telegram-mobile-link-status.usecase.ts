@@ -6,9 +6,19 @@ import {
 } from '../../../agents/services/telegram-mobile-link-token.service';
 import { GetIntegrationStoreTelegramMobileLinkStatusCommand } from './get-integration-store-telegram-mobile-link-status.command';
 
+export interface GetIntegrationStoreTelegramMobileLinkStatusResultValid {
+  valid: true;
+  providerName: 'telegram';
+}
+
+export interface GetIntegrationStoreTelegramMobileLinkStatusResultInvalid {
+  valid: false;
+  reason: 'expired' | 'used' | 'invalid';
+}
+
 export type GetIntegrationStoreTelegramMobileLinkStatusResult =
-  | { valid: true; providerName: 'telegram' }
-  | { valid: false; reason: 'expired' | 'used' | 'invalid' };
+  | GetIntegrationStoreTelegramMobileLinkStatusResultValid
+  | GetIntegrationStoreTelegramMobileLinkStatusResultInvalid;
 
 @Injectable()
 export class GetIntegrationStoreTelegramMobileLinkStatus {

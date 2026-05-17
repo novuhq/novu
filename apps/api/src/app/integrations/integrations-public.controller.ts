@@ -64,7 +64,7 @@ export class IntegrationsPublicController {
       'new Telegram integration in the issuing environment with the bot token stored on its credentials. ' +
       'The token becomes invalid after a successful call.',
   })
-  async consume(
+  async createTelegramMobileConfiguration(
     @Body() body: ConsumeIntegrationStoreTelegramMobileLinkRequestDto
   ): Promise<ConsumeIntegrationStoreTelegramMobileLinkResponseDto> {
     const result = await this.consumeUsecase.execute(

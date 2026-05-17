@@ -59,6 +59,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   // integration ids on first paint and watching for a new one to appear.
   const isTelegramCreateStep = provider?.id === ChatProviderIdEnum.Telegram && step === 'configure';
   const initialTelegramIdsRef = useRef<Set<string> | null>(null);
+  const hasHandledAutoConnectRef = useRef<boolean>(false);
 
   // Reset the snapshot whenever the user leaves the Telegram configure step so
   // re-entering the flow takes a fresh baseline (instead of treating already
@@ -66,6 +67,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   useEffect(() => {
     if (!isTelegramCreateStep) {
       initialTelegramIdsRef.current = null;
+      hasHandledAutoConnectRef.current = false;
     }
   }, [isTelegramCreateStep]);
 
@@ -86,6 +88,8 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
       return;
     }
 
+    if (hasHandledAutoConnectRef.current) return;
+
     const newOne = integrations.find(
       (integration) =>
         integration.providerId === ChatProviderIdEnum.Telegram &&
@@ -93,6 +97,9 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
     );
 
     if (newOne) {
+      // Latch immediately so a refetch firing before unmount can't replay the
+      // toast + navigate for the same newly-detected integration.
+      hasHandledAutoConnectRef.current = true;
       showSuccessToast('Telegram bot connected from your phone');
       // Direct close (skip `useUnsavedChangesAlertDialog`) — the user explicitly
       // opted into the mobile flow, so confirming "discard changes" is noisy.

@@ -2,9 +2,9 @@ import {
   BadGatewayException,
   ConflictException,
   Injectable,
-  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import { ChannelTypeEnum, ChatProviderIdEnum, slugify } from '@novu/shared';
 import Axios from 'axios';
 import shortid from 'shortid';
@@ -17,7 +17,6 @@ import { CreateIntegrationCommand } from '../create-integration/create-integrati
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
 import { ConsumeIntegrationStoreTelegramMobileLinkCommand } from './consume-integration-store-telegram-mobile-link.command';
 
-const LOG_CONTEXT = 'ConsumeIntegrationStoreTelegramMobileLink';
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
 const TELEGRAM_MAX_RETRIES = 3;
 const TELEGRAM_RETRY_DELAY_BASE_MS = 500;
@@ -54,8 +53,11 @@ export interface ConsumeIntegrationStoreTelegramMobileLinkResult {
 export class ConsumeIntegrationStoreTelegramMobileLink {
   constructor(
     private readonly tokenService: TelegramMobileLinkTokenService,
-    private readonly createIntegrationUsecase: CreateIntegration
-  ) {}
+    private readonly createIntegrationUsecase: CreateIntegration,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(
     command: ConsumeIntegrationStoreTelegramMobileLinkCommand
@@ -99,11 +101,19 @@ export class ConsumeIntegrationStoreTelegramMobileLink {
         integrationIdentifier: integration.identifier,
       };
     } catch (err) {
-      await this.tokenService.releaseJti(payload.jti);
-      Logger.warn(
-        `Telegram integration-store mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`,
-        LOG_CONTEXT
+      try {
+        await this.tokenService.releaseJti(payload.jti);
+      } catch (releaseErr) {
+        this.logger.error(
+          { err: releaseErr, jti: payload.jti },
+          'Failed to release JTI during Telegram integration-store consume rollback'
+        );
+      }
+
+      this.logger.warn(
+        `Telegram integration-store mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`
       );
+
       throw err;
     }
   }

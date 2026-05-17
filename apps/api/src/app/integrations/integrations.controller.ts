@@ -822,7 +822,7 @@ export class IntegrationsController {
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @HttpCode(HttpStatus.OK)
-  async issueTelegramMobileLink(
+  async createTelegramMobileLink(
     @UserSession() user: UserSessionData
   ): Promise<IssueIntegrationStoreTelegramMobileLinkResponseDto> {
     return this.issueIntegrationStoreTelegramMobileLinkUsecase.execute(

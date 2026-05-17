@@ -41,10 +41,7 @@ export class IssueIntegrationStoreTelegramMobileLink {
   }
 
   private buildMobileUrl(token: string): string {
-    const base = (process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL || 'https://dashboard.novu.co').replace(
-      /\/$/,
-      ''
-    );
+    const base = (process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL || '').replace(/\/$/, '');
 
     return `${base}${MOBILE_PATH}/${token}`;
   }
