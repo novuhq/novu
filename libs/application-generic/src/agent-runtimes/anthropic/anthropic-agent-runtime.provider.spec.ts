@@ -1,5 +1,6 @@
 import { File as NodeFile } from 'node:buffer';
 import { APIError } from '@anthropic-ai/sdk';
+import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
 import { expect } from 'chai';
 import { AgentRuntimeBadRequestError } from '../errors';
 import type { UploadSkillInput } from '../i-agent-runtime-provider';
@@ -46,7 +47,7 @@ jest.mock('@anthropic-ai/sdk', () => {
 // eslint-disable-next-line import/first, import/order
 import Anthropic from '@anthropic-ai/sdk';
 // eslint-disable-next-line import/first, import/order
-import { AnthropicAgentRuntimeProvider } from './anthropic-agent-runtime.provider';
+import { AnthropicAgentRuntimeProvider, createAnthropicProvider } from './anthropic-agent-runtime.provider';
 
 const SKILL_MD = `---
 name: my-skill
@@ -79,7 +80,7 @@ function buildDuplicateDisplayTitleError(displayTitle = 'samber-golang-benchmark
   return new APIError(400, body, JSON.stringify(body), undefined as unknown as Headers);
 }
 
-type MockClient = {
+interface MockClient {
   beta: {
     skills: {
       create: jest.Mock;
@@ -87,7 +88,7 @@ type MockClient = {
     };
   };
   post: jest.Mock;
-};
+}
 
 function buildMockClient(): MockClient {
   return {
@@ -132,6 +133,43 @@ function collectFormDataFileNames(body: unknown): string[] {
   }
 
   return names;
+}
+
+interface AgentToolsetConfigEntry {
+  name: string;
+  enabled: boolean;
+}
+
+interface AgentToolsetPayloadEntry {
+  type: string;
+  configs?: AgentToolsetConfigEntry[];
+  mcp_server_name?: string;
+}
+
+function installUpdateConfigMockClient(
+  provider: AnthropicAgentRuntimeProvider,
+  options: {
+    retrieve: jest.Mock;
+    update: jest.Mock;
+  }
+) {
+  const mockClient = {
+    beta: {
+      agents: {
+        retrieve: options.retrieve,
+        update: options.update,
+      },
+    },
+  };
+
+  // `buildClient` is private; injecting via cast keeps the test independent of the SDK constructor.
+  (provider as unknown as { buildClient: () => unknown }).buildClient = () => mockClient;
+}
+
+function getToolsetPayload(updatePayload: {
+  tools?: AgentToolsetPayloadEntry[];
+}): AgentToolsetPayloadEntry | undefined {
+  return updatePayload.tools?.find((t) => t.type === 'agent_toolset_20260401');
 }
 
 describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
@@ -349,7 +387,143 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
       }
 
       expect(thrown).to.be.instanceOf(AgentRuntimeBadRequestError);
+      // Full SDK-isolation check: neither the proactive lookup (`list`) nor
+      // the version-append path (`post`) should run when validation rejects
+      // the bundle before any network call.
+      expect(mockClient.beta.skills.list.mock.calls).to.have.lengthOf(0);
       expect(mockClient.beta.skills.create.mock.calls).to.have.lengthOf(0);
+      expect(mockClient.post.mock.calls).to.have.lengthOf(0);
     });
+  });
+});
+
+describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
+  it('uses tool externalId (not display name) when serialising the toolset payload', async () => {
+    const provider = createAnthropicProvider('test-key');
+
+    const retrieve = jest.fn().mockResolvedValue({
+      version: 1,
+      tools: [],
+      mcp_servers: [],
+    });
+
+    const update = jest.fn().mockResolvedValue({
+      model: 'claude-sonnet-4-5',
+      system: '',
+      tools: [
+        {
+          type: 'agent_toolset_20260401',
+          configs: [{ name: 'bash', enabled: true }],
+        },
+      ],
+      mcp_servers: [],
+      skills: [],
+    });
+
+    installUpdateConfigMockClient(provider, { retrieve, update });
+
+    const result = await provider.updateConfig('ext-agent-id', {
+      tools: [{ externalId: 'bash', name: 'Bash', type: 'builtin' }],
+    });
+
+    expect(update).toHaveBeenCalledTimes(1);
+
+    const [, updatePayload] = update.mock.calls[0];
+    const toolset = getToolsetPayload(updatePayload as { tools?: AgentToolsetPayloadEntry[] });
+
+    expect(toolset).toBeDefined();
+
+    const bashConfig = toolset?.configs?.find((c) => c.name === 'bash');
+    expect(bashConfig).toBeDefined();
+    expect(bashConfig?.enabled).toBe(true);
+
+    const allBuiltinTypes = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
+    const otherToolsDisabled = toolset?.configs
+      ?.filter((c) => c.name !== 'bash')
+      .every((c) => allBuiltinTypes.includes(c.name) && c.enabled === false);
+    expect(otherToolsDisabled).toBe(true);
+
+    expect(result.tools).toEqual([{ externalId: 'bash', name: 'bash', type: 'builtin' }]);
+  });
+
+  it('treats an empty tools array as "disable all tools" by emitting enabled=false for every catalog entry', async () => {
+    const provider = createAnthropicProvider('test-key');
+
+    const retrieve = jest.fn().mockResolvedValue({
+      version: 1,
+      tools: [
+        {
+          type: 'agent_toolset_20260401',
+          configs: CLAUDE_BUILTIN_TOOLS.map((t) => ({ name: t.type, enabled: true })),
+        },
+      ],
+      mcp_servers: [],
+    });
+
+    const update = jest.fn().mockResolvedValue({
+      model: 'claude-sonnet-4-5',
+      system: '',
+      tools: [],
+      mcp_servers: [],
+      skills: [],
+    });
+
+    installUpdateConfigMockClient(provider, { retrieve, update });
+
+    await provider.updateConfig('ext-agent-id', { tools: [] });
+
+    const [, updatePayload] = update.mock.calls[0];
+    // With no enabled tools and no mcpServers, buildToolsPayload returns []
+    // and we deliberately omit `tools` from the update payload entirely so
+    // we don't clear the side the caller didn't touch.
+    expect((updatePayload as { tools?: unknown }).tools).toBeUndefined();
+  });
+
+  it('preserves currently-enabled tools (by externalId) when only mcpServers is patched', async () => {
+    const provider = createAnthropicProvider('test-key');
+
+    const retrieve = jest.fn().mockResolvedValue({
+      version: 1,
+      tools: [
+        {
+          type: 'agent_toolset_20260401',
+          configs: [
+            { name: 'bash', enabled: true },
+            { name: 'web_search', enabled: true },
+            { name: 'read', enabled: false },
+          ],
+        },
+      ],
+      mcp_servers: [],
+    });
+
+    const update = jest.fn().mockResolvedValue({
+      model: 'claude-sonnet-4-5',
+      system: '',
+      tools: [
+        {
+          type: 'agent_toolset_20260401',
+          configs: [
+            { name: 'bash', enabled: true },
+            { name: 'web_search', enabled: true },
+          ],
+        },
+      ],
+      mcp_servers: [{ name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
+      skills: [],
+    });
+
+    installUpdateConfigMockClient(provider, { retrieve, update });
+
+    await provider.updateConfig('ext-agent-id', {
+      mcpServers: [{ externalId: 'Slack', name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
+    });
+
+    const [, updatePayload] = update.mock.calls[0];
+    const toolset = getToolsetPayload(updatePayload as { tools?: AgentToolsetPayloadEntry[] });
+
+    const enabledNames = toolset?.configs?.filter((c) => c.enabled).map((c) => c.name) ?? [];
+    expect(enabledNames).toEqual(expect.arrayContaining(['bash', 'web_search']));
+    expect(enabledNames).not.toContain('read');
   });
 });

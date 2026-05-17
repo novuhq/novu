@@ -92,7 +92,7 @@ export function MobileSideNavigation() {
       </button>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="left" className="w-[275px] p-0 sm:max-w-[275px]">
+        <SheetContent side="left" className="w-[225px] p-0 sm:max-w-[225px]">
           <VisuallyHidden>
             <SheetTitle>Navigation</SheetTitle>
           </VisuallyHidden>

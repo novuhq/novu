@@ -11,7 +11,7 @@ import sinon from 'sinon';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentConfigResolver } from '../services/agent-config-resolver.service';
 import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
-import { BridgeExecutorParams, BridgeExecutorService } from '../services/bridge-executor.service';
+import { AgentExecutionParams, BridgeExecutorService } from '../services/bridge-executor.service';
 import {
   AgentTestContext,
   activityRepository,
@@ -64,7 +64,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
   let ctx: AgentTestContext;
   let inboundHandler: AgentInboundHandler;
   let configResolver: AgentConfigResolver;
-  let bridgeCalls: BridgeExecutorParams[];
+  let bridgeCalls: AgentExecutionParams[];
 
   before(() => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
@@ -77,7 +77,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
     bridgeCalls = [];
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
-    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: BridgeExecutorParams) => {
+    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {
       bridgeCalls.push(params);
     });
   });

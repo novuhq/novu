@@ -1547,7 +1547,7 @@ export function TeamsSetupGuide({
     return (
       <div className="flex flex-col gap-0">
         {isQuickSetupEnabled && <div className="pt-4 pb-2">{modeToggle}</div>}
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6')}>
+        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
           <div
             className="absolute bottom-0 left-[22px] top-0 w-px"
             style={{

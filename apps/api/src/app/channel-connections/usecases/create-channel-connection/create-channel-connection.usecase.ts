@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, shortId } from '@novu/application-generic';
+import { encryptChannelConnectionAuth, InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -123,7 +123,7 @@ export class CreateChannelConnection {
       subscriberId,
       contextKeys,
       workspace: command.workspace,
-      auth: command.auth,
+      auth: encryptChannelConnectionAuth(command.auth),
     });
 
     return channelConnection;

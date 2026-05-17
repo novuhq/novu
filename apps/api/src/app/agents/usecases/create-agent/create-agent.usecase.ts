@@ -81,6 +81,7 @@ export class CreateAgent {
               Object.assign(new ProvisionManagedAgentCommand(), {
                 agentId: created._id,
                 name: command.name,
+                externalEnvironmentId: managedRuntime.externalEnvironmentId,
                 externalAgentId: managedRuntime.externalAgentId,
                 providerId: managedRuntime.providerId,
                 integrationId: managedRuntime.integrationId,

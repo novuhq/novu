@@ -1,8 +1,53 @@
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 
-export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
+export type ManagedRuntimeHydration = {
+  /** Provider-side environment id (decrypted from the linked integration credentials). */
+  externalEnvironmentId?: string;
+  /**
+   * Provider-side workspace id used in console deep links.
+   * For Anthropic this is `"default"` for the auto-created Default Workspace,
+   * or a `wrkspc_…` id for custom workspaces.
+   */
+  externalWorkspaceId?: string;
+};
+
+/** Default Claude workspace id — every Anthropic org has an auto-created Default Workspace addressed as `default`. */
+const DEFAULT_CLAUDE_WORKSPACE_ID = 'default';
+
+/** Builds a deep link to the agent in the provider console, or `undefined` for unknown providers. */
+function buildAgentConsoleUrl(
+  providerId: string,
+  externalAgentId: string,
+  externalWorkspaceId: string | undefined
+): string | undefined {
+  if (providerId === AgentRuntimeProviderIdEnum.Anthropic) {
+    const workspaceId = encodeURIComponent(externalWorkspaceId?.trim() || DEFAULT_CLAUDE_WORKSPACE_ID);
+
+    return `https://platform.claude.com/workspaces/${workspaceId}/agents/${encodeURIComponent(externalAgentId)}`;
+  }
+
+  return undefined;
+}
+
+export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHydration): AgentResponseDto {
+  const managedRuntime = agent.managedRuntime
+    ? {
+        providerId: agent.managedRuntime.providerId,
+        integrationId: agent.managedRuntime._integrationId,
+        externalAgentId: agent.managedRuntime.externalAgentId,
+        externalEnvironmentId: hydration?.externalEnvironmentId,
+        externalWorkspaceId: hydration?.externalWorkspaceId,
+        consoleUrl: buildAgentConsoleUrl(
+          agent.managedRuntime.providerId,
+          agent.managedRuntime.externalAgentId,
+          hydration?.externalWorkspaceId
+        ),
+      }
+    : undefined;
+
   return {
     _id: agent._id,
     name: agent.name,
@@ -15,13 +60,7 @@ export function toAgentResponse(agent: AgentEntity): AgentResponseDto {
     devBridgeActive: agent.devBridgeActive,
     runtime: agent.runtime,
     creationSource: agent.creationSource,
-    managedRuntime: agent.managedRuntime
-      ? {
-          providerId: agent.managedRuntime.providerId,
-          integrationId: agent.managedRuntime._integrationId,
-          externalAgentId: agent.managedRuntime.externalAgentId,
-        }
-      : undefined,
+    managedRuntime,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,
     createdAt: agent.createdAt,
