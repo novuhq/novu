@@ -157,10 +157,16 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
 
   const hasProviderSelected = Boolean(effectiveIntegrationId);
 
-  const linkedIntegrationIds = useMemo(
-    () => new Set(agent.integrations?.map((i) => i.integrationId) ?? []),
-    [agent.integrations]
-  );
+  // Source from the live agent-integrations query rather than `agent.integrations`
+  // — the agent response does not always carry the link summary, so relying on
+  // it would leave `linkedIntegrationIds` empty and let `ProviderDropdown`
+  // re-offer providers (notably NovuAgent) that are already linked.
+  const linkedIntegrationIds = useMemo(() => {
+    const liveIntegrationIds = agentIntegrationsQuery.data?.data?.map((link) => link.integration._id) ?? [];
+    const summaryIntegrationIds = agent.integrations?.map((i) => i.integrationId) ?? [];
+
+    return new Set<string>([...liveIntegrationIds, ...summaryIntegrationIds]);
+  }, [agentIntegrationsQuery.data?.data, agent.integrations]);
 
   const firstIncompleteStep = hasProviderSelected ? 2 : 1;
 
