@@ -907,10 +907,11 @@ export class ChatSdkService implements OnModuleDestroy {
       useFromAddressOverride: c.useFromAddressOverride ?? null,
       fromAddressOverride: c.fromAddressOverride ?? null,
       // Email-specific fields closed over by the sendEmail callback (demo path):
-      // a slug rename or sender rebrand must rebuild the cached adapter
-      // otherwise the agent keeps replying from the stale From/Reply-To
-      // address until the LRU TTL expires.
+      // a slug rename, routing-key rotation, or sender rebrand must rebuild the
+      // cached adapter otherwise the agent keeps replying from the stale
+      // From/Reply-To address until the LRU TTL expires.
       emailSlugPrefix: c.emailSlugPrefix ?? null,
+      inboxRoutingKey: c.inboxRoutingKey ?? null,
       senderName: c.senderName ?? null,
     });
   }
@@ -937,7 +938,11 @@ export class ChatSdkService implements OnModuleDestroy {
       // shared agent inbox domain. Cloud-only - self-hosted keeps the legacy "must
       // configure outbound" error to preserve existing behavior.
       if (!outboundIntegrationId) {
-        if (!isAgentSharedInboxEnabled() || !config.credentials.emailSlugPrefix) {
+        if (
+          !isAgentSharedInboxEnabled() ||
+          !config.credentials.emailSlugPrefix ||
+          !config.credentials.inboxRoutingKey
+        ) {
           throw new BadRequestException(
             'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
               'Configure one in the agent email setup.'
@@ -1047,17 +1052,19 @@ export class ChatSdkService implements OnModuleDestroy {
 
   /**
    * Resolve the canonical inbound address used for Reply-To. When the cloud
-   * shared-inbox feature is enabled and the agent has an `emailSlugPrefix`,
-   * we always use `{slug}-{agentId}@<shared-domain>` so replies route through
-   * the Novu-managed inbound MX even when the outbound `From` is rewritten.
+   * shared-inbox feature is enabled and the agent's NovuAgent integration has
+   * both an `emailSlugPrefix` and an `inboxRoutingKey`, we always use
+   * `{slug}-{inboxRoutingKey}@<shared-domain>` so replies route through the
+   * Novu-managed inbound MX even when the outbound `From` is rewritten.
    * Falls back to whatever the chat-adapter-email SDK supplied (today's
    * behavior on self-hosted).
    */
   private resolveAgentInboundAddress(config: ResolvedAgentConfig, fallback: string): string {
     const slug = config.credentials.emailSlugPrefix;
-    if (isAgentSharedInboxEnabled() && slug) {
+    const inboxRoutingKey = config.credentials.inboxRoutingKey;
+    if (isAgentSharedInboxEnabled() && slug && inboxRoutingKey) {
       try {
-        return buildAgentSharedInbox(slug, config.agentId);
+        return buildAgentSharedInbox(slug, inboxRoutingKey);
       } catch (err) {
         this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
       }
@@ -1097,7 +1104,7 @@ export class ChatSdkService implements OnModuleDestroy {
       );
     }
 
-    const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix!, config.agentId);
+    const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix!, config.credentials.inboxRoutingKey!);
 
     const syntheticIntegration: IntegrationEntity = {
       _id: 'novu-demo-synthetic',

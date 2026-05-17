@@ -6,7 +6,13 @@ import {
   PinoLogger,
   parseAgentSharedInboxLocalPart,
 } from '@novu/application-generic';
-import { AgentRepository, DomainRepository, DomainRouteRepository } from '@novu/dal';
+import {
+  AgentIntegrationRepository,
+  AgentRepository,
+  DomainRepository,
+  DomainRouteRepository,
+  IntegrationRepository,
+} from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 
@@ -17,6 +23,8 @@ export class DomainRouteStrategy {
     private domainRouteRepository: DomainRouteRepository,
     private inboundDomainRouteDelivery: InboundDomainRouteDelivery,
     private agentRepository: AgentRepository,
+    private integrationRepository: IntegrationRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -99,15 +107,17 @@ export class DomainRouteStrategy {
 
   /**
    * Inbound email arrived at the shared agent domain (e.g. `agentconnect.sh`).
-   * The local-part encodes the agent id as the trailing 24 hex chars (see
-   * `parseAgentSharedInboxLocalPart`). We resolve the agent unscoped, then
-   * reuse the existing `InboundDomainRouteDelivery.deliverToAgent` pipeline -
-   * which enforces `Integration.active=true` and signs/forwards the payload
-   * to the API webhook just like the standard per-tenant flow.
+   * The local-part shape is `{slug}-{inboxRoutingKey}` (see
+   * `parseAgentSharedInboxLocalPart`). We resolve the owning NovuAgent
+   * integration via its `credentials.inboxRoutingKey` (backed by a partial
+   * unique index, cross-tenant), then join through `AgentIntegration` to find
+   * the agent, then reuse the existing `InboundDomainRouteDelivery.deliverToAgent`
+   * pipeline — which enforces `Integration.active=true` and signs/forwards the
+   * payload to the API webhook just like the standard per-tenant flow.
    *
-   * Unknown agent ids, malformed local-parts, and agents whose NovuAgent
-   * integration is disabled all result in silently dropping the message
-   * (after logging).
+   * Unknown routing keys, malformed local-parts, missing links, and agents
+   * whose NovuAgent integration is disabled all result in silently dropping
+   * the message (after logging).
    */
   private async deliverSharedAgentInbox(
     command: InboundEmailParseCommand,
@@ -124,15 +134,54 @@ export class DomainRouteStrategy {
     if (!parsed) {
       this.logger.info(
         { toAddress, localPart },
-        'Shared agent domain: local part did not match {slug}-{24hex} - dropping'
+        'Shared agent domain: local part did not match {slug}-{inboxRoutingKey} - dropping'
       );
 
       return;
     }
 
-    const agent = await this.agentRepository.findByIdForWebhook(parsed.agentId);
+    const integration = await this.integrationRepository.findAgentInboundByInboxRoutingKey(parsed.inboxRoutingKey);
+    if (!integration) {
+      this.logger.info(
+        { toAddress, inboxRoutingKey: parsed.inboxRoutingKey },
+        'Shared agent domain: no integration found for routing key - dropping'
+      );
+
+      return;
+    }
+
+    if (integration.active === false) {
+      this.logger.info(
+        { toAddress, integrationId: integration._id },
+        'Shared agent domain: integration is inactive - dropping'
+      );
+
+      return;
+    }
+
+    const link = await this.agentIntegrationRepository.findOne(
+      {
+        _integrationId: integration._id,
+        _environmentId: integration._environmentId,
+        _organizationId: integration._organizationId,
+      },
+      ['_agentId']
+    );
+    if (!link) {
+      this.logger.info(
+        { toAddress, integrationId: integration._id },
+        'Shared agent domain: no agent link found for integration - dropping'
+      );
+
+      return;
+    }
+
+    const agent = await this.agentRepository.findByIdForWebhook(link._agentId);
     if (!agent) {
-      this.logger.info({ toAddress, agentId: parsed.agentId }, 'Shared agent domain: no agent found for id - dropping');
+      this.logger.info(
+        { toAddress, agentId: link._agentId },
+        'Shared agent domain: no agent found for link - dropping'
+      );
 
       return;
     }

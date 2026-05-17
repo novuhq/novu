@@ -92,13 +92,14 @@ export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHy
 }
 
 /**
- * Compute the shared inbox address (`{slug}-{_id}@<shared-domain>`) for a
- * NovuAgent email integration link. Returns `undefined` when the cloud
+ * Compute the shared inbox address (`{slug}-{inboxRoutingKey}@<shared-domain>`)
+ * for a NovuAgent email integration link. Returns `undefined` when the cloud
  * shared-inbox feature is disabled, the provider is not NovuAgent, the shared
- * domain isn't configured, or the slug can't be resolved. The result is
- * deterministic given those inputs; the integration's `active` flag controls
- * routing, not addressability, so the address is exposed regardless of toggle
- * state so the dashboard can still show it while the inbox is paused.
+ * domain isn't configured, the slug can't be resolved, or the routing key is
+ * missing/invalid. The result is deterministic given those inputs; the
+ * integration's `active` flag controls routing, not addressability, so the
+ * address is exposed regardless of toggle state so the dashboard can still
+ * show it while the inbox is paused.
  */
 function resolveSharedInboxAddress(
   agent: SharedInboxAgentContext,
@@ -125,8 +126,13 @@ function resolveSharedInboxAddress(
     return undefined;
   }
 
+  const inboxRoutingKey = integration.credentials?.inboxRoutingKey;
+  if (!inboxRoutingKey) {
+    return undefined;
+  }
+
   try {
-    return buildAgentSharedInbox(slug, agent._id);
+    return buildAgentSharedInbox(slug, inboxRoutingKey);
   } catch {
     return undefined;
   }

@@ -1,6 +1,10 @@
 import { randomBytes } from 'node:crypto';
 import { ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { encryptSecret, isValidAgentEmailSlugPrefix } from '@novu/application-generic';
+import {
+  encryptSecret,
+  generateAgentInboxRoutingKey,
+  isValidAgentEmailSlugPrefix,
+} from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -19,6 +23,17 @@ import {
 } from '@novu/shared';
 import { ClientSession } from 'mongoose';
 import shortid from 'shortid';
+
+/**
+ * Max collision-retry attempts when minting the per-agent inbox routing key.
+ * 8 chars from a 36-char alphabet gives ~2.8 × 10¹² combinations, so a duplicate
+ * key is astronomically rare — the loop is here as a safety net rather than a
+ * realistic hot path.
+ */
+const ROUTING_KEY_MAX_ATTEMPTS = 5;
+
+/** Mongo duplicate-key error code. */
+const MONGO_DUPLICATE_KEY = 11000;
 
 import type { AgentIntegrationResponseDto } from '../../dtos';
 import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
@@ -60,28 +75,74 @@ export class FindOrCreateNovuEmail {
       const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
       const identifier = `${slugify(displayName)}-${shortid.generate()}`;
 
-      const integration = await this.integrationRepository.create(
-        {
-          providerId: EmailProviderIdEnum.NovuAgent,
-          channel: ChannelTypeEnum.EMAIL,
-          credentials: {
-            secretKey: encryptSecret(randomBytes(32).toString('hex')),
-            emailSlugPrefix,
-          },
-          configurations: {},
-          name: displayName,
-          identifier,
-          active: true,
-          _environmentId: environmentId,
-          _organizationId: organizationId,
-        } as any,
-        { session }
-      );
+      const integration = await this.createNovuAgentIntegration({
+        displayName,
+        identifier,
+        emailSlugPrefix,
+        environmentId,
+        organizationId,
+        session,
+      });
 
       const response = await this.createLink(agentId, integration, environmentId, organizationId, session);
 
       return { response, provisionedNewLink: true };
     });
+  }
+
+  /**
+   * Mints the NovuAgent integration with a freshly-generated `inboxRoutingKey`.
+   * The key is globally unique under a partial index gated to NovuAgent rows
+   * (`{ 'credentials.inboxRoutingKey': 1 }`), so the lone failure mode of a
+   * duplicate-key collision is retried up to {@link ROUTING_KEY_MAX_ATTEMPTS}
+   * times before surfacing the error to the caller.
+   */
+  private async createNovuAgentIntegration({
+    displayName,
+    identifier,
+    emailSlugPrefix,
+    environmentId,
+    organizationId,
+    session,
+  }: {
+    displayName: string;
+    identifier: string;
+    emailSlugPrefix: string;
+    environmentId: string;
+    organizationId: string;
+    session: ClientSession | null;
+  }): Promise<IntegrationEntity> {
+    let lastError: unknown;
+    for (let attempt = 0; attempt < ROUTING_KEY_MAX_ATTEMPTS; attempt += 1) {
+      const inboxRoutingKey = generateAgentInboxRoutingKey();
+      try {
+        return await this.integrationRepository.create(
+          {
+            providerId: EmailProviderIdEnum.NovuAgent,
+            channel: ChannelTypeEnum.EMAIL,
+            credentials: {
+              secretKey: encryptSecret(randomBytes(32).toString('hex')),
+              emailSlugPrefix,
+              inboxRoutingKey,
+            },
+            configurations: {},
+            name: displayName,
+            identifier,
+            active: true,
+            _environmentId: environmentId,
+            _organizationId: organizationId,
+          } as any,
+          { session }
+        );
+      } catch (err) {
+        if (!isInboxRoutingKeyCollision(err)) {
+          throw err;
+        }
+        lastError = err;
+      }
+    }
+
+    throw lastError ?? new Error('Failed to mint a unique inboxRoutingKey after retries');
   }
 
   /**
@@ -193,4 +254,19 @@ export class FindOrCreateNovuEmail {
       throw new HttpException('Payment Required', HttpStatus.PAYMENT_REQUIRED);
     }
   }
+}
+
+/**
+ * Detects a duplicate-key violation on the partial unique index for
+ * `credentials.inboxRoutingKey`. We narrow on the index name rather than the
+ * raw error code so an unrelated future unique index doesn't get retried by
+ * accident.
+ */
+function isInboxRoutingKeyCollision(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const candidate = err as { code?: number; codeName?: string; message?: string };
+  if (candidate.code !== MONGO_DUPLICATE_KEY) return false;
+  const message = typeof candidate.message === 'string' ? candidate.message : '';
+
+  return message.includes('credentials.inboxRoutingKey');
 }

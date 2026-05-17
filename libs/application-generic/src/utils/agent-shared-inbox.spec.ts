@@ -1,8 +1,10 @@
 import {
   buildAgentSharedInbox,
+  generateAgentInboxRoutingKey,
   getSharedAgentDomain,
   isAgentSharedInboxEnabled,
   isValidAgentEmailSlugPrefix,
+  isValidAgentInboxRoutingKey,
   parseAgentSharedInboxLocalPart,
 } from './agent-shared-inbox';
 
@@ -102,58 +104,89 @@ describe('agent-shared-inbox helpers', () => {
     });
   });
 
+  describe('generateAgentInboxRoutingKey', () => {
+    it('produces an 8-char lowercase-alnum key that passes isValidAgentInboxRoutingKey', () => {
+      for (let i = 0; i < 32; i += 1) {
+        const key = generateAgentInboxRoutingKey();
+        expect(key).toHaveLength(8);
+        expect(key).toMatch(/^[a-z0-9]{8}$/);
+        expect(isValidAgentInboxRoutingKey(key)).toBe(true);
+      }
+    });
+  });
+
+  describe('isValidAgentInboxRoutingKey', () => {
+    it('accepts 8 lowercase-alnum characters', () => {
+      expect(isValidAgentInboxRoutingKey('abcd1234')).toBe(true);
+      expect(isValidAgentInboxRoutingKey('00000000')).toBe(true);
+      expect(isValidAgentInboxRoutingKey('zzzzzzzz')).toBe(true);
+    });
+
+    it('rejects anything that does not match exactly 8 lowercase-alnum chars', () => {
+      expect(isValidAgentInboxRoutingKey('')).toBe(false);
+      expect(isValidAgentInboxRoutingKey('abc')).toBe(false);
+      expect(isValidAgentInboxRoutingKey('abcdefghi')).toBe(false);
+      expect(isValidAgentInboxRoutingKey('ABCD1234')).toBe(false);
+      expect(isValidAgentInboxRoutingKey('abcd-234')).toBe(false);
+      expect(isValidAgentInboxRoutingKey('abcd 234')).toBe(false);
+    });
+  });
+
   describe('buildAgentSharedInbox', () => {
-    it('joins slug, _id and shared domain with the canonical separators', () => {
+    it('joins slug, inboxRoutingKey and shared domain with the canonical separators', () => {
       withEnv({ [ENV_KEY]: 'agentconnect.sh' }, () => {
-        const out = buildAgentSharedInbox('wine-bot', '65a3f1d2b8e4c7a9f3b2c1d0');
-        expect(out).toBe('wine-bot-65a3f1d2b8e4c7a9f3b2c1d0@agentconnect.sh');
+        const out = buildAgentSharedInbox('wine-bot', 'a1b2c3d4');
+        expect(out).toBe('wine-bot-a1b2c3d4@agentconnect.sh');
       });
     });
 
-    it('throws when the agent id is not a 24-char hex string', () => {
+    it('throws when the routing key is not 8 lowercase-alnum chars', () => {
       withEnv({ [ENV_KEY]: 'agentconnect.sh' }, () => {
-        expect(() => buildAgentSharedInbox('wine-bot', 'not-an-objectid')).toThrow();
+        expect(() => buildAgentSharedInbox('wine-bot', 'too-short')).toThrow();
+        expect(() => buildAgentSharedInbox('wine-bot', 'ABCDEFGH')).toThrow();
+        expect(() => buildAgentSharedInbox('wine-bot', '')).toThrow();
       });
     });
 
     it('throws when the slug is invalid', () => {
       withEnv({ [ENV_KEY]: 'agentconnect.sh' }, () => {
-        expect(() => buildAgentSharedInbox('-leading-dash', '65a3f1d2b8e4c7a9f3b2c1d0')).toThrow();
-        expect(() => buildAgentSharedInbox('UPPER', '65a3f1d2b8e4c7a9f3b2c1d0')).toThrow();
-        expect(() => buildAgentSharedInbox('', '65a3f1d2b8e4c7a9f3b2c1d0')).toThrow();
+        expect(() => buildAgentSharedInbox('-leading-dash', 'a1b2c3d4')).toThrow();
+        expect(() => buildAgentSharedInbox('UPPER', 'a1b2c3d4')).toThrow();
+        expect(() => buildAgentSharedInbox('', 'a1b2c3d4')).toThrow();
       });
     });
   });
 
   describe('parseAgentSharedInboxLocalPart', () => {
     it('parses slugs containing dashes correctly', () => {
-      expect(parseAgentSharedInboxLocalPart('my-cool-bot-65a3f1d2b8e4c7a9f3b2c1d0')).toEqual({
+      expect(parseAgentSharedInboxLocalPart('my-cool-bot-a1b2c3d4')).toEqual({
         slug: 'my-cool-bot',
-        agentId: '65a3f1d2b8e4c7a9f3b2c1d0',
+        inboxRoutingKey: 'a1b2c3d4',
       });
     });
 
     it('parses simple slugs', () => {
-      expect(parseAgentSharedInboxLocalPart('agent-65a3f1d2b8e4c7a9f3b2c1d0')).toEqual({
+      expect(parseAgentSharedInboxLocalPart('agent-a1b2c3d4')).toEqual({
         slug: 'agent',
-        agentId: '65a3f1d2b8e4c7a9f3b2c1d0',
+        inboxRoutingKey: 'a1b2c3d4',
       });
     });
 
-    it('returns null when the trailing 24 chars are not hex', () => {
-      expect(parseAgentSharedInboxLocalPart('agent-not-hex-zzzzzzzzzzzzz')).toBeNull();
+    it('returns null when the trailing 8 chars are not lowercase-alnum', () => {
+      expect(parseAgentSharedInboxLocalPart('agent-ABCDEF12')).toBeNull();
+      expect(parseAgentSharedInboxLocalPart('agent-zzzz-yy')).toBeNull();
     });
 
     it('returns null when the slug is empty', () => {
-      // Local part is exactly "-{24hex}" with no slug → null
-      expect(parseAgentSharedInboxLocalPart('-65a3f1d2b8e4c7a9f3b2c1d0')).toBeNull();
+      // Local part is exactly "-{key}" with no slug → null
+      expect(parseAgentSharedInboxLocalPart('-a1b2c3d4')).toBeNull();
     });
 
-    it('returns null when no dash separates slug from id', () => {
-      expect(parseAgentSharedInboxLocalPart('agent65a3f1d2b8e4c7a9f3b2c1d0')).toBeNull();
+    it('returns null when no dash separates slug from key', () => {
+      expect(parseAgentSharedInboxLocalPart('agenta1b2c3d4')).toBeNull();
     });
 
-    it('returns null for inputs shorter than the id', () => {
+    it('returns null for inputs shorter than the key', () => {
       expect(parseAgentSharedInboxLocalPart('short')).toBeNull();
       expect(parseAgentSharedInboxLocalPart('')).toBeNull();
     });
