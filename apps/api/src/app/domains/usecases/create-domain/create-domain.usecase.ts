@@ -1,5 +1,9 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import { ResourceValidatorService } from '@novu/application-generic';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import {
+  getSharedAgentDomain,
+  isAgentSharedInboxEnabled,
+  ResourceValidatorService,
+} from '@novu/application-generic';
 import { DomainEntity, DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
 
@@ -23,6 +27,12 @@ export class CreateDomain {
   async execute(command: CreateDomainCommand): Promise<DomainResponseDto> {
     await this.resourceValidatorService.validateDomainsLimit(command.organizationId);
     const name = command.name.toLowerCase();
+
+    if (isAgentSharedInboxEnabled() && name === getSharedAgentDomain()) {
+      throw new BadRequestException(
+        `The domain "${name}" is reserved for Novu's shared agent inbox and cannot be claimed.`
+      );
+    }
 
     const existing = await this.domainRepository.findByName(name);
 
