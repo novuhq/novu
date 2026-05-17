@@ -1,9 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { CacheService } from '@novu/application-generic';
-
-const LOG_CONTEXT = 'TelegramMobileLinkTokenService';
+import { CacheService, PinoLogger } from '@novu/application-generic';
 
 /** Lifetime of an issued mobile setup token (seconds). */
 export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
@@ -67,8 +65,11 @@ export class InvalidTelegramMobileTokenError extends Error {
 export class TelegramMobileLinkTokenService {
   constructor(
     private readonly jwtService: JwtService,
-    private readonly cacheService: CacheService
-  ) {}
+    private readonly cacheService: CacheService,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async issue(params: {
     environmentId: string;
@@ -183,7 +184,7 @@ export class TelegramMobileLinkTokenService {
    */
   async claimJti(jti: string): Promise<boolean> {
     if (!this.cacheService.cacheEnabled()) {
-      Logger.warn('Cache unavailable for telegram mobile jti tracking', LOG_CONTEXT);
+      this.logger.warn('Cache unavailable for telegram mobile jti tracking');
 
       return true;
     }
@@ -211,7 +212,7 @@ export class TelegramMobileLinkTokenService {
     try {
       await this.cacheService.del(this.jtiKey(jti));
     } catch (err) {
-      Logger.warn(`Failed to release telegram mobile jti ${jti}: ${(err as Error).message}`, LOG_CONTEXT);
+      this.logger.warn(`Failed to release telegram mobile jti ${jti}: ${(err as Error).message}`);
     }
   }
 

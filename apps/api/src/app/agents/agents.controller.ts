@@ -50,6 +50,7 @@ import {
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
+import { ConfigureTelegramWebhookResponseDto } from './dtos/configure-telegram-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
 import { IssueTelegramMobileLinkResponseDto } from './dtos/issue-telegram-mobile-link-response.dto';
 import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
@@ -416,7 +417,7 @@ export class AgentsController {
 
   @Post('/:identifier/integrations/:integrationId/telegram/configure')
   @HttpCode(HttpStatus.OK)
-  @ApiResponse(Object, 200)
+  @ApiResponse(ConfigureTelegramWebhookResponseDto, 200)
   @ApiOperation({
     summary: 'Configure Telegram bot webhook',
     description:
@@ -428,11 +429,11 @@ export class AgentsController {
     description: 'The agent, integration, or agent-integration link was not found.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  configureTelegramWebhook(
+  updateTelegramWebhook(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
     @Param('integrationId') integrationId: string
-  ): Promise<{ webhookUrl: string; configuredAt: string; botUsername: string }> {
+  ): Promise<ConfigureTelegramWebhookResponseDto> {
     return this.configureTelegramAgentWebhookUsecase.execute(
       ConfigureTelegramAgentWebhookCommand.create({
         userId: user._id,
@@ -457,7 +458,7 @@ export class AgentsController {
     description: 'The agent, integration, or agent-integration link was not found.',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  issueTelegramMobileLink(
+  createTelegramMobileLink(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
     @Param('integrationId') integrationId: string

@@ -2,11 +2,10 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
-  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { encryptSecret } from '@novu/application-generic';
+import { encryptSecret, PinoLogger } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 
@@ -17,8 +16,6 @@ import {
 import { ConfigureTelegramAgentWebhookCommand } from '../configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
 import { ConfigureTelegramAgentWebhook } from '../configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
 import { ConsumeTelegramMobileLinkCommand } from './consume-telegram-mobile-link.command';
-
-const LOG_CONTEXT = 'ConsumeTelegramMobileLink';
 
 export interface ConsumeTelegramMobileLinkResult {
   success: true;
@@ -31,8 +28,11 @@ export class ConsumeTelegramMobileLink {
   constructor(
     private readonly tokenService: TelegramMobileLinkTokenService,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly configureTelegramWebhookUsecase: ConfigureTelegramAgentWebhook
-  ) {}
+    private readonly configureTelegramWebhookUsecase: ConfigureTelegramAgentWebhook,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: ConsumeTelegramMobileLinkCommand): Promise<ConsumeTelegramMobileLinkResult> {
     const payload = this.verifyToken(command.token);
@@ -90,9 +90,8 @@ export class ConsumeTelegramMobileLink {
       };
     } catch (err) {
       await this.tokenService.releaseJti(payload.jti);
-      Logger.warn(
-        `Telegram mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`,
-        LOG_CONTEXT
+      this.logger.warn(
+        `Telegram mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`
       );
       throw err;
     }

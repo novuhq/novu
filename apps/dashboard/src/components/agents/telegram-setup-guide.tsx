@@ -141,12 +141,11 @@ export function TelegramSetupGuide({
 
   // When credentials already exist (e.g. user revisiting the guide), auto-configure the webhook
   // so botUsername is populated and the QR code is available for step 3.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: run once when credentials become available
   useEffect(() => {
     if (hasCredentials && !isWebhookConfigured && !isConfiguring) {
       configureTelegram();
     }
-  }, [hasCredentials]);
+  }, [hasCredentials, integrationId, isWebhookConfigured, isConfiguring, configureTelegram]);
 
   const base = stepOffset;
 

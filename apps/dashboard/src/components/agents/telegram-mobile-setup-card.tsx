@@ -12,7 +12,7 @@ import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { cn } from '@/utils/ui';
 
-const REFRESH_INTERVAL_MS = 4 * 60 * 1000;
+const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 const TOKEN_TTL_MS = 5 * 60 * 1000;
 /** Don't expose the manual refresh control until the current token has been visible long enough to actually scan it. */
 const MIN_MANUAL_REFRESH_AGE_MS = 60 * 1000;
@@ -70,7 +70,7 @@ export function TelegramMobileSetupCardShell({
               Set up from your phone
             </div>
             <p className="text-text-soft text-label-xs leading-4">
-              Scan or open the link on the device where BotFather sent the token. and paste the entire message. Refreshes every 5 minutes.
+              Scan or open the link on the device where BotFather sent the token and paste the entire message. Refreshes every 5 minutes.
             </p>
           </div>
           <div className="flex flex-col items-start gap-1.5">
@@ -103,7 +103,7 @@ export function TelegramMobileSetupCardShell({
         Set up from your phone
       </div>
       <p className="text-text-soft text-label-xs leading-4">
-        Scan the QR code or open the link on the device where BotFather sent the token. Refreshes every 4 minutes.
+        Scan the QR code or open the link on the device where BotFather sent the token. Refreshes every 5 minutes.
       </p>
 
       <div className="mt-1 flex flex-col items-center gap-2">

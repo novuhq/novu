@@ -96,12 +96,8 @@ export function TelegramCredentialsPaste({
 
   const handlePaste = useCallback(
     (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
-      const text = event.clipboardData.getData('text/plain');
-      const { token } = parseBotFatherMessage(text);
-
-      if (!token) return;
-
       event.preventDefault();
+      const text = event.clipboardData.getData('text/plain');
       setDraft('');
       setOutcome(apply(text));
     },
