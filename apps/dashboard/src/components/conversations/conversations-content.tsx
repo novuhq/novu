@@ -77,6 +77,7 @@ function EnterpriseConversationsContent({
     return (
       mergedFilterValues.dateRange !== defaultConversationFilters.dateRange ||
       mergedFilterValues.subscriberId !== '' ||
+      mergedFilterValues.agentId !== '' ||
       mergedFilterValues.provider.length > 0 ||
       mergedFilterValues.conversationId !== ''
     );

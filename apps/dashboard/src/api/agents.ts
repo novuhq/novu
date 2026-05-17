@@ -17,6 +17,8 @@ const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
 
 const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
 
+const AGENT_RUNTIME_CONFIG_QUERY_KEY = 'fetchAgentRuntimeConfig' as const;
+
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
 }
@@ -30,6 +32,10 @@ export function getAgentsListQueryKey(
   params: { after?: string; before?: string; limit: number; identifier: string }
 ) {
   return [AGENTS_LIST_QUERY_KEY, environmentId, params] as const;
+}
+
+export function getAgentRuntimeConfigQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
+  return [AGENT_RUNTIME_CONFIG_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
 
 export type AgentIntegrationSummary = {
@@ -46,6 +52,15 @@ export type AgentBehavior = {
   reactionOnResolved?: string | null;
 };
 
+export type ManagedRuntimeResponse = {
+  providerId: string;
+  integrationId: string;
+  externalAgentId: string;
+  externalEnvironmentId?: string;
+  externalWorkspaceId?: string;
+  consoleUrl?: string;
+};
+
 export type AgentResponse = {
   _id: string;
   name: string;
@@ -56,6 +71,8 @@ export type AgentResponse = {
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
+  runtime?: AgentRuntime;
+  managedRuntime?: ManagedRuntimeResponse;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;
@@ -296,6 +313,73 @@ export async function sendAgentTestEmail(
     environment,
     body: { targetAddress },
   });
+}
+
+export type AgentMcpServer = {
+  externalId: string;
+  name: string;
+  url: string;
+  authToken?: string;
+};
+
+export type AgentTool = {
+  externalId: string;
+  name: string;
+  type: 'builtin' | 'custom';
+  description?: string;
+};
+
+export type AgentRuntimeCapabilities = {
+  mcpServers: boolean;
+  tools: boolean;
+  model: boolean;
+  systemPrompt: boolean;
+  skills: boolean;
+};
+
+export type AgentRuntimeConfig = {
+  model: string;
+  systemPrompt: string;
+  mcpServers: AgentMcpServer[];
+  tools: AgentTool[];
+  skills?: AgentSkillInputDto[];
+  capabilities?: AgentRuntimeCapabilities;
+};
+
+export type PatchAgentRuntimeConfigBody = {
+  model?: string;
+  systemPrompt?: string;
+  mcpServers?: AgentMcpServer[];
+  tools?: AgentTool[];
+  skills?: AgentSkillInputDto[];
+};
+
+type AgentRuntimeConfigEnvelope = { data: AgentRuntimeConfig };
+
+export async function getAgentRuntimeConfig(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentRuntimeConfig> {
+  const response = await get<AgentRuntimeConfigEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/runtime/config`,
+    { environment, signal }
+  );
+
+  return response.data;
+}
+
+export async function patchAgentRuntimeConfig(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  body: PatchAgentRuntimeConfigBody
+): Promise<AgentRuntimeConfig> {
+  const response = await patch<AgentRuntimeConfigEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/runtime/config`,
+    { environment, body }
+  );
+
+  return response.data;
 }
 
 type WelcomeMessageResponse = { sent: boolean; conversationId?: string };

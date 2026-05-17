@@ -521,7 +521,7 @@ export function WhatsAppSetupGuide({
   if (embedded) {
     return (
       <div className="flex flex-col gap-0">
-        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-6')}>
+        <div className={cn('relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6')}>
           <div
             className="absolute bottom-0 left-[22px] top-0 w-px"
             style={{

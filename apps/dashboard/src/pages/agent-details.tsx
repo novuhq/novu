@@ -365,7 +365,7 @@ export function AgentDetailsPage() {
                   Overview
                 </TabsTrigger>
                 <TabsTrigger variant="regular" value="integrations" size="xl">
-                  Integrations
+                  Channels
                 </TabsTrigger>
               </TabsList>
 

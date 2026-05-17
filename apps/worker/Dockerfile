@@ -4,7 +4,7 @@ ENV NX_DAEMON=false
 
 
 RUN npm i pm2@6.0.14 -g
-RUN npm --no-update-notifier --no-fund --global install pnpm@10.33.0
+RUN npm --no-update-notifier --no-fund --global install pnpm@11.0.9
 RUN pnpm --version
 
 
