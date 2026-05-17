@@ -21,6 +21,7 @@ import { SendAgentWelcomeMessage } from './send-agent-welcome-message/send-agent
 import { SendWhatsAppTestTemplate } from './send-whatsapp-test-template/send-whatsapp-test-template.usecase';
 import { SyncAgentToEnvironment } from './sync-agent-to-environment/sync-agent-to-environment.usecase';
 import { UpdateAgent } from './update-agent/update-agent.usecase';
+import { UpdateAgentInboxShared } from './update-agent-inbox-shared/update-agent-inbox-shared.usecase';
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfig } from './update-agent-runtime-config/update-agent-runtime-config.usecase';
 
@@ -35,6 +36,7 @@ export const USE_CASES = [
   GetTelegramMobileLinkStatus,
   ListAgents,
   UpdateAgent,
+  UpdateAgentInboxShared,
   UpdateAgentRuntimeConfig,
   DeleteAgent,
   AddAgentIntegration,

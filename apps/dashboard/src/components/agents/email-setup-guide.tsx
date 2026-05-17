@@ -1,9 +1,9 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
+import { RiInformation2Fill, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { type AgentResponse, sendAgentTestEmail } from '@/api/agents';
+import { type AgentIntegrationLink, type AgentResponse, sendAgentTestEmail } from '@/api/agents';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -13,7 +13,27 @@ import { InboundAddressConfig } from './inbound-address-config';
 import { OutboundProviderSelect } from './outbound-provider-select';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
-import { useEmailSetupCredentials } from './use-email-setup-credentials';
+import { useEmailSetupCredentials, type ConfiguredAddress } from './use-email-setup-credentials';
+
+function resolveTestEmailTarget(
+  customTarget: ConfiguredAddress | undefined,
+  sharedInboundAddress: string | undefined,
+  hasSharedInbox: boolean
+): string | undefined {
+  if (customTarget) {
+    if (customTarget.address === '*') {
+      return `test@${customTarget.domain}`;
+    }
+
+    return `${customTarget.address}@${customTarget.domain}`;
+  }
+
+  if (hasSharedInbox) {
+    return sharedInboundAddress;
+  }
+
+  return undefined;
+}
 
 export type EmailSetupGuideProps = {
   agent: AgentResponse;
@@ -21,6 +41,14 @@ export type EmailSetupGuideProps = {
   stepOffset?: number;
   onStepsCompleted?: () => void;
   embedded?: boolean;
+  /**
+   * Optional agent–integration link, populated by callers that already have
+   * it. When present, the wizard counts the Novu shared inbox as a valid
+   * inbound address and uses it as the test-email target if no custom-domain
+   * routes are configured. When absent (legacy callers), the wizard falls
+   * back to the previous behavior of requiring a custom address.
+   */
+  integrationLink?: AgentIntegrationLink;
 };
 
 export function EmailSetupGuide({
@@ -29,6 +57,7 @@ export function EmailSetupGuide({
   stepOffset = 1,
   onStepsCompleted,
   embedded = false,
+  integrationLink,
 }: EmailSetupGuideProps) {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
@@ -45,6 +74,7 @@ export function EmailSetupGuide({
     outboundId,
     configuredAddresses,
     domains,
+    isOutboundDemo,
     needsCredentialsStep,
     hasOutboundCredentials,
     outboundProviderConfig,
@@ -53,12 +83,22 @@ export function EmailSetupGuide({
     removeAddress,
   } = useEmailSetupCredentials({ emailIntegration, integrations, agent });
 
+  /**
+   * Cloud-provisioned shared inbox address for this agent (e.g.
+   * `support-agent-x@agentconnect.sh`). Pulled from the link payload because
+   * computing it client-side would require the `NOVU_AGENT_SHARED_INBOUND_DOMAIN`
+   * env var, which is server-only.
+   */
+  const sharedInboundAddress = integrationLink?.integration?.sharedInboundAddress;
+  const sharedInboxDisabled = Boolean(integrationLink?.integration?.sharedInboxDisabled);
+  const hasSharedInbox = Boolean(sharedInboundAddress) && !sharedInboxDisabled;
+
   const testEmailMutation = useMutation({
     mutationFn: async () => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const first = configuredAddresses[0];
-      if (!first) throw new Error('No inbound address configured.');
-      const targetAddress = first.address === '*' ? `test@${first.domain}` : `${first.address}@${first.domain}`;
+      const customTarget = configuredAddresses[0];
+      const targetAddress = resolveTestEmailTarget(customTarget, sharedInboundAddress, hasSharedInbox);
+      if (!targetAddress) throw new Error('No inbound address configured.');
       await sendAgentTestEmail(environment, agent.identifier, targetAddress);
     },
     onSuccess: () => showSuccessToast('Test email sent.'),
@@ -74,18 +114,23 @@ export function EmailSetupGuide({
   const inboundStepIndex = needsCredentialsStep ? base + 2 : base + 1;
   const testStepIndex = inboundStepIndex + 1;
 
-  const hasAddresses = configuredAddresses.length > 0;
+  // The Novu shared inbox satisfies the "configure inbound address" step out
+  // of the box on cloud; users can still add custom-domain routes for branded
+  // delivery, but they're no longer a hard prerequisite.
+  const hasAddresses = configuredAddresses.length > 0 || hasSharedInbox;
 
+  // The "Setup providers to send emails" step starts complete: the agent
+  // already has the Novu demo sender selected by default, and choosing a real
+  // provider is an explicit upgrade rather than a prerequisite. For demo,
+  // `needsCredentialsStep` stays false so the credentials step is skipped
+  // naturally and the wizard advances straight to the inbound-address step.
   const firstIncompleteStep = useMemo(() => {
-    if (!outboundId) return base;
     if (needsCredentialsStep && !hasOutboundCredentials) return credentialsStepIndex;
     if (!hasAddresses) return inboundStepIndex;
     if (!testConnected) return testStepIndex;
 
     return testStepIndex + 1;
   }, [
-    base,
-    outboundId,
     needsCredentialsStep,
     hasOutboundCredentials,
     credentialsStepIndex,
@@ -101,16 +146,21 @@ export function EmailSetupGuide({
         index={base}
         status={deriveStepStatus(base, firstIncompleteStep)}
         sectionLabel="SETUP SENDING EMAILS"
-        title="Setup providers to send emails"
+        title="Send emails via"
         description={
           <span>
-            {'Choose which email provider sends outbound replies from your agent. '}
+            {'The Novu Email demo sender is selected by default. Switch to your own provider for higher volume. '}
             <Link to={ROUTES.INTEGRATIONS} className="text-text-sub underline underline-offset-2">
               Manage email providers
             </Link>
           </span>
         }
-        rightContent={<OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} />}
+        rightContent={
+          <div className="flex w-full flex-col gap-1.5">
+            <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} />
+            {isOutboundDemo ? <DemoProviderHint /> : null}
+          </div>
+        }
       />
 
       {needsCredentialsStep && (
@@ -231,5 +281,17 @@ export function EmailSetupGuide({
       {listening}
       {credentialsSidebar}
     </>
+  );
+}
+
+function DemoProviderHint() {
+  return (
+    <div className="bg-bg-weak border-stroke-weak text-text-sub flex items-start gap-2 rounded-md border px-2 py-1.5">
+      <RiInformation2Fill className="text-away-base mt-px size-3.5 shrink-0" aria-hidden />
+      <p className="text-paragraph-xs leading-4">
+        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider
+        to send at scale.
+      </p>
+    </div>
   );
 }

@@ -495,8 +495,8 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom domains', value: true },
   },
   [FeatureNameEnum.AGENT_EMAIL_INTEGRATION]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Agent email integration', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'Agent email integration', value: false },
+    [ApiServiceLevelEnum.FREE]: { label: 'Agent email integration', value: true },
+    [ApiServiceLevelEnum.PRO]: { label: 'Agent email integration', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Agent email integration', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Agent email integration', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Agent email integration', value: true },

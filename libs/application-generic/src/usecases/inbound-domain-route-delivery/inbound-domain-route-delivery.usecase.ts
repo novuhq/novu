@@ -356,8 +356,9 @@ export class InboundDomainRouteDelivery {
         _organizationId: organizationId,
         providerId: EmailProviderIdEnum.NovuAgent,
         channel: ChannelTypeEnum.EMAIL,
+        active: true,
       },
-      'identifier credentials'
+      'identifier credentials active'
     );
 
     if (!integration) {

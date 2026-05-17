@@ -43,8 +43,25 @@ type OutboundInstanceItem = {
   integration?: IIntegration;
 };
 
+// Sentinel persisted on the agent's NovuAgent integration credentials when the
+// user opts into the bundled Novu Email demo sender. The API treats an empty
+// outboundIntegrationId as "use the demo provider" (see chat-sdk.service.ts), so
+// we mirror that here instead of inventing a new string.
+const DEMO_OUTBOUND_VALUE = '';
+
+const DEMO_PROVIDER_CONFIG = emailProviderConfigs.find((p) => p.id === EmailProviderIdEnum.Novu);
+const DEMO_PROVIDER_DISPLAY_NAME = DEMO_PROVIDER_CONFIG?.displayName ?? 'Novu Email';
+
 const EXCLUDED_OUTBOUND_PROVIDERS = new Set<string>([EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu]);
 const OUTBOUND_EMAIL_PROVIDERS = emailProviderConfigs.filter((p) => !EXCLUDED_OUTBOUND_PROVIDERS.has(p.id));
+
+function DemoBadge() {
+  return (
+    <span className="bg-away-lighter text-away-base rounded px-1 py-px text-[10px] font-medium uppercase leading-3 tracking-wide">
+      Demo
+    </span>
+  );
+}
 
 function buildOutboundItems(allIntegrations: IIntegration[] | undefined): OutboundProviderType[] {
   const integrationsByProvider = new Map<string, IIntegration[]>();
@@ -93,15 +110,33 @@ export function OutboundProviderSelect({
     [expandedProviderId, providerTypes]
   );
 
+  // The agent uses the Novu demo provider whenever no real outbound integration
+  // is attached. Mirror that in the UI: an empty/undefined selectedId surfaces
+  // as the demo being preselected, and legacy rows that point at a real Novu
+  // demo integration are normalized to the same display.
+  const isDemoSelected = useMemo(() => {
+    if (!selectedId) return true;
+    const integration = integrations?.find((i) => i._id === selectedId);
+
+    return integration?.providerId === EmailProviderIdEnum.Novu;
+  }, [integrations, selectedId]);
+
   const selected = useMemo(() => {
-    if (!selectedId) return undefined;
+    if (isDemoSelected) {
+      return {
+        providerId: EmailProviderIdEnum.Novu,
+        displayName: DEMO_PROVIDER_DISPLAY_NAME,
+        isDemo: true,
+      };
+    }
+
     for (const pt of providerTypes) {
       const match = pt.integrations.find((i) => i._id === selectedId);
-      if (match) return { providerId: pt.providerId, displayName: match.name || pt.displayName };
+      if (match) return { providerId: pt.providerId, displayName: match.name || pt.displayName, isDemo: false };
     }
 
     return undefined;
-  }, [providerTypes, selectedId]);
+  }, [providerTypes, selectedId, isDemoSelected]);
 
   const isBusy = pendingKey !== null;
 
@@ -167,6 +202,13 @@ export function OutboundProviderSelect({
     }
   }
 
+  function handleSelectDemo() {
+    if (isBusy) return;
+    onSelect(DEMO_OUTBOUND_VALUE);
+    setOpen(false);
+    setExpandedProviderId(null);
+  }
+
   const collapsedList = (
     <Command>
       <div className="bg-bg-weak border-stroke-weak flex items-center gap-2 border-b py-1.5 pl-3 pr-3">
@@ -182,7 +224,28 @@ export function OutboundProviderSelect({
       </div>
       <CommandList className="max-h-[260px] p-1">
         <CommandEmpty className="text-text-soft text-label-xs py-4">No email providers found.</CommandEmpty>
-        <CommandGroup heading="Email providers" className={groupHeadingClassName}>
+        <CommandGroup heading="Default · for testing" className={groupHeadingClassName}>
+          <CommandItem
+            key="__demo__"
+            value={`${DEMO_PROVIDER_DISPLAY_NAME} demo novu email`}
+            disabled={isBusy}
+            onSelect={handleSelectDemo}
+            className={cn('flex items-center gap-2 rounded-md p-1', isDemoSelected && 'bg-bg-muted')}
+          >
+            <div className="flex w-full min-w-0 items-center gap-1">
+              <ProviderIcon
+                providerId={EmailProviderIdEnum.Novu}
+                providerDisplayName={DEMO_PROVIDER_DISPLAY_NAME}
+                className="size-4 shrink-0"
+              />
+              <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
+                {DEMO_PROVIDER_DISPLAY_NAME}
+              </span>
+              <DemoBadge />
+            </div>
+          </CommandItem>
+        </CommandGroup>
+        <CommandGroup heading="Production providers" className={groupHeadingClassName}>
           {providerTypes.map((pt) => {
             const hasInstances = pt.integrations.length > 0;
             const isAnyInstanceSelected = pt.integrations.some((i) => i._id === selectedId);
@@ -337,13 +400,16 @@ export function OutboundProviderSelect({
               )}
             >
               {selected ? (
-                <div className="flex items-center gap-1">
+                <div className="flex min-w-0 items-center gap-1">
                   <ProviderIcon
                     providerId={selected.providerId}
                     providerDisplayName={selected.displayName}
                     className="size-4 shrink-0"
                   />
-                  <span className="text-text-strong text-label-xs font-medium leading-4">{selected.displayName}</span>
+                  <span className="text-text-strong text-label-xs min-w-0 truncate font-medium leading-4">
+                    {selected.displayName}
+                  </span>
+                  {selected.isDemo ? <DemoBadge /> : null}
                 </div>
               ) : (
                 <span className="text-text-soft text-label-xs font-medium leading-4">Select provider...</span>

@@ -1,9 +1,17 @@
 import { BadRequestException, ConflictException, Injectable, UnprocessableEntityException } from '@nestjs/common';
-import { AnalyticsService, shortId, slugifyOrRandom } from '@novu/application-generic';
-import { AgentRepository } from '@novu/dal';
+import {
+  AnalyticsService,
+  isAgentSharedInboxEnabled,
+  PinoLogger,
+  shortId,
+  slugifyOrRandom,
+} from '@novu/application-generic';
+import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
+import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { trackAgentCreated } from '../../agent-analytics';
 import type { AgentResponseDto } from '../../dtos';
 import { toAgentResponse } from '../../mappers/agent-response.mapper';
+import { FindOrCreateNovuEmail } from '../find-or-create-novu-email/find-or-create-novu-email.usecase';
 import { ProvisionManagedAgentCommand } from '../provision-managed-agent/provision-managed-agent.command';
 import { ProvisionManagedAgent } from '../provision-managed-agent/provision-managed-agent.usecase';
 import { CreateAgentCommand } from './create-agent.command';
@@ -16,8 +24,14 @@ export class CreateAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly analyticsService: AnalyticsService,
-    private readonly provisionManagedAgentUsecase: ProvisionManagedAgent
-  ) {}
+    private readonly provisionManagedAgentUsecase: ProvisionManagedAgent,
+    private readonly findOrCreateNovuEmail: FindOrCreateNovuEmail,
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly organizationRepository: CommunityOrganizationRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: CreateAgentCommand): Promise<AgentResponseDto> {
     const isAdoptMode = command.runtime === 'managed' && !!command.managedRuntime?.externalAgentId;
@@ -171,7 +185,54 @@ export class CreateAgent {
       name: (updatedAgent ?? agent).name,
     });
 
+    await this.autoProvisionDefaultEmailInbox(agent._id, command.environmentId, command.organizationId);
+
     return toAgentResponse(updatedAgent ?? agent);
+  }
+
+  /**
+   * Auto-provision the agent's default NovuAgent email integration so the
+   * dashboard EMAIL INBOX card has something to render the moment the agent
+   * is created. Reuses `FindOrCreateNovuEmail` (idempotent).
+   *
+   * Gates:
+   *   - cloud only (NOVU_ENTERPRISE + non self-hosted + shared inbound domain configured)
+   *   - non-production environment (mirrors AddAgentIntegration's existing
+   *     restriction; manual attach in production is also blocked today)
+   *   - AGENT_EMAIL_INTEGRATION tier feature flag
+   *
+   * On any failure (tier, transient DB error, etc.) we log and continue - the
+   * agent itself was created successfully and email can be wired up later.
+   */
+  private async autoProvisionDefaultEmailInbox(
+    agentId: string,
+    environmentId: string,
+    organizationId: string
+  ): Promise<void> {
+    if (!isAgentSharedInboxEnabled()) return;
+
+    try {
+      const environment = await this.environmentRepository.findOne(
+        { _id: environmentId, _organizationId: organizationId },
+        ['type']
+      );
+      if (!environment || environment.type === EnvironmentTypeEnum.PROD) {
+        return;
+      }
+
+      const organization = await this.organizationRepository.findById(organizationId);
+      const tier = organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
+      if (!getFeatureForTierAsBoolean(FeatureNameEnum.AGENT_EMAIL_INTEGRATION, tier)) {
+        return;
+      }
+
+      await this.findOrCreateNovuEmail.execute(agentId, environmentId, organizationId);
+    } catch (err) {
+      this.logger.warn(
+        { err, agentId, environmentId, organizationId },
+        'Failed to auto-provision NovuAgent email integration at agent creation'
+      );
+    }
   }
 
   /**

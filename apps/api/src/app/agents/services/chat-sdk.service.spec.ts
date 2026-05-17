@@ -1,4 +1,6 @@
 import type { IncomingHttpHeaders } from 'node:http';
+import { BadRequestException } from '@nestjs/common';
+import { MailFactory } from '@novu/application-generic';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -28,7 +30,16 @@ describe('ChatSdkService', () => {
       setContext: sinon.stub(),
     };
 
-    return new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any, {} as any);
+    return new ChatSdkService(
+      logger as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      { create: sinon.stub().resolves({ _id: 'm' }) } as any
+    );
   }
 
   describe('prepareContentForDelivery', () => {
@@ -348,7 +359,16 @@ describe('ChatSdkService', () => {
         info: sinon.stub(),
         setContext: sinon.stub(),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any, {} as any);
+      const service = new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        { create: sinon.stub().resolves({ _id: 'm' }) } as any
+      );
 
       const result = await (service as any).prepareContentForDelivery(
         {
@@ -376,7 +396,16 @@ describe('ChatSdkService', () => {
         info: sinon.stub(),
         setContext: sinon.stub(),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any, {} as any);
+      const service = new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        { create: sinon.stub().resolves({ _id: 'm' }) } as any
+      );
 
       const result = await (service as any).prepareContentForDelivery(
         {
@@ -423,7 +452,9 @@ describe('ChatSdkService', () => {
         {} as any,
         {} as any,
         integrationRepository as any,
-        {} as any
+        {} as any,
+        {} as any,
+        { create: sinon.stub().resolves({ _id: 'm' }) } as any
       );
       const sendEmail = (service as any).buildSendEmailCallback(
         {
@@ -491,7 +522,9 @@ describe('ChatSdkService', () => {
         {} as any,
         {} as any,
         integrationRepository as any,
-        {} as any
+        {} as any,
+        {} as any,
+        { create: sinon.stub().resolves({ _id: 'm' }) } as any
       );
       const sendEmail = (service as any).buildSendEmailCallback(
         {
@@ -523,6 +556,147 @@ describe('ChatSdkService', () => {
         outboundIntegrationId: 'outbound-integration-id',
       });
       expect(logger.warn.firstCall.args[1]).to.include('no messageId was supplied');
+    });
+  });
+
+  describe('sendViaNovuDemoProvider', () => {
+    let novuEnterprise: string | undefined;
+    let isSelfHosted: string | undefined;
+    let sharedInboundDomain: string | undefined;
+    let novuEmailApiKey: string | undefined;
+
+    beforeEach(() => {
+      novuEnterprise = process.env.NOVU_ENTERPRISE;
+      isSelfHosted = process.env.IS_SELF_HOSTED;
+      sharedInboundDomain = process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+      novuEmailApiKey = process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
+
+      process.env.NOVU_ENTERPRISE = 'true';
+      delete process.env.IS_SELF_HOSTED;
+      process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentconnect.sh';
+      process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'test-key';
+    });
+
+    afterEach(() => {
+      if (novuEnterprise === undefined) delete process.env.NOVU_ENTERPRISE;
+      else process.env.NOVU_ENTERPRISE = novuEnterprise;
+
+      if (isSelfHosted === undefined) delete process.env.IS_SELF_HOSTED;
+      else process.env.IS_SELF_HOSTED = isSelfHosted;
+
+      if (sharedInboundDomain === undefined) delete process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+      else process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = sharedInboundDomain;
+
+      if (novuEmailApiKey === undefined) delete process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
+      else process.env.NOVU_EMAIL_INTEGRATION_API_KEY = novuEmailApiKey;
+
+      sinon.restore();
+    });
+
+    function makeSendViaService(deps: {
+      calculateLimit?: { execute: sinon.SinonStub };
+      messageCreate?: sinon.SinonStub;
+    }) {
+      const logger = {
+        warn: sinon.stub(),
+        error: sinon.stub(),
+        debug: sinon.stub(),
+        info: sinon.stub(),
+        setContext: sinon.stub(),
+      };
+
+      const calculateLimitNovuIntegration = deps.calculateLimit ?? {
+        execute: sinon.stub().resolves({ limit: 300, count: 0 }),
+      };
+
+      const messageRepository = {
+        create: deps.messageCreate ?? sinon.stub().resolves({ _id: 'msg-1' }),
+      };
+
+      return new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        calculateLimitNovuIntegration as any,
+        messageRepository as any
+      );
+    }
+
+    const demoConfig = {
+      environmentId: 'env-id',
+      organizationId: 'org-id',
+      agentId: 'agent-1',
+      credentials: {
+        emailSlugPrefix: 'support',
+        inboxRoutingKey: 'abcd1234',
+        senderName: 'Support',
+      },
+    };
+
+    const demoParams = {
+      from: 'fallback@example.com',
+      to: 'user@example.com',
+      subject: 'Hello',
+      html: '<p>Hi</p>',
+      messageId: '<mid@example.com>',
+    };
+
+    it('throws when Novu demo email credentials are not configured', async () => {
+      delete process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
+      const messageCreate = sinon.stub().resolves({ _id: 'msg-1' });
+      const service = makeSendViaService({ messageCreate });
+
+      try {
+        await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams);
+        throw new Error('Expected sendViaNovuDemoProvider to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('not configured on this deployment');
+        expect(messageCreate.called).to.equal(false);
+      }
+    });
+
+    it('persists a Message with providerId Novu after successful send for quota accounting', async () => {
+      const messageCreate = sinon.stub().resolves({ _id: 'msg-1' });
+      const service = makeSendViaService({ messageCreate });
+      const sendStub = sinon.stub().resolves({ id: 'sg-123' });
+      sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub });
+
+      const result = await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams);
+
+      expect(result).to.deep.equal({ messageId: 'sg-123' });
+      expect(sendStub.calledOnce).to.equal(true);
+      expect(messageCreate.calledOnce).to.equal(true);
+      expect(messageCreate.firstCall.args[0]).to.include({
+        _environmentId: 'env-id',
+        _organizationId: 'org-id',
+        channel: ChannelTypeEnum.EMAIL,
+        providerId: EmailProviderIdEnum.Novu,
+        email: 'user@example.com',
+        subject: 'Hello',
+        transactionId: 'sg-123',
+      });
+      expect(messageCreate.firstCall.args[0].tags).to.deep.equal(['agent-demo-reply']);
+    });
+
+    it('throws when the Novu demo quota is exhausted', async () => {
+      const calculateLimit = {
+        execute: sinon.stub().resolves({ limit: 300, count: 300 }),
+      };
+      const messageCreate = sinon.stub().resolves({ _id: 'msg-1' });
+      const service = makeSendViaService({ calculateLimit, messageCreate });
+
+      try {
+        await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams);
+        throw new Error('Expected sendViaNovuDemoProvider to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('quota exhausted');
+        expect(messageCreate.called).to.equal(false);
+      }
     });
   });
 });

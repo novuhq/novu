@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
+import { CalculateLimitNovuIntegration } from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   ConversationActivityRepository,
   ConversationRepository,
   IntegrationRepository,
+  MessageRepository,
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
@@ -46,6 +48,7 @@ import { USE_CASES } from './usecases';
     ConversationRepository,
     ConversationActivityRepository,
     IntegrationRepository,
+    MessageRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
@@ -56,6 +59,7 @@ import { USE_CASES } from './usecases';
     ManagedExecutorService,
     ChatSdkService,
     TelegramMobileLinkTokenService,
+    CalculateLimitNovuIntegration,
   ],
   exports: [...USE_CASES, ChatSdkService],
 })
