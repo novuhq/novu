@@ -1,15 +1,19 @@
-import { BaseCommand } from '@novu/application-generic';
 import { IsNotEmpty, IsString } from 'class-validator';
 
-export class LinkTelegramChatToSubscriberCommand extends BaseCommand {
-  /**
-   * The raw `/start <token>` payload received from the Telegram webhook. The
-   * usecase verifies it as a subscriber-link JWT, then claims its `jti` as used
-   * before creating the channel endpoint.
-   */
+import { EnvironmentCommand } from '../../../shared/commands/project.command';
+
+export class LinkTelegramChatToSubscriberCommand extends EnvironmentCommand {
   @IsString()
   @IsNotEmpty()
-  token: string;
+  agentIdentifier: string;
+
+  @IsString()
+  @IsNotEmpty()
+  integrationId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  subscriberId: string;
 
   /**
    * The Telegram `chat.id` of the inbound message, which is what

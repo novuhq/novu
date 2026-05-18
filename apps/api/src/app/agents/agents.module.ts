@@ -35,6 +35,7 @@ import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { ManagedExecutorService } from './services/managed-executor.service';
 import { TelegramMobileLinkTokenService } from './services/telegram-mobile-link-token.service';
+import { TelegramStartCodeService } from './services/telegram-start-code.service';
 import { USE_CASES } from './usecases';
 
 @Module({
@@ -68,6 +69,7 @@ import { USE_CASES } from './usecases';
     ManagedExecutorService,
     ChatSdkService,
     TelegramMobileLinkTokenService,
+    TelegramStartCodeService,
     CalculateLimitNovuIntegration,
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,

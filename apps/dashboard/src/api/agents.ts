@@ -592,7 +592,6 @@ export async function requestTelegramMobileLink(
 }
 
 export type TelegramSubscriberLink = {
-  token: string;
   deepLinkUrl: string;
   botUsername: string;
   /** ISO timestamp when the link expires. */
@@ -602,7 +601,7 @@ export type TelegramSubscriberLink = {
 type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
 
 /**
- * Issues a `t.me/<bot>?start=<token>` deep-link that, when opened by a subscriber,
+ * Issues a `t.me/<bot>?start=<code>` deep-link that, when opened by a subscriber,
  * automatically links the originating Telegram chat to the supplied subscriberId
  * by creating a `telegram_chat` channel endpoint on the bot inbound webhook.
  */

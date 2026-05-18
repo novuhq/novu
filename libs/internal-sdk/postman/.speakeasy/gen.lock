@@ -1,10 +1,10 @@
 lockVersion: 2.0.0
 id: 47485c62-299d-4bb9-8ec5-e9e1c5ead062
 management:
-  docChecksum: 181a873517a8ffb8800fdf2b89ee8e50
+  docChecksum: 82a9cf2d3fb52b90337967a2c9569b51
   docVersion: 3.15.0
-  speakeasyVersion: 1.761.9
-  generationVersion: 2.881.4
+  speakeasyVersion: 1.763.1
+  generationVersion: 2.884.4
   releaseVersion: 1.0.0
   configChecksum: 25eb47514328bc87ca500cfa55ddb708
 persistentEdits:
@@ -25,7 +25,7 @@ features:
 trackedFiles:
   novu_api_postman_collection.json:
     id: f80b59e13e5c
-    last_write_checksum: sha1:a99117b4e5e010096eb9a64f06f562d508206a62
+    last_write_checksum: sha1:1c0614ffbbcca6f29af9c1f36f0b30915d67212e
     pristine_git_object: 5e1d2eedd7bc4934ecc1a374a7f4dd6b4fa15852
 examples:
   EventsController_trigger:
@@ -1453,10 +1453,10 @@ examples:
   IntegrationsController_createIntegration:
     speakeasy-default-integrations-controller-create-integration:
       requestBody:
-        application/json: {"providerId": "<id>", "channel": "email"}
+        application/json: {}
       responses:
         "201":
-          application/json: {"_environmentId": "<id>", "_organizationId": "<id>", "name": "<value>", "identifier": "<value>", "providerId": "<id>", "channel": "chat", "credentials": {}, "active": false, "deleted": false, "primary": true}
+          application/json: {"_environmentId": "<id>", "_organizationId": "<id>", "name": "<value>", "identifier": "<value>", "providerId": "<id>", "active": false, "deleted": false, "primary": true}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -1478,7 +1478,7 @@ examples:
         application/json: {}
       responses:
         "200":
-          application/json: {"_environmentId": "<id>", "_organizationId": "<id>", "name": "<value>", "identifier": "<value>", "providerId": "<id>", "channel": "push", "credentials": {}, "active": false, "deleted": false, "primary": true}
+          application/json: {"_environmentId": "<id>", "_organizationId": "<id>", "name": "<value>", "identifier": "<value>", "providerId": "<id>", "active": false, "deleted": false, "primary": true}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -1538,7 +1538,7 @@ examples:
           integrationId: "<id>"
       responses:
         "200":
-          application/json: {"_environmentId": "<id>", "_organizationId": "<id>", "name": "<value>", "identifier": "<value>", "providerId": "<id>", "channel": "in_app", "credentials": {}, "active": false, "deleted": false, "primary": false}
+          application/json: {"_environmentId": "<id>", "_organizationId": "<id>", "name": "<value>", "identifier": "<value>", "providerId": "<id>", "active": false, "deleted": false, "primary": false}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":
@@ -2779,7 +2779,7 @@ examples:
           domain: "alive-publication.biz"
       responses:
         "200":
-          application/json: {"ok": true, "runAt": "<value>", "checks": [{"code": "ns_unresolvable", "status": "skipped", "latencyMs": 2745.11}], "issues": []}
+          application/json: {"ok": true, "runAt": "<value>", "checks": [{"code": "mx_missing", "status": "skipped", "latencyMs": 2745.11}], "issues": []}
         "414":
           application/json: {"statusCode": 404, "timestamp": "2024-12-12T13:00:00Z", "path": "/api/v1/resource", "message": "xx xx xx ", "ctx": {"workflowId": "some_wf_id", "stepId": "some_wf_id"}, "errorId": "abc123"}
         "400":

@@ -3,6 +3,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import {
@@ -14,11 +15,10 @@ import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } fr
 import { ChatProviderIdEnum } from '@novu/shared';
 import Axios from 'axios';
 
-import { TelegramMobileLinkTokenService } from '../../services/telegram-mobile-link-token.service';
+import { TelegramStartCodeService } from '../../services/telegram-start-code.service';
 import { IssueTelegramSubscriberLinkCommand } from './issue-telegram-subscriber-link.command';
 
 export interface IssueTelegramSubscriberLinkResult {
-  token: string;
   deepLinkUrl: string;
   botUsername: string;
   /** ISO timestamp when the link expires. */
@@ -44,7 +44,7 @@ export class IssueTelegramSubscriberLink {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
-    private readonly tokenService: TelegramMobileLinkTokenService
+    private readonly startCodeService: TelegramStartCodeService
   ) {}
 
   async execute(command: IssueTelegramSubscriberLinkCommand): Promise<IssueTelegramSubscriberLinkResult> {
@@ -78,6 +78,8 @@ export class IssueTelegramSubscriberLink {
       throw new BadRequestException('Subscriber-link is only available for Telegram integrations.');
     }
 
+    const integrationId = String(integration._id);
+
     const link = await this.agentIntegrationRepository.findOne(
       {
         _agentId: agent._id,
@@ -92,9 +94,6 @@ export class IssueTelegramSubscriberLink {
       throw new NotFoundException('Integration is not linked to this agent');
     }
 
-    // Ensure the subscriber exists. We upsert here so customers can call this
-    // endpoint before their target subscriber has any other Novu touchpoint;
-    // mirrors the trigger-event create-on-the-fly behavior.
     await this.createOrUpdateSubscriber.execute(
       CreateOrUpdateSubscriberCommand.create({
         environmentId: command.environmentId,
@@ -114,24 +113,34 @@ export class IssueTelegramSubscriberLink {
 
     const botUsername = await this.callGetMe(botToken);
 
-    const { token, expiresAt } = await this.tokenService.issueSubscriberLink({
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      agentIdentifier: agent.identifier,
-      integrationId: integration._id,
-      subscriberId: command.subscriberId,
-    });
+    let code: string;
+    let expiresAt: string;
+
+    try {
+      const issued = await this.startCodeService.issue({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentIdentifier: agent.identifier,
+        integrationId,
+        subscriberId: command.subscriberId,
+      });
+      code = issued.code;
+      expiresAt = issued.expiresAt;
+    } catch {
+      throw new ServiceUnavailableException(
+        'Could not issue a Telegram connection link because the cache is unavailable. Try again shortly.'
+      );
+    }
 
     return {
-      token,
       expiresAt,
       botUsername,
-      deepLinkUrl: this.buildDeepLink(botUsername, token),
+      deepLinkUrl: this.buildDeepLink(botUsername, code),
     };
   }
 
-  private buildDeepLink(botUsername: string, token: string): string {
-    return `https://t.me/${botUsername}?start=${encodeURIComponent(token)}`;
+  private buildDeepLink(botUsername: string, code: string): string {
+    return `https://t.me/${botUsername}?start=${code}`;
   }
 
   private async callGetMe(botToken: string): Promise<string> {

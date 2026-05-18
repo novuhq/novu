@@ -516,10 +516,9 @@ export class AgentsController {
   @ApiOperation({
     summary: 'Issue a Telegram subscriber-link deep link',
     description:
-      'Issues a signed, single-use Telegram `t.me/<bot>?start=<token>` deep link that, when opened by a ' +
-      'subscriber, sends `/start <token>` to the bot. The agent webhook then links the originating Telegram ' +
-      'chat to the supplied subscriber id by creating a `telegram_chat` channel endpoint, so subsequent ' +
-      'notifications can be delivered to that subscriber via Telegram.',
+      'Issues a short-lived opaque start code and returns a Telegram `t.me/<bot>?start=<code>` deep link. When ' +
+      'opened, Telegram sends `/start <code>` to the bot; the agent webhook consumes the code server-side and ' +
+      'creates a `telegram_chat` channel endpoint so notifications can reach that subscriber via Telegram.',
   })
   @ApiNotFoundResponse({
     description: 'The agent, integration, agent-integration link, or subscriber was not found.',

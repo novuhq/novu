@@ -3,14 +3,9 @@ import { ApiProperty } from '@nestjs/swagger';
 export class IssueTelegramSubscriberLinkResponseDto {
   @ApiProperty({
     type: String,
-    description: 'Signed, single-use JWT identifying this Telegram subscriber-link session',
-  })
-  token: string;
-
-  @ApiProperty({
-    type: String,
-    description: "Absolute Telegram deep-link URL the subscriber opens to send `/start <token>` to the bot",
-    example: 'https://t.me/MyBot?start=abc123',
+    description:
+      'Telegram deep-link URL (`t.me/<bot>?start=<code>`) the subscriber opens; Telegram sends `/start <code>` to the bot',
+    example: 'https://t.me/MyBot?start=AbCdEfGhIjKlMnOpQrStUvWxYz012345',
   })
   deepLinkUrl: string;
 
@@ -21,6 +16,6 @@ export class IssueTelegramSubscriberLinkResponseDto {
   })
   botUsername: string;
 
-  @ApiProperty({ type: String, description: 'ISO-8601 timestamp at which the token expires' })
+  @ApiProperty({ type: String, description: 'ISO-8601 timestamp at which the start code expires' })
   expiresAt: string;
 }

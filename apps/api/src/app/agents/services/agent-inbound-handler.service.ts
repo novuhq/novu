@@ -1,25 +1,25 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
+  ChannelEndpointRepository,
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
   EnvironmentRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import type { AgentAction } from '@novu/framework';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
-import {
-  LinkTelegramChatToSubscriber,
-  LinkTelegramChatTokenError,
-} from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
+import { TelegramStartCodeService } from './telegram-start-code.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
@@ -28,8 +28,8 @@ import { ManagedExecutorService } from './managed-executor.service';
 /**
  * `/start <payload>` is Telegram's deep-link mechanism. Telegram delivers it as
  * a regular message whose text is exactly `/start ` followed by the URL-decoded
- * payload (max 64 characters per the API). We only treat the message as a
- * subscriber-link request when it has a non-empty payload.
+ * payload (max 64 base64url characters per the API). We only treat the message
+ * as a subscriber-link request when it has a non-empty payload.
  */
 const TELEGRAM_START_COMMAND = /^\/start(?:@[\w_]+)?\s+(\S+)\s*$/;
 
@@ -56,10 +56,8 @@ const SUBSCRIBER_LINK_INVALID_REPLY =
   "This connection link isn't valid — open a fresh link from your Novu dashboard and try again.";
 const SUBSCRIBER_LINK_EXPIRED_REPLY =
   'This connection link has expired. Open a new link from your Novu dashboard and try again.';
-const SUBSCRIBER_LINK_USED_REPLY =
-  'This connection link was already used. Open a new link from your Novu dashboard and try again.';
-const SUBSCRIBER_LINK_CHAT_TAKEN_REPLY =
-  'This Telegram chat is already linked to a different subscriber. Unlink it in your Novu dashboard before re-connecting.';
+const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
+  "This connection link wasn't issued for this bot. Open the link from your Novu dashboard again (or request a new one) and make sure you're messaging the same bot you configured.";
 
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
@@ -205,6 +203,8 @@ export class AgentInboundHandler {
     private readonly environmentRepository: EnvironmentRepository,
     private readonly analyticsService: AnalyticsService,
     private readonly attachmentStorage: AgentAttachmentStorage,
+    private readonly startCodeService: TelegramStartCodeService,
+    private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber
   ) {
     this.logger.setContext(this.constructor.name);
@@ -220,7 +220,7 @@ export class AgentInboundHandler {
     if (config.platform === AgentPlatformEnum.TELEGRAM) {
       const startToken = extractTelegramStartToken(message.text);
       if (startToken) {
-        const consumed = await this.handleTelegramSubscriberLink(agentId, thread, message, startToken);
+        const consumed = await this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
         if (consumed) {
           return;
         }
@@ -447,61 +447,83 @@ export class AgentInboundHandler {
   }
 
   /**
-   * Process a Telegram `/start <token>` deep-link payload as a subscriber-link
+   * Process a Telegram `/start <code>` deep-link payload as a subscriber-link
    * request. Returns `true` if the message was consumed as a control payload
    * (so downstream bridge execution must be skipped), `false` if we couldn't
    * derive a chatId and the message should fall through to normal handling.
    */
   private async handleTelegramSubscriberLink(
     agentId: string,
+    config: ResolvedAgentConfig,
     thread: Thread,
     message: Message,
-    token: string
+    code: string
   ): Promise<boolean> {
     const chatId = extractTelegramChatId(thread);
     if (!chatId) {
       this.logger.warn(
         `[agent:${agentId}] Telegram /start payload received but channelId is missing — falling back to normal handling`
       );
+
       return false;
     }
 
-    try {
-      const result = await this.linkTelegramChatToSubscriber.execute(
-        LinkTelegramChatToSubscriberCommand.create({ token, chatId })
-      );
+    const payload = await this.startCodeService.peek(code);
 
-      const reply = result.created ? SUBSCRIBER_LINK_SUCCESS_REPLY : SUBSCRIBER_LINK_DUPLICATE_REPLY;
-      await this.safePostInboundReply(thread, reply, agentId, message);
-    } catch (err) {
-      if (err instanceof LinkTelegramChatTokenError) {
-        const reply = this.linkErrorReplyText(err.reason);
-        await this.safePostInboundReply(thread, reply, agentId, message);
-      } else {
-        this.logger.error(err, `[agent:${agentId}] Unexpected failure linking Telegram chat to subscriber`);
-        await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
+    if (payload) {
+      const sameScope =
+        payload._environmentId === config.environmentId &&
+        payload._organizationId === config.organizationId &&
+        payload._integrationId === config.integrationId &&
+        payload.agentIdentifier === config.agentIdentifier;
+
+      if (!sameScope) {
+        await this.safePostInboundReply(thread, SUBSCRIBER_LINK_WRONG_BOT_REPLY, agentId, message);
+
+        return true;
       }
+
+      await this.startCodeService.delete(code);
+
+      try {
+        const result = await this.linkTelegramChatToSubscriber.execute(
+          LinkTelegramChatToSubscriberCommand.create({
+            environmentId: payload._environmentId,
+            organizationId: payload._organizationId,
+            agentIdentifier: payload.agentIdentifier,
+            integrationId: payload._integrationId,
+            subscriberId: payload.subscriberId,
+            chatId,
+          })
+        );
+
+        const reply = result.created ? SUBSCRIBER_LINK_SUCCESS_REPLY : SUBSCRIBER_LINK_DUPLICATE_REPLY;
+        await this.safePostInboundReply(thread, reply, agentId, message);
+      } catch (err) {
+        if (err instanceof NotFoundException) {
+          await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
+        } else {
+          this.logger.error(err, `[agent:${agentId}] Unexpected failure linking Telegram chat to subscriber`);
+          await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
+        }
+      }
+
+      return true;
     }
+
+    const existing = await this.channelEndpointRepository.findByPlatformIdentity({
+      _environmentId: config.environmentId,
+      _organizationId: config.organizationId,
+      integrationIdentifier: config.integrationIdentifier,
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpointField: 'chatId',
+      endpointValue: chatId,
+    });
+
+    const reply = existing ? SUBSCRIBER_LINK_DUPLICATE_REPLY : SUBSCRIBER_LINK_EXPIRED_REPLY;
+    await this.safePostInboundReply(thread, reply, agentId, message);
 
     return true;
-  }
-
-  private linkErrorReplyText(reason: LinkTelegramChatTokenError['reason']): string {
-    switch (reason) {
-      case 'expired':
-        return SUBSCRIBER_LINK_EXPIRED_REPLY;
-      case 'used':
-        return SUBSCRIBER_LINK_USED_REPLY;
-      case 'chat_already_linked':
-        return SUBSCRIBER_LINK_CHAT_TAKEN_REPLY;
-      case 'invalid':
-      case 'mismatch':
-        return SUBSCRIBER_LINK_INVALID_REPLY;
-      default: {
-        const _exhaustive: never = reason;
-        return SUBSCRIBER_LINK_INVALID_REPLY;
-      }
-    }
   }
 
   private async safePostInboundReply(thread: Thread, text: string, agentId: string, message: Message): Promise<void> {

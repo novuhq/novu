@@ -2,7 +2,6 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import { LinkTelegramChatTokenError } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 import { NoBridgeUrlError } from './bridge-executor.service';
 
@@ -38,6 +37,9 @@ describe('AgentInboundHandler', () => {
       storedAttachments?: any[];
       bridgeError?: Error;
       linkTelegramExecute?: sinon.SinonStub;
+      startCodePeek?: sinon.SinonStub;
+      startCodeDelete?: sinon.SinonStub;
+      findTelegramEndpointByIdentity?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
@@ -80,6 +82,13 @@ describe('AgentInboundHandler', () => {
         overrides.linkTelegramExecute ??
         sinon.stub().resolves({ created: true, subscriberId: 'sub-1', agentIdentifier: 'support-agent' }),
     };
+    const startCodeService = {
+      peek: overrides.startCodePeek ?? sinon.stub().resolves(null),
+      delete: overrides.startCodeDelete ?? sinon.stub().resolves(undefined),
+    };
+    const channelEndpointRepository = {
+      findByPlatformIdentity: overrides.findTelegramEndpointByIdentity ?? sinon.stub().resolves(null),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -91,6 +100,8 @@ describe('AgentInboundHandler', () => {
       environmentRepository as any,
       analyticsService as any,
       attachmentStorage as any,
+      startCodeService as any,
+      channelEndpointRepository as any,
       linkTelegramChatToSubscriber as any
     );
 
@@ -101,6 +112,8 @@ describe('AgentInboundHandler', () => {
       conversationService,
       linkTelegramChatToSubscriber,
       subscriberResolver,
+      startCodeService,
+      channelEndpointRepository,
     };
   }
 
@@ -284,6 +297,14 @@ describe('AgentInboundHandler', () => {
       acknowledgeOnReceived: false,
     };
 
+    const matchingStartPayload = {
+      _environmentId: 'env1',
+      _organizationId: 'org1',
+      agentIdentifier: 'support-agent',
+      _integrationId: 'integration1',
+      subscriberId: 'ext-sub-1',
+    };
+
     function makeTelegramThread() {
       const post = sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' });
 
@@ -308,21 +329,29 @@ describe('AgentInboundHandler', () => {
       };
     }
 
-    it('invokes LinkTelegramChatToSubscriber with the token + chatId and skips bridge execution on success', async () => {
+    it('peek+delete+LinkTelegramChatToSubscriber on matching start code and skips bridge', async () => {
       const linkTelegramExecute = sinon
         .stub()
-        .resolves({ created: true, subscriberId: 'sub-1', agentIdentifier: 'support-agent' });
-      const { handler, bridgeExecutor, linkTelegramChatToSubscriber, conversationService } = makeHandler({
-        linkTelegramExecute,
-      });
+        .resolves({ created: true, subscriberId: 'ext-sub-1', agentIdentifier: 'support-agent' });
+      const startCodePeek = sinon.stub().resolves(matchingStartPayload);
+      const startCodeDelete = sinon.stub().resolves(undefined);
+      const { handler, bridgeExecutor, linkTelegramChatToSubscriber, conversationService, startCodeService } =
+        makeHandler({
+          linkTelegramExecute,
+          startCodePeek,
+          startCodeDelete,
+        });
       const thread = makeTelegramThread();
-      const message = makeStartMessage('/start eyJhbGciOiJIUzI1NiJ9.payload.signature');
+      const message = makeStartMessage('/start AbCdEfGhIjKlMnOpQrStUvWxYz012345');
 
       await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
+      expect(startCodeService.peek.calledOnce).to.equal(true);
+      expect(startCodeService.delete.calledOnce).to.equal(true);
       expect(linkTelegramChatToSubscriber.execute.calledOnce).to.equal(true);
       const cmd = linkTelegramChatToSubscriber.execute.firstCall.args[0];
-      expect(cmd.token).to.equal('eyJhbGciOiJIUzI1NiJ9.payload.signature');
+      expect(cmd.environmentId).to.equal('env1');
+      expect(cmd.subscriberId).to.equal('ext-sub-1');
       expect(cmd.chatId).to.equal('42');
       expect(thread.post.calledOnce).to.equal(true);
       expect(bridgeExecutor.execute.called).to.equal(false);
@@ -333,9 +362,13 @@ describe('AgentInboundHandler', () => {
       const linkTelegramExecute = sinon
         .stub()
         .resolves({ created: false, subscriberId: 'sub-1', agentIdentifier: 'support-agent' });
-      const { handler, bridgeExecutor } = makeHandler({ linkTelegramExecute });
+      const { handler, bridgeExecutor } = makeHandler({
+        linkTelegramExecute,
+        startCodePeek: sinon.stub().resolves(matchingStartPayload),
+        startCodeDelete: sinon.stub().resolves(undefined),
+      });
       const thread = makeTelegramThread();
-      const message = makeStartMessage('/start abc');
+      const message = makeStartMessage('/start validcode');
 
       await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
@@ -344,15 +377,47 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
-    it('replies with the expired-link message when the token has expired', async () => {
-      const linkTelegramExecute = sinon.stub().rejects(new LinkTelegramChatTokenError('expired'));
-      const { handler, bridgeExecutor } = makeHandler({ linkTelegramExecute });
+    it('replies with wrong-bot message when start code targets a different integration', async () => {
+      const { handler, bridgeExecutor, linkTelegramChatToSubscriber } = makeHandler({
+        startCodePeek: sinon.stub().resolves({
+          ...matchingStartPayload,
+          _integrationId: 'other-integration',
+        }),
+      });
       const thread = makeTelegramThread();
-      const message = makeStartMessage('/start expiredtoken');
+      const message = makeStartMessage('/start validcode');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(linkTelegramChatToSubscriber.execute.called).to.equal(false);
+      expect(thread.post.firstCall.args[0]).to.match(/issued for this bot/i);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('replies with expired message when code is missing and chat has no endpoint', async () => {
+      const { handler, bridgeExecutor } = makeHandler({
+        findTelegramEndpointByIdentity: sinon.stub().resolves(null),
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start unknowncode');
 
       await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(thread.post.firstCall.args[0]).to.match(/expired/i);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('replies already connected when code is consumed but chat endpoint still exists', async () => {
+      const { handler, bridgeExecutor } = makeHandler({
+        startCodePeek: sinon.stub().resolves(null),
+        findTelegramEndpointByIdentity: sinon.stub().resolves({ subscriberId: 'sub-1' }),
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start reused');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(thread.post.firstCall.args[0]).to.match(/already connected/i);
       expect(bridgeExecutor.execute.called).to.equal(false);
     });
 
