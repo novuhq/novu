@@ -125,7 +125,10 @@ export class TelegramMobileLinkTokenService {
     } catch (err) {
       if (err instanceof InvalidTelegramMobileTokenError) throw err;
       const isExpired =
-        typeof err === 'object' && err !== null && 'name' in err && (err as { name?: string }).name === 'TokenExpiredError';
+        typeof err === 'object' &&
+        err !== null &&
+        'name' in err &&
+        (err as { name?: string }).name === 'TokenExpiredError';
       throw new InvalidTelegramMobileTokenError(isExpired ? 'expired' : 'invalid');
     }
   }

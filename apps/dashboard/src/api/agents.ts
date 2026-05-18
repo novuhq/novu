@@ -736,11 +736,7 @@ function extractErrorCode(data: unknown): SubmitTelegramMobileCredentialsError['
       ? (message as { code?: unknown }).code
       : (data as { code?: unknown }).code;
 
-  if (
-    candidate === 'token_invalid' ||
-    candidate === 'token_expired' ||
-    candidate === 'token_already_used'
-  ) {
+  if (candidate === 'token_invalid' || candidate === 'token_expired' || candidate === 'token_already_used') {
     return candidate;
   }
 

@@ -111,9 +111,7 @@ export class ConsumeTelegramMobileLink {
       };
     } catch (err) {
       await this.tokenService.releaseJti(payload.jti);
-      this.logger.warn(
-        `Telegram mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`
-      );
+      this.logger.warn(`Telegram mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`);
       throw err;
     }
   }

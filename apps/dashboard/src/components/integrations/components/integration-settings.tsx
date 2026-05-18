@@ -312,7 +312,10 @@ export function IntegrationSettings({
                             key={`${credential.key}-${integration?._id || 'no-id'}`}
                             credential={
                               showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
-                                ? { ...credential, description: 'Auto-filled from the BotFather message above, or enter it manually.' }
+                                ? {
+                                    ...credential,
+                                    description: 'Auto-filled from the BotFather message above, or enter it manually.',
+                                  }
                                 : credential
                             }
                             control={control}

@@ -108,8 +108,7 @@ export function TelegramCredentialsPaste({
 
   if (isReadOnly) return null;
 
-  const hasApiTokenValue =
-    typeof credentials?.apiToken === 'string' && credentials.apiToken.trim().length > 0;
+  const hasApiTokenValue = typeof credentials?.apiToken === 'string' && credentials.apiToken.trim().length > 0;
   const canShowMobileSetup = Boolean(mobileSetup) && !hasApiTokenValue;
 
   return (
@@ -169,9 +168,16 @@ function PasteOutcome({ outcome, onDismiss }: { outcome: ApplyOutcome; onDismiss
         </span>
         <div className="flex flex-1 flex-col gap-0.5">
           <p className="text-text-strong text-label-xs font-medium">Couldn't find a bot token in the pasted text.</p>
-          <p className="text-text-soft text-label-xs leading-4">Paste the full message from BotFather, or enter the token manually in the field below.</p>
+          <p className="text-text-soft text-label-xs leading-4">
+            Paste the full message from BotFather, or enter the token manually in the field below.
+          </p>
         </div>
-        <button type="button" className="text-text-soft hover:text-text-strong cursor-pointer" aria-label="Dismiss" onClick={onDismiss}>
+        <button
+          type="button"
+          className="text-text-soft hover:text-text-strong cursor-pointer"
+          aria-label="Dismiss"
+          onClick={onDismiss}
+        >
           <RiCloseLine className="size-3.5" />
         </button>
       </div>
@@ -189,12 +195,16 @@ function PasteOutcome({ outcome, onDismiss }: { outcome: ApplyOutcome; onDismiss
         </p>
         {outcome.botUsername && (
           <p className="text-text-soft text-label-xs leading-4">
-            Bot username set to{' '}
-            <span className="text-text-strong font-medium">@{outcome.botUsername}</span>
+            Bot username set to <span className="text-text-strong font-medium">@{outcome.botUsername}</span>
           </p>
         )}
       </div>
-      <button type="button" className="text-text-soft hover:text-text-strong cursor-pointer" aria-label="Dismiss" onClick={onDismiss}>
+      <button
+        type="button"
+        className="text-text-soft hover:text-text-strong cursor-pointer"
+        aria-label="Dismiss"
+        onClick={onDismiss}
+      >
         <RiCloseLine className="size-3.5" />
       </button>
     </div>

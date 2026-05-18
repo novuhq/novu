@@ -50,7 +50,6 @@ export type TelegramSetupGuideProps = {
   embedded?: boolean;
 };
 
-
 export function TelegramSetupGuide({
   agent,
   integrationId,
@@ -107,8 +106,7 @@ export function TelegramSetupGuide({
   // Set only after a successful setWebhook call; also used to detect webhook configured
   // outside this session (e.g. mobile flow) so step 3 can still issue a subscriber link.
   const hasWebhookSecret =
-    typeof selectedIntegration?.credentials?.token === 'string' &&
-    selectedIntegration.credentials.token.length > 0;
+    typeof selectedIntegration?.credentials?.token === 'string' && selectedIntegration.credentials.token.length > 0;
 
   // Poll for credentials only while the sidebar is open AND the user hasn't saved a token yet.
   // Stops the moment the drawer closes or credentials appear.
@@ -231,9 +229,7 @@ export function TelegramSetupGuide({
   const configureErrorMessage = useMemo(() => {
     if (!configureError) return null;
 
-    return configureError instanceof Error
-      ? configureError.message
-      : 'Failed to configure webhook. Please try again.';
+    return configureError instanceof Error ? configureError.message : 'Failed to configure webhook. Please try again.';
   }, [configureError]);
 
   const stepsColumn = (
@@ -255,15 +251,14 @@ export function TelegramSetupGuide({
             </a>
             {' on Telegram and run '}
             <code className="text-text-sub rounded bg-neutral-alpha-100 px-1 font-mono text-[11px]">/newbot</code>
-            {'. Follow the prompts to choose a name and username, then copy the entire confirmation message BotFather sends.'}
+            {
+              '. Follow the prompts to choose a name and username, then copy the entire confirmation message BotFather sends.'
+            }
           </span>
         }
         rightContent={
           <div className="flex flex-col items-start gap-0">
-            <SetupButton
-              href="https://t.me/botfather"
-              leadingIcon={<RiRobot2Line className="size-3.5" />}
-            >
+            <SetupButton href="https://t.me/botfather" leadingIcon={<RiRobot2Line className="size-3.5" />}>
               Open BotFather
             </SetupButton>
             {step1Status === 'current' && <TelegramQrInline url="https://t.me/botfather" />}
