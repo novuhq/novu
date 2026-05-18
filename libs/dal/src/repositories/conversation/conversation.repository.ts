@@ -221,6 +221,17 @@ export class ConversationRepository extends BaseRepositoryV2<
     await this.update({ _id: conversationId, _environmentId: environmentId }, { $unset: { externalSessionId: '' } });
   }
 
+  async findByExternalSessionId(sessionId: string) {
+    return this.findOne({ externalSessionId: sessionId } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds, [
+      '_id',
+      '_agentId',
+      '_environmentId',
+      '_organizationId',
+      'externalSessionId',
+      'channels',
+    ]);
+  }
+
   async listConversations({
     organizationId,
     environmentId,

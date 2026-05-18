@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
@@ -27,6 +34,7 @@ export class HandleAgentReply {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
+    @Inject(forwardRef(() => ChatSdkService))
     private readonly chatSdkService: ChatSdkService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentConfigResolver: AgentConfigResolver,

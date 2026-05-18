@@ -414,8 +414,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/testing
       '@novu/thalamus':
-        specifier: https://github.com/novuhq/thalamus.git#c069bb3
-        version: https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@3.25.20))
+        specifier: https://github.com/novuhq/thalamus.git#3e4a0d4
+        version: https://codeload.github.com/novuhq/thalamus/tar.gz/3e4a0d45c3ace724704d191ce7857c07f023884f(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@3.25.20))
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
@@ -8656,8 +8656,8 @@ packages:
     resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
     engines: {node: '>=18.0.0'}
 
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e':
-    resolution: {gitHosted: true, integrity: sha512-H6xy9U8+TZd7F5VrI86Nj3f6PCrppHKOrTRw5l7uTCKDSChldWDuc1XQLRZQ/vyFWKyQTIOCQvQvjI4vi7l0AQ==, tarball: https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e}
+  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/3e4a0d45c3ace724704d191ce7857c07f023884f':
+    resolution: {gitHosted: true, integrity: sha512-2wlMYpyJ+UClyqc/UCF5/5EnkliRwOb0sYi28lDzL3n5PPr06VHoTr5/aUa96YVA6Ter1fv/cofO6P9e39iWFQ==, tarball: https://codeload.github.com/novuhq/thalamus/tar.gz/3e4a0d45c3ace724704d191ce7857c07f023884f}
     version: 0.1.0
     peerDependencies:
       '@anthropic-ai/aws-sdk': '>=0.86.0'
@@ -34040,7 +34040,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@3.25.20))':
+  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/3e4a0d45c3ace724704d191ce7857c07f023884f(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@3.25.20))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.95.1(zod@3.25.20)
       '@aws-crypto/sha256-js': 5.2.0

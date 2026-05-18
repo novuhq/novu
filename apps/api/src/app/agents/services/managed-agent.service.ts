@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, type OnModuleInit } from '@nestjs/common';
 import { decryptCredentials, PinoLogger } from '@novu/application-generic';
 import {
   type AgentEntity,
+  AgentRepository,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationRepository,
@@ -10,6 +11,8 @@ import {
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import {
   CredentialExpiredError,
+  cloudflare,
+  type EdgeObserver,
   McpServerError,
   type Message,
   MessageRole,
@@ -36,14 +39,17 @@ const MAX_CACHED_PROVIDERS = 200;
 const PROVIDER_TTL_MS = 30 * 60 * 1000;
 
 @Injectable()
-export class ManagedAgentService {
+export class ManagedAgentService implements OnModuleInit {
   private readonly providers: LRUCache<string, Provider>;
   private readonly sessionContext = new Map<string, SessionContext>();
+  private edgeObserver: EdgeObserver | undefined;
 
   constructor(
+    private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
+    @Inject(forwardRef(() => HandleAgentReply))
     private readonly handleAgentReply: HandleAgentReply,
     private readonly logger: PinoLogger
   ) {
@@ -52,6 +58,65 @@ export class ManagedAgentService {
       max: MAX_CACHED_PROVIDERS,
       ttl: PROVIDER_TTL_MS,
     });
+    this.edgeObserver = this.initEdgeObserver();
+  }
+
+  async onModuleInit(): Promise<void> {
+    if (!process.env.THALAMUS_CF_URL) return;
+
+    try {
+      await this.recoverActiveSessions();
+    } catch (err) {
+      this.logger.error(err, 'Failed to recover active sessions on startup');
+    }
+  }
+
+  /**
+   * Queries the CF worker for active sessions and creates providers only
+   * for agents that have in-flight work. Thalamus reconnects WebSockets
+   * to the DOs and flushes buffered events through onSessionEvents.
+   */
+  private async recoverActiveSessions(): Promise<void> {
+    if (!this.edgeObserver) return;
+
+    const activeSessionIds = await this.edgeObserver.listActive();
+    if (!activeSessionIds.length) return;
+
+    this.logger.info(`Recovering ${activeSessionIds.length} active session(s) from edge`);
+
+    const conversations = await Promise.all(
+      activeSessionIds.map((id) => this.conversationRepository.findByExternalSessionId(id))
+    );
+
+    const uniqueAgents = new Map(
+      conversations
+        .filter((c): c is NonNullable<typeof c> => c !== null)
+        .map((c) => [`${c._agentId}:${c._environmentId}`, { agentId: c._agentId, environmentId: c._environmentId }])
+    );
+
+    const results = await Promise.allSettled(
+      [...uniqueAgents.values()].map(async ({ agentId, environmentId }) => {
+        const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: environmentId } as any, [
+          '_id',
+          'managedRuntime',
+        ]);
+        if (!agent?.managedRuntime) return false;
+
+        await this.getOrCreateProvider(agent, environmentId);
+
+        return true;
+      })
+    );
+
+    const initialized = results.filter((r) => r.status === 'fulfilled' && r.value).length;
+    const failed = results.filter((r) => r.status === 'rejected');
+    if (failed.length) {
+      for (const r of failed) {
+        this.logger.warn(r.reason, 'Failed to initialize provider during recovery');
+      }
+    }
+
+    this.logger.info(`Session recovery: ${initialized} provider(s) reconnected`);
   }
 
   async dispatch(context: AgentExecutionParams, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
@@ -84,7 +149,7 @@ export class ManagedAgentService {
   private buildOnSessionEvents(): SessionEventsFactory {
     return (sessionId: string): StreamCallbacks => ({
       onFinish: async (e) => {
-        const ctx = this.sessionContext.get(sessionId);
+        const ctx = await this.resolveSessionContext(sessionId);
         if (!ctx) return;
 
         try {
@@ -106,13 +171,54 @@ export class ManagedAgentService {
         this.sessionContext.delete(sessionId);
       },
       onError: async (e) => {
-        const ctx = this.sessionContext.get(sessionId);
+        const ctx = await this.resolveSessionContext(sessionId);
         if (!ctx) return;
 
         await this.handleErrorEvent(ctx, sessionId, e.error);
         this.sessionContext.delete(sessionId);
       },
     });
+  }
+
+  /**
+   * Resolves session context from the in-memory map (hot path) or
+   * falls back to DB lookup (recovery after restart).
+   */
+  private async resolveSessionContext(sessionId: string): Promise<SessionContext | null> {
+    const cached = this.sessionContext.get(sessionId);
+    if (cached) return cached;
+
+    const conversation = await this.conversationRepository.findByExternalSessionId(sessionId);
+    if (!conversation) {
+      this.logger.warn(`No conversation found for session ${sessionId}, skipping callback`);
+
+      return null;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      { _id: conversation._agentId, _environmentId: conversation._environmentId },
+      ['_id', 'identifier']
+    );
+    if (!agent) return null;
+
+    const integration = conversation.channels[0]
+      ? await this.integrationRepository.findOne({
+          _id: conversation.channels[0]._integrationId,
+          _environmentId: conversation._environmentId,
+        })
+      : null;
+
+    const ctx: SessionContext = {
+      conversationId: String(conversation._id),
+      environmentId: conversation._environmentId,
+      organizationId: conversation._organizationId,
+      agentIdentifier: agent.identifier,
+      integrationIdentifier: integration?.identifier ?? '',
+    };
+
+    this.sessionContext.set(sessionId, ctx);
+
+    return ctx;
   }
 
   private async handleErrorEvent(ctx: SessionContext, sessionId: string, error: Error): Promise<void> {
@@ -200,20 +306,18 @@ export class ManagedAgentService {
         return thalamus.anthropic({
           ...config,
           onSessionEvents: this.buildOnSessionEvents(),
-          edgeObserver: this.resolveEdgeObserver(),
+          durable: this.edgeObserver,
         });
       default:
         throw new Error(`Unsupported agent runtime provider: ${providerId}`);
     }
   }
 
-  private resolveEdgeObserver() {
+  private initEdgeObserver(): EdgeObserver | undefined {
     const cfUrl = process.env.THALAMUS_CF_URL;
     if (!cfUrl) return undefined;
 
-    const { cloudflare } = require('@novu/thalamus/durable');
-
-    return cloudflare({ url: cfUrl });
+    return cloudflare({ url: cfUrl, apiKey: process.env.THALAMUS_CF_API_KEY });
   }
 
   private async buildMessagesWithHistory(context: AgentExecutionParams): Promise<Message[]> {
