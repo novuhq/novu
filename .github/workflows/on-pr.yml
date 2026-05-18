@@ -265,7 +265,13 @@ jobs:
     needs: [get-affected]
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
-      ee: true
+      # PRs opened from forks (community contributions) do not receive repo
+      # secrets — even after a maintainer approves the run — so the EE branch,
+      # which checks out the private enterprise submodule using
+      # ${{ secrets.SUBMODULES_TOKEN }}, fails immediately with
+      # "Input required and not supplied: token". Fall back to the non-EE e2e
+      # suite (Novu V1) for fork PRs so the change still gets validated.
+      ee: ${{ github.event.pull_request.head.repo.fork != true }}
     secrets: inherit
 
   # Aggregator / "all-green" gate. This job depends on every other job in
