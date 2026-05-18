@@ -8079,28 +8079,28 @@ packages:
   '@mermaid-js/parser@1.1.1':
     resolution: {integrity: sha512-VuHdsYMK1bT6X2JbcAaWAhugTRvRBRyuZgd+c22swUeI9g/ntaxF7CY7dYarhZovofCbUNO0G7JesfmNtjYOCw==}
 
-  '@microsoft/teams.api@2.0.7':
-    resolution: {integrity: sha512-SQu7d/alQ3ZKgBX2ur/0VbtxsDLMZb3HmGUVnzIWkvSzFkGcPQ8uPK//670gpEyFJVh2qqP0wFwOwH98/tO57w==}
+  '@microsoft/teams.api@2.0.11':
+    resolution: {integrity: sha512-/QvOQkqSM73O9SrDLURyJZClnOAi6fJTX6qhhka/fPZbPU4ID4BIDvee7dSRbLx7lM+nSa370uLFzHHzXp5TWQ==}
     engines: {node: '>=20'}
 
-  '@microsoft/teams.apps@2.0.7':
-    resolution: {integrity: sha512-1y7mLrM/HZfRn8tHK/vInMZCpMXjRPQ6QawboNXttJqEQxvlwNRK9nzDjnzuIyBF32oTVt/ro7Id38oNnhaXeQ==}
+  '@microsoft/teams.apps@2.0.11':
+    resolution: {integrity: sha512-DSk09njNbFi5pc8GOAd3/Auqy52ZmsBJqu0wRXV2VQp/L+M8e9L2SXhmyIs164jhnwD0w3DYXPOjjZKHdu1M2A==}
     engines: {node: '>=20'}
 
-  '@microsoft/teams.cards@2.0.7':
-    resolution: {integrity: sha512-HUGw5OWKc6eCdinRLYqHgFyvScTplQs+PqUqHnf79wH1QNqAKCX+p7uF71YxTm383laJYOqDGYU6uvFEoTvOsA==}
+  '@microsoft/teams.cards@2.0.11':
+    resolution: {integrity: sha512-4ErBqR4A4abpKSXsiCssRh2ZTpE3jsYHcWXLwL+fKnJo96GzlfSUV1Zg78dl7xWxe388SlqQ3Z4r3m/v413Mew==}
     engines: {node: '>=20'}
 
-  '@microsoft/teams.common@2.0.7':
-    resolution: {integrity: sha512-O3qWC/RbLbiJSAHyk1j5Ybx3GAxmM7DhFbfLW5a2sebEQ+Sn/hB/8rr+IsxlG2FAaUgrcKkir8B55wuKTlZPYw==}
+  '@microsoft/teams.common@2.0.11':
+    resolution: {integrity: sha512-XuGTRlYfLOQxJZuZI6IUhbTRQjgXZAgW59LlGnFJ/nb00G8GnJwdCrFbis+bQa+h7dP5SdLIi1ZybVGYomKgqA==}
     engines: {node: '>=20'}
 
-  '@microsoft/teams.graph-endpoints@2.0.7':
-    resolution: {integrity: sha512-VYx2CeSqZnjsp8fvVgt0f5PahXk2OKBKUHo1ICPLX/pvzsxjB8+RYU/5dvXVzPweNRTbIJR5gAugzyZwL/1miQ==}
+  '@microsoft/teams.graph-endpoints@2.0.11':
+    resolution: {integrity: sha512-liU5M9wrx05qFV5FrLwU+fQC7VVYnzHJFmBsgyp076GsZCuJYbLZiO7M0IUwzo0akmAh7QaiShBSiY4EB9m9AQ==}
     engines: {node: '>=20'}
 
-  '@microsoft/teams.graph@2.0.7':
-    resolution: {integrity: sha512-hHX1gsCL7GFhAUz1CAT+PFar5U20/nA6sV4yJJaLygu0Wft10XgX3tJh1FckXBQlO1vCaDRtmcMJ9Eey0Z/wRg==}
+  '@microsoft/teams.graph@2.0.11':
+    resolution: {integrity: sha512-Txc0N6dENmEluOCwGzCerz+3G/uomfzCElla1OR7nUNICIcY8p1A2babcIAA8AZiuAKPSkck0U1w5RTu7jZgVQ==}
     engines: {node: '>=20'}
 
   '@microsoft/tsdoc@0.15.0':
@@ -12139,6 +12139,10 @@ packages:
 
   '@slack/logger@4.0.1':
     resolution: {integrity: sha512-6cmdPrV/RYfd2U0mDGiMK8S7OJqpCTm7enMLRR3edccsPX8j7zXTLnaEF4fhxxJJTAIOil6+qZrnUPTuaLvwrQ==}
+    engines: {node: '>= 18', npm: '>= 8.6.0'}
+
+  '@slack/socket-mode@2.0.7':
+    resolution: {integrity: sha512-qYy07je71WnEHgRwmw12DlAnZLi5HXmdlI2WUzUK2LH/rYXQpP6uEg462S5CwfE8FoCKUdIigHtYnOOfzZH1lQ==}
     engines: {node: '>= 18', npm: '>= 8.6.0'}
 
   '@slack/types@2.20.1':
@@ -30495,7 +30499,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.39.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.2(zod@4.3.6)
+      better-call: 1.3.2(zod@4.3.5)
       jose: 6.1.3
       kysely: 0.28.17
       nanostores: 1.2.0
@@ -30627,11 +30631,14 @@ snapshots:
   '@chat-adapter/slack@4.28.1':
     dependencies:
       '@chat-adapter/shared': 4.28.1
+      '@slack/socket-mode': 2.0.7
       '@slack/web-api': 7.15.0
       chat: 4.28.1
     transitivePeerDependencies:
+      - bufferutil
       - debug
       - supports-color
+      - utf-8-validate
 
   '@chat-adapter/state-ioredis@4.28.1':
     dependencies:
@@ -30643,10 +30650,10 @@ snapshots:
   '@chat-adapter/teams@4.28.1':
     dependencies:
       '@chat-adapter/shared': 4.28.1
-      '@microsoft/teams.api': 2.0.7
-      '@microsoft/teams.apps': 2.0.7
-      '@microsoft/teams.cards': 2.0.7
-      '@microsoft/teams.graph-endpoints': 2.0.7
+      '@microsoft/teams.api': 2.0.11
+      '@microsoft/teams.apps': 2.0.11
+      '@microsoft/teams.cards': 2.0.11
+      '@microsoft/teams.graph-endpoints': 2.0.11
       chat: 4.28.1
     transitivePeerDependencies:
       - debug
@@ -33157,21 +33164,21 @@ snapshots:
     dependencies:
       '@chevrotain/types': 11.1.2
 
-  '@microsoft/teams.api@2.0.7':
+  '@microsoft/teams.api@2.0.11':
     dependencies:
-      '@microsoft/teams.cards': 2.0.7
-      '@microsoft/teams.common': 2.0.7
+      '@microsoft/teams.cards': 2.0.11
+      '@microsoft/teams.common': 2.0.11
       jwt-decode: 4.0.0
       qs: 6.15.0
     transitivePeerDependencies:
       - debug
 
-  '@microsoft/teams.apps@2.0.7':
+  '@microsoft/teams.apps@2.0.11':
     dependencies:
       '@azure/msal-node': 3.8.10
-      '@microsoft/teams.api': 2.0.7
-      '@microsoft/teams.common': 2.0.7
-      '@microsoft/teams.graph': 2.0.7
+      '@microsoft/teams.api': 2.0.11
+      '@microsoft/teams.common': 2.0.11
+      '@microsoft/teams.graph': 2.0.11
       axios: 1.16.0
       cors: 2.8.5
       express: 5.0.1
@@ -33182,19 +33189,19 @@ snapshots:
       - debug
       - supports-color
 
-  '@microsoft/teams.cards@2.0.7': {}
+  '@microsoft/teams.cards@2.0.11': {}
 
-  '@microsoft/teams.common@2.0.7':
+  '@microsoft/teams.common@2.0.11':
     dependencies:
       axios: 1.16.0
     transitivePeerDependencies:
       - debug
 
-  '@microsoft/teams.graph-endpoints@2.0.7': {}
+  '@microsoft/teams.graph-endpoints@2.0.11': {}
 
-  '@microsoft/teams.graph@2.0.7':
+  '@microsoft/teams.graph@2.0.11':
     dependencies:
-      '@microsoft/teams.common': 2.0.7
+      '@microsoft/teams.common': 2.0.11
       qs: 6.15.0
     transitivePeerDependencies:
       - debug
@@ -38826,6 +38833,19 @@ snapshots:
     dependencies:
       '@types/node': 22.15.13
 
+  '@slack/socket-mode@2.0.7':
+    dependencies:
+      '@slack/logger': 4.0.1
+      '@slack/web-api': 7.15.0
+      '@types/node': 22.15.13
+      '@types/ws': 8.18.1
+      eventemitter3: 5.0.4
+      ws: 8.20.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - utf-8-validate
+
   '@slack/types@2.20.1': {}
 
   '@slack/web-api@7.15.0':
@@ -43742,7 +43762,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
-      better-call: 1.3.2(zod@4.3.6)
+      better-call: 1.3.2(zod@4.3.5)
       defu: 6.1.6
       jose: 6.1.3
       kysely: 0.28.17
@@ -43760,6 +43780,15 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
+
+  better-call@1.3.2(zod@4.3.5):
+    dependencies:
+      '@better-auth/utils': 0.3.1
+      '@better-fetch/fetch': 1.1.21
+      rou3: 0.7.12
+      set-cookie-parser: 3.1.0
+    optionalDependencies:
+      zod: 4.3.5
 
   better-call@1.3.2(zod@4.3.6):
     dependencies:
