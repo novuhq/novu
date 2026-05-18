@@ -102,7 +102,14 @@ export class AgentsWebhookController {
       if (err instanceof HttpException) {
         res.status(err.getStatus()).json(err.getResponse());
       } else {
-        throw err;
+        // TEMP DEBUG: surface unexpected webhook errors in the response so CI logs them
+        const errObj = err as Error;
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+          debug: true,
+          message: errObj?.message,
+          name: errObj?.name,
+          stack: errObj?.stack?.split('\n').slice(0, 8).join(' | '),
+        });
       }
     }
   }
