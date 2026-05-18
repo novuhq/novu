@@ -13,7 +13,7 @@ const BADGE_ROOT_NAME = 'BadgeRoot';
 const BADGE_ICON_NAME = 'BadgeIcon';
 const BADGE_DOT_NAME = 'BadgeDot';
 
-export const badgeVariants = tv({
+const badgeVariants = tv({
   slots: {
     root: 'inline-flex items-center justify-center rounded-full leading-none transition duration-200 ease-out',
     icon: 'shrink-0',
@@ -570,4 +570,4 @@ function AnimatedBadgeDot({ size, variant, color = 'gray', className, ...rest }:
 
 AnimatedBadgeDot.displayName = 'AnimatedBadgeDot';
 
-export { BadgeRoot as Badge, BadgeIcon, BadgeDot as Dot, BadgeRoot as Root, AnimatedBadgeDot };
+export { BadgeRoot as Badge, BadgeIcon, BadgeDot as Dot, AnimatedBadgeDot };
