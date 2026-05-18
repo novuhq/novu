@@ -1,3 +1,4 @@
+import { ConflictException } from '@nestjs/common';
 import type { AgentEntity, IntegrationEntity } from '@novu/dal';
 import { ApiServiceLevelEnum, ChannelTypeEnum, EmailProviderIdEnum, NOVU_PROVIDERS } from '@novu/shared';
 import { expect } from 'chai';
@@ -115,7 +116,6 @@ describe('FindOrCreateNovuEmail usecase', () => {
 
       // First findOne: lookup of the primary custom email integration.
       integrationRepo.findOne.onFirstCall().resolves(primaryCustomIntegration);
-      // Second findOne: NovuAgent integration creation succeeds.
       integrationRepo.create.resolves({
         _id: 'novu-agent-int-id',
         providerId: EmailProviderIdEnum.NovuAgent,
@@ -128,13 +128,13 @@ describe('FindOrCreateNovuEmail usecase', () => {
 
       await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
 
-      const lookupQuery = integrationRepo.findOne.firstCall.args[0];
-      expect(lookupQuery._environmentId).to.equal(ENV_ID);
-      expect(lookupQuery._organizationId).to.equal(ORG_ID);
-      expect(lookupQuery.channel).to.equal(ChannelTypeEnum.EMAIL);
-      expect(lookupQuery.active).to.equal(true);
-      expect(lookupQuery.primary).to.equal(true);
-      expect(lookupQuery.providerId).to.deep.equal({ $nin: NOVU_PROVIDERS });
+      const primaryQuery = integrationRepo.findOne.firstCall.args[0];
+      expect(primaryQuery._environmentId).to.equal(ENV_ID);
+      expect(primaryQuery._organizationId).to.equal(ORG_ID);
+      expect(primaryQuery.channel).to.equal(ChannelTypeEnum.EMAIL);
+      expect(primaryQuery.active).to.equal(true);
+      expect(primaryQuery.primary).to.equal(true);
+      expect(primaryQuery.providerId).to.deep.equal({ $nin: NOVU_PROVIDERS });
 
       expect(integrationRepo.create.calledOnce).to.equal(true);
       const createArg = integrationRepo.create.firstCall.args[0];
@@ -144,8 +144,19 @@ describe('FindOrCreateNovuEmail usecase', () => {
       expect(createArg.credentials.inboxRoutingKey).to.be.a('string');
     });
 
-    it('omits outboundIntegrationId when no active primary custom email integration exists, falling back to the demo sender at send-time', async () => {
+    it("falls back to the env's Novu demo email integration when no primary custom integration exists", async () => {
+      const novuDemoIntegration = {
+        _id: 'novu-demo-id',
+        providerId: EmailProviderIdEnum.Novu,
+        channel: ChannelTypeEnum.EMAIL,
+        active: true,
+        primary: true,
+      } as IntegrationEntity;
+
+      // First findOne: no primary custom email integration.
       integrationRepo.findOne.onFirstCall().resolves(null);
+      // Second findOne: Novu demo integration exists.
+      integrationRepo.findOne.onSecondCall().resolves(novuDemoIntegration);
       integrationRepo.create.resolves({
         _id: 'novu-agent-int-id',
         providerId: EmailProviderIdEnum.NovuAgent,
@@ -158,8 +169,26 @@ describe('FindOrCreateNovuEmail usecase', () => {
 
       await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
 
+      const demoQuery = integrationRepo.findOne.secondCall.args[0];
+      expect(demoQuery.providerId).to.equal(EmailProviderIdEnum.Novu);
+      expect(demoQuery.active).to.equal(true);
+
       const createArg = integrationRepo.create.firstCall.args[0];
-      expect(createArg.credentials).to.not.have.property('outboundIntegrationId');
+      expect(createArg.credentials.outboundIntegrationId).to.equal('novu-demo-id');
+    });
+
+    it('throws when neither a primary custom integration nor a Novu demo integration is available', async () => {
+      integrationRepo.findOne.onFirstCall().resolves(null);
+      integrationRepo.findOne.onSecondCall().resolves(null);
+
+      try {
+        await buildUsecase().execute(AGENT_ID, ENV_ID, ORG_ID);
+        throw new Error('Expected ConflictException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ConflictException);
+      }
+
+      expect(integrationRepo.create.called).to.equal(false);
     });
 
     it('does not lookup or change outboundIntegrationId when an existing NovuAgent link is returned', async () => {
@@ -193,7 +222,7 @@ describe('FindOrCreateNovuEmail usecase', () => {
 
       expect(result.provisionedNewLink).to.equal(false);
       expect(integrationRepo.create.called).to.equal(false);
-      // Only the existing-link lookup happens; we never query for the primary custom integration.
+      // Only the existing-link lookup happens; we never query for the default outbound integration.
       expect(integrationRepo.findOne.calledOnce).to.equal(true);
     });
   });

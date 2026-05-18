@@ -43,12 +43,6 @@ type OutboundInstanceItem = {
   integration?: IIntegration;
 };
 
-// Sentinel persisted on the agent's NovuAgent integration credentials when the
-// user opts into the bundled Novu Email demo sender. The API treats an empty
-// outboundIntegrationId as "use the demo provider" (see chat-sdk.service.ts), so
-// we mirror that here instead of inventing a new string.
-const DEMO_OUTBOUND_VALUE = '';
-
 const DEMO_PROVIDER_CONFIG = emailProviderConfigs.find((p) => p.id === EmailProviderIdEnum.Novu);
 const DEMO_PROVIDER_DISPLAY_NAME = DEMO_PROVIDER_CONFIG?.displayName ?? 'Novu Email';
 
@@ -110,16 +104,23 @@ export function OutboundProviderSelect({
     [expandedProviderId, providerTypes]
   );
 
-  // The agent uses the Novu demo provider whenever no real outbound integration
-  // is attached, so an empty/undefined selectedId surfaces as the demo being
-  // preselected.
-  const isDemoSelected = !selectedId;
+  // The env's bundled Novu Email demo integration row (auto-seeded for
+  // Development environments alongside the org). When the agent's outbound
+  // points here, the runtime overrides credentials with the cloud demo API
+  // key and rate-limits via the shared quota. Hidden from the dropdown when
+  // the env doesn't have a demo row at all (custom non-prod envs).
+  const novuDemoIntegration = useMemo(
+    () => integrations?.find((i) => i.channel === ChannelTypeEnum.EMAIL && i.providerId === EmailProviderIdEnum.Novu),
+    [integrations]
+  );
+
+  const isDemoSelected = Boolean(novuDemoIntegration) && selectedId === novuDemoIntegration?._id;
 
   const selected = useMemo(() => {
-    if (isDemoSelected) {
+    if (isDemoSelected && novuDemoIntegration) {
       return {
         providerId: EmailProviderIdEnum.Novu,
-        displayName: DEMO_PROVIDER_DISPLAY_NAME,
+        displayName: novuDemoIntegration.name || DEMO_PROVIDER_DISPLAY_NAME,
         isDemo: true,
       };
     }
@@ -130,7 +131,7 @@ export function OutboundProviderSelect({
     }
 
     return undefined;
-  }, [providerTypes, selectedId, isDemoSelected]);
+  }, [providerTypes, selectedId, isDemoSelected, novuDemoIntegration]);
 
   const isBusy = pendingKey !== null;
 
@@ -198,7 +199,8 @@ export function OutboundProviderSelect({
 
   function handleSelectDemo() {
     if (isBusy) return;
-    onSelect(DEMO_OUTBOUND_VALUE);
+    if (!novuDemoIntegration) return;
+    onSelect(novuDemoIntegration._id);
     setOpen(false);
     setExpandedProviderId(null);
   }
@@ -218,27 +220,29 @@ export function OutboundProviderSelect({
       </div>
       <CommandList className="max-h-[260px] p-1">
         <CommandEmpty className="text-text-soft text-label-xs py-4">No email providers found.</CommandEmpty>
-        <CommandGroup heading="Default · for testing" className={groupHeadingClassName}>
-          <CommandItem
-            key="__demo__"
-            value={`${DEMO_PROVIDER_DISPLAY_NAME} demo novu email`}
-            disabled={isBusy}
-            onSelect={handleSelectDemo}
-            className={cn('flex items-center gap-2 rounded-md p-1', isDemoSelected && 'bg-bg-muted')}
-          >
-            <div className="flex w-full min-w-0 items-center gap-1">
-              <ProviderIcon
-                providerId={EmailProviderIdEnum.Novu}
-                providerDisplayName={DEMO_PROVIDER_DISPLAY_NAME}
-                className="size-4 shrink-0"
-              />
-              <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
-                {DEMO_PROVIDER_DISPLAY_NAME}
-              </span>
-              <DemoBadge />
-            </div>
-          </CommandItem>
-        </CommandGroup>
+        {novuDemoIntegration ? (
+          <CommandGroup heading="Default · for testing" className={groupHeadingClassName}>
+            <CommandItem
+              key="__demo__"
+              value={`${DEMO_PROVIDER_DISPLAY_NAME} demo novu email`}
+              disabled={isBusy}
+              onSelect={handleSelectDemo}
+              className={cn('flex items-center gap-2 rounded-md p-1', isDemoSelected && 'bg-bg-muted')}
+            >
+              <div className="flex w-full min-w-0 items-center gap-1">
+                <ProviderIcon
+                  providerId={EmailProviderIdEnum.Novu}
+                  providerDisplayName={DEMO_PROVIDER_DISPLAY_NAME}
+                  className="size-4 shrink-0"
+                />
+                <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
+                  {novuDemoIntegration.name || DEMO_PROVIDER_DISPLAY_NAME}
+                </span>
+                <DemoBadge />
+              </div>
+            </CommandItem>
+          </CommandGroup>
+        ) : null}
         <CommandGroup heading="Production providers" className={groupHeadingClassName}>
           {providerTypes.map((pt) => {
             const hasInstances = pt.integrations.length > 0;

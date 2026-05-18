@@ -939,31 +939,10 @@ export class ChatSdkService implements OnModuleDestroy {
     messageId?: string;
   }) => Promise<{ messageId?: string }> {
     return async (params) => {
-      // No user-attached outbound provider: fall back to the Novu demo sender on the
-      // shared agent inbox domain. Cloud-only - self-hosted keeps the legacy "must
-      // configure outbound" error to preserve existing behavior. The demo sender
-      // *requires* a usable shared inbox to round-trip replies, so we also refuse
-      // when the user has explicitly disabled the shared inbox for this agent.
       if (!outboundIntegrationId) {
-        if (
-          !isAgentSharedInboxEnabled() ||
-          !config.credentials.emailSlugPrefix ||
-          !config.credentials.inboxRoutingKey
-        ) {
-          throw new BadRequestException(
-            'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
-              'Configure one in the agent email setup.'
-          );
-        }
-
-        if (config.credentials.sharedInboxDisabled) {
-          throw new BadRequestException(
-            'The Novu demo sender requires the shared inbox to be enabled. ' +
-              'Re-enable it or attach an outbound email provider.'
-          );
-        }
-
-        return this.sendViaNovuDemoProvider(config, params);
+        throw new BadRequestException(
+          'Email agent integration is missing outboundIntegrationId. Reconfigure the agent email setup.'
+        );
       }
 
       const integration = await this.integrationRepository.findOne({
@@ -989,6 +968,10 @@ export class ChatSdkService implements OnModuleDestroy {
         throw new BadRequestException(
           `Outbound email integration ${outboundIntegrationId} (${integration.providerId}) is inactive`
         );
+      }
+
+      if (integration.providerId === EmailProviderIdEnum.Novu) {
+        return this.sendViaNovuDemoProvider(config, params, integration);
       }
 
       const hasUnsupportedAlternatives =
@@ -1096,10 +1079,16 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   /**
-   * Outbound demo path: no user-attached email provider is configured. We
-   * send via the Novu demo provider with `From = {slug}-{agentId}@<shared-domain>`
-   * so replies route back to the same inbox. Quota-gated by the same
-   * per-environment 300/month cap as workflow notification emails.
+   * Outbound demo path: the agent is wired to the bundled Novu Email demo
+   * provider row. We override the integration's stored credentials with the
+   * cloud demo API key (`NOVU_EMAIL_INTEGRATION_API_KEY`) and force `From` to
+   * `{slug}-{inboxRoutingKey}@<shared-domain>` so replies route back to the
+   * same inbox. Quota-gated by the same per-environment 300/month cap as
+   * workflow notification emails.
+   *
+   * Refuses to send when the shared inbox prerequisites aren't met because
+   * the demo path can't recover a Reply-To without it — at that point the
+   * user must attach a real outbound email provider.
    */
   private async sendViaNovuDemoProvider(
     config: ResolvedAgentConfig,
@@ -1113,8 +1102,23 @@ export class ChatSdkService implements OnModuleDestroy {
       inReplyTo?: string;
       references?: string;
       messageId?: string;
-    }
+    },
+    integration: IntegrationEntity
   ): Promise<{ messageId?: string }> {
+    if (!isAgentSharedInboxEnabled() || !config.credentials.emailSlugPrefix || !config.credentials.inboxRoutingKey) {
+      throw new BadRequestException(
+        'Email agent integration requires either a shared agent inbox or a custom outbound email provider. ' +
+          'Configure one in the agent email setup.'
+      );
+    }
+
+    if (config.credentials.sharedInboxDisabled) {
+      throw new BadRequestException(
+        'The Novu demo sender requires the shared inbox to be enabled. ' +
+          'Re-enable it or attach an outbound email provider.'
+      );
+    }
+
     const limit = await this.calculateLimitNovuIntegration.execute({
       channelType: ChannelTypeEnum.EMAIL,
       environmentId: config.environmentId,
@@ -1132,34 +1136,24 @@ export class ChatSdkService implements OnModuleDestroy {
       );
     }
 
-    const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix!, config.credentials.inboxRoutingKey!);
+    const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix, config.credentials.inboxRoutingKey);
 
-    const syntheticId = `synthetic-${config.environmentId}`;
-
-    const syntheticIntegration: IntegrationEntity = {
-      _id: syntheticId,
-      _environmentId: config.environmentId,
-      _organizationId: config.organizationId,
-      providerId: EmailProviderIdEnum.Novu,
-      channel: ChannelTypeEnum.EMAIL,
-      name: 'Novu Email (demo)',
-      identifier: syntheticId,
-      active: true,
-      primary: false,
+    // The Novu demo integration row's stored credentials are empty by design —
+    // the real API key lives in the deployment's env so a single Novu-managed
+    // SendGrid account fans out across every org's demo sender. We rebuild
+    // credentials on every send rather than mutating the row.
+    const demoIntegration: IntegrationEntity = {
+      ...integration,
       credentials: {
         apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from,
         senderName: config.credentials.senderName || 'Novu',
         ipPoolName: 'Demo',
       },
-      configurations: {},
-      deleted: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    } as unknown as IntegrationEntity;
+    };
 
     const mailFactory = new MailFactory();
-    const handler = mailFactory.getHandler(syntheticIntegration, from);
+    const handler = mailFactory.getHandler(demoIntegration, from);
 
     const mailOptions: IEmailOptions = {
       to: [params.to],

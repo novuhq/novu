@@ -1,5 +1,6 @@
 import {
   DomainRouteTypeEnum,
+  EmailProviderIdEnum,
   emailProviders as emailProviderConfigs,
   type IEnvironment,
   type IIntegration,
@@ -161,12 +162,13 @@ export function useEmailSetupCredentials({
     () => (outboundId ? integrations?.find((i) => i._id === outboundId) : undefined),
     [integrations, outboundId]
   );
-  // An empty outboundId is the API contract for "fall back to the Novu demo
-  // sender" (see chat-sdk.service.ts and send-agent-test-email.usecase.ts), so
-  // we surface it the same way to the UI as an explicitly-selected demo
-  // integration: no real outbound provider, no credentials step, rate-limited
-  // delivery.
-  const isOutboundDemo = !outboundId;
+  // The Novu Email demo integration row carries `providerId === Novu` and is
+  // auto-seeded for Development envs. When the agent points here, the runtime
+  // overrides credentials with the cloud demo API key (see
+  // chat-sdk.service.ts sendViaNovuDemoProvider and send-agent-test-email
+  // findSenderIntegration), so we surface it as "demo selected" in the UI:
+  // no credentials step, rate-limited delivery.
+  const isOutboundDemo = outboundIntegration?.providerId === EmailProviderIdEnum.Novu;
   const needsCredentialsStep = Boolean(outboundIntegration) && !isOutboundDemo;
   const hasOutboundCredentials = useMemo(() => {
     if (!outboundIntegration) return false;

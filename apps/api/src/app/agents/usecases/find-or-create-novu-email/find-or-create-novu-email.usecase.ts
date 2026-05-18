@@ -86,10 +86,7 @@ export class FindOrCreateNovuEmail {
     if (existing) return { response: existing, provisionedNewLink: false };
 
     const emailSlugPrefix = this.deriveEmailSlugPrefix(agent);
-    const defaultOutboundIntegrationId = await this.findActivePrimaryCustomEmailIntegrationId(
-      environmentId,
-      organizationId
-    );
+    const defaultOutboundIntegrationId = await this.resolveDefaultOutboundIntegrationId(environmentId, organizationId);
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
       const recheck = await this.findExistingLink(agent, environmentId, organizationId);
@@ -133,7 +130,7 @@ export class FindOrCreateNovuEmail {
     displayName: string;
     identifier: string;
     emailSlugPrefix: string;
-    outboundIntegrationId: string | null;
+    outboundIntegrationId: string;
     environmentId: string;
     organizationId: string;
     session: ClientSession | null;
@@ -150,7 +147,7 @@ export class FindOrCreateNovuEmail {
               secretKey: encryptSecret(randomBytes(32).toString('hex')),
               emailSlugPrefix,
               inboxRoutingKey,
-              ...(outboundIntegrationId ? { outboundIntegrationId } : {}),
+              outboundIntegrationId,
             },
             configurations: {},
             name: displayName,
@@ -173,19 +170,27 @@ export class FindOrCreateNovuEmail {
   }
 
   /**
-   * On first auto-provision, default the agent's outbound sender to the env's
-   * existing primary email integration when one is configured. Otherwise we
-   * leave `outboundIntegrationId` unset and let the dashboard / runtime fall
-   * back to the rate-limited Novu demo sender. Excludes Novu-owned providers
-   * (the demo provider and the inbound-only NovuAgent integration itself) so
-   * we never select a sender that can't actually deliver outbound mail at
-   * scale or, worse, points at the inbound side.
+   * Resolve the integration id we persist as the agent's default outbound
+   * sender. Preference order:
+   *
+   *   1. The env's active primary email integration that isn't Novu-owned
+   *      (i.e. an integration the user explicitly wired up for production
+   *      sending — SendGrid, Resend, …). Identified by `primary: true` on the
+   *      email channel, excluding `NOVU_PROVIDERS` so we never accidentally
+   *      pick the inbound-only NovuAgent row or the demo provider here.
+   *   2. The env's bundled Novu Email demo integration row, auto-seeded for
+   *      Development environments alongside the org. It's quota-limited but
+   *      lets the agent reply out of the box without any user configuration.
+   *
+   * We deliberately throw when neither exists rather than persisting an empty
+   * sentinel: every downstream path (send-agent-test-email + chat-sdk's
+   * `buildSendEmailCallback`) now assumes a concrete integration id, and a
+   * misconfigured env (custom non-prod env with no email seeded) is surfaced
+   * loudly so the user can fix it instead of silently routing through a
+   * synthetic demo that may also be unavailable.
    */
-  private async findActivePrimaryCustomEmailIntegrationId(
-    environmentId: string,
-    organizationId: string
-  ): Promise<string | null> {
-    const integration = await this.integrationRepository.findOne({
+  private async resolveDefaultOutboundIntegrationId(environmentId: string, organizationId: string): Promise<string> {
+    const primaryCustom = await this.integrationRepository.findOne({
       _environmentId: environmentId,
       _organizationId: organizationId,
       channel: ChannelTypeEnum.EMAIL,
@@ -193,8 +198,20 @@ export class FindOrCreateNovuEmail {
       primary: true,
       providerId: { $nin: NOVU_PROVIDERS } as unknown as string,
     });
+    if (primaryCustom) return primaryCustom._id;
 
-    return integration?._id ?? null;
+    const novuDemo = await this.integrationRepository.findOne({
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+      channel: ChannelTypeEnum.EMAIL,
+      providerId: EmailProviderIdEnum.Novu,
+      active: true,
+    });
+    if (novuDemo) return novuDemo._id;
+
+    throw new ConflictException(
+      'No outbound email integration available for this environment. Activate the Novu Email demo provider or configure a primary email integration.'
+    );
   }
 
   /**

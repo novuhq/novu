@@ -644,13 +644,26 @@ describe('ChatSdkService', () => {
       messageId: '<mid@example.com>',
     };
 
+    const demoIntegration = {
+      _id: 'novu-demo-id',
+      _environmentId: 'env-id',
+      _organizationId: 'org-id',
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
+      name: 'Novu Email',
+      identifier: 'novu-email-demo',
+      active: true,
+      primary: true,
+      credentials: {},
+    };
+
     it('throws when Novu demo email credentials are not configured', async () => {
       delete process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
       const messageCreate = sinon.stub().resolves({ _id: 'msg-1' });
       const service = makeSendViaService({ messageCreate });
 
       try {
-        await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams);
+        await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams, demoIntegration);
         throw new Error('Expected sendViaNovuDemoProvider to throw');
       } catch (err) {
         expect(err).to.be.instanceOf(BadRequestException);
@@ -665,7 +678,7 @@ describe('ChatSdkService', () => {
       const sendStub = sinon.stub().resolves({ id: 'sg-123' });
       sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub });
 
-      const result = await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams);
+      const result = await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams, demoIntegration);
 
       expect(result).to.deep.equal({ messageId: 'sg-123' });
       expect(sendStub.calledOnce).to.equal(true);
@@ -690,7 +703,7 @@ describe('ChatSdkService', () => {
       const service = makeSendViaService({ calculateLimit, messageCreate });
 
       try {
-        await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams);
+        await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams, demoIntegration);
         throw new Error('Expected sendViaNovuDemoProvider to throw');
       } catch (err) {
         expect(err).to.be.instanceOf(BadRequestException);
