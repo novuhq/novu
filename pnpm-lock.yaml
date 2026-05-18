@@ -1489,9 +1489,6 @@ importers:
 
   apps/worker:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.95.1
-        version: 0.95.1(zod@4.3.6)
       '@aws-sdk/client-secrets-manager':
         specifier: ^3.1048.0
         version: 3.1048.0
@@ -1534,9 +1531,6 @@ importers:
       '@novu/testing':
         specifier: workspace:*
         version: link:../../libs/testing
-      '@novu/thalamus':
-        specifier: https://github.com/novuhq/thalamus.git#c069bb3
-        version: https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))
       '@sentry/browser':
         specifier: ^8.33.1
         version: 8.55.0
@@ -1621,9 +1615,6 @@ importers:
       newrelic:
         specifier: 13.19.2
         version: 13.19.2
-      openai:
-        specifier: ^6.17.0
-        version: 6.17.0(ws@8.20.0)(zod@4.3.6)
       reflect-metadata:
         specifier: 0.2.2
         version: 0.2.2
@@ -27358,13 +27349,6 @@ snapshots:
     optionalDependencies:
       zod: 3.25.20
 
-  '@anthropic-ai/sdk@0.95.1(zod@4.3.6)':
-    dependencies:
-      json-schema-to-ts: 3.1.1
-      standardwebhooks: 1.0.0
-    optionalDependencies:
-      zod: 4.3.6
-
   '@apidevtools/json-schema-ref-parser@11.6.4':
     dependencies:
       '@jsdevtools/ono': 7.1.3
@@ -34062,13 +34046,6 @@ snapshots:
       '@aws-crypto/sha256-js': 5.2.0
       '@smithy/signature-v4': 5.4.3
       openai: 6.17.0(ws@8.20.0)(zod@3.25.20)
-
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))':
-    optionalDependencies:
-      '@anthropic-ai/sdk': 0.95.1(zod@4.3.6)
-      '@aws-crypto/sha256-js': 5.2.0
-      '@smithy/signature-v4': 5.4.3
-      openai: 6.17.0(ws@8.20.0)(zod@4.3.6)
 
   '@nrwl/nx-cloud@19.1.0':
     dependencies:
@@ -52510,11 +52487,6 @@ snapshots:
       ws: 8.20.0
       zod: 4.3.5
     optional: true
-
-  openai@6.17.0(ws@8.20.0)(zod@4.3.6):
-    optionalDependencies:
-      ws: 8.20.0
-      zod: 4.3.6
 
   opener@1.5.2: {}
 
