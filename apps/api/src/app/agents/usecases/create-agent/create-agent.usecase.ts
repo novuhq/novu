@@ -35,18 +35,19 @@ export class CreateAgent {
 
   async execute(command: CreateAgentCommand): Promise<AgentResponseDto> {
     const isAdoptMode = command.runtime === 'managed' && !!command.managedRuntime?.externalAgentId;
+    let identifier = command.identifier;
 
     if (!isAdoptMode) {
       if (!command.name) {
         throw new BadRequestException('name is required when not adopting an existing managed agent.');
       }
-      if (!command.identifier) {
+      if (!identifier) {
         throw new BadRequestException('identifier is required when not adopting an existing managed agent.');
       }
 
       const existing = await this.agentRepository.findOne(
         {
-          identifier: command.identifier,
+          identifier: identifier,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
@@ -54,9 +55,7 @@ export class CreateAgent {
       );
 
       if (existing) {
-        throw new ConflictException(
-          `An agent with identifier "${command.identifier}" already exists in this environment.`
-        );
+        identifier = `${identifier}-${shortId()}`;
       }
     }
 
@@ -75,7 +74,7 @@ export class CreateAgent {
           const tempName = isAdoptMode ? ADOPT_PLACEHOLDER : (command.name ?? ADOPT_PLACEHOLDER);
           const tempIdentifier = isAdoptMode
             ? `${ADOPT_PLACEHOLDER}-${shortId(6)}`
-            : (command.identifier ?? `${ADOPT_PLACEHOLDER}-${shortId(6)}`);
+            : (identifier ?? `${ADOPT_PLACEHOLDER}-${shortId(6)}`);
 
           const created = await this.agentRepository.create(
             {

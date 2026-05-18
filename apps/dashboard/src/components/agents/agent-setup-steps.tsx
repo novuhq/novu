@@ -1,6 +1,6 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiExpandUpDownLine } from 'react-icons/ri';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
@@ -10,19 +10,26 @@ import {
   listAgentIntegrations,
   sendAgentWelcomeMessage,
 } from '@/api/agents';
+import { ConnectAgentForm } from '@/components/onboarding/connect-agent/connect-agent-form';
+import {
+  type ConnectSummary,
+  deriveConnectSummaryDisplay,
+} from '@/components/onboarding/connect-agent/connect-summary';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildRoute } from '@/utils/routes';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { EmailSetupGuide } from './email-setup-guide';
-import { ProviderDropdown } from './provider-dropdown';
+import { ProviderCards } from './provider-cards';
 import { SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SlackSetupGuide } from './slack-setup-guide';
-import { TelegramSetupGuide } from './telegram-setup-guide';
 import { TeamsSetupGuide } from './teams-setup-guide';
+import { TelegramSetupGuide } from './telegram-setup-guide';
 import { WhatsAppSetupGuide } from './whatsapp-setup-guide';
+
+const noop = () => {};
 
 function resolveProviderSetupGuide(providerId: string) {
   switch (providerId) {
@@ -43,27 +50,35 @@ function resolveProviderSetupGuide(providerId: string) {
 
 const SESSION_KEY = (agentIdentifier: string) => `agent-setup-integration:${agentIdentifier}`;
 
+// Channel-selection step is step 3 — continues from the connect phase (steps 1-2).
+// Email is intentionally not part of the onboarding flow yet, so we go straight from 2 -> 3.
+const CHANNEL_STEP_INDEX = 3;
+const PROVIDER_GUIDE_STEP_OFFSET = CHANNEL_STEP_INDEX + 1;
+// Provider guides reserve up to three numbered steps; the bridge section continues from there.
+const PROVIDER_GUIDE_RESERVED_STEPS = 3;
+const BRIDGE_STEP_OFFSET = PROVIDER_GUIDE_STEP_OFFSET + PROVIDER_GUIDE_RESERVED_STEPS;
+
 type AgentSetupStepsProps = {
   agent: AgentResponse;
-  onBridgeConnected?: () => void;
+  /**
+   * Fires once when the agent is considered "fully set up":
+   * - managed runtimes: as soon as the chosen provider integration is connected
+   * - other runtimes: when the user's bridge endpoint becomes reachable
+   */
+  onSetupComplete?: () => void;
   hideAddProvider?: boolean;
+  /**
+   * Onboarding flow only: the connector + template the user picked in the connect phase,
+   * used to render the "View all instructions" recap above the channel step.
+   */
+  connectSummary?: ConnectSummary | null;
 };
 
-function CollapsedProviderSection({
-  expanded,
-  onToggle,
-  visible,
-}: {
-  expanded: boolean;
-  onToggle: () => void;
-  visible: boolean;
-}) {
-  if (!visible) return null;
-
+function ViewAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; onToggle: () => void }) {
   return (
     <div className="relative flex items-center pl-6">
       <div className="absolute -left-[20px] flex w-5 justify-center">
-        <div className="flex size-5 shrink-0 items-center justify-center rounded-full border border-success-dark bg-success-base shadow-[0px_0px_0px_1px_hsl(var(--static-white)),0px_0px_0px_2px_hsl(var(--stroke-soft))]">
+        <div className="border-success-dark bg-success-base flex size-5 shrink-0 items-center justify-center rounded-full shadow-[0px_0px_0px_1px_hsl(var(--static-white)),0px_0px_0px_2px_hsl(var(--stroke-soft))] border">
           <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
             <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -74,14 +89,54 @@ function CollapsedProviderSection({
         onClick={onToggle}
         className="text-text-sub hover:text-text-strong flex cursor-pointer items-center gap-1 transition-colors"
       >
-        <span className="text-label-xs font-medium">{expanded ? 'Hide instructions' : 'View all instructions'}</span>
+        <span className="text-label-xs font-medium">
+          {expanded ? 'Hide all instructions' : 'View all instructions'}
+        </span>
         <RiExpandUpDownLine className="size-4" />
       </button>
     </div>
   );
 }
 
-export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: AgentSetupStepsProps) {
+function ConnectPhaseRecap({ summary }: { summary: ConnectSummary }) {
+  const display = deriveConnectSummaryDisplay(summary);
+
+  return (
+    <div className="flex flex-col gap-10">
+      <ConnectAgentForm
+        connectorId={summary.connectorId}
+        isClaudeSelected={display.isClaudeSelected}
+        apiKey={summary.apiKey}
+        externalWorkspaceId={summary.externalWorkspaceId}
+        templateSelection={summary.templateSelection}
+        isExistingMode={display.isExistingMode}
+        isScratchMode={display.isScratchMode}
+        showExistingOption={display.showExistingOption}
+        existingOptionIcon={display.existingOptionIcon}
+        name={summary.name}
+        identifier={summary.identifier}
+        instructions={summary.instructions}
+        isIdentifierTouched
+        externalAgentId={summary.externalAgentId}
+        externalEnvironmentId={summary.externalEnvironmentId}
+        errors={{}}
+        disabled
+        onConnectorChange={noop}
+        onTemplateChange={noop}
+        onApiKeyChange={noop}
+        onExternalWorkspaceIdChange={noop}
+        onNameChange={noop}
+        onIdentifierChange={noop}
+        onIdentifierTouched={noop}
+        onInstructionsChange={noop}
+        onExternalAgentIdChange={noop}
+        onExternalEnvironmentIdChange={noop}
+      />
+    </div>
+  );
+}
+
+export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, connectSummary }: AgentSetupStepsProps) {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
   const queryClient = useQueryClient();
@@ -130,14 +185,7 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
     );
   }, [agentIntegrationsQuery.data?.data]);
 
-  const [userExpandedProvider, setUserExpandedProvider] = useState(false);
-  const isProviderExpanded = !hasConnectedIntegration || userExpandedProvider;
-
-  useEffect(() => {
-    if (!hasConnectedIntegration) {
-      setUserExpandedProvider(false);
-    }
-  }, [hasConnectedIntegration]);
+  const [isInstructionsExpanded, setIsInstructionsExpanded] = useState(false);
 
   const defaultFromAgent = agent.integrations?.[0];
   const effectiveIntegrationId = validatedSelectedId ?? defaultFromAgent?.integrationId;
@@ -160,25 +208,38 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
 
   const hasProviderSelected = Boolean(effectiveIntegrationId);
 
-  // Source from the live agent-integrations query rather than `agent.integrations`
-  // — the agent response does not always carry the link summary, so relying on
-  // it would leave `linkedIntegrationIds` empty and let `ProviderDropdown`
-  // re-offer providers (notably NovuAgent) that are already linked.
-  const linkedIntegrationIds = useMemo(() => {
-    const liveIntegrationIds = agentIntegrationsQuery.data?.data?.map((link) => link.integration._id) ?? [];
-    const summaryIntegrationIds = agent.integrations?.map((i) => i.integrationId) ?? [];
+  const agentIntegrationLinks = useMemo(
+    () => agentIntegrationsQuery.data?.data ?? [],
+    [agentIntegrationsQuery.data?.data]
+  );
 
-    return new Set<string>([...liveIntegrationIds, ...summaryIntegrationIds]);
-  }, [agentIntegrationsQuery.data?.data, agent.integrations]);
-
-  const firstIncompleteStep = hasProviderSelected ? 2 : 1;
+  const firstIncompleteStep = hasProviderSelected ? PROVIDER_GUIDE_STEP_OFFSET : CHANNEL_STEP_INDEX;
 
   const ProviderGuide = selectedProviderId ? resolveProviderSetupGuide(selectedProviderId) : null;
 
   const integrationIdentifier = selectedIntegration?.identifier ?? defaultFromAgent?.identifier;
 
+  // Managed agents have no bridge — the setup is considered complete as soon as the chosen
+  // provider integration becomes connected. Fire onSetupComplete exactly once.
+  const isManagedRuntime = agent.runtime === 'managed';
+  const onSetupCompleteRef = useRef(onSetupComplete);
+  onSetupCompleteRef.current = onSetupComplete;
+  const setupCompleteFiredRef = useRef(false);
+
+  useEffect(() => {
+    if (!isManagedRuntime) return;
+    if (!hasConnectedIntegration) return;
+    if (setupCompleteFiredRef.current) return;
+
+    setupCompleteFiredRef.current = true;
+    onSetupCompleteRef.current?.();
+  }, [isManagedRuntime, hasConnectedIntegration]);
+
   const handleBridgeConnected = useCallback(() => {
-    onBridgeConnected?.();
+    if (!setupCompleteFiredRef.current) {
+      setupCompleteFiredRef.current = true;
+      onSetupComplete?.();
+    }
 
     const conversationId = onboardingConversationIdRef.current;
     if (
@@ -204,7 +265,7 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
           lastSentConversationIdRef.current = null;
         }
       });
-  }, [onBridgeConnected, currentEnvironment, integrationIdentifier, agent.identifier, setSearchParams]);
+  }, [onSetupComplete, currentEnvironment, integrationIdentifier, agent.identifier, setSearchParams]);
 
   const handleProviderStepsCompleted = useCallback(() => {
     queryClient.invalidateQueries({
@@ -215,7 +276,7 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
   const handleAddProvider = useCallback(() => {
     if (!currentEnvironment?.slug) return;
 
-    navigate(
+    void navigate(
       `${buildRoute(agentRoutes.detailsTab, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
@@ -233,57 +294,77 @@ export function AgentSetupSteps({ agent, onBridgeConnected, hideAddProvider }: A
         }}
       />
 
-      <CollapsedProviderSection
-        expanded={isProviderExpanded}
-        onToggle={() => setUserExpandedProvider((prev) => !prev)}
-        visible={hasConnectedIntegration}
-      />
-
-      <motion.div
-        initial={false}
-        animate={{ height: isProviderExpanded ? 'auto' : 0, opacity: isProviderExpanded ? 1 : 0 }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-        style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
-      >
+      {connectSummary && (
         <div className="flex flex-col gap-10">
-          <SetupStep
-            index={1}
-            status={deriveStepStatus(1, firstIncompleteStep)}
-            sectionLabel="1/2 SETUP PROVIDER"
-            title="Choose where your agent listens and communicates"
-            description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
-            rightContent={
-              <ProviderDropdown
-                agentIdentifier={agent.identifier}
-                agentName={agent.name}
-                selectedIntegrationId={validatedSelectedId ?? defaultFromAgent?.integrationId}
-                linkedIntegrationIds={linkedIntegrationIds}
-                onSelect={(_providerId, integration) => {
-                  if (integration?._id) {
-                    setSelectedIntegrationId(integration._id);
-                    sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
-                  }
-                }}
-              />
-            }
+          <ViewAllInstructionsToggle
+            expanded={isInstructionsExpanded}
+            onToggle={() => setIsInstructionsExpanded((prev) => !prev)}
           />
 
-          {ProviderGuide && effectiveIntegrationId ? (
+          <motion.div
+            initial={false}
+            animate={{ height: isInstructionsExpanded ? 'auto' : 0, opacity: isInstructionsExpanded ? 1 : 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
+          >
+            <ConnectPhaseRecap summary={connectSummary} />
+          </motion.div>
+        </div>
+      )}
+
+      <SetupStep
+        index={CHANNEL_STEP_INDEX}
+        status={deriveStepStatus(CHANNEL_STEP_INDEX, firstIncompleteStep)}
+        sectionLabel="3/7 SETUP WHERE TO LISTEN"
+        title="Choose where your agent listens and communicates"
+        description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
+        fullWidthContent={
+          <ProviderCards
+            agentIdentifier={agent.identifier}
+            agentName={agent.name}
+            selectedIntegrationId={validatedSelectedId ?? defaultFromAgent?.integrationId}
+            existingLinks={agentIntegrationLinks}
+            onSelect={(_providerId, integration) => {
+              if (integration?._id) {
+                setSelectedIntegrationId(integration._id);
+                sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
+              }
+            }}
+          />
+        }
+      />
+
+      {/*
+       * Expand the provider guide inline when the user picks a provider, and collapse it when
+       * they switch to a different one (the `key` change triggers exit + enter). Same
+       * height/opacity + clipPath pattern used for the connect↔details phase transition.
+       */}
+      <AnimatePresence mode="wait" initial={false}>
+        {ProviderGuide && effectiveIntegrationId ? (
+          <motion.div
+            key={effectiveIntegrationId}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            className="flex flex-col gap-10"
+            style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
+          >
             <ProviderGuide
               agent={agent}
               integrationId={effectiveIntegrationId}
-              stepOffset={2}
+              stepOffset={PROVIDER_GUIDE_STEP_OFFSET}
               embedded={false}
               onStepsCompleted={handleProviderStepsCompleted}
             />
-          ) : null}
-        </div>
-      </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
-      {hasConnectedIntegration && (
+      {hasConnectedIntegration && !isManagedRuntime && (
         <AgentCodeSetupSection
           agent={agent}
-          stepOffset={5}
+          stepOffset={BRIDGE_STEP_OFFSET}
           providerId={selectedProviderId}
           onBridgeConnected={handleBridgeConnected}
           onAddProvider={hideAddProvider ? undefined : handleAddProvider}
