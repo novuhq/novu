@@ -15,10 +15,9 @@ export type AgentMcpServerScope = 'environment' | 'agent_mcp' | 'agent_mcp_subsc
 
 /**
  * Default authentication mode for connections created under this enabled
- * MCP. A specific `mcp_connection` row may override this if the catalog
- * entry's OAuth descriptor allows it (e.g. `providerVaultSupported`).
+ * MCP.
  */
-export type AgentMcpServerAuthMode = 'novu' | 'provider' | 'none';
+export type AgentMcpServerAuthMode = 'novu' | 'none';
 
 export type AgentMcpServerStatus = 'active' | 'syncing' | 'error' | 'disabled';
 
@@ -53,7 +52,7 @@ export class AgentMcpServerEntity {
 
   _agentId: string;
 
-  /** Catalog id from `CLAUDE_MCP_SERVERS` (e.g. 'slack'). */
+  /** Catalog id from `MCP_SERVERS` (e.g. 'slack'). */
   mcpId: string;
 
   enabled: boolean;

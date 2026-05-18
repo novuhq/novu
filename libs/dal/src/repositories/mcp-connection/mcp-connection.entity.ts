@@ -1,5 +1,3 @@
-import type { AgentRuntimeProviderIdEnum } from '@novu/shared';
-
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -12,13 +10,11 @@ import type { OrganizationId } from '../organization';
 export type McpConnectionScope = 'environment' | 'agent_mcp' | 'agent_mcp_subscriber';
 
 /**
- * - `novu`     — Novu owns the secret. Encrypted access/refresh tokens live
- *                in the `auth` blob.
- * - `provider` — The runtime provider (e.g. Anthropic Vault) owns the secret.
- *                We only store an opaque `providerRef.vaultId` mapping.
- * - `none`     — Anonymous MCP, no auth needed.
+ * - `novu` — Novu owns the secret. Encrypted access/refresh tokens live
+ *            in the `auth` blob.
+ * - `none` — Anonymous MCP, no auth needed.
  */
-export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
+export type McpConnectionAuthMode = 'novu' | 'none';
 
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
 
@@ -32,19 +28,57 @@ export interface McpConnectionAuth {
   scopes?: string[];
 }
 
-export interface McpConnectionProviderRef {
-  providerId: AgentRuntimeProviderIdEnum;
-  /** Opaque pointer to the entry in the provider's vault (e.g. Anthropic Vault). */
-  vaultId: string;
-  metadata?: Record<string, unknown>;
-}
-
 export interface McpConnectionOAuthState {
   /** Optional PKCE verifier kept while the OAuth flow is in flight. */
   pkceVerifier?: string;
   initiatedAt: Date;
   /** Soft deadline used to expire abandoned OAuth flows during cleanup. */
   expectedRedirectAt?: Date;
+  /**
+   * Authorization-server `issuer` recorded at authorize-URL time per RFC 9207.
+   * On callback, the `iss` query parameter (when emitted) must equal this
+   * value by simple string comparison; mismatches reject the response.
+   */
+  expectedIssuer?: string;
+  /**
+   * Canonical MCP resource URI recorded at authorize-URL time per RFC 8707
+   * so the token request can replay the same `resource` value even after the
+   * AS-metadata cache evicts.
+   */
+  resource?: string;
+}
+
+/**
+ * OAuth client credentials persisted across re-consents for a (subscriber, mcp)
+ * pair. Populated by the MCP-spec Dynamic Client Registration flow (RFC 7591).
+ *
+ * Survives `status` transitions out of `pending_oauth` so a reconnect can reuse
+ * the registered client without re-hitting the upstream `/register` endpoint.
+ * Only cleared when (a) the recorded `issuer` no longer matches PRM discovery,
+ * (b) `clientSecretExpiresAt` has lapsed, or (c) the catalog entry is removed.
+ */
+export interface McpConnectionOAuthClient {
+  /** Client identifier issued by the upstream authorization server. */
+  clientId: string;
+  /** Encrypted client secret (use `decryptMcpConnectionAuth` at read-time). */
+  clientSecret?: string;
+  /**
+   * RFC 7591 `client_secret_expires_at`. Absent/0 = non-expiring; a Date in
+   * the past triggers re-registration on next authorize-URL request.
+   */
+  clientSecretExpiresAt?: Date;
+  /** Encrypted RFC 7592 registration access token, when issued by the AS. */
+  registrationAccessToken?: string;
+  /** RFC 7592 client configuration endpoint URI, when issued. */
+  registrationClientUri?: string;
+  /** Authorization-server issuer recorded for spoof-detection on reuse. */
+  issuer: string;
+  authorizationEndpoint: string;
+  tokenEndpoint: string;
+  registrationEndpoint?: string;
+  /** Scopes requested at registration time. */
+  scopesGranted?: string[];
+  registeredAt: Date;
 }
 
 export interface McpConnectionLastError {
@@ -56,8 +90,8 @@ export interface McpConnectionLastError {
 /**
  * OAuth state for a (scope, mcp, owner) tuple.
  *
- * Either `auth` (novu mode) OR `providerRef` (provider mode) is populated
- * once `status === 'connected'`. Owner ref fields populated by scope:
+ * `auth` is populated when `authMode === 'novu'` and `status === 'connected'`.
+ * Owner ref fields populated by scope:
  *
  *  - `environment`            : `_environmentId` only (future).
  *  - `agent_mcp`              : `_agentMcpServerId` (future).
@@ -72,7 +106,7 @@ export class McpConnectionEntity {
 
   scope: McpConnectionScope;
 
-  /** Catalog id from `CLAUDE_MCP_SERVERS` (e.g. 'slack'). */
+  /** Catalog id from `MCP_SERVERS` (e.g. 'slack'). */
   mcpId: string;
 
   /** FK to `agent_mcp_server` for `agent_mcp` and `agent_mcp_subscriber` scopes. */
@@ -88,11 +122,15 @@ export class McpConnectionEntity {
   /** Populated when `authMode === 'novu'`. */
   auth?: McpConnectionAuth;
 
-  /** Populated when `authMode === 'provider'`. */
-  providerRef?: McpConnectionProviderRef;
-
   /** Cleared once `status` transitions out of `pending_oauth`. */
   oauthState?: McpConnectionOAuthState;
+
+  /**
+   * DCR-issued OAuth client credentials + discovered AS endpoints. Survives
+   * re-consents; only re-registered when the upstream issuer rotates or the
+   * client secret expires.
+   */
+  oauthClient?: McpConnectionOAuthClient;
 
   lastError?: McpConnectionLastError;
 

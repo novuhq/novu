@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AGENT_RUNTIME_PROVIDERS, CLAUDE_MCP_SERVERS } from '@novu/shared';
+import { AGENT_RUNTIME_PROVIDERS, MCP_SERVERS } from '@novu/shared';
 import type {
   AgentMcpServerDto,
   AgentRuntimeCapabilitiesDto,
@@ -88,7 +88,7 @@ export class UpdateAgentRuntimeConfig {
 
     const mcpServers: AgentMcpServerDto[] = mcpRows
       .map((row) => {
-        const catalog = CLAUDE_MCP_SERVERS.find((entry) => entry.id === row.mcpId);
+        const catalog = MCP_SERVERS.find((entry) => entry.id === row.mcpId);
 
         if (!catalog) {
           return null;
@@ -107,6 +107,7 @@ export class UpdateAgentRuntimeConfig {
           model: providerEntry.capabilities.model,
           systemPrompt: providerEntry.capabilities.systemPrompt,
           skills: providerEntry.capabilities.skills,
+          tokenVault: providerEntry.capabilities.tokenVault,
         }
       : undefined;
 

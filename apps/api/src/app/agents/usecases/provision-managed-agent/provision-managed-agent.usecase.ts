@@ -1,12 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import {
-  CLAUDE_MCP_SERVERS,
-  type ClaudeMcpServerOAuthMode,
-  McpConnectionAuthModeEnum,
-  McpConnectionScopeEnum,
-} from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum, type McpServerOAuthMode } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
 import { getMcpOAuthMode } from '../../utils/mcp-oauth-catalog';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
@@ -181,7 +176,7 @@ export class ProvisionManagedAgent {
     const writeOptions = session ? { session } : {};
 
     for (const mcpId of command.mcpServers) {
-      const catalog = CLAUDE_MCP_SERVERS.find((entry) => entry.id === mcpId);
+      const catalog = MCP_SERVERS.find((entry) => entry.id === mcpId);
 
       if (!catalog) {
         continue;
@@ -211,10 +206,8 @@ export class ProvisionManagedAgent {
   }
 }
 
-function deriveDefaultAuthMode(catalogMode: ClaudeMcpServerOAuthMode): McpConnectionAuthModeEnum {
+function deriveDefaultAuthMode(catalogMode: McpServerOAuthMode): McpConnectionAuthModeEnum {
   switch (catalogMode) {
-    case 'provider':
-      return McpConnectionAuthModeEnum.Provider;
     case 'none':
       return McpConnectionAuthModeEnum.None;
     case 'novu':

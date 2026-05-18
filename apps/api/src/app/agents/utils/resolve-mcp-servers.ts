@@ -1,11 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
-import { CLAUDE_MCP_SERVERS } from '@novu/shared';
+import { MCP_SERVERS } from '@novu/shared';
 
 export type ResolvedMcpServer = { name: string; url: string };
 
 /**
  * Resolve catalog MCP server IDs (e.g. "slack") to the trusted {name, url}
- * pair from CLAUDE_MCP_SERVERS. Throws BadRequestException for unknown IDs.
+ * pair from MCP_SERVERS. Throws BadRequestException for unknown IDs.
  *
  * Used on the provisioning path where the API surface accepts IDs.
  *
@@ -17,7 +17,7 @@ export type ResolvedMcpServer = { name: string; url: string };
  */
 export function resolveMcpServersById(serverIds: string[]): ResolvedMcpServer[] {
   return serverIds.map((serverId) => {
-    const catalogServer = CLAUDE_MCP_SERVERS.find((s) => s.id === serverId);
+    const catalogServer = MCP_SERVERS.find((s) => s.id === serverId);
 
     if (!catalogServer) {
       throw new BadRequestException(

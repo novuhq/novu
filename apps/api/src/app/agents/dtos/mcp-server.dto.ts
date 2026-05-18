@@ -3,7 +3,7 @@ import { McpConnectionAuthModeEnum, McpConnectionScopeEnum, McpConnectionStatusE
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class EnableAgentMcpServerRequestDto {
-  @ApiProperty({ description: 'Catalog id from CLAUDE_MCP_SERVERS (e.g. "slack").' })
+  @ApiProperty({ description: 'Catalog id from MCP_SERVERS (e.g. "slack").' })
   @IsNotEmpty()
   @IsString()
   mcpId: string;
@@ -31,7 +31,7 @@ export class AgentMcpServerEnablementResponseDto {
   @ApiProperty()
   id: string;
 
-  @ApiProperty({ description: 'Catalog id from CLAUDE_MCP_SERVERS.' })
+  @ApiProperty({ description: 'Catalog id from MCP_SERVERS.' })
   mcpId: string;
 
   @ApiProperty()
@@ -73,9 +73,6 @@ export class McpConnectionResponseDto {
 
   @ApiPropertyOptional()
   subscriberId?: string;
-
-  @ApiPropertyOptional({ description: 'Provider vault entity id when authMode === "provider".' })
-  providerVaultId?: string;
 
   @ApiPropertyOptional()
   expiresAt?: string;

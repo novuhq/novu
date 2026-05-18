@@ -1,4 +1,4 @@
-import { CLAUDE_MCP_SERVERS, type ClaudeMcpServer } from '@novu/shared';
+import { MCP_SERVERS, type McpServer } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
@@ -42,7 +42,7 @@ function renderRowStatus({
   enablement,
   isPending,
 }: {
-  entry: ClaudeMcpServer;
+  entry: McpServer;
   enablement: AgentMcpServerEnablement | undefined;
   isPending: boolean;
 }) {
@@ -56,10 +56,6 @@ function renderRowStatus({
 
   if (enablement?.enabled && entry.oauthMode === 'novu') {
     return <span className="text-text-soft text-paragraph-xs shrink-0">Subscribers authorize on first use</span>;
-  }
-
-  if (enablement?.enabled && entry.oauthMode === 'provider') {
-    return <span className="text-text-soft text-paragraph-xs shrink-0">Provider-managed auth</span>;
   }
 
   return null;
@@ -97,9 +93,9 @@ export function McpsSheet({ agent, isOpen, onOpenChange, consoleUrl }: McpsSheet
   const filteredMcps = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    if (!query) return CLAUDE_MCP_SERVERS;
+    if (!query) return MCP_SERVERS;
 
-    return CLAUDE_MCP_SERVERS.filter(
+    return MCP_SERVERS.filter(
       (entry) =>
         entry.name.toLowerCase().includes(query) ||
         entry.description.toLowerCase().includes(query) ||
@@ -149,7 +145,7 @@ export function McpsSheet({ agent, isOpen, onOpenChange, consoleUrl }: McpsSheet
   const canEdit = !readOnly;
   const isMutating = enableMutation.isPending || disableMutation.isPending;
 
-  const handleToggle = (entry: ClaudeMcpServer, checked: boolean) => {
+  const handleToggle = (entry: McpServer, checked: boolean) => {
     if (!canEdit || pendingId) return;
     setPendingId(entry.id);
 

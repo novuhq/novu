@@ -66,6 +66,13 @@ export class AgentRuntimeCapabilitiesDto {
 
   @ApiProperty()
   skills: boolean;
+
+  @ApiProperty({
+    description:
+      'Provider exposes a token-vault API where Novu can push OAuth tokens obtained from an MCP handshake. ' +
+      'When false, Novu keeps tokens in its own encrypted store.',
+  })
+  tokenVault: boolean;
 }
 
 export class AgentRuntimeConfigResponseDto {

@@ -69,7 +69,6 @@ export class GetMcpConnectionStatus {
       status: connection.status as McpConnectionStatusEnum,
       agentMcpServerId: connection._agentMcpServerId,
       subscriberId: connection._subscriberId,
-      providerVaultId: connection.providerRef?.vaultId,
       expiresAt: connection.auth?.expiresAt?.toISOString(),
       connectedAt: connection.connectedAt?.toISOString(),
     };

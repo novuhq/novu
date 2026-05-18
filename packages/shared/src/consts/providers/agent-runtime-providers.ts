@@ -1,5 +1,4 @@
 import { AgentRuntimeProviderIdEnum } from '../../types/providers';
-import { CLAUDE_MCP_SERVERS, type ClaudeMcpServer } from './claude-mcp-servers';
 import { CLAUDE_ANTHROPIC_SKILLS, type ClaudeAnthropicSkill } from './claude-skills';
 import { CLAUDE_BUILTIN_TOOLS, type ClaudeBuiltinTool } from './claude-tools';
 import { anthropicAgentConfig } from './credentials';
@@ -18,6 +17,14 @@ export type AgentRuntimeCapabilities = {
   systemPrompt: boolean;
   /** Supports attaching Anthropic-managed and custom skills */
   skills: boolean;
+  /**
+   * Provider exposes a token-vault API where Novu can push OAuth tokens
+   * obtained from an MCP handshake. When `false`, Novu keeps tokens in
+   * its own encrypted `mcp_connection.auth` blob. When `true`, the OAuth
+   * callback path is expected to also call the provider's vault API and
+   * Novu's blob may be empty.
+   */
+  tokenVault: boolean;
 };
 
 export type AgentRuntimeProvider = {
@@ -32,8 +39,6 @@ export type AgentRuntimeProvider = {
   credentials: IConfigCredential[];
   /** Static catalog of built-in tools the provider supports */
   availableTools?: ClaudeBuiltinTool[];
-  /** Static catalog of remote MCP servers the provider supports */
-  availableMcpServers?: ClaudeMcpServer[];
   /** Static catalog of Anthropic-managed skills the provider supports */
   availableSkills?: ClaudeAnthropicSkill[];
 };
@@ -52,9 +57,9 @@ export const AGENT_RUNTIME_PROVIDERS: AgentRuntimeProvider[] = [
       model: true,
       systemPrompt: true,
       skills: true,
+      tokenVault: false,
     },
     availableTools: CLAUDE_BUILTIN_TOOLS,
-    availableMcpServers: CLAUDE_MCP_SERVERS,
     availableSkills: CLAUDE_ANTHROPIC_SKILLS,
   },
 ];

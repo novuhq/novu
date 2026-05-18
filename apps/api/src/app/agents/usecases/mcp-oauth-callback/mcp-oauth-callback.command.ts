@@ -13,6 +13,16 @@ export class McpOAuthCallbackCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   error?: string;
+
+  /**
+   * RFC 9207 `iss` parameter from the authorization response. The MCP spec
+   * requires validation against the issuer recorded at authorize-URL time
+   * (see {@link McpOAuthCallback}). Absence is also significant when the AS
+   * advertised `authorization_response_iss_parameter_supported: true`.
+   */
+  @IsOptional()
+  @IsString()
+  iss?: string;
 }
 
 export type McpOAuthCallbackResult = {

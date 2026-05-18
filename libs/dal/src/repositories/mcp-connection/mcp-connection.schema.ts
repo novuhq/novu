@@ -29,24 +29,6 @@ const authSchema = new Schema(
   { _id: false }
 );
 
-const providerRefSchema = new Schema(
-  {
-    providerId: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    vaultId: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    metadata: {
-      type: Schema.Types.Mixed,
-      required: false,
-    },
-  },
-  { _id: false }
-);
-
 const oauthStateSchema = new Schema(
   {
     pkceVerifier: {
@@ -60,6 +42,64 @@ const oauthStateSchema = new Schema(
     expectedRedirectAt: {
       type: Schema.Types.Date,
       required: false,
+    },
+    expectedIssuer: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    resource: {
+      type: Schema.Types.String,
+      required: false,
+    },
+  },
+  { _id: false }
+);
+
+const oauthClientSchema = new Schema(
+  {
+    clientId: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    clientSecret: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    clientSecretExpiresAt: {
+      type: Schema.Types.Date,
+      required: false,
+    },
+    registrationAccessToken: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    registrationClientUri: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    issuer: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    authorizationEndpoint: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    tokenEndpoint: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    registrationEndpoint: {
+      type: Schema.Types.String,
+      required: false,
+    },
+    scopesGranted: {
+      type: [Schema.Types.String],
+      required: false,
+    },
+    registeredAt: {
+      type: Schema.Types.Date,
+      required: true,
     },
   },
   { _id: false }
@@ -119,7 +159,7 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     authMode: {
       type: Schema.Types.String,
       required: true,
-      enum: ['novu', 'provider', 'none'],
+      enum: ['novu', 'none'],
     },
     status: {
       type: Schema.Types.String,
@@ -130,12 +170,12 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
       type: authSchema,
       required: false,
     },
-    providerRef: {
-      type: providerRefSchema,
-      required: false,
-    },
     oauthState: {
       type: oauthStateSchema,
+      required: false,
+    },
+    oauthClient: {
+      type: oauthClientSchema,
       required: false,
     },
     lastError: {

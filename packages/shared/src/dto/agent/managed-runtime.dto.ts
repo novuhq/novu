@@ -43,7 +43,7 @@ export type CreateManagedRuntimeDto = {
   systemPrompt?: string;
   /** Tool `type` strings to enable on the new agent (e.g. 'web_search'). */
   tools?: string[];
-  /** MCP server IDs to attach to the new agent (must match ClaudeMcpServer.id). */
+  /** MCP server IDs to attach to the new agent (must match McpServer.id). */
   mcpServers?: string[];
   /** Skills to attach to the new agent. Maximum 20. */
   skills?: AgentSkillDto[];
@@ -82,14 +82,11 @@ export enum McpConnectionScopeEnum {
 /**
  * Where the OAuth secret for an MCP connection lives.
  *
- * - `novu`     — Novu stores encrypted access/refresh tokens itself.
- * - `provider` — Provider (e.g. Anthropic Vault) owns the secret. We only
- *                store an opaque mapping (`providerVaultId`).
- * - `none`     — MCP requires no auth.
+ * - `novu` — Novu stores encrypted access/refresh tokens itself.
+ * - `none` — MCP requires no auth.
  */
 export enum McpConnectionAuthModeEnum {
   Novu = 'novu',
-  Provider = 'provider',
   None = 'none',
 }
 
@@ -104,7 +101,7 @@ export enum McpConnectionStatusEnum {
 export type McpConnectionDto = {
   /** Mongo `_id` of the underlying `mcp_connection` row. */
   id: string;
-  /** Catalog id (`ClaudeMcpServer.id`). */
+  /** Catalog id (`McpServer.id`). */
   mcpId: string;
   scope: McpConnectionScopeEnum;
   authMode: McpConnectionAuthModeEnum;
@@ -113,8 +110,6 @@ export type McpConnectionDto = {
   agentMcpServerId?: string;
   /** Mongo `Subscriber._id` when scope === `agent_mcp_subscriber`. */
   subscriberId?: string;
-  /** Provider vault entity id when authMode === `provider`. */
-  providerVaultId?: string;
   expiresAt?: string;
   connectedAt?: string;
 };
@@ -125,7 +120,7 @@ export type McpConnectionDto = {
  */
 export type AgentMcpServerEnablementDto = {
   id: string;
-  /** Catalog id (`ClaudeMcpServer.id`). */
+  /** Catalog id (`McpServer.id`). */
   mcpId: string;
   enabled: boolean;
   defaultScope: McpConnectionScopeEnum;

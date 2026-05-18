@@ -47,6 +47,14 @@ describe('Agent runtime capabilities parity', () => {
       it('capabilities.systemPrompt matches the catalog', () => {
         expect(instance.capabilities.systemPrompt).toBe(catalogEntry.capabilities.systemPrompt);
       });
+
+      it('capabilities.skills matches the catalog', () => {
+        expect(instance.capabilities.skills).toBe(catalogEntry.capabilities.skills);
+      });
+
+      it('capabilities.tokenVault matches the catalog', () => {
+        expect(instance.capabilities.tokenVault).toBe(catalogEntry.capabilities.tokenVault);
+      });
     });
   }
 });

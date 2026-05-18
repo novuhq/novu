@@ -27,6 +27,7 @@ import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.se
 import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { ManagedExecutorService } from './services/managed-executor.service';
+import { McpOAuthDiscoveryService } from './services/mcp-oauth-discovery.service';
 import { USE_CASES } from './usecases';
 
 @Module({
@@ -52,6 +53,7 @@ import { USE_CASES } from './usecases';
     BridgeExecutorService,
     ManagedExecutorService,
     ChatSdkService,
+    McpOAuthDiscoveryService,
   ],
   exports: [...USE_CASES, ChatSdkService],
 })

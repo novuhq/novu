@@ -1,35 +1,55 @@
 import { createHash as nodeCreateHash, randomBytes } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { createHash, encodeOAuthState } from '@novu/application-generic';
+import {
+  createHash,
+  decryptMcpConnectionOAuthClient,
+  encodeOAuthState,
+  encryptMcpConnectionOAuthClient,
+} from '@novu/application-generic';
 import {
   AgentMcpServerEntity,
   AgentMcpServerRepository,
   AgentRepository,
   EnvironmentRepository,
+  McpConnectionEntity,
+  McpConnectionOAuthClient,
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import {
-  CLAUDE_MCP_SERVERS,
-  McpConnectionAuthModeEnum,
-  McpConnectionScopeEnum,
-  McpConnectionStatusEnum,
-} from '@novu/shared';
-
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum, McpConnectionStatusEnum } from '@novu/shared';
 import { GenerateMcpOAuthUrlResponseDto } from '../../dtos/mcp-server.dto';
+import {
+  AuthorizationServerMetadata,
+  DiscoveredProtectedResource,
+  McpOAuthDiscoveryError,
+  McpOAuthDiscoveryService,
+} from '../../services/mcp-oauth-discovery.service';
 import { getMcpOAuthCatalogEntry, type NovuOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { GenerateMcpOAuthUrlCommand } from './generate-mcp-oauth-url.command';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from './mcp-oauth-state';
 
+const NOVU_MCP_CLIENT_NAME = 'Novu';
+const DEFAULT_SOFTWARE_ID = 'novu-mcp-client';
+const SOFTWARE_VERSION = process.env.NOVU_API_VERSION || 'dev';
+
 /**
  * Build the provider authorize URL for an `agent_mcp_subscriber`-scoped MCP
- * OAuth flow. Reuses the signed-state pattern from chat integrations
- * (`encodeOAuthState` + `createHash`) so callbacks can be verified with the
- * environment API key.
+ * OAuth flow that follows the MCP authorization spec
+ * (`modelcontextprotocol.io/specification/draft/basic/authorization`).
  *
- * Side-effects: ensures a `pending_oauth` `mcp_connection` row exists so the
- * dashboard can show "authorisation in progress" without waiting for the
- * provider to redirect back. The same row is updated on callback.
+ * Sequence:
+ *  1. Discover PRM (RFC 9728) for the catalog MCP URL.
+ *  2. Discover AS metadata (RFC 8414 / OIDC) for the chosen authorization
+ *     server. Refuses to proceed unless `S256` is advertised.
+ *  3. Reuse the per-subscriber DCR client from the existing mcp_connection
+ *     row when issuer + secret-expiry still match; otherwise POST
+ *     `{registration_endpoint}` (RFC 7591) and persist the new credentials.
+ *  4. Generate a PKCE S256 challenge, record the expected issuer + canonical
+ *     resource on `oauthState`, sign the redirect state with the env API key.
+ *  5. Return the authorize URL with `client_id`, `redirect_uri`,
+ *     `response_type=code`, `scope` (per spec scope-selection strategy),
+ *     `state`, `code_challenge`, `code_challenge_method=S256`, and
+ *     `resource` (RFC 8707).
  */
 @Injectable()
 export class GenerateMcpOAuthUrl {
@@ -38,11 +58,12 @@ export class GenerateMcpOAuthUrl {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly subscriberRepository: SubscriberRepository
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly discoveryService: McpOAuthDiscoveryService
   ) {}
 
   async execute(command: GenerateMcpOAuthUrlCommand): Promise<GenerateMcpOAuthUrlResponseDto> {
-    const catalog = CLAUDE_MCP_SERVERS.find((entry) => entry.id === command.mcpId);
+    const catalog = MCP_SERVERS.find((entry) => entry.id === command.mcpId);
 
     if (!catalog) {
       throw new BadRequestException(`Unknown MCP "${command.mcpId}".`);
@@ -88,32 +109,177 @@ export class GenerateMcpOAuthUrl {
       throw new NotFoundException(`Subscriber "${command.subscriberId}" not found in this environment.`);
     }
 
-    const pkceVerifier = oauthConfig.pkceRequired ? generatePkceVerifier() : undefined;
-
-    await this.upsertPendingConnection(enablement, subscriber._id, command, pkceVerifier);
-
-    const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
-
-    return { authorizeUrl: this.buildAuthorizeUrl(oauthConfig, state, pkceVerifier) };
-  }
-
-  private async upsertPendingConnection(
-    enablement: AgentMcpServerEntity,
-    subscriberMongoId: string,
-    command: GenerateMcpOAuthUrlCommand,
-    pkceVerifier: string | undefined
-  ): Promise<void> {
-    const oauthState = {
-      pkceVerifier,
-      initiatedAt: new Date(),
-    };
+    const { asMetadata, prm } = await this.resolveAuthorizationServer(catalog.url, command.mcpId);
+    const scopes = this.selectScopes(prm);
+    const resource = catalog.url;
 
     const existing = await this.mcpConnectionRepository.findSubscriberConnection({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       agentMcpServerId: enablement._id,
-      subscriberId: subscriberMongoId,
+      subscriberId: subscriber._id,
     });
+
+    const oauthClient = await this.ensureOAuthClient({
+      existing,
+      asMetadata,
+      oauthConfig,
+      scopes,
+    });
+
+    const pkceVerifier = generatePkceVerifier();
+
+    await this.upsertPendingConnection({
+      enablement,
+      subscriberMongoId: subscriber._id,
+      command,
+      pkceVerifier,
+      expectedIssuer: asMetadata.issuer,
+      resource,
+      oauthClient,
+      existing,
+    });
+
+    const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
+    const authorizeUrl = this.buildAuthorizeUrl({
+      asMetadata,
+      oauthClient,
+      scopes,
+      resource,
+      state,
+      pkceVerifier,
+    });
+
+    return { authorizeUrl };
+  }
+
+  private async resolveAuthorizationServer(
+    mcpUrl: string,
+    mcpId: string
+  ): Promise<{ asMetadata: AuthorizationServerMetadata; prm: DiscoveredProtectedResource }> {
+    let prm: DiscoveredProtectedResource;
+    try {
+      prm = await this.discoveryService.discoverProtectedResource(mcpUrl);
+    } catch (err) {
+      throw mapDiscoveryError(err, `MCP "${mcpId}"`);
+    }
+
+    if (prm.authorizationServers.length === 0) {
+      throw new UnprocessableEntityException(
+        `MCP "${mcpId}" advertises no authorization servers in Protected Resource Metadata.`
+      );
+    }
+
+    const [issuer] = prm.authorizationServers;
+    let asMetadata: AuthorizationServerMetadata;
+    try {
+      asMetadata = await this.discoveryService.discoverAuthorizationServer(issuer);
+    } catch (err) {
+      throw mapDiscoveryError(err, `MCP "${mcpId}" authorization server "${issuer}"`);
+    }
+
+    return { asMetadata, prm };
+  }
+
+  private selectScopes(prm: DiscoveredProtectedResource): string[] {
+    // RFC 9728 + MCP-spec Scope Selection Strategy:
+    //   1. Use the `scope` parameter from the initial WWW-Authenticate challenge.
+    //   2. Otherwise use all of `scopes_supported` from PRM.
+    //   3. Otherwise omit `scope` (return []).
+    if (prm.challengeScopes && prm.challengeScopes.length > 0) {
+      return prm.challengeScopes;
+    }
+    if (prm.scopesSupported.length > 0) {
+      return prm.scopesSupported;
+    }
+
+    return [];
+  }
+
+  private async ensureOAuthClient(args: {
+    existing: McpConnectionEntity | null;
+    asMetadata: AuthorizationServerMetadata;
+    oauthConfig: NovuOAuthCatalogEntry;
+    scopes: string[];
+  }): Promise<McpConnectionOAuthClient> {
+    const { existing, asMetadata, oauthConfig, scopes } = args;
+    const reusable = pickReusableOAuthClient(existing?.oauthClient, asMetadata.issuer);
+
+    if (reusable) {
+      return reusable;
+    }
+
+    const registration = await this.registerNewClient({ asMetadata, oauthConfig, scopes });
+
+    return {
+      clientId: registration.clientId,
+      clientSecret: registration.clientSecret,
+      clientSecretExpiresAt: registration.clientSecretExpiresAt
+        ? secondsSinceEpochToDate(registration.clientSecretExpiresAt)
+        : undefined,
+      registrationAccessToken: registration.registrationAccessToken,
+      registrationClientUri: registration.registrationClientUri,
+      issuer: asMetadata.issuer,
+      authorizationEndpoint: asMetadata.authorizationEndpoint,
+      tokenEndpoint: asMetadata.tokenEndpoint,
+      registrationEndpoint: asMetadata.registrationEndpoint,
+      scopesGranted: scopes.length > 0 ? scopes : undefined,
+      registeredAt: new Date(),
+    };
+  }
+
+  private async registerNewClient(args: {
+    asMetadata: AuthorizationServerMetadata;
+    oauthConfig: NovuOAuthCatalogEntry;
+    scopes: string[];
+  }): Promise<{
+    clientId: string;
+    clientSecret?: string;
+    clientSecretExpiresAt?: number;
+    registrationAccessToken?: string;
+    registrationClientUri?: string;
+  }> {
+    const { asMetadata, oauthConfig, scopes } = args;
+    const frontBase = process.env.FRONT_BASE_URL?.replace(/\/$/, '');
+
+    try {
+      return await this.discoveryService.registerClient(asMetadata, {
+        redirect_uris: [buildMcpOAuthRedirectUri()],
+        client_name: NOVU_MCP_CLIENT_NAME,
+        application_type: oauthConfig.applicationType ?? 'web',
+        grant_types: ['authorization_code', 'refresh_token'],
+        response_types: ['code'],
+        token_endpoint_auth_method: 'client_secret_post',
+        scope: scopes.length > 0 ? scopes.join(' ') : undefined,
+        client_uri: frontBase,
+        logo_uri: frontBase ? `${frontBase}/static/novu-logo.png` : undefined,
+        software_id: oauthConfig.softwareId ?? DEFAULT_SOFTWARE_ID,
+        software_version: SOFTWARE_VERSION,
+      });
+    } catch (err) {
+      throw mapDiscoveryError(err, `MCP authorization server "${asMetadata.issuer}"`);
+    }
+  }
+
+  private async upsertPendingConnection(args: {
+    enablement: AgentMcpServerEntity;
+    subscriberMongoId: string;
+    command: GenerateMcpOAuthUrlCommand;
+    pkceVerifier: string;
+    expectedIssuer: string;
+    resource: string;
+    oauthClient: McpConnectionOAuthClient;
+    existing: McpConnectionEntity | null;
+  }): Promise<void> {
+    const { enablement, subscriberMongoId, command, pkceVerifier, expectedIssuer, resource, oauthClient, existing } =
+      args;
+    const oauthState = {
+      pkceVerifier,
+      initiatedAt: new Date(),
+      expectedIssuer,
+      resource,
+    };
+    const encryptedClient = encryptMcpConnectionOAuthClient(oauthClient);
 
     if (existing) {
       await this.mcpConnectionRepository.update(
@@ -126,6 +292,7 @@ export class GenerateMcpOAuthUrl {
           $set: {
             status: McpConnectionStatusEnum.PendingOAuth,
             oauthState,
+            oauthClient: encryptedClient,
           },
           $unset: { lastError: 1 },
         }
@@ -144,6 +311,7 @@ export class GenerateMcpOAuthUrl {
       authMode: McpConnectionAuthModeEnum.Novu,
       status: McpConnectionStatusEnum.PendingOAuth,
       oauthState,
+      oauthClient: encryptedClient,
     });
   }
 
@@ -175,28 +343,30 @@ export class GenerateMcpOAuthUrl {
     return encodeOAuthState(payload, signature);
   }
 
-  private buildAuthorizeUrl(config: NovuOAuthCatalogEntry, state: string, pkceVerifier: string | undefined): string {
-    const clientId = process.env[config.clientIdEnvVar];
-
-    if (!clientId) {
-      // Misconfigured server-side env, not a client error. 500 is the right shape.
-      throw new Error(`MCP OAuth client id env var ${config.clientIdEnvVar} is not configured.`);
-    }
-
+  private buildAuthorizeUrl(args: {
+    asMetadata: AuthorizationServerMetadata;
+    oauthClient: McpConnectionOAuthClient;
+    scopes: string[];
+    resource: string;
+    state: string;
+    pkceVerifier: string;
+  }): string {
+    const { asMetadata, oauthClient, scopes, resource, state, pkceVerifier } = args;
     const params = new URLSearchParams({
-      client_id: clientId,
+      client_id: oauthClient.clientId,
       redirect_uri: buildMcpOAuthRedirectUri(),
       response_type: 'code',
-      scope: config.scopes.join(' '),
       state,
+      code_challenge: deriveCodeChallenge(pkceVerifier),
+      code_challenge_method: 'S256',
+      resource,
     });
 
-    if (pkceVerifier) {
-      params.set('code_challenge', deriveCodeChallenge(pkceVerifier));
-      params.set('code_challenge_method', 'S256');
+    if (scopes.length > 0) {
+      params.set('scope', scopes.join(' '));
     }
 
-    return `${config.authorizeUrl}?${params.toString()}`;
+    return `${asMetadata.authorizationEndpoint}?${params.toString()}`;
   }
 
   private async getEnvironmentApiKey(environmentId: string): Promise<string> {
@@ -211,16 +381,59 @@ export class GenerateMcpOAuthUrl {
 }
 
 /**
- * Generate a PKCE code_verifier (RFC 7636 §4.1) — 32 bytes of randomness
+ * Decide whether to reuse the row's existing DCR-issued client. Returns the
+ * decrypted client when:
+ *  - the row has an `oauthClient`,
+ *  - the recorded `issuer` matches the AS metadata `issuer` (no rotation), and
+ *  - `clientSecretExpiresAt` is in the future (or absent, meaning non-expiring).
+ *
+ * Otherwise returns `undefined` and the caller re-registers.
+ */
+function pickReusableOAuthClient(
+  client: McpConnectionOAuthClient | undefined,
+  asIssuer: string
+): McpConnectionOAuthClient | undefined {
+  if (!client) return undefined;
+  if (client.issuer !== asIssuer) return undefined;
+  if (client.clientSecretExpiresAt && client.clientSecretExpiresAt.getTime() <= Date.now()) {
+    return undefined;
+  }
+
+  return decryptMcpConnectionOAuthClient(client);
+}
+
+function mapDiscoveryError(err: unknown, contextLabel: string): never {
+  if (err instanceof McpOAuthDiscoveryError) {
+    throw new UnprocessableEntityException({
+      statusCode: 422,
+      message: `${contextLabel}: ${err.message}`,
+      error: err.code,
+    });
+  }
+  if (err instanceof Error) {
+    throw err;
+  }
+  throw new Error(`${contextLabel}: unknown discovery error`);
+}
+
+function secondsSinceEpochToDate(seconds: number): Date | undefined {
+  // RFC 7591 §3.2.1: `client_secret_expires_at` of 0 means "never expires".
+  if (!seconds || seconds <= 0) {
+    return undefined;
+  }
+
+  return new Date(seconds * 1000);
+}
+
+/**
+ * Generate a PKCE `code_verifier` (RFC 7636 §4.1) — 32 bytes of randomness
  * encoded as base64url, yielding 43 chars within the 43-128 length window.
  */
 function generatePkceVerifier(): string {
   return base64UrlEncode(randomBytes(32));
 }
 
-/**
- * Derive the S256 code_challenge from a verifier (RFC 7636 §4.2).
- */
+/** Derive the S256 `code_challenge` from a verifier (RFC 7636 §4.2). */
 function deriveCodeChallenge(verifier: string): string {
   return base64UrlEncode(nodeCreateHash('sha256').update(verifier).digest());
 }

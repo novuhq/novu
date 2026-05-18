@@ -1,4 +1,4 @@
-export type ClaudeMcpServerCategory =
+export type McpServerCategory =
   | 'productivity'
   | 'communication'
   | 'code'
@@ -11,33 +11,33 @@ export type ClaudeMcpServerCategory =
 
 /**
  * Discriminator for which OAuth flow Novu uses to authorise a connection
- * to an MCP. The actual provider-specific OAuth metadata (URLs, env var
- * names, scopes) lives in a server-only catalog at
+ * to an MCP. The actual OAuth metadata (URLs, env var names, scopes) lives
+ * in a server-only catalog at
  * `apps/api/src/app/agents/utils/mcp-oauth-catalog.ts` so the values do
  * not ship in the dashboard JS bundle. This enum is exposed in
  * `@novu/shared` only so DTOs can reference it.
  */
-export type ClaudeMcpServerOAuthMode = 'none' | 'novu' | 'provider';
+export type McpServerOAuthMode = 'none' | 'novu';
 
-export type ClaudeMcpServer = {
+export type McpServer = {
   /** Stable identifier used as a key in selections */
   id: string;
   name: string;
   description: string;
   /** Remote MCP server URL (used to configure the connection) */
   url: string;
-  category: ClaudeMcpServerCategory;
+  category: McpServerCategory;
   /** Whether this server appears in the "Popular" section of the picker */
   popular: boolean;
   /**
    * High-level hint for the dashboard to render the right CTA
-   * ("Authorize" vs "Connect via provider" vs no auth needed). The
-   * authoritative configuration is server-side; this is render hints only.
+   * ("Authorize" vs no auth needed). The authoritative configuration is
+   * server-side; this is a render hint only.
    */
-  oauthMode?: ClaudeMcpServerOAuthMode;
+  oauthMode?: McpServerOAuthMode;
 };
 
-export const CLAUDE_MCP_SERVERS: ClaudeMcpServer[] = [
+export const MCP_SERVERS: McpServer[] = [
   // ── Popular ────────────────────────────────────────────────────────────────
   {
     id: 'slack',
@@ -75,7 +75,7 @@ export const CLAUDE_MCP_SERVERS: ClaudeMcpServer[] = [
     id: 'sentry',
     name: 'Sentry',
     description: 'Access error events, issues, and performance data from Sentry.',
-    url: 'https://mcp.sentry.io/sse',
+    url: 'https://mcp.sentry.dev/mcp',
     category: 'code',
     popular: true,
   },
@@ -427,4 +427,4 @@ export const CLAUDE_MCP_SERVERS: ClaudeMcpServer[] = [
   },
 ];
 
-export const CLAUDE_POPULAR_MCP_SERVERS = CLAUDE_MCP_SERVERS.filter((s) => s.popular);
+export const POPULAR_MCP_SERVERS = MCP_SERVERS.filter((s) => s.popular);

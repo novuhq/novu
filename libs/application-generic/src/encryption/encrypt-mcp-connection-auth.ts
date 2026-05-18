@@ -10,16 +10,34 @@ import { decryptApiKey, encryptApiKey } from './encrypt-provider';
  */
 const SECURE_AUTH_FIELDS = ['accessToken', 'refreshToken'] as const;
 
+/**
+ * Fields inside an `McpConnection.oauthClient` object that must be encrypted
+ * at rest. The list is intentionally separate from `SECURE_AUTH_FIELDS` so
+ * adding a new secret on the access-token side cannot accidentally encrypt
+ * the wrong field on the DCR client identity, and vice versa.
+ */
+const SECURE_OAUTH_CLIENT_FIELDS = ['clientSecret', 'registrationAccessToken'] as const;
+
 export interface McpConnectionAuthInput {
   accessToken?: string;
   refreshToken?: string;
   [key: string]: unknown;
 }
 
-function transformSecureFields<T extends object>(auth: T, transform: (value: string) => string): T {
-  const result: Record<string, unknown> = { ...(auth as Record<string, unknown>) };
+export interface McpConnectionOAuthClientInput {
+  clientSecret?: string;
+  registrationAccessToken?: string;
+  [key: string]: unknown;
+}
 
-  for (const key of SECURE_AUTH_FIELDS) {
+function transformFields<T extends object>(
+  source: T,
+  fieldList: readonly string[],
+  transform: (value: string) => string
+): T {
+  const result: Record<string, unknown> = { ...(source as Record<string, unknown>) };
+
+  for (const key of fieldList) {
     const value = result[key];
     if (typeof value === 'string' && value.length > 0) {
       result[key] = transform(value);
@@ -41,7 +59,7 @@ export function encryptMcpConnectionAuth<T extends object | undefined>(auth: T):
     return auth;
   }
 
-  return transformSecureFields(auth, encryptApiKey);
+  return transformFields(auth, SECURE_AUTH_FIELDS, encryptApiKey);
 }
 
 /**
@@ -55,5 +73,29 @@ export function decryptMcpConnectionAuth<T extends object | undefined>(auth: T):
     return auth;
   }
 
-  return transformSecureFields(auth, decryptApiKey);
+  return transformFields(auth, SECURE_AUTH_FIELDS, decryptApiKey);
+}
+
+/**
+ * Encrypt every secret field inside an `mcp_connection.oauthClient` object
+ * (DCR client credentials per RFC 7591). Idempotent.
+ */
+export function encryptMcpConnectionOAuthClient<T extends object | undefined>(client: T): T {
+  if (!client) {
+    return client;
+  }
+
+  return transformFields(client, SECURE_OAUTH_CLIENT_FIELDS, encryptApiKey);
+}
+
+/**
+ * Decrypt every secret field inside an `mcp_connection.oauthClient` object.
+ * Idempotent — legacy unprefixed values pass through unchanged.
+ */
+export function decryptMcpConnectionOAuthClient<T extends object | undefined>(client: T): T {
+  if (!client) {
+    return client;
+  }
+
+  return transformFields(client, SECURE_OAUTH_CLIENT_FIELDS, decryptApiKey);
 }

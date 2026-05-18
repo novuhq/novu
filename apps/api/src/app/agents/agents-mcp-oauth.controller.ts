@@ -39,7 +39,8 @@ export class AgentsMcpOAuthController {
     @Query('state') state?: string,
     @Query('code') code?: string,
     @Query('error') error?: string,
-    @Query('error_description') errorDescription?: string
+    @Query('error_description') errorDescription?: string,
+    @Query('iss') iss?: string
   ): Promise<void> {
     if (!state) {
       throw new BadRequestException('Missing required OAuth parameter: state');
@@ -52,6 +53,7 @@ export class AgentsMcpOAuthController {
         state,
         providerCode: code,
         error: callbackError,
+        iss,
       })
     );
 

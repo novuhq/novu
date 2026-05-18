@@ -1,12 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository } from '@novu/dal';
-import {
-  CLAUDE_MCP_SERVERS,
-  type ClaudeMcpServerOAuthMode,
-  McpConnectionAuthModeEnum,
-  McpConnectionScopeEnum,
-} from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum, type McpServerOAuthMode } from '@novu/shared';
 
 import { trackAgentMcpServerEnabled } from '../../agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../dtos/mcp-server.dto';
@@ -39,12 +34,10 @@ export class EnableAgentMcpServer {
   ) {}
 
   async execute(command: EnableAgentMcpServerCommand): Promise<AgentMcpServerEnablementResponseDto> {
-    const catalogEntry = CLAUDE_MCP_SERVERS.find((entry) => entry.id === command.mcpId);
+    const catalogEntry = MCP_SERVERS.find((entry) => entry.id === command.mcpId);
 
     if (!catalogEntry) {
-      throw new BadRequestException(
-        `Unknown MCP server "${command.mcpId}". Must match a catalog id from CLAUDE_MCP_SERVERS.`
-      );
+      throw new BadRequestException(`Unknown MCP server "${command.mcpId}". Must match a catalog id from MCP_SERVERS.`);
     }
 
     const agent = await this.agentRepository.findOne(
@@ -171,10 +164,8 @@ function isDuplicateKeyError(err: unknown): err is MongoDuplicateKeyError {
   return code === 11000;
 }
 
-function deriveDefaultAuthMode(catalogMode: ClaudeMcpServerOAuthMode): McpConnectionAuthModeEnum {
+function deriveDefaultAuthMode(catalogMode: McpServerOAuthMode): McpConnectionAuthModeEnum {
   switch (catalogMode) {
-    case 'provider':
-      return McpConnectionAuthModeEnum.Provider;
     case 'none':
       return McpConnectionAuthModeEnum.None;
     case 'novu':

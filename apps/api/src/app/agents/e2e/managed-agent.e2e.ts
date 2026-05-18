@@ -29,7 +29,7 @@ const integrationRepository = new IntegrationRepository();
 function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> = {}) {
   return {
     providerId: AgentRuntimeProviderIdEnum.Anthropic,
-    capabilities: { mcpServers: true, tools: true, model: true, systemPrompt: true, skills: true },
+    capabilities: { mcpServers: true, tools: true, model: true, systemPrompt: true, skills: true, tokenVault: false },
     validateCredentials: sinon.stub().resolves(),
     createAgent: sinon.stub().resolves({ externalAgentId: FAKE_EXTERNAL_AGENT_ID }),
     deleteAgent: sinon.stub().resolves(),
@@ -738,7 +738,7 @@ describe('Managed Agents API #novu-v2', () => {
     // The PATCH endpoint accepts full {externalId, name, url} MCP server DTOs,
     // but a caller with agent write access must never be able to attach an
     // arbitrary external MCP endpoint to a managed agent (tool-chain hijack /
-    // exfiltration). The use-case resolves every entry against CLAUDE_MCP_SERVERS
+    // exfiltration). The use-case resolves every entry against MCP_SERVERS
     // before forwarding to the provider, ignoring the caller-supplied url.
     describe('mcpServers catalog enforcement', () => {
       it('should reject an MCP server whose name is not in the trusted catalog', async () => {

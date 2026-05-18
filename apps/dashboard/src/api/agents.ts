@@ -334,6 +334,7 @@ export type AgentRuntimeCapabilities = {
   model: boolean;
   systemPrompt: boolean;
   skills: boolean;
+  tokenVault: boolean;
 };
 
 export type AgentRuntimeConfig = {
@@ -383,7 +384,7 @@ export async function patchAgentRuntimeConfig(
 
 export type McpConnectionScope = 'environment' | 'agent_mcp' | 'agent_mcp_subscriber';
 
-export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
+export type McpConnectionAuthMode = 'novu' | 'none';
 
 export type AgentMcpServerEnablement = {
   id: string;
@@ -477,7 +478,6 @@ export type McpConnectionView = {
   status: McpConnectionStatus;
   agentMcpServerId?: string;
   subscriberId?: string;
-  providerVaultId?: string;
   expiresAt?: string;
   connectedAt?: string;
 };

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { CLAUDE_MCP_SERVERS } from '@novu/shared';
+import { MCP_SERVERS } from '@novu/shared';
 
 import { SyncAgentMcpServersCommand } from './sync-agent-mcp-servers.command';
 
@@ -81,7 +81,7 @@ export class SyncAgentMcpServers {
 
     const projection = enabled
       .map((row) => {
-        const catalog = CLAUDE_MCP_SERVERS.find((c) => c.id === row.mcpId);
+        const catalog = MCP_SERVERS.find((c) => c.id === row.mcpId);
 
         if (!catalog) {
           return null;
@@ -134,7 +134,7 @@ export class SyncAgentMcpServers {
             $set: {
               externalProjection: {
                 providerId,
-                mcpServerName: CLAUDE_MCP_SERVERS.find((c) => c.id === row.mcpId)?.name ?? row.mcpId,
+                mcpServerName: MCP_SERVERS.find((c) => c.id === row.mcpId)?.name ?? row.mcpId,
                 syncedAt,
               },
               status: 'active',

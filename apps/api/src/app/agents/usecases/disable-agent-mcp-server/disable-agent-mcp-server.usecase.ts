@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { AgentMcpServerRepository, AgentRepository, McpConnectionEntity, McpConnectionRepository } from '@novu/dal';
-import { McpConnectionAuthModeEnum } from '@novu/shared';
+import { AgentMcpServerRepository, AgentRepository, McpConnectionRepository } from '@novu/dal';
 
 import { trackAgentMcpServerDisabled } from '../../agent-analytics';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
@@ -11,14 +10,10 @@ import { DisableAgentMcpServerCommand } from './disable-agent-mcp-server.command
 /**
  * Disable a catalog MCP on an agent.
  *
- *   1. Walk every `mcp_connection` row scoped to the `agent_mcp_server`
- *      we are about to remove. For provider-managed rows, log the orphan
- *      vault id so a follow-up reaper job can revoke it on the provider
- *      (the runtime provider interface does not yet expose a vault
- *      delete method; until it does, we record the orphan here).
- *   2. Cascade-delete the `mcp_connection` rows.
- *   3. Delete the `agent_mcp_server` row.
- *   4. Project the new (smaller) enabled set onto the runtime provider via
+ *   1. Cascade-delete every `mcp_connection` row scoped to the
+ *      `agent_mcp_server` we are about to remove.
+ *   2. Delete the `agent_mcp_server` row.
+ *   3. Project the new (smaller) enabled set onto the runtime provider via
  *      `SyncAgentMcpServers`.
  */
 @Injectable()
@@ -59,14 +54,6 @@ export class DisableAgentMcpServer {
       return;
     }
 
-    const connections = await this.mcpConnectionRepository.findByAgentMcpServer({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      agentMcpServerId: enablement._id,
-    });
-
-    this.logProviderVaultOrphans(connections, command, agent._id);
-
     await this.mcpConnectionRepository.delete({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -95,31 +82,5 @@ export class DisableAgentMcpServer {
       agentIdentifier: command.agentIdentifier,
       mcpId: command.mcpId,
     });
-  }
-
-  private logProviderVaultOrphans(
-    connections: McpConnectionEntity[],
-    command: DisableAgentMcpServerCommand,
-    agentId: string
-  ): void {
-    const providerOrphans = connections.filter(
-      (c) => c.authMode === McpConnectionAuthModeEnum.Provider && c.providerRef?.vaultId
-    );
-
-    if (providerOrphans.length === 0) {
-      return;
-    }
-
-    this.logger.warn(
-      {
-        agentId,
-        agentIdentifier: command.agentIdentifier,
-        mcpId: command.mcpId,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        orphanedVaultIds: providerOrphans.map((c) => c.providerRef?.vaultId).filter(Boolean),
-      },
-      'MCP disabled with provider-managed connections; vault entries are orphaned and require provider-side cleanup.'
-    );
   }
 }
