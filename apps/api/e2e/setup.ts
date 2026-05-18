@@ -33,7 +33,13 @@ process.emitWarning = ((warning: string | Error, ...args: any[]) => {
 
 async function getDatabaseConnection(): Promise<Connection> {
   if (!databaseConnection) {
-    databaseConnection = await dalService.connect(process.env.MONGO_URL);
+    const mongoUrl = process.env.MONGO_URL;
+
+    if (!mongoUrl) {
+      throw new Error('MONGO_URL must be set for API e2e tests');
+    }
+
+    databaseConnection = await dalService.connect(mongoUrl);
   }
 
   return databaseConnection;
