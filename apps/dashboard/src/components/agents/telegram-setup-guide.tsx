@@ -104,6 +104,11 @@ export function TelegramSetupGuide({
 
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
+  // Set only after a successful setWebhook call; also used to detect webhook configured
+  // outside this session (e.g. mobile flow) so step 3 can still issue a subscriber link.
+  const hasWebhookSecret =
+    typeof selectedIntegration?.credentials?.token === 'string' &&
+    selectedIntegration.credentials.token.length > 0;
 
   // Poll for credentials only while the sidebar is open AND the user hasn't saved a token yet.
   // Stops the moment the drawer closes or credentials appear.
@@ -154,7 +159,9 @@ export function TelegramSetupGuide({
     },
   });
 
-  const isWebhookConfigured = Boolean(configuredWebhookUrl);
+  const isWebhookConfigured = Boolean(configuredWebhookUrl) || hasWebhookSecret;
+
+  const displayBotUsername = botUsername ?? subscriberLink?.botUsername ?? null;
 
   const {
     mutate: issueSubscriberLink,
@@ -174,6 +181,7 @@ export function TelegramSetupGuide({
       );
     },
     onSuccess: (result) => {
+      setBotUsername(result.botUsername);
       setSubscriberLink(result);
     },
     onError: (err: unknown) => {
@@ -187,11 +195,11 @@ export function TelegramSetupGuide({
 
   // Once the webhook is registered, auto-issue a subscriber-link for the
   // current dashboard user so step 3 ("Send a test message") opens a deep link
-  // that automatically links this Telegram chat to a test subscriber.
+  // that automatically links this Telegram chat to a test subscriber. Also
+  // resolves botUsername when configureTelegram did not run in this session.
   useEffect(() => {
     if (
       isWebhookConfigured &&
-      botUsername &&
       testSubscriberId &&
       !subscriberLink &&
       !isIssuingSubscriberLink &&
@@ -201,7 +209,6 @@ export function TelegramSetupGuide({
     }
   }, [
     isWebhookConfigured,
-    botUsername,
     testSubscriberId,
     subscriberLink,
     isIssuingSubscriberLink,
@@ -305,18 +312,18 @@ export function TelegramSetupGuide({
           </span>
         }
         rightContent={
-          botUsername ? (
+          displayBotUsername ? (
             <div className="flex flex-col items-start gap-0">
               <SetupButton
-                href={subscriberLink?.deepLinkUrl ?? `https://t.me/${botUsername}`}
+                href={subscriberLink?.deepLinkUrl ?? `https://t.me/${displayBotUsername}`}
                 leadingIcon={<RiSendPlaneLine className="size-3.5" />}
               >
-                {subscriberLink ? `Connect & test @${botUsername}` : `Open @${botUsername}`}
+                {subscriberLink ? `Connect & test @${displayBotUsername}` : `Open @${displayBotUsername}`}
               </SetupButton>
               {step3Status === 'current' && (
                 <TelegramQrInline
-                  url={subscriberLink?.deepLinkUrl ?? `https://t.me/${botUsername}`}
-                  username={botUsername}
+                  url={subscriberLink?.deepLinkUrl ?? `https://t.me/${displayBotUsername}`}
+                  username={displayBotUsername}
                 />
               )}
             </div>
