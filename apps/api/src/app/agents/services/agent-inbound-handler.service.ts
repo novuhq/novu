@@ -448,9 +448,9 @@ export class AgentInboundHandler {
 
   /**
    * Process a Telegram `/start <code>` deep-link payload as a subscriber-link
-   * request. Returns `true` if the message was consumed as a control payload
-   * (so downstream bridge execution must be skipped), `false` if we couldn't
-   * derive a chatId and the message should fall through to normal handling.
+   * request. `/start <code>` is control input and is always consumed here —
+   * the handler never falls through to normal bridge processing so the code
+   * cannot be persisted or forwarded as regular content.
    */
   private async handleTelegramSubscriberLink(
     agentId: string,
@@ -462,31 +462,30 @@ export class AgentInboundHandler {
     const chatId = extractTelegramChatId(thread);
     if (!chatId) {
       this.logger.warn(
-        `[agent:${agentId}] Telegram /start payload received but channelId is missing — falling back to normal handling`
+        `[agent:${agentId}] Telegram /start payload received but channelId is missing — dropping as invalid control input`
       );
+      await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
 
-      return false;
+      return true;
     }
 
-    const payload = await this.startCodeService.peek(code);
+    const result = await this.startCodeService.consumeIfMatches(code, {
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      integrationId: config.integrationId,
+      agentIdentifier: config.agentIdentifier,
+    });
 
-    if (payload) {
-      const sameScope =
-        payload._environmentId === config.environmentId &&
-        payload._organizationId === config.organizationId &&
-        payload._integrationId === config.integrationId &&
-        payload.agentIdentifier === config.agentIdentifier;
+    if (result.status === 'mismatch') {
+      await this.safePostInboundReply(thread, SUBSCRIBER_LINK_WRONG_BOT_REPLY, agentId, message);
 
-      if (!sameScope) {
-        await this.safePostInboundReply(thread, SUBSCRIBER_LINK_WRONG_BOT_REPLY, agentId, message);
+      return true;
+    }
 
-        return true;
-      }
-
-      await this.startCodeService.delete(code);
-
+    if (result.status === 'consumed') {
+      const { payload } = result;
       try {
-        const result = await this.linkTelegramChatToSubscriber.execute(
+        const linkResult = await this.linkTelegramChatToSubscriber.execute(
           LinkTelegramChatToSubscriberCommand.create({
             environmentId: payload._environmentId,
             organizationId: payload._organizationId,
@@ -497,7 +496,7 @@ export class AgentInboundHandler {
           })
         );
 
-        const reply = result.created ? SUBSCRIBER_LINK_SUCCESS_REPLY : SUBSCRIBER_LINK_DUPLICATE_REPLY;
+        const reply = linkResult.created ? SUBSCRIBER_LINK_SUCCESS_REPLY : SUBSCRIBER_LINK_DUPLICATE_REPLY;
         await this.safePostInboundReply(thread, reply, agentId, message);
       } catch (err) {
         if (err instanceof NotFoundException) {
