@@ -1,5 +1,6 @@
 export { ActiveJobsMetricQueueService } from './active-jobs-metric-queue.service';
 export { InboundParseQueueService } from './inbound-parse-queue.service';
+export { ManagedAgentQueueService } from './managed-agent-queue.service';
 export { QueueBaseService } from './queue-base.service';
 export { StandardQueueService } from './standard-queue.service';
 export { SubscriberProcessQueueService } from './subscriber-process-queue.service';

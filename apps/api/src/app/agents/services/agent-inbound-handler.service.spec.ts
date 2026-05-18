@@ -51,6 +51,12 @@ describe('AgentInboundHandler', () => {
     const subscriberRepository = {
       findBySubscriberId: sinon.stub(),
     };
+    const managedExecutor = {
+      execute: sinon.stub().resolves(undefined),
+    };
+    const agentRepository = {
+      findOne: sinon.stub().resolves(null),
+    };
     const environmentRepository = {
       findOne: sinon.stub().resolves(null),
     };
@@ -65,6 +71,8 @@ describe('AgentInboundHandler', () => {
       subscriberResolver as any,
       conversationService as any,
       bridgeExecutor as any,
+      managedExecutor as any,
+      agentRepository as any,
       subscriberRepository as any,
       environmentRepository as any,
       analyticsService as any,

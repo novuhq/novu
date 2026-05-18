@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import type { ClientSession } from 'mongoose';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
@@ -57,6 +57,24 @@ export class ProvisionManagedAgent {
     const resolvedApiKey = decryptedCredentials.apiKey;
 
     const runtimeProvider = getAgentRuntimeProvider(command.providerId, resolvedApiKey);
+
+    if (command.externalEnvironmentId && command.externalEnvironmentId !== decryptedCredentials.externalEnvironmentId) {
+      const providerEnvironment = await runtimeProvider.getEnvironment(command.externalEnvironmentId);
+      const nextCredentials = encryptCredentials({
+        ...decryptedCredentials,
+        externalEnvironmentId: providerEnvironment.id,
+      });
+
+      await this.integrationRepository.update(
+        {
+          _id: resolvedIntegrationId,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        { $set: { credentials: nextCredentials } },
+        session ? { session } : {}
+      );
+    }
 
     let externalAgentId: string;
     let adoptedName: string | undefined;

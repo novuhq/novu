@@ -28,6 +28,11 @@ export type GetAgentResult = {
   name: string;
 };
 
+export type GetEnvironmentResult = {
+  id: string;
+  name: string;
+};
+
 export type UpdateAgentRuntimeConfigInput = {
   model?: string;
   systemPrompt?: string;
@@ -75,6 +80,11 @@ export interface IAgentRuntimeProvider {
    * agent exists (404 if not), so there is no need to call validateCredentials() first.
    */
   getAgent(externalAgentId: string): Promise<GetAgentResult>;
+
+  /**
+   * Fetch environment information.
+   */
+  getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult>;
 
   /**
    * Permanently delete the agent on the provider side.

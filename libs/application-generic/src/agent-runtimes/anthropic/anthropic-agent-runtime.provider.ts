@@ -22,6 +22,7 @@ import type {
   CreateAgentInput,
   CreateAgentResult,
   GetAgentResult,
+  GetEnvironmentResult,
   IAgentRuntimeProvider,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
@@ -148,6 +149,21 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
         this.normaliseError(err);
       }
     });
+  }
+
+  async getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult> {
+    const client = this.buildClient();
+
+    try {
+      const env = await client.beta.environments.retrieve(externalEnvironmentId);
+
+      return {
+        id: env.id,
+        name: env.name,
+      };
+    } catch (err) {
+      this.normaliseError(err);
+    }
   }
 
   async deleteAgent(externalAgentId: string): Promise<void> {

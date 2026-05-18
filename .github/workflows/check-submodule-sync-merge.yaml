@@ -24,11 +24,13 @@ jobs:
     steps:
       - name: Check if secret exists
         id: secret-check
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
         run: |
-          if [[ -n "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo "has_token=true" >> $GITHUB_OUTPUT
+          if [ -n "${SUBMODULES_TOKEN:-}" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
           else
-            echo "has_token=false" >> $GITHUB_OUTPUT
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
           fi
 
   validate-submodule-sync:
@@ -38,7 +40,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
           submodules: true

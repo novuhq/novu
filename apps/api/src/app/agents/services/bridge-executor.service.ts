@@ -66,7 +66,7 @@ export interface BridgeReaction {
   sourceMessageStoredAttachments?: StoredAttachment[];
 }
 
-export interface BridgeExecutorParams {
+export interface AgentExecutionParams {
   event: AgentEventEnum;
   config: ResolvedAgentConfig;
   conversation: ConversationEntity;
@@ -96,7 +96,7 @@ export class BridgeExecutorService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(params: BridgeExecutorParams): Promise<void> {
+  async execute(params: AgentExecutionParams): Promise<void> {
     const agentIdentifier = params.config.agentIdentifier;
 
     try {
@@ -225,7 +225,7 @@ export class BridgeExecutorService {
     return url.toString();
   }
 
-  private async buildPayload(params: BridgeExecutorParams): Promise<AgentBridgeRequest> {
+  private async buildPayload(params: AgentExecutionParams): Promise<AgentBridgeRequest> {
     const { event, config, conversation, subscriber, history, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 

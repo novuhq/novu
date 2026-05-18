@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { IntegrationEntity, IntegrationRepository } from '@novu/dal';
+import { ICredentialsEntity, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 
 import { decryptCredentials } from '../../encryption';
 import { GetDecryptedIntegrationsCommand } from './get-decrypted-integrations.command';
@@ -37,10 +37,15 @@ export class GetDecryptedIntegrations {
       .filter((integration) => integration)
       .map((integration: IntegrationEntity) => {
         if (command.returnCredentials === false) {
-          // Don't include credentials
-          const { credentials, ...integrationWithoutCredentials } = integration;
-
-          return integrationWithoutCredentials as IntegrationEntity;
+          /*
+           * Return an empty `credentials` object instead of omitting the field.
+           * Older `@novu/api` SDK versions (e.g. 3.15.0) declare `credentials` as a
+           * required object in their zod schema, so omitting it causes response
+           * validation to fail. An empty object preserves the same effective
+           * "no credentials" semantics while keeping previously released
+           * SDK clients working.
+           */
+          return { ...integration, credentials: {} as ICredentialsEntity };
         }
 
         return GetDecryptedIntegrations.getDecryptedCredentials(integration);

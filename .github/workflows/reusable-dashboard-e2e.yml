@@ -44,16 +44,18 @@ jobs:
     steps:
       - id: determine_run_type
         name: Determing community vs enterprise run
+        env:
+          SUBMODULES_TOKEN: ${{ secrets.SUBMODULES_TOKEN }}
         run: |
-          if ! [[ -z "${{ secrets.SUBMODULES_TOKEN }}" ]]; then
-            echo "enterprise_run=true" >> $GITHUB_OUTPUT
+          if [ -n "${SUBMODULES_TOKEN:-}" ]; then
+            echo "enterprise_run=true" >> "$GITHUB_OUTPUT"
           else
-            echo "enterprise_run=false" >> $GITHUB_OUTPUT
+            echo "enterprise_run=false" >> "$GITHUB_OUTPUT"
           fi
 
       - id: checkout-enterprise-code
         name: Checkout enterprise code from the submodule
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         if: steps.determine_run_type.outputs.enterprise_run == 'true'
         with:
           submodules: true
@@ -61,7 +63,7 @@ jobs:
 
       - id: checkout-community-code
         name: Checkout community code
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         if: steps.determine_run_type.outputs.enterprise_run != 'true'
 
       - uses: ./.github/actions/setup-project
@@ -92,7 +94,7 @@ jobs:
           echo CLERK_SECRET_KEY=${{ secrets.CLERK_E2E_SECRET_KEY }} >> .env.playwright
           echo NODE_ENV=test >> .env.playwright
 
-      - uses: mansagroup/nrwl-nx-action@v3
+      - uses: mansagroup/nrwl-nx-action@a531870269e0c1eeb7af6247c4a206c31cae82cc # v3
         env:
           NX_NO_CLOUD: ${{ secrets.NX_CLOUD_ACCESS_TOKEN == '' && 'true' || 'false' }}
         with:
@@ -136,7 +138,7 @@ jobs:
         run: echo "version=$(pnpm list @playwright/test --depth=0 --json | jq -r '.[] | .dependencies["@playwright/test"].version')" >> $GITHUB_OUTPUT
 
       - name: Cache Playwright browsers
-        uses: useblacksmith/cache@v5
+        uses: useblacksmith/cache@71c7c918062ba3861252d84b07fe5ab2a6b467a6 # v5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -160,7 +162,7 @@ jobs:
           NOVU_ENTERPRISE: ${{ steps.determine_run_type.outputs.enterprise_run }}
         run: pnpm test:e2e --shard=${{ matrix.containers }}/${{ matrix.total }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ !cancelled() }}
         with:
           name: dashboard-blob-report-${{ matrix.containers }}
@@ -173,13 +175,13 @@ jobs:
     needs: [e2e_dashboard]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 22.22.1
 
       - name: Download blob reports from GitHub Actions Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           path: dashboard-all-blob-reports
           pattern: dashboard-blob-report-*
@@ -189,7 +191,7 @@ jobs:
         run: npx playwright merge-reports --reporter html ./dashboard-all-blob-reports
 
       - name: Upload HTML report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dashboard-html-report--attempt-${{ github.run_attempt }}
           path: playwright-report
