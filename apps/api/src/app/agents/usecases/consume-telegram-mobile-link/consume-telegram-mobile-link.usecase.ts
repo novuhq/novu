@@ -90,17 +90,23 @@ export class ConsumeTelegramMobileLink {
       let deepLinkUrl: string | undefined;
 
       if (payload.sid) {
-        const subscriberLink = await this.issueTelegramSubscriberLink.execute(
-          IssueTelegramSubscriberLinkCommand.create({
-            userId: 'telegram-mobile-link',
-            environmentId: payload.env,
-            organizationId: payload.org,
-            agentIdentifier: payload.aid,
-            integrationId: integration._id,
-            subscriberId: payload.sid,
-          })
-        );
-        deepLinkUrl = subscriberLink.deepLinkUrl;
+        try {
+          const subscriberLink = await this.issueTelegramSubscriberLink.execute(
+            IssueTelegramSubscriberLinkCommand.create({
+              userId: 'telegram-mobile-link',
+              environmentId: payload.env,
+              organizationId: payload.org,
+              agentIdentifier: payload.aid,
+              integrationId: integration._id,
+              subscriberId: payload.sid,
+            })
+          );
+          deepLinkUrl = subscriberLink.deepLinkUrl;
+        } catch (err) {
+          this.logger.warn(
+            `Telegram subscriber-link issue failed for integrationId=${integration._id}, subscriberId=${payload.sid}: ${(err as Error).message}`
+          );
+        }
       }
 
       return {
