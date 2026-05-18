@@ -24,6 +24,10 @@ jobs:
   find-flags:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Find LaunchDarkly feature flags in diff
+    # Skip on fork PRs: `LD_ACCESS_TOKEN` is unavailable, so LaunchDarkly's
+    # find-code-references action fails with "`access-token` is required".
+    # Same `head.repo.fork` gate as pr-labeler.yml.
+    if: ${{ github.event.pull_request.head.repo.fork != true }}
     environment: Linting
     steps:
       - name: Checkout
