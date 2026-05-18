@@ -62,12 +62,20 @@ export function TelegramSetupGuide({
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
 
+  // Guards the auto-configure effect below from looping on failure. Without it,
+  // a failed configureTelegram() (e.g. Telegram setWebhook rate-limit) would
+  // leave isWebhookConfigured=false and isConfiguring=false, and the effect
+  // would immediately re-fire — generating an unbounded burst of webhook
+  // registration attempts and getting rate-limited further by Telegram.
+  const autoConfigureAttemptedRef = useRef(false);
+
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
   useEffect(() => {
     setIsConnected(false);
     setCredentialsSavedLocally(false);
     setConfiguredWebhookUrl(null);
     setBotUsername(null);
+    autoConfigureAttemptedRef.current = false;
   }, [integrationId]);
 
   const handleConnected = useCallback(() => {
@@ -139,13 +147,28 @@ export function TelegramSetupGuide({
 
   const isWebhookConfigured = Boolean(configuredWebhookUrl);
 
-  // When credentials already exist (e.g. user revisiting the guide), auto-configure the webhook
-  // so botUsername is populated and the QR code is available for step 3.
+  // Every code path that fires the webhook configuration goes through this
+  // helper so the auto-configure effect cannot also fire after a manual
+  // attempt fails. See autoConfigureAttemptedRef above for the rate-limit
+  // loop this prevents.
+  const runConfigureTelegram = useCallback(() => {
+    autoConfigureAttemptedRef.current = true;
+    configureTelegram();
+  }, [configureTelegram]);
+
+  // When credentials already exist (e.g. user revisiting the guide, or the
+  // mobile flow just dropped a token onto the integration), auto-configure
+  // once so botUsername is populated and the QR code is available for step 3.
   useEffect(() => {
-    if (hasCredentials && !isWebhookConfigured && !isConfiguring) {
-      configureTelegram();
+    if (
+      hasCredentials &&
+      !isWebhookConfigured &&
+      !isConfiguring &&
+      !autoConfigureAttemptedRef.current
+    ) {
+      runConfigureTelegram();
     }
-  }, [hasCredentials, integrationId, isWebhookConfigured, isConfiguring, configureTelegram]);
+  }, [hasCredentials, isWebhookConfigured, isConfiguring, runConfigureTelegram]);
 
   const base = stepOffset;
 
@@ -288,7 +311,7 @@ export function TelegramSetupGuide({
           onClose={() => setIsCredentialsSidebarOpen(false)}
           onSaveSuccess={() => {
             setCredentialsSavedLocally(true);
-            configureTelegram();
+            runConfigureTelegram();
           }}
           agentOnboarding
           agentIdentifier={agent.identifier}
@@ -308,7 +331,7 @@ export function TelegramSetupGuide({
         onClose={() => setIsCredentialsSidebarOpen(false)}
         onSaveSuccess={() => {
           setCredentialsSavedLocally(true);
-          configureTelegram();
+          runConfigureTelegram();
         }}
         agentOnboarding
         agentIdentifier={agent.identifier}

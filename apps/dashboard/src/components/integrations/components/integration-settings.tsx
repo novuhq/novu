@@ -131,7 +131,14 @@ export function IntegrationSettings({
   const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
   const isWhatsAppOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.WhatsAppBusiness;
   const isTelegramProvider = provider.id === ChatProviderIdEnum.Telegram;
-  const showTelegramPaste = isTelegramProvider && !isReadOnly;
+  // The BotFather paste helper is an onboarding affordance — once the integration
+  // already has a saved bot token, the textarea and mobile QR card are noise
+  // (and the "Auto-filled from the BotFather message above…" hint becomes
+  // misleading), so hide all of it and fall back to the regular API token field.
+  const telegramApiToken = integration?.credentials?.[CredentialsKeyEnum.ApiToken];
+  const hasExistingTelegramToken =
+    isTelegramProvider && typeof telegramApiToken === 'string' && telegramApiToken.trim().length > 0;
+  const showTelegramPaste = isTelegramProvider && !isReadOnly && !hasExistingTelegramToken;
   // Picks the QR variant: agent flow when we already have agent + integration,
   // integration-store flow in the create flow where neither exists yet, none
   // otherwise (e.g. plain edit of a non-agent Telegram integration).
