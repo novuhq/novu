@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
+import { CalculateLimitNovuIntegration } from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   ConversationActivityRepository,
   ConversationRepository,
   IntegrationRepository,
+  MessageRepository,
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
@@ -36,6 +38,7 @@ import { USE_CASES } from './usecases';
     ConversationRepository,
     ConversationActivityRepository,
     IntegrationRepository,
+    MessageRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
@@ -45,6 +48,7 @@ import { USE_CASES } from './usecases';
     BridgeExecutorService,
     ManagedExecutorService,
     ChatSdkService,
+    CalculateLimitNovuIntegration,
   ],
   exports: [...USE_CASES, ChatSdkService],
 })

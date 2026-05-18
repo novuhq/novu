@@ -1,13 +1,14 @@
 import {
   CallHandler,
   ExecutionContext,
+  ForbiddenException,
   HttpException,
   Injectable,
   NestInterceptor,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { ProductFeature } from '@novu/application-generic';
+import { isAgentSharedInboxEnabled, ProductFeature } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import {
   ApiServiceLevelEnum,
@@ -42,6 +43,13 @@ export class ProductFeatureInterceptor implements NestInterceptor {
       throw new UnauthorizedException();
     }
 
+    if (
+      requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS &&
+      process.env.IS_SELF_HOSTED === 'true'
+    ) {
+      return next.handle();
+    }
+
     const { organizationId } = user;
 
     const organization = await this.organizationRepository.findById(organizationId);
@@ -53,6 +61,10 @@ export class ProductFeatureInterceptor implements NestInterceptor {
     if (!enabled) {
       // TODO: Reuse PaymentRequiredException from EE billing module.
       throw new HttpException('Payment Required', 402);
+    }
+
+    if (requestedFeature === ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION && !isAgentSharedInboxEnabled()) {
+      throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
     }
 
     return next.handle();

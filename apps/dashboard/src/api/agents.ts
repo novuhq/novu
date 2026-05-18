@@ -221,6 +221,18 @@ export type AgentIntegrationEmbedded = {
   providerId: string;
   channel: ChannelTypeEnum;
   active: boolean;
+  /**
+   * Cloud only. The Novu shared inbox address for this agent when the shared-inbox
+   * feature is enabled. The dashboard uses this as the headline inbound address and
+   * to render the shared inbox row in the inbox list.
+   */
+  sharedInboundAddress?: string;
+  /**
+   * Cloud only. When `true`, the worker drops inbound mail addressed to this
+   * agent on the shared `agentconnect.sh` domain. Custom-domain routes still
+   * deliver. Only meaningful on the NovuAgent integration.
+   */
+  sharedInboxDisabled?: boolean;
 };
 
 /** Agent–integration link row returned by GET /agents/:identifier/integrations */
@@ -377,6 +389,22 @@ export async function patchAgentRuntimeConfig(
   const response = await patch<AgentRuntimeConfigEnvelope>(
     `/agents/${encodeURIComponent(agentIdentifier)}/runtime/config`,
     { environment, body }
+  );
+
+  return response.data;
+}
+
+type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
+
+/** Enable or disable the Novu shared inbox for a single agent. */
+export async function setAgentInboxSharedDisabled(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  disabled: boolean
+): Promise<AgentIntegrationLink> {
+  const response = await patch<AgentIntegrationResponseEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/inbox/shared`,
+    { environment, body: { disabled } }
   );
 
   return response.data;

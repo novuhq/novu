@@ -47,6 +47,7 @@ import {
   ListAgentsResponseDto,
   PatchAgentRuntimeConfigRequestDto,
   UpdateAgentBridgeRequestDto,
+  UpdateAgentInboxSharedRequestDto,
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
@@ -86,6 +87,8 @@ import { SendWhatsAppTestTemplateCommand } from './usecases/send-whatsapp-test-t
 import { SendWhatsAppTestTemplate } from './usecases/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
+import { UpdateAgentInboxSharedCommand } from './usecases/update-agent-inbox-shared/update-agent-inbox-shared.command';
+import { UpdateAgentInboxShared } from './usecases/update-agent-inbox-shared/update-agent-inbox-shared.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
 import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfigCommand } from './usecases/update-agent-runtime-config/update-agent-runtime-config.command';
@@ -115,7 +118,8 @@ export class AgentsController {
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly updateAgentRuntimeConfigUsecase: UpdateAgentRuntimeConfig,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
-    private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate
+    private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
+    private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
   ) {}
 
   @Get('/emoji')
@@ -376,6 +380,34 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         targetAddress: body.targetAddress,
+      })
+    );
+  }
+
+  @Patch('/:identifier/inbox/shared')
+  @ApiResponse(AgentIntegrationResponseDto)
+  @ApiOperation({
+    summary: 'Enable or disable the Novu shared inbox for an agent',
+    description:
+      'Disabling drops inbound mail addressed to this agent on the shared `agentconnect.sh` domain — custom-domain ' +
+      'routes continue to deliver. Refused when no custom-domain inbox is configured (would leave the agent with ' +
+      'zero inbound paths).',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or its Novu Email integration was not found.' })
+  @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateAgentInboxShared(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: UpdateAgentInboxSharedRequestDto
+  ): Promise<AgentIntegrationResponseDto> {
+    return this.updateAgentInboxSharedUsecase.execute(
+      UpdateAgentInboxSharedCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        disabled: body.disabled,
       })
     );
   }

@@ -1,3 +1,4 @@
+import { EmailProviderIdEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -76,6 +77,9 @@ const integrationSchema = new Schema<IntegrationDBModel>(
       outboundIntegrationId: Schema.Types.String,
       useFromAddressOverride: Schema.Types.Boolean,
       fromAddressOverride: Schema.Types.String,
+      emailSlugPrefix: Schema.Types.String,
+      inboxRoutingKey: Schema.Types.String,
+      sharedInboxDisabled: Schema.Types.Boolean,
       AppIOBaseUrl: Schema.Types.String,
       AppIOSubscriptionId: Schema.Types.String,
       AppIOBearerToken: Schema.Types.String,
@@ -147,6 +151,24 @@ integrationSchema.index({
 integrationSchema.index({
   _environmentId: 1,
 });
+
+/**
+ * Globally-unique routing key for the agent default shared inbox feature
+ * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). The partial filter
+ * scopes the index to NovuAgent rows so every other provider stays unconstrained
+ * — and lets a string-typed `inboxRoutingKey` exist on legacy NovuAgent docs
+ * provisioned before this field was added without forcing a backfill.
+ */
+integrationSchema.index(
+  { 'credentials.inboxRoutingKey': 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      providerId: EmailProviderIdEnum.NovuAgent,
+      'credentials.inboxRoutingKey': { $type: 'string' },
+    },
+  }
+);
 
 integrationSchema.plugin(mongooseDelete, { deletedAt: true, deletedBy: true, overrideMethods: 'all' });
 

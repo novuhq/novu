@@ -58,6 +58,34 @@ export interface ICredentials {
   outboundIntegrationId?: string;
   useFromAddressOverride?: boolean;
   fromAddressOverride?: string;
+  /**
+   * Agent default shared inbox: the slug prefix used in
+   * `{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`. Only meaningful on
+   * the NovuAgent email integration. Snapshotted from the linked agent's
+   * identifier at provisioning time; editable by the user. Validated against
+   * `^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$` server-side.
+   */
+  emailSlugPrefix?: string;
+  /**
+   * Agent default shared inbox: the trailing routing key in
+   * `{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`. Only meaningful on
+   * the NovuAgent email integration. Generated server-side at provisioning
+   * time, globally unique under a partial index on `credentials.inboxRoutingKey`
+   * scoped to `providerId = novu-email-agent`. Not user-editable: the API
+   * update path pins this field to its existing value to prevent rotation
+   * through the standard integration update endpoint.
+   */
+  inboxRoutingKey?: string;
+  /**
+   * Cloud-only kill switch for the Novu shared inbox
+   * (`{emailSlugPrefix}-{inboxRoutingKey}@<shared-domain>`). When `true`, the
+   * inbound worker drops mail addressed to this agent on the shared domain;
+   * custom-domain routes for the same agent still deliver. Only meaningful on
+   * the NovuAgent email integration. Managed server-side via
+   * `PATCH /agents/:identifier/inbox/shared`; pinned through the generic
+   * integration update path.
+   */
+  sharedInboxDisabled?: boolean;
   /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. */
   externalEnvironmentId?: string;
   /**
