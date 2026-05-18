@@ -603,7 +603,7 @@ export async function getTelegramMobileSetupStatus(
   token: string,
   signal?: AbortSignal
 ): Promise<TelegramMobileLinkStatus> {
-  const url = `${getApiBaseUrl()}/v1/agents/telegram/mobile-configure/status?token=${encodeURIComponent(token)}`;
+  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure/status?token=${encodeURIComponent(token)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
@@ -644,7 +644,7 @@ export async function submitTelegramMobileCredentials(
   token: string,
   botToken: string
 ): Promise<SubmitTelegramMobileCredentialsResult> {
-  const url = `${getApiBaseUrl()}/v1/agents/telegram/mobile-configure`;
+  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

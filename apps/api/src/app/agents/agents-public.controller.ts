@@ -18,18 +18,19 @@ import {
 } from './usecases/get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
 
 /**
- * Public, unauthenticated endpoints for the Telegram mobile setup landing page.
+ * Public, unauthenticated agent endpoints (no session). Add provider-specific
+ * route groups under this controller — today only Telegram mobile configure.
  *
- * Authorization is carried entirely by a signed, single-use, short-lived JWT
- * embedded in the request — the dashboard issues these tokens through the
- * authed `/agents/:id/integrations/:iid/telegram/mobile-link` endpoint.
+ * Telegram: authorization is a signed, single-use, short-lived JWT in the
+ * request; the dashboard issues it via authed
+ * `POST /agents/:id/integrations/:iid/telegram/mobile-link`.
  *
- * Mounted under `/v1/agents/telegram/mobile-configure*` paths so they cannot
- * collide with the authed `/v1/agents/:identifier/*` routes.
+ * Base path `/v1/agents/public` keeps these routes separate from authed
+ * `/v1/agents/:identifier/*`.
  */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
-@Controller('/agents/telegram/mobile-configure')
+@Controller('/agents/public')
 @ApiExcludeController()
 export class AgentsPublicController {
   constructor(
@@ -37,7 +38,7 @@ export class AgentsPublicController {
     private readonly consumeTelegramMobileLinkUsecase: ConsumeTelegramMobileLink
   ) {}
 
-  @Get('/status')
+  @Get('telegram/mobile-configure/status')
   @HttpCode(HttpStatus.OK)
   @ApiResponse(TelegramMobileLinkStatusResponseDto, 200)
   @ApiOperation({
@@ -52,7 +53,7 @@ export class AgentsPublicController {
     );
   }
 
-  @Post('/')
+  @Post('telegram/mobile-configure')
   @HttpCode(HttpStatus.OK)
   @ApiResponse(ConsumeTelegramMobileLinkResponseDto, 200)
   @ApiOperation({
