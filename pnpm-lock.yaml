@@ -336,20 +336,20 @@ importers:
         specifier: ^3.1037.0
         version: 3.1042.0
       '@chat-adapter/slack':
-        specifier: ^4.25.0
-        version: 4.25.0
+        specifier: 4.28.1
+        version: 4.28.1
       '@chat-adapter/state-ioredis':
-        specifier: ^4.26.0
-        version: 4.26.0
+        specifier: 4.28.1
+        version: 4.28.1
       '@chat-adapter/teams':
-        specifier: ^4.25.0
-        version: 4.25.0
+        specifier: 4.28.1
+        version: 4.28.1
       '@chat-adapter/telegram':
-        specifier: ^4.25.0
+        specifier: 4.28.1
         version: 4.28.1
       '@chat-adapter/whatsapp':
-        specifier: ^4.25.0
-        version: 4.25.0
+        specifier: 4.28.1
+        version: 4.28.1
       '@godaddy/terminus':
         specifier: ^4.12.1
         version: 4.12.1
@@ -468,8 +468,8 @@ importers:
         specifier: ^4.2.1
         version: 4.10.4
       chat:
-        specifier: ^4.25.0
-        version: 4.25.0
+        specifier: 4.28.1
+        version: 4.28.1
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -3366,8 +3366,8 @@ importers:
         specifier: 2.0.7
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       chat:
-        specifier: '>=4.25.0'
-        version: 4.26.0
+        specifier: '>=4.28.1'
+        version: 4.28.1
       hast-util-to-html:
         specifier: 9.0.5
         version: 9.0.5
@@ -3403,8 +3403,8 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       chat:
-        specifier: ^4.25.0
-        version: 4.25.0
+        specifier: 4.28.1
+        version: 4.28.1
       cross-fetch:
         specifier: ^4.0.0
         version: 4.0.0(encoding@0.1.13)
@@ -6201,26 +6201,23 @@ packages:
   '@cfworker/json-schema@4.1.1':
     resolution: {integrity: sha512-gAmrUZSGtKc3AiBL71iNWxDsyUC5uMaKKGdvzYsBoTW/xi42JQHl7eKV2OYzCUqvc+D2RCcf7EXY2iCyFIk6og==}
 
-  '@chat-adapter/shared@4.25.0':
-    resolution: {integrity: sha512-NoRjEqNN1fyOTwT3AXNXjoy88QHk7FxhQxRus9JdEZBBYsDEuP4B8ekN+BVLQD/rlPcDgQ5TN0UGuiOi9r5nZQ==}
-
   '@chat-adapter/shared@4.28.1':
     resolution: {integrity: sha512-v7AcZMrvS2gxFlRiUO1o9Nta2iipnnmV54Gie8e3nQTQvnghENfSf7j7nimA5DOUWCgj+e4DV7LE0x1pakNtkA==}
 
-  '@chat-adapter/slack@4.25.0':
-    resolution: {integrity: sha512-5jTLMzRUB3iyezaxNSxXAdJIX1xQFvMsVyOResrTWs72Mfa9Ae0K69iS7+X/Z2kbgj65w0wR54Oa5HXDt8HQWQ==}
+  '@chat-adapter/slack@4.28.1':
+    resolution: {integrity: sha512-JxgV7+cRXXeKpj0MzS7nzG3JvpnfhIgnPo9r/sdEIzeWhIb8tUcT2PbLl/fpSu/cb+WkICS0bCENn1I0PS39Hg==}
 
-  '@chat-adapter/state-ioredis@4.26.0':
-    resolution: {integrity: sha512-DhTkcZv0qq5tYxyOrQTCDkwAepka5pi+gr1g3rjOfklX1AMdON/9N5x/+8v/wm7vahukcQTjG2hsDYE+Xwo+uA==}
+  '@chat-adapter/state-ioredis@4.28.1':
+    resolution: {integrity: sha512-bvzCR3wJa1u+nVdj2klOGoLxgrbzKPTx7ygTXOGA4aj2k8eSa1gPoefGclLdXBAUYmYgffx9opSV8MVjd9SgeQ==}
 
-  '@chat-adapter/teams@4.25.0':
-    resolution: {integrity: sha512-oxRy6VgbGaLHvh7RMoxS5ZxJxZIwxJH57/2VUHiPXkmdJfvhFxfdYDJ3pKP3dVZKYKPr4gXAOR2no0MeQmyftQ==}
+  '@chat-adapter/teams@4.28.1':
+    resolution: {integrity: sha512-ESv8E4yGn0IkVfF9SBoP2cy5G1oq1TCF9CkDT3d2h41UGkTQF0b0HqKGm+kQdRAbXyC/7zpscm2KdnFUd4CFrA==}
 
   '@chat-adapter/telegram@4.28.1':
     resolution: {integrity: sha512-ZBw6zx36enxXGlbOoigzCsWH6slbTCOWyTGatCz7jq4DFTDpvjRgBBH760n9peFkZpXJWOAXZKJm/IW8saT5aw==}
 
-  '@chat-adapter/whatsapp@4.25.0':
-    resolution: {integrity: sha512-FOk3Y0BCS3Gbm2tgUEa+84EPe9nLM29bh4fV+6uuB5CVVfYsWYpsHlNNItes9/p+4SKHgkKuecg3Hh7z9i8KKA==}
+  '@chat-adapter/whatsapp@4.28.1':
+    resolution: {integrity: sha512-NSU4Yda/uhbZXQNBnIgDHFWN+3ZBJ7L7mrFHUIctwZBX1XHlGkweWucfFbDynWgxb4IDm6NYZxA34+HVe8ugBA==}
 
   '@chevrotain/types@11.1.2':
     resolution: {integrity: sha512-U+HFai5+zmJCkK86QsaJtoITlboZHBqrVketcO2ROv865xfCMSFpELQoz1GkX5GzME8pTa+3kbKrZHQtI0gdbw==}
@@ -16159,12 +16156,6 @@ packages:
 
   chardet@0.7.0:
     resolution: {integrity: sha512-mT8iDcrh03qDGRRmoA2hmBJnxpllMR+0/0qlzjqZES6NdiWDcZkCNAk4rPFZ9Q85r27unkiNNg8ZOiwZXBHwcA==}
-
-  chat@4.25.0:
-    resolution: {integrity: sha512-QM8ex4Gpn8zYIPyQXh41Who6R9Wq3WcQeOjAy4EuR1m1ha0tASuzHkLQfjaTAGLgrgrThV0Zh5KKoH0S92iwNA==}
-
-  chat@4.26.0:
-    resolution: {integrity: sha512-QToDnIEGpyb8yQA6YLMHOSRK30YVk4RtsyFyuWFYyB2c4jQlyIrSWtwVK7qyvmvqzQp9uDwCdJRAhS8GtCHAGQ==}
 
   chat@4.28.1:
     resolution: {integrity: sha512-oKBeLQ746rSmHWGoXmPgDOqMVdIe9cWFQBQ1G2pw0l2vV4sAsZgfEJmc1UYqSJR4kYy4PxKgRFy31pe4RJ644Q==}
@@ -30627,42 +30618,36 @@ snapshots:
 
   '@cfworker/json-schema@4.1.1': {}
 
-  '@chat-adapter/shared@4.25.0':
-    dependencies:
-      chat: 4.25.0
-    transitivePeerDependencies:
-      - supports-color
-
   '@chat-adapter/shared@4.28.1':
     dependencies:
       chat: 4.28.1
     transitivePeerDependencies:
       - supports-color
 
-  '@chat-adapter/slack@4.25.0':
+  '@chat-adapter/slack@4.28.1':
     dependencies:
-      '@chat-adapter/shared': 4.25.0
+      '@chat-adapter/shared': 4.28.1
       '@slack/web-api': 7.15.0
-      chat: 4.25.0
+      chat: 4.28.1
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@chat-adapter/state-ioredis@4.26.0':
+  '@chat-adapter/state-ioredis@4.28.1':
     dependencies:
-      chat: 4.26.0
+      chat: 4.28.1
       ioredis: 5.10.1
     transitivePeerDependencies:
       - supports-color
 
-  '@chat-adapter/teams@4.25.0':
+  '@chat-adapter/teams@4.28.1':
     dependencies:
-      '@chat-adapter/shared': 4.25.0
+      '@chat-adapter/shared': 4.28.1
       '@microsoft/teams.api': 2.0.7
       '@microsoft/teams.apps': 2.0.7
       '@microsoft/teams.cards': 2.0.7
       '@microsoft/teams.graph-endpoints': 2.0.7
-      chat: 4.25.0
+      chat: 4.28.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -30674,10 +30659,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@chat-adapter/whatsapp@4.25.0':
+  '@chat-adapter/whatsapp@4.28.1':
     dependencies:
-      '@chat-adapter/shared': 4.25.0
-      chat: 4.25.0
+      '@chat-adapter/shared': 4.28.1
+      chat: 4.28.1
     transitivePeerDependencies:
       - supports-color
 
@@ -44212,30 +44197,6 @@ snapshots:
   character-reference-invalid@2.0.1: {}
 
   chardet@0.7.0: {}
-
-  chat@4.25.0:
-    dependencies:
-      '@workflow/serde': 4.1.0-beta.2
-      mdast-util-to-string: 4.0.0
-      remark-gfm: 4.0.1
-      remark-parse: 11.0.0
-      remark-stringify: 11.0.0
-      remend: 1.3.0
-      unified: 11.0.5
-    transitivePeerDependencies:
-      - supports-color
-
-  chat@4.26.0:
-    dependencies:
-      '@workflow/serde': 4.1.0-beta.2
-      mdast-util-to-string: 4.0.0
-      remark-gfm: 4.0.1
-      remark-parse: 11.0.0
-      remark-stringify: 11.0.0
-      remend: 1.3.0
-      unified: 11.0.5
-    transitivePeerDependencies:
-      - supports-color
 
   chat@4.28.1:
     dependencies:
