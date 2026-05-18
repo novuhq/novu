@@ -311,6 +311,14 @@ export class ChatSdkService implements OnModuleDestroy {
     const { ThreadImpl } = await esmImport('chat');
     const adapter = chat.getAdapter(platform);
     const thread = ThreadImpl.fromJSON(serializedThread, adapter);
+    // chat@4.28.x reconstructs threads via `ThreadImpl.fromJSON` with only an
+    // adapter; the state adapter is resolved lazily via `Chat.getSingleton()`
+    // (e.g. when posting cards needs `processCardCallbackUrls`). We run many
+    // Chat instances per process (one per agent), so registering one as the
+    // global singleton would leak state across agents. Wire this thread's
+    // state adapter directly so card/postable replies don't trip the
+    // "No Chat singleton registered" check.
+    (thread as unknown as { _stateAdapterInstance: unknown })._stateAdapterInstance = chat.getState();
     const deliveryContent = await this.prepareContentForDelivery(content, platform, agentId);
 
     let postPromise: Promise<{ id: string; threadId: string }>;

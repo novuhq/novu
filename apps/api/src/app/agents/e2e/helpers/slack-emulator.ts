@@ -190,6 +190,29 @@ function patchWebClient(): void {
       const [method, options] = args as [string, Record<string, unknown> | undefined];
       recordedCalls.push({ method, options: { ...(options ?? {}) } });
 
+      // chat-adapter@4.28.1+ posts markdown replies with the `markdown_text`
+      // payload key instead of `text`. The emulate.dev slack module only
+      // persists `body.text` for chat.postMessage / chat.update, so without
+      // this shim the stored message ends up with empty text and `text === ...`
+      // assertions on `conversations.replies` / `conversations.history` fail.
+      // Mirror `markdown_text` into `text` for the wire payload so the
+      // emulator stores something useful while leaving the recorded payload
+      // (above) intact for fidelity assertions.
+      if (
+        (method === 'chat.postMessage' || method === 'chat.update') &&
+        options &&
+        typeof options === 'object' &&
+        typeof (options as { markdown_text?: unknown }).markdown_text === 'string' &&
+        typeof (options as { text?: unknown }).text !== 'string'
+      ) {
+        const shimmed = {
+          ...(options as Record<string, unknown>),
+          text: (options as { markdown_text: string }).markdown_text,
+        };
+
+        return origApiCall.apply(this, [method, shimmed, ...args.slice(2)] as unknown[]);
+      }
+
       return origApiCall.apply(this, args);
     };
   }
