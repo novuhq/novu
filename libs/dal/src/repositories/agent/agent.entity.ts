@@ -1,4 +1,4 @@
-import type { AgentCreationSourceEnum, AgentRuntime, ManagedRuntimeConfigDto } from '@novu/shared';
+import type { AgentRuntime, ManagedRuntimeConfigDto } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -48,12 +48,6 @@ export class AgentEntity {
    * (model, systemPrompt, MCP servers, tools) is fetched from the provider on demand.
    */
   managedRuntime?: ManagedRuntimeConfig;
-
-  /**
-   * Which section of the Novu Dashboard was used to create this agent.
-   * Defaults to 'platform' for backward compatibility with existing records.
-   */
-  creationSource?: AgentCreationSourceEnum;
 
   _environmentId: EnvironmentId;
 

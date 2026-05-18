@@ -1,10 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  AgentCreationSourceEnum,
-  AgentRuntime,
-  SLUG_IDENTIFIER_REGEX,
-  slugIdentifierFormatMessage,
-} from '@novu/shared';
+import { AgentRuntime, SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -61,13 +56,4 @@ export class CreateAgentRequestDto {
   @ValidateNested()
   @Type(() => ManagedRuntimeDto)
   managedRuntime?: ManagedRuntimeDto;
-
-  @ApiPropertyOptional({
-    enum: AgentCreationSourceEnum,
-    default: AgentCreationSourceEnum.PLATFORM,
-    description: 'Which section of the Novu Dashboard was used to create this agent.',
-  })
-  @IsOptional()
-  @IsEnum(AgentCreationSourceEnum)
-  creationSource?: AgentCreationSourceEnum;
 }

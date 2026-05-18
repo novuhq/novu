@@ -167,7 +167,6 @@ export class AgentsController {
         active: body.active,
         runtime: body.runtime,
         managedRuntime: body.managedRuntime,
-        creationSource: body.creationSource,
       })
     );
   }

@@ -1,5 +1,4 @@
 import type {
-  AgentCreationSourceEnum,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
@@ -113,7 +112,6 @@ export type CreateAgentBody = {
   active?: boolean;
   runtime?: AgentRuntime;
   managedRuntime?: ManagedRuntimeDto;
-  creationSource?: AgentCreationSourceEnum;
 };
 
 export type UpdateAgentBody = {
