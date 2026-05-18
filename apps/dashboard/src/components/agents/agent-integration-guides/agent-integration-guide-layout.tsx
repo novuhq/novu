@@ -1,6 +1,7 @@
 import { type ReactNode, useId } from 'react';
 import { RiArrowLeftSLine, RiMore2Fill } from 'react-icons/ri';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
+import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
@@ -55,7 +56,7 @@ export function AgentIntegrationGuideHeader({
   onRequestRemoveIntegration,
   isRemovingIntegration = false,
 }: AgentIntegrationGuideHeaderProps) {
-  const isConnected = Boolean(integrationLink.connectedAt);
+  const isConnected = isAgentIntegrationConnected(integrationLink);
   const integrationIdentifier = integrationLink.integration.identifier;
   const createdAt = integrationLink.createdAt;
 
@@ -89,14 +90,14 @@ export function AgentIntegrationGuideHeader({
         </div>
 
         {integrationIdentifier ? (
-          <div className="flex items-center gap-1.5">
-            <span className="text-text-sub font-mono text-[12px] leading-4 tracking-tight">
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            <span className="text-text-sub font-mono text-[12px] leading-4 tracking-tight break-all">
               {integrationIdentifier}
             </span>
             {createdAt ? (
               <>
                 <span className="bg-text-soft size-0.5 shrink-0 rounded-full" />
-                <span className="text-[12px] leading-4">
+                <span className="text-[12px] leading-4 whitespace-nowrap">
                   <span className="text-text-soft">Created </span>
                   <span className="text-text-sub font-medium">{formatCreatedDate(createdAt)}</span>
                 </span>
@@ -177,7 +178,6 @@ export function AgentIntegrationGuideLayout({
           canRemoveIntegration={canRemoveIntegration}
           onRequestRemoveIntegration={onRequestRemoveIntegration}
           isRemovingIntegration={isRemovingIntegration}
-
         />
       ) : null}
 

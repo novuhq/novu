@@ -26,6 +26,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
+import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 import { ProviderDropdown } from './provider-dropdown';
 
 type AgentIntegrationsTabProps = {
@@ -410,8 +411,8 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   );
 
   return (
-    <div className="flex min-w-0 w-full gap-6 px-6 pt-4">
-      <aside className="w-[300px] shrink-0">
+    <div className="flex min-w-0 w-full flex-col gap-4 px-4 pt-4 pb-6 md:flex-row md:gap-6 md:px-6 md:pb-0">
+      <aside className="w-full md:w-[300px] md:shrink-0">
         <div className="flex flex-col gap-2.5">
           {readOnly && (
             <InlineToast
@@ -456,7 +457,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                       const int = link.integration;
                       const providerMeta = novuProviders.find((p) => p.id === int.providerId);
                       const isSelected = integrationIdentifier === int.identifier;
-                      const showActionNeeded = !link.connectedAt;
+                      const showActionNeeded = !isAgentIntegrationConnected(link);
 
                       const statusLabel = showActionNeeded ? 'Action needed' : 'Active';
 
@@ -543,7 +544,9 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1">{mainPanel}</div>
+      <div className="min-w-0 flex-1 mt-10 md:mt-0 border-t border-stroke-weak md:border-t-0 pt-4 md:pt-0">
+        {mainPanel}
+      </div>
     </div>
   );
 }

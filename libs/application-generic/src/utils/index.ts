@@ -1,3 +1,4 @@
+export * from './agent-shared-inbox';
 export * from './base62';
 export * from './bridge';
 export * from './build-slug';

@@ -256,6 +256,7 @@ export function AgentsList() {
       apiKey,
       externalAgentId,
       externalEnvironmentId,
+      externalWorkspaceId,
       runtime,
       isExistingMode,
     }: CreateAgentForm) => {
@@ -280,9 +281,10 @@ export function AgentsList() {
             active: true,
             kind: IntegrationKindEnum.AGENT,
             providerId: AgentRuntimeProviderIdEnum.Anthropic,
-            credentials: { apiKey },
+            // `externalWorkspaceId` is only sent when the user pasted a non-default workspace id —
+            // omitting it lets the backend fall back to the `default` workspace.
+            credentials: { apiKey, ...(externalWorkspaceId ? { externalWorkspaceId } : {}) },
             name,
-            identifier,
           });
 
           integrationId = integration._id;

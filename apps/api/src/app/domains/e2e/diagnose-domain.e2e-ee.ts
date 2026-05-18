@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { Novu } from '@novu/api';
 import { DomainRouteDtoType } from '@novu/api/models/components';
+import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -21,6 +22,7 @@ describe('Domain DNS diagnose API - /v1/domains/:domain/diagnose #novu-v2', () =
   beforeEach(async () => {
     session = new UserSession();
     await session.initialize();
+    await session.updateOrganizationServiceLevel(ApiServiceLevelEnum.BUSINESS);
     novuClient = initNovuClassSdkInternalAuth(session);
   });
 

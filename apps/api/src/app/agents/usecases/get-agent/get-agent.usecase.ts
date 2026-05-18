@@ -1,12 +1,16 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AgentRepository } from '@novu/dal';
+import { decryptCredentials } from '@novu/application-generic';
+import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import type { AgentResponseDto } from '../../dtos';
-import { toAgentResponse } from '../../mappers/agent-response.mapper';
+import { type ManagedRuntimeHydration, toAgentResponse } from '../../mappers/agent-response.mapper';
 import { GetAgentCommand } from './get-agent.command';
 
 @Injectable()
 export class GetAgent {
-  constructor(private readonly agentRepository: AgentRepository) {}
+  constructor(
+    private readonly agentRepository: AgentRepository,
+    private readonly integrationRepository: IntegrationRepository
+  ) {}
 
   async execute(command: GetAgentCommand): Promise<AgentResponseDto> {
     const agent = await this.agentRepository.findOne(
@@ -22,6 +26,38 @@ export class GetAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
-    return toAgentResponse(agent);
+    const hydration = await this.loadManagedRuntimeHydration(agent, command.environmentId, command.organizationId);
+
+    return toAgentResponse(agent, hydration);
+  }
+
+  private async loadManagedRuntimeHydration(
+    agent: { runtime?: string; managedRuntime?: { _integrationId: string } },
+    environmentId: string,
+    organizationId: string
+  ): Promise<ManagedRuntimeHydration | undefined> {
+    if (agent.runtime !== 'managed' || !agent.managedRuntime?._integrationId) {
+      return undefined;
+    }
+
+    const integration = await this.integrationRepository.findOne(
+      {
+        _id: agent.managedRuntime._integrationId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      ['credentials']
+    );
+
+    if (!integration) {
+      return undefined;
+    }
+
+    const decrypted = decryptCredentials(integration.credentials ?? {});
+
+    return {
+      externalEnvironmentId: decrypted.externalEnvironmentId ?? undefined,
+      externalWorkspaceId: decrypted.externalWorkspaceId ?? undefined,
+    };
   }
 }
