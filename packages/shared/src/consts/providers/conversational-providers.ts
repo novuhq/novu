@@ -12,7 +12,7 @@ export const CONVERSATIONAL_PROVIDERS: ConversationalProvider[] = [
   { providerId: ChatProviderIdEnum.MsTeams, displayName: 'MS Teams' },
   { providerId: ChatProviderIdEnum.WhatsAppBusiness, displayName: 'WhatsApp Business' },
   { providerId: EmailProviderIdEnum.NovuAgent, displayName: 'Novu Email', requiresBusinessTier: true },
-  { providerId: 'telegram', displayName: 'Telegram', comingSoon: true },
+  { providerId: ChatProviderIdEnum.Telegram, displayName: 'Telegram' },
   { providerId: 'google-chat', displayName: 'Google Chat', comingSoon: true },
   { providerId: 'linear', displayName: 'Linear', comingSoon: true },
   { providerId: 'zoom', displayName: 'Zoom', comingSoon: true },

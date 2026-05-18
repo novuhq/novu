@@ -1,7 +1,7 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
@@ -123,6 +123,8 @@ function getProviderSendTitle(providerId: string | undefined): string {
       return 'Send a message to the Slack App on Slack';
     case ChatProviderIdEnum.MsTeams:
       return 'Send a message to the bot on MS Teams';
+    case ChatProviderIdEnum.Telegram:
+      return 'Send a message to your Telegram bot';
     case ChatProviderIdEnum.WhatsAppBusiness:
       return 'Send a message on WhatsApp';
     case EmailProviderIdEnum.NovuAgent:
@@ -138,6 +140,8 @@ function getProviderSendDescription(providerId: string | undefined, agentName: s
       return `Open your Slack workspace and send a message to ${agentName}. Make sure to send in a channel or directly to the bot.`;
     case ChatProviderIdEnum.MsTeams:
       return `Open Microsoft Teams and send a message to ${agentName} in a channel or direct chat.`;
+    case ChatProviderIdEnum.Telegram:
+      return `Open Telegram and send a message to your bot to test the connection.`;
     case ChatProviderIdEnum.WhatsAppBusiness:
       return `Send a message to your WhatsApp number to test the connection.`;
     case EmailProviderIdEnum.NovuAgent:
@@ -296,7 +300,10 @@ export function AgentCodeSetupSection({
 
   const bridgeConnected = useBridgeConnectionPolling(agent, onBridgeConnected);
 
-  const firstIncompleteStep = bridgeConnected ? stepOffset + 3 : stepOffset;
+  const firstIncompleteStep = useMemo(
+    () => (bridgeConnected ? stepOffset + 3 : stepOffset),
+    [bridgeConnected, stepOffset]
+  );
 
   return (
     <>

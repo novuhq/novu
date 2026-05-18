@@ -143,6 +143,7 @@ export enum ChatProviderIdEnum {
   Line = 'line',
   ChatWebhook = 'chat-webhook',
   Novu = 'novu-slack',
+  Telegram = 'telegram',
 }
 
 export enum PushProviderIdEnum {

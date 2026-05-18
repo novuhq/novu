@@ -51,7 +51,9 @@ import {
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
 } from './dtos';
+import { ConfigureTelegramWebhookResponseDto } from './dtos/configure-telegram-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
+import { IssueTelegramMobileLinkResponseDto } from './dtos/issue-telegram-mobile-link-response.dto';
 import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
 import { SendAgentWelcomeMessageRequestDto } from './dtos/send-agent-welcome-message-request.dto';
 import {
@@ -62,6 +64,8 @@ import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.f
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
+import { ConfigureTelegramAgentWebhookCommand } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
+import { ConfigureTelegramAgentWebhook } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
 import { ConfigureWhatsAppWebhookCommand } from './usecases/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
 import { ConfigureWhatsAppWebhook } from './usecases/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { CreateAgentCommand } from './usecases/create-agent/create-agent.command';
@@ -72,6 +76,8 @@ import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
 import { GetAgentRuntimeConfigCommand } from './usecases/get-agent-runtime-config/get-agent-runtime-config.command';
 import { GetAgentRuntimeConfig } from './usecases/get-agent-runtime-config/get-agent-runtime-config.usecase';
+import { IssueTelegramMobileLinkCommand } from './usecases/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
+import { IssueTelegramMobileLink } from './usecases/issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
 import { type AgentEmojiEntry, ListAgentEmoji } from './usecases/list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrationsCommand } from './usecases/list-agent-integrations/list-agent-integrations.command';
 import { ListAgentIntegrations } from './usecases/list-agent-integrations/list-agent-integrations.usecase';
@@ -119,6 +125,8 @@ export class AgentsController {
     private readonly updateAgentRuntimeConfigUsecase: UpdateAgentRuntimeConfig,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
+    private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook,
+    private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
   ) {}
 
@@ -435,6 +443,64 @@ export class AgentsController {
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
         conversationId: body.conversationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationId/telegram/configure')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(ConfigureTelegramWebhookResponseDto, 200)
+  @ApiOperation({
+    summary: 'Configure Telegram bot webhook',
+    description: `Registers the Novu agent webhook URL with Telegram for the specified integration,
+       generates a cryptographic secret token for webhook verification,
+       and persists it on the integration. Re-running rotates the secret.`,
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent, integration, or agent-integration link was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateTelegramWebhook(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationId') integrationId: string
+  ): Promise<ConfigureTelegramWebhookResponseDto> {
+    return this.configureTelegramAgentWebhookUsecase.execute(
+      ConfigureTelegramAgentWebhookCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationId/telegram/mobile-link')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(IssueTelegramMobileLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a short-lived Telegram mobile setup link',
+    description:
+      'Issues a signed, single-use link (TTL = 5 minutes) that can be opened on a mobile device to finish ' +
+      'configuring a Telegram bot without re-authenticating. Telegram-only.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent, integration, or agent-integration link was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  createTelegramMobileLink(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationId') integrationId: string
+  ): Promise<IssueTelegramMobileLinkResponseDto> {
+    return this.issueTelegramMobileLinkUsecase.execute(
+      IssueTelegramMobileLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationId,
       })
     );
   }

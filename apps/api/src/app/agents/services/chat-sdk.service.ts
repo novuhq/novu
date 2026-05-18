@@ -1302,6 +1302,24 @@ export class ChatSdkService implements OnModuleDestroy {
           }),
         };
       }
+      case AgentPlatformEnum.TELEGRAM: {
+        if (!credentials.apiToken || !credentials.token) {
+          throw new BadRequestException(
+            'Telegram agent integration requires a Bot Token and a webhook secret token. ' +
+              'Run the "Configure webhook" step to provision the webhook secret token before this integration can receive messages.'
+          );
+        }
+
+        const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
+
+        return {
+          telegram: createTelegramAdapter({
+            botToken: credentials.apiToken,
+            secretToken: credentials.token,
+            mode: 'webhook',
+          }),
+        };
+      }
       case AgentPlatformEnum.EMAIL: {
         const { senderName, outboundIntegrationId } = credentials;
 

@@ -37,6 +37,7 @@ import {
   PhoneEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
+  TelegramChatEndpointDto,
   WebhookEndpointDto,
 } from './dtos/endpoint-types.dto';
 import { GetChannelEndpointResponseDto } from './dtos/get-channel-endpoint-response.dto';
@@ -69,7 +70,8 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   WebhookEndpointDto,
   PhoneEndpointDto,
   MsTeamsChannelEndpointDto,
-  MsTeamsUserEndpointDto
+  MsTeamsUserEndpointDto,
+  TelegramChatEndpointDto
 )
 @ExternalApiAccessible()
 @RequireAuthentication()

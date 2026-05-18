@@ -10,6 +10,7 @@ import { NovuSlackHandler } from './handlers/novu-slack.handler';
 import { RocketChatHandler } from './handlers/rocket-chat.handler';
 import { RyverHandler } from './handlers/ryver.handler';
 import { SlackHandler } from './handlers/slack.handler';
+import { TelegramHandler } from './handlers/telegram.handler';
 import { WhatsAppBusinessHandler } from './handlers/whatsapp-business.handler';
 import { ZulipHandler } from './handlers/zulip.handler';
 import { IChatFactory, IChatHandler } from './interfaces';
@@ -29,6 +30,7 @@ export class ChatFactory implements IChatFactory {
     new RocketChatHandler(),
     new WhatsAppBusinessHandler(),
     new LineHandler(),
+    new TelegramHandler(),
   ];
 
   getHandler(integration: Pick<IntegrationEntity, 'credentials' | 'channel' | 'providerId' | 'configurations'>) {
