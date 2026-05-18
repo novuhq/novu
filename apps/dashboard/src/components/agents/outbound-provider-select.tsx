@@ -110,7 +110,10 @@ export function OutboundProviderSelect({
   // key and rate-limits via the shared quota. Hidden from the dropdown when
   // the env doesn't have a demo row at all (custom non-prod envs).
   const novuDemoIntegration = useMemo(
-    () => integrations?.find((i) => i.channel === ChannelTypeEnum.EMAIL && i.providerId === EmailProviderIdEnum.Novu),
+    () =>
+      integrations?.find(
+        (i) => i.channel === ChannelTypeEnum.EMAIL && i.providerId === EmailProviderIdEnum.Novu && i.active === true
+      ),
     [integrations]
   );
 

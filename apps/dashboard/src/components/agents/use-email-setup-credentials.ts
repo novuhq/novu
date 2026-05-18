@@ -168,7 +168,8 @@ export function useEmailSetupCredentials({
   // chat-sdk.service.ts sendViaNovuDemoProvider and send-agent-test-email
   // findSenderIntegration), so we surface it as "demo selected" in the UI:
   // no credentials step, rate-limited delivery.
-  const isOutboundDemo = outboundIntegration?.providerId === EmailProviderIdEnum.Novu;
+  const isOutboundDemo =
+    outboundIntegration?.providerId === EmailProviderIdEnum.Novu && outboundIntegration.active === true;
   const needsCredentialsStep = Boolean(outboundIntegration) && !isOutboundDemo;
   const hasOutboundCredentials = useMemo(() => {
     if (!outboundIntegration) return false;
