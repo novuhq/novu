@@ -1532,8 +1532,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/testing
       '@novu/thalamus':
-        specifier: https://github.com/novuhq/thalamus.git#ec3f432
-        version: https://codeload.github.com/novuhq/thalamus/tar.gz/ec3f4322d059a0744771576d5cca49b0555b1bef(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))
+        specifier: https://github.com/novuhq/thalamus.git#c069bb3
+        version: https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))
       '@sentry/browser':
         specifier: ^8.33.1
         version: 8.55.0
@@ -7338,6 +7338,7 @@ packages:
 
   '@gitopslovers/nx-biome@1.5.0':
     resolution: {integrity: sha512-RDYX+dd3o36+rqzpShr948LimCXjH9lJdATdQGTKtYcN2OL43LRb3R9MLzU/OqnGOrt1/6Hg92YJS3pLES68aw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@godaddy/terminus@4.12.1':
     resolution: {integrity: sha512-Tm+wVu1/V37uZXcT7xOhzdpFoovQReErff8x3y82k6YyWa1gzxWBjTyrx4G2enjEqoXPnUUmJ3MOmwH+TiP6Sw==}
@@ -8661,8 +8662,8 @@ packages:
     resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
     engines: {node: '>=18.0.0'}
 
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/ec3f4322d059a0744771576d5cca49b0555b1bef':
-    resolution: {gitHosted: true, integrity: sha512-rExJgqCS8ZCCIHQRoDuYbfxo0J08TTSFASAea5J1QkJYbEt9MFwVWO7qGNcJvap++IC/YWlttWCpkPbAkgcSWg==, tarball: https://codeload.github.com/novuhq/thalamus/tar.gz/ec3f4322d059a0744771576d5cca49b0555b1bef}
+  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e':
+    resolution: {gitHosted: true, integrity: sha512-H6xy9U8+TZd7F5VrI86Nj3f6PCrppHKOrTRw5l7uTCKDSChldWDuc1XQLRZQ/vyFWKyQTIOCQvQvjI4vi7l0AQ==, tarball: https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e}
     version: 0.1.0
     peerDependencies:
       '@anthropic-ai/aws-sdk': '>=0.86.0'
@@ -34052,7 +34053,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/ec3f4322d059a0744771576d5cca49b0555b1bef(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))':
+  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.95.1(zod@4.3.6)
       '@aws-crypto/sha256-js': 5.2.0

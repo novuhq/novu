@@ -15,6 +15,7 @@ import {
 } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import {
+  AbortedError,
   CredentialExpiredError,
   McpServerError,
   type Message,
@@ -133,7 +134,7 @@ export class ProcessManagedAgentTurn {
 
     const messages = await this.buildMessagesWithHistory(command);
 
-    return this.streamWithTimeout(provider, messages, undefined);
+    return this.sendWithTimeout(provider, messages, undefined);
   }
 
   private async streamWithSessionRecovery(
@@ -144,7 +145,7 @@ export class ProcessManagedAgentTurn {
     const messages = [{ role: MessageRole.USER, content: command.messageText }];
 
     try {
-      return await this.streamWithTimeout(provider, messages, sessionId);
+      return await this.sendWithTimeout(provider, messages, sessionId);
     } catch (err) {
       if (!(err instanceof SessionExpiredError)) {
         throw err;
@@ -156,10 +157,13 @@ export class ProcessManagedAgentTurn {
 
     const messagesWithHistory = await this.buildMessagesWithHistory(command);
 
-    return this.streamWithTimeout(provider, messagesWithHistory, undefined);
+    return this.sendWithTimeout(provider, messagesWithHistory, undefined);
   }
 
   private buildErrorMessage(err: unknown): string {
+    if (err instanceof AbortedError) {
+      return 'The agent took too long to respond. Please try again with a simpler request.';
+    }
     if (err instanceof CredentialExpiredError) {
       return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
     }
@@ -187,20 +191,12 @@ export class ProcessManagedAgentTurn {
     return messages;
   }
 
-  /**
-   * TODO: Replace Promise.race timeout with AbortSignal-based cancellation
-   * once thalamus supports it — so the underlying HTTP connection is torn down
-   * rather than just ignored.
-   */
-  private async streamWithTimeout(
+  private async sendWithTimeout(
     provider: Provider,
     messages: Message[],
     sessionId: string | undefined
   ): Promise<ThalamusResponse> {
-    return Promise.race([
-      provider.stream({ messages, sessionId }),
-      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Agent turn timed out')), MAX_TURN_MS)),
-    ]);
+    return provider.send({ messages, sessionId, abortSignal: AbortSignal.timeout(MAX_TURN_MS) });
   }
 
   private createProvider(

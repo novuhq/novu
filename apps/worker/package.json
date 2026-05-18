@@ -35,7 +35,7 @@
     "@novu/dal": "workspace:*",
     "@novu/framework": "workspace:*",
     "@novu/shared": "workspace:*",
-    "@novu/thalamus": "https://github.com/novuhq/thalamus.git#ec3f432",
+    "@novu/thalamus": "https://github.com/novuhq/thalamus.git#c069bb3",
     "@novu/stateless": "workspace:*",
     "@anthropic-ai/sdk": "^0.95.1",
     "openai": "^6.17.0",
