@@ -124,6 +124,8 @@ export function TelegramMobileSetupCardShell({
 type AgentTelegramMobileSetupCardProps = {
   agentIdentifier: string;
   integrationId: string;
+  /** When set, mobile setup success returns a `/start` deep link for this subscriber. */
+  testSubscriberId?: string | null;
   disabled?: boolean;
   className?: string;
   layout?: CardLayout;
@@ -136,6 +138,7 @@ type AgentTelegramMobileSetupCardProps = {
 export function AgentTelegramMobileSetupCard({
   agentIdentifier,
   integrationId,
+  testSubscriberId,
   disabled,
   className,
   layout = 'stacked',
@@ -144,12 +147,13 @@ export function AgentTelegramMobileSetupCard({
   const environmentId = currentEnvironment?._id;
 
   const linkQuery = useQuery<TelegramMobileLink>({
-    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, agentIdentifier, integrationId],
+    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, agentIdentifier, integrationId, testSubscriberId],
     queryFn: () =>
       requestTelegramMobileLink(
         requireEnvironment(currentEnvironment, 'No environment selected'),
         agentIdentifier,
-        integrationId
+        integrationId,
+        testSubscriberId ?? undefined
       ),
     enabled: !disabled && Boolean(environmentId && agentIdentifier && integrationId),
     refetchInterval: REFRESH_INTERVAL_MS,

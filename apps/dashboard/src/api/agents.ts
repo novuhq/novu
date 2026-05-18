@@ -579,11 +579,12 @@ type TelegramMobileLinkEnvelope = { data: TelegramMobileLink };
 export async function requestTelegramMobileLink(
   environment: IEnvironment,
   agentIdentifier: string,
-  integrationId: string
+  integrationId: string,
+  subscriberId?: string
 ): Promise<TelegramMobileLink> {
   const response = await post<TelegramMobileLinkEnvelope>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/mobile-link`,
-    { environment }
+    { environment, body: subscriberId ? { subscriberId } : undefined }
   );
 
   return response.data;
@@ -649,6 +650,8 @@ export type SubmitTelegramMobileCredentialsResult = {
   success: true;
   botUsername: string;
   webhookUrl: string;
+  /** Present when the mobile link was issued with a subscriberId. */
+  deepLinkUrl?: string;
 };
 
 export type SubmitTelegramMobileCredentialsError = {

@@ -99,7 +99,13 @@ function SetupForm({ token, agentName }: SetupFormProps) {
   });
 
   if (submitMutation.data?.success) {
-    return <SuccessCard botUsername={submitMutation.data.botUsername} agentName={agentName} />;
+    return (
+      <SuccessCard
+        botUsername={submitMutation.data.botUsername}
+        agentName={agentName}
+        deepLinkUrl={submitMutation.data.deepLinkUrl}
+      />
+    );
   }
 
   if (submitMutation.error instanceof TelegramMobileSubmitError) {
@@ -199,8 +205,17 @@ function ParseStatus({ draft, parsedToken, parsedUsername }: ParseStatusProps) {
   );
 }
 
-function SuccessCard({ botUsername, agentName }: { botUsername: string; agentName: string }) {
-  const telegramUrl = `https://t.me/${botUsername}`;
+function SuccessCard({
+  botUsername,
+  agentName,
+  deepLinkUrl,
+}: {
+  botUsername: string;
+  agentName: string;
+  deepLinkUrl?: string;
+}) {
+  const telegramUrl = deepLinkUrl ?? `https://t.me/${botUsername}`;
+  const hasStartLink = Boolean(deepLinkUrl);
 
   return (
     <Card>
@@ -211,7 +226,9 @@ function SuccessCard({ botUsername, agentName }: { botUsername: string; agentNam
         <h1 className="text-text-strong text-paragraph-md font-semibold">@{botUsername} is connected</h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Your Telegram bot is now wired up to <span className="text-text-strong font-medium">{agentName}</span>.
-          Open it in Telegram to send your first message — your agent will reply.
+          {hasStartLink
+            ? ' Open the link below in Telegram to link this chat and send your first test message.'
+            : ' Open it in Telegram to send your first message — your agent will reply.'}
         </p>
       </div>
 
@@ -222,7 +239,7 @@ function SuccessCard({ botUsername, agentName }: { botUsername: string; agentNam
         className="bg-text-strong text-static-white hover:bg-text-strong/90 mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-10 px-3.5 text-label-sm transition"
       >
         <RiSendPlaneLine className="size-4" />
-        Open @{botUsername}
+        {hasStartLink ? `Connect & test @${botUsername}` : `Open @${botUsername}`}
       </a>
 
       <p className="text-text-soft text-label-xs mt-3 text-center">You can safely close this tab.</p>

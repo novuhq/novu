@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 const BOT_TOKEN_PATTERN = /^\d{8,}:[A-Za-z0-9_-]{35,}$/;
@@ -27,4 +27,11 @@ export class ConsumeTelegramMobileLinkResponseDto {
 
   @ApiProperty({ type: String, description: 'Webhook URL Novu registered with Telegram' })
   webhookUrl: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description:
+      'Telegram `t.me/<bot>?start=<code>` deep link to link this chat to the subscriber when the mobile link was issued with a subscriberId.',
+  })
+  deepLinkUrl?: string;
 }

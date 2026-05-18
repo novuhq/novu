@@ -52,6 +52,8 @@ type IntegrationConfigurationProps = {
   agentOnboarding?: boolean;
   /** Agent identifier — only set during the agent-onboarding flow. */
   agentIdentifier?: string;
+  /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
+  testSubscriberId?: string | null;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
 };
 
@@ -74,6 +76,7 @@ export function IntegrationSettings({
   isReadOnly,
   agentOnboarding,
   agentIdentifier,
+  testSubscriberId,
   onFormStateChange,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
@@ -146,13 +149,13 @@ export function IntegrationSettings({
     if (!showTelegramPaste) return undefined;
 
     if (isAgentOnboarding && agentIdentifier && integration?._id) {
-      return { kind: 'agent', agentIdentifier, integrationId: integration._id };
+      return { kind: 'agent', agentIdentifier, integrationId: integration._id, testSubscriberId };
     }
 
     if (mode === 'create') return { kind: 'integration-store' };
 
     return undefined;
-  }, [showTelegramPaste, isAgentOnboarding, agentIdentifier, integration?._id, mode]);
+  }, [showTelegramPaste, isAgentOnboarding, agentIdentifier, integration?._id, mode, testSubscriberId]);
   const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
     control,
     setValue,

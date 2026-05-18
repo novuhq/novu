@@ -24,6 +24,8 @@ export interface TelegramMobileLinkTokenPayload {
   aid: string;
   /** Integration id (internal Mongo `_id`). */
   iid: string;
+  /** Subscriber to link via `/start` deep link after mobile setup (optional). */
+  sid?: string;
   /** Unique token id used for single-use enforcement. */
   jti: string;
   /** Issued-at (seconds since epoch). */
@@ -76,6 +78,7 @@ export class TelegramMobileLinkTokenService {
     organizationId: string;
     agentIdentifier: string;
     integrationId: string;
+    subscriberId?: string;
   }): Promise<IssuedTelegramMobileLink> {
     const jti = randomUUID();
 
@@ -85,6 +88,7 @@ export class TelegramMobileLinkTokenService {
       aid: params.agentIdentifier,
       iid: params.integrationId,
       jti,
+      ...(params.subscriberId ? { sid: params.subscriberId } : {}),
     };
 
     const token = this.jwtService.sign(payload, {

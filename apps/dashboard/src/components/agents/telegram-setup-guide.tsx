@@ -366,6 +366,7 @@ export function TelegramSetupGuide({
           }}
           agentOnboarding
           agentIdentifier={agent.identifier}
+          testSubscriberId={testSubscriberId}
           submitLabel="Save & Connect"
         />
       </div>
@@ -386,6 +387,7 @@ export function TelegramSetupGuide({
         }}
         agentOnboarding
         agentIdentifier={agent.identifier}
+        testSubscriberId={testSubscriberId}
         submitLabel="Save & Connect"
       />
     </>

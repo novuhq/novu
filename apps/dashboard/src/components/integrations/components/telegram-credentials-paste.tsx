@@ -22,7 +22,7 @@ type ApplyOutcome = { token: string | null; botUsername: string | null; recogniz
  *   a new Telegram integration via the integration-store public endpoint.
  */
 export type TelegramCredentialsPasteMobileSetup =
-  | { kind: 'agent'; agentIdentifier: string; integrationId: string }
+  | { kind: 'agent'; agentIdentifier: string; integrationId: string; testSubscriberId?: string | null }
   | { kind: 'integration-store' };
 
 type TelegramCredentialsPasteProps = {
@@ -138,6 +138,7 @@ export function TelegramCredentialsPaste({
             <AgentTelegramMobileSetupCard
               agentIdentifier={mobileSetup.agentIdentifier}
               integrationId={mobileSetup.integrationId}
+              testSubscriberId={mobileSetup.testSubscriberId}
               layout="inline"
             />
           ) : (
