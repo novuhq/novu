@@ -11,6 +11,8 @@ import { GetAgentRuntimeConfig } from './get-agent-runtime-config/get-agent-runt
 import { GetTelegramMobileLinkStatus } from './get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
 import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
 import { IssueTelegramMobileLink } from './issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
+import { IssueTelegramSubscriberLink } from './issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
+import { LinkTelegramChatToSubscriber } from './link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { ListAgentEmoji } from './list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrations } from './list-agent-integrations/list-agent-integrations.usecase';
 import { ListAgents } from './list-agents/list-agents.usecase';
@@ -25,7 +27,14 @@ import { UpdateAgentInboxShared } from './update-agent-inbox-shared/update-agent
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfig } from './update-agent-runtime-config/update-agent-runtime-config.usecase';
 
-export { ConfigureTelegramAgentWebhook, ConsumeTelegramMobileLink, GetTelegramMobileLinkStatus, IssueTelegramMobileLink };
+export {
+  ConfigureTelegramAgentWebhook,
+  ConsumeTelegramMobileLink,
+  GetTelegramMobileLinkStatus,
+  IssueTelegramMobileLink,
+  IssueTelegramSubscriberLink,
+  LinkTelegramChatToSubscriber,
+};
 
 export const USE_CASES = [
   CreateAgent,
@@ -44,6 +53,8 @@ export const USE_CASES = [
   ConfigureWhatsAppWebhook,
   FindOrCreateNovuEmail,
   IssueTelegramMobileLink,
+  IssueTelegramSubscriberLink,
+  LinkTelegramChatToSubscriber,
   ListAgentEmoji,
   ListAgentIntegrations,
   UpdateAgentIntegration,

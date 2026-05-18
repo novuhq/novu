@@ -1,6 +1,8 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
+import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { LinkTelegramChatTokenError } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 import { NoBridgeUrlError } from './bridge-executor.service';
 
@@ -30,7 +32,14 @@ describe('AgentInboundHandler', () => {
     };
   }
 
-  function makeHandler(overrides: { history?: any[]; storedAttachments?: any[]; bridgeError?: Error } = {}) {
+  function makeHandler(
+    overrides: {
+      history?: any[];
+      storedAttachments?: any[];
+      bridgeError?: Error;
+      linkTelegramExecute?: sinon.SinonStub;
+    } = {}
+  ) {
     const logger = makeLogger();
     const subscriberResolver = {
       resolve: sinon.stub().resolves(null),
@@ -66,6 +75,11 @@ describe('AgentInboundHandler', () => {
     const attachmentStorage = {
       storeInbound: sinon.stub().resolves(overrides.storedAttachments ?? []),
     };
+    const linkTelegramChatToSubscriber = {
+      execute:
+        overrides.linkTelegramExecute ??
+        sinon.stub().resolves({ created: true, subscriberId: 'sub-1', agentIdentifier: 'support-agent' }),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -76,10 +90,18 @@ describe('AgentInboundHandler', () => {
       subscriberRepository as any,
       environmentRepository as any,
       analyticsService as any,
-      attachmentStorage as any
+      attachmentStorage as any,
+      linkTelegramChatToSubscriber as any
     );
 
-    return { handler, attachmentStorage, bridgeExecutor, conversationService };
+    return {
+      handler,
+      attachmentStorage,
+      bridgeExecutor,
+      conversationService,
+      linkTelegramChatToSubscriber,
+      subscriberResolver,
+    };
   }
 
   function makeSlackDmThread() {
@@ -248,6 +270,113 @@ describe('AgentInboundHandler', () => {
         ],
       });
       expect(bridgeExecutor.execute.firstCall.args[0].storedAttachments).to.deep.equal(storedAttachments);
+    });
+  });
+
+  describe('Telegram /start subscriber-link handling', () => {
+    const telegramConfig = {
+      environmentId: 'env1',
+      organizationId: 'org1',
+      platform: AgentPlatformEnum.TELEGRAM,
+      integrationIdentifier: 'telegram-main',
+      integrationId: 'integration1',
+      agentIdentifier: 'support-agent',
+      acknowledgeOnReceived: false,
+    };
+
+    function makeTelegramThread() {
+      const post = sinon.stub().resolves({ id: 'reply-1', threadId: 'telegram:42' });
+
+      return {
+        id: 'telegram:42',
+        channelId: '42',
+        isDM: true,
+        toJSON: () => ({ id: 'telegram:42', channelId: '42', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post,
+      };
+    }
+
+    function makeStartMessage(text: string) {
+      return {
+        id: 'msg-1',
+        threadId: 'telegram:42',
+        text,
+        author: { userId: '42', fullName: 'TG User', userName: 'tguser', isBot: false },
+        raw: { message: { chat: { id: 42 } } },
+        attachments: [],
+      };
+    }
+
+    it('invokes LinkTelegramChatToSubscriber with the token + chatId and skips bridge execution on success', async () => {
+      const linkTelegramExecute = sinon
+        .stub()
+        .resolves({ created: true, subscriberId: 'sub-1', agentIdentifier: 'support-agent' });
+      const { handler, bridgeExecutor, linkTelegramChatToSubscriber, conversationService } = makeHandler({
+        linkTelegramExecute,
+      });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start eyJhbGciOiJIUzI1NiJ9.payload.signature');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(linkTelegramChatToSubscriber.execute.calledOnce).to.equal(true);
+      const cmd = linkTelegramChatToSubscriber.execute.firstCall.args[0];
+      expect(cmd.token).to.equal('eyJhbGciOiJIUzI1NiJ9.payload.signature');
+      expect(cmd.chatId).to.equal('42');
+      expect(thread.post.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+      expect(conversationService.createOrGetConversation.called).to.equal(false);
+    });
+
+    it('replies with the duplicate message when the chat was already linked', async () => {
+      const linkTelegramExecute = sinon
+        .stub()
+        .resolves({ created: false, subscriberId: 'sub-1', agentIdentifier: 'support-agent' });
+      const { handler, bridgeExecutor } = makeHandler({ linkTelegramExecute });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start abc');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(thread.post.calledOnce).to.equal(true);
+      expect(thread.post.firstCall.args[0]).to.match(/already connected/i);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('replies with the expired-link message when the token has expired', async () => {
+      const linkTelegramExecute = sinon.stub().rejects(new LinkTelegramChatTokenError('expired'));
+      const { handler, bridgeExecutor } = makeHandler({ linkTelegramExecute });
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start expiredtoken');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(thread.post.firstCall.args[0]).to.match(/expired/i);
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('falls through to normal inbound processing for plain Telegram messages (no /start)', async () => {
+      const { handler, bridgeExecutor, linkTelegramChatToSubscriber, conversationService } = makeHandler();
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('hi there');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(linkTelegramChatToSubscriber.execute.called).to.equal(false);
+      expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+    });
+
+    it('falls through to normal inbound processing for /start with no payload (bare command)', async () => {
+      const { handler, linkTelegramChatToSubscriber, conversationService } = makeHandler();
+      const thread = makeTelegramThread();
+      const message = makeStartMessage('/start');
+
+      await handler.handle('agent1', telegramConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(linkTelegramChatToSubscriber.execute.called).to.equal(false);
+      expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
     });
   });
 

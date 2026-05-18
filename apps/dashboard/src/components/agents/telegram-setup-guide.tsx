@@ -1,10 +1,15 @@
+import { useUser } from '@clerk/clerk-react';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiKey2Line, RiRobot2Line, RiSendPlaneLine } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
-import type { AgentResponse } from '@/api/agents';
-import { configureTelegramAgentWebhook, getAgentIntegrationsQueryKey } from '@/api/agents';
+import type { AgentResponse, TelegramSubscriberLink } from '@/api/agents';
+import {
+  configureTelegramAgentWebhook,
+  getAgentIntegrationsQueryKey,
+  requestTelegramSubscriberLink,
+} from '@/api/agents';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -58,9 +63,20 @@ export function TelegramSetupGuide({
   const [isConnected, setIsConnected] = useState(false);
   const [configuredWebhookUrl, setConfiguredWebhookUrl] = useState<string | null>(null);
   const [botUsername, setBotUsername] = useState<string | null>(null);
+  const [subscriberLink, setSubscriberLink] = useState<TelegramSubscriberLink | null>(null);
 
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
+  const { user } = useUser();
+
+  // Build a stable per-agent subscriber id from the dashboard user so the test
+  // step can reach the same Novu subscriber row each time setup is revisited.
+  // Mirrors the Slack guide's `${user.externalId}:agent-quickstart:${agent._id}` pattern.
+  const testSubscriberId = useMemo(() => {
+    if (!user?.externalId) return null;
+
+    return `${user.externalId}:agent-quickstart:${agent._id}`;
+  }, [user?.externalId, agent._id]);
 
   // Guards the auto-configure effect below from looping on failure. Without it,
   // a failed configureTelegram() (e.g. Telegram setWebhook rate-limit) would
@@ -76,6 +92,7 @@ export function TelegramSetupGuide({
     setConfiguredWebhookUrl(null);
     setBotUsername(null);
     autoConfigureAttemptedRef.current = false;
+    setSubscriberLink(null);
   }, [integrationId]);
 
   const handleConnected = useCallback(() => {
@@ -170,6 +187,59 @@ export function TelegramSetupGuide({
     }
   }, [hasCredentials, isWebhookConfigured, isConfiguring, runConfigureTelegram]);
 
+  const {
+    mutate: issueSubscriberLink,
+    isPending: isIssuingSubscriberLink,
+    error: subscriberLinkError,
+  } = useMutation({
+    mutationFn: () => {
+      if (!testSubscriberId) {
+        throw new Error('Sign-in is required to issue a Telegram connection link.');
+      }
+
+      return requestTelegramSubscriberLink(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agent.identifier,
+        integrationId,
+        testSubscriberId
+      );
+    },
+    onSuccess: (result) => {
+      setSubscriberLink(result);
+    },
+    onError: (err: unknown) => {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Failed to issue a Telegram connection link. Check that the bot token is valid and try again.';
+      showErrorToast(message);
+    },
+  });
+
+  // Once the webhook is registered, auto-issue a subscriber-link for the
+  // current dashboard user so step 3 ("Send a test message") opens a deep link
+  // that automatically links this Telegram chat to a test subscriber.
+  useEffect(() => {
+    if (
+      isWebhookConfigured &&
+      botUsername &&
+      testSubscriberId &&
+      !subscriberLink &&
+      !isIssuingSubscriberLink &&
+      !subscriberLinkError
+    ) {
+      issueSubscriberLink();
+    }
+  }, [
+    isWebhookConfigured,
+    botUsername,
+    testSubscriberId,
+    subscriberLink,
+    isIssuingSubscriberLink,
+    subscriberLinkError,
+    issueSubscriberLink,
+  ]);
+
   const base = stepOffset;
 
   const firstIncompleteStep = useMemo(() => {
@@ -260,20 +330,25 @@ export function TelegramSetupGuide({
         title="Send a test message"
         description={
           <span>
-            {'Open Telegram and send a direct message to your bot. If everything is configured correctly, your agent will respond. You can search for your bot by its username.'}
+            {subscriberLink
+              ? 'Open the connection link below in Telegram. The bot will link this chat to a test subscriber and confirm your agent can reach you here.'
+              : 'Open Telegram and send a direct message to your bot. If everything is configured correctly, your agent will respond. You can search for your bot by its username.'}
           </span>
         }
         rightContent={
           botUsername ? (
             <div className="flex flex-col items-start gap-0">
               <SetupButton
-                href={`https://t.me/${botUsername}`}
+                href={subscriberLink?.deepLinkUrl ?? `https://t.me/${botUsername}`}
                 leadingIcon={<RiSendPlaneLine className="size-3.5" />}
               >
-                Open @{botUsername}
+                {subscriberLink ? `Connect & test @${botUsername}` : `Open @${botUsername}`}
               </SetupButton>
               {step3Status === 'current' && (
-                <TelegramQrInline url={`https://t.me/${botUsername}`} username={botUsername} />
+                <TelegramQrInline
+                  url={subscriberLink?.deepLinkUrl ?? `https://t.me/${botUsername}`}
+                  username={botUsername}
+                />
               )}
             </div>
           ) : null

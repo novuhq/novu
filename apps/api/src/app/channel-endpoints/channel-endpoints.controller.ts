@@ -28,6 +28,7 @@ import {
   CreatePhoneEndpointDto,
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
+  CreateTelegramChatEndpointDto,
   CreateWebhookEndpointDto,
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
@@ -65,6 +66,7 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreatePhoneEndpointDto,
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
+  CreateTelegramChatEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
@@ -167,6 +169,7 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreatePhoneEndpointDto) },
         { $ref: getSchemaPath(CreateMsTeamsChannelEndpointDto) },
         { $ref: getSchemaPath(CreateMsTeamsUserEndpointDto) },
+        { $ref: getSchemaPath(CreateTelegramChatEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -177,6 +180,7 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.PHONE]: getSchemaPath(CreatePhoneEndpointDto),
           [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: getSchemaPath(CreateMsTeamsChannelEndpointDto),
           [ENDPOINT_TYPES.MS_TEAMS_USER]: getSchemaPath(CreateMsTeamsUserEndpointDto),
+          [ENDPOINT_TYPES.TELEGRAM_CHAT]: getSchemaPath(CreateTelegramChatEndpointDto),
         },
       },
     },

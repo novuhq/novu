@@ -6,14 +6,24 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 /** Lifetime of an issued mobile setup token (seconds). */
 export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
 
+/**
+ * Lifetime of a subscriber-link token (seconds). Longer than the mobile-link
+ * token because the user has to leave the dashboard, switch to Telegram, and
+ * send the `/start <token>` message to the bot.
+ */
+export const TELEGRAM_SUBSCRIBER_LINK_TTL_SECONDS = 15 * 60;
+
 /** Cache TTL for the used-jti blocklist. Slightly larger than the JWT TTL to outlive clock skew. */
 const USED_JTI_TTL_SECONDS = TELEGRAM_MOBILE_LINK_TTL_SECONDS + 60;
+const USED_SUBSCRIBER_LINK_JTI_TTL_SECONDS = TELEGRAM_SUBSCRIBER_LINK_TTL_SECONDS + 60;
 
 const JWT_AUDIENCE = 'telegram-mobile-setup';
 const JWT_AUDIENCE_INTEGRATION_STORE = 'telegram-integration-mobile-setup';
+const JWT_AUDIENCE_SUBSCRIBER_LINK = 'telegram-subscriber-link';
 const JWT_ISSUER = 'novu';
 
 const USED_JTI_KEY_PREFIX = 'telegram_mobile_jti:';
+const USED_SUBSCRIBER_LINK_JTI_KEY_PREFIX = 'telegram_sub_link_jti:';
 
 export interface TelegramMobileLinkTokenPayload {
   /** Environment id. */
@@ -55,9 +65,36 @@ export interface IssuedTelegramMobileLink {
   expiresAt: string;
 }
 
+/**
+ * Payload for the agent subscriber-link deep-link flow. Carries enough context
+ * to validate the agent + integration link and to attach the inbound Telegram
+ * `chat.id` to the right Novu subscriber when the user runs `/start <token>`.
+ */
+export interface TelegramSubscriberLinkTokenPayload {
+  env: string;
+  org: string;
+  /** Agent external identifier. */
+  aid: string;
+  /** Integration id (internal Mongo `_id`). */
+  iid: string;
+  /** Target subscriber id (external). */
+  sid: string;
+  jti: string;
+  iat?: number;
+  exp?: number;
+  aud?: string;
+  iss?: string;
+}
+
 export class InvalidTelegramMobileTokenError extends Error {
   constructor(public readonly reason: 'invalid' | 'expired' | 'used') {
     super(`Telegram mobile token is ${reason}`);
+  }
+}
+
+export class InvalidTelegramSubscriberLinkTokenError extends Error {
+  constructor(public readonly reason: 'invalid' | 'expired' | 'used') {
+    super(`Telegram subscriber-link token is ${reason}`);
   }
 }
 
@@ -216,7 +253,103 @@ export class TelegramMobileLinkTokenService {
     }
   }
 
+  async issueSubscriberLink(params: {
+    environmentId: string;
+    organizationId: string;
+    agentIdentifier: string;
+    integrationId: string;
+    subscriberId: string;
+  }): Promise<IssuedTelegramMobileLink> {
+    const jti = randomUUID();
+
+    const payload: TelegramSubscriberLinkTokenPayload = {
+      env: params.environmentId,
+      org: params.organizationId,
+      aid: params.agentIdentifier,
+      iid: params.integrationId,
+      sid: params.subscriberId,
+      jti,
+    };
+
+    const token = this.jwtService.sign(payload, {
+      expiresIn: TELEGRAM_SUBSCRIBER_LINK_TTL_SECONDS,
+      audience: JWT_AUDIENCE_SUBSCRIBER_LINK,
+      issuer: JWT_ISSUER,
+    });
+
+    const expiresAt = new Date(Date.now() + TELEGRAM_SUBSCRIBER_LINK_TTL_SECONDS * 1000).toISOString();
+
+    return { token, expiresAt };
+  }
+
+  verifySubscriberLink(token: string): TelegramSubscriberLinkTokenPayload {
+    if (!token || typeof token !== 'string') {
+      throw new InvalidTelegramSubscriberLinkTokenError('invalid');
+    }
+
+    try {
+      const payload = this.jwtService.verify<TelegramSubscriberLinkTokenPayload>(token, {
+        audience: JWT_AUDIENCE_SUBSCRIBER_LINK,
+        issuer: JWT_ISSUER,
+      });
+
+      if (!payload?.env || !payload?.org || !payload?.aid || !payload?.iid || !payload?.sid || !payload?.jti) {
+        throw new InvalidTelegramSubscriberLinkTokenError('invalid');
+      }
+
+      return payload;
+    } catch (err) {
+      if (err instanceof InvalidTelegramSubscriberLinkTokenError) throw err;
+      const isExpired =
+        typeof err === 'object' &&
+        err !== null &&
+        'name' in err &&
+        (err as { name?: string }).name === 'TokenExpiredError';
+      throw new InvalidTelegramSubscriberLinkTokenError(isExpired ? 'expired' : 'invalid');
+    }
+  }
+
+  /**
+   * Atomically claim a subscriber-link `jti` as used. Mirrors {@link claimJti}
+   * but uses a separate key namespace and TTL to allow longer-lived link tokens.
+   */
+  async claimSubscriberLinkJti(jti: string): Promise<boolean> {
+    if (!this.cacheService.cacheEnabled()) {
+      this.logger.warn('Cache unavailable for telegram subscriber-link jti tracking');
+
+      return true;
+    }
+
+    const result = await this.cacheService.setIfNotExist(this.subscriberLinkJtiKey(jti), '1', {
+      ttl: USED_SUBSCRIBER_LINK_JTI_TTL_SECONDS,
+    });
+
+    return result !== null;
+  }
+
+  async isSubscriberLinkJtiUsed(jti: string): Promise<boolean> {
+    if (!this.cacheService.cacheEnabled()) return false;
+
+    const value = await this.cacheService.get(this.subscriberLinkJtiKey(jti));
+
+    return value != null;
+  }
+
+  async releaseSubscriberLinkJti(jti: string): Promise<void> {
+    if (!this.cacheService.cacheEnabled()) return;
+
+    try {
+      await this.cacheService.del(this.subscriberLinkJtiKey(jti));
+    } catch (err) {
+      this.logger.warn(`Failed to release telegram subscriber-link jti ${jti}: ${(err as Error).message}`);
+    }
+  }
+
   private jtiKey(jti: string): string {
     return `${USED_JTI_KEY_PREFIX}${jti}`;
+  }
+
+  private subscriberLinkJtiKey(jti: string): string {
+    return `${USED_SUBSCRIBER_LINK_JTI_KEY_PREFIX}${jti}`;
   }
 }

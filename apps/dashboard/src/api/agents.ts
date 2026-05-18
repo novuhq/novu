@@ -591,6 +591,35 @@ export async function requestTelegramMobileLink(
   return response.data;
 }
 
+export type TelegramSubscriberLink = {
+  token: string;
+  deepLinkUrl: string;
+  botUsername: string;
+  /** ISO timestamp when the link expires. */
+  expiresAt: string;
+};
+
+type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
+
+/**
+ * Issues a `t.me/<bot>?start=<token>` deep-link that, when opened by a subscriber,
+ * automatically links the originating Telegram chat to the supplied subscriberId
+ * by creating a `telegram_chat` channel endpoint on the bot inbound webhook.
+ */
+export async function requestTelegramSubscriberLink(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationId: string,
+  subscriberId: string
+): Promise<TelegramSubscriberLink> {
+  const response = await post<TelegramSubscriberLinkEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
+    { environment, body: { subscriberId } }
+  );
+
+  return response.data;
+}
+
 export type TelegramMobileLinkStatus =
   | { valid: true; agentName: string; providerName: string }
   | { valid: false; reason: 'expired' | 'used' | 'invalid' };
