@@ -133,10 +133,10 @@ overrides:
   path-to-regexp@>=3.0.0 <3.3.0: ^3.3.0
   path-to-regexp@>=6.0.0 <6.3.0: ^6.3.0
   path-to-regexp@>=8.0.0 <8.4.0: ^8.4.0
-  svelte@<5.53.5: 5.53.5
+  svelte: 5.55.7
   '@sveltejs/kit@<=2.57.0': ^2.57.1
   langsmith@<0.6.0: ^0.6.3
-  devalue@<5.6.4: 5.6.4
+  devalue@<5.8.1: ^5.8.1
   picomatch@<2.3.2: ^2.3.2
   picomatch@>=4.0.0 <4.0.4: ^4.0.4
   yaml@>=1.0.0 <1.10.3: ^1.10.3
@@ -165,6 +165,7 @@ overrides:
   mermaid@>=11.0.0-alpha.1 <11.15.0: ^11.15.0
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
+  better-auth: 1.5.6
 
 # allowBuilds replaces onlyBuiltDependencies (and other build-dependency settings) in pnpm v11.
 # Values map package names to `true` (always allow scripts) or `false` (always deny).
