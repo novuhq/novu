@@ -413,6 +413,9 @@ importers:
       '@novu/testing':
         specifier: workspace:*
         version: link:../../libs/testing
+      '@novu/thalamus':
+        specifier: https://github.com/novuhq/thalamus.git#c069bb3
+        version: https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@3.25.20))
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
@@ -34052,6 +34055,13 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
+
+  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@3.25.20))':
+    optionalDependencies:
+      '@anthropic-ai/sdk': 0.95.1(zod@3.25.20)
+      '@aws-crypto/sha256-js': 5.2.0
+      '@smithy/signature-v4': 5.4.3
+      openai: 6.17.0(ws@8.20.0)(zod@3.25.20)
 
   '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/c069bb3fa6eb1f07f61024755d06579d09930e2e(@anthropic-ai/sdk@0.95.1(zod@4.3.6))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.0)(zod@4.3.6))':
     optionalDependencies:

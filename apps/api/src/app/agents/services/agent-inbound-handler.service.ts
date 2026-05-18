@@ -22,7 +22,7 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
-import { ManagedExecutorService } from './managed-executor.service';
+import { ManagedAgentService } from './managed-agent.service';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
 /**
@@ -197,7 +197,7 @@ export class AgentInboundHandler {
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly managedExecutor: ManagedExecutorService,
+    private readonly managedAgentService: ManagedAgentService,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly environmentRepository: EnvironmentRepository,
@@ -385,7 +385,7 @@ export class AgentInboundHandler {
 
     try {
       if (agent?.runtime === 'managed' && agent.managedRuntime) {
-        await this.managedExecutor.execute(executionContext, agent);
+        await this.managedAgentService.dispatch(executionContext, agent);
       } else {
         await this.bridgeExecutor.execute({
           ...executionContext,

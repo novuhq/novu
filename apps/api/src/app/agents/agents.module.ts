@@ -33,7 +33,7 @@ import { AgentInboundHandler } from './services/agent-inbound-handler.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
 import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
-import { ManagedExecutorService } from './services/managed-executor.service';
+import { ManagedAgentService } from './services/managed-agent.service';
 import { TelegramMobileLinkTokenService } from './services/telegram-mobile-link-token.service';
 import { TelegramStartCodeService } from './services/telegram-start-code.service';
 import { USE_CASES } from './usecases';
@@ -66,7 +66,7 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
-    ManagedExecutorService,
+    ManagedAgentService,
     ChatSdkService,
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
