@@ -77,25 +77,32 @@ jobs:
       nr_matrix: ${{ steps.set-matrix.outputs.nr_matrix }}
     steps:
       - name: Validate Selected Services
+        env:
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          INPUT_DEPLOY_API: ${{ github.event.inputs.deploy_api }}
+          INPUT_DEPLOY_WORKER: ${{ github.event.inputs.deploy_worker }}
+          INPUT_DEPLOY_WS: ${{ github.event.inputs.deploy_ws }}
+          INPUT_DEPLOY_WEBHOOK: ${{ github.event.inputs.deploy_webhook }}
+          INPUT_DEPLOY_INBOUND_MAIL: ${{ github.event.inputs.deploy_inbound_mail }}
         run: |
-          if [ "${{ github.event.inputs.deploy_api }}" != "true" ] && \
-             [ "${{ github.event.inputs.deploy_worker }}" != "true" ] && \
-             [ "${{ github.event.inputs.deploy_ws }}" != "true" ] && \
-             [ "${{ github.event.inputs.deploy_webhook }}" != "true" ] && \
-             [ "${{ github.event.inputs.deploy_inbound_mail }}" != "true" ]; then
+          if [ "$INPUT_DEPLOY_API" != "true" ] && \
+             [ "$INPUT_DEPLOY_WORKER" != "true" ] && \
+             [ "$INPUT_DEPLOY_WS" != "true" ] && \
+             [ "$INPUT_DEPLOY_WEBHOOK" != "true" ] && \
+             [ "$INPUT_DEPLOY_INBOUND_MAIL" != "true" ]; then
             echo "Error: At least one service must be selected for deployment."
             exit 1
           fi
 
           # webhook and inbound-mail only have infra in staging-eu, prod-us, prod-eu.
           # Fail fast if someone selects them with an unsupported environment.
-          if [ "${{ github.event.inputs.deploy_webhook }}" = "true" ] || \
-             [ "${{ github.event.inputs.deploy_inbound_mail }}" = "true" ]; then
-            case "${{ github.event.inputs.environment }}" in
+          if [ "$INPUT_DEPLOY_WEBHOOK" = "true" ] || \
+             [ "$INPUT_DEPLOY_INBOUND_MAIL" = "true" ]; then
+            case "$INPUT_ENVIRONMENT" in
               staging|production-us|production-eu|production-us-and-eu) ;;
               *)
                 echo "Error: webhook and inbound-mail can only deploy to staging, production-us, production-eu, or production-us-and-eu."
-                echo "Selected environment: ${{ github.event.inputs.environment }}"
+                echo "Selected environment: $INPUT_ENVIRONMENT"
                 exit 1
                 ;;
             esac
@@ -106,6 +113,12 @@ jobs:
         env:
           WORKER_SERVICE: ${{ vars.WORKER_SERVICE }}
           API_SERVICE: ${{ vars.API_SERVICE }}
+          INPUT_ENVIRONMENT: ${{ github.event.inputs.environment }}
+          INPUT_DEPLOY_API: ${{ github.event.inputs.deploy_api }}
+          INPUT_DEPLOY_WORKER: ${{ github.event.inputs.deploy_worker }}
+          INPUT_DEPLOY_WS: ${{ github.event.inputs.deploy_ws }}
+          INPUT_DEPLOY_WEBHOOK: ${{ github.event.inputs.deploy_webhook }}
+          INPUT_DEPLOY_INBOUND_MAIL: ${{ github.event.inputs.deploy_inbound_mail }}
         run: |
           envs=()
           services=()
@@ -113,38 +126,38 @@ jobs:
           nr=()
 
           # Collect selected environments
-          if [ "${{ github.event.inputs.environment }}" == "staging" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "staging" ]; then
             envs+=("\"staging-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "staging-sg" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "staging-sg" ]; then
             envs+=("\"staging-apse1\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-us" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-us" ]; then
             envs+=("\"prod-us\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-eu" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-eu" ]; then
             envs+=("\"prod-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-sg" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-sg" ]; then
             envs+=("\"prod-apse1\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-au" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-au" ]; then
             envs+=("\"prod-apse2\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-uk" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-uk" ]; then
             envs+=("\"prod-ew2\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-jp" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-jp" ]; then
             envs+=("\"prod-apne1\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-kr" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-kr" ]; then
             envs+=("\"prod-apne2\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-us-and-eu" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-us-and-eu" ]; then
             envs+=("\"prod-us\"")
             envs+=("\"prod-eu\"")
           fi
-          if [ "${{ github.event.inputs.environment }}" == "production-sg-au-uk-jp-kr" ]; then
+          if [ "$INPUT_ENVIRONMENT" == "production-sg-au-uk-jp-kr" ]; then
             envs+=("\"prod-apse1\"")
             envs+=("\"prod-apse2\"")
             envs+=("\"prod-ew2\"")
@@ -153,21 +166,21 @@ jobs:
           fi
 
           # Collect selected services
-          if [ "${{ github.event.inputs.deploy_api }}" == "true" ]; then
+          if [ "$INPUT_DEPLOY_API" == "true" ]; then
             services+=("\"api\"")
             nr+=("\"api\"")
           fi
-          if [ "${{ github.event.inputs.deploy_worker }}" == "true" ]; then
+          if [ "$INPUT_DEPLOY_WORKER" == "true" ]; then
             services+=("\"worker\"")
             nr+=("\"worker\"")
           fi
-          if [ "${{ github.event.inputs.deploy_ws }}" == "true" ]; then
+          if [ "$INPUT_DEPLOY_WS" == "true" ]; then
             services+=("\"ws\"")
           fi
-          if [ "${{ github.event.inputs.deploy_webhook }}" == "true" ]; then
+          if [ "$INPUT_DEPLOY_WEBHOOK" == "true" ]; then
             services+=("\"webhook\"")
           fi
-          if [ "${{ github.event.inputs.deploy_inbound_mail }}" == "true" ]; then
+          if [ "$INPUT_DEPLOY_INBOUND_MAIL" == "true" ]; then
             services+=("\"inbound-mail\"")
           fi
 
@@ -285,7 +298,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           submodules: true
           fetch-depth: 0
@@ -293,7 +306,7 @@ jobs:
 
       - name: Whitelist Runner IP
         id: whitelist
-        uses: novuhq/clickhouse-cloud-whitelist-ip-action@v1.0.0
+        uses: novuhq/clickhouse-cloud-whitelist-ip-action@7594062e821f1f28af7673bf82e4df9ca2e78636 # v1.0.0
         with:
           clickhouse-org-id: ${{ secrets.CLICKHOUSE_ORG_ID }}
           clickhouse-service-id: ${{ secrets.CLICKHOUSE_SERVICE_ID }}
@@ -301,13 +314,13 @@ jobs:
           clickhouse-api-key-secret: ${{ secrets.CLICKHOUSE_API_KEY_SECRET }}
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
-          version: 10.33.0
+          version: 11.0.9
           run_install: false
 
       - name: Setup Node Version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22.22.1"
           cache: "pnpm"
@@ -329,26 +342,29 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix:
         service: ${{ fromJson(needs.prepare-matrix.outputs.service_matrix).service }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           submodules: true
           fetch-depth: 0
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
         with:
-          version: 10.33.0
+          version: 11.0.9
           run_install: false
 
       - name: Setup Node Version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "22.22.1"
           cache: "pnpm"
@@ -358,7 +374,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
         with:
           driver-opts: "image=moby/buildkit:v0.13.1"
 
@@ -366,15 +382,15 @@ jobs:
         run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID}}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-build-${{ github.run_id }}
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: aws-actions/amazon-ecr-login@fa648b43de3d4d023bcb3f89ed6940096949c419 # v2
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -397,6 +413,9 @@ jobs:
   deploy:
     needs: [build, prepare-matrix, run-clickhouse-migrations]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix:
         env: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment }}
@@ -406,11 +425,11 @@ jobs:
 
     steps:
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: gha-deploy-${{ github.run_id }}
 
       - name: Download task definition
         env:
@@ -446,16 +465,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Get NPM Version
         id: package-version
-        uses: martinbeentjes/npm-get-version-action@main
+        uses: martinbeentjes/npm-get-version-action@3cf273023a0dda27efcd3164bdfb51908dd46a5b # main
         with:
           path: apps/${{ matrix.service }}
 
       - name: Create Sentry release
-        uses: getsentry/action-release@v1
+        uses: getsentry/action-release@a74facf8a080ecbdf1cb355f16743530d712abb7 # v1
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}
@@ -479,7 +498,7 @@ jobs:
 
     steps:
       - name: New Relic Application Deployment Marker
-        uses: newrelic/deployment-marker-action@v2.3.0
+        uses: newrelic/deployment-marker-action@8c1d1c009e7ee18ed2bda1e068d59867fdaa91c4 # v2.3.0
         with:
           region: EU
           apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
@@ -495,7 +514,7 @@ jobs:
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
     steps:
       - name: Sync State to Novu
-        uses: novuhq/actions-novu-sync@v2
+        uses: novuhq/actions-novu-sync@dceec32b0c93c5d7f741e38094204fd5ebd9f308 # v2
         with:
           secret-key: ${{ secrets.NOVU_INTERNAL_SECRET_KEY }}
           bridge-url: ${{ vars.NOVU_BRIDGE_URL }}
@@ -532,6 +551,11 @@ jobs:
   linear_release_cloud:
     # Cloud uses two continuous Linear pipelines: staging and production.
     # Each successful deploy syncs a completed release to the matching pipeline.
+    #
+    # The release `name` is date-based (`YYYY-MM-DD HH:MM UTC · <environment>`),
+    # so releases are easy to scan in the Linear UI. The commit SHA is preserved
+    # on the release via the `version` field (the Linear Release Action has no
+    # `description` input — see https://github.com/linear/linear-release-action).
     name: Linear Release (Cloud)
     needs: [deploy, prepare-matrix]
     runs-on: ubuntu-latest
@@ -547,9 +571,17 @@ jobs:
       contents: read
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           fetch-depth: 0
+
+      - name: Compute date-based release name
+        id: release_meta
+        env:
+          DEPLOY_ENVIRONMENT: ${{ github.event.inputs.environment }}
+        run: |
+          release_name="$(date -u +'%Y-%m-%d %H:%M UTC') · ${DEPLOY_ENVIRONMENT}"
+          echo "name=${release_name}" >> "$GITHUB_OUTPUT"
 
       - name: Sync staging release to Linear
         if: |
@@ -558,6 +590,7 @@ jobs:
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_STAGING }}
+          name: ${{ steps.release_meta.outputs.name }}
           version: ${{ github.sha }}
 
       - name: Sync production release to Linear
@@ -565,4 +598,5 @@ jobs:
         uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_PROD }}
+          name: ${{ steps.release_meta.outputs.name }}
           version: ${{ github.sha }}

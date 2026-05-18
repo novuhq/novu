@@ -48,6 +48,19 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
 
+function findLinkedNovuAgentIntegration(
+  linkedIntegrationIds: Set<string> | undefined,
+  integrations: IIntegration[] | undefined
+): IIntegration | undefined {
+  if (!linkedIntegrationIds?.size || !integrations?.length) {
+    return undefined;
+  }
+
+  return integrations.find(
+    (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds.has(i._id)
+  );
+}
+
 /** One row per provider type in the collapsed list. */
 type ProviderTypeItem = {
   providerId: string;
@@ -120,7 +133,7 @@ function buildDropdownItems(
       displayName,
       comingSoon: false,
       requiresBusinessTier: cp.requiresBusinessTier ?? false,
-      // NovuAgent is 1:1 per agent — never surface existing integrations from other agents.
+      // NovuAgent is 1:1 per agent — never list other agents' instances (see `findLinkedNovuAgentIntegration`).
       integrations: cp.providerId === EmailProviderIdEnum.NovuAgent ? [] : existing,
     });
   }
@@ -174,25 +187,22 @@ export function ProviderDropdown({
   const supported = useMemo(() => {
     let items = allSupported;
 
+    // NovuAgent is 1:1 per agent and the backend enforces it — hiding the row
+    // once an instance is linked is an invariant the picker must always honor,
+    // independent of the caller's `excludeLinked` preference (which only
+    // controls whether *other providers'* already-linked instances are shown).
+    if (linkedIntegrationIds?.size) {
+      const linkedNovuAgent = findLinkedNovuAgentIntegration(linkedIntegrationIds, integrations);
+      if (linkedNovuAgent) {
+        items = items.filter((item) => item.providerId !== EmailProviderIdEnum.NovuAgent);
+      }
+    }
+
     if (excludeLinked && linkedIntegrationIds?.size) {
-      items = items
-        .map((item) => ({
-          ...item,
-          integrations: item.integrations.filter((i) => !linkedIntegrationIds.has(i._id)),
-        }))
-        .filter((item) => {
-          // Keep providers that still have unlinked instances OR have no instances (create path).
-          // NovuAgent: keep only if it has no linked instance yet.
-          if (item.providerId === EmailProviderIdEnum.NovuAgent) {
-            const linkedNovuAgent = integrations?.find(
-              (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds.has(i._id)
-            );
-
-            return !linkedNovuAgent;
-          }
-
-          return true;
-        });
+      items = items.map((item) => ({
+        ...item,
+        integrations: item.integrations.filter((i) => !linkedIntegrationIds.has(i._id)),
+      }));
     }
 
     return items;
@@ -633,19 +643,44 @@ export function ProviderDropdown({
   const expandedList = expandedProvider && (
     <Command>
       {/* Back header */}
-      <button
-        type="button"
-        onClick={() => setExpandedProviderId(null)}
-        className="bg-bg-weak border-stroke-weak hover:bg-bg-soft flex w-full items-center gap-1.5 border-b px-2 py-1.5 transition-colors"
-      >
-        <RiArrowLeftSLine className="text-text-soft size-3.5 shrink-0" />
-        <ProviderIcon
-          providerId={expandedProvider.providerId}
-          providerDisplayName={expandedProvider.displayName}
-          className="size-4 shrink-0"
-        />
-        <span className="text-text-sub text-label-xs font-medium leading-4">{expandedProvider.displayName}</span>
-      </button>
+      <div className="bg-bg-weak border-stroke-weak flex w-full items-center border-b">
+        <button
+          type="button"
+          onClick={() => setExpandedProviderId(null)}
+          className="hover:bg-bg-soft flex flex-1 items-center gap-1.5 px-2 py-1.5 transition-colors"
+        >
+          <RiArrowLeftSLine className="text-text-soft size-3.5 shrink-0" />
+          <ProviderIcon
+            providerId={expandedProvider.providerId}
+            providerDisplayName={expandedProvider.displayName}
+            className="size-4 shrink-0"
+          />
+          <span className="text-text-sub text-label-xs font-medium leading-4">{expandedProvider.displayName}</span>
+        </button>
+        <button
+          type="button"
+          disabled={isBusy}
+          aria-label={`Create another ${expandedProvider.displayName} integration`}
+          onClick={() => {
+            void handleSelect(
+              {
+                providerId: expandedProvider.providerId,
+                displayName: expandedProvider.displayName,
+                comingSoon: false,
+                requiresBusinessTier: expandedProvider.requiresBusinessTier,
+              },
+              expandedProvider.integrations.length
+            );
+          }}
+          className="hover:bg-bg-soft flex items-center justify-center px-2 py-1.5 transition-colors disabled:opacity-60"
+        >
+          {pendingItemKey === `${expandedProvider.providerId}-new-${expandedProvider.integrations.length}` ? (
+            <RiLoader4Line className="text-text-soft size-3.5 shrink-0 animate-spin" aria-hidden />
+          ) : (
+            <RiAddLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+          )}
+        </button>
+      </div>
 
       <CommandList className="max-h-[260px] p-1">
         <CommandEmpty className="text-text-soft text-label-xs py-4">No integrations found.</CommandEmpty>

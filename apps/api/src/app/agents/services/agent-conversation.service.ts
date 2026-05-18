@@ -394,6 +394,7 @@ export class AgentConversationService {
         params.conversationId,
         ConversationStatusEnum.RESOLVED
       ),
+      this.conversationRepository.clearExternalSessionId(params.environmentId, params.conversationId),
       this.activityRepository.createSignalActivity({
         identifier: `act_${shortId(12)}`,
         conversationId: params.conversationId,

@@ -108,45 +108,30 @@ export class SendAgentTestEmail {
   }
 
   private async findSenderIntegration(environmentId: string, organizationId: string, outboundIntegrationId?: string) {
-    if (outboundIntegrationId) {
-      const configured = await this.integrationRepository.findOne({
-        _id: outboundIntegrationId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        channel: ChannelTypeEnum.EMAIL,
-        active: true,
-      });
-
-      if (!configured) {
-        throw new BadRequestException('Configured outbound integration not found or inactive.');
-      }
-
-      if (configured.providerId === EmailProviderIdEnum.Novu) {
-        return {
-          ...configured,
-          credentials: {
-            apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
-            from: 'no-reply@novu.co',
-            senderName: 'Novu',
-            ipPoolName: 'Demo',
-          },
-        };
-      }
-
-      return { ...configured, credentials: decryptCredentials(configured.credentials ?? {}) };
+    if (!outboundIntegrationId) {
+      throw new BadRequestException('Agent has no outbound email integration configured.');
     }
 
-    const novuDemo = await this.integrationRepository.findOne({
+    const configured = await this.integrationRepository.findOne({
+      _id: outboundIntegrationId,
       _environmentId: environmentId,
       _organizationId: organizationId,
-      providerId: EmailProviderIdEnum.Novu,
       channel: ChannelTypeEnum.EMAIL,
       active: true,
     });
 
-    if (novuDemo) {
+    if (!configured) {
+      throw new BadRequestException('Configured outbound integration not found or inactive.');
+    }
+
+    // The Novu demo email integration is provisioned alongside each org but
+    // ships with empty stored credentials — the real SendGrid API key lives in
+    // the deployment's `NOVU_EMAIL_INTEGRATION_API_KEY` env var. Mirror the
+    // runtime resolution in chat-sdk.service.ts so test emails go through the
+    // same demo plumbing as actual agent replies.
+    if (configured.providerId === EmailProviderIdEnum.Novu) {
       return {
-        ...novuDemo,
+        ...configured,
         credentials: {
           apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
           from: 'no-reply@novu.co',
@@ -156,18 +141,6 @@ export class SendAgentTestEmail {
       };
     }
 
-    const anyEmailProvider = await this.integrationRepository.findOne({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      channel: ChannelTypeEnum.EMAIL,
-      active: true,
-      providerId: { $nin: [EmailProviderIdEnum.NovuAgent, EmailProviderIdEnum.Novu] } as unknown as string,
-    });
-
-    if (!anyEmailProvider) {
-      throw new BadRequestException('No active email provider available to send the test email.');
-    }
-
-    return { ...anyEmailProvider, credentials: decryptCredentials(anyEmailProvider.credentials ?? {}) };
+    return { ...configured, credentials: decryptCredentials(configured.credentials ?? {}) };
   }
 }

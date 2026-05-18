@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository } from '@novu/dal';
+import { AnalyticsService, decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
+import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 
 import { trackAgentDeleted } from '../../agent-analytics';
 import { CleanupNovuEmail } from '../cleanup-novu-email/cleanup-novu-email.usecase';
@@ -11,6 +11,7 @@ export class DeleteAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly integrationRepository: IntegrationRepository,
     private readonly cleanupNovuEmail: CleanupNovuEmail,
     private readonly analyticsService: AnalyticsService
   ) {}
@@ -22,11 +23,17 @@ export class DeleteAgent {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id']
+      ['_id', 'runtime', 'managedRuntime']
     );
 
     if (!agent) {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
+    }
+
+    const shouldDeleteFromProvider = command.deleteFromProvider === true;
+
+    if (agent.runtime === 'managed' && agent.managedRuntime && shouldDeleteFromProvider) {
+      await this.deleteFromProvider(agent.managedRuntime, command);
     }
 
     await this.agentRepository.withTransaction(async (session) => {
@@ -58,5 +65,33 @@ export class DeleteAgent {
       agentId: agent._id,
       agentIdentifier: command.identifier,
     });
+  }
+
+  private async deleteFromProvider(
+    managedRuntime: { providerId: string; _integrationId: string; externalAgentId: string },
+    command: DeleteAgentCommand
+  ): Promise<void> {
+    const integration = await this.integrationRepository.findOne(
+      {
+        _id: managedRuntime._integrationId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['credentials']
+    );
+
+    if (!integration) {
+      return;
+    }
+
+    const decryptedCredentials = decryptCredentials(integration.credentials);
+
+    if (!decryptedCredentials.apiKey) {
+      return;
+    }
+
+    const runtimeProvider = getAgentRuntimeProvider(managedRuntime.providerId, decryptedCredentials.apiKey);
+
+    await runtimeProvider.deleteAgent(managedRuntime.externalAgentId);
   }
 }

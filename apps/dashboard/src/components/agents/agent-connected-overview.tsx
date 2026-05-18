@@ -9,7 +9,7 @@ type AgentConnectedOverviewProps = {
 
 export function AgentConnectedOverview({ agent }: AgentConnectedOverviewProps) {
   return (
-    <div className="flex min-w-0 flex-1 flex-col gap-4">
+    <div className="flex min-w-0 flex-1 flex-col gap-4 w-full">
       <AgentBehaviorSection agent={agent} />
       <ConnectedProvidersSection agent={agent} />
       <RecentConversationsSection agent={agent} />

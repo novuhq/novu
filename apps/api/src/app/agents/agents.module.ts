@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
+import { CalculateLimitNovuIntegration } from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   ConversationActivityRepository,
   ConversationRepository,
+  IntegrationRepository,
+  MessageRepository,
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
@@ -12,6 +15,7 @@ import { SharedModule } from '../shared/shared.module';
 import { AgentEmailActionsController } from './agent-email-actions.controller';
 import { AgentsController } from './agents.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
+import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
 import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
 import { AgentConfigResolver } from './services/agent-config-resolver.service';
 import { AgentConversationService } from './services/agent-conversation.service';
@@ -20,6 +24,7 @@ import { AgentInboundHandler } from './services/agent-inbound-handler.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
 import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
+import { ManagedExecutorService } from './services/managed-executor.service';
 import { USE_CASES } from './usecases';
 
 @Module({
@@ -27,10 +32,13 @@ import { USE_CASES } from './usecases';
   controllers: [AgentsController, AgentsWebhookController, AgentEmailActionsController],
   providers: [
     ...USE_CASES,
+    AgentRuntimeExceptionFilter,
     ChannelConnectionRepository,
     ChannelEndpointRepository,
     ConversationRepository,
     ConversationActivityRepository,
+    IntegrationRepository,
+    MessageRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
@@ -38,7 +46,9 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
+    ManagedExecutorService,
     ChatSdkService,
+    CalculateLimitNovuIntegration,
   ],
   exports: [...USE_CASES, ChatSdkService],
 })

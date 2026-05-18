@@ -1,15 +1,30 @@
-import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import type { AgentRuntime } from '@novu/shared';
+import { AgentCreationSourceEnum } from '@novu/shared';
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
+  IsString,
+  ValidateIf,
+  ValidateNested,
+} from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
+import { ManagedRuntimeDto } from '../../dtos/agent-runtime-config.dto';
 
 export class CreateAgentCommand extends EnvironmentWithUserCommand {
+  @ValidateIf((o) => !o.managedRuntime?.externalAgentId)
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name?: string;
 
+  @ValidateIf((o) => !o.managedRuntime?.externalAgentId)
   @IsString()
   @IsNotEmpty()
-  identifier: string;
+  identifier?: string;
 
   @IsString()
   @IsOptional()
@@ -18,4 +33,18 @@ export class CreateAgentCommand extends EnvironmentWithUserCommand {
   @IsBoolean()
   @IsOptional()
   active?: boolean;
+
+  @IsOptional()
+  @IsEnum(['self-hosted', 'managed'] as const)
+  runtime?: AgentRuntime;
+
+  @ValidateIf((o) => o.runtime === 'managed')
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ManagedRuntimeDto)
+  managedRuntime?: ManagedRuntimeDto;
+
+  @IsOptional()
+  @IsEnum(AgentCreationSourceEnum)
+  creationSource?: AgentCreationSourceEnum;
 }

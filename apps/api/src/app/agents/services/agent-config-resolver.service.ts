@@ -1,5 +1,11 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  decryptChannelConnectionAuth,
+  decryptCredentials,
+  FeatureFlagsService,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
   AgentRepository,
@@ -7,7 +13,7 @@ import {
   ICredentialsEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
 import { trackAgentIntegrationFirstWebhook } from '../agent-analytics';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
@@ -44,6 +50,7 @@ export interface ResolvedAgentConfig {
   connectionAccessToken?: string;
   environmentId: string;
   organizationId: string;
+  agentId: string;
   agentIdentifier: string;
   /** Human-readable display name; used in email-action confirmation UI. */
   agentName: string;
@@ -125,6 +132,14 @@ export class AgentConfigResolver {
       throw new NotFoundException(`Integration ${integrationIdentifier} not found for agent ${agentId}`);
     }
 
+    // The NovuAgent integration's `active` flag is the per-agent email kill switch
+    // ("Enable email inbox" toggle in the dashboard). When false the email channel
+    // for this agent is disabled - reject resolve here so both inbound webhook and
+    // outbound chat paths fail fast with a clear error.
+    if (integration.providerId === EmailProviderIdEnum.NovuAgent && integration.active === false) {
+      throw new UnprocessableEntityException(`Email channel is disabled for agent ${agentId}`);
+    }
+
     const agentIntegration = await this.agentIntegrationRepository.findOne(
       {
         _environmentId: environmentId,
@@ -154,7 +169,8 @@ export class AgentConfigResolver {
       integrationIdentifier,
     });
     if (connection) {
-      connectionAccessToken = connection.auth.accessToken;
+      const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
+      connectionAccessToken = decryptedAuth?.accessToken;
     }
 
     // `connectedAt` is set the first time the platform actually delivers a
@@ -189,6 +205,7 @@ export class AgentConfigResolver {
       connectionAccessToken,
       environmentId,
       organizationId,
+      agentId: agent._id,
       agentIdentifier: agent.identifier,
       agentName: agent.name,
       integrationIdentifier,

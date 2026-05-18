@@ -1,4 +1,11 @@
-import type { ChannelTypeEnum, DirectionEnum, IEnvironment } from '@novu/shared';
+import type {
+  AgentCreationSourceEnum,
+  AgentRuntime,
+  AgentRuntimeProviderIdEnum,
+  ChannelTypeEnum,
+  DirectionEnum,
+  IEnvironment,
+} from '@novu/shared';
 import { del, get, patch, post } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
@@ -9,6 +16,8 @@ const AGENT_DETAIL_QUERY_KEY = 'fetchAgent' as const;
 const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
 
 const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
+
+const AGENT_RUNTIME_CONFIG_QUERY_KEY = 'fetchAgentRuntimeConfig' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
@@ -25,6 +34,10 @@ export function getAgentsListQueryKey(
   return [AGENTS_LIST_QUERY_KEY, environmentId, params] as const;
 }
 
+export function getAgentRuntimeConfigQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
+  return [AGENT_RUNTIME_CONFIG_QUERY_KEY, environmentId, agentIdentifier] as const;
+}
+
 export type AgentIntegrationSummary = {
   integrationId: string;
   providerId: string;
@@ -39,6 +52,15 @@ export type AgentBehavior = {
   reactionOnResolved?: string | null;
 };
 
+export type ManagedRuntimeResponse = {
+  providerId: string;
+  integrationId: string;
+  externalAgentId: string;
+  externalEnvironmentId?: string;
+  externalWorkspaceId?: string;
+  consoleUrl?: string;
+};
+
 export type AgentResponse = {
   _id: string;
   name: string;
@@ -49,6 +71,8 @@ export type AgentResponse = {
   bridgeUrl?: string;
   devBridgeUrl?: string;
   devBridgeActive?: boolean;
+  runtime?: AgentRuntime;
+  managedRuntime?: ManagedRuntimeResponse;
   _environmentId: string;
   _organizationId: string;
   createdAt: string;
@@ -64,11 +88,32 @@ export type ListAgentsResponse = {
   totalCountCapped: boolean;
 };
 
+type AgentSkillInputDto = {
+  type: 'anthropic' | 'custom';
+  skillId: string;
+  version?: string | null;
+};
+
+type ManagedRuntimeDto = {
+  providerId: AgentRuntimeProviderIdEnum;
+  integrationId: string;
+  externalAgentId?: string;
+  externalEnvironmentId?: string;
+  model?: string;
+  systemPrompt?: string;
+  tools?: string[];
+  mcpServers?: string[];
+  skills?: AgentSkillInputDto[];
+};
+
 export type CreateAgentBody = {
   name: string;
   identifier: string;
   description?: string;
   active?: boolean;
+  runtime?: AgentRuntime;
+  managedRuntime?: ManagedRuntimeDto;
+  creationSource?: AgentCreationSourceEnum;
 };
 
 export type UpdateAgentBody = {
@@ -176,6 +221,18 @@ export type AgentIntegrationEmbedded = {
   providerId: string;
   channel: ChannelTypeEnum;
   active: boolean;
+  /**
+   * Cloud only. The Novu shared inbox address for this agent when the shared-inbox
+   * feature is enabled. The dashboard uses this as the headline inbound address and
+   * to render the shared inbox row in the inbox list.
+   */
+  sharedInboundAddress?: string;
+  /**
+   * Cloud only. When `true`, the worker drops inbound mail addressed to this
+   * agent on the shared `agentconnect.sh` domain. Custom-domain routes still
+   * deliver. Only meaningful on the NovuAgent integration.
+   */
+  sharedInboxDisabled?: boolean;
 };
 
 /** Agent–integration link row returned by GET /agents/:identifier/integrations */
@@ -268,6 +325,89 @@ export async function sendAgentTestEmail(
     environment,
     body: { targetAddress },
   });
+}
+
+export type AgentMcpServer = {
+  externalId: string;
+  name: string;
+  url: string;
+  authToken?: string;
+};
+
+export type AgentTool = {
+  externalId: string;
+  name: string;
+  type: 'builtin' | 'custom';
+  description?: string;
+};
+
+export type AgentRuntimeCapabilities = {
+  mcpServers: boolean;
+  tools: boolean;
+  model: boolean;
+  systemPrompt: boolean;
+  skills: boolean;
+};
+
+export type AgentRuntimeConfig = {
+  model: string;
+  systemPrompt: string;
+  mcpServers: AgentMcpServer[];
+  tools: AgentTool[];
+  skills?: AgentSkillInputDto[];
+  capabilities?: AgentRuntimeCapabilities;
+};
+
+export type PatchAgentRuntimeConfigBody = {
+  model?: string;
+  systemPrompt?: string;
+  mcpServers?: AgentMcpServer[];
+  tools?: AgentTool[];
+  skills?: AgentSkillInputDto[];
+};
+
+type AgentRuntimeConfigEnvelope = { data: AgentRuntimeConfig };
+
+export async function getAgentRuntimeConfig(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentRuntimeConfig> {
+  const response = await get<AgentRuntimeConfigEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/runtime/config`,
+    { environment, signal }
+  );
+
+  return response.data;
+}
+
+export async function patchAgentRuntimeConfig(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  body: PatchAgentRuntimeConfigBody
+): Promise<AgentRuntimeConfig> {
+  const response = await patch<AgentRuntimeConfigEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/runtime/config`,
+    { environment, body }
+  );
+
+  return response.data;
+}
+
+type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
+
+/** Enable or disable the Novu shared inbox for a single agent. */
+export async function setAgentInboxSharedDisabled(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  disabled: boolean
+): Promise<AgentIntegrationLink> {
+  const response = await patch<AgentIntegrationResponseEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/inbox/shared`,
+    { environment, body: { disabled } }
+  );
+
+  return response.data;
 }
 
 type WelcomeMessageResponse = { sent: boolean; conversationId?: string };

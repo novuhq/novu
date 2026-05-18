@@ -5,7 +5,9 @@
   "author": "",
   "private": "true",
   "license": "MIT",
-  "portless": { "name": "api.novu" },
+  "portless": {
+    "name": "api.novu"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "pnpm build:metadata && nest build",
@@ -161,6 +163,7 @@
     "async": "^3.2.0",
     "chai": "^4.2.0",
     "chai-subset": "^1.6.0",
+    "emulate": "^0.5.0",
     "get-port": "^5.1.1",
     "mocha": "^10.2.0",
     "pirates": "^4.0.7",

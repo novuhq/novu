@@ -65,9 +65,9 @@ export type IntegrationResponseDto = {
    */
   channel: IntegrationResponseDtoChannel;
   /**
-   * The credentials required for the integration to function, including API keys and other sensitive information.
+   * The decrypted credentials required for the integration to function (e.g. provider API keys, signing secrets). Only returned to dashboard/session-token callers; API-key authenticated callers receive the integration metadata without this field to avoid amplifying API-key leaks into provider-credential leaks.
    */
-  credentials: CredentialsDto;
+  credentials?: CredentialsDto | undefined;
   /**
    * The configurations required for enabling the additional configurations of the integration.
    */
@@ -116,7 +116,7 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<
   identifier: z.string(),
   providerId: z.string(),
   channel: IntegrationResponseDtoChannel$inboundSchema,
-  credentials: CredentialsDto$inboundSchema,
+  credentials: CredentialsDto$inboundSchema.optional(),
   configurations: ConfigurationsDto$inboundSchema.optional(),
   active: z.boolean(),
   deleted: z.boolean(),

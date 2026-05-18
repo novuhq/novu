@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { decryptCredentials, InstrumentUsecase, MsTeamsTokenService } from '@novu/application-generic';
+import {
+  decryptChannelConnectionAuth,
+  decryptCredentials,
+  InstrumentUsecase,
+  MsTeamsTokenService,
+} from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -239,6 +244,12 @@ export class ResolveChannelEndpoints {
       return undefined;
     }
 
-    return 'accessToken' in connection.auth ? connection.auth.accessToken : undefined;
+    if (!('accessToken' in connection.auth)) {
+      return undefined;
+    }
+
+    const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
+
+    return decryptedAuth?.accessToken;
   }
 }

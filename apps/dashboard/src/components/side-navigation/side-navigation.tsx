@@ -110,7 +110,7 @@ export const LegacySideNavigation = () => {
   };
 
   return (
-    <aside className="relative flex h-full w-[275px] shrink-0 flex-col">
+    <aside className="relative flex h-full w-[225px] shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown

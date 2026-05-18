@@ -5,7 +5,9 @@
   "author": "",
   "private": true,
   "license": "UNLICENSED",
-  "portless": { "name": "ws.novu" },
+  "portless": {
+    "name": "ws.novu"
+  },
   "scripts": {
     "prebuild": "rimraf dist",
     "build": "nest build",
