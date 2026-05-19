@@ -6,6 +6,7 @@ import {
   AgentRuntimeProviderIdEnum,
   CLAUDE_BUILTIN_TOOLS,
 } from '@novu/shared';
+import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
   AgentRuntimeBadRequestError,
   AgentRuntimeForbiddenError,
@@ -23,7 +24,7 @@ import type {
   CreateAgentResult,
   GetAgentResult,
   GetEnvironmentResult,
-  IAgentRuntimeProvider,
+  ParsedMcpInitFailure,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
@@ -36,14 +37,27 @@ const RETRY_JITTER_MS = 500;
 /** Timeout for config calls in ms */
 const REQUEST_TIMEOUT_MS = 10_000;
 
-export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
+/**
+ * Anthropic surfaces missing MCP credentials, URL mismatches, and "not yet
+ * registered" cases as stream errors with the message shape
+ * `MCP server '<displayName>' initialize failed: ...`. Thalamus's
+ * `mapSessionError` wraps these in a generic retryable `ThalamusError`, so
+ * the worker needs a stable parser to lift the server name out — we keep
+ * the regex here (the only Anthropic-specific knowledge required) so the
+ * worker stays runtime-agnostic.
+ */
+const MCP_INIT_ERROR_PATTERN = /^MCP server '([^']+)' initialize failed/;
+
+export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   readonly providerId = PROVIDER_ID;
 
   readonly capabilities: AgentRuntimeCapabilities = AGENT_RUNTIME_PROVIDERS.find(
     (p) => p.providerId === PROVIDER_ID
   ).capabilities;
 
-  constructor(private readonly _apiKey: string) {}
+  constructor(private readonly _apiKey: string) {
+    super();
+  }
 
   private buildClient(apiKey: string = this._apiKey): Anthropic {
     return new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
@@ -292,6 +306,33 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
       }
     });
   }
+
+  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null {
+    // Inspect the error message only — we deliberately avoid coupling this
+    // module to `@novu/thalamus`'s ThalamusError class so the abstraction
+    // stays light. Anything in the codebase that surfaces this exact wire
+    // text was originally produced by Anthropic's streaming MCP-init path.
+    const message = (err as { message?: unknown } | null)?.message;
+
+    if (typeof message !== 'string') {
+      return null;
+    }
+
+    const match = message.match(MCP_INIT_ERROR_PATTERN);
+
+    if (!match) {
+      return null;
+    }
+
+    return { mcpServerName: match[1] };
+  }
+
+  // `upsertVaultCredential` / `deleteVaultCredential` are intentionally NOT
+  // overridden in this PR. `capabilities.tokenVault` is `false` for Anthropic
+  // today; the base-class default throws `UnsupportedCapabilityError` so any
+  // caller that forgets the capability gate fails loudly. When Anthropic's
+  // `beta.vaults.credentials.*` SDK call is wired in, override both methods
+  // and flip the catalog `tokenVault` flag to `true` in the same change.
 }
 
 export function createAnthropicProvider(apiKey: string): AnthropicAgentRuntimeProvider {

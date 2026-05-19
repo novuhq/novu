@@ -16,7 +16,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
-import { ProductFeature, RequirePermissions } from '@novu/application-generic';
+import { type IManagedAgentJobData, ProductFeature, RequirePermissions } from '@novu/application-generic';
 import {
   ApiRateLimitCategoryEnum,
   DirectionEnum,
@@ -51,6 +51,7 @@ import {
   ListAgentsQueryDto,
   ListAgentsResponseDto,
   McpConnectionResponseDto,
+  ParkManagedAgentTurnRequestDto,
   PatchAgentRuntimeConfigRequestDto,
   UpdateAgentBridgeRequestDto,
   UpdateAgentIntegrationRequestDto,
@@ -92,6 +93,8 @@ import { ListAgentMcpServersCommand } from './usecases/list-agent-mcp-servers/li
 import { ListAgentMcpServers } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
+import { ParkManagedAgentTurnCommand } from './usecases/park-managed-agent-turn/park-managed-agent-turn.command';
+import { ParkManagedAgentTurn } from './usecases/park-managed-agent-turn/park-managed-agent-turn.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
@@ -136,7 +139,8 @@ export class AgentsController {
     private readonly disableAgentMcpServerUsecase: DisableAgentMcpServer,
     private readonly listAgentMcpServersUsecase: ListAgentMcpServers,
     private readonly generateMcpOAuthUrlUsecase: GenerateMcpOAuthUrl,
-    private readonly getMcpConnectionStatusUsecase: GetMcpConnectionStatus
+    private readonly getMcpConnectionStatusUsecase: GetMcpConnectionStatus,
+    private readonly parkManagedAgentTurnUsecase: ParkManagedAgentTurn
   ) {}
 
   @Get('/emoji')
@@ -697,6 +701,7 @@ export class AgentsController {
       'Returns the provider authorize URL the subscriber should be redirected to for an `agent_mcp_subscriber`-scoped connection. ' +
       'Reuses the signed-state OAuth pattern already used by chat integrations.',
   })
+  @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
   generateMcpOAuthUrl(
     @UserSession() user: UserSessionData,
@@ -738,6 +743,38 @@ export class AgentsController {
         agentIdentifier: identifier,
         mcpId,
         subscriberId,
+      })
+    );
+  }
+
+  @Post('/:identifier/mcp-servers/:mcpId/pending-turn')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Park a managed-agent turn awaiting MCP OAuth',
+    description:
+      'Persists a managed-agent job payload on the per-subscriber MCP connection so the OAuth callback can re-enqueue it once the user finishes authorising. Called by the worker when a turn fails because the upstream MCP could not be initialised (no credential in the runtime vault). Requires `GenerateMcpOAuthUrl` to have run first for the same (agent, mcp, subscriber) tuple.',
+  })
+  @ApiExcludeEndpoint()
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async parkManagedAgentTurn(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string,
+    @Body() body: ParkManagedAgentTurnRequestDto
+  ): Promise<void> {
+    await this.parkManagedAgentTurnUsecase.execute(
+      ParkManagedAgentTurnCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
+        subscriberId: body.subscriberId,
+        // The HTTP boundary types `jobData` loosely; the worker is the
+        // source of truth for the `IManagedAgentJobData` shape and the
+        // OAuth callback narrows it again before re-enqueueing.
+        jobData: body.jobData as unknown as IManagedAgentJobData,
       })
     );
   }

@@ -23,9 +23,15 @@ export interface McpConnectionAuth {
   accessToken?: string;
   /** Encrypted refresh token (use decryptMcpConnectionAuth at read-time). */
   refreshToken?: string;
-  expiresAt?: Date;
+  expiresAt?: string;
   tokenType?: string;
   scopes?: string[];
+  /**
+   * Stable identifier returned by the agent-runtime provider's vault when the
+   * credential was pushed there (only set when `capabilities.tokenVault ===
+   * true`). Used to target the same credential on refresh / disable.
+   */
+  vaultCredentialId?: string;
 }
 
 export interface McpConnectionOAuthState {
@@ -88,6 +94,23 @@ export interface McpConnectionLastError {
 }
 
 /**
+ * A managed-agent turn that failed because the upstream MCP couldn't be
+ * initialised (no credential in the provider vault). The worker parks the
+ * full job payload here so the OAuth callback can re-enqueue it once the
+ * subscriber finishes the DCR flow. Cleared when re-enqueued; expires via
+ * the schema-level TTL index when the user abandons the flow.
+ *
+ * `jobData` is intentionally typed loosely — `libs/dal` cannot depend on
+ * `libs/application-generic` (where `IManagedAgentJobData` lives), and the
+ * DAL has no reason to validate the queue payload shape. The parking
+ * usecase enforces the shape before this is persisted.
+ */
+export interface McpConnectionPendingTurn {
+  jobData: Record<string, unknown>;
+  queuedAt: Date;
+}
+
+/**
  * OAuth state for a (scope, mcp, owner) tuple.
  *
  * `auth` is populated when `authMode === 'novu'` and `status === 'connected'`.
@@ -134,7 +157,14 @@ export class McpConnectionEntity {
 
   lastError?: McpConnectionLastError;
 
-  connectedAt?: Date;
+  /**
+   * Failed managed-agent turn waiting to be replayed after the subscriber
+   * completes OAuth. Set by `ParkManagedAgentTurn`, cleared by the OAuth
+   * callback (or by the schema TTL index on abandonment).
+   */
+  pendingTurn?: McpConnectionPendingTurn;
+
+  connectedAt?: string;
 
   createdAt: string;
 

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { EnqueueManagedAgentJob } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
   ChannelConnectionRepository,
@@ -54,6 +55,7 @@ import { USE_CASES } from './usecases';
     ManagedExecutorService,
     ChatSdkService,
     McpOAuthDiscoveryService,
+    EnqueueManagedAgentJob,
   ],
   exports: [...USE_CASES, ChatSdkService],
 })

@@ -1,5 +1,15 @@
 import type { Credentials } from './credentials';
 
+declare global {
+  interface Window {
+    Clerk?: {
+      session?: {
+        getToken: () => Promise<string | null>;
+      };
+    };
+  }
+}
+
 export type McpConnectionScope = 'environment' | 'agent_mcp' | 'agent_mcp_subscriber';
 export type McpConnectionAuthMode = 'novu' | 'none';
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
@@ -9,8 +19,19 @@ export type AgentSummary = {
   _id: string;
   name: string;
   identifier: string;
+  /** `managed` | `self-hosted` — the `AgentRuntime` enum value. */
   runtime?: string;
   active: boolean;
+  /**
+   * Populated when `runtime === 'managed'`. Carries the upstream provider
+   * id (e.g. `anthropic`) so the playground can resolve the runtime's
+   * `tokenVault` capability for the storage indicator.
+   */
+  managedRuntime?: {
+    providerId: string;
+    integrationId?: string;
+    externalAgentId?: string;
+  };
 };
 
 export type AgentMcpServerEnablement = {
@@ -54,8 +75,12 @@ type RequestOptions = {
 
 async function request<T>(credentials: Credentials, path: string, options: RequestOptions = {}): Promise<T> {
   const method = options.method ?? 'GET';
+  const jwt = (await window.Clerk?.session?.getToken()) ?? '';
+  if (!jwt) {
+    throw new McpApiError(401, 'Not signed in to Clerk', null);
+  }
   const headers: Record<string, string> = {
-    'x-mcp-jwt': credentials.jwt,
+    'x-mcp-jwt': jwt,
     'x-mcp-environment-id': credentials.environmentId,
   };
 
@@ -107,8 +132,60 @@ function extractErrorMessage(body: unknown): string | null {
   return null;
 }
 
+export type EnvironmentSummary = {
+  _id: string;
+  name: string;
+  type?: string;
+  _parentId?: string;
+};
+
+/**
+ * Hit `/v1/environments` through the proxy. This route is org-scoped — the
+ * playground hasn't picked an environment yet, so the `Novu-Environment-Id`
+ * header is intentionally omitted. The upstream JWT strategy reads that header
+ * as a raw ObjectId, so a sentinel string would 500 with a CastError.
+ */
+export async function listEnvironments(signal?: AbortSignal): Promise<EnvironmentSummary[]> {
+  const jwt = (await window.Clerk?.session?.getToken()) ?? '';
+  if (!jwt) {
+    throw new McpApiError(401, 'Not signed in to Clerk', null);
+  }
+
+  const response = await fetch('/api/mcp-proxy/v1/environments', {
+    method: 'GET',
+    headers: {
+      'x-mcp-jwt': jwt,
+    },
+    signal,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      parsed = text;
+    }
+    const message = extractErrorMessage(parsed) ?? `Request failed with status ${response.status}`;
+    throw new McpApiError(response.status, message, parsed);
+  }
+
+  const raw = (await response.json()) as EnvironmentSummary[] | { data: EnvironmentSummary[] };
+  const list = Array.isArray(raw) ? raw : raw.data;
+
+  return list.map((env) => ({ _id: env._id, name: env.name, type: env.type, _parentId: env._parentId }));
+}
+
 type ListAgentsEnvelope = {
-  data: Array<{ _id: string; name: string; identifier: string; runtime?: string; active: boolean }>;
+  data: Array<{
+    _id: string;
+    name: string;
+    identifier: string;
+    runtime?: string;
+    active: boolean;
+    managedRuntime?: { providerId: string; integrationId?: string; externalAgentId?: string };
+  }>;
   next: string | null;
   previous: string | null;
   totalCount: number;
@@ -123,10 +200,17 @@ export async function listAgents(credentials: Credentials, signal?: AbortSignal)
     identifier: agent.identifier,
     runtime: agent.runtime,
     active: agent.active,
+    managedRuntime: agent.managedRuntime
+      ? {
+          providerId: agent.managedRuntime.providerId,
+          integrationId: agent.managedRuntime.integrationId,
+          externalAgentId: agent.managedRuntime.externalAgentId,
+        }
+      : undefined,
   }));
 }
 
-type ListMcpServersEnvelope = { data: { data: AgentMcpServerEnablement[] } };
+type ListMcpServersEnvelope = { data: AgentMcpServerEnablement[] };
 
 export async function listAgentMcpServers(
   credentials: Credentials,
@@ -139,7 +223,7 @@ export async function listAgentMcpServers(
     { signal }
   );
 
-  return response.data.data;
+  return Array.isArray(response?.data) ? response.data : [];
 }
 
 type EnvelopedEnablement = { data: AgentMcpServerEnablement };

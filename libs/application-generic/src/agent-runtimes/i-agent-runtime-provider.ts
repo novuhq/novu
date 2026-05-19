@@ -56,6 +56,51 @@ export type ProvisionIntegrationResult = {
   metadata?: Record<string, unknown>;
 };
 
+/**
+ * Decoded credential payload pushed to a provider's vault.
+ *
+ * Mirrors `McpConnectionAuth` from `@novu/dal` but is intentionally redeclared
+ * here so the provider abstraction stays independent of the persistence layer.
+ * Callers decrypt before passing in.
+ */
+export type VaultCredentialAuth = {
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  tokenType?: string;
+  scopes?: string[];
+};
+
+export type UpsertVaultCredentialInput = {
+  externalEnvironmentId: string;
+  /** Canonical MCP server URL the credential authorises. */
+  mcpServerUrl: string;
+  /** Human-readable label surfaced in the provider's vault UI. */
+  displayName: string;
+  /** Decrypted OAuth tokens issued by the upstream MCP authorization server. */
+  auth: VaultCredentialAuth;
+  /**
+   * When set, update the existing vault credential instead of creating a new
+   * one. Returned by a previous `upsertVaultCredential` call.
+   */
+  existingCredentialId?: string;
+};
+
+export type UpsertVaultCredentialResult = {
+  /** Stable identifier for subsequent `update` / `delete` calls. */
+  vaultCredentialId: string;
+};
+
+export type DeleteVaultCredentialInput = {
+  externalEnvironmentId: string;
+  vaultCredentialId: string;
+};
+
+export type ParsedMcpInitFailure = {
+  /** Catalog-side display name surfaced by the runtime (e.g. "Sentry"). */
+  mcpServerName: string;
+};
+
 export interface IAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
   readonly capabilities: AgentRuntimeCapabilities;
@@ -118,4 +163,36 @@ export interface IAgentRuntimeProvider {
    * Best-effort — callers should still proceed with local cleanup on error.
    */
   deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
+
+  /**
+   * Inspect an error surfaced by a streaming turn (or any provider-side call
+   * that goes through MCP server initialisation) and decide whether it is
+   * the "MCP X failed to initialize" shape that means the upstream credential
+   * vault is missing/expired and the caller should prompt the user to
+   * (re-)authorise the MCP.
+   *
+   * Returns `null` for anything else so the caller can fall through to its
+   * generic retry/fallback path. Each provider owns its own error shape;
+   * the abstraction never assumes a specific error class.
+   */
+  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null;
+
+  /**
+   * Push an OAuth credential to the provider's per-environment vault so the
+   * upstream MCP initialise step can succeed on the next turn.
+   *
+   * Only callable when `capabilities.tokenVault === true`. Providers without
+   * a token vault fall back to having Novu inject the bearer per request —
+   * use `BaseAgentRuntimeProvider`'s default, which throws
+   * `UnsupportedCapabilityError`, to fail loudly if a caller forgets the
+   * capability gate.
+   */
+  upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult>;
+
+  /**
+   * Delete a credential previously pushed via `upsertVaultCredential` (called
+   * on disable / revoke). Only callable when `capabilities.tokenVault === true`.
+   * Best-effort — callers should still proceed with local cleanup on error.
+   */
+  deleteVaultCredential(input: DeleteVaultCredentialInput): Promise<void>;
 }

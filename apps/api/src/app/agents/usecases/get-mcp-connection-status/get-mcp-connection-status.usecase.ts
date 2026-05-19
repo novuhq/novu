@@ -69,8 +69,8 @@ export class GetMcpConnectionStatus {
       status: connection.status as McpConnectionStatusEnum,
       agentMcpServerId: connection._agentMcpServerId,
       subscriberId: connection._subscriberId,
-      expiresAt: connection.auth?.expiresAt?.toISOString(),
-      connectedAt: connection.connectedAt?.toISOString(),
+      expiresAt: connection.auth?.expiresAt,
+      connectedAt: connection.connectedAt,
     };
   }
 }

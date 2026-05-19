@@ -1,5 +1,6 @@
 'use client';
 
+import { SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/clerk-react';
 import { MCP_SERVERS, type McpServer } from '@novu/shared';
 import {
   AlertCircle,
@@ -17,22 +18,24 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { novuConfig } from '@/utils/config';
-import { type Credentials, useCredentials } from './lib/credentials';
+import { FlowSimulator } from './components/flow-simulator';
+import { type Credentials, useEnvironmentId } from './lib/credentials';
 import {
   type AgentMcpServerEnablement,
   type AgentSummary,
   disableAgentMcpServer,
+  type EnvironmentSummary,
   enableAgentMcpServer,
   generateMcpOAuthUrl,
   getMcpConnectionStatus,
   listAgentMcpServers,
   listAgents,
+  listEnvironments,
   McpApiError,
   type McpConnectionView,
 } from './lib/mcp-api';
@@ -47,7 +50,36 @@ type OAuthResultMessage = {
 };
 
 export default function AgentsMcpPlaygroundPage() {
-  const { credentials, hydrated, save, clear } = useCredentials();
+  return (
+    <>
+      <SignedOut>
+        <SignInGate />
+      </SignedOut>
+      <SignedIn>
+        <AuthenticatedPlayground />
+      </SignedIn>
+    </>
+  );
+}
+
+function SignInGate() {
+  return (
+    <div className="flex h-full items-center justify-center px-6 py-8">
+      <div className="flex flex-col items-center gap-6">
+        <div className="text-center">
+          <h1 className="font-semibold text-base">Agent MCP OAuth playground</h1>
+          <p className="text-xs text-muted-foreground">
+            Sign in with the same Clerk user you use in the dashboard to use this playground.
+          </p>
+        </div>
+        <SignIn routing="hash" />
+      </div>
+    </div>
+  );
+}
+
+function AuthenticatedPlayground() {
+  const { environmentId, hydrated, setEnvironmentId, clear } = useEnvironmentId();
 
   if (!hydrated) {
     return (
@@ -55,29 +87,43 @@ export default function AgentsMcpPlaygroundPage() {
     );
   }
 
-  if (!credentials) {
+  if (!environmentId) {
     return (
-      <div className="h-full overflow-y-auto px-6 py-8">
-        <div className="mx-auto max-w-2xl space-y-6">
-          <Header />
-          <CredentialsForm onSave={save} />
-          <SetupChecklist />
+      <div className="flex h-full flex-col overflow-hidden">
+        <div className="border-b px-6 py-4 shrink-0">
+          <HeaderBar />
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-8">
+          <div className="mx-auto max-w-2xl">
+            <EnvironmentPicker onPick={setEnvironmentId} title="Pick an environment to get started" />
+          </div>
         </div>
       </div>
     );
   }
 
+  const credentials: Credentials = { environmentId };
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="border-b px-6 py-4 shrink-0">
-        <Header />
+        <HeaderBar />
       </div>
       <div className="border-b bg-muted/30 px-6 py-3 shrink-0">
-        <CredentialsBar credentials={credentials} onClear={clear} onSave={save} />
+        <EnvironmentBar environmentId={environmentId} onChange={setEnvironmentId} onClear={clear} />
       </div>
       <div className="flex-1 overflow-hidden">
         <PlaygroundBody credentials={credentials} />
       </div>
+    </div>
+  );
+}
+
+function HeaderBar() {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <Header />
+      <UserButton afterSignOutUrl="/agents-mcp" />
     </div>
   );
 }
@@ -99,162 +145,127 @@ function Header() {
   );
 }
 
-function CredentialsForm({ onSave }: { onSave: (jwt: string, environmentId: string) => void }) {
-  const [jwt, setJwt] = useState('');
-  const [environmentId, setEnvironmentId] = useState('');
-
-  const canSubmit = jwt.trim().length > 0 && environmentId.trim().length > 0;
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">Paste your dashboard credentials</CardTitle>
-        <CardDescription className="text-xs">
-          Open{' '}
-          <a className="underline" href="http://localhost:4201" target="_blank" rel="noreferrer">
-            the dashboard
-          </a>
-          , open devtools network tab, click any <code>/v1/*</code> request, and copy the <code>Authorization</code>{' '}
-          header (without the <code>Bearer</code> prefix) and the <code>Novu-Environment-Id</code> header.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <label className="block space-y-1">
-          <span className="text-xs font-medium">JWT</span>
-          <Input
-            value={jwt}
-            onChange={(e) => setJwt(e.target.value.replace(/^bearer\s+/i, '').trim())}
-            placeholder="eyJhbGciOi..."
-            type="password"
-            className="font-mono text-xs"
-          />
-        </label>
-        <label className="block space-y-1">
-          <span className="text-xs font-medium">Novu-Environment-Id</span>
-          <Input
-            value={environmentId}
-            onChange={(e) => setEnvironmentId(e.target.value.trim())}
-            placeholder="65a..."
-            className="font-mono text-xs"
-          />
-        </label>
-        <Button
-          disabled={!canSubmit}
-          onClick={() => {
-            if (canSubmit) onSave(jwt.trim(), environmentId.trim());
-          }}
-        >
-          Save credentials
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function SetupChecklist() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-sm">One-time API setup</CardTitle>
-        <CardDescription className="text-xs">
-          Required for the Slack OAuth round-trip. Only Slack is wired in the server-side catalog today (see{' '}
-          <code>apps/api/src/app/agents/utils/mcp-oauth-catalog.ts</code>).
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ol className="list-decimal space-y-2 pl-4 text-xs text-muted-foreground">
-          <li>
-            In <code>apps/api/.env</code> set <code>FRONT_BASE_URL=http://localhost:4011</code>,{' '}
-            <code>SLACK_MCP_CLIENT_ID</code> and <code>SLACK_MCP_CLIENT_SECRET</code> from your Slack OAuth app.
-          </li>
-          <li>
-            Register <code>http://localhost:3000/v1/agents/mcp/oauth/callback</code> as a redirect URI in your Slack
-            app.
-          </li>
-          <li>
-            Start the API (<code>pnpm start:api:dev</code>) and the dashboard so you can grab a JWT.
-          </li>
-          <li>
-            Create a managed agent (Anthropic runtime integration) once via the dashboard, then come back here and
-            enable Slack on it.
-          </li>
-        </ol>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CredentialsBar({
-  credentials,
-  onClear,
-  onSave,
+function EnvironmentPicker({
+  onPick,
+  title,
+  initialValue,
 }: {
-  credentials: Credentials;
+  onPick: (environmentId: string) => void;
+  title: string;
+  initialValue?: string;
+}) {
+  const { user } = useUser();
+  const [environments, setEnvironments] = useState<EnvironmentSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string>(initialValue ?? '');
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-fetch only when the Clerk user changes; `selected` is read for initial-pick only.
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    listEnvironments()
+      .then((list) => {
+        if (cancelled) return;
+        setEnvironments(list);
+        if (!selected && list.length > 0) {
+          setSelected(list[0]._id);
+        }
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(toErrorMessage(err));
+      })
+      .finally(() => {
+        if (cancelled) return;
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const canSubmit = selected.length > 0 && !loading && !error;
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="text-sm font-semibold">{title}</h2>
+        <p className="text-xs text-muted-foreground">
+          Environments are loaded from <code>/v1/environments</code> using your Clerk session. The picker uses your
+          active Clerk organization.
+        </p>
+      </div>
+      {error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle className="text-xs">Could not load environments</AlertTitle>
+          <AlertDescription className="text-xs">{error}</AlertDescription>
+        </Alert>
+      ) : null}
+      <Select value={selected} onValueChange={setSelected} disabled={loading || environments.length === 0}>
+        <SelectTrigger className="h-9 text-xs">
+          <SelectValue placeholder={loading ? 'Loading environments…' : 'Select an environment'} />
+        </SelectTrigger>
+        <SelectContent>
+          {environments.map((env) => (
+            <SelectItem key={env._id} value={env._id}>
+              <span className="font-medium">{env.name}</span>
+              <span className="ml-2 text-muted-foreground font-mono text-[10px]">{env._id}</span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button disabled={!canSubmit} onClick={() => canSubmit && onPick(selected)}>
+        Continue
+      </Button>
+    </div>
+  );
+}
+
+function EnvironmentBar({
+  environmentId,
+  onChange,
+  onClear,
+}: {
+  environmentId: string;
+  onChange: (next: string) => void;
   onClear: () => void;
-  onSave: (jwt: string, environmentId: string) => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [jwt, setJwt] = useState(credentials.jwt);
-  const [environmentId, setEnvironmentId] = useState(credentials.environmentId);
 
-  useEffect(() => {
-    if (!editing) {
-      setJwt(credentials.jwt);
-      setEnvironmentId(credentials.environmentId);
-    }
-  }, [credentials.jwt, credentials.environmentId, editing]);
-
-  if (!editing) {
+  if (editing) {
     return (
-      <div className="flex items-center gap-3 text-xs">
-        <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-muted-foreground">
-          Env <span className="font-mono text-foreground">{credentials.environmentId}</span> · JWT saved{' '}
-          {new Date(credentials.savedAt).toLocaleTimeString()}
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
-            Edit
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onClear}>
-            Clear
-          </Button>
-        </div>
+      <div className="space-y-2 text-xs">
+        <EnvironmentPicker
+          initialValue={environmentId}
+          title="Switch environment"
+          onPick={(next) => {
+            onChange(next);
+            setEditing(false);
+          }}
+        />
+        <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
+          Cancel
+        </Button>
       </div>
     );
   }
 
-  const canSave = jwt.trim().length > 0 && environmentId.trim().length > 0;
-
   return (
-    <div className="flex flex-col gap-2 text-xs sm:flex-row sm:items-center">
-      <Input
-        value={jwt}
-        onChange={(e) => setJwt(e.target.value.replace(/^bearer\s+/i, '').trim())}
-        placeholder="JWT"
-        className="font-mono text-xs"
-        type="password"
-      />
-      <Input
-        value={environmentId}
-        onChange={(e) => setEnvironmentId(e.target.value.trim())}
-        placeholder="Novu-Environment-Id"
-        className="font-mono text-xs sm:w-72"
-      />
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          disabled={!canSave}
-          onClick={() => {
-            if (!canSave) return;
-            onSave(jwt.trim(), environmentId.trim());
-            setEditing(false);
-          }}
-        >
-          Save
+    <div className="flex items-center gap-3 text-xs">
+      <KeyRound className="h-3.5 w-3.5 text-muted-foreground" />
+      <span className="text-muted-foreground">
+        Env <span className="font-mono text-foreground">{environmentId}</span> · Clerk session auto-refreshes JWT
+      </span>
+      <div className="ml-auto flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
+          Switch environment
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setEditing(false)}>
-          Cancel
+        <Button variant="ghost" size="sm" onClick={onClear}>
+          Clear
         </Button>
       </div>
     </div>
@@ -297,6 +308,11 @@ function PlaygroundBody({ credentials }: { credentials: Credentials }) {
     }
   }, [selectedAgent]);
 
+  const selectedAgentObject = useMemo(
+    () => agents.find((agent) => agent.identifier === selectedAgent) ?? null,
+    [agents, selectedAgent]
+  );
+
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="border-b px-6 py-3 shrink-0">
@@ -310,8 +326,8 @@ function PlaygroundBody({ credentials }: { credentials: Credentials }) {
         />
       </div>
       <div className="flex-1 overflow-hidden">
-        {selectedAgent ? (
-          <AgentMcpPanel credentials={credentials} agentIdentifier={selectedAgent} />
+        {selectedAgentObject ? (
+          <AgentMcpPanel credentials={credentials} agent={selectedAgentObject} />
         ) : (
           <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             {agentsLoading ? 'Loading agents…' : 'No agent selected. Create one in the dashboard first.'}
@@ -366,13 +382,27 @@ function AgentPicker({
   );
 }
 
-function AgentMcpPanel({ credentials, agentIdentifier }: { credentials: Credentials; agentIdentifier: string }) {
+function AgentMcpPanel({ credentials, agent }: { credentials: Credentials; agent: AgentSummary }) {
+  const agentIdentifier = agent.identifier;
   const [enablements, setEnablements] = useState<AgentMcpServerEnablement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busyMcpId, setBusyMcpId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [activeMcpId, setActiveMcpId] = useState<string | null>(null);
+
+  // Lifted up so both `OAuthPanel` and `FlowSimulator` operate on the same
+  // subscriber id without duplicating the input.
+  const [subscriberId, setSubscriberId] = useState<string>(() => {
+    if (typeof window === 'undefined') return novuConfig.subscriberId ?? '';
+
+    return window.localStorage.getItem(SUBSCRIBER_STORAGE_KEY) ?? novuConfig.subscriberId ?? '';
+  });
+
+  useEffect(() => {
+    if (!subscriberId) return;
+    window.localStorage.setItem(SUBSCRIBER_STORAGE_KEY, subscriberId);
+  }, [subscriberId]);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -439,24 +469,38 @@ function AgentMcpPanel({ credentials, agentIdentifier }: { credentials: Credenti
   );
 
   return (
-    <div className="grid h-full grid-cols-1 overflow-hidden lg:grid-cols-[1fr_1fr_1fr]">
-      <CatalogPanel
-        enabledMcpIds={enabledMcpIds}
-        onEnable={handleEnable}
-        busyMcpId={busyMcpId}
-        actionError={actionError}
+    <div className="grid h-full grid-rows-[minmax(0,1fr)_minmax(0,1fr)] overflow-hidden">
+      <div className="grid grid-cols-1 overflow-hidden border-b lg:grid-cols-[1fr_1fr_1fr]">
+        <CatalogPanel
+          enabledMcpIds={enabledMcpIds}
+          onEnable={handleEnable}
+          busyMcpId={busyMcpId}
+          actionError={actionError}
+        />
+        <EnabledPanel
+          loading={loading}
+          error={error}
+          enablements={enablements}
+          activeMcpId={activeMcpId}
+          onSelect={setActiveMcpId}
+          onDisable={handleDisable}
+          onReload={reload}
+          busyMcpId={busyMcpId}
+        />
+        <OAuthPanel
+          credentials={credentials}
+          agentIdentifier={agentIdentifier}
+          enablement={activeEnablement}
+          subscriberId={subscriberId}
+          onSubscriberIdChange={setSubscriberId}
+        />
+      </div>
+      <FlowSimulator
+        credentials={credentials}
+        agent={agent}
+        enablement={activeEnablement}
+        subscriberId={subscriberId}
       />
-      <EnabledPanel
-        loading={loading}
-        error={error}
-        enablements={enablements}
-        activeMcpId={activeMcpId}
-        onSelect={setActiveMcpId}
-        onDisable={handleDisable}
-        onReload={reload}
-        busyMcpId={busyMcpId}
-      />
-      <OAuthPanel credentials={credentials} agentIdentifier={agentIdentifier} enablement={activeEnablement} />
     </div>
   );
 }
@@ -724,18 +768,15 @@ function OAuthPanel({
   credentials,
   agentIdentifier,
   enablement,
+  subscriberId,
+  onSubscriberIdChange,
 }: {
   credentials: Credentials;
   agentIdentifier: string;
   enablement: AgentMcpServerEnablement | null;
+  subscriberId: string;
+  onSubscriberIdChange: (next: string) => void;
 }) {
-  const initialSubscriber = useMemo(() => {
-    if (typeof window === 'undefined') return novuConfig.subscriberId ?? '';
-
-    return window.localStorage.getItem(SUBSCRIBER_STORAGE_KEY) ?? novuConfig.subscriberId ?? '';
-  }, []);
-
-  const [subscriberId, setSubscriberId] = useState(initialSubscriber);
   const [connection, setConnection] = useState<McpConnectionView | null>(null);
   const [statusLoading, setStatusLoading] = useState(false);
   const [statusError, setStatusError] = useState<string | null>(null);
@@ -773,11 +814,6 @@ function OAuthPanel({
   useEffect(() => {
     refreshStatus();
   }, [refreshStatus]);
-
-  useEffect(() => {
-    if (!subscriberId) return;
-    window.localStorage.setItem(SUBSCRIBER_STORAGE_KEY, subscriberId);
-  }, [subscriberId]);
 
   useEffect(() => {
     function onMessage(event: MessageEvent) {
@@ -852,7 +888,7 @@ function OAuthPanel({
           <span className="text-xs font-medium">Subscriber id (external)</span>
           <Input
             value={subscriberId}
-            onChange={(e) => setSubscriberId(e.target.value)}
+            onChange={(e) => onSubscriberIdChange(e.target.value)}
             placeholder="external subscriber id"
             className="font-mono text-xs"
           />

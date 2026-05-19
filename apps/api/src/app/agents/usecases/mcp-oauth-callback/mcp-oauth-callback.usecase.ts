@@ -1,14 +1,22 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   createHash,
+  decryptCredentials,
   decryptMcpConnectionOAuthClient,
+  EnqueueManagedAgentJob,
+  EnqueueManagedAgentJobCommand,
   encryptMcpConnectionAuth,
+  getAgentRuntimeProvider,
+  type IAgentRuntimeProvider,
+  type IManagedAgentJobData,
   PinoLogger,
   splitOAuthState,
 } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
+  AgentRepository,
   EnvironmentRepository,
+  IntegrationRepository,
   McpConnectionEntity,
   McpConnectionOAuthClient,
   McpConnectionRepository,
@@ -20,6 +28,8 @@ import { McpOAuthDiscoveryService } from '../../services/mcp-oauth-discovery.ser
 import { getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
+import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
+import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oauth-callback.command';
 
 const MAX_ERROR_MESSAGE_LEN = 256;
@@ -56,9 +66,13 @@ interface TokenResponse {
 export class McpOAuthCallback {
   constructor(
     private readonly environmentRepository: EnvironmentRepository,
+    private readonly agentRepository: AgentRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly integrationRepository: IntegrationRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly discoveryService: McpOAuthDiscoveryService,
+    private readonly syncAgentMcpServers: SyncAgentMcpServers,
+    private readonly enqueueManagedAgentJob: EnqueueManagedAgentJob,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(McpOAuthCallback.name);
@@ -144,12 +158,20 @@ export class McpOAuthCallback {
 
     const expiresAt = tokenResponse.expires_in ? new Date(Date.now() + tokenResponse.expires_in * 1000) : undefined;
 
-    const auth = encryptMcpConnectionAuth({
+    const plainAuth = {
       accessToken: tokenResponse.access_token,
       refreshToken: tokenResponse.refresh_token,
-      expiresAt,
+      expiresAt: expiresAt?.toISOString(),
       tokenType: tokenResponse.token_type,
       scopes: tokenResponse.scope ? tokenResponse.scope.split(/\s+/).filter(Boolean) : undefined,
+    } as const;
+
+    const auth = encryptMcpConnectionAuth({
+      accessToken: plainAuth.accessToken,
+      refreshToken: plainAuth.refreshToken,
+      expiresAt,
+      tokenType: plainAuth.tokenType,
+      scopes: plainAuth.scopes,
     });
 
     await this.mcpConnectionRepository.update(
@@ -169,7 +191,188 @@ export class McpOAuthCallback {
       }
     );
 
+    try {
+      await this.runPostConnectActions({
+        connection: claimed,
+        stateData,
+        plainAuth,
+        mcpServerUrl: catalog.url,
+        mcpServerName: catalog.name,
+      });
+    } catch (err) {
+      this.logger.error(
+        { err, connectionId: claimed._id, mcpId: stateData.mcpId },
+        'Post-connect actions failed (vault push / sync / replay)'
+      );
+      const message = err instanceof Error ? sanitizeErrorMessage(err.message) : 'Post-connect failure';
+
+      await this.mcpConnectionRepository.update(
+        {
+          _id: claimed._id,
+          _environmentId: stateData.environmentId,
+          _organizationId: stateData.organizationId,
+        },
+        {
+          $set: {
+            status: McpConnectionStatusEnum.Error,
+            lastError: { code: 'mcp_post_connect_failed', message, at: new Date() },
+          },
+        }
+      );
+
+      return { status: 'error', message };
+    }
+
     return { status: 'connected' };
+  }
+
+  /**
+   * After the encrypted token blob has been persisted to mongo, fan out the
+   * three side effects that complete the lazy-OAuth flow:
+   *
+   *   1. Push the credential to the runtime provider's vault when the
+   *      provider exposes one (`capabilities.tokenVault === true`). Persists
+   *      the returned `vaultCredentialId` so disable/refresh can target it.
+   *   2. Re-run `SyncAgentMcpServers` so the upstream `agent.mcp_servers`
+   *      projection is fresh (idempotent; cheap).
+   *   3. Re-enqueue any managed-agent turn that was parked while we waited
+   *      for OAuth, and clear `pendingTurn` so the TTL doesn't fire.
+   *
+   * Throws on vault-push failure so the caller can mark the connection
+   * `error` — the user retries by clicking the Connect button again. Sync
+   * and enqueue failures are logged but never block the connection from
+   * landing in `Connected`.
+   */
+  private async runPostConnectActions(args: {
+    connection: McpConnectionEntity;
+    stateData: McpOAuthState;
+    plainAuth: {
+      accessToken: string;
+      refreshToken?: string;
+      expiresAt?: string;
+      tokenType?: string;
+      scopes?: string[];
+    };
+    mcpServerUrl: string;
+    mcpServerName: string;
+  }): Promise<void> {
+    const { connection, stateData, plainAuth, mcpServerUrl, mcpServerName } = args;
+    const runtime = await this.resolveRuntime(stateData);
+
+    if (!runtime) {
+      // Agent / integration was deleted between authorize and callback —
+      // nothing to project / push, but the connection itself is still valid.
+      return;
+    }
+
+    if (runtime.runtimeProvider.capabilities.tokenVault) {
+      const result = await runtime.runtimeProvider.upsertVaultCredential({
+        externalEnvironmentId: runtime.externalEnvironmentId,
+        mcpServerUrl,
+        displayName: mcpServerName,
+        auth: plainAuth,
+        existingCredentialId: connection.auth?.vaultCredentialId,
+      });
+
+      await this.mcpConnectionRepository.update(
+        {
+          _id: connection._id,
+          _environmentId: stateData.environmentId,
+          _organizationId: stateData.organizationId,
+        },
+        { $set: { 'auth.vaultCredentialId': result.vaultCredentialId } }
+      );
+    }
+
+    try {
+      await this.syncAgentMcpServers.execute(
+        SyncAgentMcpServersCommand.create({
+          environmentId: stateData.environmentId,
+          organizationId: stateData.organizationId,
+          agentId: stateData.agentId,
+        })
+      );
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), agentId: stateData.agentId },
+        'SyncAgentMcpServers after OAuth callback failed (non-fatal)'
+      );
+    }
+
+    await this.replayParkedTurn(connection, stateData);
+  }
+
+  private async replayParkedTurn(connection: McpConnectionEntity, stateData: McpOAuthState): Promise<void> {
+    const parked = await this.mcpConnectionRepository.findOne(
+      {
+        _id: connection._id,
+        _environmentId: stateData.environmentId,
+        _organizationId: stateData.organizationId,
+      },
+      ['pendingTurn']
+    );
+
+    if (!parked?.pendingTurn?.jobData) {
+      return;
+    }
+
+    try {
+      await this.enqueueManagedAgentJob.execute(
+        EnqueueManagedAgentJobCommand.create({
+          jobData: parked.pendingTurn.jobData as unknown as IManagedAgentJobData,
+        })
+      );
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), connectionId: connection._id },
+        'Failed to re-enqueue parked managed-agent turn'
+      );
+
+      return;
+    }
+
+    await this.mcpConnectionRepository.clearPendingTurn({
+      organizationId: stateData.organizationId,
+      environmentId: stateData.environmentId,
+      connectionId: connection._id,
+    });
+  }
+
+  private async resolveRuntime(
+    stateData: McpOAuthState
+  ): Promise<{ runtimeProvider: IAgentRuntimeProvider; externalEnvironmentId: string } | null> {
+    const agent = await this.agentRepository.findOne(
+      {
+        _id: stateData.agentId,
+        _environmentId: stateData.environmentId,
+        _organizationId: stateData.organizationId,
+      },
+      ['_id', 'runtime', 'managedRuntime']
+    );
+
+    if (!agent?.managedRuntime) {
+      return null;
+    }
+
+    const integration = await this.integrationRepository.findOne({
+      _id: agent.managedRuntime._integrationId,
+      _environmentId: stateData.environmentId,
+    });
+
+    if (!integration?.credentials) {
+      return null;
+    }
+
+    const creds = decryptCredentials(integration.credentials);
+
+    if (!creds.apiKey) {
+      return null;
+    }
+
+    return {
+      runtimeProvider: getAgentRuntimeProvider(agent.managedRuntime.providerId, creds.apiKey),
+      externalEnvironmentId: (creds.externalEnvironmentId as string | undefined) ?? '',
+    };
   }
 
   private requireOAuthClient(claimed: McpConnectionEntity): McpConnectionOAuthClient {

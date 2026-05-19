@@ -8,9 +8,9 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
   const jwt = req.headers.get('x-mcp-jwt');
   const environmentId = req.headers.get('x-mcp-environment-id');
 
-  if (!jwt || !environmentId) {
+  if (!jwt) {
     return NextResponse.json(
-      { message: 'Missing x-mcp-jwt or x-mcp-environment-id header. Paste credentials in the playground first.' },
+      { message: 'Missing x-mcp-jwt header. Sign in to Clerk in the playground first.' },
       { status: 401 }
     );
   }
@@ -22,8 +22,14 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
 
   const headers: Record<string, string> = {
     Authorization: `Bearer ${jwt}`,
-    'Novu-Environment-Id': environmentId,
   };
+  // `Novu-Environment-Id` is required for env-scoped routes (e.g. /v1/agents)
+  // but must be omitted for org-scoped routes (e.g. /v1/environments) — the
+  // upstream JWT strategy unconditionally treats the header as a Mongo ObjectId
+  // and will throw a CastError on any non-empty placeholder.
+  if (environmentId) {
+    headers['Novu-Environment-Id'] = environmentId;
+  }
 
   let body: BodyInit | undefined;
   if (req.method !== 'GET' && req.method !== 'HEAD') {

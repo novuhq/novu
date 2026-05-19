@@ -25,6 +25,10 @@ const authSchema = new Schema(
       type: [Schema.Types.String],
       required: false,
     },
+    vaultCredentialId: {
+      type: Schema.Types.String,
+      required: false,
+    },
   },
   { _id: false }
 );
@@ -123,6 +127,20 @@ const lastErrorSchema = new Schema(
   { _id: false }
 );
 
+const pendingTurnSchema = new Schema(
+  {
+    jobData: {
+      type: Schema.Types.Mixed,
+      required: true,
+    },
+    queuedAt: {
+      type: Schema.Types.Date,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
   {
     _organizationId: {
@@ -182,6 +200,10 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
       type: lastErrorSchema,
       required: false,
     },
+    pendingTurn: {
+      type: pendingTurnSchema,
+      required: false,
+    },
     connectedAt: {
       type: Schema.Types.Date,
       required: false,
@@ -217,6 +239,14 @@ mcpConnectionSchema.index(
 
 mcpConnectionSchema.index({ _subscriberId: 1, _environmentId: 1 });
 mcpConnectionSchema.index({ _agentMcpServerId: 1 });
+
+// Sparse TTL on `pendingTurn.queuedAt`: rows without a parked turn carry no
+// expiry; rows with one drop the `pendingTurn` subdoc 30 minutes after it
+// was set so abandoned OAuth flows don't accumulate stale job payloads.
+// `expireAfterSeconds` on a subdocument field deletes the WHOLE row, which
+// is acceptable because a `pendingTurn` lifetime exceeding 30 min means the
+// user abandoned the flow — clearing the connection is the desired UX.
+mcpConnectionSchema.index({ 'pendingTurn.queuedAt': 1 }, { expireAfterSeconds: 30 * 60, sparse: true });
 
 export const McpConnection =
   (mongoose.models.McpConnection as mongoose.Model<McpConnectionDBModel>) ||

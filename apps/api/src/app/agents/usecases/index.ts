@@ -16,6 +16,7 @@ import { ListAgentIntegrations } from './list-agent-integrations/list-agent-inte
 import { ListAgentMcpServers } from './list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgents } from './list-agents/list-agents.usecase';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
+import { ParkManagedAgentTurn } from './park-managed-agent-turn/park-managed-agent-turn.usecase';
 import { ProvisionManagedAgent } from './provision-managed-agent/provision-managed-agent.usecase';
 import { RemoveAgentIntegration } from './remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmail } from './send-agent-test-email/send-agent-test-email.usecase';
@@ -56,4 +57,5 @@ export const USE_CASES = [
   GenerateMcpOAuthUrl,
   McpOAuthCallback,
   GetMcpConnectionStatus,
+  ParkManagedAgentTurn,
 ];
