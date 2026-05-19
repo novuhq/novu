@@ -44,7 +44,7 @@ export function AgentsList() {
   const agentRoutes = useAgentRoutes();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
   const currentApp = useCurrentApp();
-  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
+  const isConnectApp = currentApp === APP_IDS.CONNECT;
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -57,7 +57,7 @@ export function AgentsList() {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Allow external links (e.g. dispatch dashboard) to open the create dialog with prefilled values
+  // Allow external links (e.g. connect dashboard) to open the create dialog with prefilled values
   // via `?create=1&name=...&description=...`. Consume the params once and strip them from the URL.
   useEffect(() => {
     if (searchParams.get('create') !== '1') return;
@@ -134,8 +134,8 @@ export function AgentsList() {
       showSuccessToast('Agent deleted', 'The agent was removed.');
 
       track(
-        isDispatchApp
-          ? TelemetryEvent.DISPATCH_AGENT_DELETED_FROM_DASHBOARD
+        isConnectApp
+          ? TelemetryEvent.CONNECT_AGENT_DELETED_FROM_DASHBOARD
           : TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD,
         { agentIdentifier: identifier }
       );
@@ -211,8 +211,8 @@ export function AgentsList() {
           showSuccessToast('Agent created', 'Your agent is ready to use.');
 
           track(
-            isDispatchApp
-              ? TelemetryEvent.DISPATCH_AGENT_CREATED_FROM_DASHBOARD
+            isConnectApp
+              ? TelemetryEvent.CONNECT_AGENT_CREATED_FROM_DASHBOARD
               : TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD,
             {
               agentIdentifier: createdAgent.identifier,
@@ -236,7 +236,7 @@ export function AgentsList() {
         },
       });
     },
-    [submitCreateAgent, track, isDispatchApp, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
+    [submitCreateAgent, track, isConnectApp, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
   );
 
   if (!canReadAgents) {

@@ -84,20 +84,20 @@ export const ROUTES = {
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
   AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
   INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',
-  DISPATCH_HOME: '/env/:environmentSlug/dispatch',
-  DISPATCH_AGENTS: '/env/:environmentSlug/dispatch/agents',
-  DISPATCH_AGENT_DETAILS: '/env/:environmentSlug/dispatch/agents/:agentIdentifier',
-  /** Must be registered before DISPATCH_AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
-  DISPATCH_AGENT_DETAILS_INTEGRATIONS_DETAIL:
-    '/env/:environmentSlug/dispatch/agents/:agentIdentifier/integrations/:integrationIdentifier',
-  DISPATCH_AGENT_DETAILS_TAB: '/env/:environmentSlug/dispatch/agents/:agentIdentifier/:agentTab',
-  DISPATCH_CONVERSATIONS: '/env/:environmentSlug/dispatch/conversations',
-  DISPATCH_API_KEYS: '/env/:environmentSlug/dispatch/api-keys',
-  DISPATCH_SETTINGS: '/env/:environmentSlug/dispatch/settings',
-  DISPATCH_SETTINGS_ACCOUNT: '/env/:environmentSlug/dispatch/settings/account',
-  DISPATCH_SETTINGS_ORGANIZATION: '/env/:environmentSlug/dispatch/settings/organization',
-  DISPATCH_SETTINGS_TEAM: '/env/:environmentSlug/dispatch/settings/team',
-  DISPATCH_SETTINGS_BILLING: '/env/:environmentSlug/dispatch/settings/billing',
+  CONNECT_HOME: '/env/:environmentSlug/connect',
+  CONNECT_AGENTS: '/env/:environmentSlug/connect/agents',
+  CONNECT_AGENT_DETAILS: '/env/:environmentSlug/connect/agents/:agentIdentifier',
+  /** Must be registered before CONNECT_AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
+  CONNECT_AGENT_DETAILS_INTEGRATIONS_DETAIL:
+    '/env/:environmentSlug/connect/agents/:agentIdentifier/integrations/:integrationIdentifier',
+  CONNECT_AGENT_DETAILS_TAB: '/env/:environmentSlug/connect/agents/:agentIdentifier/:agentTab',
+  CONNECT_CONVERSATIONS: '/env/:environmentSlug/connect/conversations',
+  CONNECT_API_KEYS: '/env/:environmentSlug/connect/api-keys',
+  CONNECT_SETTINGS: '/env/:environmentSlug/connect/settings',
+  CONNECT_SETTINGS_ACCOUNT: '/env/:environmentSlug/connect/settings/account',
+  CONNECT_SETTINGS_ORGANIZATION: '/env/:environmentSlug/connect/settings/organization',
+  CONNECT_SETTINGS_TEAM: '/env/:environmentSlug/connect/settings/team',
+  CONNECT_SETTINGS_BILLING: '/env/:environmentSlug/connect/settings/billing',
 } as const;
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';

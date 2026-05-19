@@ -2,7 +2,7 @@ import { ConversationsContent } from '@/components/conversations/conversations-c
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 
-export function DispatchConversationsPage() {
+export function ConnectConversationsPage() {
   return (
     <>
       <PageMeta title="Conversations" />

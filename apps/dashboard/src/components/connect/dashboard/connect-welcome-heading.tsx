@@ -1,6 +1,6 @@
 import { useUser } from '@clerk/clerk-react';
 
-export function DispatchWelcomeHeading({ completedOnboarding }: { completedOnboarding: boolean }) {
+export function ConnectWelcomeHeading({ completedOnboarding }: { completedOnboarding: boolean }) {
   const { user } = useUser();
   const firstName = user?.firstName?.trim();
   const title = `${firstName ? `Welcome, ${firstName}.` : 'Welcome.'}`;

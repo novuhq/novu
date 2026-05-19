@@ -5,7 +5,7 @@ import { type SettingsTabRoutes, SettingsTabs } from '@/components/settings/sett
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
-export function DispatchSettingsPage() {
+export function ConnectSettingsPage() {
   const { currentEnvironment } = useEnvironment();
   const environmentSlug = currentEnvironment?.slug ?? '';
 
@@ -13,21 +13,21 @@ export function DispatchSettingsPage() {
     const params = { environmentSlug };
 
     const built: SettingsTabRoutes = {
-      account: buildRoute(ROUTES.DISPATCH_SETTINGS_ACCOUNT, params),
-      organization: buildRoute(ROUTES.DISPATCH_SETTINGS_ORGANIZATION, params),
-      team: buildRoute(ROUTES.DISPATCH_SETTINGS_TEAM, params),
-      billing: buildRoute(ROUTES.DISPATCH_SETTINGS_BILLING, params),
+      account: buildRoute(ROUTES.CONNECT_SETTINGS_ACCOUNT, params),
+      organization: buildRoute(ROUTES.CONNECT_SETTINGS_ORGANIZATION, params),
+      team: buildRoute(ROUTES.CONNECT_SETTINGS_TEAM, params),
+      billing: buildRoute(ROUTES.CONNECT_SETTINGS_BILLING, params),
     };
 
     return {
-      rootRoute: buildRoute(ROUTES.DISPATCH_SETTINGS, params),
+      rootRoute: buildRoute(ROUTES.CONNECT_SETTINGS, params),
       routes: built,
     };
   }, [environmentSlug]);
 
   return (
     <>
-      <PageMeta title="Dispatch · Settings" />
+      <PageMeta title="Connect · Settings" />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Settings</h1>}>
         <SettingsTabs rootRoute={rootRoute} routes={routes} />
       </DashboardLayout>

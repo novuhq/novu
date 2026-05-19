@@ -11,7 +11,7 @@ import {
   type RuntimeType,
   validateCreateAgentForm,
 } from '@/components/agents/create-agent-fields';
-import { AGENT_TEMPLATES } from '@/components/dispatch/dashboard/agent-templates';
+import { AGENT_TEMPLATES } from '@/components/connect/dashboard/agent-templates';
 import { ClaudeIcon } from '@/components/icons/claude';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';

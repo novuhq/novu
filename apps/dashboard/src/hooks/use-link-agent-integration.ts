@@ -75,7 +75,7 @@ export function useLinkAgentIntegration({
   const queryClient = useQueryClient();
   const track = useTelemetry();
   const currentApp = useCurrentApp();
-  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
+  const isConnectApp = currentApp === APP_IDS.CONNECT;
 
   const [pendingItemKey, setPendingItemKey] = useState<string | null>(null);
   /** Integrations created by this hook instance — safe to delete when switching providers. */
@@ -144,8 +144,8 @@ export function useLinkAgentIntegration({
         mode: 'novu_email' | 'existing_integration' | 'new_integration_then_link'
       ) => {
         track(
-          isDispatchApp
-            ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
+          isConnectApp
+            ? TelemetryEvent.CONNECT_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
             : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
           {
             agentIdentifier,
@@ -285,7 +285,7 @@ export function useLinkAgentIntegration({
       createIntegrationMutation,
       currentEnvironment,
       existingLinks,
-      isDispatchApp,
+      isConnectApp,
       linkedIntegrationIds,
       onLinked,
       queryClient,

@@ -11,17 +11,17 @@ import {
 import { getConversationsList } from '@/api/conversations';
 import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { DISPATCH_ONBOARDING_COMPLETED } from '@/utils/constants';
+import { CONNECT_ONBOARDING_COMPLETED } from '@/utils/constants';
 
-export type DispatchSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
+export type ConnectSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
 
-export type DispatchSetupStepStatus = 'completed' | 'pending';
+export type ConnectSetupStepStatus = 'completed' | 'pending';
 
-export type DispatchSetupStep = {
-  id: DispatchSetupStepId;
+export type ConnectSetupStep = {
+  id: ConnectSetupStepId;
   title: string;
   description: string;
-  status: DispatchSetupStepStatus;
+  status: ConnectSetupStepStatus;
   /**
    * Whether this step is associated with an actionable CTA in the UI.
    * `setup-channel` is only actionable when there is exactly one agent and zero connected channels.
@@ -31,15 +31,15 @@ export type DispatchSetupStep = {
   agentIdentifier?: string;
 };
 
-export type UseDispatchSetupStepsResult = {
-  steps: DispatchSetupStep[];
+export type UseConnectSetupStepsResult = {
+  steps: ConnectSetupStep[];
   isComplete: boolean;
   isLoading: boolean;
 };
 
 const AGENTS_PEEK_PARAMS = { after: undefined, before: undefined, limit: 2, identifier: '' };
 
-export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
+export function useConnectSetupSteps(): UseConnectSetupStepsResult {
   const { currentEnvironment } = useEnvironment();
 
   const agentsQuery = useQuery({
@@ -77,7 +77,7 @@ export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
   }, [agentIntegrationsQuery.data?.data]);
 
   const conversationsQuery = useQuery({
-    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, 'dispatch-setup-steps'],
+    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, 'connect-setup-steps'],
     queryFn: ({ signal }) =>
       getConversationsList({
         environment: requireEnvironment(currentEnvironment, 'No environment selected'),
@@ -97,12 +97,12 @@ export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
   const setupChannelCtaAvailable = agents.length === 1 && !hasConnectedChannelOnOnlyAgent;
   const agentSetupComplete = addAgentCompleted && setupChannelCompleted;
 
-  const steps = useMemo<DispatchSetupStep[]>(
+  const steps = useMemo<ConnectSetupStep[]>(
     () => [
       {
         id: 'create-account',
         title: 'Create your account',
-        description: "You're signed in and ready to set up Dispatch.",
+        description: "You're signed in and ready to set up Connect.",
         status: 'completed',
         ctaAvailable: false,
       },
@@ -133,13 +133,13 @@ export function useDispatchSetupSteps(): UseDispatchSetupStepsResult {
   );
 
   // Only block on agents loading — conversations / integrations errors should never hide the section.
-  // The persisted `DISPATCH_ONBOARDING_COMPLETED` flag is written from `agent-details.tsx` once the
+  // The persisted `CONNECT_ONBOARDING_COMPLETED` flag is written from `agent-details.tsx` once the
   // user finishes setting up an agent there; here we only read it to keep the section hidden.
   const isLoading = agentsQuery.isLoading;
 
   return {
     steps,
-    isComplete: localStorage.getItem(DISPATCH_ONBOARDING_COMPLETED) === 'true' || agentSetupComplete,
+    isComplete: localStorage.getItem(CONNECT_ONBOARDING_COMPLETED) === 'true' || agentSetupComplete,
     isLoading: isLoading || !agentsQuery.data,
   };
 }

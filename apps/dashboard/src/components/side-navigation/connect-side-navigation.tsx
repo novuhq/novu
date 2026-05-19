@@ -7,7 +7,7 @@ import { NavigationGroup } from './navigation-group';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 
-export const DispatchSideNavigation = () => {
+export const ConnectSideNavigation = () => {
   const { currentEnvironment } = useEnvironment();
   const envSlug = currentEnvironment?.slug;
 
@@ -20,29 +20,29 @@ export const DispatchSideNavigation = () => {
         <nav className="flex h-full flex-1 flex-col overflow-auto">
           <div className="flex flex-col gap-4">
             <NavigationGroup>
-              <NavigationLink to={buildEnvRoute(ROUTES.DISPATCH_HOME)} isExact>
+              <NavigationLink to={buildEnvRoute(ROUTES.CONNECT_HOME)} isExact>
                 <RiDashboardLine className="size-4" />
                 <span>Dashboard</span>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Manage">
-              <NavigationLink to={buildEnvRoute(ROUTES.DISPATCH_AGENTS)}>
+              <NavigationLink to={buildEnvRoute(ROUTES.CONNECT_AGENTS)}>
                 <RiRobot2Line className="size-4" />
                 <span>Agents</span>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Monitor">
-              <NavigationLink to={buildEnvRoute(ROUTES.DISPATCH_CONVERSATIONS)}>
+              <NavigationLink to={buildEnvRoute(ROUTES.CONNECT_CONVERSATIONS)}>
                 <RiDiscussLine className="size-4" />
                 <span>Conversations</span>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Application">
-              <NavigationLink to={buildEnvRoute(ROUTES.DISPATCH_API_KEYS)}>
+              <NavigationLink to={buildEnvRoute(ROUTES.CONNECT_API_KEYS)}>
                 <RiKey2Line className="size-4" />
                 <span>API Keys</span>
               </NavigationLink>
-              <NavigationLink to={buildEnvRoute(ROUTES.DISPATCH_SETTINGS)}>
+              <NavigationLink to={buildEnvRoute(ROUTES.CONNECT_SETTINGS)}>
                 <RiSettings4Line className="size-4" />
                 <span>Settings</span>
               </NavigationLink>
