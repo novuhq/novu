@@ -151,37 +151,44 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   private buildOnSessionEvents(): SessionEventsFactory {
-    return (sessionId: string): StreamCallbacks => ({
-      onFinish: async (e) => {
-        const ctx = await this.resolveSessionContext(sessionId);
-        if (!ctx) return;
+    return (initialSessionId: string): StreamCallbacks => {
+      let sessionId = initialSessionId;
 
-        try {
-          await this.handleAgentReply.execute(
-            HandleAgentReplyCommand.create({
-              userId: 'system',
-              organizationId: ctx.organizationId,
-              environmentId: ctx.environmentId,
-              conversationId: ctx.conversationId,
-              agentIdentifier: ctx.agentIdentifier,
-              integrationIdentifier: ctx.integrationIdentifier,
-              reply: { markdown: e.response.content },
-            })
-          );
-        } catch (err) {
-          this.logger.error(err, `Failed to deliver reply for session ${sessionId}`);
-        }
+      return {
+        onStreamStart: (e: { sessionId?: string }) => {
+          if (e.sessionId) sessionId = e.sessionId;
+        },
+        onFinish: async (e) => {
+          const ctx = await this.resolveSessionContext(sessionId);
+          if (!ctx) return;
 
-        this.sessionContext.delete(sessionId);
-      },
-      onError: async (e) => {
-        const ctx = await this.resolveSessionContext(sessionId);
-        if (!ctx) return;
+          try {
+            await this.handleAgentReply.execute(
+              HandleAgentReplyCommand.create({
+                userId: 'system',
+                organizationId: ctx.organizationId,
+                environmentId: ctx.environmentId,
+                conversationId: ctx.conversationId,
+                agentIdentifier: ctx.agentIdentifier,
+                integrationIdentifier: ctx.integrationIdentifier,
+                reply: { markdown: e.response.content },
+              })
+            );
+          } catch (err) {
+            this.logger.error(err, `Failed to deliver reply for session ${sessionId}`);
+          }
 
-        await this.handleErrorEvent(ctx, sessionId, e.error);
-        this.sessionContext.delete(sessionId);
-      },
-    });
+          this.sessionContext.delete(sessionId);
+        },
+        onError: async (e) => {
+          const ctx = await this.resolveSessionContext(sessionId);
+          if (!ctx) return;
+
+          await this.handleErrorEvent(ctx, sessionId, e.error);
+          this.sessionContext.delete(sessionId);
+        },
+      };
+    };
   }
 
   /**
