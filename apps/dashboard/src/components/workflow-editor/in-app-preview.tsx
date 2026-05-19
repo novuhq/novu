@@ -1,5 +1,5 @@
-import { parseMarkdownIntoTokens } from '@novu/js/internal';
-import { HTMLAttributes, ReactNode, useMemo } from 'react';
+import { HTMLAttributes, ReactNode } from 'react';
+import { MarkdownText } from '@/components/primitives/markdown-text';
 
 import { InboxArrowDown } from '@/components/icons/inbox-arrow-down';
 import { InboxBell } from '@/components/icons/inbox-bell';
@@ -209,27 +209,11 @@ export const InAppPreviewSecondaryAction = (props: InAppPreviewSecondaryActionPr
 type MarkdownProps = Omit<HTMLAttributes<HTMLParagraphElement>, 'children'> & { children?: string };
 
 const Markdown = (props: MarkdownProps) => {
-  const { children, ...rest } = props;
-
-  const tokens = useMemo(() => parseMarkdownIntoTokens(children || ''), [children]);
+  const { children, className, ...rest } = props;
 
   return (
-    <p {...rest}>
-      {tokens.map((token, index) => {
-        if (token.type === 'boldItalic') {
-          return (
-            <strong key={index}>
-              <em>{token.content}</em>
-            </strong>
-          );
-        } else if (token.type === 'bold') {
-          return <strong key={index}>{token.content}</strong>;
-        } else if (token.type === 'italic') {
-          return <em key={index}>{token.content}</em>;
-        } else {
-          return <span key={index}>{token.content}</span>;
-        }
-      })}
+    <p className={className} {...rest}>
+      <MarkdownText>{children}</MarkdownText>
     </p>
   );
 };
