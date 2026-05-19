@@ -22,6 +22,16 @@ export type CreateAgentForm = {
    * Custom workspaces are identified by a `wrkspc_…` id.
    */
   externalWorkspaceId?: string;
+  /**
+   * Existing managed-runtime integration to attach the agent to. When present, `apiKey` is ignored
+   * and a new integration is NOT created.
+   */
+  integrationId?: string;
+  /**
+   * Display name used when creating a brand-new managed-runtime integration. Only consumed when
+   * `integrationId` is absent. Defaults to e.g. "Anthropic 1" in the dialog.
+   */
+  integrationName?: string;
 };
 
 export type CreateAgentFormErrors = {
@@ -30,6 +40,7 @@ export type CreateAgentFormErrors = {
   apiKey?: string;
   externalAgentId?: string;
   externalEnvironmentId?: string;
+  integrationName?: string;
 };
 
 export const DEFAULT_CLAUDE_WORKSPACE_ID = 'default';

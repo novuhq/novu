@@ -45,6 +45,8 @@ export function useCreateAgentMutation() {
         externalWorkspaceId,
         runtime,
         isExistingMode,
+        integrationId: providedIntegrationId,
+        integrationName,
       }: CreateAgentForm,
       options?: SubmitOptions
     ) => {
@@ -75,24 +77,31 @@ export function useCreateAgentMutation() {
           requireEnvironment(currentEnvironment, 'No environment selected');
 
           let integrationId: string;
+          // Tracks whether THIS submission provisioned the integration, so we only roll back our own.
+          let createdIntegrationInThisSubmit = false;
 
-          try {
-            const { data: integration } = await createIntegration({
-              active: true,
-              kind: IntegrationKindEnum.AGENT,
-              providerId: AgentRuntimeProviderIdEnum.Anthropic,
-              // `externalWorkspaceId` is only sent when the user pasted a non-default workspace id —
-              // omitting it lets the backend fall back to the `default` workspace.
-              credentials: { apiKey, ...(externalWorkspaceId ? { externalWorkspaceId } : {}) },
-              name,
-            });
+          if (providedIntegrationId) {
+            integrationId = providedIntegrationId;
+          } else {
+            try {
+              const { data: integration } = await createIntegration({
+                active: true,
+                kind: IntegrationKindEnum.AGENT,
+                providerId: AgentRuntimeProviderIdEnum.Anthropic,
+                // `externalWorkspaceId` is only sent when the user pasted a non-default workspace id —
+                // omitting it lets the backend fall back to the `default` workspace.
+                credentials: { apiKey, ...(externalWorkspaceId ? { externalWorkspaceId } : {}) },
+                name: integrationName?.trim() || name,
+              });
 
-            integrationId = integration._id;
-          } catch (err) {
-            const error = err instanceof Error ? err : new Error('Could not create integration.');
-            options?.onError?.(error);
+              integrationId = integration._id;
+              createdIntegrationInThisSubmit = true;
+            } catch (err) {
+              const error = err instanceof Error ? err : new Error('Could not create integration.');
+              options?.onError?.(error);
 
-            return undefined;
+              return undefined;
+            }
           }
 
           const request: CreateAgentBody = {
@@ -121,10 +130,12 @@ export function useCreateAgentMutation() {
 
             return created;
           } catch (err) {
-            try {
-              await deleteIntegration({ id: integrationId });
-            } catch {
-              // Best-effort cleanup; the caller's onError already surfaces a toast.
+            if (createdIntegrationInThisSubmit) {
+              try {
+                await deleteIntegration({ id: integrationId });
+              } catch {
+                // Best-effort cleanup; the caller's onError already surfaces a toast.
+              }
             }
 
             const error = err instanceof Error ? err : new Error('Could not create agent.');
