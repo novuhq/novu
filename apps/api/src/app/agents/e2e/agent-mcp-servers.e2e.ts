@@ -251,7 +251,11 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
       const res = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`);
       expect(res.status).to.equal(200);
-      const rows = res.body.data.data;
+      // ResponseInterceptor flattens `{ data: [...] }` (no `_id`/`id`) by
+      // spreading the result, so the final body is `{ data: [...] }` — not
+      // the double-wrapped `{ data: { data: [...] } }` that paginated DTOs
+      // produce. Same shape as every other test in this file.
+      const rows = res.body.data;
       expect(rows.map((r: { mcpId: string }) => r.mcpId)).to.have.members(['slack', 'linear']);
     });
   });
