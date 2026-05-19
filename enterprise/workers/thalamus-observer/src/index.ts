@@ -1,6 +1,6 @@
 import type { StreamPart, Response as ThalamusResponse, Usage } from '@novu/thalamus';
-import { mapAnthropicEvent } from '@novu/thalamus/anthropic';
-import { mapOpenAIEvent } from '@novu/thalamus/openai';
+import { mapAnthropicEvent } from '@novu/thalamus/anthropic/parser';
+import { mapOpenAIEvent } from '@novu/thalamus/openai/parser';
 import { Agent, type Connection, type ConnectionContext, type FiberRecoveryContext } from 'agents';
 import { type EventSourceMessage, EventSourceParserStream } from 'eventsource-parser/stream';
 
