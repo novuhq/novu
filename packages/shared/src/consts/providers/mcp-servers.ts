@@ -16,8 +16,17 @@ export type McpServerCategory =
  * in a server-only allow-list at
  * `apps/api/src/app/agents/utils/mcp-oauth-catalog.ts`. This enum is shipped
  * to the dashboard JS bundle as a render hint only.
+ *
+ * - `none`     — no OAuth required (or unsupported). Connection is created
+ *               without an auth handshake.
+ * - `novu`     — Novu drives the MCP OAuth dance and stores tokens in its
+ *               own encrypted `mcp_connection.auth` blob.
+ * - `provider` — runtime provider exposes its own credential vault (see
+ *               `AgentRuntimeCapabilities.tokenVault`); Novu still kicks
+ *               off the OAuth dance but pushes the resulting tokens to the
+ *               provider vault instead of keeping them locally.
  */
-export type McpServerOAuthMode = 'none' | 'novu';
+export type McpServerOAuthMode = 'none' | 'novu' | 'provider';
 
 export type McpServer = {
   /** Stable identifier used as a key in selections */

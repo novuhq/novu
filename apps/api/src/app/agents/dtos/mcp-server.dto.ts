@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { McpConnectionAuthModeEnum, McpConnectionScopeEnum, McpConnectionStatusEnum } from '@novu/shared';
-import { IsEnum, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsIn, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class EnableAgentMcpServerRequestDto {
   @ApiProperty({ description: 'Catalog id from MCP_SERVERS (e.g. "slack").' })
@@ -9,12 +9,17 @@ export class EnableAgentMcpServerRequestDto {
   mcpId: string;
 
   @ApiPropertyOptional({
-    enum: McpConnectionScopeEnum,
-    description: 'Default authorisation scope for connections under this enabled MCP. Defaults to "subscriber".',
+    // The wider `environment` / `agent` enum members exist on
+    // `McpConnectionScopeEnum` for forward compatibility but the v1 enable
+    // flow only wires the subscriber-scoped path end-to-end, so the public
+    // request surface is restricted to that single value.
+    enum: [McpConnectionScopeEnum.Subscriber],
+    description:
+      'Default authorisation scope for connections under this enabled MCP. Only "subscriber" is accepted today.',
   })
   @IsOptional()
-  @IsEnum(McpConnectionScopeEnum)
-  defaultScope?: McpConnectionScopeEnum;
+  @IsIn([McpConnectionScopeEnum.Subscriber])
+  defaultScope?: McpConnectionScopeEnum.Subscriber;
 
   @ApiPropertyOptional({
     enum: McpConnectionAuthModeEnum,

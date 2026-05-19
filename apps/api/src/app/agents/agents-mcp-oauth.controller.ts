@@ -34,7 +34,7 @@ export class AgentsMcpOAuthController {
       'Handles the redirect from a third-party OAuth provider. Exchanges the authorization code for tokens and persists ' +
       'them on the originating `mcp_connection` row.',
   })
-  async handleCallback(
+  async getOAuthCallback(
     @Res() res: Response,
     @Query('state') state?: string,
     @Query('code') code?: string,

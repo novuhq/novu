@@ -724,12 +724,14 @@ export class AgentsController {
   }
 
   @Get('/:identifier/mcp-servers/:mcpId/connection')
+  @ApiResponse(McpConnectionResponseDto)
   @ApiOperation({
     summary: 'Get MCP connection status for a subscriber',
     description:
       'Returns the per-subscriber connection state for the (agent, mcp) pair, or null when no connection has been initiated yet. ' +
       'Used by the dashboard to render Authorize / Connected / Re-authorize CTAs without leaking encrypted tokens.',
   })
+  @ApiNotFoundResponse({ description: 'Agent or MCP enablement not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   getMcpConnectionStatus(
     @UserSession() user: UserSessionData,

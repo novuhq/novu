@@ -168,9 +168,15 @@ function deriveDefaultAuthMode(catalogMode: McpServerOAuthMode): McpConnectionAu
   switch (catalogMode) {
     case 'none':
       return McpConnectionAuthModeEnum.None;
+    case 'provider':
+      return McpConnectionAuthModeEnum.Provider;
     case 'novu':
-    default:
       return McpConnectionAuthModeEnum.Novu;
+    default: {
+      const _exhaustive: never = catalogMode;
+
+      return McpConnectionAuthModeEnum.Novu;
+    }
   }
 }
 

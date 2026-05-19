@@ -107,6 +107,24 @@ export class ProvisionManagedAgent {
       externalAgentId = response.externalAgentId;
     }
 
+    // Snapshot the pre-update runtime fields so we can compensate when the
+    // post-managed-runtime writes fail and we are NOT inside a Mongo
+    // transaction (i.e. `session === null`). With a session, the caller's
+    // transaction rolls everything back automatically — without one, every
+    // write here is independently committed and we have to undo by hand.
+    const previousAgentRuntime = !session
+      ? await this.agentRepository.findOne(
+          {
+            _id: command.agentId,
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+          },
+          ['runtime', 'managedRuntime']
+        )
+      : null;
+
+    let agentRuntimePersisted = false;
+
     // Persist the managed runtime identifiers on the agent.
     try {
       const updateResult = await this.agentRepository.update(
@@ -134,6 +152,8 @@ export class ProvisionManagedAgent {
         );
       }
 
+      agentRuntimePersisted = true;
+
       // Mongo is the source of truth for the agent's MCP list. Mirror the
       // initial set sent to the provider as `agent_mcp_server` rows so the
       // dashboard and runtime config endpoints can read them directly.
@@ -145,6 +165,34 @@ export class ProvisionManagedAgent {
       }
     } catch (mongoError) {
       this.logger.error({ err: mongoError }, 'Failed to persist managed runtime on agent after provisioning');
+
+      // Compensating Mongo rollback for the no-session path: if the runtime
+      // update already committed but the MCP seeding failed, the agent row
+      // would otherwise be left pointing at a provider agent we're about to
+      // delete below. Revert it to its pre-update shape so the row matches
+      // reality. With a session, the caller's transaction handles this.
+      if (agentRuntimePersisted && !session) {
+        try {
+          await this.agentRepository.update(
+            {
+              _id: command.agentId,
+              _environmentId: command.environmentId,
+              _organizationId: command.organizationId,
+            },
+            {
+              $set: {
+                runtime: previousAgentRuntime?.runtime ?? null,
+                managedRuntime: previousAgentRuntime?.managedRuntime ?? null,
+              },
+            }
+          );
+        } catch (revertError) {
+          this.logger.error(
+            { agentId: command.agentId, err: revertError },
+            'Failed to revert agent runtime fields after provisioning failure — manual cleanup may be required'
+          );
+        }
+      }
 
       if (!command.externalAgentId) {
         // Best-effort rollback the provider agent we just created.
@@ -210,8 +258,14 @@ function deriveDefaultAuthMode(catalogMode: McpServerOAuthMode): McpConnectionAu
   switch (catalogMode) {
     case 'none':
       return McpConnectionAuthModeEnum.None;
+    case 'provider':
+      return McpConnectionAuthModeEnum.Provider;
     case 'novu':
-    default:
       return McpConnectionAuthModeEnum.Novu;
+    default: {
+      const _exhaustive: never = catalogMode;
+
+      return McpConnectionAuthModeEnum.Novu;
+    }
   }
 }
