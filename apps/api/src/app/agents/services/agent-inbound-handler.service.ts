@@ -328,7 +328,11 @@ export class AgentInboundHandler {
       const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
 
       if (supportsTyping) {
-        await thread.startTyping('Thinking...');
+        try {
+          await thread.startTyping('Thinking...');
+        } catch (err) {
+          this.logger.warn(err, `[agent:${agentId}] Failed to start typing indicator`);
+        }
       } else if (message.id) {
         thread
           .createSentMessageFromMessage(message)
