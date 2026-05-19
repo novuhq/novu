@@ -516,21 +516,32 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.body.data.tools).to.be.an('array');
     });
 
-    it('should return all mcpServer and tool fields exactly as returned by the provider', async () => {
+    it('returns mcpServers from the Novu-authoritative enablement table (provider mcpServers ignored)', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-cfg-full-${Date.now()}`;
       createdAgentIdentifiers.push(identifier);
 
       await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
 
+      // Enable a catalog MCP via the new authoritative endpoint. Mongo
+      // (`agent_mcp_server`) is now the source of truth for the agent's MCP
+      // list; the provider's `getConfig().mcpServers` is intentionally
+      // ignored to avoid trusting upstream drift.
+      const enableRes = await session.testAgent
+        .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
+        .send({ mcpId: 'slack' });
+      expect(enableRes.status, `enable slack failed: ${JSON.stringify(enableRes.body)}`).to.equal(201);
+
       mockProvider.getConfig.resolves({
         model: 'claude-opus-4-5',
         systemPrompt: 'You are a helpful assistant',
+        // Provider returns its own (potentially drifted) mcpServers shape; the
+        // runtime-config endpoint MUST ignore it and project from Mongo.
         mcpServers: [
           {
-            externalId: 'mcp-1',
-            name: 'Slack',
-            url: 'https://mcp.slack.com/sse',
+            externalId: 'should-be-ignored',
+            name: 'ProviderDriftedName',
+            url: 'https://mcp.provider-drift.example/sse',
           },
         ],
         tools: [
@@ -558,9 +569,12 @@ describe('Managed Agents API #novu-v2', () => {
       expect(systemPrompt).to.equal('You are a helpful assistant');
 
       expect(mcpServers).to.have.length(1);
-      expect(mcpServers[0].externalId).to.equal('mcp-1');
+      // Projection comes from the shared catalog for `slack`, NOT the
+      // provider's stub. The `externalId` mirrors the catalog id; the name
+      // and url are the canonical Slack catalog values.
+      expect(mcpServers[0].externalId).to.equal('slack');
       expect(mcpServers[0].name).to.equal('Slack');
-      expect(mcpServers[0].url).to.equal('https://mcp.slack.com/sse');
+      expect(mcpServers[0].url).to.equal('https://mcp.slack.com/mcp');
 
       expect(tools).to.have.length(2);
       expect(tools[0].externalId).to.equal('tool-1');
