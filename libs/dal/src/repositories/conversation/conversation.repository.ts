@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -58,7 +58,7 @@ export class ConversationRepository extends BaseRepositoryV2<
         channels: {
           $elemMatch: {
             platformThreadId,
-            _integrationId: integrationId,
+            _integrationId: new Types.ObjectId(integrationId),
           },
         },
       },

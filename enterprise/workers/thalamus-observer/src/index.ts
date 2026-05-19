@@ -156,16 +156,6 @@ export class SessionObserver extends Agent<Env, State> {
         ws.close(1000, 'response complete');
       } catch {}
     }
-    if (sessionId) {
-      this.unregisterSession(sessionId);
-    }
-  }
-
-  private unregisterSession(sessionId: string): void {
-    try {
-      const registry = this.env.SESSION_REGISTRY.getByName('global');
-      void registry.remove(sessionId);
-    } catch {}
   }
 
   private async observeSSE(
@@ -190,7 +180,6 @@ export class SessionObserver extends Agent<Env, State> {
     if (!response.ok || !response.body) {
       if (this.state.observation) {
         this.updateObservation({ ...this.state.observation, status: 'error' });
-        this.unregisterSession(params.sessionId);
       }
       throw new Error(`SSE connection failed: ${response.status}`);
     }
@@ -210,7 +199,6 @@ export class SessionObserver extends Agent<Env, State> {
         ...this.state.observation,
         status: 'completed',
       });
-      this.unregisterSession(params.sessionId);
     }
   }
 }

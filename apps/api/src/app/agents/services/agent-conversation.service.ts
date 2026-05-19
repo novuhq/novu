@@ -129,7 +129,6 @@ export class AgentConversationService {
       params.integrationId,
       platformThreadId
     );
-
     if (existing) {
       if (existing.status === ConversationStatusEnum.RESOLVED) {
         await this.conversationRepository.updateStatus(
