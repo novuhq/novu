@@ -6,6 +6,9 @@
  * Replaces hardcoded `https://*.novu.localhost` literals so worktree prefixes
  * and non-default proxy ports flow through to the apps automatically.
  *
+ * Used by API and dashboard `start:portless`, and by the worker `start:portless`
+ * (worker is not behind `portless run` but still needs API_ROOT_URL / API_INTERNAL_ORIGIN).
+ *
  * Usage: node scripts/with-portless-env.mjs <command> [args...]
  */
 import { execFileSync, spawn } from 'node:child_process';
@@ -68,6 +71,7 @@ const env = {
   VITE_WEBSOCKET_HOSTNAME: wsUrl,
   VITE_DASHBOARD_URL: dashboardUrl,
   VITE_BETTER_AUTH_BASE_URL: apiUrl,
+  API_INTERNAL_ORIGIN: apiUrl,
 };
 
 const [, , command, ...args] = process.argv;

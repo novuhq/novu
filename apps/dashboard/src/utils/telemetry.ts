@@ -21,6 +21,8 @@ export enum TelemetryEvent {
   AI_PROMPT_COPIED = 'AI prompt copied - [Onboarding]',
   SKIP_ONBOARDING_CLICKED = 'Skip onboarding clicked - [Onboarding]',
   ONBOARDING_COMPLETED = 'Onboarding completed - [Onboarding]',
+  ONBOARDING_CONNECT_AGENT_SUBMITTED = 'Onboarding connect agent submitted - [Onboarding]',
+  ONBOARDING_REDIRECT = 'Onboarding redirect - [Onboarding]',
   USECASE_SELECT_PAGE_VIEWED = 'Use case select page viewed - [Onboarding]',
   AGENTS_USECASE_PAGE_VIEWED = 'Agents use case page viewed - [Onboarding]',
   AGENTS_SETUP_PAGE_VIEWED = 'Agents setup page viewed - [Onboarding]',

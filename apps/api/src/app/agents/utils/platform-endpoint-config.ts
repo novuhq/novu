@@ -19,4 +19,11 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
     endpointType: ENDPOINT_TYPES.PHONE,
     identityField: 'phoneNumber',
   },
+  // Telegram subscriber resolution is DM-only: for 1:1 chats with the bot,
+  // Telegram's chat.id equals the sender's user.id, so the chatId stored on
+  // telegram_chat endpoints is also the value of message.author.userId on inbound.
+  [AgentPlatformEnum.TELEGRAM]: {
+    endpointType: ENDPOINT_TYPES.TELEGRAM_CHAT,
+    identityField: 'chatId',
+  },
 };

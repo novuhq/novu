@@ -75,6 +75,7 @@ export class GetSubscriberPreference {
       contextKeys: command.contextKeys,
       subscriberId: subscriber._id,
       workflowIds,
+      preFetchedSubscriberGlobalPreference: command.subscriberGlobalPreference,
     });
 
     const allWorkflowPreferences = [
@@ -258,12 +259,14 @@ export class GetSubscriberPreference {
     subscriberId,
     workflowIds,
     contextKeys,
+    preFetchedSubscriberGlobalPreference,
   }: {
     environmentId: string;
     organizationId: string;
     subscriberId: string;
     workflowIds: string[];
     contextKeys?: string[];
+    preFetchedSubscriberGlobalPreference?: PreferencesEntity | null;
   }) {
     const baseQuery = {
       _environmentId: environmentId,
@@ -280,6 +283,27 @@ export class GetSubscriberPreference {
     const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(contextKeys, {
       enabled: useContextFiltering,
     });
+
+    /*
+     * When the caller already fetched the SUBSCRIBER_GLOBAL preference (e.g. the v2
+     * /preferences endpoint, which also exposes it on the response), skip the duplicate
+     * mongo query. Under concurrent load this duplicate fetch is one of the larger CPU/IO
+     * sources because every preferences call hits both this code path and
+     * `GetSubscriberGlobalPreference` for the same document.
+     */
+    const subscriberGlobalPreferenceQuery: Promise<PreferencesEntity[]> =
+      preFetchedSubscriberGlobalPreference !== undefined
+        ? Promise.resolve(preFetchedSubscriberGlobalPreference ? [preFetchedSubscriberGlobalPreference] : [])
+        : this.preferencesRepository.find(
+            {
+              ...baseQuery,
+              _subscriberId: subscriberId,
+              type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+              ...contextQuery,
+            },
+            undefined,
+            readOptions
+          );
 
     const [
       workflowResourcePreferences,
@@ -316,16 +340,7 @@ export class GetSubscriberPreference {
         undefined,
         readOptions
       ),
-      this.preferencesRepository.find(
-        {
-          ...baseQuery,
-          _subscriberId: subscriberId,
-          type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
-          ...contextQuery,
-        },
-        undefined,
-        readOptions
-      ),
+      subscriberGlobalPreferenceQuery,
     ]);
 
     return {

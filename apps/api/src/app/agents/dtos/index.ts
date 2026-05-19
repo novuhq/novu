@@ -13,3 +13,4 @@ export * from './list-agents-response.dto';
 export * from './update-agent-bridge-request.dto';
 export * from './update-agent-integration-request.dto';
 export * from './update-agent-request.dto';
+export * from './upload-custom-skill.dto';

@@ -11,9 +11,9 @@ import {
   Settings,
   Smartphone,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { RiArrowLeftSLine, RiCheckLine } from 'react-icons/ri';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { Notification5Fill } from '@/components/icons/notification-5-fill';
@@ -22,6 +22,7 @@ import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { getOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -265,12 +266,14 @@ type UsecaseId = 'agents' | 'inbox';
 
 function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect: (id: UsecaseId) => void }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
 
   const handleContinue = () => {
     if (selected === 'inbox') {
-      navigate(ROUTES.INBOX_USECASE);
+      navigate(withAppId(ROUTES.INBOX_USECASE, appId));
     } else if (selected === 'agents') {
-      navigate(ROUTES.AGENTS_SETUP);
+      navigate(withAppId(ROUTES.AGENTS_SETUP, appId));
     }
   };
 

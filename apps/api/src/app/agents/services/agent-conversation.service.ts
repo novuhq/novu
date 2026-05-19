@@ -125,9 +125,10 @@ export class AgentConversationService {
     const existing = await this.conversationRepository.findByPlatformThread(
       environmentId,
       organizationId,
+      params.agentId,
+      params.integrationId,
       platformThreadId
     );
-
     if (existing) {
       if (existing.status === ConversationStatusEnum.RESOLVED) {
         await this.conversationRepository.updateStatus(
@@ -245,22 +246,6 @@ export class AgentConversationService {
     return this.activityRepository.findByConversation(environmentId, conversationId, limit);
   }
 
-  async updateChannelThread(
-    environmentId: string,
-    organizationId: string,
-    conversationId: string,
-    platformThreadId: string,
-    serializedThread: Record<string, unknown>
-  ): Promise<void> {
-    await this.conversationRepository.updateChannelThread(
-      environmentId,
-      organizationId,
-      conversationId,
-      platformThreadId,
-      serializedThread
-    );
-  }
-
   async getConversation(
     conversationId: string,
     environmentId: string,
@@ -275,9 +260,17 @@ export class AgentConversationService {
   async findByPlatformThread(
     environmentId: string,
     organizationId: string,
+    agentId: string,
+    integrationId: string,
     platformThreadId: string
   ): Promise<ConversationEntity | null> {
-    return this.conversationRepository.findByPlatformThread(environmentId, organizationId, platformThreadId);
+    return this.conversationRepository.findByPlatformThread(
+      environmentId,
+      organizationId,
+      agentId,
+      integrationId,
+      platformThreadId
+    );
   }
 
   async setFirstPlatformMessageId(

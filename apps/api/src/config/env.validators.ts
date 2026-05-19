@@ -70,6 +70,8 @@ export const envValidators = {
   STEP_RESOLVER_CF_DISPATCH_NAMESPACE: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
+  THALAMUS_CF_API_KEY: str({ default: undefined }),
+  THALAMUS_CF_URL: url({ default: undefined }),
   /**
    * Shared inbound domain for the agent default inbox feature, e.g. `agentconnect.sh`.
    * When unset the feature is disabled and the worker falls through to the existing

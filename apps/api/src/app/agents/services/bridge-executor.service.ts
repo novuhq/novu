@@ -77,6 +77,8 @@ export interface AgentExecutionParams {
   action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
+  /** Called after all retries are exhausted and the bridge remains unreachable. */
+  onBridgeFailure?: (error: Error) => Promise<void>;
 }
 
 export class NoBridgeUrlError extends Error {
@@ -118,6 +120,9 @@ export class BridgeExecutorService {
 
       this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
         this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
+        params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
+          this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
+        });
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {

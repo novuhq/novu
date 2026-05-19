@@ -249,7 +249,7 @@ export function AgentsUsecasePage() {
     </>
   );
 
-  const rightContent = <AgentFlowIllustration />;
+  const rightContent = <AgentFlowIllustration state="connect" runtime="scratch" />;
 
   return <OnboardingShell left={leftContent} right={rightContent} maxLeftWidth="820px" />;
 }

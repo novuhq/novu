@@ -12,6 +12,7 @@ import { EscapeKeyManagerProvider } from '@/context/escape-key-manager/escape-ke
 import { IdentityProvider } from '@/context/identity-provider';
 import { RegionProvider } from '@/context/region';
 import { SegmentProvider } from '@/context/segment';
+import { SnitcherProvider } from '@/context/snitcher';
 import { RootRouteErrorFallback } from '@/routes/root-route-error-fallback';
 
 const queryClient = new QueryClient({
@@ -51,19 +52,21 @@ const RootRouteInternal = () => {
         <ClerkProvider>
           <SegmentProvider>
             <CustomerIoProvider>
-              <AuthProvider>
-                <RegionProvider>
-                  <IdentityProvider>
-                    <HelmetProvider>
-                      <TooltipProvider delayDuration={100}>
-                        <EscapeKeyManagerProvider>
-                          <Outlet />
-                        </EscapeKeyManagerProvider>
-                      </TooltipProvider>
-                    </HelmetProvider>
-                  </IdentityProvider>
-                </RegionProvider>
-              </AuthProvider>
+              <SnitcherProvider>
+                <AuthProvider>
+                  <RegionProvider>
+                    <IdentityProvider>
+                      <HelmetProvider>
+                        <TooltipProvider delayDuration={100}>
+                          <EscapeKeyManagerProvider>
+                            <Outlet />
+                          </EscapeKeyManagerProvider>
+                        </TooltipProvider>
+                      </HelmetProvider>
+                    </IdentityProvider>
+                  </RegionProvider>
+                </AuthProvider>
+              </SnitcherProvider>
             </CustomerIoProvider>
           </SegmentProvider>
         </ClerkProvider>

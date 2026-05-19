@@ -7,10 +7,6 @@ apps/api/src/metadata.ts
 # Playground / demo apps — not production code
 playground/
 
-# CI/CD, build infrastructure, and Docker configs
-.github/
-docker/
-
 # Inactive apps — no longer under active development
 apps/webhook/
 

@@ -1,11 +1,4 @@
-import {
-  AgentRuntimeProviderIdEnum,
-  CLAUDE_BUILTIN_TOOLS,
-  DirectionEnum,
-  EnvironmentTypeEnum,
-  IntegrationKindEnum,
-  PermissionsEnum,
-} from '@novu/shared';
+import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
@@ -13,14 +6,11 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AGENTS_LIST_QUERY_KEY,
   type AgentResponse,
-  type CreateAgentBody,
-  createAgent,
   deleteAgent,
   getAgentsListQueryKey,
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { deleteIntegration } from '@/api/integrations';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
@@ -34,7 +24,7 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
-import { useCreateIntegration } from '@/hooks/use-create-integration';
+import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -134,41 +124,7 @@ export function AgentsList() {
     placeholderData: keepPreviousData,
   });
 
-  const createMutation = useMutation({
-    mutationFn: (body: CreateAgentBody) =>
-      createAgent(requireEnvironment(currentEnvironment, 'No environment selected'), body),
-    onSuccess: async (createdAgent) => {
-      showSuccessToast('Agent created', 'Your agent is ready to use.');
-
-      track(
-        isDispatchApp
-          ? TelemetryEvent.DISPATCH_AGENT_CREATED_FROM_DASHBOARD
-          : TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD,
-        {
-          agentIdentifier: createdAgent.identifier,
-          active: createdAgent.active,
-        }
-      );
-
-      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
-        environmentSlug: environment.slug ?? '',
-        agentIdentifier: encodeURIComponent(createdAgent.identifier),
-        agentTab: AGENT_DETAILS_DEFAULT_TAB,
-      })}${location.search}`;
-
-      navigate(agentDetailsPath);
-      queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
-      setCreateOpen(false);
-    },
-    onError: (err: Error) => {
-      const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
-
-      showErrorToast(message, 'Create failed');
-    },
-  });
-
-  const { mutateAsync: createIntegration, isPending: isCreatingIntegration } = useCreateIntegration();
+  const { submit: submitCreateAgent, isPending: isCreatingAgent } = useCreateAgentMutation();
 
   const deleteMutation = useMutation({
     mutationFn: (identifier: string) =>
@@ -249,86 +205,38 @@ export function AgentsList() {
   }, []);
 
   const handleCreateSubmit = useCallback(
-    async ({
-      name,
-      identifier,
-      instructions,
-      apiKey,
-      externalAgentId,
-      externalEnvironmentId,
-      externalWorkspaceId,
-      runtime,
-      isExistingMode,
-    }: CreateAgentForm) => {
-      if (runtime === 'scratch') {
-        const request: CreateAgentBody = {
-          name,
-          identifier,
-          description: instructions,
-        };
+    async (form: CreateAgentForm) => {
+      await submitCreateAgent(form, {
+        onSuccess: (createdAgent) => {
+          showSuccessToast('Agent created', 'Your agent is ready to use.');
 
-        await createMutation.mutateAsync(request);
-      } else if (runtime === 'claude') {
-        const request: CreateAgentBody = {
-          name,
-          identifier,
-        };
-
-        let integrationId: string;
-
-        try {
-          const { data: integration } = await createIntegration({
-            active: true,
-            kind: IntegrationKindEnum.AGENT,
-            providerId: AgentRuntimeProviderIdEnum.Anthropic,
-            // `externalWorkspaceId` is only sent when the user pasted a non-default workspace id —
-            // omitting it lets the backend fall back to the `default` workspace.
-            credentials: { apiKey, ...(externalWorkspaceId ? { externalWorkspaceId } : {}) },
-            name,
-          });
-
-          integrationId = integration._id;
-        } catch (err) {
-          const message = err instanceof NovuApiError ? err.message : 'Could not create integration.';
-
-          showErrorToast(message, 'Create failed');
-
-          return;
-        }
-
-        if (isExistingMode) {
-          request.runtime = 'managed';
-          request.managedRuntime = {
-            integrationId,
-            providerId: AgentRuntimeProviderIdEnum.Anthropic,
-            externalAgentId,
-            externalEnvironmentId,
-          };
-        } else {
-          request.runtime = 'managed';
-          request.managedRuntime = {
-            integrationId,
-            providerId: AgentRuntimeProviderIdEnum.Anthropic,
-            model: 'claude-opus-4-5',
-            systemPrompt: instructions || undefined,
-            tools: CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
-          };
-        }
-
-        const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-
-        createMutation.mutate(request, {
-          onError: async () => {
-            try {
-              await deleteIntegration({ id: integrationId, environment });
-            } catch {
-              // Best-effort cleanup; the global onError toast already informed the user.
+          track(
+            isDispatchApp
+              ? TelemetryEvent.DISPATCH_AGENT_CREATED_FROM_DASHBOARD
+              : TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD,
+            {
+              agentIdentifier: createdAgent.identifier,
+              active: createdAgent.active,
             }
-          },
-        });
-      }
+          );
+
+          const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+          const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
+            environmentSlug: environment.slug ?? '',
+            agentIdentifier: encodeURIComponent(createdAgent.identifier),
+            agentTab: AGENT_DETAILS_DEFAULT_TAB,
+          })}${location.search}`;
+
+          navigate(agentDetailsPath);
+          setCreateOpen(false);
+        },
+        onError: (err) => {
+          const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+          showErrorToast(message, 'Create failed');
+        },
+      });
     },
-    [createMutation, createIntegration, currentEnvironment]
+    [submitCreateAgent, track, isDispatchApp, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
   );
 
   if (!canReadAgents) {
@@ -461,7 +369,7 @@ export function AgentsList() {
         open={createOpen}
         onOpenChange={handleCreateOpenChange}
         onSubmit={handleCreateSubmit}
-        isSubmitting={createMutation.isPending || isCreatingIntegration}
+        isSubmitting={isCreatingAgent}
         initialName={memoizedInitialName}
         initialInstructions={memoizedInitialDescription}
       />

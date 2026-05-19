@@ -82,7 +82,6 @@ export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHy
     devBridgeUrl: agent.devBridgeUrl,
     devBridgeActive: agent.devBridgeActive,
     runtime: agent.runtime,
-    creationSource: agent.creationSource,
     managedRuntime,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,

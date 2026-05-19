@@ -301,26 +301,28 @@ export class ChatSdkService implements OnModuleDestroy {
     agentId: string,
     integrationIdentifier: string,
     platform: string,
-    serializedThread: Record<string, unknown>,
+    platformThreadId: string,
     content: ReplyContentDto
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const { ThreadImpl } = await esmImport('chat');
-    const adapter = chat.getAdapter(platform);
-    const thread = ThreadImpl.fromJSON(serializedThread, adapter);
+    // `chat.thread()` (chat@4.27+) infers the adapter from the threadId prefix and
+    // returns a Thread already wired to this Chat instance's state adapter, so we
+    // avoid rehydrating from a serialized blob and don't trip the "No Chat singleton
+    // registered" check that `ThreadImpl.fromJSON` hits for card/postable replies.
+    const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.prepareContentForDelivery(content, platform, agentId);
 
-    let postPromise: Promise<{ id: string; threadId: string }>;
-    if (deliveryContent.card) {
-      postPromise = thread.post(deliveryContent.card);
-    } else {
-      postPromise = thread.post({ markdown: deliveryContent.markdown ?? '', files: deliveryContent.files });
-    }
+    const postArg = deliveryContent.card
+      ? (deliveryContent.card as unknown as AdapterPostableMessage)
+      : ({
+          markdown: deliveryContent.markdown ?? '',
+          files: deliveryContent.files,
+        } as unknown as AdapterPostableMessage);
 
-    const sent = await postPromise.catch(toDeliveryError);
+    const sent = await thread.post(postArg).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
@@ -330,7 +332,7 @@ export class ChatSdkService implements OnModuleDestroy {
     integrationIdentifier: string,
     platformUserId: string,
     content: ReplyContentDto
-  ): Promise<SentMessageInfo & { serializedThread: Record<string, unknown> }> {
+  ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -352,18 +354,7 @@ export class ChatSdkService implements OnModuleDestroy {
     // when the user replies, keeping inbound and outbound on the same conversation.
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
-    // DM threads opened via openDM() may not have a currentMessage, so toJSON()
-    // can fail. Build a minimal serialized thread that ThreadImpl.fromJSON() can
-    // reconstruct for later replies.
-    const serializedThread: Record<string, unknown> = {
-      id: platformThreadId,
-      channelId: dmThread.channelId,
-      isDM: true,
-      platform: config.platform,
-      currentMessage: { id: sent.id, threadId: sent.threadId },
-    };
-
-    return { messageId: sent.id, platformThreadId, serializedThread };
+    return { messageId: sent.id, platformThreadId };
   }
 
   async editInConversation(
@@ -1299,6 +1290,24 @@ export class ChatSdkService implements OnModuleDestroy {
             appSecret: credentials.secretKey,
             verifyToken: credentials.token,
             phoneNumberId: credentials.phoneNumberIdentification,
+          }),
+        };
+      }
+      case AgentPlatformEnum.TELEGRAM: {
+        if (!credentials.apiToken || !credentials.token) {
+          throw new BadRequestException(
+            'Telegram agent integration requires a Bot Token and a webhook secret token. ' +
+              'Run the "Configure webhook" step to provision the webhook secret token before this integration can receive messages.'
+          );
+        }
+
+        const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
+
+        return {
+          telegram: createTelegramAdapter({
+            botToken: credentials.apiToken,
+            secretToken: credentials.token,
+            mode: 'webhook',
           }),
         };
       }
