@@ -524,8 +524,8 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     // the e2e layer because the in-memory PRM/AS-metadata LRU is held by the
     // singleton service instance and can't be evicted from outside the
     // process; doing so reliably would require either an explicit
-    // dev/test-only cache-clear endpoint or DI gymnastics that are out of
-    // scope here.
+    // dev-mode cache-clear endpoint (test-scoped) or DI gymnastics that are
+    // out of scope here.
 
     it('refuses to proceed when the AS does not advertise registration_endpoint (mcp_no_dcr_support)', async () => {
       const { identifier } = await createManagedAgent();
