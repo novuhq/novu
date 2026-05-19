@@ -5,6 +5,14 @@ on:
 
 jobs:
   on_pr:
+    # Skip on fork PRs. GitHub forces GITHUB_TOKEN to read-only for
+    # `pull_request` runs from forks regardless of the `permissions:`
+    # block, so the labeler can't add labels and the job fails with
+    # "Resource not accessible by integration". Skipping cleanly produces
+    # a "skipped" status (treated as passing by branch protection). Uses
+    # the same `head.repo.fork != true` discriminator as `test_e2e_api`
+    # in on-pr.yml.
+    if: ${{ github.event.pull_request.head.repo.fork != true }}
     permissions:
       contents: read
       pull-requests: write

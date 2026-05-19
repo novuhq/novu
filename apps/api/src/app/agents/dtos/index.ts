@@ -1,5 +1,6 @@
 export * from './add-agent-integration-request.dto';
 export * from './agent-behavior.dto';
+export * from './agent-inbox.dto';
 export * from './agent-integration-response.dto';
 export * from './agent-integration-summary.dto';
 export * from './agent-response.dto';
@@ -13,3 +14,4 @@ export * from './mcp-server.dto';
 export * from './update-agent-bridge-request.dto';
 export * from './update-agent-integration-request.dto';
 export * from './update-agent-request.dto';
+export * from './upload-custom-skill.dto';

@@ -1,17 +1,22 @@
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import * as https from 'node:https';
+import { randomUUID } from 'node:crypto';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import {
+  areNovuEmailCredentialsSet,
   assertSafeOutboundUrl,
+  buildAgentSharedInbox,
   CacheService,
+  CalculateLimitNovuIntegration,
   decryptCredentials,
+  isAgentSharedInboxEnabled,
   isPrivateIp,
   MailFactory,
   PinoLogger,
   SsrfBlockedError,
 } from '@novu/application-generic';
-import { IntegrationRepository } from '@novu/dal';
+import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
@@ -177,7 +182,9 @@ export class ChatSdkService implements OnModuleDestroy {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly inboundHandler: AgentInboundHandler,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly actionTokenService: AgentEmailActionTokenService
+    private readonly actionTokenService: AgentEmailActionTokenService,
+    private readonly calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    private readonly messageRepository: MessageRepository
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -294,26 +301,28 @@ export class ChatSdkService implements OnModuleDestroy {
     agentId: string,
     integrationIdentifier: string,
     platform: string,
-    serializedThread: Record<string, unknown>,
+    platformThreadId: string,
     content: ReplyContentDto
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const { ThreadImpl } = await esmImport('chat');
-    const adapter = chat.getAdapter(platform);
-    const thread = ThreadImpl.fromJSON(serializedThread, adapter);
+    // `chat.thread()` (chat@4.27+) infers the adapter from the threadId prefix and
+    // returns a Thread already wired to this Chat instance's state adapter, so we
+    // avoid rehydrating from a serialized blob and don't trip the "No Chat singleton
+    // registered" check that `ThreadImpl.fromJSON` hits for card/postable replies.
+    const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.prepareContentForDelivery(content, platform, agentId);
 
-    let postPromise: Promise<{ id: string; threadId: string }>;
-    if (deliveryContent.card) {
-      postPromise = thread.post(deliveryContent.card);
-    } else {
-      postPromise = thread.post({ markdown: deliveryContent.markdown ?? '', files: deliveryContent.files });
-    }
+    const postArg = deliveryContent.card
+      ? (deliveryContent.card as unknown as AdapterPostableMessage)
+      : ({
+          markdown: deliveryContent.markdown ?? '',
+          files: deliveryContent.files,
+        } as unknown as AdapterPostableMessage);
 
-    const sent = await postPromise.catch(toDeliveryError);
+    const sent = await thread.post(postArg).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
@@ -323,7 +332,7 @@ export class ChatSdkService implements OnModuleDestroy {
     integrationIdentifier: string,
     platformUserId: string,
     content: ReplyContentDto
-  ): Promise<SentMessageInfo & { serializedThread: Record<string, unknown> }> {
+  ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -345,18 +354,7 @@ export class ChatSdkService implements OnModuleDestroy {
     // when the user replies, keeping inbound and outbound on the same conversation.
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
-    // DM threads opened via openDM() may not have a currentMessage, so toJSON()
-    // can fail. Build a minimal serialized thread that ThreadImpl.fromJSON() can
-    // reconstruct for later replies.
-    const serializedThread: Record<string, unknown> = {
-      id: platformThreadId,
-      channelId: dmThread.channelId,
-      isDM: true,
-      platform: config.platform,
-      currentMessage: { id: sent.id, threadId: sent.threadId },
-    };
-
-    return { messageId: sent.id, platformThreadId, serializedThread };
+    return { messageId: sent.id, platformThreadId };
   }
 
   async editInConversation(
@@ -902,6 +900,15 @@ export class ChatSdkService implements OnModuleDestroy {
       outboundIntegrationId: c.outboundIntegrationId ?? null,
       useFromAddressOverride: c.useFromAddressOverride ?? null,
       fromAddressOverride: c.fromAddressOverride ?? null,
+      // Email-specific fields closed over by the sendEmail callback (demo path):
+      // a slug rename, routing-key rotation, shared-inbox toggle, or sender
+      // rebrand must rebuild the cached adapter otherwise the agent keeps
+      // replying from the stale From/Reply-To address until the LRU TTL
+      // expires.
+      emailSlugPrefix: c.emailSlugPrefix ?? null,
+      inboxRoutingKey: c.inboxRoutingKey ?? null,
+      sharedInboxDisabled: c.sharedInboxDisabled ?? null,
+      senderName: c.senderName ?? null,
     });
   }
 
@@ -925,8 +932,7 @@ export class ChatSdkService implements OnModuleDestroy {
     return async (params) => {
       if (!outboundIntegrationId) {
         throw new BadRequestException(
-          'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
-            'Configure one in the agent email setup.'
+          'Email agent integration is missing outboundIntegrationId. Reconfigure the agent email setup.'
         );
       }
 
@@ -953,6 +959,10 @@ export class ChatSdkService implements OnModuleDestroy {
         throw new BadRequestException(
           `Outbound email integration ${outboundIntegrationId} (${integration.providerId}) is inactive`
         );
+      }
+
+      if (integration.providerId === EmailProviderIdEnum.Novu) {
+        return this.sendViaNovuDemoProvider(config, params, integration);
       }
 
       const hasUnsupportedAlternatives =
@@ -991,7 +1001,9 @@ export class ChatSdkService implements OnModuleDestroy {
       // outbound From is rewritten to the sending provider's configured sender (or a per-agent
       // override). When neither override nor outbound.from is set, we fall back to the agent
       // address for From and skip Reply-To — preserving the legacy behavior.
-      const agentInboundAddress = params.from;
+      // Prefer the shared-inbox address (cloud) so Reply-To always routes back to the agent
+      // even when the SDK has no DomainRoute-derived address handy.
+      const agentInboundAddress = this.resolveAgentInboundAddress(config, params.from);
       const overrideFrom = config.credentials.useFromAddressOverride
         ? config.credentials.fromAddressOverride?.trim() || undefined
         : undefined;
@@ -1024,6 +1036,161 @@ export class ChatSdkService implements OnModuleDestroy {
 
       return { messageId: result?.id || params.messageId || '' };
     };
+  }
+
+  /**
+   * Resolve the canonical inbound address used for Reply-To. Preference order:
+   *
+   *   1. The synthetic shared inbox `{slug}-{inboxRoutingKey}@<shared-domain>`
+   *      when the cloud feature is enabled and the shared inbox itself is not
+   *      disabled. System-managed and always works.
+   *   2. The fallback supplied by the chat-adapter-email SDK — already a
+   *      custom-domain agent route configured by the user (the SDK builds it
+   *      from `DomainRoute` rows), or whatever the platform passed on
+   *      self-hosted.
+   *
+   * Replies must always reach an inbox the worker will actually process, so
+   * we deliberately do not return the shared inbox here when
+   * `sharedInboxDisabled` is set — the worker would drop those messages and
+   * we fall through to the SDK's custom-domain address instead.
+   */
+  private resolveAgentInboundAddress(config: ResolvedAgentConfig, fallback: string): string {
+    const slug = config.credentials.emailSlugPrefix;
+    const inboxRoutingKey = config.credentials.inboxRoutingKey;
+    const sharedDisabled = Boolean(config.credentials.sharedInboxDisabled);
+    if (isAgentSharedInboxEnabled() && slug && inboxRoutingKey && !sharedDisabled) {
+      try {
+        return buildAgentSharedInbox(slug, inboxRoutingKey);
+      } catch (err) {
+        this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
+      }
+    }
+
+    return fallback;
+  }
+
+  /**
+   * Outbound demo path: the agent is wired to the bundled Novu Email demo
+   * provider row. We override the integration's stored credentials with the
+   * cloud demo API key (`NOVU_EMAIL_INTEGRATION_API_KEY`) and force `From` to
+   * `{slug}-{inboxRoutingKey}@<shared-domain>` so replies route back to the
+   * same inbox. Quota-gated by the same per-environment 300/month cap as
+   * workflow notification emails.
+   *
+   * Refuses to send when the shared inbox prerequisites aren't met because
+   * the demo path can't recover a Reply-To without it — at that point the
+   * user must attach a real outbound email provider.
+   */
+  private async sendViaNovuDemoProvider(
+    config: ResolvedAgentConfig,
+    params: {
+      from: string;
+      to: string;
+      subject: string;
+      html: string;
+      text?: string;
+      alternatives?: Array<{ contentType: string; content: string | Buffer }>;
+      inReplyTo?: string;
+      references?: string;
+      messageId?: string;
+    },
+    integration: IntegrationEntity
+  ): Promise<{ messageId?: string }> {
+    if (!isAgentSharedInboxEnabled() || !config.credentials.emailSlugPrefix || !config.credentials.inboxRoutingKey) {
+      throw new BadRequestException(
+        'Email agent integration requires either a shared agent inbox or a custom outbound email provider. ' +
+          'Configure one in the agent email setup.'
+      );
+    }
+
+    if (config.credentials.sharedInboxDisabled) {
+      throw new BadRequestException(
+        'The Novu demo sender requires the shared inbox to be enabled. ' +
+          'Re-enable it or attach an outbound email provider.'
+      );
+    }
+
+    const limit = await this.calculateLimitNovuIntegration.execute({
+      channelType: ChannelTypeEnum.EMAIL,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    });
+    if (limit && limit.count >= limit.limit) {
+      throw new BadRequestException(
+        `Novu demo email quota exhausted for this environment (${limit.count}/${limit.limit} this month). Attach an outbound email provider (e.g. SendGrid) to remove this cap.`
+      );
+    }
+
+    if (!areNovuEmailCredentialsSet()) {
+      throw new BadRequestException(
+        'Novu demo email is not configured on this deployment. Attach an outbound email provider to send replies.'
+      );
+    }
+
+    const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix, config.credentials.inboxRoutingKey);
+
+    // The Novu demo integration row's stored credentials are empty by design —
+    // the real API key lives in the deployment's env so a single Novu-managed
+    // SendGrid account fans out across every org's demo sender. We rebuild
+    // credentials on every send rather than mutating the row.
+    const demoIntegration: IntegrationEntity = {
+      ...integration,
+      credentials: {
+        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        from,
+        senderName: config.credentials.senderName || 'Novu',
+        ipPoolName: 'Demo',
+      },
+    };
+
+    const mailFactory = new MailFactory();
+    const handler = mailFactory.getHandler(demoIntegration, from);
+
+    const mailOptions: IEmailOptions = {
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+      alternatives: params.alternatives,
+      from,
+      senderName: config.credentials.senderName || undefined,
+      headers: {
+        ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
+        ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
+        ...(params.references
+          ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') }
+          : {}),
+      },
+    };
+
+    const result = await handler.send(mailOptions).catch(toDeliveryError);
+
+    const messageIdForReturn = result?.id || params.messageId || '';
+
+    try {
+      await this.messageRepository.create({
+        _environmentId: config.environmentId,
+        _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.EMAIL,
+        providerId: EmailProviderIdEnum.Novu,
+        email: params.to,
+        subject: params.subject,
+        transactionId: messageIdForReturn || randomUUID(),
+        payload: {
+          agentId: config.agentId,
+          html: params.html,
+          text: params.text,
+        },
+        tags: ['agent-demo-reply'],
+      });
+    } catch (err) {
+      this.logger.warn(
+        { err, environmentId: config.environmentId, agentId: config.agentId },
+        'Failed to persist Novu demo email message for quota accounting'
+      );
+    }
+
+    return { messageId: messageIdForReturn };
   }
 
   private async createChatInstance(
@@ -1123,6 +1290,24 @@ export class ChatSdkService implements OnModuleDestroy {
             appSecret: credentials.secretKey,
             verifyToken: credentials.token,
             phoneNumberId: credentials.phoneNumberIdentification,
+          }),
+        };
+      }
+      case AgentPlatformEnum.TELEGRAM: {
+        if (!credentials.apiToken || !credentials.token) {
+          throw new BadRequestException(
+            'Telegram agent integration requires a Bot Token and a webhook secret token. ' +
+              'Run the "Configure webhook" step to provision the webhook secret token before this integration can receive messages.'
+          );
+        }
+
+        const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
+
+        return {
+          telegram: createTelegramAdapter({
+            botToken: credentials.apiToken,
+            secretToken: credentials.token,
+            mode: 'webhook',
           }),
         };
       }

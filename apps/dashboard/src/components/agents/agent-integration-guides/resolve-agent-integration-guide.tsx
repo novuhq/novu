@@ -1,8 +1,9 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
-import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
+import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
+import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
 import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
@@ -10,6 +11,7 @@ import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
 import { SlackAgentIntegrationGuide } from './slack-agent-integration-guide';
 import { TeamsAgentIntegrationGuide } from './teams-agent-integration-guide';
+import { TelegramAgentIntegrationGuide } from './telegram-agent-integration-guide';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 
 type ResolveAgentIntegrationGuideProps = {
@@ -41,7 +43,7 @@ function SetupGuideWithHeader({
   isRemovingIntegration,
   children,
 }: SetupGuideWrapperProps) {
-  const isConnected = Boolean(integrationLink.connectedAt);
+  const isConnected = isAgentIntegrationConnected(integrationLink);
 
   const statusBadge = isConnected ? (
     <span className="bg-success-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
@@ -145,6 +147,35 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
+  if (providerId === ChatProviderIdEnum.Telegram && !integrationLink.connectedAt) {
+    return (
+      <SetupGuideWithHeader
+        providerId={providerId}
+        providerDisplayName="Telegram"
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      >
+        <TelegramSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
+      </SetupGuideWithHeader>
+    );
+  }
+
+  if (providerId === ChatProviderIdEnum.Telegram) {
+    return (
+      <TelegramAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
   if (providerId === ChatProviderIdEnum.WhatsAppBusiness && !integrationLink.connectedAt) {
     return (
       <SetupGuideWithHeader
@@ -171,21 +202,6 @@ export function ResolveAgentIntegrationGuide({
         onRequestRemoveIntegration={onRequestRemoveIntegration}
         isRemovingIntegration={isRemovingIntegration}
       />
-    );
-  }
-
-  if (providerId === EmailProviderIdEnum.NovuAgent && !integrationLink.connectedAt) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="Novu Email"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <EmailSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
     );
   }
 

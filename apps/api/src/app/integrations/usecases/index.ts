@@ -25,7 +25,10 @@ import { GenerateMsTeamsArmTemplate } from './generate-msteams-arm-template/gene
 import { GetMsTeamsArmTemplate } from './generate-msteams-arm-template/get-msteams-arm-template.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrations } from './get-integrations/get-integrations.usecase';
+import { ConsumeIntegrationStoreTelegramMobileLink } from './consume-integration-store-telegram-mobile-link/consume-integration-store-telegram-mobile-link.usecase';
+import { GetIntegrationStoreTelegramMobileLinkStatus } from './get-integration-store-telegram-mobile-link-status/get-integration-store-telegram-mobile-link-status.usecase';
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
+import { IssueIntegrationStoreTelegramMobileLink } from './issue-integration-store-telegram-mobile-link/issue-integration-store-telegram-mobile-link.usecase';
 import { MsTeamsHealthCheck } from './msteams-health-check/msteams-health-check.usecase';
 import { RemoveIntegration } from './remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integration-as-primary.usecase';
@@ -66,4 +69,7 @@ export const USE_CASES = [
   MsTeamsHealthCheck,
   SlackQuickSetup,
   WhatsAppValidateToken,
+  IssueIntegrationStoreTelegramMobileLink,
+  GetIntegrationStoreTelegramMobileLinkStatus,
+  ConsumeIntegrationStoreTelegramMobileLink,
 ];

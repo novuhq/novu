@@ -23,6 +23,7 @@ import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown'
 import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
 import { SlackCredentialsPaste } from './slack-credentials-paste';
+import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
 import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
 import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
@@ -49,6 +50,10 @@ type IntegrationConfigurationProps = {
   hasOtherProviders?: boolean;
   isReadOnly?: boolean;
   agentOnboarding?: boolean;
+  /** Agent identifier — only set during the agent-onboarding flow. */
+  agentIdentifier?: string;
+  /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
+  testSubscriberId?: string | null;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
 };
 
@@ -70,6 +75,8 @@ export function IntegrationSettings({
   hasOtherProviders,
   isReadOnly,
   agentOnboarding,
+  agentIdentifier,
+  testSubscriberId,
   onFormStateChange,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
@@ -126,6 +133,29 @@ export function IntegrationSettings({
   const isAgentOnboarding = agentOnboarding || searchParams.get('agent_onboarding') === 'true';
   const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
   const isWhatsAppOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.WhatsAppBusiness;
+  const isTelegramProvider = provider.id === ChatProviderIdEnum.Telegram;
+  // The BotFather paste helper is an onboarding affordance — once the integration
+  // already has a saved bot token, the textarea and mobile QR card are noise
+  // (and the "Auto-filled from the BotFather message above…" hint becomes
+  // misleading), so hide all of it and fall back to the regular API token field.
+  const telegramApiToken = integration?.credentials?.[CredentialsKeyEnum.ApiToken];
+  const hasExistingTelegramToken =
+    isTelegramProvider && typeof telegramApiToken === 'string' && telegramApiToken.trim().length > 0;
+  const showTelegramPaste = isTelegramProvider && !isReadOnly && !hasExistingTelegramToken;
+  // Picks the QR variant: agent flow when we already have agent + integration,
+  // integration-store flow in the create flow where neither exists yet, none
+  // otherwise (e.g. plain edit of a non-agent Telegram integration).
+  const telegramMobileVariant = useMemo<TelegramCredentialsPasteMobileSetup | undefined>(() => {
+    if (!showTelegramPaste) return undefined;
+
+    if (isAgentOnboarding && agentIdentifier && integration?._id) {
+      return { kind: 'agent', agentIdentifier, integrationId: integration._id, testSubscriberId };
+    }
+
+    if (mode === 'create') return { kind: 'integration-store' };
+
+    return undefined;
+  }, [showTelegramPaste, isAgentOnboarding, agentIdentifier, integration?._id, mode, testSubscriberId]);
   const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
     control,
     setValue,
@@ -268,11 +298,26 @@ export function IntegrationSettings({
                           <WhatsAppCredentialsValidator control={control} />
                         </>
                       )}
+                      {showTelegramPaste && (
+                        <TelegramCredentialsPaste
+                          control={control}
+                          setValue={setValue}
+                          isReadOnly={isReadOnly}
+                          mobileSetup={telegramMobileVariant}
+                        />
+                      )}
                       <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
                         {providerCredentials.map((credential) => (
                           <CredentialSection
                             key={`${credential.key}-${integration?._id || 'no-id'}`}
-                            credential={credential}
+                            credential={
+                              showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
+                                ? {
+                                    ...credential,
+                                    description: 'Auto-filled from the BotFather message above, or enter it manually.',
+                                  }
+                                : credential
+                            }
                             control={control}
                             isReadOnly={isReadOnly}
                             integrationId={integration?._id}

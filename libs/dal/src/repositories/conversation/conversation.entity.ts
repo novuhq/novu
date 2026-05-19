@@ -26,8 +26,6 @@ export interface ConversationChannel {
   _integrationId: string;
   /** Unique thread identifier on the platform (e.g. Slack channel+ts, GitHub PR number) */
   platformThreadId: string;
-  /** Chat SDK SerializedThread — stored for reply delivery via ThreadImpl.fromJSON() */
-  serializedThread?: Record<string, unknown>;
   /** Platform message ID of the thread-starting message */
   firstPlatformMessageId?: string;
 }

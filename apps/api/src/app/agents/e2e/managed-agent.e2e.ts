@@ -327,7 +327,7 @@ describe('Managed Agents API #novu-v2', () => {
       expect(leftover, 'agent document should have been rolled back').to.equal(null);
     });
 
-    it('should return 409 when creating a managed agent with a duplicate identifier', async () => {
+    it('should append a suffix when creating a managed agent with a duplicate identifier', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-dup-managed-${Date.now()}`;
       createdAgentIdentifiers.push(identifier);
@@ -336,7 +336,11 @@ describe('Managed Agents API #novu-v2', () => {
 
       const second = await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
 
-      expect(second.status).to.equal(409);
+      expect(second.status).to.equal(201);
+      expect(second.body.data.identifier).to.not.equal(identifier);
+      expect(second.body.data.identifier.startsWith(`${identifier}-`)).to.be.true;
+
+      createdAgentIdentifiers.push(second.body.data.identifier);
     });
 
     it('should return 400 and NOT call createAgent when mcpServers contains an unknown catalog ID', async () => {

@@ -238,7 +238,7 @@ export function AgentSidebarWidget({ agent }: AgentSidebarWidgetProps) {
   const viewActivityHref = useMemo(() => {
     if (!currentEnvironment?.slug) return undefined;
 
-    const route = currentApp === APP_IDS.DISPATCH ? ROUTES.DISPATCH_CONVERSATIONS : ROUTES.ACTIVITY_CONVERSATIONS;
+    const route = currentApp === APP_IDS.CONNECT ? ROUTES.CONNECT_CONVERSATIONS : ROUTES.ACTIVITY_CONVERSATIONS;
     const path = buildRoute(route, { environmentSlug: currentEnvironment.slug });
 
     return `${path}?agentId=${encodeURIComponent(agent.identifier)}`;

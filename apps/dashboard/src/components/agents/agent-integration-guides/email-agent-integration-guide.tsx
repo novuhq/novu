@@ -1,7 +1,11 @@
 import { EmailProviderIdEnum } from '@novu/shared';
+import { useMemo } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
-import { EmailConfigurationCard } from '@/components/agents/email-configuration-card';
+import { EmailConfigurationCardBody } from '@/components/agents/email-configuration-card';
+import { EmailInboxCardBody } from '@/components/agents/email-inbox-card';
 import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
+import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { AgentIntegrationGuideLayout } from './agent-integration-guide-layout';
 
 type EmailAgentIntegrationGuideProps = {
@@ -23,8 +27,21 @@ export function EmailAgentIntegrationGuide({
   onRequestRemoveIntegration,
   isRemovingIntegration,
 }: EmailAgentIntegrationGuideProps) {
-  const isConnected = Boolean(integrationLink?.connectedAt);
+  const isConnected = integrationLink ? isAgentIntegrationConnected(integrationLink) : false;
   const integrationId = integrationLink?.integration?._id;
+  const { integrations } = useFetchIntegrations();
+
+  const isSharedInboxEnabled = Boolean(integrationLink?.integration?.sharedInboundAddress);
+
+  const emailIntegration = useMemo(
+    () =>
+      integrationId && integrations
+        ? integrations.find((i) => i._id === integrationId && i.providerId === EmailProviderIdEnum.NovuAgent)
+        : undefined,
+    [integrationId, integrations]
+  );
+
+  const showInboxSection = isSharedInboxEnabled && emailIntegration && integrationLink;
 
   return (
     <AgentIntegrationGuideLayout
@@ -38,8 +55,28 @@ export function EmailAgentIntegrationGuide({
       onRequestRemoveIntegration={onRequestRemoveIntegration}
       isRemovingIntegration={isRemovingIntegration}
     >
-      {integrationId && <EmailConfigurationCard agent={agent} integrationId={integrationId} />}
-      {!isConnected && integrationId && <EmailSetupGuide agent={agent} integrationId={integrationId} embedded />}
+      {emailIntegration && integrationId ? (
+        <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
+          <div className="flex items-center px-2 py-1.5">
+            <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
+              EMAIL
+            </span>
+          </div>
+          <div className="bg-bg-white flex flex-col overflow-hidden rounded-md shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
+            {showInboxSection ? (
+              <EmailInboxCardBody
+                emailIntegration={emailIntegration}
+                integrationEmbedded={integrationLink.integration}
+                agent={agent}
+              />
+            ) : null}
+            <EmailConfigurationCardBody agent={agent} integrationId={integrationId} />
+          </div>
+        </div>
+      ) : null}
+      {!isConnected && integrationId && (
+        <EmailSetupGuide agent={agent} integrationId={integrationId} embedded integrationLink={integrationLink} />
+      )}
     </AgentIntegrationGuideLayout>
   );
 }

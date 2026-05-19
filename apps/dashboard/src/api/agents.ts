@@ -1,12 +1,11 @@
 import type {
-  AgentCreationSourceEnum,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
-import { del, get, patch, post } from '@/api/api.client';
+import { del, get, getApiBaseUrl, NovuApiError, patch, post } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
@@ -113,7 +112,6 @@ export type CreateAgentBody = {
   active?: boolean;
   runtime?: AgentRuntime;
   managedRuntime?: ManagedRuntimeDto;
-  creationSource?: AgentCreationSourceEnum;
 };
 
 export type UpdateAgentBody = {
@@ -221,6 +219,18 @@ export type AgentIntegrationEmbedded = {
   providerId: string;
   channel: ChannelTypeEnum;
   active: boolean;
+  /**
+   * Cloud only. The Novu shared inbox address for this agent when the shared-inbox
+   * feature is enabled. The dashboard uses this as the headline inbound address and
+   * to render the shared inbox row in the inbox list.
+   */
+  sharedInboundAddress?: string;
+  /**
+   * Cloud only. When `true`, the worker drops inbound mail addressed to this
+   * agent on the shared `agentconnect.sh` domain. Custom-domain routes still
+   * deliver. Only meaningful on the NovuAgent integration.
+   */
+  sharedInboxDisabled?: boolean;
 };
 
 /** Agent–integration link row returned by GET /agents/:identifier/integrations */
@@ -498,6 +508,22 @@ export async function getMcpConnectionStatus(
   return response.data;
 }
 
+type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
+
+/** Enable or disable the Novu shared inbox for a single agent. */
+export async function setAgentInboxSharedDisabled(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  disabled: boolean
+): Promise<AgentIntegrationLink> {
+  const response = await patch<AgentIntegrationResponseEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/inbox/shared`,
+    { environment, body: { disabled } }
+  );
+
+  return response.data;
+}
+
 type WelcomeMessageResponse = { sent: boolean; conversationId?: string };
 
 export async function sendAgentWelcomeMessage(
@@ -634,4 +660,201 @@ export async function sendWhatsAppTestTemplate(
   );
 
   return response.data;
+}
+
+export type ConfigureTelegramWebhookResult = {
+  webhookUrl: string;
+  configuredAt: string;
+  botUsername: string;
+};
+
+type ConfigureTelegramWebhookEnvelope = { data: ConfigureTelegramWebhookResult };
+
+export async function configureTelegramAgentWebhook(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationId: string
+): Promise<ConfigureTelegramWebhookResult> {
+  const response = await post<ConfigureTelegramWebhookEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/configure`,
+    { environment }
+  );
+
+  return response.data;
+}
+
+export type TelegramMobileLink = {
+  token: string;
+  url: string;
+  /** ISO timestamp when the link expires. */
+  expiresAt: string;
+};
+
+type TelegramMobileLinkEnvelope = { data: TelegramMobileLink };
+
+export async function requestTelegramMobileLink(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationId: string,
+  subscriberId?: string
+): Promise<TelegramMobileLink> {
+  const response = await post<TelegramMobileLinkEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/mobile-link`,
+    { environment, body: subscriberId ? { subscriberId } : undefined }
+  );
+
+  return response.data;
+}
+
+export type TelegramSubscriberLink = {
+  deepLinkUrl: string;
+  botUsername: string;
+  /** ISO timestamp when the link expires. */
+  expiresAt: string;
+};
+
+type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
+
+/**
+ * Issues a `t.me/<bot>?start=<code>` deep-link that, when opened by a subscriber,
+ * automatically links the originating Telegram chat to the supplied subscriberId
+ * by creating a `telegram_chat` channel endpoint on the bot inbound webhook.
+ */
+export async function requestTelegramSubscriberLink(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationId: string,
+  subscriberId: string
+): Promise<TelegramSubscriberLink> {
+  const response = await post<TelegramSubscriberLinkEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
+    { environment, body: { subscriberId } }
+  );
+
+  return response.data;
+}
+
+export type TelegramMobileLinkStatus =
+  | { valid: true; agentName: string; providerName: string }
+  | { valid: false; reason: 'expired' | 'used' | 'invalid' };
+
+/**
+ * Public, unauthenticated request. Used by the mobile landing page where the
+ * visitor does not have a Clerk session.
+ */
+export async function getTelegramMobileSetupStatus(
+  token: string,
+  signal?: AbortSignal
+): Promise<TelegramMobileLinkStatus> {
+  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure/status?token=${encodeURIComponent(token)}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+  });
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    throw new NovuApiError(extractErrorMessage(data) ?? 'Failed to load setup link', response.status, data);
+  }
+
+  return unwrapEnvelope(data) as TelegramMobileLinkStatus;
+}
+
+export type SubmitTelegramMobileCredentialsResult = {
+  success: true;
+  botUsername: string;
+  webhookUrl: string;
+  /** Present when the mobile link was issued with a subscriberId. */
+  deepLinkUrl?: string;
+};
+
+export type SubmitTelegramMobileCredentialsError = {
+  code: 'token_invalid' | 'token_expired' | 'token_already_used' | 'unknown';
+  message: string;
+};
+
+export class TelegramMobileSubmitError extends Error {
+  constructor(
+    public readonly code: SubmitTelegramMobileCredentialsError['code'],
+    message: string,
+    public readonly status: number
+  ) {
+    super(message);
+  }
+}
+
+export async function submitTelegramMobileCredentials(
+  token: string,
+  botToken: string
+): Promise<SubmitTelegramMobileCredentialsResult> {
+  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, botToken }),
+  });
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    const code = extractErrorCode(data);
+    const message = extractErrorMessage(data) ?? 'Failed to configure Telegram bot';
+    throw new TelegramMobileSubmitError(code, message, response.status);
+  }
+
+  return unwrapEnvelope(data) as SubmitTelegramMobileCredentialsResult;
+}
+
+async function safeJson(response: Response): Promise<unknown> {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The API's global ResponseInterceptor wraps every successful body in `{ data: ... }`.
+ * Our authed `post`/`get` helpers go through `api.client` which unwraps it, but the
+ * public mobile flow uses raw `fetch` and must unwrap manually.
+ */
+function unwrapEnvelope(data: unknown): unknown {
+  if (data && typeof data === 'object' && 'data' in (data as Record<string, unknown>)) {
+    return (data as { data: unknown }).data;
+  }
+
+  return data;
+}
+
+function extractErrorMessage(data: unknown): string | undefined {
+  if (data && typeof data === 'object' && 'message' in data) {
+    const message = (data as { message: unknown }).message;
+    if (typeof message === 'string') return message;
+    if (message && typeof message === 'object' && 'message' in (message as object)) {
+      const inner = (message as { message: unknown }).message;
+
+      return typeof inner === 'string' ? inner : undefined;
+    }
+  }
+
+  return undefined;
+}
+
+function extractErrorCode(data: unknown): SubmitTelegramMobileCredentialsError['code'] {
+  if (!data || typeof data !== 'object') return 'unknown';
+
+  // Nest's HttpException with object payload nests the response under `message`.
+  const message = (data as { message?: unknown }).message;
+  const candidate =
+    typeof message === 'object' && message !== null && 'code' in (message as object)
+      ? (message as { code?: unknown }).code
+      : (data as { code?: unknown }).code;
+
+  if (candidate === 'token_invalid' || candidate === 'token_expired' || candidate === 'token_already_used') {
+    return candidate;
+  }
+
+  return 'unknown';
 }

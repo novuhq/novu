@@ -12,6 +12,8 @@ import type {
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
+  UploadSkillInput,
+  UploadSkillResult,
   UpsertVaultCredentialInput,
   UpsertVaultCredentialResult,
 } from './i-agent-runtime-provider';
@@ -65,5 +67,9 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
 
   deleteVaultCredential(_input: DeleteVaultCredentialInput): Promise<void> {
     throw new UnsupportedCapabilityError('tokenVault', this.providerId);
+  }
+
+  uploadSkill(_input: UploadSkillInput): Promise<UploadSkillResult> {
+    throw new UnsupportedCapabilityError('skills', this.providerId);
   }
 }
