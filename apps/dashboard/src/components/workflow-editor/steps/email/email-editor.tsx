@@ -25,7 +25,12 @@ export const EmailEditor = (props: EmailEditorProps) => {
       <div className="flex h-full flex-col">
         <div className={cn('px-4 pb-0 pt-4', isEditorV2 && 'px-0 pt-0')}>
           <div className={cn(isEditorV2 && 'border-b border-neutral-200 px-3 py-2')}>
-            <EmailPreviewHeader minimalHeader={isEditorV2} onEditSenderClick={() => setSenderDrawerOpen(true)}>
+            <EmailPreviewHeader
+              minimalHeader={isEditorV2}
+              onEditSenderClick={
+                currentEnvironment?.type === EnvironmentTypeEnum.DEV ? () => setSenderDrawerOpen(true) : undefined
+              }
+            >
               {disableOutputSanitization &&
                 getComponentByType({
                   component: disableOutputSanitization.component,
