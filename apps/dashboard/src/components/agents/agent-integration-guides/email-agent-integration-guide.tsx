@@ -70,7 +70,11 @@ export function EmailAgentIntegrationGuide({
                 agent={agent}
               />
             ) : null}
-            <EmailConfigurationCardBody agent={agent} integrationId={integrationId} />
+            <EmailConfigurationCardBody
+              agent={agent}
+              integrationId={integrationId}
+              defaultSenderName={integrationLink?.integration?.defaultSenderName}
+            />
           </div>
         </div>
       ) : null}

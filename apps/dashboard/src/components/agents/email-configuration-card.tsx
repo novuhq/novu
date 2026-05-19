@@ -17,7 +17,11 @@ export type EmailConfigurationCardProps = {
 /**
  * Outbound / sender rows for embedding inside a parent shell (merged email card).
  */
-export function EmailConfigurationCardBody({ agent, integrationId }: EmailConfigurationCardProps) {
+export function EmailConfigurationCardBody({
+  agent,
+  integrationId,
+  defaultSenderName,
+}: EmailConfigurationCardProps & { defaultSenderName?: string }) {
   const { integrations } = useFetchIntegrations();
   const emailIntegration = useMemo(
     () => integrations?.find((i) => i._id === integrationId && i.providerId === EmailProviderIdEnum.NovuAgent),
@@ -55,11 +59,12 @@ export function EmailConfigurationCardBody({ agent, integrationId }: EmailConfig
 
       <CardRow
         title="Sender address"
-        description="By default, replies use your sending provider's From address. Override it to send from another address. Reply-To always routes back to the agent so subscriber replies stay in the thread."
+        description="By default, replies send from the agent inbox address using the agent name as the From display name. Override the address to send from another email. Reply-To always routes back to the agent so subscriber replies stay in the thread."
       >
         <SenderAddressOverride
           serverEnabled={serverUseFromAddressOverride}
           serverValue={serverFromAddressOverride}
+          defaultSenderName={defaultSenderName || agent.name}
           outboundFromAddress={outboundFromAddress}
           inboundAddresses={inboundAddresses}
           onSave={saveSenderOverride}

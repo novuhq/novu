@@ -1,7 +1,7 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { assertSafeOutboundUrl, resolvePublicAddresses, SsrfBlockedError } from '@novu/application-generic';
-import { AgentRepository, EnvironmentRepository } from '@novu/dal';
-import { EnvironmentTypeEnum } from '@novu/shared';
+import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
+import { EmailProviderIdEnum, EnvironmentTypeEnum } from '@novu/shared';
 import type { AgentResponseDto } from '../../dtos';
 import { toAgentResponse } from '../../mappers/agent-response.mapper';
 import { UpdateAgentCommand } from './update-agent.command';
@@ -10,7 +10,9 @@ import { UpdateAgentCommand } from './update-agent.command';
 export class UpdateAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
-    private readonly environmentRepository: EnvironmentRepository
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly integrationRepository: IntegrationRepository
   ) {}
 
   async execute(command: UpdateAgentCommand): Promise<AgentResponseDto> {
@@ -111,6 +113,10 @@ export class UpdateAgent {
       { $set }
     );
 
+    if (command.name !== undefined) {
+      await this.syncNovuAgentSenderName(existing._id, command.environmentId, command.organizationId, command.name);
+    }
+
     const updated = await this.agentRepository.findById(
       {
         _id: existing._id,
@@ -136,6 +142,37 @@ export class UpdateAgent {
     if (environment?.type === EnvironmentTypeEnum.PROD) {
       throw new ForbiddenException(message);
     }
+  }
+
+  private async syncNovuAgentSenderName(
+    agentId: string,
+    environmentId: string,
+    organizationId: string,
+    senderName: string
+  ): Promise<void> {
+    const links = await this.agentIntegrationRepository.find(
+      {
+        _agentId: agentId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      '_integrationId'
+    );
+
+    const integrationIds = links.map((link) => link._integrationId).filter(Boolean);
+    if (integrationIds.length === 0) {
+      return;
+    }
+
+    await this.integrationRepository.update(
+      {
+        _id: { $in: integrationIds } as unknown as string,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        providerId: EmailProviderIdEnum.NovuAgent,
+      },
+      { $set: { 'credentials.senderName': senderName } }
+    );
   }
 
   private async assertSafeBridgeUrl(url: string | undefined | null, field: string): Promise<void> {

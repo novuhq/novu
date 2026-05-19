@@ -70,6 +70,10 @@ function wrapMsgId(id: string): string {
   return trimmed.startsWith('<') && trimmed.endsWith('>') ? trimmed : `<${trimmed}>`;
 }
 
+function resolveAgentEmailSenderName(config: ResolvedAgentConfig): string {
+  return config.credentials.senderName?.trim() || config.agentName;
+}
+
 /**
  * Thrown by `ChatSdkService.processEmailAction` when a failure is provably pre-dispatch —
  * i.e. token validation, agent-config lookup, or chat/adapter setup failed before the chat
@@ -909,6 +913,7 @@ export class ChatSdkService implements OnModuleDestroy {
       inboxRoutingKey: c.inboxRoutingKey ?? null,
       sharedInboxDisabled: c.sharedInboxDisabled ?? null,
       senderName: c.senderName ?? null,
+      agentName: config.agentName,
     });
   }
 
@@ -1008,8 +1013,9 @@ export class ChatSdkService implements OnModuleDestroy {
         ? config.credentials.fromAddressOverride?.trim() || undefined
         : undefined;
       const outboundFrom = (decrypted.from as string | undefined)?.trim() || undefined;
-      const effectiveFrom = overrideFrom || outboundFrom || agentInboundAddress;
+      const effectiveFrom = overrideFrom || agentInboundAddress || outboundFrom;
       const replyToHeader = effectiveFrom !== agentInboundAddress ? agentInboundAddress : undefined;
+      const senderName = resolveAgentEmailSenderName(config);
 
       const mailFactory = new MailFactory();
       const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, effectiveFrom);
@@ -1022,7 +1028,7 @@ export class ChatSdkService implements OnModuleDestroy {
         alternatives: params.alternatives,
         from: effectiveFrom,
         ...(replyToHeader ? { replyTo: replyToHeader } : {}),
-        senderName: config.credentials.senderName || undefined,
+        senderName,
         headers: {
           ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
           ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
@@ -1128,6 +1134,7 @@ export class ChatSdkService implements OnModuleDestroy {
     }
 
     const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix, config.credentials.inboxRoutingKey);
+    const senderName = resolveAgentEmailSenderName(config);
 
     // The Novu demo integration row's stored credentials are empty by design —
     // the real API key lives in the deployment's env so a single Novu-managed
@@ -1138,7 +1145,7 @@ export class ChatSdkService implements OnModuleDestroy {
       credentials: {
         apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
         from,
-        senderName: config.credentials.senderName || 'Novu',
+        senderName,
         ipPoolName: 'Demo',
       },
     };
@@ -1153,7 +1160,7 @@ export class ChatSdkService implements OnModuleDestroy {
       text: params.text,
       alternatives: params.alternatives,
       from,
-      senderName: config.credentials.senderName || undefined,
+      senderName,
       headers: {
         ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
         ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
@@ -1312,7 +1319,7 @@ export class ChatSdkService implements OnModuleDestroy {
         };
       }
       case AgentPlatformEnum.EMAIL: {
-        const { senderName, outboundIntegrationId } = credentials;
+        const { outboundIntegrationId } = credentials;
 
         if (!credentials.secretKey) {
           throw new BadRequestException('Email agent integration requires secretKey credentials');
@@ -1322,7 +1329,7 @@ export class ChatSdkService implements OnModuleDestroy {
 
         return {
           email: createNovuEmailAdapter({
-            senderName,
+            senderName: resolveAgentEmailSenderName(config),
             signingSecret: credentials.secretKey,
             sendEmail: this.buildSendEmailCallback(config, outboundIntegrationId),
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {

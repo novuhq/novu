@@ -226,6 +226,11 @@ export type AgentIntegrationEmbedded = {
    */
   sharedInboundAddress?: string;
   /**
+   * Default email From display name for NovuAgent integrations.
+   * Mirrors `credentials.senderName`, falling back to the agent name when unset.
+   */
+  defaultSenderName?: string;
+  /**
    * Cloud only. When `true`, the worker drops inbound mail addressed to this
    * agent on the shared `agentconnect.sh` domain. Custom-domain routes still
    * deliver. Only meaningful on the NovuAgent integration.

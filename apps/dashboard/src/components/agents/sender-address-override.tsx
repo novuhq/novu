@@ -7,6 +7,7 @@ import { Switch } from '@/components/primitives/switch';
 export type SenderAddressOverrideProps = {
   serverEnabled: boolean;
   serverValue: string;
+  defaultSenderName: string;
   outboundFromAddress: string;
   inboundAddresses: string[];
   onSave: (params: { enabled: boolean; value: string }) => Promise<void>;
@@ -26,6 +27,7 @@ export type SenderAddressOverrideProps = {
 export function SenderAddressOverride({
   serverEnabled,
   serverValue,
+  defaultSenderName,
   outboundFromAddress,
   inboundAddresses,
   onSave,
@@ -63,13 +65,13 @@ export function SenderAddressOverride({
   const canSave = !disabled && isDirty && !isSaving && !hasInvalidValue;
 
   // Mirror the resolution in apps/api/src/app/agents/services/chat-sdk.service.ts
-  // buildSendEmailCallback: override > outbound.from > agent inbound. When the
+  // buildSendEmailCallback: override > agent inbound > outbound.from. When the
   // override is locked (demo sender), the override is server-side ignored, so
   // we drop it from the preview to match the address subscribers will actually
   // see in their inbox.
   const previewOverride = !disabled && enabled ? trimmedValue : '';
   const fallbackInbound = inboundAddresses[0] ?? '';
-  const resolvedFrom = previewOverride || outboundFromAddress || fallbackInbound;
+  const resolvedFrom = previewOverride || fallbackInbound || outboundFromAddress;
   const resolvedReplyTo = resolvedFrom && resolvedFrom !== fallbackInbound ? fallbackInbound : '';
 
   async function handleSave() {
@@ -127,7 +129,7 @@ export function SenderAddressOverride({
         </div>
       )}
 
-      <AddressPreview from={resolvedFrom} replyTo={resolvedReplyTo} />
+      <AddressPreview fromName={defaultSenderName} from={resolvedFrom} replyTo={resolvedReplyTo} />
 
       {disabled && disabledReason ? (
         <p className="text-text-soft text-paragraph-xs leading-4">{disabledReason}</p>
@@ -151,13 +153,24 @@ export function SenderAddressOverride({
   );
 }
 
-function AddressPreview({ from, replyTo }: { from: string; replyTo: string }) {
+function AddressPreview({ fromName, from, replyTo }: { fromName: string; from: string; replyTo: string }) {
+  const fromDisplay = from ? formatFromHeader(fromName, from) : '';
+
   return (
     <div className="border-stroke-soft bg-bg-weak flex flex-col gap-1 rounded-md border px-2.5 py-2">
-      <PreviewRow label="From" value={from || 'Not configured yet'} muted={!from} />
+      <PreviewRow label="From name" value={fromName || 'Not configured yet'} muted={!fromName} />
+      <PreviewRow label="From" value={fromDisplay || 'Not configured yet'} muted={!from} />
       <PreviewRow label="Reply-To" value={replyTo || 'Not set (replies go to From)'} muted={!replyTo} />
     </div>
   );
+}
+
+function formatFromHeader(name: string, email: string): string {
+  if (!name) {
+    return email;
+  }
+
+  return `${name} <${email}>`;
 }
 
 function PreviewRow({ label, value, muted }: { label: string; value: string; muted: boolean }) {

@@ -69,6 +69,7 @@ describe('FindOrCreateNovuEmail usecase', () => {
       find: stub().resolves([]),
       findOne: stub(),
       create: stub(),
+      update: stub().resolves({}),
     };
     agentIntegrationRepo = {
       find: stub().resolves([]),
@@ -142,6 +143,7 @@ describe('FindOrCreateNovuEmail usecase', () => {
       expect(createArg.credentials.outboundIntegrationId).to.equal('sendgrid-id');
       expect(createArg.credentials.emailSlugPrefix).to.be.a('string');
       expect(createArg.credentials.inboxRoutingKey).to.be.a('string');
+      expect(createArg.credentials.senderName).to.equal('My Agent');
     });
 
     it("falls back to the env's Novu demo email integration when no primary custom integration exists", async () => {
@@ -224,6 +226,7 @@ describe('FindOrCreateNovuEmail usecase', () => {
       expect(integrationRepo.create.called).to.equal(false);
       // Only the existing-link lookup happens; we never query for the default outbound integration.
       expect(integrationRepo.findOne.calledOnce).to.equal(true);
+      expect(integrationRepo.update.calledOnce).to.equal(true);
     });
   });
 });

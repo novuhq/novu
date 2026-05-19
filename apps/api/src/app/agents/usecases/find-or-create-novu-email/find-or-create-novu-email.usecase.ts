@@ -83,14 +83,22 @@ export class FindOrCreateNovuEmail {
     }
 
     const existing = await this.findExistingLink(agent, environmentId, organizationId);
-    if (existing) return { response: existing, provisionedNewLink: false };
+    if (existing) {
+      await this.backfillSenderNameIfMissing(agent, environmentId, organizationId, existing.response, existing.integration);
+
+      return { response: existing.response, provisionedNewLink: false };
+    }
 
     const emailSlugPrefix = this.deriveEmailSlugPrefix(agent);
     const defaultOutboundIntegrationId = await this.resolveDefaultOutboundIntegrationId(environmentId, organizationId);
 
     return this.agentIntegrationRepository.withTransaction(async (session) => {
       const recheck = await this.findExistingLink(agent, environmentId, organizationId);
-      if (recheck) return { response: recheck, provisionedNewLink: false };
+      if (recheck) {
+        await this.backfillSenderNameIfMissing(agent, environmentId, organizationId, recheck.response, recheck.integration);
+
+        return { response: recheck.response, provisionedNewLink: false };
+      }
 
       const displayName = providers.find((p) => p.id === EmailProviderIdEnum.NovuAgent)?.displayName ?? 'Novu Email';
       const identifier = `${slugify(displayName)}-${shortid.generate()}`;
@@ -99,6 +107,7 @@ export class FindOrCreateNovuEmail {
         displayName,
         identifier,
         emailSlugPrefix,
+        senderName: agent.name,
         outboundIntegrationId: defaultOutboundIntegrationId,
         environmentId,
         organizationId,
@@ -122,6 +131,7 @@ export class FindOrCreateNovuEmail {
     displayName,
     identifier,
     emailSlugPrefix,
+    senderName,
     outboundIntegrationId,
     environmentId,
     organizationId,
@@ -130,6 +140,7 @@ export class FindOrCreateNovuEmail {
     displayName: string;
     identifier: string;
     emailSlugPrefix: string;
+    senderName: string;
     outboundIntegrationId: string;
     environmentId: string;
     organizationId: string;
@@ -148,6 +159,7 @@ export class FindOrCreateNovuEmail {
               emailSlugPrefix,
               inboxRoutingKey,
               outboundIntegrationId,
+              senderName,
             },
             configurations: {},
             name: displayName,
@@ -243,7 +255,7 @@ export class FindOrCreateNovuEmail {
     agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
     environmentId: string,
     organizationId: string
-  ): Promise<AgentIntegrationResponseDto | null> {
+  ): Promise<{ response: AgentIntegrationResponseDto; integration: IntegrationEntity } | null> {
     const agentId = agent._id;
     const links = await this.agentIntegrationRepository.find(
       { _agentId: agentId, _environmentId: environmentId, _organizationId: organizationId },
@@ -270,7 +282,10 @@ export class FindOrCreateNovuEmail {
     const link = links.find((l) => l._integrationId === emailIntegration._id);
     if (!link) return null;
 
-    return toAgentIntegrationResponse(link, emailIntegration, agent);
+    return {
+      response: toAgentIntegrationResponse(link, emailIntegration, agent),
+      integration: emailIntegration,
+    };
   }
 
   private async createLink(
@@ -308,6 +323,34 @@ export class FindOrCreateNovuEmail {
     );
 
     return toAgentIntegrationResponse(link, integration, agent);
+  }
+
+  /**
+   * Older NovuAgent rows were provisioned without `credentials.senderName`.
+   * Backfill from the agent display name so outbound email and the dashboard
+   * show the correct From name without requiring a manual integration edit.
+   */
+  private async backfillSenderNameIfMissing(
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
+    environmentId: string,
+    organizationId: string,
+    response: AgentIntegrationResponseDto,
+    integration: Pick<IntegrationEntity, '_id' | 'credentials'>
+  ): Promise<void> {
+    if (integration.credentials?.senderName) {
+      return;
+    }
+
+    await this.integrationRepository.update(
+      {
+        _id: integration._id,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      { $set: { 'credentials.senderName': agent.name } }
+    );
+
+    response.integration.defaultSenderName = agent.name;
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
