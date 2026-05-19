@@ -43,10 +43,28 @@ export type NovuOAuthCatalogEntry = Extract<McpOAuthCatalogEntry, { mode: 'novu'
  * flow (discovery + per-subscriber DCR). Add new entries here as upstream
  * MCP servers are verified to advertise `registration_endpoint` and
  * `code_challenge_methods_supported: ["S256"]` in their AS metadata.
+ *
+ * Each entry below has been probed against `.well-known/oauth-authorization-server`
+ * (RFC 8414) and confirmed to expose a `registration_endpoint` (RFC 7591) with
+ * PKCE `S256` support.
  */
 const MCP_OAUTH_CATALOG: Record<string, McpOAuthCatalogEntry> = {
-  sentry: { mode: 'novu' },
+  ahrefs: { mode: 'novu' },
+  airtable: { mode: 'novu' },
+  amplitude: { mode: 'novu' },
+  asana: { mode: 'novu' },
+  attio: { mode: 'novu' },
+  canva: { mode: 'novu' },
+  cloudflare: { mode: 'novu' },
+  datadog: { mode: 'novu' },
+  intercom: { mode: 'novu' },
   linear: { mode: 'novu' },
+  mixpanel: { mode: 'novu' },
+  neon: { mode: 'novu' },
+  notion: { mode: 'novu' },
+  sentry: { mode: 'novu' },
+  stripe: { mode: 'novu' },
+  supabase: { mode: 'novu' },
 };
 
 export function getMcpOAuthCatalogEntry(mcpId: string): McpOAuthCatalogEntry {
