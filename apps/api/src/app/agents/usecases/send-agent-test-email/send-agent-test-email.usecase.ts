@@ -20,7 +20,8 @@ function escapeHtml(text: string): string {
 function resolveAgentInboundFrom(emailIntegration: IntegrationEntity): string | undefined {
   const slug = emailIntegration.credentials?.emailSlugPrefix;
   const inboxRoutingKey = emailIntegration.credentials?.inboxRoutingKey;
-  if (!isAgentSharedInboxEnabled() || !slug || !inboxRoutingKey) {
+  const sharedInboxDisabled = Boolean(emailIntegration.credentials?.sharedInboxDisabled);
+  if (!isAgentSharedInboxEnabled() || !slug || !inboxRoutingKey || sharedInboxDisabled) {
     return undefined;
   }
 

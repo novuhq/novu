@@ -156,7 +156,7 @@ export class UpdateAgent {
         _environmentId: environmentId,
         _organizationId: organizationId,
       },
-      '_integrationId'
+      ['_integrationId']
     );
 
     const integrationIds = links.map((link) => link._integrationId).filter(Boolean);
