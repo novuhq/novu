@@ -55,7 +55,7 @@
     }
   },
   "dependencies": {
-    "lru-cache": "^11.2.4"
+    "lru-cache": "^11.3.6"
   },
   "devDependencies": {
     "madge": "^8.0.0",

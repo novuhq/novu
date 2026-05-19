@@ -120,6 +120,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const conversation = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
         ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
         threadId
       );
 
@@ -165,6 +167,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const conversation = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
         ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
         threadId
       );
 
@@ -192,6 +196,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const conversation = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
         ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
         threadId
       );
 
@@ -319,6 +325,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const conversation = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
         ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
         threadId
       );
       expect(conversation!.status).to.equal(ConversationStatusEnum.ACTIVE);
@@ -335,6 +343,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const reopened = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
         ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
         threadId
       );
       expect(reopened!.status).to.equal(ConversationStatusEnum.ACTIVE);
@@ -350,6 +360,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       let conversation = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
         ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
         threadId
       );
       const platformUserParticipant = conversation!.participants.find(
@@ -374,6 +386,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       conversation = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
         ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
         threadId
       );
 
@@ -480,6 +494,8 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const conversation = await conversationRepository.findByPlatformThread(
         ctx.session.environment._id,
         ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
         threadId
       );
       const activitiesBefore = await activityRepository.findByConversation(

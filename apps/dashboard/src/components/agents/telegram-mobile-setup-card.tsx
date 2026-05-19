@@ -3,10 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { RiFileCopyLine, RiQrCodeLine, RiRefreshLine, RiSmartphoneLine } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
 import { requestTelegramMobileLink, type TelegramMobileLink } from '@/api/agents';
-import {
-  requestIntegrationStoreTelegramMobileLink,
-  type IntegrationStoreTelegramMobileLink,
-} from '@/api/integrations';
+import { type IntegrationStoreTelegramMobileLink, requestIntegrationStoreTelegramMobileLink } from '@/api/integrations';
 import { Button } from '@/components/primitives/button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -55,13 +52,11 @@ export function TelegramMobileSetupCardShell({
 
   if (layout === 'inline') {
     return (
-      <div className={cn('border-stroke-soft bg-bg-weak/50 flex w-full flex-row gap-3 rounded-md border p-3', className)}>
+      <div
+        className={cn('border-stroke-soft bg-bg-weak/50 flex w-full flex-row gap-3 rounded-md border p-3', className)}
+      >
         <div className="shrink-0">
-          {link ? (
-            <QrPreview link={link} isRefreshing={isRefreshing} hideMeta size={120} />
-          ) : (
-            <QrSkeleton size={120} />
-          )}
+          {link ? <QrPreview link={link} isRefreshing={isRefreshing} hideMeta size={120} /> : <QrSkeleton size={120} />}
         </div>
         <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
           <div className="flex flex-col gap-1">
@@ -70,7 +65,8 @@ export function TelegramMobileSetupCardShell({
               Set up from your phone
             </div>
             <p className="text-text-soft text-label-xs leading-4">
-              Scan or open the link on the device where BotFather sent the token and paste the entire message. Refreshes every 5 minutes.
+              Scan or open the link on the device where BotFather sent the token and paste the entire message. Refreshes
+              every 5 minutes.
             </p>
           </div>
           <div className="flex flex-col items-start gap-1.5">
@@ -97,7 +93,12 @@ export function TelegramMobileSetupCardShell({
   }
 
   return (
-    <div className={cn('border-stroke-soft bg-bg-weak/50 mt-2 flex w-full max-w-[280px] flex-col gap-2 rounded-md border p-3', className)}>
+    <div
+      className={cn(
+        'border-stroke-soft bg-bg-weak/50 mt-2 flex w-full max-w-[280px] flex-col gap-2 rounded-md border p-3',
+        className
+      )}
+    >
       <div className="text-text-strong text-label-xs flex items-center gap-1.5 font-medium">
         <RiSmartphoneLine className="size-3.5" />
         Set up from your phone
@@ -107,16 +108,10 @@ export function TelegramMobileSetupCardShell({
       </p>
 
       <div className="mt-1 flex flex-col items-center gap-2">
-        {link ? (
-          <QrPreview link={link} isRefreshing={isRefreshing} onRefresh={onRefresh} />
-        ) : (
-          <QrSkeleton />
-        )}
+        {link ? <QrPreview link={link} isRefreshing={isRefreshing} onRefresh={onRefresh} /> : <QrSkeleton />}
       </div>
 
-      {isError && (
-        <p className="text-error-base text-label-xs">Couldn&apos;t generate a setup link. Try refreshing.</p>
-      )}
+      {isError && <p className="text-error-base text-label-xs">Couldn&apos;t generate a setup link. Try refreshing.</p>}
     </div>
   );
 }
@@ -124,6 +119,8 @@ export function TelegramMobileSetupCardShell({
 type AgentTelegramMobileSetupCardProps = {
   agentIdentifier: string;
   integrationId: string;
+  /** When set, mobile setup success returns a `/start` deep link for this subscriber. */
+  testSubscriberId?: string | null;
   disabled?: boolean;
   className?: string;
   layout?: CardLayout;
@@ -136,6 +133,7 @@ type AgentTelegramMobileSetupCardProps = {
 export function AgentTelegramMobileSetupCard({
   agentIdentifier,
   integrationId,
+  testSubscriberId,
   disabled,
   className,
   layout = 'stacked',
@@ -144,12 +142,13 @@ export function AgentTelegramMobileSetupCard({
   const environmentId = currentEnvironment?._id;
 
   const linkQuery = useQuery<TelegramMobileLink>({
-    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, agentIdentifier, integrationId],
+    queryKey: [MOBILE_LINK_QUERY_KEY, environmentId, agentIdentifier, integrationId, testSubscriberId],
     queryFn: () =>
       requestTelegramMobileLink(
         requireEnvironment(currentEnvironment, 'No environment selected'),
         agentIdentifier,
-        integrationId
+        integrationId,
+        testSubscriberId ?? undefined
       ),
     enabled: !disabled && Boolean(environmentId && agentIdentifier && integrationId),
     refetchInterval: REFRESH_INTERVAL_MS,
@@ -197,9 +196,7 @@ export function IntegrationStoreTelegramMobileSetupCard({
   const linkQuery = useQuery<IntegrationStoreTelegramMobileLink>({
     queryKey: [MOBILE_LINK_QUERY_KEY, 'integration-store', environmentId],
     queryFn: () =>
-      requestIntegrationStoreTelegramMobileLink(
-        requireEnvironment(currentEnvironment, 'No environment selected')
-      ),
+      requestIntegrationStoreTelegramMobileLink(requireEnvironment(currentEnvironment, 'No environment selected')),
     enabled: !disabled && Boolean(environmentId),
     refetchInterval: REFRESH_INTERVAL_MS,
     refetchOnWindowFocus: true,

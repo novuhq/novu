@@ -38,16 +38,29 @@ export class ConversationRepository extends BaseRepositoryV2<
     super(Conversation, ConversationEntity);
   }
 
+  /**
+   * Resolves a conversation for an inbound platform thread. Must be scoped by
+   * agent and integration so Telegram private-chat IDs (same numeric chat.id
+   * across different bots) do not collide across agents in one environment.
+   */
   async findByPlatformThread(
     environmentId: string,
     organizationId: string,
+    agentId: string,
+    integrationId: string,
     platformThreadId: string
   ): Promise<ConversationEntity | null> {
     return this.findOne(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
-        'channels.platformThreadId': platformThreadId,
+        _agentId: agentId,
+        channels: {
+          $elemMatch: {
+            platformThreadId,
+            _integrationId: integrationId,
+          },
+        },
       },
       '*'
     );

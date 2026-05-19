@@ -649,6 +649,10 @@ const router = createBrowserRouter([
                   { path: ROUTES.DISPATCH_CONVERSATIONS, element: <DispatchConversationsPage /> },
                   { path: ROUTES.DISPATCH_API_KEYS, element: <DispatchApiKeysPage /> },
                   { path: ROUTES.DISPATCH_SETTINGS, element: <DispatchSettingsPage /> },
+                  { path: ROUTES.DISPATCH_SETTINGS_ACCOUNT, element: <DispatchSettingsPage /> },
+                  { path: ROUTES.DISPATCH_SETTINGS_ORGANIZATION, element: <DispatchSettingsPage /> },
+                  { path: ROUTES.DISPATCH_SETTINGS_TEAM, element: <DispatchSettingsPage /> },
+                  { path: ROUTES.DISPATCH_SETTINGS_BILLING, element: <DispatchSettingsPage /> },
                 ],
               },
 
