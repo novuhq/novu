@@ -2,10 +2,10 @@ import { AgentRuntimeProviderIdEnum, CLAUDE_BUILTIN_TOOLS, IntegrationKindEnum }
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { AGENTS_LIST_QUERY_KEY, type AgentResponse, type CreateAgentBody, createAgent } from '@/api/agents';
-import { deleteIntegration } from '@/api/integrations';
 import type { CreateAgentForm } from '@/components/agents/create-agent-fields';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useCreateIntegration } from './use-create-integration';
+import { useDeleteIntegration } from './use-delete-integration';
 
 type SubmitOptions = {
   onSuccess?: (agent: AgentResponse) => void;
@@ -21,6 +21,7 @@ export function useCreateAgentMutation() {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const { mutateAsync: createIntegration } = useCreateIntegration();
+  const { deleteIntegration } = useDeleteIntegration();
 
   const [isPending, setIsPending] = useState(false);
 
@@ -71,7 +72,7 @@ export function useCreateAgentMutation() {
         }
 
         if (runtime === 'claude') {
-          const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+          requireEnvironment(currentEnvironment, 'No environment selected');
 
           let integrationId: string;
 
@@ -121,7 +122,7 @@ export function useCreateAgentMutation() {
             return created;
           } catch (err) {
             try {
-              await deleteIntegration({ id: integrationId, environment });
+              await deleteIntegration({ id: integrationId });
             } catch {
               // Best-effort cleanup; the caller's onError already surfaces a toast.
             }
@@ -138,7 +139,7 @@ export function useCreateAgentMutation() {
         setIsPending(false);
       }
     },
-    [createAgentMutation, createIntegration, currentEnvironment]
+    [createAgentMutation, createIntegration, currentEnvironment, deleteIntegration]
   );
 
   return { submit, isPending };
