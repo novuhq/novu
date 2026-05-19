@@ -419,10 +419,35 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       safeJsonStub = sinon.stub(SsrfModule, 'safeOutboundJsonRequest');
 
       // Default happy path: 401 probe → PRM → AS metadata → DCR registration.
+      //
+      // URL-routed instead of call-index based because `McpOAuthDiscoveryService`
+      // holds singleton PRM + AS-metadata LRU caches that survive across tests
+      // (we can't reach into the running process to evict). A prior test that
+      // warmed the cache for the same `sentry` MCP would skip the PRM / AS-metadata
+      // requests entirely, shifting `onCall(0)` from the PRM endpoint onto the
+      // DCR endpoint and serving a PRM-shaped body where a DCR body is expected.
+      // Routing by `args.url` substring keeps each call deterministic regardless
+      // of cache state, while still letting individual tests stub specific
+      // responses via `safeJsonStub.onCall(N)` overrides.
       safeRawStub.resolves(build401WithChallenge());
-      safeJsonStub.onCall(0).resolves(buildPrmResponse());
-      safeJsonStub.onCall(1).resolves(buildAsMetadataResponse());
-      safeJsonStub.onCall(2).resolves(buildDcrResponse('dcr-client-1'));
+      safeJsonStub.callsFake((args: { url: string }) => {
+        if (args.url.includes('/.well-known/oauth-protected-resource')) {
+          return Promise.resolve(buildPrmResponse());
+        }
+        if (args.url.includes('/.well-known/oauth-authorization-server')) {
+          return Promise.resolve(buildAsMetadataResponse());
+        }
+        if (args.url.endsWith('/register')) {
+          return Promise.resolve(buildDcrResponse('dcr-client-1'));
+        }
+
+        return Promise.resolve({
+          statusCode: 500,
+          statusMessage: 'unhandled stub url',
+          headers: {},
+          body: { error: 'unhandled_stub_url', url: args.url },
+        });
+      });
     });
 
     afterEach(() => {
