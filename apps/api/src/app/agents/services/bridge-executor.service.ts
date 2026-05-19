@@ -28,15 +28,17 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
 const MAX_RETRIES = 2;
 
-/** Agent bridge replyUrl: use the process listen port (portless) or API_ROOT_URL. */
+/** Agent bridge replyUrl: prefer API_ROOT_URL, else localhost on PORT (default 3000). */
 function resolveAgentReplyApiOrigin(): string {
-  const listenPort = process.env.PORT;
+  const apiRootUrl = process.env.API_ROOT_URL?.replace(/\/$/, '');
 
-  if (listenPort) {
-    return `http://127.0.0.1:${listenPort}`;
+  if (apiRootUrl) {
+    return apiRootUrl;
   }
 
-  return (process.env.API_ROOT_URL || 'http://localhost:3000').replace(/\/$/, '');
+  const port = process.env.PORT || '3000';
+
+  return `http://localhost:${port}`;
 }
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
