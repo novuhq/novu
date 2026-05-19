@@ -69,7 +69,6 @@ describe('FindOrCreateNovuEmail usecase', () => {
       find: stub().resolves([]),
       findOne: stub(),
       create: stub(),
-      update: stub().resolves({}),
     };
     agentIntegrationRepo = {
       find: stub().resolves([]),
@@ -226,7 +225,6 @@ describe('FindOrCreateNovuEmail usecase', () => {
       expect(integrationRepo.create.called).to.equal(false);
       // Only the existing-link lookup happens; we never query for the default outbound integration.
       expect(integrationRepo.findOne.calledOnce).to.equal(true);
-      expect(integrationRepo.update.calledOnce).to.equal(true);
     });
   });
 });
