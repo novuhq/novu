@@ -25,12 +25,11 @@ import { openInNewTab } from '@/utils/url';
  * on the card. Keep in sync with provider docs / setup guides.
  */
 const PROVIDER_SETUP_TIME: Record<string, string> = {
-  [ChatProviderIdEnum.Slack]: '~ 30 seconds',
-  [EmailProviderIdEnum.NovuAgent]: '~ 2 minutes',
+  [ChatProviderIdEnum.Slack]: '~ 1 min',
   [ChatProviderIdEnum.MsTeams]: '~ 1 hour',
-  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
+  [ChatProviderIdEnum.WhatsAppBusiness]: '~ 10 min',
+  [ChatProviderIdEnum.Telegram]: '~ 2 min',
   [ChatProviderIdEnum.Discord]: '~ 2 minutes',
-  telegram: '~ 2 minutes',
   'google-chat': '~ 2 minutes',
   linear: '~ 2 minutes',
   zoom: '~ 2 minutes',
@@ -329,7 +328,18 @@ export function ProviderCards({
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
   const navigate = useNavigate();
 
-  const items = useMemo(() => buildCardItems(CONVERSATIONAL_PROVIDERS, integrations), [integrations]);
+  const conversationalProviders = useMemo(() => {
+    if (IS_SELF_HOSTED) {
+      return CONVERSATIONAL_PROVIDERS;
+    }
+
+    return CONVERSATIONAL_PROVIDERS.filter((cp) => cp.providerId !== EmailProviderIdEnum.NovuAgent);
+  }, []);
+
+  const items = useMemo(
+    () => buildCardItems(conversationalProviders, integrations),
+    [conversationalProviders, integrations]
+  );
 
   const linkedIntegrationIds = useMemo(
     () => new Set(existingLinks?.map((link) => link.integration._id) ?? []),
