@@ -5,7 +5,7 @@ import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum, type Mc
 
 import { trackAgentMcpServerEnabled } from '../../agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../dtos/mcp-server.dto';
-import { getMcpOAuthMode } from '../../utils/mcp-oauth-catalog';
+import { getMcpOAuthCatalogEntry, getMcpOAuthMode } from '../../utils/mcp-oauth-catalog';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';
@@ -67,7 +67,15 @@ export class EnableAgentMcpServer {
       throw new ConflictException(`MCP "${command.mcpId}" is already enabled on this agent.`);
     }
 
+    const catalogOAuthEntry = getMcpOAuthCatalogEntry(command.mcpId);
     const defaultAuthMode = command.defaultAuthMode ?? deriveDefaultAuthMode(getMcpOAuthMode(command.mcpId));
+
+    // Guard caller-supplied `defaultAuthMode` overrides against what the MCP
+    // actually advertises in the OAuth catalog. Persisting a mismatched
+    // combination (e.g. `novu` on an MCP whose catalog mode is `none`) would
+    // store a row that only blows up later when the connect / OAuth dance
+    // tries to dereference a non-existent catalog entry.
+    assertAuthModeSupported(command.mcpId, defaultAuthMode, catalogOAuthEntry.mode);
 
     const defaultScope = command.defaultScope ?? McpConnectionScopeEnum.Subscriber;
 
@@ -162,6 +170,37 @@ function isDuplicateKeyError(err: unknown): err is MongoDuplicateKeyError {
   const code = (err as MongoDuplicateKeyError).code;
 
   return code === 11000;
+}
+
+function assertAuthModeSupported(
+  mcpId: string,
+  authMode: McpConnectionAuthModeEnum,
+  catalogMode: McpServerOAuthMode
+): void {
+  const allowed: McpConnectionAuthModeEnum[] = (() => {
+    switch (catalogMode) {
+      case 'none':
+        return [McpConnectionAuthModeEnum.None];
+      case 'novu':
+        // `none` is allowed alongside `novu` so an admin can opt out of the
+        // OAuth handshake on a per-row basis (e.g. integrating a public MCP
+        // that happens to also advertise OAuth).
+        return [McpConnectionAuthModeEnum.Novu, McpConnectionAuthModeEnum.None];
+      case 'provider':
+        return [McpConnectionAuthModeEnum.Provider, McpConnectionAuthModeEnum.None];
+      default: {
+        const _exhaustive: never = catalogMode;
+
+        return [McpConnectionAuthModeEnum.None];
+      }
+    }
+  })();
+
+  if (!allowed.includes(authMode)) {
+    throw new BadRequestException(
+      `defaultAuthMode "${authMode}" is not supported for MCP "${mcpId}" (catalog OAuth mode: "${catalogMode}"). Allowed: ${allowed.join(', ')}.`
+    );
+  }
 }
 
 function deriveDefaultAuthMode(catalogMode: McpServerOAuthMode): McpConnectionAuthModeEnum {

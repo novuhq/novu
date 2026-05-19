@@ -10,14 +10,26 @@ import { DisableAgentMcpServerCommand } from './disable-agent-mcp-server.command
 /**
  * Disable a catalog MCP on an agent.
  *
- *   1. For runtimes that expose a token vault (`capabilities.tokenVault ===
- *      true`), best-effort delete each stored provider-side credential so a
- *      revoked Novu connection doesn't leave dangling tokens upstream.
- *   2. Cascade-delete every `mcp_connection` row scoped to the
- *      `agent_mcp_server` we are about to remove.
- *   3. Delete the `agent_mcp_server` row.
- *   4. Project the new (smaller) enabled set onto the runtime provider via
- *      `SyncAgentMcpServers`.
+ * Ordering is chosen so a failure in the runtime-projection step never leaves
+ * Mongo in a "disabled" state while the provider still has the MCP attached:
+ *
+ *   1. Best-effort revoke each stored provider-vault credential for runtimes
+ *      that expose one (`capabilities.tokenVault === true`). Done first so we
+ *      can still read `mcp_connection.auth.vaultCredentialId` from rows that
+ *      we are about to delete; vault errors are logged and ignored because
+ *      leaving a stale token upstream is preferable to aborting disable.
+ *   2. Soft-disable the enablement row by flipping `enabled: false` +
+ *      `status: 'syncing'`. The row is intentionally kept so a failed sync
+ *      can be retried without losing the enablement record.
+ *   3. Project the new (smaller) enabled set onto the runtime provider via
+ *      `SyncAgentMcpServers`. The soft-disabled row is excluded from the
+ *      projection (`findByAgent({ enabledOnly: true })`), so the upstream
+ *      `agent.mcp_servers` set converges to the desired state.
+ *   4. Only after the sync succeeds: cascade-delete connections and the
+ *      enablement row. If step 3 throws, the disabled row + its connections
+ *      are left in place — a retry of this same endpoint will pick up where
+ *      we left off (revoke is best-effort, soft-disable is idempotent, and
+ *      re-running the projection is safe).
  */
 @Injectable()
 export class DisableAgentMcpServer {
@@ -64,6 +76,50 @@ export class DisableAgentMcpServer {
       agentMcpServerId: enablement._id,
     });
 
+    // Soft-disable first so the runtime projection drops this MCP without
+    // permanently removing the enablement row. Idempotent: a retry that
+    // re-enters this path after a failed sync sees `enabled: false` already
+    // and the update is a no-op.
+    await this.agentMcpServerRepository.update(
+      {
+        _id: enablement._id,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      { $set: { enabled: false, status: 'syncing' }, $unset: { lastError: 1 } }
+    );
+
+    try {
+      await this.syncAgentMcpServers.execute(
+        SyncAgentMcpServersCommand.create({
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          agentId: agent._id,
+        })
+      );
+    } catch (err) {
+      // The soft-disabled row was excluded from the projection (sync reads
+      // `enabledOnly: true`), so the sync failure is unrelated to this MCP
+      // — typically a transport error or the provider rejecting an UNRELATED
+      // row. Record an error on this row so callers / dashboards see it and
+      // a retry can converge. Re-throw so the HTTP response surfaces the
+      // failure (caller will retry, which is now safe to repeat).
+      const code = err instanceof Error ? err.name || 'sync_error' : 'sync_error';
+      const message = err instanceof Error ? err.message : 'Unknown provider error';
+      await this.agentMcpServerRepository.update(
+        {
+          _id: enablement._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        { $set: { status: 'error', lastError: { code, message, at: new Date() } } }
+      );
+
+      throw err;
+    }
+
+    // Sync succeeded → provider no longer has this MCP attached, so it is
+    // safe to drop the local connection rows and the enablement record.
     await this.mcpConnectionRepository.delete({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
@@ -75,14 +131,6 @@ export class DisableAgentMcpServer {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
-
-    await this.syncAgentMcpServers.execute(
-      SyncAgentMcpServersCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        agentId: agent._id,
-      })
-    );
 
     trackAgentMcpServerDisabled(this.analyticsService, {
       userId: command.userId,

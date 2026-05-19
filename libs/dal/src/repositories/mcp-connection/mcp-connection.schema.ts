@@ -174,12 +174,35 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
       ref: 'AgentMcpServer',
       required: false,
       default: null,
+      // Scope-to-owner invariant: `agent` / `subscriber` rows MUST point at
+      // an enablement row; `environment` rows MUST NOT. Enforced at write
+      // time by Mongoose so a buggy caller can't persist a malformed shape.
+      validate: {
+        validator(this: McpConnectionDBModel, value: unknown) {
+          if (this.scope === 'environment') return value == null;
+
+          return value != null;
+        },
+        message: '_agentMcpServerId must be set for `agent`/`subscriber` scope and absent for `environment` scope',
+      },
     },
     _subscriberId: {
       type: Schema.Types.ObjectId,
       ref: 'Subscriber',
       required: false,
       default: null,
+      // Scope-to-owner invariant: only `subscriber` rows carry a subscriber
+      // pointer; `environment` / `agent` rows MUST leave this null so the
+      // partial subscriber-uniqueness index below only applies where it's
+      // semantically meaningful.
+      validate: {
+        validator(this: McpConnectionDBModel, value: unknown) {
+          if (this.scope === 'subscriber') return value != null;
+
+          return value == null;
+        },
+        message: '_subscriberId must be set ONLY for `subscriber` scope',
+      },
     },
     authMode: {
       type: Schema.Types.String,
@@ -220,11 +243,19 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
   schemaOptions
 );
 
+// Subscriber-scope uniqueness: one connection per (enablement, subscriber,
+// mcp). Pinned to `scope: 'subscriber'` so a stray non-subscriber row
+// (validators above already prevent this, but the index acts as a second
+// line of defence) can't accidentally claim the unique slot.
 mcpConnectionSchema.index(
   { _agentMcpServerId: 1, _subscriberId: 1, mcpId: 1 },
   {
     unique: true,
-    partialFilterExpression: { _agentMcpServerId: { $type: 'objectId' }, _subscriberId: { $type: 'objectId' } },
+    partialFilterExpression: {
+      scope: 'subscriber',
+      _agentMcpServerId: { $type: 'objectId' },
+      _subscriberId: { $type: 'objectId' },
+    },
   }
 );
 
