@@ -23,7 +23,10 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
   const displayName = providerMeta?.displayName ?? link.integration.name;
 
   return (
-    <Link to={to} className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5">
+    <Link
+      to={to}
+      className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       <div
         className="border-stroke-soft/50 flex min-h-[80px] items-center justify-center rounded-lg border-[0.5px] px-6 py-4 transition-colors hover:border-stroke-soft"
         style={{
