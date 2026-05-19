@@ -275,14 +275,14 @@
   },
   "dependencies": {
     "chat": "^4.25.0",
-    "ajv": "^8.18.0",
+    "ajv": "^8.20.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",
     "chalk": "^4.1.2",
     "cross-fetch": "^4.0.0",
     "json-schema-to-ts": "^3.0.0",
     "jsonrepair": "^3.13.1",
-    "liquidjs": "^10.25.7",
+    "liquidjs": "^10.27.0",
     "pluralize": "^8.0.0",
     "sanitize-html": "^2.13.0"
   },
