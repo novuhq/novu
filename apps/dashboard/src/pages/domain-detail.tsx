@@ -23,6 +23,7 @@ import {
   DetailsSidebarRow,
   ExpandableDetailsTextarea,
 } from '@/components/details-sidebar';
+import { ApexDomainMxWarning } from '@/components/domains/apex-domain-mx-warning';
 import { DomainRouting, type DomainRoutingHandle } from '@/components/domains/domain-routing';
 import { PageMeta } from '@/components/page-meta';
 import { AnimatedBadgeDot, Badge } from '@/components/primitives/badge';
@@ -65,6 +66,7 @@ import { useDeleteDomain } from '@/hooks/use-domains';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { parseDomainMetadataJson } from '@/utils/domain-metadata';
+import { isApexInboundDomain } from '@/utils/inbound-domain';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
@@ -159,6 +161,7 @@ export function DomainDetailPage() {
   const domainConnectError = searchParams.get('error_description') ?? searchParams.get('error');
   const domainConnectProviderName = domainConnectStatus?.providerName ?? 'your DNS provider';
   const canWriteDomains = has({ permission: PermissionsEnum.ORG_SETTINGS_WRITE });
+  const showApexDomainMxWarning = domain ? isApexInboundDomain(domain.name) : false;
 
   const domainsHref = currentEnvironment?.slug
     ? buildRoute(ROUTES.DOMAINS, { environmentSlug: currentEnvironment.slug })
@@ -611,6 +614,8 @@ export function DomainDetailPage() {
                   <p className="text-xs font-medium text-foreground-400">
                     Add the following MX record at your DNS provider:
                   </p>
+
+                  {showApexDomainMxWarning && <ApexDomainMxWarning />}
 
                   <Table containerClassname="rounded-none border-0 shadow-none overflow-visible">
                     <TableHeader className="shadow-none [&>tr>th]:bg-bg-weak [&>tr>th]:border-stroke-weak [&>tr>th]:border-y [&>tr>th:first-child]:rounded-l-lg [&>tr>th:first-child]:border-l [&>tr>th:last-child]:rounded-r-lg [&>tr>th:last-child]:border-r">
