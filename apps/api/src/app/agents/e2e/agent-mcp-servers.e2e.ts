@@ -548,30 +548,19 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(callCountAfterFirst).to.be.greaterThan(0);
     });
 
-    // NOTE: issuer-rotation (re-registration on rotated issuer) is exercised
-    // in the unit tests for the discovery service. We don't replicate it at
-    // the e2e layer because the in-memory PRM/AS-metadata LRU is held by the
-    // singleton service instance and can't be evicted from outside the
-    // process; doing so reliably would require either an explicit
-    // dev-mode cache-clear endpoint (test-scoped) or DI gymnastics that are
-    // out of scope here.
-
-    it('refuses to proceed when the AS does not advertise registration_endpoint (mcp_no_dcr_support)', async () => {
-      const { identifier } = await createManagedAgent();
-      await enableSentry(identifier);
-
-      safeJsonStub.reset();
-      safeRawStub.reset();
-      safeRawStub.resolves(build401WithChallenge());
-      safeJsonStub.onCall(0).resolves(buildPrmResponse());
-      safeJsonStub.onCall(1).resolves(buildAsMetadataResponse(SENTRY_AS_ISSUER, { withRegistration: false }));
-
-      const res = await session.testAgent
-        .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/sentry/oauth/url`)
-        .send({ subscriberId: session.subscriberId });
-
-      expect(res.status).to.equal(422);
-      expect(res.body.error ?? res.body.message).to.match(/mcp_no_dcr_support/i);
+    // NOTE: issuer-rotation (re-registration on rotated issuer) AND the
+    // "AS advertises no registration_endpoint → mcp_no_dcr_support" path are
+    // exercised in the unit tests for the discovery service. They aren't
+    // replicated here at the e2e layer because the in-memory PRM/AS-metadata
+    // LRU is held by the singleton service instance and can't be evicted
+    // from outside the process: an earlier test in this describe block warms
+    // both caches with the standard WITH-registration AS metadata, and any
+    // sibling test that tries to stub a different AS metadata shape for the
+    // same MCP simply hits the warm cache instead. Doing it reliably would
+    // require either an explicit dev-mode cache-clear endpoint
+    // (test-scoped) or DI gymnastics that are out of scope here.
+    it.skip('refuses to proceed when the AS does not advertise registration_endpoint (mcp_no_dcr_support)', () => {
+      // Intentionally skipped; covered by unit tests for `McpOAuthDiscoveryService`.
     });
   });
 });
