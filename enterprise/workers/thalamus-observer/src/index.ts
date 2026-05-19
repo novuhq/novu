@@ -151,9 +151,11 @@ export class SessionObserver extends Agent<Env, State> {
   }
 
   async stopObserving(): Promise<void> {
+    const sessionId = this.state.observation?.sessionId;
     this.abortController?.abort();
     this.abortController = null;
     this.setState({ observation: null });
+    this.cleanupEvents(sessionId);
   }
 
   async getStatus(): Promise<string> {
@@ -222,16 +224,19 @@ export class SessionObserver extends Agent<Env, State> {
       }
 
       const parts = this.parseSSEEvent(sseEvent, parser, acc);
+      let hasError = false;
       for (const part of parts) {
+        if (part.type === 'finish') continue;
+        if (part.type === 'error') hasError = true;
         this.persistEvent(params.sessionId, sequence++, part);
       }
 
       this.triggerDelivery(params);
 
-      if (acc.done) break;
+      if (hasError || acc.done) break;
     }
 
-    if (acc.done || !signal.aborted) {
+    if (acc.done) {
       const content = this.reconstructContent(params.sessionId);
       const finish: StreamPart = {
         type: 'finish',
@@ -242,6 +247,11 @@ export class SessionObserver extends Agent<Env, State> {
       this.updateObservation({
         ...this.state.observation!,
         status: 'completed',
+      });
+    } else if (!signal.aborted) {
+      this.updateObservation({
+        ...(this.state.observation ?? params),
+        status: 'error',
       });
     }
   }
@@ -422,7 +432,7 @@ export class SessionObserver extends Agent<Env, State> {
           });
 
           if (r.status >= 200 && r.status < 300) return r;
-          if (r.status >= 400 && r.status < 500) {
+          if (r.status >= 400 && r.status < 500 && r.status !== 408 && r.status !== 429) {
             const err = new Error(`HTTP ${r.status}`) as Error & {
               permanent: boolean;
             };
@@ -467,6 +477,7 @@ export class SessionObserver extends Agent<Env, State> {
   }
 
   async retryDelivery(params: ObservationParams): Promise<void> {
+    if (!this.state.observation) return;
     const pending = this.getPendingEvents(params.sessionId);
     if (pending.length === 0) return;
     await this.deliverPending(params);
