@@ -98,6 +98,27 @@ function getMessageRawEvent(message: Message): Record<string, unknown> | undefin
   return asRecord(raw?.event) ?? raw;
 }
 
+function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Message): string {
+  const preview = getInboundActivityPreview(message.text, {
+    hasPlatformAttachments: Boolean(message.attachments?.length),
+  });
+
+  if (preview.trim().length > 0) {
+    return preview;
+  }
+
+  if (platform === AgentPlatformEnum.EMAIL) {
+    const raw = asRecord(message.raw);
+    const subject = typeof raw?.subject === 'string' ? raw.subject.trim() : '';
+
+    if (subject.length > 0) {
+      return subject;
+    }
+  }
+
+  return preview;
+}
+
 function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, message: Message): string {
   const rawEvent = getMessageRawEvent(message);
   const rawThreadTs = rawEvent?.thread_ts;
@@ -246,9 +267,7 @@ export class AgentInboundHandler {
       participantId,
       participantType,
       platformUserId: message.author.userId,
-      firstMessageText: getInboundActivityPreview(message.text, {
-        hasPlatformAttachments: Boolean(message.attachments?.length),
-      }),
+      firstMessageText: resolveInboundFirstMessageText(config.platform, message),
     });
 
     const senderType = subscriberId
