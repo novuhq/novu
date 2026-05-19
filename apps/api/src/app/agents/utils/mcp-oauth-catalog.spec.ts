@@ -1,31 +1,36 @@
 import { MCP_SERVERS } from '@novu/shared';
 import { expect } from 'chai';
 
-import { getMcpOAuthCatalogEntry, getMcpOAuthMode } from './mcp-oauth-catalog';
+import { getMcpOAuthCatalogEntry, getMcpOAuthCatalogIds, getMcpOAuthMode } from './mcp-oauth-catalog';
 
 describe('MCP OAuth Catalog', () => {
   describe('alignment with MCP_SERVERS', () => {
     /**
-     * Every server-only catalog entry must point at a real `MCP_SERVERS` row.
-     * Otherwise the user picker has no row that surfaces the auth flow, and
-     * the dashboard's `oauthMode` hint will never resolve. The catalog file
-     * is the source of truth for the runtime allow-list; this test fails the
-     * build if the two drift.
+     * Stale catalog rot guard. Walks the server-only allow-list (NOT
+     * `MCP_SERVERS`) so we catch ids that exist only in `MCP_OAUTH_CATALOG` —
+     * the previous, MCP_SERVERS-driven walk silently missed those. A failing
+     * assertion means the allow-list still references an MCP that's been
+     * removed from the shared catalog and should be cleaned up.
      */
     it('every catalog entry has a matching MCP_SERVERS entry', () => {
-      const orphans: string[] = [];
+      const mcpServerIds = new Set(MCP_SERVERS.map((server) => server.id));
+      const orphans = getMcpOAuthCatalogIds().filter((id) => !mcpServerIds.has(id));
 
-      for (const server of MCP_SERVERS) {
-        const entry = getMcpOAuthCatalogEntry(server.id);
+      expect(orphans, `MCP_OAUTH_CATALOG entries are missing from MCP_SERVERS: ${orphans.join(', ')}`).to.deep.equal(
+        []
+      );
+    });
 
-        if (entry.mode !== 'none') {
-          continue;
-        }
-
-        if (server.oauthMode === 'novu') {
-          orphans.push(server.id);
-        }
-      }
+    /**
+     * Inverse check: every `MCP_SERVERS` row that declares `oauthMode: 'novu'`
+     * must have a matching allow-list entry, otherwise the dashboard would
+     * advertise Authorize CTAs for an MCP whose OAuth flow has no
+     * server-side configuration.
+     */
+    it("every MCP_SERVERS entry with oauthMode='novu' has a catalog allow-list entry", () => {
+      const orphans = MCP_SERVERS.filter((server) => server.oauthMode === 'novu')
+        .map((server) => server.id)
+        .filter((id) => getMcpOAuthCatalogEntry(id).mode === 'none');
 
       expect(
         orphans,

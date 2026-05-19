@@ -19,12 +19,16 @@ export type AgentRuntimeCapabilities = {
   skills: boolean;
   /**
    * Provider exposes a token-vault API where Novu can push OAuth tokens
-   * obtained from an MCP handshake. When `false`, Novu keeps tokens in
-   * its own encrypted `mcp_connection.auth` blob. When `true`, the OAuth
-   * callback path is expected to also call the provider's vault API and
-   * Novu's blob may be empty.
+   * obtained from an MCP handshake. When `false` (or absent), Novu keeps
+   * tokens in its own encrypted `mcp_connection.auth` blob. When `true`,
+   * the OAuth callback path is expected to also call the provider's vault
+   * API and Novu's blob may be empty.
+   *
+   * Optional so adding it to `AgentRuntimeCapabilities` is non-breaking
+   * for external consumers of `@novu/shared`; treat `undefined` as `false`
+   * (use `capabilities.tokenVault ?? false` on the read path).
    */
-  tokenVault: boolean;
+  tokenVault?: boolean;
 };
 
 export type AgentRuntimeProvider = {

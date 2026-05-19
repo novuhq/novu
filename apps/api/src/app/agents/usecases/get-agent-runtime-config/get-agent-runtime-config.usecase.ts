@@ -79,7 +79,7 @@ export class GetAgentRuntimeConfig {
           model: providerEntry.capabilities.model,
           systemPrompt: providerEntry.capabilities.systemPrompt,
           skills: providerEntry.capabilities.skills,
-          tokenVault: providerEntry.capabilities.tokenVault,
+          tokenVault: providerEntry.capabilities.tokenVault ?? false,
         }
       : undefined;
 

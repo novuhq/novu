@@ -26,7 +26,7 @@ export class UpdateAgentRuntimeConfig {
       // contract explicit.
       throw new BadRequestException(
         'Updating mcpServers via /runtime/config is no longer supported. ' +
-          'Use POST /agents/:id/mcp-servers and DELETE /agents/:id/mcp-servers/:mcpId instead.'
+          'Use POST /agents/:identifier/mcp-servers and DELETE /agents/:identifier/mcp-servers/:mcpId instead.'
       );
     }
 
@@ -100,7 +100,7 @@ export class UpdateAgentRuntimeConfig {
           model: providerEntry.capabilities.model,
           systemPrompt: providerEntry.capabilities.systemPrompt,
           skills: providerEntry.capabilities.skills,
-          tokenVault: providerEntry.capabilities.tokenVault,
+          tokenVault: providerEntry.capabilities.tokenVault ?? false,
         }
       : undefined;
 

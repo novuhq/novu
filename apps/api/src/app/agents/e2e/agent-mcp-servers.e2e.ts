@@ -167,7 +167,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const updateConfigCall = mockProvider.updateConfig.firstCall;
       expect(mockProvider.updateConfig.calledOnce, 'updateConfig should be called once').to.be.true;
       expect(updateConfigCall.args[1].mcpServers).to.deep.include({
-        externalId: 'Slack',
+        externalId: 'slack',
         name: 'Slack',
         url: 'https://mcp.slack.com/mcp',
       });

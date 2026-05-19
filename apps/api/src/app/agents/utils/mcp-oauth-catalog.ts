@@ -87,6 +87,15 @@ export function getMcpOAuthCatalogEntry(mcpId: string): McpOAuthCatalogEntry {
 }
 
 /**
+ * Returns the list of MCP ids on the server-side OAuth allow-list. Used by
+ * the alignment spec to catch stale allow-list keys that no longer exist in
+ * the shared `MCP_SERVERS` catalog (which would otherwise silently rot).
+ */
+export function getMcpOAuthCatalogIds(): readonly string[] {
+  return Object.keys(MCP_OAUTH_CATALOG);
+}
+
+/**
  * Public hint used by the shared catalog (`McpServer.oauthMode`).
  * Server-side code should call `getMcpOAuthCatalogEntry` directly to get
  * the full configuration; this exposes only the discriminator.

@@ -2,7 +2,7 @@ import { FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { AgentMcpServerDBModel, AgentMcpServerEntity } from './agent-mcp-server.entity';
+import { type AgentMcpServerDBModel, AgentMcpServerEntity } from './agent-mcp-server.entity';
 import { AgentMcpServer } from './agent-mcp-server.schema';
 
 export class AgentMcpServerRepository extends BaseRepositoryV2<
@@ -29,7 +29,7 @@ export class AgentMcpServerRepository extends BaseRepositoryV2<
     environmentId: string;
     agentId: string;
     enabledOnly?: boolean;
-  }): Promise<AgentMcpServerEntity[]> {
+  }) {
     const query: FilterQuery<AgentMcpServerDBModel> & EnforceEnvOrOrgIds = {
       _environmentId: environmentId,
       _organizationId: organizationId,
@@ -53,7 +53,7 @@ export class AgentMcpServerRepository extends BaseRepositoryV2<
     environmentId: string;
     agentId: string;
     mcpId: string;
-  }): Promise<AgentMcpServerEntity | null> {
+  }) {
     return this.findOne(
       {
         _environmentId: environmentId,

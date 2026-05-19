@@ -57,34 +57,36 @@ export type ProvisionIntegrationResult = {
 };
 
 /**
+ * OAuth client metadata recorded at authorize-URL time. Providers whose vault
+ * supports server-side refresh (e.g. Anthropic's `mcp_oauth.refresh` block)
+ * use this to register the upstream token endpoint with the vault so refreshes
+ * can happen without round-tripping back through Novu.
+ */
+export interface VaultCredentialAuthOAuthClient {
+  clientId: string;
+  clientSecret?: string;
+  tokenEndpoint: string;
+  /** RFC 8707 resource indicator replayed verbatim on refresh. */
+  resource?: string;
+}
+
+/**
  * Decoded credential payload pushed to a provider's vault.
  *
  * Mirrors `McpConnectionAuth` from `@novu/dal` but is intentionally redeclared
  * here so the provider abstraction stays independent of the persistence layer.
  * Callers decrypt before passing in.
  */
-export type VaultCredentialAuth = {
+export interface VaultCredentialAuth {
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: string;
   tokenType?: string;
   scopes?: string[];
-  /**
-   * OAuth client metadata recorded at authorize-URL time. Providers whose
-   * vault supports server-side refresh (e.g. Anthropic's `mcp_oauth.refresh`
-   * block) use this to register the upstream token endpoint with the vault
-   * so refreshes can happen without round-tripping back through Novu.
-   */
-  oauthClient?: {
-    clientId: string;
-    clientSecret?: string;
-    tokenEndpoint: string;
-    /** RFC 8707 resource indicator replayed verbatim on refresh. */
-    resource?: string;
-  };
-};
+  oauthClient?: VaultCredentialAuthOAuthClient;
+}
 
-export type UpsertVaultCredentialInput = {
+export interface UpsertVaultCredentialInput {
   /**
    * Decrypted integration credentials blob. The provider extracts whichever
    * locator it needs (Anthropic: `externalVaultId`); keeping the input
@@ -102,9 +104,9 @@ export type UpsertVaultCredentialInput = {
    * one. Returned by a previous `upsertVaultCredential` call.
    */
   existingCredentialId?: string;
-};
+}
 
-export type UpsertVaultCredentialResult = {
+export interface UpsertVaultCredentialResult {
   /** Stable identifier for subsequent `update` / `delete` calls. */
   vaultCredentialId: string;
   /**
@@ -118,18 +120,18 @@ export type UpsertVaultCredentialResult = {
    * Semantically identical to `ProvisionIntegrationResult.credentialsUpdate`.
    */
   integrationCredentialsUpdate?: Record<string, unknown>;
-};
+}
 
-export type DeleteVaultCredentialInput = {
+export interface DeleteVaultCredentialInput {
   /** Decrypted integration credentials blob; see `UpsertVaultCredentialInput`. */
   integrationCredentials: Record<string, unknown>;
   vaultCredentialId: string;
-};
+}
 
-export type ParsedMcpInitFailure = {
+export interface ParsedMcpInitFailure {
   /** Catalog-side display name surfaced by the runtime (e.g. "Sentry"). */
   mcpServerName: string;
-};
+}
 
 /**
  * Snapshot of a tool call the runtime is waiting on user approval for.
@@ -139,7 +141,7 @@ export type ParsedMcpInitFailure = {
  * an Approve/Deny card on the SDK side without coupling the worker to any
  * one provider's session-events shape.
  */
-export type PendingToolApproval = {
+export interface PendingToolApproval {
   /** Provider-side event id (e.g. Anthropic `sevt_...`). */
   toolUseId: string;
   toolName: string;
@@ -147,7 +149,7 @@ export type PendingToolApproval = {
   mcpServerName?: string;
   /** Tool arguments — surfaced to the user so they can decide. */
   input?: Record<string, unknown>;
-};
+}
 
 export interface IAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;

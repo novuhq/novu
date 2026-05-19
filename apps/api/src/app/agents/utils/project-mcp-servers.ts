@@ -40,7 +40,12 @@ export function projectMcpRowsToCatalog<TRow extends ProjectableMcpRow>(
       continue;
     }
 
-    projections.push({ externalId: catalog.name, name: catalog.name, url: catalog.url });
+    // `externalId` uses the stable catalog id (e.g. 'slack'), not the display
+    // name. The provider relies on this value for identity matching on
+    // subsequent diffs/upserts; using `catalog.name` would break that
+    // invariant if a catalog row is ever renamed or two providers ship the
+    // same display name.
+    projections.push({ externalId: row.mcpId, name: catalog.name, url: catalog.url });
   }
 
   if (orphanMcpIds.length > 0 && logger) {
