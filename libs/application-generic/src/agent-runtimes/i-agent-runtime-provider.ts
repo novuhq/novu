@@ -131,6 +131,24 @@ export type ParsedMcpInitFailure = {
   mcpServerName: string;
 };
 
+/**
+ * Snapshot of a tool call the runtime is waiting on user approval for.
+ *
+ * Used by the worker when a turn ends in `requires-action` (e.g. Anthropic
+ * MCP toolsets configured with `permission_policy: always_ask`) to materialise
+ * an Approve/Deny card on the SDK side without coupling the worker to any
+ * one provider's session-events shape.
+ */
+export type PendingToolApproval = {
+  /** Provider-side event id (e.g. Anthropic `sevt_...`). */
+  toolUseId: string;
+  toolName: string;
+  /** Set when the tool comes from an MCP toolset; undefined for builtin / custom tools. */
+  mcpServerName?: string;
+  /** Tool arguments — surfaced to the user so they can decide. */
+  input?: Record<string, unknown>;
+};
+
 export interface IAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
   readonly capabilities: AgentRuntimeCapabilities;
@@ -206,6 +224,16 @@ export interface IAgentRuntimeProvider {
    * the abstraction never assumes a specific error class.
    */
   parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null;
+
+  /**
+   * Inspect a session that ended in `requires-action` (or was rejected for
+   * "waiting on responses to events") and return the single oldest pending
+   * tool-confirmation request, or `null` if none can be located.
+   *
+   * Providers without a session-scoped event log return `null`; callers fall
+   * back to a generic error reply.
+   */
+  getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null>;
 
   /**
    * Push an OAuth credential to the provider's per-environment vault so the

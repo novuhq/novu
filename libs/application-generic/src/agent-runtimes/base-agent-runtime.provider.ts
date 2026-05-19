@@ -8,6 +8,7 @@ import type {
   GetEnvironmentResult,
   IAgentRuntimeProvider,
   ParsedMcpInitFailure,
+  PendingToolApproval,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
@@ -52,6 +53,10 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
 
   parseMcpInitFailure(_err: unknown): ParsedMcpInitFailure | null {
     return null;
+  }
+
+  getPendingToolApproval(_sessionId: string): Promise<PendingToolApproval | null> {
+    return Promise.resolve(null);
   }
 
   upsertVaultCredential(_input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {

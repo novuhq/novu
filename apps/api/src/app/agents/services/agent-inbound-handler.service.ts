@@ -531,6 +531,50 @@ export class AgentInboundHandler {
       actionId: action.id,
     });
 
+    // MCP tool-approval clicks are surfaced by the worker as Buttons with an
+    // id pattern `mcp-approval:<allow|deny>:<toolUseId>`. They MUST NOT
+    // bubble through the bridge — the agent has no user-defined `onAction`
+    // for them; routing to the managed executor enqueues a follow-up turn
+    // that resumes the runtime session with a `user.tool_confirmation`.
+    const mcpApprovalDecision = parseMcpApprovalActionId(action.id);
+    if (mcpApprovalDecision) {
+      const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+        '_id',
+        'runtime',
+        'managedRuntime',
+      ]);
+
+      if (agent?.runtime === 'managed' && agent.managedRuntime) {
+        await this.managedExecutor.executeToolConfirmation({
+          agentId: String(agent._id),
+          conversationId: conversation._id,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+          integrationIdentifier: config.integrationIdentifier,
+          agentIdentifier: config.agentIdentifier,
+          platform: config.platform,
+          platformThreadId: thread.id,
+          subscriberId: subscriberId ?? undefined,
+          subscriberFirstName: undefined,
+          toolConfirmation: {
+            toolUseId: mcpApprovalDecision.toolUseId,
+            approved: mcpApprovalDecision.approved,
+          },
+        });
+
+        return;
+      }
+
+      // Fall through if the agent is not managed: a non-managed agent
+      // wouldn't have produced an `mcp-approval:*` action, but if a stale
+      // card slipped into a bridge agent we still surface the click through
+      // the bridge so the user-defined handler can react.
+      this.logger.warn(
+        { agentId, actionId: action.id },
+        'Received mcp-approval action for a non-managed agent; forwarding to bridge'
+      );
+    }
+
     const [subscriber, history] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
@@ -553,4 +597,35 @@ export class AgentInboundHandler {
       action,
     });
   }
+}
+
+/**
+ * Action ids that surface MCP tool approval prompts. Worker-side card builder
+ * emits `mcp-approval:allow:<toolUseId>` and `mcp-approval:deny:<toolUseId>`
+ * — keep this prefix in sync with `process-managed-agent-turn.usecase.ts`
+ * (see `MCP_APPROVAL_ACTION_PREFIX`).
+ */
+const MCP_APPROVAL_ACTION_PREFIX = 'mcp-approval:';
+
+function parseMcpApprovalActionId(actionId: string): { approved: boolean; toolUseId: string } | null {
+  if (!actionId?.startsWith(MCP_APPROVAL_ACTION_PREFIX)) {
+    return null;
+  }
+
+  const rest = actionId.slice(MCP_APPROVAL_ACTION_PREFIX.length);
+  const sep = rest.indexOf(':');
+  if (sep <= 0) {
+    return null;
+  }
+
+  const verdict = rest.slice(0, sep);
+  const toolUseId = rest.slice(sep + 1);
+  if (!toolUseId) {
+    return null;
+  }
+
+  if (verdict === 'allow') return { approved: true, toolUseId };
+  if (verdict === 'deny') return { approved: false, toolUseId };
+
+  return null;
 }

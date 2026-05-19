@@ -26,6 +26,7 @@ import type {
   GetAgentResult,
   GetEnvironmentResult,
   ParsedMcpInitFailure,
+  PendingToolApproval,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
@@ -138,6 +139,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // dropped response would create a duplicate billable agent upstream.
     try {
       const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
+
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
@@ -353,6 +355,53 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
+  async getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null> {
+    const client = this.buildClient();
+
+    try {
+      // Walk the session event log newest-first looking for an MCP or builtin
+      // tool_use event whose evaluated_permission is "ask" — that's what
+      // parks the session in `requires_action`. Stop as soon as we find one
+      // result (or any `user.tool_confirmation`, which means a later
+      // approval already cleared the pending request).
+      const iterator = (client as any).beta.sessions.events.list(sessionId, {
+        order: 'desc',
+        types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
+      });
+
+      for await (const event of iterator) {
+        if (event?.type === 'user.tool_confirmation') {
+          // Any confirmation event we hit before the open ask was already
+          // resolved upstream — stop searching to avoid surfacing a stale
+          // approval.
+          return null;
+        }
+
+        if (event?.evaluated_permission !== 'ask') {
+          continue;
+        }
+
+        const toolUseId = event.id as string | undefined;
+        const toolName = (event.name as string | undefined) ?? 'unknown_tool';
+
+        if (!toolUseId) {
+          continue;
+        }
+
+        return {
+          toolUseId,
+          toolName,
+          mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
+          input: (event.input as Record<string, unknown> | undefined) ?? undefined,
+        };
+      }
+
+      return null;
+    } catch (err) {
+      this.normaliseError(err);
+    }
+  }
+
   parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null {
     // Inspect the error message only — we deliberately avoid coupling this
     // module to `@novu/thalamus`'s ThalamusError class so the abstraction
@@ -384,16 +433,25 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // persist it on the integration in the same transaction.
     let vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
     let integrationCredentialsUpdate: Record<string, unknown> | undefined;
+    let lazyCreatedVault = false;
 
     if (!vaultId) {
       vaultId = await this.createVaultForIntegration(client, input.integrationCredentials);
       integrationCredentialsUpdate = { externalVaultId: vaultId };
+      lazyCreatedVault = true;
     }
+
+    // Vault credentials are vault-scoped on Anthropic's side, so an
+    // `existingCredentialId` recorded against a previous (now-orphan) vault
+    // would 404 on update. When we just lazy-created a fresh vault, ignore
+    // the stale id and take the create branch so the caller's connection
+    // row gets re-pointed at the new credential.
+    const existingCredentialId = lazyCreatedVault ? undefined : input.existingCredentialId;
 
     return this.withRetry(async () => {
       try {
-        if (input.existingCredentialId) {
-          const updated = await (client as any).beta.vaults.credentials.update(input.existingCredentialId, {
+        if (existingCredentialId) {
+          const updated = await (client as any).beta.vaults.credentials.update(existingCredentialId, {
             vault_id: vaultId,
             display_name: input.displayName,
             auth: buildMcpOAuthUpdateAuth(input.auth),

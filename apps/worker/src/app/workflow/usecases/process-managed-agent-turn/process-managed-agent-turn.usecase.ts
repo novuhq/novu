@@ -32,6 +32,22 @@ import { ProcessManagedAgentTurnCommand } from './process-managed-agent-turn.com
 
 const MAX_TURN_MS = 3 * 60 * 1000;
 
+/**
+ * Anthropic returns this 400 when the session is parked in `requires_action`
+ * (e.g. an MCP tool fired with `permission_policy: always_ask`) and the worker
+ * tries to push a fresh `user.message`. We use it as a signal to fetch the
+ * pending tool details and surface an Approve/Deny card to the user instead.
+ */
+const AWAITING_TOOL_RESPONSES_PATTERN = /waiting on responses to events/i;
+const REQUIRES_ACTION_FINISH_REASON = 'requires-action';
+/**
+ * Card-button id prefix that the inbound action router uses to recognise
+ * MCP tool-approval clicks and route them back to the managed executor.
+ * Keep in sync with `agent-inbound-handler.service.ts`
+ * (`MCP_APPROVAL_ACTION_PREFIX`).
+ */
+const MCP_APPROVAL_ACTION_PREFIX = 'mcp-approval:';
+
 interface ResolvedRuntime {
   /** Streaming provider used to actually run the turn. */
   provider: Provider;
@@ -41,9 +57,16 @@ interface ResolvedRuntime {
    * `parseMcpInitFailure`) without coupling the worker to thalamus internals.
    */
   runtimeProvider: IAgentRuntimeProvider;
+  /**
+   * Vault IDs to bind to every session created on this turn. Anthropic's
+   * `beta.sessions.create` only exposes vault credentials to MCP servers when
+   * `vault_ids` is set; omitting it makes any OAuth-protected MCP fail
+   * initialise with "no credential is stored for this server URL".
+   */
+  vaultIds: string[];
 }
 
-/** Card shape sent to `/v1/agents/.../reply` to surface the Connect button. */
+/** Card shape sent to `/v1/agents/.../reply`. */
 type ChatCardReply = {
   type: 'card';
   children: Array<
@@ -51,9 +74,24 @@ type ChatCardReply = {
     | { type: 'divider' }
     | {
         type: 'actions';
-        children: Array<{ type: 'link-button'; label: string; url: string; style?: 'primary' | 'secondary' }>;
+        children: Array<CardLinkButton | CardActionButton>;
       }
   >;
+};
+
+type CardLinkButton = {
+  type: 'link-button';
+  label: string;
+  url: string;
+  style?: 'primary' | 'secondary';
+};
+
+type CardActionButton = {
+  type: 'button';
+  id: string;
+  label: string;
+  style?: 'primary' | 'danger' | 'default';
+  value?: string;
 };
 
 @Injectable()
@@ -75,7 +113,9 @@ export class ProcessManagedAgentTurn {
     const conversation = await this.loadConversation(command);
     const outcome = await this.runTurnOrFallback(runtime, conversation, command);
 
-    if (outcome.sessionId) {
+    if (outcome.clearSession) {
+      await this.conversationRepository.clearExternalSessionId(command.environmentId, command.conversationId);
+    } else if (outcome.sessionId) {
       await this.conversationRepository.setExternalSessionIdIfMissing(
         command.environmentId,
         command.conversationId,
@@ -83,7 +123,9 @@ export class ProcessManagedAgentTurn {
       );
     }
 
-    await this.deliverReply(command, outcome.reply);
+    if (!outcome.suppressReply) {
+      await this.deliverReply(command, outcome.reply);
+    }
   }
 
   /**
@@ -106,9 +148,64 @@ export class ProcessManagedAgentTurn {
     runtime: ResolvedRuntime,
     conversation: { _id: string; externalSessionId?: string | null },
     command: ProcessManagedAgentTurnCommand
-  ): Promise<{ reply: { markdown?: string; card?: ChatCardReply }; sessionId?: string | null }> {
+  ): Promise<{
+    reply: { markdown?: string; card?: ChatCardReply };
+    sessionId?: string | null;
+    clearSession?: boolean;
+    /**
+     * When true, `execute` skips the `/reply` call. Used on dead-end paths
+     * where there's no useful surface to show the user (e.g. a confirmation
+     * was processed and the agent has no follow-up content yet).
+     */
+    suppressReply?: boolean;
+  }> {
     try {
-      const response = await this.runTurn(runtime.provider, conversation, command);
+      const response = await this.runTurn(runtime, conversation, command);
+
+      // The runtime parked the session on a tool-confirmation event. Surface
+      // an Approve/Deny card to the user so they can decide — we keep the
+      // session id so the follow-up click resumes the same conversation.
+      if (response.finishReason === REQUIRES_ACTION_FINISH_REASON) {
+        const sessionId = response.sessionId ?? conversation.externalSessionId ?? undefined;
+        const approval = sessionId ? await this.tryFetchPendingApproval(runtime, sessionId) : null;
+
+        if (approval && sessionId) {
+          this.logger.info(
+            {
+              agentId: command.agentId,
+              sessionId,
+              toolUseId: approval.toolUseId,
+              toolName: approval.toolName,
+              mcpServerName: approval.mcpServerName,
+            },
+            'Surfacing MCP tool-approval card for managed-agent turn'
+          );
+
+          return {
+            reply: { card: this.buildToolApprovalCard(approval) },
+            sessionId,
+          };
+        }
+
+        this.logger.warn(
+          { agentId: command.agentId, sessionId },
+          'Agent turn finished in requires-action but no pending tool could be fetched; falling back to markdown'
+        );
+
+        return {
+          reply: { markdown: this.buildAwaitingApprovalMessage() },
+          sessionId,
+        };
+      }
+
+      // A tool-confirmation resume can complete without producing any agent
+      // text content (e.g. a denied call where the agent immediately invokes
+      // another tool that also needs approval). The next iteration of
+      // requires-action above re-surfaces an approval card — we don't want
+      // an empty markdown reply landing in the user's chat in the meantime.
+      if (command.toolConfirmation && (response.content ?? '').length === 0) {
+        return { reply: { markdown: '' }, sessionId: response.sessionId, suppressReply: true };
+      }
 
       return { reply: { markdown: response.content }, sessionId: response.sessionId };
     } catch (err) {
@@ -129,6 +226,42 @@ export class ProcessManagedAgentTurn {
         return { reply: { markdown: this.buildMcpAuthFallbackMessage(initFailure.mcpServerName) } };
       }
 
+      // 400 "waiting on responses to events" — the conversation's stored
+      // session has a pending tool approval from before this user message.
+      // Fetch the pending tool and re-surface the Approve/Deny card so the
+      // user can finally resolve it (their current message is dropped on the
+      // floor; the approval flow takes precedence).
+      if (this.isAwaitingToolResponsesError(err)) {
+        const sessionId = conversation.externalSessionId ?? undefined;
+        const approval = sessionId ? await this.tryFetchPendingApproval(runtime, sessionId) : null;
+
+        if (approval && sessionId) {
+          this.logger.warn(
+            {
+              agentId: command.agentId,
+              sessionId,
+              toolUseId: approval.toolUseId,
+            },
+            'Existing session is awaiting tool approval; re-surfacing approval card'
+          );
+
+          return {
+            reply: { card: this.buildToolApprovalCard(approval) },
+            sessionId,
+          };
+        }
+
+        this.logger.warn(
+          { agentId: command.agentId },
+          'Session is awaiting tool responses but no pending tool resolved; clearing session id'
+        );
+
+        return {
+          reply: { markdown: this.buildAwaitingApprovalMessage() },
+          clearSession: true,
+        };
+      }
+
       // MCP server initialisation failures are reported by the provider with a
       // generic `ThalamusError` that thalamus's mapSessionError flags as
       // `isRetryable: true`. They are NOT actually retryable — see
@@ -142,6 +275,80 @@ export class ProcessManagedAgentTurn {
 
       return { reply: { markdown: this.buildErrorMessage(err) } };
     }
+  }
+
+  private async tryFetchPendingApproval(runtime: ResolvedRuntime, sessionId: string) {
+    try {
+      return await runtime.runtimeProvider.getPendingToolApproval(sessionId);
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), sessionId },
+        'Failed to fetch pending tool approval from runtime provider'
+      );
+
+      return null;
+    }
+  }
+
+  private buildToolApprovalCard(approval: {
+    toolUseId: string;
+    toolName: string;
+    mcpServerName?: string;
+    input?: Record<string, unknown>;
+  }): ChatCardReply {
+    const source = approval.mcpServerName ? `${approval.mcpServerName} \u2022 ${approval.toolName}` : approval.toolName;
+    const inputPreview = this.previewToolInput(approval.input);
+    const lines = [
+      `The agent wants to run **${source}**. Approve to continue, or deny to stop.`,
+      ...(inputPreview ? ['', '```', inputPreview, '```'] : []),
+    ];
+
+    return {
+      type: 'card',
+      children: [
+        { type: 'text', content: lines.join('\n') },
+        { type: 'divider' },
+        {
+          type: 'actions',
+          children: [
+            {
+              type: 'button',
+              id: `${MCP_APPROVAL_ACTION_PREFIX}allow:${approval.toolUseId}`,
+              label: 'Approve',
+              style: 'primary',
+            },
+            {
+              type: 'button',
+              id: `${MCP_APPROVAL_ACTION_PREFIX}deny:${approval.toolUseId}`,
+              label: 'Deny',
+              style: 'danger',
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  private previewToolInput(input: Record<string, unknown> | undefined): string | null {
+    if (!input || Object.keys(input).length === 0) {
+      return null;
+    }
+
+    try {
+      const json = JSON.stringify(input, null, 2);
+
+      return json.length > 1500 ? `${json.slice(0, 1500)}\n...` : json;
+    } catch {
+      return null;
+    }
+  }
+
+  private isAwaitingToolResponsesError(err: unknown): boolean {
+    if (!(err instanceof ThalamusError)) {
+      return false;
+    }
+
+    return AWAITING_TOOL_RESPONSES_PATTERN.test(err.message ?? '');
   }
 
   /**
@@ -255,8 +462,10 @@ export class ProcessManagedAgentTurn {
       environmentId: creds.externalEnvironmentId as string,
     });
     const runtimeProvider = getAgentRuntimeProvider(providerId, creds.apiKey);
+    const externalVaultId = (creds as { externalVaultId?: string }).externalVaultId;
+    const vaultIds = externalVaultId ? [externalVaultId] : [];
 
-    return { provider, runtimeProvider };
+    return { provider, runtimeProvider, vaultIds };
   }
 
   private async loadConversation(command: ProcessManagedAgentTurnCommand) {
@@ -272,30 +481,64 @@ export class ProcessManagedAgentTurn {
   }
 
   private async runTurn(
-    provider: Provider,
+    runtime: ResolvedRuntime,
     conversation: { _id: string; externalSessionId?: string | null },
     command: ProcessManagedAgentTurnCommand
   ): Promise<ThalamusResponse> {
     const sessionId = conversation.externalSessionId ?? undefined;
 
+    // Resume path: a user click on the previously surfaced Approve/Deny card
+    // funnels here as a fresh job carrying `toolConfirmation`. We MUST reuse
+    // the same session (the tool_use_id is scoped to it) and we send a
+    // `user.tool_confirmation` event rather than a new `user.message`.
+    if (command.toolConfirmation) {
+      if (!sessionId) {
+        throw new Error(
+          `Cannot resume managed-agent turn with a tool confirmation: conversation ${command.conversationId} has no externalSessionId`
+        );
+      }
+
+      return this.streamWithToolConfirmation(runtime, sessionId, command.toolConfirmation);
+    }
+
     if (sessionId) {
-      return this.streamWithSessionRecovery(provider, sessionId, command);
+      return this.streamWithSessionRecovery(runtime, sessionId, command);
     }
 
     const messages = await this.buildMessagesWithHistory(command);
 
-    return this.streamWithTimeout(provider, messages, undefined);
+    return this.streamWithTimeout(runtime, messages, undefined);
+  }
+
+  private async streamWithToolConfirmation(
+    runtime: ResolvedRuntime,
+    sessionId: string,
+    confirmation: { toolUseId: string; approved: boolean; denyMessage?: string }
+  ): Promise<ThalamusResponse> {
+    const streamParams: Parameters<Provider['stream']>[0] = {
+      messages: [],
+      sessionId,
+      toolResults: [{ toolUseId: confirmation.toolUseId, approved: confirmation.approved }],
+    };
+    if (runtime.vaultIds.length > 0) {
+      streamParams.vaultIds = runtime.vaultIds;
+    }
+
+    return Promise.race([
+      runtime.provider.stream(streamParams),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Agent turn timed out')), MAX_TURN_MS)),
+    ]);
   }
 
   private async streamWithSessionRecovery(
-    provider: Provider,
+    runtime: ResolvedRuntime,
     sessionId: string,
     command: ProcessManagedAgentTurnCommand
   ): Promise<ThalamusResponse> {
     const messages = [{ role: MessageRole.USER, content: command.messageText }];
 
     try {
-      return await this.streamWithTimeout(provider, messages, sessionId);
+      return await this.streamWithTimeout(runtime, messages, sessionId);
     } catch (err) {
       if (!(err instanceof SessionExpiredError)) {
         throw err;
@@ -307,7 +550,7 @@ export class ProcessManagedAgentTurn {
 
     const messagesWithHistory = await this.buildMessagesWithHistory(command);
 
-    return this.streamWithTimeout(provider, messagesWithHistory, undefined);
+    return this.streamWithTimeout(runtime, messagesWithHistory, undefined);
   }
 
   private buildErrorMessage(err: unknown): string {
@@ -323,6 +566,10 @@ export class ProcessManagedAgentTurn {
 
   private buildMcpAuthFallbackMessage(mcpServerName: string): string {
     return `Agent error: "${mcpServerName}" isn't authorized yet. Connect it from the agent's MCP settings and try again.`;
+  }
+
+  private buildAwaitingApprovalMessage(): string {
+    return "The agent tried to use a tool that requires manual approval, which isn't supported in this chat. Ask an administrator to update the agent's tool permissions to allow this tool automatically.";
   }
 
   private async buildMessagesWithHistory(command: ProcessManagedAgentTurnCommand): Promise<Message[]> {
@@ -348,12 +595,20 @@ export class ProcessManagedAgentTurn {
    * rather than just ignored.
    */
   private async streamWithTimeout(
-    provider: Provider,
+    runtime: ResolvedRuntime,
     messages: Message[],
     sessionId: string | undefined
   ): Promise<ThalamusResponse> {
+    const streamParams: { messages: Message[]; sessionId: string | undefined; vaultIds?: string[] } = {
+      messages,
+      sessionId,
+    };
+    if (runtime.vaultIds.length > 0) {
+      streamParams.vaultIds = runtime.vaultIds;
+    }
+
     return Promise.race([
-      provider.stream({ messages, sessionId }),
+      runtime.provider.stream(streamParams),
       new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Agent turn timed out')), MAX_TURN_MS)),
     ]);
   }

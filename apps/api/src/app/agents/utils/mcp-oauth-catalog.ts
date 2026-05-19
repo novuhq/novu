@@ -46,6 +46,7 @@ export type NovuOAuthCatalogEntry = Extract<McpOAuthCatalogEntry, { mode: 'novu'
  */
 const MCP_OAUTH_CATALOG: Record<string, McpOAuthCatalogEntry> = {
   sentry: { mode: 'novu' },
+  linear: { mode: 'novu' },
 };
 
 export function getMcpOAuthCatalogEntry(mcpId: string): McpOAuthCatalogEntry {

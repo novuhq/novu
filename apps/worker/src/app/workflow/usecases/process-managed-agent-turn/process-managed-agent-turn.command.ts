@@ -1,5 +1,20 @@
-import { EnvironmentCommand } from '@novu/application-generic';
-import { IsDefined, IsOptional, IsString } from 'class-validator';
+import { EnvironmentCommand, type IManagedAgentToolConfirmation } from '@novu/application-generic';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsDefined, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
+
+class ToolConfirmationCommand implements IManagedAgentToolConfirmation {
+  @IsDefined()
+  @IsString()
+  toolUseId: string;
+
+  @IsDefined()
+  @IsBoolean()
+  approved: boolean;
+
+  @IsOptional()
+  @IsString()
+  denyMessage?: string;
+}
 
 export class ProcessManagedAgentTurnCommand extends EnvironmentCommand {
   @IsDefined()
@@ -37,4 +52,10 @@ export class ProcessManagedAgentTurnCommand extends EnvironmentCommand {
   @IsDefined()
   @IsString()
   platformThreadId: string;
+
+  @IsOptional()
+  @IsObject()
+  @ValidateNested()
+  @Type(() => ToolConfirmationCommand)
+  toolConfirmation?: ToolConfirmationCommand;
 }
