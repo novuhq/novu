@@ -17,7 +17,7 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateDomain } from '@/hooks/use-domains';
-import { isApexInboundDomain } from '@/utils/inbound-domain';
+import { DOMAIN_NAME_PATTERN, isApexInboundDomain } from '@/utils/inbound-domain';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 type AddDomainFormData = {
@@ -94,7 +94,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
               rules={{
                 required: 'Domain name is required',
                 pattern: {
-                  value: /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i,
+                  value: DOMAIN_NAME_PATTERN,
                   message: 'Enter a valid domain name (e.g. example.com)',
                 },
               }}
