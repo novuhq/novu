@@ -301,34 +301,28 @@ export class ChatSdkService implements OnModuleDestroy {
     agentId: string,
     integrationIdentifier: string,
     platform: string,
-    serializedThread: Record<string, unknown>,
+    platformThreadId: string,
     content: ReplyContentDto
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const { ThreadImpl } = await esmImport('chat');
-    const adapter = chat.getAdapter(platform);
-    const thread = ThreadImpl.fromJSON(serializedThread, adapter);
-    // chat@4.28.x reconstructs threads via `ThreadImpl.fromJSON` with only an
-    // adapter; the state adapter is resolved lazily via `Chat.getSingleton()`
-    // (e.g. when posting cards needs `processCardCallbackUrls`). We run many
-    // Chat instances per process (one per agent), so registering one as the
-    // global singleton would leak state across agents. Wire this thread's
-    // state adapter directly so card/postable replies don't trip the
-    // "No Chat singleton registered" check.
-    (thread as unknown as { _stateAdapterInstance: unknown })._stateAdapterInstance = chat.getState();
+    // `chat.thread()` (chat@4.27+) infers the adapter from the threadId prefix and
+    // returns a Thread already wired to this Chat instance's state adapter, so we
+    // avoid rehydrating from a serialized blob and don't trip the "No Chat singleton
+    // registered" check that `ThreadImpl.fromJSON` hits for card/postable replies.
+    const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.prepareContentForDelivery(content, platform, agentId);
 
-    let postPromise: Promise<{ id: string; threadId: string }>;
-    if (deliveryContent.card) {
-      postPromise = thread.post(deliveryContent.card);
-    } else {
-      postPromise = thread.post({ markdown: deliveryContent.markdown ?? '', files: deliveryContent.files });
-    }
+    const postArg = deliveryContent.card
+      ? (deliveryContent.card as unknown as AdapterPostableMessage)
+      : ({
+          markdown: deliveryContent.markdown ?? '',
+          files: deliveryContent.files,
+        } as unknown as AdapterPostableMessage);
 
-    const sent = await postPromise.catch(toDeliveryError);
+    const sent = await thread.post(postArg).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
@@ -361,8 +355,8 @@ export class ChatSdkService implements OnModuleDestroy {
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
     // DM threads opened via openDM() may not have a currentMessage, so toJSON()
-    // can fail. Build a minimal serialized thread that ThreadImpl.fromJSON() can
-    // reconstruct for later replies.
+    // can fail. Build a minimal serialized snapshot for persistence; the post
+    // path uses `chat.thread(platformThreadId)` and does not consume this blob.
     const serializedThread: Record<string, unknown> = {
       id: platformThreadId,
       channelId: dmThread.channelId,

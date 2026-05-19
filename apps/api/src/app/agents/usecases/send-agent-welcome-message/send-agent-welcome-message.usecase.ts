@@ -179,9 +179,6 @@ export class SendAgentWelcomeMessage {
     }
 
     const channel = this.conversationService.getPrimaryChannel(conversation);
-    if (!channel.serializedThread) {
-      return { sent: false };
-    }
 
     const agent = await this.agentRepository.findOne(
       {
@@ -202,7 +199,7 @@ export class SendAgentWelcomeMessage {
         agent._id,
         command.integrationIdentifier,
         channel.platform,
-        channel.serializedThread,
+        channel.platformThreadId,
         { markdown: text }
       );
 
