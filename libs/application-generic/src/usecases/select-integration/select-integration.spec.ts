@@ -184,7 +184,7 @@ describe('select integration', () => {
     const userId = 'userId';
     const identifier = 'prod-integration-identifier';
 
-    findOneMock.mockImplementation(() => null);
+    findOneMock.mockImplementationOnce(() => null);
 
     const integration = await useCase.execute(
       SelectIntegrationCommand.create({
@@ -217,7 +217,7 @@ describe('select integration', () => {
     const userId = 'userId';
     const identifier = 'dev-integration-identifier';
 
-    findOneMock.mockImplementation(() => ({
+    findOneMock.mockImplementationOnce(() => ({
       ...testIntegration,
       _environmentId: environmentId,
       identifier,
