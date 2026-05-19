@@ -322,6 +322,7 @@ export function IntegrationCredentialsSidebar({
   onSaveSuccess,
   agentOnboarding,
   agentIdentifier,
+  testSubscriberId,
   submitLabel,
 }: {
   integrationId: string;
@@ -335,6 +336,8 @@ export function IntegrationCredentialsSidebar({
    * (e.g. the Telegram mobile setup QR code) inside the modal.
    */
   agentIdentifier?: string;
+  /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
+  testSubscriberId?: string | null;
   submitLabel?: string;
 }) {
   const { integrations } = useFetchIntegrations();
@@ -404,6 +407,7 @@ export function IntegrationCredentialsSidebar({
           mode="update"
           agentOnboarding={agentOnboarding}
           agentIdentifier={agentIdentifier}
+          testSubscriberId={testSubscriberId}
           onFormStateChange={setFormState}
         />
       </div>

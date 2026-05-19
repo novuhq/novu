@@ -53,6 +53,7 @@ import {
 } from './dtos';
 import { ConfigureTelegramWebhookResponseDto } from './dtos/configure-telegram-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
+import { IssueTelegramMobileLinkRequestDto } from './dtos/issue-telegram-mobile-link-request.dto';
 import { IssueTelegramMobileLinkResponseDto } from './dtos/issue-telegram-mobile-link-response.dto';
 import { IssueTelegramSubscriberLinkRequestDto } from './dtos/issue-telegram-subscriber-link-request.dto';
 import { IssueTelegramSubscriberLinkResponseDto } from './dtos/issue-telegram-subscriber-link-response.dto';
@@ -167,7 +168,6 @@ export class AgentsController {
         active: body.active,
         runtime: body.runtime,
         managedRuntime: body.managedRuntime,
-        creationSource: body.creationSource,
       })
     );
   }
@@ -497,7 +497,8 @@ export class AgentsController {
   createTelegramMobileLink(
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
-    @Param('integrationId') integrationId: string
+    @Param('integrationId') integrationId: string,
+    @Body() body?: IssueTelegramMobileLinkRequestDto
   ): Promise<IssueTelegramMobileLinkResponseDto> {
     return this.issueTelegramMobileLinkUsecase.execute(
       IssueTelegramMobileLinkCommand.create({
@@ -506,6 +507,7 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationId,
+        subscriberId: body?.subscriberId,
       })
     );
   }

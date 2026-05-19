@@ -9,21 +9,21 @@ import {
   EnvironmentRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ENDPOINT_TYPES } from '@novu/shared';
 import type { AgentAction } from '@novu/framework';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
-import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
+import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
-import { TelegramStartCodeService } from './telegram-start-code.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 import { ManagedExecutorService } from './managed-executor.service';
+import { TelegramStartCodeService } from './telegram-start-code.service';
 
 /**
  * `/start <payload>` is Telegram's deep-link mechanism. Telegram delivers it as
@@ -547,6 +547,8 @@ export class AgentInboundHandler {
     const conversation = await this.conversationService.findByPlatformThread(
       config.environmentId,
       config.organizationId,
+      config.agentId,
+      config.integrationId,
       threadId
     );
 

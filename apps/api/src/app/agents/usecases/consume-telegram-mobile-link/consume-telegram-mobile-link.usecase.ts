@@ -15,12 +15,15 @@ import {
 } from '../../services/telegram-mobile-link-token.service';
 import { ConfigureTelegramAgentWebhookCommand } from '../configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
 import { ConfigureTelegramAgentWebhook } from '../configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
+import { IssueTelegramSubscriberLinkCommand } from '../issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
+import { IssueTelegramSubscriberLink } from '../issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { ConsumeTelegramMobileLinkCommand } from './consume-telegram-mobile-link.command';
 
 export interface ConsumeTelegramMobileLinkResult {
   success: true;
   botUsername: string;
   webhookUrl: string;
+  deepLinkUrl?: string;
 }
 
 @Injectable()
@@ -29,6 +32,7 @@ export class ConsumeTelegramMobileLink {
     private readonly tokenService: TelegramMobileLinkTokenService,
     private readonly integrationRepository: IntegrationRepository,
     private readonly configureTelegramWebhookUsecase: ConfigureTelegramAgentWebhook,
+    private readonly issueTelegramSubscriberLink: IssueTelegramSubscriberLink,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -83,16 +87,37 @@ export class ConsumeTelegramMobileLink {
         })
       );
 
+      let deepLinkUrl: string | undefined;
+
+      if (payload.sid) {
+        try {
+          const subscriberLink = await this.issueTelegramSubscriberLink.execute(
+            IssueTelegramSubscriberLinkCommand.create({
+              userId: 'telegram-mobile-link',
+              environmentId: payload.env,
+              organizationId: payload.org,
+              agentIdentifier: payload.aid,
+              integrationId: integration._id,
+              subscriberId: payload.sid,
+            })
+          );
+          deepLinkUrl = subscriberLink.deepLinkUrl;
+        } catch (err) {
+          this.logger.warn(
+            `Telegram subscriber-link issue failed for integrationId=${integration._id}, subscriberId=${payload.sid}: ${(err as Error).message}`
+          );
+        }
+      }
+
       return {
         success: true,
         botUsername: result.botUsername,
         webhookUrl: result.webhookUrl,
+        deepLinkUrl,
       };
     } catch (err) {
       await this.tokenService.releaseJti(payload.jti);
-      this.logger.warn(
-        `Telegram mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`
-      );
+      this.logger.warn(`Telegram mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`);
       throw err;
     }
   }
