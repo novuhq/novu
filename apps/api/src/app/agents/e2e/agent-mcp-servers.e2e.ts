@@ -2,7 +2,6 @@ import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main
 import * as SsrfModule from '@novu/application-generic/build/main/utils/ssrf-url-validation';
 import {
   AgentMcpServerRepository,
-  AgentRepository,
   IntegrationRepository,
   McpConnectionRepository,
   SubscriberRepository,
@@ -22,7 +21,6 @@ const FAKE_API_KEY = 'sk-fake-anthropic-key-for-e2e';
 const FAKE_EXTERNAL_AGENT_ID = 'ext-agent-mcp-e2e-123';
 const FAKE_EXTERNAL_ENV_ID = 'env_01XJ5McpFakeEnvE2E';
 
-const agentRepository = new AgentRepository();
 const integrationRepository = new IntegrationRepository();
 const agentMcpServerRepository = new AgentMcpServerRepository();
 const mcpConnectionRepository = new McpConnectionRepository();
@@ -116,7 +114,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     });
 
     expect(res.status, `createAgentRuntimeIntegration failed: ${JSON.stringify(res.body)}`).to.equal(201);
-    const integrationId: string = res.body._id ?? res.body.data?._id ?? res.body.data?.id;
+    const integrationId: string | undefined = res.body._id ?? res.body.data?._id ?? res.body.data?.id;
+    if (typeof integrationId !== 'string' || !integrationId) {
+      throw new Error(`createAgentRuntimeIntegration response missing _id: ${JSON.stringify(res.body)}`);
+    }
     createdIntegrationIds.push(integrationId);
 
     return integrationId;
@@ -338,7 +339,6 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     const SENTRY_AS_ISSUER = 'https://auth.sentry.dev';
     const SENTRY_AUTHORIZE_URL = 'https://auth.sentry.dev/authorize';
     const SENTRY_TOKEN_URL = 'https://auth.sentry.dev/token';
-    const SENTRY_REGISTRATION_URL = 'https://auth.sentry.dev/register';
 
     let safeRawStub: sinon.SinonStub;
     let safeJsonStub: sinon.SinonStub;
@@ -512,8 +512,11 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(secondClientId).to.equal('dcr-client-1');
       // No extra HTTP discovery or registration calls on the reuse path.
       expect(safeJsonStub.callCount, 'no new HTTP calls expected on reuse').to.equal(0);
-      // Sanity: first call did all three discovery+register HTTP roundtrips.
-      expect(callCountAfterFirst).to.equal(3);
+      // Sanity: the first call performed outbound discovery/registration work.
+      // Allowing >0 (rather than == 3) keeps the test cache-safe: this suite
+      // shares the singleton in-memory PRM/AS-metadata LRU, so a sibling
+      // describe can prime the cache and cut the cold-start roundtrips.
+      expect(callCountAfterFirst).to.be.greaterThan(0);
     });
 
     // NOTE: issuer-rotation (re-registration on rotated issuer) is exercised

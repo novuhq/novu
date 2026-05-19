@@ -518,13 +518,14 @@ function CatalogPanel({
 }) {
   const popular = useMemo(() => MCP_SERVERS.filter((mcp: McpServer) => mcp.popular), []);
   const others = useMemo(() => MCP_SERVERS.filter((mcp: McpServer) => !mcp.popular), []);
+  const novuOAuthMcpCount = useMemo(() => MCP_SERVERS.filter((mcp: McpServer) => mcp.oauthMode === 'novu').length, []);
 
   return (
     <div className="flex h-full flex-col overflow-hidden border-r">
       <div className="border-b px-4 py-3 shrink-0">
         <h2 className="text-sm font-semibold">Catalog</h2>
         <p className="text-xs text-muted-foreground">
-          {MCP_SERVERS.length} MCPs · only `slack` has Novu-managed OAuth wired today
+          {MCP_SERVERS.length} MCPs · {novuOAuthMcpCount} with Novu-managed OAuth wired
         </p>
       </div>
       {actionError ? (
@@ -604,7 +605,7 @@ function CatalogRow({
         <div className="flex items-center gap-2">
           <span className="font-medium text-xs">{mcp.name}</span>
           <code className="text-[10px] text-muted-foreground">{mcp.id}</code>
-          {mcp.id === 'slack' ? (
+          {mcp.oauthMode === 'novu' ? (
             <Badge variant="secondary" className="text-[10px] py-0">
               OAuth wired
             </Badge>
@@ -853,7 +854,10 @@ function OAuthPanel({
       const { authorizeUrl } = await generateMcpOAuthUrl(credentials, agentIdentifier, enablement.mcpId, {
         subscriberId: subscriberId.trim(),
       });
-      const popup = window.open(authorizeUrl, 'novu-mcp-oauth', 'noopener=no,width=520,height=720,scrollbars=yes');
+      // Intentionally omit `noopener`: the same-origin OAuth result page calls
+      // `window.opener.postMessage(...)` to deliver the outcome, which requires
+      // opener access.
+      const popup = window.open(authorizeUrl, 'novu-mcp-oauth', 'width=520,height=720,scrollbars=yes');
       if (!popup) {
         setAuthorizeError('Browser blocked the popup. Allow popups for this site and retry.');
 
@@ -915,7 +919,7 @@ function OAuthPanel({
             <AlertTitle className="text-xs">No Novu-managed OAuth</AlertTitle>
             <AlertDescription className="text-xs">
               This MCP is registered with auth mode <code>{enablement.defaultAuthMode}</code>. The Authorize button is
-              only wired for <code>novu</code> mode (Slack today).
+              only wired for <code>novu</code> mode.
             </AlertDescription>
           </Alert>
         ) : null}

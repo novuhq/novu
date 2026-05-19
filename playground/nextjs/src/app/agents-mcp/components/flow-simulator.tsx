@@ -268,7 +268,11 @@ export function FlowSimulator({
       }
       if (isCanceled()) return;
 
-      const popup = window.open(authorizeUrl, 'novu-mcp-oauth-flow', 'noopener=no,width=520,height=720,scrollbars=yes');
+      // Intentionally omit `noopener`: the same-origin OAuth result page calls
+      // `window.opener.postMessage(...)` to deliver the outcome, which requires
+      // opener access. The `noopener=no` form is ambiguous across browsers — an
+      // omitted feature is the unambiguous "opener access allowed" signal.
+      const popup = window.open(authorizeUrl, 'novu-mcp-oauth-flow', 'width=520,height=720,scrollbars=yes');
       if (!popup) {
         failAt('Browser blocked the OAuth popup. Allow popups for this origin and re-run the simulation.', 'novu-dcr');
 
@@ -280,13 +284,9 @@ export function FlowSimulator({
 
       // ── Wait for postMessage from oauth/result page (or popup close) ─────
       const oauthOutcome = await new Promise<{ status: 'connected' | 'error'; reason?: string }>((resolve) => {
-        oauthResolverRef.current = (status, reason) => {
-          oauthResolverRef.current = null;
-          resolve({ status, reason });
-        };
-
         // Defensive: if the user closes the popup without completing OAuth,
-        // detect via polling and treat as an error.
+        // detect via polling and treat as an error. Cleared in every resolver
+        // path (postMessage, popup-closed, cancel) to avoid a leaked timer.
         const interval = setInterval(() => {
           if (isCanceled()) {
             clearInterval(interval);
@@ -302,6 +302,12 @@ export function FlowSimulator({
             }
           }
         }, 600);
+
+        oauthResolverRef.current = (status, reason) => {
+          clearInterval(interval);
+          oauthResolverRef.current = null;
+          resolve({ status, reason });
+        };
       });
 
       if (isCanceled()) return;
