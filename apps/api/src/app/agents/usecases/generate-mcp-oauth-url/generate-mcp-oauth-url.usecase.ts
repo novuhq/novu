@@ -111,7 +111,13 @@ export class GenerateMcpOAuthUrl {
 
     const { asMetadata, prm } = await this.resolveAuthorizationServer(catalog.url, command.mcpId);
     const scopes = this.selectScopes(prm);
-    const resource = catalog.url;
+    // RFC 8707 §2 — the `resource` indicator MUST be the canonical resource
+    // URI advertised by the protected resource. PRM exposes that explicitly
+    // (`prm.resource`); we fall back to the catalog URL only when discovery
+    // produced no resource value, otherwise the resource bound into the
+    // authorize+token requests would silently disagree with what the
+    // authorization server expects.
+    const resource = prm.resource ?? catalog.url;
 
     const existing = await this.mcpConnectionRepository.findSubscriberConnection({
       organizationId: command.organizationId,

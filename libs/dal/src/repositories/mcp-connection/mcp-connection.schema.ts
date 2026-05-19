@@ -33,31 +33,38 @@ const authSchema = new Schema(
   { _id: false }
 );
 
-const oauthStateSchema = new Schema(
-  {
-    pkceVerifier: {
-      type: Schema.Types.String,
-      required: false,
-    },
-    initiatedAt: {
-      type: Schema.Types.Date,
-      required: true,
-    },
-    expectedRedirectAt: {
-      type: Schema.Types.Date,
-      required: false,
-    },
-    expectedIssuer: {
-      type: Schema.Types.String,
-      required: false,
-    },
-    resource: {
-      type: Schema.Types.String,
-      required: false,
-    },
+const oauthStateSchema = new Schema({
+  pkceVerifier: {
+    type: Schema.Types.String,
+    required: false,
   },
-  { _id: false }
-);
+  initiatedAt: {
+    type: Schema.Types.Date,
+    required: true,
+  },
+  expectedRedirectAt: {
+    type: Schema.Types.Date,
+    required: false,
+  },
+  expectedIssuer: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  resource: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  /**
+   * One-shot OAuth callback claim. The callback usecase sets this in the
+   * same `findOneAndUpdate` that gates token exchange, then filters on
+   * its absence so concurrent callbacks for the same signed state can't
+   * both reach the token endpoint. See `mcp-oauth-callback.usecase.ts`.
+   */
+  callbackClaimedAt: {
+    type: Schema.Types.Date,
+    required: false,
+  },
+});
 
 const oauthClientSchema = new Schema(
   {

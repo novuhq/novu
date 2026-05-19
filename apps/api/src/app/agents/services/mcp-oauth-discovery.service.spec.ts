@@ -76,6 +76,14 @@ describe('McpOAuthDiscoveryService', () => {
       expect(result.resourceMetadataUrl).to.equal('https://x/y');
       expect(result.challengeScopes).to.deep.equal(['a']);
     });
+
+    it('finds the Bearer challenge when another scheme is listed first', () => {
+      const result = parseWwwAuthenticateHeader(
+        'Basic realm="x", Bearer resource_metadata="https://mcp.example.com/.well-known/oauth-protected-resource", scope="read"'
+      );
+      expect(result.resourceMetadataUrl).to.equal('https://mcp.example.com/.well-known/oauth-protected-resource');
+      expect(result.challengeScopes).to.deep.equal(['read']);
+    });
   });
 
   describe('discoverProtectedResource', () => {

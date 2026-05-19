@@ -359,22 +359,26 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const client = this.buildClient();
 
     try {
-      // Walk the session event log newest-first looking for an MCP or builtin
-      // tool_use event whose evaluated_permission is "ask" — that's what
-      // parks the session in `requires_action`. Stop as soon as we find one
-      // result (or any `user.tool_confirmation`, which means a later
-      // approval already cleared the pending request).
+      // Walk the session event log oldest-first looking for an MCP or
+      // builtin tool_use event whose evaluated_permission is "ask" — that's
+      // what parks the session in `requires_action`. The provider contract
+      // asks for the SINGLE OLDEST PENDING ask, so we must scan ascending
+      // and pick the first match (a descending walk would surface the
+      // newest unresolved ask instead). The `user.tool_confirmation`
+      // sentinel still short-circuits — if we encounter a confirmation
+      // event before any later ask, that confirmation already resolved a
+      // prior pending request and there's nothing left to ask the user.
       const iterator = (client as any).beta.sessions.events.list(sessionId, {
-        order: 'desc',
+        order: 'asc',
         types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
       });
 
       for await (const event of iterator) {
         if (event?.type === 'user.tool_confirmation') {
-          // Any confirmation event we hit before the open ask was already
-          // resolved upstream — stop searching to avoid surfacing a stale
-          // approval.
-          return null;
+          // A confirmation event encountered during an ascending walk
+          // resolves the most-recent prior ask — continue scanning so a
+          // later still-open ask can be surfaced.
+          continue;
         }
 
         if (event?.evaluated_permission !== 'ask') {

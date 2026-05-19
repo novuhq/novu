@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AgentMcpServerRepository, AgentRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
+import { McpConnectionStatusEnum } from '@novu/shared';
 
 import { ParkManagedAgentTurnCommand } from './park-managed-agent-turn.command';
 
@@ -66,6 +67,17 @@ export class ParkManagedAgentTurn {
     if (!connection) {
       throw new NotFoundException(
         `No OAuth connection in progress for subscriber "${command.subscriberId}" on MCP "${command.mcpId}". Call /oauth/url first.`
+      );
+    }
+
+    // Only `pending_oauth` rows are eligible for parking — attaching a
+    // pendingTurn to a connection that is already `connected` / `error` /
+    // anything else would leave the job dangling because the OAuth callback
+    // (which is the only path that drains `pendingTurn`) will never fire
+    // again for that row.
+    if (connection.status !== McpConnectionStatusEnum.PendingOAuth) {
+      throw new ConflictException(
+        `MCP connection for subscriber "${command.subscriberId}" on "${command.mcpId}" is not awaiting OAuth (status: ${connection.status}). Call /oauth/url to start a new authorisation before parking a turn.`
       );
     }
 

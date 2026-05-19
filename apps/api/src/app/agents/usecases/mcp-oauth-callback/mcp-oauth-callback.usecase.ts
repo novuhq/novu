@@ -11,6 +11,8 @@ import {
   type IAgentRuntimeProvider,
   type IManagedAgentJobData,
   PinoLogger,
+  SsrfBlockedError,
+  safeOutboundJsonRequest,
   splitOAuthState,
 } from '@novu/application-generic';
 import {
@@ -23,7 +25,6 @@ import {
   McpConnectionRepository,
 } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
-import axios, { type AxiosError } from 'axios';
 
 import { McpOAuthDiscoveryService } from '../../services/mcp-oauth-discovery.service';
 import { getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
@@ -117,9 +118,14 @@ export class McpOAuthCallback {
       throw new BadRequestException('OAuth state agent does not match enablement record.');
     }
 
-    // Claim the pending row before talking to the OAuth provider. If the
-    // row is missing or already moved past pending_oauth, this is a replay
-    // attempt; bail out without exchanging the code.
+    // Atomically claim the pending row before talking to the OAuth provider.
+    // The filter requires `oauthState.callbackClaimedAt` to be ABSENT and the
+    // update sets it to `now()`, so MongoDB only matches the row for the
+    // first arriving callback; concurrent callbacks for the same signed
+    // state see no match and bail out below. This closes the race where two
+    // requests could both pass a non-mutating gate and each exchange the
+    // authorization code (RFC 6749 §4.1.2 forbids reusing the code).
+    const callbackClaimedAt = new Date();
     const claimed = await this.mcpConnectionRepository.findOneAndUpdate(
       {
         _environmentId: stateData.environmentId,
@@ -128,9 +134,10 @@ export class McpOAuthCallback {
         _subscriberId: stateData.subscriberId,
         scope: stateData.scope,
         status: McpConnectionStatusEnum.PendingOAuth,
+        'oauthState.callbackClaimedAt': { $exists: false },
       },
       {
-        $set: { status: McpConnectionStatusEnum.PendingOAuth },
+        $set: { 'oauthState.callbackClaimedAt': callbackClaimedAt },
         $unset: { lastError: 1 },
       },
       { new: true }
@@ -138,7 +145,7 @@ export class McpOAuthCallback {
 
     if (!claimed) {
       throw new BadRequestException(
-        'OAuth callback rejected: connection is not awaiting authorisation. Restart the flow.'
+        'OAuth callback rejected: connection is not awaiting authorisation, or has already been claimed by a concurrent callback. Restart the flow.'
       );
     }
 
@@ -566,42 +573,96 @@ export class McpOAuthCallback {
     }
 
     try {
-      const response = await axios.post<TokenResponse>(oauthClient.tokenEndpoint, params, {
+      // The token endpoint URL comes from AS metadata that was discovered at
+      // authorize-URL time. Even though we re-validated the issuer above, the
+      // metadata document is still upstream-controlled, so we MUST route the
+      // POST through the SSRF-safe client to ensure the URL is re-checked on
+      // every hop (no private-IP rebinding between discovery and token
+      // exchange). The body is a plain `application/x-www-form-urlencoded`
+      // payload — `safeOutboundJsonRequest` parses the response as JSON,
+      // which is the only token-endpoint content-type we ever care about.
+      const response = await safeOutboundJsonRequest<unknown>({
+        url: oauthClient.tokenEndpoint,
+        method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          Accept: 'application/json',
+          accept: 'application/json',
         },
-        validateStatus: (status) => status >= 200 && status < 300,
-        timeout: 10_000,
+        body: params.toString(),
+        timeoutMs: 10_000,
       });
 
-      return response.data;
-    } catch (err) {
-      // Critical: NEVER let the AxiosError propagate. It carries the
-      // request body (with `client_secret`) in `err.config.data`, and
-      // global error filters / Sentry will serialize it. We log a tiny
-      // sanitized record server-side and throw a clean BadRequestException.
-      const status = isAxiosError(err) ? err.response?.status : undefined;
-      const providerError = isAxiosError(err) ? extractProviderErrorCode(err) : undefined;
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        const providerError = pickProviderErrorCode(response.body);
+        this.logger.warn(
+          {
+            tokenEndpoint: oauthClient.tokenEndpoint,
+            status: response.statusCode,
+            providerError,
+          },
+          'MCP OAuth token exchange returned non-2xx'
+        );
 
+        await this.markConnectionError(
+          stateData,
+          'mcp_token_exchange_failed',
+          providerError ? `Token exchange failed: ${providerError}` : 'Token exchange failed.'
+        );
+
+        throw new BadRequestException(
+          providerError ? `OAuth token exchange failed: ${providerError}` : 'OAuth token exchange failed.'
+        );
+      }
+
+      const parsed = parseTokenResponseBody(response.body);
+      if (!parsed) {
+        // 2xx with malformed body — never let it propagate to encryption /
+        // update so we can't persist a broken connection. Funnels into the
+        // same sanitized error path used for non-2xx responses.
+        this.logger.warn(
+          { tokenEndpoint: oauthClient.tokenEndpoint, status: response.statusCode },
+          'MCP OAuth token exchange returned a malformed 2xx body'
+        );
+
+        await this.markConnectionError(
+          stateData,
+          'mcp_token_exchange_failed',
+          'Token exchange returned a malformed response.'
+        );
+
+        throw new BadRequestException('OAuth token exchange returned a malformed response.');
+      }
+
+      return parsed;
+    } catch (err) {
+      if (err instanceof BadRequestException) {
+        throw err;
+      }
+
+      if (err instanceof SsrfBlockedError) {
+        this.logger.warn(
+          { tokenEndpoint: oauthClient.tokenEndpoint, reason: err.reason },
+          'MCP OAuth token exchange blocked by SSRF policy'
+        );
+
+        await this.markConnectionError(
+          stateData,
+          'mcp_token_exchange_failed',
+          'Token endpoint resolves to a non-routable address.'
+        );
+
+        throw new BadRequestException('OAuth token endpoint is not reachable.');
+      }
+
+      const message = err instanceof Error ? err.message : 'unknown error';
       this.logger.warn(
-        {
-          tokenEndpoint: oauthClient.tokenEndpoint,
-          status,
-          providerError,
-        },
+        { tokenEndpoint: oauthClient.tokenEndpoint, errorMessage: message },
         'MCP OAuth token exchange failed'
       );
 
-      await this.markConnectionError(
-        stateData,
-        'mcp_token_exchange_failed',
-        providerError ? `Token exchange failed: ${providerError}` : 'Token exchange failed.'
-      );
+      await this.markConnectionError(stateData, 'mcp_token_exchange_failed', 'Token exchange failed.');
 
-      throw new BadRequestException(
-        providerError ? `OAuth token exchange failed: ${providerError}` : 'OAuth token exchange failed.'
-      );
+      throw new BadRequestException('OAuth token exchange failed.');
     }
   }
 
@@ -660,23 +721,47 @@ function sanitizeErrorMessage(message: string): string {
   return message.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, MAX_ERROR_MESSAGE_LEN);
 }
 
-function isAxiosError(err: unknown): err is AxiosError {
-  return Boolean(err) && typeof err === 'object' && (err as AxiosError).isAxiosError === true;
-}
-
-function extractProviderErrorCode(err: AxiosError): string | undefined {
-  const data = err.response?.data as { error?: string; error_description?: string; message?: string } | undefined;
-  if (!data) return undefined;
+function pickProviderErrorCode(body: unknown): string | undefined {
+  if (!body || typeof body !== 'object') return undefined;
+  const data = body as { error?: unknown; message?: unknown };
 
   // OAuth 2 standard: `error` is a short token (e.g. "invalid_grant").
   // Accept `message` as a generic fallback. Never log/return the full
   // body — it may contain access tokens.
-  if (typeof data.error === 'string' && data.error.length <= 64) {
+  if (typeof data.error === 'string' && data.error.length > 0 && data.error.length <= 64) {
     return data.error;
   }
-  if (typeof data.message === 'string' && data.message.length <= 64) {
+  if (typeof data.message === 'string' && data.message.length > 0 && data.message.length <= 64) {
     return data.message;
   }
 
   return undefined;
+}
+
+/**
+ * Validate the upstream token response shape before we hand it to encryption
+ * + persistence. RFC 6749 §5.1 requires `access_token` and `token_type`;
+ * `expires_in` / `refresh_token` / `scope` are optional but typed when
+ * present. A response that does not match is treated as a token-exchange
+ * failure rather than silently writing a broken `mcp_connection` row.
+ */
+function parseTokenResponseBody(body: unknown): TokenResponse | null {
+  if (!body || typeof body !== 'object') return null;
+  const data = body as Record<string, unknown>;
+
+  if (typeof data.access_token !== 'string' || data.access_token.length === 0) return null;
+
+  const refreshToken = typeof data.refresh_token === 'string' ? data.refresh_token : undefined;
+  const expiresIn =
+    typeof data.expires_in === 'number' && Number.isFinite(data.expires_in) ? data.expires_in : undefined;
+  const tokenType = typeof data.token_type === 'string' ? data.token_type : undefined;
+  const scope = typeof data.scope === 'string' ? data.scope : undefined;
+
+  return {
+    access_token: data.access_token,
+    refresh_token: refreshToken,
+    expires_in: expiresIn,
+    token_type: tokenType,
+    scope,
+  };
 }

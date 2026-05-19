@@ -327,7 +327,13 @@ export class McpOAuthDiscoveryService {
       return {};
     }
 
-    const wwwAuth = headerValue(response.headers['www-authenticate']);
+    // A single `WWW-Authenticate` response can carry multiple challenges (RFC
+    // 7235 §4.1) — e.g. `Basic realm="…", Bearer resource_metadata="…"`. Some
+    // servers also emit the header more than once. `headerValue()` collapses
+    // either shape to just the first entry, which would drop the Bearer
+    // hint whenever it isn't first. Join everything into one string so the
+    // Bearer-aware parser can locate it regardless of ordering.
+    const wwwAuth = joinHeaderValues(response.headers['www-authenticate']);
 
     return parseWwwAuthenticateHeader(wwwAuth);
   }
@@ -482,6 +488,21 @@ function headerValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
+/**
+ * Join multiple header values (or multiple comma-separated challenges in a
+ * single value) into one string suitable for re-parsing. Preserves quoted
+ * commas inside `key="value, with comma"` by not splitting the input; the
+ * downstream parser handles the comma-separation itself.
+ */
+function joinHeaderValues(value: string | string[] | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  if (Array.isArray(value)) {
+    return value.filter((v) => typeof v === 'string' && v.length > 0).join(', ');
+  }
+
+  return value;
+}
+
 function dedupe(list: string[]): string[] {
   return Array.from(new Set(list));
 }
@@ -522,26 +543,26 @@ function serializeError(err: unknown): { name: string; message: string } | strin
 }
 
 /**
- * RFC 9728 §5.1 / RFC 6750 §3.1 — parse the `WWW-Authenticate: Bearer …`
- * challenge into the pieces relevant to MCP authorization. The Bearer scheme
- * uses comma-separated `key=value` pairs with optional quoting; only the
- * literal `Bearer` scheme is recognised here (other schemes are ignored to
- * avoid stripping `Basic` realm values into pseudo-OAuth fields).
+ * RFC 9728 §5.1 / RFC 6750 §3.1 — extract the `Bearer` challenge from a
+ * `WWW-Authenticate` header and return the pieces relevant to MCP
+ * authorization (`resource_metadata` PRM hint + advertised scopes).
+ *
+ * Handles multi-challenge headers like
+ *   `Basic realm="x", Bearer resource_metadata="…", scope="a b"`
+ * by isolating just the `Bearer` segment instead of requiring the header to
+ * start with `Bearer`. Other auth schemes are ignored.
  */
 export function parseWwwAuthenticateHeader(header: string | undefined): {
   resourceMetadataUrl?: string;
   challengeScopes?: string[];
 } {
   if (!header) return {};
-  const trimmed = header.trim();
-  if (!/^bearer\b/i.test(trimmed)) return {};
-
-  const params = trimmed.slice('bearer'.length).trim();
-  if (!params) return {};
+  const bearerParams = extractBearerChallengeParams(header);
+  if (bearerParams === null) return {};
 
   const result: { resourceMetadataUrl?: string; challengeScopes?: string[] } = {};
   const re = /(\w+)\s*=\s*("([^"]*)"|([^,]+))(?:\s*,\s*|\s*$)/g;
-  for (const match of params.matchAll(re)) {
+  for (const match of bearerParams.matchAll(re)) {
     const key = match[1].toLowerCase();
     const value = (match[3] ?? match[4] ?? '').trim();
     if (!value) continue;
@@ -556,4 +577,49 @@ export function parseWwwAuthenticateHeader(header: string | undefined): {
   }
 
   return result;
+}
+
+/**
+ * Locate the `Bearer` challenge within a (possibly multi-challenge) header
+ * and return its raw `key=value, key=value` parameter string. Returns
+ * `null` when no `Bearer` challenge is present.
+ *
+ * The match relies on `Bearer` being followed by whitespace (auth-param
+ * region) or appearing at end of input. Subsequent schemes are detected by a
+ * comma followed by an `Atom` token followed by whitespace, which is how
+ * RFC 7235 §4.1 separates challenges.
+ */
+function extractBearerChallengeParams(header: string): string | null {
+  const trimmed = header.trim();
+  if (!trimmed) return null;
+
+  const startMatch = /(^|,)\s*bearer(\s+|$)/i.exec(trimmed);
+  if (!startMatch) return null;
+
+  const paramsStart = startMatch.index + startMatch[0].length;
+  if (paramsStart >= trimmed.length) return '';
+
+  // Walk forward until we hit the next scheme boundary, respecting quoted
+  // values that may contain commas / whitespace.
+  let inQuotes = false;
+  let i = paramsStart;
+  for (; i < trimmed.length; i += 1) {
+    const ch = trimmed[i];
+    if (ch === '"' && trimmed[i - 1] !== '\\') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (inQuotes) continue;
+    if (ch === ',') {
+      // A comma starts another auth-param if followed by `token=`; it starts
+      // another challenge if followed by `token<sp>`. Peek ahead.
+      const rest = trimmed.slice(i + 1);
+      const nextScheme = /^\s*[!#$%&'*+\-.^_`|~\w]+(\s+|$)/.exec(rest);
+      if (nextScheme && !/^\s*[!#$%&'*+\-.^_`|~\w]+\s*=/.exec(rest)) {
+        break;
+      }
+    }
+  }
+
+  return trimmed.slice(paramsStart, i).trim();
 }

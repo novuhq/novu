@@ -54,6 +54,15 @@ export interface McpConnectionOAuthState {
    * AS-metadata cache evicts.
    */
   resource?: string;
+  /**
+   * One-shot OAuth callback claim. Set by the callback usecase during the
+   * atomic `findOneAndUpdate` that gates token exchange so concurrent
+   * callbacks for the same signed `state` can't both swap an authorization
+   * code for tokens. The presence of this field acts as the exclusive
+   * marker; subsequent callbacks see the row no longer matches the
+   * `callbackClaimedAt: { $exists: false }` filter and bail out.
+   */
+  callbackClaimedAt?: Date;
 }
 
 /**
