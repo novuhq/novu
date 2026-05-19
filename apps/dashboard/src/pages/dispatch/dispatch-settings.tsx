@@ -1,5 +1,36 @@
-import { DispatchPlaceholder } from './dispatch-placeholder';
+import { useMemo } from 'react';
+import { DashboardLayout } from '@/components/dashboard-layout';
+import { PageMeta } from '@/components/page-meta';
+import { type SettingsTabRoutes, SettingsTabs } from '@/components/settings/settings-tabs';
+import { useEnvironment } from '@/context/environment/hooks';
+import { buildRoute, ROUTES } from '@/utils/routes';
 
 export function DispatchSettingsPage() {
-  return <DispatchPlaceholder section="Settings" />;
+  const { currentEnvironment } = useEnvironment();
+  const environmentSlug = currentEnvironment?.slug ?? '';
+
+  const { rootRoute, routes } = useMemo(() => {
+    const params = { environmentSlug };
+
+    const built: SettingsTabRoutes = {
+      account: buildRoute(ROUTES.DISPATCH_SETTINGS_ACCOUNT, params),
+      organization: buildRoute(ROUTES.DISPATCH_SETTINGS_ORGANIZATION, params),
+      team: buildRoute(ROUTES.DISPATCH_SETTINGS_TEAM, params),
+      billing: buildRoute(ROUTES.DISPATCH_SETTINGS_BILLING, params),
+    };
+
+    return {
+      rootRoute: buildRoute(ROUTES.DISPATCH_SETTINGS, params),
+      routes: built,
+    };
+  }, [environmentSlug]);
+
+  return (
+    <>
+      <PageMeta title="Dispatch · Settings" />
+      <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Settings</h1>}>
+        <SettingsTabs rootRoute={rootRoute} routes={routes} />
+      </DashboardLayout>
+    </>
+  );
 }

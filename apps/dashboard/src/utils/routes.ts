@@ -94,6 +94,10 @@ export const ROUTES = {
   DISPATCH_CONVERSATIONS: '/env/:environmentSlug/dispatch/conversations',
   DISPATCH_API_KEYS: '/env/:environmentSlug/dispatch/api-keys',
   DISPATCH_SETTINGS: '/env/:environmentSlug/dispatch/settings',
+  DISPATCH_SETTINGS_ACCOUNT: '/env/:environmentSlug/dispatch/settings/account',
+  DISPATCH_SETTINGS_ORGANIZATION: '/env/:environmentSlug/dispatch/settings/organization',
+  DISPATCH_SETTINGS_TEAM: '/env/:environmentSlug/dispatch/settings/team',
+  DISPATCH_SETTINGS_BILLING: '/env/:environmentSlug/dispatch/settings/billing',
 } as const;
 
 export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
