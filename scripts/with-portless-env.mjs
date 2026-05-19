@@ -12,6 +12,7 @@
  * Usage: node scripts/with-portless-env.mjs <command> [args...]
  */
 import { execFileSync, spawn } from 'node:child_process';
+import { portlessCaEnv } from './portless-ca-env.mjs';
 
 const SERVICES = ['api.novu', 'dashboard.novu', 'ws.novu', 'playground.novu'];
 
@@ -76,6 +77,7 @@ const env = {
   NEXT_PUBLIC_NOVU_BACKEND_URL: apiUrl,
   NEXT_PUBLIC_NOVU_SOCKET_URL: wsUrl,
   NEXT_PUBLIC_PLAYGROUND_URL: playgroundUrl,
+  ...(process.env.PORTLESS_INJECT_CA === '1' ? portlessCaEnv() : {}),
 };
 
 const [, , command, ...args] = process.argv;
