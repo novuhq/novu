@@ -131,8 +131,12 @@ const MAX_AGGREGATE_FILE_BYTES = 50 * 1024 * 1024;
 const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
 const FILE_FETCH_TIMEOUT_MS = 10_000;
 const MAX_FILE_FETCH_REDIRECTS = 3;
-const SUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.SLACK, AgentPlatformEnum.TEAMS]);
-const UNSUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.EMAIL, AgentPlatformEnum.WHATSAPP]);
+const SUPPORTED_FILE_PLATFORMS = new Set<string>([
+  AgentPlatformEnum.SLACK,
+  AgentPlatformEnum.TEAMS,
+  AgentPlatformEnum.WHATSAPP,
+]);
+const UNSUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.EMAIL]);
 // EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS is a deliberate allowlist for providers that preserve custom MIME
 // alternatives used by Gmail reactions; Braze, Brevo, Mailgun, Mailjet, Mailtrap, Mandrill, Plunk, Postmark,
 // Resend, SparkPost, and similar providers are excluded until their SDK paths are verified.
@@ -315,12 +319,7 @@ export class ChatSdkService implements OnModuleDestroy {
     const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.prepareContentForDelivery(content, platform, agentId);
 
-    const postArg = deliveryContent.card
-      ? (deliveryContent.card as unknown as AdapterPostableMessage)
-      : ({
-          markdown: deliveryContent.markdown ?? '',
-          files: deliveryContent.files,
-        } as unknown as AdapterPostableMessage);
+    const postArg = this.buildAdapterPostableMessage(deliveryContent);
 
     const sent = await thread.post(postArg).catch(toDeliveryError);
 
@@ -340,12 +339,7 @@ export class ChatSdkService implements OnModuleDestroy {
     const dmThread = await chat.openDM(platformUserId);
     const deliveryContent = await this.prepareContentForDelivery(content, config.platform, agentId);
 
-    const postArg = deliveryContent.card
-      ? (deliveryContent.card as unknown as AdapterPostableMessage)
-      : ({
-          markdown: deliveryContent.markdown ?? '',
-          files: deliveryContent.files,
-        } as unknown as AdapterPostableMessage);
+    const postArg = this.buildAdapterPostableMessage(deliveryContent);
 
     const sent = await dmThread.post(postArg).catch(toDeliveryError);
 
@@ -376,6 +370,8 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const deliveryContent = await this.prepareContentForDelivery(content, platform, agentId);
 
+    const editPayload = this.buildAdapterPostableMessage(deliveryContent);
+
     let editPromise: Promise<{ id: string; threadId: string }>;
     if (deliveryContent.card) {
       editPromise = adapter.editMessage(
@@ -384,10 +380,7 @@ export class ChatSdkService implements OnModuleDestroy {
         deliveryContent.card as unknown as AdapterPostableMessage
       );
     } else {
-      editPromise = adapter.editMessage(platformThreadId, platformMessageId, {
-        markdown: deliveryContent.markdown ?? '',
-        files: deliveryContent.files,
-      } as unknown as AdapterPostableMessage);
+      editPromise = adapter.editMessage(platformThreadId, platformMessageId, editPayload);
     }
 
     const edited = await editPromise.catch(toDeliveryError);
@@ -400,13 +393,6 @@ export class ChatSdkService implements OnModuleDestroy {
     platform: string = AgentPlatformEnum.SLACK,
     agentId?: string
   ): Promise<ChatSdkReplyContent> {
-    if (content.card && content.files?.length) {
-      throw new BadRequestException({
-        error: 'attachment_failed',
-        message: 'File attachments are only supported with string or markdown replies, not cards.',
-      });
-    }
-
     if (!content.files?.length) {
       return content as ChatSdkReplyContent;
     }
@@ -473,6 +459,25 @@ export class ChatSdkService implements OnModuleDestroy {
       ...content,
       files,
     };
+  }
+
+  private buildAdapterPostableMessage(deliveryContent: ChatSdkReplyContent): AdapterPostableMessage {
+    if (deliveryContent.card) {
+      const payload: { card: unknown; files?: ChatSdkFile[] } = {
+        card: deliveryContent.card,
+      };
+
+      if (deliveryContent.files?.length) {
+        payload.files = deliveryContent.files;
+      }
+
+      return payload as unknown as AdapterPostableMessage;
+    }
+
+    return {
+      markdown: deliveryContent.markdown ?? '',
+      files: deliveryContent.files,
+    } as unknown as AdapterPostableMessage;
   }
 
   private async prepareFileForDelivery(file: FileRef, index: number): Promise<MaterializedFile> {

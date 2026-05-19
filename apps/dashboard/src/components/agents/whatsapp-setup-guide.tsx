@@ -58,6 +58,18 @@ type ConnectStatus =
   | { state: 'manual_fallback'; message: string }
   | { state: 'error'; message: string };
 
+function connectStatusLabel(state: ConnectStatus['state'], manualMarkedConfigured: boolean): string {
+  if (state === 'manual_fallback') {
+    if (manualMarkedConfigured) {
+      return 'Webhook configured — send a test message';
+    }
+
+    return 'Webhook URL ready — finish in Meta';
+  }
+
+  return 'Connected — Novu is listening for messages';
+}
+
 type TestStatus =
   | { state: 'idle' }
   | { state: 'sending' }
@@ -80,6 +92,7 @@ function ConnectAndTestPanel({
   onConnected: () => void;
 }) {
   const [connectStatus, setConnectStatus] = useState<ConnectStatus>({ state: 'idle' });
+  const [manualMarkedConfigured, setManualMarkedConfigured] = useState(false);
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' });
   const [phone, setPhone] = useState('');
 
@@ -89,6 +102,7 @@ function ConnectAndTestPanel({
   useEffect(() => {
     if (!isCredentialsSaved) {
       setConnectStatus({ state: 'idle' });
+      setManualMarkedConfigured(false);
       setTestStatus({ state: 'idle' });
     }
   }, [isCredentialsSaved]);
@@ -170,12 +184,14 @@ function ConnectAndTestPanel({
     }
   }, [agent.identifier, integrationIdentifier, phone, sendTestTemplate]);
 
-  const isConnected = connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
-  const showManualFallback = connectStatus.state === 'manual_fallback';
+  const connectAttemptFinished =
+    connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
+  const showManualFallback = connectStatus.state === 'manual_fallback' && !manualMarkedConfigured;
+  const showTestPanel = connectStatus.state === 'connected' || manualMarkedConfigured;
 
   return (
     <div className="flex w-full max-w-[400px] flex-col gap-3">
-      {!isConnected ? (
+      {!connectAttemptFinished ? (
         <Button
           type="button"
           variant="primary"
@@ -190,9 +206,7 @@ function ConnectAndTestPanel({
       ) : (
         <div className="text-success-base flex items-center gap-1.5">
           <RiCheckLine className="size-4" />
-          <span className="text-label-xs font-medium">
-            {showManualFallback ? 'Webhook URL ready — finish in Meta' : 'Connected — Novu is listening for messages'}
-          </span>
+          <span className="text-label-xs font-medium">{connectStatusLabel(connectStatus.state, manualMarkedConfigured)}</span>
         </div>
       )}
 
@@ -205,11 +219,14 @@ function ConnectAndTestPanel({
           message={connectStatus.message}
           webhookUrl={webhookUrl}
           verifyToken={verifyToken}
-          onMarkConnected={onConnected}
+          onMarkConnected={() => {
+            setManualMarkedConfigured(true);
+            onConnected();
+          }}
         />
       ) : null}
 
-      {connectStatus.state === 'connected' ? (
+      {showTestPanel ? (
         <div className="border-stroke-soft mt-2 flex w-full flex-col gap-2 rounded-md border p-3">
           <p className="text-text-strong text-label-xs font-medium leading-4">Send yourself a test message</p>
           <p className="text-text-soft text-label-xs leading-4">

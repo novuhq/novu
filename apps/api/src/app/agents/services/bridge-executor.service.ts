@@ -27,6 +27,17 @@ import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachmen
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
 const MAX_RETRIES = 2;
+
+/** Agent bridge replyUrl: use the process listen port (portless) or API_ROOT_URL. */
+function resolveAgentReplyApiOrigin(): string {
+  const listenPort = process.env.PORT;
+
+  if (listenPort) {
+    return `http://127.0.0.1:${listenPort}`;
+  }
+
+  return (process.env.API_ROOT_URL || 'http://localhost:3000').replace(/\/$/, '');
+}
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
 const ATTACHMENT_SIGNING_CONCURRENCY = 4;
@@ -234,8 +245,7 @@ export class BridgeExecutorService {
     const { event, config, conversation, subscriber, history, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
-    const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
-    const replyUrl = `${apiRootUrl}/v1/agents/${agentIdentifier}/reply`;
+    const replyUrl = `${resolveAgentReplyApiOrigin()}/v1/agents/${agentIdentifier}/reply`;
 
     const timestamp = new Date().toISOString();
 
