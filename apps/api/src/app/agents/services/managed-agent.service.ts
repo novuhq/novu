@@ -129,21 +129,25 @@ export class ManagedAgentService implements OnModuleInit {
 
     const result = provider.send({ messages, sessionId });
 
-    result.sessionId.then(async (sid) => {
-      this.sessionContext.set(sid, {
-        conversationId: String(context.conversation._id),
-        environmentId: context.config.environmentId,
-        organizationId: context.config.organizationId,
-        agentIdentifier: context.config.agentIdentifier,
-        integrationIdentifier: context.config.integrationIdentifier,
-      });
+    result.sessionId
+      .then(async (sid) => {
+        this.sessionContext.set(sid, {
+          conversationId: String(context.conversation._id),
+          environmentId: context.config.environmentId,
+          organizationId: context.config.organizationId,
+          agentIdentifier: context.config.agentIdentifier,
+          integrationIdentifier: context.config.integrationIdentifier,
+        });
 
-      await this.conversationRepository.setExternalSessionIdIfMissing(
-        context.config.environmentId,
-        String(context.conversation._id),
-        sid
-      );
-    });
+        await this.conversationRepository.setExternalSessionIdIfMissing(
+          context.config.environmentId,
+          String(context.conversation._id),
+          sid
+        );
+      })
+      .catch((err) => {
+        this.logger.error(err, 'Failed to resolve provider session id');
+      });
   }
 
   private buildOnSessionEvents(): SessionEventsFactory {
@@ -286,11 +290,14 @@ export class ManagedAgentService implements OnModuleInit {
     if (!creds.apiKey) {
       throw new Error('Integration has no API key');
     }
+    if (!creds.externalEnvironmentId) {
+      throw new Error('Integration has no external environment id');
+    }
 
     provider = this.createProvider(agent.managedRuntime.providerId, {
       apiKey: creds.apiKey,
       agentId: agent.managedRuntime.externalAgentId,
-      environmentId: creds.externalEnvironmentId as string,
+      environmentId: creds.externalEnvironmentId,
     });
     this.providers.set(key, provider);
 

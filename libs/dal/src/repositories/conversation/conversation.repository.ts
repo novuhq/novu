@@ -221,6 +221,12 @@ export class ConversationRepository extends BaseRepositoryV2<
     await this.update({ _id: conversationId, _environmentId: environmentId }, { $unset: { externalSessionId: '' } });
   }
 
+  /**
+   * Intentionally queries without _environmentId scope — session recovery and
+   * edge callbacks only have the CF-generated session UUID and need to resolve
+   * which environment owns it. Session IDs are system-generated UUIDs from
+   * Cloudflare Durable Objects, not user-supplied input.
+   */
   async findByExternalSessionId(sessionId: string) {
     return this.findOne({ externalSessionId: sessionId } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds, [
       '_id',
