@@ -100,6 +100,13 @@ function ConnectAndTestPanel({
   const { mutateAsync: sendTestTemplate } = useSendWhatsAppTestTemplate();
 
   useEffect(() => {
+    setConnectStatus({ state: 'idle' });
+    setManualMarkedConfigured(false);
+    setTestStatus({ state: 'idle' });
+    setPhone('');
+  }, [integrationIdentifier]);
+
+  useEffect(() => {
     if (!isCredentialsSaved) {
       setConnectStatus({ state: 'idle' });
       setManualMarkedConfigured(false);
