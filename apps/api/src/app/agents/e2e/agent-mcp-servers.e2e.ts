@@ -437,7 +437,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/sentry/oauth/url`)
         .send({ subscriberId: session.subscriberId });
 
-      expect(res.status, `oauth/url failed: ${JSON.stringify(res.body)}`).to.equal(201);
+      expect(res.status, `oauth/url failed: ${JSON.stringify(res.body)}`).to.equal(200);
       const url = new URL(res.body.data.authorizeUrl);
       expect(`${url.origin}${url.pathname}`).to.equal(SENTRY_AUTHORIZE_URL);
       expect(url.searchParams.get('client_id')).to.equal('dcr-client-1');
@@ -488,7 +488,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const first = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/sentry/oauth/url`)
         .send({ subscriberId: session.subscriberId });
-      expect(first.status).to.equal(201);
+      expect(first.status).to.equal(200);
       const firstClientId = new URL(first.body.data.authorizeUrl).searchParams.get('client_id');
       expect(firstClientId).to.equal('dcr-client-1');
 
@@ -507,7 +507,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const second = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/sentry/oauth/url`)
         .send({ subscriberId: session.subscriberId });
-      expect(second.status, `second oauth/url failed: ${JSON.stringify(second.body)}`).to.equal(201);
+      expect(second.status, `second oauth/url failed: ${JSON.stringify(second.body)}`).to.equal(200);
       const secondClientId = new URL(second.body.data.authorizeUrl).searchParams.get('client_id');
       expect(secondClientId).to.equal('dcr-client-1');
       // No extra HTTP discovery or registration calls on the reuse path.
