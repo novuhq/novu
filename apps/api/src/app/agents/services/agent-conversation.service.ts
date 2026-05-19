@@ -245,22 +245,6 @@ export class AgentConversationService {
     return this.activityRepository.findByConversation(environmentId, conversationId, limit);
   }
 
-  async updateChannelThread(
-    environmentId: string,
-    organizationId: string,
-    conversationId: string,
-    platformThreadId: string,
-    serializedThread: Record<string, unknown>
-  ): Promise<void> {
-    await this.conversationRepository.updateChannelThread(
-      environmentId,
-      organizationId,
-      conversationId,
-      platformThreadId,
-      serializedThread
-    );
-  }
-
   async getConversation(
     conversationId: string,
     environmentId: string,

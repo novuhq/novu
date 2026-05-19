@@ -110,17 +110,6 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
   return `${thread.id}${threadRoot}`;
 }
 
-function applyPlatformThreadIdToSerializedThread(serializedThread: Record<string, unknown>, platformThreadId: string) {
-  serializedThread.id = platformThreadId;
-
-  const currentMessage = asRecord(serializedThread.currentMessage ?? serializedThread.message);
-  if (!currentMessage) {
-    return;
-  }
-
-  currentMessage.threadId = platformThreadId;
-}
-
 function applyPlatformThreadIdToThread(thread: Thread, platformThreadId: string) {
   // Chat SDK currently gives top-level Slack DMs an empty-root thread id (`slack:D...:`).
   // Patch the in-memory handle before posting fallback replies so Slack receives a real thread root.
@@ -349,16 +338,6 @@ export class AgentInboundHandler {
           });
       }
     }
-
-    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
-    applyPlatformThreadIdToSerializedThread(serializedThread, platformThreadId);
-    await this.conversationService.updateChannelThread(
-      config.environmentId,
-      config.organizationId,
-      conversation._id,
-      platformThreadId,
-      serializedThread
-    );
 
     const [subscriber, history] = await Promise.all([
       subscriberId
@@ -672,15 +651,6 @@ export class AgentInboundHandler {
       platformUserId: userId,
       firstMessageText: `[action:${action.id}]`,
     });
-
-    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
-    await this.conversationService.updateChannelThread(
-      config.environmentId,
-      config.organizationId,
-      conversation._id,
-      thread.id,
-      serializedThread
-    );
 
     trackAgentInboundAction(this.analyticsService, {
       organizationId: config.organizationId,

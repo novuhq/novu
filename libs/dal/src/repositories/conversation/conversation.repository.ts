@@ -141,24 +141,6 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
-  async updateChannelThread(
-    environmentId: string,
-    organizationId: string,
-    id: string,
-    platformThreadId: string,
-    serializedThread: Record<string, unknown>
-  ): Promise<void> {
-    await this.update(
-      {
-        _id: id,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        'channels.platformThreadId': platformThreadId,
-      },
-      { $set: { 'channels.$.serializedThread': serializedThread } }
-    );
-  }
-
   async setFirstPlatformMessageId(
     environmentId: string,
     organizationId: string,

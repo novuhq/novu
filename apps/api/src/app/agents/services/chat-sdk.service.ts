@@ -332,7 +332,7 @@ export class ChatSdkService implements OnModuleDestroy {
     integrationIdentifier: string,
     platformUserId: string,
     content: ReplyContentDto
-  ): Promise<SentMessageInfo & { serializedThread: Record<string, unknown> }> {
+  ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -354,18 +354,7 @@ export class ChatSdkService implements OnModuleDestroy {
     // when the user replies, keeping inbound and outbound on the same conversation.
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
-    // DM threads opened via openDM() may not have a currentMessage, so toJSON()
-    // can fail. Build a minimal serialized snapshot for persistence; the post
-    // path uses `chat.thread(platformThreadId)` and does not consume this blob.
-    const serializedThread: Record<string, unknown> = {
-      id: platformThreadId,
-      channelId: dmThread.channelId,
-      isDM: true,
-      platform: config.platform,
-      currentMessage: { id: sent.id, threadId: sent.threadId },
-    };
-
-    return { messageId: sent.id, platformThreadId, serializedThread };
+    return { messageId: sent.id, platformThreadId };
   }
 
   async editInConversation(
