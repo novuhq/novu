@@ -7,8 +7,8 @@ export class AgentBehaviorDto {
     description:
       'Acknowledge incoming messages. On platforms that support a native typing indicator ' +
       '(e.g. Slack, Microsoft Teams), shows a "Typing…" indicator while the agent processes the message. ' +
-      'On platforms that do not (e.g. WhatsApp), reacts with an "eyes" emoji to the first ' +
-      'inbound message in a thread. Default: true',
+      'On platforms that do not (e.g. WhatsApp), reacts with an "eyes" emoji to each inbound ' +
+      'message while the agent processes it. Default: true',
     default: true,
   })
   @IsBoolean()

@@ -408,6 +408,8 @@ export interface AddReactionPayload {
 export interface AgentReplyPayload {
   conversationId: string;
   integrationIdentifier: string;
+  /** Platform message ID to clear the inbound "eyes" ack reaction from (WhatsApp, etc.). */
+  ackMessageId?: string;
   reply?: ReplyContent;
   edit?: EditPayload;
   resolve?: { summary?: string };

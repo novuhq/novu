@@ -10,6 +10,8 @@ import {
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
+  ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
   ConversationChannel,
   ConversationEntity,
   ConversationParticipantTypeEnum,
@@ -92,7 +94,7 @@ export class HandleAgentReply {
     if (command.reply) {
       replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
 
-      this.removeAckReaction(config!, conversation, channel).catch((err) => {
+      this.removeAckReaction(config!, command, conversation, channel).catch((err) => {
         this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to remove ack reaction`);
       });
     }
@@ -409,20 +411,48 @@ export class HandleAgentReply {
     });
   }
 
+  private async resolveAckMessageId(
+    command: HandleAgentReplyCommand,
+    channel: ConversationChannel
+  ): Promise<string | undefined> {
+    if (command.ackMessageId) {
+      return command.ackMessageId;
+    }
+
+    const history = await this.conversationService.getHistory(command.environmentId, command.conversationId);
+
+    for (let index = history.length - 1; index >= 0; index -= 1) {
+      const activity = history[index];
+      const isInboundMessage =
+        activity.type === ConversationActivityTypeEnum.MESSAGE &&
+        (activity.senderType === ConversationActivitySenderTypeEnum.SUBSCRIBER ||
+          activity.senderType === ConversationActivitySenderTypeEnum.PLATFORM_USER);
+
+      if (isInboundMessage && activity.platformMessageId) {
+        return activity.platformMessageId;
+      }
+    }
+
+    return channel.firstPlatformMessageId;
+  }
+
   private async removeAckReaction(
     config: ResolvedAgentConfig,
+    command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
     channel: ConversationChannel
   ): Promise<void> {
-    const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId || !config.acknowledgeOnReceived) return;
+    if (!config.acknowledgeOnReceived) return;
+
+    const ackMessageId = await this.resolveAckMessageId(command, channel);
+    if (!ackMessageId) return;
 
     await this.chatSdkService.removeReaction(
       conversation._agentId,
       config.integrationIdentifier,
       channel.platform,
       channel.platformThreadId,
-      firstMessageId,
+      ackMessageId,
       'eyes'
     );
   }

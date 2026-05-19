@@ -247,6 +247,15 @@ export class AgentReplyPayloadDto {
   @IsNotEmpty()
   integrationIdentifier: string;
 
+  @ApiPropertyOptional({
+    description:
+      'Platform message ID to clear the inbound acknowledge reaction from (e.g. WhatsApp "eyes" emoji). ' +
+      'Set automatically when replying from an agent handler.',
+  })
+  @IsOptional()
+  @IsString()
+  ackMessageId?: string;
+
   @ApiPropertyOptional({ type: ReplyContentDto })
   @IsOptional()
   @IsObject()

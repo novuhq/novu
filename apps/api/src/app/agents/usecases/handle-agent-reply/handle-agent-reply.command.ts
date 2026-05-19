@@ -18,6 +18,10 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
   integrationIdentifier: string;
 
   @IsOptional()
+  @IsString()
+  ackMessageId?: string;
+
+  @IsOptional()
   @ValidateNested()
   @Type(() => ReplyContentDto)
   reply?: ReplyContentDto;

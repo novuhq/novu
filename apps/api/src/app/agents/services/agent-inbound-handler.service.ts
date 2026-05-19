@@ -329,12 +329,12 @@ export class AgentInboundHandler {
 
       if (supportsTyping) {
         await thread.startTyping('Thinking...');
-      } else if (isFirstMessage && message.id) {
+      } else if (message.id) {
         thread
           .createSentMessageFromMessage(message)
           .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
           .catch((err) => {
-            this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
+            this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to inbound message`);
           });
       }
     }

@@ -52,6 +52,7 @@ export class AgentsWebhookController {
         conversationId: body.conversationId,
         agentIdentifier: agentId,
         integrationIdentifier: body.integrationIdentifier,
+        ackMessageId: body.ackMessageId,
         reply: body.reply,
         edit: body.edit,
         resolve: body.resolve,

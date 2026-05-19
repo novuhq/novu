@@ -276,6 +276,81 @@ describe('AgentInboundHandler', () => {
       });
       expect(bridgeExecutor.execute.firstCall.args[0].storedAttachments).to.deep.equal(storedAttachments);
     });
+
+    it('should add eyes ack reaction on every WhatsApp inbound message when acknowledgeOnReceived is enabled', async () => {
+      const whatsappConfig = {
+        ...config,
+        platform: 'whatsapp',
+        integrationIdentifier: 'whatsapp-main',
+        acknowledgeOnReceived: true,
+      };
+      const addReaction = sinon.stub().resolves(undefined);
+      const thread = {
+        id: 'whatsapp:15551234567',
+        channelId: 'whatsapp:15551234567',
+        isDM: true,
+        toJSON: () => ({ id: 'whatsapp:15551234567' }),
+        createSentMessageFromMessage: sinon.stub().returns({ addReaction }),
+      };
+      const conversationWithFirstMessage = {
+        ...conversation,
+        channels: [
+          {
+            platformThreadId: 'whatsapp:15551234567',
+            platform: 'whatsapp',
+            _integrationId: 'integration1',
+            firstPlatformMessageId: 'first-msg',
+          },
+        ],
+      };
+      const conversationService = {
+        createOrGetConversation: sinon.stub().resolves(conversationWithFirstMessage),
+        getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
+        persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
+        persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
+        setFirstPlatformMessageId: sinon.stub().resolves(undefined),
+        findByPlatformThread: sinon.stub().resolves(conversationWithFirstMessage),
+        getHistory: sinon.stub().resolves([]),
+      };
+      const logger = makeLogger();
+      const handlerWithConversation = new AgentInboundHandler(
+        logger as any,
+        { resolve: sinon.stub().resolves(null) } as any,
+        conversationService as any,
+        { execute: sinon.stub().resolves(undefined) } as any,
+        { dispatch: sinon.stub().resolves(undefined) } as any,
+        { findOne: sinon.stub().resolves(null) } as any,
+        { findBySubscriberId: sinon.stub() } as any,
+        { findOne: sinon.stub().resolves(null) } as any,
+        { track: sinon.stub() } as any,
+        { storeInbound: sinon.stub().resolves([]) } as any,
+        { consumeIfMatches: sinon.stub().resolves({ status: 'missing' }) } as any,
+        { findByPlatformIdentity: sinon.stub().resolves(null) } as any,
+        { execute: sinon.stub().resolves(undefined) } as any
+      );
+      const message = {
+        id: 'follow-up-msg',
+        text: 'second message',
+        author: {
+          userId: '15557654321',
+          fullName: 'User One',
+          userName: 'userone',
+          isBot: false,
+        },
+        attachments: [],
+      };
+
+      await handlerWithConversation.handle(
+        'agent1',
+        whatsappConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(thread.createSentMessageFromMessage.calledOnceWith(message)).to.equal(true);
+      expect(addReaction.calledOnceWith('eyes')).to.equal(true);
+    });
   });
 
   describe('Telegram /start subscriber-link handling', () => {

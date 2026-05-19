@@ -322,6 +322,7 @@ export class AgentContextImpl {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
+      ackMessageId: this.message?.platformMessageId,
       reply: await serializeContent(content, options?.files),
     };
 
@@ -378,6 +379,7 @@ export class AgentContextImpl {
     const body: AgentReplyPayload = {
       conversationId: this._conversationId,
       integrationIdentifier: this._integrationIdentifier,
+      ackMessageId: this.message?.platformMessageId,
     };
 
     if (this._signals.length) {

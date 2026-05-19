@@ -160,6 +160,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(replyBody.reply.markdown).toBe('Echo: Hello bot!');
     expect(replyBody.conversationId).toBe('conv-456');
     expect(replyBody.integrationIdentifier).toBe('slack-main');
+    expect(replyBody.ackMessageId).toBe('msg-789');
 
     const replyHeaders = replyCall![1].headers;
     expect(replyHeaders.Authorization).toBe('ApiKey test-secret-key');
