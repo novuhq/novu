@@ -69,10 +69,28 @@ export type VaultCredentialAuth = {
   expiresAt?: string;
   tokenType?: string;
   scopes?: string[];
+  /**
+   * OAuth client metadata recorded at authorize-URL time. Providers whose
+   * vault supports server-side refresh (e.g. Anthropic's `mcp_oauth.refresh`
+   * block) use this to register the upstream token endpoint with the vault
+   * so refreshes can happen without round-tripping back through Novu.
+   */
+  oauthClient?: {
+    clientId: string;
+    clientSecret?: string;
+    tokenEndpoint: string;
+    /** RFC 8707 resource indicator replayed verbatim on refresh. */
+    resource?: string;
+  };
 };
 
 export type UpsertVaultCredentialInput = {
-  externalEnvironmentId: string;
+  /**
+   * Decrypted integration credentials blob. The provider extracts whichever
+   * locator it needs (Anthropic: `externalVaultId`); keeping the input
+   * provider-agnostic prevents callers from leaking provider-specific keys.
+   */
+  integrationCredentials: Record<string, unknown>;
   /** Canonical MCP server URL the credential authorises. */
   mcpServerUrl: string;
   /** Human-readable label surfaced in the provider's vault UI. */
@@ -89,10 +107,22 @@ export type UpsertVaultCredentialInput = {
 export type UpsertVaultCredentialResult = {
   /** Stable identifier for subsequent `update` / `delete` calls. */
   vaultCredentialId: string;
+  /**
+   * Optional credential-field updates the caller must merge into the integration.
+   *
+   * Set when the provider had to lazy-provision integration-scoped resources
+   * during the upsert — e.g. a legacy Anthropic integration that pre-dates
+   * vault eager-provisioning will have a new `externalVaultId` created in
+   * flight and returned here so the OAuth callback can persist it.
+   *
+   * Semantically identical to `ProvisionIntegrationResult.credentialsUpdate`.
+   */
+  integrationCredentialsUpdate?: Record<string, unknown>;
 };
 
 export type DeleteVaultCredentialInput = {
-  externalEnvironmentId: string;
+  /** Decrypted integration credentials blob; see `UpsertVaultCredentialInput`. */
+  integrationCredentials: Record<string, unknown>;
   vaultCredentialId: string;
 };
 

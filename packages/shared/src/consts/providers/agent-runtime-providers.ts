@@ -57,7 +57,7 @@ export const AGENT_RUNTIME_PROVIDERS: AgentRuntimeProvider[] = [
       model: true,
       systemPrompt: true,
       skills: true,
-      tokenVault: false,
+      tokenVault: true,
     },
     availableTools: CLAUDE_BUILTIN_TOOLS,
     availableSkills: CLAUDE_ANTHROPIC_SKILLS,

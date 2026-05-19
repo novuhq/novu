@@ -138,12 +138,6 @@ export class DisableAgentMcpServer {
       return;
     }
 
-    const externalEnvironmentId = creds.externalEnvironmentId as string | undefined;
-
-    if (!externalEnvironmentId) {
-      return;
-    }
-
     const connections = await this.mcpConnectionRepository.findByAgentMcpServer({
       organizationId: command.organizationId,
       environmentId: command.environmentId,
@@ -159,7 +153,7 @@ export class DisableAgentMcpServer {
 
       try {
         await runtimeProvider.deleteVaultCredential({
-          externalEnvironmentId,
+          integrationCredentials: creds as Record<string, unknown>,
           vaultCredentialId,
         });
       } catch (err) {

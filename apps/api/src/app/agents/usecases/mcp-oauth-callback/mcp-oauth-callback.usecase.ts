@@ -5,6 +5,7 @@ import {
   decryptMcpConnectionOAuthClient,
   EnqueueManagedAgentJob,
   EnqueueManagedAgentJobCommand,
+  encryptCredentials,
   encryptMcpConnectionAuth,
   getAgentRuntimeProvider,
   type IAgentRuntimeProvider,
@@ -196,6 +197,7 @@ export class McpOAuthCallback {
         connection: claimed,
         stateData,
         plainAuth,
+        oauthClient,
         mcpServerUrl: catalog.url,
         mcpServerName: catalog.name,
       });
@@ -253,10 +255,11 @@ export class McpOAuthCallback {
       tokenType?: string;
       scopes?: string[];
     };
+    oauthClient: McpConnectionOAuthClient;
     mcpServerUrl: string;
     mcpServerName: string;
   }): Promise<void> {
-    const { connection, stateData, plainAuth, mcpServerUrl, mcpServerName } = args;
+    const { connection, stateData, plainAuth, oauthClient, mcpServerUrl, mcpServerName } = args;
     const runtime = await this.resolveRuntime(stateData);
 
     if (!runtime) {
@@ -267,12 +270,33 @@ export class McpOAuthCallback {
 
     if (runtime.runtimeProvider.capabilities.tokenVault) {
       const result = await runtime.runtimeProvider.upsertVaultCredential({
-        externalEnvironmentId: runtime.externalEnvironmentId,
+        integrationCredentials: runtime.integrationCredentials,
         mcpServerUrl,
         displayName: mcpServerName,
-        auth: plainAuth,
+        auth: {
+          ...plainAuth,
+          oauthClient: {
+            clientId: oauthClient.clientId,
+            clientSecret: oauthClient.clientSecret,
+            tokenEndpoint: oauthClient.tokenEndpoint,
+            resource: connection.oauthState?.resource,
+          },
+        },
         existingCredentialId: connection.auth?.vaultCredentialId,
       });
+
+      // Provider may have lazy-provisioned integration-scoped resources
+      // (e.g. a vault for a legacy integration) during the upsert — persist
+      // those updates BEFORE the connection write so subsequent OAuth flows
+      // on this integration find the new ids on the integration row.
+      if (result.integrationCredentialsUpdate) {
+        await this.persistIntegrationCredentialsUpdate({
+          integrationId: runtime.integrationId,
+          environmentId: stateData.environmentId,
+          organizationId: stateData.organizationId,
+          update: result.integrationCredentialsUpdate,
+        });
+      }
 
       await this.mcpConnectionRepository.update(
         {
@@ -338,9 +362,11 @@ export class McpOAuthCallback {
     });
   }
 
-  private async resolveRuntime(
-    stateData: McpOAuthState
-  ): Promise<{ runtimeProvider: IAgentRuntimeProvider; externalEnvironmentId: string } | null> {
+  private async resolveRuntime(stateData: McpOAuthState): Promise<{
+    runtimeProvider: IAgentRuntimeProvider;
+    integrationId: string;
+    integrationCredentials: Record<string, unknown>;
+  } | null> {
     const agent = await this.agentRepository.findOne(
       {
         _id: stateData.agentId,
@@ -371,8 +397,51 @@ export class McpOAuthCallback {
 
     return {
       runtimeProvider: getAgentRuntimeProvider(agent.managedRuntime.providerId, creds.apiKey),
-      externalEnvironmentId: (creds.externalEnvironmentId as string | undefined) ?? '',
+      integrationId: integration._id,
+      integrationCredentials: creds as Record<string, unknown>,
     };
+  }
+
+  /**
+   * Merge a partial credentials update returned by the runtime provider
+   * (typically a lazy-provisioned `externalVaultId`) back onto the integration.
+   *
+   * Re-decrypts the integration row inside this call so we don't race with any
+   * other writers that may have rotated the API key between our `resolveRuntime`
+   * read and this update. Failures are surfaced — the caller treats them as
+   * vault-push failures, since a vault credential that the integration row
+   * doesn't know about is effectively orphaned.
+   */
+  private async persistIntegrationCredentialsUpdate(args: {
+    integrationId: string;
+    environmentId: string;
+    organizationId: string;
+    update: Record<string, unknown>;
+  }): Promise<void> {
+    const { integrationId, environmentId, organizationId, update } = args;
+
+    const integration = await this.integrationRepository.findOne({
+      _id: integrationId,
+      _environmentId: environmentId,
+      _organizationId: organizationId,
+    });
+
+    if (!integration?.credentials) {
+      throw new Error(
+        `Cannot persist credentials update for integration "${integrationId}": integration or credentials missing`
+      );
+    }
+
+    const merged = { ...decryptCredentials(integration.credentials), ...update };
+
+    await this.integrationRepository.update(
+      {
+        _id: integrationId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      { $set: { credentials: encryptCredentials(merged) } }
+    );
   }
 
   private requireOAuthClient(claimed: McpConnectionEntity): McpConnectionOAuthClient {

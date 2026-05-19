@@ -84,10 +84,10 @@ describe('Agent runtime capabilities parity', () => {
             // itself is exercised by provider-specific integration tests.
             const probe = () =>
               instance.upsertVaultCredential({
-                externalEnvironmentId: 'env',
+                integrationCredentials: { externalVaultId: 'vlt_test' },
                 mcpServerUrl: 'https://example.invalid',
                 displayName: 'probe',
-                auth: {},
+                auth: { accessToken: 'test-token' },
               });
 
             await expect(probe()).rejects.not.toBeInstanceOf(UnsupportedCapabilityError);
@@ -96,7 +96,7 @@ describe('Agent runtime capabilities parity', () => {
           it('overrides deleteVaultCredential (does not throw UnsupportedCapabilityError)', async () => {
             const probe = () =>
               instance.deleteVaultCredential({
-                externalEnvironmentId: 'env',
+                integrationCredentials: { externalVaultId: 'vlt_test' },
                 vaultCredentialId: 'probe',
               });
 
@@ -106,7 +106,7 @@ describe('Agent runtime capabilities parity', () => {
           it('upsertVaultCredential throws UnsupportedCapabilityError when tokenVault is false', async () => {
             const probe = () =>
               instance.upsertVaultCredential({
-                externalEnvironmentId: 'env',
+                integrationCredentials: {},
                 mcpServerUrl: 'https://example.invalid',
                 displayName: 'probe',
                 auth: {},
@@ -118,7 +118,7 @@ describe('Agent runtime capabilities parity', () => {
           it('deleteVaultCredential throws UnsupportedCapabilityError when tokenVault is false', async () => {
             const probe = () =>
               instance.deleteVaultCredential({
-                externalEnvironmentId: 'env',
+                integrationCredentials: {},
                 vaultCredentialId: 'probe',
               });
 

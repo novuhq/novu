@@ -31,7 +31,7 @@ const subscriberRepository = new SubscriberRepository();
 function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> = {}) {
   return {
     providerId: AgentRuntimeProviderIdEnum.Anthropic,
-    capabilities: { mcpServers: true, tools: true, model: true, systemPrompt: true, skills: true, tokenVault: false },
+    capabilities: { mcpServers: true, tools: true, model: true, systemPrompt: true, skills: true, tokenVault: true },
     validateCredentials: sinon.stub().resolves(),
     createAgent: sinon.stub().resolves({ externalAgentId: FAKE_EXTERNAL_AGENT_ID }),
     deleteAgent: sinon.stub().resolves(),

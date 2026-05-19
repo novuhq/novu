@@ -22,12 +22,16 @@ import {
 import type {
   CreateAgentInput,
   CreateAgentResult,
+  DeleteVaultCredentialInput,
   GetAgentResult,
   GetEnvironmentResult,
   ParsedMcpInitFailure,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
+  UpsertVaultCredentialInput,
+  UpsertVaultCredentialResult,
+  VaultCredentialAuth,
 } from '../i-agent-runtime-provider';
 
 const PROVIDER_ID = AgentRuntimeProviderIdEnum.Anthropic;
@@ -271,40 +275,82 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const client = this.buildClient();
 
     // Not retried: environment creation is not idempotent.
-    try {
-      const env = await (client as any).beta.environments.create({
-        name: `nv-${input.integrationName}`,
-        config: {
-          type: 'cloud',
-          networking: { type: 'unrestricted' },
-        },
-      });
+    const env: { id: string } = await (async () => {
+      try {
+        return await (client as any).beta.environments.create({
+          name: `nv-${input.integrationName}`,
+          config: {
+            type: 'cloud',
+            networking: { type: 'unrestricted' },
+          },
+        });
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    })();
 
-      return {
-        credentialsUpdate: { externalEnvironmentId: env.id as string },
-        metadata: {},
-      };
-    } catch (err) {
-      this.normaliseError(err);
-    }
+    // Anthropic vaults are a separate top-level resource from environments,
+    // so we eager-provision one alongside each integration. Doing it here keeps
+    // every "find the vlt_… for this integration" lookup constant-time on the
+    // hot path (OAuth callback) — we just read `externalVaultId` off the
+    // already-decrypted credentials blob.
+    const vault: { id: string } = await (async () => {
+      try {
+        return await (client as any).beta.vaults.create({
+          display_name: `nv-${input.integrationName}-vault`,
+        });
+      } catch (err) {
+        // Best-effort rollback so we don't leak an orphan environment when
+        // the vault create fails. If the rollback itself fails the
+        // environment is archived later by ops; the original error is what
+        // surfaces.
+        try {
+          await (client as any).beta.environments.archive(env.id);
+        } catch {
+          // swallow — original error is more useful
+        }
+        this.normaliseError(err);
+      }
+    })();
+
+    return {
+      credentialsUpdate: {
+        externalEnvironmentId: env.id,
+        externalVaultId: vault.id,
+      },
+      metadata: {},
+    };
   }
 
   async deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void> {
     const externalEnvironmentId = credentialsUpdate.externalEnvironmentId as string | undefined;
+    const externalVaultId = credentialsUpdate.externalVaultId as string | undefined;
 
-    if (!externalEnvironmentId) {
+    if (!externalEnvironmentId && !externalVaultId) {
       return;
     }
 
     const client = this.buildClient();
 
-    await this.withRetry(async () => {
-      try {
-        await (client as any).beta.environments.archive(externalEnvironmentId);
-      } catch (err) {
-        this.normaliseError(err);
-      }
-    });
+    if (externalEnvironmentId) {
+      await this.withRetry(async () => {
+        try {
+          await (client as any).beta.environments.archive(externalEnvironmentId);
+        } catch (err) {
+          this.normaliseError(err);
+        }
+      });
+    }
+
+    if (externalVaultId) {
+      await this.withRetry(async () => {
+        try {
+          await (client as any).beta.vaults.archive(externalVaultId);
+        } catch (err) {
+          this.normaliseError(err);
+        }
+      });
+    }
   }
 
   parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null {
@@ -327,12 +373,89 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     return { mcpServerName: match[1] };
   }
 
-  // `upsertVaultCredential` / `deleteVaultCredential` are intentionally NOT
-  // overridden in this PR. `capabilities.tokenVault` is `false` for Anthropic
-  // today; the base-class default throws `UnsupportedCapabilityError` so any
-  // caller that forgets the capability gate fails loudly. When Anthropic's
-  // `beta.vaults.credentials.*` SDK call is wired in, override both methods
-  // and flip the catalog `tokenVault` flag to `true` in the same change.
+  async upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
+    const client = this.buildClient();
+
+    // Eager provisioning is the happy path (see `provisionIntegration`).
+    // Legacy integrations that pre-date vault eager-creation, or any flow
+    // where the integration credentials lost their `externalVaultId`, fall
+    // through to in-flight lazy creation. We hand the new id back to the
+    // caller via `integrationCredentialsUpdate` so the OAuth callback can
+    // persist it on the integration in the same transaction.
+    let vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
+    let integrationCredentialsUpdate: Record<string, unknown> | undefined;
+
+    if (!vaultId) {
+      vaultId = await this.createVaultForIntegration(client, input.integrationCredentials);
+      integrationCredentialsUpdate = { externalVaultId: vaultId };
+    }
+
+    return this.withRetry(async () => {
+      try {
+        if (input.existingCredentialId) {
+          const updated = await (client as any).beta.vaults.credentials.update(input.existingCredentialId, {
+            vault_id: vaultId,
+            display_name: input.displayName,
+            auth: buildMcpOAuthUpdateAuth(input.auth),
+          });
+
+          return { vaultCredentialId: updated.id as string, integrationCredentialsUpdate };
+        }
+
+        const created = await (client as any).beta.vaults.credentials.create(vaultId, {
+          display_name: input.displayName,
+          auth: buildMcpOAuthCreateAuth(input.mcpServerUrl, input.auth),
+        });
+
+        return { vaultCredentialId: created.id as string, integrationCredentialsUpdate };
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  /**
+   * Create a vault on the fly for a legacy integration that wasn't provisioned
+   * with one. Not retried at this layer: if the create fails we let the caller
+   * see the underlying error so they can mark the connection as `error`.
+   */
+  private async createVaultForIntegration(
+    client: Anthropic,
+    integrationCredentials: Record<string, unknown>
+  ): Promise<string> {
+    const envHint = integrationCredentials.externalEnvironmentId as string | undefined;
+    const displayName = envHint ? `nv-${envHint}-vault` : `nv-vault-${Date.now()}`;
+
+    try {
+      const vault = await (client as any).beta.vaults.create({ display_name: displayName });
+
+      return vault.id as string;
+    } catch (err) {
+      this.normaliseError(err);
+    }
+  }
+
+  async deleteVaultCredential(input: DeleteVaultCredentialInput): Promise<void> {
+    const vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
+
+    // No vault provisioned (legacy integration provisioned before tokenVault
+    // shipped) — nothing upstream to delete, callers proceed with local
+    // cleanup. We only hard-fail in `upsert` because writing a credential
+    // without a vault is genuinely broken.
+    if (!vaultId) {
+      return;
+    }
+
+    const client = this.buildClient();
+
+    await this.withRetry(async () => {
+      try {
+        await (client as any).beta.vaults.credentials.delete(input.vaultCredentialId, { vault_id: vaultId });
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
 }
 
 export function createAnthropicProvider(apiKey: string): AnthropicAgentRuntimeProvider {
@@ -455,4 +578,68 @@ function buildToolsPayload(
   }
 
   return payload;
+}
+
+/**
+ * Build the Anthropic `mcp_oauth` create payload. The `refresh` block is only
+ * emitted when both a refresh token and the OAuth client metadata are present
+ * — that's what enables Anthropic-side automated refresh; otherwise the vault
+ * stores an access-only credential that Novu re-pushes on refresh.
+ */
+function buildMcpOAuthCreateAuth(mcpServerUrl: string, auth: VaultCredentialAuth): Record<string, unknown> {
+  if (!auth.accessToken) {
+    // The interface marks accessToken optional (delete flow), but create
+    // semantically requires it. Surface as a programmer error.
+    throw new Error('Anthropic vault credential create requires an access token');
+  }
+
+  const payload: Record<string, unknown> = {
+    type: 'mcp_oauth',
+    access_token: auth.accessToken,
+    mcp_server_url: mcpServerUrl,
+    expires_at: auth.expiresAt ?? null,
+  };
+
+  if (auth.refreshToken && auth.oauthClient) {
+    payload.refresh = buildMcpOAuthRefreshParams(auth);
+  }
+
+  return payload;
+}
+
+function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    type: 'mcp_oauth',
+  };
+
+  if (auth.accessToken !== undefined) payload.access_token = auth.accessToken;
+  if (auth.expiresAt !== undefined) payload.expires_at = auth.expiresAt;
+
+  if (auth.refreshToken && auth.oauthClient) {
+    payload.refresh = buildMcpOAuthRefreshParams(auth);
+  }
+
+  return payload;
+}
+
+function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<string, unknown> {
+  // Caller guarantees both before invoking, but narrow defensively so we
+  // never emit a half-built refresh block.
+  if (!auth.refreshToken || !auth.oauthClient) {
+    throw new Error('buildMcpOAuthRefreshParams requires refreshToken and oauthClient');
+  }
+
+  const { oauthClient } = auth;
+  const tokenEndpointAuth = oauthClient.clientSecret
+    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
+    : { type: 'none' };
+
+  return {
+    client_id: oauthClient.clientId,
+    refresh_token: auth.refreshToken,
+    token_endpoint: oauthClient.tokenEndpoint,
+    token_endpoint_auth: tokenEndpointAuth,
+    resource: oauthClient.resource ?? null,
+    scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
+  };
 }
