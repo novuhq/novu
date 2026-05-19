@@ -39077,7 +39077,7 @@ snapshots:
       '@types/node': 22.15.13
       '@types/ws': 8.18.1
       eventemitter3: 5.0.4
-      ws: 8.20.0
+      ws: 8.20.1
     transitivePeerDependencies:
       - bufferutil
       - debug
