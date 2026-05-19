@@ -7,6 +7,7 @@ export function RequiredFieldLabel({ htmlFor, children }: { htmlFor: string; chi
       <span className="text-primary-base text-label-sm leading-5 tracking-tight" aria-hidden>
         *
       </span>
+      <span className="sr-only">(required)</span>
     </label>
   );
 }

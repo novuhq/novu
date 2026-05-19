@@ -57,10 +57,17 @@ export function useCreateAgentMutation() {
             description: instructions,
           };
 
-          const created = await createAgentMutation.mutateAsync(request);
-          options?.onSuccess?.(created);
+          try {
+            const created = await createAgentMutation.mutateAsync(request);
+            options?.onSuccess?.(created);
 
-          return created;
+            return created;
+          } catch (err) {
+            const error = err instanceof Error ? err : new Error('Could not create agent.');
+            options?.onError?.(error);
+
+            return undefined;
+          }
         }
 
         if (runtime === 'claude') {

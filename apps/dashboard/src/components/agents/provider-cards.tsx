@@ -152,8 +152,9 @@ type ProviderCardsProps = {
   /**
    * Full list of agent-integration links currently attached to this agent. Used to:
    *  1. Skip the link API call when the user re-selects an already-linked integration.
-   *  2. Unlink + delete the previously selected integration when the user picks a different one
-   *     (single-select picker behaviour).
+   *  2. Unlink the previously selected integration when the user picks a different one
+   *     (single-select picker behaviour). Integrations created during this session are deleted;
+   *     pre-existing integrations are only unlinked.
    */
   existingLinks?: AgentIntegrationLink[];
   onSelect: (providerId: string, integration?: IIntegration) => void;
@@ -435,6 +436,7 @@ export function ProviderCards({
               isAgentEmailAvailable={isAgentEmailAvailable}
               onClick={() => {
                 if (isBusy) return;
+                if (isSelected) return;
 
                 if (isNovuAgent) {
                   handleNovuAgentLink(item);

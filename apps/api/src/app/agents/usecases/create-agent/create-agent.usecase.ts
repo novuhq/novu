@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import {
   AnalyticsService,
   isAgentSharedInboxEnabled,
@@ -156,7 +156,7 @@ export class CreateAgent {
         })
       : await this.agentRepository.create({
           name: command.name ?? '',
-          identifier: command.identifier ?? '',
+          identifier: identifier ?? '',
           description: command.description,
           active: command.active ?? true,
           _environmentId: command.environmentId,

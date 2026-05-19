@@ -39,7 +39,7 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
     );
   }, [integrationsQuery.data?.data]);
 
-  const showSetupGuide = !integrationsQuery.isLoading && !hasConnectedChannel;
+  const showSetupGuide = integrationsQuery.isSuccess && !hasConnectedChannel;
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4 w-full">

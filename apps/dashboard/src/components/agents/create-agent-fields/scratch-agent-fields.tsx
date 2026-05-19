@@ -105,7 +105,7 @@ export function ScratchAgentFields({
             hasError={Boolean(errors.identifier)}
             disabled={disabled}
             aria-invalid={errors.identifier ? true : undefined}
-            aria-describedby={errors.identifier ? `${identifierId}-hint ${identifierId}-error` : `${identifierId}-hint`}
+            aria-describedby={errors.identifier ? `${identifierId}-error` : undefined}
           />
           {errors.identifier ? (
             <p id={`${identifierId}-error`} className="text-error-base text-label-xs" role="alert">
@@ -127,7 +127,7 @@ export function ScratchAgentFields({
         <Textarea
           id={instructionsId}
           placeholder={
-            isClaudeSelected
+            showSystemPromptHelper
               ? 'You are a helpful assistant for the team. Always reply concisely\nand cite sources when you can...'
               : 'What does this agent do...'
           }

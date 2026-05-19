@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, EmailProviderIdEnum, type IIntegration, PROVIDER_ID_TO_CHANNEL_MAP } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import {
   type AgentIntegrationLink,
   addAgentIntegration,
@@ -33,12 +33,13 @@ type UseLinkAgentIntegrationOptions = {
   linkedIntegrationIds?: Set<string>;
   /**
    * Existing agent-integration links. Required when `replaceExisting` is enabled so the hook
-   * can remove the previous links + their underlying integrations after the new link succeeds.
+   * can remove the previous links after the new link succeeds.
    */
   existingLinks?: AgentIntegrationLink[];
   /**
-   * When true, after a successful link the hook deletes every other agent-integration link
-   * (and its underlying integration) from `existingLinks`. Used for single-select pickers like
+   * When true, after a successful link the hook removes every other agent-integration link
+   * from `existingLinks`. Integrations provisioned by this hook during the session are also
+   * deleted; pre-existing integrations are only unlinked. Used for single-select pickers like
    * the onboarding provider cards.
    */
   replaceExisting?: boolean;
@@ -77,6 +78,8 @@ export function useLinkAgentIntegration({
   const isDispatchApp = currentApp === APP_IDS.DISPATCH;
 
   const [pendingItemKey, setPendingItemKey] = useState<string | null>(null);
+  /** Integrations created by this hook instance — safe to delete when switching providers. */
+  const createdIntegrationIdsRef = useRef(new Set<string>());
 
   const addAgentIntegrationMutation = useMutation({
     mutationFn: async (body: { integrationIdentifier?: string; providerId?: string }) => {
@@ -154,10 +157,10 @@ export function useLinkAgentIntegration({
       };
 
       /**
-       * Removes every existing link (and its underlying integration) that is not the freshly
-       * linked one. Runs only when `replaceExisting` is enabled. Failures are logged but never
-       * surfaced because the primary link succeeded — leaving stale integrations is preferable
-       * to flashing an error after a successful selection.
+       * Removes every existing link that is not the freshly linked one. Runs only when
+       * `replaceExisting` is enabled. Only integrations provisioned by this hook are deleted;
+       * pre-existing integrations are unlinked but left intact. Failures are logged but never
+       * surfaced because the primary link succeeded.
        */
       const removePreviousLinks = async (keepIntegrationId: string | undefined) => {
         if (!replaceExisting || !existingLinks?.length) return;
@@ -174,8 +177,13 @@ export function useLinkAgentIntegration({
               return;
             }
 
+            if (!createdIntegrationIdsRef.current.has(link.integration._id)) {
+              return;
+            }
+
             try {
               await deleteIntegration({ id: link.integration._id, environment });
+              createdIntegrationIdsRef.current.delete(link.integration._id);
             } catch (deleteErr) {
               console.warn('Failed to delete previous integration', {
                 integrationId: link.integration._id,
@@ -191,6 +199,7 @@ export function useLinkAgentIntegration({
           const link = await addAgentIntegrationMutation.mutateAsync({ providerId: item.providerId });
           const integration = link.integration as unknown as IIntegration;
 
+          createdIntegrationIdsRef.current.add(integration._id);
           showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
           trackLink(item.providerId, link.integration.identifier, 'novu_email');
           await removePreviousLinks(integration._id);
@@ -212,6 +221,10 @@ export function useLinkAgentIntegration({
               if (!isAlreadyLinkedToAgentConflict(linkErr)) {
                 throw linkErr;
               }
+
+              if (!linkedIntegrationIds?.has(item.integration._id)) {
+                throw linkErr;
+              }
             }
           }
 
@@ -230,7 +243,14 @@ export function useLinkAgentIntegration({
           providerId: item.providerId,
           name: uniqueName,
         });
-        await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: created.identifier });
+
+        createdIntegrationIdsRef.current.add(created._id);
+        try {
+          await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: created.identifier });
+        } catch (linkErr) {
+          await deleteIntegration({ id: created._id, environment }).catch(() => undefined);
+          throw linkErr;
+        }
         showSuccessToast('Integration linked', `${created.name} was added to this agent.`);
         trackLink(item.providerId, created.identifier, 'new_integration_then_link');
         await removePreviousLinks(created._id);
@@ -239,7 +259,11 @@ export function useLinkAgentIntegration({
 
         return created;
       } catch (err) {
-        if (item.integration && isAlreadyLinkedToAgentConflict(err)) {
+        if (
+          item.integration &&
+          isAlreadyLinkedToAgentConflict(err) &&
+          linkedIntegrationIds?.has(item.integration._id)
+        ) {
           await removePreviousLinks(item.integration._id);
           onLinked?.(item.providerId, item.integration);
           await invalidateAgentLinkQueries();
