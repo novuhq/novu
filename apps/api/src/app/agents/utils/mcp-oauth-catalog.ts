@@ -40,13 +40,28 @@ export type NovuOAuthCatalogEntry = Extract<McpOAuthCatalogEntry, { mode: 'novu'
 
 /**
  * Allow-list of MCPs where Novu performs the spec-compliant managed OAuth
- * flow (discovery + per-subscriber DCR). Add new entries here as upstream
- * MCP servers are verified to advertise `registration_endpoint` and
- * `code_challenge_methods_supported: ["S256"]` in their AS metadata.
+ * flow (discovery + per-subscriber DCR).
  *
- * Each entry below has been probed against `.well-known/oauth-authorization-server`
- * (RFC 8414) and confirmed to expose a `registration_endpoint` (RFC 7591) with
- * PKCE `S256` support.
+ * Each entry below has been manually probed and verified to:
+ *   1. Advertise its authorization server via Protected Resource Metadata
+ *      at `.well-known/oauth-protected-resource` (RFC 9728), and
+ *   2. Expose a `registration_endpoint` (RFC 7591) on its AS metadata
+ *      (RFC 8414), and
+ *   3. Advertise `code_challenge_methods_supported: ["S256"]`.
+ *
+ * The actual discovery is performed at runtime by `McpOAuthDiscoveryService`;
+ * if any upstream removes DCR support, `GenerateMcpOAuthUrl` surfaces a
+ * `mcp_no_dcr_support` error on the connection's `lastError`.
+ *
+ * Keys MUST match an `id` from `MCP_SERVERS` and the matching catalog entry
+ * MUST carry `oauthMode: 'novu'`. The alignment is asserted by
+ * `mcp-oauth-catalog.spec.ts` at test time.
+ *
+ * Intentionally NOT on the allow-list (yet):
+ *   - slack, github, atlassian-rovo, pagerduty — popular but their AS does
+ *     not yet advertise an RFC 7591 `registration_endpoint`; subscribers
+ *     would need to pre-register a static client out-of-band.
+ *   - box, hubspot, plaid, etc. — pending verification.
  */
 const MCP_OAUTH_CATALOG: Record<string, McpOAuthCatalogEntry> = {
   ahrefs: { mode: 'novu' },

@@ -1,12 +1,9 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
+import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AGENT_RUNTIME_PROVIDERS, MCP_SERVERS } from '@novu/shared';
-import type {
-  AgentMcpServerDto,
-  AgentRuntimeCapabilitiesDto,
-  AgentRuntimeConfigResponseDto,
-} from '../../dtos/agent-runtime-config.dto';
+import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
+import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
+import { projectMcpRowsToCatalog } from '../../utils/project-mcp-servers';
 import { GetAgentRuntimeConfigCommand } from './get-agent-runtime-config.command';
 
 @Injectable()
@@ -14,8 +11,11 @@ export class GetAgentRuntimeConfig {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly agentMcpServerRepository: AgentMcpServerRepository
-  ) {}
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: GetAgentRuntimeConfigCommand): Promise<AgentRuntimeConfigResponseDto> {
     const agent = await this.agentRepository.findOne(
@@ -65,17 +65,10 @@ export class GetAgentRuntimeConfig {
       }),
     ]);
 
-    const mcpServers: AgentMcpServerDto[] = mcpRows
-      .map((row) => {
-        const catalog = MCP_SERVERS.find((entry) => entry.id === row.mcpId);
-
-        if (!catalog) {
-          return null;
-        }
-
-        return { externalId: catalog.name, name: catalog.name, url: catalog.url };
-      })
-      .filter((entry): entry is AgentMcpServerDto => entry !== null);
+    const mcpServers = projectMcpRowsToCatalog(mcpRows, this.logger, {
+      agentId: agent._id,
+      useCase: GetAgentRuntimeConfig.name,
+    });
 
     const providerEntry = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);
 

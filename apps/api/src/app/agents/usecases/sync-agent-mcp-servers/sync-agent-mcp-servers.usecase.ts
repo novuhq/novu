@@ -3,6 +3,7 @@ import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/a
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { MCP_SERVERS } from '@novu/shared';
 
+import { projectMcpRowsToCatalog } from '../../utils/project-mcp-servers';
 import { SyncAgentMcpServersCommand } from './sync-agent-mcp-servers.command';
 
 /**
@@ -28,7 +29,7 @@ export class SyncAgentMcpServers {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly logger: PinoLogger
   ) {
-    this.logger.setContext(SyncAgentMcpServers.name);
+    this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: SyncAgentMcpServersCommand): Promise<void> {
@@ -79,17 +80,10 @@ export class SyncAgentMcpServers {
       enabledOnly: true,
     });
 
-    const projection = enabled
-      .map((row) => {
-        const catalog = MCP_SERVERS.find((c) => c.id === row.mcpId);
-
-        if (!catalog) {
-          return null;
-        }
-
-        return { externalId: catalog.name, name: catalog.name, url: catalog.url };
-      })
-      .filter((entry): entry is { externalId: string; name: string; url: string } => entry !== null);
+    const projection = projectMcpRowsToCatalog(enabled, this.logger, {
+      agentId: command.agentId,
+      useCase: SyncAgentMcpServers.name,
+    });
 
     const runtimeProvider = getAgentRuntimeProvider(providerId, decryptedCredentials.apiKey);
 

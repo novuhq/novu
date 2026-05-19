@@ -11,11 +11,11 @@ export type McpServerCategory =
 
 /**
  * Discriminator for which OAuth flow Novu uses to authorise a connection
- * to an MCP. The actual OAuth metadata (URLs, env var names, scopes) lives
- * in a server-only catalog at
- * `apps/api/src/app/agents/utils/mcp-oauth-catalog.ts` so the values do
- * not ship in the dashboard JS bundle. This enum is exposed in
- * `@novu/shared` only so DTOs can reference it.
+ * to an MCP. The full OAuth metadata (URLs, scopes, registration endpoint,
+ * issuer) is discovered at runtime per the MCP authorization spec and lives
+ * in a server-only allow-list at
+ * `apps/api/src/app/agents/utils/mcp-oauth-catalog.ts`. This enum is shipped
+ * to the dashboard JS bundle as a render hint only.
  */
 export type McpServerOAuthMode = 'none' | 'novu';
 
@@ -30,9 +30,10 @@ export type McpServer = {
   /** Whether this server appears in the "Popular" section of the picker */
   popular: boolean;
   /**
-   * High-level hint for the dashboard to render the right CTA
-   * ("Authorize" vs no auth needed). The authoritative configuration is
-   * server-side; this is a render hint only.
+   * High-level render hint for the dashboard ("Authorize" CTA vs no auth
+   * required). MUST stay aligned with the server-only allow-list in
+   * `mcp-oauth-catalog.ts`; a unit test (`mcp-oauth-catalog.spec.ts`)
+   * enforces the invariant.
    */
   oauthMode?: McpServerOAuthMode;
 };
@@ -54,6 +55,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.linear.app/mcp',
     category: 'productivity',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'atlassian-rovo',
@@ -78,6 +80,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.sentry.dev/mcp',
     category: 'code',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'notion',
@@ -86,6 +89,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.notion.com/mcp',
     category: 'productivity',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'asana',
@@ -94,6 +98,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.asana.com/v2/mcp',
     category: 'productivity',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'amplitude',
@@ -102,6 +107,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.amplitude.com/mcp',
     category: 'data',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'airtable',
@@ -110,6 +116,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.airtable.com/mcp',
     category: 'data',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'stripe',
@@ -118,6 +125,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.stripe.com',
     category: 'financial-services',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'intercom',
@@ -126,6 +134,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.intercom.com/mcp',
     category: 'communication',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'datadog',
@@ -134,6 +143,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.datadoghq.com/api/unstable/mcp-server/mcp',
     category: 'code',
     popular: true,
+    oauthMode: 'novu',
   },
   {
     id: 'pagerduty',
@@ -160,14 +170,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://api.ahrefs.com/mcp/mcp',
     category: 'sales-and-marketing',
     popular: false,
-  },
-  {
-    id: 'airwallex',
-    name: 'Airwallex',
-    description: 'Integrate with the Airwallex global payments platform.',
-    url: 'https://mcp-demo.airwallex.com/developer',
-    category: 'financial-services',
-    popular: false,
+    oauthMode: 'novu',
   },
   {
     id: 'attio',
@@ -176,6 +179,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.attio.com/mcp',
     category: 'sales-and-marketing',
     popular: false,
+    oauthMode: 'novu',
   },
   {
     id: 'aws-marketplace',
@@ -208,6 +212,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.canva.com/mcp',
     category: 'design',
     popular: false,
+    oauthMode: 'novu',
   },
   {
     id: 'cloudflare',
@@ -216,14 +221,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.cloudflare.com/mcp',
     category: 'code',
     popular: false,
-  },
-  {
-    id: 'confluence',
-    name: 'Confluence',
-    description: 'Read and write Confluence documentation pages.',
-    url: 'https://mcp.atlassian.com/v1/mcp/authv2',
-    category: 'productivity',
-    popular: false,
+    oauthMode: 'novu',
   },
   {
     id: 'dropbox',
@@ -258,20 +256,13 @@ export const MCP_SERVERS: McpServer[] = [
     popular: false,
   },
   {
-    id: 'jira',
-    name: 'Jira',
-    description: 'Create, update, and query Jira issues and sprints.',
-    url: 'https://mcp.atlassian.com/v1/mcp/authv2',
-    category: 'productivity',
-    popular: false,
-  },
-  {
     id: 'mixpanel',
     name: 'Mixpanel',
     description: 'Query product analytics and user behavior insights from Mixpanel.',
     url: 'https://mcp.mixpanel.com/mcp',
     category: 'data',
     popular: false,
+    oauthMode: 'novu',
   },
   {
     id: 'neon',
@@ -280,6 +271,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.neon.tech/mcp',
     category: 'data',
     popular: false,
+    oauthMode: 'novu',
   },
   {
     id: 'plaid',
@@ -287,14 +279,6 @@ export const MCP_SERVERS: McpServer[] = [
     description: 'Access financial accounts, transactions, and identity data via Plaid.',
     url: 'https://api.dashboard.plaid.com/mcp',
     category: 'financial-services',
-    popular: false,
-  },
-  {
-    id: 'salesforce',
-    name: 'Salesforce',
-    description: 'Access Salesforce CRM records, leads, opportunities, and reports.',
-    url: 'https://api.salesforce.com/platform/mcp/v1/',
-    category: 'sales-and-marketing',
     popular: false,
   },
   {
@@ -312,6 +296,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.supabase.com/mcp',
     category: 'data',
     popular: false,
+    oauthMode: 'novu',
   },
 ];
 
