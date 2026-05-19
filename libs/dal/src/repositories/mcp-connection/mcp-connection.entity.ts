@@ -4,17 +4,19 @@ import type { OrganizationId } from '../organization';
 
 /**
  * Scope tier for an `mcp_connection` row. Determines which owner ref fields
- * are populated on the row. v1 only writes `agent_mcp_subscriber`; the other
- * tiers are reserved for future shared-token flows.
+ * are populated on the row. v1 only writes `subscriber`; the other tiers are
+ * reserved for future shared-token flows.
  */
-export type McpConnectionScope = 'environment' | 'agent_mcp' | 'agent_mcp_subscriber';
+export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
 
 /**
- * - `novu` — Novu owns the secret. Encrypted access/refresh tokens live
- *            in the `auth` blob.
- * - `none` — Anonymous MCP, no auth needed.
+ * - `novu`     — Novu owns the secret. Encrypted access/refresh tokens live
+ *                in the `auth` blob.
+ * - `provider` — The runtime provider's own vault owns the secret; we hold
+ *                only a `vaultCredentialId` pointer in `auth`.
+ * - `none`     — Anonymous MCP, no auth needed.
  */
-export type McpConnectionAuthMode = 'novu' | 'none';
+export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
 
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
 
@@ -116,9 +118,9 @@ export interface McpConnectionPendingTurn {
  * `auth` is populated when `authMode === 'novu'` and `status === 'connected'`.
  * Owner ref fields populated by scope:
  *
- *  - `environment`            : `_environmentId` only (future).
- *  - `agent_mcp`              : `_agentMcpServerId` (future).
- *  - `agent_mcp_subscriber`   : `_agentMcpServerId` + `_subscriberId` (v1).
+ *  - `environment` : `_environmentId` only (future).
+ *  - `agent`       : `_agentMcpServerId` (future).
+ *  - `subscriber`  : `_agentMcpServerId` + `_subscriberId` (v1).
  */
 export class McpConnectionEntity {
   _id: string;
@@ -132,7 +134,7 @@ export class McpConnectionEntity {
   /** Catalog id from `MCP_SERVERS` (e.g. 'slack'). */
   mcpId: string;
 
-  /** FK to `agent_mcp_server` for `agent_mcp` and `agent_mcp_subscriber` scopes. */
+  /** FK to `agent_mcp_server` for `agent` and `subscriber` scopes. */
   _agentMcpServerId?: string;
 
   /** Mongo `Subscriber._id` (not the external `subscriberId` string). */

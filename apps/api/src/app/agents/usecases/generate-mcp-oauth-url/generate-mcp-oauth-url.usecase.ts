@@ -33,7 +33,7 @@ const DEFAULT_SOFTWARE_ID = 'novu-mcp-client';
 const SOFTWARE_VERSION = process.env.NOVU_API_VERSION || 'dev';
 
 /**
- * Build the provider authorize URL for an `agent_mcp_subscriber`-scoped MCP
+ * Build the provider authorize URL for a `subscriber`-scoped MCP
  * OAuth flow that follows the MCP authorization spec
  * (`modelcontextprotocol.io/specification/draft/basic/authorization`).
  *
@@ -304,7 +304,7 @@ export class GenerateMcpOAuthUrl {
     await this.mcpConnectionRepository.create({
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      scope: McpConnectionScopeEnum.AgentMcpSubscriber,
+      scope: McpConnectionScopeEnum.Subscriber,
       mcpId: command.mcpId,
       _agentMcpServerId: enablement._id,
       _subscriberId: subscriberMongoId,
@@ -328,7 +328,7 @@ export class GenerateMcpOAuthUrl {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       mcpId: command.mcpId,
-      scope: McpConnectionScopeEnum.AgentMcpSubscriber,
+      scope: McpConnectionScopeEnum.Subscriber,
       timestamp: Date.now(),
     };
 

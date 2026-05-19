@@ -156,7 +156,7 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     scope: {
       type: Schema.Types.String,
       required: true,
-      enum: ['environment', 'agent_mcp', 'agent_mcp_subscriber'],
+      enum: ['environment', 'agent', 'subscriber'],
     },
     mcpId: {
       type: Schema.Types.String,
@@ -177,7 +177,7 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     authMode: {
       type: Schema.Types.String,
       required: true,
-      enum: ['novu', 'none'],
+      enum: ['novu', 'provider', 'none'],
     },
     status: {
       type: Schema.Types.String,
@@ -225,7 +225,7 @@ mcpConnectionSchema.index(
   { _agentMcpServerId: 1, scope: 1 },
   {
     unique: true,
-    partialFilterExpression: { _agentMcpServerId: { $type: 'objectId' }, scope: 'agent_mcp' },
+    partialFilterExpression: { _agentMcpServerId: { $type: 'objectId' }, scope: 'agent' },
   }
 );
 

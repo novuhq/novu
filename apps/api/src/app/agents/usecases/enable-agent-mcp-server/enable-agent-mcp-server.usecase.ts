@@ -69,7 +69,7 @@ export class EnableAgentMcpServer {
 
     const defaultAuthMode = command.defaultAuthMode ?? deriveDefaultAuthMode(getMcpOAuthMode(command.mcpId));
 
-    const defaultScope = command.defaultScope ?? McpConnectionScopeEnum.AgentMcpSubscriber;
+    const defaultScope = command.defaultScope ?? McpConnectionScopeEnum.Subscriber;
 
     const row = existing
       ? await this.reEnableExistingRow(existing, command, defaultScope, defaultAuthMode)

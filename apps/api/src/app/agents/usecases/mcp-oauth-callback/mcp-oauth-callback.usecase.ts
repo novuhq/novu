@@ -44,7 +44,7 @@ interface TokenResponse {
 }
 
 /**
- * Handle the OAuth redirect for an `agent_mcp_subscriber`-scoped MCP
+ * Handle the OAuth redirect for a `subscriber`-scoped MCP
  * connection (Novu-managed mode), following the MCP authorization spec
  * (`modelcontextprotocol.io/specification/draft/basic/authorization`).
  *

@@ -10,8 +10,8 @@ declare global {
   }
 }
 
-export type McpConnectionScope = 'environment' | 'agent_mcp' | 'agent_mcp_subscriber';
-export type McpConnectionAuthMode = 'novu' | 'none';
+export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
+export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
 export type AgentMcpServerStatus = 'active' | 'syncing' | 'error' | 'disabled';
 

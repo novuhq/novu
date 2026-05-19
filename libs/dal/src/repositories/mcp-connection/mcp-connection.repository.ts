@@ -35,7 +35,7 @@ export class McpConnectionRepository extends BaseRepositoryV2<
         _organizationId: organizationId,
         _agentMcpServerId: agentMcpServerId,
         _subscriberId: subscriberId,
-        scope: 'agent_mcp_subscriber',
+        scope: 'subscriber',
       },
       '*'
     );

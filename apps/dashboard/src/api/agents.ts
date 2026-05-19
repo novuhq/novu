@@ -382,9 +382,9 @@ export async function patchAgentRuntimeConfig(
   return response.data;
 }
 
-export type McpConnectionScope = 'environment' | 'agent_mcp' | 'agent_mcp_subscriber';
+export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
 
-export type McpConnectionAuthMode = 'novu' | 'none';
+export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
 
 export type AgentMcpServerEnablement = {
   id: string;

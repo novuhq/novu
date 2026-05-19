@@ -10,8 +10,7 @@ export class EnableAgentMcpServerRequestDto {
 
   @ApiPropertyOptional({
     enum: McpConnectionScopeEnum,
-    description:
-      'Default authorisation scope for connections under this enabled MCP. Defaults to "agent_mcp_subscriber".',
+    description: 'Default authorisation scope for connections under this enabled MCP. Defaults to "subscriber".',
   })
   @IsOptional()
   @IsEnum(McpConnectionScopeEnum)

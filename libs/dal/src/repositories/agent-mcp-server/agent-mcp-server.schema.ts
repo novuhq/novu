@@ -3,41 +3,35 @@ import mongoose, { Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { AgentMcpServerDBModel } from './agent-mcp-server.entity';
 
-const externalProjectionSchema = new Schema(
-  {
-    providerId: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    mcpServerName: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    syncedAt: {
-      type: Schema.Types.Date,
-      required: true,
-    },
+const externalProjectionSchema = new Schema({
+  providerId: {
+    type: Schema.Types.String,
+    required: true,
   },
-  { _id: false }
-);
+  mcpServerName: {
+    type: Schema.Types.String,
+    required: true,
+  },
+  syncedAt: {
+    type: Schema.Types.Date,
+    required: true,
+  },
+});
 
-const lastErrorSchema = new Schema(
-  {
-    code: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    message: {
-      type: Schema.Types.String,
-      required: true,
-    },
-    at: {
-      type: Schema.Types.Date,
-      required: true,
-    },
+const lastErrorSchema = new Schema({
+  code: {
+    type: Schema.Types.String,
+    required: true,
   },
-  { _id: false }
-);
+  message: {
+    type: Schema.Types.String,
+    required: true,
+  },
+  at: {
+    type: Schema.Types.Date,
+    required: true,
+  },
+});
 
 const agentMcpServerSchema = new Schema<AgentMcpServerDBModel>(
   {
@@ -68,13 +62,13 @@ const agentMcpServerSchema = new Schema<AgentMcpServerDBModel>(
     defaultScope: {
       type: Schema.Types.String,
       required: true,
-      enum: ['environment', 'agent_mcp', 'agent_mcp_subscriber'],
-      default: 'agent_mcp_subscriber',
+      enum: ['environment', 'agent', 'subscriber'],
+      default: 'subscriber',
     },
     defaultAuthMode: {
       type: Schema.Types.String,
       required: true,
-      enum: ['novu', 'none'],
+      enum: ['novu', 'provider', 'none'],
       default: 'novu',
     },
     externalProjection: {

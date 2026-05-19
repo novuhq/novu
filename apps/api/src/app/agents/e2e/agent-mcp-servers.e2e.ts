@@ -151,7 +151,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(res.status).to.equal(201);
       expect(res.body.data.mcpId).to.equal('slack');
       expect(res.body.data.enabled).to.equal(true);
-      expect(res.body.data.defaultScope).to.equal(McpConnectionScopeEnum.AgentMcpSubscriber);
+      expect(res.body.data.defaultScope).to.equal(McpConnectionScopeEnum.Subscriber);
 
       const row = await agentMcpServerRepository.findByAgentAndMcpId({
         organizationId: session.organization._id,
@@ -271,7 +271,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       await mcpConnectionRepository.create({
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
-        scope: McpConnectionScopeEnum.AgentMcpSubscriber,
+        scope: McpConnectionScopeEnum.Subscriber,
         mcpId: 'slack',
         _agentMcpServerId: enablement!._id,
         _subscriberId: '507f1f77bcf86cd799439011',

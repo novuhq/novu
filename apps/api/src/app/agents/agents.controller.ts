@@ -698,7 +698,7 @@ export class AgentsController {
   @ApiOperation({
     summary: 'Generate MCP OAuth authorize URL',
     description:
-      'Returns the provider authorize URL the subscriber should be redirected to for an `agent_mcp_subscriber`-scoped connection. ' +
+      'Returns the provider authorize URL the subscriber should be redirected to for a `subscriber`-scoped connection. ' +
       'Reuses the signed-state OAuth pattern already used by chat integrations.',
   })
   @ExternalApiAccessible()

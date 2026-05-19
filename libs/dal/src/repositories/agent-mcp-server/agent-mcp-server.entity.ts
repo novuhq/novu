@@ -7,17 +7,19 @@ import type { OrganizationId } from '../organization';
 /**
  * Default authorization scope for an MCP enabled on an agent.
  *
- * Only `agent_mcp_subscriber` is implemented in v1. The other values are
- * reserved for future tiers (per-environment shared token, per-(agent, mcp)
- * shared token) so the field is forward-compatible without a migration.
+ * Only `subscriber` is implemented in v1. The other values are reserved for
+ * future tiers (per-environment shared token, per-(agent, mcp) shared token)
+ * so the field is forward-compatible without a migration.
  */
-export type AgentMcpServerScope = 'environment' | 'agent_mcp' | 'agent_mcp_subscriber';
+export type AgentMcpServerScope = 'environment' | 'agent' | 'subscriber';
 
 /**
  * Default authentication mode for connections created under this enabled
- * MCP.
+ * MCP. `provider` is reserved for runtimes that own their own token vault
+ * (e.g. Anthropic); `novu` keeps the encrypted token in Novu; `none` is
+ * for unauthenticated MCPs.
  */
-export type AgentMcpServerAuthMode = 'novu' | 'none';
+export type AgentMcpServerAuthMode = 'novu' | 'provider' | 'none';
 
 export type AgentMcpServerStatus = 'active' | 'syncing' | 'error' | 'disabled';
 

@@ -70,23 +70,26 @@ export type AgentMcpServerDto = {
 
 /**
  * Scope tier for an MCP OAuth connection. Mirrors `McpConnectionEntity.scope`
- * in `@novu/dal`. Only `agent_mcp_subscriber` is implemented in v1; the
- * remaining tiers are reserved for future shared-token flows.
+ * in `@novu/dal`. Only `subscriber` is implemented in v1; the remaining tiers
+ * are reserved for future shared-token flows.
  */
 export enum McpConnectionScopeEnum {
   Environment = 'environment',
-  AgentMcp = 'agent_mcp',
-  AgentMcpSubscriber = 'agent_mcp_subscriber',
+  Agent = 'agent',
+  Subscriber = 'subscriber',
 }
 
 /**
  * Where the OAuth secret for an MCP connection lives.
  *
- * - `novu` — Novu stores encrypted access/refresh tokens itself.
- * - `none` — MCP requires no auth.
+ * - `novu`     — Novu stores encrypted access/refresh tokens itself.
+ * - `provider` — The runtime provider's vault owns the secret; Novu only
+ *                holds a `vaultCredentialId` pointer.
+ * - `none`     — MCP requires no auth.
  */
 export enum McpConnectionAuthModeEnum {
   Novu = 'novu',
+  Provider = 'provider',
   None = 'none',
 }
 
@@ -106,9 +109,9 @@ export type McpConnectionDto = {
   scope: McpConnectionScopeEnum;
   authMode: McpConnectionAuthModeEnum;
   status: McpConnectionStatusEnum;
-  /** Mongo `_id` of the parent `agent_mcp_server` row when scope >= agent_mcp. */
+  /** Mongo `_id` of the parent `agent_mcp_server` row when scope >= agent. */
   agentMcpServerId?: string;
-  /** Mongo `Subscriber._id` when scope === `agent_mcp_subscriber`. */
+  /** Mongo `Subscriber._id` when scope === `subscriber`. */
   subscriberId?: string;
   expiresAt?: string;
   connectedAt?: string;

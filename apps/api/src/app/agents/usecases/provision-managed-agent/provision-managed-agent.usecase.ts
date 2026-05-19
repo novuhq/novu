@@ -191,7 +191,7 @@ export class ProvisionManagedAgent {
           _agentId: command.agentId,
           mcpId,
           enabled: true,
-          defaultScope: McpConnectionScopeEnum.AgentMcpSubscriber,
+          defaultScope: McpConnectionScopeEnum.Subscriber,
           defaultAuthMode,
           status: 'active',
           externalProjection: {
