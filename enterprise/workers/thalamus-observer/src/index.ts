@@ -20,10 +20,10 @@ export interface ObservationParams {
 
 type ObservationStatus = 'active' | 'completed' | 'error';
 
-type State = {
+interface State {
   observation: (ObservationParams & { status: ObservationStatus }) | null;
   eventBuffer: EventSourceMessage[];
-};
+}
 
 /* ------------------------------------------------------------------ */
 /*  SessionObserver — one Durable Object per session                   */
@@ -37,6 +37,8 @@ export class SessionObserver extends Agent<Env, State> {
   private abortController: AbortController | null = null;
 
   async startObserving(params: ObservationParams): Promise<void> {
+    this.abortController?.abort();
+
     this.updateObservation({ ...params, status: 'active' });
 
     const controller = new AbortController();
@@ -51,6 +53,11 @@ export class SessionObserver extends Agent<Env, State> {
   async stopObserving(): Promise<void> {
     this.abortController?.abort();
     this.abortController = null;
+    for (const ws of this.ctx.getWebSockets()) {
+      try {
+        ws.close(1000, 'observation stopped');
+      } catch {}
+    }
     this.setState({ observation: null, eventBuffer: [] });
   }
 
@@ -137,6 +144,7 @@ export class SessionObserver extends Agent<Env, State> {
   }
 
   private markCompleted(): void {
+    const sessionId = this.state.observation?.sessionId;
     if (this.state.observation) {
       this.updateObservation({
         ...this.state.observation,
@@ -148,6 +156,16 @@ export class SessionObserver extends Agent<Env, State> {
         ws.close(1000, 'response complete');
       } catch {}
     }
+    if (sessionId) {
+      this.unregisterSession(sessionId);
+    }
+  }
+
+  private unregisterSession(sessionId: string): void {
+    try {
+      const registry = this.env.SESSION_REGISTRY.getByName('global');
+      void registry.remove(sessionId);
+    } catch {}
   }
 
   private async observeSSE(
@@ -170,7 +188,10 @@ export class SessionObserver extends Agent<Env, State> {
     });
 
     if (!response.ok || !response.body) {
-      this.updateObservation(this.state.observation ? { ...this.state.observation, status: 'error' } : null);
+      if (this.state.observation) {
+        this.updateObservation({ ...this.state.observation, status: 'error' });
+        this.unregisterSession(params.sessionId);
+      }
       throw new Error(`SSE connection failed: ${response.status}`);
     }
 
@@ -189,6 +210,7 @@ export class SessionObserver extends Agent<Env, State> {
         ...this.state.observation,
         status: 'completed',
       });
+      this.unregisterSession(params.sessionId);
     }
   }
 }
@@ -237,16 +259,20 @@ function timingSafeEqual(a: string, b: string): boolean {
 function validateObservationParams(body: unknown): body is ObservationParams {
   if (typeof body !== 'object' || body === null) return false;
   const obj = body as Record<string, unknown>;
+  if (typeof obj.sessionId !== 'string' || obj.sessionId.length === 0) return false;
+  if (typeof obj.streamUrl !== 'string') return false;
+  try {
+    new URL(obj.streamUrl);
+  } catch {
+    return false;
+  }
+  if (typeof obj.headers !== 'object' || obj.headers === null || Array.isArray(obj.headers)) return false;
+  const headers = obj.headers as Record<string, unknown>;
+  for (const val of Object.values(headers)) {
+    if (typeof val !== 'string') return false;
+  }
 
-  return (
-    typeof obj.sessionId === 'string' &&
-    obj.sessionId.length > 0 &&
-    typeof obj.streamUrl === 'string' &&
-    obj.streamUrl.length > 0 &&
-    typeof obj.headers === 'object' &&
-    obj.headers !== null &&
-    !Array.isArray(obj.headers)
-  );
+  return true;
 }
 
 /* ------------------------------------------------------------------ */
