@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, type OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import type { PendingToolApproval } from '@novu/application-generic';
 import {
   decryptCredentials,
@@ -19,18 +19,16 @@ import { AgentRuntimeProviderIdEnum, MCP_SERVERS } from '@novu/shared';
 import {
   CredentialExpiredError,
   cloudflare,
-  type EdgeObserver,
   McpServerError,
   type Message,
   MessageRole,
-  type Provider,
-  type SendResult,
-  type SessionEventsFactory,
-  SessionExpiredError,
-  type StreamCallbacks,
   type Response as ThalamusResponse,
+  SessionExpiredError,
+  type StreamPart,
   thalamus,
+  type WebhookProvider,
 } from '@novu/thalamus';
+import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import { LRUCache } from 'lru-cache';
 import { GenerateMcpOAuthUrlCommand } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
@@ -40,7 +38,13 @@ import { ParkManagedAgentTurnCommand } from '../usecases/park-managed-agent-turn
 import { ParkManagedAgentTurn } from '../usecases/park-managed-agent-turn/park-managed-agent-turn.usecase';
 import type { AgentExecutionParams } from './bridge-executor.service';
 
-interface SessionContext {
+/**
+ * Webhook metadata persisted on the Cloudflare durable session and replayed
+ * back on every `StreamPart` the runtime emits. Mirrors the in-memory
+ * `SessionContext` map from the pre-webhook architecture — every field needed
+ * to resolve a reply target without a DB round-trip lives here.
+ */
+type WebhookSessionMetadata = {
   conversationId: string;
   environmentId: string;
   organizationId: string;
@@ -56,16 +60,16 @@ interface SessionContext {
    * session, but for them we fall through to the plain-text MCP-init error.
    */
   subscriberId?: string;
-}
+};
 
 /**
  * Cached pair for a managed-agent's provider integration. We keep both the
- * streaming `Provider` and the in-repo `IAgentRuntimeProvider` together so
- * the session `onError` callback can call `parseMcpInitFailure(err)` without
+ * webhook `WebhookProvider` and the in-repo `IAgentRuntimeProvider` together
+ * so the webhook `error` handler can call `parseMcpInitFailure(err)` without
  * having to re-decrypt integration credentials per error.
  */
 interface CachedRuntime {
-  provider: Provider;
+  provider: WebhookProvider;
   runtimeProvider: IAgentRuntimeProvider;
   // Anthropic-side vault that holds OAuth credentials for this integration's
   // MCP servers. Sessions must opt-in to vaults via `SessionCreateParams.vault_ids`
@@ -100,10 +104,9 @@ const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
 const PARKED_SESSION_ERROR_PATTERN = /waiting on responses to events/i;
 
 @Injectable()
-export class ManagedAgentService implements OnModuleInit {
+export class ManagedAgentService {
   private readonly providers: LRUCache<string, CachedRuntime>;
-  private readonly sessionContext = new Map<string, SessionContext>();
-  private edgeObserver: EdgeObserver | undefined;
+  private readonly webhookHandler: WebhookHandler | undefined;
 
   constructor(
     private readonly agentRepository: AgentRepository,
@@ -121,65 +124,7 @@ export class ManagedAgentService implements OnModuleInit {
       max: MAX_CACHED_PROVIDERS,
       ttl: PROVIDER_TTL_MS,
     });
-    this.edgeObserver = this.initEdgeObserver();
-  }
-
-  async onModuleInit(): Promise<void> {
-    if (!process.env.THALAMUS_CF_URL) return;
-
-    try {
-      await this.recoverActiveSessions();
-    } catch (err) {
-      this.logger.error(err, 'Failed to recover active sessions on startup');
-    }
-  }
-
-  /**
-   * Queries the CF worker for active sessions and creates providers only
-   * for agents that have in-flight work. Thalamus reconnects WebSockets
-   * to the DOs and flushes buffered events through onSessionEvents.
-   */
-  private async recoverActiveSessions(): Promise<void> {
-    if (!this.edgeObserver) return;
-
-    const activeSessionIds = await this.edgeObserver.listActive();
-    if (!activeSessionIds.length) return;
-
-    this.logger.info(`Recovering ${activeSessionIds.length} active session(s) from edge`);
-
-    const conversations = await Promise.all(
-      activeSessionIds.map((id) => this.conversationRepository.findByExternalSessionId(id))
-    );
-
-    const uniqueAgents = new Map(
-      conversations
-        .filter((c): c is NonNullable<typeof c> => c !== null)
-        .map((c) => [`${c._agentId}:${c._environmentId}`, { agentId: c._agentId, environmentId: c._environmentId }])
-    );
-
-    const results = await Promise.allSettled(
-      [...uniqueAgents.values()].map(async ({ agentId, environmentId }) => {
-        const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: environmentId } as any, [
-          '_id',
-          'managedRuntime',
-        ]);
-        if (!agent?.managedRuntime) return false;
-
-        await this.getOrCreateProvider(agent, environmentId);
-
-        return true;
-      })
-    );
-
-    const initialized = results.filter((r) => r.status === 'fulfilled' && r.value).length;
-    const failed = results.filter((r) => r.status === 'rejected');
-    if (failed.length) {
-      for (const r of failed) {
-        this.logger.warn(r.reason, 'Failed to initialize provider during recovery');
-      }
-    }
-
-    this.logger.info(`Session recovery: ${initialized} provider(s) reconnected`);
+    this.webhookHandler = this.initWebhookHandler();
   }
 
   async dispatch(context: AgentExecutionParams, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
@@ -190,174 +135,99 @@ export class ManagedAgentService implements OnModuleInit {
       ? [{ role: MessageRole.USER, content: context.message?.text ?? '' }]
       : await this.buildMessagesWithHistory(context);
 
-    const result = provider.send({ messages, sessionId, vaultIds });
+    const newSessionId = await provider.send({
+      messages,
+      sessionId,
+      vaultIds,
+      webhookMetadata: this.buildWebhookMetadata({
+        conversationId: String(context.conversation._id),
+        environmentId: context.config.environmentId,
+        organizationId: context.config.organizationId,
+        agentIdentifier: context.config.agentIdentifier,
+        integrationIdentifier: context.config.integrationIdentifier,
+        subscriberId: context.subscriber?.subscriberId,
+      }),
+    });
 
-    // Stream errors (MCP init failure, provider faults, etc.) are surfaced
-    // through `onSessionEvents.onError`. The Thalamus SDK ALSO rethrows the
-    // same error from the underlying `result.response` (an auto-started
-    // stream promise we never await), and without an explicit `.catch()`
-    // that rejection escapes as an unhandled promise rejection — killing the
-    // process mid-webhook. `absorbStreamRejection` does the bookkeeping.
-    this.absorbStreamRejection(result);
-
-    result.sessionId
-      .then(async (sid) => {
-        this.sessionContext.set(sid, {
-          conversationId: String(context.conversation._id),
-          environmentId: context.config.environmentId,
-          organizationId: context.config.organizationId,
-          agentIdentifier: context.config.agentIdentifier,
-          integrationIdentifier: context.config.integrationIdentifier,
-          subscriberId: context.subscriber?.subscriberId,
-        });
-
-        await this.conversationRepository.setExternalSessionIdIfMissing(
-          context.config.environmentId,
-          String(context.conversation._id),
-          sid
-        );
-      })
-      .catch((err) => {
-        this.logger.error(err, 'Failed to resolve provider session id');
-      });
+    await this.conversationRepository.setExternalSessionIdIfMissing(
+      context.config.environmentId,
+      String(context.conversation._id),
+      newSessionId
+    );
   }
 
-  private buildOnSessionEvents(runtimeProvider: IAgentRuntimeProvider): SessionEventsFactory {
-    return (initialSessionId: string): StreamCallbacks => {
-      let sessionId = initialSessionId;
+  getWebhookHandler(): WebhookHandler | undefined {
+    return this.webhookHandler;
+  }
 
-      return {
-        onStreamStart: (e: { sessionId?: string }) => {
-          if (e.sessionId) sessionId = e.sessionId;
-        },
-        onFinish: async (e) => {
-          const ctx = await this.resolveSessionContext(sessionId);
-          if (!ctx) return;
+  async handleWebhookEvent(sessionId: string, metadata: Record<string, string>, event: StreamPart): Promise<void> {
+    if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
+      this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
 
-          // `requires-action` means the session is parked on Anthropic's side
-          // waiting for a `user.tool_confirmation`. Posting `e.response.content`
-          // here would push an empty string to the chat platform (Slack 502 /
-          // `no_text`) AND leave the user with no surface to approve. Render
-          // an Approve/Deny card from the pending tool details and keep the
-          // session context alive — `confirmToolApproval` reuses it on click.
-          if (e.response.finishReason === 'requires-action') {
+      return;
+    }
+
+    switch (event.type) {
+      case 'finish': {
+        // `requires-action` means the session is parked on Anthropic's side
+        // waiting for a `user.tool_confirmation`. Posting `event.response.content`
+        // here would push an empty string to the chat platform (Slack 502 /
+        // `no_text`) AND leave the user with no surface to approve. Render
+        // an Approve/Deny card from the pending tool details and short-circuit
+        // the normal reply path — `confirmToolApproval` resumes the session.
+        if (event.response.finishReason === 'requires-action') {
+          const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
+          if (runtimeProvider) {
             const delivered = await this.tryDeliverToolApprovalCard(
-              ctx,
+              metadata,
               sessionId,
               runtimeProvider,
-              extractPendingToolApproval(e.response)
+              extractPendingToolApproval(event.response)
             );
 
             if (delivered) {
               return;
             }
           }
+        }
 
-          try {
-            await this.handleAgentReply.execute(
-              HandleAgentReplyCommand.create({
-                userId: 'system',
-                organizationId: ctx.organizationId,
-                environmentId: ctx.environmentId,
-                conversationId: ctx.conversationId,
-                agentIdentifier: ctx.agentIdentifier,
-                integrationIdentifier: ctx.integrationIdentifier,
-                reply: { markdown: e.response.content },
-              })
-            );
-          } catch (err) {
-            this.logger.error(err, `Failed to deliver reply for session ${sessionId}`);
-          }
+        await this.handleAgentReply.execute(
+          HandleAgentReplyCommand.create({
+            userId: 'system',
+            environmentId: metadata.environmentId,
+            organizationId: metadata.organizationId,
+            conversationId: metadata.conversationId,
+            agentIdentifier: metadata.agentIdentifier ?? '',
+            integrationIdentifier: metadata.integrationIdentifier ?? '',
+            reply: { markdown: event.response.content },
+          })
+        );
+        break;
+      }
 
-          this.sessionContext.delete(sessionId);
-        },
-        onError: async (e) => {
-          const ctx = await this.resolveSessionContext(sessionId);
-          if (!ctx) return;
+      case 'error': {
+        await this.handleErrorEvent(metadata, sessionId, event.error);
+        break;
+      }
 
-          const keepSessionAlive = await this.handleErrorEvent(ctx, sessionId, e.error, runtimeProvider);
-
-          // Parked-session errors leave the Anthropic session alive (it's still
-          // waiting for a `user.tool_confirmation`), so deleting our local
-          // context here would orphan the next Approve/Deny click.
-          if (!keepSessionAlive) {
-            this.sessionContext.delete(sessionId);
-          }
-        },
-      };
-    };
-  }
-
-  /**
-   * Resolves session context from the in-memory map (hot path) or
-   * falls back to DB lookup (recovery after restart).
-   */
-  private async resolveSessionContext(sessionId: string): Promise<SessionContext | null> {
-    const cached = this.sessionContext.get(sessionId);
-    if (cached) return cached;
-
-    const conversation = await this.conversationRepository.findByExternalSessionId(sessionId);
-    if (!conversation) {
-      this.logger.warn(`No conversation found for session ${sessionId}, skipping callback`);
-
-      return null;
+      default:
+        break;
     }
-
-    const agent = await this.agentRepository.findOne(
-      { _id: conversation._agentId, _environmentId: conversation._environmentId },
-      ['_id', 'identifier']
-    );
-    if (!agent) return null;
-
-    const integration = conversation.channels[0]
-      ? await this.integrationRepository.findOne({
-          _id: conversation.channels[0]._integrationId,
-          _environmentId: conversation._environmentId,
-        })
-      : null;
-
-    // After a process restart we lose the in-memory `subscriberId` set in
-    // `dispatch()`. Re-derive it from the conversation's subscriber
-    // participant so the Connect-card path stays available on recovered
-    // sessions; participants with `type: PLATFORM_USER` (anonymous) are
-    // intentionally skipped — they can't be the target of a subscriber-scoped
-    // OAuth flow.
-    const subscriberParticipant = conversation.participants.find(
-      (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
-    );
-
-    const ctx: SessionContext = {
-      conversationId: String(conversation._id),
-      environmentId: conversation._environmentId,
-      organizationId: conversation._organizationId,
-      agentIdentifier: agent.identifier,
-      integrationIdentifier: integration?.identifier ?? '',
-      subscriberId: subscriberParticipant?.id,
-    };
-
-    this.sessionContext.set(sessionId, ctx);
-
-    return ctx;
   }
 
-  /**
-   * Returns `true` when the caller MUST keep the session context cached
-   * (e.g. the Anthropic session is still alive waiting on a tool confirmation
-   * and the next Approve/Deny click needs to find it). Returns `false` for
-   * terminal errors where freeing the context is correct.
-   */
   private async handleErrorEvent(
-    ctx: SessionContext,
+    metadata: Record<string, string>,
     sessionId: string,
-    error: Error,
-    runtimeProvider: IAgentRuntimeProvider
-  ): Promise<boolean> {
+    error: Error
+  ): Promise<void> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
-      await this.conversationRepository.clearExternalSessionId(ctx.environmentId, ctx.conversationId);
+      await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
 
-      return false;
+      return;
     }
+
+    const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
 
     // Parked-session 400: user sent a new `user.message` while a previous
     // turn is still waiting on `user.tool_confirmation`. Anthropic rejects
@@ -365,11 +235,11 @@ export class ManagedAgentService implements OnModuleInit {
     // [sevt_...]"). Surface the same Approve/Deny card the original
     // `requires-action` turn would have rendered so the user can unblock
     // without us round-tripping a useless "temporarily unavailable" reply.
-    if (typeof error.message === 'string' && PARKED_SESSION_ERROR_PATTERN.test(error.message)) {
-      const delivered = await this.tryDeliverToolApprovalCard(ctx, sessionId, runtimeProvider);
+    if (runtimeProvider && typeof error.message === 'string' && PARKED_SESSION_ERROR_PATTERN.test(error.message)) {
+      const delivered = await this.tryDeliverToolApprovalCard(metadata, sessionId, runtimeProvider);
 
       if (delivered) {
-        return true;
+        return;
       }
     }
 
@@ -378,13 +248,15 @@ export class ManagedAgentService implements OnModuleInit {
     // card with a one-click authorize URL instead of a generic error. The
     // worker pipeline (#11156, BullMQ era) did the same dance — we ported it
     // here because the CF durable-session runtime owns the conversation now.
-    const initFailure = runtimeProvider.parseMcpInitFailure(error);
+    if (runtimeProvider) {
+      const initFailure = runtimeProvider.parseMcpInitFailure(error);
 
-    if (initFailure) {
-      const delivered = await this.tryDeliverMcpConnectCard(ctx, sessionId, initFailure.mcpServerName);
+      if (initFailure) {
+        const delivered = await this.tryDeliverMcpConnectCard(metadata, sessionId, initFailure.mcpServerName);
 
-      if (delivered) {
-        return false;
+        if (delivered) {
+          return;
+        }
       }
     }
 
@@ -394,19 +266,17 @@ export class ManagedAgentService implements OnModuleInit {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
           userId: 'system',
-          organizationId: ctx.organizationId,
-          environmentId: ctx.environmentId,
-          conversationId: ctx.conversationId,
-          agentIdentifier: ctx.agentIdentifier,
-          integrationIdentifier: ctx.integrationIdentifier,
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
           reply: { markdown: message },
         })
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
     }
-
-    return false;
   }
 
   /**
@@ -429,13 +299,15 @@ export class ManagedAgentService implements OnModuleInit {
    *   4. Deliver `{ reply: { card: ConnectCard } }` via `HandleAgentReply`.
    */
   private async tryDeliverMcpConnectCard(
-    ctx: SessionContext,
+    metadata: Record<string, string>,
     sessionId: string,
     mcpServerName: string
   ): Promise<boolean> {
-    if (!ctx.subscriberId) {
+    const subscriberId = await this.resolveSubscriberIdFromMetadata(metadata);
+
+    if (!subscriberId) {
       this.logger.warn(
-        { sessionId, mcpServerName, conversationId: ctx.conversationId },
+        { sessionId, mcpServerName, conversationId: metadata.conversationId },
         'Cannot offer MCP OAuth — session has no subscriber context (anonymous platform user)'
       );
 
@@ -459,11 +331,11 @@ export class ManagedAgentService implements OnModuleInit {
       const result = await this.generateMcpOAuthUrl.execute(
         GenerateMcpOAuthUrlCommand.create({
           userId: 'system',
-          environmentId: ctx.environmentId,
-          organizationId: ctx.organizationId,
-          agentIdentifier: ctx.agentIdentifier,
+          environmentId: metadata.environmentId,
+          organizationId: metadata.organizationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
           mcpId,
-          subscriberId: ctx.subscriberId,
+          subscriberId,
         })
       );
       authorizeUrl = result.authorizeUrl;
@@ -473,7 +345,7 @@ export class ManagedAgentService implements OnModuleInit {
           err: err instanceof Error ? err.message : String(err),
           sessionId,
           mcpId,
-          agentIdentifier: ctx.agentIdentifier,
+          agentIdentifier: metadata.agentIdentifier,
         },
         'GenerateMcpOAuthUrl failed; falling back to plain-text MCP-init error'
       );
@@ -488,15 +360,15 @@ export class ManagedAgentService implements OnModuleInit {
       await this.parkManagedAgentTurn.execute(
         ParkManagedAgentTurnCommand.create({
           userId: 'system',
-          environmentId: ctx.environmentId,
-          organizationId: ctx.organizationId,
-          agentIdentifier: ctx.agentIdentifier,
+          environmentId: metadata.environmentId,
+          organizationId: metadata.organizationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
           mcpId,
-          subscriberId: ctx.subscriberId,
+          subscriberId,
           jobData: {
             runtime: 'managed-cf-durable-session',
-            conversationId: ctx.conversationId,
-            integrationIdentifier: ctx.integrationIdentifier,
+            conversationId: metadata.conversationId,
+            integrationIdentifier: metadata.integrationIdentifier ?? '',
             sessionId,
           },
         })
@@ -512,11 +384,11 @@ export class ManagedAgentService implements OnModuleInit {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
           userId: 'system',
-          organizationId: ctx.organizationId,
-          environmentId: ctx.environmentId,
-          conversationId: ctx.conversationId,
-          agentIdentifier: ctx.agentIdentifier,
-          integrationIdentifier: ctx.integrationIdentifier,
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
           reply: { card: this.buildConnectCard(mcpServerName, authorizeUrl) },
         })
       );
@@ -570,13 +442,13 @@ export class ManagedAgentService implements OnModuleInit {
   /**
    * Surface an Approve/Deny card for the single oldest pending tool-use
    * approval on the session. When `knownPending` is supplied (e.g. lifted
-   * from the `onFinish` response payload) we skip the round-trip to the
+   * from the `finish` webhook event payload) we skip the round-trip to the
    * provider event log; otherwise we fall back to
    * `runtimeProvider.getPendingToolApproval(sessionId)`. Returns `true` when
    * the card was successfully delivered.
    */
   private async tryDeliverToolApprovalCard(
-    ctx: SessionContext,
+    metadata: Record<string, string>,
     sessionId: string,
     runtimeProvider: IAgentRuntimeProvider,
     knownPending?: PendingToolApproval | null
@@ -598,7 +470,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (!pending) {
       this.logger.warn(
-        { sessionId, conversationId: ctx.conversationId },
+        { sessionId, conversationId: metadata.conversationId },
         'Session is parked on requires-action but no pending tool approval was located'
       );
 
@@ -609,11 +481,11 @@ export class ManagedAgentService implements OnModuleInit {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
           userId: 'system',
-          organizationId: ctx.organizationId,
-          environmentId: ctx.environmentId,
-          conversationId: ctx.conversationId,
-          agentIdentifier: ctx.agentIdentifier,
-          integrationIdentifier: ctx.integrationIdentifier,
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
           reply: { card: this.buildToolApprovalCard(pending) },
         })
       );
@@ -672,8 +544,8 @@ export class ManagedAgentService implements OnModuleInit {
    * Resume a session that was parked in `requires-action` by sending the
    * user's verdict back through the provider as a `toolResults` entry.
    * Anthropic accepts this as a `user.tool_confirmation` event and unblocks
-   * the turn; the resumed stream completes via the same `onSessionEvents`
-   * pipeline, so no extra delivery wiring is needed here.
+   * the turn; the resumed stream completes via the same webhook pipeline,
+   * so no extra delivery wiring is needed here.
    *
    * Public so `AgentInboundHandler.handleAction` can route
    * `mcp-approval:<verdict>:<toolUseId>` clicks here without re-implementing
@@ -720,46 +592,20 @@ export class ManagedAgentService implements OnModuleInit {
     const { provider, vaultIds } = await this.getOrCreateProvider(agent, params.environmentId);
     const sessionId = conversation.externalSessionId;
 
-    // Pre-seed the in-memory session context so the resumed stream's
-    // `onFinish` / `onError` callbacks can resolve the conversation without
-    // hitting the DB. dispatch() already does this from the resolved
-    // `result.sessionId`, but the session id is stable across resumes so
-    // we can set it eagerly here too.
-    this.sessionContext.set(sessionId, {
-      conversationId: params.conversationId,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-      agentIdentifier: params.agentIdentifier,
-      integrationIdentifier: params.integrationIdentifier,
-      subscriberId: params.subscriberId,
-    });
-
-    const result = provider.send({
+    await provider.send({
       messages: [],
       sessionId,
       vaultIds,
       toolResults: [{ toolUseId: params.toolUseId, approved: params.approved }],
+      webhookMetadata: this.buildWebhookMetadata({
+        conversationId: params.conversationId,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        agentIdentifier: params.agentIdentifier,
+        integrationIdentifier: params.integrationIdentifier,
+        subscriberId: params.subscriberId,
+      }),
     });
-
-    this.absorbStreamRejection(result);
-  }
-
-  /**
-   * Absorb the auto-started stream's rejection. Without this, the rejection
-   * escapes as an unhandled promise rejection and the API's global
-   * `unhandledRejection` handler calls `process.exit(1)`. User-facing
-   * reporting is handled by `onSessionEvents.onError`.
-   */
-  private absorbStreamRejection(result: SendResult): void {
-    const streamResponse = (result as { response?: Promise<unknown> }).response;
-    if (streamResponse && typeof streamResponse.catch === 'function') {
-      streamResponse.catch((err) => {
-        this.logger.debug(
-          { err },
-          'Provider stream rejected; user-facing reporting handled by onSessionEvents.onError'
-        );
-      });
-    }
   }
 
   private buildErrorMessage(err: unknown): string {
@@ -774,11 +620,9 @@ export class ManagedAgentService implements OnModuleInit {
     // when an MCP server can't initialize (typically: no credential stored in the
     // vault, or the configured server URL doesn't match the vault entry). Thalamus
     // surfaces it as a generic ThalamusError carrying the message verbatim
-    // (`MCP server '<name>' initialize failed: ...`). Anthropic's session continues
-    // on its side, but Thalamus throws on the first session.error and our local
-    // stream terminates — so we never receive the actual agent.message. Until
-    // Thalamus stops treating MCP init errors as fatal, give the user an
-    // actionable message instead of the generic "temporarily unavailable".
+    // (`MCP server '<name>' initialize failed: ...`). Until the lazy-OAuth Connect
+    // card path can resolve the failure, give the user an actionable message
+    // instead of the generic "temporarily unavailable".
     if (err instanceof Error) {
       const mcpInitMatch = err.message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
       if (mcpInitMatch) {
@@ -826,7 +670,7 @@ export class ManagedAgentService implements OnModuleInit {
     }
 
     const runtimeProvider = getAgentRuntimeProvider(agent.managedRuntime.providerId, creds.apiKey);
-    const provider = this.createProvider(agent.managedRuntime.providerId, runtimeProvider, {
+    const provider = this.createProvider(agent.managedRuntime.providerId, {
       apiKey: creds.apiKey,
       agentId: agent.managedRuntime.externalAgentId,
       environmentId: creds.externalEnvironmentId,
@@ -840,26 +684,50 @@ export class ManagedAgentService implements OnModuleInit {
 
   private createProvider(
     providerId: AgentRuntimeProviderIdEnum,
-    runtimeProvider: IAgentRuntimeProvider,
     config: { apiKey: string; agentId: string; environmentId: string }
-  ): Provider {
+  ): WebhookProvider {
+    const cfUrl = process.env.THALAMUS_CF_URL;
+    if (!cfUrl) {
+      throw new Error('THALAMUS_CF_URL is required for managed agents');
+    }
+
+    const webhookSecret = process.env.THALAMUS_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error('THALAMUS_WEBHOOK_SECRET is required for managed agents');
+    }
+
     switch (providerId) {
       case AgentRuntimeProviderIdEnum.Anthropic:
         return thalamus.anthropic({
           ...config,
-          onSessionEvents: this.buildOnSessionEvents(runtimeProvider),
-          durable: this.edgeObserver,
+          durable: cloudflare({
+            url: cfUrl,
+            apiKey: process.env.THALAMUS_CF_API_KEY,
+            webhook: {
+              url: `${process.env.API_ROOT_URL}/v1/agents/events`,
+              secret: webhookSecret,
+            },
+          }),
         });
       default:
         throw new Error(`Unsupported agent runtime provider: ${providerId}`);
     }
   }
 
-  private initEdgeObserver(): EdgeObserver | undefined {
-    const cfUrl = process.env.THALAMUS_CF_URL;
-    if (!cfUrl) return undefined;
+  private initWebhookHandler(): WebhookHandler | undefined {
+    const secret = process.env.THALAMUS_WEBHOOK_SECRET;
+    if (!secret) return undefined;
 
-    return cloudflare({ url: cfUrl, apiKey: process.env.THALAMUS_CF_API_KEY });
+    return createWebhookHandler({
+      secret,
+      onSessionEvents: (sessionId, metadata) => ({
+        onPart: (part) => {
+          this.handleWebhookEvent(sessionId, metadata, part).catch((err) => {
+            this.logger.error(err, `Failed to handle webhook event for session ${sessionId}`);
+          });
+        },
+      }),
+    });
   }
 
   private async buildMessagesWithHistory(context: AgentExecutionParams): Promise<Message[]> {
@@ -877,6 +745,100 @@ export class ManagedAgentService implements OnModuleInit {
     messages.push({ role: MessageRole.USER, content: context.message?.text ?? '' });
 
     return messages;
+  }
+
+  /**
+   * Build the webhookMetadata payload sent on every `provider.send`. Fields
+   * are flattened to strings (the Thalamus webhook contract is
+   * `Record<string, string>`) and the optional `subscriberId` is omitted
+   * when absent so reads can use a truthy check.
+   */
+  private buildWebhookMetadata(input: WebhookSessionMetadata): Record<string, string> {
+    const metadata: Record<string, string> = {
+      conversationId: input.conversationId,
+      environmentId: input.environmentId,
+      organizationId: input.organizationId,
+      agentIdentifier: input.agentIdentifier,
+      integrationIdentifier: input.integrationIdentifier,
+    };
+
+    if (input.subscriberId) {
+      metadata.subscriberId = input.subscriberId;
+    }
+
+    return metadata;
+  }
+
+  /**
+   * Best-effort resolution of the cached runtime/provider for a webhook
+   * event. Returns `null` when we can't recover the agent for the metadata
+   * (deleted agent, missing managedRuntime, etc.) — callers fall back to the
+   * generic plain-text error reply.
+   */
+  private async tryGetRuntimeProvider(metadata: Record<string, string>): Promise<IAgentRuntimeProvider | null> {
+    if (!metadata.environmentId || !metadata.organizationId || !metadata.agentIdentifier) {
+      return null;
+    }
+
+    try {
+      const agent = await this.agentRepository.findOne(
+        { identifier: metadata.agentIdentifier, _environmentId: metadata.environmentId },
+        ['_id', 'managedRuntime']
+      );
+
+      if (!agent?.managedRuntime) {
+        return null;
+      }
+
+      const { runtimeProvider } = await this.getOrCreateProvider(agent, metadata.environmentId);
+
+      return runtimeProvider;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), agentIdentifier: metadata.agentIdentifier },
+        'Failed to resolve runtime provider for webhook event'
+      );
+
+      return null;
+    }
+  }
+
+  /**
+   * Webhook metadata always carries `subscriberId` for sessions opened by a
+   * subscriber (dispatch() sets it). After a process restart the metadata is
+   * still authoritative — the CF DO replays it on every event — so we
+   * normally read from there. As a defensive fallback (older sessions, code
+   * paths that forgot to pass `subscriberId`), look up the conversation's
+   * subscriber participant.
+   */
+  private async resolveSubscriberIdFromMetadata(metadata: Record<string, string>): Promise<string | undefined> {
+    if (metadata.subscriberId) {
+      return metadata.subscriberId;
+    }
+
+    if (!metadata.conversationId || !metadata.environmentId) {
+      return undefined;
+    }
+
+    try {
+      const conversation = await this.conversationRepository.findOne(
+        { _id: metadata.conversationId, _environmentId: metadata.environmentId },
+        '*'
+      );
+
+      const subscriberParticipant = conversation?.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      );
+
+      return subscriberParticipant?.id;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), conversationId: metadata.conversationId },
+        'Failed to resolve subscriberId from conversation participants'
+      );
+
+      return undefined;
+    }
   }
 }
 
