@@ -304,18 +304,21 @@ export function CreateAgentDialog({
 
   const handleVerify = (keyToVerify: string) => {
     if (!selectedConnector?.providerId) return;
+    const trimmedApiKey = keyToVerify.trim();
+    const trimmedWorkspaceId = externalWorkspaceId.trim();
+    if (!trimmedApiKey) return;
     if (verifyMutation.isPending) return;
-    if (lastVerifiedKeyRef.current === keyToVerify && verifyStatus === 'valid') return;
+    if (lastVerifiedKeyRef.current === trimmedApiKey && verifyStatus === 'valid') return;
 
-    lastVerifiedKeyRef.current = keyToVerify;
+    lastVerifiedKeyRef.current = trimmedApiKey;
     setVerifyStatus('verifying');
     setVerifyMessage(undefined);
 
     verifyMutation.mutate(
       {
         providerId: selectedConnector.providerId,
-        apiKey: keyToVerify,
-        externalWorkspaceId: externalWorkspaceId || undefined,
+        apiKey: trimmedApiKey,
+        externalWorkspaceId: trimmedWorkspaceId || undefined,
       },
       {
         onSuccess: () => {
@@ -338,6 +341,7 @@ export function CreateAgentDialog({
     setApiKey(next);
     setVerifyStatus('idle');
     setVerifyMessage(undefined);
+    lastVerifiedKeyRef.current = null;
     setErrors((prev) => ({ ...prev, apiKey: undefined }));
   };
 

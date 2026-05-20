@@ -265,6 +265,9 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       setSelectedIntegrationId(undefined);
       setCredentialsPanelVisible(true);
       setCredentialsPanelExpanded(true);
+      setVerifyStatus('idle');
+      setVerifyMessage(undefined);
+      lastVerifiedKeyRef.current = null;
 
       if (option.providerLabel && !integrationName.trim()) {
         const nextIndex =
