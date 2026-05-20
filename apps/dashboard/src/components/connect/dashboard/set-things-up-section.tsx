@@ -6,7 +6,7 @@ import { Button } from '@/components/primitives/button';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { useDispatchSetupSteps } from './use-dispatch-setup-steps';
+import { useConnectSetupSteps } from './use-connect-setup-steps';
 
 type DisplayStep = {
   id: string;
@@ -107,7 +107,7 @@ function StepRow({
 export function SetThingsUpSection({ isLoading }: { isLoading?: boolean }) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
-  const { steps: hookSteps, isComplete } = useDispatchSetupSteps();
+  const { steps: hookSteps, isComplete } = useConnectSetupSteps();
 
   if (isComplete) {
     return null;
@@ -123,14 +123,14 @@ export function SetThingsUpSection({ isLoading }: { isLoading?: boolean }) {
   const goToAddAgent = () => {
     if (!environmentSlug) return;
 
-    navigate(`${buildRoute(ROUTES.DISPATCH_AGENTS, { environmentSlug })}?create=1`);
+    navigate(`${buildRoute(ROUTES.CONNECT_AGENTS, { environmentSlug })}?create=1`);
   };
 
   const goToSetupChannel = () => {
     if (!environmentSlug || !setupChannel?.agentIdentifier) return;
 
     navigate(
-      buildRoute(ROUTES.DISPATCH_AGENT_DETAILS_TAB, {
+      buildRoute(ROUTES.CONNECT_AGENT_DETAILS_TAB, {
         environmentSlug,
         agentIdentifier: encodeURIComponent(setupChannel.agentIdentifier),
         agentTab: 'integrations',
@@ -139,7 +139,7 @@ export function SetThingsUpSection({ isLoading }: { isLoading?: boolean }) {
   };
 
   const handleHowItWorks = () => {
-    window.open(docsUrl('/platform/dispatch/overview'), '_blank', 'noopener,noreferrer');
+    window.open(docsUrl('/platform/connect/overview'), '_blank', 'noopener,noreferrer');
   };
 
   const displaySteps: DisplayStep[] = [

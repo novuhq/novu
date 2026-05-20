@@ -50,6 +50,8 @@ import {
   UpdateAgentInboxSharedRequestDto,
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
+  UploadCustomSkillRequestDto,
+  UploadCustomSkillResponseDto,
   VerifyManagedCredentialsRequestDto,
   VerifyManagedCredentialsResponseDto,
 } from './dtos';
@@ -106,6 +108,8 @@ import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integrati
 import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfigCommand } from './usecases/update-agent-runtime-config/update-agent-runtime-config.command';
 import { UpdateAgentRuntimeConfig } from './usecases/update-agent-runtime-config/update-agent-runtime-config.usecase';
+import { UploadCustomSkillCommand } from './usecases/upload-custom-skill/upload-custom-skill.command';
+import { UploadCustomSkill } from './usecases/upload-custom-skill/upload-custom-skill.usecase';
 import { VerifyManagedCredentialsCommand } from './usecases/verify-managed-credentials/verify-managed-credentials.command';
 import { VerifyManagedCredentials } from './usecases/verify-managed-credentials/verify-managed-credentials.usecase';
 
@@ -132,6 +136,7 @@ export class AgentsController {
     private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage,
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly updateAgentRuntimeConfigUsecase: UpdateAgentRuntimeConfig,
+    private readonly uploadCustomSkillUsecase: UploadCustomSkill,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
     private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook,
@@ -753,6 +758,47 @@ export class AgentsController {
         mcpServers: body.mcpServers,
         tools: body.tools,
         skills: body.skills,
+      })
+    );
+  }
+
+  @Post('/skills')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiResponse(UploadCustomSkillResponseDto, 201)
+  @ApiOperation({
+    summary: 'Upload one or more custom skills from a source',
+    description:
+      'Downloads the supplied source, uploads each resulting bundle to the integration provider ' +
+      'as a custom skill, and returns the provider-assigned skill IDs as a uniform `skills[]` array. ' +
+      'Three source variants are supported:\n\n' +
+      '- `type: "github-url"` — full `https://github.com/...` URL. Always uploads exactly one skill; ' +
+      'use this form to pin a ref or to disambiguate when multiple repo directories share a basename. ' +
+      'Accepts `/`, `/tree/{ref}`, or `/tree/{ref}/{path}` shapes.\n' +
+      '- `type: "github-repo"` — `owner/repo` slug fetched from the default branch (HEAD). ' +
+      'Pass a required, non-empty `skills` array of directory basenames to upload. Each name must ' +
+      'match exactly one directory containing a `SKILL.md`; ambiguous names are rejected with a 400.\n' +
+      '- `type: "inline"` — raw `SKILL.md` text pasted by the caller, wrapped server-side as a single-file bundle.\n\n' +
+      'Each returned `skillId` can be passed via `managedRuntime.skills` on POST /agents or ' +
+      'PATCH /agents/:identifier/runtime/config as `{ type: "custom", skillId }`. ' +
+      'Re-uploading a source whose derived display title matches an existing custom skill appends a new ' +
+      'version to it rather than failing — the entry returns the existing `skillId` and the new `version`. ' +
+      'When a multi-skill `github-repo` upload partially fails, the request is aborted at the first ' +
+      'error and earlier successful uploads are NOT rolled back (they will auto-version on retry).',
+  })
+  @ApiNotFoundResponse({ description: 'The integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  createCustomSkill(
+    @UserSession() user: UserSessionData,
+    @Body() body: UploadCustomSkillRequestDto
+  ): Promise<UploadCustomSkillResponseDto> {
+    return this.uploadCustomSkillUsecase.execute(
+      UploadCustomSkillCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationId: body.integrationId,
+        source: body.source,
       })
     );
   }

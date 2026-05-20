@@ -51,7 +51,6 @@ describe('AgentInboundHandler', () => {
       persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
       persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
-      updateChannelThread: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
     };
@@ -61,8 +60,8 @@ describe('AgentInboundHandler', () => {
     const subscriberRepository = {
       findBySubscriberId: sinon.stub(),
     };
-    const managedExecutor = {
-      execute: sinon.stub().resolves(undefined),
+    const managedAgentService = {
+      dispatch: sinon.stub().resolves(undefined),
     };
     const agentRepository = {
       findOne: sinon.stub().resolves(null),
@@ -92,7 +91,7 @@ describe('AgentInboundHandler', () => {
       subscriberResolver as any,
       conversationService as any,
       bridgeExecutor as any,
-      managedExecutor as any,
+      managedAgentService as any,
       agentRepository as any,
       subscriberRepository as any,
       environmentRepository as any,
@@ -197,11 +196,6 @@ describe('AgentInboundHandler', () => {
       expect(conversationService.createOrGetConversation.firstCall.args[0].platformThreadId).to.equal(expectedThreadId);
       expect(conversationService.persistInboundMessage.firstCall.args[0].platformThreadId).to.equal(expectedThreadId);
       expect(conversationService.setFirstPlatformMessageId.firstCall.args[3]).to.equal(expectedThreadId);
-      expect(conversationService.updateChannelThread.firstCall.args[3]).to.equal(expectedThreadId);
-      expect(conversationService.updateChannelThread.firstCall.args[4].id).to.equal(expectedThreadId);
-      expect(conversationService.updateChannelThread.firstCall.args[4].currentMessage.threadId).to.equal(
-        expectedThreadId
-      );
       expect(bridgeExecutor.execute.firstCall.args[0].platformContext.threadId).to.equal(expectedThreadId);
     });
 

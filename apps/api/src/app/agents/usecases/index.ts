@@ -26,6 +26,7 @@ import { UpdateAgent } from './update-agent/update-agent.usecase';
 import { UpdateAgentInboxShared } from './update-agent-inbox-shared/update-agent-inbox-shared.usecase';
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfig } from './update-agent-runtime-config/update-agent-runtime-config.usecase';
+import { UploadCustomSkill } from './upload-custom-skill/upload-custom-skill.usecase';
 import { VerifyManagedCredentials } from './verify-managed-credentials/verify-managed-credentials.usecase';
 
 export {
@@ -48,6 +49,7 @@ export const USE_CASES = [
   UpdateAgent,
   UpdateAgentInboxShared,
   UpdateAgentRuntimeConfig,
+  UploadCustomSkill,
   DeleteAgent,
   AddAgentIntegration,
   CleanupNovuEmail,

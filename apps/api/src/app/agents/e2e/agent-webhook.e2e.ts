@@ -128,7 +128,6 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(conversation).to.exist;
       expect(conversation!.status).to.equal(ConversationStatusEnum.ACTIVE);
       expect(conversation!.channels[0].platformThreadId).to.equal(threadId);
-      expect(conversation!.channels[0].serializedThread).to.exist;
       expect(conversation!.messageCount).to.be.gte(1);
 
       const platformUserParticipant = conversation!.participants.find(

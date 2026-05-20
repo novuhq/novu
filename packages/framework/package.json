@@ -274,7 +274,7 @@
     "zod-to-json-schema": "^3.23.3"
   },
   "dependencies": {
-    "chat": "^4.25.0",
+    "chat": "4.28.1",
     "ajv": "^8.20.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",

@@ -17,7 +17,7 @@ const RESOURCE_LINKS: ResourceLink[] = [
   },
   {
     label: 'Read documentation',
-    href: docsUrl('/platform/dispatch/overview'),
+    href: docsUrl('/platform/connect/overview'),
     icon: RiBookMarkedLine,
   },
   {
@@ -27,7 +27,7 @@ const RESOURCE_LINKS: ResourceLink[] = [
   },
 ];
 
-export function DispatchResourcesSection() {
+export function ConnectResourcesSection() {
   return (
     <div className="flex flex-col rounded-[10px] p-1">
       <div className="flex items-center px-2 py-1.5 gap-1">

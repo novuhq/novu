@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -58,7 +58,7 @@ export class ConversationRepository extends BaseRepositoryV2<
         channels: {
           $elemMatch: {
             platformThreadId,
-            _integrationId: integrationId,
+            _integrationId: new Types.ObjectId(integrationId),
           },
         },
       },
@@ -154,24 +154,6 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
-  async updateChannelThread(
-    environmentId: string,
-    organizationId: string,
-    id: string,
-    platformThreadId: string,
-    serializedThread: Record<string, unknown>
-  ): Promise<void> {
-    await this.update(
-      {
-        _id: id,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        'channels.platformThreadId': platformThreadId,
-      },
-      { $set: { 'channels.$.serializedThread': serializedThread } }
-    );
-  }
-
   async setFirstPlatformMessageId(
     environmentId: string,
     organizationId: string,
@@ -219,6 +201,23 @@ export class ConversationRepository extends BaseRepositoryV2<
 
   async clearExternalSessionId(environmentId: string, conversationId: string): Promise<void> {
     await this.update({ _id: conversationId, _environmentId: environmentId }, { $unset: { externalSessionId: '' } });
+  }
+
+  /**
+   * Intentionally queries without _environmentId scope — session recovery and
+   * edge callbacks only have the CF-generated session UUID and need to resolve
+   * which environment owns it. Session IDs are system-generated UUIDs from
+   * Cloudflare Durable Objects, not user-supplied input.
+   */
+  async findByExternalSessionId(sessionId: string) {
+    return this.findOne({ externalSessionId: sessionId } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds, [
+      '_id',
+      '_agentId',
+      '_environmentId',
+      '_organizationId',
+      'externalSessionId',
+      'channels',
+    ]);
   }
 
   async listConversations({

@@ -22,7 +22,7 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
-import { ManagedExecutorService } from './managed-executor.service';
+import { ManagedAgentService } from './managed-agent.service';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
 /**
@@ -98,6 +98,27 @@ function getMessageRawEvent(message: Message): Record<string, unknown> | undefin
   return asRecord(raw?.event) ?? raw;
 }
 
+function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Message): string {
+  const preview = getInboundActivityPreview(message.text, {
+    hasPlatformAttachments: Boolean(message.attachments?.length),
+  });
+
+  if (preview.trim().length > 0) {
+    return preview;
+  }
+
+  if (platform === AgentPlatformEnum.EMAIL) {
+    const raw = asRecord(message.raw);
+    const subject = typeof raw?.subject === 'string' ? raw.subject.trim() : '';
+
+    if (subject.length > 0) {
+      return subject;
+    }
+  }
+
+  return preview;
+}
+
 function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, message: Message): string {
   const rawEvent = getMessageRawEvent(message);
   const rawThreadTs = rawEvent?.thread_ts;
@@ -108,17 +129,6 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
   }
 
   return `${thread.id}${threadRoot}`;
-}
-
-function applyPlatformThreadIdToSerializedThread(serializedThread: Record<string, unknown>, platformThreadId: string) {
-  serializedThread.id = platformThreadId;
-
-  const currentMessage = asRecord(serializedThread.currentMessage ?? serializedThread.message);
-  if (!currentMessage) {
-    return;
-  }
-
-  currentMessage.threadId = platformThreadId;
 }
 
 function applyPlatformThreadIdToThread(thread: Thread, platformThreadId: string) {
@@ -197,7 +207,7 @@ export class AgentInboundHandler {
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly managedExecutor: ManagedExecutorService,
+    private readonly managedAgentService: ManagedAgentService,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly environmentRepository: EnvironmentRepository,
@@ -257,9 +267,7 @@ export class AgentInboundHandler {
       participantId,
       participantType,
       platformUserId: message.author.userId,
-      firstMessageText: getInboundActivityPreview(message.text, {
-        hasPlatformAttachments: Boolean(message.attachments?.length),
-      }),
+      firstMessageText: resolveInboundFirstMessageText(config.platform, message),
     });
 
     const senderType = subscriberId
@@ -350,16 +358,6 @@ export class AgentInboundHandler {
       }
     }
 
-    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
-    applyPlatformThreadIdToSerializedThread(serializedThread, platformThreadId);
-    await this.conversationService.updateChannelThread(
-      config.environmentId,
-      config.organizationId,
-      conversation._id,
-      platformThreadId,
-      serializedThread
-    );
-
     const [subscriber, history] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
@@ -385,7 +383,7 @@ export class AgentInboundHandler {
 
     try {
       if (agent?.runtime === 'managed' && agent.managedRuntime) {
-        await this.managedExecutor.execute(executionContext, agent);
+        await this.managedAgentService.dispatch(executionContext, agent);
       } else {
         await this.bridgeExecutor.execute({
           ...executionContext,
@@ -674,15 +672,6 @@ export class AgentInboundHandler {
       platformUserId: userId,
       firstMessageText: `[action:${action.id}]`,
     });
-
-    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
-    await this.conversationService.updateChannelThread(
-      config.environmentId,
-      config.organizationId,
-      conversation._id,
-      thread.id,
-      serializedThread
-    );
 
     trackAgentInboundAction(this.analyticsService, {
       organizationId: config.organizationId,

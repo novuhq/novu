@@ -1,20 +1,20 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-import { DispatchBreadcrumbProvider } from '@/components/dashboard-shell/dispatch-breadcrumb-provider';
+import { ConnectBreadcrumbProvider } from '@/components/dashboard-shell/connect-breadcrumb-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
-type DispatchProtectedRouteProps = {
+type ConnectProtectedRouteProps = {
   children: ReactNode;
 };
 
-export function DispatchProtectedRoute({ children }: DispatchProtectedRouteProps) {
-  const isDispatchEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DISPATCH_DASHBOARD_ENABLED, false);
+export function ConnectProtectedRoute({ children }: ConnectProtectedRouteProps) {
+  const isConnectEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
   const { currentEnvironment } = useEnvironment();
 
-  if (!isDispatchEnabled) {
+  if (!isConnectEnabled) {
     const fallback = currentEnvironment?.slug
       ? buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment.slug })
       : ROUTES.ROOT;
@@ -22,5 +22,5 @@ export function DispatchProtectedRoute({ children }: DispatchProtectedRouteProps
     return <Navigate to={fallback} replace />;
   }
 
-  return <DispatchBreadcrumbProvider>{children}</DispatchBreadcrumbProvider>;
+  return <ConnectBreadcrumbProvider>{children}</ConnectBreadcrumbProvider>;
 }

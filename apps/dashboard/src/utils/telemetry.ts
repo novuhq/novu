@@ -124,11 +124,11 @@ export enum TelemetryEvent {
   AGENT_INTEGRATION_GUIDE_VIEWED = 'Agent integration setup guide viewed',
   AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD = 'Agent integration removed from dashboard',
 
-  DISPATCH_AGENTS_PAGE_VISITED = 'Agents page visited - [Dispatch]',
-  DISPATCH_AGENT_DETAILS_PAGE_VISITED = 'Agent details page visited - [Dispatch]',
-  DISPATCH_AGENT_CREATED_FROM_DASHBOARD = 'Agent created from dashboard - [Dispatch]',
-  DISPATCH_AGENT_DELETED_FROM_DASHBOARD = 'Agent deleted from dashboard - [Dispatch]',
-  DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD = 'Agent integration linked from dashboard - [Dispatch]',
-  DISPATCH_AGENT_INTEGRATION_GUIDE_VIEWED = 'Agent integration setup guide viewed - [Dispatch]',
-  DISPATCH_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD = 'Agent integration removed from dashboard - [Dispatch]',
+  CONNECT_AGENTS_PAGE_VISITED = 'Agents page visited - [Connect]',
+  CONNECT_AGENT_DETAILS_PAGE_VISITED = 'Agent details page visited - [Connect]',
+  CONNECT_AGENT_CREATED_FROM_DASHBOARD = 'Agent created from dashboard - [Connect]',
+  CONNECT_AGENT_DELETED_FROM_DASHBOARD = 'Agent deleted from dashboard - [Connect]',
+  CONNECT_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD = 'Agent integration linked from dashboard - [Connect]',
+  CONNECT_AGENT_INTEGRATION_GUIDE_VIEWED = 'Agent integration setup guide viewed - [Connect]',
+  CONNECT_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD = 'Agent integration removed from dashboard - [Connect]',
 }
