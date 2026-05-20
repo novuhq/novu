@@ -137,7 +137,7 @@ function MessageContent({ content }: { content: string }) {
 
   return (
     <div className="flex items-center gap-2.5 px-2 py-1">
-      <p
+      <div
         id={contentId}
         className={cn(
           'text-label-xs min-w-0 flex-1 font-medium text-[#1a1a1a]',
@@ -145,9 +145,9 @@ function MessageContent({ content }: { content: string }) {
           expanded && 'wrap-break-word whitespace-pre-wrap'
         )}
       >
-        <MarkdownText>{displayContent}</MarkdownText>
+        <MarkdownText className="text-label-xs text-[#1a1a1a]">{displayContent}</MarkdownText>
         {isLong && !expanded && '...'}
-      </p>
+      </div>
       {isLong && (
         <button
           type="button"

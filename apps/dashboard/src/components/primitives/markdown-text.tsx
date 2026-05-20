@@ -1,36 +1,30 @@
-import { parseMarkdownIntoTokens } from '@novu/js/internal';
-import { HTMLAttributes, useMemo } from 'react';
+import { cjk } from '@streamdown/cjk';
+import { code } from '@streamdown/code';
+import { math } from '@streamdown/math';
+import { mermaid } from '@streamdown/mermaid';
+import { HTMLAttributes } from 'react';
+import { Streamdown } from 'streamdown';
 
 import { cn } from '@/utils/ui';
 
-type MarkdownTextProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children'> & {
+const streamdownPlugins = { code, mermaid, math, cjk };
+
+type MarkdownTextProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'> & {
   children?: string;
 };
 
 export function MarkdownText({ children, className, ...rest }: MarkdownTextProps) {
-  const tokens = useMemo(() => parseMarkdownIntoTokens(children || ''), [children]);
-
   return (
-    <span className={cn(className)} {...rest}>
-      {tokens.map((token, index) => {
-        if (token.type === 'boldItalic') {
-          return (
-            <strong key={index}>
-              <em>{token.content}</em>
-            </strong>
-          );
-        }
-
-        if (token.type === 'bold') {
-          return <strong key={index}>{token.content}</strong>;
-        }
-
-        if (token.type === 'italic') {
-          return <em key={index}>{token.content}</em>;
-        }
-
-        return <span key={index}>{token.content}</span>;
-      })}
-    </span>
+    <Streamdown
+      className={cn(
+        'target-anchor [&>*:first-child]:mt-0 [&>*:last-child]:mb-0',
+        '[&_strong]:font-semibold [&_em]:italic',
+        className
+      )}
+      plugins={streamdownPlugins}
+      {...rest}
+    >
+      {children ?? ''}
+    </Streamdown>
   );
 }
