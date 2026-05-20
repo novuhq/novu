@@ -51,7 +51,6 @@ import {
   ListAgentsQueryDto,
   ListAgentsResponseDto,
   McpConnectionResponseDto,
-  ParkManagedAgentTurnRequestDto,
   PatchAgentRuntimeConfigRequestDto,
   UpdateAgentBridgeRequestDto,
   UpdateAgentInboxSharedRequestDto,
@@ -107,8 +106,6 @@ import { ListAgentMcpServersCommand } from './usecases/list-agent-mcp-servers/li
 import { ListAgentMcpServers } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
-import { ParkManagedAgentTurnCommand } from './usecases/park-managed-agent-turn/park-managed-agent-turn.command';
-import { ParkManagedAgentTurn } from './usecases/park-managed-agent-turn/park-managed-agent-turn.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
@@ -159,7 +156,6 @@ export class AgentsController {
     private readonly listAgentMcpServersUsecase: ListAgentMcpServers,
     private readonly generateMcpOAuthUrlUsecase: GenerateMcpOAuthUrl,
     private readonly getMcpConnectionStatusUsecase: GetMcpConnectionStatus,
-    private readonly parkManagedAgentTurnUsecase: ParkManagedAgentTurn,
     private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook,
     private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
     private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
@@ -889,35 +885,6 @@ export class AgentsController {
         agentIdentifier: identifier,
         mcpId,
         subscriberId,
-      })
-    );
-  }
-
-  @Post('/:identifier/mcp-servers/:mcpId/pending-turn')
-  @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiOperation({
-    summary: 'Park a managed-agent turn awaiting MCP OAuth',
-    description:
-      'Persists a managed-agent job payload on the per-subscriber MCP connection so the OAuth callback can re-enqueue it once the user finishes authorising. Called by the worker when a turn fails because the upstream MCP could not be initialised (no credential in the runtime vault). Requires `GenerateMcpOAuthUrl` to have run first for the same (agent, mcp, subscriber) tuple.',
-  })
-  @ApiExcludeEndpoint()
-  @ExternalApiAccessible()
-  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  async parkManagedAgentTurn(
-    @UserSession() user: UserSessionData,
-    @Param('identifier') identifier: string,
-    @Param('mcpId') mcpId: string,
-    @Body() body: ParkManagedAgentTurnRequestDto
-  ): Promise<void> {
-    await this.parkManagedAgentTurnUsecase.execute(
-      ParkManagedAgentTurnCommand.create({
-        userId: user._id,
-        environmentId: user.environmentId,
-        organizationId: user.organizationId,
-        agentIdentifier: identifier,
-        mcpId,
-        subscriberId: body.subscriberId,
-        jobData: body.jobData,
       })
     );
   }

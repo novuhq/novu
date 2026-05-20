@@ -166,6 +166,12 @@ overrides:
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
   better-auth: 1.5.6
+  # Force single instances of @codemirror/state and @codemirror/autocomplete.
+  # Without this, transitive lang-* packages pin to state@6.4.1 while direct
+  # dashboard imports resolve against state@6.6.0, producing two virtual peer
+  # instances of @codemirror/autocomplete@6.18.3 with incompatible types.
+  '@codemirror/state': 6.6.0
+  '@codemirror/autocomplete': 6.18.3
 
 # allowBuilds replaces onlyBuiltDependencies (and other build-dependency settings) in pnpm v11.
 # Values map package names to `true` (always allow scripts) or `false` (always deny).

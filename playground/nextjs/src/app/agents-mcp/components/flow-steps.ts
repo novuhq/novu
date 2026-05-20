@@ -132,8 +132,8 @@ export const FLOW_STEPS: FlowStep[] = [
   },
   {
     id: 'runtime-resumes',
-    label: 'Novu auto-replays the parked turn',
-    note: 'OAuth callback re-enqueues the IManagedAgentJobData stored under mcp_connection.pendingTurn via EnqueueManagedAgentJob — the user never has to retype their message.',
+    label: 'User re-sends the message',
+    note: 'Sessions are owned by the Cloudflare Durable Object, so Novu cannot auto-replay the turn. The user re-sends after OAuth completes.',
     source: 'novu',
     target: 'runtime',
     branch: 'miss',

@@ -20,48 +20,6 @@ describe('MCP OAuth Catalog', () => {
         []
       );
     });
-
-    /**
-     * Inverse check: every `MCP_SERVERS` row that declares `oauthMode: 'novu'`
-     * must have a matching allow-list entry, otherwise the dashboard would
-     * advertise Authorize CTAs for an MCP whose OAuth flow has no
-     * server-side configuration.
-     */
-    it("every MCP_SERVERS entry with oauthMode='novu' has a catalog allow-list entry", () => {
-      const orphans = MCP_SERVERS.filter((server) => server.oauthMode === 'novu')
-        .map((server) => server.id)
-        .filter((id) => getMcpOAuthCatalogEntry(id).mode === 'none');
-
-      expect(
-        orphans,
-        `MCP_SERVERS entries claim oauthMode='novu' but are not in MCP_OAUTH_CATALOG: ${orphans.join(', ')}`
-      ).to.deep.equal([]);
-    });
-
-    /**
-     * The dashboard reads `oauthMode` directly off `MCP_SERVERS` (the catalog
-     * file is server-only). If a catalog allow-list entry doesn't carry the
-     * matching render hint, the dashboard will not display the Authorize
-     * status for it.
-     */
-    it("every allow-listed catalog entry has oauthMode='novu' on its MCP_SERVERS row", () => {
-      const allowListedIds = MCP_SERVERS.map((server) => server.id).filter((id) => getMcpOAuthMode(id) === 'novu');
-
-      expect(allowListedIds.length, 'allow-list should be non-empty').to.be.greaterThan(0);
-
-      for (const id of allowListedIds) {
-        const server = MCP_SERVERS.find((entry) => entry.id === id);
-
-        if (!server) {
-          throw new Error(`MCP_SERVERS row missing for catalog id "${id}"`);
-        }
-
-        expect(
-          server.oauthMode,
-          `MCP_SERVERS["${id}"].oauthMode must be 'novu' to keep the dashboard hint in sync with the server-only catalog`
-        ).to.equal('novu');
-      }
-    });
   });
 
   describe('getMcpOAuthCatalogEntry', () => {

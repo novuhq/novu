@@ -518,15 +518,11 @@ function CatalogPanel({
 }) {
   const popular = useMemo(() => MCP_SERVERS.filter((mcp: McpServer) => mcp.popular), []);
   const others = useMemo(() => MCP_SERVERS.filter((mcp: McpServer) => !mcp.popular), []);
-  const novuOAuthMcpCount = useMemo(() => MCP_SERVERS.filter((mcp: McpServer) => mcp.oauthMode === 'novu').length, []);
-
   return (
     <div className="flex h-full flex-col overflow-hidden border-r">
       <div className="border-b px-4 py-3 shrink-0">
         <h2 className="text-sm font-semibold">Catalog</h2>
-        <p className="text-xs text-muted-foreground">
-          {MCP_SERVERS.length} MCPs · {novuOAuthMcpCount} with Novu-managed OAuth wired
-        </p>
+        <p className="text-xs text-muted-foreground">{MCP_SERVERS.length} MCPs in catalog</p>
       </div>
       {actionError ? (
         <Alert variant="destructive" className="m-3">
@@ -605,11 +601,6 @@ function CatalogRow({
         <div className="flex items-center gap-2">
           <span className="font-medium text-xs">{mcp.name}</span>
           <code className="text-[10px] text-muted-foreground">{mcp.id}</code>
-          {mcp.oauthMode === 'novu' ? (
-            <Badge variant="secondary" className="text-[10px] py-0">
-              OAuth wired
-            </Badge>
-          ) : null}
         </div>
         <p className="mt-0.5 text-[11px] text-muted-foreground line-clamp-2">{mcp.description}</p>
       </div>

@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum, type McpServerOAuthMode } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
-import { getMcpOAuthMode } from '../../utils/mcp-oauth-catalog';
+import { getMcpOAuthMode, type McpOAuthCatalogMode } from '../../utils/mcp-oauth-catalog';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
@@ -254,7 +254,7 @@ export class ProvisionManagedAgent {
   }
 }
 
-function deriveDefaultAuthMode(catalogMode: McpServerOAuthMode): McpConnectionAuthModeEnum {
+function deriveDefaultAuthMode(catalogMode: McpOAuthCatalogMode): McpConnectionAuthModeEnum {
   switch (catalogMode) {
     case 'none':
       return McpConnectionAuthModeEnum.None;

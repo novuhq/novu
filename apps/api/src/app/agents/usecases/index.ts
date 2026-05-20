@@ -1,7 +1,7 @@
 import { AddAgentIntegration } from './add-agent-integration/add-agent-integration.usecase';
 import { CleanupNovuEmail } from './cleanup-novu-email/cleanup-novu-email.usecase';
-import { ConfigureWhatsAppWebhook } from './configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { ConfigureTelegramAgentWebhook } from './configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
+import { ConfigureWhatsAppWebhook } from './configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { ConsumeTelegramMobileLink } from './consume-telegram-mobile-link/consume-telegram-mobile-link.usecase';
 import { CreateAgent } from './create-agent/create-agent.usecase';
 import { DeleteAgent } from './delete-agent/delete-agent.usecase';
@@ -22,7 +22,6 @@ import { ListAgentIntegrations } from './list-agent-integrations/list-agent-inte
 import { ListAgentMcpServers } from './list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgents } from './list-agents/list-agents.usecase';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
-import { ParkManagedAgentTurn } from './park-managed-agent-turn/park-managed-agent-turn.usecase';
 import { ProvisionManagedAgent } from './provision-managed-agent/provision-managed-agent.usecase';
 import { RemoveAgentIntegration } from './remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmail } from './send-agent-test-email/send-agent-test-email.usecase';
@@ -82,5 +81,4 @@ export const USE_CASES = [
   GenerateMcpOAuthUrl,
   McpOAuthCallback,
   GetMcpConnectionStatus,
-  ParkManagedAgentTurn,
 ];

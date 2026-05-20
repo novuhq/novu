@@ -2,7 +2,7 @@ import { FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { McpConnectionDBModel, McpConnectionEntity, McpConnectionPendingTurn } from './mcp-connection.entity';
+import { McpConnectionDBModel, McpConnectionEntity } from './mcp-connection.entity';
 import { McpConnection } from './mcp-connection.schema';
 
 export class McpConnectionRepository extends BaseRepositoryV2<
@@ -61,55 +61,5 @@ export class McpConnectionRepository extends BaseRepositoryV2<
     };
 
     return this.find(query, '*');
-  }
-
-  /**
-   * Park a managed-agent job on the (agent_mcp_server, subscriber) connection
-   * so the OAuth callback can replay it once the subscriber finishes
-   * authorising. Overwrites any previous parked turn — the latest user
-   * message is the one we want to answer.
-   */
-  async setPendingTurn({
-    organizationId,
-    environmentId,
-    connectionId,
-    pendingTurn,
-  }: {
-    organizationId: string;
-    environmentId: string;
-    connectionId: string;
-    pendingTurn: McpConnectionPendingTurn;
-  }): Promise<void> {
-    await this.update(
-      {
-        _id: connectionId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      { $set: { pendingTurn } }
-    );
-  }
-
-  /**
-   * Clear the parked turn after the OAuth callback successfully re-enqueues
-   * it. Idempotent — a no-op if nothing is parked.
-   */
-  async clearPendingTurn({
-    organizationId,
-    environmentId,
-    connectionId,
-  }: {
-    organizationId: string;
-    environmentId: string;
-    connectionId: string;
-  }): Promise<void> {
-    await this.update(
-      {
-        _id: connectionId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      { $unset: { pendingTurn: 1 } }
-    );
   }
 }

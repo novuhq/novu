@@ -240,19 +240,11 @@ export class McpOAuthCallback {
    *      the returned `vaultCredentialId` so disable/refresh can target it.
    *   2. Re-run `SyncAgentMcpServers` so the upstream `agent.mcp_servers`
    *      projection is fresh (idempotent; cheap).
-   *   3. Clear any parked-turn metadata on the connection. The previous
-   *      BullMQ managed-agent pipeline auto-replayed the parked turn here;
-   *      after #11156 replaced that pipeline with CF durable sessions the
-   *      session is owned by the DO, so there's no Novu-side job to enqueue.
-   *      We leave the park-turn endpoint live as a state-recording surface
-   *      (the dashboard can render "OAuth done — send your message again")
-   *      and we unset `pendingTurn` here so a stale envelope doesn't sit on
-   *      a connection that's already in `connected`.
    *
    * Throws on vault-push failure so the caller can mark the connection
    * `error` — the user retries by clicking the Connect button again. Sync
-   * and pendingTurn-clear failures are logged but never block the connection
-   * from landing in `Connected`.
+   * failures are logged but never block the connection from landing in
+   * `Connected`.
    */
   private async runPostConnectActions(args: {
     connection: McpConnectionEntity;
@@ -329,33 +321,6 @@ export class McpOAuthCallback {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err), agentId: stateData.agentId },
         'SyncAgentMcpServers after OAuth callback failed (non-fatal)'
-      );
-    }
-
-    await this.clearParkedTurn(connection, stateData);
-  }
-
-  /**
-   * Drop any `pendingTurn` envelope left behind by a `park-managed-agent-turn`
-   * call so the dashboard / future callers don't keep showing a stale "your
-   * message is waiting on OAuth" state once authorisation is complete.
-   *
-   * The pre-#11156 callback re-enqueued the parked turn onto the managed-agent
-   * BullMQ queue here; that queue no longer exists (sessions live in CF DOs),
-   * so the user re-sends instead. Failures are logged but never block — a
-   * leftover `pendingTurn` is cosmetic, not a correctness issue.
-   */
-  private async clearParkedTurn(connection: McpConnectionEntity, stateData: McpOAuthState): Promise<void> {
-    try {
-      await this.mcpConnectionRepository.clearPendingTurn({
-        organizationId: stateData.organizationId,
-        environmentId: stateData.environmentId,
-        connectionId: connection._id,
-      });
-    } catch (err) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), connectionId: connection._id },
-        'Failed to clear pendingTurn after OAuth callback'
       );
     }
   }

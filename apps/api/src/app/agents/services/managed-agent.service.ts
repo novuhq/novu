@@ -22,9 +22,9 @@ import {
   McpServerError,
   type Message,
   MessageRole,
-  type Response as ThalamusResponse,
   SessionExpiredError,
   type StreamPart,
+  type Response as ThalamusResponse,
   thalamus,
   type WebhookProvider,
 } from '@novu/thalamus';
@@ -34,8 +34,6 @@ import { GenerateMcpOAuthUrlCommand } from '../usecases/generate-mcp-oauth-url/g
 import { GenerateMcpOAuthUrl } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
-import { ParkManagedAgentTurnCommand } from '../usecases/park-managed-agent-turn/park-managed-agent-turn.command';
-import { ParkManagedAgentTurn } from '../usecases/park-managed-agent-turn/park-managed-agent-turn.usecase';
 import type { AgentExecutionParams } from './bridge-executor.service';
 
 /**
@@ -53,8 +51,7 @@ type WebhookSessionMetadata = {
   /**
    * External subscriberId of the user who sent the message that opened this
    * session. Required to surface a Connect card when the upstream MCP needs
-   * OAuth — `GenerateMcpOAuthUrl` and `ParkManagedAgentTurn` are both
-   * subscriber-scoped.
+   * OAuth — `GenerateMcpOAuthUrl` is subscriber-scoped.
    *
    * Optional: anonymous platform users (no subscriber resolved) still get a
    * session, but for them we fall through to the plain-text MCP-init error.
@@ -116,7 +113,6 @@ export class ManagedAgentService {
     @Inject(forwardRef(() => HandleAgentReply))
     private readonly handleAgentReply: HandleAgentReply,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
-    private readonly parkManagedAgentTurn: ParkManagedAgentTurn,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -215,11 +211,7 @@ export class ManagedAgentService {
     }
   }
 
-  private async handleErrorEvent(
-    metadata: Record<string, string>,
-    sessionId: string,
-    error: Error
-  ): Promise<void> {
+  private async handleErrorEvent(metadata: Record<string, string>, sessionId: string, error: Error): Promise<void> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
       await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
@@ -292,11 +284,7 @@ export class ManagedAgentService {
    *   2. Call `GenerateMcpOAuthUrl` — discovers PRM/AS metadata, does
    *      per-subscriber DCR, mints the authorize URL, and upserts the
    *      `mcp_connection` row to `pending_oauth`.
-   *   3. Best-effort `ParkManagedAgentTurn` — records the connection's
-   *      pending-turn metadata. Post #11156 the OAuth callback no longer
-   *      auto-replays the parked turn (the CF DO owns the session), so a
-   *      failure here is logged but does NOT block card delivery.
-   *   4. Deliver `{ reply: { card: ConnectCard } }` via `HandleAgentReply`.
+   *   3. Deliver `{ reply: { card: ConnectCard } }` via `HandleAgentReply`.
    */
   private async tryDeliverMcpConnectCard(
     metadata: Record<string, string>,
@@ -351,33 +339,6 @@ export class ManagedAgentService {
       );
 
       return false;
-    }
-
-    // Parking is best-effort: post-#11156 the OAuth callback unsets it but
-    // never auto-replays the turn (the CF DO owns the session), so a failed
-    // park doesn't break the user-visible Connect flow. Log + continue.
-    try {
-      await this.parkManagedAgentTurn.execute(
-        ParkManagedAgentTurnCommand.create({
-          userId: 'system',
-          environmentId: metadata.environmentId,
-          organizationId: metadata.organizationId,
-          agentIdentifier: metadata.agentIdentifier ?? '',
-          mcpId,
-          subscriberId,
-          jobData: {
-            runtime: 'managed-cf-durable-session',
-            conversationId: metadata.conversationId,
-            integrationIdentifier: metadata.integrationIdentifier ?? '',
-            sessionId,
-          },
-        })
-      );
-    } catch (err) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), sessionId, mcpId },
-        'ParkManagedAgentTurn failed; proceeding with Connect card anyway'
-      );
     }
 
     try {

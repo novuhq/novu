@@ -38,11 +38,9 @@ type McpsSheetProps = {
 };
 
 function renderRowStatus({
-  entry,
   enablement,
   isPending,
 }: {
-  entry: McpServer;
   enablement: AgentMcpServerEnablement | undefined;
   isPending: boolean;
 }) {
@@ -54,7 +52,7 @@ function renderRowStatus({
     return <span className="text-error-base text-paragraph-xs shrink-0">Sync error</span>;
   }
 
-  if (enablement?.enabled && entry.oauthMode === 'novu') {
+  if (enablement?.enabled && enablement.defaultAuthMode === 'novu') {
     return <span className="text-text-soft text-paragraph-xs shrink-0">Subscribers authorize on first use</span>;
   }
 
@@ -207,7 +205,7 @@ export function McpsSheet({ agent, isOpen, onOpenChange, consoleUrl }: McpsSheet
                     <span className="text-text-strong text-label-sm min-w-0 flex-1 truncate font-medium">
                       {entry.name}
                     </span>
-                    {renderRowStatus({ entry, enablement, isPending })}
+                    {renderRowStatus({ enablement, isPending })}
                   </li>
                 );
               })}

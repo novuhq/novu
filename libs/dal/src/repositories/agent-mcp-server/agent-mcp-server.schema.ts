@@ -1,3 +1,4 @@
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -7,6 +8,7 @@ const externalProjectionSchema = new Schema({
   providerId: {
     type: Schema.Types.String,
     required: true,
+    enum: Object.values(AgentRuntimeProviderIdEnum),
   },
   mcpServerName: {
     type: Schema.Types.String,

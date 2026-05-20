@@ -1,11 +1,13 @@
-import type { McpServerOAuthMode } from '@novu/shared';
+/**
+ * Server-only OAuth policy for catalog MCP entries.
+ *
+ * Lives outside `@novu/shared` so OAuth allow-list metadata is not shipped in
+ * the dashboard JS bundle.
+ */
+export type McpOAuthCatalogMode = 'none' | 'novu' | 'provider';
 
 /**
  * Server-only OAuth metadata for catalog MCP entries.
- *
- * Lives outside `@novu/shared` so we can carry server-only OAuth policy hints
- * without shipping them in the dashboard JS bundle. The dashboard sees only
- * the high-level `oauthMode` discriminator on `McpServer`.
  *
  * After the MCP-spec OAuth refactor this catalog is a thin **allow-list**:
  * the actual OAuth endpoints, scopes, registration endpoint, and issuer are
@@ -16,7 +18,7 @@ import type { McpServerOAuthMode } from '@novu/shared';
  * (RFC 7591); no env-var-based pre-registered clients are configured here.
  *
  * Keys map to `McpServer.id` from `MCP_SERVERS`. Entries not listed default
- * to `{ mode: 'none' }` and surface in the dashboard with no Authorize CTA.
+ * to `{ mode: 'none' }`.
  */
 
 export type McpOAuthCatalogEntry =
@@ -53,8 +55,7 @@ export type NovuOAuthCatalogEntry = Extract<McpOAuthCatalogEntry, { mode: 'novu'
  * if any upstream removes DCR support, `GenerateMcpOAuthUrl` surfaces a
  * `mcp_no_dcr_support` error on the connection's `lastError`.
  *
- * Keys MUST match an `id` from `MCP_SERVERS` and the matching catalog entry
- * MUST carry `oauthMode: 'novu'`. The alignment is asserted by
+ * Keys MUST match an `id` from `MCP_SERVERS`. The alignment is asserted by
  * `mcp-oauth-catalog.spec.ts` at test time.
  *
  * Intentionally NOT on the allow-list (yet):
@@ -95,11 +96,7 @@ export function getMcpOAuthCatalogIds(): readonly string[] {
   return Object.keys(MCP_OAUTH_CATALOG);
 }
 
-/**
- * Public hint used by the shared catalog (`McpServer.oauthMode`).
- * Server-side code should call `getMcpOAuthCatalogEntry` directly to get
- * the full configuration; this exposes only the discriminator.
- */
-export function getMcpOAuthMode(mcpId: string): McpServerOAuthMode {
+/** Returns the OAuth policy mode for a catalog MCP id. */
+export function getMcpOAuthMode(mcpId: string): McpOAuthCatalogMode {
   return getMcpOAuthCatalogEntry(mcpId).mode;
 }

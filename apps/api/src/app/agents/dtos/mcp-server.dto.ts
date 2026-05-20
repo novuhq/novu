@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { McpConnectionAuthModeEnum, McpConnectionScopeEnum, McpConnectionStatusEnum } from '@novu/shared';
-import { IsEnum, IsIn, IsNotEmpty, IsObject, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class EnableAgentMcpServerRequestDto {
   @ApiProperty({ description: 'Catalog id from MCP_SERVERS (e.g. "slack").' })
@@ -95,29 +95,4 @@ export class GenerateMcpOAuthUrlRequestDto {
 export class GenerateMcpOAuthUrlResponseDto {
   @ApiProperty({ description: 'Fully-qualified URL the dashboard should redirect the user to.' })
   authorizeUrl: string;
-}
-
-/**
- * Body for `POST /v1/agents/:identifier/mcp-servers/:mcpId/pending-turn` —
- * worker calls this after a managed-agent turn fails due to an upstream MCP
- * initialisation error, so the OAuth callback can re-enqueue the original
- * message once the subscriber finishes authorising.
- *
- * `jobData` is the same `IManagedAgentJobData` shape produced by
- * `ManagedExecutorService` (kept loose at the API boundary so the API doesn't
- * need to import a queue-layer DTO into its OpenAPI schema).
- */
-export class ParkManagedAgentTurnRequestDto {
-  @ApiProperty({ description: 'External subscriberId whose pending turn should be parked.' })
-  @IsNotEmpty()
-  @IsString()
-  subscriberId: string;
-
-  @ApiProperty({
-    description: 'Managed-agent queue payload to replay after OAuth completes.',
-    type: 'object',
-    additionalProperties: true,
-  })
-  @IsObject()
-  jobData: Record<string, unknown>;
 }

@@ -1,11 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum, type McpServerOAuthMode } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
 
 import { trackAgentMcpServerEnabled } from '../../agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../dtos/mcp-server.dto';
-import { getMcpOAuthCatalogEntry, getMcpOAuthMode } from '../../utils/mcp-oauth-catalog';
+import { getMcpOAuthCatalogEntry, getMcpOAuthMode, type McpOAuthCatalogMode } from '../../utils/mcp-oauth-catalog';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';
@@ -175,7 +175,7 @@ function isDuplicateKeyError(err: unknown): err is MongoDuplicateKeyError {
 function assertAuthModeSupported(
   mcpId: string,
   authMode: McpConnectionAuthModeEnum,
-  catalogMode: McpServerOAuthMode
+  catalogMode: McpOAuthCatalogMode
 ): void {
   const allowed: McpConnectionAuthModeEnum[] = (() => {
     switch (catalogMode) {
@@ -203,7 +203,7 @@ function assertAuthModeSupported(
   }
 }
 
-function deriveDefaultAuthMode(catalogMode: McpServerOAuthMode): McpConnectionAuthModeEnum {
+function deriveDefaultAuthMode(catalogMode: McpOAuthCatalogMode): McpConnectionAuthModeEnum {
   switch (catalogMode) {
     case 'none':
       return McpConnectionAuthModeEnum.None;

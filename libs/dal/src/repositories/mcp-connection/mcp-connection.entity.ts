@@ -40,8 +40,6 @@ export interface McpConnectionOAuthState {
   /** Optional PKCE verifier kept while the OAuth flow is in flight. */
   pkceVerifier?: string;
   initiatedAt: Date;
-  /** Soft deadline used to expire abandoned OAuth flows during cleanup. */
-  expectedRedirectAt?: Date;
   /**
    * Authorization-server `issuer` recorded at authorize-URL time per RFC 9207.
    * On callback, the `iss` query parameter (when emitted) must equal this
@@ -105,23 +103,6 @@ export interface McpConnectionLastError {
 }
 
 /**
- * A managed-agent turn that failed because the upstream MCP couldn't be
- * initialised (no credential in the provider vault). The worker parks the
- * full job payload here so the OAuth callback can re-enqueue it once the
- * subscriber finishes the DCR flow. Cleared when re-enqueued; expires via
- * the schema-level TTL index when the user abandons the flow.
- *
- * `jobData` is intentionally typed loosely — `libs/dal` cannot depend on
- * `libs/application-generic` (where `IManagedAgentJobData` lives), and the
- * DAL has no reason to validate the queue payload shape. The parking
- * usecase enforces the shape before this is persisted.
- */
-export interface McpConnectionPendingTurn {
-  jobData: Record<string, unknown>;
-  queuedAt: Date;
-}
-
-/**
  * OAuth state for a (scope, mcp, owner) tuple.
  *
  * `auth` is populated when `authMode === 'novu'` and `status === 'connected'`.
@@ -167,13 +148,6 @@ export class McpConnectionEntity {
   oauthClient?: McpConnectionOAuthClient;
 
   lastError?: McpConnectionLastError;
-
-  /**
-   * Failed managed-agent turn waiting to be replayed after the subscriber
-   * completes OAuth. Set by `ParkManagedAgentTurn`, cleared by the OAuth
-   * callback (or by the schema TTL index on abandonment).
-   */
-  pendingTurn?: McpConnectionPendingTurn;
 
   connectedAt?: string;
 
