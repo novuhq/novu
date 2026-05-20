@@ -1,4 +1,5 @@
 import { forwardRef, Inject, Injectable, type OnModuleInit } from '@nestjs/common';
+import type { PendingToolApproval } from '@novu/application-generic';
 import {
   decryptCredentials,
   getAgentRuntimeProvider,
@@ -23,9 +24,11 @@ import {
   type Message,
   MessageRole,
   type Provider,
+  type SendResult,
   type SessionEventsFactory,
   SessionExpiredError,
   type StreamCallbacks,
+  type Response as ThalamusResponse,
   thalamus,
 } from '@novu/thalamus';
 import { LRUCache } from 'lru-cache';
@@ -75,6 +78,26 @@ interface CachedRuntime {
 
 const MAX_CACHED_PROVIDERS = 200;
 const PROVIDER_TTL_MS = 30 * 60 * 1000;
+
+/**
+ * Action-id prefix for Approve/Deny buttons rendered when an MCP toolset
+ * (or a custom tool) configured with `permission_policy: ask` parks the
+ * Anthropic session in `requires_action`. The id shape is
+ * `mcp-approval:<verdict>:<toolUseId>` so the existing `AgentInboundHandler.handleAction`
+ * routing can intercept clicks before they fall through to the bridge.
+ */
+const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
+
+/**
+ * Anthropic emits this exact `invalid_request_error` when a new
+ * `user.message` event is appended to a session that is still waiting on a
+ * `user.tool_confirmation` (or one of the other tool-result event types).
+ * The wire shape is `Invalid user.message event at events[0]: waiting on
+ * responses to events [sevt_...]`. We surface an Approve/Deny card instead
+ * of the generic "temporarily unavailable" fallback so the user can unblock
+ * the parked turn.
+ */
+const PARKED_SESSION_ERROR_PATTERN = /waiting on responses to events/i;
 
 @Injectable()
 export class ManagedAgentService implements OnModuleInit {
@@ -169,25 +192,13 @@ export class ManagedAgentService implements OnModuleInit {
 
     const result = provider.send({ messages, sessionId, vaultIds });
 
-    // Stream errors (MCP init failure, provider faults, etc.) are surfaced through
-    // `onSessionEvents.onError`, which handles the user-facing reply. The Thalamus
-    // SDK ALSO rethrows the same error from the underlying `result.response` (an
-    // auto-started stream promise we never await). Without an explicit `.catch()`
-    // that rejection escapes as an unhandled promise rejection — and the API's
-    // global `unhandledRejection` handler (see `bootstrap.ts`) calls
-    // `process.exit(1)`, killing the process mid-webhook. That manifests as a
-    // 502 at the ingress, a dangling Slack "Thinking…" indicator, and no error
-    // reply ever reaching the user (because `onError`'s async work is aborted).
-    // Absorb the rejection here; user-facing error reporting is the onError job.
-    const streamResponse = (result as { response?: Promise<unknown> }).response;
-    if (streamResponse && typeof streamResponse.catch === 'function') {
-      streamResponse.catch((err) => {
-        this.logger.debug(
-          { err },
-          'Provider stream rejected; user-facing reporting handled by onSessionEvents.onError'
-        );
-      });
-    }
+    // Stream errors (MCP init failure, provider faults, etc.) are surfaced
+    // through `onSessionEvents.onError`. The Thalamus SDK ALSO rethrows the
+    // same error from the underlying `result.response` (an auto-started
+    // stream promise we never await), and without an explicit `.catch()`
+    // that rejection escapes as an unhandled promise rejection — killing the
+    // process mid-webhook. `absorbStreamRejection` does the bookkeeping.
+    this.absorbStreamRejection(result);
 
     result.sessionId
       .then(async (sid) => {
@@ -223,6 +234,25 @@ export class ManagedAgentService implements OnModuleInit {
           const ctx = await this.resolveSessionContext(sessionId);
           if (!ctx) return;
 
+          // `requires-action` means the session is parked on Anthropic's side
+          // waiting for a `user.tool_confirmation`. Posting `e.response.content`
+          // here would push an empty string to the chat platform (Slack 502 /
+          // `no_text`) AND leave the user with no surface to approve. Render
+          // an Approve/Deny card from the pending tool details and keep the
+          // session context alive — `confirmToolApproval` reuses it on click.
+          if (e.response.finishReason === 'requires-action') {
+            const delivered = await this.tryDeliverToolApprovalCard(
+              ctx,
+              sessionId,
+              runtimeProvider,
+              extractPendingToolApproval(e.response)
+            );
+
+            if (delivered) {
+              return;
+            }
+          }
+
           try {
             await this.handleAgentReply.execute(
               HandleAgentReplyCommand.create({
@@ -245,8 +275,14 @@ export class ManagedAgentService implements OnModuleInit {
           const ctx = await this.resolveSessionContext(sessionId);
           if (!ctx) return;
 
-          await this.handleErrorEvent(ctx, sessionId, e.error, runtimeProvider);
-          this.sessionContext.delete(sessionId);
+          const keepSessionAlive = await this.handleErrorEvent(ctx, sessionId, e.error, runtimeProvider);
+
+          // Parked-session errors leave the Anthropic session alive (it's still
+          // waiting for a `user.tool_confirmation`), so deleting our local
+          // context here would orphan the next Approve/Deny click.
+          if (!keepSessionAlive) {
+            this.sessionContext.delete(sessionId);
+          }
         },
       };
     };
@@ -304,17 +340,37 @@ export class ManagedAgentService implements OnModuleInit {
     return ctx;
   }
 
+  /**
+   * Returns `true` when the caller MUST keep the session context cached
+   * (e.g. the Anthropic session is still alive waiting on a tool confirmation
+   * and the next Approve/Deny click needs to find it). Returns `false` for
+   * terminal errors where freeing the context is correct.
+   */
   private async handleErrorEvent(
     ctx: SessionContext,
     sessionId: string,
     error: Error,
     runtimeProvider: IAgentRuntimeProvider
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
       await this.conversationRepository.clearExternalSessionId(ctx.environmentId, ctx.conversationId);
 
-      return;
+      return false;
+    }
+
+    // Parked-session 400: user sent a new `user.message` while a previous
+    // turn is still waiting on `user.tool_confirmation`. Anthropic rejects
+    // with `invalid_request_error` ("waiting on responses to events
+    // [sevt_...]"). Surface the same Approve/Deny card the original
+    // `requires-action` turn would have rendered so the user can unblock
+    // without us round-tripping a useless "temporarily unavailable" reply.
+    if (typeof error.message === 'string' && PARKED_SESSION_ERROR_PATTERN.test(error.message)) {
+      const delivered = await this.tryDeliverToolApprovalCard(ctx, sessionId, runtimeProvider);
+
+      if (delivered) {
+        return true;
+      }
     }
 
     // Lazy MCP OAuth: if the upstream MCP failed to initialise because the
@@ -328,7 +384,7 @@ export class ManagedAgentService implements OnModuleInit {
       const delivered = await this.tryDeliverMcpConnectCard(ctx, sessionId, initFailure.mcpServerName);
 
       if (delivered) {
-        return;
+        return false;
       }
     }
 
@@ -349,6 +405,8 @@ export class ManagedAgentService implements OnModuleInit {
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
     }
+
+    return false;
   }
 
   /**
@@ -509,6 +567,201 @@ export class ManagedAgentService implements OnModuleInit {
     };
   }
 
+  /**
+   * Surface an Approve/Deny card for the single oldest pending tool-use
+   * approval on the session. When `knownPending` is supplied (e.g. lifted
+   * from the `onFinish` response payload) we skip the round-trip to the
+   * provider event log; otherwise we fall back to
+   * `runtimeProvider.getPendingToolApproval(sessionId)`. Returns `true` when
+   * the card was successfully delivered.
+   */
+  private async tryDeliverToolApprovalCard(
+    ctx: SessionContext,
+    sessionId: string,
+    runtimeProvider: IAgentRuntimeProvider,
+    knownPending?: PendingToolApproval | null
+  ): Promise<boolean> {
+    let pending: PendingToolApproval | null = knownPending ?? null;
+
+    if (!pending) {
+      try {
+        pending = await runtimeProvider.getPendingToolApproval(sessionId);
+      } catch (err) {
+        this.logger.warn(
+          { err: err instanceof Error ? err.message : String(err), sessionId },
+          'getPendingToolApproval failed; cannot render Approve/Deny card'
+        );
+
+        return false;
+      }
+    }
+
+    if (!pending) {
+      this.logger.warn(
+        { sessionId, conversationId: ctx.conversationId },
+        'Session is parked on requires-action but no pending tool approval was located'
+      );
+
+      return false;
+    }
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: 'system',
+          organizationId: ctx.organizationId,
+          environmentId: ctx.environmentId,
+          conversationId: ctx.conversationId,
+          agentIdentifier: ctx.agentIdentifier,
+          integrationIdentifier: ctx.integrationIdentifier,
+          reply: { card: this.buildToolApprovalCard(pending) },
+        })
+      );
+    } catch (err) {
+      this.logger.error(err, `Failed to deliver tool-approval card for session ${sessionId}`);
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Card shape mirrors `buildConnectCard` above. The two `button` children
+   * carry `id`s of the form `mcp-approval:<verdict>:<toolUseId>` so the
+   * existing `AgentInboundHandler.handleAction` routing can intercept the
+   * click and call `confirmToolApproval` before falling through to the
+   * bridge (the user-defined `onAction` handler shouldn't see
+   * provider-internal tool-use ids).
+   */
+  private buildToolApprovalCard(pending: PendingToolApproval): Record<string, unknown> {
+    const serverLabel = pending.mcpServerName ? ` from ${pending.mcpServerName}` : '';
+    const inputPreview = formatToolInputPreview(pending.input);
+
+    return {
+      type: 'card',
+      children: [
+        {
+          type: 'text',
+          content: `I'd like to call \`${pending.toolName}\`${serverLabel} to answer this. Approve to let me run it, or deny to skip.`,
+        },
+        ...(inputPreview ? [{ type: 'text', content: inputPreview }] : []),
+        { type: 'divider' },
+        {
+          type: 'actions',
+          children: [
+            {
+              type: 'button',
+              id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${pending.toolUseId}`,
+              label: 'Approve',
+              style: 'primary',
+            },
+            {
+              type: 'button',
+              id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${pending.toolUseId}`,
+              label: 'Deny',
+              style: 'danger',
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  /**
+   * Resume a session that was parked in `requires-action` by sending the
+   * user's verdict back through the provider as a `toolResults` entry.
+   * Anthropic accepts this as a `user.tool_confirmation` event and unblocks
+   * the turn; the resumed stream completes via the same `onSessionEvents`
+   * pipeline, so no extra delivery wiring is needed here.
+   *
+   * Public so `AgentInboundHandler.handleAction` can route
+   * `mcp-approval:<verdict>:<toolUseId>` clicks here without re-implementing
+   * provider/session lookup.
+   */
+  async confirmToolApproval(params: {
+    conversationId: string;
+    environmentId: string;
+    organizationId: string;
+    agentIdentifier: string;
+    integrationIdentifier: string;
+    subscriberId?: string;
+    toolUseId: string;
+    approved: boolean;
+  }): Promise<void> {
+    const conversation = await this.conversationRepository.findOne(
+      { _id: params.conversationId, _environmentId: params.environmentId, _organizationId: params.organizationId },
+      '*'
+    );
+
+    if (!conversation?.externalSessionId) {
+      this.logger.warn(
+        { conversationId: params.conversationId, toolUseId: params.toolUseId },
+        'Ignoring tool-approval click — conversation has no externalSessionId (stale card or already resolved)'
+      );
+
+      return;
+    }
+
+    const agent = await this.agentRepository.findOne(
+      { _id: conversation._agentId, _environmentId: params.environmentId },
+      ['_id', 'managedRuntime']
+    );
+
+    if (!agent?.managedRuntime) {
+      this.logger.warn(
+        { conversationId: params.conversationId, toolUseId: params.toolUseId },
+        'Ignoring tool-approval click — agent has no managedRuntime'
+      );
+
+      return;
+    }
+
+    const { provider, vaultIds } = await this.getOrCreateProvider(agent, params.environmentId);
+    const sessionId = conversation.externalSessionId;
+
+    // Pre-seed the in-memory session context so the resumed stream's
+    // `onFinish` / `onError` callbacks can resolve the conversation without
+    // hitting the DB. dispatch() already does this from the resolved
+    // `result.sessionId`, but the session id is stable across resumes so
+    // we can set it eagerly here too.
+    this.sessionContext.set(sessionId, {
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      integrationIdentifier: params.integrationIdentifier,
+      subscriberId: params.subscriberId,
+    });
+
+    const result = provider.send({
+      messages: [],
+      sessionId,
+      vaultIds,
+      toolResults: [{ toolUseId: params.toolUseId, approved: params.approved }],
+    });
+
+    this.absorbStreamRejection(result);
+  }
+
+  /**
+   * Absorb the auto-started stream's rejection. Without this, the rejection
+   * escapes as an unhandled promise rejection and the API's global
+   * `unhandledRejection` handler calls `process.exit(1)`. User-facing
+   * reporting is handled by `onSessionEvents.onError`.
+   */
+  private absorbStreamRejection(result: SendResult): void {
+    const streamResponse = (result as { response?: Promise<unknown> }).response;
+    if (streamResponse && typeof streamResponse.catch === 'function') {
+      streamResponse.catch((err) => {
+        this.logger.debug(
+          { err },
+          'Provider stream rejected; user-facing reporting handled by onSessionEvents.onError'
+        );
+      });
+    }
+  }
+
   private buildErrorMessage(err: unknown): string {
     if (err instanceof CredentialExpiredError) {
       return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
@@ -625,4 +878,65 @@ export class ManagedAgentService implements OnModuleInit {
 
     return messages;
   }
+}
+
+/**
+ * Lift the single oldest pending `mcp-approval` (or `tool-confirmation`) out
+ * of a Thalamus `Response.actionsRequired` array. Returns `null` when the
+ * response carries no actionable approval — callers fall back to
+ * `runtimeProvider.getPendingToolApproval(sessionId)` for the event-log walk.
+ */
+function extractPendingToolApproval(response: ThalamusResponse): PendingToolApproval | null {
+  const actionsRequired = response.actionsRequired;
+  if (!Array.isArray(actionsRequired) || actionsRequired.length === 0) {
+    return null;
+  }
+
+  for (const action of actionsRequired) {
+    if (action.type === 'mcp-approval') {
+      return {
+        toolUseId: action.toolUseId,
+        toolName: action.toolName,
+        mcpServerName: action.serverName,
+        input: action.input,
+      };
+    }
+
+    if (action.type === 'tool-confirmation') {
+      return {
+        toolUseId: action.toolUseId,
+        toolName: action.toolName,
+        input: action.input,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Render the tool's input arguments as an inline code block so the user can
+ * see what they're approving. Capped at 600 chars to stay well inside the
+ * Slack block-kit text limit (3000) with room for the surrounding card.
+ */
+function formatToolInputPreview(input: Record<string, unknown> | undefined): string | null {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const keys = Object.keys(input);
+  if (keys.length === 0) {
+    return null;
+  }
+
+  let serialised: string;
+  try {
+    serialised = JSON.stringify(input, null, 2);
+  } catch {
+    return null;
+  }
+
+  const capped = serialised.length > 600 ? `${serialised.slice(0, 597)}...` : serialised;
+
+  return `\`\`\`json\n${capped}\n\`\`\``;
 }

@@ -92,6 +92,23 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
   return value as Record<string, unknown>;
 }
 
+/**
+ * Action-id shape rendered by `ManagedAgentService.buildToolApprovalCard`:
+ * `mcp-approval:<approve|deny>:<toolUseId>`. Returns `null` for anything
+ * else so the caller can fall through to its existing bridge dispatch.
+ */
+function parseToolApprovalActionId(id: string | undefined): { approved: boolean; toolUseId: string } | null {
+  if (!id) return null;
+  const parts = id.split(':');
+  if (parts.length !== 3 || parts[0] !== 'mcp-approval') return null;
+
+  const verdict = parts[1];
+  const toolUseId = parts[2];
+  if ((verdict !== 'approve' && verdict !== 'deny') || !toolUseId) return null;
+
+  return { approved: verdict === 'approve', toolUseId };
+}
+
 function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {
   const raw = asRecord(message.raw);
 
@@ -684,16 +701,28 @@ export class AgentInboundHandler {
       actionId: action.id,
     });
 
-    // NOTE: MCP tool-approval routing (action ids like `mcp-approval:<verdict>:<toolUseId>`)
-    // was wired through `ManagedExecutorService.executeToolConfirmation` in the
-    // BullMQ-based managed-agent pipeline. That pipeline was removed in #11156
-    // (Cloudflare durable sessions own the conversation now), and the worker no
-    // longer emits these approval cards from `process-managed-agent-turn.usecase.ts`.
-    // Tool confirmation in the CF DO runtime is owned by the durable object;
-    // when a fresh confirmation surface is added on top of the DO it should be
-    // routed in here, NOT through the bridge (the user-defined `onAction`
-    // shouldn't see provider-internal tool-use ids). Until then, any stale
-    // `mcp-approval:*` click falls through to the bridge handler below.
+    // MCP tool-approval routing: `ManagedAgentService` owns the Cloudflare
+    // durable session (post-#11156) and renders Approve/Deny cards with
+    // action ids of the form `mcp-approval:<verdict>:<toolUseId>`. Intercept
+    // those clicks here so they call `confirmToolApproval` to resume the
+    // parked Anthropic session — they must NOT fall through to the bridge
+    // (the user-defined `onAction` shouldn't see provider-internal tool-use ids).
+    const toolApproval = parseToolApprovalActionId(action.id);
+
+    if (toolApproval) {
+      await this.managedAgentService.confirmToolApproval({
+        conversationId: conversation._id,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        agentIdentifier: config.agentIdentifier,
+        integrationIdentifier: config.integrationIdentifier,
+        subscriberId: subscriberId ?? undefined,
+        toolUseId: toolApproval.toolUseId,
+        approved: toolApproval.approved,
+      });
+
+      return;
+    }
 
     const [subscriber, history] = await Promise.all([
       subscriberId
