@@ -166,6 +166,7 @@ overrides:
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
   better-auth: 1.5.6
+  '@codemirror/state': 6.6.0
 
 # allowBuilds replaces onlyBuiltDependencies (and other build-dependency settings) in pnpm v11.
 # Values map package names to `true` (always allow scripts) or `false` (always deny).

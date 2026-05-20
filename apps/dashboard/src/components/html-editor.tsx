@@ -1,4 +1,4 @@
-import { Completion, CompletionContext, CompletionResult, CompletionSource } from '@codemirror/autocomplete';
+import { Completion, CompletionContext, CompletionSource } from '@codemirror/autocomplete';
 import { html, htmlCompletionSource } from '@codemirror/lang-html';
 import { liquid, liquidCompletionSource } from '@codemirror/lang-liquid';
 import { tags as t } from '@lezer/highlight';
@@ -66,14 +66,13 @@ export function HtmlEditor({
 }: HtmlEditorProps) {
   const formatButtonRef = useRef<HTMLButtonElement>(null);
 
-  const enhancedLiquidCompletionSource: CompletionSource = useCallback((context: CompletionContext) => {
-    const liquidSource = liquidCompletionSource() as unknown as CompletionSource;
-    const result = liquidSource(context);
-    if (!result || result instanceof Promise) return null;
+  const enhancedLiquidCompletionSource = useCallback((context: CompletionContext) => {
+    const result = liquidCompletionSource()(context);
+    if (!result) return null;
 
     return {
       ...result,
-      options: result.options.map(
+      options: result?.options.map(
         (option) =>
           ({
             ...option,
@@ -106,15 +105,15 @@ export function HtmlEditor({
             },
           }) as Completion
       ),
-    } satisfies CompletionResult;
+    };
   }, []);
 
   const allExtensions = useMemo(() => {
     return [liquid({ base: html() }), ...(extensions || [])];
   }, [extensions]);
 
-  const allCompletionSources = useMemo<CompletionSource[]>(() => {
-    return [enhancedLiquidCompletionSource, htmlCompletionSource as unknown as CompletionSource, ...completionSources];
+  const allCompletionSources = useMemo(() => {
+    return [enhancedLiquidCompletionSource, htmlCompletionSource, ...completionSources];
   }, [completionSources, enhancedLiquidCompletionSource]);
 
   const tagStyles = useMemo(() => {
