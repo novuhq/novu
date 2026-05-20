@@ -129,6 +129,26 @@ export class ManagedAgentService implements OnModuleInit {
 
     const result = provider.send({ messages, sessionId });
 
+    // Stream errors (MCP init failure, provider faults, etc.) are surfaced through
+    // `onSessionEvents.onError`, which handles the user-facing reply. The Thalamus
+    // SDK ALSO rethrows the same error from the underlying `result.response` (an
+    // auto-started stream promise we never await). Without an explicit `.catch()`
+    // that rejection escapes as an unhandled promise rejection — and the API's
+    // global `unhandledRejection` handler (see `bootstrap.ts`) calls
+    // `process.exit(1)`, killing the process mid-webhook. That manifests as a
+    // 502 at the ingress, a dangling Slack "Thinking…" indicator, and no error
+    // reply ever reaching the user (because `onError`'s async work is aborted).
+    // Absorb the rejection here; user-facing error reporting is the onError job.
+    const streamResponse = (result as { response?: Promise<unknown> }).response;
+    if (streamResponse && typeof streamResponse.catch === 'function') {
+      streamResponse.catch((err) => {
+        this.logger.debug(
+          { err },
+          'Provider stream rejected; user-facing reporting handled by onSessionEvents.onError'
+        );
+      });
+    }
+
     result.sessionId
       .then(async (sid) => {
         this.sessionContext.set(sid, {
@@ -265,6 +285,27 @@ export class ManagedAgentService implements OnModuleInit {
     }
     if (err instanceof McpServerError) {
       return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
+    }
+
+    // Anthropic emits `session.error` with type `mcp_authentication_failed_error`
+    // when an MCP server can't initialize (typically: no credential stored in the
+    // vault, or the configured server URL doesn't match the vault entry). Thalamus
+    // surfaces it as a generic ThalamusError carrying the message verbatim
+    // (`MCP server '<name>' initialize failed: ...`). Anthropic's session continues
+    // on its side, but Thalamus throws on the first session.error and our local
+    // stream terminates — so we never receive the actual agent.message. Until
+    // Thalamus stops treating MCP init errors as fatal, give the user an
+    // actionable message instead of the generic "temporarily unavailable".
+    if (err instanceof Error) {
+      const mcpInitMatch = err.message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
+      if (mcpInitMatch) {
+        const serverName = mcpInitMatch[1];
+
+        return (
+          `I couldn't connect to the **${serverName}** MCP server — no credential is stored for it. ` +
+          `Connect ${serverName} from this agent's integration settings (or remove it from the agent's MCP list) and try again.`
+        );
+      }
     }
 
     return 'The agent is temporarily unavailable. Please try again later.';
