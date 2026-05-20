@@ -217,6 +217,10 @@ export class ConversationRepository extends BaseRepositoryV2<
       '_organizationId',
       'externalSessionId',
       'channels',
+      // Needed by `ManagedAgentService.resolveSessionContext` to recover the
+      // subscriber participant after a process restart so the Connect-card
+      // OAuth path stays available on sessions that outlive the API instance.
+      'participants',
     ]);
   }
 

@@ -457,11 +457,13 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // row gets re-pointed at the new credential.
     const existingCredentialId = lazyCreatedVault ? undefined : input.existingCredentialId;
 
+    const vaultIdRef = vaultId;
+
     return this.withRetry(async () => {
       try {
         if (existingCredentialId) {
           const updated = await (client as any).beta.vaults.credentials.update(existingCredentialId, {
-            vault_id: vaultId,
+            vault_id: vaultIdRef,
             display_name: input.displayName,
             auth: buildMcpOAuthUpdateAuth(input.auth),
           });
@@ -469,16 +471,116 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           return { vaultCredentialId: updated.id as string, integrationCredentialsUpdate };
         }
 
-        const created = await (client as any).beta.vaults.credentials.create(vaultId, {
-          display_name: input.displayName,
-          auth: buildMcpOAuthCreateAuth(input.mcpServerUrl, input.auth),
-        });
+        try {
+          const created = await (client as any).beta.vaults.credentials.create(vaultIdRef, {
+            display_name: input.displayName,
+            auth: buildMcpOAuthCreateAuth(input.mcpServerUrl, input.auth),
+          });
 
-        return { vaultCredentialId: created.id as string, integrationCredentialsUpdate };
+          return { vaultCredentialId: created.id as string, integrationCredentialsUpdate };
+        } catch (createErr) {
+          // Anthropic enforces uniqueness on (vault_id, auth.mcp_server_url).
+          // If a previous flow pushed a credential for this URL but Novu's
+          // `mcp_connection.auth.vaultCredentialId` was never persisted (or
+          // got cleared — e.g. legacy BullMQ-era runs, manual cleanup, a
+          // dropped DB write after a successful vault push), the CREATE
+          // branch hits 409. Recover by listing the vault and rebinding to
+          // the orphan via UPDATE so the agent.mcp_servers projection can
+          // finally point at a usable credential.
+          const recovered = await this.tryRecoverOrphanVaultCredential({
+            client,
+            vaultId: vaultIdRef,
+            mcpServerUrl: input.mcpServerUrl,
+            displayName: input.displayName,
+            auth: input.auth,
+            error: createErr,
+          });
+
+          if (recovered) {
+            return { vaultCredentialId: recovered, integrationCredentialsUpdate };
+          }
+
+          throw createErr;
+        }
       } catch (err) {
         this.normaliseError(err);
       }
     });
+  }
+
+  /**
+   * Recover from a 409 "credential already exists" on CREATE by listing the
+   * vault's credentials, finding the one whose `auth.mcp_server_url` matches,
+   * and calling UPDATE with its id. Returns the recovered credential id on
+   * success, or `null` if the error wasn't a 409 conflict or no matching
+   * credential could be found.
+   *
+   * If the matching credential is archived we delete it first and re-CREATE,
+   * because Anthropic's archive flow doesn't allow updating in place.
+   */
+  private async tryRecoverOrphanVaultCredential(args: {
+    client: Anthropic;
+    vaultId: string;
+    mcpServerUrl: string;
+    displayName: string;
+    auth: VaultCredentialAuth;
+    error: unknown;
+  }): Promise<string | null> {
+    const { client, vaultId, mcpServerUrl, displayName, auth, error } = args;
+
+    if (!(error instanceof APIError) || error.status !== 409) {
+      return null;
+    }
+
+    let orphan: { id: string; mcpServerUrl: string; archived: boolean } | null = null;
+
+    try {
+      const credentials = (client as any).beta.vaults.credentials.list(vaultId, { include_archived: true });
+
+      for await (const credential of credentials) {
+        const credAuth = (credential as { auth?: { mcp_server_url?: string } }).auth;
+        const credUrl = credAuth?.mcp_server_url;
+
+        if (typeof credUrl === 'string' && credUrl === mcpServerUrl) {
+          orphan = {
+            id: (credential as { id: string }).id,
+            mcpServerUrl: credUrl,
+            archived: !!(credential as { archived_at?: string | null }).archived_at,
+          };
+          break;
+        }
+      }
+    } catch {
+      return null;
+    }
+
+    if (!orphan) {
+      return null;
+    }
+
+    try {
+      if (orphan.archived) {
+        // Archived credentials still occupy the (vault, mcp_url) uniqueness
+        // slot but can't be updated in place — delete then re-create.
+        await (client as any).beta.vaults.credentials.delete(orphan.id, { vault_id: vaultId });
+        const created = await (client as any).beta.vaults.credentials.create(vaultId, {
+          display_name: displayName,
+          auth: buildMcpOAuthCreateAuth(mcpServerUrl, auth),
+        });
+
+        return created.id as string;
+      }
+
+      const updated = await (client as any).beta.vaults.credentials.update(orphan.id, {
+        vault_id: vaultId,
+        display_name: displayName,
+        auth: buildMcpOAuthUpdateAuth(auth),
+      });
+
+      return updated.id as string;
+    } catch {
+      return null;
+    }
   }
 
   /**
@@ -976,8 +1078,13 @@ function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): Record<string, unkn
   if (auth.accessToken !== undefined) payload.access_token = auth.accessToken;
   if (auth.expiresAt !== undefined) payload.expires_at = auth.expiresAt;
 
+  // Anthropic's UPDATE schema (BetaManagedAgentsMCPOAuthRefreshUpdateParams)
+  // only permits `refresh_token`, `scope`, and `token_endpoint_auth` — the
+  // other refresh fields (`client_id`, `token_endpoint`, `resource`) are
+  // immutable after CREATE. Emitting them yields a 400:
+  //   "auth.refresh.client_id: Extra inputs are not permitted"
   if (auth.refreshToken && auth.oauthClient) {
-    payload.refresh = buildMcpOAuthRefreshParams(auth);
+    payload.refresh = buildMcpOAuthRefreshUpdateParams(auth);
   }
 
   return payload;
@@ -1003,4 +1110,33 @@ function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<string, u
     resource: oauthClient.resource ?? null,
     scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
   };
+}
+
+/**
+ * Build the UPDATE-shaped refresh payload. Anthropic treats `client_id`,
+ * `token_endpoint`, and `resource` as immutable on a credential, so the
+ * update endpoint only accepts `refresh_token`, `scope`, and a partial
+ * `token_endpoint_auth` (basic / post update params). Emitting any of the
+ * immutable fields trips a 400 "Extra inputs are not permitted".
+ */
+function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Record<string, unknown> {
+  if (!auth.refreshToken || !auth.oauthClient) {
+    throw new Error('buildMcpOAuthRefreshUpdateParams requires refreshToken and oauthClient');
+  }
+
+  const { oauthClient } = auth;
+  const tokenEndpointAuth = oauthClient.clientSecret
+    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
+    : undefined;
+
+  const payload: Record<string, unknown> = {
+    refresh_token: auth.refreshToken,
+    scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
+  };
+
+  if (tokenEndpointAuth) {
+    payload.token_endpoint_auth = tokenEndpointAuth;
+  }
+
+  return payload;
 }
