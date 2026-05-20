@@ -2,13 +2,20 @@ import { useId } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { PlatformIcon } from '@/components/icons/platform';
+import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { APP_IDS, buildOtherAppExternalUrl } from '@/utils/apps';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 export function ExplorePlatformSection() {
   const { currentEnvironment } = useEnvironment();
   const environmentSlug = currentEnvironment?.slug;
-  const platformHref = environmentSlug ? buildRoute(ROUTES.WORKFLOWS, { environmentSlug }) : ROUTES.ROOT;
+  // When the hostname split is configured we send users to the Platform host in a new tab so
+  // they keep their Connect tab open; otherwise we use an in-app link to keep dev/self-hosted
+  // single-origin setups working.
+  const externalPlatformHref = buildOtherAppExternalUrl(APP_IDS.NOVU, environmentSlug);
+  const samePagePlatformHref = environmentSlug ? buildRoute(ROUTES.WORKFLOWS, { environmentSlug }) : ROUTES.ROOT;
+  const platformHref = IS_HOSTNAME_SPLIT_ENABLED ? (externalPlatformHref ?? samePagePlatformHref) : samePagePlatformHref;
   const reactId = useId();
   const gridId = `${reactId}-grid`;
   const gridMaskId = `${reactId}-grid-mask`;
@@ -63,20 +70,39 @@ export function ExplorePlatformSection() {
         </div>
       </div>
 
-      <Link
-        to={platformHref}
-        className="border border-bg-soft bg-bg-white hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-stroke-strong text-text-sub group flex w-full items-center justify-center gap-0.5 rounded-md py-1.5 pl-2 pr-1.5 text-label-xs font-medium shadow-[0px_0px_0px_1px_var(--stroke-soft),0px_1px_3px_0px_rgba(14,18,27,0.12)] transition-colors focus-visible:outline-none focus-visible:ring-2"
-      >
-        <span>Explore</span>
-        <span className="flex items-center gap-1 px-1">
-          <PlatformIcon className="text-text-sub size-4" aria-hidden />
-          <span>Platform</span>
-        </span>
-        <RiArrowRightSLine
-          className="text-text-soft size-4 transition-transform duration-200 group-hover:translate-x-0.5"
-          aria-hidden
-        />
-      </Link>
+      {IS_HOSTNAME_SPLIT_ENABLED ? (
+        <a
+          href={platformHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="border border-bg-soft bg-bg-white hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-stroke-strong text-text-sub group flex w-full items-center justify-center gap-0.5 rounded-md py-1.5 pl-2 pr-1.5 text-label-xs font-medium shadow-[0px_0px_0px_1px_var(--stroke-soft),0px_1px_3px_0px_rgba(14,18,27,0.12)] transition-colors focus-visible:outline-none focus-visible:ring-2"
+        >
+          <span>Explore</span>
+          <span className="flex items-center gap-1 px-1">
+            <PlatformIcon className="text-text-sub size-4" aria-hidden />
+            <span>Platform</span>
+          </span>
+          <RiArrowRightSLine
+            className="text-text-soft size-4 transition-transform duration-200 group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        </a>
+      ) : (
+        <Link
+          to={platformHref}
+          className="border border-bg-soft bg-bg-white hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-stroke-strong text-text-sub group flex w-full items-center justify-center gap-0.5 rounded-md py-1.5 pl-2 pr-1.5 text-label-xs font-medium shadow-[0px_0px_0px_1px_var(--stroke-soft),0px_1px_3px_0px_rgba(14,18,27,0.12)] transition-colors focus-visible:outline-none focus-visible:ring-2"
+        >
+          <span>Explore</span>
+          <span className="flex items-center gap-1 px-1">
+            <PlatformIcon className="text-text-sub size-4" aria-hidden />
+            <span>Platform</span>
+          </span>
+          <RiArrowRightSLine
+            className="text-text-soft size-4 transition-transform duration-200 group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        </Link>
+      )}
     </div>
   );
 }

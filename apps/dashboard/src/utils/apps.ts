@@ -1,3 +1,4 @@
+import { IS_HOSTNAME_SPLIT_ENABLED, IS_NOVU_CONNECT, NOVU_CONNECT_HOSTNAME, NOVU_PLATFORM_HOSTNAME } from '@/config';
 import { buildRoute, ROUTES } from './routes';
 
 export type AppId = 'novu' | 'connect';
@@ -7,14 +8,31 @@ export const APP_IDS = {
   CONNECT: 'connect',
 } as const satisfies Record<string, AppId>;
 
-const CONNECT_PATH_REGEX = /^\/env\/[^/]+\/connect(\/.*)?$/;
+export const CONNECT_PATH_REGEX = /^\/env\/[^/]+\/connect(\/.*)?$/;
 
-export function getAppIdFromPathname(pathname: string): AppId {
-  if (CONNECT_PATH_REGEX.test(pathname)) {
+/**
+ * Single source of truth for current product. When the hostname split is configured, this is
+ * driven by `window.location.host`. Otherwise we keep the legacy pathname-based detection for
+ * self-hosted deployments that have not yet split origins.
+ */
+export function getCurrentAppId(pathname?: string): AppId {
+  if (IS_HOSTNAME_SPLIT_ENABLED) {
+    return IS_NOVU_CONNECT ? APP_IDS.CONNECT : APP_IDS.NOVU;
+  }
+
+  if (pathname && CONNECT_PATH_REGEX.test(pathname)) {
     return APP_IDS.CONNECT;
   }
 
   return APP_IDS.NOVU;
+}
+
+/**
+ * Back-compat alias. Existing callers pass `location.pathname`; the new hostname-driven
+ * detection ignores it when the split is configured.
+ */
+export function getAppIdFromPathname(pathname: string): AppId {
+  return getCurrentAppId(pathname);
 }
 
 export function buildAppHomeRoute(appId: AppId, environmentSlug: string | undefined): string | undefined {
@@ -27,6 +45,36 @@ export function buildAppHomeRoute(appId: AppId, environmentSlug: string | undefi
   }
 
   return buildRoute(ROUTES.WORKFLOWS, { environmentSlug });
+}
+
+/**
+ * Build an absolute URL pointing at the other product. Returns:
+ *  - `https://{hostname}{path}` when the corresponding hostname env var is set
+ *  - the bare path (same-origin) as a fallback when no hostname is configured
+ *  - undefined when no env slug is available so callers can disable the link
+ */
+export function buildOtherAppExternalUrl(targetAppId: AppId, environmentSlug: string | undefined): string | undefined {
+  const path = buildAppHomeRoute(targetAppId, environmentSlug);
+
+  if (!path) {
+    return undefined;
+  }
+
+  const host = targetAppId === APP_IDS.CONNECT ? NOVU_CONNECT_HOSTNAME : NOVU_PLATFORM_HOSTNAME;
+
+  if (!host || typeof window === 'undefined') {
+    return path;
+  }
+
+  return `${window.location.protocol}//${host}${path}`;
+}
+
+/**
+ * Returns true when the given path string is an absolute URL (different origin). Helps callers
+ * pick between `window.location.assign` and react-router `navigate`.
+ */
+export function isAbsoluteUrl(target: string): boolean {
+  return /^https?:\/\//i.test(target);
 }
 
 export const APP_LABELS: Record<AppId, string> = {

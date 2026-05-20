@@ -23,9 +23,23 @@ import { useEnvironment, useFetchEnvironments } from '@/context/environment/hook
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { isAbsoluteUrl } from '@/utils/apps';
 import { getOnboardingAppId, getPostOnboardingRoute, withAppId } from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+
+function goToPostOnboardingRoute(target: string, navigate: (path: string) => void) {
+  // Cross-origin destinations (Platform → Connect host or vice-versa) need a full page nav so
+  // the browser sends a real request to the other host; react-router's `navigate` would only
+  // update the in-app history.
+  if (isAbsoluteUrl(target)) {
+    window.location.assign(target);
+
+    return;
+  }
+
+  navigate(target);
+}
 
 type LoadingPhase = 'initializing' | 'loading' | 'ready' | 'error';
 type SetupPhase = 'connect' | 'details';
@@ -204,7 +218,7 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'skip' });
 
     if (currentEnvironment?.slug) {
-      void navigate(getPostOnboardingRoute(appId, currentEnvironment.slug));
+      goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
 
       return;
     }
@@ -217,7 +231,7 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'complete' });
 
     if (currentEnvironment?.slug) {
-      void navigate(getPostOnboardingRoute(appId, currentEnvironment.slug));
+      goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
     }
   }, [appId, currentEnvironment?.slug, navigate, telemetry]);
 

@@ -36,6 +36,39 @@ export const LEGACY_DASHBOARD_URL =
 
 export const DASHBOARD_URL = window._env_?.VITE_DASHBOARD_URL || import.meta.env.VITE_DASHBOARD_URL;
 
+/**
+ * Hostname (host:port) that serves the Novu Connect product. When the current page is loaded
+ * from this host, the same dashboard build switches into Connect mode (Connect-only sidebar,
+ * routes, and branding). When empty, the hostname split is disabled and Connect is reachable
+ * via the legacy /env/:slug/connect/* paths on the Platform hostname.
+ */
+export const NOVU_CONNECT_HOSTNAME =
+  window._env_?.VITE_NOVU_CONNECT_HOSTNAME || import.meta.env.VITE_NOVU_CONNECT_HOSTNAME || '';
+
+/**
+ * Hostname (host:port) of the Novu Platform deployment. Used by the Connect deployment to build
+ * absolute switcher URLs back to Platform. When empty, the Platform hostname is assumed to be
+ * the same origin (used as a same-origin fallback in dev/self-hosted setups).
+ */
+export const NOVU_PLATFORM_HOSTNAME =
+  window._env_?.VITE_NOVU_PLATFORM_HOSTNAME || import.meta.env.VITE_NOVU_PLATFORM_HOSTNAME || '';
+
+/**
+ * Whether the hostname split is configured for this deployment. When false, the dashboard
+ * keeps the legacy single-origin behavior where both products coexist under the same host.
+ */
+export const IS_HOSTNAME_SPLIT_ENABLED = NOVU_CONNECT_HOSTNAME.length > 0;
+
+/**
+ * Single source of truth: are we currently rendering Novu Connect? Replaces the previous
+ * pathname-based detection. When the hostname split is not configured, this stays false and
+ * legacy /env/:slug/connect/* routing continues to work on the Platform hostname.
+ */
+export const IS_NOVU_CONNECT =
+  IS_HOSTNAME_SPLIT_ENABLED &&
+  typeof window !== 'undefined' &&
+  window.location.host === NOVU_CONNECT_HOSTNAME;
+
 export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT_APP_ID;
 
 export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';

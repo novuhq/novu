@@ -1,4 +1,5 @@
-import { APP_IDS, type AppId } from './apps';
+import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
+import { APP_IDS, type AppId, buildOtherAppExternalUrl } from './apps';
 import { buildRoute, ROUTES } from './routes';
 
 const APP_ID_PARAM = 'appId';
@@ -25,8 +26,24 @@ export function withAppId(path: string, appId: AppId | undefined): string {
   return `${path}${separator}${APP_ID_PARAM}=${appId}`;
 }
 
+/**
+ * Returns the post-onboarding destination. May be an absolute URL when the hostname split is
+ * configured and the user is being sent to the *other* product (typical case: signed up on
+ * the Platform host but chose the Agents onboarding path → land on the Connect host).
+ *
+ * Callers must detect absolute URLs (e.g. `apps.isAbsoluteUrl`) and use `window.location.assign`
+ * instead of react-router's `navigate` so the cross-origin navigation actually happens.
+ */
 export function getPostOnboardingRoute(appId: AppId | undefined, environmentSlug: string): string {
   if (appId === APP_IDS.CONNECT) {
+    if (IS_HOSTNAME_SPLIT_ENABLED) {
+      const external = buildOtherAppExternalUrl(APP_IDS.CONNECT, environmentSlug);
+
+      if (external) {
+        return external;
+      }
+    }
+
     return buildRoute(ROUTES.CONNECT_HOME, { environmentSlug });
   }
 

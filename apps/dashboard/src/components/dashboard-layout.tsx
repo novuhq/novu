@@ -4,6 +4,7 @@ import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
+import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type DashboardLayoutProps = {
@@ -41,9 +42,12 @@ const LegacyDashboardLayout = ({
 };
 
 export const DashboardLayout = (props: DashboardLayoutProps) => {
-  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
+  const isShellV2FlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
 
-  if (isShellV2) {
+  // When the hostname split is configured Connect/Platform always render through the v2 shell,
+  // since the AppRail is part of the split's UX. The LD flag still controls rollout on legacy
+  // single-origin deployments that haven't moved to the split yet.
+  if (IS_HOSTNAME_SPLIT_ENABLED || isShellV2FlagEnabled) {
     return <DashboardShell {...props} />;
   }
 

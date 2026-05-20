@@ -114,6 +114,15 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 4201,
+      // Listen on all network interfaces so we can hit the dev server from `connect.localhost`
+      // (or any custom hostname pointed at 127.0.0.1) — needed for the Novu Connect hostname
+      // split to be testable in local dev without spinning up a second dev server.
+      host: true,
+      // Vite 5+ blocks requests with unrecognized Host headers by default (host-rebinding
+      // protection). Explicitly whitelist the Connect hostname pattern so requests to
+      // `connect.localhost:4201` aren't rejected. We allow any `*.localhost` subdomain so
+      // teams can pick a different name without editing the config.
+      allowedHosts: ['localhost', '.localhost'],
       headers: {
         'Document-Policy': 'js-profiling',
       },
