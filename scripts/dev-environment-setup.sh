@@ -68,7 +68,11 @@ detect_os () {
             ;;
         Linux)
             OS_TYPE="Linux"
-            SHELL_PROFILE="$HOME/.bashrc"
+            case "$(basename "${SHELL:-bash}")" in
+                zsh) SHELL_PROFILE="${ZDOTDIR:-$HOME}/.zshrc" ;;
+                bash|sh) SHELL_PROFILE="$HOME/.bashrc" ;;
+                *) SHELL_PROFILE="$HOME/.profile" ;;
+            esac
             if [ -f /etc/os-release ]; then
                 DISTRO_FAMILY="$(
                     . /etc/os-release
@@ -248,7 +252,13 @@ install_linux_base_deps () {
         return 1
     fi
 
-    linux_pkg_install lsof iproute2 2>/dev/null || linux_pkg_install lsof || true
+    if [[ "$DISTRO_FAMILY" == "debian" ]]; then
+        linux_pkg_install lsof iproute2 || true
+    elif [[ "$DISTRO_FAMILY" == "rhel" ]]; then
+        linux_pkg_install lsof iproute || true
+    else
+        linux_pkg_install lsof || true
+    fi
 
     success_message "Linux base dependencies"
 }
@@ -353,14 +363,13 @@ check_nvm () {
 
 install_node () {
     NODE_JS_VERSION="22.22.1"
-    REQUIRED_NODE_MAJOR="22"
 
     SKIP="$(check_nvm)"
 
     if [[ -z "$SKIP" ]]; then
         load_nvm
         TEST_CMD=$(execute_command_without_error_print "node --version")
-        if [[ -z "$TEST_CMD" ]] || [[ "$TEST_CMD" == *"command not found"* ]] || [[ "$TEST_CMD" != v${REQUIRED_NODE_MAJOR}.* ]]; then
+        if [[ -z "$TEST_CMD" ]] || [[ "$TEST_CMD" == *"command not found"* ]] || [[ "$TEST_CMD" != "v${NODE_JS_VERSION}" ]]; then
             installing_dependency "Node.js v$NODE_JS_VERSION"
 
             nvm install "$NODE_JS_VERSION"
@@ -413,7 +422,7 @@ install_pnpm () {
     PNPM_VERSION="11.0.9"
     load_nvm
     TEST_PNPM_CMD=$(execute_command_without_error_print "pnpm --version")
-    if [[ -z "$TEST_PNPM_CMD" ]] || [[ "$TEST_PNPM_CMD" == *"command not found"* ]]; then
+    if [[ -z "$TEST_PNPM_CMD" ]] || [[ "$TEST_PNPM_CMD" == *"command not found"* ]] || [[ "$TEST_PNPM_CMD" != "$PNPM_VERSION" ]]; then
          installing_dependency "PNPM $PNPM_VERSION"
          npm install -g "pnpm@$PNPM_VERSION"
 
@@ -497,7 +506,14 @@ install_docker_linux () {
     fi
 
     if ! docker info &>/dev/null; then
-        sudo chmod 666 /var/run/docker.sock 2>/dev/null || true
+        if [[ -S /var/run/docker.sock ]]; then
+            sudo chown root:docker /var/run/docker.sock 2>/dev/null || true
+            sudo chmod 660 /var/run/docker.sock 2>/dev/null || true
+        fi
+        if ! docker info &>/dev/null; then
+            echo "Docker is installed, but this shell does not have access to the daemon yet."
+            echo "Run 'newgrp docker' or log out and back in, then retry."
+        fi
     fi
 
     AFTER_INSTALL_TEST_CMD=$(execute_command_without_error_print "docker --version")
