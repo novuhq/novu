@@ -6,7 +6,12 @@ import { RegionSelector, useRegion } from '@/context/region';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { clerkSignupAppearance } from '../../utils/clerk-appearance';
-import { getOnboardingAppId, withAppId } from '../../utils/onboarding-redirect';
+import {
+  getOnboardingAppId,
+  getPostOrgCreateRoute,
+  resolveOnboardingAppId,
+  withAppId,
+} from '../../utils/onboarding-redirect';
 import { ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
@@ -64,7 +69,9 @@ function OrganizationForm() {
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const [searchParams] = useSearchParams();
-  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
+  // Hostname-aware: defaults to Connect when running on the Connect host, otherwise reads
+  // the explicit `?appId=` param (Platform → Connect handoff case).
+  const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -84,8 +91,12 @@ function OrganizationForm() {
     return () => observer.disconnect();
   }, [showRegionSelector]);
 
-  const afterCreateUrl = withAppId(isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE, appId);
-  const afterSelectUrl = withAppId(ROUTES.ENV, appId);
+  // Only forward `?appId=` when it was set explicitly on the URL (Platform → Connect
+  // cross-origin handoff). When the user is already on the Connect hostname, hostname
+  // detection alone is enough — onboarding URLs stay clean.
+  const explicitAppId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
+  const afterCreateUrl = withAppId(getPostOrgCreateRoute(appId, isAgentsEnabled), explicitAppId);
+  const afterSelectUrl = withAppId(ROUTES.ENV, explicitAppId);
 
   return (
     <div className="relative">

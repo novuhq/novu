@@ -1,5 +1,5 @@
 import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
-import { APP_IDS, type AppId, buildOtherAppExternalUrl } from './apps';
+import { APP_IDS, type AppId, buildOtherAppExternalUrl, getCurrentAppId } from './apps';
 import { buildRoute, ROUTES } from './routes';
 
 const APP_ID_PARAM = 'appId';
@@ -16,6 +16,18 @@ export function getOnboardingAppId(search: URLSearchParams): AppId | undefined {
   return undefined;
 }
 
+/**
+ * Canonical product resolver for onboarding flows. Prefers an explicit `?appId=` query param
+ * (used for the Platform → Connect cross-origin handoff) and falls back to hostname detection.
+ *
+ * On the Connect hostname this returns `connect` without needing the param, so Connect-internal
+ * onboarding URLs stay clean (e.g. `/onboarding/agents/setup` instead of
+ * `/onboarding/agents/setup?appId=connect`).
+ */
+export function resolveOnboardingAppId(search: URLSearchParams): AppId {
+  return getOnboardingAppId(search) ?? getCurrentAppId();
+}
+
 export function withAppId(path: string, appId: AppId | undefined): string {
   if (!appId) {
     return path;
@@ -24,6 +36,19 @@ export function withAppId(path: string, appId: AppId | undefined): string {
   const separator = path.includes('?') ? '&' : '?';
 
   return `${path}${separator}${APP_ID_PARAM}=${appId}`;
+}
+
+/**
+ * Where to send the user after they create or select an organization. Connect-product users
+ * skip the usecase picker and go straight into agent setup; Platform users keep the existing
+ * usecase / inbox onboarding entry points (gated by the agents feature flag).
+ */
+export function getPostOrgCreateRoute(appId: AppId, isAgentsEnabled: boolean): string {
+  if (appId === APP_IDS.CONNECT) {
+    return ROUTES.AGENTS_SETUP;
+  }
+
+  return isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE;
 }
 
 /**

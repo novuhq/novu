@@ -23,8 +23,8 @@ import { useEnvironment, useFetchEnvironments } from '@/context/environment/hook
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { isAbsoluteUrl } from '@/utils/apps';
-import { getOnboardingAppId, getPostOnboardingRoute, withAppId } from '@/utils/onboarding-redirect';
+import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
+import { getPostOnboardingRoute, resolveOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -174,7 +174,9 @@ export function AgentsSetupPage() {
   const agentRoutes = useAgentRoutes();
 
   const [searchParams] = useSearchParams();
-  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
+  // Hostname-aware: on the Connect host this resolves to `connect` even without `?appId=`.
+  const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
+  const isConnectFlow = appId === APP_IDS.CONNECT;
 
   const [envLoaded, setEnvLoaded] = useState(false);
   const { environments } = useFetchEnvironments({
@@ -249,8 +251,14 @@ export function AgentsSetupPage() {
 
   const handleBackToConnect = useCallback(() => setPhase('connect'), []);
 
+  // Connect users land here directly from org create (no usecase picker before this step), so
+  // the back affordance only makes sense once they've advanced to the details phase.
+  const handleBackFromConnectPhase = isConnectFlow ? undefined : () => navigate(ROUTES.USECASE_SELECT);
+
   if (!isAgentsEnabled) {
-    return <Navigate to={ROUTES.INBOX_USECASE} replace />;
+    // Connect users skip the usecase picker entirely, so the inbox fallback is a dead-end for
+    // them. Send them to the root and let the global guards resolve to the right app home.
+    return <Navigate to={isConnectFlow ? ROUTES.ROOT : ROUTES.INBOX_USECASE} replace />;
   }
 
   if (!currentEnvironment || loadingPhase !== 'ready') {
@@ -267,7 +275,7 @@ export function AgentsSetupPage() {
       <PageMeta title="Let's connect your agent to where you work" />
       <StepHeader
         current={phase === 'connect' ? 2 : 3}
-        onBack={phase === 'connect' ? () => navigate(ROUTES.USECASE_SELECT) : handleBackToConnect}
+        onBack={phase === 'connect' ? handleBackFromConnectPhase : handleBackToConnect}
       />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">

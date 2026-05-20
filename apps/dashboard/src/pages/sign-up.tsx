@@ -1,11 +1,12 @@
 import { SignUp as SignUpForm } from '@clerk/clerk-react';
 import { useEffect } from 'react';
 import { AuthSideBanner } from '@/components/auth/auth-side-banner';
+import { ConnectAuthSideBanner } from '@/components/auth/connect-auth-side-banner';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { ROUTES } from '@/utils/routes';
-import { IS_SELF_HOSTED } from '../config';
+import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '../config';
 import { useSegment } from '../context/segment';
 import { TelemetryEvent } from '../utils/telemetry';
 import { getReferrer, getUtmParams } from '../utils/tracking';
@@ -24,10 +25,10 @@ export const SignUpPage = () => {
   }, []);
 
   return (
-    <div className="flex min-h-screen w-full flex-col md:max-w-[1100px] md:flex-row md:gap-36">
-      <PageMeta title="Sign up for Novu" />
-      <div className="w-full md:w-auto">
-        <AuthSideBanner />
+    <div className="flex min-h-screen w-full flex-col md:max-w-[1120px] md:flex-row md:gap-36">
+      <PageMeta title={IS_NOVU_CONNECT ? 'Sign up for Novu Connect' : 'Sign up for Novu'} />
+      <div className="w-full shrink-0 md:w-auto">
+        {IS_NOVU_CONNECT ? <ConnectAuthSideBanner /> : <AuthSideBanner />}
       </div>
       <div className="flex flex-1 justify-end px-4 py-0 sm:py-0 md:items-center md:px-0">
         <div className="flex w-full max-w-[400px] flex-col items-start justify-start gap-[18px]">
@@ -37,7 +38,7 @@ export const SignUpPage = () => {
             appearance={clerkSignupAppearance}
             forceRedirectUrl={ROUTES.SIGNUP_ORGANIZATION_LIST}
           />
-          {!IS_SELF_HOSTED && <RegionPicker />}
+          {!IS_SELF_HOSTED && !IS_NOVU_CONNECT && <RegionPicker />}
         </div>
       </div>
     </div>
