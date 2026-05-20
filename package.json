@@ -17,7 +17,7 @@
     "clean": "rimraf **/build **/dist **/node_modules",
     "clean:cache": "pnpm nx reset && pnpm store prune",
     "commit": "cz",
-    "dev-environment-setup": "sh ./scripts/dev-environment-setup.sh",
+    "dev-environment-setup": "./scripts/dev-environment-setup.sh",
     "dev:portless": "mprocs",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
     "g:module": "hygen module new --name=$pnpm_config_name",
