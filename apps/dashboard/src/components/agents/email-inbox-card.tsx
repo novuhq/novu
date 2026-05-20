@@ -334,7 +334,7 @@ function CardRow({
   return (
     <div
       className={cn(
-        'flex items-start justify-between gap-4 p-3',
+        'flex items-start justify-between gap-6 p-3',
         divider && 'border-stroke-weak border-b',
         disabled && 'opacity-60'
       )}

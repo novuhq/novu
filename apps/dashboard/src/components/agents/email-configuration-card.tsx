@@ -21,7 +21,8 @@ export function EmailConfigurationCardBody({
   agent,
   integrationId,
   defaultSenderName,
-}: EmailConfigurationCardProps & { defaultSenderName?: string }) {
+  sharedInboundAddress,
+}: EmailConfigurationCardProps & { defaultSenderName?: string; sharedInboundAddress?: string }) {
   const { integrations } = useFetchIntegrations();
   const emailIntegration = useMemo(
     () => integrations?.find((i) => i._id === integrationId && i.providerId === EmailProviderIdEnum.NovuAgent),
@@ -65,6 +66,7 @@ export function EmailConfigurationCardBody({
           serverEnabled={serverUseFromAddressOverride}
           serverValue={serverFromAddressOverride}
           defaultSenderName={defaultSenderName || agent.name}
+          sharedInboundAddress={sharedInboundAddress}
           outboundFromAddress={outboundFromAddress}
           inboundAddresses={inboundAddresses}
           onSave={saveSenderOverride}
@@ -103,8 +105,8 @@ function CardRow({
     <div
       className={
         divider
-          ? 'border-stroke-weak flex items-start justify-between gap-4 border-b p-3'
-          : 'flex items-start justify-between gap-4 p-3'
+          ? 'border-stroke-weak flex items-start justify-between gap-6 border-b p-3'
+          : 'flex items-start justify-between gap-6 p-3'
       }
     >
       <div className="flex max-w-[350px] min-w-0 flex-1 flex-col gap-1">

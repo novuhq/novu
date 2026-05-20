@@ -8,6 +8,8 @@ export type SenderAddressOverrideProps = {
   serverEnabled: boolean;
   serverValue: string;
   defaultSenderName: string;
+  /** Cloud shared inbox (`slug-key@agentconnect.sh`) — used when no custom-domain routes exist. */
+  sharedInboundAddress?: string;
   outboundFromAddress: string;
   inboundAddresses: string[];
   onSave: (params: { enabled: boolean; value: string }) => Promise<void>;
@@ -28,6 +30,7 @@ export function SenderAddressOverride({
   serverEnabled,
   serverValue,
   defaultSenderName,
+  sharedInboundAddress,
   outboundFromAddress,
   inboundAddresses,
   onSave,
@@ -70,9 +73,12 @@ export function SenderAddressOverride({
   // we drop it from the preview to match the address subscribers will actually
   // see in their inbox.
   const previewOverride = !disabled && enabled ? trimmedValue : '';
+  const sharedInbound = sharedInboundAddress?.trim() ?? '';
   const fallbackInbound = inboundAddresses[0] ?? '';
-  const resolvedFrom = previewOverride || fallbackInbound || outboundFromAddress;
-  const resolvedReplyTo = resolvedFrom && resolvedFrom !== fallbackInbound ? fallbackInbound : '';
+  const agentInboundAddress = sharedInbound || fallbackInbound;
+  const resolvedFrom = previewOverride || agentInboundAddress || outboundFromAddress;
+  const resolvedReplyTo =
+    resolvedFrom && agentInboundAddress && resolvedFrom !== agentInboundAddress ? agentInboundAddress : '';
 
   async function handleSave() {
     if (!canSave) return;
@@ -175,8 +181,8 @@ function formatFromHeader(name: string, email: string): string {
 
 function PreviewRow({ label, value, muted }: { label: string; value: string; muted: boolean }) {
   return (
-    <div className="flex items-baseline gap-2.5">
-      <span className="text-text-soft text-[10px] w-[52px] shrink-0 font-medium uppercase leading-4 whitespace-nowrap">
+    <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-0">
+      <span className="text-text-soft text-[10px] shrink-0 font-medium uppercase leading-4">
         {label}
       </span>
       <span
