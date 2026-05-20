@@ -1,8 +1,7 @@
-import { forwardRef, Inject, Injectable, type OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { decryptCredentials, PinoLogger } from '@novu/application-generic';
 import {
   type AgentEntity,
-  AgentRepository,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationRepository,
@@ -12,40 +11,29 @@ import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import {
   CredentialExpiredError,
   cloudflare,
-  type EdgeObserver,
   McpServerError,
   type Message,
   MessageRole,
-  type Provider,
-  type SessionEventsFactory,
   SessionExpiredError,
-  type StreamCallbacks,
+  type StreamPart,
   thalamus,
+  type WebhookProvider,
 } from '@novu/thalamus';
+import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import { LRUCache } from 'lru-cache';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
 import type { AgentExecutionParams } from './bridge-executor.service';
 
-interface SessionContext {
-  conversationId: string;
-  environmentId: string;
-  organizationId: string;
-  agentIdentifier: string;
-  integrationIdentifier: string;
-}
-
 const MAX_CACHED_PROVIDERS = 200;
 const PROVIDER_TTL_MS = 30 * 60 * 1000;
 
 @Injectable()
-export class ManagedAgentService implements OnModuleInit {
-  private readonly providers: LRUCache<string, Provider>;
-  private readonly sessionContext = new Map<string, SessionContext>();
-  private edgeObserver: EdgeObserver | undefined;
+export class ManagedAgentService {
+  private readonly providers: LRUCache<string, WebhookProvider>;
+  private readonly webhookHandler: WebhookHandler | undefined;
 
   constructor(
-    private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
@@ -54,69 +42,11 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
-    this.providers = new LRUCache<string, Provider>({
+    this.providers = new LRUCache<string, WebhookProvider>({
       max: MAX_CACHED_PROVIDERS,
       ttl: PROVIDER_TTL_MS,
     });
-    this.edgeObserver = this.initEdgeObserver();
-  }
-
-  async onModuleInit(): Promise<void> {
-    if (!process.env.THALAMUS_CF_URL) return;
-
-    try {
-      await this.recoverActiveSessions();
-    } catch (err) {
-      this.logger.error(err, 'Failed to recover active sessions on startup');
-    }
-  }
-
-  /**
-   * Queries the CF worker for active sessions and creates providers only
-   * for agents that have in-flight work. Thalamus reconnects WebSockets
-   * to the DOs and flushes buffered events through onSessionEvents.
-   */
-  private async recoverActiveSessions(): Promise<void> {
-    if (!this.edgeObserver) return;
-
-    const activeSessionIds = await this.edgeObserver.listActive();
-    if (!activeSessionIds.length) return;
-
-    this.logger.info(`Recovering ${activeSessionIds.length} active session(s) from edge`);
-
-    const conversations = await Promise.all(
-      activeSessionIds.map((id) => this.conversationRepository.findByExternalSessionId(id))
-    );
-
-    const uniqueAgents = new Map(
-      conversations
-        .filter((c): c is NonNullable<typeof c> => c !== null)
-        .map((c) => [`${c._agentId}:${c._environmentId}`, { agentId: c._agentId, environmentId: c._environmentId }])
-    );
-
-    const results = await Promise.allSettled(
-      [...uniqueAgents.values()].map(async ({ agentId, environmentId }) => {
-        const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: environmentId } as any, [
-          '_id',
-          'managedRuntime',
-        ]);
-        if (!agent?.managedRuntime) return false;
-
-        await this.getOrCreateProvider(agent, environmentId);
-
-        return true;
-      })
-    );
-
-    const initialized = results.filter((r) => r.status === 'fulfilled' && r.value).length;
-    const failed = results.filter((r) => r.status === 'rejected');
-    if (failed.length) {
-      for (const r of failed) {
-        this.logger.warn(r.reason, 'Failed to initialize provider during recovery');
-      }
-    }
-
-    this.logger.info(`Session recovery: ${initialized} provider(s) reconnected`);
+    this.webhookHandler = this.initWebhookHandler();
   }
 
   async dispatch(context: AgentExecutionParams, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
@@ -127,115 +57,66 @@ export class ManagedAgentService implements OnModuleInit {
       ? [{ role: MessageRole.USER, content: context.message?.text ?? '' }]
       : await this.buildMessagesWithHistory(context);
 
-    const result = provider.send({ messages, sessionId });
+    const newSessionId = await provider.send({
+      messages,
+      sessionId,
+      webhookMetadata: {
+        environmentId: context.config.environmentId,
+        organizationId: context.config.organizationId,
+        conversationId: String(context.conversation._id),
+        agentIdentifier: context.config.agentIdentifier,
+        integrationIdentifier: context.config.integrationIdentifier,
+      },
+    });
 
-    result.sessionId
-      .then(async (sid) => {
-        this.sessionContext.set(sid, {
-          conversationId: String(context.conversation._id),
-          environmentId: context.config.environmentId,
-          organizationId: context.config.organizationId,
-          agentIdentifier: context.config.agentIdentifier,
-          integrationIdentifier: context.config.integrationIdentifier,
-        });
-
-        await this.conversationRepository.setExternalSessionIdIfMissing(
-          context.config.environmentId,
-          String(context.conversation._id),
-          sid
-        );
-      })
-      .catch((err) => {
-        this.logger.error(err, 'Failed to resolve provider session id');
-      });
+    await this.conversationRepository.setExternalSessionIdIfMissing(
+      context.config.environmentId,
+      String(context.conversation._id),
+      newSessionId
+    );
   }
 
-  private buildOnSessionEvents(): SessionEventsFactory {
-    return (initialSessionId: string): StreamCallbacks => {
-      let sessionId = initialSessionId;
-
-      return {
-        onStreamStart: (e: { sessionId?: string }) => {
-          if (e.sessionId) sessionId = e.sessionId;
-        },
-        onFinish: async (e) => {
-          const ctx = await this.resolveSessionContext(sessionId);
-          if (!ctx) return;
-
-          try {
-            await this.handleAgentReply.execute(
-              HandleAgentReplyCommand.create({
-                userId: 'system',
-                organizationId: ctx.organizationId,
-                environmentId: ctx.environmentId,
-                conversationId: ctx.conversationId,
-                agentIdentifier: ctx.agentIdentifier,
-                integrationIdentifier: ctx.integrationIdentifier,
-                reply: { markdown: e.response.content },
-              })
-            );
-          } catch (err) {
-            this.logger.error(err, `Failed to deliver reply for session ${sessionId}`);
-          }
-
-          this.sessionContext.delete(sessionId);
-        },
-        onError: async (e) => {
-          const ctx = await this.resolveSessionContext(sessionId);
-          if (!ctx) return;
-
-          await this.handleErrorEvent(ctx, sessionId, e.error);
-          this.sessionContext.delete(sessionId);
-        },
-      };
-    };
+  getWebhookHandler(): WebhookHandler | undefined {
+    return this.webhookHandler;
   }
 
-  /**
-   * Resolves session context from the in-memory map (hot path) or
-   * falls back to DB lookup (recovery after restart).
-   */
-  private async resolveSessionContext(sessionId: string): Promise<SessionContext | null> {
-    const cached = this.sessionContext.get(sessionId);
-    if (cached) return cached;
+  async handleWebhookEvent(sessionId: string, metadata: Record<string, string>, event: StreamPart): Promise<void> {
+    if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
+      this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
 
-    const conversation = await this.conversationRepository.findByExternalSessionId(sessionId);
-    if (!conversation) {
-      this.logger.warn(`No conversation found for session ${sessionId}, skipping callback`);
-
-      return null;
+      return;
     }
 
-    const agent = await this.agentRepository.findOne(
-      { _id: conversation._agentId, _environmentId: conversation._environmentId },
-      ['_id', 'identifier']
-    );
-    if (!agent) return null;
+    switch (event.type) {
+      case 'finish': {
+        await this.handleAgentReply.execute(
+          HandleAgentReplyCommand.create({
+            userId: 'system',
+            environmentId: metadata.environmentId,
+            organizationId: metadata.organizationId,
+            conversationId: metadata.conversationId,
+            agentIdentifier: metadata.agentIdentifier ?? '',
+            integrationIdentifier: metadata.integrationIdentifier ?? '',
+            reply: { markdown: event.response.content },
+          })
+        );
+        break;
+      }
 
-    const integration = conversation.channels[0]
-      ? await this.integrationRepository.findOne({
-          _id: conversation.channels[0]._integrationId,
-          _environmentId: conversation._environmentId,
-        })
-      : null;
+      case 'error': {
+        await this.handleErrorEvent(metadata, sessionId, event.error);
+        break;
+      }
 
-    const ctx: SessionContext = {
-      conversationId: String(conversation._id),
-      environmentId: conversation._environmentId,
-      organizationId: conversation._organizationId,
-      agentIdentifier: agent.identifier,
-      integrationIdentifier: integration?.identifier ?? '',
-    };
-
-    this.sessionContext.set(sessionId, ctx);
-
-    return ctx;
+      default:
+        break;
+    }
   }
 
-  private async handleErrorEvent(ctx: SessionContext, sessionId: string, error: Error): Promise<void> {
+  private async handleErrorEvent(metadata: Record<string, string>, sessionId: string, error: Error): Promise<void> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
-      await this.conversationRepository.clearExternalSessionId(ctx.environmentId, ctx.conversationId);
+      await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
 
       return;
     }
@@ -246,11 +127,11 @@ export class ManagedAgentService implements OnModuleInit {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
           userId: 'system',
-          organizationId: ctx.organizationId,
-          environmentId: ctx.environmentId,
-          conversationId: ctx.conversationId,
-          agentIdentifier: ctx.agentIdentifier,
-          integrationIdentifier: ctx.integrationIdentifier,
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
           reply: { markdown: message },
         })
       );
@@ -273,7 +154,7 @@ export class ManagedAgentService implements OnModuleInit {
   private async getOrCreateProvider(
     agent: Pick<AgentEntity, '_id' | 'managedRuntime'>,
     environmentId: string
-  ): Promise<Provider> {
+  ): Promise<WebhookProvider> {
     if (!agent.managedRuntime) {
       throw new Error(`Agent ${agent._id} is not a managed agent`);
     }
@@ -314,24 +195,49 @@ export class ManagedAgentService implements OnModuleInit {
   private createProvider(
     providerId: AgentRuntimeProviderIdEnum,
     config: { apiKey: string; agentId: string; environmentId: string }
-  ): Provider {
+  ): WebhookProvider {
+    const cfUrl = process.env.THALAMUS_CF_URL;
+    if (!cfUrl) {
+      throw new Error('THALAMUS_CF_URL is required for managed agents');
+    }
+
+    const webhookSecret = process.env.THALAMUS_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      throw new Error('THALAMUS_WEBHOOK_SECRET is required for managed agents');
+    }
+
     switch (providerId) {
       case AgentRuntimeProviderIdEnum.Anthropic:
         return thalamus.anthropic({
           ...config,
-          onSessionEvents: this.buildOnSessionEvents(),
-          durable: this.edgeObserver,
+          durable: cloudflare({
+            url: cfUrl,
+            apiKey: process.env.THALAMUS_CF_API_KEY,
+            webhook: {
+              url: `${process.env.API_ROOT_URL}/v1/agents/events`,
+              secret: webhookSecret,
+            },
+          }),
         });
       default:
         throw new Error(`Unsupported agent runtime provider: ${providerId}`);
     }
   }
 
-  private initEdgeObserver(): EdgeObserver | undefined {
-    const cfUrl = process.env.THALAMUS_CF_URL;
-    if (!cfUrl) return undefined;
+  private initWebhookHandler(): WebhookHandler | undefined {
+    const secret = process.env.THALAMUS_WEBHOOK_SECRET;
+    if (!secret) return undefined;
 
-    return cloudflare({ url: cfUrl, apiKey: process.env.THALAMUS_CF_API_KEY });
+    return createWebhookHandler({
+      secret,
+      onSessionEvents: (sessionId, metadata) => ({
+        onPart: (part) => {
+          this.handleWebhookEvent(sessionId, metadata, part).catch((err) => {
+            this.logger.error(err, `Failed to handle webhook event for session ${sessionId}`);
+          });
+        },
+      }),
+    });
   }
 
   private async buildMessagesWithHistory(context: AgentExecutionParams): Promise<Message[]> {

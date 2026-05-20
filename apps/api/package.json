@@ -73,7 +73,7 @@
     "@novu/notifications": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
-    "@novu/thalamus": "https://github.com/novuhq/thalamus.git#3e4a0d4",
+    "@novu/thalamus": "0.1.0-alpha.6",
     "@novu/testing": "workspace:*",
     "@sendgrid/mail": "^8.1.6",
     "@sentry/browser": "^8.33.1",
