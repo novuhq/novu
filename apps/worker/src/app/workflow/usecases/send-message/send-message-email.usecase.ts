@@ -315,8 +315,8 @@ export class SendMessageEmail extends SendMessageBase {
         }
     );
 
-    const replaceToRecipient = command.overrides?.email?.replaceToRecipient === true;
-    const hasOverrideRecipients = hasEmailOverrideRecipients(command.overrides?.email);
+    const replaceToRecipient = overrides?.replaceToRecipient === true;
+    const hasOverrideRecipients = hasEmailOverrideRecipients(overrides);
 
     if (replaceToRecipient && !hasOverrideRecipients) {
       const mailErrorMessage = 'replaceToRecipient requires at least one of to / cc / bcc';
@@ -338,13 +338,13 @@ export class SendMessageEmail extends SendMessageBase {
 
       return {
         status: SendMessageStatus.FAILED,
-        errorMessage: mailErrorMessage,
+        errorMessage: DetailEnum.NOTIFICATION_ERROR,
       };
     }
 
     const canSendWithoutSubscriberEmail = replaceToRecipient && hasOverrideRecipients;
 
-    if ((!email && !canSendWithoutSubscriberEmail) || !integration) {
+    if (!email && !canSendWithoutSubscriberEmail) {
       return await this.sendErrors(email, integration, message, command);
     }
 

@@ -28,7 +28,7 @@ export const createMailData = (options: IEmailOptions, overrides: Record<string,
   if (replaceToRecipient) {
     to = Array.isArray(overrides?.to) ? [...overrides.to] : [];
   } else {
-    let baseTo = Array.isArray(options.to) ? options.to : [options.to];
+    const baseTo = Array.isArray(options.to) ? options.to : [options.to];
     to = [...baseTo, ...(overrides?.to || [])];
     to = to.reduce(filterDuplicate, []);
   }
