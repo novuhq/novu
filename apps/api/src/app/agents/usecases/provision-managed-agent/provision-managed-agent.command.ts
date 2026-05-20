@@ -20,6 +20,13 @@ export class ProvisionManagedAgentCommand {
   @IsString()
   externalAgentId?: string;
 
+  /**
+   * When set, the usecase adopts this existing provider environment.
+   */
+  @IsOptional()
+  @IsString()
+  externalEnvironmentId?: string;
+
   @IsNotEmpty()
   @IsEnum(AgentRuntimeProviderIdEnum)
   providerId: AgentRuntimeProviderIdEnum;

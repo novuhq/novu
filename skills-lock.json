@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "figma-use": {
+      "source": "figma/mcp-server-guide",
+      "sourceType": "github",
+      "skillPath": "skills/figma-use/SKILL.md",
+      "computedHash": "ee93ebdc63dda9331bbaab80c206dd2f13943867d5d9867e1bf708d2f1735cc2"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",

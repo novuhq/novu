@@ -17,7 +17,12 @@ export class ChannelConnectionEntity implements ChannelConnection {
   contextKeys: string[];
 
   workspace: { id: string; name?: string };
-  auth: { accessToken: string };
+  auth: {
+    accessToken: string;
+    refreshToken?: string;
+    signingSecret?: string;
+    clientSecret?: string;
+  };
 
   createdAt: string;
   updatedAt: string;

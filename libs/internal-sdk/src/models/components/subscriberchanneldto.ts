@@ -26,6 +26,7 @@ export const SubscriberChannelDtoProviderId = {
   WhatsappBusiness: "whatsapp-business",
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
+  Telegram: "telegram",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",

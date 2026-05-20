@@ -28,6 +28,11 @@ export type GetAgentResult = {
   name: string;
 };
 
+export type GetEnvironmentResult = {
+  id: string;
+  name: string;
+};
+
 export type UpdateAgentRuntimeConfigInput = {
   model?: string;
   systemPrompt?: string;
@@ -49,6 +54,27 @@ export type ProvisionIntegrationResult = {
   credentialsUpdate: Record<string, unknown>;
   /** Optional provider-specific metadata (not stored in credentials). */
   metadata?: Record<string, unknown>;
+};
+
+export type UploadSkillFile = {
+  /** Relative path of the file inside the skill bundle (e.g. 'SKILL.md', 'lib/helpers.py'). */
+  path: string;
+  /** Raw file bytes. */
+  content: Buffer;
+};
+
+export type UploadSkillInput = {
+  /** Files comprising the skill bundle. Must include a SKILL.md at the root. */
+  files: UploadSkillFile[];
+  /** Human-readable label for the skill on the provider side. */
+  displayTitle?: string;
+};
+
+export type UploadSkillResult = {
+  /** Stable provider-assigned skill identifier (e.g. 'skill_01XJ5...'). */
+  skillId: string;
+  /** Latest version identifier returned by the provider, when available. */
+  version: string | null;
 };
 
 export interface IAgentRuntimeProvider {
@@ -75,6 +101,11 @@ export interface IAgentRuntimeProvider {
    * agent exists (404 if not), so there is no need to call validateCredentials() first.
    */
   getAgent(externalAgentId: string): Promise<GetAgentResult>;
+
+  /**
+   * Fetch environment information.
+   */
+  getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult>;
 
   /**
    * Permanently delete the agent on the provider side.
@@ -108,4 +139,11 @@ export interface IAgentRuntimeProvider {
    * Best-effort — callers should still proceed with local cleanup on error.
    */
   deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
+
+  /**
+   * Upload a custom skill bundle to the provider and return a stable skillId
+   * that can later be passed via `skills: [{ type: 'custom', skillId }]` on
+   * createAgent / updateConfig.
+   */
+  uploadSkill(input: UploadSkillInput): Promise<UploadSkillResult>;
 }

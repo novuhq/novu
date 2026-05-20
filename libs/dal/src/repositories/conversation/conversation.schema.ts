@@ -48,9 +48,6 @@ const conversationSchema = new Schema<ConversationDBModel>(
               type: Schema.Types.String,
               required: true,
             },
-            serializedThread: {
-              type: Schema.Types.Mixed,
-            },
             firstPlatformMessageId: {
               type: Schema.Types.String,
             },
@@ -79,6 +76,9 @@ const conversationSchema = new Schema<ConversationDBModel>(
       default: 0,
     },
     lastMessagePreview: {
+      type: Schema.Types.String,
+    },
+    externalSessionId: {
       type: Schema.Types.String,
     },
     lastActivityAt: {

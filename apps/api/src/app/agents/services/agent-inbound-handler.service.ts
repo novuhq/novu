@@ -1,6 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
+  AgentRepository,
+  ChannelEndpointRepository,
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
@@ -8,15 +10,54 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
+import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
+import { ManagedAgentService } from './managed-agent.service';
+import { TelegramStartCodeService } from './telegram-start-code.service';
+
+/**
+ * `/start <payload>` is Telegram's deep-link mechanism. Telegram delivers it as
+ * a regular message whose text is exactly `/start ` followed by the URL-decoded
+ * payload (max 64 base64url characters per the API). We only treat the message
+ * as a subscriber-link request when it has a non-empty payload.
+ */
+const TELEGRAM_START_COMMAND = /^\/start(?:@[\w_]+)?\s+(\S+)\s*$/;
+
+function extractTelegramStartToken(text: string | undefined): string | null {
+  if (!text) return null;
+  const match = TELEGRAM_START_COMMAND.exec(text.trim());
+  return match ? match[1] : null;
+}
+
+function extractTelegramChatId(thread: Thread): string | null {
+  const raw = thread.channelId;
+  if (!raw) return null;
+  // chat-sdk Telegram adapter exposes `chat.id` as the bare numeric id (string).
+  // For safety against an upstream change to a namespaced form, peel off any
+  // `telegram:` prefix before persistence so the value we store matches what
+  // `TelegramChatProvider.sendMessage` will POST to the bot API.
+  return raw.startsWith('telegram:') ? raw.slice('telegram:'.length) : raw;
+}
+
+const SUBSCRIBER_LINK_SUCCESS_REPLY = "You're connected. Notifications from this agent will now reach you here.";
+const SUBSCRIBER_LINK_DUPLICATE_REPLY =
+  'This chat is already connected to your account — no changes needed. Send any message to try the agent out.';
+const SUBSCRIBER_LINK_INVALID_REPLY =
+  "This connection link isn't valid — open a fresh link from your Novu dashboard and try again.";
+const SUBSCRIBER_LINK_EXPIRED_REPLY =
+  'This connection link has expired. Open a new link from your Novu dashboard and try again.';
+const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
+  "This connection link wasn't issued for this bot. Open the link from your Novu dashboard again (or request a new one) and make sure you're messaging the same bot you configured.";
 
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
@@ -39,6 +80,10 @@ function buildNoBridgeReply(dashboardUrl?: string): CardElement {
   return { type: 'card', children };
 }
 
+const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
+
+The agent is unavailable right now. Please try again later.`;
+
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object') {
     return undefined;
@@ -53,6 +98,27 @@ function getMessageRawEvent(message: Message): Record<string, unknown> | undefin
   return asRecord(raw?.event) ?? raw;
 }
 
+function resolveInboundFirstMessageText(platform: AgentPlatformEnum, message: Message): string {
+  const preview = getInboundActivityPreview(message.text, {
+    hasPlatformAttachments: Boolean(message.attachments?.length),
+  });
+
+  if (preview.trim().length > 0) {
+    return preview;
+  }
+
+  if (platform === AgentPlatformEnum.EMAIL) {
+    const raw = asRecord(message.raw);
+    const subject = typeof raw?.subject === 'string' ? raw.subject.trim() : '';
+
+    if (subject.length > 0) {
+      return subject;
+    }
+  }
+
+  return preview;
+}
+
 function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread, message: Message): string {
   const rawEvent = getMessageRawEvent(message);
   const rawThreadTs = rawEvent?.thread_ts;
@@ -63,17 +129,6 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
   }
 
   return `${thread.id}${threadRoot}`;
-}
-
-function applyPlatformThreadIdToSerializedThread(serializedThread: Record<string, unknown>, platformThreadId: string) {
-  serializedThread.id = platformThreadId;
-
-  const currentMessage = asRecord(serializedThread.currentMessage ?? serializedThread.message);
-  if (!currentMessage) {
-    return;
-  }
-
-  currentMessage.threadId = platformThreadId;
 }
 
 function applyPlatformThreadIdToThread(thread: Thread, platformThreadId: string) {
@@ -152,10 +207,15 @@ export class AgentInboundHandler {
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
+    private readonly managedAgentService: ManagedAgentService,
+    private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly analyticsService: AnalyticsService,
-    private readonly attachmentStorage: AgentAttachmentStorage
+    private readonly attachmentStorage: AgentAttachmentStorage,
+    private readonly startCodeService: TelegramStartCodeService,
+    private readonly channelEndpointRepository: ChannelEndpointRepository,
+    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -167,6 +227,16 @@ export class AgentInboundHandler {
     message: Message,
     event: AgentEventEnum
   ): Promise<void> {
+    if (config.platform === AgentPlatformEnum.TELEGRAM) {
+      const startToken = extractTelegramStartToken(message.text);
+      if (startToken) {
+        const consumed = await this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
+        if (consumed) {
+          return;
+        }
+      }
+    }
+
     const subscriberId = await this.subscriberResolver
       .resolve({
         environmentId: config.environmentId,
@@ -197,9 +267,7 @@ export class AgentInboundHandler {
       participantId,
       participantType,
       platformUserId: message.author.userId,
-      firstMessageText: getInboundActivityPreview(message.text, {
-        hasPlatformAttachments: Boolean(message.attachments?.length),
-      }),
+      firstMessageText: resolveInboundFirstMessageText(config.platform, message),
     });
 
     const senderType = subscriberId
@@ -290,16 +358,6 @@ export class AgentInboundHandler {
       }
     }
 
-    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
-    applyPlatformThreadIdToSerializedThread(serializedThread, platformThreadId);
-    await this.conversationService.updateChannelThread(
-      config.environmentId,
-      config.organizationId,
-      conversation._id,
-      platformThreadId,
-      serializedThread
-    );
-
     const [subscriber, history] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
@@ -307,21 +365,44 @@ export class AgentInboundHandler {
       this.conversationService.getHistory(config.environmentId, conversation._id),
     ]);
 
+    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+      '_id',
+      'runtime',
+      'managedRuntime',
+    ]);
+    const executionContext = {
+      event,
+      config,
+      conversation,
+      subscriber,
+      history,
+      message,
+      platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
+      storedAttachments: message.attachments?.length ? storedAttachments : undefined,
+    };
+
     try {
-      await this.bridgeExecutor.execute({
-        event,
-        config,
-        conversation,
-        subscriber,
-        history,
-        message,
-        platformContext: {
-          threadId: platformThreadId,
-          channelId: thread.channelId,
-          isDM: thread.isDM,
-        },
-        storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-      });
+      if (agent?.runtime === 'managed' && agent.managedRuntime) {
+        await this.managedAgentService.dispatch(executionContext, agent);
+      } else {
+        await this.bridgeExecutor.execute({
+          ...executionContext,
+          onBridgeFailure: async () => {
+            applyPlatformThreadIdToThread(thread, platformThreadId);
+            const sent = await thread.post(BRIDGE_OFFLINE_REPLY_MARKDOWN);
+            const channel = this.conversationService.getPrimaryChannel(conversation);
+            await this.conversationService.persistAgentMessage({
+              conversationId: conversation._id,
+              channel,
+              platformMessageId: (sent as { id?: string })?.id ?? '',
+              agentIdentifier: config.agentIdentifier,
+              content: BRIDGE_OFFLINE_REPLY_MARKDOWN,
+              environmentId: config.environmentId,
+              organizationId: config.organizationId,
+            });
+          },
+        });
+      }
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
         applyPlatformThreadIdToThread(thread, platformThreadId);
@@ -363,6 +444,96 @@ export class AgentInboundHandler {
     }
   }
 
+  /**
+   * Process a Telegram `/start <code>` deep-link payload as a subscriber-link
+   * request. `/start <code>` is control input and is always consumed here —
+   * the handler never falls through to normal bridge processing so the code
+   * cannot be persisted or forwarded as regular content.
+   */
+  private async handleTelegramSubscriberLink(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    code: string
+  ): Promise<boolean> {
+    const chatId = extractTelegramChatId(thread);
+    if (!chatId) {
+      this.logger.warn(
+        `[agent:${agentId}] Telegram /start payload received but channelId is missing — dropping as invalid control input`
+      );
+      await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
+
+      return true;
+    }
+
+    const result = await this.startCodeService.consumeIfMatches(code, {
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+      integrationId: config.integrationId,
+      agentIdentifier: config.agentIdentifier,
+    });
+
+    if (result.status === 'mismatch') {
+      await this.safePostInboundReply(thread, SUBSCRIBER_LINK_WRONG_BOT_REPLY, agentId, message);
+
+      return true;
+    }
+
+    if (result.status === 'consumed') {
+      const { payload } = result;
+      try {
+        const linkResult = await this.linkTelegramChatToSubscriber.execute(
+          LinkTelegramChatToSubscriberCommand.create({
+            environmentId: payload._environmentId,
+            organizationId: payload._organizationId,
+            agentIdentifier: payload.agentIdentifier,
+            integrationId: payload._integrationId,
+            subscriberId: payload.subscriberId,
+            chatId,
+          })
+        );
+
+        const reply = linkResult.created ? SUBSCRIBER_LINK_SUCCESS_REPLY : SUBSCRIBER_LINK_DUPLICATE_REPLY;
+        await this.safePostInboundReply(thread, reply, agentId, message);
+      } catch (err) {
+        if (err instanceof NotFoundException) {
+          await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
+        } else {
+          this.logger.error(err, `[agent:${agentId}] Unexpected failure linking Telegram chat to subscriber`);
+          await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
+        }
+      }
+
+      return true;
+    }
+
+    const existing = await this.channelEndpointRepository.findByPlatformIdentity({
+      _environmentId: config.environmentId,
+      _organizationId: config.organizationId,
+      integrationIdentifier: config.integrationIdentifier,
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpointField: 'chatId',
+      endpointValue: chatId,
+    });
+
+    const reply = existing ? SUBSCRIBER_LINK_DUPLICATE_REPLY : SUBSCRIBER_LINK_EXPIRED_REPLY;
+    await this.safePostInboundReply(thread, reply, agentId, message);
+
+    return true;
+  }
+
+  private async safePostInboundReply(thread: Thread, text: string, agentId: string, message: Message): Promise<void> {
+    try {
+      await thread.post(text);
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `[agent:${agentId}] Failed to post Telegram subscriber-link reply for inbound message ${message.id ?? '<unknown>'}`
+      );
+    }
+  }
+
   async handleReaction(agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent): Promise<void> {
     const threadId = event.thread?.id;
     if (!threadId) {
@@ -374,6 +545,8 @@ export class AgentInboundHandler {
     const conversation = await this.conversationService.findByPlatformThread(
       config.environmentId,
       config.organizationId,
+      config.agentId,
+      config.integrationId,
       threadId
     );
 
@@ -499,15 +672,6 @@ export class AgentInboundHandler {
       platformUserId: userId,
       firstMessageText: `[action:${action.id}]`,
     });
-
-    const serializedThread = thread.toJSON() as unknown as Record<string, unknown>;
-    await this.conversationService.updateChannelThread(
-      config.environmentId,
-      config.organizationId,
-      conversation._id,
-      thread.id,
-      serializedThread
-    );
 
     trackAgentInboundAction(this.analyticsService, {
       organizationId: config.organizationId,

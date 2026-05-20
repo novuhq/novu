@@ -1,17 +1,28 @@
 import { Module } from '@nestjs/common';
+import { JwtModule } from '@nestjs/jwt';
+import {
+  CalculateLimitNovuIntegration,
+  CreateOrUpdateSubscriberUseCase,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
+} from '@novu/application-generic';
 import {
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   ConversationActivityRepository,
   ConversationRepository,
   IntegrationRepository,
+  MessageRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
+import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentEmailActionsController } from './agent-email-actions.controller';
 import { AgentsController } from './agents.controller';
+import { AgentsPublicController } from './agents-public.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
 import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
 import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
@@ -22,11 +33,22 @@ import { AgentInboundHandler } from './services/agent-inbound-handler.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
 import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
+import { ManagedAgentService } from './services/managed-agent.service';
+import { TelegramMobileLinkTokenService } from './services/telegram-mobile-link-token.service';
+import { TelegramStartCodeService } from './services/telegram-start-code.service';
 import { USE_CASES } from './usecases';
 
 @Module({
-  imports: [SharedModule, AuthModule, EventsModule],
-  controllers: [AgentsController, AgentsWebhookController, AgentEmailActionsController],
+  imports: [
+    SharedModule,
+    AuthModule,
+    EventsModule,
+    ChannelEndpointsModule,
+    JwtModule.register({
+      secret: process.env.JWT_SECRET,
+    }),
+  ],
+  controllers: [AgentsController, AgentsPublicController, AgentsWebhookController, AgentEmailActionsController],
   providers: [
     ...USE_CASES,
     AgentRuntimeExceptionFilter,
@@ -35,6 +57,8 @@ import { USE_CASES } from './usecases';
     ConversationRepository,
     ConversationActivityRepository,
     IntegrationRepository,
+    MessageRepository,
+    SubscriberRepository,
     AgentAttachmentStorage,
     AgentConfigResolver,
     AgentSubscriberResolver,
@@ -42,7 +66,14 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
+    ManagedAgentService,
     ChatSdkService,
+    TelegramMobileLinkTokenService,
+    TelegramStartCodeService,
+    CalculateLimitNovuIntegration,
+    CreateOrUpdateSubscriberUseCase,
+    UpdateSubscriber,
+    UpdateSubscriberChannel,
   ],
   exports: [...USE_CASES, ChatSdkService],
 })

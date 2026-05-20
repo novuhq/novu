@@ -34,13 +34,18 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
   ContextRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
   DomainRepository,
   DomainRouteRepository,
+  IntegrationRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -104,8 +109,13 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 };
 
 const REPOSITORIES = [
+  AgentRepository,
+  AgentIntegrationRepository,
+  ConversationActivityRepository,
+  ConversationRepository,
   DomainRepository,
   DomainRouteRepository,
+  IntegrationRepository,
   JobRepository,
   CommunityOrganizationRepository,
   PreferencesRepository,

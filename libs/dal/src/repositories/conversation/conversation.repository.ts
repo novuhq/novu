@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
+import { FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -38,16 +38,29 @@ export class ConversationRepository extends BaseRepositoryV2<
     super(Conversation, ConversationEntity);
   }
 
+  /**
+   * Resolves a conversation for an inbound platform thread. Must be scoped by
+   * agent and integration so Telegram private-chat IDs (same numeric chat.id
+   * across different bots) do not collide across agents in one environment.
+   */
   async findByPlatformThread(
     environmentId: string,
     organizationId: string,
+    agentId: string,
+    integrationId: string,
     platformThreadId: string
   ): Promise<ConversationEntity | null> {
     return this.findOne(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
-        'channels.platformThreadId': platformThreadId,
+        _agentId: agentId,
+        channels: {
+          $elemMatch: {
+            platformThreadId,
+            _integrationId: new Types.ObjectId(integrationId),
+          },
+        },
       },
       '*'
     );
@@ -141,24 +154,6 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
-  async updateChannelThread(
-    environmentId: string,
-    organizationId: string,
-    id: string,
-    platformThreadId: string,
-    serializedThread: Record<string, unknown>
-  ): Promise<void> {
-    await this.update(
-      {
-        _id: id,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        'channels.platformThreadId': platformThreadId,
-      },
-      { $set: { 'channels.$.serializedThread': serializedThread } }
-    );
-  }
-
   async setFirstPlatformMessageId(
     environmentId: string,
     organizationId: string,
@@ -180,6 +175,49 @@ export class ConversationRepository extends BaseRepositoryV2<
       },
       { $set: { 'channels.$.firstPlatformMessageId': firstPlatformMessageId } }
     );
+  }
+
+  /**
+   * Atomically set externalSessionId only if not already set.
+   * Prevents race conditions when two concurrent first-messages
+   * try to create sessions simultaneously.
+   */
+  async setExternalSessionIdIfMissing(
+    environmentId: string,
+    conversationId: string,
+    sessionId: string
+  ): Promise<boolean> {
+    const result = await this.update(
+      {
+        _id: conversationId,
+        _environmentId: environmentId,
+        externalSessionId: { $exists: false },
+      },
+      { $set: { externalSessionId: sessionId } }
+    );
+
+    return result.matched > 0;
+  }
+
+  async clearExternalSessionId(environmentId: string, conversationId: string): Promise<void> {
+    await this.update({ _id: conversationId, _environmentId: environmentId }, { $unset: { externalSessionId: '' } });
+  }
+
+  /**
+   * Intentionally queries without _environmentId scope — session recovery and
+   * edge callbacks only have the CF-generated session UUID and need to resolve
+   * which environment owns it. Session IDs are system-generated UUIDs from
+   * Cloudflare Durable Objects, not user-supplied input.
+   */
+  async findByExternalSessionId(sessionId: string) {
+    return this.findOne({ externalSessionId: sessionId } as FilterQuery<ConversationDBModel> & EnforceEnvOrOrgIds, [
+      '_id',
+      '_agentId',
+      '_environmentId',
+      '_organizationId',
+      'externalSessionId',
+      'channels',
+    ]);
   }
 
   async listConversations({

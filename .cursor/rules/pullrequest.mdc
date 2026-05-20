@@ -7,8 +7,9 @@ alwaysApply: false
 
 **Title format**: `type(scope): Description fixes NOV-<ticket-id>`
 
+- When creating a pull requests from any run, verify that there is a linear ticket associated with the pr (From branch name or other), if not, create the linear ticket before creating the PR and attach the linear ticket id in title (fixes NV-XXX)
 - Examples: `feat(dashboard): add workflow trigger button fixes NOV-123`, `fix(api-service): handle null subscriber case fixes NOV-456`
-- Omit the `fixes NOV-XXX` suffix when no Linear ticket is in context
+
 
 **Scopes**: `dashboard`, `api-service`, `worker`, `shared`, `js`, `react`, `react-native`, `nextjs`, `providers`, `root`
 
