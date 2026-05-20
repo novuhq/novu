@@ -58,7 +58,6 @@ export interface Env {
 
 export interface ObservationParams {
   sessionId: string;
-  /** Unique identifier for the originating `send()` invocation. Forwarded in every webhook event. */
   runId: string;
   streamUrl: string;
   headers: Record<string, string>;
@@ -531,14 +530,7 @@ function validateObservationParams(body: unknown): body is ObservationParams {
   if (typeof body !== 'object' || body === null) return false;
   const obj = body as Record<string, unknown>;
   if (typeof obj.sessionId !== 'string' || obj.sessionId.length === 0) return false;
-  // runId is required by the SDK contract, but accept callers without it so
-  // older SDK versions don't fail. Backfilled to empty string so downstream
-  // consumers can detect the case rather than receive a fabricated value.
-  if (obj.runId === undefined) {
-    obj.runId = '';
-  } else if (typeof obj.runId !== 'string') {
-    return false;
-  }
+  if (typeof obj.runId !== 'string' || obj.runId.length === 0) return false;
   if (typeof obj.streamUrl !== 'string') return false;
   try {
     new URL(obj.streamUrl);
