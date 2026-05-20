@@ -339,8 +339,8 @@ export class SessionObserver extends Agent<Env, State> {
     this.ctx.storage.sql.exec("UPDATE events SET status = 'dead' WHERE id = ?", id);
   }
 
-  private deleteEvent(id: number): void {
-    this.ctx.storage.sql.exec('DELETE FROM events WHERE id = ?', id);
+  private markDelivered(id: number): void {
+    this.ctx.storage.sql.exec("UPDATE events SET status = 'delivered' WHERE id = ?", id);
   }
 
   private incrementAttempts(id: number): void {
@@ -376,13 +376,13 @@ export class SessionObserver extends Agent<Env, State> {
       switch (outcome) {
         case 'delivered':
         case 'skipped':
-          this.deleteEvent(row.id);
-          if ((event.type === 'finish' || event.type === 'error') && outcome === 'delivered') {
+          if (event.type === 'finish' || event.type === 'error') {
             this.cleanupEvents(sessionId);
             this.setState({ observation: null });
 
             return;
           }
+          this.markDelivered(row.id);
           break;
 
         case 'retry-later':
