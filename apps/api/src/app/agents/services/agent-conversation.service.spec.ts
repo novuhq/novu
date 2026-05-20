@@ -50,9 +50,7 @@ describe('AgentConversationService', () => {
 
   describe('getInboundActivityPreview', () => {
     it('returns attachment preview when message has no text but has attachments', () => {
-      expect(getInboundActivityPreview('', { hasPlatformAttachments: true })).to.equal(
-        INBOUND_ATTACHMENT_ONLY_PREVIEW
-      );
+      expect(getInboundActivityPreview('', { hasPlatformAttachments: true })).to.equal(INBOUND_ATTACHMENT_ONLY_PREVIEW);
     });
 
     it('returns empty string when there is no text and no attachments', () => {

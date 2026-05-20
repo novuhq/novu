@@ -227,8 +227,8 @@ export function AgentsList() {
             agentTab: AGENT_DETAILS_DEFAULT_TAB,
           })}${location.search}`;
 
-          navigate(agentDetailsPath);
           setCreateOpen(false);
+          navigate(agentDetailsPath);
         },
         onError: (err) => {
           const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';

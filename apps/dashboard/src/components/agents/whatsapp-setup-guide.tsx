@@ -191,8 +191,7 @@ function ConnectAndTestPanel({
     }
   }, [agent.identifier, integrationIdentifier, phone, sendTestTemplate]);
 
-  const connectAttemptFinished =
-    connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
+  const connectAttemptFinished = connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
   const showManualFallback = connectStatus.state === 'manual_fallback' && !manualMarkedConfigured;
   const showTestPanel = connectStatus.state === 'connected' || manualMarkedConfigured;
 
@@ -213,7 +212,9 @@ function ConnectAndTestPanel({
       ) : (
         <div className="text-success-base flex items-center gap-1.5">
           <RiCheckLine className="size-4" />
-          <span className="text-label-xs font-medium">{connectStatusLabel(connectStatus.state, manualMarkedConfigured)}</span>
+          <span className="text-label-xs font-medium">
+            {connectStatusLabel(connectStatus.state, manualMarkedConfigured)}
+          </span>
         </div>
       )}
 

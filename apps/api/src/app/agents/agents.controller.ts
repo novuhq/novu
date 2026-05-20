@@ -52,6 +52,8 @@ import {
   UpdateAgentRequestDto,
   UploadCustomSkillRequestDto,
   UploadCustomSkillResponseDto,
+  VerifyManagedCredentialsRequestDto,
+  VerifyManagedCredentialsResponseDto,
 } from './dtos';
 import { ConfigureTelegramWebhookResponseDto } from './dtos/configure-telegram-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
@@ -108,6 +110,8 @@ import { UpdateAgentRuntimeConfigCommand } from './usecases/update-agent-runtime
 import { UpdateAgentRuntimeConfig } from './usecases/update-agent-runtime-config/update-agent-runtime-config.usecase';
 import { UploadCustomSkillCommand } from './usecases/upload-custom-skill/upload-custom-skill.command';
 import { UploadCustomSkill } from './usecases/upload-custom-skill/upload-custom-skill.usecase';
+import { VerifyManagedCredentialsCommand } from './usecases/verify-managed-credentials/verify-managed-credentials.command';
+import { VerifyManagedCredentials } from './usecases/verify-managed-credentials/verify-managed-credentials.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -138,7 +142,8 @@ export class AgentsController {
     private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook,
     private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
     private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
-    private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
+    private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared,
+    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials
   ) {}
 
   @Get('/emoji')
@@ -151,6 +156,32 @@ export class AgentsController {
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgentEmoji(): Promise<AgentEmojiEntry[]> {
     return this.listAgentEmojiUsecase.execute();
+  }
+
+  @Post('/verify-credentials')
+  @ApiResponse(VerifyManagedCredentialsResponseDto)
+  @ApiOperation({
+    summary: 'Verify managed-runtime credentials',
+    description:
+      'Performs a stateless, read-only validation of the supplied API key against the selected managed-runtime provider. ' +
+      'Used by the dashboard to give immediate feedback when configuring credentials before the integration is created.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  verifyManagedCredentials(
+    @UserSession() user: UserSessionData,
+    @Body() body: VerifyManagedCredentialsRequestDto
+  ): Promise<VerifyManagedCredentialsResponseDto> {
+    return this.verifyManagedCredentialsUsecase.execute(
+      VerifyManagedCredentialsCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        providerId: body.providerId,
+        apiKey: body.apiKey,
+        externalWorkspaceId: body.externalWorkspaceId,
+      })
+    );
   }
 
   @Post('/')

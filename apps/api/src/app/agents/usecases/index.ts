@@ -1,7 +1,7 @@
 import { AddAgentIntegration } from './add-agent-integration/add-agent-integration.usecase';
 import { CleanupNovuEmail } from './cleanup-novu-email/cleanup-novu-email.usecase';
-import { ConfigureWhatsAppWebhook } from './configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { ConfigureTelegramAgentWebhook } from './configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
+import { ConfigureWhatsAppWebhook } from './configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { ConsumeTelegramMobileLink } from './consume-telegram-mobile-link/consume-telegram-mobile-link.usecase';
 import { CreateAgent } from './create-agent/create-agent.usecase';
 import { DeleteAgent } from './delete-agent/delete-agent.usecase';
@@ -27,6 +27,7 @@ import { UpdateAgentInboxShared } from './update-agent-inbox-shared/update-agent
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfig } from './update-agent-runtime-config/update-agent-runtime-config.usecase';
 import { UploadCustomSkill } from './upload-custom-skill/upload-custom-skill.usecase';
+import { VerifyManagedCredentials } from './verify-managed-credentials/verify-managed-credentials.usecase';
 
 export {
   ConfigureTelegramAgentWebhook,
@@ -67,4 +68,5 @@ export const USE_CASES = [
   SendAgentWelcomeMessage,
   SendWhatsAppTestTemplate,
   SyncAgentToEnvironment,
+  VerifyManagedCredentials,
 ];

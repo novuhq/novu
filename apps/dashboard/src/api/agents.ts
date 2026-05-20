@@ -197,6 +197,27 @@ export async function createAgent(environment: IEnvironment, body: CreateAgentBo
   return response.data;
 }
 
+export type VerifyManagedCredentialsBody = {
+  providerId: AgentRuntimeProviderIdEnum;
+  apiKey: string;
+  externalWorkspaceId?: string;
+};
+
+export type VerifyManagedCredentialsResponse = { valid: true };
+
+export async function verifyManagedCredentials(
+  environment: IEnvironment,
+  body: VerifyManagedCredentialsBody,
+  signal?: AbortSignal
+): Promise<VerifyManagedCredentialsResponse> {
+  const response = await post<{ data: VerifyManagedCredentialsResponse } | VerifyManagedCredentialsResponse>(
+    '/agents/verify-credentials',
+    { environment, body, signal }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function updateAgent(
   environment: IEnvironment,
   identifier: string,

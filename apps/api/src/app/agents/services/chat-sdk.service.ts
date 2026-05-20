@@ -1,7 +1,7 @@
+import { randomUUID } from 'node:crypto';
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import * as https from 'node:https';
-import { randomUUID } from 'node:crypto';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import {
   areNovuEmailCredentialsSet,
