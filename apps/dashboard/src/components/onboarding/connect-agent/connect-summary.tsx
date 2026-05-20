@@ -18,6 +18,15 @@ export type ConnectSummary = {
   externalAgentId: string;
   externalEnvironmentId: string;
   externalWorkspaceId: string;
+  /**
+   * Managed-runtime integration the user picked or just created during the connect phase.
+   * Used in the recap to render the integration name inside the connector dropdown.
+   */
+  selectedIntegrationId?: string;
+  /**
+   * Display name used when the user provisioned a new managed-runtime integration inline.
+   */
+  integrationName?: string;
 };
 
 function resolveRuntime(connectorId: ConnectorId): RuntimeType {

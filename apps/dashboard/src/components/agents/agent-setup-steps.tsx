@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, EmailProviderIdEnum, type IIntegration } from '@novu/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -98,7 +98,13 @@ function ViewAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; 
   );
 }
 
-function ConnectPhaseRecap({ summary }: { summary: ConnectSummary }) {
+function ConnectPhaseRecap({
+  summary,
+  integrations,
+}: {
+  summary: ConnectSummary;
+  integrations: IIntegration[] | undefined;
+}) {
   const display = deriveConnectSummaryDisplay(summary);
 
   return (
@@ -121,6 +127,16 @@ function ConnectPhaseRecap({ summary }: { summary: ConnectSummary }) {
         externalEnvironmentId={summary.externalEnvironmentId}
         errors={{}}
         disabled
+        integrations={integrations}
+        selectedIntegrationId={summary.selectedIntegrationId}
+        dropdownStatus={summary.selectedIntegrationId ? 'valid' : 'idle'}
+        showSavedBadge={false}
+        credentialsPanelVisible={false}
+        credentialsPanelExpanded={false}
+        integrationName={summary.integrationName ?? ''}
+        verifyStatus="idle"
+        verifyMessage={undefined}
+        isSavingIntegration={false}
         onConnectorChange={noop}
         onTemplateChange={noop}
         onApiKeyChange={noop}
@@ -131,6 +147,12 @@ function ConnectPhaseRecap({ summary }: { summary: ConnectSummary }) {
         onInstructionsChange={noop}
         onExternalAgentIdChange={noop}
         onExternalEnvironmentIdChange={noop}
+        onSelectIntegration={noop}
+        onRequestSetupCredentials={noop}
+        onCredentialsExpandedChange={noop}
+        onIntegrationNameChange={noop}
+        onVerify={noop}
+        onSaveIntegration={noop}
       />
     </div>
   );
@@ -307,7 +329,7 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
           >
-            <ConnectPhaseRecap summary={connectSummary} />
+            <ConnectPhaseRecap summary={connectSummary} integrations={integrations} />
           </motion.div>
         </div>
       )}
