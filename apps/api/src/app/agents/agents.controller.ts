@@ -41,6 +41,8 @@ import {
   AgentResponseDto,
   AgentRuntimeConfigResponseDto,
   CreateAgentRequestDto,
+  GenerateManagedAgentRequestDto,
+  GenerateManagedAgentResponseDto,
   ListAgentIntegrationsQueryDto,
   ListAgentIntegrationsResponseDto,
   ListAgentsQueryDto,
@@ -79,6 +81,8 @@ import { CreateAgentCommand } from './usecases/create-agent/create-agent.command
 import { CreateAgent } from './usecases/create-agent/create-agent.usecase';
 import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command';
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
+import { GenerateManagedAgentCommand } from './usecases/generate-managed-agent/generate-managed-agent.command';
+import { GenerateManagedAgent } from './usecases/generate-managed-agent/generate-managed-agent.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
 import { GetAgentRuntimeConfigCommand } from './usecases/get-agent-runtime-config/get-agent-runtime-config.command';
@@ -143,7 +147,8 @@ export class AgentsController {
     private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
     private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared,
-    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials
+    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials,
+    private readonly generateManagedAgentUsecase: GenerateManagedAgent
   ) {}
 
   @Get('/emoji')
@@ -180,6 +185,27 @@ export class AgentsController {
         providerId: body.providerId,
         apiKey: body.apiKey,
         externalWorkspaceId: body.externalWorkspaceId,
+      })
+    );
+  }
+
+  @Post('/generate')
+  @ApiResponse(GenerateManagedAgentResponseDto)
+  @ApiOperation({
+    summary: 'Generate an agent configuration from a free-form prompt',
+    description:
+      'Translates a user-supplied description into an agent configuration (name, identifier, systemPrompt, tools, MCP servers, skills).',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  generateManagedAgent(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateManagedAgentRequestDto
+  ): Promise<GenerateManagedAgentResponseDto> {
+    return this.generateManagedAgentUsecase.execute(
+      GenerateManagedAgentCommand.create({
+        user,
+        prompt: body.prompt,
+        runtime: body.runtime,
       })
     );
   }

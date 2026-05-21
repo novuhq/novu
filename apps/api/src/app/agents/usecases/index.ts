@@ -6,6 +6,7 @@ import { ConsumeTelegramMobileLink } from './consume-telegram-mobile-link/consum
 import { CreateAgent } from './create-agent/create-agent.usecase';
 import { DeleteAgent } from './delete-agent/delete-agent.usecase';
 import { FindOrCreateNovuEmail } from './find-or-create-novu-email/find-or-create-novu-email.usecase';
+import { GenerateManagedAgent } from './generate-managed-agent/generate-managed-agent.usecase';
 import { GetAgent } from './get-agent/get-agent.usecase';
 import { GetAgentRuntimeConfig } from './get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { GetTelegramMobileLinkStatus } from './get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
@@ -55,6 +56,7 @@ export const USE_CASES = [
   CleanupNovuEmail,
   ConfigureWhatsAppWebhook,
   FindOrCreateNovuEmail,
+  GenerateManagedAgent,
   IssueTelegramMobileLink,
   IssueTelegramSubscriberLink,
   LinkTelegramChatToSubscriber,

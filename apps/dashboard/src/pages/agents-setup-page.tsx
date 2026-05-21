@@ -285,6 +285,7 @@ export function AgentsSetupPage() {
                 isManagedEnabled={isManagedEnabled}
               />
             </div>
+            <SkipBanner onSkip={handleSkip} />
           </motion.div>
         ) : createdAgent ? (
           <motion.div
@@ -302,7 +303,7 @@ export function AgentsSetupPage() {
               connectSummary={connectSummary}
             />
 
-            {setupComplete && (
+            {setupComplete ? (
               <div className="mt-6 flex items-center gap-3 pb-10 pl-6">
                 <Button
                   className="text-label-xs gap-1 rounded-lg p-2"
@@ -321,12 +322,12 @@ export function AgentsSetupPage() {
                   Setup another channel
                 </button>
               </div>
+            ) : (
+              <SkipBanner onSkip={handleSkip} />
             )}
           </motion.div>
         ) : null}
       </AnimatePresence>
-
-      <SkipBanner onSkip={handleSkip} />
     </>
   );
   const illustrationState = getIllustrationState({ phase, setupComplete });

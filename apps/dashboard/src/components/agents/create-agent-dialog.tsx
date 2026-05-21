@@ -6,9 +6,12 @@ import {
   slugify,
 } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine } from 'react-icons/ri';
+import type { GeneratedManagedAgent } from '@/api/agents';
+import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
@@ -22,10 +25,13 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
 import { QueryKeys } from '@/utils/query-keys';
-import { BotIcon } from '../icons/bot';
-import { Tag } from '../primitives/tag';
+import { cn } from '@/utils/ui';
+import { AgentSuggestionPills } from '../onboarding/connect-agent/agent-suggestion-pills';
+import { GenerationStatus, type GenerationStep } from '../onboarding/connect-agent/generation-status';
+import { PromptInput } from '../onboarding/connect-agent/prompt-input';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
@@ -37,9 +43,9 @@ import {
   ConfigureCredentialsSection,
   type CreateAgentForm,
   type CreateAgentFormErrors,
-  type CreateAgentMode,
   ExistingAgentFields,
   hasFormErrors,
+  type ManagedAgentRuntimeOverrides,
   ScratchAgentFields,
   type VerifyStatus,
   validateCreateAgentForm,
@@ -59,6 +65,42 @@ type CreateAgentDialogProps = {
 };
 
 const DEFAULT_CONNECTOR_ID: ConnectorId = 'claude';
+
+/**
+ * Mirrors the onboarding step's `AgentGenerationMode` so the dialog reuses the same prompt /
+ * manual / existing affordances. Keeping the shape identical also keeps the suggestion-pill
+ * handler trivial: it always switches to `'prompt'` and pre-fills the textarea.
+ */
+type AgentGenerationMode = 'prompt' | 'manual' | 'existing';
+
+const GENERATION_STEPS: ReadonlyArray<GenerationStep> = [
+  { id: 'spinning', text: 'Spinning up a fresh agent' },
+  { id: 'coffee', text: 'Sipping a little bit of coffee' },
+  { id: 'system-prompt', text: 'Crafting the system prompt' },
+  { id: 'tools', text: 'Picking the right tools' },
+  { id: 'mcp', text: 'Wiring up MCP servers' },
+  { id: 'skills', text: 'Selecting starter skills' },
+  { id: 'agent', text: 'Generating your agent' },
+];
+
+const MIN_PROMPT_LENGTH = 8;
+
+const PROMPT_HEADER: Record<
+  Exclude<AgentGenerationMode, 'existing'>,
+  { label: string; toggleLabel: string; toggleTo: Exclude<AgentGenerationMode, 'existing'>; toggleIcon?: 'sparkles' }
+> = {
+  prompt: {
+    label: 'Generate from prompt',
+    toggleLabel: 'Create manually',
+    toggleTo: 'manual',
+  },
+  manual: {
+    label: 'Create manually',
+    toggleLabel: 'Generate from prompt',
+    toggleTo: 'prompt',
+    toggleIcon: 'sparkles',
+  },
+};
 
 function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): ConnectorIntegrationStatus {
   if (hasIntegration || verify === 'valid') return 'valid';
@@ -86,7 +128,19 @@ export function CreateAgentDialog({
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
   const [credentialsPanelVisible, setCredentialsPanelVisible] = useState(false);
   const [credentialsPanelExpanded, setCredentialsPanelExpanded] = useState(true);
-  const [mode, setMode] = useState<CreateAgentMode>('create');
+  // If the caller pre-populated a name or instructions, default to manual mode so the form is
+  // already filled out. Otherwise show the prompt textarea by default.
+  const [generationMode, setGenerationMode] = useState<AgentGenerationMode>(() =>
+    initialName || initialInstructions ? 'manual' : 'prompt'
+  );
+  const [prompt, setPrompt] = useState('');
+  const [promptError, setPromptError] = useState<string | undefined>(undefined);
+  const promptTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  // Keeps the dialog in a busy state for the whole submit lifecycle — across the LLM call (prompt
+  // mode), the create-agent mutation, and the brief gap before the parent flips `open` to false.
+  // Without it the status animation and the submit button briefly snap back to their idle styles
+  // while Radix is still running the dialog's close animation, which reads as a "blink".
+  const [isSubmitInFlight, setIsSubmitInFlight] = useState(false);
   const [name, setName] = useState(initialName ?? '');
   const [identifier, setIdentifier] = useState(initialName ? slugify(initialName) : '');
   const [instructions, setInstructions] = useState(initialInstructions ?? '');
@@ -97,7 +151,6 @@ export function CreateAgentDialog({
   const [externalEnvironmentId, setExternalEnvironmentId] = useState('');
   const [errors, setErrors] = useState<CreateAgentFormErrors>({});
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
-  const [templateOffset] = useState(0);
   const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>('idle');
   const [verifyMessage, setVerifyMessage] = useState<string | undefined>(undefined);
   // Tracks the last apiKey we sent for verification so we can drop stale responses (the user may
@@ -110,10 +163,25 @@ export function CreateAgentDialog({
   // auto-select effect does not overwrite it or reopen the credentials section during refetch.
   const pinnedIntegrationIdRef = useRef<string | null>(null);
 
-  const visibleTemplates = AGENT_TEMPLATES.slice(templateOffset, templateOffset + 4);
+  const {
+    generate: generateManagedAgent,
+    isPending: isGenerating,
+    cancel: cancelGeneration,
+  } = useGenerateManagedAgent();
 
   const selectedConnector = getConnectorById(connectorId);
   const isClaudeSelected = connectorId === 'claude';
+  const runtime = selectedConnector?.runtime ?? 'scratch';
+  const isScratchRuntime = runtime === 'scratch';
+  // The "Generate from prompt" surface is available for both managed Claude (when the
+  // managed-runtime flag is on) and for the self-hosted Custom Scaffold flow unconditionally —
+  // Custom Scaffold generation only produces name/identifier/systemPrompt and never touches any
+  // Anthropic-managed infrastructure, so it has no reason to depend on the managed flag.
+  const useAiGeneration = isClaudeSelected ? isManagedEnabled : isScratchRuntime;
+  const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
+  // Whether the segmented "Create new agent" / "Connect existing agent" tabs apply. They only
+  // make sense for the managed Claude flow, since other runtimes can't adopt a remote agent.
+  const showScopeTabs = isClaudeSelected;
   const showManagedOptions = isManagedEnabled;
 
   // Hide managed connectors when the feature flag is off — the dropdown still lists them visually,
@@ -205,6 +273,9 @@ export function CreateAgentDialog({
     setInstructions(initialInstructions ?? '');
     setIsIdentifierTouched(false);
     setErrors({});
+    setGenerationMode(initialName || initialInstructions ? 'manual' : 'prompt');
+    setPrompt('');
+    setPromptError(undefined);
   }, [open, initialName, initialInstructions]);
 
   const reset = useCallback(() => {
@@ -212,7 +283,10 @@ export function CreateAgentDialog({
     setSelectedIntegrationId(undefined);
     setCredentialsPanelVisible(false);
     setCredentialsPanelExpanded(true);
-    setMode('create');
+    setGenerationMode('prompt');
+    setPrompt('');
+    setPromptError(undefined);
+    setIsSubmitInFlight(false);
     setName('');
     setIdentifier('');
     setInstructions('');
@@ -256,15 +330,34 @@ export function CreateAgentDialog({
     onOpenChange(next);
   };
 
-  const handleTemplateSelect = (template: AgentTemplate) => {
-    setName(template.name);
-    if (!isIdentifierTouched) {
-      setIdentifier(slugify(template.name));
-      setErrors((prev) => ({ ...prev, identifier: undefined }));
-    }
-    setInstructions(template.instructions);
-    setErrors((prev) => ({ ...prev, name: undefined }));
-  };
+  // Clicking a suggestion when the AI surface is available lands the user in prompt mode with the
+  // textarea pre-filled. Mirrors `handleSelectSuggestion` in `connect-agent-step.tsx`.
+  const handleSelectAiSuggestion = useCallback((suggestion: AgentTemplate) => {
+    setGenerationMode('prompt');
+    setPrompt(suggestion.instructions);
+    setPromptError(undefined);
+    requestAnimationFrame(() => {
+      const el = promptTextareaRef.current;
+      if (!el) return;
+      el.focus();
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    });
+  }, []);
+
+  // Legacy fallback (AI generation unavailable): pre-fill the manual form fields directly.
+  const handleSelectTemplate = useCallback(
+    (template: AgentTemplate) => {
+      setName(template.name);
+      if (!isIdentifierTouched) {
+        setIdentifier(slugify(template.name));
+        setErrors((prev) => ({ ...prev, identifier: undefined }));
+      }
+      setInstructions(template.instructions);
+      setErrors((prev) => ({ ...prev, name: undefined }));
+    },
+    [isIdentifierTouched]
+  );
 
   const handleSelectConnector = (id: ConnectorId) => {
     setConnectorId(id);
@@ -278,7 +371,34 @@ export function CreateAgentDialog({
       setVerifyStatus('idle');
       setVerifyMessage(undefined);
     }
+    // Switching away from Claude collapses the "existing" mode back to the default surface,
+    // since only the managed Claude flow supports adopting a remote agent.
+    if (next?.runtime !== 'claude' && generationMode === 'existing') {
+      setGenerationMode('prompt');
+      setExternalAgentId('');
+      setExternalEnvironmentId('');
+    }
   };
+
+  const handleGenerationModeChange = useCallback((next: AgentGenerationMode) => {
+    setGenerationMode(next);
+    if (next === 'prompt' || next === 'manual') {
+      setExternalAgentId('');
+      setExternalEnvironmentId('');
+    }
+    if (next === 'manual') {
+      setPromptError(undefined);
+    }
+  }, []);
+
+  const handlePromptChange = useCallback((next: string) => {
+    setPrompt(next);
+    setPromptError(undefined);
+  }, []);
+
+  const handleCancelGeneration = useCallback(() => {
+    cancelGeneration();
+  }, [cancelGeneration]);
 
   const handleSelectIntegration = (integration: { _id: string }) => {
     setSelectedIntegrationId(integration._id);
@@ -398,13 +518,66 @@ export function CreateAgentDialog({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const runtime = selectedConnector?.runtime ?? 'scratch';
-    const isExistingMode = runtime === 'claude' && mode === 'existing';
+    const isExistingMode = runtime === 'claude' && generationMode === 'existing';
+    const isPromptGenerationMode = useAiGeneration && generationMode === 'prompt';
+
+    let generated: GeneratedManagedAgent | null = null;
+    let effectiveName = name;
+    let effectiveIdentifier = identifier;
+    let effectiveInstructions = instructions;
+    let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
+
+    if (isPromptGenerationMode) {
+      const trimmedPrompt = prompt.trim();
+      if (trimmedPrompt.length < MIN_PROMPT_LENGTH) {
+        setPromptError(`Add at least ${MIN_PROMPT_LENGTH} characters describing your agent.`);
+
+        return;
+      }
+
+      // Anthropic API key is only required when we provision the agent on Claude's managed
+      // runtime. The Custom Scaffold flow generates name/identifier/systemPrompt only and the
+      // user runs the agent on their own runtime, so no provider credentials are needed.
+      if (isClaudeSelected && !selectedIntegrationId && !apiKey.trim()) {
+        setErrors((prev) => ({ ...prev, apiKey: 'Anthropic API key is required.' }));
+
+        return;
+      }
+
+      setIsSubmitInFlight(true);
+
+      try {
+        generated = await generateManagedAgent({
+          prompt: trimmedPrompt,
+          runtime: isClaudeSelected ? 'managed' : 'self-hosted',
+        });
+      } catch (err) {
+        setIsSubmitInFlight(false);
+
+        if (err instanceof GenerationCancelledError) {
+          return;
+        }
+        const message = err instanceof Error ? err.message : 'Could not generate agent.';
+        showErrorToast(message, 'Generation failed');
+
+        return;
+      }
+
+      effectiveName = generated.name;
+      effectiveIdentifier = generated.identifier;
+      effectiveInstructions = generated.systemPrompt;
+      managedOverrides = {
+        systemPrompt: generated.systemPrompt,
+        tools: generated.tools,
+        mcpServers: generated.mcpServers,
+        skills: generated.skills,
+      };
+    }
 
     const nextErrors = validateCreateAgentForm({
-      name,
-      identifier,
-      instructions,
+      name: effectiveName,
+      identifier: effectiveIdentifier,
+      instructions: effectiveInstructions,
       apiKey,
       runtime,
       isExistingMode,
@@ -417,48 +590,50 @@ export function CreateAgentDialog({
 
     if (hasFormErrors(nextErrors)) {
       setErrors(nextErrors);
+      setIsSubmitInFlight(false);
 
       return;
     }
 
     setErrors({});
 
-    const trimmedInstructions = instructions.trim();
-    const trimmedName = name.trim();
-    const trimmedIdentifier = identifier.trim();
-    const trimmedApiKey = apiKey.trim();
-    const trimmedIntegrationName = integrationName.trim();
-    const trimmedExternalAgentId = externalAgentId.trim();
-    const trimmedExternalEnvironmentId = externalEnvironmentId.trim();
-    const trimmedExternalWorkspaceId = externalWorkspaceId.trim();
+    // Idempotent in prompt mode (already set before the LLM call); the important case is manual
+    // mode, where we cover the create-agent mutation here so the busy state stays continuous
+    // until the parent flips `open` to false.
+    setIsSubmitInFlight(true);
 
     try {
       await onSubmit({
-        name: trimmedName,
-        identifier: trimmedIdentifier,
-        instructions: trimmedInstructions,
-        apiKey: trimmedApiKey,
+        name: effectiveName.trim(),
+        identifier: effectiveIdentifier.trim(),
+        instructions: effectiveInstructions.trim(),
+        apiKey: apiKey.trim(),
         runtime,
         isExistingMode,
-        externalAgentId: trimmedExternalAgentId,
-        externalEnvironmentId: trimmedExternalEnvironmentId,
-        externalWorkspaceId: trimmedExternalWorkspaceId || undefined,
+        externalAgentId: externalAgentId.trim(),
+        externalEnvironmentId: externalEnvironmentId.trim(),
+        externalWorkspaceId: externalWorkspaceId.trim() || undefined,
         integrationId: selectedIntegrationId,
-        integrationName: trimmedIntegrationName || undefined,
+        integrationName: integrationName.trim() || undefined,
+        managedOverrides,
       });
       // Parent closes the dialog in onSuccess — do not reset here while the modal is still open.
+      // The flag is cleared in `reset()` once the dialog finishes closing.
     } catch {
       // Caller surfaces a toast; keep the dialog open so the user can retry.
+      setIsSubmitInFlight(false);
     }
   };
 
   const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
   const showCredentialsSection = isClaudeSelected && credentialsPanelVisible;
+  const isSubmitBusy = isSubmitting || isGenerating || isSubmitInFlight;
+  const promptHeader = generationMode === 'existing' ? null : PROMPT_HEADER[generationMode];
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="border-stroke-soft max-w-[600px] gap-0 overflow-hidden rounded-12 border p-0 shadow-xl sm:rounded-12 min-w-[400px]"
+        className="border-stroke-soft w-[600px] max-w-[600px] gap-0 overflow-hidden rounded-12 border p-0 shadow-xl sm:rounded-12"
         hideCloseButton
       >
         <div className="bg-bg-weak flex flex-col gap-3 p-4">
@@ -537,24 +712,28 @@ export function CreateAgentDialog({
               ) : null}
             </div>
 
-            {isClaudeSelected && (
-              <SegmentedControl value={mode} onValueChange={(v) => setMode(v as CreateAgentMode)}>
+            {showScopeTabs && (
+              <SegmentedControl
+                value={scope}
+                onValueChange={(v) => handleGenerationModeChange(v === 'existing' ? 'existing' : 'prompt')}
+              >
                 <SegmentedControlList className="rounded-[5px] bg-bg-muted p-px">
-                  <SegmentedControlTrigger value="create" className="text-label-xs">
+                  <SegmentedControlTrigger value="create" className="text-label-xs" disabled={isSubmitBusy}>
                     Create new agent
                   </SegmentedControlTrigger>
-                  <SegmentedControlTrigger value="existing" className="text-label-xs">
+                  <SegmentedControlTrigger value="existing" className="text-label-xs" disabled={isSubmitBusy}>
                     Connect existing agent
                   </SegmentedControlTrigger>
                 </SegmentedControlList>
               </SegmentedControl>
             )}
 
-            {isClaudeSelected && mode === 'existing' ? (
+            {generationMode === 'existing' ? (
               <ExistingAgentFields
                 externalAgentId={externalAgentId}
                 externalEnvironmentId={externalEnvironmentId}
                 errors={errors}
+                disabled={isSubmitBusy}
                 onExternalAgentIdChange={(next) => {
                   setExternalAgentId(next);
                   setErrors((prev) => ({ ...prev, externalAgentId: undefined }));
@@ -564,26 +743,111 @@ export function CreateAgentDialog({
                   setErrors((prev) => ({ ...prev, externalEnvironmentId: undefined }));
                 }}
               />
-            ) : (
-              <div className="flex flex-col gap-5">
+            ) : useAiGeneration ? (
+              <div className="flex flex-col gap-2">
                 <div className="flex flex-col gap-2.5">
-                  <span className="text-text-sub text-label-xs font-medium">Start from a template</span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {visibleTemplates.map((template) => (
-                      <button
-                        key={template.label}
-                        type="button"
-                        onClick={() => handleTemplateSelect(template)}
-                        className="cursor-pointer rounded-full"
-                      >
-                        <Tag className="h-7 rounded-full" variant="stroke">
-                          <BotIcon className="text-feature size-4 shrink-0" />
-                          {template.label}
-                        </Tag>
-                      </button>
-                    ))}
-                  </div>
+                  {promptHeader && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-text-strong text-label-xs font-medium leading-4">{promptHeader.label}</span>
+                      {!isSubmitBusy && (
+                        <button
+                          type="button"
+                          onClick={() => handleGenerationModeChange(promptHeader.toggleTo)}
+                          className={cn(
+                            'text-text-sub hover:text-text-strong text-label-xs inline-flex items-center gap-0.5 font-medium leading-4',
+                            'disabled:cursor-not-allowed disabled:opacity-50'
+                          )}
+                        >
+                          {promptHeader.toggleIcon === 'sparkles' && (
+                            <BroomSparkle className="text-feature size-3.5 shrink-0" aria-hidden />
+                          )}
+                          <span>{promptHeader.toggleLabel}</span>
+                          <RiArrowRightSLine className="size-3.5 shrink-0" aria-hidden />
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {generationMode === 'prompt' && (
+                    // We intentionally don't forward `generationSteps`/`onCancelGeneration` to
+                    // `PromptInput` here so the textarea stays compact. The Cancel button and the
+                    // animation are rendered as siblings below the suggestion pills instead, which
+                    // keeps the pills anchored directly under the textarea and stops them from
+                    // shifting whenever a generation kicks off.
+                    <PromptInput
+                      value={prompt}
+                      onChange={handlePromptChange}
+                      disabled={isSubmitting}
+                      errorMessage={promptError}
+                      textareaRef={promptTextareaRef}
+                      isGenerating={isSubmitBusy}
+                    />
+                  )}
+
+                  {generationMode === 'manual' && (
+                    <ScratchAgentFields
+                      name={name}
+                      identifier={identifier}
+                      instructions={instructions}
+                      errors={errors}
+                      isIdentifierTouched={isIdentifierTouched}
+                      isClaudeSelected={isClaudeSelected}
+                      disabled={isSubmitBusy}
+                      onNameChange={(next) => {
+                        setName(next);
+                        setErrors((prev) => ({ ...prev, name: undefined }));
+                      }}
+                      onIdentifierChange={(next) => {
+                        setIdentifier(next);
+                        setErrors((prev) => ({ ...prev, identifier: undefined }));
+                      }}
+                      onIdentifierTouched={() => setIsIdentifierTouched(true)}
+                      onInstructionsChange={setInstructions}
+                    />
+                  )}
                 </div>
+
+                <AgentSuggestionPills
+                  suggestions={AGENT_TEMPLATES}
+                  onSelect={handleSelectAiSuggestion}
+                  disabled={isSubmitBusy}
+                />
+
+                <AnimatePresence initial={false}>
+                  {isSubmitBusy && generationMode === 'prompt' && (
+                    <motion.div
+                      key="prompt-generation-status"
+                      initial={{ height: 0, opacity: 0, y: -4 }}
+                      animate={{ height: 'auto', opacity: 1, y: 0 }}
+                      exit={{ height: 0, opacity: 0, y: -4 }}
+                      transition={{ duration: 0.2, ease: 'easeInOut' }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex flex-col gap-3">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          mode="outline"
+                          size="2xs"
+                          className="w-fit gap-1"
+                          onClick={handleCancelGeneration}
+                          // Cancel is only meaningful while the LLM call is in flight; once it
+                          // returns we are mid-provisioning at Anthropic and there is nothing to
+                          // abort, so keep the button visible (avoids a layout shift) but disable it.
+                          disabled={!isGenerating}
+                          trailingIcon={RiCloseLine}
+                        >
+                          Cancel
+                        </Button>
+                        <GenerationStatus steps={GENERATION_STEPS} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                <AgentSuggestionPills suggestions={AGENT_TEMPLATES} onSelect={handleSelectTemplate} />
 
                 <ScratchAgentFields
                   name={name}
@@ -613,7 +877,7 @@ export function CreateAgentDialog({
               mode="gradient"
               size="xs"
               type="submit"
-              isLoading={isSubmitting}
+              isLoading={isSubmitBusy}
               trailingIcon={RiArrowRightSLine}
             >
               Setup agent
