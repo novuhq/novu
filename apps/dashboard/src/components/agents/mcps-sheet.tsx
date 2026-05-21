@@ -1,4 +1,4 @@
-import { CLAUDE_MCP_SERVERS, type ClaudeMcpServer } from '@novu/shared';
+import { MCP_SERVERS, type McpServer } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
@@ -40,7 +40,7 @@ function buildSelectedIds(currentMcpServers: AgentMcpServer[]): Set<string> {
   const selected = new Set<string>();
 
   for (const server of currentMcpServers) {
-    const catalogEntry = CLAUDE_MCP_SERVERS.find((entry) => entry.id === server.externalId || entry.url === server.url);
+    const catalogEntry = MCP_SERVERS.find((entry) => entry.id === server.externalId || entry.url === server.url);
 
     if (catalogEntry) {
       selected.add(catalogEntry.id);
@@ -67,9 +67,9 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
   const filteredMcps = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    if (!query) return CLAUDE_MCP_SERVERS;
+    if (!query) return MCP_SERVERS;
 
-    return CLAUDE_MCP_SERVERS.filter(
+    return MCP_SERVERS.filter(
       (entry) =>
         entry.name.toLowerCase().includes(query) ||
         entry.description.toLowerCase().includes(query) ||
@@ -96,7 +96,7 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
   const canEdit = !readOnly;
   const isMutating = updateMcps.isPending;
 
-  const handleToggle = (entry: ClaudeMcpServer, checked: boolean) => {
+  const handleToggle = (entry: McpServer, checked: boolean) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
 
@@ -111,15 +111,13 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
   };
 
   const handleSave = () => {
-    const fromCatalog: AgentMcpServer[] = CLAUDE_MCP_SERVERS.filter((entry) => selectedIds.has(entry.id)).map(
-      (entry) => ({
-        externalId: entry.id,
-        name: entry.name,
-        url: entry.url,
-      })
-    );
+    const fromCatalog: AgentMcpServer[] = MCP_SERVERS.filter((entry) => selectedIds.has(entry.id)).map((entry) => ({
+      externalId: entry.id,
+      name: entry.name,
+      url: entry.url,
+    }));
     const unknown = currentMcpServers.filter(
-      (server) => !CLAUDE_MCP_SERVERS.some((entry) => entry.id === server.externalId || entry.url === server.url)
+      (server) => !MCP_SERVERS.some((entry) => entry.id === server.externalId || entry.url === server.url)
     );
     const next: AgentMcpServer[] = [...fromCatalog, ...unknown];
 
