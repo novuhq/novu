@@ -11,7 +11,7 @@ declare global {
 }
 
 export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
-export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
+export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app';
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
 export type AgentMcpServerStatus = 'active' | 'syncing' | 'error' | 'disabled';
 
@@ -231,7 +231,7 @@ type EnvelopedEnablement = { data: AgentMcpServerEnablement };
 export async function enableAgentMcpServer(
   credentials: Credentials,
   agentIdentifier: string,
-  body: { mcpId: string; defaultScope?: McpConnectionScope; defaultAuthMode?: McpConnectionAuthMode }
+  body: { mcpId: string; defaultScope?: McpConnectionScope }
 ): Promise<AgentMcpServerEnablement> {
   const response = await request<EnvelopedEnablement>(
     credentials,

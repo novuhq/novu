@@ -3,7 +3,7 @@ import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLo
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
-import { getMcpOAuthMode, type McpOAuthCatalogMode } from '../../utils/mcp-oauth-catalog';
+import { getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
@@ -230,7 +230,7 @@ export class ProvisionManagedAgent {
         continue;
       }
 
-      const defaultAuthMode = deriveDefaultAuthMode(getMcpOAuthMode(mcpId));
+      const defaultAuthMode = getMcpOAuthCatalogEntry(mcpId).mode as McpConnectionAuthModeEnum;
 
       await this.agentMcpServerRepository.create(
         {
@@ -250,22 +250,6 @@ export class ProvisionManagedAgent {
         },
         writeOptions
       );
-    }
-  }
-}
-
-function deriveDefaultAuthMode(catalogMode: McpOAuthCatalogMode): McpConnectionAuthModeEnum {
-  switch (catalogMode) {
-    case 'none':
-      return McpConnectionAuthModeEnum.None;
-    case 'provider':
-      return McpConnectionAuthModeEnum.Provider;
-    case 'novu':
-      return McpConnectionAuthModeEnum.Novu;
-    default: {
-      const _exhaustive: never = catalogMode;
-
-      return McpConnectionAuthModeEnum.Novu;
     }
   }
 }

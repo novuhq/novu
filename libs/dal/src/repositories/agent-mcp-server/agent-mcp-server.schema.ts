@@ -70,8 +70,8 @@ const agentMcpServerSchema = new Schema<AgentMcpServerDBModel>(
     defaultAuthMode: {
       type: Schema.Types.String,
       required: true,
-      enum: ['novu', 'provider', 'none'],
-      default: 'novu',
+      enum: ['dcr', 'novu-app', 'user-app'],
+      default: 'dcr',
     },
     externalProjection: {
       type: externalProjectionSchema,

@@ -70,17 +70,20 @@ export enum McpConnectionScopeEnum {
 }
 
 /**
- * Where the OAuth secret for an MCP connection lives.
+ * OAuth mechanism the connection was established with. Mirrors the catalog
+ * `mode` for the MCP — each MCP supports exactly one mechanism.
  *
- * - `novu`     — Novu stores encrypted access/refresh tokens itself.
- * - `provider` — The runtime provider's vault owns the secret; Novu only
- *                holds a `vaultCredentialId` pointer.
- * - `none`     — MCP requires no auth.
+ * - `dcr`      — Dynamic Client Registration (RFC 7591). A fresh OAuth client
+ *                is registered per subscriber against the upstream AS.
+ * - `novu-app` — Novu's single pre-registered OAuth application is used.
+ *                `client_id` / `client_secret` come from server env vars.
+ * - `user-app` — The Novu customer's own pre-registered OAuth application is
+ *                used. Credentials come from a per-org credential table.
  */
 export enum McpConnectionAuthModeEnum {
-  Novu = 'novu',
-  Provider = 'provider',
-  None = 'none',
+  Dcr = 'dcr',
+  NovuApp = 'novu-app',
+  UserApp = 'user-app',
 }
 
 export enum McpConnectionStatusEnum {

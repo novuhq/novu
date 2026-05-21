@@ -15,11 +15,14 @@ export type AgentMcpServerScope = 'environment' | 'agent' | 'subscriber';
 
 /**
  * Default authentication mode for connections created under this enabled
- * MCP. `provider` is reserved for runtimes that own their own token vault
- * (e.g. Anthropic); `novu` keeps the encrypted token in Novu; `none` is
- * for unauthenticated MCPs.
+ * MCP. Mirrors the catalog `mode` for the MCP (each MCP supports exactly
+ * one mechanism):
+ *
+ *  - `dcr`      — Dynamic Client Registration (RFC 7591); per-subscriber.
+ *  - `novu-app` — Novu's pre-registered OAuth application; env-var creds.
+ *  - `user-app` — Customer's pre-registered OAuth application; per-org creds.
  */
-export type AgentMcpServerAuthMode = 'novu' | 'provider' | 'none';
+export type AgentMcpServerAuthMode = 'dcr' | 'novu-app' | 'user-app';
 
 export type AgentMcpServerStatus = 'active' | 'syncing' | 'error' | 'disabled';
 

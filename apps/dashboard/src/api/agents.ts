@@ -394,7 +394,7 @@ export async function patchAgentRuntimeConfig(
 
 export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
 
-export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
+export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app';
 
 export type AgentMcpServerEnablement = {
   id: string;
@@ -434,7 +434,6 @@ export async function listAgentMcpServers(
 export type EnableAgentMcpServerBody = {
   mcpId: string;
   defaultScope?: McpConnectionScope;
-  defaultAuthMode?: McpConnectionAuthMode;
 };
 
 export async function enableAgentMcpServer(

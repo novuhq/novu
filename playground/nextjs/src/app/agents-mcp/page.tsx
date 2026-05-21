@@ -892,7 +892,7 @@ function OAuthPanel({
         <div className="flex flex-wrap gap-2">
           <Button
             onClick={handleAuthorize}
-            disabled={authorizing || !subscriberId.trim() || enablement.defaultAuthMode !== 'novu'}
+            disabled={authorizing || !subscriberId.trim() || enablement.defaultAuthMode !== 'dcr'}
             size="sm"
           >
             {authorizing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ExternalLink className="h-3.5 w-3.5" />}
@@ -904,13 +904,13 @@ function OAuthPanel({
           </Button>
         </div>
 
-        {enablement.defaultAuthMode !== 'novu' ? (
+        {enablement.defaultAuthMode !== 'dcr' ? (
           <Alert>
             <Unlink className="h-4 w-4" />
-            <AlertTitle className="text-xs">No Novu-managed OAuth</AlertTitle>
+            <AlertTitle className="text-xs">No DCR support</AlertTitle>
             <AlertDescription className="text-xs">
               This MCP is registered with auth mode <code>{enablement.defaultAuthMode}</code>. The Authorize button is
-              only wired for <code>novu</code> mode.
+              only wired for <code>dcr</code> mode.
             </AlertDescription>
           </Alert>
         ) : null}

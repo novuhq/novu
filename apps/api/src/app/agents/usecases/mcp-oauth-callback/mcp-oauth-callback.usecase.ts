@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, NotImplementedException } from '@nestjs/common';
 import {
   createHash,
   decryptCredentials,
@@ -91,10 +91,28 @@ export class McpOAuthCallback {
     }
 
     const catalog = MCP_SERVERS.find((entry) => entry.id === stateData.mcpId);
+
+    if (!catalog) {
+      throw new BadRequestException(`Unknown MCP "${stateData.mcpId}".`);
+    }
+
     const oauthConfig = getMcpOAuthCatalogEntry(stateData.mcpId);
 
-    if (!catalog || oauthConfig.mode !== 'novu') {
-      throw new BadRequestException(`MCP "${stateData.mcpId}" does not support Novu-managed OAuth.`);
+    // Only DCR callbacks are wired today; `novu-app` and `user-app` ship
+    // alongside their own callback paths in the follow-up PR.
+    switch (oauthConfig.mode) {
+      case 'dcr':
+        break;
+      case 'novu-app':
+      case 'user-app':
+        throw new NotImplementedException(
+          `MCP "${stateData.mcpId}" auth mode "${oauthConfig.mode}" is not yet supported.`
+        );
+      default: {
+        const _exhaustive: never = oauthConfig;
+
+        throw new Error(`Unhandled MCP OAuth mode: ${JSON.stringify(_exhaustive)}`);
+      }
     }
 
     const enablement = await this.agentMcpServerRepository.findOne(
@@ -186,7 +204,7 @@ export class McpOAuthCallback {
       },
       {
         $set: {
-          authMode: McpConnectionAuthModeEnum.Novu,
+          authMode: McpConnectionAuthModeEnum.Dcr,
           status: McpConnectionStatusEnum.Connected,
           auth,
           connectedAt: new Date(),

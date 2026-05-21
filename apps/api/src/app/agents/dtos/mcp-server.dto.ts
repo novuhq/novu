@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { McpConnectionAuthModeEnum, McpConnectionScopeEnum, McpConnectionStatusEnum } from '@novu/shared';
-import { IsEnum, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class EnableAgentMcpServerRequestDto {
   @ApiProperty({ description: 'Catalog id from MCP_SERVERS (e.g. "slack").' })
@@ -20,15 +20,6 @@ export class EnableAgentMcpServerRequestDto {
   @IsOptional()
   @IsIn([McpConnectionScopeEnum.Subscriber])
   defaultScope?: McpConnectionScopeEnum.Subscriber;
-
-  @ApiPropertyOptional({
-    enum: McpConnectionAuthModeEnum,
-    description:
-      'Default auth mode for connections under this enabled MCP. Inferred from the catalog OAuth descriptor when omitted.',
-  })
-  @IsOptional()
-  @IsEnum(McpConnectionAuthModeEnum)
-  defaultAuthMode?: McpConnectionAuthModeEnum;
 }
 
 export class AgentMcpServerEnablementResponseDto {

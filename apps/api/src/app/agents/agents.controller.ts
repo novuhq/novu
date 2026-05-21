@@ -801,7 +801,6 @@ export class AgentsController {
         agentIdentifier: identifier,
         mcpId: body.mcpId,
         defaultScope: body.defaultScope,
-        defaultAuthMode: body.defaultAuthMode,
       })
     );
   }

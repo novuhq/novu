@@ -1,4 +1,4 @@
-import { McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
+import { McpConnectionScopeEnum } from '@novu/shared';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
@@ -15,8 +15,4 @@ export class EnableAgentMcpServerCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsEnum(McpConnectionScopeEnum)
   defaultScope?: McpConnectionScopeEnum;
-
-  @IsOptional()
-  @IsEnum(McpConnectionAuthModeEnum)
-  defaultAuthMode?: McpConnectionAuthModeEnum;
 }

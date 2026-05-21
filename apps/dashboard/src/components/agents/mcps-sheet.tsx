@@ -52,7 +52,7 @@ function renderRowStatus({
     return <span className="text-error-base text-paragraph-xs shrink-0">Sync error</span>;
   }
 
-  if (enablement?.enabled && enablement.defaultAuthMode === 'novu') {
+  if (enablement?.enabled && enablement.defaultAuthMode === 'dcr') {
     return <span className="text-text-soft text-paragraph-xs shrink-0">Subscribers authorize on first use</span>;
   }
 

@@ -147,10 +147,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
       const res = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
-        .send({ mcpId: 'slack' });
+        .send({ mcpId: 'linear' });
 
       expect(res.status).to.equal(201);
-      expect(res.body.data.mcpId).to.equal('slack');
+      expect(res.body.data.mcpId).to.equal('linear');
       expect(res.body.data.enabled).to.equal(true);
       expect(res.body.data.defaultScope).to.equal(McpConnectionScopeEnum.Subscriber);
 
@@ -158,7 +158,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         agentId,
-        mcpId: 'slack',
+        mcpId: 'linear',
       });
       expect(row, 'agent_mcp_server row should be created').to.exist;
       expect(row!.status).to.equal('active');
@@ -167,9 +167,9 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const updateConfigCall = mockProvider.updateConfig.firstCall;
       expect(mockProvider.updateConfig.calledOnce, 'updateConfig should be called once').to.be.true;
       expect(updateConfigCall.args[1].mcpServers).to.deep.include({
-        externalId: 'slack',
-        name: 'Slack',
-        url: 'https://mcp.slack.com/mcp',
+        externalId: 'linear',
+        name: 'Linear',
+        url: 'https://mcp.linear.app/mcp',
       });
     });
 
@@ -178,12 +178,12 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
       const first = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
-        .send({ mcpId: 'slack' });
+        .send({ mcpId: 'linear' });
       expect(first.status).to.equal(201);
 
       const second = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
-        .send({ mcpId: 'slack' });
+        .send({ mcpId: 'linear' });
       expect(second.status).to.equal(409);
     });
 
@@ -203,14 +203,14 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
       const failed = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
-        .send({ mcpId: 'slack' });
+        .send({ mcpId: 'linear' });
       expect(failed.status).to.be.oneOf([400, 422, 500, 503]);
 
       const errored = await agentMcpServerRepository.findByAgentAndMcpId({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         agentId,
-        mcpId: 'slack',
+        mcpId: 'linear',
       });
       expect(errored, 'enablement row should still exist after failed sync').to.exist;
       expect(errored!.status).to.equal('error');
@@ -227,14 +227,14 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
       const retry = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
-        .send({ mcpId: 'slack' });
+        .send({ mcpId: 'linear' });
       expect(retry.status, 'retry on errored row should succeed').to.equal(201);
 
       const recovered = await agentMcpServerRepository.findByAgentAndMcpId({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         agentId,
-        mcpId: 'slack',
+        mcpId: 'linear',
       });
       expect(recovered!.status).to.equal('active');
       expect(recovered!.lastError).to.equal(undefined);
@@ -244,10 +244,12 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
   describe('GET /v1/agents/:identifier/mcp-servers', () => {
     it('returns the per-agent enablement rows', async () => {
       const { identifier } = await createManagedAgent();
-      await session.testAgent.post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`).send({ mcpId: 'slack' });
       await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
         .send({ mcpId: 'linear' });
+      await session.testAgent
+        .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
+        .send({ mcpId: 'sentry' });
 
       const res = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`);
       expect(res.status).to.equal(200);
@@ -256,20 +258,22 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       // the double-wrapped `{ data: { data: [...] } }` that paginated DTOs
       // produce. Same shape as every other test in this file.
       const rows = res.body.data;
-      expect(rows.map((r: { mcpId: string }) => r.mcpId)).to.have.members(['slack', 'linear']);
+      expect(rows.map((r: { mcpId: string }) => r.mcpId)).to.have.members(['linear', 'sentry']);
     });
   });
 
   describe('DELETE /v1/agents/:identifier/mcp-servers/:mcpId', () => {
     it('cascade-deletes mcp_connection rows and removes the enablement', async () => {
       const { identifier, agentId } = await createManagedAgent();
-      await session.testAgent.post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`).send({ mcpId: 'slack' });
+      await session.testAgent
+        .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
+        .send({ mcpId: 'linear' });
 
       const enablement = await agentMcpServerRepository.findByAgentAndMcpId({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         agentId,
-        mcpId: 'slack',
+        mcpId: 'linear',
       });
 
       // Seed a fake subscriber connection so we can assert the cascade.
@@ -277,10 +281,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
         _organizationId: session.organization._id,
         _environmentId: session.environment._id,
         scope: McpConnectionScopeEnum.Subscriber,
-        mcpId: 'slack',
+        mcpId: 'linear',
         _agentMcpServerId: enablement!._id,
         _subscriberId: '507f1f77bcf86cd799439011',
-        authMode: McpConnectionAuthModeEnum.Novu,
+        authMode: McpConnectionAuthModeEnum.Dcr,
         status: McpConnectionStatusEnum.Connected,
       });
 
@@ -291,14 +295,14 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       });
       expect(before.length, 'connection should exist before disable').to.equal(1);
 
-      const res = await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/slack`);
+      const res = await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/linear`);
       expect(res.status).to.equal(204);
 
       const removed = await agentMcpServerRepository.findByAgentAndMcpId({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         agentId,
-        mcpId: 'slack',
+        mcpId: 'linear',
       });
       expect(removed, 'enablement row should be deleted').to.equal(null);
 
@@ -313,7 +317,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     it('is a no-op when the MCP is not enabled (idempotent disable)', async () => {
       const { identifier } = await createManagedAgent();
 
-      const res = await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/slack`);
+      const res = await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/linear`);
       expect(res.status).to.equal(204);
     });
   });
@@ -497,7 +501,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
       expect(connection, 'mcp_connection row should be persisted').to.exist;
       expect(connection!.status).to.equal(McpConnectionStatusEnum.PendingOAuth);
-      expect(connection!.authMode).to.equal(McpConnectionAuthModeEnum.Novu);
+      expect(connection!.authMode).to.equal(McpConnectionAuthModeEnum.Dcr);
       expect(connection!.oauthClient, 'oauthClient should be persisted').to.exist;
       expect(connection!.oauthClient!.clientId).to.equal('dcr-client-1');
       expect(connection!.oauthClient!.issuer).to.equal(SENTRY_AS_ISSUER);

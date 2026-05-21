@@ -1,5 +1,11 @@
 import { createHash as nodeCreateHash, randomBytes } from 'node:crypto';
-import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  NotImplementedException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import {
   createHash,
   decryptMcpConnectionOAuthClient,
@@ -24,7 +30,7 @@ import {
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
 } from '../../services/mcp-oauth-discovery.service';
-import { getMcpOAuthCatalogEntry, type NovuOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
+import { type DcrOAuthCatalogEntry, getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { GenerateMcpOAuthUrlCommand } from './generate-mcp-oauth-url.command';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from './mcp-oauth-state';
 
@@ -69,13 +75,7 @@ export class GenerateMcpOAuthUrl {
       throw new BadRequestException(`Unknown MCP "${command.mcpId}".`);
     }
 
-    const oauthConfig = getMcpOAuthCatalogEntry(command.mcpId);
-
-    if (oauthConfig.mode !== 'novu') {
-      throw new UnprocessableEntityException(
-        `MCP "${command.mcpId}" does not support Novu-managed OAuth. Use the provider-vault flow.`
-      );
-    }
+    const oauthConfig = requireDcrCatalogEntry(getMcpOAuthCatalogEntry(command.mcpId), command.mcpId);
 
     const agent = await this.agentRepository.findOne(
       {
@@ -205,7 +205,7 @@ export class GenerateMcpOAuthUrl {
   private async ensureOAuthClient(args: {
     existing: McpConnectionEntity | null;
     asMetadata: AuthorizationServerMetadata;
-    oauthConfig: NovuOAuthCatalogEntry;
+    oauthConfig: DcrOAuthCatalogEntry;
     scopes: string[];
   }): Promise<McpConnectionOAuthClient> {
     const { existing, asMetadata, oauthConfig, scopes } = args;
@@ -236,7 +236,7 @@ export class GenerateMcpOAuthUrl {
 
   private async registerNewClient(args: {
     asMetadata: AuthorizationServerMetadata;
-    oauthConfig: NovuOAuthCatalogEntry;
+    oauthConfig: DcrOAuthCatalogEntry;
     scopes: string[];
   }): Promise<{
     clientId: string;
@@ -314,7 +314,7 @@ export class GenerateMcpOAuthUrl {
       mcpId: command.mcpId,
       _agentMcpServerId: enablement._id,
       _subscriberId: subscriberMongoId,
-      authMode: McpConnectionAuthModeEnum.Novu,
+      authMode: McpConnectionAuthModeEnum.Dcr,
       status: McpConnectionStatusEnum.PendingOAuth,
       oauthState,
       oauthClient: encryptedClient,
@@ -457,4 +457,27 @@ function deriveCodeChallenge(verifier: string): string {
 
 function base64UrlEncode(buf: Buffer): string {
   return buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+/**
+ * Narrow a catalog entry to the DCR variant or surface a clear error. The
+ * catalog locks each MCP to one OAuth mechanism; `novu-app` and `user-app`
+ * land here as `NotImplementedException` until the resolver service ships.
+ */
+function requireDcrCatalogEntry(
+  entry: ReturnType<typeof getMcpOAuthCatalogEntry>,
+  mcpId: string
+): DcrOAuthCatalogEntry {
+  switch (entry.mode) {
+    case 'dcr':
+      return entry;
+    case 'novu-app':
+    case 'user-app':
+      throw new NotImplementedException(`MCP "${mcpId}" auth mode "${entry.mode}" is not yet supported.`);
+    default: {
+      const _exhaustive: never = entry;
+
+      throw new Error(`Unhandled MCP OAuth mode: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
 }

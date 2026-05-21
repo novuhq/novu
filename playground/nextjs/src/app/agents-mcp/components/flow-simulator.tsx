@@ -115,7 +115,7 @@ export function FlowSimulator({
   const storage = useStorageDescriptor(agent);
 
   const ready = Boolean(agent && enablement && subscriberId.trim().length > 0);
-  const novuManaged = enablement?.defaultAuthMode === 'novu';
+  const dcrManaged = enablement?.defaultAuthMode === 'dcr';
 
   const activeStepId = stateToStepId(state);
 
@@ -238,9 +238,9 @@ export function FlowSimulator({
       }
 
       // ── Miss branch ──────────────────────────────────────────────────────
-      if (!novuManaged) {
+      if (!dcrManaged) {
         failAt(
-          `MCP "${enablement.mcpId}" has auth mode "${enablement.defaultAuthMode}". Novu-managed OAuth is only wired for auth mode "novu"; this simulator cannot continue on the miss branch.`,
+          `MCP "${enablement.mcpId}" has auth mode "${enablement.defaultAuthMode}". OAuth simulation is only wired for auth mode "dcr"; this simulator cannot continue on the miss branch.`,
           'runtime-needs-oauth'
         );
 
@@ -362,7 +362,7 @@ export function FlowSimulator({
       if (isCanceled()) return;
       setState({ kind: 'error', message: toErrorMessage(err), atStepId: stateToStepId(state) });
     }
-  }, [ready, agent, enablement, subscriberId, credentials, novuManaged, state]);
+  }, [ready, agent, enablement, subscriberId, credentials, dcrManaged, state]);
 
   const visibleSteps = useMemo(() => FLOW_STEPS.filter((step) => isStepVisible(step, branch)), [branch]);
   const isRunning = state.kind !== 'idle' && state.kind !== 'done' && state.kind !== 'error';

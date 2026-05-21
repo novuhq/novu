@@ -10,13 +10,19 @@ import type { OrganizationId } from '../organization';
 export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
 
 /**
- * - `novu`     — Novu owns the secret. Encrypted access/refresh tokens live
- *                in the `auth` blob.
- * - `provider` — The runtime provider's own vault owns the secret; we hold
- *                only a `vaultCredentialId` pointer in `auth`.
- * - `none`     — Anonymous MCP, no auth needed.
+ * OAuth mechanism the connection was established with. Mirrors the catalog
+ * `mode` for the MCP — each MCP supports exactly one mechanism.
+ *
+ * - `dcr`      — Dynamic Client Registration (RFC 7591). A fresh OAuth client
+ *                is registered per subscriber against the upstream AS.
+ *                Encrypted access/refresh tokens live in the `auth` blob and
+ *                the registered client lives in `oauthClient`.
+ * - `novu-app` — Novu's single pre-registered OAuth application is used.
+ *                `client_id` / `client_secret` come from server env vars.
+ * - `user-app` — The Novu customer's own pre-registered OAuth application is
+ *                used. Credentials come from a per-org credential table.
  */
-export type McpConnectionAuthMode = 'novu' | 'provider' | 'none';
+export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app';
 
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
 
@@ -105,8 +111,10 @@ export interface McpConnectionLastError {
 /**
  * OAuth state for a (scope, mcp, owner) tuple.
  *
- * `auth` is populated when `authMode === 'novu'` and `status === 'connected'`.
- * Owner ref fields populated by scope:
+ * `auth` is populated when `status === 'connected'` — the access/refresh
+ * tokens it carries belong to whichever client the `authMode` indicates
+ * (DCR-issued, Novu's pre-registered app, or the customer's pre-registered
+ * app). Owner ref fields populated by scope:
  *
  *  - `environment` : `_environmentId` only (future).
  *  - `agent`       : `_agentMcpServerId` (future).
@@ -134,16 +142,18 @@ export class McpConnectionEntity {
 
   status: McpConnectionStatus;
 
-  /** Populated when `authMode === 'novu'`. */
+  /** Populated when `status === 'connected'`. Encrypted token blob. */
   auth?: McpConnectionAuth;
 
   /** Cleared once `status` transitions out of `pending_oauth`. */
   oauthState?: McpConnectionOAuthState;
 
   /**
-   * DCR-issued OAuth client credentials + discovered AS endpoints. Survives
-   * re-consents; only re-registered when the upstream issuer rotates or the
-   * client secret expires.
+   * DCR-issued OAuth client credentials + discovered AS endpoints. Populated
+   * only when `authMode === 'dcr'`. Survives re-consents; only re-registered
+   * when the upstream issuer rotates or the client secret expires. Absent
+   * for `novu-app` and `user-app` connections — those modes load credentials
+   * from env vars / per-org config at request time instead.
    */
   oauthClient?: McpConnectionOAuthClient;
 
