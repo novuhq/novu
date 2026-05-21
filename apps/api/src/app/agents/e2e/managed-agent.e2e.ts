@@ -529,8 +529,8 @@ describe('Managed Agents API #novu-v2', () => {
       // ignored to avoid trusting upstream drift.
       const enableRes = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
-        .send({ mcpId: 'slack' });
-      expect(enableRes.status, `enable slack failed: ${JSON.stringify(enableRes.body)}`).to.equal(201);
+        .send({ mcpId: 'linear' });
+      expect(enableRes.status, `enable linear failed: ${JSON.stringify(enableRes.body)}`).to.equal(201);
 
       mockProvider.getConfig.resolves({
         model: 'claude-opus-4-5',
@@ -569,12 +569,12 @@ describe('Managed Agents API #novu-v2', () => {
       expect(systemPrompt).to.equal('You are a helpful assistant');
 
       expect(mcpServers).to.have.length(1);
-      // Projection comes from the shared catalog for `slack`, NOT the
+      // Projection comes from the shared catalog for `linear`, NOT the
       // provider's stub. The `externalId` mirrors the catalog id; the name
-      // and url are the canonical Slack catalog values.
-      expect(mcpServers[0].externalId).to.equal('slack');
-      expect(mcpServers[0].name).to.equal('Slack');
-      expect(mcpServers[0].url).to.equal('https://mcp.slack.com/mcp');
+      // and url are the canonical Linear catalog values.
+      expect(mcpServers[0].externalId).to.equal('linear');
+      expect(mcpServers[0].name).to.equal('Linear');
+      expect(mcpServers[0].url).to.equal('https://mcp.linear.app/mcp');
 
       expect(tools).to.have.length(2);
       expect(tools[0].externalId).to.equal('tool-1');
