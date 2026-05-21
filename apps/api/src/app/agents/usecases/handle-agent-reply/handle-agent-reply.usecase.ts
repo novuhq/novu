@@ -1,5 +1,12 @@
 import { randomUUID } from 'node:crypto';
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
@@ -27,6 +34,7 @@ export class HandleAgentReply {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
+    @Inject(forwardRef(() => ChatSdkService))
     private readonly chatSdkService: ChatSdkService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentConfigResolver: AgentConfigResolver,
@@ -82,8 +90,6 @@ export class HandleAgentReply {
 
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
-      this.ensureSerializedThread(channel);
-
       replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
 
       this.removeAckReaction(config!, conversation, channel).catch((err) => {
@@ -166,14 +172,6 @@ export class HandleAgentReply {
     return agent.name;
   }
 
-  private ensureSerializedThread(
-    channel: ConversationChannel
-  ): asserts channel is ConversationChannel & { serializedThread: Record<string, unknown> } {
-    if (!channel.serializedThread) {
-      throw new BadRequestException('Conversation has no serialized thread — unable to deliver reply');
-    }
-  }
-
   private async deliverMessage(
     command: HandleAgentReplyCommand,
     conversation: ConversationEntity,
@@ -187,7 +185,7 @@ export class HandleAgentReply {
       conversation._agentId,
       command.integrationIdentifier,
       channel.platform,
-      channel.serializedThread!,
+      channel.platformThreadId,
       content
     );
 

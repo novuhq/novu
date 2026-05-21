@@ -67,7 +67,7 @@ overrides:
   vite@<4.5.10: ^4.5.10
   vite@>=5.0.0 <6.4.2: ^6.4.2
   node-forge@<1.4.0: ^1.4.0
-  ws@>=8.0.0 <8.17.1: ^8.17.1
+  ws@>=8.0.0 <8.20.1: ^8.20.1
   nextjs>next: 15.5.18
   next@<16.2.6: ^16.2.6
   fast-xml-parser@>=4.0.0 <5.0.0: 5.7.3
@@ -117,7 +117,7 @@ overrides:
   micromatch@>=4.0.0 <4.0.8: ^4.0.8
   brace-expansion@>=1.0.0 <1.1.13: ^1.1.13
   brace-expansion@>=2.0.0 <2.0.3: ^2.0.3
-  brace-expansion@>=5.0.0 <5.0.5: ^5.0.5
+  brace-expansion@>=5.0.0 <5.0.6: ^5.0.6
   on-headers@<1.1.0: ^1.1.0
   diff@>=4.0.0 <4.0.4: ^4.0.4
   diff@>=5.0.0 <5.2.2: ^5.2.2
@@ -150,7 +150,7 @@ overrides:
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@tootallnate/once@<3.0.1': ^3.0.1
-  protobufjs@<7.5.6: ^7.5.6
+  protobufjs@<7.5.8: ^7.5.8
   protobufjs@>=8.0.0 <8.0.2: ^8.0.2
   ip-address@<10.1.1: ^10.1.1
   mongoose@>=8.0.0 <8.22.1: ^8.22.1
@@ -166,6 +166,7 @@ overrides:
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
   better-auth: 1.5.6
+  '@codemirror/state': 6.6.0
 
 # allowBuilds replaces onlyBuiltDependencies (and other build-dependency settings) in pnpm v11.
 # Values map package names to `true` (always allow scripts) or `false` (always deny).

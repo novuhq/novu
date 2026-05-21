@@ -1,10 +1,12 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { RegionSelector, useRegion } from '@/context/region';
 import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/clerk-react';
-import { useEffect, useRef, useState } from 'react';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { RegionSelector, useRegion } from '@/context/region';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { clerkSignupAppearance } from '../../utils/clerk-appearance';
+import { getOnboardingAppId, withAppId } from '../../utils/onboarding-redirect';
 import { ROUTES } from '../../utils/routes';
 import { TelemetryEvent } from '../../utils/telemetry';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
@@ -16,15 +18,12 @@ const HEADER_CONFIG = {
   description: 'Create an organization to get started',
   showSkipButton: false,
   showBackButton: false,
-  showStepper: true,
-  currentStep: 1,
-  totalSteps: 4,
+  showStepper: false,
 } as const;
 
-const ORGANIZATION_FORM_CONFIG = {
+const ORGANIZATION_FORM_BASE_CONFIG = {
   hidePersonal: true,
   skipInvitationScreen: true,
-  afterSelectOrganizationUrl: ROUTES.ENV,
 } as const;
 
 const FORM_APPEARANCE = {
@@ -64,6 +63,8 @@ function FormContainer({ children }: FormContainerProps) {
 function OrganizationForm() {
   const [showRegionSelector, setShowRegionSelector] = useState(false);
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
+  const [searchParams] = useSearchParams();
+  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
 
   useEffect(() => {
     const observer = new MutationObserver(() => {
@@ -83,7 +84,8 @@ function OrganizationForm() {
     return () => observer.disconnect();
   }, [showRegionSelector]);
 
-  const afterCreateUrl = isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE;
+  const afterCreateUrl = withAppId(isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE, appId);
+  const afterSelectUrl = withAppId(ROUTES.ENV, appId);
 
   return (
     <div className="relative">
@@ -95,8 +97,9 @@ function OrganizationForm() {
 
       <OrganizationListForm
         appearance={FORM_APPEARANCE}
-        {...ORGANIZATION_FORM_CONFIG}
+        {...ORGANIZATION_FORM_BASE_CONFIG}
         afterCreateOrganizationUrl={afterCreateUrl}
+        afterSelectOrganizationUrl={afterSelectUrl}
       />
     </div>
   );

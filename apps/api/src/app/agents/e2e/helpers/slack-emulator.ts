@@ -42,6 +42,58 @@ let emulator: EmulatorInstance | undefined;
 let webClientPatched = false;
 let recordedCalls: RecordedSlackCall[] = [];
 
+/**
+ * Synthetic Slack user records returned in place of real `users.info` lookups
+ * for user ids the test fixtures inject (e.g. `<@UBOT>` in `buildSlackAppMention`).
+ *
+ * emulate.dev seeds users with auto-generated ids and exposes no way to pin a
+ * specific user_id from the seed config, so `users.info({ user: 'UBOT' })`
+ * against the emulator would otherwise return `user_not_found`. The
+ * chat-adapter handles the failure gracefully but logs the full error stack
+ * on every inbound message, which drowns real signals in CI output. Stub the
+ * lookup result here instead so the adapter sees a clean response.
+ */
+const SYNTHETIC_USER_STUBS: Record<
+  string,
+  {
+    ok: true;
+    user: {
+      id: string;
+      team_id: string;
+      name: string;
+      real_name: string;
+      is_bot: boolean;
+      deleted: false;
+      profile: {
+        display_name: string;
+        real_name: string;
+        email: string;
+        image_48: string;
+        image_192: string;
+      };
+    };
+  }
+> = {
+  UBOT: {
+    ok: true,
+    user: {
+      id: 'UBOT',
+      team_id: 'T000000001',
+      name: 'novu-agent',
+      real_name: 'Novu Agent',
+      is_bot: true,
+      deleted: false,
+      profile: {
+        display_name: 'novu-agent',
+        real_name: 'Novu Agent',
+        email: 'novu-agent@emulate.dev',
+        image_48: '',
+        image_192: '',
+      },
+    },
+  },
+};
+
 export function getRecordedCalls(method?: string): RecordedSlackCall[] {
   if (!method) return [...recordedCalls];
 
@@ -189,6 +241,44 @@ function patchWebClient(): void {
       // WebClient, not against what the emulator stored.
       const [method, options] = args as [string, Record<string, unknown> | undefined];
       recordedCalls.push({ method, options: { ...(options ?? {}) } });
+
+      // Short-circuit `users.info` lookups for the synthetic user ids the test
+      // fixtures inject into inbound app_mention payloads (e.g. `UBOT`).
+      // emulate.dev seeds users with auto-generated ids only, so the
+      // chat-adapter's `resolveInlineMentions` → `users.info({ user: 'UBOT' })`
+      // would otherwise hit `user_not_found` and log a noisy stack on every
+      // inbound message. Returning a synthetic ok response keeps the
+      // mention-resolution path quiet without changing the production wire
+      // contract — the recorded payload above still captures the real call.
+      if (method === 'users.info' && options && typeof (options as { user?: unknown }).user === 'string') {
+        const stub = SYNTHETIC_USER_STUBS[(options as { user: string }).user];
+        if (stub) {
+          return Promise.resolve(stub);
+        }
+      }
+
+      // chat-adapter@4.28.1+ posts markdown replies with the `markdown_text`
+      // payload key instead of `text`. The emulate.dev slack module only
+      // persists `body.text` for chat.postMessage / chat.update, so without
+      // this shim the stored message ends up with empty text and `text === ...`
+      // assertions on `conversations.replies` / `conversations.history` fail.
+      // Mirror `markdown_text` into `text` for the wire payload so the
+      // emulator stores something useful while leaving the recorded payload
+      // (above) intact for fidelity assertions.
+      if (
+        (method === 'chat.postMessage' || method === 'chat.update') &&
+        options &&
+        typeof options === 'object' &&
+        typeof (options as { markdown_text?: unknown }).markdown_text === 'string' &&
+        typeof (options as { text?: unknown }).text !== 'string'
+      ) {
+        const shimmed = {
+          ...(options as Record<string, unknown>),
+          text: (options as { markdown_text: string }).markdown_text,
+        };
+
+        return origApiCall.apply(this, [method, shimmed, ...args.slice(2)] as unknown[]);
+      }
 
       return origApiCall.apply(this, args);
     };

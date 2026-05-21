@@ -1,5 +1,5 @@
 import { EnvironmentWithSubscriber } from '@novu/application-generic';
-import { NotificationTemplateEntity, SubscriberEntity } from '@novu/dal';
+import { NotificationTemplateEntity, PreferencesEntity, SubscriberEntity } from '@novu/dal';
 import { SeverityLevelEnum, WorkflowCriticalityEnum } from '@novu/shared';
 import { IsArray, IsBoolean, IsDefined, IsEnum, IsOptional, IsString } from 'class-validator';
 
@@ -27,4 +27,13 @@ export class GetSubscriberPreferenceCommand extends EnvironmentWithSubscriber {
 
   @IsOptional()
   workflowList?: NotificationTemplateEntity[];
+
+  /**
+   * Optional pre-fetched SUBSCRIBER_GLOBAL preference entity. When provided, the use-case
+   * will reuse this value instead of issuing its own SUBSCRIBER_GLOBAL mongo lookup inside
+   * {@link findAllPreferences}. Pass `null` (and not `undefined`) to indicate that no
+   * entity was found.
+   */
+  @IsOptional()
+  subscriberGlobalPreference?: PreferencesEntity | null;
 }

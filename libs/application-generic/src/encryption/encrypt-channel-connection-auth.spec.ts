@@ -1,7 +1,4 @@
-import {
-  decryptChannelConnectionAuth,
-  encryptChannelConnectionAuth,
-} from './encrypt-channel-connection-auth';
+import { decryptChannelConnectionAuth, encryptChannelConnectionAuth } from './encrypt-channel-connection-auth';
 
 describe('encryptChannelConnectionAuth / decryptChannelConnectionAuth', () => {
   const novuSubMask = 'nvsk.';

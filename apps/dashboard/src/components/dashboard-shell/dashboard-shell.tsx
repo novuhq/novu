@@ -3,16 +3,16 @@ import { RiSearchLine } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
-import { DispatchSideNavigation } from '@/components/side-navigation/dispatch-side-navigation';
+import { ConnectSideNavigation } from '@/components/side-navigation/connect-side-navigation';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCurrentApp } from '@/hooks/use-current-app';
 import {
   APP_IDS,
   type AppId,
-  DISPATCH_SECTION_LABELS,
-  type DispatchSectionId,
-  getDispatchSectionFromPathname,
+  CONNECT_SECTION_LABELS,
+  type ConnectSectionId,
+  getConnectSectionFromPathname,
 } from '@/utils/apps';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
@@ -28,7 +28,7 @@ import {
 import { Button } from '../primitives/button';
 import { Kbd } from '../primitives/kbd';
 import { AppRail } from './app-rail';
-import { useDispatchBreadcrumbLeaf } from './use-dispatch-breadcrumb';
+import { useConnectBreadcrumbLeaf } from './use-connect-breadcrumb';
 
 type DashboardShellProps = {
   children: ReactNode;
@@ -52,15 +52,15 @@ function useDidAppJustSwitch(appId: AppId): boolean {
   return previousAppId !== undefined && previousAppId !== appId;
 }
 
-const DISPATCH_SECTION_ROUTES: Record<DispatchSectionId, keyof typeof ROUTES> = {
-  dashboard: 'DISPATCH_HOME',
-  agents: 'DISPATCH_AGENTS',
-  conversations: 'DISPATCH_CONVERSATIONS',
-  'api-keys': 'DISPATCH_API_KEYS',
-  settings: 'DISPATCH_SETTINGS',
+const CONNECT_SECTION_ROUTES: Record<ConnectSectionId, keyof typeof ROUTES> = {
+  dashboard: 'CONNECT_HOME',
+  agents: 'CONNECT_AGENTS',
+  conversations: 'CONNECT_CONVERSATIONS',
+  'api-keys': 'CONNECT_API_KEYS',
+  settings: 'CONNECT_SETTINGS',
 };
 
-type DispatchBreadcrumbEntry = {
+type ConnectBreadcrumbEntry = {
   key: string;
   label: string;
   icon?: ReactNode;
@@ -75,31 +75,31 @@ export function DashboardShell({
 }: DashboardShellProps) {
   const appId = useCurrentApp();
   const didAppJustSwitch = useDidAppJustSwitch(appId);
-  const SideNav = appId === APP_IDS.DISPATCH ? DispatchSideNavigation : LegacySideNavigation;
+  const SideNav = appId === APP_IDS.CONNECT ? ConnectSideNavigation : LegacySideNavigation;
   const { currentEnvironment } = useEnvironment();
   const { openCommandPalette } = useCommandPalette();
   const location = useLocation();
-  const dispatchLeaf = useDispatchBreadcrumbLeaf();
+  const connectLeaf = useConnectBreadcrumbLeaf();
   const envSlug = currentEnvironment?.slug ?? '';
-  const dispatchSection = getDispatchSectionFromPathname(location.pathname);
-  const dispatchHomeUrl = buildRoute(ROUTES.DISPATCH_HOME, { environmentSlug: envSlug });
-  const sectionRouteTemplate = ROUTES[DISPATCH_SECTION_ROUTES[dispatchSection]];
+  const connectSection = getConnectSectionFromPathname(location.pathname);
+  const connectHomeUrl = buildRoute(ROUTES.CONNECT_HOME, { environmentSlug: envSlug });
+  const sectionRouteTemplate = ROUTES[CONNECT_SECTION_ROUTES[connectSection]];
   const sectionUrl = buildRoute(sectionRouteTemplate, { environmentSlug: envSlug });
 
-  const dispatchBreadcrumbItems: DispatchBreadcrumbEntry[] = [
-    { key: 'root', label: 'Dispatch', to: dispatchHomeUrl },
+  const connectBreadcrumbItems: ConnectBreadcrumbEntry[] = [
+    { key: 'root', label: 'Connect', to: connectHomeUrl },
     {
       key: 'section',
-      label: DISPATCH_SECTION_LABELS[dispatchSection],
-      to: dispatchLeaf ? sectionUrl : undefined,
+      label: CONNECT_SECTION_LABELS[connectSection],
+      to: connectLeaf ? sectionUrl : undefined,
     },
   ];
 
-  if (dispatchLeaf) {
-    dispatchBreadcrumbItems.push({ key: 'leaf', label: dispatchLeaf.label, icon: dispatchLeaf.icon });
+  if (connectLeaf) {
+    connectBreadcrumbItems.push({ key: 'leaf', label: connectLeaf.label, icon: connectLeaf.icon });
   }
 
-  const dispatchLastIndex = dispatchBreadcrumbItems.length - 1;
+  const connectLastIndex = connectBreadcrumbItems.length - 1;
 
   return (
     <div className="relative flex h-full w-full bg-bg-muted">
@@ -129,8 +129,8 @@ export function DashboardShell({
         ) : (
           <Breadcrumb className="min-w-0 py-3 px-2.5 pb-[10px] border-b border-b-neutral-200">
             <BreadcrumbList>
-              {dispatchBreadcrumbItems.map((item, index) => {
-                const isLast = index === dispatchLastIndex;
+              {connectBreadcrumbItems.map((item, index) => {
+                const isLast = index === connectLastIndex;
 
                 return (
                   <Fragment key={item.key}>

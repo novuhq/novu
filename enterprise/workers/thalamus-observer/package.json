@@ -1,0 +1,25 @@
+{
+  "name": "@novu/thalamus-observer-worker",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev --env local",
+    "start": "wrangler dev --env local",
+    "deploy": "wrangler deploy",
+    "deploy:local": "wrangler deploy --env local",
+    "deploy:staging": "wrangler deploy --env staging",
+    "deploy:production": "wrangler deploy --env production",
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types"
+  },
+  "dependencies": {
+    "@novu/thalamus": "0.1.0-alpha.6",
+    "agents": "^0.12.4",
+    "eventsource-parser": "^3.0.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250424.0",
+    "typescript": "^5.5.2",
+    "wrangler": "^4.20.5"
+  }
+}

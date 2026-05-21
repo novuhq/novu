@@ -138,6 +138,26 @@ describe('Domain Connect usecases', () => {
     );
   });
 
+  it('falls back to Vercel Domain Connect when DNS provider is recognized but TXT discovery is missing', async () => {
+    domainRepositoryMock.findOne.resolves({ ...domain, dnsProvider: 'Vercel' });
+    domainConnectDiscoveryServiceMock.discoverDomainConnectHost.resolves({
+      domainName: 'example.com',
+      providerHost: 'domainconnect.vercel.com',
+    });
+    const usecase = new GetDomainConnectStatus(
+      domainRepositoryMock,
+      featureFlagsServiceMock,
+      domainConnectDiscoveryServiceMock
+    );
+
+    const result = await usecase.execute(command);
+
+    expect(result.available).to.equal(true);
+    expect(
+      domainConnectDiscoveryServiceMock.discoverDomainConnectHost.calledWith('example.com', 'Vercel')
+    ).to.equal(true);
+  });
+
   it('uses discovered root domain provider settings for submitted subdomains', async () => {
     domainRepositoryMock.findOne.resolves({ ...domain, name: 'inbound.example.com' });
     domainConnectDiscoveryServiceMock.discoverDomainConnectHost.resolves({

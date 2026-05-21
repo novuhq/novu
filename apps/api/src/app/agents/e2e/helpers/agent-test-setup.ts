@@ -92,10 +92,9 @@ export async function setupAgentTestContext(): Promise<AgentTestContext> {
 
 export async function seedConversation(
   ctx: AgentTestContext,
-  opts: { withSerializedThread?: boolean; status?: ConversationStatusEnum; metadata?: Record<string, unknown> } = {}
+  opts: { status?: ConversationStatusEnum; metadata?: Record<string, unknown> } = {}
 ): Promise<string> {
   const { session, agentId, integrationId } = ctx;
-  const withThread = opts.withSerializedThread ?? true;
 
   const conversation = await conversationRepository.create({
     identifier: `conv-e2e-${Date.now()}`,
@@ -109,7 +108,6 @@ export async function seedConversation(
         platform: 'slack',
         _integrationId: integrationId,
         platformThreadId: `thread-${Date.now()}`,
-        ...(withThread ? { serializedThread: { id: 'T_SERIALIZED', platform: 'slack' } } : {}),
       },
     ],
     status: opts.status ?? ConversationStatusEnum.ACTIVE,

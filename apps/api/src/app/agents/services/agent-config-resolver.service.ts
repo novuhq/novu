@@ -162,6 +162,21 @@ export class AgentConfigResolver {
 
     const credentials = decryptCredentials(integration.credentials);
 
+    // Defense in depth: reject Telegram inbound webhooks that have not completed
+    // the Configure step. ConfigureTelegramAgentWebhook is the only place that
+    // provisions credentials.token (the X-Telegram-Bot-Api-Secret-Token). Without
+    // it the @chat-adapter/telegram handleWebhook is fail-open and would accept
+    // every POST regardless of origin. Throwing NotFoundException here makes this
+    // public endpoint indistinguishable from "unknown agent / unknown integration"
+    // so callers cannot fingerprint which integrations are mid-setup.
+    if (platform === AgentPlatformEnum.TELEGRAM && !credentials.token) {
+      this.logger.warn(
+        { agentId, integrationIdentifier },
+        'Telegram inbound webhook rejected: secret_token not yet configured for this integration'
+      );
+      throw new NotFoundException();
+    }
+
     let connectionAccessToken: string | undefined;
     const connection = await this.channelConnectionRepository.findOne({
       _environmentId: environmentId,

@@ -41,11 +41,6 @@ const agentSchema = new Schema<AgentDBModel>(
       },
       externalAgentId: Schema.Types.String,
     },
-    creationSource: {
-      type: Schema.Types.String,
-      enum: ['platform', 'connect'],
-      default: 'platform',
-    },
     _organizationId: {
       type: Schema.Types.ObjectId,
       ref: 'Organization',

@@ -7,7 +7,6 @@ export * from './inbound-parse-job.dto';
 export * from './integration-response.dto';
 export * from './json-schema.dto';
 export * from './layout';
-export * from './managed-agent-job.dto';
 export * from './process-subscriber-job.dto';
 export * from './standard-job.dto';
 export * from './step-filter-dto';
