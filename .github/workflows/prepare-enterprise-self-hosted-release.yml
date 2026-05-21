@@ -183,7 +183,7 @@ jobs:
 
       - name: Install Dependencies
         shell: bash
-        run: pnpm install --frozen-lockfile
+        run: pnpm ci
 
       - name: Symlink Enterprise Packages
         shell: bash
