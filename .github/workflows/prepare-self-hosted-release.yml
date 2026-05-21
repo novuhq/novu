@@ -148,7 +148,7 @@ jobs:
           cache: "pnpm"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm ci
 
       - name: Setup Docker
         uses: crazy-max/ghaction-setup-docker@69b561f709cbd934060981d481ccfc316cfb77b7 # v2
