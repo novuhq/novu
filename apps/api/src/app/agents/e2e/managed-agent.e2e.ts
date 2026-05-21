@@ -751,31 +751,6 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.headers['retry-after']).to.exist;
       expect(Number(res.headers['retry-after'])).to.equal(5);
     });
-
-    // ── MCP server updates rejected on PATCH ────────────────────────────────
-    // MCP enablement now goes through POST/DELETE /agents/:id/mcp-servers
-    // (Mongo-authoritative). The PATCH /runtime/config endpoint hard rejects
-    // any `mcpServers` field with 400 to avoid racing with the new flow's
-    // cascade-deletes of `mcp_connection` rows. The catalog-level enforcement
-    // (allow-list, url overwrite) is now tested against the new endpoint in
-    // `enable-agent-mcp-server.e2e.ts`.
-    describe('mcpServers field is no longer accepted', () => {
-      it('should reject any mcpServers update with 400 and not forward to the provider', async () => {
-        const integrationId = await createAgentRuntimeIntegration();
-        const identifier = `e2e-patch-mcp-rejected-${Date.now()}`;
-        createdAgentIdentifiers.push(identifier);
-
-        await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
-
-        const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`).send({
-          mcpServers: [{ externalId: 'linear', name: 'Linear', url: 'https://mcp.linear.app/mcp' }],
-        });
-
-        expect(res.status).to.equal(400);
-        expect(mockProvider.updateConfig.called, 'updateConfig must not be called when mcpServers is supplied').to.be
-          .false;
-      });
-    });
   });
 
   // ─── POST /v1/agents — adopt existing managed agent ─────────────────────────

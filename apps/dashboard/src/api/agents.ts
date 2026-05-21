@@ -392,7 +392,6 @@ export type AgentRuntimeConfig = {
 export type PatchAgentRuntimeConfigBody = {
   model?: string;
   systemPrompt?: string;
-  mcpServers?: AgentMcpServer[];
   tools?: AgentTool[];
   skills?: AgentSkillInputDto[];
 };

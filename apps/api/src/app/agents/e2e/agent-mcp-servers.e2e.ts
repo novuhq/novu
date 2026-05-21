@@ -322,19 +322,6 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     });
   });
 
-  describe('PATCH /v1/agents/:identifier/runtime/config', () => {
-    it('rejects mcpServers in the body to enforce the dedicated endpoint flow', async () => {
-      const { identifier } = await createManagedAgent();
-
-      const res = await session.testAgent
-        .patch(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`)
-        .send({ mcpServers: [{ externalId: 'Slack', name: 'Slack', url: 'https://mcp.slack.com/mcp' }] });
-
-      expect(res.status).to.equal(400);
-      expect(res.body.message ?? res.body.error).to.match(/mcp-servers/i);
-    });
-  });
-
   /**
    * MCP-spec OAuth flow tests.
    *

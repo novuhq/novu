@@ -753,7 +753,7 @@ export class AgentsController {
       'Applies a partial update to the managed agent runtime config on the provider. ' +
       'Accepts any combination of model, systemPrompt, tools, and skills. ' +
       'MCP enablement is managed via the dedicated `POST /agents/:identifier/mcp-servers` and ' +
-      '`DELETE /agents/:identifier/mcp-servers/:mcpId` endpoints; passing `mcpServers` here is rejected with a 400. ' +
+      '`DELETE /agents/:identifier/mcp-servers/:mcpId` endpoints. ' +
       'Server-side diffing issues the minimal set of provider API calls. ' +
       'An empty body is accepted and returns the current config unchanged.',
   })
@@ -778,7 +778,6 @@ export class AgentsController {
         identifier,
         model: body.model,
         systemPrompt: body.systemPrompt,
-        mcpServers: body.mcpServers,
         tools: body.tools,
         skills: body.skills,
       })
