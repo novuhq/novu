@@ -1,4 +1,3 @@
-import { DashboardLayout } from '@/components/dashboard-layout';
 import { ConnectResourcesSection } from '@/components/connect/dashboard/connect-resources-section';
 import { ConnectWelcomeHeading } from '@/components/connect/dashboard/connect-welcome-heading';
 import { ExplorePlatformSection } from '@/components/connect/dashboard/explore-platform-section';
@@ -7,6 +6,7 @@ import { SetThingsUpSection } from '@/components/connect/dashboard/set-things-up
 import { StartFromTemplateSection } from '@/components/connect/dashboard/start-from-template-section';
 import { useConnectSetupSteps } from '@/components/connect/dashboard/use-connect-setup-steps';
 import { WhatsNextSection } from '@/components/connect/dashboard/whats-next-section';
+import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
 
 export function ConnectDashboardPage() {

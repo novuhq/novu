@@ -1,4 +1,4 @@
-import { Fragment, useId, useState } from 'react';
+import { Fragment, useId, useMemo, useState } from 'react';
 import {
   RiCheckboxCircleFill,
   RiExpandUpDownLine,
@@ -9,6 +9,7 @@ import {
 } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import { ConversationActivityDto } from '@/api/conversations';
+import { MarkdownText } from '@/components/primitives/markdown-text';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { useEnvironment } from '@/context/environment/hooks';
 import { getProviderSquareIconFileName } from '@/utils/provider-square-icon';
@@ -132,11 +133,11 @@ function MessageContent({ content }: { content: string }) {
   const [expanded, setExpanded] = useState(false);
   const contentId = useId();
   const isLong = content.length > 80;
-  const displayContent = expanded ? content : content.slice(0, 80);
+  const displayContent = useMemo(() => (expanded ? content : content.slice(0, 80)), [content, expanded]);
 
   return (
     <div className="flex items-center gap-2.5 px-2 py-1">
-      <p
+      <div
         id={contentId}
         className={cn(
           'text-label-xs min-w-0 flex-1 font-medium text-[#1a1a1a]',
@@ -144,9 +145,9 @@ function MessageContent({ content }: { content: string }) {
           expanded && 'wrap-break-word whitespace-pre-wrap'
         )}
       >
-        {displayContent}
+        <MarkdownText className="text-label-xs text-[#1a1a1a]">{displayContent}</MarkdownText>
         {isLong && !expanded && '...'}
-      </p>
+      </div>
       {isLong && (
         <button
           type="button"

@@ -127,7 +127,7 @@ overrides:
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@tootallnate/once@<3.0.1': ^3.0.1
-  protobufjs@<7.5.6: ^7.5.6
+  protobufjs@<7.5.8: ^7.5.8
   protobufjs@>=8.0.0 <8.0.2: ^8.0.2
   ip-address@<10.1.1: ^10.1.1
   mongoose@>=8.0.0 <8.22.1: ^8.22.1
@@ -23601,8 +23601,8 @@ packages:
     resolution: {integrity: sha512-SAzp/O4Yh02jGdRc+uIrGoe87dkN/XtwxfZ4ZyafJHymd79ozp5VG5nyZ7ygqPM5+cpLDjjGnYFUkngonyDPOQ==}
     engines: {node: '>=14.0.0'}
 
-  protobufjs@7.5.7:
-    resolution: {integrity: sha512-NGnrxS/nLKUo5nkbVQxlC71sB4hdfImdYIbFeSCidxtwATx0AHRPcANSLd0q5Bb2BkoSWo2iisQhGg5/r+ihbA==}
+  protobufjs@7.5.8:
+    resolution: {integrity: sha512-dvpCIeLPbXZS/Ete7yLaO7RenOdken2NHKykBXbsaGxZT0UTltcarBciw+A78SRQs9iMAAVpsYA+l8b1hTePIA==}
     engines: {node: '>=12.0.0'}
 
   protobufjs@8.2.0:
@@ -32357,7 +32357,7 @@ snapshots:
       fast-deep-equal: 3.1.3
       functional-red-black-tree: 1.0.1
       google-gax: 4.6.0(encoding@0.1.13)
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -32464,14 +32464,14 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.2.3
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       yargs: 17.7.2
 
   '@grpc/proto-loader@0.8.0':
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.2.3
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       yargs: 17.7.2
 
   '@gwhitney/detect-indent@7.0.1': {}
@@ -35687,7 +35687,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.201.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
 
   '@opentelemetry/otlp-transformer@0.217.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -47912,7 +47912,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
       object-hash: 3.0.0
       proto3-json-serializer: 2.0.2
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       retry-request: 7.0.2(encoding@0.1.13)
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -54052,10 +54052,10 @@ snapshots:
 
   proto3-json-serializer@2.0.2:
     dependencies:
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
     optional: true
 
-  protobufjs@7.5.7:
+  protobufjs@7.5.8:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2

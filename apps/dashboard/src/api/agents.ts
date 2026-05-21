@@ -197,6 +197,27 @@ export async function createAgent(environment: IEnvironment, body: CreateAgentBo
   return response.data;
 }
 
+export type VerifyManagedCredentialsBody = {
+  providerId: AgentRuntimeProviderIdEnum;
+  apiKey: string;
+  externalWorkspaceId?: string;
+};
+
+export type VerifyManagedCredentialsResponse = { valid: true };
+
+export async function verifyManagedCredentials(
+  environment: IEnvironment,
+  body: VerifyManagedCredentialsBody,
+  signal?: AbortSignal
+): Promise<VerifyManagedCredentialsResponse> {
+  const response = await post<{ data: VerifyManagedCredentialsResponse } | VerifyManagedCredentialsResponse>(
+    '/agents/verify-credentials',
+    { environment, body, signal }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function updateAgent(
   environment: IEnvironment,
   identifier: string,
@@ -225,6 +246,11 @@ export type AgentIntegrationEmbedded = {
    * to render the shared inbox row in the inbox list.
    */
   sharedInboundAddress?: string;
+  /**
+   * Default email From display name for NovuAgent integrations.
+   * Mirrors `credentials.senderName`, falling back to the agent name when unset.
+   */
+  defaultSenderName?: string;
   /**
    * Cloud only. When `true`, the worker drops inbound mail addressed to this
    * agent on the shared `agentconnect.sh` domain. Custom-domain routes still

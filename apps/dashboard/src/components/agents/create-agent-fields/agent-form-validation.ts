@@ -18,8 +18,12 @@ export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormE
     }
   }
 
-  if (form.runtime === 'claude' && !form.apiKey.trim()) {
+  if (form.runtime === 'claude' && !form.integrationId && !form.apiKey.trim()) {
     errors.apiKey = 'Anthropic API key is required.';
+  }
+
+  if (form.runtime === 'claude' && !form.integrationId && form.apiKey.trim() && !form.integrationName?.trim()) {
+    errors.integrationName = 'Integration name is required.';
   }
 
   if (isExistingMode && !form.externalAgentId?.trim()) {
