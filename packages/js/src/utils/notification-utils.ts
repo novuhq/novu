@@ -341,7 +341,13 @@ function checkDataEntries(
   if (depth > 2) return false;
 
   for (const [rawKey, rawValue] of Object.entries(filterData)) {
-    if (rawKey.startsWith('$') || rawKey.startsWith('.') || rawKey === '__proto__' || rawKey === 'constructor') {
+    if (
+      rawKey.startsWith('$') ||
+      rawKey.startsWith('.') ||
+      rawKey === '__proto__' ||
+      rawKey === 'constructor' ||
+      rawKey === 'prototype'
+    ) {
       return false;
     }
     const path = [...pathPrefix, rawKey];

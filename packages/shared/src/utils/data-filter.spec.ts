@@ -87,13 +87,14 @@ describe('normalizeDataFilter', () => {
   it('rejects dangerous prototype keys', () => {
     const malicious: Record<string, unknown> = {};
     Object.defineProperty(malicious, '__proto__', {
-      value: 'x',
+      value: null,
       enumerable: true,
       configurable: true,
       writable: true,
     });
     expect(() => normalizeDataFilter(malicious)).toThrow(DataFilterValidationError);
     expect(() => normalizeDataFilter({ constructor: 'x' } as never)).toThrow(DataFilterValidationError);
+    expect(() => normalizeDataFilter({ prototype: 'x' } as never)).toThrow(DataFilterValidationError);
   });
 
   it('rejects strings longer than the limit', () => {
