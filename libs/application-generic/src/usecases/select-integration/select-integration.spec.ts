@@ -177,4 +177,75 @@ describe('select integration', () => {
       );
     }
   );
+
+  it('should scope identifier override query to the current environment', async () => {
+    const environmentId = 'dev-env-id';
+    const organizationId = 'organizationId';
+    const userId = 'userId';
+    const identifier = 'prod-integration-identifier';
+
+    findOneMock.mockImplementationOnce(() => null);
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId,
+        organizationId,
+        userId,
+        identifier,
+        filterData: {},
+      })
+    );
+
+    expect(findOneMock).toHaveBeenCalledWith(
+      {
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier,
+        active: true,
+      },
+      undefined,
+      { query: { sort: { createdAt: -1 } } }
+    );
+    expect(integration).toBeUndefined();
+  });
+
+  it('should return integration when identifier belongs to the same environment', async () => {
+    const environmentId = 'dev-env-id';
+    const organizationId = 'organizationId';
+    const userId = 'userId';
+    const identifier = 'dev-integration-identifier';
+
+    findOneMock.mockImplementationOnce(() => ({
+      ...testIntegration,
+      _environmentId: environmentId,
+      identifier,
+    }));
+
+    const integration = await useCase.execute(
+      SelectIntegrationCommand.create({
+        channelType: ChannelTypeEnum.EMAIL,
+        environmentId,
+        organizationId,
+        userId,
+        identifier,
+        filterData: {},
+      })
+    );
+
+    expect(findOneMock).toHaveBeenCalledWith(
+      {
+        _organizationId: organizationId,
+        _environmentId: environmentId,
+        channel: ChannelTypeEnum.EMAIL,
+        identifier,
+        active: true,
+      },
+      undefined,
+      { query: { sort: { createdAt: -1 } } }
+    );
+    expect(integration).not.toBeUndefined();
+    expect(integration?.identifier).toEqual(identifier);
+  });
 });

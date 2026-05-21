@@ -93,7 +93,6 @@ export class LinkTelegramChatToSubscriber {
 
     if (existing) {
       if (existing.subscriberId === subscriber.subscriberId) {
-
         return {
           created: false,
           subscriberId: subscriber.subscriberId,

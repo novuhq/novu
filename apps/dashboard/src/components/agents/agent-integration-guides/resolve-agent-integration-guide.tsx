@@ -1,10 +1,11 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import { useEffect, useState } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
 import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
-import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
+import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
@@ -89,7 +90,27 @@ export function ResolveAgentIntegrationGuide({
 }: ResolveAgentIntegrationGuideProps) {
   const providerId = integrationLink.integration.providerId;
 
-  if (providerId === ChatProviderIdEnum.Slack && !integrationLink.connectedAt) {
+  // Once the user opens an unconnected integration, keep showing the setup guide so the
+  // "Connected" success state (confetti + listening status) stays visible after the
+  // backend reports `connectedAt`. Stickiness is scoped to a single integration at a
+  // time — switching to a different provider clears it, and a fresh mount (page
+  // refresh / leaving the tab) reverts to the management view for already-connected
+  // integrations.
+  const [stickySetupId, setStickySetupId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!integrationLink.connectedAt) {
+      setStickySetupId(integrationLink._id);
+
+      return;
+    }
+
+    setStickySetupId((prev) => (prev === integrationLink._id ? prev : null));
+  }, [integrationLink._id, integrationLink.connectedAt]);
+
+  const showSetupGuide = !integrationLink.connectedAt || stickySetupId === integrationLink._id;
+
+  if (providerId === ChatProviderIdEnum.Slack && showSetupGuide) {
     return (
       <SetupGuideWithHeader
         providerId={providerId}
@@ -118,7 +139,7 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  if (providerId === ChatProviderIdEnum.MsTeams && !integrationLink.connectedAt) {
+  if (providerId === ChatProviderIdEnum.MsTeams && showSetupGuide) {
     return (
       <SetupGuideWithHeader
         providerId={providerId}
@@ -147,7 +168,7 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  if (providerId === ChatProviderIdEnum.Telegram && !integrationLink.connectedAt) {
+  if (providerId === ChatProviderIdEnum.Telegram && showSetupGuide) {
     return (
       <SetupGuideWithHeader
         providerId={providerId}
@@ -176,7 +197,7 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  if (providerId === ChatProviderIdEnum.WhatsAppBusiness && !integrationLink.connectedAt) {
+  if (providerId === ChatProviderIdEnum.WhatsAppBusiness && showSetupGuide) {
     return (
       <SetupGuideWithHeader
         providerId={providerId}

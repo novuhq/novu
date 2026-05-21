@@ -43,10 +43,7 @@ export class ProductFeatureInterceptor implements NestInterceptor {
       throw new UnauthorizedException();
     }
 
-    if (
-      requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS &&
-      process.env.IS_SELF_HOSTED === 'true'
-    ) {
+    if (requestedFeature === ProductFeatureKeyEnum.CUSTOM_DOMAINS && process.env.IS_SELF_HOSTED === 'true') {
       return next.handle();
     }
 

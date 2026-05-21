@@ -98,7 +98,6 @@ export class TelegramStartCodeService {
    */
   async consumeIfMatches(code: string, scope: TelegramStartCodeScope): Promise<ConsumeStartCodeResult> {
     if (!code || !this.cacheService.cacheEnabled()) {
-
       return { status: 'missing' };
     }
 
@@ -116,7 +115,6 @@ export class TelegramStartCodeService {
     }
 
     if (!raw) {
-
       return { status: 'missing' };
     }
 
@@ -125,17 +123,14 @@ export class TelegramStartCodeService {
 
     const payload = this.parsePayload(body);
     if (!payload) {
-
       return { status: 'missing' };
     }
 
     if (status === 'M') {
-
       return { status: 'consumed', payload };
     }
 
     if (status === 'X') {
-
       return { status: 'mismatch', payload };
     }
 
@@ -144,7 +139,6 @@ export class TelegramStartCodeService {
 
   async delete(code: string): Promise<void> {
     if (!code || !this.cacheService.cacheEnabled()) {
-
       return;
     }
 
@@ -166,19 +160,16 @@ export class TelegramStartCodeService {
         !parsed?._integrationId ||
         !parsed?.subscriberId
       ) {
-
         return null;
       }
 
       return parsed;
     } catch {
-
       return null;
     }
   }
 
   private cacheKey(code: string): string {
-
     return `${CACHE_KEY_PREFIX}${code}`;
   }
 }

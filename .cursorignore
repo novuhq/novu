@@ -5,7 +5,6 @@ apps/api/src/metadata.ts
 .idea/
 
 # Playground / demo apps — not production code
-playground/
 
 # Inactive apps — no longer under active development
 apps/webhook/

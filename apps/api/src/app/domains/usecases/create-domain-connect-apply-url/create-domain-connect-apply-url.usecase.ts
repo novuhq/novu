@@ -41,7 +41,10 @@ export class CreateDomainConnectApplyUrl {
       throw new BadRequestException('Domain Connect auto-configuration is not enabled.');
     }
 
-    const discovery = await this.domainConnectDiscoveryService.discoverDomainConnectHost(domain.name);
+    const discovery = await this.domainConnectDiscoveryService.discoverDomainConnectHost(
+      domain.name,
+      domain.dnsProvider
+    );
 
     if (!discovery || !isSupportedDomainConnectHost(discovery.providerHost)) {
       throw new BadRequestException('Domain Connect auto-configuration is not available for this DNS provider.');

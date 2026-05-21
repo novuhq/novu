@@ -38,13 +38,19 @@ import { UserSession } from '../shared/framework/user.decorator';
 import {
   AddAgentIntegrationRequestDto,
   AgentIntegrationResponseDto,
+  AgentMcpServerEnablementResponseDto,
   AgentResponseDto,
   AgentRuntimeConfigResponseDto,
   CreateAgentRequestDto,
+  EnableAgentMcpServerRequestDto,
+  GenerateMcpOAuthUrlRequestDto,
+  GenerateMcpOAuthUrlResponseDto,
   ListAgentIntegrationsQueryDto,
   ListAgentIntegrationsResponseDto,
+  ListAgentMcpServersResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
+  McpConnectionResponseDto,
   PatchAgentRuntimeConfigRequestDto,
   UpdateAgentBridgeRequestDto,
   UpdateAgentInboxSharedRequestDto,
@@ -52,6 +58,8 @@ import {
   UpdateAgentRequestDto,
   UploadCustomSkillRequestDto,
   UploadCustomSkillResponseDto,
+  VerifyManagedCredentialsRequestDto,
+  VerifyManagedCredentialsResponseDto,
 } from './dtos';
 import { ConfigureTelegramWebhookResponseDto } from './dtos/configure-telegram-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
@@ -77,10 +85,18 @@ import { CreateAgentCommand } from './usecases/create-agent/create-agent.command
 import { CreateAgent } from './usecases/create-agent/create-agent.usecase';
 import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command';
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
+import { DisableAgentMcpServerCommand } from './usecases/disable-agent-mcp-server/disable-agent-mcp-server.command';
+import { DisableAgentMcpServer } from './usecases/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
+import { EnableAgentMcpServerCommand } from './usecases/enable-agent-mcp-server/enable-agent-mcp-server.command';
+import { EnableAgentMcpServer } from './usecases/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
+import { GenerateMcpOAuthUrlCommand } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
+import { GenerateMcpOAuthUrl } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
 import { GetAgentRuntimeConfigCommand } from './usecases/get-agent-runtime-config/get-agent-runtime-config.command';
 import { GetAgentRuntimeConfig } from './usecases/get-agent-runtime-config/get-agent-runtime-config.usecase';
+import { GetMcpConnectionStatusCommand } from './usecases/get-mcp-connection-status/get-mcp-connection-status.command';
+import { GetMcpConnectionStatus } from './usecases/get-mcp-connection-status/get-mcp-connection-status.usecase';
 import { IssueTelegramMobileLinkCommand } from './usecases/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
 import { IssueTelegramMobileLink } from './usecases/issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
 import { IssueTelegramSubscriberLinkCommand } from './usecases/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
@@ -88,6 +104,8 @@ import { IssueTelegramSubscriberLink } from './usecases/issue-telegram-subscribe
 import { type AgentEmojiEntry, ListAgentEmoji } from './usecases/list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrationsCommand } from './usecases/list-agent-integrations/list-agent-integrations.command';
 import { ListAgentIntegrations } from './usecases/list-agent-integrations/list-agent-integrations.usecase';
+import { ListAgentMcpServersCommand } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.command';
+import { ListAgentMcpServers } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
@@ -108,6 +126,8 @@ import { UpdateAgentRuntimeConfigCommand } from './usecases/update-agent-runtime
 import { UpdateAgentRuntimeConfig } from './usecases/update-agent-runtime-config/update-agent-runtime-config.usecase';
 import { UploadCustomSkillCommand } from './usecases/upload-custom-skill/upload-custom-skill.command';
 import { UploadCustomSkill } from './usecases/upload-custom-skill/upload-custom-skill.usecase';
+import { VerifyManagedCredentialsCommand } from './usecases/verify-managed-credentials/verify-managed-credentials.command';
+import { VerifyManagedCredentials } from './usecases/verify-managed-credentials/verify-managed-credentials.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -135,10 +155,16 @@ export class AgentsController {
     private readonly uploadCustomSkillUsecase: UploadCustomSkill,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
+    private readonly enableAgentMcpServerUsecase: EnableAgentMcpServer,
+    private readonly disableAgentMcpServerUsecase: DisableAgentMcpServer,
+    private readonly listAgentMcpServersUsecase: ListAgentMcpServers,
+    private readonly generateMcpOAuthUrlUsecase: GenerateMcpOAuthUrl,
+    private readonly getMcpConnectionStatusUsecase: GetMcpConnectionStatus,
     private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook,
     private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
     private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
-    private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
+    private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared,
+    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials
   ) {}
 
   @Get('/emoji')
@@ -151,6 +177,32 @@ export class AgentsController {
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgentEmoji(): Promise<AgentEmojiEntry[]> {
     return this.listAgentEmojiUsecase.execute();
+  }
+
+  @Post('/verify-credentials')
+  @ApiResponse(VerifyManagedCredentialsResponseDto)
+  @ApiOperation({
+    summary: 'Verify managed-runtime credentials',
+    description:
+      'Performs a stateless, read-only validation of the supplied API key against the selected managed-runtime provider. ' +
+      'Used by the dashboard to give immediate feedback when configuring credentials before the integration is created.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  verifyManagedCredentials(
+    @UserSession() user: UserSessionData,
+    @Body() body: VerifyManagedCredentialsRequestDto
+  ): Promise<VerifyManagedCredentialsResponseDto> {
+    return this.verifyManagedCredentialsUsecase.execute(
+      VerifyManagedCredentialsCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        providerId: body.providerId,
+        apiKey: body.apiKey,
+        externalWorkspaceId: body.externalWorkspaceId,
+      })
+    );
   }
 
   @Post('/')
@@ -699,7 +751,9 @@ export class AgentsController {
     summary: 'Update agent runtime config',
     description:
       'Applies a partial update to the managed agent runtime config on the provider. ' +
-      'Accepts any combination of model, systemPrompt, mcpServers, tools, and skills. ' +
+      'Accepts any combination of model, systemPrompt, tools, and skills. ' +
+      'MCP enablement is managed via the dedicated `POST /agents/:identifier/mcp-servers` and ' +
+      '`DELETE /agents/:identifier/mcp-servers/:mcpId` endpoints. ' +
       'Server-side diffing issues the minimal set of provider API calls. ' +
       'An empty body is accepted and returns the current config unchanged.',
   })
@@ -724,9 +778,142 @@ export class AgentsController {
         identifier,
         model: body.model,
         systemPrompt: body.systemPrompt,
-        mcpServers: body.mcpServers,
         tools: body.tools,
         skills: body.skills,
+      })
+    );
+  }
+
+  @Get('/:identifier/mcp-servers')
+  @ApiResponse(ListAgentMcpServersResponseDto)
+  @ApiOperation({
+    summary: 'List MCP servers enabled on agent',
+    description:
+      'Returns the per-agent enablement records sourced from Mongo. Mongo is the source of truth for ' +
+      'the agent\u2019s MCP list; the provider\u2019s `agent.mcp_servers` collection is synced from these rows.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  listAgentMcpServers(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<ListAgentMcpServersResponseDto> {
+    return this.listAgentMcpServersUsecase.execute(
+      ListAgentMcpServersCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/mcp-servers')
+  @ApiResponse(AgentMcpServerEnablementResponseDto, 201)
+  @ApiOperation({
+    summary: 'Enable an MCP server on agent',
+    description:
+      'Writes the per-agent enablement record and synchronously projects the new enabled set onto the runtime provider.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or runtime integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  enableAgentMcpServer(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: EnableAgentMcpServerRequestDto
+  ): Promise<AgentMcpServerEnablementResponseDto> {
+    return this.enableAgentMcpServerUsecase.execute(
+      EnableAgentMcpServerCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId: body.mcpId,
+        defaultScope: body.defaultScope,
+      })
+    );
+  }
+
+  @Delete('/:identifier/mcp-servers/:mcpId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Disable an MCP server on agent',
+    description:
+      'Cascade-deletes any `mcp_connection` rows scoped to this enablement, removes the per-agent record, and resyncs the provider projection.',
+  })
+  @ApiNoContentResponse({ description: 'The MCP was disabled.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  disableAgentMcpServer(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string
+  ): Promise<void> {
+    return this.disableAgentMcpServerUsecase.execute(
+      DisableAgentMcpServerCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
+      })
+    );
+  }
+
+  @Post('/:identifier/mcp-servers/:mcpId/oauth/url')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(GenerateMcpOAuthUrlResponseDto, 200)
+  @ApiOperation({
+    summary: 'Generate MCP OAuth authorize URL',
+    description:
+      'Returns the provider authorize URL the subscriber should be redirected to for a `subscriber`-scoped connection. ' +
+      'Reuses the signed-state OAuth pattern already used by chat integrations.',
+  })
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  generateMcpOAuthUrl(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string,
+    @Body() body: GenerateMcpOAuthUrlRequestDto
+  ): Promise<GenerateMcpOAuthUrlResponseDto> {
+    return this.generateMcpOAuthUrlUsecase.execute(
+      GenerateMcpOAuthUrlCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
+        subscriberId: body.subscriberId,
+      })
+    );
+  }
+
+  @Get('/:identifier/mcp-servers/:mcpId/connection')
+  @ApiResponse(McpConnectionResponseDto)
+  @ApiOperation({
+    summary: 'Get MCP connection status for a subscriber',
+    description:
+      'Returns the per-subscriber connection state for the (agent, mcp) pair, or null when no connection has been initiated yet. ' +
+      'Used by the dashboard to render Authorize / Connected / Re-authorize CTAs without leaking encrypted tokens.',
+  })
+  @ApiNotFoundResponse({ description: 'Agent or MCP enablement not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getMcpConnectionStatus(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string,
+    @Query('subscriberId') subscriberId: string
+  ): Promise<McpConnectionResponseDto | null> {
+    return this.getMcpConnectionStatusUsecase.execute(
+      GetMcpConnectionStatusCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
+        subscriberId,
       })
     );
   }

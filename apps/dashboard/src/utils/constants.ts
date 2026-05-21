@@ -70,4 +70,4 @@ export const DEFAULT_CONTROL_HTTP_REQUEST_ENFORCE_SCHEMA_VALIDATION = false;
 export const DEFAULT_CONTROL_HTTP_REQUEST_CONTINUE_ON_FAILURE = false;
 export const DEFAULT_CONTROL_HTTP_REQUEST_TIMEOUT = 5000;
 
-export const DISPATCH_ONBOARDING_COMPLETED = 'novu-dispatch-onboarding-completed';
+export const CONNECT_ONBOARDING_COMPLETED = 'novu-connect-onboarding-completed';

@@ -12,8 +12,9 @@
  * Usage: node scripts/with-portless-env.mjs <command> [args...]
  */
 import { execFileSync, spawn } from 'node:child_process';
+import { portlessCaEnv } from './portless-ca-env.mjs';
 
-const SERVICES = ['api.novu', 'dashboard.novu', 'ws.novu'];
+const SERVICES = ['api.novu', 'dashboard.novu', 'ws.novu', 'playground.novu'];
 
 function normalizeServiceUrl(rawUrl, name) {
   // `portless get` may return the upstream HTTP URL (e.g. http://api.novu.localhost:1355).
@@ -50,6 +51,7 @@ const urls = Object.fromEntries(SERVICES.map((name) => [name, getServiceUrl(name
 const apiUrl = urls['api.novu'];
 const dashboardUrl = urls['dashboard.novu'];
 const wsUrl = urls['ws.novu'];
+const playgroundUrl = urls['playground.novu'];
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -72,6 +74,10 @@ const env = {
   VITE_DASHBOARD_URL: dashboardUrl,
   VITE_BETTER_AUTH_BASE_URL: apiUrl,
   API_INTERNAL_ORIGIN: apiUrl,
+  NEXT_PUBLIC_NOVU_BACKEND_URL: apiUrl,
+  NEXT_PUBLIC_NOVU_SOCKET_URL: wsUrl,
+  NEXT_PUBLIC_PLAYGROUND_URL: playgroundUrl,
+  ...(process.env.PORTLESS_INJECT_CA === '1' ? portlessCaEnv() : {}),
 };
 
 const [, , command, ...args] = process.argv;

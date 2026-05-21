@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
+import { useEffect, useState } from 'react';
 import { RiCheckboxCircleFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 import { LogoCircle } from '@/components/icons/logo-circle';
 

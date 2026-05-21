@@ -3,6 +3,7 @@ import type { DomainEntity } from '@novu/dal';
 import { expect } from 'chai';
 import {
   areProviderSettingsUrlsAllowed,
+  buildDnsProviderDomainConnectDiscovery,
   buildDomainConnectApplyUrl,
   buildDomainConnectSettingsUrl,
   getDomainConnectDiscoveryCandidates,
@@ -56,6 +57,21 @@ describe('Domain Connect utils', () => {
     expect(buildDomainConnectSettingsUrl('grossman.io', 'api.cloudflare.com')).to.equal(
       'https://api.cloudflare.com/client/v4/domainconnect/v2/grossman.io/settings'
     );
+    expect(buildDomainConnectSettingsUrl('example.com', 'domainconnect.vercel.com')).to.equal(
+      'https://domainconnect.vercel.com/v2/example.com/settings'
+    );
+  });
+
+  it('maps recognized DNS providers to Domain Connect discovery hosts', () => {
+    expect(buildDnsProviderDomainConnectDiscovery('inbound.example.com', 'Vercel')).to.deep.equal({
+      domainName: 'example.com',
+      providerHost: 'domainconnect.vercel.com',
+    });
+    expect(buildDnsProviderDomainConnectDiscovery('inbound.example.com', 'Cloudflare')).to.deep.equal({
+      domainName: 'example.com',
+      providerHost: 'domainconnect.cloudflare.com',
+    });
+    expect(buildDnsProviderDomainConnectDiscovery('example.com', 'Amazon Route 53')).to.equal(undefined);
   });
 
   it('returns likely root-domain discovery candidates before the submitted subdomain', () => {

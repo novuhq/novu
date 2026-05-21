@@ -127,7 +127,7 @@ overrides:
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@tootallnate/once@<3.0.1': ^3.0.1
-  protobufjs@<7.5.6: ^7.5.6
+  protobufjs@<7.5.8: ^7.5.8
   protobufjs@>=8.0.0 <8.0.2: ^8.0.2
   ip-address@<10.1.1: ^10.1.1
   mongoose@>=8.0.0 <8.22.1: ^8.22.1
@@ -143,6 +143,8 @@ overrides:
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
   better-auth: 1.5.6
+  '@codemirror/state': 6.6.0
+  '@codemirror/autocomplete': 6.18.3
 
 importers:
 
@@ -414,8 +416,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/testing
       '@novu/thalamus':
-        specifier: https://github.com/novuhq/thalamus.git#3e4a0d4
-        version: https://codeload.github.com/novuhq/thalamus/tar.gz/3e4a0d45c3ace724704d191ce7857c07f023884f(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.1)(zod@3.25.20))
+        specifier: 0.1.0-alpha.7
+        version: 0.1.0-alpha.7(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.1)(zod@3.25.20))
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
@@ -741,7 +743,7 @@ importers:
         version: 3.0.51(react@19.2.3)(zod@4.3.5)
       '@better-auth/sso':
         specifier: ^1.3.0
-        version: 1.4.7(better-auth@1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7)(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))
+        version: 1.4.7(better-auth@1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))
       '@calcom/embed-react':
         specifier: 1.5.2
         version: 1.5.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -749,8 +751,8 @@ importers:
         specifier: ^5.61.6
         version: 5.61.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@codemirror/autocomplete':
-        specifier: ^6.18.3
-        version: 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+        specifier: 6.18.3
+        version: 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/lang-html':
         specifier: ^6.4.9
         version: 6.4.9
@@ -918,19 +920,19 @@ importers:
         version: 4.5.8
       '@uiw/codemirror-extensions-langs':
         specifier: ^4.23.6
-        version: 4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/language-data@6.5.1(@codemirror/view@6.34.3))(@codemirror/language@6.11.1)(@codemirror/legacy-modes@6.4.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/javascript@1.4.19)(@lezer/lr@1.4.2)
+        version: 4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language-data@6.5.1(@codemirror/view@6.34.3))(@codemirror/language@6.11.1)(@codemirror/legacy-modes@6.4.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)(@lezer/highlight@1.2.1)(@lezer/javascript@1.4.19)(@lezer/lr@1.4.2)
       '@uiw/codemirror-theme-material':
         specifier: ^4.23.6
-        version: 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)
+        version: 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)
       '@uiw/codemirror-theme-white':
         specifier: ^4.23.6
-        version: 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)
+        version: 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)
       '@uiw/codemirror-themes':
         specifier: ^4.23.6
-        version: 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)
+        version: 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)
       '@uiw/react-codemirror':
         specifier: ^4.23.6
-        version: 4.23.6(@babel/runtime@7.28.3)(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.4.1)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.34.3)(codemirror@6.0.1(@lezer/common@1.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 4.23.6(@babel/runtime@7.28.3)(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.34.3)(codemirror@6.0.1(@lezer/common@1.5.2))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@xyflow/react':
         specifier: ^12.3.2
         version: 12.3.2(@types/react@19.2.8)(immer@10.1.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -948,7 +950,7 @@ importers:
         version: 6.2.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       better-auth:
         specifier: 1.5.6
-        version: 1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7)(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+        version: 1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
       class-variance-authority:
         specifier: ^0.7.0
         version: 0.7.1
@@ -1217,9 +1219,15 @@ importers:
 
   apps/inbound-mail:
     dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.996.0
+        version: 3.996.0
       '@aws-sdk/client-secrets-manager':
         specifier: ^3.1037.0
         version: 3.1042.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.996.0
+        version: 3.996.0
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
@@ -2090,7 +2098,7 @@ importers:
     dependencies:
       '@better-auth/sso':
         specifier: ^1.4.9
-        version: 1.5.6(cf3ce98ba948c754e75dad8f5a1986eb)
+        version: 1.5.6(7df0cc6358d81639ef43795ea61ab08f)
       '@clerk/backend':
         specifier: ^1.25.2
         version: 1.25.2(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -2129,7 +2137,7 @@ importers:
         version: link:../../../packages/stateless
       better-auth:
         specifier: 1.5.6
-        version: 1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7)(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+        version: 1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
       better-call:
         specifier: ^1.3.2
         version: 1.3.2(zod@4.3.6)
@@ -2887,10 +2895,10 @@ importers:
     dependencies:
       react:
         specifier: ^18 || ^19
-        version: 18.3.1
+        version: 19.2.3
       react-dom:
         specifier: ^18 || ^19
-        version: 18.3.1(react@18.3.1)
+        version: 18.3.1(react@19.2.3)
       zod:
         specifier: ^3.25.0 || ^4.0.0
         version: 3.25.20
@@ -2900,7 +2908,7 @@ importers:
         version: 9.39.4
       '@tanstack/react-query':
         specifier: ^5.61.4
-        version: 5.65.0(react@18.3.1)
+        version: 5.65.0(react@19.2.3)
       '@types/react':
         specifier: ^18.3.12
         version: 18.3.18
@@ -3432,7 +3440,7 @@ importers:
         version: 10.4.18(class-transformer@0.5.1)(class-validator@0.14.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@sveltejs/kit':
         specifier: ^2.57.1
-        version: 2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
+        version: 2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
       '@types/aws-lambda':
         specifier: ^8.10.141
         version: 8.10.147
@@ -4192,6 +4200,9 @@ importers:
       '@ai-sdk/react':
         specifier: ^3.0.0
         version: 3.0.51(react@18.3.1)(zod@4.3.5)
+      '@clerk/clerk-react':
+        specifier: ^5.61.6
+        version: 5.61.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@novu/agent-toolkit':
         specifier: workspace:*
         version: link:../../packages/agent-toolkit
@@ -4201,6 +4212,9 @@ importers:
       '@novu/nextjs':
         specifier: workspace:*
         version: link:../../packages/nextjs
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@radix-ui/colors':
         specifier: ^3.0.0
         version: 3.0.0
@@ -6400,9 +6414,12 @@ packages:
     resolution: {integrity: sha512-1dNIOmiM0z4BIBwxmxEfA1yoxh1MF/6KPBbh20a5vphGV0ictKlgQsbJs6D6SkR6iJpGbpwRsa6PFMNlg9T9pQ==}
     peerDependencies:
       '@codemirror/language': ^6.0.0
-      '@codemirror/state': ^6.0.0
+      '@codemirror/state': 6.6.0
       '@codemirror/view': ^6.0.0
       '@lezer/common': ^1.0.0
+
+  '@codemirror/commands@6.10.3':
+    resolution: {integrity: sha512-JFRiqhKu+bvSkDLI+rUhJwSxQxYb759W5GBezE8Uc8mHLqC9aV/9aTC7yJSqCtB3F00pylrLCwnyS91Ap5ej4Q==}
 
   '@codemirror/commands@6.7.1':
     resolution: {integrity: sha512-llTrboQYw5H4THfhN4U3qCnSZ1SOJ60ohhz+SzU0ADGtwlc533DtklQP0vSFaQuCPDn3BPpOd1GbbnUtwNjsrw==}
@@ -6410,14 +6427,26 @@ packages:
   '@codemirror/lang-angular@0.1.3':
     resolution: {integrity: sha512-xgeWGJQQl1LyStvndWtruUvb4SnBZDAu/gvFH/ZU+c0W25tQR8e5hq7WTwiIY2dNxnf+49mRiGI/9yxIwB6f5w==}
 
+  '@codemirror/lang-angular@0.1.4':
+    resolution: {integrity: sha512-oap+gsltb/fzdlTQWD6BFF4bSLKcDnlxDsLdePiJpCVNKWXSTAbiiQeYI3UmES+BLAdkmIC1WjyztC1pi/bX4g==}
+
   '@codemirror/lang-cpp@6.0.2':
     resolution: {integrity: sha512-6oYEYUKHvrnacXxWxYa6t4puTlbN3dgV662BDfSH8+MfjQjVmP697/KYTDOqpxgerkvoNm7q5wlFMBeX8ZMocg==}
+
+  '@codemirror/lang-cpp@6.0.3':
+    resolution: {integrity: sha512-URM26M3vunFFn9/sm6rzqrBzDgfWuDixp85uTY49wKudToc2jTHUrKIGGKs+QWND+YLofNNZpxcNGRynFJfvgA==}
 
   '@codemirror/lang-css@6.3.0':
     resolution: {integrity: sha512-CyR4rUNG9OYcXDZwMPvJdtb6PHbBDKUc/6Na2BIwZ6dKab1JQqKa4di+RNRY9Myn7JB81vayKwJeQ7jEdmNVDA==}
 
+  '@codemirror/lang-css@6.3.1':
+    resolution: {integrity: sha512-kr5fwBGiGtmz6l0LSJIbno9QrifNMUusivHbnA1H6Dmqy4HZFte3UAICix1VuKo0lMPKQr2rqB+0BkKi/S3Ejg==}
+
   '@codemirror/lang-go@6.0.1':
     resolution: {integrity: sha512-7fNvbyNylvqCphW9HD6WFnRpcDjr+KXX/FgqXy5H5ZS0eC5edDljukm/yNgYkwTsgp2busdod50AOTIy6Jikfg==}
+
+  '@codemirror/lang-html@6.4.11':
+    resolution: {integrity: sha512-9NsXp7Nwp891pQchI7gPdTwBuSuT3K65NGTHWHNJ55HjYcHLllr0rbIZNdOzas9ztc1EUVBlHou85FFZS4BNnw==}
 
   '@codemirror/lang-html@6.4.9':
     resolution: {integrity: sha512-aQv37pIMSlueybId/2PVSP6NPnmurFDVmZwzc7jszd2KAF8qd4VBbvNYPXWQq90WIARjsdVkPbw29pszmHws3Q==}
@@ -6425,11 +6454,20 @@ packages:
   '@codemirror/lang-java@6.0.1':
     resolution: {integrity: sha512-OOnmhH67h97jHzCuFaIEspbmsT98fNdhVhmA3zCxW0cn7l8rChDhZtwiwJ/JOKXgfm4J+ELxQihxaI7bj7mJRg==}
 
+  '@codemirror/lang-java@6.0.2':
+    resolution: {integrity: sha512-m5Nt1mQ/cznJY7tMfQTJchmrjdjQ71IDs+55d1GAa8DGaB8JXWsVCkVT284C3RTASaY43YknrK2X3hPO/J3MOQ==}
+
   '@codemirror/lang-javascript@6.2.2':
     resolution: {integrity: sha512-VGQfY+FCc285AhWuwjYxQyUQcYurWlxdKYT4bqwr3Twnd5wP5WSeu52t4tvvuWmljT4EmgEgZCqSieokhtY8hg==}
 
+  '@codemirror/lang-javascript@6.2.5':
+    resolution: {integrity: sha512-zD4e5mS+50htS7F+TYjBPsiIFGanfVqg4HyUz6WNFikgOPf2BgKlx+TQedI1w6n/IqRBVBbBWmGFdLB/7uxO4A==}
+
   '@codemirror/lang-json@6.0.1':
     resolution: {integrity: sha512-+T1flHdgpqDDlJZ2Lkil/rLiRy684WMLc74xUnjJH48GQdfJo/pudlTRreZmKwzP8/tGdKf83wlbAdOCzlJOGQ==}
+
+  '@codemirror/lang-json@6.0.2':
+    resolution: {integrity: sha512-x2OtO+AvwEHrEwR0FyyPtfDUiloG3rnVTSZV1W8UteaLL8/MajQd8DpvUb2YVzC+/T18aSDv0H9mu+xw0EStoQ==}
 
   '@codemirror/lang-less@6.0.2':
     resolution: {integrity: sha512-EYdQTG22V+KUUk8Qq582g7FMnCZeEHsyuOJisHRft/mQ+ZSZ2w51NupvDUHiqtsOy7It5cHLPGfHQLpMh9bqpQ==}
@@ -6440,20 +6478,38 @@ packages:
   '@codemirror/lang-liquid@6.2.3':
     resolution: {integrity: sha512-yeN+nMSrf/lNii3FJxVVEGQwFG0/2eDyH6gNOj+TGCa0hlNO4bhQnoO5ISnd7JOG+7zTEcI/GOoyraisFVY7jQ==}
 
+  '@codemirror/lang-liquid@6.3.2':
+    resolution: {integrity: sha512-6PDVU3ZnfeYyz1at1E/ttorErZvZFXXt1OPhtfe1EZJ2V2iDFa0CwPqPgG5F7NXN0yONGoBogKmFAafKTqlwIw==}
+
   '@codemirror/lang-markdown@6.3.0':
     resolution: {integrity: sha512-lYrI8SdL/vhd0w0aHIEvIRLRecLF7MiiRfzXFZY94dFwHqC9HtgxgagJ8fyYNBldijGatf9wkms60d8SrAj6Nw==}
+
+  '@codemirror/lang-markdown@6.5.0':
+    resolution: {integrity: sha512-0K40bZ35jpHya6FriukbgaleaqzBLZfOh7HuzqbMxBXkbYMJDxfF39c23xOgxFezR+3G+tR2/Mup+Xk865OMvw==}
 
   '@codemirror/lang-php@6.0.1':
     resolution: {integrity: sha512-ublojMdw/PNWa7qdN5TMsjmqkNuTBD3k6ndZ4Z0S25SBAiweFGyY68AS3xNcIOlb6DDFDvKlinLQ40vSLqf8xA==}
 
+  '@codemirror/lang-php@6.0.2':
+    resolution: {integrity: sha512-ZKy2v1n8Fc8oEXj0Th0PUMXzQJ0AIR6TaZU+PbDHExFwdu+guzOA4jmCHS1Nz4vbFezwD7LyBdDnddSJeScMCA==}
+
   '@codemirror/lang-python@6.1.6':
     resolution: {integrity: sha512-ai+01WfZhWqM92UqjnvorkxosZ2aq2u28kHvr+N3gu012XqY2CThD67JPMHnGceRfXPDBmn1HnyqowdpF57bNg==}
+
+  '@codemirror/lang-python@6.2.1':
+    resolution: {integrity: sha512-IRjC8RUBhn9mGR9ywecNhB51yePWCGgvHfY1lWN/Mrp3cKuHr0isDKia+9HnvhiWNnMpbGhWrkhuWOc09exRyw==}
 
   '@codemirror/lang-rust@6.0.1':
     resolution: {integrity: sha512-344EMWFBzWArHWdZn/NcgkwMvZIWUR1GEBdwG8FEp++6o6vT6KL9V7vGs2ONsKxxFUPXKI0SPcWhyYyl2zPYxQ==}
 
+  '@codemirror/lang-rust@6.0.2':
+    resolution: {integrity: sha512-EZaGjCUegtiU7kSMvOfEZpaCReowEf3yNidYu7+vfuGTm9ow4mthAparY5hisJqOHmJowVH3Upu+eJlUji6qqA==}
+
   '@codemirror/lang-sass@6.0.2':
     resolution: {integrity: sha512-l/bdzIABvnTo1nzdY6U+kPAC51czYQcOErfzQ9zSm9D8GmNPD0WTW8st/CJwBTPLO8jlrbyvlSEcN20dc4iL0Q==}
+
+  '@codemirror/lang-sql@6.10.0':
+    resolution: {integrity: sha512-6ayPkEd/yRw0XKBx5uAiToSgGECo/GY2NoJIHXIIQh1EVwLuKoU8BP/qK0qH5NLXAbtJRLuT73hx7P9X34iO4w==}
 
   '@codemirror/lang-sql@6.8.0':
     resolution: {integrity: sha512-aGLmY4OwGqN3TdSx3h6QeA1NrvaYtF7kkoWR/+W7/JzB0gQtJ+VJxewlnE3+VImhA4WVlhmkJr109PefOOhjLg==}
@@ -6467,14 +6523,17 @@ packages:
   '@codemirror/lang-xml@6.1.0':
     resolution: {integrity: sha512-3z0blhicHLfwi2UgkZYRPioSgVTo9PV5GP5ducFH6FaHy0IAJRg+ixj5gTR1gnT/glAIC8xv4w2VL1LoZfs+Jg==}
 
-  '@codemirror/lang-yaml@6.1.1':
-    resolution: {integrity: sha512-HV2NzbK9bbVnjWxwObuZh5FuPCowx51mEfoFT9y3y+M37fA3+pbxx4I7uePuygFzDsAmCTwQSc/kXh/flab4uw==}
+  '@codemirror/lang-yaml@6.1.3':
+    resolution: {integrity: sha512-AZ8DJBuXGVHybpBQhmZtgew5//4hv3tdkXnr3vDmOUMJRuB6vn/uuwtmTOTlqEaQFg3hQSVeA90NmvIQyUV6FQ==}
 
   '@codemirror/language-data@6.5.1':
     resolution: {integrity: sha512-0sWxeUSNlBr6OmkqybUTImADFUP0M3P0IiSde4nc24bz/6jIYzqYSgkOSLS+CBIoW1vU8Q9KUWXscBXeoMVC9w==}
 
   '@codemirror/language@6.11.1':
     resolution: {integrity: sha512-5kS1U7emOGV84vxC+ruBty5sUgcD0te6dyupyRVG2zaSjhTDM73LhVKUtVwiqSe6QwmEoA4SCiU8AKPFyumAWQ==}
+
+  '@codemirror/language@6.12.3':
+    resolution: {integrity: sha512-QwCZW6Tt1siP37Jet9Tb02Zs81TQt6qQrZR2H+eGMcFsL1zMrk2/b9CLC7/9ieP1fjIUMgviLWMmgiHoJrj+ZA==}
 
   '@codemirror/legacy-modes@6.4.1':
     resolution: {integrity: sha512-vdg3XY7OAs5uLDx2Iw+cGfnwtd7kM+Et/eMsqAGTfT/JKiVBQZXosTzjEbWAi/FrY6DcQIz8mQjBozFHZEUWQA==}
@@ -6485,8 +6544,8 @@ packages:
   '@codemirror/search@6.5.6':
     resolution: {integrity: sha512-rpMgcsh7o0GuCDUXKPvww+muLA1pDJaFrpq/CCHtpQJYz8xopu4D1hPcKRoDD0YlF8gZaqTNIRa4VRBWyhyy7Q==}
 
-  '@codemirror/state@6.4.1':
-    resolution: {integrity: sha512-QkEyUiLhsJoZkbumGZlswmAhA7CBU02Wrz7zvH4SrcifbsqwlXShVXg65f3v/ts57W3dqyamEriMhij1Z3Zz4A==}
+  '@codemirror/state@6.6.0':
+    resolution: {integrity: sha512-4nbvra5R5EtiCzr9BTHiTLc+MLXK2QGiAVYMyi8PkQd3SR+6ixar/Q/01Fa21TBIDOZXgeWV4WppsQolSreAPQ==}
 
   '@codemirror/theme-one-dark@6.1.2':
     resolution: {integrity: sha512-F+sH0X16j/qFLMAfbciKTxVOwkdAS336b7AXTKOZhy8BR3eH/RelsnLgLFINrpST63mmN2OuwUt0W2ndUgYwUA==}
@@ -7312,11 +7371,17 @@ packages:
   '@floating-ui/core@1.7.3':
     resolution: {integrity: sha512-sGnvb5dmrJaKEZ+LDIpguvdX3bDlEllmv4/ClQ9awcmCZrlx5jQyyMWFM5kBI+EyNOCDDiKk8il0zeuX3Zlg/w==}
 
+  '@floating-ui/core@1.7.5':
+    resolution: {integrity: sha512-1Ih4WTWyw0+lKyFMcBHGbb5U5FtuHJuujoyyr5zTaWS5EYMeT6Jb2AuDeftsCsEuchO+mM2ij5+q9crhydzLhQ==}
+
   '@floating-ui/dom@1.6.13':
     resolution: {integrity: sha512-umqzocjDgNRGTuO7Q8CU32dkHkECqI8ZdMZ5Swb6QAM0t5rnlrN3lGo1hdpscRd3WS8T6DKYK4ephgIH9iRh3w==}
 
   '@floating-ui/dom@1.7.4':
     resolution: {integrity: sha512-OOchDgh4F2CchOX94cRVqhvy7b3AFb+/rQXyswmzmGakRfkMgoWVjfnLWkRirfLEfuD4ysVW16eXzwt3jHIzKA==}
+
+  '@floating-ui/dom@1.7.6':
+    resolution: {integrity: sha512-9gZSAI5XM36880PPMm//9dfiEngYoC6Am2izES1FF406YFsjvyBMmeJ2g4SAju3xWwtuynNRFL2s9hgxpLI5SQ==}
 
   '@floating-ui/react-dom@2.1.6':
     resolution: {integrity: sha512-4JX6rEatQEvlmgU80wZyq9RT96HZJa88q8hp0pBd+LrczeDI4o6uA2M+uvxngVHo4Ihr8uibXxH6+70zhAFrVw==}
@@ -7327,11 +7392,15 @@ packages:
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
+  '@floating-ui/utils@0.2.11':
+    resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
   '@floating-ui/utils@0.2.9':
     resolution: {integrity: sha512-MDWhGtE+eHw5JW7lq4qhc5yRLS11ERl1c7Z6Xd0a58DozHES6EnNNwUWbMiG4J9Cgj053Bhk8zvlhFYKVhULwg==}
 
   '@gitopslovers/nx-biome@1.5.0':
     resolution: {integrity: sha512-RDYX+dd3o36+rqzpShr948LimCXjH9lJdATdQGTKtYcN2OL43LRb3R9MLzU/OqnGOrt1/6Hg92YJS3pLES68aw==}
+    deprecated: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
 
   '@godaddy/terminus@4.12.1':
     resolution: {integrity: sha512-Tm+wVu1/V37uZXcT7xOhzdpFoovQReErff8x3y82k6YyWa1gzxWBjTyrx4G2enjEqoXPnUUmJ3MOmwH+TiP6Sw==}
@@ -8056,20 +8125,35 @@ packages:
   '@lezer/common@1.2.3':
     resolution: {integrity: sha512-w7ojc8ejBqr2REPsWxJjrMFsA/ysDCFICn8zEOR9mrqzOu2amhITYuLD8ag6XZf0CFXDrhKqw7+tW8cX66NaDA==}
 
+  '@lezer/common@1.5.2':
+    resolution: {integrity: sha512-sxQE460fPZyU3sdc8lafxiPwJHBzZRy/udNFynGQky1SePYBdhkBl1kOagA9uT3pxR8K09bOrmTUqA9wb/PjSQ==}
+
   '@lezer/cpp@1.1.2':
     resolution: {integrity: sha512-macwKtyeUO0EW86r3xWQCzOV9/CF8imJLpJlPv3sDY57cPGeUZ8gXWOWNlJr52TVByMV3PayFQCA5SHEERDmVQ==}
+
+  '@lezer/cpp@1.1.5':
+    resolution: {integrity: sha512-DIhSXmYtJKLehrjzDFN+2cPt547ySQ41nA8yqcDf/GxMc+YM736xqltFkvADL2M0VebU5I+3+4ks2Vv+Kyq3Aw==}
 
   '@lezer/css@1.1.9':
     resolution: {integrity: sha512-TYwgljcDv+YrV0MZFFvYFQHCfGgbPMR6nuqLabBdmZoFH3EP1gvw8t0vae326Ne3PszQkbXfVBjCnf3ZVCr0bA==}
 
-  '@lezer/go@1.0.0':
-    resolution: {integrity: sha512-co9JfT3QqX1YkrMmourYw2Z8meGC50Ko4d54QEcQbEYpvdUvN4yb0NBZdn/9ertgvjsySxHsKzH3lbm3vqJ4Jw==}
+  '@lezer/css@1.3.3':
+    resolution: {integrity: sha512-RzBo8r+/6QJeow7aPHIpGVIH59xTcJXp399820gZoMo9noQDRVpJLheIBUicYwKcsbOYoBRoLZlf2720dG/4Tg==}
+
+  '@lezer/go@1.0.1':
+    resolution: {integrity: sha512-xToRsYxwsgJNHTgNdStpcvmbVuKxTapV0dM0wey1geMMRc9aggoVyKgzYp41D2/vVOx+Ii4hmE206kvxIXBVXQ==}
 
   '@lezer/highlight@1.2.1':
     resolution: {integrity: sha512-Z5duk4RN/3zuVO7Jq0pGLJ3qynpxUVsh7IbUbGj88+uV2ApSAn6kWg2au3iJb+0Zi7kKtqffIESgNcRXWZWmSA==}
 
+  '@lezer/highlight@1.2.3':
+    resolution: {integrity: sha512-qXdH7UqTvGfdVBINrgKhDsVTJTxactNNxLk7+UMwZhU13lMHaOBlJe9Vqp907ya56Y3+ed2tlqzys7jDkTmW0g==}
+
   '@lezer/html@1.3.10':
     resolution: {integrity: sha512-dqpT8nISx/p9Do3AchvYGV3qYc4/rKr3IBZxlHmpIKam56P47RSHkSF5f13Vu9hebS1jM0HmtJIwLbWz1VIY6w==}
+
+  '@lezer/html@1.3.13':
+    resolution: {integrity: sha512-oI7n6NJml729m7pjm9lvLvmXbdoMoi2f+1pwSDJkl9d68zGr7a9Btz8NdHTGQZtW2DA25ybeuv/SyDb9D5tseg==}
 
   '@lezer/java@1.1.3':
     resolution: {integrity: sha512-yHquUfujwg6Yu4Fd1GNHCvidIvJwi/1Xu2DaKl/pfWIA2c1oXkVvawH3NyXhCaFx4OdlYBVX5wvz2f7Aoa/4Xw==}
@@ -8080,6 +8164,9 @@ packages:
   '@lezer/json@1.0.2':
     resolution: {integrity: sha512-xHT2P4S5eeCYECyKNPhr4cbEL9tc8w83SPwRC373o9uEdrvGKTZoJVAGxpOsZckMlEh9W23Pc72ew918RWQOBQ==}
 
+  '@lezer/json@1.0.3':
+    resolution: {integrity: sha512-BP9KzdF9Y35PDpv04r0VeSTKDeox5vVr3efE7eBbx3r4s3oNLfunchejZhjArmeieBH+nVOpgIiBJpEAv8ilqQ==}
+
   '@lezer/lezer@1.1.2':
     resolution: {integrity: sha512-O8yw3CxPhzYHB1hvwbdozjnAslhhR8A5BH7vfEMof0xk3p+/DFDfZkA9Tde6J+88WgtwaHy4Sy6ThZSkaI0Evw==}
 
@@ -8089,11 +8176,20 @@ packages:
   '@lezer/markdown@1.3.2':
     resolution: {integrity: sha512-Wu7B6VnrKTbBEohqa63h5vxXjiC4pO5ZQJ/TDbhJxPQaaIoRD/6UVDhSDtVsCwVZV12vvN9KxuLL3ATMnlG0oQ==}
 
+  '@lezer/markdown@1.6.3':
+    resolution: {integrity: sha512-jpGm5Ps+XErS+xA4urw7ogEGkeZOahVQF21Z6oECF0sj+2liwZopd2+I8uH5I/vZsRuuze3OxBREIANLf6KKUw==}
+
   '@lezer/php@1.0.2':
     resolution: {integrity: sha512-GN7BnqtGRpFyeoKSEqxvGvhJQiI4zkgmYnDk/JIyc7H7Ifc1tkPnUn/R2R8meH3h/aBf5rzjvU8ZQoyiNDtDrA==}
 
+  '@lezer/php@1.0.5':
+    resolution: {integrity: sha512-W7asp9DhM6q0W6DYNwIkLSKOvxlXRrif+UXBMxzsJUuqmhE7oVU+gS3THO4S/Puh7Xzgm858UNaFi6dxTP8dJA==}
+
   '@lezer/python@1.1.14':
     resolution: {integrity: sha512-ykDOb2Ti24n76PJsSa4ZoDF0zH12BSw1LGfQXCYJhJyOGiFTfGaX0Du66Ze72R+u/P35U+O6I9m8TFXov1JzsA==}
+
+  '@lezer/python@1.1.18':
+    resolution: {integrity: sha512-31FiUrU7z9+d/ElGQLJFXl+dKOdx0jALlP3KEOsGTex8mvj+SoE1FgItcHWK/axkxCHGUSpqIHt6JAWfWu9Rhg==}
 
   '@lezer/rust@1.0.2':
     resolution: {integrity: sha512-Lz5sIPBdF2FUXcWeCu1//ojFAZqzTQNRga0aYv6dYXqJqPfMdCAI0NzajWUd4Xijj1IKJLtjoXRPMvTKWBcqKg==}
@@ -8104,8 +8200,8 @@ packages:
   '@lezer/xml@1.0.5':
     resolution: {integrity: sha512-VFouqOzmUWfIg+tfmpcdV33ewtK+NSwd4ngSe1aG7HFb4BN0ExyY1b8msp+ndFrnlG4V4iC8yXacjFtrwERnaw==}
 
-  '@lezer/yaml@1.0.3':
-    resolution: {integrity: sha512-GuBLekbw9jDBDhGur82nuwkxKQ+a3W5H0GfaAthDXcAu+XdpS43VlnxA9E9hllkpSP5ellRDKjLLj7Lu9Wr6xA==}
+  '@lezer/yaml@1.0.4':
+    resolution: {integrity: sha512-2lrrHqxalACEbxIbsjhqGpSW8kWpUKuY6RHgnSAFZa6qK62wvnPxA8hGOwOoDbwHcOFs5M4o27mjGu+P7TvBmw==}
 
   '@ljharb/through@2.3.13':
     resolution: {integrity: sha512-/gKJun8NNiWGZJkGzI/Ragc53cOdcLNdzjLaIa+GEjguQs0ulsurx8WN0jijdK9yPqDvziX995sMRLyLt1uZMQ==}
@@ -8129,6 +8225,9 @@ packages:
   '@mapbox/node-pre-gyp@1.0.10':
     resolution: {integrity: sha512-4ySo4CjzStuprMwk35H5pPbkymjv1SF3jGLj6rAHp/xT/RF7TL7bd9CTm1xDY49K2qF7jmR/g7k+SkLETP6opA==}
     hasBin: true
+
+  '@marijn/find-cluster-break@1.0.2':
+    resolution: {integrity: sha512-l0h88YhZFyKdXIFNfSWpyjStDjGHwZ/U7iobcK1cQQD8sejsONdQtTVU+1wVN1PBw40PiiHB1vA5S7VTfQiP9g==}
 
   '@mermaid-js/parser@1.1.1':
     resolution: {integrity: sha512-VuHdsYMK1bT6X2JbcAaWAhugTRvRBRyuZgd+c22swUeI9g/ntaxF7CY7dYarhZovofCbUNO0G7JesfmNtjYOCw==}
@@ -8655,9 +8754,8 @@ packages:
     resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
     engines: {node: '>=18.0.0'}
 
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/3e4a0d45c3ace724704d191ce7857c07f023884f':
-    resolution: {gitHosted: true, tarball: https://codeload.github.com/novuhq/thalamus/tar.gz/3e4a0d45c3ace724704d191ce7857c07f023884f}
-    version: 0.1.0
+  '@novu/thalamus@0.1.0-alpha.7':
+    resolution: {integrity: sha512-fLzeJ0BzIC5/TvxFSBmqSyLZqZhoZObhyIS9oH0cCedzmqsaJ+8S80DcBWBcSSsOu2Dt5O4D+zuswe86uoNnrQ==}
     peerDependencies:
       '@anthropic-ai/aws-sdk': '>=0.86.0'
       '@anthropic-ai/sdk': '>=0.86.0'
@@ -11634,9 +11732,9 @@ packages:
   '@replit/codemirror-lang-csharp@6.2.0':
     resolution: {integrity: sha512-6utbaWkoymhoAXj051mkRp+VIJlpwUgCX9Toevz3YatiZsz512fw3OVCedXQx+WcR0wb6zVHjChnuxqfCLtFVQ==}
     peerDependencies:
-      '@codemirror/autocomplete': ^6.0.0
+      '@codemirror/autocomplete': 6.18.3
       '@codemirror/language': ^6.0.0
-      '@codemirror/state': ^6.0.0
+      '@codemirror/state': 6.6.0
       '@codemirror/view': ^6.0.0
       '@lezer/common': ^1.0.0
       '@lezer/highlight': ^1.0.0
@@ -11645,9 +11743,9 @@ packages:
   '@replit/codemirror-lang-nix@6.0.1':
     resolution: {integrity: sha512-lvzjoYn9nfJzBD5qdm3Ut6G3+Or2wEacYIDJ49h9+19WSChVnxv4ojf+rNmQ78ncuxIt/bfbMvDLMeMP0xze6g==}
     peerDependencies:
-      '@codemirror/autocomplete': ^6.0.0
+      '@codemirror/autocomplete': 6.18.3
       '@codemirror/language': ^6.0.0
-      '@codemirror/state': ^6.0.0
+      '@codemirror/state': 6.6.0
       '@codemirror/view': ^6.0.0
       '@lezer/common': ^1.0.0
       '@lezer/highlight': ^1.0.0
@@ -11661,12 +11759,12 @@ packages:
   '@replit/codemirror-lang-svelte@6.0.0':
     resolution: {integrity: sha512-U2OqqgMM6jKelL0GNWbAmqlu1S078zZNoBqlJBW+retTc5M4Mha6/Y2cf4SVg6ddgloJvmcSpt4hHrVoM4ePRA==}
     peerDependencies:
-      '@codemirror/autocomplete': ^6.0.0
+      '@codemirror/autocomplete': 6.18.3
       '@codemirror/lang-css': ^6.0.1
       '@codemirror/lang-html': ^6.2.0
       '@codemirror/lang-javascript': ^6.1.1
       '@codemirror/language': ^6.0.0
-      '@codemirror/state': ^6.0.0
+      '@codemirror/state': 6.6.0
       '@codemirror/view': ^6.0.0
       '@lezer/common': ^1.0.0
       '@lezer/highlight': ^1.0.0
@@ -14018,6 +14116,9 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
+  '@types/estree@1.0.9':
+    resolution: {integrity: sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg==}
+
   '@types/express-serve-static-core@4.17.33':
     resolution: {integrity: sha512-TPBqmR/HRYI3eC2E5hmiivIzv+bidAfXofM+sbonAGvyDhySGw9/PQZFt2BLOrjUUR++4eJVpx6KnLQK1Fk9tA==}
 
@@ -14532,12 +14633,12 @@ packages:
   '@uiw/codemirror-extensions-basic-setup@4.23.6':
     resolution: {integrity: sha512-bvtq8IOvdkLJMhoJBRGPEzU51fMpPDwEhcAHp9xCR05MtbIokQgsnLXrmD1aZm6e7s/3q47H+qdSfAAkR5MkLA==}
     peerDependencies:
-      '@codemirror/autocomplete': '>=6.0.0'
+      '@codemirror/autocomplete': 6.18.3
       '@codemirror/commands': '>=6.0.0'
       '@codemirror/language': '>=6.0.0'
       '@codemirror/lint': '>=6.0.0'
       '@codemirror/search': '>=6.0.0'
-      '@codemirror/state': '>=6.0.0'
+      '@codemirror/state': 6.6.0
       '@codemirror/view': '>=6.0.0'
 
   '@uiw/codemirror-extensions-langs@4.23.6':
@@ -14556,14 +14657,14 @@ packages:
     resolution: {integrity: sha512-0dpuLQW+V6zrKvfvor/eo71V3tpr2L2Hsu8QZAdtSzksjWABxTOzH3ShaBRxCEsrz6sU9sa9o7ShwBMMDz59bQ==}
     peerDependencies:
       '@codemirror/language': '>=6.0.0'
-      '@codemirror/state': '>=6.0.0'
+      '@codemirror/state': 6.6.0
       '@codemirror/view': '>=6.0.0'
 
   '@uiw/react-codemirror@4.23.6':
     resolution: {integrity: sha512-caYKGV6TfGLRV1HHD3p0G3FiVzKL1go7wes5XT2nWjB0+dTdyzyb81MKRSacptgZcotujfNO6QXn65uhETRAMw==}
     peerDependencies:
       '@babel/runtime': ^7.26.10
-      '@codemirror/state': '>=6.0.0'
+      '@codemirror/state': 6.6.0
       '@codemirror/theme-one-dark': '>=6.0.0'
       '@codemirror/view': '>=6.0.0'
       codemirror: '>=6.0.0'
@@ -17949,8 +18050,13 @@ packages:
     resolution: {integrity: sha512-Ap6G0WQwcU/LHsvLwON1fAQX9Zp0A2Y6Y/cJBl9r/JbW90Zyg4/zbG6zzKa2OTALELarYHmKu0GhpM5EO+7T0g==}
     engines: {node: '>=0.10'}
 
-  esrap@2.2.4:
-    resolution: {integrity: sha512-suICpxAmZ9A8bzJjEl/+rLJiDKC0X4gYWUxT6URAWBLvlXmtbZd5ySMu/N2ZGEtMCAmflUDPSehrP9BQcsGcSg==}
+  esrap@2.2.9:
+    resolution: {integrity: sha512-4KijP+NxCWthMCUC3qHbE6n4vCjqgJS1uAYKhuT/GWfFTf1Qyive2TgOjep+gzbSzRfnNyaN/UU9YmdOt8Eg0A==}
+    peerDependencies:
+      '@typescript-eslint/types': ^8.2.0
+    peerDependenciesMeta:
+      '@typescript-eslint/types':
+        optional: true
 
   esrecurse@4.3.0:
     resolution: {integrity: sha512-KmfKL3b6G+RXvP8N1vr3Tq1kL/oCFgn2NYXEtqP8/L3pKapUA4G8cFVaoF3SU323CD4XypR/ffioHmkti6/Tag==}
@@ -23501,8 +23607,8 @@ packages:
     resolution: {integrity: sha512-SAzp/O4Yh02jGdRc+uIrGoe87dkN/XtwxfZ4ZyafJHymd79ozp5VG5nyZ7ygqPM5+cpLDjjGnYFUkngonyDPOQ==}
     engines: {node: '>=14.0.0'}
 
-  protobufjs@7.5.7:
-    resolution: {integrity: sha512-NGnrxS/nLKUo5nkbVQxlC71sB4hdfImdYIbFeSCidxtwATx0AHRPcANSLd0q5Bb2BkoSWo2iisQhGg5/r+ihbA==}
+  protobufjs@7.5.8:
+    resolution: {integrity: sha512-dvpCIeLPbXZS/Ete7yLaO7RenOdken2NHKykBXbsaGxZT0UTltcarBciw+A78SRQs9iMAAVpsYA+l8b1hTePIA==}
     engines: {node: '>=12.0.0'}
 
   protobufjs@8.2.0:
@@ -23573,6 +23679,10 @@ packages:
 
   qs@6.15.0:
     resolution: {integrity: sha512-mAZTtNCeetKMH+pSjrb76NAM8V9a05I9aBZOHztWy/UqcJdQYNsf59vrRKWnojAT9Y+GbIvoTBC++CPHqpDBhQ==}
+    engines: {node: '>=0.6'}
+
+  qs@6.15.1:
+    resolution: {integrity: sha512-6YHEFRL9mfgcAvql/XhwTvf5jKcOiiupt2FiJxHkiX1z4j7WL8J/jRHYLluORvc1XxB5rV20KoeK00gVJamspg==}
     engines: {node: '>=0.6'}
 
   query-registry@3.0.1:
@@ -25149,6 +25259,9 @@ packages:
   style-mod@4.1.2:
     resolution: {integrity: sha512-wnD1HyVqpJUI2+eKZ+eo1UwghftP6yuFheBqqe+bWCotBjC2K1YnteJILRMs3SM4V/0dLEW1SC27MWP5y+mwmw==}
 
+  style-mod@4.1.3:
+    resolution: {integrity: sha512-i/n8VsZydrugj3Iuzll8+x/00GH2vnYsk1eomD8QiRrSAeW6ItbCQDtfXCeJHd0iwiNagqjQkvpvREEPtW3IoQ==}
+
   style-to-js@1.1.21:
     resolution: {integrity: sha512-RjQetxJrrUJLQPHbLku6U/ocGtzyjbJMP9lCNK7Ag0CNh690nSH8woqWH9u16nMjYBAok+i7JO1NP2pOy8IsPQ==}
 
@@ -26250,6 +26363,15 @@ packages:
 
   use-isomorphic-layout-effect@1.2.0:
     resolution: {integrity: sha512-q6ayo8DWoPZT0VdG4u3D3uxcgONP3Mevx2i2b0434cwWBoL+aelL1DzkXI6w3PhTZzUeR2kaVlZn70iCiseP6w==}
+    peerDependencies:
+      '@types/react': '*'
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  use-isomorphic-layout-effect@1.2.1:
+    resolution: {integrity: sha512-tpZZ+EX0gaghDAiFR37hj5MgY6ZN55kLiPkJsKxBMZ6GZdOSPJXiOzPM984oPYZ5AnehYx5WQp1+ME8I/P/pRA==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -27598,8 +27720,8 @@ snapshots:
       '@aws-crypto/sha1-browser': 3.0.0
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sso-oidc': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-bucket-endpoint': 3.575.0
@@ -27952,11 +28074,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sso-oidc@3.575.0(@aws-sdk/client-sts@3.575.0)':
+  '@aws-sdk/client-sso-oidc@3.575.0':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -27995,7 +28117,6 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
-      - '@aws-sdk/client-sts'
       - aws-crt
 
   '@aws-sdk/client-sso@3.575.0':
@@ -28084,11 +28205,11 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-sts@3.575.0':
+  '@aws-sdk/client-sts@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
       '@aws-crypto/sha256-browser': 3.0.0
       '@aws-crypto/sha256-js': 3.0.0
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/core': 3.575.0
       '@aws-sdk/credential-provider-node': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)
       '@aws-sdk/middleware-host-header': 3.575.0
@@ -28127,6 +28248,7 @@ snapshots:
       '@smithy/util-utf8': 3.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
+      - '@aws-sdk/client-sso-oidc'
       - aws-crt
 
   '@aws-sdk/core@3.575.0':
@@ -28306,7 +28428,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-ini@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/credential-provider-env': 3.575.0
       '@aws-sdk/credential-provider-process': 3.575.0
       '@aws-sdk/credential-provider-sso': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
@@ -28633,7 +28755,7 @@ snapshots:
 
   '@aws-sdk/credential-provider-web-identity@3.575.0(@aws-sdk/client-sts@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sts': 3.575.0
+      '@aws-sdk/client-sts': 3.575.0(@aws-sdk/client-sso-oidc@3.575.0)
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/types': 3.3.0
@@ -29252,7 +29374,7 @@ snapshots:
 
   '@aws-sdk/token-providers@3.575.0(@aws-sdk/client-sso-oidc@3.575.0)':
     dependencies:
-      '@aws-sdk/client-sso-oidc': 3.575.0(@aws-sdk/client-sts@3.575.0)
+      '@aws-sdk/client-sso-oidc': 3.575.0
       '@aws-sdk/types': 3.575.0
       '@smithy/property-provider': 3.1.3
       '@smithy/shared-ini-file-loader': 3.1.4
@@ -30741,21 +30863,21 @@ snapshots:
       '@better-auth/core': 1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.3.1
 
-  '@better-auth/sso@1.4.7(better-auth@1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7)(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))':
+  '@better-auth/sso@1.4.7(better-auth@1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))':
     dependencies:
       '@better-fetch/fetch': 1.1.21
-      better-auth: 1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7)(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      better-auth: 1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
       fast-xml-parser: 5.7.3
       jose: 6.1.3
       samlify: 2.10.2
       zod: 4.3.5
 
-  '@better-auth/sso@1.5.6(cf3ce98ba948c754e75dad8f5a1986eb)':
+  '@better-auth/sso@1.5.6(7df0cc6358d81639ef43795ea61ab08f)':
     dependencies:
       '@better-auth/core': 1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/utils': 0.3.1
       '@better-fetch/fetch': 1.1.21
-      better-auth: 1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7)(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      better-auth: 1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
       better-call: 1.3.2(zod@4.3.6)
       fast-xml-parser: 5.7.3
       jose: 6.1.3
@@ -30893,6 +31015,13 @@ snapshots:
       - react
       - react-dom
 
+  '@clerk/clerk-react@5.61.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@clerk/shared': 3.47.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      tslib: 2.8.1
+
   '@clerk/clerk-react@5.61.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@clerk/shared': 3.47.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -30922,6 +31051,18 @@ snapshots:
     optionalDependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
+
+  '@clerk/shared@3.47.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      csstype: 3.1.3
+      dequal: 2.0.3
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.5
+      std-env: 3.9.0
+      swr: 2.3.4(react@18.3.1)
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   '@clerk/shared@3.47.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -30990,17 +31131,38 @@ snapshots:
   '@cloudflare/workerd-windows-64@1.20260302.0':
     optional: true
 
-  '@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)':
+  '@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)':
     dependencies:
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.2.3
+
+  '@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)':
+    dependencies:
+      '@codemirror/language': 6.11.1
+      '@codemirror/state': 6.6.0
+      '@codemirror/view': 6.34.3
+      '@lezer/common': 1.5.2
+
+  '@codemirror/autocomplete@6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)':
+    dependencies:
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@codemirror/view': 6.34.3
+      '@lezer/common': 1.5.2
+
+  '@codemirror/commands@6.10.3':
+    dependencies:
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@codemirror/view': 6.34.3
+      '@lezer/common': 1.5.2
 
   '@codemirror/commands@6.7.1':
     dependencies:
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.2.3
 
@@ -31013,38 +31175,74 @@ snapshots:
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
+  '@codemirror/lang-angular@0.1.4':
+    dependencies:
+      '@codemirror/lang-html': 6.4.11
+      '@codemirror/lang-javascript': 6.2.5
+      '@codemirror/language': 6.12.3
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.2
+
   '@codemirror/lang-cpp@6.0.2':
     dependencies:
       '@codemirror/language': 6.11.1
       '@lezer/cpp': 1.1.2
 
+  '@codemirror/lang-cpp@6.0.3':
+    dependencies:
+      '@codemirror/language': 6.12.3
+      '@lezer/cpp': 1.1.5
+
   '@codemirror/lang-css@6.3.0(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@lezer/common': 1.2.3
       '@lezer/css': 1.1.9
     transitivePeerDependencies:
       - '@codemirror/view'
 
-  '@codemirror/lang-go@6.0.1(@codemirror/view@6.34.3)':
+  '@codemirror/lang-css@6.3.1(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
-      '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
-      '@lezer/common': 1.2.3
-      '@lezer/go': 1.0.0
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@lezer/common': 1.5.2
+      '@lezer/css': 1.3.3
     transitivePeerDependencies:
       - '@codemirror/view'
 
+  '@codemirror/lang-go@6.0.1(@codemirror/view@6.34.3)':
+    dependencies:
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@lezer/common': 1.5.2
+      '@lezer/go': 1.0.1
+    transitivePeerDependencies:
+      - '@codemirror/view'
+
+  '@codemirror/lang-html@6.4.11':
+    dependencies:
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/lang-css': 6.3.1(@codemirror/view@6.34.3)
+      '@codemirror/lang-javascript': 6.2.5
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@codemirror/view': 6.34.3
+      '@lezer/common': 1.5.2
+      '@lezer/css': 1.3.3
+      '@lezer/html': 1.3.13
+
   '@codemirror/lang-html@6.4.9':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
       '@codemirror/lang-css': 6.3.0(@codemirror/view@6.34.3)
       '@codemirror/lang-javascript': 6.2.2
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.2.3
       '@lezer/css': 1.1.9
@@ -31055,20 +31253,40 @@ snapshots:
       '@codemirror/language': 6.11.1
       '@lezer/java': 1.1.3
 
+  '@codemirror/lang-java@6.0.2':
+    dependencies:
+      '@codemirror/language': 6.12.3
+      '@lezer/java': 1.1.3
+
   '@codemirror/lang-javascript@6.2.2':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
       '@codemirror/language': 6.11.1
       '@codemirror/lint': 6.8.2
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.2.3
+      '@lezer/javascript': 1.4.19
+
+  '@codemirror/lang-javascript@6.2.5':
+    dependencies:
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/language': 6.12.3
+      '@codemirror/lint': 6.8.2
+      '@codemirror/state': 6.6.0
+      '@codemirror/view': 6.34.3
+      '@lezer/common': 1.5.2
       '@lezer/javascript': 1.4.19
 
   '@codemirror/lang-json@6.0.1':
     dependencies:
       '@codemirror/language': 6.11.1
       '@lezer/json': 1.0.2
+
+  '@codemirror/lang-json@6.0.2':
+    dependencies:
+      '@codemirror/language': 6.12.3
+      '@lezer/json': 1.0.3
 
   '@codemirror/lang-less@6.0.2(@codemirror/view@6.34.3)':
     dependencies:
@@ -31083,46 +31301,85 @@ snapshots:
   '@codemirror/lang-lezer@6.0.1':
     dependencies:
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@lezer/common': 1.2.3
       '@lezer/lezer': 1.1.2
 
   '@codemirror/lang-liquid@6.2.3':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
       '@codemirror/lang-html': 6.4.9
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
+  '@codemirror/lang-liquid@6.3.2':
+    dependencies:
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/lang-html': 6.4.11
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@codemirror/view': 6.34.3
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.2
+
   '@codemirror/lang-markdown@6.3.0':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
       '@codemirror/lang-html': 6.4.9
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.2.3
       '@lezer/markdown': 1.3.2
+
+  '@codemirror/lang-markdown@6.5.0':
+    dependencies:
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/lang-html': 6.4.11
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@codemirror/view': 6.34.3
+      '@lezer/common': 1.5.2
+      '@lezer/markdown': 1.6.3
 
   '@codemirror/lang-php@6.0.1':
     dependencies:
       '@codemirror/lang-html': 6.4.9
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@lezer/common': 1.2.3
       '@lezer/php': 1.0.2
 
+  '@codemirror/lang-php@6.0.2':
+    dependencies:
+      '@codemirror/lang-html': 6.4.11
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@lezer/common': 1.5.2
+      '@lezer/php': 1.0.5
+
   '@codemirror/lang-python@6.1.6(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@lezer/common': 1.2.3
       '@lezer/python': 1.1.14
+    transitivePeerDependencies:
+      - '@codemirror/view'
+
+  '@codemirror/lang-python@6.2.1(@codemirror/view@6.34.3)':
+    dependencies:
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@lezer/common': 1.5.2
+      '@lezer/python': 1.1.18
     transitivePeerDependencies:
       - '@codemirror/view'
 
@@ -31131,21 +31388,37 @@ snapshots:
       '@codemirror/language': 6.11.1
       '@lezer/rust': 1.0.2
 
+  '@codemirror/lang-rust@6.0.2':
+    dependencies:
+      '@codemirror/language': 6.12.3
+      '@lezer/rust': 1.0.2
+
   '@codemirror/lang-sass@6.0.2(@codemirror/view@6.34.3)':
     dependencies:
       '@codemirror/lang-css': 6.3.0(@codemirror/view@6.34.3)
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@lezer/common': 1.2.3
       '@lezer/sass': 1.0.7
     transitivePeerDependencies:
       - '@codemirror/view'
 
+  '@codemirror/lang-sql@6.10.0(@codemirror/view@6.34.3)':
+    dependencies:
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.2
+    transitivePeerDependencies:
+      - '@codemirror/view'
+
   '@codemirror/lang-sql@6.8.0(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
@@ -31170,88 +31443,100 @@ snapshots:
 
   '@codemirror/lang-xml@6.1.0':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.2.3
       '@lezer/xml': 1.0.5
 
-  '@codemirror/lang-yaml@6.1.1(@codemirror/view@6.34.3)':
+  '@codemirror/lang-yaml@6.1.3(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
-      '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
-      '@lezer/common': 1.2.3
-      '@lezer/highlight': 1.2.1
-      '@lezer/yaml': 1.0.3
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.2
+      '@lezer/yaml': 1.0.4
     transitivePeerDependencies:
       - '@codemirror/view'
 
   '@codemirror/language-data@6.5.1(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/lang-angular': 0.1.3
-      '@codemirror/lang-cpp': 6.0.2
-      '@codemirror/lang-css': 6.3.0(@codemirror/view@6.34.3)
+      '@codemirror/lang-angular': 0.1.4
+      '@codemirror/lang-cpp': 6.0.3
+      '@codemirror/lang-css': 6.3.1(@codemirror/view@6.34.3)
       '@codemirror/lang-go': 6.0.1(@codemirror/view@6.34.3)
-      '@codemirror/lang-html': 6.4.9
-      '@codemirror/lang-java': 6.0.1
-      '@codemirror/lang-javascript': 6.2.2
-      '@codemirror/lang-json': 6.0.1
+      '@codemirror/lang-html': 6.4.11
+      '@codemirror/lang-java': 6.0.2
+      '@codemirror/lang-javascript': 6.2.5
+      '@codemirror/lang-json': 6.0.2
       '@codemirror/lang-less': 6.0.2(@codemirror/view@6.34.3)
-      '@codemirror/lang-liquid': 6.2.3
-      '@codemirror/lang-markdown': 6.3.0
-      '@codemirror/lang-php': 6.0.1
-      '@codemirror/lang-python': 6.1.6(@codemirror/view@6.34.3)
-      '@codemirror/lang-rust': 6.0.1
+      '@codemirror/lang-liquid': 6.3.2
+      '@codemirror/lang-markdown': 6.5.0
+      '@codemirror/lang-php': 6.0.2
+      '@codemirror/lang-python': 6.2.1(@codemirror/view@6.34.3)
+      '@codemirror/lang-rust': 6.0.2
       '@codemirror/lang-sass': 6.0.2(@codemirror/view@6.34.3)
-      '@codemirror/lang-sql': 6.8.0(@codemirror/view@6.34.3)
+      '@codemirror/lang-sql': 6.10.0(@codemirror/view@6.34.3)
       '@codemirror/lang-vue': 0.1.3
       '@codemirror/lang-wast': 6.0.2
       '@codemirror/lang-xml': 6.1.0
-      '@codemirror/lang-yaml': 6.1.1(@codemirror/view@6.34.3)
-      '@codemirror/language': 6.11.1
+      '@codemirror/lang-yaml': 6.1.3(@codemirror/view@6.34.3)
+      '@codemirror/language': 6.12.3
       '@codemirror/legacy-modes': 6.4.1
     transitivePeerDependencies:
       - '@codemirror/view'
 
   '@codemirror/language@6.11.1':
     dependencies:
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
       style-mod: 4.1.2
 
+  '@codemirror/language@6.12.3':
+    dependencies:
+      '@codemirror/state': 6.6.0
+      '@codemirror/view': 6.34.3
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.2
+      style-mod: 4.1.3
+
   '@codemirror/legacy-modes@6.4.1':
     dependencies:
-      '@codemirror/language': 6.11.1
+      '@codemirror/language': 6.12.3
 
   '@codemirror/lint@6.8.2':
     dependencies:
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       crelt: 1.0.6
 
   '@codemirror/search@6.5.6':
     dependencies:
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
       crelt: 1.0.6
 
-  '@codemirror/state@6.4.1': {}
+  '@codemirror/state@6.6.0':
+    dependencies:
+      '@marijn/find-cluster-break': 1.0.2
 
   '@codemirror/theme-one-dark@6.1.2':
     dependencies:
-      '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/language': 6.12.3
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
-      '@lezer/highlight': 1.2.1
+      '@lezer/highlight': 1.2.3
 
   '@codemirror/view@6.34.3':
     dependencies:
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       style-mod: 4.1.2
       w3c-keyname: 2.2.8
 
@@ -32029,6 +32314,10 @@ snapshots:
     dependencies:
       '@floating-ui/utils': 0.2.10
 
+  '@floating-ui/core@1.7.5':
+    dependencies:
+      '@floating-ui/utils': 0.2.11
+
   '@floating-ui/dom@1.6.13':
     dependencies:
       '@floating-ui/core': 1.6.2
@@ -32038,6 +32327,11 @@ snapshots:
     dependencies:
       '@floating-ui/core': 1.7.3
       '@floating-ui/utils': 0.2.10
+
+  '@floating-ui/dom@1.7.6':
+    dependencies:
+      '@floating-ui/core': 1.7.5
+      '@floating-ui/utils': 0.2.11
 
   '@floating-ui/react-dom@2.1.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
@@ -32053,6 +32347,8 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
+  '@floating-ui/utils@0.2.11': {}
+
   '@floating-ui/utils@0.2.9': {}
 
   '@gitopslovers/nx-biome@1.5.0': {}
@@ -32067,7 +32363,7 @@ snapshots:
       fast-deep-equal: 3.1.3
       functional-red-black-tree: 1.0.1
       google-gax: 4.6.0(encoding@0.1.13)
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -32174,14 +32470,14 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.2.3
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       yargs: 17.7.2
 
   '@grpc/proto-loader@0.8.0':
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.2.3
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       yargs: 17.7.2
 
   '@gwhitney/detect-indent@7.0.1': {}
@@ -33236,10 +33532,18 @@ snapshots:
 
   '@lezer/common@1.2.3': {}
 
+  '@lezer/common@1.5.2': {}
+
   '@lezer/cpp@1.1.2':
     dependencies:
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
+      '@lezer/lr': 1.4.2
+
+  '@lezer/cpp@1.1.5':
+    dependencies:
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.2
 
   '@lezer/css@1.1.9':
@@ -33248,20 +33552,36 @@ snapshots:
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
-  '@lezer/go@1.0.0':
+  '@lezer/css@1.3.3':
     dependencies:
-      '@lezer/common': 1.2.3
-      '@lezer/highlight': 1.2.1
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.2
+
+  '@lezer/go@1.0.1':
+    dependencies:
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.2
 
   '@lezer/highlight@1.2.1':
     dependencies:
       '@lezer/common': 1.2.3
 
+  '@lezer/highlight@1.2.3':
+    dependencies:
+      '@lezer/common': 1.5.2
+
   '@lezer/html@1.3.10':
     dependencies:
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
+      '@lezer/lr': 1.4.2
+
+  '@lezer/html@1.3.13':
+    dependencies:
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.2
 
   '@lezer/java@1.1.3':
@@ -33282,6 +33602,12 @@ snapshots:
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
+  '@lezer/json@1.0.3':
+    dependencies:
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.2
+
   '@lezer/lezer@1.1.2':
     dependencies:
       '@lezer/highlight': 1.2.1
@@ -33296,16 +33622,33 @@ snapshots:
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
 
+  '@lezer/markdown@1.6.3':
+    dependencies:
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+
   '@lezer/php@1.0.2':
     dependencies:
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
+  '@lezer/php@1.0.5':
+    dependencies:
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
+      '@lezer/lr': 1.4.2
+
   '@lezer/python@1.1.14':
     dependencies:
       '@lezer/common': 1.2.3
       '@lezer/highlight': 1.2.1
+      '@lezer/lr': 1.4.2
+
+  '@lezer/python@1.1.18':
+    dependencies:
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.2
 
   '@lezer/rust@1.0.2':
@@ -33326,10 +33669,10 @@ snapshots:
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
-  '@lezer/yaml@1.0.3':
+  '@lezer/yaml@1.0.4':
     dependencies:
-      '@lezer/common': 1.2.3
-      '@lezer/highlight': 1.2.1
+      '@lezer/common': 1.5.2
+      '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.2
 
   '@ljharb/through@2.3.13':
@@ -33366,6 +33709,8 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
+
+  '@marijn/find-cluster-break@1.0.2': {}
 
   '@mermaid-js/parser@1.1.1':
     dependencies:
@@ -34010,7 +34355,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@https://codeload.github.com/novuhq/thalamus/tar.gz/3e4a0d45c3ace724704d191ce7857c07f023884f(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.1)(zod@3.25.20))':
+  '@novu/thalamus@0.1.0-alpha.7(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.1)(zod@3.25.20))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.95.1(zod@3.25.20)
       '@aws-crypto/sha256-js': 5.2.0
@@ -35348,7 +35693,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.201.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
 
   '@opentelemetry/otlp-transformer@0.217.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -38423,23 +38768,23 @@ snapshots:
 
   '@remirror/core-constants@3.0.0': {}
 
-  '@replit/codemirror-lang-csharp@6.2.0(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)':
+  '@replit/codemirror-lang-csharp@6.2.0(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
-      '@lezer/common': 1.2.3
+      '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
-  '@replit/codemirror-lang-nix@6.0.1(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)':
+  '@replit/codemirror-lang-nix@6.0.1(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
-      '@lezer/common': 1.2.3
+      '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
@@ -38448,16 +38793,16 @@ snapshots:
       '@codemirror/language': 6.11.1
       '@lezer/highlight': 1.2.1
 
-  '@replit/codemirror-lang-svelte@6.0.0(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/lang-css@6.3.0(@codemirror/view@6.34.3))(@codemirror/lang-html@6.4.9)(@codemirror/lang-javascript@6.2.2)(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/javascript@1.4.19)(@lezer/lr@1.4.2)':
+  '@replit/codemirror-lang-svelte@6.0.0(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/lang-css@6.3.0(@codemirror/view@6.34.3))(@codemirror/lang-html@6.4.9)(@codemirror/lang-javascript@6.2.2)(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)(@lezer/highlight@1.2.1)(@lezer/javascript@1.4.19)(@lezer/lr@1.4.2)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/lang-css': 6.3.0(@codemirror/view@6.34.3)
       '@codemirror/lang-html': 6.4.9
       '@codemirror/lang-javascript': 6.2.2
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
-      '@lezer/common': 1.2.3
+      '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.1
       '@lezer/javascript': 1.4.19
       '@lezer/lr': 1.4.2
@@ -40774,11 +41119,11 @@ snapshots:
     dependencies:
       acorn: 8.16.0
 
-  '@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))':
+  '@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@sveltejs/acorn-typescript': 1.0.9(acorn@8.16.0)
-      '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
+      '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
       '@types/cookie': 0.6.0
       acorn: 8.16.0
       cookie: 0.7.2
@@ -40789,17 +41134,17 @@ snapshots:
       mrmime: 2.0.0
       set-cookie-parser: 3.1.0
       sirv: 3.0.2
-      svelte: 5.55.7
+      svelte: 5.55.7(@typescript-eslint/types@8.39.1)
       vite: 6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       typescript: 5.6.2
 
-  '@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))':
+  '@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
       '@standard-schema/spec': 1.1.0
       '@sveltejs/acorn-typescript': 1.0.9(acorn@8.16.0)
-      '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
       '@types/cookie': 0.6.0
       acorn: 8.16.0
       cookie: 0.7.2
@@ -40810,55 +41155,55 @@ snapshots:
       mrmime: 2.0.0
       set-cookie-parser: 3.1.0
       sirv: 3.0.2
-      svelte: 5.55.7
+      svelte: 5.55.7(@typescript-eslint/types@8.39.1)
       vite: 6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)
     optionalDependencies:
       '@opentelemetry/api': 1.9.0
       typescript: 5.6.2
     optional: true
 
-  '@sveltejs/vite-plugin-svelte-inspector@1.0.4(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)))(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))':
+  '@sveltejs/vite-plugin-svelte-inspector@1.0.4(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
+      '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
       debug: 4.4.3
-      svelte: 5.55.7
+      svelte: 5.55.7(@typescript-eslint/types@8.39.1)
       vite: 6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltejs/vite-plugin-svelte-inspector@1.0.4(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))':
+  '@sveltejs/vite-plugin-svelte-inspector@1.0.4(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      '@sveltejs/vite-plugin-svelte': 2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
       debug: 4.4.3
-      svelte: 5.55.7
+      svelte: 5.55.7(@typescript-eslint/types@8.39.1)
       vite: 6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - supports-color
     optional: true
 
-  '@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))':
+  '@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte-inspector': 1.0.4(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)))(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
+      '@sveltejs/vite-plugin-svelte-inspector': 1.0.4(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
       debug: 4.4.3
       deepmerge: 4.3.1
       kleur: 4.1.5
       magic-string: 0.30.21
-      svelte: 5.55.7
-      svelte-hmr: 0.15.3(svelte@5.55.7)
+      svelte: 5.55.7(@typescript-eslint/types@8.39.1)
+      svelte-hmr: 0.15.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))
       vite: 6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3)
       vitefu: 0.2.5(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.16.2)(yaml@2.8.3))
     transitivePeerDependencies:
       - supports-color
 
-  '@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))':
+  '@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))':
     dependencies:
-      '@sveltejs/vite-plugin-svelte-inspector': 1.0.4(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      '@sveltejs/vite-plugin-svelte-inspector': 1.0.4(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
       debug: 4.4.3
       deepmerge: 4.3.1
       kleur: 4.1.5
       magic-string: 0.30.21
-      svelte: 5.55.7
-      svelte-hmr: 0.15.3(svelte@5.55.7)
+      svelte: 5.55.7(@typescript-eslint/types@8.39.1)
+      svelte-hmr: 0.15.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))
       vite: 6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)
       vitefu: 0.2.5(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
     transitivePeerDependencies:
@@ -41111,11 +41456,6 @@ snapshots:
       tslib: 2.8.1
 
   '@tanstack/query-core@5.65.0': {}
-
-  '@tanstack/react-query@5.65.0(react@18.3.1)':
-    dependencies:
-      '@tanstack/query-core': 5.65.0
-      react: 18.3.1
 
   '@tanstack/react-query@5.65.0(react@19.2.3)':
     dependencies:
@@ -41688,6 +42028,8 @@ snapshots:
   '@types/estree@0.0.39': {}
 
   '@types/estree@1.0.8': {}
+
+  '@types/estree@1.0.9': {}
 
   '@types/express-serve-static-core@4.17.33':
     dependencies:
@@ -42303,17 +42645,17 @@ snapshots:
 
   '@tyriar/fibonacci-heap@2.0.9': {}
 
-  '@uiw/codemirror-extensions-basic-setup@4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/commands@6.7.1)(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)':
+  '@uiw/codemirror-extensions-basic-setup@4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/commands@6.7.1)(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/commands': 6.7.1
       '@codemirror/language': 6.11.1
       '@codemirror/lint': 6.8.2
       '@codemirror/search': 6.5.6
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
 
-  '@uiw/codemirror-extensions-langs@4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/language-data@6.5.1(@codemirror/view@6.34.3))(@codemirror/language@6.11.1)(@codemirror/legacy-modes@6.4.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/javascript@1.4.19)(@lezer/lr@1.4.2)':
+  '@uiw/codemirror-extensions-langs@4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language-data@6.5.1(@codemirror/view@6.34.3))(@codemirror/language@6.11.1)(@codemirror/legacy-modes@6.4.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)(@lezer/highlight@1.2.1)(@lezer/javascript@1.4.19)(@lezer/lr@1.4.2)':
     dependencies:
       '@codemirror/lang-angular': 0.1.3
       '@codemirror/lang-cpp': 6.0.2
@@ -42337,10 +42679,10 @@ snapshots:
       '@codemirror/language-data': 6.5.1(@codemirror/view@6.34.3)
       '@codemirror/legacy-modes': 6.4.1
       '@nextjournal/lang-clojure': 1.0.0
-      '@replit/codemirror-lang-csharp': 6.2.0(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)
-      '@replit/codemirror-lang-nix': 6.0.1(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)
+      '@replit/codemirror-lang-csharp': 6.2.0(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)
+      '@replit/codemirror-lang-nix': 6.0.1(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)(@lezer/highlight@1.2.1)(@lezer/lr@1.4.2)
       '@replit/codemirror-lang-solidity': 6.0.2(@codemirror/language@6.11.1)
-      '@replit/codemirror-lang-svelte': 6.0.0(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/lang-css@6.3.0(@codemirror/view@6.34.3))(@codemirror/lang-html@6.4.9)(@codemirror/lang-javascript@6.2.2)(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)(@lezer/highlight@1.2.1)(@lezer/javascript@1.4.19)(@lezer/lr@1.4.2)
+      '@replit/codemirror-lang-svelte': 6.0.0(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/lang-css@6.3.0(@codemirror/view@6.34.3))(@codemirror/lang-html@6.4.9)(@codemirror/lang-javascript@6.2.2)(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)(@lezer/highlight@1.2.1)(@lezer/javascript@1.4.19)(@lezer/lr@1.4.2)
       codemirror-lang-mermaid: 0.5.0
     transitivePeerDependencies:
       - '@codemirror/autocomplete'
@@ -42352,37 +42694,37 @@ snapshots:
       - '@lezer/javascript'
       - '@lezer/lr'
 
-  '@uiw/codemirror-theme-material@4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)':
+  '@uiw/codemirror-theme-material@4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)':
     dependencies:
-      '@uiw/codemirror-themes': 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)
+      '@uiw/codemirror-themes': 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)
     transitivePeerDependencies:
       - '@codemirror/language'
       - '@codemirror/state'
       - '@codemirror/view'
 
-  '@uiw/codemirror-theme-white@4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)':
+  '@uiw/codemirror-theme-white@4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)':
     dependencies:
-      '@uiw/codemirror-themes': 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)
+      '@uiw/codemirror-themes': 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)
     transitivePeerDependencies:
       - '@codemirror/language'
       - '@codemirror/state'
       - '@codemirror/view'
 
-  '@uiw/codemirror-themes@4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)':
+  '@uiw/codemirror-themes@4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)':
     dependencies:
       '@codemirror/language': 6.11.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
 
-  '@uiw/react-codemirror@4.23.6(@babel/runtime@7.28.3)(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.4.1)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.34.3)(codemirror@6.0.1(@lezer/common@1.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@uiw/react-codemirror@4.23.6(@babel/runtime@7.28.3)(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.34.3)(codemirror@6.0.1(@lezer/common@1.5.2))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@babel/runtime': 7.28.3
       '@codemirror/commands': 6.7.1
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/theme-one-dark': 6.1.2
       '@codemirror/view': 6.34.3
-      '@uiw/codemirror-extensions-basic-setup': 4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3))(@codemirror/commands@6.7.1)(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)
-      codemirror: 6.0.1(@lezer/common@1.2.3)
+      '@uiw/codemirror-extensions-basic-setup': 4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/commands@6.7.1)(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)
+      codemirror: 6.0.1(@lezer/common@1.5.2)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
     transitivePeerDependencies:
@@ -44031,7 +44373,7 @@ snapshots:
       jsonpointer: 5.0.1
       leven: 3.1.0
 
-  better-auth@1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7)(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)):
+  better-auth@1.5.6(@opentelemetry/api@1.9.0)(@sveltejs/kit@2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(mongodb@6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7))(next@16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(solid-js@1.9.6)(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vitest@2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)):
     dependencies:
       '@better-auth/core': 1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0)
       '@better-auth/drizzle-adapter': 1.5.6(@better-auth/core@1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.3.1)
@@ -44051,13 +44393,13 @@ snapshots:
       nanostores: 1.2.0
       zod: 4.3.6
     optionalDependencies:
-      '@sveltejs/kit': 2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7)(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+      '@sveltejs/kit': 2.57.1(@opentelemetry/api@1.9.0)(@sveltejs/vite-plugin-svelte@2.5.3(svelte@5.55.7(@typescript-eslint/types@8.39.1))(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)))(svelte@5.55.7(@typescript-eslint/types@8.39.1))(typescript@5.6.2)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
       mongodb: 6.21.0(gcp-metadata@5.3.0(encoding@0.1.13))(socks@2.8.7)
       next: 16.2.6(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       solid-js: 1.9.6
-      svelte: 5.55.7
+      svelte: 5.55.7(@typescript-eslint/types@8.39.1)
       vitest: 2.1.9(@edge-runtime/vm@3.0.3)(@types/node@22.15.13)(happy-dom@20.8.9)(jiti@2.6.1)(jsdom@20.0.3)(lightningcss@1.30.2)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3)
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
@@ -44791,14 +45133,14 @@ snapshots:
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
-  codemirror@6.0.1(@lezer/common@1.2.3):
+  codemirror@6.0.1(@lezer/common@1.5.2):
     dependencies:
-      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.4.1)(@codemirror/view@6.34.3)(@lezer/common@1.2.3)
-      '@codemirror/commands': 6.7.1
-      '@codemirror/language': 6.11.1
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/commands': 6.10.3
+      '@codemirror/language': 6.12.3
       '@codemirror/lint': 6.8.2
       '@codemirror/search': 6.5.6
-      '@codemirror/state': 6.4.1
+      '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
     transitivePeerDependencies:
       - '@lezer/common'
@@ -46446,9 +46788,10 @@ snapshots:
     dependencies:
       estraverse: 5.3.0
 
-  esrap@2.2.4:
+  esrap@2.2.9(@typescript-eslint/types@8.39.1):
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
+    optionalDependencies:
       '@typescript-eslint/types': 8.39.1
 
   esrecurse@4.3.0:
@@ -47575,7 +47918,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
       object-hash: 3.0.0
       proto3-json-serializer: 2.0.2
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       retry-request: 7.0.2(encoding@0.1.13)
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -48553,7 +48896,7 @@ snapshots:
 
   is-reference@3.0.3:
     dependencies:
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
 
   is-regex@1.1.4:
     dependencies:
@@ -53715,10 +54058,10 @@ snapshots:
 
   proto3-json-serializer@2.0.2:
     dependencies:
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
     optional: true
 
-  protobufjs@7.5.7:
+  protobufjs@7.5.8:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2
@@ -53808,6 +54151,10 @@ snapshots:
     dependencies:
       side-channel: 1.1.0
 
+  qs@6.15.1:
+    dependencies:
+      side-channel: 1.1.0
+
   query-registry@3.0.1:
     dependencies:
       query-string: 9.1.0
@@ -53887,6 +54234,12 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
       react: 18.3.1
+      scheduler: 0.23.2
+
+  react-dom@18.3.1(react@19.2.3):
+    dependencies:
+      loose-envify: 1.4.0
+      react: 19.2.3
       scheduler: 0.23.2
 
   react-dom@19.2.3(react@19.2.3):
@@ -54113,14 +54466,14 @@ snapshots:
       '@babel/runtime': 7.28.3
       '@emotion/cache': 11.14.0
       '@emotion/react': 11.14.0(@types/react@19.2.8)(react@19.2.3)
-      '@floating-ui/dom': 1.7.4
+      '@floating-ui/dom': 1.7.6
       '@types/react-transition-group': 4.4.12(@types/react@19.2.8)
       memoize-one: 6.0.0
       prop-types: 15.8.1
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
       react-transition-group: 4.4.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      use-isomorphic-layout-effect: 1.2.0(@types/react@19.2.8)(react@19.2.3)
+      use-isomorphic-layout-effect: 1.2.1(@types/react@19.2.8)(react@19.2.3)
     transitivePeerDependencies:
       - '@types/react'
       - supports-color
@@ -55717,6 +56070,8 @@ snapshots:
 
   style-mod@4.1.2: {}
 
+  style-mod@4.1.3: {}
+
   style-to-js@1.1.21:
     dependencies:
       style-to-object: 1.0.14
@@ -55801,7 +56156,7 @@ snapshots:
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.15.0
+      qs: 6.15.1
     transitivePeerDependencies:
       - supports-color
 
@@ -55873,16 +56228,16 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  svelte-hmr@0.15.3(svelte@5.55.7):
+  svelte-hmr@0.15.3(svelte@5.55.7(@typescript-eslint/types@8.39.1)):
     dependencies:
-      svelte: 5.55.7
+      svelte: 5.55.7(@typescript-eslint/types@8.39.1)
 
-  svelte@5.55.7:
+  svelte@5.55.7(@typescript-eslint/types@8.39.1):
     dependencies:
       '@jridgewell/remapping': 2.3.5
       '@jridgewell/sourcemap-codec': 1.5.5
       '@sveltejs/acorn-typescript': 1.0.9(acorn@8.16.0)
-      '@types/estree': 1.0.8
+      '@types/estree': 1.0.9
       '@types/trusted-types': 2.0.7
       acorn: 8.16.0
       aria-query: 5.3.1
@@ -55890,11 +56245,13 @@ snapshots:
       clsx: 2.1.1
       devalue: 5.8.1
       esm-env: 1.2.2
-      esrap: 2.2.4
+      esrap: 2.2.9(@typescript-eslint/types@8.39.1)
       is-reference: 3.0.3
       locate-character: 3.0.0
       magic-string: 0.30.21
       zimmerframe: 1.1.4
+    transitivePeerDependencies:
+      - '@typescript-eslint/types'
 
   svgo@3.3.3:
     dependencies:
@@ -57123,6 +57480,12 @@ snapshots:
       react: 19.2.3
 
   use-isomorphic-layout-effect@1.2.0(@types/react@19.2.8)(react@19.2.3):
+    dependencies:
+      react: 19.2.3
+    optionalDependencies:
+      '@types/react': 19.2.8
+
+  use-isomorphic-layout-effect@1.2.1(@types/react@19.2.8)(react@19.2.3):
     dependencies:
       react: 19.2.3
     optionalDependencies:

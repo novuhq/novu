@@ -19,7 +19,7 @@ type AppRailItem = {
 };
 
 const APP_RAIL_ITEMS: AppRailItem[] = [
-  { id: APP_IDS.DISPATCH, Icon: BotMessageSquare },
+  { id: APP_IDS.CONNECT, Icon: BotMessageSquare },
   { id: APP_IDS.NOVU, Icon: PlatformIcon },
 ];
 
@@ -80,7 +80,7 @@ export function AppRail() {
         <Link
           to={
             envSlug
-              ? (buildAppHomeRoute(currentApp === APP_IDS.DISPATCH ? APP_IDS.DISPATCH : APP_IDS.NOVU, envSlug) ?? '/')
+              ? (buildAppHomeRoute(currentApp === APP_IDS.CONNECT ? APP_IDS.CONNECT : APP_IDS.NOVU, envSlug) ?? '/')
               : '/'
           }
           aria-label="Novu home"

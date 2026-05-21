@@ -2,8 +2,12 @@
   "name": "nextjs",
   "version": "0.1.12",
   "private": true,
+  "portless": {
+    "name": "playground.novu"
+  },
   "scripts": {
     "dev": "next dev -p 4011",
+    "start:portless": "node ../../scripts/with-portless-env.mjs pnpm exec portless run next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -12,8 +16,10 @@
     "@ai-sdk/openai": "^3.0.0",
     "@novu/api": "workspace:*",
     "@ai-sdk/react": "^3.0.0",
+    "@clerk/clerk-react": "^5.61.6",
     "@novu/agent-toolkit": "workspace:*",
     "@novu/nextjs": "workspace:*",
+    "@novu/shared": "workspace:*",
     "@radix-ui/colors": "^3.0.0",
     "@radix-ui/react-accordion": "^1.2.1",
     "@radix-ui/react-avatar": "^1.1.2",

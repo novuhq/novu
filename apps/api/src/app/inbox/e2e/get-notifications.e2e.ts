@@ -65,6 +65,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     archived,
     snoozed,
     severity,
+    data,
   }: {
     limit?: number;
     after?: string;
@@ -75,6 +76,7 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     archived?: boolean;
     snoozed?: boolean;
     severity?: SeverityLevelEnum[];
+    data?: Record<string, unknown>;
   } = {}) => {
     let query = `limit=${limit}`;
     if (after) {
@@ -101,6 +103,9 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     }
     if (severity) {
       query += severity.map((el) => `&severity[]=${el}`).join('');
+    }
+    if (data) {
+      query += `&data=${encodeURIComponent(JSON.stringify(data))}`;
     }
 
     return await session.testAgent
@@ -539,6 +544,111 @@ describe('Get Notifications - /inbox/notifications (GET) #novu-v2', async () => 
     expect(body.data.length).to.equal(1);
     expect(body.data[0]).to.have.property('severity');
     expect(body.data[0].severity).to.equal(SeverityLevelEnum.HIGH);
+  });
+
+  describe('data filter', () => {
+    const seedMessagesWithData = async () => {
+      await triggerEvent(template, 3);
+      const messages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: subscriber?._id ?? '',
+        channel: ChannelTypeEnum.IN_APP,
+      });
+
+      if (messages.length < 3) {
+        throw new Error('Expected at least three seeded messages');
+      }
+
+      await messageRepository.update(
+        { _id: messages[0]._id, _environmentId: session.environment._id },
+        { $set: { data: { status: 'open', project: 'alpha' } } }
+      );
+      await messageRepository.update(
+        { _id: messages[1]._id, _environmentId: session.environment._id },
+        { $set: { data: { status: 'draft', project: 'beta' } } }
+      );
+      await messageRepository.update(
+        { _id: messages[2]._id, _environmentId: session.environment._id },
+        { $set: { data: { status: 'closed', project: 'gamma' } } }
+      );
+
+      return messages;
+    };
+
+    it('preserves exact-match semantics for scalar data filters', async () => {
+      await seedMessagesWithData();
+
+      const { body, status } = await getNotifications({ data: { status: 'open' } });
+
+      expect(status).to.equal(200);
+      expect(body.data.length).to.equal(1);
+      expect(body.data[0].data.status).to.equal('open');
+    });
+
+    it('matches OR via flat array data filter', async () => {
+      await seedMessagesWithData();
+
+      const { body, status } = await getNotifications({ data: { status: ['open', 'draft'] } });
+
+      expect(status).to.equal(200);
+      expect(body.data.length).to.equal(2);
+      expect(body.data.map((m) => m.data.status).sort()).to.deep.equal(['draft', 'open']);
+    });
+
+    it('matches OR via explicit { or }', async () => {
+      await seedMessagesWithData();
+
+      const { body, status } = await getNotifications({ data: { project: { or: ['alpha', 'gamma'] } } });
+
+      expect(status).to.equal(200);
+      expect(body.data.length).to.equal(2);
+      expect(body.data.map((m) => m.data.project).sort()).to.deep.equal(['alpha', 'gamma']);
+    });
+
+    it('matches AND of OR-groups (CNF) on the same key', async () => {
+      await seedMessagesWithData();
+
+      const { body, status } = await getNotifications({
+        data: {
+          status: {
+            and: [{ or: ['open', 'draft'] }, { or: ['draft', 'closed'] }],
+          },
+        },
+      });
+
+      expect(status).to.equal(200);
+      expect(body.data.length).to.equal(1);
+      expect(body.data[0].data.status).to.equal('draft');
+    });
+
+    it('ANDs filters across multiple keys', async () => {
+      await seedMessagesWithData();
+
+      const { body, status } = await getNotifications({
+        data: { status: ['open', 'draft'], project: ['alpha', 'gamma'] },
+      });
+
+      expect(status).to.equal(200);
+      expect(body.data.length).to.equal(1);
+      expect(body.data[0].data.status).to.equal('open');
+      expect(body.data[0].data.project).to.equal('alpha');
+    });
+
+    it('rejects nested arrays at the leaf', async () => {
+      const { body, status } = await getNotifications({ data: { status: [['open', 'draft']] } });
+
+      expect(status).to.equal(400);
+      expect(body.message).to.include('Nested arrays are not supported');
+    });
+
+    it('rejects both "or" and "and" at the same key', async () => {
+      const { body, status } = await getNotifications({
+        data: { status: { or: ['open'], and: [{ or: ['draft'] }] } },
+      });
+
+      expect(status).to.equal(400);
+      expect(body.message).to.include('cannot have both');
+    });
   });
 
   it('should default to none severity for templates without explicit severity', async () => {

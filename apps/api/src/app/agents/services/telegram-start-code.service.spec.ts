@@ -1,10 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import {
-  TELEGRAM_START_CODE_TTL_SECONDS,
-  TelegramStartCodeService,
-} from './telegram-start-code.service';
+import { TELEGRAM_START_CODE_TTL_SECONDS, TelegramStartCodeService } from './telegram-start-code.service';
 
 describe('TelegramStartCodeService', () => {
   function makeService() {

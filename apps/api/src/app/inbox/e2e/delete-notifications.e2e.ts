@@ -188,6 +188,34 @@ describe('Delete Notifications - /inbox/notifications (DELETE/POST) #novu-v2', a
       });
       expect(remainingMessages).to.have.length(2);
     });
+
+    it('should delete notifications when data filter uses OR (array)', async () => {
+      await messageRepository.update(
+        { _id: messages[0]._id, _environmentId: session.environment._id },
+        { $set: { data: { status: 'open' } } }
+      );
+      await messageRepository.update(
+        { _id: messages[1]._id, _environmentId: session.environment._id },
+        { $set: { data: { status: 'draft' } } }
+      );
+      await messageRepository.update(
+        { _id: messages[2]._id, _environmentId: session.environment._id },
+        { $set: { data: { status: 'closed' } } }
+      );
+
+      const response = await deleteAllNotifications({
+        data: JSON.stringify({ status: ['open', 'draft'] }),
+      });
+      expect(response.status).to.equal(204);
+
+      const remainingMessages = await messageRepository.find({
+        _environmentId: session.environment._id,
+        _subscriberId: getSubscriber()._id,
+        _templateId: template._id,
+      });
+      expect(remainingMessages).to.have.length(1);
+      expect((remainingMessages[0].data as { status?: string } | undefined)?.status).to.equal('closed');
+    });
   });
 
   describe('Authorization', () => {

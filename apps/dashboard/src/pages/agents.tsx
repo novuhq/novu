@@ -407,12 +407,12 @@ export function AgentsPage() {
   const [earlyAccessOpen, setEarlyAccessOpen] = useState(false);
   const isConversationalAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const currentApp = useCurrentApp();
-  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
+  const isConnectApp = currentApp === APP_IDS.CONNECT;
   const track = useTelemetry();
 
   useEffect(() => {
-    track(isDispatchApp ? TelemetryEvent.DISPATCH_AGENTS_PAGE_VISITED : TelemetryEvent.AGENTS_PAGE_VISITED);
-  }, [isDispatchApp, track]);
+    track(isConnectApp ? TelemetryEvent.CONNECT_AGENTS_PAGE_VISITED : TelemetryEvent.AGENTS_PAGE_VISITED);
+  }, [isConnectApp, track]);
 
   return (
     <>

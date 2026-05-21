@@ -131,6 +131,7 @@ export interface FileRef {
  * - `ChatElement` — interactive card built with Card(), Button(), etc.
  *
  * For file attachments, pass a `files` array as the second argument to reply()/edit().
+ * Cards and files can be combined on platforms that support it (e.g. WhatsApp sends media then the card).
  */
 export type MessageContent = string | ChatElement;
 

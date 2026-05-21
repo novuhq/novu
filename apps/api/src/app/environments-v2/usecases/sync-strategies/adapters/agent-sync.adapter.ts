@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { AgentEntity } from '@novu/dal';
 
-import { SyncAgentToEnvironment, SyncAgentToEnvironmentCommand } from '../../../../agents/usecases/sync-agent-to-environment';
+import {
+  SyncAgentToEnvironment,
+  SyncAgentToEnvironmentCommand,
+} from '../../../../agents/usecases/sync-agent-to-environment';
 import { ISyncContext } from '../../../types/sync.types';
 import { IBaseSyncService } from '../base/interfaces/base-sync.interface';
 

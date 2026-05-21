@@ -69,7 +69,7 @@ jobs:
           cache-dependency-path: "pnpm-lock.yaml"
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm ci
 
       - name: Reset Nx cache
         run: npx nx reset || true
