@@ -26,6 +26,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
+import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 import { ProviderDropdown } from './provider-dropdown';
 
 type AgentIntegrationsTabProps = {
@@ -224,7 +225,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const track = useTelemetry();
   const agentRoutes = useAgentRoutes();
   const currentApp = useCurrentApp();
-  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
+  const isConnectApp = currentApp === APP_IDS.CONNECT;
   const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
 
   const integrationsHubPath = `${buildRoute(agentRoutes.detailsTab, {
@@ -338,8 +339,8 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
 
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
       track(
-        isDispatchApp
-          ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD
+        isConnectApp
+          ? TelemetryEvent.CONNECT_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD
           : TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD,
         {
           agentIdentifier: agent.identifier,
@@ -456,7 +457,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                       const int = link.integration;
                       const providerMeta = novuProviders.find((p) => p.id === int.providerId);
                       const isSelected = integrationIdentifier === int.identifier;
-                      const showActionNeeded = !link.connectedAt;
+                      const showActionNeeded = !isAgentIntegrationConnected(link);
 
                       const statusLabel = showActionNeeded ? 'Action needed' : 'Active';
 

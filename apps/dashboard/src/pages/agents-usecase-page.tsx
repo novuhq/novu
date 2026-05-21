@@ -1,21 +1,25 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
 import { CalendarDays, Mail } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
+import { Navigate, useNavigate } from 'react-router-dom';
+import { SetupStep } from '@/components/agents/setup-guide-primitives';
+import type { StepStatus } from '@/components/agents/setup-guide-step-utils';
+import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
 import { AgentFlowIllustration } from '@/components/onboarding/agent-flow-illustration';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { SegmentedControl, SegmentedControlList, SegmentedControlTrigger } from '@/components/primitives/segmented-control';
-import { SetupStep } from '@/components/agents/setup-guide-primitives';
+import {
+  SegmentedControl,
+  SegmentedControlList,
+  SegmentedControlTrigger,
+} from '@/components/primitives/segmented-control';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
-import type { StepStatus } from '@/components/agents/setup-guide-step-utils';
 
 const CHANNELS = [
   {
@@ -107,7 +111,14 @@ function ListeningIndicator() {
     <div className="flex items-center gap-1 py-4 pl-8">
       <div className="flex items-center gap-1">
         <span className="size-3.5 text-[#dd2476] animate-[spin_5s_linear_infinite]">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
           </svg>
         </span>
@@ -218,12 +229,7 @@ export function AgentsUsecasePage() {
           Setup agent
         </Button>
 
-        <Button
-          variant="secondary"
-          mode="ghost"
-          size="xs"
-          onClick={() => navigate(ROUTES.WORKFLOWS)}
-        >
+        <Button variant="secondary" mode="ghost" size="xs" onClick={() => navigate(ROUTES.WORKFLOWS)}>
           Skip to dashboard
         </Button>
       </div>
@@ -243,7 +249,7 @@ export function AgentsUsecasePage() {
     </>
   );
 
-  const rightContent = <AgentFlowIllustration />;
+  const rightContent = <AgentFlowIllustration state="connect" runtime="scratch" />;
 
   return <OnboardingShell left={leftContent} right={rightContent} maxLeftWidth="820px" />;
 }

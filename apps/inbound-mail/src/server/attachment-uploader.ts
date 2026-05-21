@@ -35,15 +35,15 @@ function sanitizeFilename(name: string): string {
 
 /*
  * SMTP MTAs retry delivery with the same Message-ID, so the storage key MUST
- * be a deterministic function of (messageId, filename). Using a random UUID
- * or wall-clock date would create duplicate S3 objects on retry instead of
- * idempotently overwriting via PutObject.
+ * be a deterministic function of (messageId, attachment index, filename).
+ * Using a random UUID or wall-clock date would create duplicate S3 objects on
+ * retry instead of idempotently overwriting via PutObject.
  */
-function buildStorageKey(messageId: string, filename: string): string {
+function buildStorageKey(messageId: string, filename: string, index: number): string {
   const safeFilename = sanitizeFilename(filename || 'attachment');
   const safeMessageId = sanitizeFilename(messageId);
 
-  return `inbound-mail/${safeMessageId}/${safeFilename}`;
+  return `inbound-mail/${safeMessageId}/${index}-${safeFilename}`;
 }
 
 function getTtlSeconds(): number {
@@ -70,6 +70,7 @@ async function uploadSingle(
   s3: S3Client,
   bucket: string,
   messageId: string,
+  index: number,
   attachment: { filename?: string; contentType?: string; content?: Buffer | SerializedBuffer | string }
 ): Promise<UploadedAttachment | null> {
   const filename = attachment.filename || 'attachment';
@@ -95,7 +96,7 @@ async function uploadSingle(
     return null;
   }
 
-  const storagePath = buildStorageKey(messageId, filename);
+  const storagePath = buildStorageKey(messageId, filename, index);
 
   await s3.send(
     new PutObjectCommand({
@@ -133,19 +134,20 @@ export async function uploadAttachmentsToS3(
   if (!bucket) {
     logger.warn({ context: LOG_CONTEXT }, 'S3_BUCKET_NAME is not set — attachments will be dropped');
 
-    return { uploaded: [], failedCount: attachments.length };
+    return { uploaded: [], failedCount: 0 };
   }
 
   const s3 = buildS3Client();
   let failedCount = 0;
 
   const results = await Promise.all(
-    attachments.map(async (attachment) => {
+    attachments.map(async (attachment, index) => {
       try {
         return await uploadSingle(
           s3,
           bucket,
           messageId,
+          index,
           attachment as { filename?: string; contentType?: string; content?: Buffer | SerializedBuffer | string }
         );
       } catch (err) {

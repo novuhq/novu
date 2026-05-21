@@ -262,6 +262,8 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     const conversation = await conversationRepository.findByPlatformThread(
       ctx.session.environment._id,
       ctx.session.organization._id,
+      ctx.agentId,
+      ctx.integrationId,
       `slack:${channel.id}:${threadTs}`
     );
     expect(conversation, 'inbound conversation persisted').to.exist;
@@ -483,6 +485,8 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     const conversation = await conversationRepository.findByPlatformThread(
       ctx.session.environment._id,
       ctx.session.organization._id,
+      ctx.agentId,
+      ctx.integrationId,
       `slack:${channel.id}:${ts}`
     );
     expect(conversation, 'conversation persisted').to.exist;
@@ -529,6 +533,8 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     const conversation = await conversationRepository.findByPlatformThread(
       ctx.session.environment._id,
       ctx.session.organization._id,
+      ctx.agentId,
+      ctx.integrationId,
       `slack:${channel.id}:${threadTs}`
     );
     expect(conversation, 'conversation exists').to.exist;

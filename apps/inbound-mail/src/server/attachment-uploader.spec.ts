@@ -131,8 +131,21 @@ describe('uploadAttachmentsToS3', () => {
     const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [attachment]);
 
     expect(result.uploaded).to.deep.equal([]);
-    expect(result.failedCount).to.equal(1);
+    expect(result.failedCount).to.equal(0);
     sinon.assert.notCalled(s3SendStub);
+  });
+
+  it('assigns distinct storage keys to attachments with the same filename', async () => {
+    const attachments = [
+      { filename: 'doc.pdf', contentType: 'application/pdf', content: Buffer.from('first') },
+      { filename: 'doc.pdf', contentType: 'application/pdf', content: Buffer.from('second') },
+    ];
+
+    const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, attachments);
+
+    expect(result.failedCount).to.equal(0);
+    expect(result.uploaded).to.have.length(2);
+    expect(result.uploaded[0].storagePath).to.not.equal(result.uploaded[1].storagePath);
   });
 
   it('caps presigned URL TTL at 7 days maximum', async () => {

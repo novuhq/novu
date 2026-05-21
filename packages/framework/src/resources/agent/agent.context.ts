@@ -193,12 +193,12 @@ async function serializeContent(content: MessageContent, files?: FileRef[]): Pro
   if (isJSX(content)) {
     const card = toCardElement(content);
     if (card) {
-      return { card };
+      return validFiles ? { card, files: validFiles } : { card };
     }
   }
 
   if (isCardElement(content)) {
-    return { card: content };
+    return validFiles ? { card: content, files: validFiles } : { card: content };
   }
 
   throw new Error('Invalid message content — expected string or CardElement');

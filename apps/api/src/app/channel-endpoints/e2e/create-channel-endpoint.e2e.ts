@@ -1,6 +1,11 @@
 import { Novu } from '@novu/api';
-import { CreateSlackChannelEndpointDto, CreateWebhookEndpointDto } from '@novu/api/models/components';
-import { ENDPOINT_TYPES } from '@novu/shared';
+import {
+  CreateSlackChannelEndpointDto,
+  CreateTelegramChatEndpointDto,
+  CreateWebhookEndpointDto,
+} from '@novu/api/models/components';
+import { IntegrationRepository } from '@novu/dal';
+import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import {
@@ -10,6 +15,20 @@ import {
   setupChannelTests,
 } from '../../channel-connections/e2e/helpers/channel-helpers';
 import { expectSdkExceptionGeneric, expectSdkZodError } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+
+const integrationRepository = new IntegrationRepository();
+
+async function createTelegramIntegration(session: UserSession) {
+  return integrationRepository.create({
+    _organizationId: session.organization._id,
+    _environmentId: session.environment._id,
+    providerId: ChatProviderIdEnum.Telegram,
+    channel: ChannelTypeEnum.CHAT,
+    credentials: {},
+    active: true,
+    identifier: `telegram-${Date.now()}`,
+  });
+}
 
 describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
   let session: UserSession;
@@ -168,5 +187,29 @@ describe('Create Channel Endpoint - /channel-endpoints (POST) #novu-v2', () => {
 
     expect(error).to.exist;
     expect(error?.name).to.equal('ErrorDto');
+  });
+
+  it('should create a telegram_chat endpoint with the supplied chatId', async () => {
+    const integration = await createTelegramIntegration(session);
+    const subscribersService = createSubscribersService(session);
+    const subscriber = await subscribersService.createSubscriber();
+
+    const createDto: CreateTelegramChatEndpointDto = {
+      integrationIdentifier: integration.identifier,
+      subscriberId: subscriber.subscriberId,
+      type: ENDPOINT_TYPES.TELEGRAM_CHAT,
+      endpoint: {
+        chatId: '987654321',
+      },
+    };
+
+    const { result } = await novuClient.channelEndpoints.create(createDto);
+
+    expect(result.identifier).to.be.a('string');
+    expect(result.integrationIdentifier).to.equal(integration.identifier);
+    expect(result.subscriberId).to.equal(subscriber.subscriberId);
+    expect(result.type).to.equal(ENDPOINT_TYPES.TELEGRAM_CHAT);
+    expect((result.endpoint as { chatId: string }).chatId).to.equal('987654321');
+    expect(result.connectionIdentifier).to.be.null;
   });
 });

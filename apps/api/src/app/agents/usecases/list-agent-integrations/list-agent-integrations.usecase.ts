@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { DirectionEnum } from '@novu/shared';
+import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
 
 import { ListAgentIntegrationsResponseDto } from '../../dtos/list-agent-integrations-response.dto';
 import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
@@ -30,7 +30,7 @@ export class ListAgentIntegrations {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id']
+      ['_id', 'identifier', 'name']
     );
 
     if (!agent) {
@@ -79,20 +79,37 @@ export class ListAgentIntegrations {
     type IntegrationSummary = Pick<
       IntegrationEntity,
       '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'
-    >;
+    > &
+      Partial<Pick<IntegrationEntity, 'credentials'>>;
     let idToIntegration = new Map<string, IntegrationSummary>();
 
     if (integrationIds.length > 0) {
+      // We include `credentials` because the NovuAgent integration mapper reads
+      // `emailSlugPrefix` to derive the shared-inbox address. Non-NovuAgent
+      // providers don't use it and the field is plaintext (no decryption).
       const integrations = await this.integrationRepository.find(
         {
           _id: { $in: integrationIds },
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
-        '_id identifier name providerId channel active'
+        '_id identifier name providerId channel active credentials'
       );
 
-      idToIntegration = new Map(integrations.map((i) => [i._id, i]));
+      idToIntegration = new Map(
+        integrations.map((i) => [
+          i._id,
+          {
+            _id: i._id,
+            identifier: i.identifier,
+            name: i.name,
+            providerId: i.providerId,
+            channel: i.channel,
+            active: i.active,
+            credentials: i.providerId === EmailProviderIdEnum.NovuAgent ? i.credentials : undefined,
+          } satisfies IntegrationSummary,
+        ])
+      );
     }
 
     const data = pagination.links.reduce<ListAgentIntegrationsResponseDto['data']>((acc, link) => {
@@ -107,7 +124,7 @@ export class ListAgentIntegrations {
         return acc;
       }
 
-      acc.push(toAgentIntegrationResponse(link, integration));
+      acc.push(toAgentIntegrationResponse(link, integration, agent));
 
       return acc;
     }, []);

@@ -1,19 +1,35 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
-import { AgentRepository, IntegrationRepository } from '@novu/dal';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
 import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
-import { resolveMcpServersFromDtos } from '../../utils/resolve-mcp-servers';
+import { projectMcpRowsToCatalog } from '../../utils/project-mcp-servers';
 import { UpdateAgentRuntimeConfigCommand } from './update-agent-runtime-config.command';
 
 @Injectable()
 export class UpdateAgentRuntimeConfig {
   constructor(
     private readonly agentRepository: AgentRepository,
-    private readonly integrationRepository: IntegrationRepository
-  ) {}
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: UpdateAgentRuntimeConfigCommand): Promise<AgentRuntimeConfigResponseDto> {
+    if (command.mcpServers !== undefined) {
+      // MCP enablement now goes through POST/DELETE /agents/:id/mcp-servers,
+      // which writes Mongo first and projects to the provider. Updating the
+      // MCP list via this legacy field would race with the new flow's
+      // cascade-deletes of `mcp_connection` rows. Hard reject to make the
+      // contract explicit.
+      throw new BadRequestException(
+        'Updating mcpServers via /runtime/config is no longer supported. ' +
+          'Use POST /agents/:identifier/mcp-servers and DELETE /agents/:identifier/mcp-servers/:mcpId instead.'
+      );
+    }
+
     const agent = await this.agentRepository.findOne(
       {
         identifier: command.identifier,
@@ -56,20 +72,23 @@ export class UpdateAgentRuntimeConfig {
 
     const runtimeProvider = getAgentRuntimeProvider(providerId, decryptedCredentials.apiKey);
 
-    // Resolve any caller-supplied MCP server entries against the trusted catalog
-    // so the persisted URL on the provider side is always the catalog value,
-    // not whatever the client posted. This mirrors the provisioning path and
-    // prevents a tenant actor with agent write access from swapping in
-    // attacker-controlled MCP endpoints (tool-chain hijack / exfiltration).
-    const resolvedMcpServers =
-      command.mcpServers !== undefined ? resolveMcpServersFromDtos(command.mcpServers) : undefined;
-
     const updated = await runtimeProvider.updateConfig(externalAgentId, {
       model: command.model,
       systemPrompt: command.systemPrompt,
-      mcpServers: resolvedMcpServers,
       tools: command.tools,
       skills: command.skills,
+    });
+
+    const mcpRows = await this.agentMcpServerRepository.findByAgent({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentId: agent._id,
+      enabledOnly: true,
+    });
+
+    const mcpServers = projectMcpRowsToCatalog(mcpRows, this.logger, {
+      agentId: agent._id,
+      useCase: UpdateAgentRuntimeConfig.name,
     });
 
     const providerEntry = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);
@@ -81,13 +100,14 @@ export class UpdateAgentRuntimeConfig {
           model: providerEntry.capabilities.model,
           systemPrompt: providerEntry.capabilities.systemPrompt,
           skills: providerEntry.capabilities.skills,
+          tokenVault: providerEntry.capabilities.tokenVault ?? false,
         }
       : undefined;
 
     const result: AgentRuntimeConfigResponseDto = {
       model: updated.model,
       systemPrompt: updated.systemPrompt,
-      mcpServers: updated.mcpServers,
+      mcpServers,
       tools: updated.tools,
       ...(updated.skills !== undefined ? { skills: updated.skills } : {}),
       ...(capabilities !== undefined ? { capabilities } : {}),

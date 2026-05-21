@@ -1,8 +1,11 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ICredentials } from '@novu/shared';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsEmail, IsObject, IsOptional, IsString, ValidateIf } from 'class-validator';
+import { IsBoolean, IsEmail, IsObject, IsOptional, IsString, Matches, ValidateIf } from 'class-validator';
 import { TransformToBoolean } from '../decorators/to-boolean';
+
+/** Lowercase letters, digits and dashes; 1-32 chars; no leading/trailing dash. */
+const AGENT_EMAIL_SLUG_PREFIX_REGEX = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
 
 export class CredentialsDto implements ICredentials {
   @ApiPropertyOptional()
@@ -276,12 +279,34 @@ export class CredentialsDto implements ICredentials {
 
   @ApiPropertyOptional({
     description:
+      'Agent default shared inbox slug prefix used in `{emailSlugPrefix}-{agentId}@<shared-domain>`. ' +
+      'Only meaningful on the NovuAgent email integration.',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(AGENT_EMAIL_SLUG_PREFIX_REGEX, {
+    message: 'emailSlugPrefix must be 1-32 lowercase letters, digits or dashes, and must not start or end with a dash',
+  })
+  emailSlugPrefix?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Claude Managed Agents: ID of the Anthropic environment tied to this integration. ' +
       'Hydrated by the API at integration provisioning time.',
   })
   @IsString()
   @IsOptional()
   externalEnvironmentId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Claude Managed Agents: ID of the Anthropic vault (`vlt_…`) tied to this integration. ' +
+      'Hydrated by the API at integration provisioning time and used to push OAuth-completed ' +
+      'MCP credentials to the per-vault credentials API.',
+  })
+  @IsString()
+  @IsOptional()
+  externalVaultId?: string;
 
   @ApiPropertyOptional({
     description:

@@ -297,7 +297,7 @@ class Mailin extends events.EventEmitter {
                        * When INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true, signal a transient
                        * SMTP failure (4xx) so the sending MTA retries delivery rather than
                        * silently dropping attachments. Because buildStorageKey is deterministic
-                       * by (messageId, filename), retries idempotently overwrite the same S3
+                       * by (messageId, index, filename), retries idempotently overwrite the same S3
                        * key on success.
                        */
                       if (process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true') {

@@ -474,7 +474,7 @@ jobs:
           path: apps/${{ matrix.service }}
 
       - name: Create Sentry release
-        uses: getsentry/action-release@a74facf8a080ecbdf1cb355f16743530d712abb7 # v1
+        uses: getsentry/action-release@5657c9e888b4e2cc85f4d29143ea4131fde4a73a # v3.6.0
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ vars.SENTRY_ORG }}

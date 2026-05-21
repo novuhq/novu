@@ -19,7 +19,7 @@ import {
 import { StepFilterDto, StepFilterDto$inboundSchema } from "./stepfilterdto.js";
 
 /**
- * The channel type for the integration, which defines how it communicates (e.g., email, SMS).
+ * The channel type for the integration, which defines how it communicates (e.g., email, SMS). Not set for agent-kind integrations.
  */
 export const IntegrationResponseDtoChannel = {
   InApp: "in_app",
@@ -29,11 +29,23 @@ export const IntegrationResponseDtoChannel = {
   Push: "push",
 } as const;
 /**
- * The channel type for the integration, which defines how it communicates (e.g., email, SMS).
+ * The channel type for the integration, which defines how it communicates (e.g., email, SMS). Not set for agent-kind integrations.
  */
 export type IntegrationResponseDtoChannel = ClosedEnum<
   typeof IntegrationResponseDtoChannel
 >;
+
+/**
+ * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not have a channel.
+ */
+export const Kind = {
+  Delivery: "delivery",
+  Agent: "agent",
+} as const;
+/**
+ * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not have a channel.
+ */
+export type Kind = ClosedEnum<typeof Kind>;
 
 export type IntegrationResponseDto = {
   /**
@@ -61,9 +73,13 @@ export type IntegrationResponseDto = {
    */
   providerId: string;
   /**
-   * The channel type for the integration, which defines how it communicates (e.g., email, SMS).
+   * The channel type for the integration, which defines how it communicates (e.g., email, SMS). Not set for agent-kind integrations.
    */
-  channel: IntegrationResponseDtoChannel;
+  channel?: IntegrationResponseDtoChannel | undefined;
+  /**
+   * Distinguishes delivery integrations from agent-runtime integrations. Defaults to "delivery". Agent integrations do not have a channel.
+   */
+  kind?: Kind | undefined;
   /**
    * The decrypted credentials required for the integration to function (e.g. provider API keys, signing secrets). Only returned to dashboard/session-token callers; API-key authenticated callers receive the integration metadata without this field to avoid amplifying API-key leaks into provider-credential leaks.
    */
@@ -104,6 +120,11 @@ export const IntegrationResponseDtoChannel$inboundSchema: z.ZodNativeEnum<
 > = z.nativeEnum(IntegrationResponseDtoChannel);
 
 /** @internal */
+export const Kind$inboundSchema: z.ZodNativeEnum<typeof Kind> = z.nativeEnum(
+  Kind,
+);
+
+/** @internal */
 export const IntegrationResponseDto$inboundSchema: z.ZodType<
   IntegrationResponseDto,
   z.ZodTypeDef,
@@ -115,7 +136,8 @@ export const IntegrationResponseDto$inboundSchema: z.ZodType<
   name: z.string(),
   identifier: z.string(),
   providerId: z.string(),
-  channel: IntegrationResponseDtoChannel$inboundSchema,
+  channel: IntegrationResponseDtoChannel$inboundSchema.optional(),
+  kind: Kind$inboundSchema.optional(),
   credentials: CredentialsDto$inboundSchema.optional(),
   configurations: ConfigurationsDto$inboundSchema.optional(),
   active: z.boolean(),

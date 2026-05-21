@@ -35,6 +35,7 @@ import {
   WorkflowInMemoryProviderService,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
   AgentRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
@@ -45,6 +46,7 @@ import {
   ConversationRepository,
   DomainRepository,
   DomainRouteRepository,
+  IntegrationRepository,
   JobRepository,
   PreferencesRepository,
 } from '@novu/dal';
@@ -78,7 +80,6 @@ import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-
 import { DomainRouteStrategy } from './usecases/inbound-email-parse/strategies/domain-route.strategy';
 import { ReplyToStrategy } from './usecases/inbound-email-parse/strategies/reply-to.strategy';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
-import { ProcessManagedAgentTurn } from './usecases/process-managed-agent-turn/process-managed-agent-turn.usecase';
 import { ResolveChannelEndpoints } from './usecases/send-message/channel-endpoint-resolution/resolve-channel-endpoints.usecase';
 import { ExecuteCodeFirstCustomStep } from './usecases/send-message/execute-code-first-custom-step.usecase';
 import { ExecuteHttpRequestStep } from './usecases/send-message/execute-http-request-step.usecase';
@@ -110,10 +111,12 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
 const REPOSITORIES = [
   AgentRepository,
+  AgentIntegrationRepository,
   ConversationActivityRepository,
   ConversationRepository,
   DomainRepository,
   DomainRouteRepository,
+  IntegrationRepository,
   JobRepository,
   CommunityOrganizationRepository,
   PreferencesRepository,
@@ -217,7 +220,6 @@ const USE_CASES = [
   GetPreferences,
   GetSubscriberSchedule,
   ResolveChannelEndpoints,
-  ProcessManagedAgentTurn,
 ];
 
 const PROVIDERS: Provider[] = [RedisThrottleService, MsTeamsTokenService];

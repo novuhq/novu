@@ -18,14 +18,17 @@ type ConnectedProvidersSectionProps = {
   agent: AgentResponse;
 };
 
-function ProviderCard({ link }: { link: AgentIntegrationLink }) {
+function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) {
   const providerMeta = novuProviders.find((p) => p.id === link.integration.providerId);
   const displayName = providerMeta?.displayName ?? link.integration.name;
 
   return (
-    <div className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5">
+    <Link
+      to={to}
+      className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       <div
-        className="border-stroke-soft/50 flex min-h-[80px] items-center justify-center rounded-lg border-[0.5px] px-6 py-4"
+        className="border-stroke-soft/50 flex min-h-[80px] items-center justify-center rounded-lg border-[0.5px] px-6 py-4 transition-colors hover:border-stroke-soft"
         style={{
           backgroundImage:
             'linear-gradient(22deg, rgba(200,200,200,0) 51%, rgba(200,200,200,0.1) 88%), linear-gradient(90deg, rgba(251,251,251,0.1) 0%, rgba(251,251,251,0.1) 100%), linear-gradient(90deg, #fff 0%, #fff 100%)',
@@ -36,7 +39,7 @@ function ProviderCard({ link }: { link: AgentIntegrationLink }) {
         </div>
       </div>
       <span className="text-text-strong text-label-xs font-medium leading-4">{displayName}</span>
-    </div>
+    </Link>
   );
 }
 
@@ -121,7 +124,15 @@ export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionPr
           ) : (
             <>
               {links.map((link) => (
-                <ProviderCard key={link._id} link={link} />
+                <ProviderCard
+                  key={link._id}
+                  link={link}
+                  to={`${buildRoute(agentRoutes.integrationDetail, {
+                    environmentSlug: currentEnvironment?.slug ?? '',
+                    agentIdentifier: encodeURIComponent(agent.identifier),
+                    integrationIdentifier: encodeURIComponent(link.integration.identifier),
+                  })}${location.search}`}
+                />
               ))}
               <AddProviderCard to={integrationsTabPath} />
             </>

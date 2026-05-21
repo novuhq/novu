@@ -73,6 +73,24 @@ export class AgentRuntimeUnknownError extends AgentRuntimeError {
   readonly code = 'AGENT_RUNTIME_UNKNOWN' as const;
 }
 
+/**
+ * Thrown by `BaseAgentRuntimeProvider` defaults when a method gated on a
+ * capability flag (e.g. `tokenVault`) is invoked on a provider that did not
+ * override it. Callers MUST check `capabilities.<flag>` before calling
+ * capability-bound methods.
+ */
+export class UnsupportedCapabilityError extends AgentRuntimeError {
+  readonly code = 'AGENT_RUNTIME_UNSUPPORTED_CAPABILITY' as const;
+
+  constructor(
+    /** Capability flag the caller failed to gate on. */
+    readonly capability: string,
+    providerId: string
+  ) {
+    super(`Provider "${providerId}" does not support capability "${capability}".`, providerId);
+  }
+}
+
 export type AgentRuntimeErrorCode =
   | 'AGENT_RUNTIME_UNAUTHORIZED'
   | 'AGENT_RUNTIME_FORBIDDEN'
@@ -83,4 +101,5 @@ export type AgentRuntimeErrorCode =
   | 'AGENT_RUNTIME_TIMEOUT'
   | 'AGENT_RUNTIME_NETWORK'
   | 'AGENT_RUNTIME_BAD_REQUEST'
+  | 'AGENT_RUNTIME_UNSUPPORTED_CAPABILITY'
   | 'AGENT_RUNTIME_UNKNOWN';
