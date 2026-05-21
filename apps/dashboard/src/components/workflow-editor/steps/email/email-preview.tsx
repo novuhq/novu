@@ -38,8 +38,9 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
       <div className="flex flex-1 justify-between">
         <div>
           <div>
-            {isLoading && <Skeleton className="h-4 w-40" />}
-            {!isLoading && onEditSenderClick && (
+            {isLoading ? (
+              <Skeleton className="h-4 w-40" />
+            ) : (
               <button
                 type="button"
                 onClick={onEditSenderClick}
@@ -48,23 +49,12 @@ export const EmailPreviewHeader = (props: EmailPreviewHeaderProps) => {
                 {displaySenderName}
                 <span className="text-foreground-600 text-xs">
                   {'<'}
-                  <span className="text-foreground-600 text-xs underline decoration-dotted">
-                    {displaySenderEmail}
-                  </span>
+                  <span className="text-foreground-600 text-xs underline decoration-dotted">{displaySenderEmail}</span>
                   {'>'}
                 </span>
-                <RiEdit2Line className="text-foreground-600 size-3.5" />
+
+                {onEditSenderClick && <RiEdit2Line className="text-foreground-600 size-3.5" />}
               </button>
-            )}
-            {!isLoading && !onEditSenderClick && (
-              <span className="flex items-center gap-1 text-left">
-                {displaySenderName}
-                <span className="text-foreground-600 text-xs">
-                  {'<'}
-                  <span className="text-foreground-600 text-xs">{displaySenderEmail}</span>
-                  {'>'}
-                </span>
-              </span>
             )}
           </div>
           {!minimalHeader && (
