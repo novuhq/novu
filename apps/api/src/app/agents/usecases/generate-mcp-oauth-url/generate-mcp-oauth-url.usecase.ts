@@ -22,7 +22,15 @@ import {
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum, McpConnectionStatusEnum } from '@novu/shared';
+import {
+  type DcrOAuthCatalogEntry,
+  MCP_SERVERS,
+  McpConnectionAuthModeEnum,
+  McpConnectionScopeEnum,
+  McpConnectionStatusEnum,
+  type McpOAuthCatalogEntry,
+  type McpServer,
+} from '@novu/shared';
 import { GenerateMcpOAuthUrlResponseDto } from '../../dtos/mcp-server.dto';
 import {
   AuthorizationServerMetadata,
@@ -30,7 +38,6 @@ import {
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
 } from '../../services/mcp-oauth-discovery.service';
-import { type DcrOAuthCatalogEntry, getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { GenerateMcpOAuthUrlCommand } from './generate-mcp-oauth-url.command';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from './mcp-oauth-state';
 
@@ -75,7 +82,7 @@ export class GenerateMcpOAuthUrl {
       throw new BadRequestException(`Unknown MCP "${command.mcpId}".`);
     }
 
-    const oauthConfig = requireDcrCatalogEntry(getMcpOAuthCatalogEntry(command.mcpId), command.mcpId);
+    const oauthConfig = requireDcrCatalogEntry(catalog, command.mcpId);
 
     const agent = await this.agentRepository.findOne(
       {
@@ -461,18 +468,22 @@ function base64UrlEncode(buf: Buffer): string {
 
 /**
  * Narrow a catalog entry to the DCR variant or surface a clear error. The
- * catalog locks each MCP to one OAuth mechanism; `novu-app` and `user-app`
- * land here as `NotImplementedException` until the resolver service ships.
+ * catalog locks each MCP to one OAuth mechanism; missing `oauth` is a 400
+ * (the MCP isn't connectable yet) while `novu-app` and `user-app` land here
+ * as `NotImplementedException` until the resolver service ships.
  */
-function requireDcrCatalogEntry(
-  entry: ReturnType<typeof getMcpOAuthCatalogEntry>,
-  mcpId: string
-): DcrOAuthCatalogEntry {
+function requireDcrCatalogEntry(catalog: McpServer, mcpId: string): DcrOAuthCatalogEntry {
+  if (!catalog.oauth) {
+    throw new BadRequestException(`MCP "${mcpId}" does not have OAuth connectivity configured.`);
+  }
+
+  const entry: McpOAuthCatalogEntry = catalog.oauth;
+
   switch (entry.mode) {
-    case 'dcr':
+    case McpConnectionAuthModeEnum.Dcr:
       return entry;
-    case 'novu-app':
-    case 'user-app':
+    case McpConnectionAuthModeEnum.NovuApp:
+    case McpConnectionAuthModeEnum.UserApp:
       throw new NotImplementedException(`MCP "${mcpId}" auth mode "${entry.mode}" is not yet supported.`);
     default: {
       const _exhaustive: never = entry;

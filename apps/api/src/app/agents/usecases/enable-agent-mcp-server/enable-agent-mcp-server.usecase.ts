@@ -5,7 +5,6 @@ import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '
 
 import { trackAgentMcpServerEnabled } from '../../agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../dtos/mcp-server.dto';
-import { getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';
@@ -71,7 +70,13 @@ export class EnableAgentMcpServer {
     // entry. There is no per-row override — the caller cannot ask for `dcr`
     // when the catalog says `novu-app`, since the mode dictates whether
     // discovery happens, which credentials are loaded, etc.
-    const defaultAuthMode = getMcpOAuthCatalogEntry(command.mcpId).mode as McpConnectionAuthModeEnum;
+    if (!catalogEntry.oauth) {
+      throw new BadRequestException(
+        `MCP "${command.mcpId}" does not have OAuth connectivity configured and cannot be enabled yet.`
+      );
+    }
+
+    const defaultAuthMode: McpConnectionAuthModeEnum = catalogEntry.oauth.mode;
     const defaultScope = command.defaultScope ?? McpConnectionScopeEnum.Subscriber;
 
     const row = existing

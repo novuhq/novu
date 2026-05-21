@@ -3,16 +3,16 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import {
-  type AgentMcpServer,
+  type AgentMcpServerEnablement,
   type AgentResponse,
-  getAgentRuntimeConfigQueryKey,
-  patchAgentRuntimeConfig,
+  disableAgentMcpServer,
+  enableAgentMcpServer,
+  getAgentMcpServersQueryKey,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { getMcpIcon } from '@/components/icons/mcp';
-import { Button } from '@/components/primitives/button';
+import { Badge } from '@/components/primitives/badge';
 import { Input } from '@/components/primitives/input';
-import { Separator } from '@/components/primitives/separator';
 import {
   Sheet,
   SheetContent,
@@ -22,106 +22,120 @@ import {
   SheetMain,
   SheetTitle,
 } from '@/components/primitives/sheet';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ExternalLink } from '@/components/shared/external-link';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useDataRef } from '@/hooks/use-data-ref';
 
 type McpsSheetProps = {
   agent: AgentResponse;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  currentMcpServers: AgentMcpServer[];
+  enabledServers: AgentMcpServerEnablement[];
   consoleUrl?: string;
 };
 
-function buildSelectedIds(currentMcpServers: AgentMcpServer[]): Set<string> {
-  const selected = new Set<string>();
+function isMcpSupported(entry: McpServer): boolean {
+  return entry.oauth !== undefined;
+}
 
-  for (const server of currentMcpServers) {
-    const catalogEntry = MCP_SERVERS.find((entry) => entry.id === server.externalId || entry.url === server.url);
+/**
+ * Sort supported entries first, preserving the catalog's intrinsic ordering
+ * (popular-first) within each group so the toggle-able rows surface at the
+ * top of every search result.
+ */
+function sortSupportedFirst(entries: McpServer[]): McpServer[] {
+  const supported: McpServer[] = [];
+  const unsupported: McpServer[] = [];
 
-    if (catalogEntry) {
-      selected.add(catalogEntry.id);
+  for (const entry of entries) {
+    if (isMcpSupported(entry)) {
+      supported.push(entry);
+    } else {
+      unsupported.push(entry);
     }
   }
 
-  return selected;
+  return [...supported, ...unsupported];
 }
 
-export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, consoleUrl }: McpsSheetProps) {
+export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, consoleUrl }: McpsSheetProps) {
   const { currentEnvironment, readOnly } = useEnvironment();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => buildSelectedIds(currentMcpServers));
-  const currentMcpServersRef = useDataRef(currentMcpServers);
+  // Local optimistic state of which mcp ids are toggled on. Hydrated from the
+  // server response when the sheet opens and on every refetch.
+  const [pendingId, setPendingId] = useState<string | null>(null);
+
+  const enabledIds = useMemo(() => new Set(enabledServers.map((server) => server.mcpId)), [enabledServers]);
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedIds(buildSelectedIds(currentMcpServersRef.current));
       setSearch('');
     }
-  }, [currentMcpServersRef, isOpen]);
+  }, [isOpen]);
 
   const filteredMcps = useMemo(() => {
     const query = search.trim().toLowerCase();
+    const matched = query
+      ? MCP_SERVERS.filter(
+          (entry) =>
+            entry.name.toLowerCase().includes(query) ||
+            entry.description.toLowerCase().includes(query) ||
+            entry.id.toLowerCase().includes(query)
+        )
+      : MCP_SERVERS;
 
-    if (!query) return MCP_SERVERS;
-
-    return MCP_SERVERS.filter(
-      (entry) =>
-        entry.name.toLowerCase().includes(query) ||
-        entry.description.toLowerCase().includes(query) ||
-        entry.id.toLowerCase().includes(query)
-    );
+    return sortSupportedFirst(matched);
   }, [search]);
 
-  const updateMcps = useMutation({
-    mutationFn: (mcpServers: AgentMcpServer[]) =>
-      patchAgentRuntimeConfig(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
-        mcpServers,
-      }),
-    onSuccess: (config) => {
-      queryClient.setQueryData(getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier), config);
-      showSuccessToast('MCP servers updated.');
-      onOpenChange(false);
+  const invalidateMcpsQuery = () =>
+    queryClient.invalidateQueries({
+      queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
+    });
+
+  const enableMutation = useMutation({
+    mutationFn: (mcpId: string) =>
+      enableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
+    onSettled: () => {
+      setPendingId(null);
+      invalidateMcpsQuery();
     },
     onError: (err: Error) => {
-      const message = err instanceof NovuApiError ? err.message : 'Could not update MCP servers.';
+      const message = err instanceof NovuApiError ? err.message : 'Could not enable MCP server.';
+      showErrorToast(message, 'Update failed');
+    },
+  });
+
+  const disableMutation = useMutation({
+    mutationFn: (mcpId: string) =>
+      disableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
+    onSettled: () => {
+      setPendingId(null);
+      invalidateMcpsQuery();
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not disable MCP server.';
       showErrorToast(message, 'Update failed');
     },
   });
 
   const canEdit = !readOnly;
-  const isMutating = updateMcps.isPending;
+  const isMutating = enableMutation.isPending || disableMutation.isPending;
 
   const handleToggle = (entry: McpServer, checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+    if (!isMcpSupported(entry)) {
+      return;
+    }
 
-      if (checked) {
-        next.add(entry.id);
-      } else {
-        next.delete(entry.id);
-      }
+    setPendingId(entry.id);
 
-      return next;
-    });
-  };
-
-  const handleSave = () => {
-    const fromCatalog: AgentMcpServer[] = MCP_SERVERS.filter((entry) => selectedIds.has(entry.id)).map((entry) => ({
-      externalId: entry.id,
-      name: entry.name,
-      url: entry.url,
-    }));
-    const unknown = currentMcpServers.filter(
-      (server) => !MCP_SERVERS.some((entry) => entry.id === server.externalId || entry.url === server.url)
-    );
-    const next: AgentMcpServer[] = [...fromCatalog, ...unknown];
-
-    updateMcps.mutate(next);
+    if (checked) {
+      enableMutation.mutate(entry.id);
+    } else {
+      disableMutation.mutate(entry.id);
+    }
   };
 
   return (
@@ -155,10 +169,12 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
           ) : (
             <ul className="flex flex-col px-2 pb-2">
               {filteredMcps.map((entry) => {
-                const checked = selectedIds.has(entry.id);
+                const supported = isMcpSupported(entry);
+                const checked = enabledIds.has(entry.id);
                 const Icon = getMcpIcon(entry.id);
+                const rowDisabled = !canEdit || isMutating || !supported;
 
-                return (
+                const row = (
                   <li
                     key={entry.id}
                     className="hover:bg-bg-weak/60 flex items-center gap-3 rounded-md px-2 py-2 transition-colors"
@@ -166,35 +182,45 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
                     <Switch
                       checked={checked}
                       onCheckedChange={(val) => handleToggle(entry, val)}
-                      disabled={!canEdit || isMutating}
+                      disabled={rowDisabled}
                       aria-label={checked ? `Disable ${entry.name}` : `Enable ${entry.name}`}
                     />
                     {Icon ? <Icon className="size-5 shrink-0 -mr-2" aria-hidden /> : null}
-                    <span className="text-text-strong text-label-sm min-w-0 flex-1 truncate font-medium">
+                    <span
+                      className={
+                        supported
+                          ? 'text-text-strong text-label-sm min-w-0 flex-1 truncate font-medium'
+                          : 'text-text-soft text-label-sm min-w-0 flex-1 truncate font-medium'
+                      }
+                    >
                       {entry.name}
                     </span>
+                    {!supported ? (
+                      <Badge size="sm" variant="lighter" color="gray">
+                        Coming soon
+                      </Badge>
+                    ) : null}
+                    {pendingId === entry.id ? <span className="text-text-soft text-label-xs">Updating…</span> : null}
                   </li>
+                );
+
+                if (supported) {
+                  return row;
+                }
+
+                return (
+                  <Tooltip key={entry.id}>
+                    <TooltipTrigger asChild>{row}</TooltipTrigger>
+                    <TooltipContent side="left">Coming soon — OAuth wiring not yet available.</TooltipContent>
+                  </Tooltip>
                 );
               })}
             </ul>
           )}
         </SheetMain>
 
-        <Separator />
-
         <SheetFooter className="flex flex-row! items-center justify-between gap-2 px-3 py-2 sm:justify-between!">
           {consoleUrl ? <ExternalLink href={consoleUrl}>View in Claude</ExternalLink> : <span />}
-          <Button
-            type="button"
-            variant="secondary"
-            mode="filled"
-            size="xs"
-            isLoading={isMutating}
-            disabled={!canEdit || isMutating}
-            onClick={handleSave}
-          >
-            Save changes
-          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

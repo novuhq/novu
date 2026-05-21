@@ -3,11 +3,13 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { RiAddLine, RiArrowRightUpLine } from 'react-icons/ri';
 import {
-  type AgentMcpServer,
+  type AgentMcpServerEnablement,
   type AgentResponse,
+  disableAgentMcpServer,
+  getAgentMcpServersQueryKey,
   getAgentRuntimeConfig,
   getAgentRuntimeConfigQueryKey,
-  patchAgentRuntimeConfig,
+  listAgentMcpServers,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { getMcpIcon } from '@/components/icons/mcp';
@@ -23,11 +25,6 @@ type McpsSectionProps = {
 };
 
 const MCP_CATALOG_BY_ID: Map<string, McpServer> = new Map(MCP_SERVERS.map((server) => [server.id, server]));
-const MCP_CATALOG_BY_URL: Map<string, McpServer> = new Map(MCP_SERVERS.map((server) => [server.url, server]));
-
-function resolveCatalogEntry(server: AgentMcpServer): McpServer | undefined {
-  return MCP_CATALOG_BY_ID.get(server.externalId) ?? MCP_CATALOG_BY_URL.get(server.url);
-}
 
 function SectionShell({
   isManagedExternally,
@@ -83,46 +80,49 @@ export function McpsSection({ agent }: McpsSectionProps) {
     enabled: Boolean(currentEnvironment && agent.identifier && agent.runtime === 'managed'),
   });
 
-  const updateMcps = useMutation({
-    mutationFn: (mcpServers: AgentMcpServer[]) =>
-      patchAgentRuntimeConfig(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
-        mcpServers,
-      }),
-    onSuccess: (config) => {
-      queryClient.setQueryData(getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier), config);
+  const mcpServersQuery = useQuery({
+    queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
+    queryFn: () =>
+      listAgentMcpServers(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier),
+    enabled: Boolean(currentEnvironment && agent.identifier && agent.runtime === 'managed'),
+  });
+
+  const disableMcp = useMutation({
+    mutationFn: (mcpId: string) =>
+      disableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
+      });
     },
     onError: (err: Error) => {
-      const message = err instanceof NovuApiError ? err.message : 'Could not update MCP servers.';
+      const message = err instanceof NovuApiError ? err.message : 'Could not disable MCP server.';
       showErrorToast(message, 'Update failed');
     },
   });
 
-  const config = configQuery.data;
-  const mcpServers = useMemo<AgentMcpServer[]>(() => config?.mcpServers ?? [], [config?.mcpServers]);
+  const enabledServers = useMemo<AgentMcpServerEnablement[]>(() => mcpServersQuery.data ?? [], [mcpServersQuery.data]);
 
   if (agent.runtime !== 'managed') {
     return null;
   }
 
+  const config = configQuery.data;
+
   if (config?.capabilities && config.capabilities.mcpServers === false) {
     return null;
   }
 
-  const handleToggleOff = (server: AgentMcpServer) => {
-    const next = mcpServers.filter(
-      (existing) => !(existing.externalId === server.externalId && existing.url === server.url)
-    );
-    updateMcps.mutate(next);
-  };
-
-  const isMutating = updateMcps.isPending;
+  const isMutating = disableMcp.isPending;
   const canEdit = !readOnly;
   const consoleUrl = agent.managedRuntime?.consoleUrl;
+  const isLoading = mcpServersQuery.isLoading;
+  const isError = mcpServersQuery.isError;
 
   return (
     <>
       <SectionShell title="MCPs" isManagedExternally consoleUrl={consoleUrl}>
-        {configQuery.isLoading ? (
+        {isLoading ? (
           <div className="flex flex-col gap-2 p-3">
             {[0, 1].map((key) => (
               <div key={key} className="flex items-center gap-2">
@@ -132,26 +132,23 @@ export function McpsSection({ agent }: McpsSectionProps) {
               </div>
             ))}
           </div>
-        ) : configQuery.isError ? (
+        ) : isError ? (
           <div className="text-text-soft text-label-xs p-3">Could not load MCP servers. Try again later.</div>
-        ) : mcpServers.length === 0 ? (
+        ) : enabledServers.length === 0 ? (
           <div className="text-text-soft text-label-xs p-3 h-11">No MCP servers connected yet.</div>
         ) : (
           <ul className="flex flex-col">
-            {mcpServers.map((server) => {
-              const catalog = resolveCatalogEntry(server);
-              const displayName = catalog?.name ?? server.name;
-              const Icon = getMcpIcon(catalog?.id ?? server.externalId);
+            {enabledServers.map((enablement) => {
+              const catalog = MCP_CATALOG_BY_ID.get(enablement.mcpId);
+              const displayName = catalog?.name ?? enablement.mcpId;
+              const Icon = getMcpIcon(catalog?.id ?? enablement.mcpId);
 
               return (
-                <li
-                  key={`${server.externalId}-${server.url}`}
-                  className="flex items-center gap-3 p-3 not-last:border-b border-stroke-soft/60"
-                >
+                <li key={enablement.id} className="flex items-center gap-3 p-3 not-last:border-b border-stroke-soft/60">
                   <Switch
                     checked
                     disabled={!canEdit || isMutating}
-                    onCheckedChange={() => handleToggleOff(server)}
+                    onCheckedChange={() => disableMcp.mutate(enablement.mcpId)}
                     aria-label={`Disconnect ${displayName}`}
                   />
                   {Icon ? <Icon className="size-5 shrink-0 -mr-2" aria-hidden /> : null}
@@ -183,7 +180,7 @@ export function McpsSection({ agent }: McpsSectionProps) {
         agent={agent}
         isOpen={isSheetOpen}
         onOpenChange={setIsSheetOpen}
-        currentMcpServers={mcpServers}
+        enabledServers={enabledServers}
         consoleUrl={consoleUrl}
       />
     </>

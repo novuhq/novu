@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
-import { getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
@@ -226,11 +225,12 @@ export class ProvisionManagedAgent {
     for (const mcpId of command.mcpServers) {
       const catalog = MCP_SERVERS.find((entry) => entry.id === mcpId);
 
-      if (!catalog) {
+      if (!catalog || !catalog.oauth) {
+        // Skip MCPs that aren't in the catalog or don't yet have OAuth
+        // wiring — they can't be persisted as `defaultAuthMode` would be
+        // ambiguous and they would never be reachable from the dashboard.
         continue;
       }
-
-      const defaultAuthMode = getMcpOAuthCatalogEntry(mcpId).mode as McpConnectionAuthModeEnum;
 
       await this.agentMcpServerRepository.create(
         {
@@ -240,7 +240,7 @@ export class ProvisionManagedAgent {
           mcpId,
           enabled: true,
           defaultScope: McpConnectionScopeEnum.Subscriber,
-          defaultAuthMode,
+          defaultAuthMode: catalog.oauth.mode,
           status: 'active',
           externalProjection: {
             providerId: command.providerId,

@@ -1,4 +1,5 @@
 import type {
+  AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
@@ -18,6 +19,8 @@ const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
 
 const AGENT_RUNTIME_CONFIG_QUERY_KEY = 'fetchAgentRuntimeConfig' as const;
 
+const AGENT_MCP_SERVERS_QUERY_KEY = 'fetchAgentMcpServers' as const;
+
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
 }
@@ -35,6 +38,10 @@ export function getAgentsListQueryKey(
 
 export function getAgentRuntimeConfigQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
   return [AGENT_RUNTIME_CONFIG_QUERY_KEY, environmentId, agentIdentifier] as const;
+}
+
+export function getAgentMcpServersQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
+  return [AGENT_MCP_SERVERS_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
 
 export type AgentIntegrationSummary = {
@@ -416,6 +423,44 @@ export async function patchAgentRuntimeConfig(
   );
 
   return response.data;
+}
+
+export type AgentMcpServerEnablement = AgentMcpServerEnablementDto;
+
+export async function listAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentMcpServerEnablement[]> {
+  const response = await get<{ data: AgentMcpServerEnablement[] }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
+    { environment, signal }
+  );
+
+  return response.data;
+}
+
+export async function enableAgentMcpServer(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<AgentMcpServerEnablement> {
+  const response = await post<{ data: AgentMcpServerEnablement }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
+    { environment, body: { mcpId } }
+  );
+
+  return response.data;
+}
+
+export function disableAgentMcpServer(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<void> {
+  return del(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}`, {
+    environment,
+  });
 }
 
 type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };

@@ -24,7 +24,6 @@ import {
 import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
 
 import { McpOAuthDiscoveryService } from '../../services/mcp-oauth-discovery.service';
-import { getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
@@ -96,15 +95,19 @@ export class McpOAuthCallback {
       throw new BadRequestException(`Unknown MCP "${stateData.mcpId}".`);
     }
 
-    const oauthConfig = getMcpOAuthCatalogEntry(stateData.mcpId);
+    if (!catalog.oauth) {
+      throw new BadRequestException(`MCP "${stateData.mcpId}" does not have OAuth connectivity configured.`);
+    }
+
+    const oauthConfig = catalog.oauth;
 
     // Only DCR callbacks are wired today; `novu-app` and `user-app` ship
     // alongside their own callback paths in the follow-up PR.
     switch (oauthConfig.mode) {
-      case 'dcr':
+      case McpConnectionAuthModeEnum.Dcr:
         break;
-      case 'novu-app':
-      case 'user-app':
+      case McpConnectionAuthModeEnum.NovuApp:
+      case McpConnectionAuthModeEnum.UserApp:
         throw new NotImplementedException(
           `MCP "${stateData.mcpId}" auth mode "${oauthConfig.mode}" is not yet supported.`
         );
