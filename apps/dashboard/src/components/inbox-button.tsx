@@ -1,5 +1,4 @@
 import { useUser } from '@clerk/clerk-react';
-import type { Tab } from '@novu/react';
 import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';
@@ -138,41 +137,6 @@ export const InboxButton = ({
     [isTestPage, localizationTestSuffix]
   );
 
-  /**
-   * Test-inbox tabs that exercise the new `data` filter shapes
-   * (NV-7666). Each tab demonstrates a different OR / AND-of-OR
-   * shape so reviewers can see them filter live without leaving the
-   * workflow editor.
-   *
-   * Tabs only appear in the workflow-editor test inbox; the regular
-   * dashboard inbox keeps its default single-feed view.
-   */
-  const tabs: Tab[] | undefined = useMemo(() => {
-    if (!isTestPage) {
-      return undefined;
-    }
-
-    return [
-      { label: 'All' },
-      {
-        label: 'High priority',
-        filter: { data: { priority: 'high' } },
-      },
-      {
-        label: 'Active',
-        filter: { data: { status: ['open', 'draft'] } },
-      },
-      {
-        label: 'Targeted',
-        filter: {
-          data: {
-            status: { and: [{ or: ['open', 'draft'] }, { or: ['draft', 'closed'] }] },
-          },
-        },
-      },
-    ];
-  }, [isTestPage]);
-
   if (!user?.externalId || !currentEnvironment || !currentOrganization) {
     return null;
   }
@@ -188,7 +152,6 @@ export const InboxButton = ({
       backendUrl={shouldUseProductionApi ? 'https://api.novu.co' : apiHostnameManager.getHostname()}
       socketUrl={shouldUseProductionApi ? 'https://ws.novu.co' : apiHostnameManager.getWebSocketHostname()}
       localization={localization}
-      tabs={tabs}
     >
       <InboxInner align={align} side={side} />
     </Inbox>
