@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import type { AgentMcpServerDto, AgentSkillInputDto, AgentToolDto } from '../../dtos/agent-runtime-config.dto';
+import type { AgentSkillInputDto, AgentToolDto } from '../../dtos/agent-runtime-config.dto';
 
 export class UpdateAgentRuntimeConfigCommand extends EnvironmentWithUserCommand {
   @IsNotEmpty()
@@ -9,7 +9,6 @@ export class UpdateAgentRuntimeConfigCommand extends EnvironmentWithUserCommand 
 
   model?: string;
   systemPrompt?: string;
-  mcpServers?: AgentMcpServerDto[];
   tools?: AgentToolDto[];
   skills?: AgentSkillInputDto[];
 }

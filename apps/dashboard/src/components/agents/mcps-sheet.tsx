@@ -1,18 +1,18 @@
-import { MCP_SERVERS, type McpServer } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, type McpServer } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import {
-  type AgentMcpServer,
+  type AgentMcpServerEnablement,
   type AgentResponse,
-  getAgentRuntimeConfigQueryKey,
-  patchAgentRuntimeConfig,
+  disableAgentMcpServer,
+  enableAgentMcpServer,
+  getAgentMcpServersQueryKey,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { getMcpIcon } from '@/components/icons/mcp';
-import { Button } from '@/components/primitives/button';
+import { Badge } from '@/components/primitives/badge';
 import { Input } from '@/components/primitives/input';
-import { Separator } from '@/components/primitives/separator';
 import {
   Sheet,
   SheetContent,
@@ -22,106 +22,140 @@ import {
   SheetMain,
   SheetTitle,
 } from '@/components/primitives/sheet';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { ExternalLink } from '@/components/shared/external-link';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useDataRef } from '@/hooks/use-data-ref';
 
 type McpsSheetProps = {
   agent: AgentResponse;
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  currentMcpServers: AgentMcpServer[];
+  enabledServers: AgentMcpServerEnablement[];
   consoleUrl?: string;
 };
 
-function buildSelectedIds(currentMcpServers: AgentMcpServer[]): Set<string> {
-  const selected = new Set<string>();
+/**
+ * Gate the picker on auth modes the backend can actually complete, not just on
+ * `oauth` presence. The `novu-app` / `user-app` modes are typed in the catalog
+ * but the OAuth start/callback use cases still return `NotImplementedException`
+ * for them, so surfacing those rows as toggle-able would only fail at mutation
+ * time. Keep this set in lock-step with the modes wired in
+ * `generate-mcp-oauth-url.usecase.ts` / `mcp-oauth-callback.usecase.ts`.
+ */
+const SUPPORTED_AUTH_MODES = new Set<McpConnectionAuthModeEnum>([McpConnectionAuthModeEnum.Dcr]);
 
-  for (const server of currentMcpServers) {
-    const catalogEntry = MCP_SERVERS.find((entry) => entry.id === server.externalId || entry.url === server.url);
+function isMcpSupported(entry: McpServer): boolean {
+  return entry.oauth !== undefined && SUPPORTED_AUTH_MODES.has(entry.oauth.mode);
+}
 
-    if (catalogEntry) {
-      selected.add(catalogEntry.id);
+/**
+ * Sort supported entries first, preserving the catalog's intrinsic ordering
+ * (popular-first) within each group so the toggle-able rows surface at the
+ * top of every search result.
+ */
+function sortSupportedFirst(entries: McpServer[]): McpServer[] {
+  const supported: McpServer[] = [];
+  const unsupported: McpServer[] = [];
+
+  for (const entry of entries) {
+    if (isMcpSupported(entry)) {
+      supported.push(entry);
+    } else {
+      unsupported.push(entry);
     }
   }
 
-  return selected;
+  return [...supported, ...unsupported];
 }
 
-export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, consoleUrl }: McpsSheetProps) {
+export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, consoleUrl }: McpsSheetProps) {
   const { currentEnvironment, readOnly } = useEnvironment();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => buildSelectedIds(currentMcpServers));
-  const currentMcpServersRef = useDataRef(currentMcpServers);
+  // Single-row optimistic state. Holds the intended next checked value for the
+  // row currently being toggled so the Switch flips instantly instead of
+  // springing back to `enabledIds` while the refetch is in flight. Cleared
+  // only after the refetched ground truth lands (or on error / sheet close)
+  // to avoid a flicker between mutation success and refetch completion.
+  // Safe as a single field because the UI disables every row while a mutation
+  // is pending, so there can never be two in-flight toggles at once.
+  const [pendingChange, setPendingChange] = useState<{ id: string; nextChecked: boolean } | null>(null);
+
+  const enabledIds = useMemo(() => new Set(enabledServers.map((server) => server.mcpId)), [enabledServers]);
 
   useEffect(() => {
     if (isOpen) {
-      setSelectedIds(buildSelectedIds(currentMcpServersRef.current));
       setSearch('');
+      setPendingChange(null);
     }
-  }, [currentMcpServersRef, isOpen]);
+  }, [isOpen]);
 
   const filteredMcps = useMemo(() => {
     const query = search.trim().toLowerCase();
+    const matched = query
+      ? MCP_SERVERS.filter(
+          (entry) =>
+            entry.name.toLowerCase().includes(query) ||
+            entry.description.toLowerCase().includes(query) ||
+            entry.id.toLowerCase().includes(query)
+        )
+      : MCP_SERVERS;
 
-    if (!query) return MCP_SERVERS;
-
-    return MCP_SERVERS.filter(
-      (entry) =>
-        entry.name.toLowerCase().includes(query) ||
-        entry.description.toLowerCase().includes(query) ||
-        entry.id.toLowerCase().includes(query)
-    );
+    return sortSupportedFirst(matched);
   }, [search]);
 
-  const updateMcps = useMutation({
-    mutationFn: (mcpServers: AgentMcpServer[]) =>
-      patchAgentRuntimeConfig(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
-        mcpServers,
-      }),
-    onSuccess: (config) => {
-      queryClient.setQueryData(getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier), config);
-      showSuccessToast('MCP servers updated.');
-      onOpenChange(false);
+  const invalidateMcpsQuery = () =>
+    queryClient.invalidateQueries({
+      queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
+    });
+
+  const enableMutation = useMutation({
+    mutationFn: (mcpId: string) =>
+      enableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
+    onSuccess: async () => {
+      // Await the refetch so the cache reflects the new enablement before we
+      // drop the optimistic flag — otherwise the Switch briefly snaps back.
+      await invalidateMcpsQuery();
+      setPendingChange(null);
     },
     onError: (err: Error) => {
-      const message = err instanceof NovuApiError ? err.message : 'Could not update MCP servers.';
+      setPendingChange(null);
+      const message = err instanceof NovuApiError ? err.message : 'Could not enable MCP server.';
+      showErrorToast(message, 'Update failed');
+    },
+  });
+
+  const disableMutation = useMutation({
+    mutationFn: (mcpId: string) =>
+      disableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
+    onSuccess: async () => {
+      await invalidateMcpsQuery();
+      setPendingChange(null);
+    },
+    onError: (err: Error) => {
+      setPendingChange(null);
+      const message = err instanceof NovuApiError ? err.message : 'Could not disable MCP server.';
       showErrorToast(message, 'Update failed');
     },
   });
 
   const canEdit = !readOnly;
-  const isMutating = updateMcps.isPending;
+  const isMutating = enableMutation.isPending || disableMutation.isPending;
 
-  const handleToggle = (entry: McpServer, checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
+  const handleToggle = (entry: McpServer, nextChecked: boolean) => {
+    if (!isMcpSupported(entry)) {
+      return;
+    }
 
-      if (checked) {
-        next.add(entry.id);
-      } else {
-        next.delete(entry.id);
-      }
+    setPendingChange({ id: entry.id, nextChecked });
 
-      return next;
-    });
-  };
-
-  const handleSave = () => {
-    const fromCatalog: AgentMcpServer[] = MCP_SERVERS.filter((entry) => selectedIds.has(entry.id)).map((entry) => ({
-      externalId: entry.id,
-      name: entry.name,
-      url: entry.url,
-    }));
-    const unknown = currentMcpServers.filter(
-      (server) => !MCP_SERVERS.some((entry) => entry.id === server.externalId || entry.url === server.url)
-    );
-    const next: AgentMcpServer[] = [...fromCatalog, ...unknown];
-
-    updateMcps.mutate(next);
+    if (nextChecked) {
+      enableMutation.mutate(entry.id);
+    } else {
+      disableMutation.mutate(entry.id);
+    }
   };
 
   return (
@@ -155,10 +189,15 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
           ) : (
             <ul className="flex flex-col px-2 pb-2">
               {filteredMcps.map((entry) => {
-                const checked = selectedIds.has(entry.id);
+                const supported = isMcpSupported(entry);
+                const isPending = pendingChange?.id === entry.id;
+                // Reflect the user's intent immediately when a mutation is in
+                // flight for this row; otherwise mirror the server truth.
+                const checked = isPending ? pendingChange.nextChecked : enabledIds.has(entry.id);
                 const Icon = getMcpIcon(entry.id);
+                const rowDisabled = !canEdit || isMutating || !supported;
 
-                return (
+                const row = (
                   <li
                     key={entry.id}
                     className="hover:bg-bg-weak/60 flex items-center gap-3 rounded-md px-2 py-2 transition-colors"
@@ -166,35 +205,45 @@ export function McpsSheet({ agent, isOpen, onOpenChange, currentMcpServers, cons
                     <Switch
                       checked={checked}
                       onCheckedChange={(val) => handleToggle(entry, val)}
-                      disabled={!canEdit || isMutating}
+                      disabled={rowDisabled}
                       aria-label={checked ? `Disable ${entry.name}` : `Enable ${entry.name}`}
                     />
                     {Icon ? <Icon className="size-5 shrink-0 -mr-2" aria-hidden /> : null}
-                    <span className="text-text-strong text-label-sm min-w-0 flex-1 truncate font-medium">
+                    <span
+                      className={
+                        supported
+                          ? 'text-text-strong text-label-sm min-w-0 flex-1 truncate font-medium'
+                          : 'text-text-soft text-label-sm min-w-0 flex-1 truncate font-medium'
+                      }
+                    >
                       {entry.name}
                     </span>
+                    {!supported ? (
+                      <Badge size="sm" variant="lighter" color="gray">
+                        Coming soon
+                      </Badge>
+                    ) : null}
+                    {isPending ? <span className="text-text-soft text-label-xs">Updating…</span> : null}
                   </li>
+                );
+
+                if (supported) {
+                  return row;
+                }
+
+                return (
+                  <Tooltip key={entry.id}>
+                    <TooltipTrigger asChild>{row}</TooltipTrigger>
+                    <TooltipContent side="left">Coming soon — OAuth wiring not yet available.</TooltipContent>
+                  </Tooltip>
                 );
               })}
             </ul>
           )}
         </SheetMain>
 
-        <Separator />
-
         <SheetFooter className="flex flex-row! items-center justify-between gap-2 px-3 py-2 sm:justify-between!">
           {consoleUrl ? <ExternalLink href={consoleUrl}>View in Claude</ExternalLink> : <span />}
-          <Button
-            type="button"
-            variant="secondary"
-            mode="filled"
-            size="xs"
-            isLoading={isMutating}
-            disabled={!canEdit || isMutating}
-            onClick={handleSave}
-          >
-            Save changes
-          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

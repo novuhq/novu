@@ -106,13 +106,6 @@ export class PatchAgentRuntimeConfigRequestDto {
   @IsString()
   systemPrompt?: string;
 
-  @ApiPropertyOptional({ type: [AgentMcpServerDto] })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => AgentMcpServerDto)
-  mcpServers?: AgentMcpServerDto[];
-
   @ApiPropertyOptional({ type: [AgentToolDto] })
   @IsOptional()
   @IsArray()

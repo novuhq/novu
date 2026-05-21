@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
@@ -18,18 +18,6 @@ export class UpdateAgentRuntimeConfig {
   }
 
   async execute(command: UpdateAgentRuntimeConfigCommand): Promise<AgentRuntimeConfigResponseDto> {
-    if (command.mcpServers !== undefined) {
-      // MCP enablement now goes through POST/DELETE /agents/:id/mcp-servers,
-      // which writes Mongo first and projects to the provider. Updating the
-      // MCP list via this legacy field would race with the new flow's
-      // cascade-deletes of `mcp_connection` rows. Hard reject to make the
-      // contract explicit.
-      throw new BadRequestException(
-        'Updating mcpServers via /runtime/config is no longer supported. ' +
-          'Use POST /agents/:identifier/mcp-servers and DELETE /agents/:identifier/mcp-servers/:mcpId instead.'
-      );
-    }
-
     const agent = await this.agentRepository.findOne(
       {
         identifier: command.identifier,
