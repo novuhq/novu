@@ -16,6 +16,11 @@ describe('ssrf-url-validation', () => {
       expect(isPrivateIp('172.31.255.255')).toBe(true);
       expect(isPrivateIp('192.168.1.1')).toBe(true);
       expect(isPrivateIp('169.254.1.1')).toBe(true);
+      expect(isPrivateIp('100.64.0.1')).toBe(true);
+      expect(isPrivateIp('100.100.100.200')).toBe(true);
+      expect(isPrivateIp('100.127.255.255')).toBe(true);
+      expect(isPrivateIp('100.63.255.255')).toBe(false);
+      expect(isPrivateIp('100.128.0.1')).toBe(false);
     });
 
     it('should detect IPv6 private, loopback, and link-local addresses', () => {
@@ -33,6 +38,7 @@ describe('ssrf-url-validation', () => {
       expect(isPrivateIp('::ffff:10.0.0.1')).toBe(true);
       expect(isPrivateIp('::ffff:192.168.1.1')).toBe(true);
       expect(isPrivateIp('::ffff:169.254.1.1')).toBe(true);
+      expect(isPrivateIp('::ffff:100.100.100.200')).toBe(true);
       expect(isPrivateIp('::ffff:fe80::1')).toBe(true);
     });
 
@@ -52,6 +58,16 @@ describe('ssrf-url-validation', () => {
       const result = await validateUrlSsrf('https://ssrf-link-local-test.invalid/file.txt');
 
       expect(result).toBe('Requests to private or reserved IP addresses are not allowed (resolved: fe80::1).');
+    });
+
+    it('should block hostnames that resolve to RFC6598 shared address space', async () => {
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '100.100.100.200', family: 4 }] as never);
+
+      const result = await validateUrlSsrf('https://ssrf-shared-address-test.invalid/latest/meta-data/');
+
+      expect(result).toBe(
+        'Requests to private or reserved IP addresses are not allowed (resolved: 100.100.100.200).'
+      );
     });
   });
 });

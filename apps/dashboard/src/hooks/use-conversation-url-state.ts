@@ -12,6 +12,11 @@ function parseFilters(searchParams: URLSearchParams): ConversationFilters {
     result.subscriberId = subscriberId;
   }
 
+  const agentId = searchParams.get('agentId');
+  if (agentId) {
+    result.agentId = agentId;
+  }
+
   const provider = searchParams.get('provider')?.split(',').filter(Boolean);
   if (provider?.length) {
     result.provider = provider;
@@ -32,6 +37,7 @@ function parseFilterValues(searchParams: URLSearchParams): ConversationFiltersDa
   return {
     dateRange: searchParams.get('dateRange') || DEFAULT_DATE_RANGE,
     subscriberId: searchParams.get('subscriberId') || '',
+    agentId: searchParams.get('agentId') || '',
     provider: searchParams.get('provider')?.split(',').filter(Boolean) || [],
     conversationId: searchParams.get('conversationId') || '',
   };
@@ -69,6 +75,10 @@ export function useConversationUrlState(): ConversationUrlState & {
 
       if (data.subscriberId) {
         newParams.set('subscriberId', data.subscriberId);
+      }
+
+      if (data.agentId) {
+        newParams.set('agentId', data.agentId);
       }
 
       if (data.provider?.length) {

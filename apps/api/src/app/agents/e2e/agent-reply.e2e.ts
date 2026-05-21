@@ -156,18 +156,6 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
 
       expect(res.status).to.equal(400);
     });
-
-    it('should return 400 when conversation has no serialized thread', async () => {
-      const conversationId = await seedConversation(ctx, { withSerializedThread: false });
-
-      const res = await postReply({
-        conversationId,
-        integrationIdentifier: ctx.integrationIdentifier,
-        reply: { markdown: 'Should fail' },
-      });
-
-      expect(res.status).to.equal(400);
-    });
   });
 
   describe('Signals (metadata)', () => {

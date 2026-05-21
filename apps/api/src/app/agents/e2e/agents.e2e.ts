@@ -160,7 +160,7 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(response.body.message).to.contain('Cannot specify both "before" and "after" cursors');
   });
 
-  it('should return 409 when creating a duplicate agent identifier in the same environment', async () => {
+  it('should append a suffix when creating a scratch agent with a duplicate identifier', async () => {
     const identifier = `e2e-dup-${Date.now()}`;
 
     await session.testAgent.post('/v1/agents').send({
@@ -173,7 +173,12 @@ describe('Agents API - /agents #novu-v2', () => {
       identifier,
     });
 
-    expect(second.status).to.equal(409);
+    expect(second.status).to.equal(201);
+    expect(second.body.data.identifier).to.not.equal(identifier);
+    expect(second.body.data.identifier.startsWith(`${identifier}-`)).to.be.true;
+
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(identifier)}`);
+    await session.testAgent.delete(`/v1/agents/${encodeURIComponent(second.body.data.identifier)}`);
   });
 
   it('should add, list, update, and remove agent-integration links', async () => {

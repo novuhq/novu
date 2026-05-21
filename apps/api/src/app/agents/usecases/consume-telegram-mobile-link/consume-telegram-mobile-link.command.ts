@@ -1,0 +1,19 @@
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import { BaseCommand } from '@novu/application-generic';
+
+const BOT_TOKEN_PATTERN = /^\d{8,}:[A-Za-z0-9_-]{35,}$/;
+
+export class ConsumeTelegramMobileLinkCommand extends BaseCommand {
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Matches(BOT_TOKEN_PATTERN, {
+    message: 'botToken must match the Telegram bot token format <id>:<secret>',
+  })
+  botToken: string;
+}
+
+export { BOT_TOKEN_PATTERN };

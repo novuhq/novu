@@ -8,8 +8,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { AnalyticsService, encryptSecret } from '@novu/application-generic';
+import { AnalyticsService, encryptSecret, isAgentSharedInboxEnabled } from '@novu/application-generic';
 import {
+  type AgentEntity,
   AgentIntegrationRepository,
   AgentRepository,
   CommunityOrganizationRepository,
@@ -60,7 +61,7 @@ export class AddAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id']
+      ['_id', 'identifier', 'name']
     );
 
     if (!agent) {
@@ -96,11 +97,11 @@ export class AddAgentIntegration {
       throw new BadRequestException('integrationIdentifier is required when providerId is not NovuAgent.');
     }
 
-    return this.linkExistingIntegration(agent._id, command);
+    return this.linkExistingIntegration(agent, command);
   }
 
   private async linkExistingIntegration(
-    agentId: string,
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
     command: AddAgentIntegrationCommand
   ): Promise<AgentIntegrationResponseDto> {
     const integration = await this.integrationRepository.findOne(
@@ -109,7 +110,7 @@ export class AddAgentIntegration {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      '_id identifier name providerId channel active'
+      '_id identifier name providerId channel active credentials'
     );
 
     if (!integration) {
@@ -118,21 +119,21 @@ export class AddAgentIntegration {
 
     if (integration.providerId === EmailProviderIdEnum.NovuAgent) {
       await this.enforceEmailTier(command.organizationId);
-      await this.enforceSingletonEmail(agentId, command);
+      await this.enforceSingletonEmail(agent._id, command);
       await this.seedEmailSecretKey(integration._id, command.environmentId, command.organizationId);
     }
 
-    return this.createLink(agentId, integration, command);
+    return this.createLink(agent, integration, command);
   }
 
   private async createLink(
-    agentId: string,
+    agent: Pick<AgentEntity, '_id' | 'identifier' | 'name'>,
     integration: Pick<IntegrationEntity, '_id' | 'identifier' | 'name' | 'providerId' | 'channel' | 'active'>,
     command: AddAgentIntegrationCommand
   ): Promise<AgentIntegrationResponseDto> {
     const existingLink = await this.agentIntegrationRepository.findOne(
       {
-        _agentId: agentId,
+        _agentId: agent._id,
         _integrationId: integration._id,
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
@@ -145,19 +146,19 @@ export class AddAgentIntegration {
     }
 
     const link = await this.agentIntegrationRepository.create({
-      _agentId: agentId,
+      _agentId: agent._id,
       _integrationId: integration._id,
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
     });
 
-    const response = toAgentIntegrationResponse(link, integration);
+    const response = toAgentIntegrationResponse(link, integration, agent);
 
     trackAgentIntegrationConnected(this.analyticsService, {
       userId: command.userId,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
-      agentId,
+      agentId: agent._id,
       agentIdentifier: command.agentIdentifier,
       integrationId: integration._id,
       integrationIdentifier: integration.identifier,
@@ -170,6 +171,10 @@ export class AddAgentIntegration {
   }
 
   private async enforceEmailTier(organizationId: string): Promise<void> {
+    if (!isAgentSharedInboxEnabled()) {
+      throw new ForbiddenException('Agent Novu Email is not available in this deployment.');
+    }
+
     const organization = await this.organizationRepository.findById(organizationId);
     const tier = organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
     const allowed = getFeatureForTierAsBoolean(FeatureNameEnum.AGENT_EMAIL_INTEGRATION, tier);

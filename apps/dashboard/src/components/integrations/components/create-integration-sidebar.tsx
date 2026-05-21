@@ -1,5 +1,5 @@
-import { providers as novuProviders } from '@novu/shared';
-import { useEffect, useState } from 'react';
+import { ChatProviderIdEnum, providers as novuProviders } from '@novu/shared';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -30,7 +30,6 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
   const providers = novuProviders;
   const { mutateAsync: createIntegration, isPending } = useCreateIntegration();
   const { mutateAsync: setPrimaryIntegration, isPending: isSettingPrimary } = useSetPrimaryIntegration();
-  const { integrations } = useFetchIntegrations();
   const [formState, setFormState] = useState({ isValid: true, errors: {} as Record<string, unknown>, isDirty: false });
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(isOpened);
@@ -52,6 +51,62 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
 
   const { integrationsByChannel } = useIntegrationList(searchQuery);
   const provider = providers?.find((providerItem) => providerItem.id === (selectedIntegration || providerId));
+
+  // While the user is on the Telegram configure step, the sidebar shows a QR
+  // mobile-setup card. If the visitor completes setup on their phone, the
+  // public consume endpoint creates a new Telegram integration server-side.
+  // We detect that creation by snapshotting the set of existing Telegram
+  // integration ids on first paint and watching for a new one to appear.
+  const isTelegramCreateStep = provider?.id === ChatProviderIdEnum.Telegram && step === 'configure';
+  const initialTelegramIdsRef = useRef<Set<string> | null>(null);
+  const hasHandledAutoConnectRef = useRef<boolean>(false);
+
+  // Reset the snapshot whenever the user leaves the Telegram configure step so
+  // re-entering the flow takes a fresh baseline (instead of treating already
+  // existing integrations as freshly created).
+  useEffect(() => {
+    if (!isTelegramCreateStep) {
+      initialTelegramIdsRef.current = null;
+      hasHandledAutoConnectRef.current = false;
+    }
+  }, [isTelegramCreateStep]);
+
+  const { integrations } = useFetchIntegrations({
+    refetchInterval: isTelegramCreateStep ? 3000 : undefined,
+  });
+
+  useEffect(() => {
+    if (!isTelegramCreateStep || !integrations) return;
+
+    if (initialTelegramIdsRef.current === null) {
+      initialTelegramIdsRef.current = new Set(
+        integrations
+          .filter((integration) => integration.providerId === ChatProviderIdEnum.Telegram)
+          .map((integration) => integration._id)
+      );
+
+      return;
+    }
+
+    if (hasHandledAutoConnectRef.current) return;
+
+    const newOne = integrations.find(
+      (integration) =>
+        integration.providerId === ChatProviderIdEnum.Telegram &&
+        !initialTelegramIdsRef.current?.has(integration._id)
+    );
+
+    if (newOne) {
+      // Latch immediately so a refetch firing before unmount can't replay the
+      // toast + navigate for the same newly-detected integration.
+      hasHandledAutoConnectRef.current = true;
+      showSuccessToast('Telegram bot connected from your phone');
+      // Direct close (skip `useUnsavedChangesAlertDialog`) — the user explicitly
+      // opted into the mobile flow, so confirming "discard changes" is noisy.
+      setIsSheetOpen(false);
+      navigate(buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: newOne._id }));
+    }
+  }, [isTelegramCreateStep, integrations, navigate]);
   const {
     isPrimaryModalOpen,
     setIsPrimaryModalOpen,

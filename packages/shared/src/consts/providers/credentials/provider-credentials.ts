@@ -1455,6 +1455,17 @@ export const cmTelecomConfig: IConfigCredential[] = [
   ...smsConfigBase,
 ];
 
+export const telegramConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.ApiToken,
+    displayName: 'Bot Token',
+    description: 'Create a bot in Telegram by chatting with BotFather, then paste the HTTP API token it gives you here.',
+    type: 'string',
+    required: true,
+    links: [{ text: 'BotFather', url: 'https://t.me/botfather' }],
+  },
+];
+
 // ─── Agent Runtime Providers ─────────────────────────────────────────────────
 
 export const anthropicAgentConfig: IConfigCredential[] = [

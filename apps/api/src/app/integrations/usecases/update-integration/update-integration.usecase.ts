@@ -11,6 +11,7 @@ import { EnvironmentRepository, IntegrationEntity, IntegrationRepository } from 
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 import { CheckIntegrationCommand } from '../check-integration/check-integration.command';
 import { CheckIntegration } from '../check-integration/check-integration.usecase';
+import { ensureNovuAgentManagedCredentials } from '../novu-agent/novu-agent-credentials.utils';
 import { ensureWhatsAppManagedCredentials } from '../whatsapp/whatsapp-credentials.utils';
 import { UpdateIntegrationCommand } from './update-integration.command';
 
@@ -184,9 +185,14 @@ export class UpdateIntegration {
       const existingCredentials = existingIntegration.credentials
         ? decryptCredentials(existingIntegration.credentials)
         : undefined;
-      const managedCredentials = ensureWhatsAppManagedCredentials({
+      const whatsAppMerged = ensureWhatsAppManagedCredentials({
         providerId: existingIntegration.providerId,
         nextCredentials: command.credentials,
+        existingCredentials,
+      });
+      const managedCredentials = ensureNovuAgentManagedCredentials({
+        providerId: existingIntegration.providerId,
+        nextCredentials: whatsAppMerged,
         existingCredentials,
       });
       updatePayload.credentials = encryptCredentials(managedCredentials);

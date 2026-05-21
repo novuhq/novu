@@ -41,7 +41,7 @@ const LegacyDashboardLayout = ({
 };
 
 export const DashboardLayout = (props: DashboardLayoutProps) => {
-  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_DISPATCH_DASHBOARD_ENABLED, false);
+  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
 
   if (isShellV2) {
     return <DashboardShell {...props} />;

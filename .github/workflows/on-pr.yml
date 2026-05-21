@@ -24,6 +24,10 @@ jobs:
   find-flags:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     name: Find LaunchDarkly feature flags in diff
+    # Skip on fork PRs: `LD_ACCESS_TOKEN` is unavailable, so LaunchDarkly's
+    # find-code-references action fails with "`access-token` is required".
+    # Same `head.repo.fork` gate as pr-labeler.yml.
+    if: ${{ github.event.pull_request.head.repo.fork != true }}
     environment: Linting
     steps:
       - name: Checkout
@@ -265,7 +269,13 @@ jobs:
     needs: [get-affected]
     uses: ./.github/workflows/reusable-api-e2e.yml
     with:
-      ee: true
+      # PRs opened from forks (community contributions) do not receive repo
+      # secrets — even after a maintainer approves the run — so the EE branch,
+      # which checks out the private enterprise submodule using
+      # ${{ secrets.SUBMODULES_TOKEN }}, fails immediately with
+      # "Input required and not supplied: token". Fall back to the non-EE e2e
+      # suite (Novu V1) for fork PRs so the change still gets validated.
+      ee: ${{ github.event.pull_request.head.repo.fork != true }}
     secrets: inherit
 
   # Aggregator / "all-green" gate. This job depends on every other job in

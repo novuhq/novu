@@ -1,34 +1,38 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useEffect, useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
 import {
   Bot,
+  CalendarDays,
   ChevronDown,
   ChevronRight,
   Mail,
   MessageCircle,
   MessagesSquare,
-  CalendarDays,
   MoreHorizontal,
   Settings,
   Smartphone,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { RiArrowLeftSLine, RiCheckLine } from 'react-icons/ri';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { Notification5Fill } from '@/components/icons/notification-5-fill';
+import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { getOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
-import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
 
 function SubscriberAvatar() {
   return (
     <svg className="size-4 shrink-0" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8Z" fill="#E1E4EA" />
+      <path
+        d="M0 8C0 3.58172 3.58172 0 8 0C12.4183 0 16 3.58172 16 8C16 12.4183 12.4183 16 8 16C3.58172 16 0 12.4183 0 8Z"
+        fill="#E1E4EA"
+      />
       <g clipPath="url(#sub-avatar-clip)">
         <ellipse cx="8" cy="15.6" rx="6.4" ry="4.8" fill="white" fillOpacity="0.72" />
         <circle opacity="0.9" cx="8" cy="6.4" r="3.2" fill="white" />
@@ -61,8 +65,15 @@ function FeatureList() {
         <RiCheckLine className="size-3 shrink-0 text-[#b0b8c4]" />
         <span className="flex flex-wrap items-center gap-1">
           Cross-channel conversations across
-          <Pill icon={<img src="/images/providers/light/square/slack.svg" alt="" className="size-4" />} rotate={-1}>Slack</Pill>
-          <Pill icon={<img src="/images/providers/light/square/whatsapp-business.svg" alt="" className="size-4" />} rotate={1}>Whatsapp</Pill>
+          <Pill icon={<img src="/images/providers/light/square/slack.svg" alt="" className="size-4" />} rotate={-1}>
+            Slack
+          </Pill>
+          <Pill
+            icon={<img src="/images/providers/light/square/whatsapp-business.svg" alt="" className="size-4" />}
+            rotate={1}
+          >
+            Whatsapp
+          </Pill>
           and a lot more.
         </span>
       </div>
@@ -70,7 +81,9 @@ function FeatureList() {
         <RiCheckLine className="size-3 shrink-0 text-[#b0b8c4]" />
         <span className="flex flex-wrap items-center gap-1">
           Access conversation history
-          <Pill icon={<MessagesSquare className="size-3.5 text-[#99a1af]" />} rotate={-1}>5</Pill>
+          <Pill icon={<MessagesSquare className="size-3.5 text-[#99a1af]" />} rotate={-1}>
+            5
+          </Pill>
           and state via unified agent() handler.
         </span>
       </div>
@@ -78,7 +91,9 @@ function FeatureList() {
         <RiCheckLine className="size-3 shrink-0 text-[#b0b8c4]" />
         <span className="flex flex-wrap items-center gap-1">
           Provider identities resolved →
-          <Pill icon={<SubscriberAvatar />} rotate={1}>Subscriber</Pill>
+          <Pill icon={<SubscriberAvatar />} rotate={1}>
+            Subscriber
+          </Pill>
           mapping.
         </span>
       </div>
@@ -125,9 +140,7 @@ function InboxPreview() {
           <div className="flex flex-1 flex-col gap-3">
             <div className="flex flex-col gap-1">
               <div className="flex items-start justify-between">
-                <span className="text-sm font-medium tracking-tight text-[#0e121b]">
-                  Looks good, doesn't it?
-                </span>
+                <span className="text-sm font-medium tracking-tight text-[#0e121b]">Looks good, doesn't it?</span>
                 <div className="flex items-center px-1.5">
                   <div className="size-1.5 rounded-full bg-[#7d52f4]" />
                 </div>
@@ -237,13 +250,15 @@ const USECASE_OPTIONS = [
     id: 'agents' as const,
     icon: Bot,
     title: "I'm building an AI agent",
-    description: 'Connect your agent to Novu and Novu gives it voice. Distribute your agent across multiple channels with a unified API.',
+    description:
+      'Connect your agent to Novu and Novu gives it voice. Distribute your agent across multiple channels with a unified API.',
   },
   {
     id: 'inbox' as const,
     icon: Notification5Fill,
     title: "I'm adding notifications to my app",
-    description: 'Plug in <Inbox />, connect providers, and orchestrate workflows. Go from event → trigger → delivery with full control.',
+    description:
+      'Plug in <Inbox />, connect providers, and orchestrate workflows. Go from event → trigger → delivery with full control.',
   },
 ] as const;
 
@@ -251,12 +266,14 @@ type UsecaseId = 'agents' | 'inbox';
 
 function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect: (id: UsecaseId) => void }) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
 
   const handleContinue = () => {
     if (selected === 'inbox') {
-      navigate(ROUTES.INBOX_USECASE);
+      navigate(withAppId(ROUTES.INBOX_USECASE, appId));
     } else if (selected === 'agents') {
-      navigate(ROUTES.AGENTS_SETUP);
+      navigate(withAppId(ROUTES.AGENTS_SETUP, appId));
     }
   };
 
@@ -363,25 +380,26 @@ export function UsecaseSelectPage() {
     </>
   );
 
-  const rightContent = selected === 'agents' ? (
-    <div className="flex flex-col items-start">
-      <div className="self-center">
-        <AgentUsecasePreviewIllustration />
+  const rightContent =
+    selected === 'agents' ? (
+      <div className="flex flex-col items-start">
+        <div className="self-center">
+          <AgentUsecasePreviewIllustration />
+        </div>
+        <div className="mt-10">
+          <FeatureList />
+        </div>
       </div>
-      <div className="mt-10">
-        <FeatureList />
+    ) : (
+      <div className="flex flex-col items-start">
+        <div className="self-center">
+          <InboxPreview />
+        </div>
+        <div className="mt-10">
+          <InboxFeatureList />
+        </div>
       </div>
-    </div>
-  ) : (
-    <div className="flex flex-col items-start">
-      <div className="self-center">
-        <InboxPreview />
-      </div>
-      <div className="mt-10">
-        <InboxFeatureList />
-      </div>
-    </div>
-  );
+    );
 
   return <OnboardingShell left={leftContent} right={rightContent} />;
 }

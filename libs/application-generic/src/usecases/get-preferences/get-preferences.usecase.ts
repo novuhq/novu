@@ -78,14 +78,23 @@ export class GetPreferences {
     organizationId: string;
     subscriberId: string;
     contextKeys?: string[];
+    /**
+     * Optionally pass a pre-fetched SUBSCRIBER_GLOBAL preferences entity so the caller
+     * can hydrate the global preference response without issuing another mongo query.
+     * Pass `null` (and not `undefined`) to indicate "we looked and there is none".
+     */
+    subscriberGlobalPreference?: PreferencesEntity | null;
   }): Promise<{
     enabled: boolean;
     channels: IPreferenceChannels;
     schedule?: Schedule;
   }> {
-    const result = await this.safeExecute(command);
+    const subscriberGlobalPreference =
+      command.subscriberGlobalPreference !== undefined
+        ? command.subscriberGlobalPreference
+        : await this.findSubscriberGlobalPreferenceFromDb(command);
 
-    if (!result) {
+    if (!subscriberGlobalPreference) {
       return {
         channels: {
           email: true,
@@ -100,9 +109,49 @@ export class GetPreferences {
 
     return {
       enabled: true,
-      channels: GetPreferences.mapWorkflowPreferencesToChannelPreferences(result.preferences),
-      schedule: result.schedule,
+      channels: GetPreferences.mapWorkflowPreferencesToChannelPreferences(
+        subscriberGlobalPreference.preferences as WorkflowPreferencesPartial
+      ),
+      schedule: subscriberGlobalPreference.schedule,
     };
+  }
+
+  /**
+   * Targeted single-query fetch of the SUBSCRIBER_GLOBAL preferences for a subscriber.
+   *
+   * Historically this code path went through {@link safeExecute}/{@link execute}, which
+   * issues 4 mongo queries (workflow resource + user, subscriber workflow, subscriber
+   * global). When the caller only wants the subscriber's global preference there is no
+   * templateId, so the 3 workflow-scoped queries return nothing and just burn CPU and
+   * a connection on the secondary. This method bypasses that path entirely.
+   */
+  private async findSubscriberGlobalPreferenceFromDb(command: {
+    environmentId: string;
+    organizationId: string;
+    subscriberId: string;
+    contextKeys?: string[];
+  }): Promise<PreferencesEntity | null> {
+    const useContextFiltering = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_CONTEXT_PREFERENCES_ENABLED,
+      defaultValue: false,
+      organization: { _id: command.organizationId },
+    });
+
+    const contextQuery = this.preferencesRepository.buildContextExactMatchQuery(command.contextKeys, {
+      enabled: useContextFiltering,
+    });
+
+    return this.preferencesRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _subscriberId: command.subscriberId,
+        type: PreferencesTypeEnum.SUBSCRIBER_GLOBAL,
+        ...contextQuery,
+      },
+      undefined,
+      { readPreference: 'secondaryPreferred' as const }
+    );
   }
 
   public async safeExecute(command: GetPreferencesCommand): Promise<GetPreferencesResponseDto> {

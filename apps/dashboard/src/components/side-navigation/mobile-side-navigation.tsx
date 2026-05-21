@@ -11,7 +11,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { APP_IDS, APP_LABELS, type AppId, buildAppHomeRoute } from '@/utils/apps';
 import { cn } from '@/utils/ui';
 import { PlatformIcon } from '../icons/platform';
-import { DispatchSideNavigation } from './dispatch-side-navigation';
+import { ConnectSideNavigation } from './connect-side-navigation';
 import { LegacySideNavigation } from './side-navigation';
 
 type MobileAppSwitcherItem = {
@@ -21,7 +21,7 @@ type MobileAppSwitcherItem = {
 
 const MOBILE_APP_SWITCHER_ITEMS: MobileAppSwitcherItem[] = [
   { id: APP_IDS.NOVU, Icon: PlatformIcon },
-  { id: APP_IDS.DISPATCH, Icon: BotMessageSquare },
+  { id: APP_IDS.CONNECT, Icon: BotMessageSquare },
 ];
 
 function MobileAppSwitcher() {
@@ -70,7 +70,7 @@ function MobileAppSwitcher() {
 export function MobileSideNavigation() {
   const [isOpen, setIsOpen] = useState(false);
   const { pathname } = useLocation();
-  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_DISPATCH_DASHBOARD_ENABLED, false);
+  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
   const appId = useCurrentApp();
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export function MobileSideNavigation() {
     }
   }, [pathname]);
 
-  const SideNav = isShellV2 && appId === APP_IDS.DISPATCH ? DispatchSideNavigation : LegacySideNavigation;
+  const SideNav = isShellV2 && appId === APP_IDS.CONNECT ? ConnectSideNavigation : LegacySideNavigation;
 
   return (
     <>
