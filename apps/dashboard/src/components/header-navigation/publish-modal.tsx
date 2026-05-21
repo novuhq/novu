@@ -524,8 +524,8 @@ function AgentInactiveWarning({ count }: { count: number }) {
             </Badge>
           </p>
           <p className="text-xs text-text-sub">
-            Affected agents will publish in{' '}
-            <span className="font-medium text-text-strong">Inactive</span> state until configured in production.
+            Affected agents will publish in <span className="font-medium text-text-strong">Inactive</span> state until
+            configured in production.
           </p>
         </div>
       }

@@ -74,7 +74,7 @@ export class AgentsMcpOAuthController {
 }
 
 function buildPostCallbackRedirect(status: 'connected' | 'error', message?: string): string | undefined {
-  const base = process.env.FRONT_BASE_URL?.replace(/\/$/, '');
+  const base = process.env.DASHBOARD_URL?.replace(/\/$/, '');
   if (!base) return undefined;
 
   const params = new URLSearchParams({ status });
