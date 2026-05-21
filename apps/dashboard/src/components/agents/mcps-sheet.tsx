@@ -1,4 +1,4 @@
-import { MCP_SERVERS, type McpServer } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, type McpServer } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
@@ -36,8 +36,18 @@ type McpsSheetProps = {
   consoleUrl?: string;
 };
 
+/**
+ * Gate the picker on auth modes the backend can actually complete, not just on
+ * `oauth` presence. The `novu-app` / `user-app` modes are typed in the catalog
+ * but the OAuth start/callback use cases still return `NotImplementedException`
+ * for them, so surfacing those rows as toggle-able would only fail at mutation
+ * time. Keep this set in lock-step with the modes wired in
+ * `generate-mcp-oauth-url.usecase.ts` / `mcp-oauth-callback.usecase.ts`.
+ */
+const SUPPORTED_AUTH_MODES = new Set<McpConnectionAuthModeEnum>([McpConnectionAuthModeEnum.Dcr]);
+
 function isMcpSupported(entry: McpServer): boolean {
-  return entry.oauth !== undefined;
+  return entry.oauth !== undefined && SUPPORTED_AUTH_MODES.has(entry.oauth.mode);
 }
 
 /**
@@ -64,15 +74,21 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
   const { currentEnvironment, readOnly } = useEnvironment();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
-  // Local optimistic state of which mcp ids are toggled on. Hydrated from the
-  // server response when the sheet opens and on every refetch.
-  const [pendingId, setPendingId] = useState<string | null>(null);
+  // Single-row optimistic state. Holds the intended next checked value for the
+  // row currently being toggled so the Switch flips instantly instead of
+  // springing back to `enabledIds` while the refetch is in flight. Cleared
+  // only after the refetched ground truth lands (or on error / sheet close)
+  // to avoid a flicker between mutation success and refetch completion.
+  // Safe as a single field because the UI disables every row while a mutation
+  // is pending, so there can never be two in-flight toggles at once.
+  const [pendingChange, setPendingChange] = useState<{ id: string; nextChecked: boolean } | null>(null);
 
   const enabledIds = useMemo(() => new Set(enabledServers.map((server) => server.mcpId)), [enabledServers]);
 
   useEffect(() => {
     if (isOpen) {
       setSearch('');
+      setPendingChange(null);
     }
   }, [isOpen]);
 
@@ -98,11 +114,14 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
   const enableMutation = useMutation({
     mutationFn: (mcpId: string) =>
       enableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
-    onSettled: () => {
-      setPendingId(null);
-      invalidateMcpsQuery();
+    onSuccess: async () => {
+      // Await the refetch so the cache reflects the new enablement before we
+      // drop the optimistic flag — otherwise the Switch briefly snaps back.
+      await invalidateMcpsQuery();
+      setPendingChange(null);
     },
     onError: (err: Error) => {
+      setPendingChange(null);
       const message = err instanceof NovuApiError ? err.message : 'Could not enable MCP server.';
       showErrorToast(message, 'Update failed');
     },
@@ -111,11 +130,12 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
   const disableMutation = useMutation({
     mutationFn: (mcpId: string) =>
       disableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
-    onSettled: () => {
-      setPendingId(null);
-      invalidateMcpsQuery();
+    onSuccess: async () => {
+      await invalidateMcpsQuery();
+      setPendingChange(null);
     },
     onError: (err: Error) => {
+      setPendingChange(null);
       const message = err instanceof NovuApiError ? err.message : 'Could not disable MCP server.';
       showErrorToast(message, 'Update failed');
     },
@@ -124,14 +144,14 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
   const canEdit = !readOnly;
   const isMutating = enableMutation.isPending || disableMutation.isPending;
 
-  const handleToggle = (entry: McpServer, checked: boolean) => {
+  const handleToggle = (entry: McpServer, nextChecked: boolean) => {
     if (!isMcpSupported(entry)) {
       return;
     }
 
-    setPendingId(entry.id);
+    setPendingChange({ id: entry.id, nextChecked });
 
-    if (checked) {
+    if (nextChecked) {
       enableMutation.mutate(entry.id);
     } else {
       disableMutation.mutate(entry.id);
@@ -170,7 +190,10 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
             <ul className="flex flex-col px-2 pb-2">
               {filteredMcps.map((entry) => {
                 const supported = isMcpSupported(entry);
-                const checked = enabledIds.has(entry.id);
+                const isPending = pendingChange?.id === entry.id;
+                // Reflect the user's intent immediately when a mutation is in
+                // flight for this row; otherwise mirror the server truth.
+                const checked = isPending ? pendingChange.nextChecked : enabledIds.has(entry.id);
                 const Icon = getMcpIcon(entry.id);
                 const rowDisabled = !canEdit || isMutating || !supported;
 
@@ -200,7 +223,7 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
                         Coming soon
                       </Badge>
                     ) : null}
-                    {pendingId === entry.id ? <span className="text-text-soft text-label-xs">Updating…</span> : null}
+                    {isPending ? <span className="text-text-soft text-label-xs">Updating…</span> : null}
                   </li>
                 );
 
