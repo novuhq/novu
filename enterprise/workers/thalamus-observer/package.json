@@ -3,15 +3,17 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "deploy": "wrangler deploy",
     "dev": "wrangler dev --env local",
     "start": "wrangler dev --env local",
-    "cf-typegen": "wrangler types",
+    "deploy": "wrangler deploy",
+    "deploy:local": "wrangler deploy --env local",
     "deploy:staging": "wrangler deploy --env staging",
     "deploy:production": "wrangler deploy --env production",
-    "deploy:local": "wrangler deploy --env local"
+    "typecheck": "tsc --noEmit",
+    "cf-typegen": "wrangler types"
   },
   "dependencies": {
+    "@novu/thalamus": "0.1.0-alpha.6",
     "agents": "^0.12.4",
     "eventsource-parser": "^3.0.8"
   },

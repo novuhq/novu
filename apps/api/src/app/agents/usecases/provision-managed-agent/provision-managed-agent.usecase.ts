@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
-import { AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
+import { getMcpOAuthCatalogEntry } from '../../utils/mcp-oauth-catalog';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
@@ -22,6 +24,7 @@ export class ProvisionManagedAgent {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly logger: PinoLogger
   ) {}
 
@@ -104,6 +107,24 @@ export class ProvisionManagedAgent {
       externalAgentId = response.externalAgentId;
     }
 
+    // Snapshot the pre-update runtime fields so we can compensate when the
+    // post-managed-runtime writes fail and we are NOT inside a Mongo
+    // transaction (i.e. `session === null`). With a session, the caller's
+    // transaction rolls everything back automatically — without one, every
+    // write here is independently committed and we have to undo by hand.
+    const previousAgentRuntime = !session
+      ? await this.agentRepository.findOne(
+          {
+            _id: command.agentId,
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+          },
+          ['runtime', 'managedRuntime']
+        )
+      : null;
+
+    let agentRuntimePersisted = false;
+
     // Persist the managed runtime identifiers on the agent.
     try {
       const updateResult = await this.agentRepository.update(
@@ -130,8 +151,48 @@ export class ProvisionManagedAgent {
           `Agent "${command.agentId}" no longer exists; aborting managed-runtime provision to avoid orphaning the provider resource.`
         );
       }
+
+      agentRuntimePersisted = true;
+
+      // Mongo is the source of truth for the agent's MCP list. Mirror the
+      // initial set sent to the provider as `agent_mcp_server` rows so the
+      // dashboard and runtime config endpoints can read them directly.
+      // In adopt mode we do not know the authoritative set on the provider
+      // until a separate reconcile step (out of scope here), so skip
+      // seeding to avoid writing rows that disagree with the provider.
+      if (!command.externalAgentId && command.mcpServers?.length) {
+        await this.persistAgentMcpServers(command, session);
+      }
     } catch (mongoError) {
       this.logger.error({ err: mongoError }, 'Failed to persist managed runtime on agent after provisioning');
+
+      // Compensating Mongo rollback for the no-session path: if the runtime
+      // update already committed but the MCP seeding failed, the agent row
+      // would otherwise be left pointing at a provider agent we're about to
+      // delete below. Revert it to its pre-update shape so the row matches
+      // reality. With a session, the caller's transaction handles this.
+      if (agentRuntimePersisted && !session) {
+        try {
+          await this.agentRepository.update(
+            {
+              _id: command.agentId,
+              _environmentId: command.environmentId,
+              _organizationId: command.organizationId,
+            },
+            {
+              $set: {
+                runtime: previousAgentRuntime?.runtime ?? null,
+                managedRuntime: previousAgentRuntime?.managedRuntime ?? null,
+              },
+            }
+          );
+        } catch (revertError) {
+          this.logger.error(
+            { agentId: command.agentId, err: revertError },
+            'Failed to revert agent runtime fields after provisioning failure — manual cleanup may be required'
+          );
+        }
+      }
 
       if (!command.externalAgentId) {
         // Best-effort rollback the provider agent we just created.
@@ -149,5 +210,46 @@ export class ProvisionManagedAgent {
     }
 
     return { externalAgentId, integrationId: resolvedIntegrationId, adoptedName };
+  }
+
+  private async persistAgentMcpServers(
+    command: ProvisionManagedAgentCommand,
+    session: ClientSession | null
+  ): Promise<void> {
+    if (!command.mcpServers?.length) {
+      return;
+    }
+
+    const syncedAt = new Date();
+    const writeOptions = session ? { session } : {};
+
+    for (const mcpId of command.mcpServers) {
+      const catalog = MCP_SERVERS.find((entry) => entry.id === mcpId);
+
+      if (!catalog) {
+        continue;
+      }
+
+      const defaultAuthMode = getMcpOAuthCatalogEntry(mcpId).mode as McpConnectionAuthModeEnum;
+
+      await this.agentMcpServerRepository.create(
+        {
+          _organizationId: command.organizationId,
+          _environmentId: command.environmentId,
+          _agentId: command.agentId,
+          mcpId,
+          enabled: true,
+          defaultScope: McpConnectionScopeEnum.Subscriber,
+          defaultAuthMode,
+          status: 'active',
+          externalProjection: {
+            providerId: command.providerId,
+            mcpServerName: catalog.name,
+            syncedAt,
+          },
+        },
+        writeOptions
+      );
+    }
   }
 }

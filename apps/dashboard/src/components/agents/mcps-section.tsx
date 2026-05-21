@@ -1,4 +1,4 @@
-import { CLAUDE_MCP_SERVERS, type ClaudeMcpServer } from '@novu/shared';
+import { MCP_SERVERS, type McpServer } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { RiAddLine, RiArrowRightUpLine } from 'react-icons/ri';
@@ -22,14 +22,10 @@ type McpsSectionProps = {
   agent: AgentResponse;
 };
 
-const MCP_CATALOG_BY_ID: Map<string, ClaudeMcpServer> = new Map(
-  CLAUDE_MCP_SERVERS.map((server) => [server.id, server])
-);
-const MCP_CATALOG_BY_URL: Map<string, ClaudeMcpServer> = new Map(
-  CLAUDE_MCP_SERVERS.map((server) => [server.url, server])
-);
+const MCP_CATALOG_BY_ID: Map<string, McpServer> = new Map(MCP_SERVERS.map((server) => [server.id, server]));
+const MCP_CATALOG_BY_URL: Map<string, McpServer> = new Map(MCP_SERVERS.map((server) => [server.url, server]));
 
-function resolveCatalogEntry(server: AgentMcpServer): ClaudeMcpServer | undefined {
+function resolveCatalogEntry(server: AgentMcpServer): McpServer | undefined {
   return MCP_CATALOG_BY_ID.get(server.externalId) ?? MCP_CATALOG_BY_URL.get(server.url);
 }
 

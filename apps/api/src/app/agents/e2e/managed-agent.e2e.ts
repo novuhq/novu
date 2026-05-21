@@ -29,7 +29,7 @@ const integrationRepository = new IntegrationRepository();
 function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> = {}) {
   return {
     providerId: AgentRuntimeProviderIdEnum.Anthropic,
-    capabilities: { mcpServers: true, tools: true, model: true, systemPrompt: true, skills: true },
+    capabilities: { mcpServers: true, tools: true, model: true, systemPrompt: true, skills: true, tokenVault: true },
     validateCredentials: sinon.stub().resolves(),
     createAgent: sinon.stub().resolves({ externalAgentId: FAKE_EXTERNAL_AGENT_ID }),
     deleteAgent: sinon.stub().resolves(),
@@ -516,21 +516,32 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.body.data.tools).to.be.an('array');
     });
 
-    it('should return all mcpServer and tool fields exactly as returned by the provider', async () => {
+    it('returns mcpServers from the Novu-authoritative enablement table (provider mcpServers ignored)', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-cfg-full-${Date.now()}`;
       createdAgentIdentifiers.push(identifier);
 
       await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
 
+      // Enable a catalog MCP via the new authoritative endpoint. Mongo
+      // (`agent_mcp_server`) is now the source of truth for the agent's MCP
+      // list; the provider's `getConfig().mcpServers` is intentionally
+      // ignored to avoid trusting upstream drift.
+      const enableRes = await session.testAgent
+        .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
+        .send({ mcpId: 'linear' });
+      expect(enableRes.status, `enable linear failed: ${JSON.stringify(enableRes.body)}`).to.equal(201);
+
       mockProvider.getConfig.resolves({
         model: 'claude-opus-4-5',
         systemPrompt: 'You are a helpful assistant',
+        // Provider returns its own (potentially drifted) mcpServers shape; the
+        // runtime-config endpoint MUST ignore it and project from Mongo.
         mcpServers: [
           {
-            externalId: 'mcp-1',
-            name: 'Slack',
-            url: 'https://mcp.slack.com/sse',
+            externalId: 'should-be-ignored',
+            name: 'ProviderDriftedName',
+            url: 'https://mcp.provider-drift.example/sse',
           },
         ],
         tools: [
@@ -558,9 +569,12 @@ describe('Managed Agents API #novu-v2', () => {
       expect(systemPrompt).to.equal('You are a helpful assistant');
 
       expect(mcpServers).to.have.length(1);
-      expect(mcpServers[0].externalId).to.equal('mcp-1');
-      expect(mcpServers[0].name).to.equal('Slack');
-      expect(mcpServers[0].url).to.equal('https://mcp.slack.com/sse');
+      // Projection comes from the shared catalog for `linear`, NOT the
+      // provider's stub. The `externalId` mirrors the catalog id; the name
+      // and url are the canonical Linear catalog values.
+      expect(mcpServers[0].externalId).to.equal('linear');
+      expect(mcpServers[0].name).to.equal('Linear');
+      expect(mcpServers[0].url).to.equal('https://mcp.linear.app/mcp');
 
       expect(tools).to.have.length(2);
       expect(tools[0].externalId).to.equal('tool-1');
@@ -738,83 +752,28 @@ describe('Managed Agents API #novu-v2', () => {
       expect(Number(res.headers['retry-after'])).to.equal(5);
     });
 
-    // ── MCP server catalog enforcement ──────────────────────────────────────
-    // The PATCH endpoint accepts full {externalId, name, url} MCP server DTOs,
-    // but a caller with agent write access must never be able to attach an
-    // arbitrary external MCP endpoint to a managed agent (tool-chain hijack /
-    // exfiltration). The use-case resolves every entry against CLAUDE_MCP_SERVERS
-    // before forwarding to the provider, ignoring the caller-supplied url.
-    describe('mcpServers catalog enforcement', () => {
-      it('should reject an MCP server whose name is not in the trusted catalog', async () => {
+    // ── MCP server updates rejected on PATCH ────────────────────────────────
+    // MCP enablement now goes through POST/DELETE /agents/:id/mcp-servers
+    // (Mongo-authoritative). The PATCH /runtime/config endpoint hard rejects
+    // any `mcpServers` field with 400 to avoid racing with the new flow's
+    // cascade-deletes of `mcp_connection` rows. The catalog-level enforcement
+    // (allow-list, url overwrite) is now tested against the new endpoint in
+    // `enable-agent-mcp-server.e2e.ts`.
+    describe('mcpServers field is no longer accepted', () => {
+      it('should reject any mcpServers update with 400 and not forward to the provider', async () => {
         const integrationId = await createAgentRuntimeIntegration();
-        const identifier = `e2e-patch-mcp-unknown-${Date.now()}`;
+        const identifier = `e2e-patch-mcp-rejected-${Date.now()}`;
         createdAgentIdentifiers.push(identifier);
 
         await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
 
         const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`).send({
-          mcpServers: [{ externalId: 'Attacker MCP', name: 'Attacker MCP', url: 'https://attacker.example.com/mcp' }],
+          mcpServers: [{ externalId: 'linear', name: 'Linear', url: 'https://mcp.linear.app/mcp' }],
         });
 
         expect(res.status).to.equal(400);
-        expect(mockProvider.updateConfig.called, 'updateConfig must not be called for unknown MCP entries').to.be.false;
-      });
-
-      it('should overwrite a caller-supplied url with the trusted catalog url before calling the provider', async () => {
-        const integrationId = await createAgentRuntimeIntegration();
-        const identifier = `e2e-patch-mcp-spoof-${Date.now()}`;
-        createdAgentIdentifiers.push(identifier);
-
-        await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
-
-        mockProvider.updateConfig.resolves({
-          model: 'claude-3-5-sonnet-20241022',
-          systemPrompt: '',
-          mcpServers: [{ externalId: 'Slack', name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
-          tools: [],
-        });
-
-        const spoofedUrl = 'https://attacker.example.com/mcp';
-        const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`).send({
-          mcpServers: [{ externalId: 'Slack', name: 'Slack', url: spoofedUrl }],
-        });
-
-        expect(res.status).to.equal(200);
-        expect(mockProvider.updateConfig.calledOnce).to.be.true;
-
-        const patchArg = mockProvider.updateConfig.getCall(0).args[1];
-        expect(patchArg.mcpServers).to.be.an('array').with.length(1);
-        expect(patchArg.mcpServers[0].name).to.equal('Slack');
-        expect(
-          patchArg.mcpServers[0].url,
-          'caller-supplied url must be replaced with the trusted catalog url'
-        ).to.equal('https://mcp.slack.com/mcp');
-        expect(patchArg.mcpServers[0].url).to.not.equal(spoofedUrl);
-      });
-
-      it('should accept the GET-response round-trip shape (name matches catalog) and forward to the provider', async () => {
-        const integrationId = await createAgentRuntimeIntegration();
-        const identifier = `e2e-patch-mcp-roundtrip-${Date.now()}`;
-        createdAgentIdentifiers.push(identifier);
-
-        await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
-
-        mockProvider.updateConfig.resolves({
-          model: 'claude-3-5-sonnet-20241022',
-          systemPrompt: '',
-          mcpServers: [{ externalId: 'Linear', name: 'Linear', url: 'https://mcp.linear.app/sse' }],
-          tools: [],
-        });
-
-        const res = await session.testAgent.patch(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`).send({
-          mcpServers: [{ externalId: 'Linear', name: 'Linear', url: 'https://mcp.linear.app/sse' }],
-        });
-
-        expect(res.status).to.equal(200);
-        const patchArg = mockProvider.updateConfig.getCall(0).args[1];
-        expect(patchArg.mcpServers).to.be.an('array').with.length(1);
-        expect(patchArg.mcpServers[0].name).to.equal('Linear');
-        expect(patchArg.mcpServers[0].url).to.equal('https://mcp.linear.app/sse');
+        expect(mockProvider.updateConfig.called, 'updateConfig must not be called when mcpServers is supplied').to.be
+          .false;
       });
     });
   });

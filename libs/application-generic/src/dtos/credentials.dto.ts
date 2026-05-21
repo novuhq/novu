@@ -301,6 +301,16 @@ export class CredentialsDto implements ICredentials {
 
   @ApiPropertyOptional({
     description:
+      'Claude Managed Agents: ID of the Anthropic vault (`vlt_…`) tied to this integration. ' +
+      'Hydrated by the API at integration provisioning time and used to push OAuth-completed ' +
+      'MCP credentials to the per-vault credentials API.',
+  })
+  @IsString()
+  @IsOptional()
+  externalVaultId?: string;
+
+  @ApiPropertyOptional({
+    description:
       'Claude Managed Agents: id of the Anthropic workspace used in console deep links. ' +
       "Defaults to `'default'` (the Default Workspace). " +
       'Set this when the API key is scoped to a custom workspace (e.g. `wrkspc_…`).',

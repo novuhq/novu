@@ -1,12 +1,3 @@
-/**
- * Thalamus Session Observer — Cloudflare Durable Objects worker
- *
- * Relays SSE streams from AI providers to WebSocket clients.
- * One SessionObserver DO per session, one global SessionRegistry DO.
- *
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "thalamus-observer",
@@ -15,14 +6,16 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": {
     "enabled": true,
+    "head_sampling_rate": 1,
     "logs": {
-      "enabled": true
+      "enabled": true,
+      "head_sampling_rate": 1
     }
   },
   "migrations": [
     {
       "tag": "v1",
-      "new_sqlite_classes": ["SessionObserver", "SessionRegistry"]
+      "new_sqlite_classes": ["SessionObserver"]
     }
   ],
   "env": {
@@ -34,10 +27,6 @@
           {
             "name": "SESSION_OBSERVER",
             "class_name": "SessionObserver"
-          },
-          {
-            "name": "SESSION_REGISTRY",
-            "class_name": "SessionRegistry"
           }
         ]
       }
@@ -45,16 +34,11 @@
     "staging": {
       "name": "thalamus-observer-staging",
       "workers_dev": true,
-      // "routes": [{ "pattern": "thalamus-observer.novu-staging.co", "custom_domain": true }],
       "durable_objects": {
         "bindings": [
           {
             "name": "SESSION_OBSERVER",
             "class_name": "SessionObserver"
-          },
-          {
-            "name": "SESSION_REGISTRY",
-            "class_name": "SessionRegistry"
           }
         ]
       }
@@ -62,16 +46,11 @@
     "production": {
       "name": "thalamus-observer-production",
       "workers_dev": true,
-      // "routes": [{ "pattern": "thalamus-observer.novu.co", "custom_domain": true }],
       "durable_objects": {
         "bindings": [
           {
             "name": "SESSION_OBSERVER",
             "class_name": "SessionObserver"
-          },
-          {
-            "name": "SESSION_REGISTRY",
-            "class_name": "SessionRegistry"
           }
         ]
       }

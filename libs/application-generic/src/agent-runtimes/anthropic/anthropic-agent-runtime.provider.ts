@@ -6,6 +6,7 @@ import {
   AgentRuntimeProviderIdEnum,
   CLAUDE_BUILTIN_TOOLS,
 } from '@novu/shared';
+import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
   AgentRuntimeBadRequestError,
   AgentRuntimeForbiddenError,
@@ -21,15 +22,20 @@ import {
 import type {
   CreateAgentInput,
   CreateAgentResult,
+  DeleteVaultCredentialInput,
   GetAgentResult,
   GetEnvironmentResult,
-  IAgentRuntimeProvider,
+  ParsedMcpInitFailure,
+  PendingToolApproval,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
   UpdateAgentRuntimeConfigInput,
   UploadSkillFile,
   UploadSkillInput,
   UploadSkillResult,
+  UpsertVaultCredentialInput,
+  UpsertVaultCredentialResult,
+  VaultCredentialAuth,
 } from '../i-agent-runtime-provider';
 
 const PROVIDER_ID = AgentRuntimeProviderIdEnum.Anthropic;
@@ -41,14 +47,27 @@ const REQUEST_TIMEOUT_MS = 10_000;
 /** Anthropic enforces a 64-char cap on `display_title` for `beta.skills.create`. */
 const MAX_DISPLAY_TITLE_LENGTH = 64;
 
-export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
+/**
+ * Anthropic surfaces missing MCP credentials, URL mismatches, and "not yet
+ * registered" cases as stream errors with the message shape
+ * `MCP server '<displayName>' initialize failed: ...`. Thalamus's
+ * `mapSessionError` wraps these in a generic retryable `ThalamusError`, so
+ * the worker needs a stable parser to lift the server name out — we keep
+ * the regex here (the only Anthropic-specific knowledge required) so the
+ * worker stays runtime-agnostic.
+ */
+const MCP_INIT_ERROR_PATTERN = /^MCP server '([^']+)' initialize failed/;
+
+export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   readonly providerId = PROVIDER_ID;
 
   readonly capabilities: AgentRuntimeCapabilities = AGENT_RUNTIME_PROVIDERS.find(
     (p) => p.providerId === PROVIDER_ID
   ).capabilities;
 
-  constructor(private readonly _apiKey: string) {}
+  constructor(private readonly _apiKey: string) {
+    super();
+  }
 
   private buildClient(apiKey: string = this._apiKey): Anthropic {
     return new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
@@ -125,6 +144,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
     // dropped response would create a duplicate billable agent upstream.
     try {
       const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
+
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
@@ -262,28 +282,336 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
     const client = this.buildClient();
 
     // Not retried: environment creation is not idempotent.
+    const env: { id: string } = await (async () => {
+      try {
+        return await (client as any).beta.environments.create({
+          name: `nv-${input.integrationName}`,
+          config: {
+            type: 'cloud',
+            networking: { type: 'unrestricted' },
+          },
+        });
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    })();
+
+    // Anthropic vaults are a separate top-level resource from environments,
+    // so we eager-provision one alongside each integration. Doing it here keeps
+    // every "find the vlt_… for this integration" lookup constant-time on the
+    // hot path (OAuth callback) — we just read `externalVaultId` off the
+    // already-decrypted credentials blob.
+    const vault: { id: string } = await (async () => {
+      try {
+        return await (client as any).beta.vaults.create({
+          display_name: `nv-${input.integrationName}-vault`,
+        });
+      } catch (err) {
+        // Best-effort rollback so we don't leak an orphan environment when
+        // the vault create fails. If the rollback itself fails the
+        // environment is archived later by ops; the original error is what
+        // surfaces.
+        try {
+          await (client as any).beta.environments.archive(env.id);
+        } catch {
+          // swallow — original error is more useful
+        }
+        this.normaliseError(err);
+      }
+    })();
+
+    return {
+      credentialsUpdate: {
+        externalEnvironmentId: env.id,
+        externalVaultId: vault.id,
+      },
+      metadata: {},
+    };
+  }
+
+  async deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void> {
+    const externalEnvironmentId = credentialsUpdate.externalEnvironmentId as string | undefined;
+    const externalVaultId = credentialsUpdate.externalVaultId as string | undefined;
+
+    if (!externalEnvironmentId && !externalVaultId) {
+      return;
+    }
+
+    const client = this.buildClient();
+
+    if (externalEnvironmentId) {
+      await this.withRetry(async () => {
+        try {
+          await (client as any).beta.environments.archive(externalEnvironmentId);
+        } catch (err) {
+          this.normaliseError(err);
+        }
+      });
+    }
+
+    if (externalVaultId) {
+      await this.withRetry(async () => {
+        try {
+          await (client as any).beta.vaults.archive(externalVaultId);
+        } catch (err) {
+          this.normaliseError(err);
+        }
+      });
+    }
+  }
+
+  async getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null> {
+    const client = this.buildClient();
+
     try {
-      const env = await (client as any).beta.environments.create({
-        name: `nv-${input.integrationName}`,
-        config: {
-          type: 'cloud',
-          networking: { type: 'unrestricted' },
-        },
+      // Walk the session event log oldest-first looking for an MCP or
+      // builtin tool_use event whose evaluated_permission is "ask" — that's
+      // what parks the session in `requires_action`. The provider contract
+      // asks for the SINGLE OLDEST PENDING ask, so we must scan ascending
+      // and pick the first match (a descending walk would surface the
+      // newest unresolved ask instead). The `user.tool_confirmation`
+      // sentinel still short-circuits — if we encounter a confirmation
+      // event before any later ask, that confirmation already resolved a
+      // prior pending request and there's nothing left to ask the user.
+      const iterator = (client as any).beta.sessions.events.list(sessionId, {
+        order: 'asc',
+        types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
       });
 
-      return {
-        credentialsUpdate: { externalEnvironmentId: env.id as string },
-        metadata: {},
-      };
+      for await (const event of iterator) {
+        if (event?.type === 'user.tool_confirmation') {
+          // A confirmation event encountered during an ascending walk
+          // resolves the most-recent prior ask — continue scanning so a
+          // later still-open ask can be surfaced.
+          continue;
+        }
+
+        if (event?.evaluated_permission !== 'ask') {
+          continue;
+        }
+
+        const toolUseId = event.id as string | undefined;
+        const toolName = (event.name as string | undefined) ?? 'unknown_tool';
+
+        if (!toolUseId) {
+          continue;
+        }
+
+        return {
+          toolUseId,
+          toolName,
+          mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
+          input: (event.input as Record<string, unknown> | undefined) ?? undefined,
+        };
+      }
+
+      return null;
     } catch (err) {
       this.normaliseError(err);
     }
   }
 
-  async deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void> {
-    const externalEnvironmentId = credentialsUpdate.externalEnvironmentId as string | undefined;
+  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null {
+    // Inspect the error message only — we deliberately avoid coupling this
+    // module to `@novu/thalamus`'s ThalamusError class so the abstraction
+    // stays light. Anything in the codebase that surfaces this exact wire
+    // text was originally produced by Anthropic's streaming MCP-init path.
+    const message = (err as { message?: unknown } | null)?.message;
 
-    if (!externalEnvironmentId) {
+    if (typeof message !== 'string') {
+      return null;
+    }
+
+    const match = message.match(MCP_INIT_ERROR_PATTERN);
+
+    if (!match) {
+      return null;
+    }
+
+    return { mcpServerName: match[1] };
+  }
+
+  async upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
+    const client = this.buildClient();
+
+    // Eager provisioning is the happy path (see `provisionIntegration`).
+    // Legacy integrations that pre-date vault eager-creation, or any flow
+    // where the integration credentials lost their `externalVaultId`, fall
+    // through to in-flight lazy creation. We hand the new id back to the
+    // caller via `integrationCredentialsUpdate` so the OAuth callback can
+    // persist it on the integration in the same transaction.
+    let vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
+    let integrationCredentialsUpdate: Record<string, unknown> | undefined;
+    let lazyCreatedVault = false;
+
+    if (!vaultId) {
+      vaultId = await this.createVaultForIntegration(client, input.integrationCredentials);
+      integrationCredentialsUpdate = { externalVaultId: vaultId };
+      lazyCreatedVault = true;
+    }
+
+    // Vault credentials are vault-scoped on Anthropic's side, so an
+    // `existingCredentialId` recorded against a previous (now-orphan) vault
+    // would 404 on update. When we just lazy-created a fresh vault, ignore
+    // the stale id and take the create branch so the caller's connection
+    // row gets re-pointed at the new credential.
+    const existingCredentialId = lazyCreatedVault ? undefined : input.existingCredentialId;
+
+    const vaultIdRef = vaultId;
+
+    return this.withRetry(async () => {
+      try {
+        if (existingCredentialId) {
+          const updated = await (client as any).beta.vaults.credentials.update(existingCredentialId, {
+            vault_id: vaultIdRef,
+            display_name: input.displayName,
+            auth: buildMcpOAuthUpdateAuth(input.auth),
+          });
+
+          return { vaultCredentialId: updated.id as string, integrationCredentialsUpdate };
+        }
+
+        try {
+          const created = await (client as any).beta.vaults.credentials.create(vaultIdRef, {
+            display_name: input.displayName,
+            auth: buildMcpOAuthCreateAuth(input.mcpServerUrl, input.auth),
+          });
+
+          return { vaultCredentialId: created.id as string, integrationCredentialsUpdate };
+        } catch (createErr) {
+          // Anthropic enforces uniqueness on (vault_id, auth.mcp_server_url).
+          // If a previous flow pushed a credential for this URL but Novu's
+          // `mcp_connection.auth.vaultCredentialId` was never persisted (or
+          // got cleared — e.g. legacy BullMQ-era runs, manual cleanup, a
+          // dropped DB write after a successful vault push), the CREATE
+          // branch hits 409. Recover by listing the vault and rebinding to
+          // the orphan via UPDATE so the agent.mcp_servers projection can
+          // finally point at a usable credential.
+          const recovered = await this.tryRecoverOrphanVaultCredential({
+            client,
+            vaultId: vaultIdRef,
+            mcpServerUrl: input.mcpServerUrl,
+            displayName: input.displayName,
+            auth: input.auth,
+            error: createErr,
+          });
+
+          if (recovered) {
+            return { vaultCredentialId: recovered, integrationCredentialsUpdate };
+          }
+
+          throw createErr;
+        }
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  /**
+   * Recover from a 409 "credential already exists" on CREATE by listing the
+   * vault's credentials, finding the one whose `auth.mcp_server_url` matches,
+   * and calling UPDATE with its id. Returns the recovered credential id on
+   * success, or `null` if the error wasn't a 409 conflict or no matching
+   * credential could be found.
+   *
+   * If the matching credential is archived we delete it first and re-CREATE,
+   * because Anthropic's archive flow doesn't allow updating in place.
+   */
+  private async tryRecoverOrphanVaultCredential(args: {
+    client: Anthropic;
+    vaultId: string;
+    mcpServerUrl: string;
+    displayName: string;
+    auth: VaultCredentialAuth;
+    error: unknown;
+  }): Promise<string | null> {
+    const { client, vaultId, mcpServerUrl, displayName, auth, error } = args;
+
+    if (!(error instanceof APIError) || error.status !== 409) {
+      return null;
+    }
+
+    let orphan: { id: string; mcpServerUrl: string; archived: boolean } | null = null;
+
+    try {
+      const credentials = (client as any).beta.vaults.credentials.list(vaultId, { include_archived: true });
+
+      for await (const credential of credentials) {
+        const credAuth = (credential as { auth?: { mcp_server_url?: string } }).auth;
+        const credUrl = credAuth?.mcp_server_url;
+
+        if (typeof credUrl === 'string' && credUrl === mcpServerUrl) {
+          orphan = {
+            id: (credential as { id: string }).id,
+            mcpServerUrl: credUrl,
+            archived: !!(credential as { archived_at?: string | null }).archived_at,
+          };
+          break;
+        }
+      }
+    } catch {
+      return null;
+    }
+
+    if (!orphan) {
+      return null;
+    }
+
+    try {
+      if (orphan.archived) {
+        // Archived credentials still occupy the (vault, mcp_url) uniqueness
+        // slot but can't be updated in place — delete then re-create.
+        await (client as any).beta.vaults.credentials.delete(orphan.id, { vault_id: vaultId });
+        const created = await (client as any).beta.vaults.credentials.create(vaultId, {
+          display_name: displayName,
+          auth: buildMcpOAuthCreateAuth(mcpServerUrl, auth),
+        });
+
+        return created.id as string;
+      }
+
+      const updated = await (client as any).beta.vaults.credentials.update(orphan.id, {
+        vault_id: vaultId,
+        display_name: displayName,
+        auth: buildMcpOAuthUpdateAuth(auth),
+      });
+
+      return updated.id as string;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Create a vault on the fly for a legacy integration that wasn't provisioned
+   * with one. Not retried at this layer: if the create fails we let the caller
+   * see the underlying error so they can mark the connection as `error`.
+   */
+  private async createVaultForIntegration(
+    client: Anthropic,
+    integrationCredentials: Record<string, unknown>
+  ): Promise<string> {
+    const envHint = integrationCredentials.externalEnvironmentId as string | undefined;
+    const displayName = envHint ? `nv-${envHint}-vault` : `nv-vault-${Date.now()}`;
+
+    try {
+      const vault = await (client as any).beta.vaults.create({ display_name: displayName });
+
+      return vault.id as string;
+    } catch (err) {
+      this.normaliseError(err);
+    }
+  }
+
+  async deleteVaultCredential(input: DeleteVaultCredentialInput): Promise<void> {
+    const vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
+
+    // No vault provisioned (legacy integration provisioned before tokenVault
+    // shipped) — nothing upstream to delete, callers proceed with local
+    // cleanup. We only hard-fail in `upsert` because writing a credential
+    // without a vault is genuinely broken.
+    if (!vaultId) {
       return;
     }
 
@@ -291,7 +619,7 @@ export class AnthropicAgentRuntimeProvider implements IAgentRuntimeProvider {
 
     await this.withRetry(async () => {
       try {
-        await (client as any).beta.environments.archive(externalEnvironmentId);
+        await (client as any).beta.vaults.credentials.delete(input.vaultCredentialId, { vault_id: vaultId });
       } catch (err) {
         this.normaliseError(err);
       }
@@ -710,6 +1038,104 @@ function buildToolsPayload(
     for (const server of mcpServers) {
       payload.push({ type: 'mcp_toolset', mcp_server_name: server.name });
     }
+  }
+
+  return payload;
+}
+
+/**
+ * Build the Anthropic `mcp_oauth` create payload. The `refresh` block is only
+ * emitted when both a refresh token and the OAuth client metadata are present
+ * — that's what enables Anthropic-side automated refresh; otherwise the vault
+ * stores an access-only credential that Novu re-pushes on refresh.
+ */
+function buildMcpOAuthCreateAuth(mcpServerUrl: string, auth: VaultCredentialAuth): Record<string, unknown> {
+  if (!auth.accessToken) {
+    // The interface marks accessToken optional (delete flow), but create
+    // semantically requires it. Surface as a programmer error.
+    throw new Error('Anthropic vault credential create requires an access token');
+  }
+
+  const payload: Record<string, unknown> = {
+    type: 'mcp_oauth',
+    access_token: auth.accessToken,
+    mcp_server_url: mcpServerUrl,
+    expires_at: auth.expiresAt ?? null,
+  };
+
+  if (auth.refreshToken && auth.oauthClient) {
+    payload.refresh = buildMcpOAuthRefreshParams(auth);
+  }
+
+  return payload;
+}
+
+function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    type: 'mcp_oauth',
+  };
+
+  if (auth.accessToken !== undefined) payload.access_token = auth.accessToken;
+  if (auth.expiresAt !== undefined) payload.expires_at = auth.expiresAt;
+
+  // Anthropic's UPDATE schema (BetaManagedAgentsMCPOAuthRefreshUpdateParams)
+  // only permits `refresh_token`, `scope`, and `token_endpoint_auth` — the
+  // other refresh fields (`client_id`, `token_endpoint`, `resource`) are
+  // immutable after CREATE. Emitting them yields a 400:
+  //   "auth.refresh.client_id: Extra inputs are not permitted"
+  if (auth.refreshToken && auth.oauthClient) {
+    payload.refresh = buildMcpOAuthRefreshUpdateParams(auth);
+  }
+
+  return payload;
+}
+
+function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<string, unknown> {
+  // Caller guarantees both before invoking, but narrow defensively so we
+  // never emit a half-built refresh block.
+  if (!auth.refreshToken || !auth.oauthClient) {
+    throw new Error('buildMcpOAuthRefreshParams requires refreshToken and oauthClient');
+  }
+
+  const { oauthClient } = auth;
+  const tokenEndpointAuth = oauthClient.clientSecret
+    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
+    : { type: 'none' };
+
+  return {
+    client_id: oauthClient.clientId,
+    refresh_token: auth.refreshToken,
+    token_endpoint: oauthClient.tokenEndpoint,
+    token_endpoint_auth: tokenEndpointAuth,
+    resource: oauthClient.resource ?? null,
+    scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
+  };
+}
+
+/**
+ * Build the UPDATE-shaped refresh payload. Anthropic treats `client_id`,
+ * `token_endpoint`, and `resource` as immutable on a credential, so the
+ * update endpoint only accepts `refresh_token`, `scope`, and a partial
+ * `token_endpoint_auth` (basic / post update params). Emitting any of the
+ * immutable fields trips a 400 "Extra inputs are not permitted".
+ */
+function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Record<string, unknown> {
+  if (!auth.refreshToken || !auth.oauthClient) {
+    throw new Error('buildMcpOAuthRefreshUpdateParams requires refreshToken and oauthClient');
+  }
+
+  const { oauthClient } = auth;
+  const tokenEndpointAuth = oauthClient.clientSecret
+    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
+    : undefined;
+
+  const payload: Record<string, unknown> = {
+    refresh_token: auth.refreshToken,
+    scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
+  };
+
+  if (tokenEndpointAuth) {
+    payload.token_endpoint_auth = tokenEndpointAuth;
   }
 
   return payload;

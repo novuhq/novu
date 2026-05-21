@@ -142,6 +142,7 @@ describe('FindOrCreateNovuEmail usecase', () => {
       expect(createArg.credentials.outboundIntegrationId).to.equal('sendgrid-id');
       expect(createArg.credentials.emailSlugPrefix).to.be.a('string');
       expect(createArg.credentials.inboxRoutingKey).to.be.a('string');
+      expect(createArg.credentials.senderName).to.equal('My Agent');
     });
 
     it("falls back to the env's Novu demo email integration when no primary custom integration exists", async () => {

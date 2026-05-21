@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
+import { ApexDomainMxWarning } from '@/components/domains/apex-domain-mx-warning';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
@@ -16,6 +17,7 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateDomain } from '@/hooks/use-domains';
+import { DOMAIN_NAME_PATTERN, isApexInboundDomain } from '@/utils/inbound-domain';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 type AddDomainFormData = {
@@ -49,6 +51,8 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
   const form = useForm<AddDomainFormData>({
     defaultValues: { name: '' },
   });
+  const domainName = form.watch('name');
+  const showApexDomainWarning = isApexInboundDomain(domainName);
 
   const onSubmit = async (data: AddDomainFormData) => {
     setIsPending(true);
@@ -90,7 +94,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
               rules={{
                 required: 'Domain name is required',
                 pattern: {
-                  value: /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i,
+                  value: DOMAIN_NAME_PATTERN,
                   message: 'Enter a valid domain name (e.g. example.com)',
                 },
               }}
@@ -104,6 +108,7 @@ export function AddDomainDialog({ open, onOpenChange }: AddDomainDialogProps) {
                 </FormItem>
               )}
             />
+            {showApexDomainWarning && <ApexDomainMxWarning />}
             <DialogFooter>
               <Button type="submit" disabled={isPending}>
                 {isPending ? 'Setting up...' : 'Setup domain'}

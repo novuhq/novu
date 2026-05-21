@@ -1,14 +1,20 @@
+import { AgentRuntimeProviderIdEnum, type IIntegration } from '@novu/shared';
 import type { ReactNode } from 'react';
 import { RiInformation2Line } from 'react-icons/ri';
 import {
-  ClaudeCredentialsFields,
+  ConnectorIntegrationDropdown,
+  type ConnectorIntegrationStatus,
+} from '@/components/agents/connectors/connector-integration-dropdown';
+import { type ConnectorOption, getConnectorById } from '@/components/agents/connectors/connector-options';
+import {
+  ConfigureCredentialsSection,
   type CreateAgentFormErrors,
   ExistingAgentFields,
   ScratchAgentFields,
+  type VerifyStatus,
 } from '@/components/agents/create-agent-fields';
 import { SetupStep } from '@/components/agents/setup-guide-primitives';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
-import { ConnectorDropdown } from './connector-dropdown';
 import type { ConnectorId } from './connector-options';
 import { TemplateDropdown, type TemplateSelection } from './template-dropdown';
 
@@ -40,6 +46,18 @@ type ConnectAgentFormProps = {
    */
   disabled?: boolean;
 
+  // Integration / credentials state
+  integrations: IIntegration[] | undefined;
+  selectedIntegrationId?: string;
+  dropdownStatus?: ConnectorIntegrationStatus;
+  showSavedBadge?: boolean;
+  credentialsPanelVisible: boolean;
+  credentialsPanelExpanded: boolean;
+  integrationName: string;
+  verifyStatus: VerifyStatus;
+  verifyMessage?: string;
+  isSavingIntegration?: boolean;
+
   onConnectorChange: (next: ConnectorId) => void;
   onTemplateChange: (next: TemplateSelection) => void;
   onApiKeyChange: (next: string) => void;
@@ -50,6 +68,13 @@ type ConnectAgentFormProps = {
   onInstructionsChange: (next: string) => void;
   onExternalAgentIdChange: (next: string) => void;
   onExternalEnvironmentIdChange: (next: string) => void;
+
+  onSelectIntegration: (integration: IIntegration) => void;
+  onRequestSetupCredentials: (option: ConnectorOption) => void;
+  onCredentialsExpandedChange: (expanded: boolean) => void;
+  onIntegrationNameChange: (next: string) => void;
+  onVerify: (apiKey: string) => void;
+  onSaveIntegration: () => void;
 };
 
 export function ConnectAgentForm({
@@ -70,6 +95,16 @@ export function ConnectAgentForm({
   externalEnvironmentId,
   errors,
   disabled,
+  integrations,
+  selectedIntegrationId,
+  dropdownStatus = 'idle',
+  showSavedBadge = false,
+  credentialsPanelVisible,
+  credentialsPanelExpanded,
+  integrationName,
+  verifyStatus,
+  verifyMessage,
+  isSavingIntegration,
   onConnectorChange,
   onTemplateChange,
   onApiKeyChange,
@@ -80,7 +115,16 @@ export function ConnectAgentForm({
   onInstructionsChange,
   onExternalAgentIdChange,
   onExternalEnvironmentIdChange,
+  onSelectIntegration,
+  onRequestSetupCredentials,
+  onCredentialsExpandedChange,
+  onIntegrationNameChange,
+  onVerify,
+  onSaveIntegration,
 }: ConnectAgentFormProps) {
+  const selectedConnector = getConnectorById(connectorId);
+  const showCredentialsSection = isClaudeSelected && credentialsPanelVisible && Boolean(selectedConnector?.providerId);
+
   return (
     <>
       <SetupStep
@@ -102,7 +146,17 @@ export function ConnectAgentForm({
                 <TooltipContent>The connector integration is the way Novu communicates with the agent.</TooltipContent>
               </Tooltip>
             </div>
-            <ConnectorDropdown selectedId={connectorId} onSelect={onConnectorChange} disabled={disabled} />
+            <ConnectorIntegrationDropdown
+              selectedConnectorId={connectorId}
+              selectedIntegrationId={selectedIntegrationId}
+              integrations={integrations}
+              status={dropdownStatus}
+              showStatusBadge={showSavedBadge}
+              disabled={disabled}
+              onSelectConnector={onConnectorChange}
+              onSelectIntegration={onSelectIntegration}
+              onRequestSetupCredentials={onRequestSetupCredentials}
+            />
             {isClaudeSelected && (
               <p className="text-text-soft text-label-xs font-normal leading-4 flex items-center gap-1">
                 <RiInformation2Line className="size-3.5" aria-hidden /> Novu hosts the loop on Anthropic Managed Agents.
@@ -111,16 +165,27 @@ export function ConnectAgentForm({
           </div>
         }
         extraContent={
-          isClaudeSelected && (
-            <ClaudeCredentialsFields
+          showCredentialsSection && selectedConnector?.providerId ? (
+            <ConfigureCredentialsSection
+              providerId={selectedConnector.providerId as AgentRuntimeProviderIdEnum}
+              providerLabel={selectedConnector.providerLabel ?? 'Provider'}
+              integrationName={integrationName}
               apiKey={apiKey}
-              workspaceId={externalWorkspaceId}
+              externalWorkspaceId={externalWorkspaceId}
               errors={errors}
               disabled={disabled}
+              status={verifyStatus}
+              statusMessage={verifyMessage}
+              isSaving={isSavingIntegration}
+              expanded={credentialsPanelExpanded}
+              onExpandedChange={onCredentialsExpandedChange}
+              onIntegrationNameChange={onIntegrationNameChange}
               onApiKeyChange={onApiKeyChange}
-              onWorkspaceIdChange={onExternalWorkspaceIdChange}
+              onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+              onVerify={onVerify}
+              onSave={onSaveIntegration}
             />
-          )
+          ) : null
         }
       />
 

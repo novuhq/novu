@@ -56,6 +56,101 @@ export type ProvisionIntegrationResult = {
   metadata?: Record<string, unknown>;
 };
 
+/**
+ * OAuth client metadata recorded at authorize-URL time. Providers whose vault
+ * supports server-side refresh (e.g. Anthropic's `mcp_oauth.refresh` block)
+ * use this to register the upstream token endpoint with the vault so refreshes
+ * can happen without round-tripping back through Novu.
+ */
+export interface VaultCredentialAuthOAuthClient {
+  clientId: string;
+  clientSecret?: string;
+  tokenEndpoint: string;
+  /** RFC 8707 resource indicator replayed verbatim on refresh. */
+  resource?: string;
+}
+
+/**
+ * Decoded credential payload pushed to a provider's vault.
+ *
+ * Mirrors `McpConnectionAuth` from `@novu/dal` but is intentionally redeclared
+ * here so the provider abstraction stays independent of the persistence layer.
+ * Callers decrypt before passing in.
+ */
+export interface VaultCredentialAuth {
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  tokenType?: string;
+  scopes?: string[];
+  oauthClient?: VaultCredentialAuthOAuthClient;
+}
+
+export interface UpsertVaultCredentialInput {
+  /**
+   * Decrypted integration credentials blob. The provider extracts whichever
+   * locator it needs (Anthropic: `externalVaultId`); keeping the input
+   * provider-agnostic prevents callers from leaking provider-specific keys.
+   */
+  integrationCredentials: Record<string, unknown>;
+  /** Canonical MCP server URL the credential authorises. */
+  mcpServerUrl: string;
+  /** Human-readable label surfaced in the provider's vault UI. */
+  displayName: string;
+  /** Decrypted OAuth tokens issued by the upstream MCP authorization server. */
+  auth: VaultCredentialAuth;
+  /**
+   * When set, update the existing vault credential instead of creating a new
+   * one. Returned by a previous `upsertVaultCredential` call.
+   */
+  existingCredentialId?: string;
+}
+
+export interface UpsertVaultCredentialResult {
+  /** Stable identifier for subsequent `update` / `delete` calls. */
+  vaultCredentialId: string;
+  /**
+   * Optional credential-field updates the caller must merge into the integration.
+   *
+   * Set when the provider had to lazy-provision integration-scoped resources
+   * during the upsert — e.g. a legacy Anthropic integration that pre-dates
+   * vault eager-provisioning will have a new `externalVaultId` created in
+   * flight and returned here so the OAuth callback can persist it.
+   *
+   * Semantically identical to `ProvisionIntegrationResult.credentialsUpdate`.
+   */
+  integrationCredentialsUpdate?: Record<string, unknown>;
+}
+
+export interface DeleteVaultCredentialInput {
+  /** Decrypted integration credentials blob; see `UpsertVaultCredentialInput`. */
+  integrationCredentials: Record<string, unknown>;
+  vaultCredentialId: string;
+}
+
+export interface ParsedMcpInitFailure {
+  /** Catalog-side display name surfaced by the runtime (e.g. "Sentry"). */
+  mcpServerName: string;
+}
+
+/**
+ * Snapshot of a tool call the runtime is waiting on user approval for.
+ *
+ * Used by the worker when a turn ends in `requires-action` (e.g. Anthropic
+ * MCP toolsets configured with `permission_policy: always_ask`) to materialise
+ * an Approve/Deny card on the SDK side without coupling the worker to any
+ * one provider's session-events shape.
+ */
+export interface PendingToolApproval {
+  /** Provider-side event id (e.g. Anthropic `sevt_...`). */
+  toolUseId: string;
+  toolName: string;
+  /** Set when the tool comes from an MCP toolset; undefined for builtin / custom tools. */
+  mcpServerName?: string;
+  /** Tool arguments — surfaced to the user so they can decide. */
+  input?: Record<string, unknown>;
+}
+
 export type UploadSkillFile = {
   /** Relative path of the file inside the skill bundle (e.g. 'SKILL.md', 'lib/helpers.py'). */
   path: string;
@@ -139,6 +234,48 @@ export interface IAgentRuntimeProvider {
    * Best-effort — callers should still proceed with local cleanup on error.
    */
   deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
+
+  /**
+   * Inspect an error surfaced by a streaming turn (or any provider-side call
+   * that goes through MCP server initialisation) and decide whether it is
+   * the "MCP X failed to initialize" shape that means the upstream credential
+   * vault is missing/expired and the caller should prompt the user to
+   * (re-)authorise the MCP.
+   *
+   * Returns `null` for anything else so the caller can fall through to its
+   * generic retry/fallback path. Each provider owns its own error shape;
+   * the abstraction never assumes a specific error class.
+   */
+  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null;
+
+  /**
+   * Inspect a session that ended in `requires-action` (or was rejected for
+   * "waiting on responses to events") and return the single oldest pending
+   * tool-confirmation request, or `null` if none can be located.
+   *
+   * Providers without a session-scoped event log return `null`; callers fall
+   * back to a generic error reply.
+   */
+  getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null>;
+
+  /**
+   * Push an OAuth credential to the provider's per-environment vault so the
+   * upstream MCP initialise step can succeed on the next turn.
+   *
+   * Only callable when `capabilities.tokenVault === true`. Providers without
+   * a token vault fall back to having Novu inject the bearer per request —
+   * use `BaseAgentRuntimeProvider`'s default, which throws
+   * `UnsupportedCapabilityError`, to fail loudly if a caller forgets the
+   * capability gate.
+   */
+  upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult>;
+
+  /**
+   * Delete a credential previously pushed via `upsertVaultCredential` (called
+   * on disable / revoke). Only callable when `capabilities.tokenVault === true`.
+   * Best-effort — callers should still proceed with local cleanup on error.
+   */
+  deleteVaultCredential(input: DeleteVaultCredentialInput): Promise<void>;
 
   /**
    * Upload a custom skill bundle to the provider and return a stable skillId
