@@ -10,7 +10,7 @@ import { StepEditorUnavailable } from '../step-editor-unavailable';
 type EmailEditorProps = { uiSchema: UiSchema; isEditorV2?: boolean };
 
 export const EmailEditor = (props: EmailEditorProps) => {
-  const { currentEnvironment } = useEnvironment();
+  const { currentEnvironment, readOnly } = useEnvironment();
   const { uiSchema, isEditorV2 = false } = props;
   const [senderDrawerOpen, setSenderDrawerOpen] = useState(false);
 
@@ -53,7 +53,7 @@ export const EmailEditor = (props: EmailEditorProps) => {
       <SenderConfigDrawer
         open={senderDrawerOpen}
         onOpenChange={setSenderDrawerOpen}
-        disabled={currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
+        disabled={readOnly || currentEnvironment?.type !== EnvironmentTypeEnum.DEV}
       />
     </>
   );
