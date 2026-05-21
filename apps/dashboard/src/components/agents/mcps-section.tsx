@@ -1,14 +1,13 @@
-import { MCP_SERVERS, type McpServer } from '@novu/shared';
+import { CLAUDE_MCP_SERVERS, type ClaudeMcpServer } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { RiAddLine, RiArrowRightUpLine } from 'react-icons/ri';
 import {
   type AgentMcpServer,
   type AgentResponse,
-  disableAgentMcpServer,
-  getAgentMcpServersQueryKey,
   getAgentRuntimeConfig,
   getAgentRuntimeConfigQueryKey,
+  patchAgentRuntimeConfig,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { getMcpIcon } from '@/components/icons/mcp';
@@ -23,10 +22,14 @@ type McpsSectionProps = {
   agent: AgentResponse;
 };
 
-const MCP_CATALOG_BY_ID: Map<string, McpServer> = new Map(MCP_SERVERS.map((server) => [server.id, server]));
-const MCP_CATALOG_BY_URL: Map<string, McpServer> = new Map(MCP_SERVERS.map((server) => [server.url, server]));
+const MCP_CATALOG_BY_ID: Map<string, ClaudeMcpServer> = new Map(
+  CLAUDE_MCP_SERVERS.map((server) => [server.id, server])
+);
+const MCP_CATALOG_BY_URL: Map<string, ClaudeMcpServer> = new Map(
+  CLAUDE_MCP_SERVERS.map((server) => [server.url, server])
+);
 
-function resolveCatalogEntry(server: AgentMcpServer): McpServer | undefined {
+function resolveCatalogEntry(server: AgentMcpServer): ClaudeMcpServer | undefined {
   return MCP_CATALOG_BY_ID.get(server.externalId) ?? MCP_CATALOG_BY_URL.get(server.url);
 }
 
@@ -84,16 +87,13 @@ export function McpsSection({ agent }: McpsSectionProps) {
     enabled: Boolean(currentEnvironment && agent.identifier && agent.runtime === 'managed'),
   });
 
-  const disableMcp = useMutation({
-    mutationFn: (mcpId: string) =>
-      disableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier),
-      });
-      queryClient.invalidateQueries({
-        queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
-      });
+  const updateMcps = useMutation({
+    mutationFn: (mcpServers: AgentMcpServer[]) =>
+      patchAgentRuntimeConfig(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
+        mcpServers,
+      }),
+    onSuccess: (config) => {
+      queryClient.setQueryData(getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier), config);
     },
     onError: (err: Error) => {
       const message = err instanceof NovuApiError ? err.message : 'Could not update MCP servers.';
@@ -113,12 +113,13 @@ export function McpsSection({ agent }: McpsSectionProps) {
   }
 
   const handleToggleOff = (server: AgentMcpServer) => {
-    const catalog = resolveCatalogEntry(server);
-    const mcpId = catalog?.id ?? server.externalId;
-    disableMcp.mutate(mcpId);
+    const next = mcpServers.filter(
+      (existing) => !(existing.externalId === server.externalId && existing.url === server.url)
+    );
+    updateMcps.mutate(next);
   };
 
-  const isMutating = disableMcp.isPending;
+  const isMutating = updateMcps.isPending;
   const canEdit = !readOnly;
   const consoleUrl = agent.managedRuntime?.consoleUrl;
 
@@ -182,7 +183,13 @@ export function McpsSection({ agent }: McpsSectionProps) {
         ) : null}
       </SectionShell>
 
-      <McpsSheet agent={agent} isOpen={isSheetOpen} onOpenChange={setIsSheetOpen} consoleUrl={consoleUrl} />
+      <McpsSheet
+        agent={agent}
+        isOpen={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+        currentMcpServers={mcpServers}
+        consoleUrl={consoleUrl}
+      />
     </>
   );
 }
