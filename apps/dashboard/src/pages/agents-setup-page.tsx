@@ -18,12 +18,14 @@ import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
+import { IS_NOVU_CONNECT } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
+import { clearConnectProvisioning, isConnectProvisioningActive } from '@/utils/connect';
 import { getPostOnboardingRoute, resolveOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -177,6 +179,7 @@ export function AgentsSetupPage() {
   // Hostname-aware: on the Connect host this resolves to `connect` even without `?appId=`.
   const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
   const isConnectFlow = appId === APP_IDS.CONNECT;
+  const isConnectHost = IS_NOVU_CONNECT || isConnectFlow;
 
   const [envLoaded, setEnvLoaded] = useState(false);
   const { environments } = useFetchEnvironments({
@@ -194,6 +197,14 @@ export function AgentsSetupPage() {
       setEnvLoaded(true);
     }
   }, [environments, user, organization]);
+
+  useEffect(() => {
+    if (!currentEnvironment || loadingPhase !== 'ready') {
+      return;
+    }
+
+    clearConnectProvisioning();
+  }, [currentEnvironment, loadingPhase]);
 
   useEffect(() => {
     telemetry(TelemetryEvent.AGENTS_SETUP_PAGE_VIEWED);
@@ -262,10 +273,14 @@ export function AgentsSetupPage() {
   }
 
   if (!currentEnvironment || loadingPhase !== 'ready') {
+    if (isConnectHost && isConnectProvisioningActive()) {
+      return null;
+    }
+
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <PageMeta title="Let's connect your agent to where you work" />
-        <OnboardingLoader />
+        <PageMeta title={isConnectHost ? 'Build and distribute agents' : "Let's connect your agent to where you work"} />
+        <OnboardingLoader variant={isConnectHost ? 'connect' : 'platform'} />
       </div>
     );
   }

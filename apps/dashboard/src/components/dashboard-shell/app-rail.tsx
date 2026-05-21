@@ -1,4 +1,6 @@
-import { ComponentType, SVGProps } from 'react';
+import { AppSwitcherTooltipContent } from '@/components/dashboard-shell/app-switcher-tooltip-content';
+import { ConnectSwitchConfirmationModal } from '@/components/dashboard-shell/connect-switch-confirmation-modal';
+import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
 import { CustomerSupportButton } from '@/components/header-navigation/customer-support-button';
 import { ConnectLogo } from '@/components/icons/connect-logo';
 import { LogoCircle } from '@/components/icons/logo-circle';
@@ -7,17 +9,21 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { UserProfile } from '@/components/user-profile';
 import { IS_ENTERPRISE, IS_HOSTNAME_SPLIT_ENABLED, IS_SELF_HOSTED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useConnectSwitchConfirmation } from '@/hooks/use-connect-switch-confirmation';
 import { APP_IDS, type AppId, buildAppHomeRoute, buildOtherAppExternalUrl } from '@/utils/apps';
+import { ComponentType } from 'react';
 
 import { useCurrentApp } from '../../hooks/use-current-app';
 
-type BrandIcon = ComponentType<SVGProps<SVGSVGElement>>;
+type BrandIcon = ComponentType<{ className?: string }>;
 
 type BrandConfig = {
   id: AppId;
   Icon: BrandIcon;
   label: string;
   tooltip: string;
+  subtitle: string;
+  features: string[];
 };
 
 // Each tile is 40x40 with a 20x20 icon centered inside it (matches Figma nodes 7302:35199 and
@@ -28,6 +34,12 @@ const PLATFORM_BRAND: BrandConfig = {
   Icon: LogoCircle,
   label: 'Novu Platform',
   tooltip: 'Open Novu Platform',
+  subtitle: 'Notifications for your product',
+  features: [
+    'Multi-channel workflows for email, push, and in-app.',
+    'Embed Novu Inbox directly in your product.',
+    'Manage subscribers and deliver at scale.',
+  ],
 };
 
 const CONNECT_BRAND: BrandConfig = {
@@ -35,6 +47,12 @@ const CONNECT_BRAND: BrandConfig = {
   Icon: ConnectLogo,
   label: 'Novu Connect',
   tooltip: 'Open Novu Connect',
+  subtitle: 'Agents for your team',
+  features: [
+    'Best for internal agents and within your team.',
+    'Connect your agent to where you work.',
+    'Connect the tools your team works on.',
+  ],
 };
 
 type BrandTileProps = {
@@ -60,10 +78,17 @@ type SwitcherTileProps = {
   brand: BrandConfig;
   to: string | undefined;
   isExternal: boolean;
+  openInNewTab?: boolean;
 };
 
-function SwitcherTile({ brand, to, isExternal }: SwitcherTileProps) {
-  const { Icon, label, tooltip } = brand;
+function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherTileProps) {
+  const { Icon, label, tooltip, subtitle, features } = brand;
+  const { isModalOpen, setIsModalOpen, handleSwitcherClick, handleConfirm, showConnectSwitchModal } =
+    useConnectSwitchConfirmation({
+      targetAppId: brand.id,
+      href: to ?? '',
+      openInNewTab: isExternal && openInNewTab,
+    });
 
   // Figma node 7302:35237: switcher tile has no border/background — only a subtle hover state
   // for affordance. The icon stays at full saturation in both states.
@@ -74,27 +99,39 @@ function SwitcherTile({ brand, to, isExternal }: SwitcherTileProps) {
     </span>
   );
 
+  if (!to) {
+    return <span className="cursor-not-allowed opacity-50">{content}</span>;
+  }
+
   return (
-    <Tooltip delayDuration={500}>
-      <TooltipTrigger asChild>
-        {to ? (
-          <a
+    <>
+      <Tooltip delayDuration={300}>
+        <TooltipTrigger asChild>
+          <CrossAppLink
             href={to}
-            target={isExternal ? '_blank' : undefined}
-            rel={isExternal ? 'noopener noreferrer' : undefined}
+            openInNewTab={isExternal && openInNewTab}
+            onClick={handleSwitcherClick}
             aria-label={tooltip}
             className="focus-visible:ring-ring rounded-lg focus-visible:ring-2 focus-visible:outline-hidden"
           >
             {content}
-          </a>
-        ) : (
-          <span className="cursor-not-allowed opacity-50">{content}</span>
-        )}
-      </TooltipTrigger>
-      <TooltipContent side="right" sideOffset={6}>
-        {tooltip}
-      </TooltipContent>
-    </Tooltip>
+          </CrossAppLink>
+        </TooltipTrigger>
+        <TooltipContent
+          side="right"
+          align="start"
+          sideOffset={8}
+          variant="light"
+          size="lg"
+          className="border-stroke-weak w-auto overflow-hidden rounded-lg border p-0 shadow-md"
+        >
+          <AppSwitcherTooltipContent Icon={Icon} label={label} subtitle={subtitle} features={features} />
+        </TooltipContent>
+      </Tooltip>
+      {showConnectSwitchModal ? (
+        <ConnectSwitchConfirmationModal open={isModalOpen} onOpenChange={setIsModalOpen} onConfirm={handleConfirm} />
+      ) : null}
+    </>
   );
 }
 
@@ -107,18 +144,23 @@ export function AppRail() {
   const currentBrand = isConnect ? CONNECT_BRAND : PLATFORM_BRAND;
   const otherBrand = isConnect ? PLATFORM_BRAND : CONNECT_BRAND;
 
-  // When the hostname split is configured we always want a full URL so the switcher crosses
-  // origins (and opens in a new tab). Without the split we fall back to an in-app route so dev
-  // and self-hosted setups keep working from a single origin.
+  // Cross-origin switcher URLs. We navigate in the same tab so Clerk redirectWithAuth can sync
+  // the session; opening a new tab only receives buildUrlWithAuth and is less reliable locally.
   const otherAppHref = IS_HOSTNAME_SPLIT_ENABLED
-    ? buildOtherAppExternalUrl(otherBrand.id, envSlug)
+    ? buildOtherAppExternalUrl(otherBrand.id, envSlug, { useOrgResolutionEntry: true })
     : buildAppHomeRoute(otherBrand.id, envSlug);
+  const openCrossOriginInNewTab = false;
 
   return (
     <aside className="hidden h-full w-14 shrink-0 flex-col items-center justify-between py-2 md:flex" aria-label="Apps">
       <nav aria-label="App switcher" className="flex flex-col items-center gap-2 p-2">
         <BrandTile brand={currentBrand} />
-        <SwitcherTile brand={otherBrand} to={otherAppHref} isExternal={IS_HOSTNAME_SPLIT_ENABLED} />
+        <SwitcherTile
+          brand={otherBrand}
+          to={otherAppHref}
+          isExternal={IS_HOSTNAME_SPLIT_ENABLED}
+          openInNewTab={openCrossOriginInNewTab}
+        />
       </nav>
 
       <div className="flex flex-col items-center gap-3">

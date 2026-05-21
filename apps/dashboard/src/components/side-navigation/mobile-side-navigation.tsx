@@ -1,13 +1,16 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { ComponentType, SVGProps, useEffect, useState } from 'react';
+import { ComponentType, useEffect, useState } from 'react';
 import { RiArrowRightUpLine, RiMenuLine } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
+import { ConnectSwitchConfirmationModal } from '@/components/dashboard-shell/connect-switch-confirmation-modal';
+import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
 import { ConnectLogo } from '@/components/icons/connect-logo';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
 import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useConnectSwitchConfirmation } from '@/hooks/use-connect-switch-confirmation';
 import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { APP_IDS, type AppId, buildAppHomeRoute, buildOtherAppExternalUrl } from '@/utils/apps';
@@ -16,7 +19,7 @@ import { LegacySideNavigation } from './side-navigation';
 
 type MobileBrand = {
   id: AppId;
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+  Icon: ComponentType<{ className?: string }>;
   label: string;
 };
 
@@ -44,11 +47,22 @@ function MobileAppSwitcher() {
   const otherBrand = isConnect ? PLATFORM_BRAND : CONNECT_BRAND;
 
   const otherHref = IS_HOSTNAME_SPLIT_ENABLED
-    ? buildOtherAppExternalUrl(otherBrand.id, envSlug)
+    ? buildOtherAppExternalUrl(otherBrand.id, envSlug, { useOrgResolutionEntry: true })
     : buildAppHomeRoute(otherBrand.id, envSlug);
 
   const { Icon: CurrentIcon } = currentBrand;
   const { Icon: OtherIcon } = otherBrand;
+  const {
+    isModalOpen,
+    setIsModalOpen,
+    handleSwitcherClick,
+    handleConfirm,
+    showConnectSwitchModal,
+  } = useConnectSwitchConfirmation({
+    targetAppId: otherBrand.id,
+    href: otherHref ?? '',
+    openInNewTab: false,
+  });
 
   return (
     <nav
@@ -64,17 +78,26 @@ function MobileAppSwitcher() {
       </span>
 
       {otherHref ? (
-        <a
-          href={otherHref}
-          target={IS_HOSTNAME_SPLIT_ENABLED ? '_blank' : undefined}
-          rel={IS_HOSTNAME_SPLIT_ENABLED ? 'noopener noreferrer' : undefined}
-          className="text-foreground-600 hover:bg-bg-weak hover:text-foreground-950 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors"
-          aria-label={`Open ${otherBrand.label}`}
-        >
-          <OtherIcon className="size-4" aria-hidden />
-          <span>{otherBrand.label}</span>
-          {IS_HOSTNAME_SPLIT_ENABLED && <RiArrowRightUpLine className="text-foreground-400 size-3.5" aria-hidden />}
-        </a>
+        <>
+          <CrossAppLink
+            href={otherHref}
+            openInNewTab={false}
+            onClick={handleSwitcherClick}
+            className="text-foreground-600 hover:bg-bg-weak hover:text-foreground-950 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors"
+            aria-label={`Open ${otherBrand.label}`}
+          >
+            <OtherIcon className="size-4" aria-hidden />
+            <span>{otherBrand.label}</span>
+            {IS_HOSTNAME_SPLIT_ENABLED && <RiArrowRightUpLine className="text-foreground-400 size-3.5" aria-hidden />}
+          </CrossAppLink>
+          {showConnectSwitchModal ? (
+            <ConnectSwitchConfirmationModal
+              open={isModalOpen}
+              onOpenChange={setIsModalOpen}
+              onConfirm={handleConfirm}
+            />
+          ) : null}
+        </>
       ) : null}
     </nav>
   );

@@ -1,40 +1,77 @@
-import { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
-import { RiCheckboxCircleFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
+import { ConnectLogo } from '@/components/icons/connect-logo';
 import { LogoCircle } from '@/components/icons/logo-circle';
+import { motion } from 'motion/react';
+import { ComponentType, useEffect, useState } from 'react';
+import { RiCheckboxCircleFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 
-const ONBOARDING_STEPS = [
+// LogoCircle is an SVG component, ConnectLogo is an <img> wrapper — both only receive
+// `className` in this surface, so we type the variant logo as a class-only component.
+type LoaderLogoComponent = ComponentType<{ className?: string }>;
+
+type OnboardingLoaderVariant = 'platform' | 'connect';
+
+type LoaderStep = { id: string; text: string };
+
+const PLATFORM_STEPS: LoaderStep[] = [
   { id: 'org', text: 'Preparing your organization' },
   { id: 'env', text: 'Setting up your environment' },
   { id: 'channels', text: 'Configuring notification channels' },
   { id: 'inbox', text: 'Getting your inbox ready' },
   { id: 'final', text: 'Almost there...' },
-] as const;
+];
+
+const CONNECT_STEPS: LoaderStep[] = [
+  { id: 'workspace', text: 'Preparing your workspace' },
+  { id: 'build', text: 'Setting up where you build agents' },
+  { id: 'distribute', text: 'Connecting how you distribute them' },
+  { id: 'final', text: 'Almost there...' },
+];
+
+const VARIANT_CONFIG: Record<
+  OnboardingLoaderVariant,
+  { steps: LoaderStep[]; title: string; Logo: LoaderLogoComponent }
+> = {
+  platform: {
+    steps: PLATFORM_STEPS,
+    title: 'Setting up your workspace',
+    Logo: LogoCircle,
+  },
+  connect: {
+    steps: CONNECT_STEPS,
+    title: 'Build and distribute agents',
+    Logo: ConnectLogo,
+  },
+};
 
 const ITEM_HEIGHT = 20;
 const GAP = 12;
 const CONTAINER_HEIGHT = 140;
 const STEP_DELAY_MS = 1500;
 
-export function OnboardingLoader() {
+type OnboardingLoaderProps = {
+  variant?: OnboardingLoaderVariant;
+};
+
+export function OnboardingLoader({ variant = 'platform' }: OnboardingLoaderProps) {
+  const { steps: stepDefs, title, Logo } = VARIANT_CONFIG[variant];
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => {
-        if (prev >= ONBOARDING_STEPS.length - 1) return prev;
+        if (prev >= stepDefs.length - 1) return prev;
 
         return prev + 1;
       });
     }, STEP_DELAY_MS);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [stepDefs.length]);
 
-  const steps = ONBOARDING_STEPS.map((step, index) => {
-    const status = index < activeIndex ? 'success' : index === activeIndex ? 'progress' : 'pending';
+  const steps = stepDefs.map((step, index) => {
+    const stepStatus = index < activeIndex ? 'success' : index === activeIndex ? 'progress' : 'pending';
 
-    return { ...step, status };
+    return { ...step, status: stepStatus };
   });
 
   return (
@@ -46,7 +83,7 @@ export function OnboardingLoader() {
         className="flex flex-col items-center gap-4"
       >
         <motion.div animate={{ scale: [1, 1.08, 1] }} transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}>
-          <LogoCircle className="size-10" />
+          <Logo className="size-10" />
         </motion.div>
         <motion.span
           initial={{ opacity: 0, y: 8 }}
@@ -54,7 +91,7 @@ export function OnboardingLoader() {
           transition={{ delay: 0.2, duration: 0.4 }}
           className="text-label-md text-text-strong font-medium"
         >
-          Setting up your workspace
+          {title}
         </motion.span>
       </motion.div>
 

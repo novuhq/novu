@@ -4,6 +4,7 @@ export * from './analytics';
 export * from './api-keys';
 export * from './create-layout';
 export * from './create-workflow';
+export * from './cross-sign-out';
 export * from './error-page';
 export * from './integrations-list-page';
 export * from './invitation-accept';

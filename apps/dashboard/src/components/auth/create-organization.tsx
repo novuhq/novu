@@ -2,7 +2,9 @@ import { OrganizationList as OrganizationListForm, useOrganization } from '@cler
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { AutoCreateConnectOrganization } from '@/components/auth/auto-create-connect-organization';
 import { RegionSelector, useRegion } from '@/context/region';
+import { isManualOrgCreationAllowed } from '@/utils/connect';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import { useTelemetry } from '../../hooks/use-telemetry';
 import { clerkSignupAppearance } from '../../utils/clerk-appearance';
@@ -164,7 +166,7 @@ function PageContent() {
   );
 }
 
-export default function OrganizationCreate() {
+function PlatformOrganizationCreate() {
   const { organization } = useOrganization();
   const { selectedRegion } = useRegion();
   const track = useTelemetry();
@@ -192,4 +194,12 @@ export default function OrganizationCreate() {
       </AuthCard>
     </div>
   );
+}
+
+export default function OrganizationCreate() {
+  if (!isManualOrgCreationAllowed()) {
+    return <AutoCreateConnectOrganization />;
+  }
+
+  return <PlatformOrganizationCreate />;
 }

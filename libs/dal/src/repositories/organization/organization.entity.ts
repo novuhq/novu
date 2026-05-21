@@ -3,6 +3,7 @@ import {
   IBrandEnrichment,
   IOrganizationEntity,
   OnboardingWorkflowsStatus,
+  OrganizationProductTypeEnum,
   ProductUseCases,
 } from '@novu/shared';
 
@@ -49,6 +50,9 @@ export class OrganizationEntity implements IOrganizationEntity {
   stripeCustomerId?: string;
 
   createdBy?: string;
+
+  /** Which Novu product this organization belongs to. Missing value is treated as `platform`. */
+  productType?: OrganizationProductTypeEnum;
 }
 
 export type Branding = {

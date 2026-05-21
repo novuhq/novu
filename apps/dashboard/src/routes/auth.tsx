@@ -1,6 +1,7 @@
-import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { RedirectToSignIn, SignedIn, SignedOut, useAuth, useClerk } from '@clerk/clerk-react';
 import { Outlet } from 'react-router-dom';
 import { AuthLayout } from '@/components/auth-layout';
+import { isCrossOriginAuthHandshakePending } from '@/utils/cross-product-sign-out';
 
 export const AuthRoute = () => {
   return (
@@ -11,6 +12,13 @@ export const AuthRoute = () => {
 };
 
 export const ProtectedAuthRoute = () => {
+  const { isLoaded } = useAuth();
+  const clerk = useClerk();
+
+  if (!isLoaded || !clerk.loaded || isCrossOriginAuthHandshakePending()) {
+    return null;
+  }
+
   return (
     <>
       <SignedIn>
@@ -19,7 +27,7 @@ export const ProtectedAuthRoute = () => {
         </AuthLayout>
       </SignedIn>
       <SignedOut>
-        <RedirectToSignIn />
+        <RedirectToSignIn redirectUrl={typeof window !== 'undefined' ? window.location.href : undefined} />
       </SignedOut>
     </>
   );

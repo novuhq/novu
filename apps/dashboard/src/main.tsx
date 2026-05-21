@@ -21,6 +21,7 @@ import {
   LayoutsPage,
   OrganizationListPage,
   SettingsPage,
+  CrossSignOutPage,
   SignInPage,
   SignUpPage,
   SSOSignInPage,
@@ -138,6 +139,10 @@ const router = createBrowserRouter([
           {
             path: ROUTES.VERIFY_EMAIL,
             element: <VerifyEmailPage />,
+          },
+          {
+            path: ROUTES.CROSS_SIGN_OUT,
+            element: <CrossSignOutPage />,
           },
         ],
       },

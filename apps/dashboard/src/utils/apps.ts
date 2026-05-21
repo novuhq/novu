@@ -27,14 +27,6 @@ export function getCurrentAppId(pathname?: string): AppId {
   return APP_IDS.NOVU;
 }
 
-/**
- * Back-compat alias. Existing callers pass `location.pathname`; the new hostname-driven
- * detection ignores it when the split is configured.
- */
-export function getAppIdFromPathname(pathname: string): AppId {
-  return getCurrentAppId(pathname);
-}
-
 export function buildAppHomeRoute(appId: AppId, environmentSlug: string | undefined): string | undefined {
   if (!environmentSlug) {
     return undefined;
@@ -53,8 +45,19 @@ export function buildAppHomeRoute(appId: AppId, environmentSlug: string | undefi
  *  - the bare path (same-origin) as a fallback when no hostname is configured
  *  - undefined when no env slug is available so callers can disable the link
  */
-export function buildOtherAppExternalUrl(targetAppId: AppId, environmentSlug: string | undefined): string | undefined {
-  const path = buildAppHomeRoute(targetAppId, environmentSlug);
+type BuildOtherAppExternalUrlOptions = {
+  /** Cross-app entry runs org resolution on org-list before loading the app shell. */
+  useOrgResolutionEntry?: boolean;
+};
+
+export function buildOtherAppExternalUrl(
+  targetAppId: AppId,
+  environmentSlug: string | undefined,
+  options?: BuildOtherAppExternalUrlOptions
+): string | undefined {
+  const path = options?.useOrgResolutionEntry
+    ? ROUTES.SIGNUP_ORGANIZATION_LIST
+    : buildAppHomeRoute(targetAppId, environmentSlug);
 
   if (!path) {
     return undefined;

@@ -1,10 +1,16 @@
-import { SignUp as SignUpForm } from '@clerk/clerk-react';
+import { SignUp as SignUpForm, useAuth, useOrganization, useUser } from '@clerk/clerk-react';
 import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthSideBanner } from '@/components/auth/auth-side-banner';
 import { ConnectAuthSideBanner } from '@/components/auth/connect-auth-side-banner';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
+import {
+  beginConnectProvisioning,
+  buildConnectProvisionOrgListPath,
+  isActiveConnectWorkspace,
+} from '@/utils/connect';
 import { ROUTES } from '@/utils/routes';
 import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '../config';
 import { useSegment } from '../context/segment';
@@ -13,6 +19,10 @@ import { getReferrer, getUtmParams } from '../utils/tracking';
 
 export const SignUpPage = () => {
   const segment = useSegment();
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const { organization, isLoaded: isOrganizationLoaded } = useOrganization();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const utmParams = getUtmParams();
@@ -23,6 +33,26 @@ export const SignUpPage = () => {
       referrer,
     });
   }, []);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn || !IS_NOVU_CONNECT) return;
+    if (!isUserLoaded || !isOrganizationLoaded) return;
+
+    if (
+      organization &&
+      isActiveConnectWorkspace(organization.publicMetadata, {
+        userId: user?.id,
+        organizationId: organization.id,
+      })
+    ) {
+      navigate(ROUTES.ENV, { replace: true });
+
+      return;
+    }
+
+    beginConnectProvisioning();
+    navigate(ROUTES.SIGNUP_ORGANIZATION_LIST, { replace: true });
+  }, [isLoaded, isSignedIn, isUserLoaded, isOrganizationLoaded, organization, user?.id, navigate]);
 
   return (
     <div className="flex min-h-screen w-full flex-col md:max-w-[1120px] md:flex-row md:gap-36">
@@ -36,7 +66,11 @@ export const SignUpPage = () => {
             path={ROUTES.SIGN_UP}
             signInUrl={ROUTES.SIGN_IN}
             appearance={clerkSignupAppearance}
-            forceRedirectUrl={ROUTES.SIGNUP_ORGANIZATION_LIST}
+            forceRedirectUrl={
+              IS_NOVU_CONNECT
+                ? buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)
+                : ROUTES.SIGNUP_ORGANIZATION_LIST
+            }
           />
           {!IS_SELF_HOSTED && !IS_NOVU_CONNECT && <RegionPicker />}
         </div>

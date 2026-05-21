@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
 import { PlatformIcon } from '@/components/icons/platform';
 import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -71,10 +72,9 @@ export function ExplorePlatformSection() {
       </div>
 
       {IS_HOSTNAME_SPLIT_ENABLED ? (
-        <a
+        <CrossAppLink
           href={platformHref}
-          target="_blank"
-          rel="noopener noreferrer"
+          openInNewTab
           className="border border-bg-soft bg-bg-white hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-stroke-strong text-text-sub group flex w-full items-center justify-center gap-0.5 rounded-md py-1.5 pl-2 pr-1.5 text-label-xs font-medium shadow-[0px_0px_0px_1px_var(--stroke-soft),0px_1px_3px_0px_rgba(14,18,27,0.12)] transition-colors focus-visible:outline-none focus-visible:ring-2"
         >
           <span>Explore</span>
@@ -86,7 +86,7 @@ export function ExplorePlatformSection() {
             className="text-text-soft size-4 transition-transform duration-200 group-hover:translate-x-0.5"
             aria-hidden
           />
-        </a>
+        </CrossAppLink>
       ) : (
         <Link
           to={platformHref}

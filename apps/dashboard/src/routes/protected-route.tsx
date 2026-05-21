@@ -1,4 +1,4 @@
-import { RedirectToSignIn, SignedIn, SignedOut } from '@clerk/clerk-react';
+import { RedirectToSignIn, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import { ReactNode } from 'react';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
@@ -12,6 +12,12 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute = ({ children, permission, condition, isDrawerRoute }: ProtectedRouteProps) => {
+  const { isLoaded } = useAuth();
+
+  if (!isLoaded) {
+    return null;
+  }
+
   return (
     <>
       <SignedIn>
@@ -26,7 +32,7 @@ export const ProtectedRoute = ({ children, permission, condition, isDrawerRoute 
         </EnvironmentProvider>
       </SignedIn>
       <SignedOut>
-        <RedirectToSignIn />
+        <RedirectToSignIn redirectUrl={typeof window !== 'undefined' ? window.location.href : undefined} />
       </SignedOut>
     </>
   );

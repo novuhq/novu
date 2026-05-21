@@ -1,9 +1,10 @@
-import { SignIn as SignInForm, useAuth } from '@clerk/clerk-react';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { buildAppHomeRoute, getCurrentAppId } from '@/utils/apps';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
+import { beginConnectProvisioning, buildConnectProvisionOrgListPath, isActiveConnectWorkspace } from '@/utils/connect';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { SignIn as SignInForm, useAuth, useOrganization, useUser } from '@clerk/clerk-react';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthSideBanner } from '../components/auth/auth-side-banner';
 import { ConnectAuthSideBanner } from '../components/auth/connect-auth-side-banner';
 import { RegionPicker } from '../components/auth/region-picker';
@@ -15,7 +16,9 @@ import { getReferrer, getUtmParams } from '../utils/tracking';
 
 export const SignInPage = () => {
   const segment = useSegment();
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, isLoaded } = useAuth();
+  const { user, isLoaded: isUserLoaded } = useUser();
+  const { organization, isLoaded: isOrganizationLoaded } = useOrganization();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,14 +32,34 @@ export const SignInPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!isSignedIn) return;
+    if (!isLoaded || !isSignedIn) return;
 
-    // Hostname is the source of truth: Connect host → Connect home, Platform host → workflows.
+    if (IS_NOVU_CONNECT) {
+      if (!isUserLoaded || !isOrganizationLoaded) return;
+
+      if (
+        organization &&
+        isActiveConnectWorkspace(organization.publicMetadata, {
+          userId: user?.id,
+          organizationId: organization.id,
+        })
+      ) {
+        navigate(ROUTES.ENV, { replace: true });
+
+        return;
+      }
+
+      beginConnectProvisioning();
+      navigate(ROUTES.SIGNUP_ORGANIZATION_LIST, { replace: true });
+
+      return;
+    }
+
     const home =
       buildAppHomeRoute(getCurrentAppId(), 'default') ?? buildRoute(ROUTES.WORKFLOWS, { environmentSlug: 'default' });
 
-    navigate(home);
-  }, [isSignedIn]);
+    navigate(home, { replace: true });
+  }, [isLoaded, isSignedIn, isUserLoaded, isOrganizationLoaded, organization, user?.id, navigate]);
 
   return (
     <div className="flex min-h-screen w-full flex-col md:max-w-[1120px] md:flex-row md:gap-36">
@@ -46,7 +69,14 @@ export const SignInPage = () => {
       </div>
       <div className="flex flex-1 justify-end px-4 py-8 md:items-center md:px-0 md:py-0">
         <div className="flex w-full max-w-[400px] flex-col items-start justify-start gap-[18px]">
-          <SignInForm path={ROUTES.SIGN_IN} signUpUrl={ROUTES.SIGN_UP} appearance={clerkSignupAppearance} />
+          <SignInForm
+            path={ROUTES.SIGN_IN}
+            signUpUrl={ROUTES.SIGN_UP}
+            appearance={clerkSignupAppearance}
+            forceRedirectUrl={
+              IS_NOVU_CONNECT ? buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST) : undefined
+            }
+          />
           {!IS_SELF_HOSTED && !IS_NOVU_CONNECT && <RegionPicker />}
         </div>
       </div>

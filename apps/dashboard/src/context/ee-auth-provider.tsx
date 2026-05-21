@@ -2,7 +2,17 @@ import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buttonVariants } from '@/components/primitives/button';
-import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
+import {
+  CLERK_PUBLISHABLE_KEY,
+  EE_AUTH_PROVIDER,
+  IS_ENTERPRISE,
+  IS_HOSTNAME_SPLIT_ENABLED,
+  IS_SELF_HOSTED,
+  NOVU_CONNECT_HOSTNAME,
+  NOVU_PLATFORM_HOSTNAME,
+} from '@/config';
+import { isAbsoluteUrl } from '@/utils/apps';
+import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { ROUTES } from '@/utils/routes';
 
 type EEAuthProviderProps = PropsWithChildren;
@@ -11,10 +21,7 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   const navigate = useNavigate();
   const { children } = props;
 
-  // Check community self-hosted first to match build-time alias precedence in vite.config.ts
   if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
-    // For community self-hosted, use the self-hosted ClerkProvider
-    // (which is aliased via Vite at build time to ./src/utils/self-hosted/index.tsx)
     // @ts-expect-error - Self-hosted ClerkProvider has simpler props
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }
@@ -24,14 +31,35 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }
 
+  // Platform and Connect are separate origins with independent Clerk sessions (no satellite).
+  // Sign-in/sign-up stay on whichever host you are on. Rail switching uses CrossAppLink to pass
+  // the dev auth token when you are already signed in on the source host.
+  const navigateClerk = (to: string, replace = false) => {
+    if (isAbsoluteUrl(to)) {
+      if (replace) {
+        window.location.replace(to);
+      } else {
+        window.location.assign(to);
+      }
+
+      return;
+    }
+
+    if (replace) {
+      navigate(to, { replace: true });
+    } else {
+      navigate(to);
+    }
+  };
+
   return (
     <_ClerkProvider
-      routerPush={(to) => navigate(to)}
-      routerReplace={(to) => navigate(to, { replace: true })}
+      routerPush={(to) => navigateClerk(to)}
+      routerReplace={(to) => navigateClerk(to, true)}
       publishableKey={CLERK_PUBLISHABLE_KEY}
       signInUrl={ROUTES.SIGN_IN}
       signUpUrl={ROUTES.SIGN_UP}
-      afterSignOutUrl={ROUTES.SIGN_IN}
+      afterSignOutUrl={buildAfterSignOutUrl()}
       appearance={{
         userButton: {
           elements: {
@@ -93,7 +121,16 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
           form_identifier_exists: 'Already taken, please choose another',
         },
       }}
-      allowedRedirectOrigins={['http://localhost:*', window.location.origin]}
+      allowedRedirectOrigins={[
+        'http://localhost:*',
+        window.location.origin,
+        ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_PLATFORM_HOSTNAME
+          ? [`${window.location.protocol}//${NOVU_PLATFORM_HOSTNAME}`]
+          : []),
+        ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_CONNECT_HOSTNAME
+          ? [`${window.location.protocol}//${NOVU_CONNECT_HOSTNAME}`]
+          : []),
+      ]}
     >
       {children}
     </_ClerkProvider>
