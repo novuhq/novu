@@ -35,7 +35,7 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm ci
 
       - name: Teach Novu preview packages to work with latest dependencies
         run: pnpm run packages:set-latest

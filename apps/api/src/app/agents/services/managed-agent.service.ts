@@ -131,7 +131,7 @@ export class ManagedAgentService {
       ? [{ role: MessageRole.USER, content: context.message?.text ?? '' }]
       : await this.buildMessagesWithHistory(context);
 
-    const newSessionId = await provider.send({
+    const { sessionId: newSessionId } = await provider.send({
       messages,
       sessionId,
       vaultIds,
@@ -681,7 +681,7 @@ export class ManagedAgentService {
 
     return createWebhookHandler({
       secret,
-      onSessionEvents: (sessionId, metadata) => ({
+      onSessionEvents: (sessionId, _runId, metadata) => ({
         onPart: (part) => {
           this.handleWebhookEvent(sessionId, metadata, part).catch((err) => {
             this.logger.error(err, `Failed to handle webhook event for session ${sessionId}`);
