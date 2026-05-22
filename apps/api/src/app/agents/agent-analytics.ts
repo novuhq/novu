@@ -35,7 +35,7 @@ export function trackAgentIntegrationConnected(
     integrationId: string;
     integrationIdentifier: string;
     providerId: string;
-    channel: string;
+    channel?: string;
     connectionSource: 'existing_integration' | 'novu_email_provisioned';
   }
 ): void {
@@ -204,6 +204,50 @@ export function trackAgentTestEmailSent(
     _organization: params.organizationId,
     environmentId: params.environmentId,
     agentIdentifier: params.agentIdentifier,
+  });
+}
+
+export function trackAgentMcpServerEnabled(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    agentIdentifier: string;
+    mcpId: string;
+    defaultScope: string;
+    defaultAuthMode: string;
+  }
+): void {
+  analytics.track(`Agent MCP Enabled - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    agentIdentifier: params.agentIdentifier,
+    mcpId: params.mcpId,
+    defaultScope: params.defaultScope,
+    defaultAuthMode: params.defaultAuthMode,
+  });
+}
+
+export function trackAgentMcpServerDisabled(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    agentIdentifier: string;
+    mcpId: string;
+  }
+): void {
+  analytics.track(`Agent MCP Disabled - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    agentIdentifier: params.agentIdentifier,
+    mcpId: params.mcpId,
   });
 }
 

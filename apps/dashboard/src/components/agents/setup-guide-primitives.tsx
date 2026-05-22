@@ -85,6 +85,12 @@ export function SetupStep({
   rightContent,
   extraContent,
   fullWidthContent,
+  /**
+   * Optional content rendered above the title block in the left column. Used for
+   * step-level UI (e.g. segmented tabs) that should sit between the section label
+   * and the title.
+   */
+  headerSlot,
 }: {
   index: number;
   status: StepStatus;
@@ -94,22 +100,22 @@ export function SetupStep({
   rightContent?: ReactNode;
   extraContent?: ReactNode;
   fullWidthContent?: ReactNode;
+  headerSlot?: ReactNode;
 }) {
   return (
     <div className="relative flex flex-col gap-4 pl-6">
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
-      <div className="flex gap-20">
-        <div className="flex min-w-0 max-w-[400px] flex-1 flex-col">
+      <div className="flex flex-col gap-4 md:flex-row md:gap-20">
+        <div className="flex min-w-0 flex-1 gap-4 flex-col md:max-w-[400px]">
           <div className="flex flex-col gap-2">
             {sectionLabel && (
-              <p className="text-text-soft font-code text-[12px] font-medium leading-4 tracking-[-0.24px]">
-                {sectionLabel}
-              </p>
+              <p className="text-text-soft text-code-xs font-normal leading-4 tracking-[-0.24px]">{sectionLabel}</p>
             )}
+            {headerSlot}
             <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
-            <div className="text-text-soft text-label-xs font-medium leading-4">{description}</div>
+            <div className="text-text-soft text-label-xs font-normal leading-4">{description}</div>
           </div>
           {extraContent}
         </div>
@@ -323,12 +329,24 @@ export function IntegrationCredentialsSidebar({
   onClose,
   onSaveSuccess,
   agentOnboarding,
+  agentIdentifier,
+  testSubscriberId,
+  submitLabel,
 }: {
   integrationId: string;
   isOpen: boolean;
   onClose: () => void;
   onSaveSuccess?: () => void;
   agentOnboarding?: boolean;
+  /**
+   * Agent identifier for agent-onboarding flows. Threaded through to
+   * provider-specific paste components so they can render agent-scoped UI
+   * (e.g. the Telegram mobile setup QR code) inside the modal.
+   */
+  agentIdentifier?: string;
+  /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
+  testSubscriberId?: string | null;
+  submitLabel?: string;
 }) {
   const { integrations } = useFetchIntegrations();
   const { mutateAsync: updateIntegration, isPending: isUpdating } = useUpdateIntegration();
@@ -396,6 +414,8 @@ export function IntegrationCredentialsSidebar({
           onSubmit={onSubmit}
           mode="update"
           agentOnboarding={agentOnboarding}
+          agentIdentifier={agentIdentifier}
+          testSubscriberId={testSubscriberId}
           onFormStateChange={setFormState}
         />
       </div>
@@ -407,7 +427,7 @@ export function IntegrationCredentialsSidebar({
           isLoading={isUpdating}
           disabled={!formState.isValid}
         >
-          Save Changes
+          {submitLabel ?? 'Save Changes'}
         </Button>
       </div>
     </IntegrationSheet>

@@ -111,7 +111,13 @@ export function AgentSetupModal({ isOpen, onClose, onSetupClick }: AgentSetupMod
             View docs
           </a>
           <div className="flex flex-1 items-center justify-end">
-            <Button variant="primary" mode="gradient" size="xs" trailingIcon={RiCornerDownLeftLine} onClick={onSetupClick}>
+            <Button
+              variant="primary"
+              mode="gradient"
+              size="xs"
+              trailingIcon={RiCornerDownLeftLine}
+              onClick={onSetupClick}
+            >
               Setup agent
             </Button>
           </div>

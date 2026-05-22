@@ -113,7 +113,7 @@ export class SendAgentWelcomeMessage {
         { markdown: welcomeText }
       );
 
-      const { platformThreadId, serializedThread } = sent;
+      const { platformThreadId } = sent;
 
       const conversation = await this.conversationService.createOrGetConversation({
         environmentId: command.environmentId,
@@ -130,24 +130,15 @@ export class SendAgentWelcomeMessage {
 
       const channel = this.conversationService.getPrimaryChannel(conversation);
 
-      await Promise.all([
-        this.conversationService.persistAgentMessage({
-          conversationId: conversation._id,
-          channel,
-          platformMessageId: sent.messageId,
-          agentIdentifier: command.agentIdentifier,
-          content: welcomeText,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-        }),
-        this.conversationService.updateChannelThread(
-          command.environmentId,
-          command.organizationId,
-          conversation._id,
-          platformThreadId,
-          serializedThread
-        ),
-      ]);
+      await this.conversationService.persistAgentMessage({
+        conversationId: conversation._id,
+        channel,
+        platformMessageId: sent.messageId,
+        agentIdentifier: command.agentIdentifier,
+        content: welcomeText,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
 
       this.analyticsService.track(`Agent Welcome Message Sent - [Agents]`, command.userId, {
         _organization: command.organizationId,
@@ -179,9 +170,6 @@ export class SendAgentWelcomeMessage {
     }
 
     const channel = this.conversationService.getPrimaryChannel(conversation);
-    if (!channel.serializedThread) {
-      return { sent: false };
-    }
 
     const agent = await this.agentRepository.findOne(
       {
@@ -202,7 +190,7 @@ export class SendAgentWelcomeMessage {
         agent._id,
         command.integrationIdentifier,
         channel.platform,
-        channel.serializedThread,
+        channel.platformThreadId,
         { markdown: text }
       );
 

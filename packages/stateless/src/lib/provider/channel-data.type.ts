@@ -4,7 +4,8 @@ export type ChannelData =
   | WebhookData
   | PhoneData
   | MsTeamsChannelData
-  | MsTeamsUserData;
+  | MsTeamsUserData
+  | TelegramChatData;
 
 export const ENDPOINT_TYPES = {
   SLACK_CHANNEL: 'slack_channel',
@@ -13,6 +14,7 @@ export const ENDPOINT_TYPES = {
   PHONE: 'phone',
   MS_TEAMS_CHANNEL: 'ms_teams_channel',
   MS_TEAMS_USER: 'ms_teams_user',
+  TELEGRAM_CHAT: 'telegram_chat',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -24,6 +26,7 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.PHONE]: { phoneNumber: string };
   [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: { teamId: string; channelId: string };
   [ENDPOINT_TYPES.MS_TEAMS_USER]: { userId: string };
+  [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
 };
 
 export type SlackChannelData = {
@@ -49,6 +52,12 @@ export type WebhookData = {
 export type PhoneData = {
   type: typeof ENDPOINT_TYPES.PHONE;
   endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.PHONE];
+  identifier: string;
+};
+
+export type TelegramChatData = {
+  type: typeof ENDPOINT_TYPES.TELEGRAM_CHAT;
+  endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.TELEGRAM_CHAT];
   identifier: string;
 };
 

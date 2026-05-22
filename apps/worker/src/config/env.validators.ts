@@ -16,9 +16,7 @@ const str32 = makeValidator((variable) => {
   return variable;
 });
 
-function getFeatureFlagValidator(
-  key: FeatureFlagsKeysEnum
-): ValidatorSpec<string | number | boolean | undefined> {
+function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<string | number | boolean | undefined> {
   if (key.endsWith('_NUMBER') || key === FeatureFlagsKeysEnum.MAX_ENVIRONMENT_COUNT) {
     return num({ default: undefined });
   }
@@ -47,6 +45,12 @@ export const envValidators = {
   OTEL_PROMETHEUS_PORT: num({ default: 9464 }),
   MAX_NOVU_INTEGRATION_MAIL_REQUESTS: num({ default: 300 }),
   NOVU_EMAIL_INTEGRATION_API_KEY: str({ default: '' }),
+  /**
+   * Shared inbound domain for the agent default inbox feature, e.g. `agentconnect.sh`.
+   * When unset the feature is disabled and the worker falls through to the existing
+   * per-tenant Domain/DomainRoute lookup.
+   */
+  NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
   STORAGE_SERVICE: str({ default: undefined }),
   REDIS_HOST: str(),
   REDIS_PORT: port(),

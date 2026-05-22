@@ -6,6 +6,8 @@ import {
   Delete,
   ForbiddenException,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -55,6 +57,7 @@ import { GenerateChatOAuthUrlResponseDto } from './dtos/generate-chat-oauth-url-
 import { GenerateConnectOauthUrlRequestDto } from './dtos/generate-connect-oauth-url-request.dto';
 import { GenerateLinkUserOauthUrlRequestDto } from './dtos/generate-link-user-oauth-url-request.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
+import { IssueIntegrationStoreTelegramMobileLinkResponseDto } from './dtos/issue-integration-store-telegram-mobile-link-response.dto';
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
@@ -84,6 +87,8 @@ import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrat
 import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
+import { IssueIntegrationStoreTelegramMobileLinkCommand } from './usecases/issue-integration-store-telegram-mobile-link/issue-integration-store-telegram-mobile-link.command';
+import { IssueIntegrationStoreTelegramMobileLink } from './usecases/issue-integration-store-telegram-mobile-link/issue-integration-store-telegram-mobile-link.usecase';
 import { MsTeamsHealthCheckCommand } from './usecases/msteams-health-check/msteams-health-check.command';
 import {
   MsTeamsHealthCheck,
@@ -129,6 +134,7 @@ export class IntegrationsController {
     private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
     private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
+    private issueIntegrationStoreTelegramMobileLinkUsecase: IssueIntegrationStoreTelegramMobileLink,
     private logger: PinoLogger
   ) {
     this.logger.setContext(IntegrationsController.name);
@@ -243,6 +249,7 @@ export class IntegrationsController {
           organizationId: user.organizationId,
           providerId: body.providerId,
           channel: body.channel,
+          kind: body.kind,
           credentials: body.credentials,
           active: body.active ?? false,
           check: body.check ?? false,
@@ -804,6 +811,29 @@ export class IntegrationsController {
     );
   }
 
+  @Post('/telegram/mobile-link')
+  @ApiResponse(IssueIntegrationStoreTelegramMobileLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a short-lived Telegram mobile setup link for the integration store',
+    description:
+      'Returns a signed, single-use, short-lived JWT plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @HttpCode(HttpStatus.OK)
+  async createTelegramMobileLink(
+    @UserSession() user: UserSessionData
+  ): Promise<IssueIntegrationStoreTelegramMobileLinkResponseDto> {
+    return this.issueIntegrationStoreTelegramMobileLinkUsecase.execute(
+      IssueIntegrationStoreTelegramMobileLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
   @Post('/:integrationId/slack-quick-setup')
   @ApiResponse(SlackQuickSetupResponseDto, 201)
   @ApiOperation({
@@ -846,6 +876,16 @@ export class IntegrationsController {
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
+    /*
+     * API-key auth must never receive decrypted provider credentials, regardless of RBAC state.
+     * API keys grant ALL_PERMISSIONS in `community.auth.service.ts`, which would otherwise
+     * allow the RBAC path below to succeed and leak every stored provider secret to any
+     * caller holding an environment API key.
+     */
+    if (user.scheme === ApiAuthSchemeEnum.API_KEY) {
+      return false;
+    }
+
     const organization = await this.organizationRepository.findOne({
       _id: user.organizationId,
     });

@@ -120,6 +120,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     agentId: string;
     content: string;
     signalData: ConversationActivitySignalData;
+    platformMessageId?: string;
     environmentId: string;
     organizationId: string;
   }): Promise<ConversationActivityEntity> {
@@ -134,9 +135,28 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
       senderId: params.agentId,
       content: params.content,
       signalData: params.signalData,
+      platformMessageId: params.platformMessageId,
       _environmentId: params.environmentId,
       _organizationId: params.organizationId,
     });
+  }
+
+  async findToolActivitiesByRunId(
+    environmentId: string,
+    conversationId: string,
+    runId: string
+  ): Promise<ConversationActivityEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _conversationId: conversationId,
+        type: ConversationActivityTypeEnum.SIGNAL,
+        'signalData.type': 'tool-use',
+        'signalData.payload.runId': runId,
+      } as FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds,
+      '*',
+      { sort: { createdAt: 1 } }
+    );
   }
 
   async listActivities({

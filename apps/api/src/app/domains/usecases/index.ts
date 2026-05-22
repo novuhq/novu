@@ -1,3 +1,4 @@
+import { AttachmentRehydrator, InboundDomainRouteDelivery } from '@novu/application-generic';
 import { CreateDomain } from './create-domain/create-domain.usecase';
 import { CreateDomainConnectApplyUrl } from './create-domain-connect-apply-url/create-domain-connect-apply-url.usecase';
 import { CreateDomainRoute } from './create-domain-route/create-domain-route.usecase';
@@ -8,7 +9,6 @@ import { GetDomain } from './get-domain/get-domain.usecase';
 import { GetDomainConnectStatus } from './get-domain-connect-status/get-domain-connect-status.usecase';
 import { GetDomainRoute } from './get-domain-route/get-domain-route.usecase';
 import { GetDomains } from './get-domains/get-domains.usecase';
-import { InboundDomainRouteDelivery } from '@novu/application-generic';
 
 import { ListDomainRoutes } from './list-domain-routes/list-domain-routes.usecase';
 import { TestDomainRoute } from './test-domain-route/test-domain-route.usecase';
@@ -30,6 +30,10 @@ export const USE_CASES = [
   UpdateDomainRoute,
   DeleteDomainRoute,
   InboundDomainRouteDelivery,
+  // AttachmentRehydrator is a constructor dep of InboundDomainRouteDelivery; it pulls
+  // bytes from S3 (via StorageService, which SharedModule already provides) for the
+  // legacy domain-route webhook payload rehydration.
+  AttachmentRehydrator,
   TestDomainRoute,
   GetDomainConnectStatus,
   CreateDomainConnectApplyUrl,

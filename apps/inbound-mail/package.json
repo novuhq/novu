@@ -18,7 +18,9 @@
     "test": "cross-env NODE_ENV=test mocha --require tsx/cjs --trace-warnings --timeout 10000 --exit --file e2e/setup.ts src/**/**/*.spec.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.996.0",
     "@aws-sdk/client-secrets-manager": "^3.1037.0",
+    "@aws-sdk/s3-request-presigner": "^3.996.0",
     "@novu/application-generic": "workspace:*",
     "@novu/shared": "workspace:*",
     "@sentry/browser": "^8.33.1",

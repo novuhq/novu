@@ -683,7 +683,7 @@ export class InboxController {
         orderDirection: query.orderDirection,
         orderBy: query.orderBy || 'createdAt',
         includeCursor: query.includeCursor,
-        contextKeys: query.contextKeys,
+        contextKeys: subscriberSession.contextKeys,
         channel: query.channel,
         providerId: query.providerId,
         integrationIdentifier: query.integrationIdentifier,
@@ -703,17 +703,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('identifier') identifier: string
   ): Promise<InboxChannelConnectionResponseDto> {
-    const channelConnection = await this.getChannelConnectionUsecase.execute(
-      GetChannelConnectionCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        identifier,
-      })
-    );
-
-    if (channelConnection.subscriberId && channelConnection.subscriberId !== subscriberSession.subscriberId) {
-      throw new NotFoundException(`Channel connection not found: ${identifier}`);
-    }
+    const channelConnection = await this.loadChannelConnectionForSubscriber(subscriberSession, identifier);
 
     return mapChannelConnectionToInboxDto(channelConnection);
   }
@@ -725,17 +715,7 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('identifier') identifier: string
   ): Promise<void> {
-    const channelConnection = await this.getChannelConnectionUsecase.execute(
-      GetChannelConnectionCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        identifier,
-      })
-    );
-
-    if (channelConnection.subscriberId && channelConnection.subscriberId !== subscriberSession.subscriberId) {
-      throw new NotFoundException(`Channel connection not found: ${identifier}`);
-    }
+    await this.loadChannelConnectionForSubscriber(subscriberSession, identifier);
 
     await this.deleteChannelConnectionUsecase.execute(
       DeleteChannelConnectionCommand.create({
@@ -744,6 +724,25 @@ export class InboxController {
         identifier,
       })
     );
+  }
+
+  private async loadChannelConnectionForSubscriber(subscriberSession: SubscriberSession, identifier: string) {
+    try {
+      return await this.getChannelConnectionUsecase.execute(
+        GetChannelConnectionCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          identifier,
+          subscriberId: subscriberSession.subscriberId,
+          contextKeys: subscriberSession.contextKeys,
+        })
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(`Channel connection not found: ${identifier}`);
+      }
+      throw error;
+    }
   }
 
   @UseGuards(AuthGuard('subscriberJwt'))
@@ -765,7 +764,7 @@ export class InboxController {
         orderDirection: query.orderDirection,
         orderBy: query.orderBy || 'createdAt',
         includeCursor: query.includeCursor,
-        contextKeys: query.contextKeys,
+        contextKeys: subscriberSession.contextKeys,
         channel: query.channel,
         providerId: query.providerId,
         integrationIdentifier: query.integrationIdentifier,
@@ -787,16 +786,21 @@ export class InboxController {
     @SubscriberSession() subscriberSession: SubscriberSession,
     @Param('identifier') identifier: string
   ): Promise<void> {
-    const channelEndpoint = await this.getChannelEndpointUsecase.execute(
-      GetChannelEndpointCommand.create({
-        environmentId: subscriberSession._environmentId,
-        organizationId: subscriberSession._organizationId,
-        identifier,
-      })
-    );
-
-    if (channelEndpoint.subscriberId && channelEndpoint.subscriberId !== subscriberSession.subscriberId) {
-      throw new NotFoundException(`Channel endpoint not found: ${identifier}`);
+    try {
+      await this.getChannelEndpointUsecase.execute(
+        GetChannelEndpointCommand.create({
+          environmentId: subscriberSession._environmentId,
+          organizationId: subscriberSession._organizationId,
+          identifier,
+          subscriberId: subscriberSession.subscriberId,
+          contextKeys: subscriberSession.contextKeys,
+        })
+      );
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new NotFoundException(`Channel endpoint not found: ${identifier}`);
+      }
+      throw error;
     }
 
     await this.deleteChannelEndpointUsecase.execute(

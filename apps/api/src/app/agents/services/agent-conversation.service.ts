@@ -14,6 +14,17 @@ import {
 import type { TriggerRecipientsPayload } from '@novu/shared';
 
 export const INBOUND_ATTACHMENT_ONLY_PREVIEW = '[Attachment]';
+export const DEFAULT_CONVERSATION_TITLE = 'Untitled conversation';
+
+export function getConversationTitle(firstMessageText: string): string {
+  const trimmed = firstMessageText.trim();
+
+  if (trimmed.length === 0) {
+    return DEFAULT_CONVERSATION_TITLE;
+  }
+
+  return trimmed.slice(0, 200);
+}
 
 export function getInboundActivityPreview(
   content: string | undefined,
@@ -125,9 +136,10 @@ export class AgentConversationService {
     const existing = await this.conversationRepository.findByPlatformThread(
       environmentId,
       organizationId,
+      params.agentId,
+      params.integrationId,
       platformThreadId
     );
-
     if (existing) {
       if (existing.status === ConversationStatusEnum.RESOLVED) {
         await this.conversationRepository.updateStatus(
@@ -161,7 +173,7 @@ export class AgentConversationService {
         },
       ],
       status: ConversationStatusEnum.ACTIVE,
-      title: params.firstMessageText.slice(0, 200),
+      title: getConversationTitle(params.firstMessageText),
       metadata: {},
       _environmentId: environmentId,
       _organizationId: organizationId,
@@ -245,22 +257,6 @@ export class AgentConversationService {
     return this.activityRepository.findByConversation(environmentId, conversationId, limit);
   }
 
-  async updateChannelThread(
-    environmentId: string,
-    organizationId: string,
-    conversationId: string,
-    platformThreadId: string,
-    serializedThread: Record<string, unknown>
-  ): Promise<void> {
-    await this.conversationRepository.updateChannelThread(
-      environmentId,
-      organizationId,
-      conversationId,
-      platformThreadId,
-      serializedThread
-    );
-  }
-
   async getConversation(
     conversationId: string,
     environmentId: string,
@@ -275,9 +271,17 @@ export class AgentConversationService {
   async findByPlatformThread(
     environmentId: string,
     organizationId: string,
+    agentId: string,
+    integrationId: string,
     platformThreadId: string
   ): Promise<ConversationEntity | null> {
-    return this.conversationRepository.findByPlatformThread(environmentId, organizationId, platformThreadId);
+    return this.conversationRepository.findByPlatformThread(
+      environmentId,
+      organizationId,
+      agentId,
+      integrationId,
+      platformThreadId
+    );
   }
 
   async setFirstPlatformMessageId(
@@ -394,6 +398,7 @@ export class AgentConversationService {
         params.conversationId,
         ConversationStatusEnum.RESOLVED
       ),
+      this.conversationRepository.clearExternalSessionId(params.environmentId, params.conversationId),
       this.activityRepository.createSignalActivity({
         identifier: `act_${shortId(12)}`,
         conversationId: params.conversationId,

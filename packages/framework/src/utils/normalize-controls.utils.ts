@@ -3,12 +3,104 @@ import { jsonrepair } from 'jsonrepair';
 /**
  * Checks if a string looks like a complete JSON structure (object or array).
  */
-function looksLikeJson(value: string): boolean {
+export function looksLikeJson(value: string): boolean {
   const trimmed = value.trim();
   return (
     ((trimmed.startsWith('{') && trimmed.endsWith('}')) || (trimmed.startsWith('[') && trimmed.endsWith(']'))) &&
     trimmed.length > 2
   );
+}
+
+/**
+ * Markers used to wrap pre-parsed JSON-string control values during Liquid compilation.
+ * The pre-parse step replaces a control value like `'{"type":"doc",...}'` with the parsed object,
+ * so Liquid renders against the object's leaf strings (single level of JSON escaping) instead of
+ * the doubly-escaped string-inside-a-string. After Liquid renders and the outer string is parsed,
+ * any value wrapped with these markers is JSON.stringified back to a string, restoring the
+ * original control value shape.
+ *
+ * Without this round-trip, values rendered into a JSON-stringified control value (e.g. Maily
+ * email bodies) end up with unescaped quotes when the rendered payload contains a `"` character,
+ * because Liquid's default escape only handles one level of JSON encoding.
+ */
+export const JSON_STRING_WRAPPER_KEY = '__novuJsonString';
+
+interface JsonStringWrapper {
+  [JSON_STRING_WRAPPER_KEY]: true;
+  value: unknown;
+}
+
+function isJsonStringWrapper(value: unknown): value is JsonStringWrapper {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    (value as JsonStringWrapper)[JSON_STRING_WRAPPER_KEY] === true
+  );
+}
+
+/**
+ * Recursively walks `controls` and, for every string that looks like a complete JSON object/array
+ * and parses cleanly, replaces it with a wrapper object containing the parsed value. The wrapper
+ * allows {@link restoreJsonStringControlValues} to reliably identify which values to re-stringify
+ * after Liquid has been rendered, regardless of how deeply they were nested.
+ *
+ * @returns A new controls structure with JSON strings replaced by wrapper objects.
+ */
+export function expandJsonStringControlValues(controls: unknown): unknown {
+  if (typeof controls === 'string') {
+    if (!looksLikeJson(controls)) {
+      return controls;
+    }
+    try {
+      const parsed = JSON.parse(controls);
+
+      return { [JSON_STRING_WRAPPER_KEY]: true, value: expandJsonStringControlValues(parsed) };
+    } catch {
+      return controls;
+    }
+  }
+
+  if (Array.isArray(controls)) {
+    return controls.map((item) => expandJsonStringControlValues(item));
+  }
+
+  if (controls && typeof controls === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(controls)) {
+      out[key] = expandJsonStringControlValues(value);
+    }
+
+    return out;
+  }
+
+  return controls;
+}
+
+/**
+ * Inverse of {@link expandJsonStringControlValues}. Recursively walks the rendered controls and
+ * replaces any wrapper objects with the JSON.stringified form of their `value`, restoring the
+ * original "string that contains JSON" shape.
+ */
+export function restoreJsonStringControlValues(controls: unknown): unknown {
+  if (isJsonStringWrapper(controls)) {
+    return JSON.stringify(restoreJsonStringControlValues(controls.value));
+  }
+
+  if (Array.isArray(controls)) {
+    return controls.map((item) => restoreJsonStringControlValues(item));
+  }
+
+  if (controls && typeof controls === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(controls)) {
+      out[key] = restoreJsonStringControlValues(value);
+    }
+
+    return out;
+  }
+
+  return controls;
 }
 
 /**

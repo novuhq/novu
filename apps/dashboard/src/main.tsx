@@ -31,11 +31,11 @@ import {
   WorkflowsPage,
 } from '@/pages';
 import {
-  DispatchApiKeysPage,
-  DispatchConversationsPage,
-  DispatchDashboardPage,
-  DispatchSettingsPage,
-} from '@/pages/dispatch';
+  ConnectApiKeysPage,
+  ConnectConversationsPage,
+  ConnectDashboardPage,
+  ConnectSettingsPage,
+} from '@/pages/connect';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { Landing1SignUpPage } from '@/pages/landing-1-signup';
@@ -48,6 +48,7 @@ import { ChannelPreferences } from './components/workflow-editor/channel-prefere
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
+import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { AgentsUsecasePage } from './pages/agents-usecase-page';
@@ -69,6 +70,7 @@ import { ForgotPasswordPage } from './pages/forgot-password';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
+import { IntegrationStoreTelegramMobileSetupPage } from './pages/integration-store-telegram-mobile-setup-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
@@ -79,7 +81,7 @@ import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
-import { DispatchProtectedRoute } from './routes/dispatch-protected-route';
+import { ConnectProtectedRoute } from './routes/connect-protected-route';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
 import { ROUTES } from './utils/routes';
@@ -97,6 +99,18 @@ const router = createBrowserRouter([
       {
         path: `${ROUTES.LANDING_1_SIGN_UP}/*`,
         element: <Landing1SignUpPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for Telegram. Mounted outside
+        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
+        path: ROUTES.AGENT_TELEGRAM_MOBILE_SETUP,
+        element: <AgentTelegramMobileSetupPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for the Telegram integration
+        // store create flow. Creates a new integration server-side on submit.
+        path: ROUTES.INTEGRATION_TELEGRAM_MOBILE_SETUP,
+        element: <IntegrationStoreTelegramMobileSetupPage />,
       },
       {
         element: <AuthRoute />,
@@ -599,17 +613,17 @@ const router = createBrowserRouter([
                 ),
               },
               {
-                path: ROUTES.DISPATCH_HOME,
+                path: ROUTES.CONNECT_HOME,
                 element: (
-                  <DispatchProtectedRoute>
+                  <ConnectProtectedRoute>
                     <Outlet />
-                  </DispatchProtectedRoute>
+                  </ConnectProtectedRoute>
                 ),
                 children: [
-                  { index: true, element: <DispatchDashboardPage /> },
-                  { path: ROUTES.DISPATCH_AGENTS, element: <AgentsPage /> },
+                  { index: true, element: <ConnectDashboardPage /> },
+                  { path: ROUTES.CONNECT_AGENTS, element: <AgentsPage /> },
                   {
-                    path: ROUTES.DISPATCH_AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    path: ROUTES.CONNECT_AGENT_DETAILS_INTEGRATIONS_DETAIL,
                     element: (
                       <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
                         <AgentDetailsPage />
@@ -617,7 +631,7 @@ const router = createBrowserRouter([
                     ),
                   },
                   {
-                    path: ROUTES.DISPATCH_AGENT_DETAILS_TAB,
+                    path: ROUTES.CONNECT_AGENT_DETAILS_TAB,
                     element: (
                       <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
                         <AgentDetailsPage />
@@ -625,16 +639,20 @@ const router = createBrowserRouter([
                     ),
                   },
                   {
-                    path: ROUTES.DISPATCH_AGENT_DETAILS,
+                    path: ROUTES.CONNECT_AGENT_DETAILS,
                     element: (
                       <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
                         <AgentDetailsPage />
                       </ProtectedRoute>
                     ),
                   },
-                  { path: ROUTES.DISPATCH_CONVERSATIONS, element: <DispatchConversationsPage /> },
-                  { path: ROUTES.DISPATCH_API_KEYS, element: <DispatchApiKeysPage /> },
-                  { path: ROUTES.DISPATCH_SETTINGS, element: <DispatchSettingsPage /> },
+                  { path: ROUTES.CONNECT_CONVERSATIONS, element: <ConnectConversationsPage /> },
+                  { path: ROUTES.CONNECT_API_KEYS, element: <ConnectApiKeysPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_ACCOUNT, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_ORGANIZATION, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_TEAM, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_BILLING, element: <ConnectSettingsPage /> },
                 ],
               },
 
