@@ -50,13 +50,13 @@ function resolveProviderSetupGuide(providerId: string) {
 
 const SESSION_KEY = (agentIdentifier: string) => `agent-setup-integration:${agentIdentifier}`;
 
-// Channel-selection step is step 3 — continues from the connect phase (steps 1-2).
-// Email is intentionally not part of the onboarding flow yet, so we go straight from 2 -> 3.
-const CHANNEL_STEP_INDEX = 3;
-const PROVIDER_GUIDE_STEP_OFFSET = CHANNEL_STEP_INDEX + 1;
+// Brain section steps (connector + template/prompt) live in `connect-agent-form` and only
+// appear in the onboarding flow above this component.
+const BRAIN_STEPS = 2;
 // Provider guides reserve up to three numbered steps; the bridge section continues from there.
 const PROVIDER_GUIDE_RESERVED_STEPS = 3;
-const BRIDGE_STEP_OFFSET = PROVIDER_GUIDE_STEP_OFFSET + PROVIDER_GUIDE_RESERVED_STEPS;
+// Self-hosted agents add three handler steps (scaffold + run + send) below the provider guide.
+const HANDLER_STEPS = 3;
 
 type AgentSetupStepsProps = {
   agent: AgentResponse;
@@ -235,15 +235,26 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
     [agentIntegrationsQuery.data?.data]
   );
 
-  const firstIncompleteStep = hasProviderSelected ? PROVIDER_GUIDE_STEP_OFFSET : CHANNEL_STEP_INDEX;
+  // Managed agents have no bridge — the setup is considered complete as soon as the chosen
+  // provider integration becomes connected. Fire onSetupComplete exactly once.
+  const isManagedRuntime = agent.runtime === 'managed';
+
+  // The brain section (connector + template) only renders in the onboarding flow above this
+  // component. On the agent details page there is no brain section, so step numbering must
+  // start at 1 here instead of continuing from 3.
+  const isOnboarding = Boolean(connectSummary);
+  const brainStepsBefore = isOnboarding ? BRAIN_STEPS : 0;
+  const handlerStepsAfter = isManagedRuntime ? 0 : HANDLER_STEPS;
+  const channelStepIndex = brainStepsBefore + 1;
+  const providerGuideStepOffset = channelStepIndex + 1;
+  const bridgeStepOffset = providerGuideStepOffset + PROVIDER_GUIDE_RESERVED_STEPS;
+  const totalSteps = brainStepsBefore + 1 + PROVIDER_GUIDE_RESERVED_STEPS + handlerStepsAfter;
+
+  const firstIncompleteStep = hasProviderSelected ? providerGuideStepOffset : channelStepIndex;
 
   const ProviderGuide = selectedProviderId ? resolveProviderSetupGuide(selectedProviderId) : null;
 
   const integrationIdentifier = selectedIntegration?.identifier ?? defaultFromAgent?.identifier;
-
-  // Managed agents have no bridge — the setup is considered complete as soon as the chosen
-  // provider integration becomes connected. Fire onSetupComplete exactly once.
-  const isManagedRuntime = agent.runtime === 'managed';
   const onSetupCompleteRef = useRef(onSetupComplete);
   onSetupCompleteRef.current = onSetupComplete;
   const setupCompleteFiredRef = useRef(false);
@@ -335,9 +346,9 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
       )}
 
       <SetupStep
-        index={CHANNEL_STEP_INDEX}
-        status={deriveStepStatus(CHANNEL_STEP_INDEX, firstIncompleteStep)}
-        sectionLabel="3/7 SETUP WHERE TO LISTEN"
+        index={channelStepIndex}
+        status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
+        sectionLabel={`${channelStepIndex}/${totalSteps} SETUP WHERE TO LISTEN`}
         title="Choose where your agent listens and communicates"
         description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
         fullWidthContent={
@@ -375,7 +386,7 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
             <ProviderGuide
               agent={agent}
               integrationId={effectiveIntegrationId}
-              stepOffset={PROVIDER_GUIDE_STEP_OFFSET}
+              stepOffset={providerGuideStepOffset}
               embedded={false}
               onStepsCompleted={handleProviderStepsCompleted}
             />
@@ -386,7 +397,8 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
       {hasConnectedIntegration && !isManagedRuntime && (
         <AgentCodeSetupSection
           agent={agent}
-          stepOffset={BRIDGE_STEP_OFFSET}
+          stepOffset={bridgeStepOffset}
+          totalSteps={totalSteps}
           providerId={selectedProviderId}
           onBridgeConnected={handleBridgeConnected}
           onAddProvider={hideAddProvider ? undefined : handleAddProvider}

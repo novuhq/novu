@@ -249,6 +249,10 @@ export function ConnectAgentForm({
   const isScratchRuntime = Boolean(aiGeneration?.isScratchRuntime);
   const aiMode = aiGeneration?.mode ?? 'prompt';
   const scope: AgentScope = aiMode === 'existing' ? 'existing' : 'create';
+  // Total steps across the full onboarding flow:
+  //   brain (2) + channel (1) + provider guide (3 reserved) + handler (0 for managed, 3 for self-hosted)
+  // Managed-runtime connectors don't render the agent-handler section, so the total is 6 there.
+  const totalOnboardingSteps = isClaudeSelected ? 6 : 9;
   // The prompt/manual sub-toggle in the right-column header only exists in `'create'` scope.
   // In `'existing'` scope the segmented tabs above replace it, so we omit it entirely.
   const header = aiMode === 'existing' ? null : RIGHT_HEADER_BY_MODE[aiMode];
@@ -267,7 +271,7 @@ export function ConnectAgentForm({
       <SetupStep
         index={1}
         status="completed"
-        sectionLabel="1/7 SETUP AGENT BRAIN"
+        sectionLabel={`1/${totalOnboardingSteps} SETUP AGENT BRAIN`}
         title="Where do you want your agent?"
         description="The agent is hosted in the selected connector and Novu manages the communication across channels."
         rightContent={
