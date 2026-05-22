@@ -32,6 +32,7 @@
   },
   "devDependencies": {
     "@clerk/shared": "^4.12.2",
+    "@clerk/types": "^4.48.0",
     "@types/mocha": "^8.0.1",
     "@types/node": "^22.0.0",
     "@types/passport-jwt": "^3.0.3",
