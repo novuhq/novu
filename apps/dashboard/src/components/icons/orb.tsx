@@ -1,27 +1,51 @@
+import { useId } from 'react';
+
 export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
+  const id = useId();
+  const a = `${id}-a`;
+  const b = `${id}-b`;
+  const c = `${id}-c`;
+  const d = `${id}-d`;
+  const e = `${id}-e`;
+  const f = `${id}-f`;
+  const g = `${id}-g`;
+  const h = `${id}-h`;
+  const i = `${id}-i`;
+  const j = `${id}-j`;
+  const k = `${id}-k`;
+  const l = `${id}-l`;
+  const m = `${id}-m`;
+  const n = `${id}-n`;
+  const o = `${id}-o`;
+  const p = `${id}-p`;
+  const q = `${id}-q`;
+  const r = `${id}-r`;
+  const s = `${id}-s`;
+  const t = `${id}-t`;
+
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 22 22" {...props}>
       <g opacity=".5">
-        <g filter="url(#a)">
+        <g filter={`url(#${a})`}>
           <path
             fill="#272727"
             d="M18.45 10.595c0 4.582-2.88 7.852-7.548 7.852s-8.453-3.714-8.453-8.296 3.785-7.704 8.453-7.704 7.547 3.566 7.547 8.148"
           />
-          <mask id="b" width="17" height="17" x="2" y="2" maskUnits="userSpaceOnUse" style={{ maskType: 'alpha' }}>
+          <mask id={b} width="17" height="17" x="2" y="2" maskUnits="userSpaceOnUse" style={{ maskType: 'alpha' }}>
             <path
               fill="#182333"
               d="M18.45 10.595c0 4.582-2.88 7.852-7.548 7.852s-8.453-3.714-8.453-8.296 3.785-7.704 8.453-7.704 7.547 3.566 7.547 8.148"
             />
           </mask>
-          <g mask="url(#b)">
-            <mask id="d" width="17" height="17" x="2" y="2" maskUnits="userSpaceOnUse" style={{ maskType: 'alpha' }}>
+          <g mask={`url(#${b})`}>
+            <mask id={d} width="17" height="17" x="2" y="2" maskUnits="userSpaceOnUse" style={{ maskType: 'alpha' }}>
               <path
-                fill="url(#c)"
+                fill={`url(#${c})`}
                 d="M18.45 10.595c0 4.582-2.88 7.852-7.548 7.852s-8.453-3.714-8.453-8.296 3.785-7.704 8.453-7.704 7.547 3.566 7.547 8.148"
               />
             </mask>
-            <g mask="url(#d)">
-              <g filter="url(#e)">
+            <g mask={`url(#${d})`}>
+              <g filter={`url(#${e})`}>
                 <path
                   fill="#818181"
                   fillRule="evenodd"
@@ -29,7 +53,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                   clipRule="evenodd"
                 />
               </g>
-              <g filter="url(#f)">
+              <g filter={`url(#${f})`}>
                 <path
                   fill="#fff"
                   fillRule="evenodd"
@@ -37,7 +61,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                   clipRule="evenodd"
                 />
               </g>
-              <g filter="url(#g)">
+              <g filter={`url(#${g})`}>
                 <path
                   fill="#acacac"
                   fillRule="evenodd"
@@ -45,7 +69,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                   clipRule="evenodd"
                 />
               </g>
-              <g filter="url(#h)">
+              <g filter={`url(#${h})`}>
                 <path
                   fill="#b6b6b6"
                   fillRule="evenodd"
@@ -53,7 +77,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                   clipRule="evenodd"
                 />
               </g>
-              <g filter="url(#i)">
+              <g filter={`url(#${i})`}>
                 <path
                   fill="#5c5c5c"
                   fillRule="evenodd"
@@ -61,7 +85,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                   clipRule="evenodd"
                 />
               </g>
-              <g filter="url(#j)">
+              <g filter={`url(#${j})`}>
                 <path
                   fill="#585858"
                   fillRule="evenodd"
@@ -69,7 +93,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                   clipRule="evenodd"
                 />
               </g>
-              <g filter="url(#k)">
+              <g filter={`url(#${k})`}>
                 <path
                   fill="#777"
                   fillRule="evenodd"
@@ -77,7 +101,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                   clipRule="evenodd"
                 />
               </g>
-              <g filter="url(#l)" style={{ mixBlendMode: 'overlay' }}>
+              <g filter={`url(#${l})`} style={{ mixBlendMode: 'overlay' }}>
                 <path
                   fill="#c7c7c7"
                   fillRule="evenodd"
@@ -85,7 +109,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                   clipRule="evenodd"
                 />
               </g>
-              <g filter="url(#m)" style={{ mixBlendMode: 'overlay' }}>
+              <g filter={`url(#${m})`} style={{ mixBlendMode: 'overlay' }}>
                 <path
                   fill="#afafaf"
                   fillRule="evenodd"
@@ -94,30 +118,30 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
                 />
               </g>
             </g>
-            <g filter="url(#n)" style={{ mixBlendMode: 'overlay' }}>
+            <g filter={`url(#${n})`} style={{ mixBlendMode: 'overlay' }}>
               <path
                 stroke="#fff"
-                stroke-width=".918"
+                strokeWidth=".918"
                 d="M17.592 10.304c0 4.419-2.724 7.572-7.143 7.572a8 8 0 0 1-8-8c0-4.418 3.582-7.429 8-7.429s7.143 3.44 7.143 7.857Z"
               />
             </g>
-            <g filter="url(#o)" style={{ mixBlendMode: 'overlay' }}>
+            <g filter={`url(#${o})`} style={{ mixBlendMode: 'overlay' }}>
               <path
                 stroke="#fff"
-                stroke-width=".612"
+                strokeWidth=".612"
                 d="M17.592 10.304c0 4.419-2.724 7.572-7.143 7.572a8 8 0 0 1-8-8c0-4.418 3.582-7.429 8-7.429s7.143 3.44 7.143 7.857Z"
               />
             </g>
           </g>
         </g>
-        <mask id="p" width="17" height="17" x="2" y="3" maskUnits="userSpaceOnUse" style={{ maskType: 'alpha' }}>
+        <mask id={p} width="17" height="17" x="2" y="3" maskUnits="userSpaceOnUse" style={{ maskType: 'alpha' }}>
           <path
             fill="#182333"
             d="M18.45 11.761c0 4.582-2.88 7.852-7.548 7.852S2.449 15.9 2.449 11.317s3.785-7.704 8.453-7.704 7.547 3.567 7.547 8.148"
           />
         </mask>
-        <g mask="url(#p)">
-          <g filter="url(#q)" style={{ mixBlendMode: 'overlay' }}>
+        <g mask={`url(#${p})`}>
+          <g filter={`url(#${q})`} style={{ mixBlendMode: 'overlay' }}>
             <path
               fill="#959595"
               fillRule="evenodd"
@@ -125,7 +149,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
               clipRule="evenodd"
             />
           </g>
-          <g filter="url(#r)" style={{ mixBlendMode: 'overlay' }}>
+          <g filter={`url(#${r})`} style={{ mixBlendMode: 'overlay' }}>
             <path
               fill="#6b6b6b"
               fillRule="evenodd"
@@ -133,7 +157,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
               clipRule="evenodd"
             />
           </g>
-          <g filter="url(#s)" style={{ mixBlendMode: 'overlay' }}>
+          <g filter={`url(#${s})`} style={{ mixBlendMode: 'overlay' }}>
             <path
               fill="#d5d5d5"
               fillRule="evenodd"
@@ -142,7 +166,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
             />
           </g>
         </g>
-        <g filter="url(#t)" style={{ mixBlendMode: 'plus-lighter' }}>
+        <g filter={`url(#${t})`} style={{ mixBlendMode: 'plus-lighter' }}>
           <path
             fill="#4d4d4d"
             fillRule="evenodd"
@@ -153,7 +177,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
       </g>
       <defs>
         <filter
-          id="a"
+          id={a}
           width="20.896"
           height="20.896"
           x=".001"
@@ -166,7 +190,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="1.224" />
         </filter>
         <filter
-          id="e"
+          id={e}
           width="31.258"
           height="31.545"
           x="-15.746"
@@ -179,7 +203,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.672" />
         </filter>
         <filter
-          id="f"
+          id={f}
           width="31.258"
           height="31.545"
           x="-4.891"
@@ -192,7 +216,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.672" />
         </filter>
         <filter
-          id="g"
+          id={g}
           width="31.805"
           height="28.729"
           x="1.711"
@@ -205,7 +229,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.672" />
         </filter>
         <filter
-          id="h"
+          id={h}
           width="22.571"
           height="21.151"
           x="-.289"
@@ -218,7 +242,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.672" />
         </filter>
         <filter
-          id="i"
+          id={i}
           width="25.927"
           height="19.242"
           x="-7.034"
@@ -231,7 +255,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
         <filter
-          id="j"
+          id={j}
           width="25.927"
           height="19.242"
           x="-7.034"
@@ -244,7 +268,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
         <filter
-          id="k"
+          id={k}
           width="21.494"
           height="16.974"
           x=".294"
@@ -257,7 +281,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
         <filter
-          id="l"
+          id={l}
           width="20.123"
           height="18.703"
           x="-7.632"
@@ -270,7 +294,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
         <filter
-          id="m"
+          id={m}
           width="22.767"
           height="23.357"
           x="2.329"
@@ -283,7 +307,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
         <filter
-          id="n"
+          id={n}
           width="21.57"
           height="21.854"
           x="-.766"
@@ -296,7 +320,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="1.377" />
         </filter>
         <filter
-          id="o"
+          id={o}
           width="20.038"
           height="20.325"
           x=".003"
@@ -309,7 +333,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="1.071" />
         </filter>
         <filter
-          id="q"
+          id={q}
           width="23.334"
           height="21.17"
           x="-9.682"
@@ -322,7 +346,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
         <filter
-          id="r"
+          id={r}
           width="25.646"
           height="20.498"
           x="-3.909"
@@ -335,7 +359,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
         <filter
-          id="s"
+          id={s}
           width="20.295"
           height="35.185"
           x="5.583"
@@ -348,7 +372,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
         <filter
-          id="t"
+          id={t}
           width="19.427"
           height="20.078"
           x="2.423"
@@ -360,7 +384,7 @@ export const OrbIcon = (props: React.ComponentPropsWithoutRef<'svg'>) => {
           <feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape" />
           <feGaussianBlur result="effect1_foregroundBlur_7199_120644" stdDeviation="3.06" />
         </filter>
-        <linearGradient id="c" x1="10.902" x2="10.902" y1="1.855" y2="18.447" gradientUnits="userSpaceOnUse">
+        <linearGradient id={c} x1="10.902" x2="10.902" y1="1.855" y2="18.447" gradientUnits="userSpaceOnUse">
           <stop stopColor="#c4c4c4" />
           <stop offset="1" stopColor="#434343" />
         </linearGradient>

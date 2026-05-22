@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import type { AgentRuntime } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
@@ -28,11 +28,10 @@ export class GenerateManagedAgentRequestDto {
   @MaxLength(2000)
   prompt: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     description:
       'Target runtime for the generated agent. `managed` (default) selects Claude tools/MCPs/skills from the catalog; `self-hosted` returns only name, identifier and systemPrompt so callers can wire up their own runtime.',
     enum: AGENT_RUNTIMES,
-    required: false,
     default: 'managed',
   })
   @IsOptional()

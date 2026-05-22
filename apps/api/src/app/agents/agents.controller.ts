@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseFilters,
   UseGuards,
   UseInterceptors,
@@ -24,6 +25,7 @@ import {
   ProductFeatureKeyEnum,
   UserSessionData,
 } from '@novu/shared';
+import type { Request } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -197,17 +199,34 @@ export class AgentsController {
       'Translates a user-supplied description into an agent configuration (name, identifier, systemPrompt, tools, MCP servers, skills).',
   })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
-  generateManagedAgent(
+  async generateManagedAgent(
     @UserSession() user: UserSessionData,
-    @Body() body: GenerateManagedAgentRequestDto
+    @Body() body: GenerateManagedAgentRequestDto,
+    @Req() request: Request
   ): Promise<GenerateManagedAgentResponseDto> {
-    return this.generateManagedAgentUsecase.execute(
-      GenerateManagedAgentCommand.create({
-        user,
-        prompt: body.prompt,
-        runtime: body.runtime,
-      })
-    );
+    const abortController = new AbortController();
+    const handleSocketClose = (): void => {
+      if (request.destroyed) {
+        abortController.abort();
+      }
+    };
+    request.socket.on('close', handleSocketClose);
+
+    const command = GenerateManagedAgentCommand.create({
+      user,
+      prompt: body.prompt,
+      runtime: body.runtime,
+    });
+    // Attach signal outside `create(...)` — running an `AbortSignal` through
+    // `class-transformer`'s `plainToInstance` triggers `new AbortSignal()`, which is
+    // disallowed by the runtime (`ERR_ILLEGAL_CONSTRUCTOR`).
+    command.signal = abortController.signal;
+
+    try {
+      return await this.generateManagedAgentUsecase.execute(command);
+    } finally {
+      request.socket.off('close', handleSocketClose);
+    }
   }
 
   @Post('/')

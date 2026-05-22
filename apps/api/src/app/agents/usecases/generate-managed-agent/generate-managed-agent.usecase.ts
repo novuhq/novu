@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { ForbiddenException, Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, FeatureFlagsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
@@ -200,7 +200,7 @@ export class GenerateManagedAgent {
       });
 
       if (!isEnabled) {
-        throw new NotFoundException('Feature not enabled');
+        throw new ForbiddenException('Managed agent generation is not enabled for this organization');
       }
     }
 
@@ -239,7 +239,10 @@ export class GenerateManagedAgent {
       environmentId,
       chatId: `managed-agent-generation-${organizationId}`,
       serviceTier: llmService.getConfig().serviceTier,
-      isAborted: false,
+      // `LlmService.generateObject` doesn't yet accept an AbortSignal, so the await above
+      // resolves even when the client has disconnected. Reading `signal.aborted` here lets
+      // analytics still reflect that the request was abandoned client-side.
+      isAborted: command.signal?.aborted ?? false,
     });
 
     // Self-hosted agents do not consume the Anthropic catalog — drop any tools/MCPs/skills the

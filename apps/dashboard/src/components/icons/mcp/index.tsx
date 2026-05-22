@@ -1,42 +1,160 @@
 import type { ComponentType, SVGProps } from 'react';
-import { SiGoogleanalytics, SiHubspot, SiIntercom, SiSalesforce, SiSlack, SiStripe } from 'react-icons/si';
+import { ActiveCampaignIcon } from './activecampaign';
+import { AdobeExperienceManagerIcon } from './adobe-experience-manager';
+import { AhrefsIcon } from './ahrefs';
 import { AirtableIcon } from './airtable';
+import { AirwallexIcon } from './airwallex';
+import { AmplitudeIcon } from './amplitude';
+import { ApolloIcon } from './apollo';
+import { AsanaIcon } from './asana';
+import { AtlassianRovoIcon } from './atlassian-rovo';
+import { AttioIcon } from './attio';
+import { AwsMarketplaceIcon } from './aws-marketplace';
+import { BoxIcon } from './box';
+import { BrexIcon } from './brex';
+import { CanvaIcon } from './canva';
 import { ClickupIcon } from './clickup';
+import { CloudflareIcon } from './cloudflare';
+import { ConfluenceIcon } from './confluence';
+import { DatadogIcon } from './datadog';
+import { DropboxIcon } from './dropbox';
 import { FigmaIcon } from './figma';
 import { GithubIcon } from './github';
+import { GoogleAnalyticsIcon } from './google-analytics';
+import { GoogleDriveIcon } from './google-drive';
+import { GoogleSheetsIcon } from './google-sheets';
+import { HubspotIcon } from './hubspot';
+import { IntercomIcon } from './intercom';
+import { JiraIcon } from './jira';
 import { LinearIcon } from './linear';
+import { LookerIcon } from './looker';
+import { MixpanelIcon } from './mixpanel';
 import { MondayIcon } from './monday';
+import { MongodbAtlasIcon } from './mongodb-atlas';
+import { NeonIcon } from './neon';
 import { NotionIcon } from './notion';
+import { OktaIcon } from './okta';
+import { PagerdutyIcon } from './pagerduty';
+import { PlaidIcon } from './plaid';
+import { SalesforceIcon } from './salesforce';
+import { SegmentIcon } from './segment';
+import { SentryIcon } from './sentry';
+import { ShopifyIcon } from './shopify';
+import { SlackIcon } from './slack';
+import { SnowflakeIcon } from './snowflake';
+import { SquareIcon } from './square';
+import { StripeIcon } from './stripe';
+import { SupabaseIcon } from './supabase';
+import { TwilioIcon } from './twilio';
+import { ZapierIcon } from './zapier';
+import { ZendeskIcon } from './zendesk';
 
-export { AirtableIcon, ClickupIcon, FigmaIcon, GithubIcon, LinearIcon, MondayIcon, NotionIcon };
+export {
+  ActiveCampaignIcon,
+  AdobeExperienceManagerIcon,
+  AhrefsIcon,
+  AirtableIcon,
+  AirwallexIcon,
+  AmplitudeIcon,
+  ApolloIcon,
+  AsanaIcon,
+  AtlassianRovoIcon,
+  AttioIcon,
+  AwsMarketplaceIcon,
+  BoxIcon,
+  BrexIcon,
+  CanvaIcon,
+  ClickupIcon,
+  CloudflareIcon,
+  ConfluenceIcon,
+  DatadogIcon,
+  DropboxIcon,
+  FigmaIcon,
+  GithubIcon,
+  GoogleAnalyticsIcon,
+  GoogleDriveIcon,
+  GoogleSheetsIcon,
+  HubspotIcon,
+  IntercomIcon,
+  JiraIcon,
+  LinearIcon,
+  LookerIcon,
+  MixpanelIcon,
+  MondayIcon,
+  MongodbAtlasIcon,
+  NeonIcon,
+  NotionIcon,
+  OktaIcon,
+  PagerdutyIcon,
+  PlaidIcon,
+  SalesforceIcon,
+  SegmentIcon,
+  SentryIcon,
+  ShopifyIcon,
+  SlackIcon,
+  SnowflakeIcon,
+  SquareIcon,
+  StripeIcon,
+  SupabaseIcon,
+  TwilioIcon,
+  ZapierIcon,
+  ZendeskIcon,
+};
 
 export type McpIconComponent = ComponentType<SVGProps<SVGSVGElement>>;
-
-const slackIcon: McpIconComponent = (props) => <SiSlack color="#4A154B" {...props} />;
-const hubspotIcon: McpIconComponent = (props) => <SiHubspot color="#FF7A59" {...props} />;
-const stripeIcon: McpIconComponent = (props) => <SiStripe color="#635BFF" {...props} />;
-const salesforceIcon: McpIconComponent = (props) => <SiSalesforce color="#00A1E0" {...props} />;
-const intercomIcon: McpIconComponent = (props) => <SiIntercom color="#1F8DED" {...props} />;
-const googleAnalyticsIcon: McpIconComponent = (props) => <SiGoogleanalytics color="#E37400" {...props} />;
 
 /**
  * Maps a Claude MCP server id (matching `CLAUDE_MCP_SERVERS[].id`) to a brand icon component.
  * Servers without an entry render no icon.
  */
 export const MCP_ICONS: Record<string, McpIconComponent> = {
+  activecampaign: ActiveCampaignIcon,
+  'adobe-experience-manager': AdobeExperienceManagerIcon,
+  ahrefs: AhrefsIcon,
   airtable: AirtableIcon,
-  clickup: ClickupIcon,
+  airwallex: AirwallexIcon,
+  amplitude: AmplitudeIcon,
+  apollo: ApolloIcon,
+  asana: AsanaIcon,
+  'atlassian-rovo': AtlassianRovoIcon,
+  attio: AttioIcon,
+  'aws-marketplace': AwsMarketplaceIcon,
+  box: BoxIcon,
+  brex: BrexIcon,
+  canva: CanvaIcon,
+  cloudflare: CloudflareIcon,
+  confluence: ConfluenceIcon,
+  datadog: DatadogIcon,
+  dropbox: DropboxIcon,
   figma: FigmaIcon,
   github: GithubIcon,
+  'google-analytics': GoogleAnalyticsIcon,
+  'google-drive': GoogleDriveIcon,
+  'google-sheets': GoogleSheetsIcon,
+  hubspot: HubspotIcon,
+  intercom: IntercomIcon,
+  jira: JiraIcon,
   linear: LinearIcon,
-  monday: MondayIcon,
+  looker: LookerIcon,
+  mixpanel: MixpanelIcon,
+  'mongodb-atlas': MongodbAtlasIcon,
+  neon: NeonIcon,
   notion: NotionIcon,
-  slack: slackIcon,
-  hubspot: hubspotIcon,
-  stripe: stripeIcon,
-  salesforce: salesforceIcon,
-  intercom: intercomIcon,
-  'google-analytics': googleAnalyticsIcon,
+  okta: OktaIcon,
+  pagerduty: PagerdutyIcon,
+  plaid: PlaidIcon,
+  salesforce: SalesforceIcon,
+  segment: SegmentIcon,
+  sentry: SentryIcon,
+  shopify: ShopifyIcon,
+  slack: SlackIcon,
+  snowflake: SnowflakeIcon,
+  square: SquareIcon,
+  stripe: StripeIcon,
+  supabase: SupabaseIcon,
+  twilio: TwilioIcon,
+  zapier: ZapierIcon,
+  zendesk: ZendeskIcon,
 };
 
 export function getMcpIcon(id: string | undefined | null): McpIconComponent | undefined {
