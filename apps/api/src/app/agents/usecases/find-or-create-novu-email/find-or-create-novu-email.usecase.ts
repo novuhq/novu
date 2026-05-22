@@ -99,6 +99,7 @@ export class FindOrCreateNovuEmail {
         displayName,
         identifier,
         emailSlugPrefix,
+        senderName: agent.name,
         outboundIntegrationId: defaultOutboundIntegrationId,
         environmentId,
         organizationId,
@@ -122,6 +123,7 @@ export class FindOrCreateNovuEmail {
     displayName,
     identifier,
     emailSlugPrefix,
+    senderName,
     outboundIntegrationId,
     environmentId,
     organizationId,
@@ -130,6 +132,7 @@ export class FindOrCreateNovuEmail {
     displayName: string;
     identifier: string;
     emailSlugPrefix: string;
+    senderName: string;
     outboundIntegrationId: string;
     environmentId: string;
     organizationId: string;
@@ -148,6 +151,7 @@ export class FindOrCreateNovuEmail {
               emailSlugPrefix,
               inboxRoutingKey,
               outboundIntegrationId,
+              senderName,
             },
             configurations: {},
             name: displayName,

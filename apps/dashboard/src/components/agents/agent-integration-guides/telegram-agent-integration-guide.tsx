@@ -40,8 +40,8 @@ export function TelegramAgentIntegrationGuide({
       <AgentIntegrationGuideSection title="Overview">
         {isConnected ? (
           <p>
-            This agent is connected to Telegram. Send a direct message to your bot to start a conversation — replies
-            are routed through your agent server.
+            This agent is connected to Telegram. Send a direct message to your bot to start a conversation — replies are
+            routed through your agent server.
           </p>
         ) : (
           <p>

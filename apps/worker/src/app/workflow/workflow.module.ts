@@ -1,6 +1,7 @@
 import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import {
+  AttachmentRehydrator,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -210,6 +211,7 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
+  AttachmentRehydrator,
   InboundDomainRouteDelivery,
   ReplyToStrategy,
   DomainRouteStrategy,

@@ -33,7 +33,7 @@ export type CreateManagedRuntimeDto = {
   systemPrompt?: string;
   /** Tool `type` strings to enable on the new agent (e.g. 'web_search'). */
   tools?: string[];
-  /** MCP server IDs to attach to the new agent (must match ClaudeMcpServer.id). */
+  /** MCP server IDs to attach to the new agent (must match McpServer.id). */
   mcpServers?: string[];
   /** Skills to attach to the new agent. Maximum 20. */
   skills?: AgentSkillDto[];
@@ -56,8 +56,72 @@ export type AgentMcpServerDto = {
   externalId: string;
   name: string;
   url: string;
-  /** Optional token used to authenticate with the MCP server */
-  authToken?: string;
+};
+
+/**
+ * Scope tier for an MCP OAuth connection. Mirrors `McpConnectionEntity.scope`
+ * in `@novu/dal`. Only `subscriber` is implemented in v1; the remaining tiers
+ * are reserved for future shared-token flows.
+ */
+export enum McpConnectionScopeEnum {
+  Environment = 'environment',
+  Agent = 'agent',
+  Subscriber = 'subscriber',
+}
+
+/**
+ * OAuth mechanism the connection was established with. Mirrors the catalog
+ * `mode` for the MCP — each MCP supports exactly one mechanism.
+ *
+ * - `dcr`      — Dynamic Client Registration (RFC 7591). A fresh OAuth client
+ *                is registered per subscriber against the upstream AS.
+ * - `novu-app` — Novu's single pre-registered OAuth application is used.
+ *                `client_id` / `client_secret` come from server env vars.
+ * - `user-app` — The Novu customer's own pre-registered OAuth application is
+ *                used. Credentials come from a per-org credential table.
+ */
+export enum McpConnectionAuthModeEnum {
+  Dcr = 'dcr',
+  NovuApp = 'novu-app',
+  UserApp = 'user-app',
+}
+
+export enum McpConnectionStatusEnum {
+  PendingOAuth = 'pending_oauth',
+  Connected = 'connected',
+  Expired = 'expired',
+  Revoked = 'revoked',
+  Error = 'error',
+}
+
+export type McpConnectionDto = {
+  /** Mongo `_id` of the underlying `mcp_connection` row. */
+  id: string;
+  /** Catalog id (`McpServer.id`). */
+  mcpId: string;
+  scope: McpConnectionScopeEnum;
+  authMode: McpConnectionAuthModeEnum;
+  status: McpConnectionStatusEnum;
+  /** Mongo `_id` of the parent `agent_mcp_server` row when scope >= agent. */
+  agentMcpServerId?: string;
+  /** Mongo `Subscriber._id` when scope === `subscriber`. */
+  subscriberId?: string;
+  expiresAt?: string;
+  connectedAt?: string;
+};
+
+/**
+ * Per-agent enablement record for an MCP from the catalog.
+ * Returned by the new `/agents/:id/mcp-servers` endpoints.
+ */
+export type AgentMcpServerEnablementDto = {
+  id: string;
+  /** Catalog id (`McpServer.id`). */
+  mcpId: string;
+  enabled: boolean;
+  defaultScope: McpConnectionScopeEnum;
+  defaultAuthMode: McpConnectionAuthModeEnum;
+  status: 'active' | 'syncing' | 'error' | 'disabled';
 };
 
 export type AgentToolDto = {

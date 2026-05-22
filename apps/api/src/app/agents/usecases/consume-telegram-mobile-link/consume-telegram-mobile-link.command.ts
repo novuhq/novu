@@ -1,5 +1,5 @@
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
 import { BaseCommand } from '@novu/application-generic';
+import { IsNotEmpty, IsString, Matches } from 'class-validator';
 
 const BOT_TOKEN_PATTERN = /^\d{8,}:[A-Za-z0-9_-]{35,}$/;
 

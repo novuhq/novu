@@ -127,6 +127,36 @@ describe('DomainRouteStrategy', () => {
     expect(call.args[0].route.address).to.equal('support');
   });
 
+  it('should pass slim IInboundParseAttachment (no binary content) through commandToMail to the delivery layer', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    const slimAttachment = {
+      filename: 'doc.pdf',
+      contentType: 'application/pdf',
+      size: 2048,
+      url: 'https://s3.example.com/inbound-mail/2024-01-01/msg/uuid-doc.pdf?sig=xyz',
+      storagePath: 'inbound-mail/2024-01-01/msg/uuid-doc.pdf',
+    };
+    const command = makeCommand('support');
+    (command as any).attachments = [slimAttachment];
+
+    await strategy.execute(command);
+
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
+    const call = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
+    const passedAttachments = call.args[0].mail.attachments as unknown as Array<Record<string, unknown>>;
+
+    // The slim queue shape is forwarded — no `content` binary blob here.
+    // Rehydration happens inside InboundDomainRouteDelivery (tested separately).
+    expect(passedAttachments).to.have.length(1);
+    expect(passedAttachments[0]['filename']).to.equal('doc.pdf');
+    expect(passedAttachments[0]['size']).to.equal(2048);
+    expect(String(passedAttachments[0]['url'])).to.include('s3.example.com');
+    expect(passedAttachments[0]['content']).to.be.undefined;
+  });
+
   it('should NOT fire webhook for a WEBHOOK route that does not match the local-part', async () => {
     const routes = makeRoutes([{ address: 'billing', type: DomainRouteTypeEnum.WEBHOOK }]);
     domainRepository.findByName.resolves(makeVerifiedDomain() as any);
@@ -295,10 +325,7 @@ describe('DomainRouteStrategy', () => {
       const call = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
       expect(call.args[0].route.destination).to.equal(AGENT_ID);
       expect(call.args[0].domain.name).to.equal(SHARED_DOMAIN);
-      sinon.assert.calledOnceWithExactly(
-        integrationRepository.findAgentInboundByInboxRoutingKey as any,
-        ROUTING_KEY
-      );
+      sinon.assert.calledOnceWithExactly(integrationRepository.findAgentInboundByInboxRoutingKey as any, ROUTING_KEY);
       sinon.assert.notCalled(domainRepository.findByName as any);
     });
 

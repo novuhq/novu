@@ -127,7 +127,7 @@ overrides:
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
   '@clerk/shared@>=3.0.0-canary.v20250225091530 <3.47.5': ^3.47.5
   '@tootallnate/once@<3.0.1': ^3.0.1
-  protobufjs@<7.5.6: ^7.5.6
+  protobufjs@<7.5.8: ^7.5.8
   protobufjs@>=8.0.0 <8.0.2: ^8.0.2
   ip-address@<10.1.1: ^10.1.1
   mongoose@>=8.0.0 <8.22.1: ^8.22.1
@@ -144,6 +144,7 @@ overrides:
   sanitize-html@<2.17.4: ^2.17.4
   better-auth: 1.5.6
   '@codemirror/state': 6.6.0
+  '@codemirror/autocomplete': 6.18.3
 
 importers:
 
@@ -415,8 +416,8 @@ importers:
         specifier: workspace:*
         version: link:../../libs/testing
       '@novu/thalamus':
-        specifier: 0.1.0-alpha.6
-        version: 0.1.0-alpha.6(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.1)(zod@3.25.20))
+        specifier: 0.1.0-alpha.7
+        version: 0.1.0-alpha.7(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.1)(zod@3.25.20))
       '@sendgrid/mail':
         specifier: ^8.1.6
         version: 8.1.6
@@ -750,7 +751,7 @@ importers:
         specifier: ^5.61.6
         version: 5.61.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@codemirror/autocomplete':
-        specifier: ^6.18.3
+        specifier: 6.18.3
         version: 6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/lang-html':
         specifier: ^6.4.9
@@ -931,7 +932,7 @@ importers:
         version: 4.23.6(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)
       '@uiw/react-codemirror':
         specifier: ^4.23.6
-        version: 4.23.6(@babel/runtime@7.28.3)(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.34.3)(codemirror@6.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 4.23.6(@babel/runtime@7.28.3)(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.34.3)(codemirror@6.0.1(@lezer/common@1.5.2))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@xyflow/react':
         specifier: ^12.3.2
         version: 12.3.2(@types/react@19.2.8)(immer@10.1.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -1218,9 +1219,15 @@ importers:
 
   apps/inbound-mail:
     dependencies:
+      '@aws-sdk/client-s3':
+        specifier: ^3.996.0
+        version: 3.996.0
       '@aws-sdk/client-secrets-manager':
         specifier: ^3.1037.0
         version: 3.1042.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: ^3.996.0
+        version: 3.996.0
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
@@ -4193,6 +4200,9 @@ importers:
       '@ai-sdk/react':
         specifier: ^3.0.0
         version: 3.0.51(react@18.3.1)(zod@4.3.5)
+      '@clerk/clerk-react':
+        specifier: ^5.61.6
+        version: 5.61.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@novu/agent-toolkit':
         specifier: workspace:*
         version: link:../../packages/agent-toolkit
@@ -4202,6 +4212,9 @@ importers:
       '@novu/nextjs':
         specifier: workspace:*
         version: link:../../packages/nextjs
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@radix-ui/colors':
         specifier: ^3.0.0
         version: 3.0.0
@@ -6404,9 +6417,6 @@ packages:
       '@codemirror/state': 6.6.0
       '@codemirror/view': ^6.0.0
       '@lezer/common': ^1.0.0
-
-  '@codemirror/autocomplete@6.20.2':
-    resolution: {integrity: sha512-G5FPkgIiLjOgZMjqVjvuKQ1rGPtHogLldJr33eFJdVLtmwY+giGrlv/ewljLz6b9BSQLkjxuwBc6g6omDM+YxQ==}
 
   '@codemirror/commands@6.10.3':
     resolution: {integrity: sha512-JFRiqhKu+bvSkDLI+rUhJwSxQxYb759W5GBezE8Uc8mHLqC9aV/9aTC7yJSqCtB3F00pylrLCwnyS91Ap5ej4Q==}
@@ -8744,8 +8754,8 @@ packages:
     resolution: {integrity: sha512-5E8EKp30Ee06FQRpax204nyZOb1uv0kW72VfZXkU/4hG4CcqDsJbfrNnUjB6xIPSvIwAAlwv76MdIAsOflkLXg==}
     engines: {node: '>=18.0.0'}
 
-  '@novu/thalamus@0.1.0-alpha.6':
-    resolution: {integrity: sha512-0gSIFO0p+ck+6Tus7EnX1R3YccNCbNMOe7im1ElhPbKj1Q2C/xd1MTT+c5tWNRL/u/0bwWFiNcUofYIuWZxWrg==}
+  '@novu/thalamus@0.1.0-alpha.7':
+    resolution: {integrity: sha512-fLzeJ0BzIC5/TvxFSBmqSyLZqZhoZObhyIS9oH0cCedzmqsaJ+8S80DcBWBcSSsOu2Dt5O4D+zuswe86uoNnrQ==}
     peerDependencies:
       '@anthropic-ai/aws-sdk': '>=0.86.0'
       '@anthropic-ai/sdk': '>=0.86.0'
@@ -11722,7 +11732,7 @@ packages:
   '@replit/codemirror-lang-csharp@6.2.0':
     resolution: {integrity: sha512-6utbaWkoymhoAXj051mkRp+VIJlpwUgCX9Toevz3YatiZsz512fw3OVCedXQx+WcR0wb6zVHjChnuxqfCLtFVQ==}
     peerDependencies:
-      '@codemirror/autocomplete': ^6.0.0
+      '@codemirror/autocomplete': 6.18.3
       '@codemirror/language': ^6.0.0
       '@codemirror/state': 6.6.0
       '@codemirror/view': ^6.0.0
@@ -11733,7 +11743,7 @@ packages:
   '@replit/codemirror-lang-nix@6.0.1':
     resolution: {integrity: sha512-lvzjoYn9nfJzBD5qdm3Ut6G3+Or2wEacYIDJ49h9+19WSChVnxv4ojf+rNmQ78ncuxIt/bfbMvDLMeMP0xze6g==}
     peerDependencies:
-      '@codemirror/autocomplete': ^6.0.0
+      '@codemirror/autocomplete': 6.18.3
       '@codemirror/language': ^6.0.0
       '@codemirror/state': 6.6.0
       '@codemirror/view': ^6.0.0
@@ -11749,7 +11759,7 @@ packages:
   '@replit/codemirror-lang-svelte@6.0.0':
     resolution: {integrity: sha512-U2OqqgMM6jKelL0GNWbAmqlu1S078zZNoBqlJBW+retTc5M4Mha6/Y2cf4SVg6ddgloJvmcSpt4hHrVoM4ePRA==}
     peerDependencies:
-      '@codemirror/autocomplete': ^6.0.0
+      '@codemirror/autocomplete': 6.18.3
       '@codemirror/lang-css': ^6.0.1
       '@codemirror/lang-html': ^6.2.0
       '@codemirror/lang-javascript': ^6.1.1
@@ -14623,7 +14633,7 @@ packages:
   '@uiw/codemirror-extensions-basic-setup@4.23.6':
     resolution: {integrity: sha512-bvtq8IOvdkLJMhoJBRGPEzU51fMpPDwEhcAHp9xCR05MtbIokQgsnLXrmD1aZm6e7s/3q47H+qdSfAAkR5MkLA==}
     peerDependencies:
-      '@codemirror/autocomplete': '>=6.0.0'
+      '@codemirror/autocomplete': 6.18.3
       '@codemirror/commands': '>=6.0.0'
       '@codemirror/language': '>=6.0.0'
       '@codemirror/lint': '>=6.0.0'
@@ -23597,8 +23607,8 @@ packages:
     resolution: {integrity: sha512-SAzp/O4Yh02jGdRc+uIrGoe87dkN/XtwxfZ4ZyafJHymd79ozp5VG5nyZ7ygqPM5+cpLDjjGnYFUkngonyDPOQ==}
     engines: {node: '>=14.0.0'}
 
-  protobufjs@7.5.7:
-    resolution: {integrity: sha512-NGnrxS/nLKUo5nkbVQxlC71sB4hdfImdYIbFeSCidxtwATx0AHRPcANSLd0q5Bb2BkoSWo2iisQhGg5/r+ihbA==}
+  protobufjs@7.5.8:
+    resolution: {integrity: sha512-dvpCIeLPbXZS/Ete7yLaO7RenOdken2NHKykBXbsaGxZT0UTltcarBciw+A78SRQs9iMAAVpsYA+l8b1hTePIA==}
     engines: {node: '>=12.0.0'}
 
   protobufjs@8.2.0:
@@ -31005,6 +31015,13 @@ snapshots:
       - react
       - react-dom
 
+  '@clerk/clerk-react@5.61.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@clerk/shared': 3.47.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+      tslib: 2.8.1
+
   '@clerk/clerk-react@5.61.6(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@clerk/shared': 3.47.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
@@ -31034,6 +31051,18 @@ snapshots:
     optionalDependencies:
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
+
+  '@clerk/shared@3.47.5(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      csstype: 3.1.3
+      dequal: 2.0.3
+      glob-to-regexp: 0.4.1
+      js-cookie: 3.0.5
+      std-env: 3.9.0
+      swr: 2.3.4(react@18.3.1)
+    optionalDependencies:
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
 
   '@clerk/shared@3.47.5(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -31116,7 +31145,7 @@ snapshots:
       '@codemirror/view': 6.34.3
       '@lezer/common': 1.5.2
 
-  '@codemirror/autocomplete@6.20.2':
+  '@codemirror/autocomplete@6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)':
     dependencies:
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
@@ -31175,26 +31204,30 @@ snapshots:
     transitivePeerDependencies:
       - '@codemirror/view'
 
-  '@codemirror/lang-css@6.3.1':
+  '@codemirror/lang-css@6.3.1(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
       '@lezer/common': 1.5.2
       '@lezer/css': 1.3.3
+    transitivePeerDependencies:
+      - '@codemirror/view'
 
-  '@codemirror/lang-go@6.0.1':
+  '@codemirror/lang-go@6.0.1(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
       '@lezer/common': 1.5.2
       '@lezer/go': 1.0.1
+    transitivePeerDependencies:
+      - '@codemirror/view'
 
   '@codemirror/lang-html@6.4.11':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
-      '@codemirror/lang-css': 6.3.1
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
+      '@codemirror/lang-css': 6.3.1(@codemirror/view@6.34.3)
       '@codemirror/lang-javascript': 6.2.5
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
@@ -31237,7 +31270,7 @@ snapshots:
 
   '@codemirror/lang-javascript@6.2.5':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/language': 6.12.3
       '@codemirror/lint': 6.8.2
       '@codemirror/state': 6.6.0
@@ -31285,7 +31318,7 @@ snapshots:
 
   '@codemirror/lang-liquid@6.3.2':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/lang-html': 6.4.11
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
@@ -31306,7 +31339,7 @@ snapshots:
 
   '@codemirror/lang-markdown@6.5.0':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/lang-html': 6.4.11
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
@@ -31340,13 +31373,15 @@ snapshots:
     transitivePeerDependencies:
       - '@codemirror/view'
 
-  '@codemirror/lang-python@6.2.1':
+  '@codemirror/lang-python@6.2.1(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
       '@lezer/common': 1.5.2
       '@lezer/python': 1.1.18
+    transitivePeerDependencies:
+      - '@codemirror/view'
 
   '@codemirror/lang-rust@6.0.1':
     dependencies:
@@ -31368,14 +31403,16 @@ snapshots:
     transitivePeerDependencies:
       - '@codemirror/view'
 
-  '@codemirror/lang-sql@6.10.0':
+  '@codemirror/lang-sql@6.10.0(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.2
+    transitivePeerDependencies:
+      - '@codemirror/view'
 
   '@codemirror/lang-sql@6.8.0(@codemirror/view@6.34.3)':
     dependencies:
@@ -31413,22 +31450,24 @@ snapshots:
       '@lezer/common': 1.2.3
       '@lezer/xml': 1.0.5
 
-  '@codemirror/lang-yaml@6.1.3':
+  '@codemirror/lang-yaml@6.1.3(@codemirror/view@6.34.3)':
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/language': 6.12.3
       '@codemirror/state': 6.6.0
       '@lezer/common': 1.5.2
       '@lezer/highlight': 1.2.3
       '@lezer/lr': 1.4.2
       '@lezer/yaml': 1.0.4
+    transitivePeerDependencies:
+      - '@codemirror/view'
 
   '@codemirror/language-data@6.5.1(@codemirror/view@6.34.3)':
     dependencies:
       '@codemirror/lang-angular': 0.1.4
       '@codemirror/lang-cpp': 6.0.3
-      '@codemirror/lang-css': 6.3.1
-      '@codemirror/lang-go': 6.0.1
+      '@codemirror/lang-css': 6.3.1(@codemirror/view@6.34.3)
+      '@codemirror/lang-go': 6.0.1(@codemirror/view@6.34.3)
       '@codemirror/lang-html': 6.4.11
       '@codemirror/lang-java': 6.0.2
       '@codemirror/lang-javascript': 6.2.5
@@ -31437,14 +31476,14 @@ snapshots:
       '@codemirror/lang-liquid': 6.3.2
       '@codemirror/lang-markdown': 6.5.0
       '@codemirror/lang-php': 6.0.2
-      '@codemirror/lang-python': 6.2.1
+      '@codemirror/lang-python': 6.2.1(@codemirror/view@6.34.3)
       '@codemirror/lang-rust': 6.0.2
       '@codemirror/lang-sass': 6.0.2(@codemirror/view@6.34.3)
-      '@codemirror/lang-sql': 6.10.0
+      '@codemirror/lang-sql': 6.10.0(@codemirror/view@6.34.3)
       '@codemirror/lang-vue': 0.1.3
       '@codemirror/lang-wast': 6.0.2
       '@codemirror/lang-xml': 6.1.0
-      '@codemirror/lang-yaml': 6.1.3
+      '@codemirror/lang-yaml': 6.1.3(@codemirror/view@6.34.3)
       '@codemirror/language': 6.12.3
       '@codemirror/legacy-modes': 6.4.1
     transitivePeerDependencies:
@@ -32324,7 +32363,7 @@ snapshots:
       fast-deep-equal: 3.1.3
       functional-red-black-tree: 1.0.1
       google-gax: 4.6.0(encoding@0.1.13)
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -32431,14 +32470,14 @@ snapshots:
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.2.3
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       yargs: 17.7.2
 
   '@grpc/proto-loader@0.8.0':
     dependencies:
       lodash.camelcase: 4.3.0
       long: 5.2.3
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       yargs: 17.7.2
 
   '@gwhitney/detect-indent@7.0.1': {}
@@ -34316,7 +34355,7 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@novu/thalamus@0.1.0-alpha.6(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.1)(zod@3.25.20))':
+  '@novu/thalamus@0.1.0-alpha.7(@anthropic-ai/sdk@0.95.1(zod@3.25.20))(@aws-crypto/sha256-js@5.2.0)(@smithy/signature-v4@5.4.3)(openai@6.17.0(ws@8.20.1)(zod@3.25.20))':
     optionalDependencies:
       '@anthropic-ai/sdk': 0.95.1(zod@3.25.20)
       '@aws-crypto/sha256-js': 5.2.0
@@ -35654,7 +35693,7 @@ snapshots:
       '@opentelemetry/sdk-logs': 0.201.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-metrics': 2.0.1(@opentelemetry/api@1.9.0)
       '@opentelemetry/sdk-trace-base': 2.0.1(@opentelemetry/api@1.9.0)
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
 
   '@opentelemetry/otlp-transformer@0.217.0(@opentelemetry/api@1.9.0)':
     dependencies:
@@ -42677,7 +42716,7 @@ snapshots:
       '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
 
-  '@uiw/react-codemirror@4.23.6(@babel/runtime@7.28.3)(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.34.3)(codemirror@6.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@uiw/react-codemirror@4.23.6(@babel/runtime@7.28.3)(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/theme-one-dark@6.1.2)(@codemirror/view@6.34.3)(codemirror@6.0.1(@lezer/common@1.5.2))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
       '@babel/runtime': 7.28.3
       '@codemirror/commands': 6.7.1
@@ -42685,7 +42724,7 @@ snapshots:
       '@codemirror/theme-one-dark': 6.1.2
       '@codemirror/view': 6.34.3
       '@uiw/codemirror-extensions-basic-setup': 4.23.6(@codemirror/autocomplete@6.18.3(@codemirror/language@6.11.1)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2))(@codemirror/commands@6.7.1)(@codemirror/language@6.11.1)(@codemirror/lint@6.8.2)(@codemirror/search@6.5.6)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)
-      codemirror: 6.0.1
+      codemirror: 6.0.1(@lezer/common@1.5.2)
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
     transitivePeerDependencies:
@@ -45094,15 +45133,17 @@ snapshots:
       '@lezer/highlight': 1.2.1
       '@lezer/lr': 1.4.2
 
-  codemirror@6.0.1:
+  codemirror@6.0.1(@lezer/common@1.5.2):
     dependencies:
-      '@codemirror/autocomplete': 6.20.2
+      '@codemirror/autocomplete': 6.18.3(@codemirror/language@6.12.3)(@codemirror/state@6.6.0)(@codemirror/view@6.34.3)(@lezer/common@1.5.2)
       '@codemirror/commands': 6.10.3
       '@codemirror/language': 6.12.3
       '@codemirror/lint': 6.8.2
       '@codemirror/search': 6.5.6
       '@codemirror/state': 6.6.0
       '@codemirror/view': 6.34.3
+    transitivePeerDependencies:
+      - '@lezer/common'
 
   collect-v8-coverage@1.0.1: {}
 
@@ -47877,7 +47918,7 @@ snapshots:
       node-fetch: 2.7.0(encoding@0.1.13)
       object-hash: 3.0.0
       proto3-json-serializer: 2.0.2
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
       retry-request: 7.0.2(encoding@0.1.13)
       uuid: 9.0.1
     transitivePeerDependencies:
@@ -54017,10 +54058,10 @@ snapshots:
 
   proto3-json-serializer@2.0.2:
     dependencies:
-      protobufjs: 7.5.7
+      protobufjs: 7.5.8
     optional: true
 
-  protobufjs@7.5.7:
+  protobufjs@7.5.8:
     dependencies:
       '@protobufjs/aspromise': 1.1.2
       '@protobufjs/base64': 1.1.2

@@ -137,7 +137,6 @@ function resolveSharedInboxAddress(
   }
 }
 
-
 function deriveFallbackSlug(agent: SharedInboxAgentContext): string | undefined {
   const candidate = slugify(agent.identifier ?? agent.name ?? '')
     .slice(0, 32)
@@ -166,6 +165,10 @@ export function toAgentIntegrationResponse(
   agent: SharedInboxAgentContext
 ): AgentIntegrationResponseDto {
   const sharedInboundAddress = resolveSharedInboxAddress(agent, integration);
+  const defaultSenderName =
+    integration.providerId === EmailProviderIdEnum.NovuAgent
+      ? integration.credentials?.senderName || agent.name
+      : undefined;
 
   return {
     _id: link._id,
@@ -178,6 +181,7 @@ export function toAgentIntegrationResponse(
       channel: integration.channel,
       active: integration.active,
       sharedInboundAddress,
+      defaultSenderName,
       sharedInboxDisabled:
         integration.providerId === EmailProviderIdEnum.NovuAgent
           ? Boolean(integration.credentials?.sharedInboxDisabled)

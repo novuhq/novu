@@ -11,6 +11,7 @@ export * from './list-agent-integrations-query.dto';
 export * from './list-agent-integrations-response.dto';
 export * from './list-agents-query.dto';
 export * from './list-agents-response.dto';
+export * from './mcp-server.dto';
 export * from './update-agent-bridge-request.dto';
 export * from './update-agent-integration-request.dto';
 export * from './update-agent-request.dto';

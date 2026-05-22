@@ -13,7 +13,7 @@ import { InboundAddressConfig } from './inbound-address-config';
 import { OutboundProviderSelect } from './outbound-provider-select';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
-import { useEmailSetupCredentials, type ConfiguredAddress } from './use-email-setup-credentials';
+import { type ConfiguredAddress, useEmailSetupCredentials } from './use-email-setup-credentials';
 
 function resolveTestEmailTarget(
   customTarget: ConfiguredAddress | undefined,
@@ -289,8 +289,8 @@ function DemoProviderHint() {
     <div className="bg-bg-weak border-stroke-weak text-text-sub flex items-start gap-2 rounded-md border px-2 py-1.5">
       <RiInformation2Fill className="text-away-base mt-px size-3.5 shrink-0" aria-hidden />
       <p className="text-paragraph-xs leading-4">
-        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider
-        to send at scale.
+        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider to
+        send at scale.
       </p>
     </div>
   );

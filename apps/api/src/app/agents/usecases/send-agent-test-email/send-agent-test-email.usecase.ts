@@ -1,6 +1,13 @@
 import { BadGatewayException, BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, InstrumentUsecase, MailFactory } from '@novu/application-generic';
-import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import {
+  AnalyticsService,
+  buildAgentSharedInbox,
+  decryptCredentials,
+  InstrumentUsecase,
+  isAgentSharedInboxEnabled,
+  MailFactory,
+} from '@novu/application-generic';
+import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
 
 import { trackAgentTestEmailSent } from '../../agent-analytics';
@@ -8,6 +15,30 @@ import { SendAgentTestEmailCommand } from './send-agent-test-email.command';
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function resolveAgentInboundFrom(emailIntegration: IntegrationEntity): string | undefined {
+  const slug = emailIntegration.credentials?.emailSlugPrefix;
+  const inboxRoutingKey = emailIntegration.credentials?.inboxRoutingKey;
+  const sharedInboxDisabled = Boolean(emailIntegration.credentials?.sharedInboxDisabled);
+  if (!isAgentSharedInboxEnabled() || !slug || !inboxRoutingKey || sharedInboxDisabled) {
+    return undefined;
+  }
+
+  try {
+    return buildAgentSharedInbox(slug, inboxRoutingKey);
+  } catch {
+    return undefined;
+  }
+}
+
+function resolveAgentSenderName(emailIntegration: IntegrationEntity, agentName: string): string {
+  const stored = emailIntegration.credentials?.senderName;
+  if (typeof stored === 'string' && stored.trim()) {
+    return stored.trim();
+  }
+
+  return agentName;
 }
 
 @Injectable()
@@ -58,14 +89,19 @@ export class SendAgentTestEmail {
     }
 
     const outboundIntegrationId = emailIntegration.credentials?.outboundIntegrationId as string | undefined;
+    const agentInboundFrom = resolveAgentInboundFrom(emailIntegration);
+    const senderName = resolveAgentSenderName(emailIntegration, agent.name);
 
     const senderIntegration = await this.findSenderIntegration(
       command.environmentId,
       command.organizationId,
-      outboundIntegrationId
+      outboundIntegrationId,
+      { agentInboundFrom, senderName }
     );
+    const outboundFrom = senderIntegration.credentials?.from as string | undefined;
+    const from = agentInboundFrom || outboundFrom;
     const mailFactory = new MailFactory();
-    const handler = mailFactory.getHandler(senderIntegration, senderIntegration.credentials?.from as string);
+    const handler = mailFactory.getHandler(senderIntegration, from);
 
     const escapedName = escapeHtml(agent.name);
     const mailOptions: IEmailOptions = {
@@ -83,8 +119,8 @@ export class SendAgentTestEmail {
         '</p>',
         '</div>',
       ].join(''),
-      from: senderIntegration.credentials?.from as string,
-      senderName: (senderIntegration.credentials?.senderName as string) || 'Novu',
+      from,
+      senderName,
     };
 
     await handler.send(mailOptions).catch((err) => {
@@ -107,7 +143,12 @@ export class SendAgentTestEmail {
     return { success: true };
   }
 
-  private async findSenderIntegration(environmentId: string, organizationId: string, outboundIntegrationId?: string) {
+  private async findSenderIntegration(
+    environmentId: string,
+    organizationId: string,
+    outboundIntegrationId: string | undefined,
+    delivery: { agentInboundFrom?: string; senderName: string }
+  ) {
     if (!outboundIntegrationId) {
       throw new BadRequestException('Agent has no outbound email integration configured.');
     }
@@ -134,8 +175,8 @@ export class SendAgentTestEmail {
         ...configured,
         credentials: {
           apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
-          from: 'no-reply@novu.co',
-          senderName: 'Novu',
+          from: delivery.agentInboundFrom ?? 'no-reply@novu.co',
+          senderName: delivery.senderName,
           ipPoolName: 'Demo',
         },
       };

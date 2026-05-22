@@ -64,6 +64,7 @@ const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
 });
 
 export function isPrivateIp(ip: string): boolean {
+  const sharedAddressSecondOctet = '(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])';
   const privateRanges = [
     /^0\.0\.0\.0$/i,
     /^127\./,
@@ -71,11 +72,14 @@ export function isPrivateIp(ip: string): boolean {
     /^172\.(1[6-9]|2[0-9]|3[01])\./,
     /^192\.168\./,
     /^169\.254\./,
+    /* RFC6598 shared address space (100.64.0.0/10) — cloud metadata, CGNAT */
+    new RegExp(`^100\\.${sharedAddressSecondOctet}\\.`),
     /^::ffff:127\./i,
     /^::ffff:10\./i,
     /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./i,
     /^::ffff:192\.168\./i,
     /^::ffff:169\.254\./i,
+    new RegExp(`^::ffff:100\\.${sharedAddressSecondOctet}\\.`, 'i'),
     /^::1$/i,
     /^f[cd][0-9a-f]{2}:/i,
     /^::ffff:f[cd][0-9a-f]{2}:/i,

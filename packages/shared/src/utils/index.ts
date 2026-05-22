@@ -1,6 +1,7 @@
 export * from './bridge.utils';
 export * from './buildWorkflowPreferences';
 export * from './checkIsResponseError';
+export * from './data-filter';
 export * from './env';
 export * from './issues';
 export * from './locales';

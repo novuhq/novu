@@ -58,6 +58,7 @@ export interface Env {
 
 export interface ObservationParams {
   sessionId: string;
+  runId: string;
   streamUrl: string;
   headers: Record<string, string>;
   lastEventId?: string;
@@ -339,8 +340,8 @@ export class SessionObserver extends Agent<Env, State> {
     this.ctx.storage.sql.exec("UPDATE events SET status = 'dead' WHERE id = ?", id);
   }
 
-  private deleteEvent(id: number): void {
-    this.ctx.storage.sql.exec('DELETE FROM events WHERE id = ?', id);
+  private markDelivered(id: number): void {
+    this.ctx.storage.sql.exec("UPDATE events SET status = 'delivered' WHERE id = ?", id);
   }
 
   private incrementAttempts(id: number): void {
@@ -376,13 +377,13 @@ export class SessionObserver extends Agent<Env, State> {
       switch (outcome) {
         case 'delivered':
         case 'skipped':
-          this.deleteEvent(row.id);
-          if ((event.type === 'finish' || event.type === 'error') && outcome === 'delivered') {
+          if (event.type === 'finish' || event.type === 'error') {
             this.cleanupEvents(sessionId);
             this.setState({ observation: null });
 
             return;
           }
+          this.markDelivered(row.id);
           break;
 
         case 'retry-later':
@@ -399,7 +400,7 @@ export class SessionObserver extends Agent<Env, State> {
   }
 
   private async deliverOne(row: EventRow, event: StreamPart, params: ObservationParams): Promise<DeliveryOutcome> {
-    const { sessionId, provider, webhook } = params;
+    const { sessionId, runId, provider, webhook } = params;
 
     if (row.attempts >= MAX_ATTEMPTS) return 'exhausted';
 
@@ -407,6 +408,7 @@ export class SessionObserver extends Agent<Env, State> {
 
     const body = JSON.stringify({
       sessionId,
+      runId,
       sequence: row.sequence,
       timestamp: row.created_at,
       provider,
@@ -426,6 +428,7 @@ export class SessionObserver extends Agent<Env, State> {
               'X-Thalamus-Signature': signature,
               'X-Thalamus-Event-Type': event.type,
               'X-Thalamus-Session-Id': sessionId,
+              'X-Thalamus-Run-Id': runId,
               'X-Thalamus-Sequence': String(row.sequence),
             },
             body,
@@ -527,6 +530,7 @@ function validateObservationParams(body: unknown): body is ObservationParams {
   if (typeof body !== 'object' || body === null) return false;
   const obj = body as Record<string, unknown>;
   if (typeof obj.sessionId !== 'string' || obj.sessionId.length === 0) return false;
+  if (typeof obj.runId !== 'string' || obj.runId.length === 0) return false;
   if (typeof obj.streamUrl !== 'string') return false;
   try {
     new URL(obj.streamUrl);

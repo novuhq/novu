@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import {
+  AttachmentRehydrator,
   assertSafeOutboundUrl,
   CompileTemplate,
   createHash,
@@ -15,7 +16,7 @@ import {
   NotificationEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
+import { InboundEmailAttachment, StepTypeEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 
 const LOG_CONTEXT = 'ReplyToStrategy';
@@ -25,7 +26,8 @@ export class ReplyToStrategy {
   constructor(
     private jobRepository: JobRepository,
     private messageRepository: MessageRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private attachmentRehydrator: AttachmentRehydrator
   ) {}
 
   async execute(command: InboundEmailParseCommand): Promise<void> {
@@ -74,6 +76,9 @@ export class ReplyToStrategy {
     // HMAC is built only after the URL passes the synchronous policy check.
     // safeOutboundJsonRequest below performs the connect-time DNS guard and
     // re-runs the policy on every redirect target.
+    const rehydratedAttachments: InboundEmailAttachment[] = await this.attachmentRehydrator.rehydrate(
+      command.attachments
+    );
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
       transactionId,
@@ -82,7 +87,7 @@ export class ReplyToStrategy {
       template,
       notification,
       message,
-      mail: command,
+      mail: { ...command, attachments: rehydratedAttachments },
     };
 
     try {
@@ -147,7 +152,9 @@ export class ReplyToStrategy {
   }
 }
 
-class MailMetadata extends InboundEmailParseCommand {}
+type MailMetadata = Omit<InboundEmailParseCommand, 'attachments'> & {
+  attachments?: InboundEmailAttachment[];
+};
 
 export interface IUserWebhookPayload {
   transactionId: string;
