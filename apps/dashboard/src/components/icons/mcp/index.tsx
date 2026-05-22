@@ -104,7 +104,7 @@ export {
 export type McpIconComponent = ComponentType<SVGProps<SVGSVGElement>>;
 
 /**
- * Maps a Claude MCP server id (matching `CLAUDE_MCP_SERVERS[].id`) to a brand icon component.
+ * Maps a Claude MCP server id (matching `MCP_SERVERS[].id`) to a brand icon component.
  * Servers without an entry render no icon.
  */
 export const MCP_ICONS: Record<string, McpIconComponent> = {

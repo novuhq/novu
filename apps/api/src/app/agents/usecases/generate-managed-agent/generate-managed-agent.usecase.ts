@@ -5,8 +5,8 @@ import {
   CLAUDE_ANTHROPIC_SKILLS,
   CLAUDE_BUILTIN_TOOLS,
   CLAUDE_DEFAULT_TOOL_TYPES,
-  CLAUDE_MCP_SERVERS,
   FeatureFlagsKeysEnum,
+  MCP_SERVERS,
 } from '@novu/shared';
 
 import { GenerateManagedAgentCommand } from './generate-managed-agent.command';
@@ -74,7 +74,7 @@ function buildToolCatalog(): string {
 }
 
 function buildMcpCatalog(): string {
-  return CLAUDE_MCP_SERVERS.map((server) => `- ${server.id} (${server.name}): ${server.description}`).join('\n');
+  return MCP_SERVERS.map((server) => `- ${server.id} (${server.name}): ${server.description}`).join('\n');
 }
 
 function buildSkillCatalog(): string {

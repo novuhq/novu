@@ -1,4 +1,4 @@
-import { CLAUDE_ANTHROPIC_SKILLS, CLAUDE_BUILTIN_TOOLS, CLAUDE_MCP_SERVERS } from '@novu/shared';
+import { CLAUDE_ANTHROPIC_SKILLS, CLAUDE_BUILTIN_TOOLS, MCP_SERVERS } from '@novu/shared';
 import { z } from 'zod';
 
 /**
@@ -7,7 +7,7 @@ import { z } from 'zod';
  * downstream when we forward the generated JSON to the Anthropic Managed Agents API.
  */
 const TOOL_TYPES = CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type) as [string, ...string[]];
-const MCP_SERVER_IDS = CLAUDE_MCP_SERVERS.map((server) => server.id) as [string, ...string[]];
+const MCP_SERVER_IDS = MCP_SERVERS.map((server) => server.id) as [string, ...string[]];
 const SKILL_IDS = CLAUDE_ANTHROPIC_SKILLS.map((skill) => skill.skillId) as [string, ...string[]];
 
 /** Anthropic caps `mcp_servers` length; pick a conservative limit. */
