@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
@@ -22,6 +22,7 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
+import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
@@ -218,13 +219,14 @@ export interface InboundReactionEvent {
 }
 
 @Injectable()
-export class AgentInboundHandler {
+export class AgentInboundHandler implements OnModuleInit {
   constructor(
     private readonly logger: PinoLogger,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly managedAgentService: ManagedAgentService,
+    private readonly chatSdkService: ChatSdkService,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly environmentRepository: EnvironmentRepository,
@@ -235,6 +237,15 @@ export class AgentInboundHandler {
     private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  onModuleInit() {
+    this.chatSdkService.registerInboundCallbacks({
+      onMessage: (agentId, config, thread, message) =>
+        this.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE),
+      onAction: (agentId, config, thread, action, userId) => this.handleAction(agentId, config, thread, action, userId),
+      onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
+    });
   }
 
   async handle(

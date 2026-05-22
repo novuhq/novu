@@ -188,6 +188,7 @@ allowBuilds:
   '@nestjs/core': true
   '@newrelic/fn-inspect': true
   '@newrelic/native-metrics': true
+  '@novu/thalamus': true
   '@sentry/cli': true
   '@sentry/profiling-node': true
   '@sveltejs/kit': true
@@ -211,4 +212,3 @@ allowBuilds:
   sharp: true
   unrs-resolver: true
   workerd: true
-  '@novu/thalamus': true
