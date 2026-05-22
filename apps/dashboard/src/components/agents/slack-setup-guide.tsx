@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { NovuProvider, SlackConnectButton } from '@novu/react';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';

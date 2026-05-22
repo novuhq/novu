@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { MsTeamsConnectButton, MsTeamsLinkUser, NovuProvider, useNovu } from '@novu/react';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';

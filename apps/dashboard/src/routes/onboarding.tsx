@@ -1,4 +1,4 @@
-import { SignedIn } from '@clerk/clerk-react';
+import { SignedIn } from '@clerk/react';
 import { AnimatedOutlet } from '@/components/animated-outlet';
 import { AuthLayout } from '../components/auth-layout';
 import { EnvironmentProvider } from '../context/environment/environment-provider';

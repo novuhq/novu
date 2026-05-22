@@ -1,6 +1,6 @@
 'use client';
 
-import { SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/react';
 import { MCP_SERVERS, type McpServer } from '@novu/shared';
 import {
   AlertCircle,

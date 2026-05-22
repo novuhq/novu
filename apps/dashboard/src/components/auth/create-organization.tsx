@@ -1,4 +1,4 @@
-import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/clerk-react';
+import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';

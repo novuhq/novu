@@ -1,5 +1,5 @@
 import { apiHostnameManager } from '@/utils/api-hostname-manager';
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { Inbox, InboxContent, InboxProps } from '@novu/react';
 import { useAuth } from '../../context/auth/hooks';
 import { useFetchEnvironments } from '../../context/environment/hooks';

@@ -16,7 +16,7 @@
     "@ai-sdk/openai": "^3.0.0",
     "@novu/api": "workspace:*",
     "@ai-sdk/react": "^3.0.0",
-    "@clerk/clerk-react": "^5.61.6",
+    "@clerk/react": "^6.6.6",
     "@novu/agent-toolkit": "workspace:*",
     "@novu/nextjs": "workspace:*",
     "@novu/shared": "workspace:*",
