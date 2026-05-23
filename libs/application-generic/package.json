@@ -115,7 +115,7 @@
     "sqs-consumer": "^14.2.0",
     "sqs-producer": "^8.0.1",
     "svix": "^1.64.1",
-    "uuid": "^8.3.2",
+    "uuid": "^11.1.1",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.3"
   },
