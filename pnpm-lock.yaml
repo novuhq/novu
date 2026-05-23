@@ -612,8 +612,8 @@ importers:
         specifier: ^7.0.28
         version: 7.0.30
       uuid:
-        specifier: ^8.3.2
-        version: 8.3.2
+        specifier: ^11.1.1
+        version: 11.1.1
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -1296,8 +1296,8 @@ importers:
         specifier: 0.0.5
         version: 0.0.5
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.1
+        version: 11.1.1
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -1646,8 +1646,8 @@ importers:
         specifier: ^1.64.1
         version: 1.64.1(encoding@0.1.13)
       uuid:
-        specifier: ^8.3.2
-        version: 8.3.2
+        specifier: ^11.1.1
+        version: 11.1.1
       yargs:
         specifier: ^17.7.2
         version: 17.7.2
@@ -2699,8 +2699,8 @@ importers:
         specifier: ^1.64.1
         version: 1.64.1(encoding@0.1.13)
       uuid:
-        specifier: ^8.3.2
-        version: 8.3.2
+        specifier: ^11.1.1
+        version: 11.1.1
       zod:
         specifier: ^3.23.8
         version: 3.25.20
@@ -2870,8 +2870,8 @@ importers:
         specifier: ^0.1.14
         version: 0.1.14(superagent@10.1.0)
       uuid:
-        specifier: ^8.3.0
-        version: 8.3.2
+        specifier: ^11.1.1
+        version: 11.1.1
     devDependencies:
       '@types/node':
         specifier: ^22.0.0
@@ -3267,8 +3267,8 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0
       uuid:
-        specifier: ^8.3.0
-        version: 8.3.2
+        specifier: ^11.1.1
+        version: 11.1.1
     devDependencies:
       '@types/async':
         specifier: ^3.2.1
@@ -3307,8 +3307,8 @@ importers:
         specifier: ^2.4.2
         version: 2.4.2
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.1
+        version: 11.1.1
     devDependencies:
       '@types/commander':
         specifier: ^2.12.5
@@ -3745,8 +3745,8 @@ importers:
         specifier: 2.4.2
         version: 2.4.2
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.1
+        version: 11.1.1
       validate-npm-package-name:
         specifier: 3.0.0
         version: 3.0.0
@@ -3938,8 +3938,8 @@ importers:
         specifier: ^4.19.3
         version: 4.20.0
       uuid:
-        specifier: ^9.0.0
-        version: 9.0.1
+        specifier: ^11.1.1
+        version: 11.1.1
     devDependencies:
       '@babel/preset-env':
         specifier: ^7.23.2
