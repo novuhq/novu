@@ -40,7 +40,7 @@
     "mongoose-delete": "^1.0.7",
     "reflect-metadata": "0.2.2",
     "superagent-defaults": "^0.1.14",
-    "uuid": "^8.3.0"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
