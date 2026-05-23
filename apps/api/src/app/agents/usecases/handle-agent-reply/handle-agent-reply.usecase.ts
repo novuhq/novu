@@ -1,12 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import {
-  BadRequestException,
-  ForbiddenException,
-  forwardRef,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
@@ -34,7 +27,6 @@ export class HandleAgentReply {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    @Inject(forwardRef(() => ChatSdkService))
     private readonly chatSdkService: ChatSdkService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentConfigResolver: AgentConfigResolver,
@@ -47,10 +39,6 @@ export class HandleAgentReply {
   }
 
   async execute(command: HandleAgentReplyCommand): Promise<SentMessageInfo | null> {
-    // TODO(managed-agents): When agent.runtime === 'managed', branch here to call
-    // IAgentRuntimeProvider.runConversationTurn(externalAgentId, userMessage) instead of
-    // routing through the self-hosted bridge. This is deferred to a future PR by the runtime team.
-
     if (command.reply && command.edit) {
       throw new BadRequestException('Only one of reply or edit can be provided');
     }

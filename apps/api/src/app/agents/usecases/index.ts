@@ -8,12 +8,14 @@ import { DeleteAgent } from './delete-agent/delete-agent.usecase';
 import { DisableAgentMcpServer } from './disable-agent-mcp-server/disable-agent-mcp-server.usecase';
 import { EnableAgentMcpServer } from './enable-agent-mcp-server/enable-agent-mcp-server.usecase';
 import { FindOrCreateNovuEmail } from './find-or-create-novu-email/find-or-create-novu-email.usecase';
+import { GenerateManagedAgent } from './generate-managed-agent/generate-managed-agent.usecase';
 import { GenerateMcpOAuthUrl } from './generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { GetAgent } from './get-agent/get-agent.usecase';
 import { GetAgentRuntimeConfig } from './get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { GetMcpConnectionStatus } from './get-mcp-connection-status/get-mcp-connection-status.usecase';
 import { GetTelegramMobileLinkStatus } from './get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
 import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
+import { HandleToolProgress } from './handle-tool-progress/handle-tool-progress.usecase';
 import { IssueTelegramMobileLink } from './issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
 import { IssueTelegramSubscriberLink } from './issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { LinkTelegramChatToSubscriber } from './link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -62,6 +64,7 @@ export const USE_CASES = [
   CleanupNovuEmail,
   ConfigureWhatsAppWebhook,
   FindOrCreateNovuEmail,
+  GenerateManagedAgent,
   IssueTelegramMobileLink,
   IssueTelegramSubscriberLink,
   LinkTelegramChatToSubscriber,
@@ -70,6 +73,7 @@ export const USE_CASES = [
   UpdateAgentIntegration,
   RemoveAgentIntegration,
   HandleAgentReply,
+  HandleToolProgress,
   ProvisionManagedAgent,
   SendAgentTestEmail,
   SendAgentWelcomeMessage,

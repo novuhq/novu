@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { PendingToolApproval } from '@novu/application-generic';
 import {
   decryptCredentials,
@@ -11,6 +11,7 @@ import {
   AgentRepository,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationRepository,
   IntegrationRepository,
@@ -23,17 +24,19 @@ import {
   type Message,
   MessageRole,
   SessionExpiredError,
-  type StreamPart,
   type Response as ThalamusResponse,
   thalamus,
   type WebhookProvider,
 } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
+import type { Request, Response } from 'express';
 import { LRUCache } from 'lru-cache';
 import { GenerateMcpOAuthUrlCommand } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
+import { HandleToolProgressCommand } from '../usecases/handle-tool-progress/handle-tool-progress.command';
+import { HandleToolProgress } from '../usecases/handle-tool-progress/handle-tool-progress.usecase';
 import type { AgentExecutionParams } from './bridge-executor.service';
 
 /**
@@ -101,17 +104,17 @@ const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
 const PARKED_SESSION_ERROR_PATTERN = /waiting on responses to events/i;
 
 @Injectable()
-export class ManagedAgentService {
+export class ManagedAgentService implements OnModuleInit {
   private readonly providers: LRUCache<string, CachedRuntime>;
-  private readonly webhookHandler: WebhookHandler | undefined;
+  private webhookHandler: WebhookHandler | undefined;
 
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
-    @Inject(forwardRef(() => HandleAgentReply))
     private readonly handleAgentReply: HandleAgentReply,
+    private readonly handleToolProgress: HandleToolProgress,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
     private readonly logger: PinoLogger
   ) {
@@ -120,6 +123,9 @@ export class ManagedAgentService {
       max: MAX_CACHED_PROVIDERS,
       ttl: PROVIDER_TTL_MS,
     });
+  }
+
+  onModuleInit() {
     this.webhookHandler = this.initWebhookHandler();
   }
 
@@ -152,66 +158,52 @@ export class ManagedAgentService {
     );
   }
 
-  getWebhookHandler(): WebhookHandler | undefined {
-    return this.webhookHandler;
-  }
-
-  async handleWebhookEvent(sessionId: string, metadata: Record<string, string>, event: StreamPart): Promise<void> {
-    if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
-      this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
+  async handleWebhook(req: Request, res: Response): Promise<void> {
+    if (!this.webhookHandler) {
+      res.status(503).json({ error: 'Webhook handler not configured' });
 
       return;
     }
 
-    switch (event.type) {
-      case 'finish': {
-        // `requires-action` means the session is parked on Anthropic's side
-        // waiting for a `user.tool_confirmation`. Posting `event.response.content`
-        // here would push an empty string to the chat platform (Slack 502 /
-        // `no_text`) AND leave the user with no surface to approve. Render
-        // an Approve/Deny card from the pending tool details and short-circuit
-        // the normal reply path — `confirmToolApproval` resumes the session.
-        if (event.response.finishReason === 'requires-action') {
-          const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
-          if (runtimeProvider) {
-            const delivered = await this.tryDeliverToolApprovalCard(
-              metadata,
-              sessionId,
-              runtimeProvider,
-              extractPendingToolApproval(event.response)
-            );
+    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody?.toString('utf-8') ?? JSON.stringify(req.body);
+    const signature = req.headers['x-thalamus-signature'] as string | undefined;
 
-            if (delivered) {
-              return;
-            }
-          }
-        }
+    const result = await this.webhookHandler.handleRaw(rawBody, signature ?? null);
 
-        await this.handleAgentReply.execute(
-          HandleAgentReplyCommand.create({
-            userId: 'system',
-            environmentId: metadata.environmentId,
-            organizationId: metadata.organizationId,
-            conversationId: metadata.conversationId,
-            agentIdentifier: metadata.agentIdentifier ?? '',
-            integrationIdentifier: metadata.integrationIdentifier ?? '',
-            reply: { markdown: event.response.content },
-          })
-        );
-        break;
-      }
-
-      case 'error': {
-        await this.handleErrorEvent(metadata, sessionId, event.error);
-        break;
-      }
-
-      default:
-        break;
+    res.status(result.status);
+    if (result.body) {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(result.body);
+    } else {
+      res.end();
     }
   }
 
-  private async handleErrorEvent(metadata: Record<string, string>, sessionId: string, error: Error): Promise<void> {
+  private buildBaseFields(metadata: Record<string, string>) {
+    return {
+      userId: 'system',
+      environmentId: metadata.environmentId,
+      organizationId: metadata.organizationId,
+      conversationId: metadata.conversationId,
+      agentIdentifier: metadata.agentIdentifier ?? '',
+      integrationIdentifier: metadata.integrationIdentifier ?? '',
+    };
+  }
+
+  private async handleErrorEvent(
+    metadata: Record<string, string>,
+    sessionId: string,
+    error: Error,
+    baseCommand: {
+      userId: string;
+      environmentId: string;
+      organizationId: string;
+      conversationId: string;
+      agentIdentifier: string;
+      integrationIdentifier: string;
+    },
+    runId: string
+  ): Promise<void> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
       await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
@@ -256,15 +248,10 @@ export class ManagedAgentService {
 
     try {
       await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          userId: 'system',
-          organizationId: metadata.organizationId,
-          environmentId: metadata.environmentId,
-          conversationId: metadata.conversationId,
-          agentIdentifier: metadata.agentIdentifier ?? '',
-          integrationIdentifier: metadata.integrationIdentifier ?? '',
-          reply: { markdown: message },
-        })
+        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
+      );
+      await this.handleToolProgress.execute(
+        HandleToolProgressCommand.create({ ...baseCommand, toolProgress: { runId, action: 'fail' } })
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
@@ -557,7 +544,7 @@ export class ManagedAgentService {
       messages: [],
       sessionId,
       vaultIds,
-      toolResults: [{ toolUseId: params.toolUseId, approved: params.approved }],
+      toolResults: [{ toolUseId: params.toolUseId, approved: params.approved, content: [] }],
       webhookMetadata: this.buildWebhookMetadata({
         conversationId: params.conversationId,
         environmentId: params.environmentId,
@@ -681,13 +668,121 @@ export class ManagedAgentService {
 
     return createWebhookHandler({
       secret,
-      onSessionEvents: (sessionId, _runId, metadata) => ({
-        onPart: (part) => {
-          this.handleWebhookEvent(sessionId, metadata, part).catch((err) => {
-            this.logger.error(err, `Failed to handle webhook event for session ${sessionId}`);
-          });
-        },
-      }),
+      onSessionEvents: (sessionId, runId, metadata) => {
+        if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
+          this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
+
+          return {};
+        }
+
+        const baseFields = this.buildBaseFields(metadata);
+
+        return {
+          onToolUseStart: async (event) => {
+            try {
+              await this.handleToolProgress.execute(
+                HandleToolProgressCommand.create({
+                  ...baseFields,
+                  toolProgress: {
+                    runId,
+                    action: 'tool-use',
+                    toolUseId: event.toolUseId,
+                    toolName: event.toolName,
+                    status: 'running',
+                  },
+                })
+              );
+            } catch (err) {
+              this.logger.error(err, `onToolUseStart failed: session=${sessionId}`);
+            }
+          },
+
+          onToolUseDone: async (event) => {
+            try {
+              if (!event.input || Object.keys(event.input).length === 0) {
+                return;
+              }
+              await this.handleToolProgress.execute(
+                HandleToolProgressCommand.create({
+                  ...baseFields,
+                  toolProgress: {
+                    runId,
+                    action: 'tool-use',
+                    toolUseId: event.toolUseId,
+                    toolName: event.toolName,
+                    status: 'running',
+                    toolInput: event.input,
+                  },
+                })
+              );
+            } catch (err) {
+              this.logger.error(err, `onToolUseDone failed: session=${sessionId}`);
+            }
+          },
+
+          onToolUseResult: async (event) => {
+            try {
+              await this.handleToolProgress.execute(
+                HandleToolProgressCommand.create({
+                  ...baseFields,
+                  toolProgress: {
+                    runId,
+                    action: 'tool-use',
+                    toolUseId: event.toolUseId,
+                    status: event.isError ? 'error' : 'complete',
+                  },
+                })
+              );
+            } catch (err) {
+              this.logger.error(err, `onToolUseResult failed: session=${sessionId}`);
+            }
+          },
+
+          onFinish: async (event) => {
+            try {
+              // `requires-action` means the session is parked on Anthropic's side
+              // waiting for a `user.tool_confirmation`. Posting `event.response.content`
+              // here would push an empty string to the chat platform (Slack 502 /
+              // `no_text`) AND leave the user with no surface to approve. Render
+              // an Approve/Deny card from the pending tool details and short-circuit
+              // the normal reply path — `confirmToolApproval` resumes the session.
+              if (event.response.finishReason === 'requires-action') {
+                const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
+                if (runtimeProvider) {
+                  const delivered = await this.tryDeliverToolApprovalCard(
+                    metadata,
+                    sessionId,
+                    runtimeProvider,
+                    extractPendingToolApproval(event.response)
+                  );
+
+                  if (delivered) {
+                    return;
+                  }
+                }
+              }
+
+              await this.handleAgentReply.execute(
+                HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: event.response.content } })
+              );
+              await this.handleToolProgress.execute(
+                HandleToolProgressCommand.create({ ...baseFields, toolProgress: { runId, action: 'complete' } })
+              );
+            } catch (err) {
+              this.logger.error(err, `onFinish failed: session=${sessionId}`);
+              throw err;
+            }
+          },
+
+          onError: async (event) => {
+            try {
+              await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, runId);
+            } catch (err) {
+              this.logger.error(err, `onError handler failed: session=${sessionId}`);
+            }
+          },
+        };
+      },
     });
   }
 
@@ -698,10 +793,13 @@ export class ManagedAgentService {
       50
     );
 
-    const messages: Message[] = history.reverse().map((entry) => ({
-      role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
-      content: entry.content,
-    }));
+    const messages: Message[] = history
+      .filter((entry) => entry.type !== ConversationActivityTypeEnum.SIGNAL)
+      .reverse()
+      .map((entry) => ({
+        role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
+        content: entry.content,
+      }));
 
     messages.push({ role: MessageRole.USER, content: context.message?.text ?? '' });
 

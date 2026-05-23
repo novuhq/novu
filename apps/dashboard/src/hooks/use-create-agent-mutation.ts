@@ -47,6 +47,7 @@ export function useCreateAgentMutation() {
         isExistingMode,
         integrationId: providedIntegrationId,
         integrationName,
+        managedOverrides,
       }: CreateAgentForm,
       options?: SubmitOptions
     ) => {
@@ -104,25 +105,40 @@ export function useCreateAgentMutation() {
             }
           }
 
-          const request: CreateAgentBody = {
-            name,
-            identifier,
-            runtime: 'managed',
-            managedRuntime: isExistingMode
-              ? {
+          // When adopting an existing Claude agent the backend resolves the name and identifier
+          // from the provider, so we deliberately omit `name`, `identifier`, and `description`
+          // from the request and only send the `managedRuntime` pointer.
+          const request: CreateAgentBody = isExistingMode
+            ? {
+                runtime: 'managed',
+                managedRuntime: {
                   integrationId,
                   providerId: AgentRuntimeProviderIdEnum.Anthropic,
                   externalAgentId,
                   externalEnvironmentId,
-                }
-              : {
+                },
+              }
+            : {
+                name,
+                identifier,
+                runtime: 'managed',
+                managedRuntime: {
                   integrationId,
                   providerId: AgentRuntimeProviderIdEnum.Anthropic,
                   model: 'claude-opus-4-5',
-                  systemPrompt: instructions || undefined,
-                  tools: CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
+                  systemPrompt: managedOverrides?.systemPrompt ?? instructions ?? undefined,
+                  tools: managedOverrides?.tools ?? CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
+                  ...(managedOverrides?.mcpServers ? { mcpServers: managedOverrides.mcpServers } : {}),
+                  ...(managedOverrides?.skills
+                    ? {
+                        skills: managedOverrides.skills.map((skill) => ({
+                          type: 'anthropic' as const,
+                          skillId: skill.skillId,
+                        })),
+                      }
+                    : {}),
                 },
-          };
+              };
 
           try {
             const created = await createAgentMutation.mutateAsync(request);

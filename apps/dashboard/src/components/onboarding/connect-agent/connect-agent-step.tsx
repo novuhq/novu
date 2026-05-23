@@ -3,39 +3,52 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
-import type { AgentResponse } from '@/api/agents';
+import type { AgentResponse, GeneratedManagedAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
 import {
+  AGENT_TEMPLATES,
+  type AgentTemplate,
   type CreateAgentForm,
   type CreateAgentFormErrors,
   hasFormErrors,
+  type ManagedAgentRuntimeOverrides,
   type RuntimeType,
   type VerifyStatus,
   validateCreateAgentForm,
 } from '@/components/agents/create-agent-fields';
-import { AGENT_TEMPLATES } from '@/components/connect/dashboard/agent-templates';
+import { AGENT_TEMPLATES as DEFAULT_AGENT_TEMPLATES } from '@/components/connect/dashboard/agent-templates';
 import { ClaudeIcon } from '@/components/icons/claude';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
+import type { AgentGenerationMode } from './connect-agent-form';
 import { ConnectAgentForm } from './connect-agent-form';
 import { type ConnectSummary } from './connect-summary';
 import { CONNECTOR_OPTIONS, type ConnectorId, getConnectorById } from './connector-options';
+import type { GenerationStep } from './generation-status';
 import type { TemplateSelection } from './template-dropdown';
 
-export type { ConnectSummary } from './connect-summary';
+const GENERATION_STEPS: ReadonlyArray<GenerationStep> = [
+  { id: 'spinning', text: 'Spinning up a fresh agent' },
+  { id: 'coffee', text: 'Sipping a little bit of coffee' },
+  { id: 'system-prompt', text: 'Crafting the system prompt' },
+  { id: 'tools', text: 'Picking the right tools' },
+  { id: 'mcp', text: 'Wiring up MCP servers' },
+  { id: 'skills', text: 'Selecting starter skills' },
+  { id: 'agent', text: 'Generating your agent' },
+];
 
-const DOCS_AGENTS_LEARN_MORE_HREF = 'https://docs.novu.co/agents/overview';
+export type { ConnectSummary } from './connect-summary';
 
 const DEFAULT_CONNECTOR: ConnectorId = 'claude';
 
@@ -66,7 +79,9 @@ type ConnectAgentStepProps = {
   isManagedEnabled: boolean;
 };
 
-const DEFAULT_TEMPLATE = AGENT_TEMPLATES[0];
+const DEFAULT_TEMPLATE = DEFAULT_AGENT_TEMPLATES[0];
+
+const MIN_PROMPT_LENGTH = 8;
 
 export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEnabled }: ConnectAgentStepProps) {
   const telemetry = useTelemetry();
@@ -78,14 +93,30 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
   const [connectorId, setConnectorId] = useState<ConnectorId>(() => pickInitialConnector(isManagedEnabled));
-  const [templateSelection, setTemplateSelection] = useState<TemplateSelection>({
+  const [templateSelection, setTemplateSelection] = useState<TemplateSelection>(() => ({
     kind: 'template',
     template: DEFAULT_TEMPLATE,
-  });
+  }));
 
-  const [name, setName] = useState(DEFAULT_TEMPLATE.name);
-  const [identifier, setIdentifier] = useState(slugify(DEFAULT_TEMPLATE.name));
-  const [instructions, setInstructions] = useState(DEFAULT_TEMPLATE.instructions);
+  const [generationMode, setGenerationMode] = useState<AgentGenerationMode>('prompt');
+  const [prompt, setPrompt] = useState('');
+  const [promptError, setPromptError] = useState<string | undefined>(undefined);
+  const promptTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  // Tracks the whole prompt-mode submit lifecycle (LLM generate + create-agent mutation +
+  // the brief gap before the parent swaps to the next phase). Without this, the status
+  // animation flickers off in between `isGenerating` and `isPending` and reveals the
+  // submit button momentarily.
+  const [isPromptSubmitInFlight, setIsPromptSubmitInFlight] = useState(false);
+
+  const {
+    generate: generateManagedAgent,
+    isPending: isGenerating,
+    cancel: cancelGeneration,
+  } = useGenerateManagedAgent();
+
+  const [name, setName] = useState(() => (isManagedEnabled ? '' : DEFAULT_TEMPLATE.name));
+  const [identifier, setIdentifier] = useState(() => (isManagedEnabled ? '' : slugify(DEFAULT_TEMPLATE.name)));
+  const [instructions, setInstructions] = useState(() => (isManagedEnabled ? '' : DEFAULT_TEMPLATE.instructions));
   const [apiKey, setApiKey] = useState('');
   const [externalWorkspaceId, setExternalWorkspaceId] = useState('');
   const [externalAgentId, setExternalAgentId] = useState('');
@@ -109,8 +140,16 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
 
   const runtime = useMemo(() => resolveRuntime(connectorId), [connectorId]);
   const isClaudeSelected = runtime === 'claude';
-  const isExistingMode = isClaudeSelected && templateSelection.kind === 'existing';
-  const isScratchMode = templateSelection.kind === 'scratch';
+  const isScratchRuntime = runtime === 'scratch';
+  // The AI "Generate from prompt" surface is available for both managed Claude (when the
+  // managed-runtime flag is on) and for the self-hosted Custom Scaffold flow unconditionally.
+  // Custom Scaffold generation only produces name/identifier/systemPrompt — it does not touch
+  // any Anthropic-managed infrastructure — so it has no reason to depend on that flag.
+  const useAiGeneration = isClaudeSelected ? isManagedEnabled : isScratchRuntime;
+  const isExistingMode =
+    isClaudeSelected && (useAiGeneration ? generationMode === 'existing' : templateSelection.kind === 'existing');
+  const isScratchMode =
+    (useAiGeneration && generationMode === 'manual') || (!useAiGeneration && templateSelection.kind === 'scratch');
   const showExistingOption = isClaudeSelected;
   const existingOptionIcon = isClaudeSelected ? (
     <div className="bg-primary-base/10 text-primary-base flex size-4 items-center justify-center rounded-full">
@@ -222,6 +261,48 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       setVerifyMessage(undefined);
     }
   }, []);
+
+  const handlePromptChange = useCallback((next: string) => {
+    setPrompt(next);
+    setPromptError(undefined);
+  }, []);
+
+  const handleSelectSuggestion = useCallback(
+    (suggestion: AgentTemplate) => {
+      setGenerationMode('prompt');
+      setPrompt(suggestion.instructions);
+      setPromptError(undefined);
+      requestAnimationFrame(() => {
+        const el = promptTextareaRef.current;
+        if (!el) return;
+        el.focus();
+        const end = el.value.length;
+        el.setSelectionRange(end, end);
+      });
+
+      telemetry(TelemetryEvent.ONBOARDING_AGENT_SUGGESTION_SELECTED, {
+        suggestionId: suggestion.label,
+        suggestionName: suggestion.name,
+      });
+    },
+    [telemetry]
+  );
+
+  const handleGenerationModeChange = useCallback((next: AgentGenerationMode) => {
+    setGenerationMode(next);
+    if (next === 'prompt') {
+      setExternalAgentId('');
+      setExternalEnvironmentId('');
+    } else if (next === 'manual') {
+      setExternalAgentId('');
+      setExternalEnvironmentId('');
+      setPromptError(undefined);
+    }
+  }, []);
+
+  const handleCancelGeneration = useCallback(() => {
+    cancelGeneration();
+  }, [cancelGeneration]);
 
   const handleTemplateChange = (next: TemplateSelection) => {
     setTemplateSelection(next);
@@ -388,10 +469,75 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
+    const isPromptGenerationMode = useAiGeneration && generationMode === 'prompt';
+
+    let generated: GeneratedManagedAgent | null = null;
+    let effectiveName = name;
+    let effectiveIdentifier = identifier;
+    let effectiveInstructions = instructions;
+    let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
+
+    if (isPromptGenerationMode) {
+      const trimmedPrompt = prompt.trim();
+      if (trimmedPrompt.length < MIN_PROMPT_LENGTH) {
+        setPromptError(`Add at least ${MIN_PROMPT_LENGTH} characters describing your agent.`);
+
+        return;
+      }
+
+      // Anthropic API key is only required when we provision the agent on Claude's managed
+      // runtime. The Custom Scaffold flow generates name/identifier/systemPrompt only and the
+      // user runs the agent on their own runtime, so no provider credentials are needed.
+      if (isClaudeSelected && !selectedIntegrationId && !apiKey.trim()) {
+        setErrors((prev) => ({ ...prev, apiKey: 'Anthropic API key is required.' }));
+
+        return;
+      }
+
+      setIsPromptSubmitInFlight(true);
+
+      try {
+        generated = await generateManagedAgent({
+          prompt: trimmedPrompt,
+          runtime: isClaudeSelected ? 'managed' : 'self-hosted',
+        });
+      } catch (err) {
+        setIsPromptSubmitInFlight(false);
+
+        if (err instanceof GenerationCancelledError) {
+          return;
+        }
+        const message = err instanceof Error ? err.message : 'Could not generate agent.';
+        showErrorToast(message, 'Generation failed');
+
+        return;
+      }
+
+      effectiveName = generated.name;
+      effectiveIdentifier = generated.identifier;
+      effectiveInstructions = generated.systemPrompt;
+      managedOverrides = {
+        systemPrompt: generated.systemPrompt,
+        tools: generated.tools,
+        mcpServers: generated.mcpServers,
+        skills: generated.skills,
+      };
+
+      telemetry(TelemetryEvent.ONBOARDING_AGENT_PROMPT_GENERATED, {
+        promptLength: trimmedPrompt.length,
+        toolsCount: generated.tools.length,
+        mcpsCount: generated.mcpServers.length,
+        skillsCount: generated.skills.length,
+        tools: generated.tools,
+        mcpServers: generated.mcpServers,
+        skills: generated.skills.map((s) => s.skillId),
+      });
+    }
+
     const form: CreateAgentForm = {
-      name,
-      identifier,
-      instructions,
+      name: effectiveName,
+      identifier: effectiveIdentifier,
+      instructions: effectiveInstructions,
       apiKey,
       runtime,
       isExistingMode,
@@ -406,6 +552,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
 
     if (hasFormErrors(nextErrors)) {
       setErrors(nextErrors);
+      setIsPromptSubmitInFlight(false);
 
       return;
     }
@@ -415,17 +562,19 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     telemetry(TelemetryEvent.ONBOARDING_CONNECT_AGENT_SUBMITTED, {
       runtime,
       connectorId,
+      mode: useAiGeneration ? generationMode : 'template',
       templateKind: templateSelection.kind,
       templateLabel: templateSelection.kind === 'template' ? templateSelection.template.label : undefined,
       isExistingMode,
+      promptLength: isPromptGenerationMode ? prompt.trim().length : undefined,
     });
 
     const summary: ConnectSummary = {
       connectorId,
       templateSelection,
-      name,
-      identifier,
-      instructions,
+      name: effectiveName,
+      identifier: effectiveIdentifier,
+      instructions: effectiveInstructions,
       apiKey,
       externalAgentId,
       externalEnvironmentId,
@@ -436,9 +585,9 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
 
     await submit(
       {
-        name: name.trim(),
-        identifier: identifier.trim(),
-        instructions: instructions.trim(),
+        name: effectiveName.trim(),
+        identifier: effectiveIdentifier.trim(),
+        instructions: effectiveInstructions.trim(),
         apiKey: apiKey.trim(),
         runtime,
         isExistingMode,
@@ -447,10 +596,12 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         externalWorkspaceId: externalWorkspaceId.trim() || undefined,
         integrationId: selectedIntegrationId,
         integrationName: integrationName.trim() || undefined,
+        managedOverrides,
       },
       {
         onSuccess: (agent) => onAgentCreated(agent, summary),
         onError: (err) => {
+          setIsPromptSubmitInFlight(false);
           const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
           showErrorToast(message, 'Create failed');
         },
@@ -459,6 +610,21 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   };
 
   const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
+  const isSubmitBusy = isPending || isGenerating || isPromptSubmitInFlight;
+
+  const submitButton = (
+    <Button
+      type="submit"
+      variant="secondary"
+      mode="gradient"
+      size="xs"
+      className="mt-1 w-fit gap-1"
+      isLoading={isSubmitBusy}
+      trailingIcon={RiArrowRightSLine}
+    >
+      Setup agent
+    </Button>
+  );
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
@@ -486,7 +652,29 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         externalAgentId={externalAgentId}
         externalEnvironmentId={externalEnvironmentId}
         errors={errors}
-        disabled={isPending}
+        disabled={isSubmitBusy}
+        aiGeneration={
+          useAiGeneration
+            ? {
+                mode: generationMode,
+                onModeChange: handleGenerationModeChange,
+                prompt,
+                onPromptChange: handlePromptChange,
+                promptError,
+                suggestions: AGENT_TEMPLATES,
+                onSelectSuggestion: handleSelectSuggestion,
+                textareaRef: promptTextareaRef,
+                isGenerating: isSubmitBusy,
+                generationSteps: GENERATION_STEPS,
+                onCancelGeneration: handleCancelGeneration,
+                // Cancel is only meaningful while the LLM call is in flight; once it returns
+                // we are mid-provisioning at Anthropic and there is nothing to abort, so keep
+                // the button visible (avoids a layout shift) but disable it.
+                isCancelDisabled: !isGenerating,
+                isScratchRuntime,
+              }
+            : undefined
+        }
         integrations={integrations}
         selectedIntegrationId={selectedIntegrationId}
         dropdownStatus={dropdownStatus}
@@ -528,27 +716,10 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         }}
         onVerify={handleVerify}
         onSaveIntegration={handleSaveIntegration}
+        submitSlot={useAiGeneration ? submitButton : undefined}
       />
 
-      <div className="flex flex-col gap-2 pl-6">
-        <Button
-          type="submit"
-          variant="secondary"
-          mode="gradient"
-          size="xs"
-          className="w-fit gap-1"
-          isLoading={isPending}
-          trailingIcon={RiArrowRightSLine}
-        >
-          Setup agent
-        </Button>
-        <p className="text-text-soft text-label-xs leading-4">
-          The agent will be created and deployed to the selected connector based on the template or prompt
-        </p>
-        <ExternalLink href={DOCS_AGENTS_LEARN_MORE_HREF} variant="documentation">
-          Learn more in docs
-        </ExternalLink>
-      </div>
+      {!useAiGeneration && <div className="flex flex-col gap-2 pl-6">{submitButton}</div>}
     </form>
   );
 }

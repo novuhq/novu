@@ -85,6 +85,12 @@ export function SetupStep({
   rightContent,
   extraContent,
   fullWidthContent,
+  /**
+   * Optional content rendered above the title block in the left column. Used for
+   * step-level UI (e.g. segmented tabs) that should sit between the section label
+   * and the title.
+   */
+  headerSlot,
 }: {
   index: number;
   status: StepStatus;
@@ -94,6 +100,7 @@ export function SetupStep({
   rightContent?: ReactNode;
   extraContent?: ReactNode;
   fullWidthContent?: ReactNode;
+  headerSlot?: ReactNode;
 }) {
   return (
     <div className="relative flex flex-col gap-4 pl-6">
@@ -106,6 +113,7 @@ export function SetupStep({
             {sectionLabel && (
               <p className="text-text-soft text-code-xs font-normal leading-4 tracking-[-0.24px]">{sectionLabel}</p>
             )}
+            {headerSlot}
             <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
             <div className="text-text-soft text-label-xs font-normal leading-4">{description}</div>
           </div>

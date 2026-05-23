@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseFilters,
   UseGuards,
   UseInterceptors,
@@ -24,6 +25,7 @@ import {
   ProductFeatureKeyEnum,
   UserSessionData,
 } from '@novu/shared';
+import type { Request } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -43,6 +45,8 @@ import {
   AgentRuntimeConfigResponseDto,
   CreateAgentRequestDto,
   EnableAgentMcpServerRequestDto,
+  GenerateManagedAgentRequestDto,
+  GenerateManagedAgentResponseDto,
   GenerateMcpOAuthUrlRequestDto,
   GenerateMcpOAuthUrlResponseDto,
   ListAgentIntegrationsQueryDto,
@@ -89,6 +93,8 @@ import { DisableAgentMcpServerCommand } from './usecases/disable-agent-mcp-serve
 import { DisableAgentMcpServer } from './usecases/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
 import { EnableAgentMcpServerCommand } from './usecases/enable-agent-mcp-server/enable-agent-mcp-server.command';
 import { EnableAgentMcpServer } from './usecases/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
+import { GenerateManagedAgentCommand } from './usecases/generate-managed-agent/generate-managed-agent.command';
+import { GenerateManagedAgent } from './usecases/generate-managed-agent/generate-managed-agent.usecase';
 import { GenerateMcpOAuthUrlCommand } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
@@ -164,7 +170,8 @@ export class AgentsController {
     private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
     private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared,
-    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials
+    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials,
+    private readonly generateManagedAgentUsecase: GenerateManagedAgent
   ) {}
 
   @Get('/emoji')
@@ -203,6 +210,44 @@ export class AgentsController {
         externalWorkspaceId: body.externalWorkspaceId,
       })
     );
+  }
+
+  @Post('/generate')
+  @ApiResponse(GenerateManagedAgentResponseDto)
+  @ApiOperation({
+    summary: 'Generate an agent configuration from a free-form prompt',
+    description:
+      'Translates a user-supplied description into an agent configuration (name, identifier, systemPrompt, tools, MCP servers, skills).',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async generateManagedAgent(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateManagedAgentRequestDto,
+    @Req() request: Request
+  ): Promise<GenerateManagedAgentResponseDto> {
+    const abortController = new AbortController();
+    const handleSocketClose = (): void => {
+      if (request.destroyed) {
+        abortController.abort();
+      }
+    };
+    request.socket.on('close', handleSocketClose);
+
+    const command = GenerateManagedAgentCommand.create({
+      user,
+      prompt: body.prompt,
+      runtime: body.runtime,
+    });
+    // Attach signal outside `create(...)` — running an `AbortSignal` through
+    // `class-transformer`'s `plainToInstance` triggers `new AbortSignal()`, which is
+    // disallowed by the runtime (`ERR_ILLEGAL_CONSTRUCTOR`).
+    command.signal = abortController.signal;
+
+    try {
+      return await this.generateManagedAgentUsecase.execute(command);
+    } finally {
+      request.socket.off('close', handleSocketClose);
+    }
   }
 
   @Post('/')

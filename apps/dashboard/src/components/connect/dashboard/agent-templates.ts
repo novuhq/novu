@@ -6,6 +6,7 @@ export type AgentTemplate = {
   label: string;
   name: string;
   instructions: string;
+  suggestedMcpServers: string[];
 };
 
 export type WhatsNextTemplate = {
@@ -20,24 +21,28 @@ export const AGENT_TEMPLATES: AgentTemplate[] = [
     name: 'Customer Support Agent',
     instructions:
       'You are a helpful customer support assistant. Answer questions clearly and concisely, and escalate complex issues when needed.',
+    suggestedMcpServers: [],
   },
   {
     label: 'DevOps Buddy',
     name: 'DevOps Buddy',
     instructions:
       'You are a DevOps assistant. Help with CI/CD pipelines, infrastructure troubleshooting, and deployment best practices.',
+    suggestedMcpServers: [],
   },
   {
     label: 'Code Reviewer',
     name: 'Code Reviewer',
     instructions:
       'You are a senior code reviewer. Provide constructive feedback on code quality, security, and maintainability.',
+    suggestedMcpServers: [],
   },
   {
     label: 'Docs Helper',
     name: 'Docs Helper',
     instructions:
       'You are a documentation assistant. Help users find information, clarify concepts, and cite sources accurately.',
+    suggestedMcpServers: [],
   },
 ];
 

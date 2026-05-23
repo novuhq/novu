@@ -113,8 +113,16 @@ type ManagedRuntimeDto = {
 };
 
 export type CreateAgentBody = {
-  name: string;
-  identifier: string;
+  /**
+   * Optional in the adopt-existing managed flow — the backend resolves it from the provider when
+   * `managedRuntime.externalAgentId` is set. Required otherwise.
+   */
+  name?: string;
+  /**
+   * Optional in the adopt-existing managed flow — auto-generated from the provider agent name
+   * when omitted. Required otherwise.
+   */
+  identifier?: string;
   description?: string;
   active?: boolean;
   runtime?: AgentRuntime;
@@ -221,6 +229,44 @@ export async function verifyManagedCredentials(
     '/agents/verify-credentials',
     { environment, body, signal }
   );
+
+  return 'data' in response ? response.data : response;
+}
+
+export type GeneratedManagedAgentSkill = {
+  skillId: string;
+};
+
+export type GeneratedManagedAgent = {
+  name: string;
+  identifier: string;
+  systemPrompt: string;
+  tools: string[];
+  mcpServers: string[];
+  skills: GeneratedManagedAgentSkill[];
+};
+
+export async function generateManagedAgent({
+  environment,
+  prompt,
+  runtime,
+  signal,
+}: {
+  environment: IEnvironment;
+  prompt: string;
+  /**
+   * `managed` (default) returns the full Claude tools/MCPs/skills payload; `self-hosted`
+   * returns only name, identifier and systemPrompt and skips the catalog selection on the
+   * backend. Use `self-hosted` for the Custom Scaffold flow.
+   */
+  runtime?: AgentRuntime;
+  signal?: AbortSignal;
+}): Promise<GeneratedManagedAgent> {
+  const response = await post<{ data: GeneratedManagedAgent } | GeneratedManagedAgent>('/agents/generate', {
+    environment,
+    body: { prompt, ...(runtime ? { runtime } : {}) },
+    signal,
+  });
 
   return 'data' in response ? response.data : response;
 }
