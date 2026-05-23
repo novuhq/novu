@@ -10,3 +10,4 @@ export * from './slack/slack.provider';
 export * from './telegram/telegram.provider';
 export * from './whatsapp-business/whatsapp-business.provider';
 export * from './zulip/zulip.provider';
+export * from './wechat/wechat.provider';

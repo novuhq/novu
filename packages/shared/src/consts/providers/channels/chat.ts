@@ -118,4 +118,12 @@ export const chatProviders: IProviderConfig[] = [
     docReference: `https://docs.novu.co/platform/integrations/chat/telegram${UTM_CAMPAIGN_QUERY_PARAM}`,
     logoFileName: { light: 'telegram.svg', dark: 'telegram.svg' },
   },
+  {
+    id: ChatProviderIdEnum.WeChat,
+    displayName: 'WeChat (WeCom)',
+    channel: ChannelTypeEnum.CHAT,
+    credentials: [] as IConfigCredential[],
+    docReference: `https://docs.novu.co/channels-and-providers/chat/wechat${UTM_CAMPAIGN_QUERY_PARAM}`,
+    logoFileName: { light: 'wechat.svg', dark: 'wechat.svg' },
+  },
 ];
