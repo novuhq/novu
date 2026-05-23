@@ -1,6 +1,6 @@
-import type { SignInTheme, SignUpTheme } from '@clerk/types';
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 
-export const clerkSignupAppearance: SignUpTheme | SignInTheme = {
+export const clerkSignupAppearance: ClerkAppearanceTheme = {
   elements: {
     headerTitle: {
       fontWeight: '500',
@@ -22,7 +22,7 @@ export const clerkSignupAppearance: SignUpTheme | SignInTheme = {
   },
 } as const;
 
-export const clerkLandingSignupAppearance: SignUpTheme | SignInTheme = {
+export const clerkLandingSignupAppearance: ClerkAppearanceTheme = {
   elements: {
     headerTitle: {
       fontWeight: '500',

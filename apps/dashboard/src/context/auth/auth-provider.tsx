@@ -1,5 +1,5 @@
-import { useOrganization, useUser } from '@clerk/clerk-react';
-import type { OrganizationResource, UserResource } from '@clerk/types';
+import { useOrganization, useUser } from '@clerk/react';
+import type { OrganizationResource, UserResource } from '@clerk/shared/types';
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { ROUTES } from '@/utils/routes';
 import { AuthContext } from './auth-context';

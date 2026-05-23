@@ -1,6 +1,6 @@
 'use client';
 
-import { SignedIn, SignedOut, SignIn, UserButton, useUser } from '@clerk/clerk-react';
+import { Show, SignIn, UserButton, useUser } from '@clerk/react';
 import { MCP_SERVERS, type McpServer } from '@novu/shared';
 import {
   AlertCircle,
@@ -52,12 +52,12 @@ type OAuthResultMessage = {
 export default function AgentsMcpPlaygroundPage() {
   return (
     <>
-      <SignedOut>
+      <Show when="signed-out">
         <SignInGate />
-      </SignedOut>
-      <SignedIn>
+      </Show>
+      <Show when="signed-in">
         <AuthenticatedPlayground />
-      </SignedIn>
+      </Show>
     </>
   );
 }

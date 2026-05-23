@@ -1,6 +1,6 @@
 'use client';
 
-import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
+import { ClerkProvider as _ClerkProvider } from '@clerk/react';
 import { useRouter } from 'next/navigation';
 import type { PropsWithChildren } from 'react';
 

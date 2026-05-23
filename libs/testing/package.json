@@ -21,8 +21,8 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "@clerk/backend": "1.25.2",
-    "@clerk/types": "^4.6.1",
+    "@clerk/backend": "^3.4.11",
+    "@clerk/shared": "^4.12.2",
     "@faker-js/faker": "^6.0.0",
     "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
