@@ -11,8 +11,10 @@ import { FindOrCreateNovuEmail } from './find-or-create-novu-email/find-or-creat
 import { GenerateManagedAgent } from './generate-managed-agent/generate-managed-agent.usecase';
 import { GenerateMcpOAuthUrl } from './generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { GetAgent } from './get-agent/get-agent.usecase';
+import { GetAgentDemoQuota } from './get-agent-demo-quota/get-agent-demo-quota.usecase';
 import { GetAgentRuntimeConfig } from './get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { GetMcpConnectionStatus } from './get-mcp-connection-status/get-mcp-connection-status.usecase';
+import { GetMcpNovuAppCredentials } from './get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
 import { GetTelegramMobileLinkStatus } from './get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
 import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
 import { HandleToolProgress } from './handle-tool-progress/handle-tool-progress.usecase';
@@ -24,9 +26,8 @@ import { ListAgentIntegrations } from './list-agent-integrations/list-agent-inte
 import { ListAgentMcpServers } from './list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgents } from './list-agents/list-agents.usecase';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
-import { ProvisionManagedAgent } from './provision-managed-agent/provision-managed-agent.usecase';
 import { MigrateAgentRuntime } from './migrate-agent-runtime/migrate-agent-runtime.usecase';
-import { GetAgentDemoQuota } from './get-agent-demo-quota/get-agent-demo-quota.usecase';
+import { ProvisionManagedAgent } from './provision-managed-agent/provision-managed-agent.usecase';
 import { RemoveAgentIntegration } from './remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmail } from './send-agent-test-email/send-agent-test-email.usecase';
 import { SendAgentWelcomeMessage } from './send-agent-welcome-message/send-agent-welcome-message.usecase';
@@ -90,5 +91,6 @@ export const USE_CASES = [
   GenerateMcpOAuthUrl,
   McpOAuthCallback,
   GetMcpConnectionStatus,
+  GetMcpNovuAppCredentials,
   VerifyManagedCredentials,
 ];

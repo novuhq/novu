@@ -47,6 +47,31 @@ export class ListAgentMcpServersResponseDto {
   data: AgentMcpServerEnablementResponseDto[];
 }
 
+/**
+ * Most-recent failure surface for an MCP connection. Populated when the
+ * connection transitions to `error` (e.g. token-exchange failure, user
+ * denied consent, GitHub org blocked the app). The dashboard uses
+ * `code` to render specific copy and falls back to `message` otherwise.
+ *
+ * The `code` is intentionally a free string in the DTO (rather than a
+ * typed enum) because the underlying union evolves per provider and
+ * pinning it to the api-service compile-time set would make adding new
+ * mappings a breaking SDK change.
+ */
+export class McpConnectionLastErrorDto {
+  @ApiProperty({
+    description:
+      'Stable error code (e.g. "mcp_user_denied", "mcp_github_org_block"). See McpOAuthErrorCode for the canonical set.',
+  })
+  code: string;
+
+  @ApiProperty({ description: 'Sanitized error message (control chars stripped, clamped to 256 chars).' })
+  message: string;
+
+  @ApiProperty({ description: 'When the error was recorded (ISO 8601).' })
+  at: string;
+}
+
 export class McpConnectionResponseDto {
   @ApiProperty()
   id: string;
@@ -74,6 +99,9 @@ export class McpConnectionResponseDto {
 
   @ApiPropertyOptional()
   connectedAt?: string;
+
+  @ApiPropertyOptional({ type: McpConnectionLastErrorDto })
+  lastError?: McpConnectionLastErrorDto;
 }
 
 export class GenerateMcpOAuthUrlRequestDto {

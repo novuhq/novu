@@ -43,7 +43,18 @@ export type McpOAuthErrorCode =
   | 'mcp_no_pkce_s256'
   | 'mcp_registration_failed'
   | 'mcp_iss_mismatch'
-  | 'mcp_token_exchange_failed';
+  | 'mcp_token_exchange_failed'
+  // ── `novu-app` mode (Novu's pre-registered OAuth app) ────────────────────
+  /** `NOVU_*_MCP_APP_CLIENT_ID` / `_SECRET` not set in this environment. */
+  | 'mcp_novu_app_credentials_missing'
+  /** `IS_MCP_NOVU_APP_ENABLED` LaunchDarkly flag is off for the org. */
+  | 'mcp_novu_app_disabled'
+  /** GitHub org blocked the Novu App (`application_suspended`, `app_blocked`). */
+  | 'mcp_github_org_block'
+  /** OAuth standard: the user clicked "Cancel" on the consent screen. */
+  | 'mcp_user_denied'
+  /** GitHub App: the target org has not approved/installed the Novu App. */
+  | 'mcp_app_not_installed';
 
 export class McpOAuthDiscoveryError extends Error {
   readonly code: McpOAuthErrorCode;

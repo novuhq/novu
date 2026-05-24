@@ -1,7 +1,13 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { AnalyticsService, FeatureFlagsService } from '@novu/application-generic';
 import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
 
 import { trackAgentMcpServerEnabled } from '../../agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../dtos/mcp-server.dto';
@@ -29,7 +35,8 @@ export class EnableAgentMcpServer {
     private readonly agentRepository: AgentRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly syncAgentMcpServers: SyncAgentMcpServers,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {}
 
   async execute(command: EnableAgentMcpServerCommand): Promise<AgentMcpServerEnablementResponseDto> {
@@ -78,6 +85,26 @@ export class EnableAgentMcpServer {
 
     const defaultAuthMode: McpConnectionAuthModeEnum = catalogEntry.oauth.mode;
     const defaultScope = command.defaultScope ?? McpConnectionScopeEnum.Subscriber;
+
+    // novu-app rollout is feature-flagged per org so we can ramp safely
+    // (Cloud has env credentials wired, self-hosters may not). DCR is never
+    // gated by this flag — the catalog has already paid the per-MCP probe
+    // cost and the auth flow does not depend on Novu-managed credentials.
+    if (defaultAuthMode === McpConnectionAuthModeEnum.NovuApp) {
+      const novuAppEnabled = await this.featureFlagsService.getFlag({
+        key: FeatureFlagsKeysEnum.IS_MCP_NOVU_APP_ENABLED,
+        defaultValue: false,
+        environment: { _id: command.environmentId },
+        organization: { _id: command.organizationId },
+      });
+      if (!novuAppEnabled) {
+        throw new ForbiddenException({
+          statusCode: 403,
+          message: `MCP "${command.mcpId}" requires the novu-app integration which is not enabled for this organization.`,
+          error: 'mcp_novu_app_disabled',
+        });
+      }
+    }
 
     const row = existing
       ? await this.reEnableExistingRow(existing, command, defaultScope, defaultAuthMode)

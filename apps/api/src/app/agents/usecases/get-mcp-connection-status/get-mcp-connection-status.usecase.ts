@@ -71,6 +71,24 @@ export class GetMcpConnectionStatus {
       subscriberId: connection._subscriberId,
       expiresAt: connection.auth?.expiresAt,
       connectedAt: connection.connectedAt,
+      // Only surface `lastError` when the connection is currently in error.
+      // `markConnectionError` clears the row's status transition rules so
+      // a previously-failed-then-reconnected row should not bleed its old
+      // error to the dashboard — but defence-in-depth here too, since the
+      // underlying `$unset: lastError` doesn't always fire (e.g. when the
+      // pending claim runs but token exchange succeeds via a different
+      // code path). Without this gate, a stale error would render forever.
+      lastError:
+        connection.status === McpConnectionStatusEnum.Error && connection.lastError
+          ? {
+              code: connection.lastError.code,
+              message: connection.lastError.message,
+              at:
+                connection.lastError.at instanceof Date
+                  ? connection.lastError.at.toISOString()
+                  : String(connection.lastError.at),
+            }
+          : undefined,
     };
   }
 }
