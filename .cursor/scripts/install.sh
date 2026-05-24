@@ -36,6 +36,18 @@ ensure_exec_daemon_dirs() {
 
 ensure_exec_daemon_dirs
 
+ensure_tmux() {
+  if command -v tmux >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Installing tmux (required for Cursor terminal sessions)"
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tmux
+}
+
+ensure_tmux
+
 link_enterprise_source() {
   if [ -L .source ] && [ -e .source ]; then
     log ".source already linked -> $(readlink .source)"
