@@ -145,8 +145,8 @@ ensure_env apps/dashboard/.env
 
 # Incremental build via Nx cache. After a `git pull` only projects whose
 # inputs changed are rebuilt; everything else is a cache hit (~seconds).
-# The first build is heavy (~3-5 min) and gets captured in the snapshot.
-log "Building workspace (incremental via Nx cache)"
-pnpm build
+# Apps are excluded — they compile on demand when dev servers start.
+log "Building workspace dependencies (incremental via Nx cache, apps excluded)"
+pnpm build:agents
 
 log "Done"
