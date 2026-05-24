@@ -125,7 +125,7 @@ export function useCreateAgentMutation() {
                 managedRuntime: {
                   integrationId,
                   providerId: AgentRuntimeProviderIdEnum.Anthropic,
-                  model: 'claude-opus-4-5',
+                  model: 'claude-sonnet-4-6',
                   systemPrompt: managedOverrides?.systemPrompt ?? instructions ?? undefined,
                   tools: managedOverrides?.tools ?? CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
                   ...(managedOverrides?.mcpServers ? { mcpServers: managedOverrides.mcpServers } : {}),
