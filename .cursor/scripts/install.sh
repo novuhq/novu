@@ -48,6 +48,21 @@ ensure_tmux() {
 
 ensure_tmux
 
+ensure_docker_cli_access() {
+  if docker info >/dev/null 2>&1; then
+    return 0
+  fi
+
+  if [ ! -S /var/run/docker.sock ]; then
+    return 0
+  fi
+
+  log "Docker socket not accessible; widening permissions for agent session"
+  sudo chmod 666 /var/run/docker.sock
+}
+
+ensure_docker_cli_access
+
 link_enterprise_source() {
   if [ -L .source ] && [ -e .source ]; then
     log ".source already linked -> $(readlink .source)"
