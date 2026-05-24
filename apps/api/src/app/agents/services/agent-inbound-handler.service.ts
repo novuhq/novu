@@ -110,6 +110,15 @@ function parseToolApprovalActionId(id: string | undefined): { approved: boolean;
   return { approved: verdict === 'approve', toolUseId };
 }
 
+/**
+ * Action-id shape emitted by the chat SDK when a card `link-button` is clicked.
+ * The platform opens `url` in the user's browser; no bridge `onAction` dispatch
+ * is required (and managed agents never have a bridge URL configured).
+ */
+function isLinkButtonActionId(id: string | undefined): boolean {
+  return typeof id === 'string' && id.startsWith('link-');
+}
+
 function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {
   const raw = asRecord(message.raw);
 
@@ -749,6 +758,20 @@ export class AgentInboundHandler implements OnModuleInit {
         approved: toolApproval.approved,
       });
 
+      return;
+    }
+
+    if (isLinkButtonActionId(action.id)) {
+      return;
+    }
+
+    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+      '_id',
+      'runtime',
+      'managedRuntime',
+    ]);
+
+    if (agent?.runtime === 'managed' && agent.managedRuntime) {
       return;
     }
 
