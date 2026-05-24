@@ -43,11 +43,13 @@ describe('Update Environment - /environments (PUT)', async () => {
     }
 
     it('should reject bridge.url pointing at localhost', async () => {
-      const result = await updateBridgeUrl('http://localhost:4000/api/novu');
+      const bridgeUrl = 'http://localhost:4000/api/novu';
+      const result = await updateBridgeUrl(bridgeUrl);
 
       expect(result.status).to.equal(400);
-      expect(JSON.stringify(result.body)).to.match(/bridge\.url/i);
-      await expectBridgeUrlNotStored('http://localhost:4000/api/novu');
+      expect(JSON.stringify(result.body)).to.match(/blocked by the outbound SSRF policy/i);
+      expect(JSON.stringify(result.body)).to.not.match(/localhost/i);
+      await expectBridgeUrlNotStored(bridgeUrl);
     });
 
     it('should reject bridge.url pointing at cloud metadata hostname', async () => {
@@ -55,7 +57,8 @@ describe('Update Environment - /environments (PUT)', async () => {
       const result = await updateBridgeUrl(bridgeUrl);
 
       expect(result.status).to.equal(400);
-      expect(JSON.stringify(result.body)).to.match(/bridge\.url/i);
+      expect(JSON.stringify(result.body)).to.match(/blocked by the outbound SSRF policy/i);
+      expect(JSON.stringify(result.body)).to.not.match(/metadata\.google\.internal/i);
       await expectBridgeUrlNotStored(bridgeUrl);
     });
 
@@ -64,7 +67,7 @@ describe('Update Environment - /environments (PUT)', async () => {
       const result = await updateBridgeUrl(bridgeUrl);
 
       expect(result.status).to.equal(400);
-      expect(JSON.stringify(result.body)).to.match(/bridge\.url/i);
+      expect(JSON.stringify(result.body)).to.match(/blocked by the outbound SSRF policy/i);
       await expectBridgeUrlNotStored(bridgeUrl);
     });
 
@@ -73,7 +76,8 @@ describe('Update Environment - /environments (PUT)', async () => {
       const result = await updateBridgeUrl(bridgeUrl);
 
       expect(result.status).to.equal(400);
-      expect(JSON.stringify(result.body)).to.match(/bridge\.url/i);
+      expect(JSON.stringify(result.body)).to.match(/blocked by the outbound SSRF policy/i);
+      expect(JSON.stringify(result.body)).to.not.match(/169\.254\.169\.254/);
       await expectBridgeUrlNotStored(bridgeUrl);
     });
 
@@ -92,6 +96,7 @@ describe('Update Environment - /environments (PUT)', async () => {
 
       const environment = await environmentRepository.findOne({ _id: session.environment._id });
       expect(environment?.bridge?.url || '').to.equal('');
+      expect(environment?.echo?.url || '').to.equal('');
     });
   });
 });

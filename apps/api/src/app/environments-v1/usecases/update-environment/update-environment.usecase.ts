@@ -4,14 +4,24 @@ import {
   UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { assertSafeOutboundUrl, resolvePublicAddresses, SsrfBlockedError } from '@novu/application-generic';
+import {
+  assertSafeOutboundUrl,
+  PinoLogger,
+  resolvePublicAddresses,
+  SsrfBlockedError,
+} from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentEnum, PROTECTED_ENVIRONMENTS } from '@novu/shared';
 import { UpdateEnvironmentCommand } from './update-environment.command';
 
 @Injectable()
 export class UpdateEnvironment {
-  constructor(private environmentRepository: EnvironmentRepository) {}
+  constructor(
+    private environmentRepository: EnvironmentRepository,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: UpdateEnvironmentCommand) {
     const environment = await this.environmentRepository.findOne({
@@ -84,7 +94,8 @@ export class UpdateEnvironment {
       await resolvePublicAddresses(parsed.hostname, { useCache: true });
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        throw new BadRequestException(`bridge.url: ${err.message}`);
+        this.logger.warn({ err, bridgeUrl }, 'Blocked bridge.url update by outbound SSRF policy');
+        throw new BadRequestException('bridge.url is blocked by the outbound SSRF policy.');
       }
       throw err;
     }
