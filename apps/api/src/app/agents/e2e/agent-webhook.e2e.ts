@@ -1,4 +1,5 @@
 import {
+  AgentRepository,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
@@ -21,9 +22,15 @@ import {
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
 import { buildSlackAppMention, buildSlackChallenge, signSlackRequest } from './helpers/providers/slack';
-import { startSlackEmulator } from './helpers/slack-emulator';
+import {
+  findEmulatorChannel,
+  findEmulatorUser,
+  type SlackChannelSummary,
+  type SlackUserSummary,
+  startSlackEmulator,
+} from './helpers/slack-emulator';
 
-const WEBHOOK_SETTLE_TIMEOUT_MS = 5_000;
+const WEBHOOK_SETTLE_TIMEOUT_MS = 10_000;
 const WEBHOOK_SETTLE_POLL_MS = 50;
 const WEBHOOK_SETTLE_GRACE_MS = 200;
 
@@ -50,11 +57,10 @@ async function pollFor<T>(
   );
 }
 
-function clearChatSdkInstances(): void {
-  const chatSdkService = testServer.getService(ChatSdkService) as unknown as {
-    instances: { clear: () => void };
-  };
-  chatSdkService.instances.clear();
+async function clearChatSdkInstances(): Promise<void> {
+  const chatSdkService = testServer.getService(ChatSdkService);
+
+  await chatSdkService.onModuleDestroy();
 }
 
 function mockEmoji(name: string): EmojiValue {
@@ -96,14 +102,19 @@ function mockMessage(opts: { id?: string; userId: string; text: string; fullName
   };
 }
 
+const agentRepository = new AgentRepository();
+
 describe('Agent Webhook - inbound flow #novu-v2', () => {
   let ctx: AgentTestContext;
   let inboundHandler: AgentInboundHandler;
   let configResolver: AgentConfigResolver;
   let bridgeCalls: AgentExecutionParams[];
+  let slackEmulatorUrl: string;
 
-  before(() => {
+  before(async () => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+    const emulator = await startSlackEmulator();
+    slackEmulatorUrl = emulator.url;
   });
 
   beforeEach(async () => {
@@ -120,7 +131,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
 
   afterEach(async () => {
     await waitForBridgeCallsToSettle();
-    clearChatSdkInstances();
+    await clearChatSdkInstances();
     sinon.restore();
   });
 
@@ -144,6 +155,10 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       stableCount = count;
       stableSince = Date.now();
     }
+
+    throw new Error(
+      `Bridge calls did not settle within ${timeoutMs}ms (last count: ${bridgeCalls.length})`
+    );
   }
 
   async function waitForBridgeCallCount(expected: number): Promise<void> {
@@ -373,17 +388,30 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
   });
 
   describe('Inactive agent', () => {
+    let slackChannel: SlackChannelSummary;
+    let slackUser: SlackUserSummary;
+
     before(async () => {
-      await startSlackEmulator();
+      slackChannel = await findEmulatorChannel(slackEmulatorUrl, 'incidents');
+      slackUser = await findEmulatorUser(slackEmulatorUrl, 'e2e@novu.test');
+    });
+
+    beforeEach(async () => {
+      // The Slack emulator returns 404 for assistant.threads.setStatus; awaiting
+      // acknowledgeOnReceived can block inbound processing long enough to flake.
+      await agentRepository.update(
+        { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
+        { $set: { 'behavior.acknowledgeOnReceived': false } }
+      );
     });
 
     it('should return 200 and not process inbound when agent is inactive', async () => {
       await setAgentActive(false);
 
       await postSlackAppMentionWebhook({
-        userId: 'U_INACTIVE',
-        channel: 'C_TEST',
-        threadTs: `T_INACTIVE_${Date.now()}`,
+        userId: slackUser.id,
+        channel: slackChannel.id,
+        threadTs: `${Math.floor(Date.now() / 1000)}.000200`,
       });
 
       await waitForBridgeCallCount(0);
@@ -394,9 +422,9 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       await setAgentActive(true);
 
       await postSlackAppMentionWebhook({
-        userId: 'U_REACTIVATED',
-        channel: 'C_TEST',
-        threadTs: `T_REACTIVATE_${Date.now()}`,
+        userId: slackUser.id,
+        channel: slackChannel.id,
+        threadTs: `${Math.floor(Date.now() / 1000)}.000300`,
       });
 
       await waitForBridgeCallCount(1);
