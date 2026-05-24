@@ -29,7 +29,11 @@ describe('CalculateDemoClaudeQuota', () => {
   });
 
   afterEach(() => {
-    process.env.NOVU_MANAGED_CLAUDE_API_KEY = previousApiKey;
+    if (previousApiKey === undefined) {
+      delete process.env.NOVU_MANAGED_CLAUDE_API_KEY;
+    } else {
+      process.env.NOVU_MANAGED_CLAUDE_API_KEY = previousApiKey;
+    }
   });
 
   it('returns undefined when demo credentials are not configured', async () => {
@@ -59,7 +63,10 @@ describe('CalculateDemoClaudeQuota', () => {
 
     expect(result?.isExhausted).to.equal(true);
     expect(result?.reason).to.equal('conversations');
-    expect(result?.conversations).to.deep.equal({ count: 10, limit: 10 });
+    expect(result?.conversations).to.deep.equal({
+      count: 10,
+      limit: CalculateDemoClaudeQuota.MAX_CONVERSATIONS,
+    });
   });
 
   it('marks token quota exhausted for a conversation', async () => {
@@ -80,7 +87,10 @@ describe('CalculateDemoClaudeQuota', () => {
 
     expect(result?.isExhausted).to.equal(true);
     expect(result?.reason).to.equal('tokens');
-    expect(result?.tokens).to.deep.equal({ count: 100_000, limit: 100_000 });
+    expect(result?.tokens).to.deep.equal({
+      count: 100_000,
+      limit: CalculateDemoClaudeQuota.MAX_TOKENS_PER_CONVERSATION,
+    });
   });
 
   it('detects demo integrations via provider id', async () => {

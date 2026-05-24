@@ -3,13 +3,13 @@ import { CalculateDemoClaudeQuota, CalculateDemoClaudeQuotaCommand } from '@novu
 import { AgentRepository } from '@novu/dal';
 import { GetAgentDemoQuotaCommand } from './get-agent-demo-quota.command';
 
-export type AgentDemoQuotaResponseDto = {
+export interface AgentDemoQuotaResponseDto {
   conversations: { count: number; limit: number };
   tokens?: { count: number; limit: number };
   isExhausted: boolean;
   reason?: 'conversations' | 'tokens';
   isDemoAgent: boolean;
-};
+}
 
 @Injectable()
 export class GetAgentDemoQuota {

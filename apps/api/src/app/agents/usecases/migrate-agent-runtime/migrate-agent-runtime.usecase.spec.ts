@@ -114,7 +114,11 @@ describe('MigrateAgentRuntime', () => {
 
   afterEach(() => {
     sinon.restore();
-    process.env.NOVU_MANAGED_CLAUDE_API_KEY = previousApiKey;
+    if (previousApiKey === undefined) {
+      delete process.env.NOVU_MANAGED_CLAUDE_API_KEY;
+    } else {
+      process.env.NOVU_MANAGED_CLAUDE_API_KEY = previousApiKey;
+    }
   });
 
   it('migrates agent from demo integration to user Anthropic integration', async () => {

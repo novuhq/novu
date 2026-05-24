@@ -33,7 +33,7 @@ export function DemoQuotaBanner({ quota, onUpgrade }: DemoQuotaBannerProps) {
   return (
     <div className="border-warning/30 bg-warning/5 flex flex-col gap-3 rounded-lg border p-4">
       <div className="flex items-start gap-2">
-        <RiAlertLine className="text-warning mt-0.5 size-4 shrink-0" />
+        <RiAlertLine className="text-warning mt-0.5 size-4 shrink-0" aria-hidden="true" />
         <div className="flex flex-col gap-1">
           <span className="text-text-strong text-label-sm font-medium">
             {quota.isExhausted ? 'Novu demo quota reached' : 'Novu demo quota almost reached'}

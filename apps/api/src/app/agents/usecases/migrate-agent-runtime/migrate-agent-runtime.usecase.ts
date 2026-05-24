@@ -100,50 +100,56 @@ export class MigrateAgentRuntime {
       skills: config.skills,
     });
 
-    await this.agentRepository.withTransaction(async (session) => {
-      await this.agentRepository.update(
-        {
-          _id: agent._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        {
-          $set: {
-            managedRuntime: {
-              providerId: AgentRuntimeProviderIdEnum.Anthropic,
-              _integrationId: targetIntegration._id,
-              externalAgentId: created.externalAgentId,
-            },
-          },
-        },
-        session ? { session } : {}
-      );
-
-      await this.conversationRepository.clearExternalSessionIdsForAgent(
-        command.environmentId,
-        command.organizationId,
-        agent._id,
-        session ? { session } : undefined
-      );
-
-      const remainingDemoAgents = await this.agentRepository.count({
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-        'managedRuntime._integrationId': sourceIntegration._id,
-      });
-
-      if (remainingDemoAgents === 0) {
-        await this.integrationRepository.update(
+    try {
+      await this.agentRepository.withTransaction(async (session) => {
+        await this.agentRepository.update(
           {
-            _id: sourceIntegration._id,
+            _id: agent._id,
             _environmentId: command.environmentId,
             _organizationId: command.organizationId,
           },
-          { $set: { active: false } },
+          {
+            $set: {
+              managedRuntime: {
+                providerId: AgentRuntimeProviderIdEnum.Anthropic,
+                _integrationId: targetIntegration._id,
+                externalAgentId: created.externalAgentId,
+              },
+            },
+          },
           session ? { session } : {}
         );
-      }
-    });
+
+        await this.conversationRepository.clearExternalSessionIdsForAgent(
+          command.environmentId,
+          command.organizationId,
+          agent._id,
+          session ? { session } : undefined
+        );
+
+        const remainingDemoAgents = await this.agentRepository.count({
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+          'managedRuntime._integrationId': sourceIntegration._id,
+        });
+
+        if (remainingDemoAgents === 0) {
+          await this.integrationRepository.update(
+            {
+              _id: sourceIntegration._id,
+              _environmentId: command.environmentId,
+              _organizationId: command.organizationId,
+            },
+            { $set: { active: false } },
+            session ? { session } : {}
+          );
+        }
+      });
+    } catch (error) {
+      await targetProvider.deleteAgent(created.externalAgentId).catch(() => undefined);
+
+      throw error;
+    }
 
     this.analyticsService.track('[Novu Managed Claude] - Upgraded to own key', command.userId, {
       environmentId: command.environmentId,

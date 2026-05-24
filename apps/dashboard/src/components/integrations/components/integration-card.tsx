@@ -1,5 +1,4 @@
 import {
-  AgentRuntimeProviderIdEnum,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   type IEnvironment,
@@ -25,7 +24,7 @@ import { EnvironmentBranchIcon } from '../../primitives/environment-branch-icon'
 import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
 import { TableIntegration } from '../types';
 import { ProviderIcon } from './provider-icon';
-import { isDemoIntegration } from './utils/helpers';
+import { isDemoIntegration, getDemoIntegrationTooltipMessage } from './utils/helpers';
 
 type IntegrationCardVariant = 'default' | 'connectSheet';
 
@@ -68,6 +67,7 @@ export function IntegrationCard({
 
   const isDemo = isDemoIntegration(provider.id);
   const isFreePlan = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
+  const demoTooltipMessage = getDemoIntegrationTooltipMessage(provider.id, provider.channel);
 
   if (variant === 'connectSheet') {
     return (
@@ -102,11 +102,7 @@ export function IntegrationCard({
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>
-                  {provider.id === AgentRuntimeProviderIdEnum.NovuAnthropic
-                    ? 'This is a demo Claude provider for testing only, capped at 10 conversations per month and 100k tokens per conversation. Not suitable for production use.'
-                    : `This is a demo provider for testing purposes only and capped at 300 ${provider.channel === 'email' ? 'emails' : 'sms'} per month. Not suitable for production use.`}
-                </p>
+                <p>{demoTooltipMessage}</p>
               </TooltipContent>
             </Tooltip>
           ) : null}
@@ -173,10 +169,7 @@ export function IntegrationCard({
               </span>
             </TooltipTrigger>
             <TooltipContent>
-              <p>
-                This is a demo provider for testing purposes only and capped at 300{' '}
-                {provider.channel === 'email' ? 'emails' : 'sms'} per month. Not suitable for production use.
-              </p>
+              <p>{demoTooltipMessage}</p>
             </TooltipContent>
           </Tooltip>
         )}

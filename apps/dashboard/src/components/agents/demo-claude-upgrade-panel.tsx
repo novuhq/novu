@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
   getAgentDemoQuotaQueryKey,
+  getAgentDetailQueryKey,
+  getAgentIntegrationsQueryKey,
   migrateAgentRuntime,
   verifyManagedCredentials,
   type AgentResponse,
@@ -28,6 +30,21 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
   const [workspaceId, setWorkspaceId] = useState('');
   const [errors, setErrors] = useState<{ apiKey?: string }>({});
   const [step, setStep] = useState<'credentials' | 'migrating'>('credentials');
+
+  const resetForm = () => {
+    setApiKey('');
+    setWorkspaceId('');
+    setErrors({});
+    setStep('credentials');
+  };
+
+  const handleOpenChange = (nextOpen: boolean) => {
+    onOpenChange(nextOpen);
+
+    if (!nextOpen) {
+      resetForm();
+    }
+  };
 
   const upgradeMutation = useMutation({
     mutationFn: async () => {
@@ -62,11 +79,10 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
     onSuccess: () => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       queryClient.invalidateQueries({ queryKey: getAgentDemoQuotaQueryKey(environment._id, agent.identifier) });
+      queryClient.invalidateQueries({ queryKey: getAgentIntegrationsQueryKey(environment._id, agent.identifier) });
+      queryClient.invalidateQueries({ queryKey: getAgentDetailQueryKey(environment._id, agent.identifier) });
       showSuccessToast('Agent migrated', 'New conversations will run on your Anthropic account.');
-      onOpenChange(false);
-      setApiKey('');
-      setWorkspaceId('');
-      setStep('credentials');
+      handleOpenChange(false);
     },
     onError: (error: unknown) => {
       setStep('credentials');
@@ -77,7 +93,7 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
   });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={handleOpenChange}>
       <SheetContent className="sm:max-w-md">
         <SheetHeader>
           <SheetTitle>Use your own Anthropic key</SheetTitle>

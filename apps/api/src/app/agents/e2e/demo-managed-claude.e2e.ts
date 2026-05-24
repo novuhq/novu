@@ -61,7 +61,11 @@ describe('Demo Managed Claude #novu-v2', () => {
   });
 
   after(() => {
-    process.env.NOVU_MANAGED_CLAUDE_API_KEY = previousManagedClaudeKey;
+    if (previousManagedClaudeKey === undefined) {
+      delete process.env.NOVU_MANAGED_CLAUDE_API_KEY;
+    } else {
+      process.env.NOVU_MANAGED_CLAUDE_API_KEY = previousManagedClaudeKey;
+    }
     if (previousConversationalAgentsFlag === undefined) {
       delete process.env.IS_CONVERSATIONAL_AGENTS_ENABLED;
     } else {
