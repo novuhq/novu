@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
-import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
+import { OrganizationRepository, UserRepository } from '@novu/dal';
+import { OrganizationPublicResponse } from '../../mappers/organization-response.mapper';
 import { ApiServiceLevelEnum, EnvironmentEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
 
 import { CreateEnvironmentCommand } from '../../../environments-v1/usecases/create-environment/create-environment.command';
@@ -22,7 +23,7 @@ export class CreateOrganization {
     private analyticsService: AnalyticsService
   ) {}
 
-  async execute(command: CreateOrganizationCommand): Promise<OrganizationEntity> {
+  async execute(command: CreateOrganizationCommand): Promise<OrganizationPublicResponse> {
     const user = await this.userRepository.findById(command.userId);
     if (!user) throw new BadRequestException('User not found');
 
@@ -85,7 +86,7 @@ export class CreateOrganization {
       })
     );
 
-    return organizationAfterChanges as OrganizationEntity;
+    return organizationAfterChanges as OrganizationPublicResponse;
   }
 
   private async updateJobTitle(user, jobTitle: JobTitleEnum) {

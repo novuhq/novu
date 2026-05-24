@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
+import { OrganizationRepository } from '@novu/dal';
+import { OrganizationPublicResponse } from '../../../mappers/organization-response.mapper';
 import { ApiAuthSchemeEnum, MemberRoleEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
@@ -38,7 +39,7 @@ export class SyncExternalOrganization {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationEntity> {
+  async execute(command: SyncExternalOrganizationCommand): Promise<OrganizationPublicResponse> {
     const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
     const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
 
@@ -136,7 +137,7 @@ export class SyncExternalOrganization {
       })
     );
 
-    if (organizationAfterChanges !== null) {
+    if (organizationAfterChanges) {
       await this.createCustomer(command.email, organizationAfterChanges._id);
     }
 
@@ -147,7 +148,7 @@ export class SyncExternalOrganization {
       );
     }
 
-    return organizationAfterChanges as OrganizationEntity;
+    return organizationAfterChanges as OrganizationPublicResponse;
   }
 
   private extractDomainFromEmail(email: string): string | null {

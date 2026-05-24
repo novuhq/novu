@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
-import { OrganizationEntity, UserRepository } from '@novu/dal';
+import { UserRepository } from '@novu/dal';
+import { OrganizationPublicResponse } from '../../../organization/mappers/organization-response.mapper';
 import { normalizeEmail, SignUpOriginEnum } from '@novu/shared';
 import { hash } from 'bcrypt';
 import { CreateOrganizationCommand } from '../../../organization/usecases/create-organization/create-organization.command';
@@ -32,7 +33,7 @@ export class UserRegister {
       password: passwordHash,
     });
 
-    let organization: OrganizationEntity;
+    let organization: OrganizationPublicResponse;
     if (command.organizationName) {
       organization = await this.createOrganizationUsecase.execute(
         CreateOrganizationCommand.create({

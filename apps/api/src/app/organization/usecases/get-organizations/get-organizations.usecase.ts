@@ -1,5 +1,6 @@
 import { Injectable, Scope } from '@nestjs/common';
 import { OrganizationRepository } from '@novu/dal';
+import { toOrganizationPublicResponses } from '../../mappers/organization-response.mapper';
 import { GetOrganizationsCommand } from './get-organizations.command';
 
 @Injectable({
@@ -9,6 +10,8 @@ export class GetOrganizations {
   constructor(private readonly organizationRepository: OrganizationRepository) {}
 
   async execute(command: GetOrganizationsCommand) {
-    return await this.organizationRepository.findUserActiveOrganizations(command.userId);
+    const organizations = await this.organizationRepository.findUserActiveOrganizations(command.userId);
+
+    return toOrganizationPublicResponses(organizations);
   }
 }
