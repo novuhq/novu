@@ -2,9 +2,8 @@
 # Idempotent install hook for Cursor Background Agents.
 # Runs on every agent boot via .cursor/environment.json.
 #
-# - Wires .source/ to the sibling packages-enterprise clone (multi-repo env).
-#   .source is normally a git submodule, but Background Agents clone the
-#   private enterprise repo as a sibling instead, so we link it in.
+# - Wires .source/ to packages-enterprise (sibling under /agent/repos, or git submodule).
+#   Prefers a Cursor dependency clone when present; otherwise initializes .source via git.
 # - Installs deps with the frozen lockfile.
 # - Refreshes enterprise src symlinks (no-op when .source is missing).
 # - Seeds .env files only if missing (prefers .env.agent over .example.env).
@@ -63,6 +62,77 @@ ensure_docker_cli_access() {
 
 ensure_docker_cli_access
 
+is_enterprise_repo() {
+  local path="$1"
+
+  # packages-enterprise uses top-level ee packages (api/, auth/, …), not packages/*.
+  [ -d "$path/api" ] && [ -d "$path/auth" ] && [ -e "$path/.git" ]
+}
+
+configure_git_for_github_https() {
+  if git config --global --get-regexp '^url\.https://github\.com/\.insteadof' >/dev/null 2>&1; then
+    return 0
+  fi
+
+  git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+  if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
+    gh auth setup-git >/dev/null 2>&1 || true
+  fi
+}
+
+find_enterprise_repo_candidate() {
+  local candidate
+
+  for candidate in \
+    "$REPO_ROOT/../packages-enterprise" \
+    "$HOME/packages-enterprise" \
+    "/workspaces/packages-enterprise" \
+    "/workspace/packages-enterprise" \
+    "/agent/repos/packages-enterprise"; do
+    if is_enterprise_repo "$candidate"; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+
+  if [ -d /agent/repos ]; then
+    for candidate in /agent/repos/*; do
+      if is_enterprise_repo "$candidate"; then
+        printf '%s' "$candidate"
+        return 0
+      fi
+    done
+  fi
+
+  return 1
+}
+
+link_enterprise_source_to() {
+  local target="$1"
+
+  [ -L .source ] && rm -f .source
+  [ -d .source ] && rm -rf .source
+  ln -sfn "$target" .source
+  log "Linked .source -> $target"
+}
+
+init_enterprise_submodule() {
+  if [ -d .source ] && [ -n "$(ls -A .source 2>/dev/null)" ]; then
+    return 0
+  fi
+
+  if ! git -C "$REPO_ROOT" config -f .gitmodules --get submodule.enterprise.url >/dev/null 2>&1; then
+    return 1
+  fi
+
+  log "Initializing .source via git submodule (cloud agent fallback)"
+  configure_git_for_github_https
+  git -C "$REPO_ROOT" submodule update --init --depth 1 .source
+
+  is_enterprise_repo "$REPO_ROOT/.source"
+}
+
 link_enterprise_source() {
   if [ -L .source ] && [ -e .source ]; then
     log ".source already linked -> $(readlink .source)"
@@ -70,28 +140,27 @@ link_enterprise_source() {
   fi
 
   if [ -d .source ] && [ -n "$(ls -A .source 2>/dev/null)" ]; then
-    log ".source already populated"
+    if is_enterprise_repo "$REPO_ROOT/.source"; then
+      log ".source already populated"
+      return 0
+    fi
+  fi
+
+  local candidate
+  if candidate="$(find_enterprise_repo_candidate)"; then
+    link_enterprise_source_to "$candidate"
     return 0
   fi
 
-  for candidate in \
-    "$REPO_ROOT/../packages-enterprise" \
-    "$HOME/packages-enterprise" \
-    "/workspaces/packages-enterprise" \
-    "/workspace/packages-enterprise"; do
-    if [ -d "$candidate" ] && [ -d "$candidate/packages" ]; then
-      [ -L .source ] && rm -f .source
-      [ -d .source ] && rmdir .source 2>/dev/null || true
-      ln -sfn "$candidate" .source
-      log "Linked .source -> $candidate"
-      return 0
-    fi
-  done
+  if init_enterprise_submodule; then
+    log ".source initialized from git submodule"
+    return 0
+  fi
 
-  log "WARN: packages-enterprise sibling clone not found."
-  log "      Add 'novuhq/packages-enterprise' to the Background Agent's"
-  log "      multi-repo selection (or check repositoryDependencies in"
-  log "      .cursor/environment.json). Continuing in OSS-only mode."
+  log "WARN: packages-enterprise not available."
+  log "      Ensure repositoryDependencies includes github.com/novuhq/packages-enterprise"
+  log "      and the environment token can read it, or that gh auth can clone .source."
+  log "      Continuing in OSS-only mode."
 }
 
 ensure_env() {
