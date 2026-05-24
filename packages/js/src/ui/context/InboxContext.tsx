@@ -39,6 +39,12 @@ type InboxContextType = {
 
 const InboxContext = createContext<InboxContextType | undefined>(undefined);
 
+const KEYLESS_APPLICATION_IDENTIFIER_PREFIX = 'pk_keyless_';
+
+function isKeylessApplicationIdentifier(applicationIdentifier: string | null | undefined): boolean {
+  return !!applicationIdentifier?.startsWith(KEYLESS_APPLICATION_IDENTIFIER_PREFIX);
+}
+
 const STATUS_TO_FILTER: Record<NotificationStatus, NotificationFilter> = {
   [NotificationStatus.UNREAD_READ]: { archived: false, snoozed: false },
   [NotificationStatus.UNREAD]: { read: false, snoozed: false },
@@ -138,18 +144,23 @@ export const InboxProvider = (props: InboxProviderProps) => {
       if (!data) {
         return;
       }
-      const identifier = window.localStorage.getItem('novu_keyless_application_identifier');
+      const storedKeylessIdentifier = window.localStorage.getItem('novu_keyless_application_identifier');
 
       setHideBranding(data.removeNovuBranding);
       setIsDevelopmentMode(data.isDevelopmentMode);
       setMaxSnoozeDurationHours(data.maxSnoozeDurationHours);
       setContextKeys(data.contextKeys);
 
-      if (data.isDevelopmentMode && !props.applicationIdentifier) {
-        setIsKeyless(!data.applicationIdentifier || !!identifier?.startsWith('pk_keyless_'));
+      if (!props.applicationIdentifier) {
+        const keylessActive =
+          isKeylessApplicationIdentifier(data.applicationIdentifier) ||
+          isKeylessApplicationIdentifier(storedKeylessIdentifier);
+
+        setIsKeyless(keylessActive);
         setApplicationIdentifier(data.applicationIdentifier ?? null);
       } else {
-        setApplicationIdentifier(props.applicationIdentifier ?? null);
+        setIsKeyless(false);
+        setApplicationIdentifier(props.applicationIdentifier);
       }
     },
   });

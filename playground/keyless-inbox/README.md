@@ -41,3 +41,14 @@ If your local stack supports keyless:
 ## Clear keyless state
 
 Keyless `applicationIdentifier` is stored in `localStorage` under `novu_keyless_application_identifier`. Clear site data or remove that key to start a fresh demo environment.
+
+## Troubleshooting: keyless UI not showing
+
+The Inbox shows keyless-specific UI (empty-state CTA, “Send notification”, “Keyless mode” footer) only when the SDK detects a `pk_keyless_*` application identifier from the session response.
+
+If you only see the generic empty inbox:
+
+1. Clear `novu_keyless_application_identifier` from `localStorage` and reload.
+2. Confirm you are **not** passing `applicationIdentifier` or `subscriber` to `<Inbox />`.
+3. When using a **local** API, keyless provisioning requires enterprise + keyless org env vars; otherwise the session fails or never returns `pk_keyless_*`.
+4. Use Novu cloud (default, no `.env`) for the quickest path — see `packages/js` / API session fixes if `isDevelopmentMode` was false for keyless environments.
