@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Inject, Injectable, NotFoundExc
 import {
   AnalyticsService,
   areNovuEmailCredentialsSet,
+  areNovuManagedClaudeCredentialsSet,
   areNovuSlackCredentialsSet,
   areNovuSmsCredentialsSet,
   decryptCredentials,
@@ -83,6 +84,25 @@ export class CreateIntegration {
 
   private async validate(command: CreateIntegrationCommand): Promise<void> {
     const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
+
+    if (
+      command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic &&
+      !areNovuManagedClaudeCredentialsSet()
+    ) {
+      throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
+    }
+
+    if (isAgentKind && command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+      const count = await this.integrationRepository.count({
+        _environmentId: command.environmentId,
+        providerId: command.providerId,
+        kind: IntegrationKindEnum.AGENT,
+      });
+
+      if (count > 0) {
+        throw new ConflictException('Integration with novu provider for agent runtime already exists');
+      }
+    }
 
     if (!isAgentKind) {
       const existingIntegration = await this.integrationRepository.findOne({
@@ -208,7 +228,10 @@ export class CreateIntegration {
 
       const integrationEntity = await this.integrationRepository.create(query);
 
-      if (isAgentKind) {
+      const shouldProvisionAgentRuntime =
+        isAgentKind && command.providerId !== AgentRuntimeProviderIdEnum.NovuAnthropic;
+
+      if (shouldProvisionAgentRuntime) {
         await this.provisionAgentRuntimeIntegration(integrationEntity._id, identifier, command);
       }
 

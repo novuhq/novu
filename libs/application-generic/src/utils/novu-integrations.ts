@@ -1,3 +1,20 @@
+export const areNovuManagedClaudeCredentialsSet = () => {
+  return (
+    typeof process.env.NOVU_MANAGED_CLAUDE_API_KEY !== 'undefined' &&
+    process.env.NOVU_MANAGED_CLAUDE_API_KEY !== ''
+  );
+};
+
+export function getNovuManagedClaudeApiKey(): string {
+  const apiKey = process.env.NOVU_MANAGED_CLAUDE_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('NOVU_MANAGED_CLAUDE_API_KEY is not configured');
+  }
+
+  return apiKey;
+}
+
 export const areNovuEmailCredentialsSet = () => {
   return (
     typeof process.env.NOVU_EMAIL_INTEGRATION_API_KEY !== 'undefined' &&

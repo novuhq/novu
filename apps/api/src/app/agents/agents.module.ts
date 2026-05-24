@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import {
+  CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
   UpdateSubscriber,
@@ -84,6 +85,7 @@ import { USE_CASES } from './usecases';
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
     CalculateLimitNovuIntegration,
+    CalculateDemoClaudeQuota,
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,
     UpdateSubscriberChannel,

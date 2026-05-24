@@ -25,6 +25,8 @@ import { ListAgentMcpServers } from './list-agent-mcp-servers/list-agent-mcp-ser
 import { ListAgents } from './list-agents/list-agents.usecase';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { ProvisionManagedAgent } from './provision-managed-agent/provision-managed-agent.usecase';
+import { MigrateAgentRuntime } from './migrate-agent-runtime/migrate-agent-runtime.usecase';
+import { GetAgentDemoQuota } from './get-agent-demo-quota/get-agent-demo-quota.usecase';
 import { RemoveAgentIntegration } from './remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmail } from './send-agent-test-email/send-agent-test-email.usecase';
 import { SendAgentWelcomeMessage } from './send-agent-welcome-message/send-agent-welcome-message.usecase';
@@ -71,6 +73,8 @@ export const USE_CASES = [
   ListAgentEmoji,
   ListAgentIntegrations,
   UpdateAgentIntegration,
+  GetAgentDemoQuota,
+  MigrateAgentRuntime,
   RemoveAgentIntegration,
   HandleAgentReply,
   HandleToolProgress,

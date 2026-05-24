@@ -1,4 +1,5 @@
 import {
+  AgentRuntimeProviderIdEnum,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   type IEnvironment,
@@ -102,8 +103,9 @@ export function IntegrationCard({
               </TooltipTrigger>
               <TooltipContent>
                 <p>
-                  This is a demo provider for testing purposes only and capped at 300{' '}
-                  {provider.channel === 'email' ? 'emails' : 'sms'} per month. Not suitable for production use.
+                  {provider.id === AgentRuntimeProviderIdEnum.NovuAnthropic
+                    ? 'This is a demo Claude provider for testing only, capped at 10 conversations per month and 100k tokens per conversation. Not suitable for production use.'
+                    : `This is a demo provider for testing purposes only and capped at 300 ${provider.channel === 'email' ? 'emails' : 'sms'} per month. Not suitable for production use.`}
                 </p>
               </TooltipContent>
             </Tooltip>

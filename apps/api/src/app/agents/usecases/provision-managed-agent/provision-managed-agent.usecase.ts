@@ -1,7 +1,14 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import {
+  areNovuManagedClaudeCredentialsSet,
+  decryptCredentials,
+  encryptCredentials,
+  getAgentRuntimeProvider,
+  getNovuManagedClaudeApiKey,
+  PinoLogger,
+} from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
@@ -39,7 +46,7 @@ export class ProvisionManagedAgent {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'credentials', 'providerId'],
+      ['_id', 'credentials', 'providerId', 'name'],
       session ? { session } : {}
     );
 
@@ -47,18 +54,53 @@ export class ProvisionManagedAgent {
       throw new NotFoundException(`Integration "${command.integrationId}" not found.`);
     }
 
-    const decryptedCredentials = decryptCredentials(integration.credentials);
+    let decryptedCredentials = decryptCredentials(integration.credentials);
+    const isNovuManagedClaude = integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
+    let resolvedApiKey: string;
 
-    if (!decryptedCredentials.apiKey) {
+    if (isNovuManagedClaude) {
+      if (!areNovuManagedClaudeCredentialsSet()) {
+        throw new UnprocessableEntityException('Novu managed Claude credentials are not configured.');
+      }
+
+      resolvedApiKey = getNovuManagedClaudeApiKey();
+
+      if (!decryptedCredentials.externalEnvironmentId) {
+        const provisioningProvider = getAgentRuntimeProvider(
+          AgentRuntimeProviderIdEnum.NovuAnthropic,
+          resolvedApiKey
+        );
+        const provisionResult = await provisioningProvider.provisionIntegration({
+          integrationName: integration.name ?? 'Novu Managed Claude',
+        });
+        const nextCredentials = encryptCredentials({
+          ...decryptedCredentials,
+          ...provisionResult.credentialsUpdate,
+        });
+
+        await this.integrationRepository.update(
+          {
+            _id: integration._id,
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+          },
+          { $set: { credentials: nextCredentials } },
+          session ? { session } : {}
+        );
+
+        decryptedCredentials = decryptCredentials(nextCredentials);
+      }
+    } else if (!decryptedCredentials.apiKey) {
       throw new UnprocessableEntityException(
         `Integration "${command.integrationId}" has no API key configured. Please complete the integration setup.`
       );
+    } else {
+      resolvedApiKey = decryptedCredentials.apiKey as string;
     }
 
     const resolvedIntegrationId = integration._id;
-    const resolvedApiKey = decryptedCredentials.apiKey;
-
-    const runtimeProvider = getAgentRuntimeProvider(command.providerId, resolvedApiKey);
+    const runtimeProviderId = integration.providerId as AgentRuntimeProviderIdEnum;
+    const runtimeProvider = getAgentRuntimeProvider(runtimeProviderId, resolvedApiKey);
 
     if (command.externalEnvironmentId && command.externalEnvironmentId !== decryptedCredentials.externalEnvironmentId) {
       const providerEnvironment = await runtimeProvider.getEnvironment(command.externalEnvironmentId);
@@ -136,7 +178,7 @@ export class ProvisionManagedAgent {
           $set: {
             runtime: 'managed',
             managedRuntime: {
-              providerId: command.providerId,
+              providerId: runtimeProviderId,
               _integrationId: resolvedIntegrationId,
               externalAgentId,
             },

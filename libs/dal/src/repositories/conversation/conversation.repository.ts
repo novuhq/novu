@@ -203,6 +203,51 @@ export class ConversationRepository extends BaseRepositoryV2<
     await this.update({ _id: conversationId, _environmentId: environmentId }, { $unset: { externalSessionId: '' } });
   }
 
+  async clearExternalSessionIdsForAgent(
+    environmentId: string,
+    organizationId: string,
+    agentId: string
+  ): Promise<void> {
+    await this.update(
+      {
+        _agentId: agentId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      { $unset: { externalSessionId: '' } }
+    );
+  }
+
+  async incrementTokenUsage(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    delta: {
+      inputTokens?: number;
+      outputTokens?: number;
+      cacheReadTokens?: number;
+      cacheCreationTokens?: number;
+      totalTokens?: number;
+    }
+  ): Promise<void> {
+    const inc: Record<string, number> = {};
+
+    if (delta.inputTokens) inc['tokenUsage.inputTokens'] = delta.inputTokens;
+    if (delta.outputTokens) inc['tokenUsage.outputTokens'] = delta.outputTokens;
+    if (delta.cacheReadTokens) inc['tokenUsage.cacheReadTokens'] = delta.cacheReadTokens;
+    if (delta.cacheCreationTokens) inc['tokenUsage.cacheCreationTokens'] = delta.cacheCreationTokens;
+    if (delta.totalTokens) inc['tokenUsage.totalTokens'] = delta.totalTokens;
+
+    if (Object.keys(inc).length === 0) {
+      return;
+    }
+
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $inc: inc }
+    );
+  }
+
   /**
    * Intentionally queries without _environmentId scope — session recovery and
    * edge callbacks only have the CF-generated session UUID and need to resolve

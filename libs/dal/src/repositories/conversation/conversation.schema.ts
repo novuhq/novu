@@ -81,6 +81,18 @@ const conversationSchema = new Schema<ConversationDBModel>(
     externalSessionId: {
       type: Schema.Types.String,
     },
+    tokenUsage: {
+      type: new Schema(
+        {
+          inputTokens: { type: Schema.Types.Number, default: 0 },
+          outputTokens: { type: Schema.Types.Number, default: 0 },
+          cacheReadTokens: { type: Schema.Types.Number, default: 0 },
+          cacheCreationTokens: { type: Schema.Types.Number, default: 0 },
+          totalTokens: { type: Schema.Types.Number, default: 0 },
+        },
+        { _id: false }
+      ),
+    },
     lastActivityAt: {
       type: Schema.Types.String,
     },

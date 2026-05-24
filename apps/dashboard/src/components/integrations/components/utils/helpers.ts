@@ -1,4 +1,5 @@
 import {
+  AgentRuntimeProviderIdEnum,
   ChatProviderIdEnum,
   ConfigConfiguration,
   CredentialsKeyEnum,
@@ -11,7 +12,8 @@ export function isDemoIntegration(providerId: string) {
   return (
     providerId === EmailProviderIdEnum.Novu ||
     providerId === SmsProviderIdEnum.Novu ||
-    providerId === ChatProviderIdEnum.Novu
+    providerId === ChatProviderIdEnum.Novu ||
+    providerId === AgentRuntimeProviderIdEnum.NovuAnthropic
   );
 }
 

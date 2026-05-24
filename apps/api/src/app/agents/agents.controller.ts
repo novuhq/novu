@@ -54,6 +54,7 @@ import {
   ListAgentMcpServersResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
+  MigrateAgentRuntimeRequestDto,
   McpConnectionResponseDto,
   PatchAgentRuntimeConfigRequestDto,
   UpdateAgentBridgeRequestDto,
@@ -99,6 +100,8 @@ import { GenerateMcpOAuthUrlCommand } from './usecases/generate-mcp-oauth-url/ge
 import { GenerateMcpOAuthUrl } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
+import { GetAgentDemoQuotaCommand } from './usecases/get-agent-demo-quota/get-agent-demo-quota.command';
+import { GetAgentDemoQuota } from './usecases/get-agent-demo-quota/get-agent-demo-quota.usecase';
 import { GetAgentRuntimeConfigCommand } from './usecases/get-agent-runtime-config/get-agent-runtime-config.command';
 import { GetAgentRuntimeConfig } from './usecases/get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { GetMcpConnectionStatusCommand } from './usecases/get-mcp-connection-status/get-mcp-connection-status.command';
@@ -114,6 +117,8 @@ import { ListAgentMcpServersCommand } from './usecases/list-agent-mcp-servers/li
 import { ListAgentMcpServers } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
+import { MigrateAgentRuntimeCommand } from './usecases/migrate-agent-runtime/migrate-agent-runtime.command';
+import { MigrateAgentRuntime } from './usecases/migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
@@ -171,7 +176,9 @@ export class AgentsController {
     private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared,
     private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials,
-    private readonly generateManagedAgentUsecase: GenerateManagedAgent
+    private readonly generateManagedAgentUsecase: GenerateManagedAgent,
+    private readonly getAgentDemoQuotaUsecase: GetAgentDemoQuota,
+    private readonly migrateAgentRuntimeUsecase: MigrateAgentRuntime
   ) {}
 
   @Get('/emoji')
@@ -672,6 +679,46 @@ export class AgentsController {
         bridgeUrl: body.bridgeUrl,
         devBridgeUrl: body.devBridgeUrl,
         devBridgeActive: body.devBridgeActive,
+      })
+    );
+  }
+
+  @Get('/:identifier/demo-quota')
+  @ApiOperation({
+    summary: 'Get Novu managed Claude demo quota',
+    description:
+      'Returns monthly conversation and token usage limits for agents running on the Novu-managed Claude demo integration.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getAgentDemoQuota(@UserSession() user: UserSessionData, @Param('identifier') identifier: string) {
+    return this.getAgentDemoQuotaUsecase.execute(
+      GetAgentDemoQuotaCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/migrate-runtime')
+  @ApiOperation({
+    summary: 'Migrate managed agent off Novu demo Claude credentials',
+    description:
+      'Re-points a managed agent from the Novu demo Claude integration to a user-owned Anthropic integration, copying runtime config and clearing demo sessions.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  migrateAgentRuntime(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: MigrateAgentRuntimeRequestDto
+  ) {
+    return this.migrateAgentRuntimeUsecase.execute(
+      MigrateAgentRuntimeCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+        integrationId: body.integrationId,
       })
     );
   }

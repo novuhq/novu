@@ -206,6 +206,44 @@ export async function getAgent(
   return response.data;
 }
 
+export type AgentDemoQuota = {
+  conversations: { count: number; limit: number };
+  tokens?: { count: number; limit: number };
+  isExhausted: boolean;
+  reason?: 'conversations' | 'tokens';
+  isDemoAgent: boolean;
+};
+
+export function getAgentDemoQuotaQueryKey(environmentId: string | undefined, agentIdentifier: string) {
+  return ['agent-demo-quota', environmentId, agentIdentifier] as const;
+}
+
+export async function getAgentDemoQuota(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentDemoQuota> {
+  const response = await get<{ data: AgentDemoQuota } | AgentDemoQuota>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/demo-quota`,
+    { environment, signal }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
+export async function migrateAgentRuntime(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  body: { integrationId: string }
+): Promise<{ integrationId: string; externalAgentId: string }> {
+  const response = await post<{ data: { integrationId: string; externalAgentId: string } } | {
+    integrationId: string;
+    externalAgentId: string;
+  }>(`/agents/${encodeURIComponent(agentIdentifier)}/migrate-runtime`, { environment, body });
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
   const response = await post<AgentApiEnvelope>('/agents', { environment, body });
 

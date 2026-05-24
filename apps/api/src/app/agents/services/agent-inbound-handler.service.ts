@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, CalculateDemoClaudeQuota, CalculateDemoClaudeQuotaCommand, DemoQuotaExhaustedError, DEMO_QUOTA_EXHAUSTED_REPLY, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ChannelEndpointRepository,
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
+  ConversationRepository,
   EnvironmentRepository,
   SubscriberRepository,
 } from '@novu/dal';
@@ -224,6 +225,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly logger: PinoLogger,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
+    private readonly conversationRepository: ConversationRepository,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly managedAgentService: ManagedAgentService,
     private readonly chatSdkService: ChatSdkService,
@@ -231,6 +233,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly analyticsService: AnalyticsService,
+    private readonly calculateDemoClaudeQuota: CalculateDemoClaudeQuota,
     private readonly attachmentStorage: AgentAttachmentStorage,
     private readonly startCodeService: TelegramStartCodeService,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
@@ -284,6 +287,43 @@ export class AgentInboundHandler implements OnModuleInit {
       ? ConversationParticipantTypeEnum.SUBSCRIBER
       : ConversationParticipantTypeEnum.PLATFORM_USER;
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
+
+    const agentForQuota = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+      'runtime',
+      'managedRuntime',
+    ]);
+
+    const existingConversation = await this.conversationRepository.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      config.integrationId,
+      platformThreadId
+    );
+
+    if (!existingConversation && agentForQuota?.runtime === 'managed' && agentForQuota.managedRuntime) {
+      const isDemo = await this.calculateDemoClaudeQuota.isAgentOnDemoIntegration(
+        config.environmentId,
+        config.organizationId,
+        agentForQuota.managedRuntime._integrationId
+      );
+
+      if (isDemo) {
+        const quota = await this.calculateDemoClaudeQuota.execute(
+          CalculateDemoClaudeQuotaCommand.create({
+            environmentId: config.environmentId,
+            organizationId: config.organizationId,
+          })
+        );
+
+        if (quota?.isExhausted && quota.reason === 'conversations') {
+          applyPlatformThreadIdToThread(thread, platformThreadId);
+          await thread.post(DEMO_QUOTA_EXHAUSTED_REPLY);
+
+          return;
+        }
+      }
+    }
 
     const conversation = await this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
@@ -432,6 +472,23 @@ export class AgentInboundHandler implements OnModuleInit {
         });
       }
     } catch (err) {
+      if (err instanceof DemoQuotaExhaustedError) {
+        applyPlatformThreadIdToThread(thread, platformThreadId);
+        const sent = await thread.post(DEMO_QUOTA_EXHAUSTED_REPLY);
+        const channel = this.conversationService.getPrimaryChannel(conversation);
+        await this.conversationService.persistAgentMessage({
+          conversationId: conversation._id,
+          channel,
+          platformMessageId: (sent as { id?: string })?.id ?? '',
+          agentIdentifier: config.agentIdentifier,
+          content: DEMO_QUOTA_EXHAUSTED_REPLY,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        });
+
+        return;
+      }
+
       if (err instanceof NoBridgeUrlError) {
         applyPlatformThreadIdToThread(thread, platformThreadId);
 
