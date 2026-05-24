@@ -19,7 +19,7 @@ test('manage workflows', async ({ page }) => {
 
   const workflowsPage = new WorkflowsPage(page);
   await workflowsPage.goTo();
-  await expect(page).toHaveTitle(`Workflows | Novu Cloud Dashboard`);
+  await expect(page).toHaveTitle(`Workflows bneta | Novu Cloud Dashboard`);
 
   await workflowsPage.createWorkflowBtnClick();
 
@@ -171,7 +171,7 @@ test('manage workflows', async ({ page }) => {
 
   // Navigate back to workflows page
   await workflowEditorPage.clickWorkflowsBreadcrumb();
-  await expect(page).toHaveTitle(`Workflows | Novu Cloud Dashboard`);
+  await expect(page).toHaveTitle(`Workflows bneta | Novu Cloud Dashboard`);
 
   // Verify workflow exists and status
   const workflowElement = await workflowsPage.getWorkflowElement(workflowNameUpdated);

@@ -55,7 +55,7 @@ test('sync workflow', async ({ page }) => {
   // go to the workflows page
   const workflowsPage = new WorkflowsPage(page);
   await workflowsPage.goTo();
-  await expect(page).toHaveTitle(`Workflows | Novu Cloud Dashboard`);
+  await expect(page).toHaveTitle(`Workflows bneta | Novu Cloud Dashboard`);
 
   // check the workflow
   const workflowElement = await workflowsPage.getWorkflowElement(workflowId);
@@ -133,7 +133,7 @@ test('sync workflow', async ({ page }) => {
 
   // go to the workflows page
   await workflowEditorPage.clickWorkflowsBreadcrumb();
-  await expect(page).toHaveTitle(`Workflows | Novu Cloud Dashboard`);
+  await expect(page).toHaveTitle(`Workflows bneta | Novu Cloud Dashboard`);
 
   // check the delete workflow button
   await workflowsPage.clickWorkflowActionsMenu(workflowId);
