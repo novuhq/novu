@@ -15,6 +15,9 @@ class EdgeAccumulator {
   actionsRequired: never[] = [];
   sessionId: string | undefined;
   conversationId: string | undefined;
+  /** Required by `mapAnthropicEvent` for `agent.mcp_tool_use` / `agent.mcp_tool_result`. */
+  mcpServerByToolUseId = new Map<string, string>();
+  stepIndex = 0;
 
   set content(_: string) {}
   get content() {
