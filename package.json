@@ -11,7 +11,7 @@
     "build:v2": "nx run-many --target=build --all --projects=@novu/api-service,@novu/worker,@novu/ws,@novu/dashboard,tag:type:package",
     "build:webhook": "nx build @novu/webhook",
     "prebuild:agents": "nx run-many --target=prebuild --all --exclude=tag:type:app",
-    "build:agents": "nx run-many --target=build --all --exclude=tag:type:app,nextjs,nestjs",
+    "build:agents": "nx run-many --target=build --all --exclude=tag:type:app,nextjs,nestjs && nx run @novu/api-service:build:metadata",
     "build:worker": "nx build @novu/worker",
     "build:ws": "nx build @novu/ws",
     "build": "nx run-many --target=build --all --exclude=nextjs,nestjs",

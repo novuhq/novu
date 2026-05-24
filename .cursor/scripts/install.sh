@@ -215,6 +215,7 @@ ensure_env apps/dashboard/.env
 # Incremental build via Nx cache. After a `git pull` only projects whose
 # inputs changed are rebuilt; everything else is a cache hit (~seconds).
 # Apps are excluded — they compile on demand when dev servers start.
+# API OpenAPI metadata is still generated (required by nest start --watch).
 log "Building workspace dependencies (incremental via Nx cache, apps excluded)"
 pnpm build:agents
 
