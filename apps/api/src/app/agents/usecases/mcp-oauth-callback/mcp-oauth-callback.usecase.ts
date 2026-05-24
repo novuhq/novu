@@ -382,7 +382,7 @@ export class McpOAuthCallback {
     return {
       runtimeProvider: resolved.provider,
       integrationId: integration._id,
-      integrationCredentials: resolved.credentials,
+      integrationCredentials: resolved.credentials as Record<string, unknown>,
     };
   }
 

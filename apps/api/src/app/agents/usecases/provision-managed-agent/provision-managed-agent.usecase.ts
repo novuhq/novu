@@ -9,7 +9,7 @@ import {
   resolveAgentRuntime,
 } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, type ICredentialsDto, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
@@ -236,7 +236,7 @@ export class ProvisionManagedAgent {
   }
 
   private async ensureCredentialsProvisioned(
-    integration: { _id: string; credentials?: unknown; providerId: string; name?: string },
+    integration: { _id: string; credentials?: ICredentialsDto; providerId: string; name?: string },
     command: ProvisionManagedAgentCommand,
     session: ClientSession | null
   ): Promise<{ decryptedCredentials: ReturnType<typeof decryptCredentials>; resolvedApiKey: string }> {
@@ -248,7 +248,7 @@ export class ProvisionManagedAgent {
       }
 
       const resolvedApiKey = getNovuManagedClaudeApiKey();
-      let decryptedCredentials = decryptCredentials(integration.credentials);
+      let decryptedCredentials = decryptCredentials(integration.credentials ?? {});
 
       if (!decryptedCredentials.externalEnvironmentId) {
         const provisioningProvider = getAgentRuntimeProvider(

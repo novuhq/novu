@@ -86,15 +86,21 @@ export class DemoClaudeQuotaPolicy {
   }
 }
 
+type ThalamusUsageWithCache = NonNullable<ThalamusResponse['usage']> & {
+  cacheReadInputTokens?: number;
+  cacheCreationInputTokens?: number;
+};
+
 function extractTokenUsageDelta(usage: ThalamusResponse['usage']): ConversationTokenUsage | undefined {
   if (!usage) {
     return undefined;
   }
 
-  const inputTokens = usage.inputTokens ?? 0;
-  const outputTokens = usage.outputTokens ?? 0;
-  const cacheReadTokens = usage.cacheReadInputTokens ?? 0;
-  const cacheCreationTokens = usage.cacheCreationInputTokens ?? 0;
+  const usageWithCache = usage as ThalamusUsageWithCache;
+  const inputTokens = usageWithCache.inputTokens ?? 0;
+  const outputTokens = usageWithCache.outputTokens ?? 0;
+  const cacheReadTokens = usageWithCache.cacheReadInputTokens ?? 0;
+  const cacheCreationTokens = usageWithCache.cacheCreationInputTokens ?? 0;
   const totalTokens = inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens;
 
   if (totalTokens === 0) {
