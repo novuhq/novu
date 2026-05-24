@@ -168,6 +168,7 @@ overrides:
   sanitize-html@<2.17.4: ^2.17.4
   samlify@<2.13.0: ^2.13.0
   better-auth: 1.5.6
+  js-cookie@<3.0.7: ^3.0.7
   # Force single instances of @codemirror/state and @codemirror/autocomplete.
   # Without this, transitive lang-* packages pin to state@6.4.1 while direct
   # dashboard imports resolve against state@6.6.0, producing two virtual peer

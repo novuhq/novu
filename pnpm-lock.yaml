@@ -145,6 +145,7 @@ overrides:
   sanitize-html@<2.17.4: ^2.17.4
   samlify@<2.13.0: ^2.13.0
   better-auth: 1.5.6
+  js-cookie@<3.0.7: ^3.0.7
   '@codemirror/state': 6.6.0
   '@codemirror/autocomplete': 6.18.3
 
@@ -978,8 +979,8 @@ importers:
         specifier: ^0.13.0
         version: 0.13.0
       js-cookie:
-        specifier: ^3.0.5
-        version: 3.0.5
+        specifier: ^3.0.7
+        version: 3.0.7
       json-edit-react:
         specifier: ^1.26.2
         version: 1.26.2(react@19.2.3)
@@ -20311,13 +20312,9 @@ packages:
     resolution: {integrity: sha512-34wB/Y7MW7bzjKRjUKTa46I2Z7eV62Rkhva+KkopW7Qvv/OSWBqvkSY7vusOPrNuZcUG3tApvdVgNB8POj3SPw==}
     engines: {node: '>=10'}
 
-  js-cookie@3.0.1:
-    resolution: {integrity: sha512-+0rgsUXZu4ncpPxRL+lNEptWMOWl9etvPHc/koSRp6MPwpRYAhmk0dUG00J4bxVV3r9uUzfo24wW0knS07SKSw==}
-    engines: {node: '>=12'}
-
-  js-cookie@3.0.5:
-    resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
-    engines: {node: '>=14'}
+  js-cookie@3.0.7:
+    resolution: {integrity: sha512-z/wZZgDrkNV1eA0ULjM/F9/50Ya8fbzgKneSpoPsXSGd0KnpdtHfOZWK+GcwLk+EZbS4F9RBhU+K2RgzuDaItw==}
+    engines: {node: '>=20'}
 
   js-sha256@0.9.0:
     resolution: {integrity: sha512-sga3MHh9sgQN2+pJ9VYZ+1LPwXOxuBJBA5nrR5/ofPfuiJBE2hnjsaN8se8JznOmGLN2p49Pe5U/ttafcs/apA==}
@@ -31028,7 +31025,7 @@ snapshots:
       csstype: 3.1.3
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
-      js-cookie: 3.0.5
+      js-cookie: 3.0.7
       std-env: 3.9.0
       swr: 2.3.4(react@19.2.3)
     optionalDependencies:
@@ -31040,7 +31037,7 @@ snapshots:
       '@tanstack/query-core': 5.100.11
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
-      js-cookie: 3.0.5
+      js-cookie: 3.0.7
       std-env: 3.9.0
     optionalDependencies:
       react: 18.3.1
@@ -31051,7 +31048,7 @@ snapshots:
       '@tanstack/query-core': 5.100.11
       dequal: 2.0.3
       glob-to-regexp: 0.4.1
-      js-cookie: 3.0.5
+      js-cookie: 3.0.7
       std-env: 3.9.0
     optionalDependencies:
       react: 19.2.3
@@ -31768,7 +31765,7 @@ snapshots:
       '@segment/facade': 3.4.10
       customerio-gist-web: 3.20.3
       dset: 3.1.4
-      js-cookie: 3.0.1
+      js-cookie: 3.0.7
       node-fetch: 2.7.0(encoding@0.1.13)
       spark-md5: 3.0.2
       tslib: 2.8.1
@@ -38979,7 +38976,7 @@ snapshots:
       '@segment/analytics.js-video-plugins': 0.2.1
       '@segment/facade': 3.4.10
       dset: 3.1.4
-      js-cookie: 3.0.1
+      js-cookie: 3.0.7
       node-fetch: 2.7.0(encoding@0.1.13)
       tslib: 2.8.1
       unfetch: 4.2.0
@@ -50098,9 +50095,7 @@ snapshots:
 
   joycon@3.1.1: {}
 
-  js-cookie@3.0.1: {}
-
-  js-cookie@3.0.5: {}
+  js-cookie@3.0.7: {}
 
   js-sha256@0.9.0: {}
 
