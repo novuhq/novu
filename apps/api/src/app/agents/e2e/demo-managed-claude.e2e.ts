@@ -347,6 +347,6 @@ describe('Demo Managed Claude #novu-v2', () => {
       _organizationId: session.organization._id,
     });
 
-    expect(demoIntegration?.active).to.equal(false);
+    expect(demoIntegration).to.equal(null);
   });
 });

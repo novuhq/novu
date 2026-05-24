@@ -134,13 +134,12 @@ export class MigrateAgentRuntime {
         });
 
         if (remainingDemoAgents === 0) {
-          await this.integrationRepository.update(
+          await this.integrationRepository.delete(
             {
               _id: sourceIntegration._id,
               _environmentId: command.environmentId,
               _organizationId: command.organizationId,
             },
-            { $set: { active: false } },
             session ? { session } : {}
           );
         }
