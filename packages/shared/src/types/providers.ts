@@ -162,6 +162,7 @@ export enum InAppProviderIdEnum {
 
 export enum AgentRuntimeProviderIdEnum {
   Anthropic = 'anthropic',
+  NovuAnthropic = 'novu-anthropic',
 }
 
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */

@@ -3,3 +3,5 @@ export * from './anthropic/anthropic-agent-runtime.provider';
 export * from './base-agent-runtime.provider';
 export * from './errors';
 export * from './i-agent-runtime-provider';
+export * from './resolve-agent-runtime';
+export * from './resolve-agent-runtime-api-key';

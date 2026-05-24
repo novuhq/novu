@@ -44,6 +44,8 @@ export type UpdateAgentRuntimeConfigInput = {
 export type ProvisionIntegrationInput = {
   /** Human-readable name for the integration; used as the environment/resource name on the provider. */
   integrationName: string;
+  /** Provider-side environment/vault name stem; defaults to integrationName. */
+  resourceName?: string;
 };
 
 export type ProvisionIntegrationResult = {

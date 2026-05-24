@@ -1,8 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { areNovuEmailCredentialsSet, areNovuSlackCredentialsSet, FeatureFlagsService } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  areNovuEmailCredentialsSet,
+  areNovuManagedClaudeCredentialsSet,
+  areNovuSlackCredentialsSet,
+  FeatureFlagsService,
+} from '@novu/application-generic';
 import { EnvironmentEntity, IntegrationRepository, OrganizationEntity, UserEntity } from '@novu/dal';
 
 import {
+  AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
   ChatProviderIdEnum,
   EmailProviderIdEnum,
@@ -10,6 +17,7 @@ import {
   EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   InAppProviderIdEnum,
+  IntegrationKindEnum,
 } from '@novu/shared';
 import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
@@ -23,7 +31,8 @@ export class CreateNovuIntegrations {
     private createIntegration: CreateIntegration,
     private integrationRepository: IntegrationRepository,
     private setIntegrationAsPrimary: SetIntegrationAsPrimary,
-    private featureFlagService: FeatureFlagsService
+    private featureFlagService: FeatureFlagsService,
+    private analyticsService: AnalyticsService
   ) {}
 
   private async createEmailIntegration(command: CreateNovuIntegrationsCommand) {
@@ -108,6 +117,51 @@ export class CreateNovuIntegrations {
     }
   }
 
+  private async createManagedClaudeIntegration(command: CreateNovuIntegrationsCommand) {
+    if (!areNovuManagedClaudeCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT) {
+      return;
+    }
+
+    const isEnabled = await this.featureFlagService.getFlag({
+      user: { _id: command.userId } as UserEntity,
+      environment: { _id: command.environmentId } as EnvironmentEntity,
+      organization: { _id: command.organizationId } as OrganizationEntity,
+      key: FeatureFlagsKeysEnum.IS_DEMO_MANAGED_CLAUDE_ENABLED,
+      defaultValue: false,
+    });
+
+    if (!isEnabled) {
+      return;
+    }
+
+    const managedClaudeIntegrationCount = await this.integrationRepository.count({
+      providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+      kind: IntegrationKindEnum.AGENT,
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+    });
+
+    if (managedClaudeIntegrationCount === 0) {
+      await this.createIntegration.execute(
+        CreateIntegrationCommand.create({
+          providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+          kind: IntegrationKindEnum.AGENT,
+          active: true,
+          name: 'Novu Managed Claude',
+          check: false,
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        })
+      );
+
+      this.analyticsService.track('[Novu Managed Claude] - Integration provisioned', command.userId, {
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
+    }
+  }
+
   private async createSlackIntegration(command: CreateNovuIntegrationsCommand) {
     if (!areNovuSlackCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT) {
       return;
@@ -150,6 +204,8 @@ export class CreateNovuIntegrations {
     if (!command.channels || command.channels.includes(ChannelTypeEnum.CHAT)) {
       integrationPromises.push(this.createSlackIntegration(command));
     }
+
+    integrationPromises.push(this.createManagedClaudeIntegration(command));
 
     await Promise.all(integrationPromises);
   }

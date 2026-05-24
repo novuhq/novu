@@ -1,7 +1,15 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, encryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  areNovuManagedClaudeCredentialsSet,
+  decryptCredentials,
+  encryptCredentials,
+  getAgentRuntimeProvider,
+  getNovuManagedClaudeApiKey,
+  PinoLogger,
+  resolveAgentRuntime,
+} from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, type ICredentialsDto, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
 import { resolveMcpServersById } from '../../utils/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
@@ -39,7 +47,7 @@ export class ProvisionManagedAgent {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_id', 'credentials', 'providerId'],
+      ['_id', 'credentials', 'providerId', 'name'],
       session ? { session } : {}
     );
 
@@ -47,18 +55,17 @@ export class ProvisionManagedAgent {
       throw new NotFoundException(`Integration "${command.integrationId}" not found.`);
     }
 
-    const decryptedCredentials = decryptCredentials(integration.credentials);
+    this.assertDemoIntegrationAdoptAllowed(integration.providerId, command);
 
-    if (!decryptedCredentials.apiKey) {
-      throw new UnprocessableEntityException(
-        `Integration "${command.integrationId}" has no API key configured. Please complete the integration setup.`
-      );
-    }
+    const { decryptedCredentials, resolvedApiKey } = await this.ensureCredentialsProvisioned(
+      integration,
+      command,
+      session
+    );
 
     const resolvedIntegrationId = integration._id;
-    const resolvedApiKey = decryptedCredentials.apiKey;
-
-    const runtimeProvider = getAgentRuntimeProvider(command.providerId, resolvedApiKey);
+    const runtimeProviderId = integration.providerId as AgentRuntimeProviderIdEnum;
+    const runtimeProvider = getAgentRuntimeProvider(runtimeProviderId, resolvedApiKey);
 
     if (command.externalEnvironmentId && command.externalEnvironmentId !== decryptedCredentials.externalEnvironmentId) {
       const providerEnvironment = await runtimeProvider.getEnvironment(command.externalEnvironmentId);
@@ -136,7 +143,7 @@ export class ProvisionManagedAgent {
           $set: {
             runtime: 'managed',
             managedRuntime: {
-              providerId: command.providerId,
+              providerId: runtimeProviderId,
               _integrationId: resolvedIntegrationId,
               externalAgentId,
             },
@@ -209,6 +216,77 @@ export class ProvisionManagedAgent {
     }
 
     return { externalAgentId, integrationId: resolvedIntegrationId, adoptedName };
+  }
+
+  private assertDemoIntegrationAdoptAllowed(providerId: string, command: ProvisionManagedAgentCommand): void {
+    if (providerId !== AgentRuntimeProviderIdEnum.NovuAnthropic) {
+      return;
+    }
+
+    if (command.externalAgentId) {
+      throw new BadRequestException(
+        'Adopting an existing provider agent is not supported on the Novu managed Claude demo integration.'
+      );
+    }
+
+    if (command.externalEnvironmentId) {
+      throw new BadRequestException(
+        'Adopting an existing provider environment is not supported on the Novu managed Claude demo integration.'
+      );
+    }
+  }
+
+  private async ensureCredentialsProvisioned(
+    integration: { _id: string; credentials?: ICredentialsDto; providerId: string; name?: string },
+    command: ProvisionManagedAgentCommand,
+    session: ClientSession | null
+  ): Promise<{ decryptedCredentials: ReturnType<typeof decryptCredentials>; resolvedApiKey: string }> {
+    const isNovuManagedClaude = integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
+
+    if (isNovuManagedClaude) {
+      if (!areNovuManagedClaudeCredentialsSet()) {
+        throw new UnprocessableEntityException('Novu managed Claude credentials are not configured.');
+      }
+
+      const resolvedApiKey = getNovuManagedClaudeApiKey();
+      let decryptedCredentials = decryptCredentials(integration.credentials ?? {});
+
+      if (!decryptedCredentials.externalEnvironmentId) {
+        const provisioningProvider = getAgentRuntimeProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, resolvedApiKey);
+        const provisionResult = await provisioningProvider.provisionIntegration({
+          integrationName: integration.name ?? 'Novu Managed Claude',
+          resourceName: command.organizationId,
+        });
+        const nextCredentials = encryptCredentials({
+          ...decryptedCredentials,
+          ...provisionResult.credentialsUpdate,
+        });
+
+        await this.integrationRepository.update(
+          {
+            _id: integration._id,
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+          },
+          { $set: { credentials: nextCredentials } },
+          session ? { session } : {}
+        );
+
+        decryptedCredentials = decryptCredentials(nextCredentials);
+      }
+
+      return { decryptedCredentials, resolvedApiKey };
+    }
+
+    const resolved = resolveAgentRuntime(integration.providerId, integration.credentials);
+
+    if (!resolved) {
+      throw new UnprocessableEntityException(
+        `Integration "${command.integrationId}" has no API key configured. Please complete the integration setup.`
+      );
+    }
+
+    return { decryptedCredentials: resolved.credentials, resolvedApiKey: resolved.apiKey };
   }
 
   private async persistAgentMcpServers(

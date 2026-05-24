@@ -66,6 +66,24 @@ export const AGENT_RUNTIME_PROVIDERS: AgentRuntimeProvider[] = [
     availableTools: CLAUDE_BUILTIN_TOOLS,
     availableSkills: CLAUDE_ANTHROPIC_SKILLS,
   },
+  {
+    providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+    displayName: 'Novu Managed Claude',
+    docsUrl: 'https://docs.anthropic.com/en/docs/agents',
+    statusUrl: 'https://status.anthropic.com',
+    logoFileName: { light: 'novu.png', dark: 'novu.png' },
+    credentials: [],
+    capabilities: {
+      mcpServers: true,
+      tools: true,
+      model: true,
+      systemPrompt: true,
+      skills: true,
+      tokenVault: true,
+    },
+    availableTools: CLAUDE_BUILTIN_TOOLS,
+    availableSkills: CLAUDE_ANTHROPIC_SKILLS,
+  },
 ];
 
 export const AGENT_RUNTIME_PROVIDER_IDS = new Set(AGENT_RUNTIME_PROVIDERS.map((p) => p.providerId));

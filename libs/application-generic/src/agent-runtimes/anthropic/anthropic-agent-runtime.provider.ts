@@ -41,7 +41,7 @@ import type {
 } from '../i-agent-runtime-provider';
 
 const PROVIDER_ID = AgentRuntimeProviderIdEnum.Anthropic;
-const DEFAULT_MODEL = 'claude-sonnet-4-5';
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 /** Single retry jitter window in ms */
 const RETRY_JITTER_MS = 500;
 /** Timeout for config calls in ms */
@@ -282,12 +282,13 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
   async provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult> {
     const client = this.buildClient();
+    const resourceStem = input.resourceName ?? input.integrationName;
 
     // Not retried: environment creation is not idempotent.
     const env: { id: string } = await (async () => {
       try {
         return await (client as any).beta.environments.create({
-          name: `nv-${input.integrationName}`,
+          name: `nv-${resourceStem}`,
           config: {
             type: 'cloud',
             networking: { type: 'unrestricted' },

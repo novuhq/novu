@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  DEMO_QUOTA_EXHAUSTED_REPLY,
+  DemoQuotaExhaustedError,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   AgentRepository,
   ChannelEndpointRepository,
@@ -432,6 +437,23 @@ export class AgentInboundHandler implements OnModuleInit {
         });
       }
     } catch (err) {
+      if (err instanceof DemoQuotaExhaustedError) {
+        applyPlatformThreadIdToThread(thread, platformThreadId);
+        const sent = await thread.post(DEMO_QUOTA_EXHAUSTED_REPLY);
+        const channel = this.conversationService.getPrimaryChannel(conversation);
+        await this.conversationService.persistAgentMessage({
+          conversationId: conversation._id,
+          channel,
+          platformMessageId: (sent as { id?: string })?.id ?? '',
+          agentIdentifier: config.agentIdentifier,
+          content: DEMO_QUOTA_EXHAUSTED_REPLY,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        });
+
+        return;
+      }
+
       if (err instanceof NoBridgeUrlError) {
         applyPlatformThreadIdToThread(thread, platformThreadId);
 

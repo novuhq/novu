@@ -340,6 +340,10 @@ export class Session {
    * regardless of display name. Legacy orgs may lack `type`; fall back to the old name check.
    */
   private isInboxDevelopmentMode(environment: EnvironmentEntity): boolean {
+    if (environment.identifier?.startsWith(this.KEYLESS_ENVIRONMENT_PREFIX)) {
+      return true;
+    }
+
     if (environment.type === EnvironmentTypeEnum.PROD) {
       return false;
     }
@@ -522,6 +526,7 @@ export class Session {
       _organizationId: organization._id,
       name: `Keyless ${new Date().toISOString()}`,
       identifier,
+      type: EnvironmentTypeEnum.DEV,
       apiKeys: [
         {
           key: encryptedApiKey,

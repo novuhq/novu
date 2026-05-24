@@ -30,6 +30,14 @@ export interface ConversationChannel {
   firstPlatformMessageId?: string;
 }
 
+export interface ConversationTokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheCreationTokens: number;
+  totalTokens: number;
+}
+
 export class ConversationEntity {
   _id: string;
 
@@ -69,6 +77,8 @@ export class ConversationEntity {
    * be overwritten by customer metadata signals from the bridge.
    */
   managedSessionVaultId?: string;
+
+  tokenUsage?: ConversationTokenUsage;
 
   _environmentId: EnvironmentId;
 
