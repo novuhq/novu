@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
   areNovuManagedClaudeCredentialsSet,
   decryptCredentials,
@@ -54,6 +54,8 @@ export class ProvisionManagedAgent {
     if (!integration) {
       throw new NotFoundException(`Integration "${command.integrationId}" not found.`);
     }
+
+    this.assertDemoIntegrationAdoptAllowed(integration.providerId, command);
 
     const { decryptedCredentials, resolvedApiKey } = await this.ensureCredentialsProvisioned(integration, command, session);
 
@@ -210,6 +212,27 @@ export class ProvisionManagedAgent {
     }
 
     return { externalAgentId, integrationId: resolvedIntegrationId, adoptedName };
+  }
+
+  private assertDemoIntegrationAdoptAllowed(
+    providerId: string,
+    command: ProvisionManagedAgentCommand
+  ): void {
+    if (providerId !== AgentRuntimeProviderIdEnum.NovuAnthropic) {
+      return;
+    }
+
+    if (command.externalAgentId) {
+      throw new BadRequestException(
+        'Adopting an existing provider agent is not supported on the Novu managed Claude demo integration.'
+      );
+    }
+
+    if (command.externalEnvironmentId) {
+      throw new BadRequestException(
+        'Adopting an existing provider environment is not supported on the Novu managed Claude demo integration.'
+      );
+    }
   }
 
   private async ensureCredentialsProvisioned(

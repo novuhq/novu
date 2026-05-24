@@ -213,6 +213,83 @@ describe('Demo Managed Claude #novu-v2', () => {
     expect(configRes.body.data.tools).to.be.an('array');
   });
 
+  it('should reject adopting an external provider agent on novu-anthropic integration', async () => {
+    const integrationId = await createNovuAnthropicIntegration();
+    const identifier = `e2e-demo-adopt-agent-${Date.now()}`;
+
+    const res = await session.testAgent.post('/v1/agents').send({
+      name: 'Should Not Adopt',
+      identifier,
+      runtime: 'managed',
+      managedRuntime: {
+        providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+        integrationId,
+        externalAgentId: 'agent_owned_by_another_tenant',
+      },
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.include('Adopting an existing provider agent is not supported');
+    expect(mockProvider.getAgent.called, 'getAgent should not run for blocked demo adopt').to.equal(false);
+    expect(mockProvider.createAgent.called, 'createAgent should not run after adopt rejection').to.equal(false);
+  });
+
+  it('should reject adopting an external provider environment on novu-anthropic integration', async () => {
+    const integrationId = await createNovuAnthropicIntegration();
+    const identifier = `e2e-demo-adopt-env-${Date.now()}`;
+
+    const res = await session.testAgent.post('/v1/agents').send({
+      name: 'Should Not Adopt Env',
+      identifier,
+      runtime: 'managed',
+      managedRuntime: {
+        providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+        integrationId,
+        externalEnvironmentId: 'env_owned_by_another_tenant',
+      },
+    });
+
+    expect(res.status).to.equal(400);
+    expect(res.body.message).to.include('Adopting an existing provider environment is not supported');
+    expect(mockProvider.getEnvironment.called, 'getEnvironment should not run for blocked demo adopt').to.equal(false);
+  });
+
+  it('should delete demo agents locally without archiving upstream on deleteFromProvider', async () => {
+    const integrationId = await createNovuAnthropicIntegration();
+    const identifier = `e2e-demo-delete-${Date.now()}`;
+
+    const createRes = await session.testAgent.post('/v1/agents').send({
+      name: 'Demo Delete Agent',
+      identifier,
+      runtime: 'managed',
+      managedRuntime: {
+        providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+        integrationId,
+      },
+    });
+
+    expect(createRes.status).to.equal(201);
+    mockProvider.deleteAgent.resetHistory();
+
+    const deleteRes = await session.testAgent
+      .delete(`/v1/agents/${encodeURIComponent(identifier)}`)
+      .query({ deleteFromProvider: 'true' });
+
+    expect(deleteRes.status).to.equal(204);
+    expect(mockProvider.deleteAgent.called, 'upstream deleteAgent should be skipped for demo').to.equal(false);
+
+    const agent = await agentRepository.findOne(
+      {
+        identifier,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      },
+      ['_id']
+    );
+
+    expect(agent).to.equal(null);
+  });
+
   it('should migrate agent runtime to user Anthropic integration', async () => {
     const demoIntegrationId = await createNovuAnthropicIntegration();
     const identifier = `e2e-demo-migrate-${Date.now()}`;
