@@ -37,6 +37,7 @@ import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.se
 import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { ManagedAgentService } from './services/managed-agent.service';
+import { McpConnectionVaultService } from './services/mcp-connection-vault.service';
 import { McpOAuthDiscoveryService } from './services/mcp-oauth-discovery.service';
 import { TelegramMobileLinkTokenService } from './services/telegram-mobile-link-token.service';
 import { TelegramStartCodeService } from './services/telegram-start-code.service';
@@ -79,6 +80,7 @@ import { USE_CASES } from './usecases';
     AgentInboundHandler,
     BridgeExecutorService,
     ManagedAgentService,
+    McpConnectionVaultService,
     ChatSdkService,
     McpOAuthDiscoveryService,
     TelegramMobileLinkTokenService,

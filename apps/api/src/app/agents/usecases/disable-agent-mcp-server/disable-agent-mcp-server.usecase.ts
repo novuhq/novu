@@ -194,14 +194,16 @@ export class DisableAgentMcpServer {
 
     for (const connection of connections) {
       const vaultCredentialId = connection.auth?.vaultCredentialId;
+      const externalVaultId = connection.auth?.externalVaultId;
 
-      if (!vaultCredentialId) {
+      if (!vaultCredentialId || !externalVaultId) {
         continue;
       }
 
       try {
         await runtimeProvider.deleteVaultCredential({
           integrationCredentials: creds as Record<string, unknown>,
+          externalVaultId,
           vaultCredentialId,
         });
       } catch (err) {

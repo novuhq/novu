@@ -15,6 +15,7 @@ import {
   ConversationParticipantTypeEnum,
   ConversationRepository,
   IntegrationRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, MCP_SERVERS } from '@novu/shared';
 import {
@@ -38,6 +39,7 @@ import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-re
 import { HandleToolProgressCommand } from '../usecases/handle-tool-progress/handle-tool-progress.command';
 import { HandleToolProgress } from '../usecases/handle-tool-progress/handle-tool-progress.usecase';
 import type { AgentExecutionParams } from './bridge-executor.service';
+import { McpConnectionVaultService } from './mcp-connection-vault.service';
 
 /**
  * Webhook metadata persisted on the Cloudflare durable session and replayed
@@ -71,13 +73,6 @@ type WebhookSessionMetadata = {
 interface CachedRuntime {
   provider: WebhookProvider;
   runtimeProvider: IAgentRuntimeProvider;
-  // Anthropic-side vault that holds OAuth credentials for this integration's
-  // MCP servers. Sessions must opt-in to vaults via `SessionCreateParams.vault_ids`
-  // (otherwise Anthropic reports "no credential is stored" no matter how
-  // perfectly the credential is provisioned). We cache it alongside the
-  // provider so every `send` call can hand it to the Thalamus SDK as
-  // `vaultIds`, which forwards it to `beta.sessions.create`.
-  vaultIds: string[];
 }
 
 const MAX_CACHED_PROVIDERS = 200;
@@ -91,6 +86,9 @@ const PROVIDER_TTL_MS = 30 * 60 * 1000;
  * routing can intercept clicks before they fall through to the bridge.
  */
 const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
+
+/** Tracks which Anthropic vault was bound when the durable session was created. */
+const CONVERSATION_SESSION_VAULT_METADATA_KEY = 'managedSessionVaultId' as const;
 
 /**
  * Anthropic emits this exact `invalid_request_error` when a new
@@ -113,9 +111,11 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
+    private readonly subscriberRepository: SubscriberRepository,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handleToolProgress: HandleToolProgress,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly mcpConnectionVaultService: McpConnectionVaultService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -130,8 +130,16 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   async dispatch(context: AgentExecutionParams, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
-    const { provider, vaultIds } = await this.getOrCreateProvider(agent, context.config.environmentId);
-    const sessionId = context.conversation.externalSessionId ?? undefined;
+    const { provider, runtimeProvider } = await this.getOrCreateProvider(agent, context.config.environmentId);
+    const vaultIds = await this.resolveVaultIdsForTurn(
+      agent,
+      context.config.environmentId,
+      context.config.organizationId,
+      context.subscriber?._id,
+      runtimeProvider
+    );
+    const existingSessionId = context.conversation.externalSessionId ?? undefined;
+    const sessionId = await this.reconcileSessionIdForVaultBinding(context, vaultIds, existingSessionId);
 
     const messages = sessionId
       ? [{ role: MessageRole.USER, content: context.message?.text ?? '' }]
@@ -156,6 +164,48 @@ export class ManagedAgentService implements OnModuleInit {
       String(context.conversation._id),
       newSessionId
     );
+
+    if (vaultIds.length > 0) {
+      await this.conversationRepository.update(
+        {
+          _id: context.conversation._id,
+          _environmentId: context.config.environmentId,
+          _organizationId: context.config.organizationId,
+        },
+        { $set: { [`metadata.${CONVERSATION_SESSION_VAULT_METADATA_KEY}`]: vaultIds[0] } }
+      );
+    }
+  }
+
+  /**
+   * Thalamus only applies `vault_ids` when creating a session. If a conversation
+   * already has an `externalSessionId` that was opened without a vault, reuse
+   * would silently drop credentials. Reset the session when the target vault
+   * differs from the one bound at session creation.
+   */
+  private async reconcileSessionIdForVaultBinding(
+    context: AgentExecutionParams,
+    vaultIds: string[],
+    existingSessionId: string | undefined
+  ): Promise<string | undefined> {
+    const targetVaultId = vaultIds[0];
+
+    if (!existingSessionId || !targetVaultId) {
+      return existingSessionId;
+    }
+
+    const boundVaultId = context.conversation.metadata?.[CONVERSATION_SESSION_VAULT_METADATA_KEY] as string | undefined;
+
+    if (boundVaultId === targetVaultId) {
+      return existingSessionId;
+    }
+
+    await this.conversationRepository.clearExternalSessionId(
+      context.config.environmentId,
+      String(context.conversation._id)
+    );
+
+    return undefined;
   }
 
   async handleWebhook(req: Request, res: Response): Promise<void> {
@@ -537,7 +587,17 @@ export class ManagedAgentService implements OnModuleInit {
       return;
     }
 
-    const { provider, vaultIds } = await this.getOrCreateProvider(agent, params.environmentId);
+    const { provider, runtimeProvider } = await this.getOrCreateProvider(agent, params.environmentId);
+    const subscriberMongoId = params.subscriberId
+      ? (await this.subscriberRepository.findBySubscriberId(params.environmentId, params.subscriberId))?._id
+      : undefined;
+    const vaultIds = await this.resolveVaultIdsForTurn(
+      agent,
+      params.environmentId,
+      params.organizationId,
+      subscriberMongoId,
+      runtimeProvider
+    );
     const sessionId = conversation.externalSessionId;
 
     await provider.send({
@@ -623,11 +683,30 @@ export class ManagedAgentService implements OnModuleInit {
       agentId: agent.managedRuntime.externalAgentId,
       environmentId: creds.externalEnvironmentId,
     });
-    const vaultIds = creds.externalVaultId ? [creds.externalVaultId as string] : [];
-    const runtime: CachedRuntime = { provider, runtimeProvider, vaultIds };
+    const runtime: CachedRuntime = { provider, runtimeProvider };
     this.providers.set(key, runtime);
 
     return runtime;
+  }
+
+  private async resolveVaultIdsForTurn(
+    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>,
+    environmentId: string,
+    organizationId: string,
+    subscriberMongoId: string | undefined,
+    runtimeProvider: IAgentRuntimeProvider
+  ): Promise<string[]> {
+    if (!agent.managedRuntime) {
+      return [];
+    }
+
+    return this.mcpConnectionVaultService.resolveVaultIds({
+      agentId: agent._id,
+      environmentId,
+      organizationId,
+      subscriberMongoId,
+      runtimeProvider,
+    });
   }
 
   private createProvider(

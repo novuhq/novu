@@ -29,6 +29,10 @@ const authSchema = new Schema(
       type: Schema.Types.String,
       required: false,
     },
+    externalVaultId: {
+      type: Schema.Types.String,
+      required: false,
+    },
   },
   { _id: false }
 );
