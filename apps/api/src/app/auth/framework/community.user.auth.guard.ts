@@ -14,7 +14,7 @@ export class CommunityUserAuthGuard extends AuthGuard([PassportStrategyEnum.JWT,
     this.logger.setContext(this.constructor.name);
   }
 
-  getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions<any> {
+  getAuthenticateOptions(context: ExecutionContext): IAuthModuleOptions {
     const request = context.switchToHttp().getRequest();
     const authorizationHeader = request.headers.authorization;
 

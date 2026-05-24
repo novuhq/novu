@@ -2,6 +2,7 @@ import './instrument';
 
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import {
   BullMqService,
   getErrorInterceptor,
@@ -71,7 +72,10 @@ export async function bootstrap(
     nestOptions.rawBody = true;
   }
 
-  const app = await NestFactory.create(AppModule, { bufferLogs: true, ...nestOptions });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true, ...nestOptions });
+
+  // NestJS 11 defaults to Express v5's simple query parser; keep extended parsing for nested/array query params.
+  app.set('query parser', 'extended');
 
   app.enableVersioning({
     type: VersioningType.URI,
