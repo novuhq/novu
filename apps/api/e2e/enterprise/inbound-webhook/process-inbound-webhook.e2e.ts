@@ -193,5 +193,19 @@ describe('Process Inbound Webhook E2E #novu-v2', () => {
         'message_clicked trace should be present'
       ).to.be.true;
     });
+
+    it('should reject push webhook when API key belongs to a different environment', async () => {
+      const otherSession = new UserSession();
+      await otherSession.initialize();
+
+      const eventPayload = { ...mockWebhookBody, eventId: message?.identifier };
+
+      await session.testAgent
+        .post(`/v2/inbound-webhooks/delivery-providers/${session.environment._id}/${integration._id}`)
+        .set('Authorization', `Bearer ${otherSession.apiKey}`)
+        .set('content-type', 'application/json')
+        .send(eventPayload)
+        .expect(401);
+    });
   });
 });
