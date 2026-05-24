@@ -761,6 +761,16 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
+    // Managed agents do not use the self-hosted bridge and never configure bridgeUrl.
+    // Card interactions today are limited to Novu-internal flows only:
+    //   • mcp-approval:* — Approve/Deny tool-use (handled above)
+    //   • link-*         — link-button opens url in the browser; chat SDK still
+    //                      emits onAction but no server-side handler is needed
+    // Generic button clicks (custom ids, user-defined cards) are not supported
+    // on managed runtime yet — there is no bridge onAction and no managed-runtime
+    // action router to resume the provider session.
+    // TODO: route general managed-agent button clicks through ManagedAgentService
+    // (e.g. resume parked session / dispatch to runtime) instead of no-oping here.
     if (isLinkButtonActionId(action.id)) {
       return;
     }
