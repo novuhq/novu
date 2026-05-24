@@ -134,7 +134,7 @@ overrides:
   path-to-regexp@>=6.0.0 <6.3.0: ^6.3.0
   path-to-regexp@>=8.0.0 <8.4.0: ^8.4.0
   svelte: 5.55.7
-  '@sveltejs/kit@<=2.57.0': ^2.57.1
+  '@sveltejs/kit@<=2.60.0': ^2.60.1
   langsmith@<0.6.0: ^0.6.3
   devalue@<5.8.1: ^5.8.1
   picomatch@<2.3.2: ^2.3.2
