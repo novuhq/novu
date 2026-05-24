@@ -1,15 +1,9 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { PendingToolApproval } from '@novu/application-generic';
 import {
-  AnalyticsService,
-  CalculateDemoClaudeQuota,
-  CalculateDemoClaudeQuotaCommand,
-  decryptCredentials,
-  DemoQuotaExhaustedError,
-  getAgentRuntimeProvider,
   type IAgentRuntimeProvider,
   PinoLogger,
-  resolveAgentRuntimeApiKey,
+  resolveAgentRuntime,
 } from '@novu/application-generic';
 import {
   type AgentEntity,
@@ -43,6 +37,7 @@ import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-re
 import { HandleToolProgressCommand } from '../usecases/handle-tool-progress/handle-tool-progress.command';
 import { HandleToolProgress } from '../usecases/handle-tool-progress/handle-tool-progress.usecase';
 import type { AgentExecutionParams } from './bridge-executor.service';
+import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 
 /**
  * Webhook metadata persisted on the Cloudflare durable session and replayed
@@ -65,8 +60,6 @@ type WebhookSessionMetadata = {
    * session, but for them we fall through to the plain-text MCP-init error.
    */
   subscriberId?: string;
-  /** Whether this session runs on the Novu-managed demo Claude integration. */
-  isDemoIntegration?: boolean;
 };
 
 /**
@@ -79,7 +72,6 @@ interface CachedRuntime {
   provider: WebhookProvider;
   runtimeProvider: IAgentRuntimeProvider;
   vaultIds: string[];
-  isDemoIntegration: boolean;
 }
 
 const MAX_CACHED_PROVIDERS = 200;
@@ -118,8 +110,7 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handleToolProgress: HandleToolProgress,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
-    private readonly calculateDemoClaudeQuota: CalculateDemoClaudeQuota,
-    private readonly analyticsService: AnalyticsService,
+    private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -134,12 +125,9 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   async dispatch(context: AgentExecutionParams, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
-    await this.assertDemoQuotaAllowsDispatch(context, agent);
+    await this.demoQuota.assertAllowed(context, agent);
 
-    const { provider, vaultIds, isDemoIntegration } = await this.getOrCreateProvider(
-      agent,
-      context.config.environmentId
-    );
+    const { provider, vaultIds } = await this.getOrCreateProvider(agent, context.config.environmentId);
     const sessionId = context.conversation.externalSessionId ?? undefined;
 
     const messages = sessionId
@@ -157,7 +145,6 @@ export class ManagedAgentService implements OnModuleInit {
         agentIdentifier: context.config.agentIdentifier,
         integrationIdentifier: context.config.integrationIdentifier,
         subscriberId: context.subscriber?.subscriberId,
-        isDemoIntegration,
       }),
     });
 
@@ -547,7 +534,7 @@ export class ManagedAgentService implements OnModuleInit {
       return;
     }
 
-    const { provider, vaultIds, isDemoIntegration } = await this.getOrCreateProvider(agent, params.environmentId);
+    const { provider, vaultIds } = await this.getOrCreateProvider(agent, params.environmentId);
     const sessionId = conversation.externalSessionId;
 
     await provider.send({
@@ -562,7 +549,6 @@ export class ManagedAgentService implements OnModuleInit {
         agentIdentifier: params.agentIdentifier,
         integrationIdentifier: params.integrationIdentifier,
         subscriberId: params.subscriberId,
-        isDemoIntegration,
       }),
     });
   }
@@ -620,21 +606,26 @@ export class ManagedAgentService implements OnModuleInit {
       throw new Error(`Integration ${agent.managedRuntime._integrationId} not found or has no credentials`);
     }
 
-    const creds = decryptCredentials(integration.credentials);
-    const isDemoIntegration = integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
-    const apiKey = resolveAgentRuntimeApiKey(integration.providerId, integration.credentials);
+    const resolved = resolveAgentRuntime(integration.providerId, integration.credentials);
+
+    if (!resolved) {
+      throw new Error('Integration has no API key configured');
+    }
+
+    const creds = resolved.credentials;
+
     if (!creds.externalEnvironmentId) {
       throw new Error('Integration has no external environment id');
     }
 
-    const runtimeProvider = getAgentRuntimeProvider(integration.providerId, apiKey);
+    const runtimeProvider = resolved.provider;
     const provider = this.createProvider(integration.providerId as AgentRuntimeProviderIdEnum, {
-      apiKey,
+      apiKey: resolved.apiKey,
       agentId: agent.managedRuntime.externalAgentId,
       environmentId: creds.externalEnvironmentId as string,
     });
     const vaultIds = creds.externalVaultId ? [creds.externalVaultId as string] : [];
-    const runtime: CachedRuntime = { provider, runtimeProvider, vaultIds, isDemoIntegration };
+    const runtime: CachedRuntime = { provider, runtimeProvider, vaultIds };
     this.providers.set(key, runtime);
 
     return runtime;
@@ -776,7 +767,14 @@ export class ManagedAgentService implements OnModuleInit {
               await this.handleAgentReply.execute(
                 HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: event.response.content } })
               );
-              await this.persistDemoTokenUsage(metadata, event.response.usage);
+              await this.demoQuota.recordUsage(
+                {
+                  conversationId: metadata.conversationId,
+                  environmentId: metadata.environmentId,
+                  organizationId: metadata.organizationId,
+                },
+                event.response.usage
+              );
               await this.handleToolProgress.execute(
                 HandleToolProgressCommand.create({ ...baseFields, toolProgress: { runId, action: 'complete' } })
               );
@@ -837,118 +835,7 @@ export class ManagedAgentService implements OnModuleInit {
       metadata.subscriberId = input.subscriberId;
     }
 
-    if (input.isDemoIntegration) {
-      metadata.isDemoIntegration = 'true';
-    }
-
     return metadata;
-  }
-
-  private async assertDemoQuotaAllowsDispatch(
-    context: AgentExecutionParams,
-    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>
-  ): Promise<void> {
-    if (!agent.managedRuntime) {
-      return;
-    }
-
-    const isDemo = await this.calculateDemoClaudeQuota.isAgentOnDemoIntegration(
-      context.config.environmentId,
-      context.config.organizationId,
-      agent.managedRuntime._integrationId
-    );
-
-    if (!isDemo) {
-      return;
-    }
-
-    const quota = await this.calculateDemoClaudeQuota.execute(
-      CalculateDemoClaudeQuotaCommand.create({
-        environmentId: context.config.environmentId,
-        organizationId: context.config.organizationId,
-        conversationId: String(context.conversation._id),
-      })
-    );
-
-    if (!quota?.isExhausted || !quota.reason) {
-      return;
-    }
-
-    if (quota.reason === 'conversations') {
-      this.analyticsService.track('[Novu Managed Claude] - Conversation limit reached', 'system', {
-        environmentId: context.config.environmentId,
-        organizationId: context.config.organizationId,
-        agentId: agent._id,
-        ...quota.conversations,
-      });
-    }
-
-    if (quota.reason === 'tokens') {
-      this.analyticsService.track('[Novu Managed Claude] - Token limit reached', 'system', {
-        environmentId: context.config.environmentId,
-        organizationId: context.config.organizationId,
-        agentId: agent._id,
-        conversationId: String(context.conversation._id),
-        ...quota.tokens,
-      });
-    }
-
-    throw new DemoQuotaExhaustedError(quota.reason, quota.conversations, quota.tokens);
-  }
-
-  private extractTokenUsageDelta(usage: unknown):
-    | {
-        inputTokens: number;
-        outputTokens: number;
-        cacheReadTokens: number;
-        cacheCreationTokens: number;
-        totalTokens: number;
-      }
-    | undefined {
-    if (!usage || typeof usage !== 'object') {
-      return undefined;
-    }
-
-    const record = usage as Record<string, number | undefined>;
-    const inputTokens = record.inputTokens ?? record.input_tokens ?? 0;
-    const outputTokens = record.outputTokens ?? record.output_tokens ?? 0;
-    const cacheReadTokens = record.cacheReadInputTokens ?? record.cache_read_input_tokens ?? 0;
-    const cacheCreationTokens = record.cacheCreationInputTokens ?? record.cache_creation_input_tokens ?? 0;
-    const totalTokens = inputTokens + outputTokens + cacheReadTokens + cacheCreationTokens;
-
-    if (totalTokens === 0) {
-      return undefined;
-    }
-
-    return {
-      inputTokens,
-      outputTokens,
-      cacheReadTokens,
-      cacheCreationTokens,
-      totalTokens,
-    };
-  }
-
-  private async persistDemoTokenUsage(
-    metadata: Record<string, string>,
-    usage: unknown
-  ): Promise<void> {
-    if (metadata.isDemoIntegration !== 'true') {
-      return;
-    }
-
-    const delta = this.extractTokenUsageDelta(usage);
-
-    if (!delta) {
-      return;
-    }
-
-    await this.conversationRepository.incrementTokenUsage(
-      metadata.environmentId,
-      metadata.organizationId,
-      metadata.conversationId,
-      delta
-    );
   }
 
   /**

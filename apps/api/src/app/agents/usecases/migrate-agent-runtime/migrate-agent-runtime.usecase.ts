@@ -4,6 +4,7 @@ import {
   decryptCredentials,
   getAgentRuntimeProvider,
   getNovuManagedClaudeApiKey,
+  resolveAgentRuntime,
 } from '@novu/application-generic';
 import { AgentRepository, ConversationRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
@@ -70,11 +71,13 @@ export class MigrateAgentRuntime {
       throw new BadRequestException('Target integration must be an active Anthropic agent runtime integration.');
     }
 
-    const targetCredentials = decryptCredentials(targetIntegration.credentials ?? {});
+    const targetResolved = resolveAgentRuntime(targetIntegration.providerId, targetIntegration.credentials);
 
-    if (!targetCredentials.apiKey) {
+    if (!targetResolved) {
       throw new BadRequestException('Target integration has no API key configured.');
     }
+
+    const targetCredentials = targetResolved.credentials;
 
     if (!targetCredentials.externalEnvironmentId) {
       throw new BadRequestException('Target integration is not fully provisioned yet.');
@@ -85,12 +88,12 @@ export class MigrateAgentRuntime {
       AgentRuntimeProviderIdEnum.NovuAnthropic,
       getNovuManagedClaudeApiKey()
     );
-    const targetProvider = getAgentRuntimeProvider(
-      AgentRuntimeProviderIdEnum.Anthropic,
-      targetCredentials.apiKey as string
-    );
+    const targetProvider = targetResolved.provider;
 
     const config = await sourceProvider.getConfig(agent.managedRuntime.externalAgentId);
+
+    // External Anthropic agent is created first. If Mongo writes below fail, an orphan
+    // provider agent may remain and require manual cleanup.
     const created = await targetProvider.createAgent({
       name: agent.name,
       model: config.model,
@@ -100,45 +103,50 @@ export class MigrateAgentRuntime {
       skills: config.skills,
     });
 
-    await this.agentRepository.update(
-      {
-        _id: agent._id,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      {
-        $set: {
-          managedRuntime: {
-            providerId: AgentRuntimeProviderIdEnum.Anthropic,
-            _integrationId: targetIntegration._id,
-            externalAgentId: created.externalAgentId,
-          },
-        },
-      }
-    );
-
-    await this.conversationRepository.clearExternalSessionIdsForAgent(
-      command.environmentId,
-      command.organizationId,
-      agent._id
-    );
-
-    const remainingDemoAgents = await this.agentRepository.count({
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
-      'managedRuntime._integrationId': sourceIntegration._id,
-    });
-
-    if (remainingDemoAgents === 0) {
-      await this.integrationRepository.update(
+    await this.agentRepository.withTransaction(async (session) => {
+      await this.agentRepository.update(
         {
-          _id: sourceIntegration._id,
+          _id: agent._id,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         },
-        { $set: { active: false } }
+        {
+          $set: {
+            managedRuntime: {
+              providerId: AgentRuntimeProviderIdEnum.Anthropic,
+              _integrationId: targetIntegration._id,
+              externalAgentId: created.externalAgentId,
+            },
+          },
+        },
+        session ? { session } : {}
       );
-    }
+
+      await this.conversationRepository.clearExternalSessionIdsForAgent(
+        command.environmentId,
+        command.organizationId,
+        agent._id,
+        session ? { session } : undefined
+      );
+
+      const remainingDemoAgents = await this.agentRepository.count({
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        'managedRuntime._integrationId': sourceIntegration._id,
+      });
+
+      if (remainingDemoAgents === 0) {
+        await this.integrationRepository.update(
+          {
+            _id: sourceIntegration._id,
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+          },
+          { $set: { active: false } },
+          session ? { session } : {}
+        );
+      }
+    });
 
     this.analyticsService.track('[Novu Managed Claude] - Upgraded to own key', command.userId, {
       environmentId: command.environmentId,

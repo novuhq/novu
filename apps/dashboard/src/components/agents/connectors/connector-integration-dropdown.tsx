@@ -238,7 +238,7 @@ export function ConnectorIntegrationDropdown({
                   onSelectIntegration(integration);
                   setOpen(false);
                 }}
-                className={cn('flex min-w-0 cursor-pointer p-0', !isDemo && isCurrent && 'bg-bg-muted')}
+                className="flex min-w-0 cursor-pointer p-0"
               >
                 {isDemo ? (
                   <DemoCredentialDropdownItem
@@ -247,7 +247,12 @@ export function ConnectorIntegrationDropdown({
                     isSelected={isCurrent}
                   />
                 ) : (
-                  <div className="flex w-full min-w-0 items-center gap-1.5 break-normal p-1">
+                  <div
+                    className={cn(
+                      'flex w-full min-w-0 items-center gap-1.5 break-normal p-1',
+                      isCurrent && 'bg-bg-muted'
+                    )}
+                  >
                     {selectedConnector.icon}
                     <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
                       {integration.name}

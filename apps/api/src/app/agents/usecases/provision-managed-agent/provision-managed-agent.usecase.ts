@@ -6,6 +6,7 @@ import {
   getAgentRuntimeProvider,
   getNovuManagedClaudeApiKey,
   PinoLogger,
+  resolveAgentRuntime,
 } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
@@ -54,50 +55,7 @@ export class ProvisionManagedAgent {
       throw new NotFoundException(`Integration "${command.integrationId}" not found.`);
     }
 
-    let decryptedCredentials = decryptCredentials(integration.credentials);
-    const isNovuManagedClaude = integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
-    let resolvedApiKey: string;
-
-    if (isNovuManagedClaude) {
-      if (!areNovuManagedClaudeCredentialsSet()) {
-        throw new UnprocessableEntityException('Novu managed Claude credentials are not configured.');
-      }
-
-      resolvedApiKey = getNovuManagedClaudeApiKey();
-
-      if (!decryptedCredentials.externalEnvironmentId) {
-        const provisioningProvider = getAgentRuntimeProvider(
-          AgentRuntimeProviderIdEnum.NovuAnthropic,
-          resolvedApiKey
-        );
-        const provisionResult = await provisioningProvider.provisionIntegration({
-          integrationName: integration.name ?? 'Novu Managed Claude',
-          resourceName: command.organizationId,
-        });
-        const nextCredentials = encryptCredentials({
-          ...decryptedCredentials,
-          ...provisionResult.credentialsUpdate,
-        });
-
-        await this.integrationRepository.update(
-          {
-            _id: integration._id,
-            _environmentId: command.environmentId,
-            _organizationId: command.organizationId,
-          },
-          { $set: { credentials: nextCredentials } },
-          session ? { session } : {}
-        );
-
-        decryptedCredentials = decryptCredentials(nextCredentials);
-      }
-    } else if (!decryptedCredentials.apiKey) {
-      throw new UnprocessableEntityException(
-        `Integration "${command.integrationId}" has no API key configured. Please complete the integration setup.`
-      );
-    } else {
-      resolvedApiKey = decryptedCredentials.apiKey as string;
-    }
+    const { decryptedCredentials, resolvedApiKey } = await this.ensureCredentialsProvisioned(integration, command, session);
 
     const resolvedIntegrationId = integration._id;
     const runtimeProviderId = integration.providerId as AgentRuntimeProviderIdEnum;
@@ -252,6 +210,62 @@ export class ProvisionManagedAgent {
     }
 
     return { externalAgentId, integrationId: resolvedIntegrationId, adoptedName };
+  }
+
+  private async ensureCredentialsProvisioned(
+    integration: { _id: string; credentials?: unknown; providerId: string; name?: string },
+    command: ProvisionManagedAgentCommand,
+    session: ClientSession | null
+  ): Promise<{ decryptedCredentials: ReturnType<typeof decryptCredentials>; resolvedApiKey: string }> {
+    const isNovuManagedClaude = integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
+
+    if (isNovuManagedClaude) {
+      if (!areNovuManagedClaudeCredentialsSet()) {
+        throw new UnprocessableEntityException('Novu managed Claude credentials are not configured.');
+      }
+
+      const resolvedApiKey = getNovuManagedClaudeApiKey();
+      let decryptedCredentials = decryptCredentials(integration.credentials);
+
+      if (!decryptedCredentials.externalEnvironmentId) {
+        const provisioningProvider = getAgentRuntimeProvider(
+          AgentRuntimeProviderIdEnum.NovuAnthropic,
+          resolvedApiKey
+        );
+        const provisionResult = await provisioningProvider.provisionIntegration({
+          integrationName: integration.name ?? 'Novu Managed Claude',
+          resourceName: command.organizationId,
+        });
+        const nextCredentials = encryptCredentials({
+          ...decryptedCredentials,
+          ...provisionResult.credentialsUpdate,
+        });
+
+        await this.integrationRepository.update(
+          {
+            _id: integration._id,
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+          },
+          { $set: { credentials: nextCredentials } },
+          session ? { session } : {}
+        );
+
+        decryptedCredentials = decryptCredentials(nextCredentials);
+      }
+
+      return { decryptedCredentials, resolvedApiKey };
+    }
+
+    const resolved = resolveAgentRuntime(integration.providerId, integration.credentials);
+
+    if (!resolved) {
+      throw new UnprocessableEntityException(
+        `Integration "${command.integrationId}" has no API key configured. Please complete the integration setup.`
+      );
+    }
+
+    return { decryptedCredentials: resolved.credentials, resolvedApiKey: resolved.apiKey };
   }
 
   private async persistAgentMcpServers(

@@ -5,10 +5,9 @@ import {
   decryptMcpConnectionOAuthClient,
   encryptCredentials,
   encryptMcpConnectionAuth,
-  getAgentRuntimeProvider,
   type IAgentRuntimeProvider,
   PinoLogger,
-  resolveAgentRuntimeApiKey,
+  resolveAgentRuntime,
   SsrfBlockedError,
   safeOutboundJsonRequest,
   splitOAuthState,
@@ -374,20 +373,16 @@ export class McpOAuthCallback {
       return null;
     }
 
-    let apiKey: string;
+    const resolved = resolveAgentRuntime(agent.managedRuntime.providerId, integration.credentials);
 
-    try {
-      apiKey = resolveAgentRuntimeApiKey(agent.managedRuntime.providerId, integration.credentials);
-    } catch {
+    if (!resolved) {
       return null;
     }
 
-    const creds = decryptCredentials(integration.credentials);
-
     return {
-      runtimeProvider: getAgentRuntimeProvider(agent.managedRuntime.providerId, apiKey),
+      runtimeProvider: resolved.provider,
       integrationId: integration._id,
-      integrationCredentials: creds as Record<string, unknown>,
+      integrationCredentials: resolved.credentials,
     };
   }
 

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { getAgentRuntimeProvider, PinoLogger, resolveAgentRuntimeApiKey } from '@novu/application-generic';
+import { resolveAgentRuntime, PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
 import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
@@ -50,17 +50,15 @@ export class UpdateAgentRuntimeConfig {
       throw new NotFoundException(`Runtime integration not found for agent "${command.identifier}".`);
     }
 
-    let apiKey: string;
+    const resolved = resolveAgentRuntime(providerId, integration.credentials);
 
-    try {
-      apiKey = resolveAgentRuntimeApiKey(providerId, integration.credentials);
-    } catch {
+    if (!resolved) {
       throw new UnprocessableEntityException(
         `Integration for agent "${command.identifier}" has no API key configured. Please complete the integration setup.`
       );
     }
 
-    const runtimeProvider = getAgentRuntimeProvider(providerId, apiKey);
+    const runtimeProvider = resolved.provider;
 
     const updated = await runtimeProvider.updateConfig(externalAgentId, {
       model: command.model,

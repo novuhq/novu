@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery, Types } from 'mongoose';
+import { FilterQuery, Types, type ClientSession } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -206,7 +206,8 @@ export class ConversationRepository extends BaseRepositoryV2<
   async clearExternalSessionIdsForAgent(
     environmentId: string,
     organizationId: string,
-    agentId: string
+    agentId: string,
+    options?: { session?: ClientSession | null }
   ): Promise<void> {
     await this.update(
       {
@@ -214,7 +215,8 @@ export class ConversationRepository extends BaseRepositoryV2<
         _environmentId: environmentId,
         _organizationId: organizationId,
       },
-      { $unset: { externalSessionId: '' } }
+      { $unset: { externalSessionId: '' } },
+      options?.session ? { session: options.session } : {}
     );
   }
 

@@ -1,4 +1,4 @@
-import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
+import * as ApplicationGeneric from '@novu/application-generic';
 import { AnalyticsService, encryptCredentials } from '@novu/application-generic';
 import { AgentRepository, ConversationRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
@@ -48,12 +48,27 @@ describe('MigrateAgentRuntime', () => {
     sourceProvider = buildMockProvider();
     targetProvider = buildMockProvider();
 
-    sinon.stub(AgentRuntimeFactoryModule, 'getAgentRuntimeProvider').callsFake((providerId: string) => {
+    sinon.stub(ApplicationGeneric, 'getAgentRuntimeProvider').callsFake((providerId: string) => {
       if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
         return sourceProvider as never;
       }
 
       return targetProvider as never;
+    });
+
+    sinon.stub(ApplicationGeneric, 'resolveAgentRuntime').callsFake((providerId: string) => {
+      if (providerId === AgentRuntimeProviderIdEnum.Anthropic) {
+        return {
+          apiKey: 'sk-user-key',
+          credentials: {
+            apiKey: 'sk-user-key',
+            externalEnvironmentId: 'env-user',
+          },
+          provider: targetProvider as never,
+        };
+      }
+
+      return null;
     });
 
     agentRepository.findOne.resolves({
@@ -85,6 +100,7 @@ describe('MigrateAgentRuntime', () => {
       }),
     } as any);
 
+    agentRepository.withTransaction.callsFake(async (fn: (session: null) => Promise<unknown>) => fn(null));
     agentRepository.count.resolves(0);
     conversationRepository.clearExternalSessionIdsForAgent.resolves();
 

@@ -205,9 +205,7 @@ export class CreateNovuIntegrations {
       integrationPromises.push(this.createSlackIntegration(command));
     }
 
-    if (areNovuManagedClaudeCredentialsSet() && command.name === EnvironmentEnum.DEVELOPMENT) {
-      integrationPromises.push(this.createManagedClaudeIntegration(command));
-    }
+    integrationPromises.push(this.createManagedClaudeIntegration(command));
 
     await Promise.all(integrationPromises);
   }

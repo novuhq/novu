@@ -1,4 +1,4 @@
-import { resolveAgentRuntimeApiKey } from '@novu/application-generic/build/main/agent-runtimes/resolve-agent-runtime-api-key';
+import { resolveAgentRuntimeApiKey } from '@novu/application-generic';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 

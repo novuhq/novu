@@ -84,11 +84,11 @@ const conversationSchema = new Schema<ConversationDBModel>(
     tokenUsage: {
       type: new Schema(
         {
-          inputTokens: { type: Schema.Types.Number, default: 0 },
-          outputTokens: { type: Schema.Types.Number, default: 0 },
-          cacheReadTokens: { type: Schema.Types.Number, default: 0 },
-          cacheCreationTokens: { type: Schema.Types.Number, default: 0 },
-          totalTokens: { type: Schema.Types.Number, default: 0 },
+          inputTokens: { type: Schema.Types.Number },
+          outputTokens: { type: Schema.Types.Number },
+          cacheReadTokens: { type: Schema.Types.Number },
+          cacheCreationTokens: { type: Schema.Types.Number },
+          totalTokens: { type: Schema.Types.Number },
         },
         { _id: false }
       ),

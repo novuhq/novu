@@ -1,22 +1,17 @@
 import { AgentRuntimeProviderIdEnum, type ICredentialsDto } from '@novu/shared';
 
-import { decryptCredentials } from '../encryption/encrypt-provider';
-import { getNovuManagedClaudeApiKey } from '../utils/novu-integrations';
+import { resolveAgentRuntime } from './resolve-agent-runtime';
 
+/** @deprecated Prefer `resolveAgentRuntime`, which returns null instead of throwing. */
 export function resolveAgentRuntimeApiKey(
   providerId: AgentRuntimeProviderIdEnum | string,
   credentials: ICredentialsDto | undefined
 ): string {
-  if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
-    return getNovuManagedClaudeApiKey();
-  }
+  const resolved = resolveAgentRuntime(providerId, credentials);
 
-  const decrypted = decryptCredentials(credentials ?? {});
-  const apiKey = decrypted.apiKey as string | undefined;
-
-  if (!apiKey) {
+  if (!resolved) {
     throw new Error('Integration has no API key configured');
   }
 
-  return apiKey;
+  return resolved.apiKey;
 }
