@@ -23,6 +23,7 @@ import {
 import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { Show } from './show';
+import { useCursorAgentAutoLogin } from './use-cursor-agent-auto-login';
 
 export { Show };
 
@@ -120,18 +121,40 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
     [memberRole]
   );
 
+  const isLoaded = !isPending && !isOrgLoading;
+  const isSignedIn = !!user;
+
+  const { isAutoLoginPending, isAutoLoginFailed } = useCursorAgentAutoLogin({
+    isLoaded,
+    isSignedIn,
+    refreshSession,
+  });
+
   const value = useMemo(
     () => ({
       user,
       organization: organization || null,
       memberRole,
-      isLoaded: !isPending && !isOrgLoading,
+      isLoaded,
       signOut,
       getToken,
       refreshSession,
       has,
+      isAutoLoginPending,
+      isAutoLoginFailed,
     }),
-    [user, organization, memberRole, isPending, isOrgLoading, refreshSession, signOut, getToken, has]
+    [
+      user,
+      organization,
+      memberRole,
+      isLoaded,
+      refreshSession,
+      signOut,
+      getToken,
+      has,
+      isAutoLoginPending,
+      isAutoLoginFailed,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -332,6 +355,18 @@ export function RedirectToSignIn() {
 }
 
 export function SignIn() {
+  const context = useContext(AuthContext);
+  const isAutoLoginPending = context?.isAutoLoginPending ?? false;
+  const isAutoLoginFailed = context?.isAutoLoginFailed ?? false;
+
+  if (isAutoLoginPending && !isAutoLoginFailed) {
+    return (
+      <div className="mx-auto w-full max-w-md pt-12 text-center">
+        <p className="text-sm text-foreground-600">Signing in to the agent environment…</p>
+      </div>
+    );
+  }
+
   return <SignInComponent />;
 }
 

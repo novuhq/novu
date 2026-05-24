@@ -24,6 +24,8 @@ export type AuthContextType = {
   getToken: () => Promise<string | null>;
   refreshSession: () => Promise<void>;
   has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean;
+  isAutoLoginPending: boolean;
+  isAutoLoginFailed: boolean;
 };
 
 export const AuthContext = createContext<AuthContextType | null>(null);
