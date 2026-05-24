@@ -46,7 +46,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
 
 # Docker (services run via `docker compose` at agent startup)
 # Pattern from https://cursor.com/docs/cloud-agent/setup#recommended-dockerfile-for-complex-docker-setups
-RUN curl --retry 3 --retry-delay 5 -fsSL https://download.docker.com/linux/ubuntu/gpg \
+RUN mkdir -p /etc/apt/keyrings \
+ && curl --retry 3 --retry-delay 5 -fsSL https://download.docker.com/linux/ubuntu/gpg \
       | gpg --dearmor -o /etc/apt/keyrings/docker.gpg \
  && chmod a+r /etc/apt/keyrings/docker.gpg \
  && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" \

@@ -1,4 +1,4 @@
-import { SignUp as SignUpForm } from '@clerk/clerk-react';
+import { SignUp as SignUpForm } from '@clerk/react';
 import { useEffect } from 'react';
 import { AuthSideBanner } from '@/components/auth/auth-side-banner';
 import { RegionPicker } from '@/components/auth/region-picker';

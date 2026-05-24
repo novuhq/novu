@@ -27,6 +27,19 @@ import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachmen
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
 const MAX_RETRIES = 2;
+
+/** Agent bridge replyUrl: prefer API_ROOT_URL, else localhost on PORT (default 3000). */
+function resolveAgentReplyApiOrigin(): string {
+  const apiRootUrl = process.env.API_ROOT_URL?.replace(/\/$/, '');
+
+  if (apiRootUrl) {
+    return apiRootUrl;
+  }
+
+  const port = process.env.PORT || '3000';
+
+  return `http://localhost:${port}`;
+}
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
 const ATTACHMENT_SIGNING_CONCURRENCY = 4;
@@ -77,6 +90,8 @@ export interface AgentExecutionParams {
   action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
+  /** Called after all retries are exhausted and the bridge remains unreachable. */
+  onBridgeFailure?: (error: Error) => Promise<void>;
 }
 
 export class NoBridgeUrlError extends Error {
@@ -118,6 +133,9 @@ export class BridgeExecutorService {
 
       this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
         this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
+        params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
+          this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
+        });
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
@@ -229,8 +247,7 @@ export class BridgeExecutorService {
     const { event, config, conversation, subscriber, history, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
-    const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
-    const replyUrl = `${apiRootUrl}/v1/agents/${agentIdentifier}/reply`;
+    const replyUrl = `${resolveAgentReplyApiOrigin()}/v1/agents/${agentIdentifier}/reply`;
 
     const timestamp = new Date().toISOString();
 

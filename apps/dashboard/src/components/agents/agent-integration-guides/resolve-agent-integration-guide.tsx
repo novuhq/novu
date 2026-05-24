@@ -1,15 +1,18 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
+import { useEffect, useState } from 'react';
 import type { AgentIntegrationLink, AgentResponse } from '@/api/agents';
-import { EmailSetupGuide } from '@/components/agents/email-setup-guide';
+import { isAgentIntegrationConnected } from '@/components/agents/is-agent-integration-connected';
 import { SetupGuideCard } from '@/components/agents/setup-guide-card';
 import { SlackSetupGuide } from '@/components/agents/slack-setup-guide';
 import { TeamsSetupGuide } from '@/components/agents/teams-setup-guide';
+import { TelegramSetupGuide } from '@/components/agents/telegram-setup-guide';
 import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
 import { SlackAgentIntegrationGuide } from './slack-agent-integration-guide';
 import { TeamsAgentIntegrationGuide } from './teams-agent-integration-guide';
+import { TelegramAgentIntegrationGuide } from './telegram-agent-integration-guide';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
 
 type ResolveAgentIntegrationGuideProps = {
@@ -41,7 +44,7 @@ function SetupGuideWithHeader({
   isRemovingIntegration,
   children,
 }: SetupGuideWrapperProps) {
-  const isConnected = Boolean(integrationLink.connectedAt);
+  const isConnected = isAgentIntegrationConnected(integrationLink);
 
   const statusBadge = isConnected ? (
     <span className="bg-success-lighter flex items-center gap-1 rounded-md px-1 py-0.5">
@@ -87,7 +90,27 @@ export function ResolveAgentIntegrationGuide({
 }: ResolveAgentIntegrationGuideProps) {
   const providerId = integrationLink.integration.providerId;
 
-  if (providerId === ChatProviderIdEnum.Slack && !integrationLink.connectedAt) {
+  // Once the user opens an unconnected integration, keep showing the setup guide so the
+  // "Connected" success state (confetti + listening status) stays visible after the
+  // backend reports `connectedAt`. Stickiness is scoped to a single integration at a
+  // time — switching to a different provider clears it, and a fresh mount (page
+  // refresh / leaving the tab) reverts to the management view for already-connected
+  // integrations.
+  const [stickySetupId, setStickySetupId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!integrationLink.connectedAt) {
+      setStickySetupId(integrationLink._id);
+
+      return;
+    }
+
+    setStickySetupId((prev) => (prev === integrationLink._id ? prev : null));
+  }, [integrationLink._id, integrationLink.connectedAt]);
+
+  const showSetupGuide = !integrationLink.connectedAt || stickySetupId === integrationLink._id;
+
+  if (providerId === ChatProviderIdEnum.Slack && showSetupGuide) {
     return (
       <SetupGuideWithHeader
         providerId={providerId}
@@ -116,7 +139,7 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  if (providerId === ChatProviderIdEnum.MsTeams && !integrationLink.connectedAt) {
+  if (providerId === ChatProviderIdEnum.MsTeams && showSetupGuide) {
     return (
       <SetupGuideWithHeader
         providerId={providerId}
@@ -145,7 +168,36 @@ export function ResolveAgentIntegrationGuide({
     );
   }
 
-  if (providerId === ChatProviderIdEnum.WhatsAppBusiness && !integrationLink.connectedAt) {
+  if (providerId === ChatProviderIdEnum.Telegram && showSetupGuide) {
+    return (
+      <SetupGuideWithHeader
+        providerId={providerId}
+        providerDisplayName="Telegram"
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      >
+        <TelegramSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
+      </SetupGuideWithHeader>
+    );
+  }
+
+  if (providerId === ChatProviderIdEnum.Telegram) {
+    return (
+      <TelegramAgentIntegrationGuide
+        embedded={embedded}
+        onBack={onBack}
+        agent={agent}
+        integrationLink={integrationLink}
+        canRemoveIntegration={canRemoveIntegration}
+        onRequestRemoveIntegration={onRequestRemoveIntegration}
+        isRemovingIntegration={isRemovingIntegration}
+      />
+    );
+  }
+
+  if (providerId === ChatProviderIdEnum.WhatsAppBusiness && showSetupGuide) {
     return (
       <SetupGuideWithHeader
         providerId={providerId}
@@ -171,21 +223,6 @@ export function ResolveAgentIntegrationGuide({
         onRequestRemoveIntegration={onRequestRemoveIntegration}
         isRemovingIntegration={isRemovingIntegration}
       />
-    );
-  }
-
-  if (providerId === EmailProviderIdEnum.NovuAgent && !integrationLink.connectedAt) {
-    return (
-      <SetupGuideWithHeader
-        providerId={providerId}
-        providerDisplayName="Novu Email"
-        integrationLink={integrationLink}
-        canRemoveIntegration={canRemoveIntegration}
-        onRequestRemoveIntegration={onRequestRemoveIntegration}
-        isRemovingIntegration={isRemovingIntegration}
-      >
-        <EmailSetupGuide agent={agent} integrationId={integrationLink.integration._id} embedded />
-      </SetupGuideWithHeader>
     );
   }
 

@@ -30,14 +30,14 @@ export function RecentConversationsSection({ agent }: RecentConversationsSection
 
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
-      <div className="flex items-center justify-between px-2 py-1.5">
+      <div className="flex items-center justify-between px-2 pt-1 pb-1.5">
         <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
           Recent conversations
         </span>
         {!IS_SELF_HOSTED && conversationsPath ? (
           <Link
             to={conversationsPath}
-            className="text-text-sub hover:text-text-strong text-label-xs flex items-center gap-0.5 rounded-lg p-1.5 font-medium transition-colors"
+            className="text-text-sub hover:text-text-strong text-label-xs flex items-center gap-0.5 rounded-lg p-0 font-medium transition-colors"
           >
             View all
             <RiArrowRightLine className="size-4" />

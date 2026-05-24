@@ -45,7 +45,9 @@ wait_for_clickhouse() {
     fi
     sleep 1
   done
-  log "WARN: ClickHouse not ready after 60s; migrations may fail"
+  log "ERROR: ClickHouse not ready after 60s" >&2
+
+  return 1
 }
 
 ensure_docker

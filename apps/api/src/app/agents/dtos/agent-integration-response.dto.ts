@@ -26,6 +26,27 @@ export class AgentIntegrationResponseIntegrationDto {
 
   @ApiProperty()
   active: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'The Novu shared inbox address for this agent. Set whenever the cloud shared-inbox feature is enabled. ' +
+      'The dashboard uses this as the headline inbound address and to render the shared inbox row in the inbox list.',
+  })
+  sharedInboundAddress?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Default email From display name for this agent (NovuAgent integrations only). ' +
+      'Falls back to the agent name when not explicitly stored on the integration credentials.',
+  })
+  defaultSenderName?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'When true, the worker drops inbound mail addressed to this agent on the shared `agentconnect.sh` domain. ' +
+      'Custom-domain routes still deliver. Only meaningful on cloud-enabled NovuAgent integrations.',
+  })
+  sharedInboxDisabled?: boolean;
 }
 
 export class AgentIntegrationResponseDto {
@@ -45,7 +66,7 @@ export class AgentIntegrationResponseDto {
   _organizationId: string;
 
   @ApiPropertyOptional({
-    description: 'Set when the agent–integration link has been used (e.g. first credential resolution).',
+    description: 'Set when the agent–integration link received its first inbound webhook delivery.',
   })
   connectedAt?: string | null;
 

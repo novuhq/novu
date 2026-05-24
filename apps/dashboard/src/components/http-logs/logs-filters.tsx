@@ -1,4 +1,4 @@
-import { useOrganization } from '@clerk/clerk-react';
+import { useOrganization } from '@clerk/react';
 import { CalendarIcon } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';

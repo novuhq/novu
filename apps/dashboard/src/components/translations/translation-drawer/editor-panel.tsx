@@ -74,10 +74,10 @@ const BASIC_SETUP = { lineNumbers: true, defaultKeymap: true };
 function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnly = false }: JSONEditorProps) {
   return (
     // 112px is the height of the actions section
-    <div className="flex-1 px-3 pb-3 flex flex-col max-h-[calc(100%-112px)]">
+    <div className="min-h-0 flex-1 px-3 pb-3 flex flex-col max-h-[calc(100%-112px)]">
       <div
         className={cn(
-          'relative overflow-hidden w-full rounded-lg border bg-white flex-1 ',
+          'relative overflow-hidden w-full rounded-lg border bg-white min-h-0 flex-1',
           error ? 'border-red-300' : 'border-neutral-200',
           isReadOnly && 'bg-neutral-50'
         )}
@@ -89,6 +89,7 @@ function JSONEditor({ content, onChange, error, updatedAt, isOutdated, isReadOnl
           extensions={JSON_EXTENSIONS}
           basicSetup={BASIC_SETUP}
           placeholder="Enter JSON content..."
+          height="100%"
           className={cn(
             'flex-1 [&_.cm-scroller]:p-4 [&_div.cm-gutters]:bg-background [&_div.cm-gutters]:-translate-x-[16px] [&_div.cm-gutters]:pl-4 [&_div.cm-gutters]:-ml-4 [&_.cm-editor]:h-full rounded-lg [&_.cm-scroller]:h-full! [&_.cm-scroller]:overflow-auto [&_.cm-content]:max-w-[calc(100%-2rem)]',
             error ? 'h-[calc(100%-32px)]' : 'h-full'
@@ -170,7 +171,7 @@ export function EditorPanel({
   const isOutdated = outdatedLocales?.includes(selectedTranslation.locale);
 
   return (
-    <div className="flex flex-1 flex-col bg-neutral-50 max-w-[calc(100%-400px)]">
+    <div className="flex min-h-0 flex-1 flex-col bg-neutral-50 max-w-[calc(100%-400px)]">
       <EditorActions
         selectedTranslation={selectedTranslation}
         modifiedContent={modifiedContent}

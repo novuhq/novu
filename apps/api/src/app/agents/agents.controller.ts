@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseFilters,
   UseGuards,
   UseInterceptors,
@@ -24,6 +25,7 @@ import {
   ProductFeatureKeyEnum,
   UserSessionData,
 } from '@novu/shared';
+import type { Request } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -38,19 +40,37 @@ import { UserSession } from '../shared/framework/user.decorator';
 import {
   AddAgentIntegrationRequestDto,
   AgentIntegrationResponseDto,
+  AgentMcpServerEnablementResponseDto,
   AgentResponseDto,
   AgentRuntimeConfigResponseDto,
   CreateAgentRequestDto,
+  EnableAgentMcpServerRequestDto,
+  GenerateManagedAgentRequestDto,
+  GenerateManagedAgentResponseDto,
+  GenerateMcpOAuthUrlRequestDto,
+  GenerateMcpOAuthUrlResponseDto,
   ListAgentIntegrationsQueryDto,
   ListAgentIntegrationsResponseDto,
+  ListAgentMcpServersResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
+  McpConnectionResponseDto,
   PatchAgentRuntimeConfigRequestDto,
   UpdateAgentBridgeRequestDto,
+  UpdateAgentInboxSharedRequestDto,
   UpdateAgentIntegrationRequestDto,
   UpdateAgentRequestDto,
+  UploadCustomSkillRequestDto,
+  UploadCustomSkillResponseDto,
+  VerifyManagedCredentialsRequestDto,
+  VerifyManagedCredentialsResponseDto,
 } from './dtos';
+import { ConfigureTelegramWebhookResponseDto } from './dtos/configure-telegram-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
+import { IssueTelegramMobileLinkRequestDto } from './dtos/issue-telegram-mobile-link-request.dto';
+import { IssueTelegramMobileLinkResponseDto } from './dtos/issue-telegram-mobile-link-response.dto';
+import { IssueTelegramSubscriberLinkRequestDto } from './dtos/issue-telegram-subscriber-link-request.dto';
+import { IssueTelegramSubscriberLinkResponseDto } from './dtos/issue-telegram-subscriber-link-response.dto';
 import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
 import { SendAgentWelcomeMessageRequestDto } from './dtos/send-agent-welcome-message-request.dto';
 import {
@@ -61,19 +81,37 @@ import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.f
 import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
+import { ConfigureTelegramAgentWebhookCommand } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
+import { ConfigureTelegramAgentWebhook } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
 import { ConfigureWhatsAppWebhookCommand } from './usecases/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
 import { ConfigureWhatsAppWebhook } from './usecases/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
 import { CreateAgentCommand } from './usecases/create-agent/create-agent.command';
 import { CreateAgent } from './usecases/create-agent/create-agent.usecase';
 import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command';
 import { DeleteAgent } from './usecases/delete-agent/delete-agent.usecase';
+import { DisableAgentMcpServerCommand } from './usecases/disable-agent-mcp-server/disable-agent-mcp-server.command';
+import { DisableAgentMcpServer } from './usecases/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
+import { EnableAgentMcpServerCommand } from './usecases/enable-agent-mcp-server/enable-agent-mcp-server.command';
+import { EnableAgentMcpServer } from './usecases/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
+import { GenerateManagedAgentCommand } from './usecases/generate-managed-agent/generate-managed-agent.command';
+import { GenerateManagedAgent } from './usecases/generate-managed-agent/generate-managed-agent.usecase';
+import { GenerateMcpOAuthUrlCommand } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
+import { GenerateMcpOAuthUrl } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
 import { GetAgentRuntimeConfigCommand } from './usecases/get-agent-runtime-config/get-agent-runtime-config.command';
 import { GetAgentRuntimeConfig } from './usecases/get-agent-runtime-config/get-agent-runtime-config.usecase';
+import { GetMcpConnectionStatusCommand } from './usecases/get-mcp-connection-status/get-mcp-connection-status.command';
+import { GetMcpConnectionStatus } from './usecases/get-mcp-connection-status/get-mcp-connection-status.usecase';
+import { IssueTelegramMobileLinkCommand } from './usecases/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
+import { IssueTelegramMobileLink } from './usecases/issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
+import { IssueTelegramSubscriberLinkCommand } from './usecases/issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
+import { IssueTelegramSubscriberLink } from './usecases/issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { type AgentEmojiEntry, ListAgentEmoji } from './usecases/list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrationsCommand } from './usecases/list-agent-integrations/list-agent-integrations.command';
 import { ListAgentIntegrations } from './usecases/list-agent-integrations/list-agent-integrations.usecase';
+import { ListAgentMcpServersCommand } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.command';
+import { ListAgentMcpServers } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
@@ -86,10 +124,16 @@ import { SendWhatsAppTestTemplateCommand } from './usecases/send-whatsapp-test-t
 import { SendWhatsAppTestTemplate } from './usecases/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
+import { UpdateAgentInboxSharedCommand } from './usecases/update-agent-inbox-shared/update-agent-inbox-shared.command';
+import { UpdateAgentInboxShared } from './usecases/update-agent-inbox-shared/update-agent-inbox-shared.usecase';
 import { UpdateAgentIntegrationCommand } from './usecases/update-agent-integration/update-agent-integration.command';
 import { UpdateAgentIntegration } from './usecases/update-agent-integration/update-agent-integration.usecase';
 import { UpdateAgentRuntimeConfigCommand } from './usecases/update-agent-runtime-config/update-agent-runtime-config.command';
 import { UpdateAgentRuntimeConfig } from './usecases/update-agent-runtime-config/update-agent-runtime-config.usecase';
+import { UploadCustomSkillCommand } from './usecases/upload-custom-skill/upload-custom-skill.command';
+import { UploadCustomSkill } from './usecases/upload-custom-skill/upload-custom-skill.usecase';
+import { VerifyManagedCredentialsCommand } from './usecases/verify-managed-credentials/verify-managed-credentials.command';
+import { VerifyManagedCredentials } from './usecases/verify-managed-credentials/verify-managed-credentials.usecase';
 
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
@@ -114,8 +158,20 @@ export class AgentsController {
     private readonly sendAgentWelcomeMessageUsecase: SendAgentWelcomeMessage,
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly updateAgentRuntimeConfigUsecase: UpdateAgentRuntimeConfig,
+    private readonly uploadCustomSkillUsecase: UploadCustomSkill,
     private readonly configureWhatsAppWebhookUsecase: ConfigureWhatsAppWebhook,
-    private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate
+    private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
+    private readonly enableAgentMcpServerUsecase: EnableAgentMcpServer,
+    private readonly disableAgentMcpServerUsecase: DisableAgentMcpServer,
+    private readonly listAgentMcpServersUsecase: ListAgentMcpServers,
+    private readonly generateMcpOAuthUrlUsecase: GenerateMcpOAuthUrl,
+    private readonly getMcpConnectionStatusUsecase: GetMcpConnectionStatus,
+    private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook,
+    private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
+    private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
+    private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared,
+    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials,
+    private readonly generateManagedAgentUsecase: GenerateManagedAgent
   ) {}
 
   @Get('/emoji')
@@ -128,6 +184,70 @@ export class AgentsController {
   @RequirePermissions(PermissionsEnum.AGENT_READ)
   listAgentEmoji(): Promise<AgentEmojiEntry[]> {
     return this.listAgentEmojiUsecase.execute();
+  }
+
+  @Post('/verify-credentials')
+  @ApiResponse(VerifyManagedCredentialsResponseDto)
+  @ApiOperation({
+    summary: 'Verify managed-runtime credentials',
+    description:
+      'Performs a stateless, read-only validation of the supplied API key against the selected managed-runtime provider. ' +
+      'Used by the dashboard to give immediate feedback when configuring credentials before the integration is created.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  verifyManagedCredentials(
+    @UserSession() user: UserSessionData,
+    @Body() body: VerifyManagedCredentialsRequestDto
+  ): Promise<VerifyManagedCredentialsResponseDto> {
+    return this.verifyManagedCredentialsUsecase.execute(
+      VerifyManagedCredentialsCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        providerId: body.providerId,
+        apiKey: body.apiKey,
+        externalWorkspaceId: body.externalWorkspaceId,
+      })
+    );
+  }
+
+  @Post('/generate')
+  @ApiResponse(GenerateManagedAgentResponseDto)
+  @ApiOperation({
+    summary: 'Generate an agent configuration from a free-form prompt',
+    description:
+      'Translates a user-supplied description into an agent configuration (name, identifier, systemPrompt, tools, MCP servers, skills).',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async generateManagedAgent(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateManagedAgentRequestDto,
+    @Req() request: Request
+  ): Promise<GenerateManagedAgentResponseDto> {
+    const abortController = new AbortController();
+    const handleSocketClose = (): void => {
+      if (request.destroyed) {
+        abortController.abort();
+      }
+    };
+    request.socket.on('close', handleSocketClose);
+
+    const command = GenerateManagedAgentCommand.create({
+      user,
+      prompt: body.prompt,
+      runtime: body.runtime,
+    });
+    // Attach signal outside `create(...)` — running an `AbortSignal` through
+    // `class-transformer`'s `plainToInstance` triggers `new AbortSignal()`, which is
+    // disallowed by the runtime (`ERR_ILLEGAL_CONSTRUCTOR`).
+    command.signal = abortController.signal;
+
+    try {
+      return await this.generateManagedAgentUsecase.execute(command);
+    } finally {
+      request.socket.off('close', handleSocketClose);
+    }
   }
 
   @Post('/')
@@ -150,7 +270,6 @@ export class AgentsController {
         active: body.active,
         runtime: body.runtime,
         managedRuntime: body.managedRuntime,
-        creationSource: body.creationSource,
       })
     );
   }
@@ -380,6 +499,34 @@ export class AgentsController {
     );
   }
 
+  @Patch('/:identifier/inbox/shared')
+  @ApiResponse(AgentIntegrationResponseDto)
+  @ApiOperation({
+    summary: 'Enable or disable the Novu shared inbox for an agent',
+    description:
+      'Disabling drops inbound mail addressed to this agent on the shared `agentconnect.sh` domain — custom-domain ' +
+      'routes continue to deliver. Refused when no custom-domain inbox is configured (would leave the agent with ' +
+      'zero inbound paths).',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or its Novu Email integration was not found.' })
+  @ProductFeature(ProductFeatureKeyEnum.AGENT_EMAIL_INTEGRATION)
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateAgentInboxShared(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: UpdateAgentInboxSharedRequestDto
+  ): Promise<AgentIntegrationResponseDto> {
+    return this.updateAgentInboxSharedUsecase.execute(
+      UpdateAgentInboxSharedCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        disabled: body.disabled,
+      })
+    );
+  }
+
   @Post('/:identifier/welcome-message')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -403,6 +550,98 @@ export class AgentsController {
         agentIdentifier: identifier,
         integrationIdentifier: body.integrationIdentifier,
         conversationId: body.conversationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationId/telegram/configure')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(ConfigureTelegramWebhookResponseDto, 200)
+  @ApiOperation({
+    summary: 'Configure Telegram bot webhook',
+    description: `Registers the Novu agent webhook URL with Telegram for the specified integration,
+       generates a cryptographic secret token for webhook verification,
+       and persists it on the integration. Re-running rotates the secret.`,
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent, integration, or agent-integration link was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  updateTelegramWebhook(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationId') integrationId: string
+  ): Promise<ConfigureTelegramWebhookResponseDto> {
+    return this.configureTelegramAgentWebhookUsecase.execute(
+      ConfigureTelegramAgentWebhookCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationId/telegram/mobile-link')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(IssueTelegramMobileLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a short-lived Telegram mobile setup link',
+    description:
+      'Issues a signed, single-use link (TTL = 5 minutes) that can be opened on a mobile device to finish ' +
+      'configuring a Telegram bot without re-authenticating. Telegram-only.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent, integration, or agent-integration link was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  createTelegramMobileLink(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationId') integrationId: string,
+    @Body() body?: IssueTelegramMobileLinkRequestDto
+  ): Promise<IssueTelegramMobileLinkResponseDto> {
+    return this.issueTelegramMobileLinkUsecase.execute(
+      IssueTelegramMobileLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationId,
+        subscriberId: body?.subscriberId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationId/telegram/subscriber-link')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(IssueTelegramSubscriberLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a Telegram subscriber-link deep link',
+    description:
+      'Issues a short-lived opaque start code and returns a Telegram `t.me/<bot>?start=<code>` deep link. When ' +
+      'opened, Telegram sends `/start <code>` to the bot; the agent webhook consumes the code server-side and ' +
+      'creates a `telegram_chat` channel endpoint so notifications can reach that subscriber via Telegram.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent, integration, agent-integration link, or subscriber was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  createTelegramSubscriberLink(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationId') integrationId: string,
+    @Body() body: IssueTelegramSubscriberLinkRequestDto
+  ): Promise<IssueTelegramSubscriberLinkResponseDto> {
+    return this.issueTelegramSubscriberLinkUsecase.execute(
+      IssueTelegramSubscriberLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationId,
+        subscriberId: body.subscriberId,
       })
     );
   }
@@ -557,7 +796,9 @@ export class AgentsController {
     summary: 'Update agent runtime config',
     description:
       'Applies a partial update to the managed agent runtime config on the provider. ' +
-      'Accepts any combination of model, systemPrompt, mcpServers, tools, and skills. ' +
+      'Accepts any combination of model, systemPrompt, tools, and skills. ' +
+      'MCP enablement is managed via the dedicated `POST /agents/:identifier/mcp-servers` and ' +
+      '`DELETE /agents/:identifier/mcp-servers/:mcpId` endpoints. ' +
       'Server-side diffing issues the minimal set of provider API calls. ' +
       'An empty body is accepted and returns the current config unchanged.',
   })
@@ -582,9 +823,183 @@ export class AgentsController {
         identifier,
         model: body.model,
         systemPrompt: body.systemPrompt,
-        mcpServers: body.mcpServers,
         tools: body.tools,
         skills: body.skills,
+      })
+    );
+  }
+
+  @Get('/:identifier/mcp-servers')
+  @ApiResponse(ListAgentMcpServersResponseDto)
+  @ApiOperation({
+    summary: 'List MCP servers enabled on agent',
+    description:
+      'Returns the per-agent enablement records sourced from Mongo. Mongo is the source of truth for ' +
+      'the agent\u2019s MCP list; the provider\u2019s `agent.mcp_servers` collection is synced from these rows.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  listAgentMcpServers(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string
+  ): Promise<ListAgentMcpServersResponseDto> {
+    return this.listAgentMcpServersUsecase.execute(
+      ListAgentMcpServersCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/mcp-servers')
+  @ApiResponse(AgentMcpServerEnablementResponseDto, 201)
+  @ApiOperation({
+    summary: 'Enable an MCP server on agent',
+    description:
+      'Writes the per-agent enablement record and synchronously projects the new enabled set onto the runtime provider.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or runtime integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  enableAgentMcpServer(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: EnableAgentMcpServerRequestDto
+  ): Promise<AgentMcpServerEnablementResponseDto> {
+    return this.enableAgentMcpServerUsecase.execute(
+      EnableAgentMcpServerCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId: body.mcpId,
+        defaultScope: body.defaultScope,
+      })
+    );
+  }
+
+  @Delete('/:identifier/mcp-servers/:mcpId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Disable an MCP server on agent',
+    description:
+      'Cascade-deletes any `mcp_connection` rows scoped to this enablement, removes the per-agent record, and resyncs the provider projection.',
+  })
+  @ApiNoContentResponse({ description: 'The MCP was disabled.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  disableAgentMcpServer(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string
+  ): Promise<void> {
+    return this.disableAgentMcpServerUsecase.execute(
+      DisableAgentMcpServerCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
+      })
+    );
+  }
+
+  @Post('/:identifier/mcp-servers/:mcpId/oauth/url')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(GenerateMcpOAuthUrlResponseDto, 200)
+  @ApiOperation({
+    summary: 'Generate MCP OAuth authorize URL',
+    description:
+      'Returns the provider authorize URL the subscriber should be redirected to for a `subscriber`-scoped connection. ' +
+      'Reuses the signed-state OAuth pattern already used by chat integrations.',
+  })
+  @ExternalApiAccessible()
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  generateMcpOAuthUrl(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string,
+    @Body() body: GenerateMcpOAuthUrlRequestDto
+  ): Promise<GenerateMcpOAuthUrlResponseDto> {
+    return this.generateMcpOAuthUrlUsecase.execute(
+      GenerateMcpOAuthUrlCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
+        subscriberId: body.subscriberId,
+      })
+    );
+  }
+
+  @Get('/:identifier/mcp-servers/:mcpId/connection')
+  @ApiResponse(McpConnectionResponseDto)
+  @ApiOperation({
+    summary: 'Get MCP connection status for a subscriber',
+    description:
+      'Returns the per-subscriber connection state for the (agent, mcp) pair, or null when no connection has been initiated yet. ' +
+      'Used by the dashboard to render Authorize / Connected / Re-authorize CTAs without leaking encrypted tokens.',
+  })
+  @ApiNotFoundResponse({ description: 'Agent or MCP enablement not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getMcpConnectionStatus(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string,
+    @Query('subscriberId') subscriberId: string
+  ): Promise<McpConnectionResponseDto | null> {
+    return this.getMcpConnectionStatusUsecase.execute(
+      GetMcpConnectionStatusCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
+        subscriberId,
+      })
+    );
+  }
+
+  @Post('/skills')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiResponse(UploadCustomSkillResponseDto, 201)
+  @ApiOperation({
+    summary: 'Upload one or more custom skills from a source',
+    description:
+      'Downloads the supplied source, uploads each resulting bundle to the integration provider ' +
+      'as a custom skill, and returns the provider-assigned skill IDs as a uniform `skills[]` array. ' +
+      'Three source variants are supported:\n\n' +
+      '- `type: "github-url"` — full `https://github.com/...` URL. Always uploads exactly one skill; ' +
+      'use this form to pin a ref or to disambiguate when multiple repo directories share a basename. ' +
+      'Accepts `/`, `/tree/{ref}`, or `/tree/{ref}/{path}` shapes.\n' +
+      '- `type: "github-repo"` — `owner/repo` slug fetched from the default branch (HEAD). ' +
+      'Pass a required, non-empty `skills` array of directory basenames to upload. Each name must ' +
+      'match exactly one directory containing a `SKILL.md`; ambiguous names are rejected with a 400.\n' +
+      '- `type: "inline"` — raw `SKILL.md` text pasted by the caller, wrapped server-side as a single-file bundle.\n\n' +
+      'Each returned `skillId` can be passed via `managedRuntime.skills` on POST /agents or ' +
+      'PATCH /agents/:identifier/runtime/config as `{ type: "custom", skillId }`. ' +
+      'Re-uploading a source whose derived display title matches an existing custom skill appends a new ' +
+      'version to it rather than failing — the entry returns the existing `skillId` and the new `version`. ' +
+      'When a multi-skill `github-repo` upload partially fails, the request is aborted at the first ' +
+      'error and earlier successful uploads are NOT rolled back (they will auto-version on retry).',
+  })
+  @ApiNotFoundResponse({ description: 'The integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  createCustomSkill(
+    @UserSession() user: UserSessionData,
+    @Body() body: UploadCustomSkillRequestDto
+  ): Promise<UploadCustomSkillResponseDto> {
+    return this.uploadCustomSkillUsecase.execute(
+      UploadCustomSkillCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationId: body.integrationId,
+        source: body.source,
       })
     );
   }

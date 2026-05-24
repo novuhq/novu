@@ -51,12 +51,29 @@ ensure_env() {
   local target="$1"
   local dir="${target%/*}"
 
-  [ -f "$target" ] && return 0
-
   if [ -f "$dir/.env.agent" ]; then
-    cp "$dir/.env.agent" "$target"
-    log "Seeded $target from .env.agent"
-  elif [ -f "$dir/.example.env" ]; then
+    if [ ! -f "$target" ]; then
+      cp "$dir/.env.agent" "$target"
+      log "Seeded $target from .env.agent"
+
+      return 0
+    fi
+
+    local merged=0
+    while IFS= read -r line || [ -n "$line" ]; do
+      [[ "$line" =~ ^# ]] && continue
+      [[ -z "$line" ]] && continue
+      local key="${line%%=*}"
+      if ! grep -q "^${key}=" "$target"; then
+        echo "$line" >> "$target"
+        merged=1
+      fi
+    done < "$dir/.env.agent"
+
+    if [ "$merged" -eq 1 ]; then
+      log "Merged missing keys into $target from .env.agent"
+    fi
+  elif [ -f "$dir/.example.env" ] && [ ! -f "$target" ]; then
     cp "$dir/.example.env" "$target"
     log "Seeded $target from .example.env"
   fi

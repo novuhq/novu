@@ -19,7 +19,15 @@ jobs:
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Install pnpm
-        uses: pnpm/action-setup@a3252b78c470c02df07e9d59298aecedc3ccdd6d # v3
+        uses: pnpm/action-setup@0e279bb959325dab635dd2c09392533439d90093 # v6.0.8
+
+      # pnpm v11 requires Node.js >= 22.13. The default runner image ships Node
+      # 20, which causes `pnpm m ls` to crash with ERR_UNKNOWN_BUILTIN_MODULE
+      # (node:sqlite) and leaves the SCOPES env empty, failing this lint.
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22.22.1'
 
       - name: Generate scopes
         id: generate_scopes

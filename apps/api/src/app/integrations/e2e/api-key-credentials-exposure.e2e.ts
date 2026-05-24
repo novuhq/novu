@@ -22,9 +22,7 @@ describe('Integration credentials exposure to API-key auth - /integrations #novu
 
   describe('GET /v1/integrations', () => {
     it('should return an empty credentials object when authenticated with an API key', async () => {
-      const { body } = await session.testAgent
-        .get('/v1/integrations')
-        .set('authorization', `ApiKey ${session.apiKey}`);
+      const { body } = await session.testAgent.get('/v1/integrations').set('authorization', `ApiKey ${session.apiKey}`);
 
       expect(body.data.length).to.be.greaterThan(0);
       for (const integration of body.data) {

@@ -13,8 +13,14 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
-import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, DirectionEnum, PermissionsEnum, UserSessionData } from '@novu/shared';
+import { ExternalApiAccessible, ProductFeature, RequirePermissions } from '@novu/application-generic';
+import {
+  ApiRateLimitCategoryEnum,
+  DirectionEnum,
+  PermissionsEnum,
+  ProductFeatureKeyEnum,
+  UserSessionData,
+} from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
 import { ApiCommonResponses, ApiNoContentResponse, ApiResponse } from '../shared/framework/response.decorator';
@@ -123,6 +129,7 @@ export class DomainsController {
   @Post('/')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Create a domain',
     description:
@@ -167,6 +174,7 @@ export class DomainsController {
   @HttpCode(HttpStatus.OK)
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Verify a domain',
     description:
@@ -192,6 +200,7 @@ export class DomainsController {
   @HttpCode(HttpStatus.OK)
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_READ)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Diagnose inbound DNS for a domain',
     description:
@@ -247,6 +256,7 @@ export class DomainsController {
   @Post('/:domain/routes')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Create a route',
     description:
@@ -304,6 +314,7 @@ export class DomainsController {
   @Patch('/:domain/routes/:address')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Update a route',
     description:
@@ -336,6 +347,7 @@ export class DomainsController {
   @Delete('/:domain/routes/:address')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Delete a route',
     description:
@@ -365,6 +377,7 @@ export class DomainsController {
   @HttpCode(HttpStatus.OK)
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Test an inbound route',
     description:
@@ -424,6 +437,7 @@ export class DomainsController {
   @Post('/:domain/auto-configure/start')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Start DNS auto-configuration',
     description:
@@ -451,6 +465,7 @@ export class DomainsController {
   @Patch('/:domain')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Update a domain',
     description:
@@ -477,6 +492,7 @@ export class DomainsController {
   @Delete('/:domain')
   @ExternalApiAccessible()
   @RequirePermissions(PermissionsEnum.ORG_SETTINGS_WRITE)
+  @ProductFeature(ProductFeatureKeyEnum.CUSTOM_DOMAINS)
   @ApiOperation({
     summary: 'Delete a domain',
     description:
