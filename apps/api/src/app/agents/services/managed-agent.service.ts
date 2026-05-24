@@ -87,9 +87,6 @@ const PROVIDER_TTL_MS = 30 * 60 * 1000;
  */
 const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
 
-/** Tracks which Anthropic vault was bound when the durable session was created. */
-const CONVERSATION_SESSION_VAULT_METADATA_KEY = 'managedSessionVaultId' as const;
-
 /**
  * Anthropic emits this exact `invalid_request_error` when a new
  * `user.message` event is appended to a session that is still waiting on a
@@ -162,44 +159,39 @@ export class ManagedAgentService implements OnModuleInit {
     await this.conversationRepository.setExternalSessionIdIfMissing(
       context.config.environmentId,
       String(context.conversation._id),
-      newSessionId
+      newSessionId,
+      vaultIds[0]
     );
-
-    if (vaultIds.length > 0) {
-      await this.conversationRepository.update(
-        {
-          _id: context.conversation._id,
-          _environmentId: context.config.environmentId,
-          _organizationId: context.config.organizationId,
-        },
-        { $set: { [`metadata.${CONVERSATION_SESSION_VAULT_METADATA_KEY}`]: vaultIds[0] } }
-      );
-    }
   }
 
   /**
    * Thalamus only applies `vault_ids` when creating a session. If a conversation
-   * already has an `externalSessionId` that was opened without a vault, reuse
-   * would silently drop credentials. Reset the session when the target vault
-   * differs from the one bound at session creation.
+   * already has an `externalSessionId` that was opened against a different vault
+   * (or against a vault that has since been removed — disabled MCP, revoked
+   * connection, subscriber scope lost), reuse would silently keep the old
+   * binding. Reset the session so the next `provider.send` opens a fresh one
+   * with the correct `vault_ids` (or no vault binding at all).
    */
   private async reconcileSessionIdForVaultBinding(
     context: AgentExecutionParams,
     vaultIds: string[],
     existingSessionId: string | undefined
   ): Promise<string | undefined> {
-    const targetVaultId = vaultIds[0];
-
-    if (!existingSessionId || !targetVaultId) {
+    if (!existingSessionId) {
       return existingSessionId;
     }
 
-    const boundVaultId = context.conversation.metadata?.[CONVERSATION_SESSION_VAULT_METADATA_KEY] as string | undefined;
+    const targetVaultId = vaultIds[0];
+    const boundVaultId = context.conversation.managedSessionVaultId;
 
     if (boundVaultId === targetVaultId) {
       return existingSessionId;
     }
 
+    // boundVaultId !== targetVaultId covers: vault rotated, vault newly bound
+    // (boundVaultId === undefined && targetVaultId !== undefined), and vault
+    // dropped (boundVaultId !== undefined && targetVaultId === undefined).
+    // All three require a fresh session.
     await this.conversationRepository.clearExternalSessionId(
       context.config.environmentId,
       String(context.conversation._id)

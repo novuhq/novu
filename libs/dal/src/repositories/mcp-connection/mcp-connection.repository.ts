@@ -1,3 +1,4 @@
+import { McpConnectionScopeEnum } from '@novu/shared';
 import { FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
@@ -35,7 +36,7 @@ export class McpConnectionRepository extends BaseRepositoryV2<
         _organizationId: organizationId,
         _agentMcpServerId: agentMcpServerId,
         _subscriberId: subscriberId,
-        scope: 'subscriber',
+        scope: McpConnectionScopeEnum.Subscriber,
       },
       '*'
     );
@@ -82,46 +83,22 @@ export class McpConnectionRepository extends BaseRepositoryV2<
       return null;
     }
 
+    // Narrow projection: only the `auth` subdocument is read on this
+    // hot-path lookup. Avoids pulling the full `oauthClient` document
+    // (RFC 7591 client + registration access token) on every managed-agent
+    // turn. The DAL projection types don't model dotted-path projections,
+    // so we project the whole `auth` field; the encrypted access/refresh
+    // tokens it carries stay opaque (only `externalVaultId` is read here).
     const connection = await this.findOne(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
         _subscriberId: subscriberId,
-        scope: 'subscriber',
+        scope: McpConnectionScopeEnum.Subscriber,
         _agentMcpServerId: { $in: agentMcpServerIds },
-        'auth.externalVaultId': { $exists: true, $nin: [null, ''] },
+        'auth.externalVaultId': { $nin: [null, ''] },
       },
-      '*'
-    );
-
-    return connection?.auth?.externalVaultId ?? null;
-  }
-
-  /**
-   * Return the shared vault id for agent-scoped connections (no subscriber).
-   */
-  async findAgentScopeExternalVaultId({
-    organizationId,
-    environmentId,
-    agentMcpServerIds,
-  }: {
-    organizationId: string;
-    environmentId: string;
-    agentMcpServerIds: string[];
-  }): Promise<string | null> {
-    if (agentMcpServerIds.length === 0) {
-      return null;
-    }
-
-    const connection = await this.findOne(
-      {
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-        scope: 'agent',
-        _agentMcpServerId: { $in: agentMcpServerIds },
-        'auth.externalVaultId': { $exists: true, $nin: [null, ''] },
-      },
-      '*'
+      { auth: 1 }
     );
 
     return connection?.auth?.externalVaultId ?? null;
@@ -150,7 +127,7 @@ export class McpConnectionRepository extends BaseRepositoryV2<
         _environmentId: environmentId,
         _organizationId: organizationId,
         _subscriberId: subscriberId,
-        scope: 'subscriber',
+        scope: McpConnectionScopeEnum.Subscriber,
         _agentMcpServerId: { $in: agentMcpServerIds },
       },
       '*'
@@ -158,10 +135,14 @@ export class McpConnectionRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Copy a subscriber's vault id onto every MCP connection row for that agent
-   * so subsequent MCP OAuth flows reuse the same Anthropic vault container.
+   * Race-safe `setIfMissing` for `auth.externalVaultId` on a subscriber's MCP
+   * rows. Only rows whose `auth.externalVaultId` is currently absent / null /
+   * empty are updated, so two concurrent vault-creation racers converge on the
+   * first writer's value instead of clobbering each other. Returns the count
+   * of rows that actually changed; callers re-read to learn the winning vault
+   * id when they need it.
    */
-  async propagateSubscriberExternalVaultId({
+  async setSubscriberExternalVaultIdIfMissing({
     organizationId,
     environmentId,
     subscriberId,
@@ -173,20 +154,53 @@ export class McpConnectionRepository extends BaseRepositoryV2<
     subscriberId: string;
     agentMcpServerIds: string[];
     externalVaultId: string;
-  }): Promise<void> {
+  }): Promise<number> {
     if (agentMcpServerIds.length === 0) {
-      return;
+      return 0;
     }
 
-    await this.update(
+    const result = await this.update(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
         _subscriberId: subscriberId,
-        scope: 'subscriber',
+        scope: McpConnectionScopeEnum.Subscriber,
         _agentMcpServerId: { $in: agentMcpServerIds },
+        $or: [{ 'auth.externalVaultId': { $exists: false } }, { 'auth.externalVaultId': { $in: [null, ''] } }],
       },
       { $set: { 'auth.externalVaultId': externalVaultId } }
     );
+
+    return result.modified;
+  }
+
+  /**
+   * Race-safe `setIfMissing` for `auth.externalVaultId` on a single connection
+   * row. Returns `true` when this caller's id won the claim, `false` when
+   * another writer set a different id first (the caller's upstream vault is
+   * then orphan and should be logged for cleanup).
+   */
+  async setConnectionExternalVaultIdIfMissing({
+    connectionId,
+    organizationId,
+    environmentId,
+    externalVaultId,
+  }: {
+    connectionId: string;
+    organizationId: string;
+    environmentId: string;
+    externalVaultId: string;
+  }): Promise<boolean> {
+    const result = await this.update(
+      {
+        _id: connectionId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        $or: [{ 'auth.externalVaultId': { $exists: false } }, { 'auth.externalVaultId': { $in: [null, ''] } }],
+      },
+      { $set: { 'auth.externalVaultId': externalVaultId } }
+    );
+
+    return result.modified > 0;
   }
 }

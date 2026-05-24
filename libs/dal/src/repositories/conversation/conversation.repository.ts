@@ -181,26 +181,42 @@ export class ConversationRepository extends BaseRepositoryV2<
    * Atomically set externalSessionId only if not already set.
    * Prevents race conditions when two concurrent first-messages
    * try to create sessions simultaneously.
+   *
+   * Optionally writes `managedSessionVaultId` in the same `$set` so the
+   * vault binding always agrees with the session it was opened against —
+   * a separate write could win the `externalSessionId` race but still
+   * overwrite the vault id of the live session, defeating the rebind
+   * check on the next turn.
    */
   async setExternalSessionIdIfMissing(
     environmentId: string,
     conversationId: string,
-    sessionId: string
+    sessionId: string,
+    managedSessionVaultId?: string
   ): Promise<boolean> {
+    const update: Record<string, string> = { externalSessionId: sessionId };
+
+    if (managedSessionVaultId) {
+      update.managedSessionVaultId = managedSessionVaultId;
+    }
+
     const result = await this.update(
       {
         _id: conversationId,
         _environmentId: environmentId,
         externalSessionId: { $exists: false },
       },
-      { $set: { externalSessionId: sessionId } }
+      { $set: update }
     );
 
     return result.matched > 0;
   }
 
   async clearExternalSessionId(environmentId: string, conversationId: string): Promise<void> {
-    await this.update({ _id: conversationId, _environmentId: environmentId }, { $unset: { externalSessionId: '' } });
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId },
+      { $unset: { externalSessionId: '', managedSessionVaultId: '' } }
+    );
   }
 
   /**

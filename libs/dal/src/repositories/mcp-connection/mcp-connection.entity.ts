@@ -41,9 +41,11 @@ export interface McpConnectionAuth {
    */
   vaultCredentialId?: string;
   /**
-   * Anthropic vault container (`vlt_…`) that owns this connection owner's MCP
-   * credentials. Subscriber-scoped rows for the same agent share one vault;
-   * agent-scoped rows use a shared vault when no subscriber is present.
+   * Anthropic vault container (`vlt_…`) that owns this subscriber's MCP
+   * credentials for this agent. All subscriber-scoped rows for the same
+   * `(subscriber, agent)` share one vault id, propagated whenever a new MCP
+   * row is opened. v1 only writes subscriber-scope rows; agent-scope is
+   * reserved for a future shared-token flow.
    */
   externalVaultId?: string;
 }

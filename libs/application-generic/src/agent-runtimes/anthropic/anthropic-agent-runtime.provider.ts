@@ -308,20 +308,38 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
   async deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void> {
     const externalEnvironmentId = credentialsUpdate.externalEnvironmentId as string | undefined;
+    // `externalVaultId` on integration credentials is a legacy field from the
+    // pre-subscriber-scope rollout (integration-level eager vault). New
+    // provisioning paths don't set it, but historical integrations still
+    // carry it — archive it here so disconnects don't leak the upstream
+    // vault.
+    const legacyExternalVaultId = credentialsUpdate.externalVaultId as string | undefined;
 
-    if (!externalEnvironmentId) {
+    if (!externalEnvironmentId && !legacyExternalVaultId) {
       return;
     }
 
     const client = this.buildClient();
 
-    await this.withRetry(async () => {
-      try {
-        await (client as any).beta.environments.archive(externalEnvironmentId);
-      } catch (err) {
-        this.normaliseError(err);
-      }
-    });
+    if (externalEnvironmentId) {
+      await this.withRetry(async () => {
+        try {
+          await (client as any).beta.environments.archive(externalEnvironmentId);
+        } catch (err) {
+          this.normaliseError(err);
+        }
+      });
+    }
+
+    if (legacyExternalVaultId) {
+      await this.withRetry(async () => {
+        try {
+          await (client as any).beta.vaults.archive(legacyExternalVaultId);
+        } catch (err) {
+          this.normaliseError(err);
+        }
+      });
+    }
   }
 
   async getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null> {
@@ -398,17 +416,19 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   async createVault(input: CreateVaultInput): Promise<CreateVaultResult> {
     const client = this.buildClient();
 
-    return this.withRetry(async () => {
-      try {
-        const vault = await (client as any).beta.vaults.create({
-          display_name: input.displayName,
-        });
+    // Not retried: vault creation is not idempotent and a retry after a
+    // dropped response would mint a second vault and permanently orphan the
+    // first. Callers (`McpConnectionVaultService`) detect race-induced
+    // orphans separately via a `setIfMissing` claim + warn-log.
+    try {
+      const vault = await (client as any).beta.vaults.create({
+        display_name: input.displayName,
+      });
 
-        return { externalVaultId: vault.id as string };
-      } catch (err) {
-        this.normaliseError(err);
-      }
-    });
+      return { externalVaultId: vault.id as string };
+    } catch (err) {
+      this.normaliseError(err);
+    }
   }
 
   async upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
