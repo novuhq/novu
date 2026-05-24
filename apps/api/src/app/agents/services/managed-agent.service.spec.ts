@@ -8,7 +8,7 @@ describe('buildAnonymousUserMcpMessage', () => {
 
     expect(message).to.contain('**Linear**');
     expect(message).to.contain('Slack account');
-    expect(message).to.contain('workspace admin');
+    expect(message).to.contain('isn\'t linked to a Novu subscriber');
   });
 
   it('mentions Teams when the platform is Teams', () => {
@@ -23,13 +23,18 @@ describe('buildAnonymousUserMcpMessage', () => {
     expect(message).to.contain('WhatsApp account');
   });
 
-  it('uses Telegram-specific self-serve wording for Telegram', () => {
+  it('mentions Telegram when the platform is Telegram', () => {
     const message = buildAnonymousUserMcpMessage(AgentPlatformEnum.TELEGRAM, 'Linear');
 
     expect(message).to.contain('**Linear**');
-    expect(message).to.contain('Telegram chat');
-    expect(message).to.contain('connection link');
-    expect(message).to.not.contain('workspace admin');
+    expect(message).to.contain('Telegram account');
+    expect(message).to.contain('isn\'t linked to a Novu subscriber');
+  });
+
+  it('mentions Email when the platform is Email', () => {
+    const message = buildAnonymousUserMcpMessage(AgentPlatformEnum.EMAIL, 'Linear');
+
+    expect(message).to.contain('email account');
   });
 
   it('falls back to a generic "chat account" label when platform is undefined', () => {

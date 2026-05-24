@@ -422,7 +422,7 @@ export class ManagedAgentService implements OnModuleInit {
     sessionId: string,
     mcpServerName: string
   ): Promise<boolean> {
-    const platform = (metadata.platform as AgentPlatformEnum | undefined) ?? undefined;
+    const platform = metadata.platform as AgentPlatformEnum | undefined;
     const message = buildAnonymousUserMcpMessage(platform, mcpServerName);
 
     try {
@@ -1040,25 +1040,12 @@ const PLATFORM_DISPLAY_NAMES: Record<AgentPlatformEnum, string> = {
  * inbound platform user has no `ChannelEndpoint` linking them to a Novu
  * subscriber. The lazy-OAuth Connect-card flow is subscriber-scoped (see
  * `GenerateMcpOAuthUrl`) so we can't mint an authorize URL — but we can at
- * least tell the user what's wrong and how to fix it. Wording is
- * platform-aware: Telegram has a self-serve `/start <token>` flow (see
- * `IssueTelegramSubscriberLink`), the rest currently require a workspace
- * admin to create the channel endpoint from the dashboard.
+ * least tell the user what's wrong.
  *
  * Exported for unit-testing the wording without spinning up the whole service.
  */
 export function buildAnonymousUserMcpMessage(platform: AgentPlatformEnum | undefined, mcpServerName: string): string {
-  if (platform === AgentPlatformEnum.TELEGRAM) {
-    return (
-      `I can't connect to **${mcpServerName}** because this Telegram chat isn't linked to a Novu subscriber yet. ` +
-      `Open a connection link from your Novu dashboard and tap it in Telegram to connect, then ask me again.`
-    );
-  }
-
   const platformLabel = platform ? PLATFORM_DISPLAY_NAMES[platform] : 'chat';
 
-  return (
-    `I can't connect to **${mcpServerName}** because your ${platformLabel} account isn't linked to a Novu subscriber yet. ` +
-    `Ask a workspace admin to link your account from the Novu dashboard, then try again.`
-  );
+  return `I can't connect to **${mcpServerName}** because your ${platformLabel} account isn't linked to a Novu subscriber`;
 }
