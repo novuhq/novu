@@ -2,7 +2,6 @@ import { AgentRuntimeProviderIdEnum, type ICredentialsDto } from '@novu/shared';
 
 import { resolveAgentRuntime } from './resolve-agent-runtime';
 
-/** @deprecated Prefer `resolveAgentRuntime`, which returns null instead of throwing. */
 export function resolveAgentRuntimeApiKey(
   providerId: AgentRuntimeProviderIdEnum | string,
   credentials: ICredentialsDto | undefined

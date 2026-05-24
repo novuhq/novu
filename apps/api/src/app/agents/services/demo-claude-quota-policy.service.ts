@@ -5,24 +5,10 @@ import {
   CalculateDemoClaudeQuotaCommand,
   DemoQuotaExhaustedError,
 } from '@novu/application-generic';
-import { type AgentEntity, ConversationRepository } from '@novu/dal';
+import { type AgentEntity, ConversationRepository, type ConversationTokenUsage } from '@novu/dal';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 
 import type { AgentExecutionParams } from './bridge-executor.service';
-
-type TokenUsageDelta = {
-  inputTokens: number;
-  outputTokens: number;
-  cacheReadTokens: number;
-  cacheCreationTokens: number;
-  totalTokens: number;
-};
-
-type WebhookQuotaMetadata = {
-  conversationId: string;
-  environmentId: string;
-  organizationId: string;
-};
 
 @Injectable()
 export class DemoClaudeQuotaPolicy {
@@ -84,23 +70,23 @@ export class DemoClaudeQuotaPolicy {
     throw new DemoQuotaExhaustedError(quota.reason, quota.conversations, quota.tokens);
   }
 
-  async recordUsage(metadata: WebhookQuotaMetadata, usage: ThalamusResponse['usage']): Promise<void> {
+  async recordUsage(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    usage: ThalamusResponse['usage']
+  ): Promise<void> {
     const delta = extractTokenUsageDelta(usage);
 
     if (!delta) {
       return;
     }
 
-    await this.conversationRepository.incrementTokenUsage(
-      metadata.environmentId,
-      metadata.organizationId,
-      metadata.conversationId,
-      delta
-    );
+    await this.conversationRepository.incrementTokenUsage(environmentId, organizationId, conversationId, delta);
   }
 }
 
-function extractTokenUsageDelta(usage: ThalamusResponse['usage']): TokenUsageDelta | undefined {
+function extractTokenUsageDelta(usage: ThalamusResponse['usage']): ConversationTokenUsage | undefined {
   if (!usage) {
     return undefined;
   }

@@ -75,7 +75,6 @@ export class AgentRuntimeUnknownError extends AgentRuntimeError {
 
 export type DemoQuotaExhaustedReason = 'conversations' | 'tokens';
 
-/** Thrown when a Novu-managed demo Claude integration hits its usage cap. */
 export class DemoQuotaExhaustedError extends Error {
   readonly code = 'DEMO_QUOTA_EXHAUSTED' as const;
 

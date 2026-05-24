@@ -612,15 +612,14 @@ export class ManagedAgentService implements OnModuleInit {
       throw new Error('Integration has no API key configured');
     }
 
-    const creds = resolved.credentials;
+    const { apiKey, credentials: creds, provider: runtimeProvider } = resolved;
 
     if (!creds.externalEnvironmentId) {
       throw new Error('Integration has no external environment id');
     }
 
-    const runtimeProvider = resolved.provider;
     const provider = this.createProvider(integration.providerId as AgentRuntimeProviderIdEnum, {
-      apiKey: resolved.apiKey,
+      apiKey,
       agentId: agent.managedRuntime.externalAgentId,
       environmentId: creds.externalEnvironmentId as string,
     });
@@ -768,11 +767,9 @@ export class ManagedAgentService implements OnModuleInit {
                 HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: event.response.content } })
               );
               await this.demoQuota.recordUsage(
-                {
-                  conversationId: metadata.conversationId,
-                  environmentId: metadata.environmentId,
-                  organizationId: metadata.organizationId,
-                },
+                metadata.environmentId,
+                metadata.organizationId,
+                metadata.conversationId,
                 event.response.usage
               );
               await this.handleToolProgress.execute(

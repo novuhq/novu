@@ -91,9 +91,6 @@ export class MigrateAgentRuntime {
     const targetProvider = targetResolved.provider;
 
     const config = await sourceProvider.getConfig(agent.managedRuntime.externalAgentId);
-
-    // External Anthropic agent is created first. If Mongo writes below fail, an orphan
-    // provider agent may remain and require manual cleanup.
     const created = await targetProvider.createAgent({
       name: agent.name,
       model: config.model,

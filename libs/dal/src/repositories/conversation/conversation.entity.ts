@@ -69,7 +69,6 @@ export class ConversationEntity {
   /** Provider-side session ID (e.g. Anthropic conversation_id) managed by thalamus */
   externalSessionId?: string;
 
-  /** Accumulated token usage for Novu-managed demo Claude conversations. */
   tokenUsage?: ConversationTokenUsage;
 
   _environmentId: EnvironmentId;
