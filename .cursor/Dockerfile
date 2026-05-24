@@ -11,20 +11,22 @@
 # multi-repo environment clones it next to `novu/`; `.cursor/scripts/install.sh`
 # wires `.source` -> the sibling clone so `pnpm symlink:submodules` works.
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Base toolchain
+# Base toolchain (+ ffmpeg for Cursor screen recording / polished-renderer libavutil58)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash \
     build-essential \
     ca-certificates \
     curl \
+    ffmpeg \
     git \
     gnupg \
     iptables \
     jq \
+    libavutil58 \
     lsb-release \
     openssh-client \
     python3 \
@@ -95,4 +97,4 @@ RUN mkdir -p /home/ubuntu/.pnpm-store /home/ubuntu/.pnpm-cache \
  && pnpm config set fetch-retries 3
 
 LABEL org.novu.purpose="cursor-cloud-agent" \
-      org.novu.image-version="2.0.2"
+      org.novu.image-version="2.0.3"

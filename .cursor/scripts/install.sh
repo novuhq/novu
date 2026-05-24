@@ -47,6 +47,23 @@ ensure_tmux() {
 
 ensure_tmux
 
+ensure_screen_recording_deps() {
+  if ldconfig -p 2>/dev/null | grep -q 'libavutil\.so\.58'; then
+    return 0
+  fi
+
+  if ! apt-cache show libavutil58 >/dev/null 2>&1; then
+    log "WARN: libavutil58 unavailable on this image; rebuild .cursor/Dockerfile (Ubuntu 24.04+) for screen recording"
+    return 0
+  fi
+
+  log "Installing ffmpeg runtime (libavutil58) for screen recording"
+  sudo apt-get update -qq
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ffmpeg libavutil58
+}
+
+ensure_screen_recording_deps
+
 ensure_docker_cli_access() {
   if docker info >/dev/null 2>&1; then
     return 0
