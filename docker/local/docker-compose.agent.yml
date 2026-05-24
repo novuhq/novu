@@ -22,7 +22,7 @@ services:
     ports:
       - "${DOCKER_MONGO_PORT:-27017}:27017"
     volumes:
-      - "${TMPDIR:-/tmp/mongo}:/db/data"
+      - "${TMPDIR:-/tmp/mongo}:/data/db"
     healthcheck:
       test: 'bash -c ''mongo --host 127.0.0.1:27017 --eval "printjson(rs.status())"'''
       retries: 5

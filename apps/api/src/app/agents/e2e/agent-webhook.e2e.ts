@@ -1,4 +1,5 @@
 import {
+  AgentRepository,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
@@ -12,6 +13,7 @@ import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentConfigResolver } from '../services/agent-config-resolver.service';
 import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
 import { AgentExecutionParams, BridgeExecutorService } from '../services/bridge-executor.service';
+import { ChatSdkService } from '../services/chat-sdk.service';
 import {
   AgentTestContext,
   activityRepository,
@@ -20,6 +22,46 @@ import {
   setupAgentTestContext,
 } from './helpers/agent-test-setup';
 import { buildSlackAppMention, buildSlackChallenge, signSlackRequest } from './helpers/providers/slack';
+import {
+  findEmulatorChannel,
+  findEmulatorUser,
+  type SlackChannelSummary,
+  type SlackUserSummary,
+  startSlackEmulator,
+} from './helpers/slack-emulator';
+
+const WEBHOOK_SETTLE_TIMEOUT_MS = 10_000;
+const WEBHOOK_SETTLE_POLL_MS = 50;
+const WEBHOOK_SETTLE_GRACE_MS = 200;
+
+async function pollFor<T>(
+  fn: () => Promise<T | null | undefined>,
+  timeoutMs: number,
+  intervalMs = WEBHOOK_SETTLE_POLL_MS
+): Promise<T> {
+  const deadline = Date.now() + timeoutMs;
+  let lastError: unknown;
+
+  while (Date.now() < deadline) {
+    try {
+      const result = await fn();
+      if (result) return result;
+    } catch (err) {
+      lastError = err;
+    }
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+  }
+
+  throw new Error(
+    `pollFor timed out after ${timeoutMs}ms${lastError ? `; last error: ${(lastError as Error).message}` : ''}`
+  );
+}
+
+async function clearChatSdkInstances(): Promise<void> {
+  const chatSdkService = testServer.getService(ChatSdkService);
+
+  await chatSdkService.onModuleDestroy();
+}
 
 function mockEmoji(name: string): EmojiValue {
   return { name, toJSON: () => `{{emoji:${name}}}`, toString: () => `{{emoji:${name}}}` };
@@ -60,14 +102,19 @@ function mockMessage(opts: { id?: string; userId: string; text: string; fullName
   };
 }
 
+const agentRepository = new AgentRepository();
+
 describe('Agent Webhook - inbound flow #novu-v2', () => {
   let ctx: AgentTestContext;
   let inboundHandler: AgentInboundHandler;
   let configResolver: AgentConfigResolver;
   let bridgeCalls: AgentExecutionParams[];
+  let slackEmulatorUrl: string;
 
-  before(() => {
+  before(async () => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
+    const emulator = await startSlackEmulator();
+    slackEmulatorUrl = emulator.url;
   });
 
   beforeEach(async () => {
@@ -81,6 +128,71 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       bridgeCalls.push(params);
     });
   });
+
+  afterEach(async () => {
+    await waitForBridgeCallsToSettle();
+    await clearChatSdkInstances();
+    sinon.restore();
+  });
+
+  async function waitForBridgeCallsToSettle(timeoutMs = WEBHOOK_SETTLE_TIMEOUT_MS): Promise<void> {
+    let stableCount = bridgeCalls.length;
+    let stableSince = Date.now();
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, WEBHOOK_SETTLE_POLL_MS));
+
+      const count = bridgeCalls.length;
+      if (count === stableCount) {
+        if (Date.now() - stableSince >= WEBHOOK_SETTLE_GRACE_MS) {
+          return;
+        }
+
+        continue;
+      }
+
+      stableCount = count;
+      stableSince = Date.now();
+    }
+
+    throw new Error(
+      `Bridge calls did not settle within ${timeoutMs}ms (last count: ${bridgeCalls.length})`
+    );
+  }
+
+  async function waitForBridgeCallCount(expected: number): Promise<void> {
+    if (expected > 0) {
+      await pollFor(async () => (bridgeCalls.length >= expected ? true : null), WEBHOOK_SETTLE_TIMEOUT_MS);
+    }
+
+    await waitForBridgeCallsToSettle();
+
+    expect(bridgeCalls.length).to.equal(expected);
+  }
+
+  async function setAgentActive(active: boolean): Promise<void> {
+    const res = await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active });
+
+    expect(res.status).to.equal(200);
+    expect(res.body.data.active).to.equal(active);
+  }
+
+  async function postSlackAppMentionWebhook(opts: { userId: string; channel: string; threadTs: string }) {
+    const body = JSON.stringify(buildSlackAppMention(opts));
+    const timestamp = Math.floor(Date.now() / 1000);
+    const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
+
+    const res = await ctx.session.testAgent
+      .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
+      .set(headers)
+      .set('content-type', 'application/json')
+      .send(body);
+
+    expect(res.status).to.equal(200);
+
+    return res;
+  }
 
   async function invokeInbound(
     threadId: string,
@@ -276,43 +388,46 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
   });
 
   describe('Inactive agent', () => {
-    it('should return 200 and not process inbound when agent is inactive', async () => {
-      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
+    let slackChannel: SlackChannelSummary;
+    let slackUser: SlackUserSummary;
 
-      const body = JSON.stringify(
-        buildSlackAppMention({ userId: 'U_INACTIVE', channel: 'C_TEST', threadTs: `T_INACTIVE_${Date.now()}` })
+    before(async () => {
+      slackChannel = await findEmulatorChannel(slackEmulatorUrl, 'incidents');
+      slackUser = await findEmulatorUser(slackEmulatorUrl, 'e2e@novu.test');
+    });
+
+    beforeEach(async () => {
+      // The Slack emulator returns 404 for assistant.threads.setStatus; awaiting
+      // acknowledgeOnReceived can block inbound processing long enough to flake.
+      await agentRepository.update(
+        { _id: ctx.agentId, _environmentId: ctx.session.environment._id },
+        { $set: { 'behavior.acknowledgeOnReceived': false } }
       );
-      const timestamp = Math.floor(Date.now() / 1000);
-      const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
+    });
 
-      const res = await ctx.session.testAgent
-        .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
-        .set(headers)
-        .set('content-type', 'application/json')
-        .send(body);
+    it('should return 200 and not process inbound when agent is inactive', async () => {
+      await setAgentActive(false);
 
-      expect(res.status).to.equal(200);
-      expect(bridgeCalls.length).to.equal(0);
+      await postSlackAppMentionWebhook({
+        userId: slackUser.id,
+        channel: slackChannel.id,
+        threadTs: `${Math.floor(Date.now() / 1000)}.000200`,
+      });
+
+      await waitForBridgeCallCount(0);
     });
 
     it('should process inbound again after reactivation', async () => {
-      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: false });
-      await ctx.session.testAgent.patch(`/v1/agents/${ctx.agentIdentifier}`).send({ active: true });
+      await setAgentActive(false);
+      await setAgentActive(true);
 
-      const body = JSON.stringify(
-        buildSlackAppMention({ userId: 'U_REACTIVATED', channel: 'C_TEST', threadTs: `T_REACTIVATE_${Date.now()}` })
-      );
-      const timestamp = Math.floor(Date.now() / 1000);
-      const headers = signSlackRequest(ctx.signingSecret, timestamp, body);
+      await postSlackAppMentionWebhook({
+        userId: slackUser.id,
+        channel: slackChannel.id,
+        threadTs: `${Math.floor(Date.now() / 1000)}.000300`,
+      });
 
-      const res = await ctx.session.testAgent
-        .post(`/v1/agents/${ctx.agentId}/webhook/${ctx.integrationIdentifier}`)
-        .set(headers)
-        .set('content-type', 'application/json')
-        .send(body);
-
-      expect(res.status).to.equal(200);
-      expect(bridgeCalls.length).to.equal(1);
+      await waitForBridgeCallCount(1);
     });
   });
 

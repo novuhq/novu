@@ -67,3 +67,10 @@ export function getEnvVar(key: string, fallback: string = ''): string {
     fallback
   );
 }
+
+/** Cursor cloud agent only: auto sign-in with the pre-seeded dev user (see .env.agent). */
+export const CURSOR_AGENT_AUTO_LOGIN = getEnvVar('VITE_CURSOR_AGENT_AUTO_LOGIN') === 'true';
+
+export const CURSOR_AGENT_SEED_EMAIL = getEnvVar('VITE_AGENT_SEED_EMAIL');
+
+export const CURSOR_AGENT_SEED_PASSWORD = getEnvVar('VITE_AGENT_SEED_PASSWORD');
