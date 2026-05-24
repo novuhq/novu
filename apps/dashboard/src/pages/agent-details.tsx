@@ -17,7 +17,7 @@ import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
-import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import { DeleteAgentDialog, shouldShowManagedAgentProviderDeleteOption } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { useSetConnectBreadcrumbLeaf } from '@/components/dashboard-shell/use-connect-breadcrumb';
 import { PageMeta } from '@/components/page-meta';
@@ -394,7 +394,7 @@ export function AgentDetailsPage() {
               agentName={agentToDelete?.name ?? ''}
               agentIdentifier={agentToDelete?.identifier ?? ''}
               isDeleting={deleteMutation.isPending}
-              isManagedRuntime={agentToDelete?.runtime === 'managed'}
+              isManagedRuntime={shouldShowManagedAgentProviderDeleteOption(agentToDelete)}
             />
 
             <AgentSetupModal

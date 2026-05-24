@@ -1,7 +1,22 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { AgentResponse } from '@/api/agents';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { Checkbox } from '@/components/primitives/checkbox';
 import { Label } from '@/components/primitives/label';
+
+export function shouldShowManagedAgentProviderDeleteOption(
+  agent: Pick<AgentResponse, 'runtime' | 'managedRuntime'> | null | undefined
+): boolean {
+  if (!agent) {
+    return false;
+  }
+
+  if (agent.runtime === 'self-hosted') {
+    return false;
+  }
+
+  return agent.runtime === 'managed' || Boolean(agent.managedRuntime);
+}
 
 type DeleteAgentDialogProps = {
   open: boolean;
@@ -23,6 +38,14 @@ export function DeleteAgentDialog({
   isManagedRuntime,
 }: DeleteAgentDialogProps) {
   const [deleteFromProvider, setDeleteFromProvider] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setDeleteFromProvider(Boolean(isManagedRuntime));
+  }, [open, isManagedRuntime]);
 
   function handleOpenChange(isOpen: boolean) {
     if (!isOpen) {

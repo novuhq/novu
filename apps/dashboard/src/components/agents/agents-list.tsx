@@ -15,7 +15,7 @@ import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
 import { CreateAgentDialog, CreateAgentForm } from '@/components/agents/create-agent-dialog';
-import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import { DeleteAgentDialog, shouldShowManagedAgentProviderDeleteOption } from '@/components/agents/delete-agent-dialog';
 import { ListNoResults } from '@/components/list-no-results';
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
@@ -389,7 +389,7 @@ export function AgentsList() {
         agentName={agentToDelete?.name ?? ''}
         agentIdentifier={agentToDelete?.identifier ?? ''}
         isDeleting={deleteMutation.isPending}
-        isManagedRuntime={agentToDelete?.runtime === 'managed'}
+        isManagedRuntime={shouldShowManagedAgentProviderDeleteOption(agentToDelete)}
       />
     </>
   );
