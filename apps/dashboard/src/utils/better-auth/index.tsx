@@ -1,5 +1,5 @@
 import { FeatureFlagsKeysEnum, MemberRoleEnum, PermissionsEnum } from '@novu/shared';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
@@ -20,34 +20,11 @@ import {
   UserProfile as UserProfileComponent,
   VerifyEmail as VerifyEmailComponent,
 } from './components';
+import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { ROLE_PERMISSIONS } from './role-permissions';
+import { Show } from './show';
 
-type BetterAuthUser = {
-  id: string;
-  email: string;
-  name: string;
-  image?: string;
-  emailVerified: boolean;
-};
-
-type BetterAuthOrganization = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-type AuthContextType = {
-  user: BetterAuthUser | null;
-  organization: BetterAuthOrganization | null;
-  memberRole: MemberRoleEnum | null;
-  isLoaded: boolean;
-  signOut: () => Promise<void>;
-  getToken: () => Promise<string | null>;
-  refreshSession: () => Promise<void>;
-  has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean;
-};
-
-const AuthContext = createContext<AuthContextType | null>(null);
+export { Show };
 
 export function ClerkProvider({ children }: { children: React.ReactNode }) {
   const { data: sessionData, isPending, refetch } = authClient.useSession();
