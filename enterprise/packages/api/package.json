@@ -9,7 +9,8 @@
     "build:watch": "node_modules/.bin/tsc -w -p tsconfig.json",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "lint": "echo 'skip lint in the ci'"
+    "lint": "echo 'skip lint in the ci'",
+    "test": "mocha --require ts-node/register --extension ts 'src/**/*.spec.ts'"
   },
   "dependencies": {
     "@novu/application-generic": "workspace:*",
@@ -21,7 +22,8 @@
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
     "@novu/testing": "workspace:*",
-    "express": "^5.0.1"
+    "express": "^5.0.1",
+    "sns-validator": "^0.3.5"
   },
   "devDependencies": {
     "@nestjs/testing": "11.1.21",
@@ -29,6 +31,7 @@
     "@types/mocha": "^10.0.8",
     "@types/node": "^22.0.0",
     "@types/sinon": "^9.0.0",
+    "@types/sns-validator": "^0.3.3",
     "chai": "^4.2.0",
     "mocha": "^10.2.0",
     "rxjs": "7.8.2",

@@ -109,7 +109,7 @@
     "embla-carousel-react": "^8.6.0",
     "flat": "^6.0.1",
     "install": "^0.13.0",
-    "js-cookie": "^3.0.5",
+    "js-cookie": "^3.0.7",
     "json-edit-react": "^1.26.2",
     "json-schema": "^0.4.0",
     "json5": "^2.2.3",
