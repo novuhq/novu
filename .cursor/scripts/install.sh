@@ -16,6 +16,26 @@ cd "$REPO_ROOT"
 
 log() { printf '\033[36m[install]\033[0m %s\n' "$*"; }
 
+ensure_exec_daemon_dirs() {
+  local artifacts_owner
+  artifacts_owner="$(stat -c '%U' /opt/cursor/artifacts 2>/dev/null || echo '')"
+
+  if [ "$artifacts_owner" = "ubuntu" ]; then
+    return 0
+  fi
+
+  log "Preparing /opt/cursor dirs for exec-daemon (screen recording + artifacts)"
+  sudo mkdir -p \
+    /opt/cursor/artifacts/assets \
+    /opt/cursor/artifacts/.cursor \
+    /opt/cursor/recording-staging \
+    /opt/cursor/logs
+  sudo chown -R ubuntu:ubuntu /opt/cursor
+  sudo chmod -R 0777 /opt/cursor
+}
+
+ensure_exec_daemon_dirs
+
 link_enterprise_source() {
   if [ -L .source ] && [ -e .source ]; then
     log ".source already linked -> $(readlink .source)"

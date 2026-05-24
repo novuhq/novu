@@ -72,6 +72,14 @@ RUN id -u ubuntu >/dev/null 2>&1 || useradd -m -s /bin/bash ubuntu \
  && echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
  && chmod 0440 /etc/sudoers.d/ubuntu
 
+# exec-daemon (runs as ubuntu) mkdir+chmods these on startup; root-owned dirs cause EPERM.
+RUN mkdir -p /opt/cursor/artifacts/assets \
+             /opt/cursor/artifacts/.cursor \
+             /opt/cursor/recording-staging \
+             /opt/cursor/logs \
+ && chown -R ubuntu:ubuntu /opt/cursor \
+ && chmod -R 0777 /opt/cursor
+
 USER ubuntu
 WORKDIR /home/ubuntu
 
@@ -86,4 +94,4 @@ RUN mkdir -p /home/ubuntu/.pnpm-store /home/ubuntu/.pnpm-cache \
  && pnpm config set fetch-retries 3
 
 LABEL org.novu.purpose="cursor-cloud-agent" \
-      org.novu.image-version="2.0.0"
+      org.novu.image-version="2.0.1"
