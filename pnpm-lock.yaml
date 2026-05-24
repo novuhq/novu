@@ -69,7 +69,7 @@ overrides:
   undici@>=7.0.0 <7.24.0: ^7.24.0
   undici@>=6.0.0 <6.24.0: ^6.24.0
   jose@>=3.0.0 <4.15.5: ^4.15.5
-  qs@<6.14.2: ^6.14.2
+  qs@<6.15.2: ^6.15.2
   js-yaml@<3.14.2: ^3.14.2
   js-yaml@>=4.0.0 <4.1.1: ^4.1.1
   smol-toml@<1.6.1: ^1.6.1
@@ -3919,8 +3919,8 @@ importers:
         specifier: 1.0.0
         version: 1.0.0
       qs:
-        specifier: ^6.14.2
-        version: 6.15.0
+        specifier: ^6.15.2
+        version: 6.15.2
       resend:
         specifier: ^6.0.3
         version: 6.0.3(@react-email/render@1.4.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3))
@@ -23666,12 +23666,8 @@ packages:
   qr.js@0.0.0:
     resolution: {integrity: sha512-c4iYnWb+k2E+vYpRimHqSu575b1/wKl4XFeJGpFmrJQz5I88v9aY2czh7s0w36srfCM1sXgC/xpoJz5dJfq+OQ==}
 
-  qs@6.15.0:
-    resolution: {integrity: sha512-mAZTtNCeetKMH+pSjrb76NAM8V9a05I9aBZOHztWy/UqcJdQYNsf59vrRKWnojAT9Y+GbIvoTBC++CPHqpDBhQ==}
-    engines: {node: '>=0.6'}
-
-  qs@6.15.1:
-    resolution: {integrity: sha512-6YHEFRL9mfgcAvql/XhwTvf5jKcOiiupt2FiJxHkiX1z4j7WL8J/jRHYLluORvc1XxB5rV20KoeK00gVJamspg==}
+  qs@6.15.2:
+    resolution: {integrity: sha512-Rzq0KEyX/w/tEybncDgdkZrJgVUsUMk3xjh3t5bv3S1HTAtg+uOYt72+ZfwiQwKdysThkTBdL/rTi6HDmX9Ddw==}
     engines: {node: '>=0.6'}
 
   query-registry@3.0.1:
@@ -31794,7 +31790,7 @@ snapshots:
       json-stringify-safe: 5.0.1
       mime-types: 2.1.35
       performance-now: 2.1.0
-      qs: 6.15.0
+      qs: 6.15.2
       safe-buffer: 5.2.1
       tough-cookie: 4.1.3
       tunnel-agent: 0.6.0
@@ -33697,7 +33693,7 @@ snapshots:
       '@microsoft/teams.cards': 2.0.11
       '@microsoft/teams.common': 2.0.11
       jwt-decode: 4.0.0
-      qs: 6.15.0
+      qs: 6.15.2
     transitivePeerDependencies:
       - debug
 
@@ -33730,7 +33726,7 @@ snapshots:
   '@microsoft/teams.graph@2.0.11':
     dependencies:
       '@microsoft/teams.common': 2.0.11
-      qs: 6.15.0
+      qs: 6.15.2
     transitivePeerDependencies:
       - debug
 
@@ -44454,7 +44450,7 @@ snapshots:
       http-errors: 2.0.0
       iconv-lite: 0.4.24
       on-finished: 2.4.1
-      qs: 6.15.0
+      qs: 6.15.2
       raw-body: 2.5.2
       type-is: 1.6.18
       unpipe: 1.0.0
@@ -44469,7 +44465,7 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.7.2
       on-finished: 2.4.1
-      qs: 6.15.0
+      qs: 6.15.2
       raw-body: 3.0.2
       type-is: 2.0.1
     transitivePeerDependencies:
@@ -46956,7 +46952,7 @@ snapshots:
       parseurl: 1.3.3
       path-to-regexp: 0.1.13
       proxy-addr: 2.0.7
-      qs: 6.15.0
+      qs: 6.15.2
       range-parser: 1.2.1
       safe-buffer: 5.2.1
       send: 0.19.0
@@ -46992,7 +46988,7 @@ snapshots:
       once: 1.4.0
       parseurl: 1.3.3
       proxy-addr: 2.0.7
-      qs: 6.15.0
+      qs: 6.15.2
       range-parser: 1.2.1
       router: 2.1.0
       safe-buffer: 5.2.1
@@ -47403,7 +47399,7 @@ snapshots:
       '@paralleldrive/cuid2': 2.3.1
       dezalgo: 1.0.4
       once: 1.4.0
-      qs: 6.15.0
+      qs: 6.15.2
 
   formidable@3.5.4:
     dependencies:
@@ -47916,7 +47912,7 @@ snapshots:
       extend: 3.0.2
       gaxios: 4.3.3(encoding@0.1.13)
       google-auth-library: 6.1.6(encoding@0.1.13)
-      qs: 6.15.0
+      qs: 6.15.2
       url-template: 2.0.8
       uuid: 8.3.2
     transitivePeerDependencies:
@@ -51014,7 +51010,7 @@ snapshots:
     dependencies:
       gaxios: 6.1.1(encoding@0.1.13)
       isomorphic-unfetch: 4.0.2
-      qs: 6.15.0
+      qs: 6.15.2
     transitivePeerDependencies:
       - encoding
       - supports-color
@@ -54107,11 +54103,7 @@ snapshots:
 
   qr.js@0.0.0: {}
 
-  qs@6.15.0:
-    dependencies:
-      side-channel: 1.1.0
-
-  qs@6.15.1:
+  qs@6.15.2:
     dependencies:
       side-channel: 1.1.0
 
@@ -55997,7 +55989,7 @@ snapshots:
   stripe@11.18.0:
     dependencies:
       '@types/node': 22.15.13
-      qs: 6.15.0
+      qs: 6.15.2
 
   strnum@2.2.3: {}
 
@@ -56101,7 +56093,7 @@ snapshots:
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.15.1
+      qs: 6.15.2
     transitivePeerDependencies:
       - supports-color
 
@@ -56115,7 +56107,7 @@ snapshots:
       formidable: 2.1.5
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.15.0
+      qs: 6.15.2
       semver: 7.7.4
     transitivePeerDependencies:
       - supports-color
@@ -56130,7 +56122,7 @@ snapshots:
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
-      qs: 6.15.0
+      qs: 6.15.2
     transitivePeerDependencies:
       - supports-color
 
@@ -56442,7 +56434,7 @@ snapshots:
   telnyx@1.23.0:
     dependencies:
       lodash.isplainobject: 4.0.6
-      qs: 6.15.0
+      qs: 6.15.2
       safe-buffer: 5.2.1
       tweetnacl: 1.0.3
       uuid: 3.4.0
@@ -57040,7 +57032,7 @@ snapshots:
       dayjs: 1.11.9
       https-proxy-agent: 5.0.1
       jsonwebtoken: 9.0.3
-      qs: 6.15.0
+      qs: 6.15.2
       scmp: 2.1.0
       url-parse: 1.5.10
       xmlbuilder: 13.0.2
@@ -57241,7 +57233,7 @@ snapshots:
 
   union@0.5.0:
     dependencies:
-      qs: 6.15.0
+      qs: 6.15.2
 
   unique-string@2.0.0:
     dependencies:
