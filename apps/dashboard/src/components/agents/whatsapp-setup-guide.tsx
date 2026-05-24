@@ -554,7 +554,7 @@ export function WhatsAppSetupGuide({
             : 'Save your credentials above first. Then come back here to register the webhook with Meta in one click.'
         }
         rightContent={
-          {isConnectSubscriberReady ? (
+          isConnectSubscriberReady ? (
             <ConnectAndTestPanel
               agent={agent}
               integrationIdentifier={selectedIntegrationIdentifier}
@@ -564,7 +564,7 @@ export function WhatsAppSetupGuide({
               isCredentialsSaved={isCredentialsSaved && Boolean(selectedIntegrationIdentifier)}
               onConnected={handleConnected}
             />
-          ) : null}
+          ) : null
         }
         extraContent={
           isConnected ? (

@@ -1,5 +1,5 @@
 import { NovuProvider } from '@novu/react';
-import { createContext, type ReactNode } from 'react';
+import { createContext, type ComponentProps, type ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -23,19 +23,20 @@ type ConnectSubscriberProviderProps = {
   children?: ReactNode;
 };
 
+type NovuProviderChildren = ComponentProps<typeof NovuProvider>['children'];
+
 export function ConnectSubscriberProvider({ children }: ConnectSubscriberProviderProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { currentEnvironment } = useEnvironment();
 
   const isReady = isUserLoaded && !!currentUser?._id && !!currentEnvironment?.identifier;
   const subscriberId = currentUser?._id ? buildConnectSubscriberId(currentUser._id) : '';
-
-  const content = children ?? <Outlet />;
+  const routedContent = (children === undefined ? <Outlet /> : children) as NovuProviderChildren;
 
   if (!isReady) {
     return (
       <ConnectSubscriberContext.Provider value={{ subscriberId, isReady: false }}>
-        {content}
+        {routedContent}
       </ConnectSubscriberContext.Provider>
     );
   }
@@ -54,7 +55,7 @@ export function ConnectSubscriberProvider({ children }: ConnectSubscriberProvide
         apiUrl={apiHostnameManager.getHostname()}
         socketUrl={apiHostnameManager.getWebSocketHostname()}
       >
-        {content}
+        {routedContent}
       </NovuProvider>
     </ConnectSubscriberContext.Provider>
   );
