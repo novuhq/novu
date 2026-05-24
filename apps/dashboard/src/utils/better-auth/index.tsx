@@ -344,50 +344,6 @@ export function SignedOut({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-type ShowWhen =
-  | 'signed-in'
-  | 'signed-out'
-  | { permission: PermissionsEnum }
-  | { role: MemberRoleEnum }
-  | ((has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean) => boolean);
-
-export function Show({
-  when,
-  fallback,
-  children,
-}: {
-  when: ShowWhen;
-  fallback?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  const { has, isLoaded } = useAuth();
-  const { user, isLoaded: isUserLoaded } = useUser();
-
-  if (!isLoaded || !isUserLoaded) {
-    return null;
-  }
-
-  let shouldShow = false;
-
-  if (when === 'signed-in') {
-    shouldShow = !!user;
-  } else if (when === 'signed-out') {
-    shouldShow = !user;
-  } else if (typeof when === 'function') {
-    shouldShow = when(has);
-  } else if ('permission' in when) {
-    shouldShow = has({ permission: when.permission });
-  } else if ('role' in when) {
-    shouldShow = has({ role: when.role });
-  }
-
-  if (!shouldShow) {
-    return fallback ? <>{fallback}</> : null;
-  }
-
-  return <>{children}</>;
-}
-
 export function RedirectToSignIn() {
   const navigate = useNavigate();
 
