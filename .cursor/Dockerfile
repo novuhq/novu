@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
     sudo \
+    tmux \
     wget \
  && rm -rf /var/lib/apt/lists/*
 
@@ -94,4 +95,4 @@ RUN mkdir -p /home/ubuntu/.pnpm-store /home/ubuntu/.pnpm-cache \
  && pnpm config set fetch-retries 3
 
 LABEL org.novu.purpose="cursor-cloud-agent" \
-      org.novu.image-version="2.0.1"
+      org.novu.image-version="2.0.2"
