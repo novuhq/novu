@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeEndpoint, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiExcludeController } from '@nestjs/swagger/dist/decorators/api-exclude-controller.decorator';
-import { OrganizationPublicResponse } from './mappers/organization-response.mapper';
+import { OrganizationEntity } from '@novu/dal';
 import { MemberRoleEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
@@ -70,7 +70,7 @@ export class OrganizationController {
   async createOrganization(
     @UserSession() user: UserSessionData,
     @Body() body: CreateOrganizationDto
-  ): Promise<OrganizationPublicResponse> {
+  ): Promise<OrganizationEntity> {
     return await this.createOrganizationUsecase.execute(
       CreateOrganizationCommand.create({
         userId: user._id,

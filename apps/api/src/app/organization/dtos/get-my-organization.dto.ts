@@ -1,3 +1,3 @@
-import { OrganizationPublicResponse } from '../mappers/organization-response.mapper';
+import { OrganizationEntity } from '@novu/dal';
 
-export type IGetMyOrganizationDto = OrganizationPublicResponse;
+export type IGetMyOrganizationDto = OrganizationEntity;
