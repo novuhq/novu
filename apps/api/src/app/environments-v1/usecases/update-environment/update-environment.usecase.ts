@@ -94,10 +94,24 @@ export class UpdateEnvironment {
       await resolvePublicAddresses(parsed.hostname, { useCache: true });
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        this.logger.warn({ err, bridgeUrl }, 'Blocked bridge.url update by outbound SSRF policy');
+        this.logger.warn(
+          {
+            ssrfReason: err.reason,
+            bridgeUrlHost: this.getBridgeUrlHostForLog(bridgeUrl),
+          },
+          'Blocked bridge.url update by outbound SSRF policy'
+        );
         throw new BadRequestException('bridge.url is blocked by the outbound SSRF policy.');
       }
       throw err;
+    }
+  }
+
+  private getBridgeUrlHostForLog(bridgeUrl: string): string | undefined {
+    try {
+      return new URL(bridgeUrl).hostname;
+    } catch {
+      return undefined;
     }
   }
 }

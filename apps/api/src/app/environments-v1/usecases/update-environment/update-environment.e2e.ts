@@ -42,6 +42,17 @@ describe('Update Environment - /environments (PUT)', async () => {
       expect(storedUrl).to.not.equal(bridgeUrl);
     }
 
+    it('should persist a safe public bridge.url to bridge and echo', async () => {
+      const bridgeUrl = 'https://example.com/api/novu';
+
+      await updateBridgeUrl(bridgeUrl).expect(200);
+
+      const environment = await environmentRepository.findOne({ _id: session.environment._id });
+
+      expect(environment?.bridge?.url).to.equal(bridgeUrl);
+      expect(environment?.echo?.url).to.equal(bridgeUrl);
+    });
+
     it('should reject bridge.url pointing at localhost', async () => {
       const bridgeUrl = 'http://localhost:4000/api/novu';
       const result = await updateBridgeUrl(bridgeUrl);
