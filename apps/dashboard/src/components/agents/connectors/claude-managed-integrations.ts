@@ -6,7 +6,19 @@ const CLAUDE_MANAGED_PROVIDER_IDS: ReadonlySet<string> = new Set([
 ]);
 
 export function isClaudeManagedAgentIntegration(integration: IIntegration): boolean {
-  return integration.kind === IntegrationKindEnum.AGENT && CLAUDE_MANAGED_PROVIDER_IDS.has(integration.providerId);
+  if (integration.kind !== IntegrationKindEnum.AGENT) {
+    return false;
+  }
+
+  if (!CLAUDE_MANAGED_PROVIDER_IDS.has(integration.providerId)) {
+    return false;
+  }
+
+  if (integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic && integration.active === false) {
+    return false;
+  }
+
+  return true;
 }
 
 export function getClaudeManagedAgentIntegrations(integrations: IIntegration[] | undefined): IIntegration[] {

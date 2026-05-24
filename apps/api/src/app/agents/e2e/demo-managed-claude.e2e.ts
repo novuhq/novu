@@ -340,5 +340,13 @@ describe('Demo Managed Claude #novu-v2', () => {
 
     expect(agent?.managedRuntime?.providerId).to.equal(AgentRuntimeProviderIdEnum.Anthropic);
     expect(String(agent?.managedRuntime?._integrationId)).to.equal(userIntegrationId);
+
+    const demoIntegration = await integrationRepository.findOne({
+      _id: demoIntegrationId,
+      _environmentId: session.environment._id,
+      _organizationId: session.organization._id,
+    });
+
+    expect(demoIntegration?.active).to.equal(false);
   });
 });

@@ -36,6 +36,8 @@ type ConfigureCredentialsSectionProps = {
   status: VerifyStatus;
   statusMessage?: string;
   isSaving?: boolean;
+  saveLabel?: string;
+  showSaveButton?: boolean;
   expanded: boolean;
   onExpandedChange: (expanded: boolean) => void;
   onIntegrationNameChange: (next: string) => void;
@@ -95,6 +97,8 @@ export function ConfigureCredentialsSection({
   status,
   statusMessage,
   isSaving,
+  saveLabel = 'Save integration',
+  showSaveButton = true,
   expanded,
   onExpandedChange,
   onIntegrationNameChange,
@@ -127,7 +131,7 @@ export function ConfigureCredentialsSection({
       <div className="flex items-center justify-between gap-2 px-3 py-2">
         <span className="text-text-strong text-label-xs font-medium leading-4">Configure credentials</span>
         <div className="flex items-center gap-1.5">
-          {expanded ? (
+          {expanded && showSaveButton ? (
             <Button
               type="button"
               variant="secondary"
@@ -138,7 +142,7 @@ export function ConfigureCredentialsSection({
               trailingIcon={RiCheckLine}
               onClick={onSave}
             >
-              Save integration
+              {saveLabel}
             </Button>
           ) : null}
           <CollapsibleTrigger asChild>

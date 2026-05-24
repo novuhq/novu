@@ -140,5 +140,23 @@ describe('MigrateAgentRuntime', () => {
     expect(conversationRepository.clearExternalSessionIdsForAgent.calledOnce).to.equal(true);
     expect(analyticsService.track.calledOnce).to.equal(true);
     expect(analyticsService.track.firstCall.args[0]).to.equal('[Novu Managed Claude] - Upgraded to own key');
+    expect(integrationRepository.update.calledOnce).to.equal(true);
+    expect(integrationRepository.update.firstCall.args[1]).to.deep.equal({ $set: { active: false } });
+  });
+
+  it('does not deactivate demo integration when other demo agents remain', async () => {
+    agentRepository.count.resolves(1);
+
+    await useCase.execute(
+      MigrateAgentRuntimeCommand.create({
+        identifier: 'demo-agent',
+        integrationId: targetIntegrationId,
+        environmentId: 'env-id',
+        organizationId: 'org-id',
+        userId: 'user-id',
+      })
+    );
+
+    expect(integrationRepository.update.called).to.equal(false);
   });
 });
