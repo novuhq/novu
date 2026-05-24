@@ -145,6 +145,7 @@ describe('Demo Managed Claude #novu-v2', () => {
 
     expect(res.status).to.equal(201);
     expect(mockProvider.provisionIntegration.calledOnce, 'lazy provision should run once').to.equal(true);
+    expect(mockProvider.provisionIntegration.firstCall.args[0].resourceName).to.equal(session.organization._id);
     expect(getAgentRuntimeProviderStub.calledWith(AgentRuntimeProviderIdEnum.NovuAnthropic, FAKE_MASTER_KEY)).to.equal(
       true
     );
@@ -182,6 +183,34 @@ describe('Demo Managed Claude #novu-v2', () => {
     expect(quotaRes.status).to.equal(200);
     expect(quotaRes.body.data.isDemoAgent).to.equal(true);
     expect(quotaRes.body.data.conversations.limit).to.equal(10);
+  });
+
+  it('should fetch runtime config using the Novu master key for demo integrations', async () => {
+    const integrationId = await createNovuAnthropicIntegration();
+    const identifier = `e2e-demo-runtime-config-${Date.now()}`;
+    createdAgentIdentifiers.push(identifier);
+
+    await session.testAgent.post('/v1/agents').send({
+      name: 'Demo Runtime Config Agent',
+      identifier,
+      runtime: 'managed',
+      managedRuntime: {
+        providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+        integrationId,
+      },
+    });
+
+    mockProvider.getConfig.resetHistory();
+    getAgentRuntimeProviderStub.resetHistory();
+
+    const configRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`);
+
+    expect(configRes.status).to.equal(200);
+    expect(getAgentRuntimeProviderStub.calledWith(AgentRuntimeProviderIdEnum.NovuAnthropic, FAKE_MASTER_KEY)).to.equal(
+      true
+    );
+    expect(mockProvider.getConfig.calledOnce).to.equal(true);
+    expect(configRes.body.data.tools).to.be.an('array');
   });
 
   it('should migrate agent runtime to user Anthropic integration', async () => {

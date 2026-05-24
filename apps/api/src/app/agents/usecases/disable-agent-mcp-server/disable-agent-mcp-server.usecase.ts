@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, decryptCredentials, getAgentRuntimeProvider, PinoLogger, resolveAgentRuntimeApiKey } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository, McpConnectionRepository } from '@novu/dal';
 
 import { trackAgentMcpServerDisabled } from '../../agent-analytics';
@@ -174,13 +174,16 @@ export class DisableAgentMcpServer {
       return;
     }
 
-    const creds = decryptCredentials(integration.credentials);
+    let apiKey: string;
 
-    if (!creds.apiKey) {
+    try {
+      apiKey = resolveAgentRuntimeApiKey(agent.managedRuntime.providerId, integration.credentials);
+    } catch {
       return;
     }
 
-    const runtimeProvider = getAgentRuntimeProvider(agent.managedRuntime.providerId, creds.apiKey);
+    const creds = decryptCredentials(integration.credentials);
+    const runtimeProvider = getAgentRuntimeProvider(agent.managedRuntime.providerId, apiKey);
 
     if (!runtimeProvider.capabilities.tokenVault) {
       return;

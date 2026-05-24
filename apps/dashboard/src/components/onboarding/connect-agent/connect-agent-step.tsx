@@ -6,6 +6,7 @@ import { RiArrowRightSLine } from 'react-icons/ri';
 import type { AgentResponse, GeneratedManagedAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
+import { getClaudeManagedAgentIntegrations } from '@/components/agents/connectors/claude-managed-integrations';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
 import {
   AGENT_TEMPLATES,
@@ -162,9 +163,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const matchingAnthropicIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
 
-    return (integrations ?? []).filter(
-      (i) => i.kind === IntegrationKindEnum.AGENT && i.providerId === selectedConnector.providerId
-    );
+    return getClaudeManagedAgentIntegrations(integrations);
   }, [integrations, selectedConnector?.providerId]);
 
   useEffect(() => {
@@ -351,9 +350,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       lastVerifiedKeyRef.current = null;
 
       if (option.providerLabel && !integrationName.trim()) {
-        const nextIndex =
-          (integrations ?? []).filter((i) => i.kind === IntegrationKindEnum.AGENT && i.providerId === option.providerId)
-            .length + 1;
+        const nextIndex = getClaudeManagedAgentIntegrations(integrations).length + 1;
         setIntegrationName(`${option.providerLabel} ${nextIndex}`);
       }
     },

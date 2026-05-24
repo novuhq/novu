@@ -10,7 +10,7 @@ import {
 import { ClaudeCredentialsFields } from '@/components/agents/create-agent-fields/claude-credentials-fields';
 import { Button } from '@/components/primitives/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/primitives/sheet';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/toast';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 

@@ -8,6 +8,7 @@ import {
   getAgentRuntimeProvider,
   type IAgentRuntimeProvider,
   PinoLogger,
+  resolveAgentRuntimeApiKey,
   SsrfBlockedError,
   safeOutboundJsonRequest,
   splitOAuthState,
@@ -373,14 +374,18 @@ export class McpOAuthCallback {
       return null;
     }
 
-    const creds = decryptCredentials(integration.credentials);
+    let apiKey: string;
 
-    if (!creds.apiKey) {
+    try {
+      apiKey = resolveAgentRuntimeApiKey(agent.managedRuntime.providerId, integration.credentials);
+    } catch {
       return null;
     }
 
+    const creds = decryptCredentials(integration.credentials);
+
     return {
-      runtimeProvider: getAgentRuntimeProvider(agent.managedRuntime.providerId, creds.apiKey),
+      runtimeProvider: getAgentRuntimeProvider(agent.managedRuntime.providerId, apiKey),
       integrationId: integration._id,
       integrationCredentials: creds as Record<string, unknown>,
     };

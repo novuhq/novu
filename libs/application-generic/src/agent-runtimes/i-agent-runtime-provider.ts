@@ -44,6 +44,12 @@ export type UpdateAgentRuntimeConfigInput = {
 export type ProvisionIntegrationInput = {
   /** Human-readable name for the integration; used as the environment/resource name on the provider. */
   integrationName: string;
+  /**
+   * Optional stable resource stem for provider-side environment/vault naming.
+   * When omitted, `integrationName` is used. Novu-managed demo Claude passes the org id
+   * so each customer gets an isolated `nv-{organizationId}` environment.
+   */
+  resourceName?: string;
 };
 
 export type ProvisionIntegrationResult = {

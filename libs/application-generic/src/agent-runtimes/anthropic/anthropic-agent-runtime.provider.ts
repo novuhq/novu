@@ -280,12 +280,13 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
   async provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult> {
     const client = this.buildClient();
+    const resourceStem = input.resourceName ?? input.integrationName;
 
     // Not retried: environment creation is not idempotent.
     const env: { id: string } = await (async () => {
       try {
         return await (client as any).beta.environments.create({
-          name: `nv-${input.integrationName}`,
+          name: `nv-${resourceStem}`,
           config: {
             type: 'cloud',
             networking: { type: 'unrestricted' },
@@ -304,7 +305,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const vault: { id: string } = await (async () => {
       try {
         return await (client as any).beta.vaults.create({
-          display_name: `nv-${input.integrationName}-vault`,
+          display_name: `nv-${resourceStem}-vault`,
         });
       } catch (err) {
         // Best-effort rollback so we don't leak an orphan environment when

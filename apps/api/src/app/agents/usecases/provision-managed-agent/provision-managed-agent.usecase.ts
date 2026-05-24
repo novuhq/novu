@@ -72,6 +72,7 @@ export class ProvisionManagedAgent {
         );
         const provisionResult = await provisioningProvider.provisionIntegration({
           integrationName: integration.name ?? 'Novu Managed Claude',
+          resourceName: command.organizationId,
         });
         const nextCredentials = encryptCredentials({
           ...decryptedCredentials,

@@ -7,9 +7,9 @@ import {
   decryptCredentials,
   DemoQuotaExhaustedError,
   getAgentRuntimeProvider,
-  getNovuManagedClaudeApiKey,
   type IAgentRuntimeProvider,
   PinoLogger,
+  resolveAgentRuntimeApiKey,
 } from '@novu/application-generic';
 import {
   type AgentEntity,
@@ -622,11 +622,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     const creds = decryptCredentials(integration.credentials);
     const isDemoIntegration = integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
-    const apiKey = isDemoIntegration ? getNovuManagedClaudeApiKey() : (creds.apiKey as string | undefined);
-
-    if (!apiKey) {
-      throw new Error('Integration has no API key');
-    }
+    const apiKey = resolveAgentRuntimeApiKey(integration.providerId, integration.credentials);
     if (!creds.externalEnvironmentId) {
       throw new Error('Integration has no external environment id');
     }
@@ -667,7 +663,7 @@ export class ManagedAgentService implements OnModuleInit {
             url: cfUrl,
             apiKey: process.env.THALAMUS_CF_API_KEY,
             webhook: {
-              url: `${process.env.API_ROOT_URL}/v1/agents/events`,
+              url: `${process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL}/v1/agents/events`,
               secret: webhookSecret,
             },
           }),

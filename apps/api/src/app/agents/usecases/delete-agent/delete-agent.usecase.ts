@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
+import { AnalyticsService, getAgentRuntimeProvider, resolveAgentRuntimeApiKey } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 
 import { trackAgentDeleted } from '../../agent-analytics';
@@ -84,13 +84,15 @@ export class DeleteAgent {
       return;
     }
 
-    const decryptedCredentials = decryptCredentials(integration.credentials);
+    let apiKey: string;
 
-    if (!decryptedCredentials.apiKey) {
+    try {
+      apiKey = resolveAgentRuntimeApiKey(managedRuntime.providerId, integration.credentials);
+    } catch {
       return;
     }
 
-    const runtimeProvider = getAgentRuntimeProvider(managedRuntime.providerId, decryptedCredentials.apiKey);
+    const runtimeProvider = getAgentRuntimeProvider(managedRuntime.providerId, apiKey);
 
     await runtimeProvider.deleteAgent(managedRuntime.externalAgentId);
   }

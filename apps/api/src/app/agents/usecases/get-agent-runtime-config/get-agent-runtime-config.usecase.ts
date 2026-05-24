@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, getAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import { getAgentRuntimeProvider, PinoLogger, resolveAgentRuntimeApiKey } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
 import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
@@ -50,8 +50,17 @@ export class GetAgentRuntimeConfig {
       throw new NotFoundException(`Runtime integration not found for agent "${command.identifier}".`);
     }
 
-    const decryptedCredentials = decryptCredentials(integration.credentials);
-    const runtimeProvider = getAgentRuntimeProvider(providerId, decryptedCredentials.apiKey!);
+    let apiKey: string;
+
+    try {
+      apiKey = resolveAgentRuntimeApiKey(providerId, integration.credentials);
+    } catch {
+      throw new UnprocessableEntityException(
+        `Integration for agent "${command.identifier}" has no API key configured. Please complete the integration setup.`
+      );
+    }
+
+    const runtimeProvider = getAgentRuntimeProvider(providerId, apiKey);
 
     // Mongo is authoritative for the agent's MCP list. Other runtime fields
     // (model, system prompt, tools, skills) still come live from the provider.

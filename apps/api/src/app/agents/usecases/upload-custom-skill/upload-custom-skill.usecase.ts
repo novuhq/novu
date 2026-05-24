@@ -1,9 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
-  decryptCredentials,
   getAgentRuntimeProvider,
   type IAgentRuntimeProvider,
   PinoLogger,
+  resolveAgentRuntimeApiKey,
   type UploadSkillFile,
 } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
@@ -65,9 +65,11 @@ export class UploadCustomSkill {
       throw new NotFoundException(`Integration "${command.integrationId}" not found.`);
     }
 
-    const decryptedCredentials = decryptCredentials(integration.credentials);
+    let apiKey: string;
 
-    if (!decryptedCredentials.apiKey) {
+    try {
+      apiKey = resolveAgentRuntimeApiKey(integration.providerId, integration.credentials);
+    } catch {
       throw new UnprocessableEntityException(
         `Integration "${command.integrationId}" has no API key configured. Please complete the integration setup.`
       );
@@ -75,7 +77,7 @@ export class UploadCustomSkill {
 
     const bundles = await this.resolveBundles(command.source);
 
-    const provider = getAgentRuntimeProvider(integration.providerId, decryptedCredentials.apiKey);
+    const provider = getAgentRuntimeProvider(integration.providerId, apiKey);
     const uploaded = await this.uploadBundlesStrict(provider, bundles);
 
     this.logger.info(

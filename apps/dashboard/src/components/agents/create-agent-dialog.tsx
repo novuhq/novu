@@ -37,6 +37,7 @@ import {
   type ConnectorIntegrationStatus,
 } from './connectors/connector-integration-dropdown';
 import { type ConnectorId, type ConnectorOption, getConnectorById } from './connectors/connector-options';
+import { getClaudeManagedAgentIntegrations } from './connectors/claude-managed-integrations';
 import {
   AGENT_TEMPLATES,
   type AgentTemplate,
@@ -198,9 +199,7 @@ export function CreateAgentDialog({
   const matchingAnthropicIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
 
-    return (integrations ?? []).filter(
-      (i) => i.kind === IntegrationKindEnum.AGENT && i.providerId === selectedConnector.providerId
-    );
+    return getClaudeManagedAgentIntegrations(integrations);
   }, [integrations, selectedConnector?.providerId]);
 
   // Auto-select the first existing integration of the chosen provider on open / when the connector
@@ -415,9 +414,7 @@ export function CreateAgentDialog({
     setCredentialsPanelExpanded(true);
 
     if (option.providerLabel && !integrationName.trim()) {
-      const nextIndex =
-        (integrations ?? []).filter((i) => i.kind === IntegrationKindEnum.AGENT && i.providerId === option.providerId)
-          .length + 1;
+      const nextIndex = getClaudeManagedAgentIntegrations(integrations).length + 1;
       setIntegrationName(`${option.providerLabel} ${nextIndex}`);
     }
   };
