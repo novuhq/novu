@@ -473,7 +473,7 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationIdentifier,
-        to: body.to,
+        subscriberId: body.subscriberId,
       })
     );
   }

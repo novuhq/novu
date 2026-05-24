@@ -5,19 +5,19 @@ import { useEnvironment } from '@/context/environment/hooks';
 type SendWhatsAppTestTemplateVariables = {
   agentIdentifier: string;
   integrationIdentifier: string;
-  to: string;
+  subscriberId: string;
 };
 
 export function useSendWhatsAppTestTemplate() {
   const { currentEnvironment } = useEnvironment();
 
   return useMutation<SendWhatsAppTestTemplateResponse, Error, SendWhatsAppTestTemplateVariables>({
-    mutationFn: async ({ agentIdentifier, integrationIdentifier, to }) => {
+    mutationFn: async ({ agentIdentifier, integrationIdentifier, subscriberId }) => {
       if (!currentEnvironment) {
         throw new Error('No environment selected');
       }
 
-      return sendWhatsAppTestTemplate(currentEnvironment, agentIdentifier, integrationIdentifier, to);
+      return sendWhatsAppTestTemplate(currentEnvironment, agentIdentifier, integrationIdentifier, subscriberId);
     },
   });
 }

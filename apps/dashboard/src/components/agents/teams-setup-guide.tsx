@@ -1,5 +1,4 @@
-import { useUser } from '@clerk/react';
-import { MsTeamsConnectButton, MsTeamsLinkUser, NovuProvider, useNovu } from '@novu/react';
+import { MsTeamsConnectButton, MsTeamsLinkUser, useNovu } from '@novu/react';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Download } from 'lucide-react';
@@ -18,11 +17,13 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { API_HOSTNAME } from '@/config';
+import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { buildAgentConnectionIdentifier } from '@/utils/connect-subscriber-id';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import {
@@ -419,6 +420,7 @@ const ENDPOINT_POLL_GRACE_MS = 30_000;
 
 type ConnectAndLinkSectionProps = {
   integrationIdentifier: string;
+  subscriberId: string;
   connectionIdentifier: string;
   connectLabel: string;
   onFullyConnected: () => void;
@@ -433,6 +435,7 @@ type ConnectAndLinkSectionProps = {
  */
 function ConnectAndLinkSection({
   integrationIdentifier,
+  subscriberId,
   connectionIdentifier,
   connectLabel,
   onFullyConnected,
@@ -536,6 +539,7 @@ function ConnectAndLinkSection({
       {/* container={undefined} satisfies the Pick<NovuUIOptions, 'container' | 'appearance'> requirement */}
       <MsTeamsConnectButton
         integrationIdentifier={integrationIdentifier}
+        subscriberId={subscriberId}
         connectionIdentifier={connectionIdentifier}
         connectLabel={connectLabel}
         connectedLabel="Connected to MS Teams"
@@ -650,7 +654,8 @@ export function TeamsSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: TeamsSetupGuideProps) {
-  const { user } = useUser();
+  const { currentUser, isUserLoaded } = useAuth();
+  const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MSTEAMS_QUICK_SETUP_ENABLED, false);
@@ -689,6 +694,8 @@ export function TeamsSetupGuide({
   );
 
   const integrationIdentifier = selectedIntegration?.identifier ?? '';
+  const connectionIdentifier =
+    isUserLoaded && currentUser?._id ? buildAgentConnectionIdentifier(currentUser._id, agent._id) : null;
   const provisioning = (selectedIntegration as { provisioning?: IntegrationProvisioningState } | undefined)
     ?.provisioning;
   const credentials = selectedIntegration?.credentials as Record<string, string> | undefined;
@@ -1072,25 +1079,14 @@ export function TeamsSetupGuide({
         rightContent={
           <div className="flex min-w-0 flex-col gap-3">
             {/* teamsAppCatalogId is available here for future use (e.g. an "Open in Teams" deep link once catalog propagation is confirmed) */}
-            {hasCredentials && user?.externalId && currentEnvironment?.identifier ? (
-              <NovuProvider
-                subscriber={{
-                  subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
-                  firstName: user.firstName ?? '',
-                  lastName: user.lastName ?? '',
-                  avatar: user.imageUrl ?? '',
-                }}
-                applicationIdentifier={currentEnvironment.identifier}
-                apiUrl={apiHostnameManager.getHostname()}
-                socketUrl={apiHostnameManager.getWebSocketHostname()}
-              >
-                <ConnectAndLinkSection
-                  integrationIdentifier={integrationIdentifier}
-                  connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
-                  connectLabel={`Connect ${agent.name} ↗`}
-                  onFullyConnected={handleConnected}
-                />
-              </NovuProvider>
+            {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
+              <ConnectAndLinkSection
+                integrationIdentifier={integrationIdentifier}
+                subscriberId={connectSubscriberId}
+                connectionIdentifier={connectionIdentifier}
+                connectLabel={`Connect ${agent.name} ↗`}
+                onFullyConnected={handleConnected}
+              />
             ) : (
               <>
                 <SetupButton disabled>{`Connect ${agent.name} ↗`}</SetupButton>
@@ -1481,25 +1477,14 @@ export function TeamsSetupGuide({
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
           <div className="flex min-w-0 flex-col gap-3">
-            {hasCredentials && user?.externalId && currentEnvironment?.identifier ? (
-              <NovuProvider
-                subscriber={{
-                  subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
-                  firstName: user.firstName ?? '',
-                  lastName: user.lastName ?? '',
-                  avatar: user.imageUrl ?? '',
-                }}
-                applicationIdentifier={currentEnvironment.identifier}
-                apiUrl={apiHostnameManager.getHostname()}
-                socketUrl={apiHostnameManager.getWebSocketHostname()}
-              >
-                <ConnectAndLinkSection
-                  integrationIdentifier={integrationIdentifier}
-                  connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
-                  connectLabel={`Connect ${agent.name} ↗`}
-                  onFullyConnected={handleConnected}
-                />
-              </NovuProvider>
+            {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
+              <ConnectAndLinkSection
+                integrationIdentifier={integrationIdentifier}
+                subscriberId={connectSubscriberId}
+                connectionIdentifier={connectionIdentifier}
+                connectLabel={`Connect ${agent.name} ↗`}
+                onFullyConnected={handleConnected}
+              />
             ) : (
               <>
                 <SetupButton disabled>{`Connect ${agent.name} ↗`}</SetupButton>
