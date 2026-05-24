@@ -1,4 +1,4 @@
-import type { ShowWhenCondition } from '@clerk/shared/types';
+import type { CheckAuthorizationWithCustomPermissions, ShowWhenCondition } from '@clerk/shared/types';
 import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import React, { useContext } from 'react';
 import { AuthContext } from './auth-context';
@@ -8,6 +8,22 @@ type ShowProps = {
   fallback?: React.ReactNode;
   children: React.ReactNode;
 };
+
+function toClerkHas(
+  has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean
+): CheckAuthorizationWithCustomPermissions {
+  return (params) => {
+    if ('permission' in params && params.permission !== undefined) {
+      return has({ permission: params.permission as PermissionsEnum });
+    }
+
+    if ('role' in params && params.role !== undefined) {
+      return has({ role: params.role as MemberRoleEnum });
+    }
+
+    return false;
+  };
+}
 
 function evaluateShowCondition(
   when: ShowWhenCondition,
@@ -23,15 +39,15 @@ function evaluateShowCondition(
   }
 
   if (typeof when === 'function') {
-    return when(has);
+    return when(toClerkHas(has));
   }
 
-  if ('permission' in when) {
-    return has({ permission: when.permission });
+  if ('permission' in when && when.permission !== undefined) {
+    return has({ permission: when.permission as PermissionsEnum });
   }
 
-  if ('role' in when) {
-    return has({ role: when.role });
+  if ('role' in when && when.role !== undefined) {
+    return has({ role: when.role as MemberRoleEnum });
   }
 
   return false;
