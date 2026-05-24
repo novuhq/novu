@@ -31,6 +31,7 @@ import {
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
 import { LRUCache } from 'lru-cache';
+import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { GenerateMcpOAuthUrlCommand } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
@@ -57,9 +58,17 @@ type WebhookSessionMetadata = {
    * OAuth — `GenerateMcpOAuthUrl` is subscriber-scoped.
    *
    * Optional: anonymous platform users (no subscriber resolved) still get a
-   * session, but for them we fall through to the plain-text MCP-init error.
+   * session, but for them we surface a platform-aware "your account isn't
+   * linked" reply (see `buildAnonymousUserMcpMessage`).
    */
   subscriberId?: string;
+  /**
+   * Inbound chat platform that opened this session (slack, telegram, …).
+   * Carried through so error replies can be phrased per platform — Telegram
+   * has a self-serve `/start <token>` link flow, the others currently
+   * require an admin to provision the channel endpoint.
+   */
+  platform?: AgentPlatformEnum;
 };
 
 /**
@@ -148,6 +157,7 @@ export class ManagedAgentService implements OnModuleInit {
         agentIdentifier: context.config.agentIdentifier,
         integrationIdentifier: context.config.integrationIdentifier,
         subscriberId: context.subscriber?.subscriberId,
+        platform: context.config.platform,
       }),
     });
 
@@ -259,19 +269,26 @@ export class ManagedAgentService implements OnModuleInit {
   }
 
   /**
-   * Lazy-OAuth path for an MCP-init failure. Returns `true` when a Connect
-   * card was successfully delivered to the user; `false` for any precondition
-   * miss (anonymous user, unknown server, MCP not on the Novu-OAuth
-   * allow-list, discovery failure, network error). Callers fall back to the
-   * plain-text `buildErrorMessage` path so the user still sees *something*.
+   * Lazy-OAuth path for an MCP-init failure. Returns `true` when a reply was
+   * successfully delivered to the user (a Connect card on the happy path, or
+   * a platform-aware "your account isn't linked yet" message when the
+   * platform user has no subscriber); `false` for unrecoverable misses
+   * (unknown server, MCP not on the Novu-OAuth allow-list, discovery
+   * failure, network error). Callers fall back to the plain-text
+   * `buildErrorMessage` path so the user still sees *something*.
    *
    * Steps:
-   *   1. Map the runtime-side server display name (e.g. "Linear") to a
+   *   1. Resolve the subscriber for this session. If we can't (the inbound
+   *      platform user has no `ChannelEndpoint` linking them to a Novu
+   *      subscriber), deliver the platform-aware "not linked yet" reply and
+   *      stop — `GenerateMcpOAuthUrl` is subscriber-scoped so we can't mint
+   *      an authorize URL anyway.
+   *   2. Map the runtime-side server display name (e.g. "Linear") to a
    *      catalog `mcpId` ("linear"). Servers not in `MCP_SERVERS` return false.
-   *   2. Call `GenerateMcpOAuthUrl` — discovers PRM/AS metadata, does
+   *   3. Call `GenerateMcpOAuthUrl` — discovers PRM/AS metadata, does
    *      per-subscriber DCR, mints the authorize URL, and upserts the
    *      `mcp_connection` row to `pending_oauth`.
-   *   3. Deliver `{ reply: { card: ConnectCard } }` via `HandleAgentReply`.
+   *   4. Deliver `{ reply: { card: ConnectCard } }` via `HandleAgentReply`.
    */
   private async tryDeliverMcpConnectCard(
     metadata: Record<string, string>,
@@ -282,11 +299,16 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (!subscriberId) {
       this.logger.warn(
-        { sessionId, mcpServerName, conversationId: metadata.conversationId },
-        'Cannot offer MCP OAuth — session has no subscriber context (anonymous platform user)'
+        {
+          sessionId,
+          mcpServerName,
+          conversationId: metadata.conversationId,
+          platform: metadata.platform,
+        },
+        'MCP OAuth needed but session has no subscriber context — surfacing platform-aware "not linked" reply'
       );
 
-      return false;
+      return this.deliverAnonymousUserMcpReply(metadata, sessionId, mcpServerName);
     }
 
     const mcpId = this.resolveMcpIdByName(mcpServerName);
@@ -385,6 +407,43 @@ export class ManagedAgentService implements OnModuleInit {
         },
       ],
     };
+  }
+
+  /**
+   * Deliver a platform-aware "your account isn't linked" reply. Used when an
+   * MCP-init failure fires for a platform user we can't map to a Novu
+   * subscriber — the lazy-OAuth Connect card path requires a subscriberId so
+   * it can't help here, and the generic "temporarily unavailable" reply
+   * leaves the user with no idea what to do. Returns `true` on successful
+   * delivery so `tryDeliverMcpConnectCard` can short-circuit cleanly.
+   */
+  private async deliverAnonymousUserMcpReply(
+    metadata: Record<string, string>,
+    sessionId: string,
+    mcpServerName: string
+  ): Promise<boolean> {
+    const platform = (metadata.platform as AgentPlatformEnum | undefined) ?? undefined;
+    const message = buildAnonymousUserMcpMessage(platform, mcpServerName);
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: 'system',
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
+          reply: { markdown: message },
+        })
+      );
+    } catch (err) {
+      this.logger.error(err, `Failed to deliver anonymous-user MCP reply for session ${sessionId}`);
+
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -506,6 +565,7 @@ export class ManagedAgentService implements OnModuleInit {
     agentIdentifier: string;
     integrationIdentifier: string;
     subscriberId?: string;
+    platform?: AgentPlatformEnum;
     toolUseId: string;
     approved: boolean;
   }): Promise<void> {
@@ -552,6 +612,7 @@ export class ManagedAgentService implements OnModuleInit {
         agentIdentifier: params.agentIdentifier,
         integrationIdentifier: params.integrationIdentifier,
         subscriberId: params.subscriberId,
+        platform: params.platform,
       }),
     });
   }
@@ -825,6 +886,10 @@ export class ManagedAgentService implements OnModuleInit {
       metadata.subscriberId = input.subscriberId;
     }
 
+    if (input.platform) {
+      metadata.platform = input.platform;
+    }
+
     return metadata;
   }
 
@@ -960,4 +1025,40 @@ function formatToolInputPreview(input: Record<string, unknown> | undefined): str
   const capped = serialised.length > 600 ? `${serialised.slice(0, 597)}...` : serialised;
 
   return `\`\`\`json\n${capped}\n\`\`\``;
+}
+
+const PLATFORM_DISPLAY_NAMES: Record<AgentPlatformEnum, string> = {
+  [AgentPlatformEnum.SLACK]: 'Slack',
+  [AgentPlatformEnum.TEAMS]: 'Teams',
+  [AgentPlatformEnum.WHATSAPP]: 'WhatsApp',
+  [AgentPlatformEnum.EMAIL]: 'email',
+  [AgentPlatformEnum.TELEGRAM]: 'Telegram',
+};
+
+/**
+ * Build a markdown reply for the case where an MCP tool needs OAuth but the
+ * inbound platform user has no `ChannelEndpoint` linking them to a Novu
+ * subscriber. The lazy-OAuth Connect-card flow is subscriber-scoped (see
+ * `GenerateMcpOAuthUrl`) so we can't mint an authorize URL — but we can at
+ * least tell the user what's wrong and how to fix it. Wording is
+ * platform-aware: Telegram has a self-serve `/start <token>` flow (see
+ * `IssueTelegramSubscriberLink`), the rest currently require a workspace
+ * admin to create the channel endpoint from the dashboard.
+ *
+ * Exported for unit-testing the wording without spinning up the whole service.
+ */
+export function buildAnonymousUserMcpMessage(platform: AgentPlatformEnum | undefined, mcpServerName: string): string {
+  if (platform === AgentPlatformEnum.TELEGRAM) {
+    return (
+      `I can't connect to **${mcpServerName}** because this Telegram chat isn't linked to a Novu subscriber yet. ` +
+      `Open a connection link from your Novu dashboard and tap it in Telegram to connect, then ask me again.`
+    );
+  }
+
+  const platformLabel = platform ? PLATFORM_DISPLAY_NAMES[platform] : 'chat';
+
+  return (
+    `I can't connect to **${mcpServerName}** because your ${platformLabel} account isn't linked to a Novu subscriber yet. ` +
+    `Ask a workspace admin to link your account from the Novu dashboard, then try again.`
+  );
 }

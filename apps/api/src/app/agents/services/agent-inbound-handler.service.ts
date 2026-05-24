@@ -728,6 +728,7 @@ export class AgentInboundHandler implements OnModuleInit {
         agentIdentifier: config.agentIdentifier,
         integrationIdentifier: config.integrationIdentifier,
         subscriberId: subscriberId ?? undefined,
+        platform: config.platform,
         toolUseId: toolApproval.toolUseId,
         approved: toolApproval.approved,
       });
