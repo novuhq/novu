@@ -39,7 +39,7 @@ import type {
 } from '../i-agent-runtime-provider';
 
 const PROVIDER_ID = AgentRuntimeProviderIdEnum.Anthropic;
-const DEFAULT_MODEL = 'claude-sonnet-4-5';
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 /** Single retry jitter window in ms */
 const RETRY_JITTER_MS = 500;
 /** Timeout for config calls in ms */
