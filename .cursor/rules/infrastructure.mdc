@@ -29,4 +29,4 @@ alwaysApply: false
 - Real-time features: API + Worker + `pnpm start:ws`
 - Full stack: `docker compose` + all of the above
 
-Run `pnpm build` before starting services only if changes were made to `libs/`, `packages/`, or `enterprise/`. Cloud agent install/update uses `pnpm build:agents`, which skips `apps/` (apps build when their dev servers start).
+Run `pnpm build` before starting services only if changes were made to `libs/`, `packages/`, or `enterprise/`. Cloud agent install/update uses `pnpm build:agents`, which skips full app builds but still runs `@novu/api-service:build:metadata` (apps otherwise build when their dev servers start).
