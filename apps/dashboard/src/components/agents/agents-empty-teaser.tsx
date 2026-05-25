@@ -5,7 +5,6 @@ import { cn } from '@/utils/ui';
 
 const slackIcon = '/images/providers/light/square/slack.svg';
 const msTeamsIcon = '/images/providers/light/square/msteams.svg';
-const notionIcon = '/images/providers/light/square/notion.svg';
 const githubIcon = '/images/providers/light/square/github.svg';
 
 type AgentsPillProps = {
