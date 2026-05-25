@@ -1,8 +1,10 @@
 import { ROUTES } from '@/utils/routes';
 
 /**
- * Clerk sign-in/sign-up/forgot flows on the Connect satellite host. These must not trigger
- * auth-provider org redirects while the primary→satellite handshake is still completing.
+ * Public Clerk auth pages (sign-in, sign-up, forgot password, etc.). The auth-provider must not
+ * fire org-resolution redirects while the user is on these pages — both because the session may
+ * still be settling after a satellite cookie sync and because org-list / invitation-accept have
+ * their own bespoke org logic.
  */
 export function isPublicAuthPath(pathname: string): boolean {
   if (!pathname.startsWith('/auth/')) {

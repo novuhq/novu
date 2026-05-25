@@ -15,12 +15,13 @@ export function ConnectProtectedRoute({ children }: ConnectProtectedRouteProps) 
   const isConnectFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
   const { currentEnvironment } = useEnvironment();
 
-  // With the hostname split configured, the source of truth for Connect access is the hostname
-  // itself — the LD flag is only consulted as a per-tenant gate on top of that. Without the
-  // split, the flag remains the sole gate so legacy single-origin deployments are unchanged.
-  // Cross-origin redirects from Platform → Connect are handled by HostnameGuard before this
-  // route ever mounts, so here we only need to guard the "in Connect but flag off" case.
-  const isAllowed = IS_HOSTNAME_SPLIT_ENABLED ? IS_NOVU_CONNECT && isConnectFlagEnabled : isConnectFlagEnabled;
+  /*
+   * Connect is exclusively served from the Connect satellite host. The hostname split must be
+   * configured and we must actually be on the Connect host. The LD flag continues to act as a
+   * per-tenant rollout gate on top of that. `HostnameGuard` redirects Platform-side `/connect/*`
+   * bookmarks before this route ever mounts.
+   */
+  const isAllowed = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT && isConnectFlagEnabled;
 
   if (!isAllowed) {
     const fallback = currentEnvironment?.slug

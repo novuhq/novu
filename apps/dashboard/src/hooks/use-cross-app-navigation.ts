@@ -1,50 +1,27 @@
+import { useCallback } from 'react';
 import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { isAbsoluteUrl } from '@/utils/apps';
-import { buildDestinationSignInUrl } from '@/utils/product-auth-urls';
-import { ROUTES } from '@/utils/routes';
-import { useAuth, useClerk } from '@clerk/clerk-react';
-import { useCallback } from 'react';
 
+/**
+ * Cross-origin navigation between the Platform and Connect hosts. Clerk satellite domains keep
+ * the session in sync via cookies, so we just delegate to the browser — no token-in-hash dance.
+ */
 export function useCrossAppNavigation() {
-  const clerk = useClerk();
-  const { isSignedIn, isLoaded } = useAuth();
+  return useCallback((href: string, openInNewTab = false) => {
+    const isCrossOrigin = IS_HOSTNAME_SPLIT_ENABLED && isAbsoluteUrl(href);
 
-  return useCallback(
-    (href: string, openInNewTab = false) => {
-      const isCrossOrigin = IS_HOSTNAME_SPLIT_ENABLED && isAbsoluteUrl(href);
+    if (openInNewTab) {
+      window.open(href, '_blank', 'noopener,noreferrer');
 
-      if (!isCrossOrigin) {
-        if (openInNewTab) {
-          window.open(href, '_blank', 'noopener,noreferrer');
+      return;
+    }
 
-          return;
-        }
+    if (!isCrossOrigin) {
+      window.location.assign(href);
 
-        window.location.assign(href);
+      return;
+    }
 
-        return;
-      }
-
-      if (!isLoaded || !clerk.loaded) {
-        window.location.assign(href);
-
-        return;
-      }
-
-      if (isSignedIn) {
-        if (openInNewTab) {
-          window.open(clerk.buildUrlWithAuth(href), '_blank');
-
-          return;
-        }
-
-        void clerk.redirectWithAuth(href);
-
-        return;
-      }
-
-      window.location.assign(buildDestinationSignInUrl(href, ROUTES.SIGN_IN));
-    },
-    [clerk, isLoaded, isSignedIn]
-  );
+    window.location.assign(href);
+  }, []);
 }

@@ -37,37 +37,41 @@ export const LEGACY_DASHBOARD_URL =
 export const DASHBOARD_URL = window._env_?.VITE_DASHBOARD_URL || import.meta.env.VITE_DASHBOARD_URL;
 
 /**
- * Hostname (host:port) that serves the Novu Connect product. When the current page is loaded
- * from this host, the same dashboard build switches into Connect mode (Connect-only sidebar,
- * routes, and branding). When empty, the hostname split is disabled and Connect is reachable
- * via the legacy /env/:slug/connect/* paths on the Platform hostname.
+ * Hostname (host:port) that serves the Novu Connect product. Connect runs as a Clerk satellite
+ * of the Platform domain — sign-in/sign-up only happen on Platform, and the session is shared
+ * via Clerk cookie sync. When empty, Connect is not deployed for this build (self-hosted /
+ * dev-without-Connect setups).
  */
 export const NOVU_CONNECT_HOSTNAME =
   window._env_?.VITE_NOVU_CONNECT_HOSTNAME || import.meta.env.VITE_NOVU_CONNECT_HOSTNAME || '';
 
 /**
- * Hostname (host:port) of the Novu Platform deployment. Used by the Connect deployment to build
- * absolute switcher URLs back to Platform. When empty, the Platform hostname is assumed to be
- * the same origin (used as a same-origin fallback in dev/self-hosted setups).
+ * Hostname (host:port) of the Novu Platform deployment — the Clerk PRIMARY domain. Connect (the
+ * satellite) reads this to build absolute sign-in / sign-up / switcher URLs back to Platform.
+ * Required when `NOVU_CONNECT_HOSTNAME` is set.
  */
 export const NOVU_PLATFORM_HOSTNAME =
   window._env_?.VITE_NOVU_PLATFORM_HOSTNAME || import.meta.env.VITE_NOVU_PLATFORM_HOSTNAME || '';
 
 /**
- * Whether the hostname split is configured for this deployment. When false, the dashboard
- * keeps the legacy single-origin behavior where both products coexist under the same host.
+ * Whether the Platform↔Connect hostname split is configured for this deployment. When false,
+ * Connect simply isn't available — self-hosted / community builds get a Platform-only UX.
  */
 export const IS_HOSTNAME_SPLIT_ENABLED = NOVU_CONNECT_HOSTNAME.length > 0;
 
-/**
- * Single source of truth: are we currently rendering Novu Connect? Replaces the previous
- * pathname-based detection. When the hostname split is not configured, this stays false and
- * legacy /env/:slug/connect/* routing continues to work on the Platform hostname.
- */
+/** True when the current page is loaded from the Connect satellite hostname. */
 export const IS_NOVU_CONNECT =
   IS_HOSTNAME_SPLIT_ENABLED &&
   typeof window !== 'undefined' &&
   window.location.host === NOVU_CONNECT_HOSTNAME;
+
+/**
+ * True when the current page is loaded from the Platform primary hostname. When the split is
+ * configured but the visitor's host matches neither (e.g. a custom preview URL), we still treat
+ * the request as Platform — Connect must be served from its explicit hostname to enable the
+ * satellite Clerk flow.
+ */
+export const IS_NOVU_PLATFORM = !IS_NOVU_CONNECT;
 
 export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT_APP_ID;
 

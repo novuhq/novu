@@ -8,19 +8,22 @@ export const APP_IDS = {
   CONNECT: 'connect',
 } as const satisfies Record<string, AppId>;
 
-export const CONNECT_PATH_REGEX = /^\/env\/[^/]+\/connect(\/.*)?$/;
+/**
+ * Matches the legacy `/env/:slug/connect/*` paths. Connect doesn't render on the Platform host
+ * anymore, but bookmarks and stale links still arrive here — `HostnameGuard` uses this to do a
+ * one-shot redirect to the Connect satellite.
+ */
+export const LEGACY_CONNECT_PATH_REGEX = /^\/env\/[^/]+\/connect(\/.*)?$/;
 
 /**
- * Single source of truth for current product. When the hostname split is configured, this is
- * driven by `window.location.host`. Otherwise we keep the legacy pathname-based detection for
- * self-hosted deployments that have not yet split origins.
+ * Current product is driven exclusively by `window.location.host`. Connect requires the
+ * hostname split to be configured; everywhere else this resolves to Platform.
+ *
+ * `pathname` is accepted for backward compatibility but is intentionally ignored — there's no
+ * legacy in-path Connect to detect.
  */
-export function getCurrentAppId(pathname?: string): AppId {
-  if (IS_HOSTNAME_SPLIT_ENABLED) {
-    return IS_NOVU_CONNECT ? APP_IDS.CONNECT : APP_IDS.NOVU;
-  }
-
-  if (pathname && CONNECT_PATH_REGEX.test(pathname)) {
+export function getCurrentAppId(_pathname?: string): AppId {
+  if (IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT) {
     return APP_IDS.CONNECT;
   }
 

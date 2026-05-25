@@ -1,7 +1,6 @@
 import { RedirectToSignIn, SignedIn, SignedOut, useAuth, useClerk } from '@clerk/clerk-react';
 import { Outlet } from 'react-router-dom';
 import { AuthLayout } from '@/components/auth-layout';
-import { isCrossOriginAuthHandshakePending } from '@/utils/cross-product-sign-out';
 
 export const AuthRoute = () => {
   return (
@@ -15,7 +14,7 @@ export const ProtectedAuthRoute = () => {
   const { isLoaded } = useAuth();
   const clerk = useClerk();
 
-  if (!isLoaded || !clerk.loaded || isCrossOriginAuthHandshakePending()) {
+  if (!isLoaded || !clerk.loaded) {
     return null;
   }
 

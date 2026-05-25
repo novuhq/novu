@@ -144,8 +144,12 @@ export function AppRail() {
   const currentBrand = isConnect ? CONNECT_BRAND : PLATFORM_BRAND;
   const otherBrand = isConnect ? PLATFORM_BRAND : CONNECT_BRAND;
 
-  // Cross-origin switcher URLs. We navigate in the same tab so Clerk redirectWithAuth can sync
-  // the session; opening a new tab only receives buildUrlWithAuth and is less reliable locally.
+  /*
+   * Cross-origin switcher URLs. The destination Clerk SDK runs satellite session sync on
+   * first load, so a plain navigation is enough — no token-in-hash plumbing required. We
+   * always target the org-resolution entry on the destination so the right product workspace
+   * is picked up before the app shell renders.
+   */
   const otherAppHref = IS_HOSTNAME_SPLIT_ENABLED
     ? buildOtherAppExternalUrl(otherBrand.id, envSlug, { useOrgResolutionEntry: true })
     : buildAppHomeRoute(otherBrand.id, envSlug);

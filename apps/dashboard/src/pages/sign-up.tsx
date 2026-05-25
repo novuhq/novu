@@ -1,28 +1,42 @@
-import { SignUp as SignUpForm, useAuth, useOrganization, useUser } from '@clerk/clerk-react';
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { AuthSideBanner } from '@/components/auth/auth-side-banner';
 import { ConnectAuthSideBanner } from '@/components/auth/connect-auth-side-banner';
 import { RegionPicker } from '@/components/auth/region-picker';
 import { PageMeta } from '@/components/page-meta';
+import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
+import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
+import { beginConnectProvisioning, buildConnectProvisionOrgListPath, isActiveConnectWorkspace } from '@/utils/connect';
 import {
-  beginConnectProvisioning,
-  buildConnectProvisionOrgListPath,
-  isActiveConnectWorkspace,
-} from '@/utils/connect';
+  buildAbsoluteConnectUrl,
+  buildPrimarySignUpUrl,
+  CONNECT_PRODUCT_VALUE,
+  PRODUCT_QUERY_PARAM,
+} from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
-import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '../config';
-import { useSegment } from '../context/segment';
-import { TelemetryEvent } from '../utils/telemetry';
-import { getReferrer, getUtmParams } from '../utils/tracking';
+import { TelemetryEvent } from '@/utils/telemetry';
+import { getReferrer, getUtmParams } from '@/utils/tracking';
+import { SignUp as SignUpForm, useAuth, useOrganization, useUser } from '@clerk/clerk-react';
+import { useEffect, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 export const SignUpPage = () => {
   const segment = useSegment();
   const { isSignedIn, isLoaded } = useAuth();
   const { user, isLoaded: isUserLoaded } = useUser();
   const { organization, isLoaded: isOrganizationLoaded } = useOrganization();
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const isConnectSignUp = useMemo(
+    () => searchParams.get(PRODUCT_QUERY_PARAM) === CONNECT_PRODUCT_VALUE || IS_NOVU_CONNECT,
+    [searchParams]
+  );
+
+  // Sign-up flows are primary-only — bounce satellite visitors back with Connect branding.
+  useEffect(() => {
+    if (IS_NOVU_CONNECT) {
+      window.location.replace(buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE }));
+    }
+  }, []);
 
   useEffect(() => {
     const utmParams = getUtmParams();
@@ -35,7 +49,9 @@ export const SignUpPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !IS_NOVU_CONNECT) return;
+    if (!isLoaded || !isSignedIn) return;
+    if (IS_NOVU_CONNECT) return;
+    if (!isConnectSignUp) return;
     if (!isUserLoaded || !isOrganizationLoaded) return;
 
     if (
@@ -45,34 +61,39 @@ export const SignUpPage = () => {
         organizationId: organization.id,
       })
     ) {
-      navigate(ROUTES.ENV, { replace: true });
+      window.location.assign(buildAbsoluteConnectUrl(ROUTES.ENV));
 
       return;
     }
 
     beginConnectProvisioning();
-    navigate(ROUTES.SIGNUP_ORGANIZATION_LIST, { replace: true });
-  }, [isLoaded, isSignedIn, isUserLoaded, isOrganizationLoaded, organization, user?.id, navigate]);
+    window.location.assign(buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)));
+  }, [isLoaded, isSignedIn, isUserLoaded, isOrganizationLoaded, organization, user?.id, isConnectSignUp]);
+
+  const connectProvisionRedirect = useMemo(
+    () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
+    []
+  );
+
+  const signInUrlWithProduct = isConnectSignUp
+    ? `${ROUTES.SIGN_IN}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
+    : ROUTES.SIGN_IN;
 
   return (
     <div className="flex min-h-screen w-full flex-col md:max-w-[1120px] md:flex-row md:gap-36">
-      <PageMeta title={IS_NOVU_CONNECT ? 'Sign up for Novu Connect' : 'Sign up for Novu'} />
+      <PageMeta title={isConnectSignUp ? 'Sign up for Novu Connect' : 'Sign up for Novu'} />
       <div className="w-full shrink-0 md:w-auto">
-        {IS_NOVU_CONNECT ? <ConnectAuthSideBanner /> : <AuthSideBanner />}
+        {isConnectSignUp ? <ConnectAuthSideBanner /> : <AuthSideBanner />}
       </div>
       <div className="flex flex-1 justify-end px-4 py-0 sm:py-0 md:items-center md:px-0">
         <div className="flex w-full max-w-[400px] flex-col items-start justify-start gap-[18px]">
           <SignUpForm
             path={ROUTES.SIGN_UP}
-            signInUrl={ROUTES.SIGN_IN}
+            signInUrl={signInUrlWithProduct}
             appearance={clerkSignupAppearance}
-            forceRedirectUrl={
-              IS_NOVU_CONNECT
-                ? buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)
-                : ROUTES.SIGNUP_ORGANIZATION_LIST
-            }
+            forceRedirectUrl={isConnectSignUp ? connectProvisionRedirect : ROUTES.SIGNUP_ORGANIZATION_LIST}
           />
-          {!IS_SELF_HOSTED && !IS_NOVU_CONNECT && <RegionPicker />}
+          {!IS_SELF_HOSTED && !isConnectSignUp && <RegionPicker />}
         </div>
       </div>
     </div>

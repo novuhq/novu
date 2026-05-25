@@ -1,9 +1,6 @@
+import { type MouseEvent, type ReactNode } from 'react';
 import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { isAbsoluteUrl } from '@/utils/apps';
-import { buildDestinationSignInUrl } from '@/utils/product-auth-urls';
-import { ROUTES } from '@/utils/routes';
-import { useAuth, useClerk } from '@clerk/clerk-react';
-import { type MouseEvent, type ReactNode } from 'react';
 
 type CrossAppLinkProps = {
   href: string;
@@ -15,48 +12,29 @@ type CrossAppLinkProps = {
 };
 
 /**
- * Cross-origin product switcher. Signed-in users use Clerk redirectWithAuth / buildUrlWithAuth.
- * Signed-out users are sent to sign-in on the destination host.
+ * Cross-origin product switcher. With Clerk satellite domains the Platform and Connect hosts
+ * share one session via cookie sync, so we just hand off to the browser — Clerk's SDK on the
+ * destination performs the handshake automatically on first load.
  */
 export function CrossAppLink({ href, openInNewTab, className, onClick, children, ...rest }: CrossAppLinkProps) {
-  const clerk = useClerk();
-  const { isSignedIn, isLoaded } = useAuth();
-
   const isCrossOrigin = IS_HOSTNAME_SPLIT_ENABLED && isAbsoluteUrl(href);
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
 
-    if (event.defaultPrevented) {
-      return;
-    }
-
-    if (!isCrossOrigin) {
+    if (event.defaultPrevented || !isCrossOrigin) {
       return;
     }
 
     event.preventDefault();
 
-    if (!isLoaded || !clerk.loaded) {
-      window.location.assign(href);
+    if (openInNewTab) {
+      window.open(href, '_blank', 'noopener,noreferrer');
 
       return;
     }
 
-    if (isSignedIn) {
-      if (openInNewTab) {
-        const authUrl = clerk.buildUrlWithAuth(href);
-        window.open(authUrl, '_blank');
-
-        return;
-      }
-
-      void clerk.redirectWithAuth(href);
-
-      return;
-    }
-
-    window.location.assign(buildDestinationSignInUrl(href, ROUTES.SIGN_IN));
+    window.location.assign(href);
   };
 
   return (
