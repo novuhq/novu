@@ -27,6 +27,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
+import { AGENTS_DOCS_OVERVIEW_URL } from '@/utils/agent-docs';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from '../onboarding/connect-agent/agent-suggestion-pills';
@@ -52,7 +53,7 @@ import {
   validateCreateAgentForm,
 } from './create-agent-fields';
 
-const DOCS_AGENTS_LEARN_MORE_HREF = 'https://docs.novu.co';
+const DOCS_AGENTS_LEARN_MORE_HREF = AGENTS_DOCS_OVERVIEW_URL;
 
 export type { CreateAgentForm } from './create-agent-fields';
 

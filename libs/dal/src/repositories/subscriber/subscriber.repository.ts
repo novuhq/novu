@@ -28,6 +28,26 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     );
   }
 
+  async findByPhone(
+    environmentId: string,
+    organizationId: string,
+    phoneCandidates: string[]
+  ): Promise<SubscriberEntity[]> {
+    if (phoneCandidates.length === 0) {
+      return [];
+    }
+
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        phone: { $in: phoneCandidates },
+      },
+      'subscriberId',
+      { limit: 2 }
+    );
+  }
+
   async bulkCreateSubscribers(
     subscribers: ISubscribersDefine[],
     environmentId: EnvironmentId,

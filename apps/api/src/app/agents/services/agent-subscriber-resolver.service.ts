@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ChannelEndpointRepository } from '@novu/dal';
+import { ChannelEndpointRepository, SubscriberRepository } from '@novu/dal';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { getPhoneLookupCandidates } from '../utils/phone-normalization';
 import { PLATFORM_ENDPOINT_CONFIG } from '../utils/platform-endpoint-config';
 
 export interface ResolveSubscriberParams {
@@ -16,6 +17,7 @@ export interface ResolveSubscriberParams {
 export class AgentSubscriberResolver {
   constructor(
     private readonly channelEndpointRepository: ChannelEndpointRepository,
+    private readonly subscriberRepository: SubscriberRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -23,6 +25,19 @@ export class AgentSubscriberResolver {
 
   async resolve(params: ResolveSubscriberParams): Promise<string | null> {
     const { environmentId, organizationId, platform, platformUserId, integrationIdentifier } = params;
+
+    if (!platformUserId.trim()) {
+      return null;
+    }
+
+    if (platform === AgentPlatformEnum.WHATSAPP) {
+      return this.resolveWhatsAppSubscriber({
+        environmentId,
+        organizationId,
+        platformUserId,
+      });
+    }
+
     const endpointConfig = PLATFORM_ENDPOINT_CONFIG[platform];
 
     if (!endpointConfig) {
@@ -51,6 +66,34 @@ export class AgentSubscriberResolver {
     this.logger.debug(
       `No subscriber linked for platform user ${platform}:${platformUserId} (integration: ${integrationIdentifier})`
     );
+
+    return null;
+  }
+
+  private async resolveWhatsAppSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    platformUserId: string;
+  }): Promise<string | null> {
+    const { environmentId, organizationId, platformUserId } = params;
+    const phoneCandidates = getPhoneLookupCandidates(platformUserId);
+    const matches = await this.subscriberRepository.findByPhone(environmentId, organizationId, phoneCandidates);
+
+    if (matches.length > 1) {
+      this.logger.warn(
+        `Multiple subscribers (${matches.length}) share phone ${platformUserId} in environment ${environmentId} — using first match`
+      );
+    }
+
+    const subscriber = matches[0];
+
+    if (subscriber) {
+      this.logger.debug(`Resolved WhatsApp phone ${platformUserId} → subscriber ${subscriber.subscriberId}`);
+
+      return subscriber.subscriberId;
+    }
+
+    this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
 
     return null;
   }

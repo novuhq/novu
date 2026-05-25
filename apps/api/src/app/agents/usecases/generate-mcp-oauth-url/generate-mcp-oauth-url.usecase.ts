@@ -253,7 +253,7 @@ export class GenerateMcpOAuthUrl {
     registrationClientUri?: string;
   }> {
     const { asMetadata, oauthConfig, scopes } = args;
-    const frontBase = process.env.FRONT_BASE_URL?.replace(/\/$/, '');
+    const frontBase = (process.env.DASHBOARD_URL ?? process.env.FRONT_BASE_URL)?.replace(/\/$/, '');
 
     try {
       return await this.discoveryService.registerClient(asMetadata, {

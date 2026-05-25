@@ -12,6 +12,7 @@ import {
 import { type Message, MessageRole } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
+import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { AgentExecutionParams } from './bridge-executor.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler';
@@ -25,6 +26,7 @@ type WebhookSessionMetadata = {
   agentIdentifier: string;
   integrationIdentifier: string;
   subscriberId?: string;
+  platform?: AgentPlatformEnum;
 };
 
 @Injectable()
@@ -78,6 +80,7 @@ export class ManagedAgentService implements OnModuleInit {
         agentIdentifier: context.config.agentIdentifier,
         integrationIdentifier: context.config.integrationIdentifier,
         subscriberId: context.subscriber?.subscriberId,
+        platform: context.config.platform,
       }),
     });
 
@@ -100,6 +103,7 @@ export class ManagedAgentService implements OnModuleInit {
     agentIdentifier: string;
     integrationIdentifier: string;
     subscriberId?: string;
+    platform?: AgentPlatformEnum;
     toolUseId: string;
     approved: boolean;
   }): Promise<void> {
@@ -156,6 +160,7 @@ export class ManagedAgentService implements OnModuleInit {
         agentIdentifier: params.agentIdentifier,
         integrationIdentifier: params.integrationIdentifier,
         subscriberId: params.subscriberId,
+        platform: params.platform,
       }),
     });
   }
@@ -271,6 +276,10 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (input.subscriberId) {
       metadata.subscriberId = input.subscriberId;
+    }
+
+    if (input.platform) {
+      metadata.platform = input.platform;
     }
 
     return metadata;
