@@ -8,7 +8,7 @@ import {
 } from '@novu/application-generic';
 import { captureException } from '@sentry/node';
 
-export type AgentSentryContext = {
+export interface AgentSentryContext {
   component: string;
   operation?: string;
   agentId?: string;
@@ -17,7 +17,7 @@ export type AgentSentryContext = {
   platform?: string;
   sessionId?: string;
   extra?: Record<string, unknown>;
-};
+}
 
 function isSentryEnabled(): boolean {
   return Boolean(process.env.SENTRY_DSN);
