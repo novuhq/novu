@@ -1,5 +1,3 @@
-import { isAnthropicAwsProvider } from '@novu/shared';
-
 import type { ValidateCredentialsInput } from '../i-agent-runtime-provider';
 
 export type ResolvedAwsAnthropicCredentials = {
