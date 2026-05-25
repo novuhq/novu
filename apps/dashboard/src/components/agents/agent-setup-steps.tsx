@@ -20,6 +20,7 @@ import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildRoute } from '@/utils/routes';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
+import { EmailInboundAddressStep } from './email-inbound-address-step';
 import { EmailSetupGuide } from './email-setup-guide';
 import { ProviderCards } from './provider-cards';
 import { SetupStep } from './setup-guide-primitives';
@@ -237,6 +238,15 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
     [agentIntegrationsQuery.data?.data]
   );
 
+  // The auto-provisioned NovuAgent integration link carries the cloud shared
+  // inbound address (`{slug}-{key}@{NOVU_AGENT_SHARED_INBOUND_DOMAIN}`). It's
+  // server-built and only present when the cloud shared-inbox feature is
+  // enabled, so we gate the dedicated email-address step on its availability.
+  const sharedInboundAddress = useMemo(() => {
+    return agentIntegrationLinks.find((link) => link.integration.providerId === EmailProviderIdEnum.NovuAgent)
+      ?.integration.sharedInboundAddress;
+  }, [agentIntegrationLinks]);
+
   // Managed agents have no bridge — the setup is considered complete as soon as the chosen
   // provider integration becomes connected. Fire onSetupComplete exactly once.
   const isManagedRuntime = agent.runtime === 'managed';
@@ -247,10 +257,16 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
   const isOnboarding = Boolean(connectSummary);
   const brainStepsBefore = isOnboarding ? BRAIN_STEPS : 0;
   const handlerStepsAfter = isManagedRuntime ? 0 : HANDLER_STEPS;
-  const channelStepIndex = brainStepsBefore + 1;
+  // The email-address step is only counted when the cloud shared inbound
+  // address is available — self-hosted (and any deployment without
+  // `NOVU_AGENT_SHARED_INBOUND_DOMAIN`) keeps the original numbering.
+  const showEmailInboundStep = Boolean(sharedInboundAddress);
+  const emailInboundStepIndex = brainStepsBefore + 1;
+  const channelStepIndex = brainStepsBefore + (showEmailInboundStep ? 2 : 1);
   const providerGuideStepOffset = channelStepIndex + 1;
   const bridgeStepOffset = providerGuideStepOffset + PROVIDER_GUIDE_RESERVED_STEPS;
-  const totalSteps = brainStepsBefore + 1 + PROVIDER_GUIDE_RESERVED_STEPS + handlerStepsAfter;
+  const totalSteps =
+    brainStepsBefore + (showEmailInboundStep ? 2 : 1) + PROVIDER_GUIDE_RESERVED_STEPS + handlerStepsAfter;
 
   const firstIncompleteStep = hasProviderSelected ? providerGuideStepOffset : channelStepIndex;
 
@@ -338,7 +354,11 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
 
           <motion.div
             initial={false}
-            animate={{ height: isInstructionsExpanded ? 'auto' : 0, opacity: isInstructionsExpanded ? 1 : 0 }}
+            animate={{
+              height: isInstructionsExpanded ? 'auto' : 0,
+              opacity: isInstructionsExpanded ? 1 : 0,
+              marginTop: isInstructionsExpanded ? 0 : '-40px',
+            }}
             transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
             style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
           >
@@ -347,11 +367,24 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
         </div>
       )}
 
+      {showEmailInboundStep && sharedInboundAddress ? (
+        <EmailInboundAddressStep
+          index={emailInboundStepIndex}
+          totalSteps={totalSteps}
+          firstIncompleteStep={firstIncompleteStep}
+          sharedInboundAddress={sharedInboundAddress}
+        />
+      ) : null}
+
       <SetupStep
         index={channelStepIndex}
         status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
-        sectionLabel={`${channelStepIndex}/${totalSteps} SETUP WHERE TO LISTEN`}
-        title="Choose where your agent listens and communicates"
+        sectionLabel={showEmailInboundStep ? undefined : `${channelStepIndex}/${totalSteps} SETUP WHERE TO LISTEN`}
+        title={
+          showEmailInboundStep
+            ? 'Add another channel for your agent to communicate'
+            : 'Choose where your agent listens and communicates'
+        }
         description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
         fullWidthContent={
           <ProviderCards

@@ -1,5 +1,6 @@
 import { isClaudePlatformConsoleProvider, PermissionsEnum } from '@novu/shared';
-import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
+import { RiMore2Fill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -68,13 +69,13 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
           {agent.runtime === 'managed' &&
           agent.managedRuntime?.consoleUrl &&
           isClaudePlatformConsoleProvider(agent.managedRuntime.providerId) ? (
-            <Button variant="secondary" mode="outline" size="xs" className="gap-1.5" asChild>
-              <a href={agent.managedRuntime.consoleUrl} target="_blank" rel="noreferrer noopener">
+            <Link to={agent.managedRuntime.consoleUrl} target="_blank" rel="noreferrer noopener">
+              <Button variant="secondary" mode="outline" size="xs" className="gap-1.5">
                 <span>Open in</span>
                 <ClaudeIcon className="size-3.5 shrink-0" aria-hidden />
                 <span>Claude</span>
-              </a>
-            </Button>
+              </Button>
+            </Link>
           ) : null}
           {canWrite && onRequestDelete ? (
             <DropdownMenu>

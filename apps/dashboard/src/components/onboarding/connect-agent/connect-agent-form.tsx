@@ -254,9 +254,13 @@ export function ConnectAgentForm({
   const aiMode = aiGeneration?.mode ?? 'prompt';
   const scope: AgentScope = aiMode === 'existing' ? 'existing' : 'create';
   // Total steps across the full onboarding flow:
-  //   brain (2) + channel (1) + provider guide (3 reserved) + handler (0 for managed, 3 for self-hosted)
-  // Managed-runtime connectors don't render the agent-handler section, so the total is 6 there.
-  const totalOnboardingSteps = isClaudeSelected ? 6 : 9;
+  //   brain (2) + email-address (1) + channel (1) + provider guide (3 reserved) + handler (0 for managed, 3 for self-hosted)
+  // Managed-runtime connectors don't render the agent-handler section, so the total is 7 there.
+  // The email-address step is always counted here because the brain section runs before the agent
+  // is created — we can't yet inspect whether the cloud shared-inbound address will be provisioned.
+  // Self-hosted deployments without `NOVU_AGENT_SHARED_INBOUND_DOMAIN` skip that step downstream
+  // and the channel step will re-anchor its own numbering in `agent-setup-steps`.
+  const totalOnboardingSteps = isClaudeSelected ? 7 : 10;
   // The prompt/manual sub-toggle in the right-column header only exists in `'create'` scope.
   // In `'existing'` scope the segmented tabs above replace it, so we omit it entirely.
   const header = aiMode === 'existing' ? null : RIGHT_HEADER_BY_MODE[aiMode];
