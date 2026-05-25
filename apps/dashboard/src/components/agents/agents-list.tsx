@@ -11,6 +11,7 @@ import {
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
@@ -302,7 +303,7 @@ export function AgentsList() {
               <TooltipContent className="max-w-60">
                 {'Add agents in your development environment. '}
                 <a
-                  href="https://docs.novu.co/platform/agents"
+                  href={AGENTS_DOCS_PROVIDERS_URL}
                   target="_blank"
                   rel="noreferrer noopener"
                   className="underline"

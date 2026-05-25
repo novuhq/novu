@@ -15,6 +15,7 @@ import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button, buttonVariants } from '@/components/primitives/button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
+import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
@@ -315,7 +316,7 @@ export function ListeningStatus({
             {connectedAt ? connectedMessage : listeningMessage}
           </p>
         </div>
-        <ExternalLink href="https://docs.novu.co/agents/overview" variant="documentation">
+        <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
           Learn more in docs
         </ExternalLink>
       </div>
