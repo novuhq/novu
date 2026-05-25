@@ -1,7 +1,6 @@
 export const areNovuManagedClaudeCredentialsSet = () => {
   return (
-    typeof process.env.NOVU_MANAGED_CLAUDE_API_KEY !== 'undefined' &&
-    process.env.NOVU_MANAGED_CLAUDE_API_KEY !== ''
+    typeof process.env.NOVU_MANAGED_CLAUDE_API_KEY !== 'undefined' && process.env.NOVU_MANAGED_CLAUDE_API_KEY !== ''
   );
 };
 

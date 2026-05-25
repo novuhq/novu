@@ -3,6 +3,8 @@ import { UnsupportedCapabilityError } from './errors';
 import type {
   CreateAgentInput,
   CreateAgentResult,
+  CreateVaultInput,
+  CreateVaultResult,
   DeleteVaultCredentialInput,
   GetAgentResult,
   GetEnvironmentResult,
@@ -59,6 +61,10 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
 
   getPendingToolApproval(_sessionId: string): Promise<PendingToolApproval | null> {
     return Promise.resolve(null);
+  }
+
+  createVault(_input: CreateVaultInput): Promise<CreateVaultResult> {
+    throw new UnsupportedCapabilityError('tokenVault', this.providerId);
   }
 
   upsertVaultCredential(_input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {

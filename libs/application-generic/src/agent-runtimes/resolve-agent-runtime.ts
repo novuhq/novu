@@ -1,9 +1,9 @@
 import { AgentRuntimeProviderIdEnum, type ICredentialsDto } from '@novu/shared';
 
 import { decryptCredentials } from '../encryption/encrypt-provider';
+import { areNovuManagedClaudeCredentialsSet, getNovuManagedClaudeApiKey } from '../utils/novu-integrations';
 import { getAgentRuntimeProvider } from './agent-runtime.factory';
 import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
-import { areNovuManagedClaudeCredentialsSet, getNovuManagedClaudeApiKey } from '../utils/novu-integrations';
 
 export type ResolvedAgentRuntime = {
   apiKey: string;

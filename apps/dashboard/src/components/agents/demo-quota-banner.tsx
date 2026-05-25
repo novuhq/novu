@@ -44,9 +44,7 @@ export function DemoQuotaBanner({ quota, onUpgrade }: DemoQuotaBannerProps) {
       ? 'Novu demo quota almost reached'
       : 'Running on Novu demo Claude';
 
-  const description = isAlert
-    ? getAlertQuotaMessage(quota)
-    : getInfoQuotaMessage(quota);
+  const description = isAlert ? getAlertQuotaMessage(quota) : getInfoQuotaMessage(quota);
 
   const helperText = isAlert
     ? 'Add your own Anthropic API key to remove limits and continue production traffic.'

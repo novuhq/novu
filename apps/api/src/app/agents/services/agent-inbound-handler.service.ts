@@ -1,5 +1,10 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, DemoQuotaExhaustedError, DEMO_QUOTA_EXHAUSTED_REPLY, PinoLogger } from '@novu/application-generic';
+import {
+  AnalyticsService,
+  DEMO_QUOTA_EXHAUSTED_REPLY,
+  DemoQuotaExhaustedError,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   AgentRepository,
   ChannelEndpointRepository,

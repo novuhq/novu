@@ -24,7 +24,7 @@ import { EnvironmentBranchIcon } from '../../primitives/environment-branch-icon'
 import { StatusBadge, StatusBadgeIcon } from '../../primitives/status-badge';
 import { TableIntegration } from '../types';
 import { ProviderIcon } from './provider-icon';
-import { isDemoIntegration, getDemoIntegrationTooltipMessage } from './utils/helpers';
+import { getDemoIntegrationTooltipMessage, isDemoIntegration } from './utils/helpers';
 
 type IntegrationCardVariant = 'default' | 'connectSheet';
 

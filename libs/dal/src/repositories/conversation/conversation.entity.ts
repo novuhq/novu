@@ -69,6 +69,15 @@ export class ConversationEntity {
   /** Provider-side session ID (e.g. Anthropic conversation_id) managed by thalamus */
   externalSessionId?: string;
 
+  /**
+   * Anthropic vault id (`vlt_…`) that was attached to `externalSessionId` when the
+   * managed session was created. Thalamus only applies `vault_ids` at session
+   * creation, so the dispatch flow rebinds the session when the resolved vault
+   * changes between turns. Tracked here (not in `metadata`) so the value can't
+   * be overwritten by customer metadata signals from the bridge.
+   */
+  managedSessionVaultId?: string;
+
   tokenUsage?: ConversationTokenUsage;
 
   _environmentId: EnvironmentId;

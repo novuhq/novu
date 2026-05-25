@@ -46,11 +46,7 @@ export function DemoCredentialDropdownItem({
       )}
     >
       <div className="flex min-w-0 flex-1 items-center gap-1">
-        <ProviderIcon
-          providerId={providerId}
-          providerDisplayName={providerDisplayName}
-          className="size-4 shrink-0"
-        />
+        <ProviderIcon providerId={providerId} providerDisplayName={providerDisplayName} className="size-4 shrink-0" />
         <p className="text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
           <span className="text-text-sub">Demo credential</span>
           <span className="text-text-soft">{` · ${quotaLabel}`}</span>

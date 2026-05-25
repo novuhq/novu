@@ -236,10 +236,13 @@ export async function migrateAgentRuntime(
   agentIdentifier: string,
   body: { integrationId: string }
 ): Promise<{ integrationId: string; externalAgentId: string }> {
-  const response = await post<{ data: { integrationId: string; externalAgentId: string } } | {
-    integrationId: string;
-    externalAgentId: string;
-  }>(`/agents/${encodeURIComponent(agentIdentifier)}/migrate-runtime`, { environment, body });
+  const response = await post<
+    | { data: { integrationId: string; externalAgentId: string } }
+    | {
+        integrationId: string;
+        externalAgentId: string;
+      }
+  >(`/agents/${encodeURIComponent(agentIdentifier)}/migrate-runtime`, { environment, body });
 
   return 'data' in response ? response.data : response;
 }

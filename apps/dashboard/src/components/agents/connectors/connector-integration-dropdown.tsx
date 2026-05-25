@@ -9,14 +9,17 @@ import {
   RiCheckLine,
   RiExpandUpDownLine,
 } from 'react-icons/ri';
-import { DemoCredentialBadge, DemoCredentialDropdownItem } from '@/components/integrations/components/demo-credential-badge';
+import {
+  DemoCredentialBadge,
+  DemoCredentialDropdownItem,
+} from '@/components/integrations/components/demo-credential-badge';
 import { isDemoIntegration } from '@/components/integrations/components/utils/helpers';
 import { Badge } from '@/components/primitives/badge';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { cn } from '@/utils/ui';
-import { CONNECTOR_OPTIONS, type ConnectorId, type ConnectorOption, getConnectorById } from './connector-options';
 import { getClaudeManagedAgentIntegrations } from './claude-managed-integrations';
+import { CONNECTOR_OPTIONS, type ConnectorId, type ConnectorOption, getConnectorById } from './connector-options';
 
 const GROUP_HEADING_CLASSNAME =
   '**:[[cmdk-group-heading]]:text-text-soft **:[[cmdk-group-heading]]:text-label-xs **:[[cmdk-group-heading]]:font-medium **:[[cmdk-group-heading]]:leading-4 **:[[cmdk-group-heading]]:px-1 **:[[cmdk-group-heading]]:py-1';

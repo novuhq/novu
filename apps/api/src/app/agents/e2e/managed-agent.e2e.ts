@@ -47,10 +47,14 @@ function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> =
       mcpServers: [],
       tools: [],
     }),
-    provisionIntegration: sinon
-      .stub()
-      .resolves({ credentialsUpdate: { externalEnvironmentId: FAKE_EXTERNAL_ENV_ID }, metadata: {} }),
+    provisionIntegration: sinon.stub().resolves({
+      credentialsUpdate: { externalEnvironmentId: FAKE_EXTERNAL_ENV_ID },
+      metadata: {},
+    }),
     deprovisionIntegration: sinon.stub().resolves(),
+    createVault: sinon.stub().resolves({ externalVaultId: 'vlt_subscriber_e2e' }),
+    upsertVaultCredential: sinon.stub().resolves({ vaultCredentialId: 'vltc_e2e' }),
+    deleteVaultCredential: sinon.stub().resolves(),
     ...overrides,
   };
 }

@@ -1,10 +1,6 @@
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import type { PendingToolApproval } from '@novu/application-generic';
-import {
-  type IAgentRuntimeProvider,
-  PinoLogger,
-  resolveAgentRuntime,
-} from '@novu/application-generic';
+import { type IAgentRuntimeProvider, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import {
   type AgentEntity,
   AgentRepository,
@@ -14,6 +10,7 @@ import {
   ConversationParticipantTypeEnum,
   ConversationRepository,
   IntegrationRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, MCP_SERVERS } from '@novu/shared';
 import {
@@ -38,6 +35,7 @@ import { HandleToolProgressCommand } from '../usecases/handle-tool-progress/hand
 import { HandleToolProgress } from '../usecases/handle-tool-progress/handle-tool-progress.usecase';
 import type { AgentExecutionParams } from './bridge-executor.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { McpConnectionVaultService } from './mcp-connection-vault.service';
 
 /**
  * Webhook metadata persisted on the Cloudflare durable session and replayed
@@ -71,7 +69,6 @@ type WebhookSessionMetadata = {
 interface CachedRuntime {
   provider: WebhookProvider;
   runtimeProvider: IAgentRuntimeProvider;
-  vaultIds: string[];
 }
 
 const MAX_CACHED_PROVIDERS = 200;
@@ -107,9 +104,11 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly integrationRepository: IntegrationRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
+    private readonly subscriberRepository: SubscriberRepository,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handleToolProgress: HandleToolProgress,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly mcpConnectionVaultService: McpConnectionVaultService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly logger: PinoLogger
   ) {
@@ -127,8 +126,16 @@ export class ManagedAgentService implements OnModuleInit {
   async dispatch(context: AgentExecutionParams, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
     await this.demoQuota.assertAllowed(context, agent);
 
-    const { provider, vaultIds } = await this.getOrCreateProvider(agent, context.config.environmentId);
-    const sessionId = context.conversation.externalSessionId ?? undefined;
+    const { provider, runtimeProvider } = await this.getOrCreateProvider(agent, context.config.environmentId);
+    const vaultIds = await this.resolveVaultIdsForTurn(
+      agent,
+      context.config.environmentId,
+      context.config.organizationId,
+      context.subscriber?._id,
+      runtimeProvider
+    );
+    const existingSessionId = context.conversation.externalSessionId ?? undefined;
+    const sessionId = await this.reconcileSessionIdForVaultBinding(context, vaultIds, existingSessionId);
 
     const messages = sessionId
       ? [{ role: MessageRole.USER, content: context.message?.text ?? '' }]
@@ -151,8 +158,45 @@ export class ManagedAgentService implements OnModuleInit {
     await this.conversationRepository.setExternalSessionIdIfMissing(
       context.config.environmentId,
       String(context.conversation._id),
-      newSessionId
+      newSessionId,
+      vaultIds[0]
     );
+  }
+
+  /**
+   * Thalamus only applies `vault_ids` when creating a session. If a conversation
+   * already has an `externalSessionId` that was opened against a different vault
+   * (or against a vault that has since been removed — disabled MCP, revoked
+   * connection, subscriber scope lost), reuse would silently keep the old
+   * binding. Reset the session so the next `provider.send` opens a fresh one
+   * with the correct `vault_ids` (or no vault binding at all).
+   */
+  private async reconcileSessionIdForVaultBinding(
+    context: AgentExecutionParams,
+    vaultIds: string[],
+    existingSessionId: string | undefined
+  ): Promise<string | undefined> {
+    if (!existingSessionId) {
+      return existingSessionId;
+    }
+
+    const targetVaultId = vaultIds[0];
+    const boundVaultId = context.conversation.managedSessionVaultId;
+
+    if (boundVaultId === targetVaultId) {
+      return existingSessionId;
+    }
+
+    // boundVaultId !== targetVaultId covers: vault rotated, vault newly bound
+    // (boundVaultId === undefined && targetVaultId !== undefined), and vault
+    // dropped (boundVaultId !== undefined && targetVaultId === undefined).
+    // All three require a fresh session.
+    await this.conversationRepository.clearExternalSessionId(
+      context.config.environmentId,
+      String(context.conversation._id)
+    );
+
+    return undefined;
   }
 
   async handleWebhook(req: Request, res: Response): Promise<void> {
@@ -534,7 +578,17 @@ export class ManagedAgentService implements OnModuleInit {
       return;
     }
 
-    const { provider, vaultIds } = await this.getOrCreateProvider(agent, params.environmentId);
+    const { provider, runtimeProvider } = await this.getOrCreateProvider(agent, params.environmentId);
+    const subscriberMongoId = params.subscriberId
+      ? (await this.subscriberRepository.findBySubscriberId(params.environmentId, params.subscriberId))?._id
+      : undefined;
+    const vaultIds = await this.resolveVaultIdsForTurn(
+      agent,
+      params.environmentId,
+      params.organizationId,
+      subscriberMongoId,
+      runtimeProvider
+    );
     const sessionId = conversation.externalSessionId;
 
     await provider.send({
@@ -623,11 +677,30 @@ export class ManagedAgentService implements OnModuleInit {
       agentId: agent.managedRuntime.externalAgentId,
       environmentId: creds.externalEnvironmentId as string,
     });
-    const vaultIds = creds.externalVaultId ? [creds.externalVaultId as string] : [];
-    const runtime: CachedRuntime = { provider, runtimeProvider, vaultIds };
+    const runtime: CachedRuntime = { provider, runtimeProvider };
     this.providers.set(key, runtime);
 
     return runtime;
+  }
+
+  private async resolveVaultIdsForTurn(
+    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>,
+    environmentId: string,
+    organizationId: string,
+    subscriberMongoId: string | undefined,
+    runtimeProvider: IAgentRuntimeProvider
+  ): Promise<string[]> {
+    if (!agent.managedRuntime) {
+      return [];
+    }
+
+    return this.mcpConnectionVaultService.resolveVaultIds({
+      agentId: agent._id,
+      environmentId,
+      organizationId,
+      subscriberMongoId,
+      runtimeProvider,
+    });
   }
 
   private createProvider(

@@ -85,10 +85,7 @@ export class CreateIntegration {
   private async validate(command: CreateIntegrationCommand): Promise<void> {
     const isAgentKind = command.kind === IntegrationKindEnum.AGENT;
 
-    if (
-      command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic &&
-      !areNovuManagedClaudeCredentialsSet()
-    ) {
+    if (command.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic && !areNovuManagedClaudeCredentialsSet()) {
       throw new BadRequestException(`Creating Novu integration for ${command.providerId} provider is not allowed`);
     }
 
