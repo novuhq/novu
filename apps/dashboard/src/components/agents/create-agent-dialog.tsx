@@ -56,6 +56,7 @@ import {
   ScratchAgentFields,
   type VerifyStatus,
   validateCreateAgentForm,
+  validateManagedCredentialFields,
 } from './create-agent-fields';
 
 const DOCS_AGENTS_LEARN_MORE_HREF = AGENTS_DOCS_OVERVIEW_URL;
@@ -519,28 +520,16 @@ export function CreateAgentDialog({
         return;
       }
 
-      // Anthropic credentials are only required when we provision on Claude's managed runtime.
       if (isManagedClaudeConnector && !selectedIntegrationId && selectedConnector?.providerId) {
-        const credentialErrors = validateCreateAgentForm({
-          name: 'prompt',
-          identifier: 'prompt',
-          instructions: '',
-          apiKey,
-          runtime: 'claude',
-          isExistingMode: false,
+        const credentialErrors = validateManagedCredentialFields({
           providerId: selectedConnector.providerId,
+          apiKey,
           region,
           externalWorkspaceId,
-          integrationName: 'prompt',
         });
 
         if (credentialErrors.apiKey || credentialErrors.region || credentialErrors.externalWorkspaceId) {
-          setErrors((prev) => ({
-            ...prev,
-            apiKey: credentialErrors.apiKey,
-            region: credentialErrors.region,
-            externalWorkspaceId: credentialErrors.externalWorkspaceId,
-          }));
+          setErrors((prev) => ({ ...prev, ...credentialErrors }));
 
           return;
         }

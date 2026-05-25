@@ -1,10 +1,9 @@
-import { AgentRuntimeProviderIdEnum, type ICredentialsDto } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, type ICredentialsDto, isAnthropicAwsProvider } from '@novu/shared';
 
 import { decryptCredentials } from '../encryption/encrypt-provider';
 import { areNovuManagedClaudeCredentialsSet, getNovuManagedClaudeApiKey } from '../utils/novu-integrations';
 import { createAnthropicProvider } from './anthropic/anthropic-agent-runtime.provider';
 import {
-  isAnthropicAwsProvider,
   resolveAwsAnthropicCredentials,
   toValidateCredentialsInput,
   type ResolvedAwsAnthropicCredentials,

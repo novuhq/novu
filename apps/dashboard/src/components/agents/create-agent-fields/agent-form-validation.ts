@@ -1,6 +1,31 @@
-import { AgentRuntimeProviderIdEnum } from '@novu/shared';
-import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
 import type { CreateAgentForm, CreateAgentFormErrors } from './types';
+
+export function validateManagedCredentialFields(fields: {
+  providerId?: AgentRuntimeProviderIdEnum;
+  apiKey: string;
+  region?: string;
+  externalWorkspaceId?: string;
+}): Pick<CreateAgentFormErrors, 'apiKey' | 'region' | 'externalWorkspaceId'> {
+  const errors = validateCreateAgentForm({
+    name: 'x',
+    identifier: 'x',
+    instructions: '',
+    apiKey: fields.apiKey,
+    runtime: 'claude',
+    isExistingMode: false,
+    providerId: fields.providerId,
+    region: fields.region,
+    externalWorkspaceId: fields.externalWorkspaceId,
+    integrationName: 'x',
+  });
+
+  return {
+    apiKey: errors.apiKey,
+    region: errors.region,
+    externalWorkspaceId: errors.externalWorkspaceId,
+  };
+}
 
 export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormErrors {
   const errors: CreateAgentFormErrors = {};

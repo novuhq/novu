@@ -1,8 +1,9 @@
-import { AgentRuntimeProviderIdEnum, isAnthropicAwsProvider } from '@novu/shared';
 import {
+  AgentRuntimeProviderIdEnum,
   buildManagedIntegrationCredentials,
   buildVerifyFingerprint,
   hasCompleteManagedCredentials,
+  isAnthropicAwsProvider,
   type ManagedCredentialFields,
 } from '@novu/shared';
 

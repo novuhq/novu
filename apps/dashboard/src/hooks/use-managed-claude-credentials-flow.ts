@@ -60,6 +60,5 @@ export function useManagedClaudeCredentialsFlow() {
     setVerifyStatus,
     setVerifyMessage,
     resetCredentials,
-    invalidateVerify,
   };
 }

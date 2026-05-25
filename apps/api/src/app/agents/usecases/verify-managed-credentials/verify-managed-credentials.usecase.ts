@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase, resolveAgentRuntime } from '@novu/application-generic';
-import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 
 import { VerifyManagedCredentialsCommand } from './verify-managed-credentials.command';
 

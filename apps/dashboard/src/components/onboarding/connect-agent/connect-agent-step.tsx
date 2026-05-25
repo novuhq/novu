@@ -22,6 +22,7 @@ import {
   type RuntimeType,
   type VerifyStatus,
   validateCreateAgentForm,
+  validateManagedCredentialFields,
 } from '@/components/agents/create-agent-fields';
 import { AGENT_TEMPLATES as DEFAULT_AGENT_TEMPLATES } from '@/components/connect/dashboard/agent-templates';
 import { ClaudeIcon } from '@/components/icons/claude';
@@ -507,28 +508,16 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         return;
       }
 
-      // Anthropic credentials are only required when we provision on Claude's managed runtime.
       if (isClaudeSelected && !selectedIntegrationId && selectedConnector?.providerId) {
-        const credentialErrors = validateCreateAgentForm({
-          name: 'prompt',
-          identifier: 'prompt',
-          instructions: '',
-          apiKey,
-          runtime: 'claude',
-          isExistingMode: false,
+        const credentialErrors = validateManagedCredentialFields({
           providerId: selectedConnector.providerId,
+          apiKey,
           region,
           externalWorkspaceId,
-          integrationName: 'prompt',
         });
 
         if (credentialErrors.apiKey || credentialErrors.region || credentialErrors.externalWorkspaceId) {
-          setErrors((prev) => ({
-            ...prev,
-            apiKey: credentialErrors.apiKey,
-            region: credentialErrors.region,
-            externalWorkspaceId: credentialErrors.externalWorkspaceId,
-          }));
+          setErrors((prev) => ({ ...prev, ...credentialErrors }));
 
           return;
         }

@@ -1,4 +1,3 @@
-/** AWS commercial regions supported by Claude Platform on AWS. */
 export const AWS_CLAUDE_COMMERCIAL_REGIONS = [
   'us-east-1',
   'us-east-2',

@@ -1,6 +1,5 @@
 import { AgentRuntimeProviderIdEnum } from './providers';
 
-/** Credentials for Claude Platform on AWS (API key auth). */
 export type AnthropicAwsCredentials = {
   region: string;
   externalWorkspaceId: string;

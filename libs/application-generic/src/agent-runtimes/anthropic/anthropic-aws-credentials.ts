@@ -1,4 +1,4 @@
-import { isAnthropicAwsProvider, type AnthropicAwsCredentials } from '@novu/shared';
+import { isAnthropicAwsProvider } from '@novu/shared';
 
 import type { ValidateCredentialsInput } from '../i-agent-runtime-provider';
 
@@ -7,8 +7,6 @@ export type ResolvedAwsAnthropicCredentials = {
   workspaceId: string;
   apiKey: string;
 };
-
-export { isAnthropicAwsProvider };
 
 export function toValidateCredentialsInput(credentials: Record<string, unknown>): ValidateCredentialsInput {
   return {
@@ -30,23 +28,6 @@ export function resolveAwsAnthropicCredentials(
   }
 
   return { region, workspaceId, apiKey };
-}
-
-export function toAnthropicAwsCredentials(credentials: Record<string, unknown>): AnthropicAwsCredentials | null {
-  const resolved = resolveAwsAnthropicCredentials(credentials);
-
-  if (!resolved) {
-    return null;
-  }
-
-  const externalEnvironmentId = (credentials.externalEnvironmentId as string | undefined)?.trim();
-
-  return {
-    region: resolved.region,
-    externalWorkspaceId: resolved.workspaceId,
-    apiKey: resolved.apiKey,
-    ...(externalEnvironmentId ? { externalEnvironmentId } : {}),
-  };
 }
 
 export function toThalamusAwsAnthropicCredentials(credentials: ResolvedAwsAnthropicCredentials): {
