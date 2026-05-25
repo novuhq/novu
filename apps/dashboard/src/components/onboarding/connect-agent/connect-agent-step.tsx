@@ -5,8 +5,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import type { AgentResponse, GeneratedManagedAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { getClaudeManagedAgentIntegrations } from '@/components/agents/connectors/claude-managed-integrations';
+import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
 import {
   AGENT_TEMPLATES,

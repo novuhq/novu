@@ -40,6 +40,14 @@ export interface McpConnectionAuth {
    * true`). Used to target the same credential on refresh / disable.
    */
   vaultCredentialId?: string;
+  /**
+   * Anthropic vault container (`vlt_…`) that owns this subscriber's MCP
+   * credentials for this agent. All subscriber-scoped rows for the same
+   * `(subscriber, agent)` share one vault id, propagated whenever a new MCP
+   * row is opened. v1 only writes subscriber-scope rows; agent-scope is
+   * reserved for a future shared-token flow.
+   */
+  externalVaultId?: string;
 }
 
 export interface McpConnectionOAuthState {

@@ -3,26 +3,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiCloseLine } from 'react-icons/ri';
 import {
+  type AgentResponse,
   getAgentDemoQuotaQueryKey,
   getAgentDetailQueryKey,
   getAgentIntegrationsQueryKey,
   migrateAgentRuntime,
-  type AgentResponse,
 } from '@/api/agents';
 import {
   ConfigureCredentialsSection,
   type CreateAgentFormErrors,
   type VerifyStatus,
 } from '@/components/agents/create-agent-fields';
-import { CompactButton } from '@/components/primitives/button-compact';
 import { Button } from '@/components/primitives/button';
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from '@/components/primitives/dialog';
+import { CompactButton } from '@/components/primitives/button-compact';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useCreateIntegration } from '@/hooks/use-create-integration';

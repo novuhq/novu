@@ -88,13 +88,22 @@ export interface VaultCredentialAuth {
   oauthClient?: VaultCredentialAuthOAuthClient;
 }
 
+export interface CreateVaultInput {
+  displayName: string;
+}
+
+export interface CreateVaultResult {
+  externalVaultId: string;
+}
+
 export interface UpsertVaultCredentialInput {
   /**
-   * Decrypted integration credentials blob. The provider extracts whichever
-   * locator it needs (Anthropic: `externalVaultId`); keeping the input
-   * provider-agnostic prevents callers from leaking provider-specific keys.
+   * Decrypted integration credentials blob kept provider-agnostic for API-key
+   * access during vault operations.
    */
   integrationCredentials: Record<string, unknown>;
+  /** Scoped Anthropic vault container (`vlt_…`) that owns this credential. */
+  externalVaultId: string;
   /** Canonical MCP server URL the credential authorises. */
   mcpServerUrl: string;
   /** Human-readable label surfaced in the provider's vault UI. */
@@ -111,22 +120,13 @@ export interface UpsertVaultCredentialInput {
 export interface UpsertVaultCredentialResult {
   /** Stable identifier for subsequent `update` / `delete` calls. */
   vaultCredentialId: string;
-  /**
-   * Optional credential-field updates the caller must merge into the integration.
-   *
-   * Set when the provider had to lazy-provision integration-scoped resources
-   * during the upsert — e.g. a legacy Anthropic integration that pre-dates
-   * vault eager-provisioning will have a new `externalVaultId` created in
-   * flight and returned here so the OAuth callback can persist it.
-   *
-   * Semantically identical to `ProvisionIntegrationResult.credentialsUpdate`.
-   */
-  integrationCredentialsUpdate?: Record<string, unknown>;
 }
 
 export interface DeleteVaultCredentialInput {
   /** Decrypted integration credentials blob; see `UpsertVaultCredentialInput`. */
   integrationCredentials: Record<string, unknown>;
+  /** Scoped Anthropic vault container (`vlt_…`) that owns this credential. */
+  externalVaultId: string;
   vaultCredentialId: string;
 }
 
@@ -259,6 +259,12 @@ export interface IAgentRuntimeProvider {
    * back to a generic error reply.
    */
   getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null>;
+
+  /**
+   * Create an empty credential vault on the provider (Anthropic: `vlt_…`).
+   * Only callable when `capabilities.tokenVault === true`.
+   */
+  createVault(input: CreateVaultInput): Promise<CreateVaultResult>;
 
   /**
    * Push an OAuth credential to the provider's per-environment vault so the

@@ -2,9 +2,8 @@ import { AgentRepository, ConversationRepository, IntegrationRepository } from '
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-
-import { CalculateDemoClaudeQuota } from './calculate-demo-claude-quota.usecase';
 import { CalculateDemoClaudeQuotaCommand } from './calculate-demo-claude-quota.command';
+import { CalculateDemoClaudeQuota } from './calculate-demo-claude-quota.usecase';
 
 describe('CalculateDemoClaudeQuota', () => {
   let useCase: CalculateDemoClaudeQuota;

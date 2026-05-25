@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, resolveAgentRuntime, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository, McpConnectionRepository } from '@novu/dal';
 
 import { trackAgentMcpServerDisabled } from '../../agent-analytics';
@@ -195,14 +195,16 @@ export class DisableAgentMcpServer {
 
     for (const connection of connections) {
       const vaultCredentialId = connection.auth?.vaultCredentialId;
+      const externalVaultId = connection.auth?.externalVaultId;
 
-      if (!vaultCredentialId) {
+      if (!vaultCredentialId || !externalVaultId) {
         continue;
       }
 
       try {
         await runtimeProvider.deleteVaultCredential({
           integrationCredentials: creds as Record<string, unknown>,
+          externalVaultId,
           vaultCredentialId,
         });
       } catch (err) {

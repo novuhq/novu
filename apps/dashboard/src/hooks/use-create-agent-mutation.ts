@@ -1,9 +1,9 @@
-import { AgentRuntimeProviderIdEnum, type IIntegration, CLAUDE_BUILTIN_TOOLS, IntegrationKindEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, CLAUDE_BUILTIN_TOOLS, type IIntegration, IntegrationKindEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { AGENTS_LIST_QUERY_KEY, type AgentResponse, type CreateAgentBody, createAgent } from '@/api/agents';
-import type { CreateAgentForm } from '@/components/agents/create-agent-fields';
 import { resolveClaudeManagedProviderId } from '@/components/agents/connectors/claude-managed-integrations';
+import type { CreateAgentForm } from '@/components/agents/create-agent-fields';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { useCreateIntegration } from './use-create-integration';

@@ -32,12 +32,12 @@ import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from '../onboarding/connect-agent/agent-suggestion-pills';
 import { GenerationStatus, type GenerationStep } from '../onboarding/connect-agent/generation-status';
 import { PromptInput } from '../onboarding/connect-agent/prompt-input';
+import { getClaudeManagedAgentIntegrations } from './connectors/claude-managed-integrations';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
 } from './connectors/connector-integration-dropdown';
 import { type ConnectorId, type ConnectorOption, getConnectorById } from './connectors/connector-options';
-import { getClaudeManagedAgentIntegrations } from './connectors/claude-managed-integrations';
 import {
   AGENT_TEMPLATES,
   type AgentTemplate,

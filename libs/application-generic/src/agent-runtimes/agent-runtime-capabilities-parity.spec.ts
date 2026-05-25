@@ -79,12 +79,19 @@ describe('Agent runtime capabilities parity', () => {
 
       describe('vault credential methods', () => {
         if (catalogEntry.capabilities.tokenVault) {
+          it('overrides createVault (does not throw UnsupportedCapabilityError)', async () => {
+            const probe = () => instance.createVault({ displayName: 'probe-vault' });
+
+            await expect(probe()).rejects.not.toBeInstanceOf(UnsupportedCapabilityError);
+          });
+
           it('overrides upsertVaultCredential (does not throw UnsupportedCapabilityError)', async () => {
             // We only assert the method was overridden — the upstream API call
             // itself is exercised by provider-specific integration tests.
             const probe = () =>
               instance.upsertVaultCredential({
-                integrationCredentials: { externalVaultId: 'vlt_test' },
+                integrationCredentials: {},
+                externalVaultId: 'vlt_test',
                 mcpServerUrl: 'https://example.invalid',
                 displayName: 'probe',
                 auth: { accessToken: 'test-token' },
@@ -96,7 +103,8 @@ describe('Agent runtime capabilities parity', () => {
           it('overrides deleteVaultCredential (does not throw UnsupportedCapabilityError)', async () => {
             const probe = () =>
               instance.deleteVaultCredential({
-                integrationCredentials: { externalVaultId: 'vlt_test' },
+                integrationCredentials: {},
+                externalVaultId: 'vlt_test',
                 vaultCredentialId: 'probe',
               });
 
@@ -107,6 +115,7 @@ describe('Agent runtime capabilities parity', () => {
             const probe = () =>
               instance.upsertVaultCredential({
                 integrationCredentials: {},
+                externalVaultId: 'vlt_test',
                 mcpServerUrl: 'https://example.invalid',
                 displayName: 'probe',
                 auth: {},
@@ -119,6 +128,7 @@ describe('Agent runtime capabilities parity', () => {
             const probe = () =>
               instance.deleteVaultCredential({
                 integrationCredentials: {},
+                externalVaultId: 'vlt_test',
                 vaultCredentialId: 'probe',
               });
 

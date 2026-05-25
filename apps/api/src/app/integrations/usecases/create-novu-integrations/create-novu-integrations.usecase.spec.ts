@@ -142,7 +142,9 @@ describe('CreateNovuIntegrations - managed Claude demo integration', () => {
   });
 
   it('should provision novu-anthropic on Development when feature flag is enabled', async () => {
-    featureFlagsService.getFlag.callsFake(async ({ key }) => key === FeatureFlagsKeysEnum.IS_DEMO_MANAGED_CLAUDE_ENABLED);
+    featureFlagsService.getFlag.callsFake(
+      async ({ key }) => key === FeatureFlagsKeysEnum.IS_DEMO_MANAGED_CLAUDE_ENABLED
+    );
 
     await useCase.execute(
       CreateNovuIntegrationsCommand.create({

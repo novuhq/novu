@@ -22,6 +22,8 @@ import {
 import type {
   CreateAgentInput,
   CreateAgentResult,
+  CreateVaultInput,
+  CreateVaultResult,
   DeleteVaultCredentialInput,
   GetAgentResult,
   GetEnvironmentResult,
@@ -297,34 +299,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       }
     })();
 
-    // Anthropic vaults are a separate top-level resource from environments,
-    // so we eager-provision one alongside each integration. Doing it here keeps
-    // every "find the vlt_… for this integration" lookup constant-time on the
-    // hot path (OAuth callback) — we just read `externalVaultId` off the
-    // already-decrypted credentials blob.
-    const vault: { id: string } = await (async () => {
-      try {
-        return await (client as any).beta.vaults.create({
-          display_name: `nv-${resourceStem}-vault`,
-        });
-      } catch (err) {
-        // Best-effort rollback so we don't leak an orphan environment when
-        // the vault create fails. If the rollback itself fails the
-        // environment is archived later by ops; the original error is what
-        // surfaces.
-        try {
-          await (client as any).beta.environments.archive(env.id);
-        } catch {
-          // swallow — original error is more useful
-        }
-        this.normaliseError(err);
-      }
-    })();
-
     return {
       credentialsUpdate: {
         externalEnvironmentId: env.id,
-        externalVaultId: vault.id,
       },
       metadata: {},
     };
@@ -332,9 +309,14 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
   async deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void> {
     const externalEnvironmentId = credentialsUpdate.externalEnvironmentId as string | undefined;
-    const externalVaultId = credentialsUpdate.externalVaultId as string | undefined;
+    // `externalVaultId` on integration credentials is a legacy field from the
+    // pre-subscriber-scope rollout (integration-level eager vault). New
+    // provisioning paths don't set it, but historical integrations still
+    // carry it — archive it here so disconnects don't leak the upstream
+    // vault.
+    const legacyExternalVaultId = credentialsUpdate.externalVaultId as string | undefined;
 
-    if (!externalEnvironmentId && !externalVaultId) {
+    if (!externalEnvironmentId && !legacyExternalVaultId) {
       return;
     }
 
@@ -350,10 +332,10 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       });
     }
 
-    if (externalVaultId) {
+    if (legacyExternalVaultId) {
       await this.withRetry(async () => {
         try {
-          await (client as any).beta.vaults.archive(externalVaultId);
+          await (client as any).beta.vaults.archive(legacyExternalVaultId);
         } catch (err) {
           this.normaliseError(err);
         }
@@ -432,65 +414,59 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     return { mcpServerName: match[1] };
   }
 
-  async upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
+  async createVault(input: CreateVaultInput): Promise<CreateVaultResult> {
     const client = this.buildClient();
 
-    // Eager provisioning is the happy path (see `provisionIntegration`).
-    // Legacy integrations that pre-date vault eager-creation, or any flow
-    // where the integration credentials lost their `externalVaultId`, fall
-    // through to in-flight lazy creation. We hand the new id back to the
-    // caller via `integrationCredentialsUpdate` so the OAuth callback can
-    // persist it on the integration in the same transaction.
-    let vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
-    let integrationCredentialsUpdate: Record<string, unknown> | undefined;
-    let lazyCreatedVault = false;
+    // Not retried: vault creation is not idempotent and a retry after a
+    // dropped response would mint a second vault and permanently orphan the
+    // first. Callers (`McpConnectionVaultService`) detect race-induced
+    // orphans separately via a `setIfMissing` claim + warn-log.
+    try {
+      const vault = await (client as any).beta.vaults.create({
+        display_name: input.displayName,
+      });
 
-    if (!vaultId) {
-      vaultId = await this.createVaultForIntegration(client, input.integrationCredentials);
-      integrationCredentialsUpdate = { externalVaultId: vaultId };
-      lazyCreatedVault = true;
+      return { externalVaultId: vault.id as string };
+    } catch (err) {
+      this.normaliseError(err);
     }
+  }
 
-    // Vault credentials are vault-scoped on Anthropic's side, so an
-    // `existingCredentialId` recorded against a previous (now-orphan) vault
-    // would 404 on update. When we just lazy-created a fresh vault, ignore
-    // the stale id and take the create branch so the caller's connection
-    // row gets re-pointed at the new credential.
-    const existingCredentialId = lazyCreatedVault ? undefined : input.existingCredentialId;
-
-    const vaultIdRef = vaultId;
+  async upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
+    const client = this.buildClient();
+    const vaultId = input.externalVaultId;
+    const existingCredentialId = input.existingCredentialId;
 
     return this.withRetry(async () => {
       try {
         if (existingCredentialId) {
           const updated = await (client as any).beta.vaults.credentials.update(existingCredentialId, {
-            vault_id: vaultIdRef,
+            vault_id: vaultId,
             display_name: input.displayName,
             auth: buildMcpOAuthUpdateAuth(input.auth),
           });
 
-          return { vaultCredentialId: updated.id as string, integrationCredentialsUpdate };
+          return { vaultCredentialId: updated.id as string };
         }
 
         try {
-          const created = await (client as any).beta.vaults.credentials.create(vaultIdRef, {
+          const created = await (client as any).beta.vaults.credentials.create(vaultId, {
             display_name: input.displayName,
             auth: buildMcpOAuthCreateAuth(input.mcpServerUrl, input.auth),
           });
 
-          return { vaultCredentialId: created.id as string, integrationCredentialsUpdate };
+          return { vaultCredentialId: created.id as string };
         } catch (createErr) {
           // Anthropic enforces uniqueness on (vault_id, auth.mcp_server_url).
           // If a previous flow pushed a credential for this URL but Novu's
           // `mcp_connection.auth.vaultCredentialId` was never persisted (or
-          // got cleared — e.g. legacy BullMQ-era runs, manual cleanup, a
-          // dropped DB write after a successful vault push), the CREATE
-          // branch hits 409. Recover by listing the vault and rebinding to
-          // the orphan via UPDATE so the agent.mcp_servers projection can
-          // finally point at a usable credential.
+          // got cleared — e.g. manual cleanup, a dropped DB write after a
+          // successful vault push), the CREATE branch hits 409. Recover by
+          // listing the vault and rebinding to the orphan via UPDATE so the
+          // agent.mcp_servers projection can finally point at a usable credential.
           const recovered = await this.tryRecoverOrphanVaultCredential({
             client,
-            vaultId: vaultIdRef,
+            vaultId,
             mcpServerUrl: input.mcpServerUrl,
             displayName: input.displayName,
             auth: input.auth,
@@ -498,7 +474,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           });
 
           if (recovered) {
-            return { vaultCredentialId: recovered, integrationCredentialsUpdate };
+            return { vaultCredentialId: recovered };
           }
 
           throw createErr;
@@ -584,43 +560,14 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
-  /**
-   * Create a vault on the fly for a legacy integration that wasn't provisioned
-   * with one. Not retried at this layer: if the create fails we let the caller
-   * see the underlying error so they can mark the connection as `error`.
-   */
-  private async createVaultForIntegration(
-    client: Anthropic,
-    integrationCredentials: Record<string, unknown>
-  ): Promise<string> {
-    const envHint = integrationCredentials.externalEnvironmentId as string | undefined;
-    const displayName = envHint ? `nv-${envHint}-vault` : `nv-vault-${Date.now()}`;
-
-    try {
-      const vault = await (client as any).beta.vaults.create({ display_name: displayName });
-
-      return vault.id as string;
-    } catch (err) {
-      this.normaliseError(err);
-    }
-  }
-
   async deleteVaultCredential(input: DeleteVaultCredentialInput): Promise<void> {
-    const vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
-
-    // No vault provisioned (legacy integration provisioned before tokenVault
-    // shipped) — nothing upstream to delete, callers proceed with local
-    // cleanup. We only hard-fail in `upsert` because writing a credential
-    // without a vault is genuinely broken.
-    if (!vaultId) {
-      return;
-    }
-
     const client = this.buildClient();
 
     await this.withRetry(async () => {
       try {
-        await (client as any).beta.vaults.credentials.delete(input.vaultCredentialId, { vault_id: vaultId });
+        await (client as any).beta.vaults.credentials.delete(input.vaultCredentialId, {
+          vault_id: input.externalVaultId,
+        });
       } catch (err) {
         this.normaliseError(err);
       }

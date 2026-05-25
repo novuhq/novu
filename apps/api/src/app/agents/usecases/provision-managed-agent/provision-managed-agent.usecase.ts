@@ -57,7 +57,11 @@ export class ProvisionManagedAgent {
 
     this.assertDemoIntegrationAdoptAllowed(integration.providerId, command);
 
-    const { decryptedCredentials, resolvedApiKey } = await this.ensureCredentialsProvisioned(integration, command, session);
+    const { decryptedCredentials, resolvedApiKey } = await this.ensureCredentialsProvisioned(
+      integration,
+      command,
+      session
+    );
 
     const resolvedIntegrationId = integration._id;
     const runtimeProviderId = integration.providerId as AgentRuntimeProviderIdEnum;
@@ -214,10 +218,7 @@ export class ProvisionManagedAgent {
     return { externalAgentId, integrationId: resolvedIntegrationId, adoptedName };
   }
 
-  private assertDemoIntegrationAdoptAllowed(
-    providerId: string,
-    command: ProvisionManagedAgentCommand
-  ): void {
+  private assertDemoIntegrationAdoptAllowed(providerId: string, command: ProvisionManagedAgentCommand): void {
     if (providerId !== AgentRuntimeProviderIdEnum.NovuAnthropic) {
       return;
     }
@@ -251,10 +252,7 @@ export class ProvisionManagedAgent {
       let decryptedCredentials = decryptCredentials(integration.credentials ?? {});
 
       if (!decryptedCredentials.externalEnvironmentId) {
-        const provisioningProvider = getAgentRuntimeProvider(
-          AgentRuntimeProviderIdEnum.NovuAnthropic,
-          resolvedApiKey
-        );
+        const provisioningProvider = getAgentRuntimeProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, resolvedApiKey);
         const provisionResult = await provisioningProvider.provisionIntegration({
           integrationName: integration.name ?? 'Novu Managed Claude',
           resourceName: command.organizationId,
