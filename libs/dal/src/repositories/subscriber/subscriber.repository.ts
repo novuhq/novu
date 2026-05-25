@@ -48,6 +48,26 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
     );
   }
 
+  async findByEmail(
+    environmentId: string,
+    organizationId: string,
+    email: string
+  ): Promise<SubscriberEntity[]> {
+    if (!email) {
+      return [];
+    }
+
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        email,
+      },
+      'subscriberId',
+      { limit: 2 }
+    );
+  }
+
   async bulkCreateSubscribers(
     subscribers: ISubscribersDefine[],
     environmentId: EnvironmentId,

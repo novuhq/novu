@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ChannelEndpointRepository, SubscriberRepository } from '@novu/dal';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { isValidEmailForLookup, normalizeEmailForLookup } from '../utils/email-normalization';
 import { getPhoneLookupCandidates } from '../utils/phone-normalization';
 import { PLATFORM_ENDPOINT_CONFIG } from '../utils/platform-endpoint-config';
 
@@ -32,6 +33,14 @@ export class AgentSubscriberResolver {
 
     if (platform === AgentPlatformEnum.WHATSAPP) {
       return this.resolveWhatsAppSubscriber({
+        environmentId,
+        organizationId,
+        platformUserId,
+      });
+    }
+
+    if (platform === AgentPlatformEnum.EMAIL) {
+      return this.resolveEmailSubscriber({
         environmentId,
         organizationId,
         platformUserId,
@@ -94,6 +103,41 @@ export class AgentSubscriberResolver {
     }
 
     this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
+
+    return null;
+  }
+
+  private async resolveEmailSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    platformUserId: string;
+  }): Promise<string | null> {
+    const { environmentId, organizationId, platformUserId } = params;
+    const email = normalizeEmailForLookup(platformUserId);
+
+    if (!isValidEmailForLookup(email)) {
+      this.logger.debug(`Skipping email subscriber lookup for invalid address "${platformUserId}"`);
+
+      return null;
+    }
+
+    const matches = await this.subscriberRepository.findByEmail(environmentId, organizationId, email);
+
+    if (matches.length > 1) {
+      this.logger.warn(
+        `Multiple subscribers (${matches.length}) share email ${email} in environment ${environmentId} — using first match`
+      );
+    }
+
+    const subscriber = matches[0];
+
+    if (subscriber) {
+      this.logger.debug(`Resolved email ${email} → subscriber ${subscriber.subscriberId}`);
+
+      return subscriber.subscriberId;
+    }
+
+    this.logger.debug(`No subscriber found for email ${email}`);
 
     return null;
   }

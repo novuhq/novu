@@ -637,6 +637,99 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
     });
   });
 
+  describe('Email subscriber resolution', () => {
+    async function invokeEmailInbound(email: string, text: string) {
+      const baseConfig = await configResolver.resolve(ctx.agentId, ctx.integrationIdentifier);
+      const config = {
+        ...baseConfig,
+        platform: AgentPlatformEnum.EMAIL,
+      };
+      const threadId = `email:${encodeURIComponent(email)}:abc123`;
+      const thread = {
+        id: threadId,
+        channelId: `email:${email}`,
+        isDM: true,
+        startTyping: async () => {},
+        subscribe: async () => {},
+        post: async () => mockSentMessage(),
+        createSentMessageFromMessage: () => mockSentMessage(),
+        toJSON: () => ({ id: threadId }),
+      };
+      const message = mockMessage({ userId: email, text, fullName: 'Email User' });
+
+      await inboundHandler.handle(ctx.agentId, config, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      return threadId;
+    }
+
+    it('should create participant as subscriber when subscriber.email matches inbound author.userId', async () => {
+      const subscriberRepository = new SubscriberRepository();
+      const subscriber = await subscriberRepository.create({
+        subscriberId: `sub-email-e2e-${Date.now()}`,
+        firstName: 'Email',
+        lastName: 'Subscriber',
+        email: 'agent-inbound@example.com',
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+      });
+
+      const threadId = await invokeEmailInbound('agent-inbound@example.com', 'Hello from email');
+
+      const conversation = await conversationRepository.findByPlatformThread(
+        ctx.session.environment._id,
+        ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
+        threadId
+      );
+
+      expect(conversation).to.exist;
+
+      const subParticipant = conversation!.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      );
+      expect(subParticipant).to.exist;
+      expect(subParticipant!.id).to.equal(subscriber.subscriberId);
+
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
+      const userActivity = activities.find((a) => a.content === 'Hello from email');
+      expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
+    });
+
+    it('should not resolve when stored subscriber.email casing differs from lowercased inbound', async () => {
+      await new SubscriberRepository().create({
+        subscriberId: `sub-email-case-${Date.now()}`,
+        firstName: 'Email',
+        lastName: 'Case',
+        email: 'Mixed@Example.com',
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+      });
+
+      const threadId = await invokeEmailInbound('mixed@example.com', 'Exact lowercase lookup');
+
+      const conversation = await conversationRepository.findByPlatformThread(
+        ctx.session.environment._id,
+        ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
+        threadId
+      );
+
+      expect(conversation).to.exist;
+
+      const subParticipant = conversation!.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      );
+      expect(subParticipant).to.not.exist;
+
+      const platformParticipant = conversation!.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.PLATFORM_USER
+      );
+      expect(platformParticipant!.id).to.equal('email:mixed@example.com');
+    });
+  });
+
   describe('WhatsApp subscriber resolution', () => {
     async function invokeWhatsAppInbound(phone: string, text: string) {
       const baseConfig = await configResolver.resolve(ctx.agentId, ctx.integrationIdentifier);
