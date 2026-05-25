@@ -129,6 +129,13 @@ export class ManagedAgentEventHandler {
               );
 
               if (delivered) {
+                await this.handlePlanProgress.execute(
+                  HandlePlanProgressCommand.create({
+                    ...baseFields,
+                    toolProgress: { runId, action: 'awaiting-approval' },
+                  })
+                );
+
                 return;
               }
             }
@@ -193,6 +200,13 @@ export class ManagedAgentEventHandler {
       const delivered = await this.tryDeliverToolApprovalCard(metadata, sessionId, runtimeProvider);
 
       if (delivered) {
+        await this.handlePlanProgress.execute(
+          HandlePlanProgressCommand.create({
+            ...baseCommand,
+            toolProgress: { runId, action: 'awaiting-approval' },
+          })
+        );
+
         return;
       }
     }

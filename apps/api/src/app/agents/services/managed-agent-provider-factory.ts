@@ -118,6 +118,11 @@ export class ManagedAgentProviderFactory {
       throw new Error('THALAMUS_WEBHOOK_SECRET is required for managed agents');
     }
 
+    const webhookBaseUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
+    if (!webhookBaseUrl) {
+      throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL is required for managed agents');
+    }
+
     switch (providerId) {
       case AgentRuntimeProviderIdEnum.Anthropic:
       case AgentRuntimeProviderIdEnum.NovuAnthropic:
@@ -127,7 +132,7 @@ export class ManagedAgentProviderFactory {
             url: cfUrl,
             apiKey: process.env.THALAMUS_CF_API_KEY,
             webhook: {
-              url: `${process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL}/v1/agents/events`,
+              url: `${webhookBaseUrl}/v1/agents/events`,
               secret: webhookSecret,
             },
           }),
