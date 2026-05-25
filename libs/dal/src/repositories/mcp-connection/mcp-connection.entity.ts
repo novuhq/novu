@@ -132,6 +132,33 @@ export interface McpConnectionLastError {
 }
 
 /**
+ * Snapshot of the GitHub-App installation captured at OAuth-callback time
+ * for `novu-app` rows whose catalog declares an `installation` block.
+ *
+ * GitHub App user-to-server tokens cover EVERY installation the user has
+ * consented to — not just the one returned in the redirect. This row only
+ * records the most recent one for display continuity (e.g. when the dashboard
+ * loads but GitHub is briefly unreachable). The live list of installations
+ * the token can actually act on comes from `GET /user/installations` at
+ * view time; this snapshot exists purely as a hint, not a source of truth.
+ *
+ * Absent for rows whose catalog entry doesn't use the App + Installation
+ * flow, and for legacy connections persisted before the field was added.
+ */
+export interface McpConnectionInstallation {
+  /** Numeric installation id from GitHub's redirect `installation_id` param. */
+  id: number;
+  /** `login` of the account the App was installed on (user handle or org slug). */
+  account: string;
+  /** Account type — drives the "Manage" deep link path on github.com. */
+  accountType: 'User' | 'Organization';
+  /** `all` = every repo on the account; `selected` = a hand-picked list. */
+  repositorySelection: 'all' | 'selected';
+  /** When this snapshot was refreshed against GitHub. */
+  syncedAt: Date;
+}
+
+/**
  * OAuth state for a (scope, mcp, owner) tuple.
  *
  * `auth` is populated when `status === 'connected'` — the access/refresh
@@ -183,6 +210,14 @@ export class McpConnectionEntity {
    * from env vars / per-org config at request time instead.
    */
   oauthClient?: McpConnectionOAuthClient;
+
+  /**
+   * GitHub-App installation snapshot. Populated only for `novu-app` rows
+   * whose catalog declares an `installation` block (currently only `github`).
+   * Display hint — the dashboard's authoritative installation list comes
+   * from `GET /user/installations` at view time.
+   */
+  installation?: McpConnectionInstallation;
 
   lastError?: McpConnectionLastError;
 

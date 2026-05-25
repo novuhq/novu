@@ -51,6 +51,29 @@ export type NovuAppOAuthCatalogEntry = {
   authorizationEndpoint: string;
   tokenEndpoint: string;
   scopes: string[];
+  /**
+   * Optional "GitHub App + Installation" flow. When present, `GenerateMcpOAuthUrl`
+   * redirects the user through `https://github.com/apps/<slug>/installations/new`
+   * instead of the classic `authorizationEndpoint`, so installing the App on a
+   * user/org and consenting to OAuth happen in a single click. The redirect
+   * returns BOTH `?code=...` and `?installation_id=...` to Novu's callback,
+   * which exchanges the code as usual and persists the installation snapshot
+   * for dashboard visibility.
+   *
+   * Requires the GitHub App settings to have "Request user authorization
+   * (OAuth) during installation" enabled, otherwise the install URL returns
+   * only `installation_id` and the token exchange fails. Without this block,
+   * `authorizationEndpoint` is used verbatim and `scopes` is sent on the URL
+   * (classic OAuth-App flow).
+   *
+   * `appSlugEnv` names the env var that resolves to the App's public slug
+   * (e.g. `novu-mcp` for `https://github.com/apps/novu-mcp`). Read at request
+   * time by `GetMcpNovuAppCredentials.executeAppSlug` so self-hosters can
+   * BYO App without forking the catalog.
+   */
+  installation?: {
+    appSlugEnv: string;
+  };
 };
 
 export type UserAppOAuthCatalogEntry = {
@@ -157,28 +180,40 @@ export const MCP_SERVERS: McpServer[] = [
     popular: true,
     // GitHub does NOT advertise RFC 8414 AS metadata or RFC 7591 DCR, so the
     // catalog pins the authorize/token endpoints and Novu uses its single
-    // pre-registered GitHub App (env-loaded `NOVU_GITHUB_MCP_APP_CLIENT_*`).
-    // Scopes mirror Anthropic's Claude GitHub connector verbatim so users
-    // see a familiar permission set on the consent screen.
+    // pre-registered **GitHub App** (env-loaded `NOVU_GITHUB_MCP_APP_*`).
+    //
+    // GitHub Apps differ from classic OAuth Apps in a critical way: access
+    // to a repo requires BOTH the user to consent via OAuth AND the App to
+    // be **installed** on the target account (user or org), with the repo
+    // included in the install's selection. Without an install, the user's
+    // token comes back valid but every REST call against a repo returns
+    // `403 Resource not accessible by integration`.
+    //
+    // The `installation` block below points the authorize redirect at
+    // `https://github.com/apps/<slug>/installations/new` (instead of the
+    // classic `authorizationEndpoint`) so the user installs the App AND
+    // grants OAuth in a single click. The callback receives `code` +
+    // `installation_id` and persists both.
+    //
+    // GitHub App settings checklist (required for the install-and-authorize
+    // redirect to return a `code`):
+    //   - "Where can this GitHub App be installed?" → Any account
+    //   - "Request user authorization (OAuth) during installation" → ON
+    //   - "Expire user authorization tokens" → ON (refresh-token issuance)
+    //   - "Callback URL" → `{FRONT_BASE_URL}/v1/agents/mcp/oauth/callback`
+    //
+    // `scopes: []` is intentional. GitHub Apps silently ignore the OAuth
+    // `scope=` parameter on the authorize URL; permissions are declared on
+    // the App's settings page instead (e.g. `Issues: Read and write`).
     oauth: {
       mode: McpConnectionAuthModeEnum.NovuApp,
       issuer: 'https://github.com',
       authorizationEndpoint: 'https://github.com/login/oauth/authorize',
       tokenEndpoint: 'https://github.com/login/oauth/access_token',
-      scopes: [
-        'repo',
-        'read:org',
-        'read:user',
-        'user:email',
-        'read:packages',
-        'write:packages',
-        'read:project',
-        'project',
-        'gist',
-        'notifications',
-        'workflow',
-        'codespace',
-      ],
+      scopes: [],
+      installation: {
+        appSlugEnv: 'NOVU_GITHUB_MCP_APP_SLUG',
+      },
     },
   },
   {

@@ -577,6 +577,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     const previousFlag = process.env.IS_MCP_NOVU_APP_ENABLED;
     const previousClientId = process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID;
     const previousClientSecret = process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET;
+    const previousAppSlug = process.env.NOVU_GITHUB_MCP_APP_SLUG;
     const previousApiRootUrl = process.env.API_ROOT_URL;
 
     let safeJsonStub: sinon.SinonStub;
@@ -603,6 +604,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       process.env.IS_MCP_NOVU_APP_ENABLED = 'true';
       process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID = 'Iv23livefakeclientid';
       process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET = 'ghs_fakeclientsecret';
+      // GitHub catalog entry declares an `installation.appSlugEnv` so a slug
+      // env var is now required for authorize-URL generation. Match the
+      // shape used in production but use a fake slug here.
+      process.env.NOVU_GITHUB_MCP_APP_SLUG = 'novu-mcp-test';
       process.env.API_ROOT_URL = 'https://api.example.test';
 
       // PRM probe attempt is non-fatal; default to a 401 with no usable
@@ -635,6 +640,11 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
         delete process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET;
       } else {
         process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET = previousClientSecret;
+      }
+      if (previousAppSlug === undefined) {
+        delete process.env.NOVU_GITHUB_MCP_APP_SLUG;
+      } else {
+        process.env.NOVU_GITHUB_MCP_APP_SLUG = previousAppSlug;
       }
       if (previousApiRootUrl === undefined) {
         delete process.env.API_ROOT_URL;
@@ -688,7 +698,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(res.status).to.equal(404);
     });
 
-    it('generates an authorize URL with pinned catalog scopes, resource, PKCE, and persists novu-app state', async () => {
+    it('generates a GitHub App install-and-authorize URL with PKCE + resource, and persists novu-app state', async () => {
       const { identifier } = await createManagedAgent();
       await enableGithub(identifier);
 
@@ -698,7 +708,9 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
       expect(res.status, `oauth/url failed: ${JSON.stringify(res.body)}`).to.equal(200);
       const url = new URL(res.body.data.authorizeUrl);
-      expect(`${url.origin}${url.pathname}`).to.equal('https://github.com/login/oauth/authorize');
+      // GitHub App + Installation flow: authorize URL is the install URL
+      // for the configured App slug, NOT the classic OAuth authorize.
+      expect(`${url.origin}${url.pathname}`).to.equal('https://github.com/apps/novu-mcp-test/installations/new');
       expect(url.searchParams.get('client_id')).to.equal('Iv23livefakeclientid');
       expect(url.searchParams.get('response_type')).to.equal('code');
       expect(url.searchParams.get('code_challenge_method')).to.equal('S256');
@@ -707,10 +719,9 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       // PRM probe failed; falls back to catalog. `resource` defaults to the
       // catalog URL when PRM produced no `resource` value.
       expect(url.searchParams.get('resource')).to.equal('https://api.githubcopilot.com/mcp/');
-      // Scopes mirror the catalog (no PRM challenge_scopes here).
-      expect(url.searchParams.get('scope')).to.equal(
-        'repo read:org read:user user:email read:packages write:packages read:project project gist notifications workflow codespace'
-      );
+      // GitHub Apps ignore the `scope=` parameter — Novu must NOT send one
+      // on the install URL or GitHub silently downgrades / 400s.
+      expect(url.searchParams.get('scope')).to.equal(null);
 
       const enablement = await agentMcpServerRepository.findOne(
         {
@@ -736,11 +747,15 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(connection!.oauthClient, 'oauthClient must NOT be persisted for novu-app').to.equal(undefined);
       expect(connection!.oauthState!.expectedIssuer).to.equal('https://github.com');
       expect(connection!.oauthState!.tokenEndpoint).to.equal('https://github.com/login/oauth/access_token');
-      expect(connection!.oauthState!.authorizationEndpoint).to.equal('https://github.com/login/oauth/authorize');
+      // `authorizationEndpoint` on oauthState records the install URL so
+      // the callback can rebuild the ephemeral oauthClient for vault push.
+      expect(connection!.oauthState!.authorizationEndpoint).to.equal(
+        'https://github.com/apps/novu-mcp-test/installations/new'
+      );
       expect(connection!.oauthState!.pkceVerifier).to.have.length.greaterThan(0);
     });
 
-    it('returns 422 with mcp_novu_app_credentials_missing when env vars are unset', async () => {
+    it('returns 422 with mcp_novu_app_credentials_missing when client_id / client_secret env vars are unset', async () => {
       delete process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID;
       delete process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET;
       const { identifier } = await createManagedAgent();
@@ -752,6 +767,25 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
       expect(res.status).to.equal(422);
       expect(res.body.error ?? res.body.data?.error).to.equal('mcp_novu_app_credentials_missing');
+    });
+
+    it('returns 422 with mcp_novu_app_credentials_missing when the app slug env var is unset', async () => {
+      // GitHub catalog declares `installation.appSlugEnv` — without the env
+      // var resolved the install URL would be malformed
+      // (`/apps/undefined/installations/new`), so this MUST surface the same
+      // 422 path as a missing client_id rather than crashing later in
+      // `resolveServerEndpointsForNovuApp`.
+      delete process.env.NOVU_GITHUB_MCP_APP_SLUG;
+      const { identifier } = await createManagedAgent();
+      await enableGithub(identifier);
+
+      const res = await session.testAgent
+        .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/github/oauth/url`)
+        .send({ subscriberId: session.subscriberId });
+
+      expect(res.status).to.equal(422);
+      expect(res.body.error ?? res.body.data?.error).to.equal('mcp_novu_app_credentials_missing');
+      expect(res.body.message ?? res.body.data?.message).to.contain('NOVU_GITHUB_MCP_APP_SLUG');
     });
 
     /**
@@ -780,10 +814,25 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       return { identifier, agentId, state: state as string };
     }
 
-    function routeJsonStub(perEndpoint: { tokenEndpoint?: unknown }) {
+    function routeJsonStub(perEndpoint: {
+      tokenEndpoint?: unknown;
+      userInstallationsSingle?: unknown;
+      userInstallationsList?: unknown;
+    }) {
       safeJsonStub.callsFake((args: { url: string }) => {
         if (args.url.includes('/login/oauth/access_token') && perEndpoint.tokenEndpoint) {
           return Promise.resolve(perEndpoint.tokenEndpoint);
+        }
+        // The callback fetches `/user/installations/{id}` to capture a
+        // single-installation snapshot at OAuth-callback time. The list-
+        // installations usecase fetches `/user/installations` (no trailing
+        // id) at view time. Route on path shape, since both URLs share the
+        // same prefix.
+        if (perEndpoint.userInstallationsSingle && /\/user\/installations\/\d+/.test(args.url)) {
+          return Promise.resolve(perEndpoint.userInstallationsSingle);
+        }
+        if (perEndpoint.userInstallationsList && args.url.endsWith('/user/installations')) {
+          return Promise.resolve(perEndpoint.userInstallationsList);
         }
         if (args.url.includes('/.well-known/oauth-protected-resource')) {
           return Promise.resolve({
@@ -993,6 +1042,276 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(bodyParams.get('code')).to.equal('fake-auth-code');
       expect(bodyParams.get('code_verifier')).to.match(/^[A-Za-z0-9_-]{43}$/);
       expect(bodyParams.get('resource')).to.equal('https://api.githubcopilot.com/mcp/');
+    });
+
+    /**
+     * GitHub App + Installation flow — the install URL redirect carries
+     * `installation_id` and `setup_action` alongside `code`. The callback
+     * has to:
+     *   1. Exchange `code` for a user-to-server token (existing path).
+     *   2. Fetch `/user/installations/{id}` to capture a display snapshot.
+     *   3. When `setup_action=request`, mark `Connected` but ALSO write a
+     *      `mcp_github_pending_org_approval` lastError so the dashboard
+     *      can render a "waiting for org owner" banner without inventing
+     *      a new connection status enum.
+     */
+    describe('install + authorize redirect (installation_id / setup_action)', () => {
+      it('captures installation snapshot from /user/installations/{id} on the connection row', async () => {
+        const { agentId, state } = await authorizeAndCaptureState();
+
+        routeJsonStub({
+          tokenEndpoint: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: {
+              access_token: 'gho_fake-access',
+              refresh_token: 'ghr_fake-refresh',
+              expires_in: 28_800,
+              token_type: 'bearer',
+            },
+          },
+          userInstallationsSingle: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: {
+              id: 9876543,
+              account: { login: 'novuhq', type: 'Organization', avatar_url: 'https://avatars.githubusercontent.com/x' },
+              repository_selection: 'selected',
+            },
+          },
+        });
+
+        const cb = await session.testAgent.get(
+          `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}` +
+            `&code=fake-auth-code&installation_id=9876543&setup_action=install`
+        );
+        expect([200, 302]).to.include(cb.status);
+
+        const conn = await findGithubConnection(agentId);
+        expect(conn!.status).to.equal(McpConnectionStatusEnum.Connected);
+        expect(conn!.installation, 'installation snapshot should be persisted').to.exist;
+        expect(conn!.installation!.id).to.equal(9876543);
+        expect(conn!.installation!.account).to.equal('novuhq');
+        expect(conn!.installation!.accountType).to.equal('Organization');
+        expect(conn!.installation!.repositorySelection).to.equal('selected');
+        // Pending-approval lastError must NOT be set for the happy install
+        // path — the dashboard relies on its absence to mean "all good".
+        expect(conn!.lastError).to.equal(undefined);
+      });
+
+      it('marks Connected + mcp_github_pending_org_approval lastError when setup_action=request', async () => {
+        const { agentId, state } = await authorizeAndCaptureState();
+
+        routeJsonStub({
+          tokenEndpoint: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: {
+              access_token: 'gho_fake-access',
+              token_type: 'bearer',
+            },
+          },
+          userInstallationsSingle: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: {
+              id: 4242,
+              account: { login: 'novuhq', type: 'Organization' },
+              repository_selection: 'selected',
+            },
+          },
+        });
+
+        const cb = await session.testAgent.get(
+          `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}` +
+            `&code=fake-auth-code&installation_id=4242&setup_action=request`
+        );
+        expect([200, 302]).to.include(cb.status);
+
+        const conn = await findGithubConnection(agentId);
+        expect(conn!.status).to.equal(McpConnectionStatusEnum.Connected);
+        expect(conn!.lastError?.code).to.equal('mcp_github_pending_org_approval');
+        // installation snapshot still captured — the org just hasn't
+        // approved the install yet, but we record what we know.
+        expect(conn!.installation!.id).to.equal(4242);
+      });
+
+      it('falls back to a minimal installation snapshot when /user/installations/{id} fails (non-blocking)', async () => {
+        const { agentId, state } = await authorizeAndCaptureState();
+
+        routeJsonStub({
+          tokenEndpoint: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: { access_token: 'gho_fake-access', token_type: 'bearer' },
+          },
+          userInstallationsSingle: {
+            statusCode: 404,
+            statusMessage: 'Not Found',
+            headers: { 'content-type': 'application/json' },
+            body: { message: 'Not Found' },
+          },
+        });
+
+        const cb = await session.testAgent.get(
+          `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}` +
+            `&code=fake-auth-code&installation_id=999`
+        );
+        expect([200, 302]).to.include(cb.status);
+
+        const conn = await findGithubConnection(agentId);
+        expect(conn!.status).to.equal(McpConnectionStatusEnum.Connected);
+        // Lookup failed but the connection still landed — display "unknown"
+        // until the dashboard re-fetches via `GET /user/installations`.
+        expect(conn!.installation!.id).to.equal(999);
+        expect(conn!.installation!.account).to.equal('unknown');
+      });
+
+      it('skips installation snapshot when installation_id is absent (classic OAuth fallback path)', async () => {
+        // Defence-in-depth: if a GitHub-App callback ever loses
+        // installation_id (misconfigured App, weird redirect), the
+        // connection still completes — just without a snapshot.
+        const { agentId, state } = await authorizeAndCaptureState();
+
+        routeJsonStub({
+          tokenEndpoint: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: { access_token: 'gho_fake-access', token_type: 'bearer' },
+          },
+        });
+
+        const cb = await session.testAgent.get(
+          `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&code=fake-auth-code`
+        );
+        expect([200, 302]).to.include(cb.status);
+
+        const conn = await findGithubConnection(agentId);
+        expect(conn!.status).to.equal(McpConnectionStatusEnum.Connected);
+        expect(conn!.installation).to.equal(undefined);
+      });
+    });
+
+    /**
+     * `GET /v1/agents/:identifier/mcp-servers/github/installations` — live
+     * list backed by `/user/installations` upstream. Connection must be
+     * Connected and `installation` flow opt-in; otherwise the response
+     * carries the actual status with an empty list.
+     */
+    describe('GET /mcp-servers/:mcpId/installations', () => {
+      async function completeConnect(): Promise<{ identifier: string; agentId: string }> {
+        const { identifier, agentId, state } = await authorizeAndCaptureState();
+        routeJsonStub({
+          tokenEndpoint: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: { access_token: 'gho_user_to_server_token', token_type: 'bearer' },
+          },
+          userInstallationsSingle: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: {
+              id: 111,
+              account: { login: 'me', type: 'User' },
+              repository_selection: 'all',
+            },
+          },
+        });
+        const cb = await session.testAgent.get(
+          `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}` +
+            `&code=fake-auth-code&installation_id=111&setup_action=install`
+        );
+        expect([200, 302]).to.include(cb.status);
+
+        return { identifier, agentId };
+      }
+
+      it('returns the live installation list from GitHub with manage deep links', async () => {
+        const { identifier } = await completeConnect();
+
+        // Re-program the stub to return a multi-installation list for the
+        // /user/installations call (no trailing id).
+        routeJsonStub({
+          userInstallationsList: {
+            statusCode: 200,
+            statusMessage: 'OK',
+            headers: { 'content-type': 'application/json' },
+            body: {
+              installations: [
+                {
+                  id: 111,
+                  account: { login: 'me', type: 'User', avatar_url: 'https://avatars.githubusercontent.com/u/1' },
+                  repository_selection: 'all',
+                  repositories_url: 'https://api.github.com/user/installations/111/repositories',
+                  html_url: 'https://github.com/settings/installations/111',
+                },
+                {
+                  id: 222,
+                  account: {
+                    login: 'novuhq',
+                    type: 'Organization',
+                    avatar_url: 'https://avatars.githubusercontent.com/u/2',
+                  },
+                  repository_selection: 'selected',
+                  repositories_url: 'https://api.github.com/user/installations/222/repositories',
+                  html_url: 'https://github.com/organizations/novuhq/settings/installations/222',
+                },
+              ],
+            },
+          },
+        });
+
+        const res = await session.testAgent.get(
+          `/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/github/installations?subscriberId=${encodeURIComponent(
+            session.subscriberId
+          )}`
+        );
+        expect(res.status, `installations endpoint failed: ${JSON.stringify(res.body)}`).to.equal(200);
+        expect(res.body.data).to.be.an('array').with.lengthOf(2);
+        expect(res.body.data[0].id).to.equal(111);
+        expect(res.body.data[0].account.login).to.equal('me');
+        expect(res.body.data[0].account.type).to.equal('User');
+        expect(res.body.data[0].repositorySelection).to.equal('all');
+        expect(res.body.data[0].manageUrl).to.equal('https://github.com/settings/installations/111');
+        expect(res.body.data[1].account.type).to.equal('Organization');
+        expect(res.body.data[1].manageUrl).to.contain('organizations/novuhq');
+        expect(res.body.connectionStatus).to.equal(McpConnectionStatusEnum.Connected);
+      });
+
+      it('flips the connection to expired when GitHub returns 401 (token revoked upstream)', async () => {
+        const { identifier, agentId } = await completeConnect();
+
+        routeJsonStub({
+          userInstallationsList: {
+            statusCode: 401,
+            statusMessage: 'Unauthorized',
+            headers: { 'content-type': 'application/json' },
+            body: { message: 'Bad credentials' },
+          },
+        });
+
+        const res = await session.testAgent.get(
+          `/v1/agents/${encodeURIComponent(identifier)}/mcp-servers/github/installations?subscriberId=${encodeURIComponent(
+            session.subscriberId
+          )}`
+        );
+        expect(res.status).to.equal(200);
+        expect(res.body.data).to.be.an('array').with.lengthOf(0);
+        expect(res.body.connectionStatus).to.equal(McpConnectionStatusEnum.Expired);
+
+        const conn = await findGithubConnection(agentId);
+        expect(conn!.status, 'connection should be flipped to expired so dashboard prompts re-auth').to.equal(
+          McpConnectionStatusEnum.Expired
+        );
+      });
     });
   });
 });

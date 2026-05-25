@@ -54,6 +54,7 @@ import {
   ListAgentMcpServersResponseDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
+  ListMcpInstallationsResponseDto,
   McpConnectionResponseDto,
   MigrateAgentRuntimeRequestDto,
   PatchAgentRuntimeConfigRequestDto,
@@ -117,6 +118,8 @@ import { ListAgentMcpServersCommand } from './usecases/list-agent-mcp-servers/li
 import { ListAgentMcpServers } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
+import { ListMcpInstallationsCommand } from './usecases/list-mcp-installations/list-mcp-installations.command';
+import { ListMcpInstallations } from './usecases/list-mcp-installations/list-mcp-installations.usecase';
 import { MigrateAgentRuntimeCommand } from './usecases/migrate-agent-runtime/migrate-agent-runtime.command';
 import { MigrateAgentRuntime } from './usecases/migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
@@ -169,6 +172,7 @@ export class AgentsController {
     private readonly enableAgentMcpServerUsecase: EnableAgentMcpServer,
     private readonly disableAgentMcpServerUsecase: DisableAgentMcpServer,
     private readonly listAgentMcpServersUsecase: ListAgentMcpServers,
+    private readonly listMcpInstallationsUsecase: ListMcpInstallations,
     private readonly generateMcpOAuthUrlUsecase: GenerateMcpOAuthUrl,
     private readonly getMcpConnectionStatusUsecase: GetMcpConnectionStatus,
     private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook,
@@ -1001,6 +1005,35 @@ export class AgentsController {
   ): Promise<McpConnectionResponseDto | null> {
     return this.getMcpConnectionStatusUsecase.execute(
       GetMcpConnectionStatusCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
+        subscriberId,
+      })
+    );
+  }
+
+  @Get('/:identifier/mcp-servers/:mcpId/installations')
+  @ApiResponse(ListMcpInstallationsResponseDto)
+  @ApiOperation({
+    summary: 'List GitHub-App installations the subscriber token can act on',
+    description:
+      'Calls `GET /user/installations` against GitHub with the subscriber\u2019s stored access token and returns the live list ' +
+      'plus "Manage on GitHub" deep links. Only applicable to MCPs that use the GitHub App + Installation flow (currently `github`). ' +
+      'When the token has been revoked upstream the connection is flipped to `expired` and the response carries that status.',
+  })
+  @ApiNotFoundResponse({ description: 'Agent, MCP enablement, or subscriber not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  listMcpInstallations(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string,
+    @Query('subscriberId') subscriberId: string
+  ): Promise<ListMcpInstallationsResponseDto> {
+    return this.listMcpInstallationsUsecase.execute(
+      ListMcpInstallationsCommand.create({
         userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,

@@ -18,7 +18,17 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { Switch } from '@/components/primitives/switch';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { GithubInstallationsList } from './github-installations-list';
 import { McpsSheet } from './mcps-sheet';
+
+/**
+ * Catalog ids whose `oauth.installation` block is set; these surface an
+ * additional installations list below the toggle row. Kept as a literal
+ * set rather than derived from `MCP_SERVERS` so the dashboard bundle
+ * doesn't pull the entire catalog into the component tree just for one
+ * conditional render.
+ */
+const MCPS_WITH_INSTALLATIONS_LIST = new Set(['github']);
 
 type McpsSectionProps = {
   agent: AgentResponse;
@@ -142,17 +152,25 @@ export function McpsSection({ agent }: McpsSectionProps) {
               const catalog = MCP_CATALOG_BY_ID.get(enablement.mcpId);
               const displayName = catalog?.name ?? enablement.mcpId;
               const Icon = getMcpIcon(catalog?.id ?? enablement.mcpId);
+              const hasInstallations = MCPS_WITH_INSTALLATIONS_LIST.has(enablement.mcpId);
 
               return (
-                <li key={enablement.id} className="flex items-center gap-3 p-3 not-last:border-b border-stroke-soft/60">
-                  <Switch
-                    checked
-                    disabled={!canEdit || isMutating}
-                    onCheckedChange={() => disableMcp.mutate(enablement.mcpId)}
-                    aria-label={`Disconnect ${displayName}`}
-                  />
-                  {Icon ? <Icon className="size-5 shrink-0 -mr-2" aria-hidden /> : null}
-                  <span className="text-text-sub text-label-sm min-w-0 flex-1 truncate font-medium">{displayName}</span>
+                <li key={enablement.id} className="flex flex-col not-last:border-b border-stroke-soft/60">
+                  <div className="flex items-center gap-3 p-3">
+                    <Switch
+                      checked
+                      disabled={!canEdit || isMutating}
+                      onCheckedChange={() => disableMcp.mutate(enablement.mcpId)}
+                      aria-label={`Disconnect ${displayName}`}
+                    />
+                    {Icon ? <Icon className="size-5 shrink-0 -mr-2" aria-hidden /> : null}
+                    <span className="text-text-sub text-label-sm min-w-0 flex-1 truncate font-medium">
+                      {displayName}
+                    </span>
+                  </div>
+                  {hasInstallations ? (
+                    <GithubInstallationsList agentIdentifier={agent.identifier} mcpId={enablement.mcpId} />
+                  ) : null}
                 </li>
               );
             })}

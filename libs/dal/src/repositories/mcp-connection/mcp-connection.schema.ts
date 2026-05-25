@@ -153,6 +153,34 @@ const lastErrorSchema = new Schema(
   { _id: false }
 );
 
+const installationSchema = new Schema(
+  {
+    id: {
+      type: Schema.Types.Number,
+      required: true,
+    },
+    account: {
+      type: Schema.Types.String,
+      required: true,
+    },
+    accountType: {
+      type: Schema.Types.String,
+      required: true,
+      enum: ['User', 'Organization'],
+    },
+    repositorySelection: {
+      type: Schema.Types.String,
+      required: true,
+      enum: ['all', 'selected'],
+    },
+    syncedAt: {
+      type: Schema.Types.Date,
+      required: true,
+    },
+  },
+  { _id: false }
+);
+
 const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
   {
     _organizationId: {
@@ -229,6 +257,10 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     },
     oauthClient: {
       type: oauthClientSchema,
+      required: false,
+    },
+    installation: {
+      type: installationSchema,
       required: false,
     },
     lastError: {

@@ -16,6 +16,7 @@ import {
   EnvironmentRepository,
   IntegrationRepository,
   McpConnectionEntity,
+  type McpConnectionInstallation,
   McpConnectionOAuthClient,
   McpConnectionRepository,
 } from '@novu/dal';
@@ -241,6 +242,32 @@ export class McpOAuthCallback {
       scopes: plainAuth.scopes,
     });
 
+    // GitHub-App "install + authorize" flow returns an `installation_id`
+    // alongside `code`. Fetch the metadata while we still have a fresh
+    // access token in memory and persist a snapshot for dashboard display.
+    // Falls back to a minimal snapshot (id + syncedAt) when the lookup
+    // fails — the connection itself is still valid; the dashboard will
+    // re-fetch via `GET /user/installations` at view time.
+    const installation = await this.captureInstallationSnapshotIfApplicable({
+      oauthConfig,
+      installationId: command.installationId,
+      accessToken: plainAuth.accessToken,
+    });
+
+    // `setup_action=request` means the user picked an org they don't admin;
+    // the install is pending an owner approval. Token still came back, so
+    // the row lands `Connected`, but we surface the pending state via
+    // `lastError` so the dashboard can render a banner without inventing
+    // a new status enum value (deferred per plan).
+    const pendingApprovalError =
+      command.setupAction === 'request'
+        ? {
+            code: 'mcp_github_pending_org_approval' as const,
+            message: 'Installation is pending approval from an organization owner.',
+            at: new Date(),
+          }
+        : undefined;
+
     await this.mcpConnectionRepository.update(
       {
         _id: claimed._id,
@@ -253,8 +280,14 @@ export class McpOAuthCallback {
           status: McpConnectionStatusEnum.Connected,
           auth,
           connectedAt: new Date(),
+          ...(installation && { installation }),
+          ...(pendingApprovalError && { lastError: pendingApprovalError }),
         },
-        $unset: { oauthState: 1, lastError: 1 },
+        // Only clear `lastError` when we're NOT writing a fresh
+        // pending-approval signal. Otherwise the same statement would
+        // both set and unset it (Mongo rejects). When pending approval
+        // applies we still want to drop `oauthState`, just not `lastError`.
+        $unset: pendingApprovalError ? { oauthState: 1 } : { oauthState: 1, lastError: 1 },
       }
     );
 
@@ -501,6 +534,96 @@ export class McpOAuthCallback {
       scopesGranted,
       registeredAt: new Date(claimed.createdAt),
     };
+  }
+
+  /**
+   * Resolve the GitHub-App installation metadata for the redirect we're
+   * processing. Only fires when:
+   *   - the catalog declares an `installation` block (i.e. App + Install flow), AND
+   *   - the redirect actually carried an `installation_id`.
+   *
+   * Returns `undefined` (no-op) for classic OAuth flows and for the rare
+   * case where the catalog uses the install flow but GitHub didn't return
+   * an installation_id — the connection itself is still valid; the
+   * dashboard will fetch installations fresh via `GET /user/installations`.
+   *
+   * GitHub call failures are logged but NEVER block the connection from
+   * landing `Connected`. A token without a snapshot is strictly better
+   * than failing the consent flow because we couldn't render a label.
+   */
+  private async captureInstallationSnapshotIfApplicable(args: {
+    oauthConfig: McpOAuthCatalogEntry;
+    installationId: string | undefined;
+    accessToken: string;
+  }): Promise<McpConnectionInstallation | undefined> {
+    const { oauthConfig, installationId, accessToken } = args;
+
+    if (oauthConfig.mode !== McpConnectionAuthModeEnum.NovuApp) {
+      return undefined;
+    }
+    if (!oauthConfig.installation) {
+      return undefined;
+    }
+    if (!installationId) {
+      return undefined;
+    }
+
+    const id = Number.parseInt(installationId, 10);
+    if (!Number.isInteger(id) || id <= 0) {
+      this.logger.warn(
+        { installationId },
+        'GitHub callback installation_id is not a positive integer; skipping snapshot'
+      );
+
+      return undefined;
+    }
+
+    try {
+      const response = await safeOutboundJsonRequest<Record<string, unknown>>({
+        url: `https://api.github.com/user/installations/${id}`,
+        method: 'GET',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          accept: 'application/vnd.github+json',
+          'x-github-api-version': '2022-11-28',
+        },
+        timeoutMs: 10_000,
+      });
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        this.logger.warn(
+          { installationId: id, status: response.statusCode },
+          'GitHub /user/installations/{id} returned non-2xx; storing minimal snapshot'
+        );
+
+        return {
+          id,
+          account: 'unknown',
+          accountType: 'User',
+          repositorySelection: 'selected',
+          syncedAt: new Date(),
+        };
+      }
+
+      return parseInstallationSnapshot(id, response.body);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        // SSRF policy ALWAYS wins; never bypass. We still don't fail the
+        // connection — just skip the snapshot.
+        this.logger.warn(
+          { installationId: id, reason: err.reason },
+          'GitHub /user/installations/{id} blocked by SSRF policy'
+        );
+
+        return undefined;
+      }
+      this.logger.warn(
+        { installationId: id, err: err instanceof Error ? err.message : String(err) },
+        'GitHub /user/installations/{id} fetch failed; skipping snapshot'
+      );
+
+      return undefined;
+    }
   }
 
   private async validateIssuer(
@@ -889,6 +1012,48 @@ function pickProviderErrorCode(body: unknown): string | undefined {
   }
 
   return undefined;
+}
+
+/**
+ * Build a `McpConnectionInstallation` snapshot from the JSON body of
+ * `GET /user/installations/{id}`. Tolerant of missing fields — returns a
+ * minimal snapshot rather than throwing, because failing the OAuth flow on
+ * a display-only field is worse UX than rendering "unknown" once.
+ *
+ * Reference: https://docs.github.com/en/rest/apps/installations
+ */
+function parseInstallationSnapshot(id: number, body: unknown): McpConnectionInstallation {
+  if (!body || typeof body !== 'object') {
+    return { id, account: 'unknown', accountType: 'User', repositorySelection: 'selected', syncedAt: new Date() };
+  }
+
+  const data = body as Record<string, unknown>;
+  const accountRaw = data.account;
+  let accountLogin = 'unknown';
+  let accountTypeRaw = 'User';
+  if (accountRaw && typeof accountRaw === 'object') {
+    const accountObj = accountRaw as Record<string, unknown>;
+    if (typeof accountObj.login === 'string' && accountObj.login.length > 0) {
+      accountLogin = accountObj.login;
+    }
+    if (typeof accountObj.type === 'string' && accountObj.type.length > 0) {
+      accountTypeRaw = accountObj.type;
+    }
+  }
+  const accountType: McpConnectionInstallation['accountType'] =
+    accountTypeRaw === 'Organization' ? 'Organization' : 'User';
+
+  const repoSelRaw = data.repository_selection;
+  const repositorySelection: McpConnectionInstallation['repositorySelection'] =
+    repoSelRaw === 'all' ? 'all' : 'selected';
+
+  return {
+    id,
+    account: accountLogin,
+    accountType,
+    repositorySelection,
+    syncedAt: new Date(),
+  };
 }
 
 /**

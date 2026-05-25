@@ -247,6 +247,17 @@ export class GenerateMcpOAuthUrl {
         let credentials: NovuAppCredentials;
         try {
           credentials = this.getNovuAppCredentials.execute(command.mcpId);
+          // Catalog opted into the GitHub-App install flow — resolve the
+          // slug now so a missing env var surfaces the same 422 path as a
+          // missing client_id, instead of crashing later inside
+          // `resolveServerEndpointsForNovuApp` after the connection row
+          // has already been mutated.
+          if (entry.installation) {
+            credentials = {
+              ...credentials,
+              appSlug: this.getNovuAppCredentials.executeAppSlug(command.mcpId),
+            };
+          }
         } catch (err) {
           if (err instanceof McpOAuthDiscoveryError) {
             throw new UnprocessableEntityException({
@@ -302,6 +313,12 @@ export class GenerateMcpOAuthUrl {
    * metadata discovery is skipped entirely because non-DCR upstreams
    * (e.g. GitHub) publish neither `.well-known/oauth-authorization-server`
    * nor a registration endpoint.
+   *
+   * When the catalog declares an `installation` block (GitHub App flow),
+   * the returned `authorizationEndpoint` is swapped to the App's install
+   * URL (`https://github.com/apps/<slug>/installations/new`) so the user
+   * installs the App and grants OAuth in one redirect. Scope list is
+   * forced to `[]` because GitHub Apps ignore the OAuth `scope=` param.
    */
   private async resolveServerEndpointsForNovuApp(
     catalog: McpServer,
@@ -326,6 +343,35 @@ export class GenerateMcpOAuthUrl {
         authorizationServers: [oauthConfig.catalog.issuer],
         scopesSupported: [],
         challengeScopes: undefined,
+      };
+    }
+
+    // GitHub-App "install + authorize in one redirect" path. The token
+    // endpoint stays the same as classic OAuth (`/login/oauth/access_token`),
+    // so only the user-facing redirect changes. `appSlug` is resolved
+    // upfront in `resolveOAuthConfig`, so by the time we get here it's
+    // guaranteed to be set whenever the catalog declares `installation`.
+    if (oauthConfig.catalog.installation) {
+      const slug = oauthConfig.credentials.appSlug;
+      if (!slug) {
+        // Should be unreachable — `resolveOAuthConfig` populates it before
+        // we get here. Throw a 500-ish error rather than constructing a
+        // malformed URL like `…/apps/undefined/installations/new`.
+        throw new Error(
+          `Resolved novu-app credentials for "${catalog.id}" missing app slug despite catalog installation block.`
+        );
+      }
+      const installAuthorizeUrl = `${oauthConfig.catalog.issuer}/apps/${encodeURIComponent(slug)}/installations/new`;
+
+      return {
+        issuer: oauthConfig.catalog.issuer,
+        authorizationEndpoint: installAuthorizeUrl,
+        tokenEndpoint: oauthConfig.catalog.tokenEndpoint,
+        resource: prm.resource ?? catalog.url,
+        // GitHub Apps reject / silently downgrade requests that include a
+        // `scope=` parameter on the install URL — permissions are declared
+        // on the App settings page, not via OAuth scopes.
+        scopes: [],
       };
     }
 

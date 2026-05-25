@@ -54,7 +54,14 @@ export type McpOAuthErrorCode =
   /** OAuth standard: the user clicked "Cancel" on the consent screen. */
   | 'mcp_user_denied'
   /** GitHub App: the target org has not approved/installed the Novu App. */
-  | 'mcp_app_not_installed';
+  | 'mcp_app_not_installed'
+  /**
+   * GitHub App: install completed but `setup_action=request` (user picked an
+   * org they don't admin). The OAuth grant is empty until an org owner
+   * approves the install; the dashboard renders a banner pointing at the
+   * install's manage URL so the user can wait + nudge the owner.
+   */
+  | 'mcp_github_pending_org_approval';
 
 export class McpOAuthDiscoveryError extends Error {
   readonly code: McpOAuthErrorCode;

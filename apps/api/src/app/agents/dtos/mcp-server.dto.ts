@@ -115,3 +115,55 @@ export class GenerateMcpOAuthUrlResponseDto {
   @ApiProperty({ description: 'Fully-qualified URL the dashboard should redirect the user to.' })
   authorizeUrl: string;
 }
+
+/**
+ * One GitHub-App installation the subscriber's token can act on. Returned
+ * by `GET /agents/:id/mcp-servers/:mcpId/installations` for catalog
+ * entries that opt into the install-and-authorize redirect (currently just
+ * `github`).
+ *
+ * The `manageUrl` deep-links the user back to GitHub's settings page so
+ * they can add/remove repos from the installation without re-running the
+ * full OAuth dance. Org installs land on the org's settings page; user
+ * installs land on the user's installations page.
+ */
+export class McpInstallationAccountDto {
+  @ApiProperty({ description: 'Account login (user handle or org slug).' })
+  login: string;
+
+  @ApiProperty({ enum: ['User', 'Organization'] })
+  type: 'User' | 'Organization';
+
+  @ApiPropertyOptional({ description: 'CDN avatar URL surfaced by GitHub.' })
+  avatarUrl?: string;
+}
+
+export class McpInstallationDto {
+  @ApiProperty({ description: 'Numeric installation id from GitHub.' })
+  id: number;
+
+  @ApiProperty({ type: McpInstallationAccountDto })
+  account: McpInstallationAccountDto;
+
+  @ApiProperty({ enum: ['all', 'selected'] })
+  repositorySelection: 'all' | 'selected';
+
+  @ApiPropertyOptional({ description: 'Endpoint to list the repositories included in this installation.' })
+  repositoriesUrl?: string;
+
+  @ApiProperty({ description: 'Deep link to manage the installation (add/remove repos) on github.com.' })
+  manageUrl: string;
+}
+
+/**
+ * Live installations the subscriber's GitHub-App token can act on. Status
+ * field surfaces token-side failures (e.g. `expired`) so the dashboard can
+ * prompt re-authorization without inventing a new wire shape.
+ */
+export class ListMcpInstallationsResponseDto {
+  @ApiProperty({ type: [McpInstallationDto] })
+  data: McpInstallationDto[];
+
+  @ApiProperty({ enum: McpConnectionStatusEnum })
+  connectionStatus: McpConnectionStatusEnum;
+}

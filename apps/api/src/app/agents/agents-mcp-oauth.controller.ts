@@ -4,8 +4,18 @@ import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { Response } from 'express';
 
 import { ThrottlerCategory } from '../rate-limiting/guards';
-import { McpOAuthCallbackCommand } from './usecases/mcp-oauth-callback/mcp-oauth-callback.command';
+import {
+  McpOAuthCallbackCommand,
+  type McpOAuthSetupAction,
+} from './usecases/mcp-oauth-callback/mcp-oauth-callback.command';
 import { McpOAuthCallback } from './usecases/mcp-oauth-callback/mcp-oauth-callback.usecase';
+
+/**
+ * `setup_action` values GitHub returns on the install-and-authorize
+ * redirect. Anything else is treated as the param being absent so we don't
+ * persist garbage onto the connection row.
+ */
+const SETUP_ACTION_WHITELIST = new Set<McpOAuthSetupAction>(['install', 'update', 'request']);
 
 const SUCCESS_FALLBACK_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Connection complete</title></head><body><p>Connection complete. You can close this window.</p><script>window.close();</script></body></html>`;
 const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Connection failed</title></head><body><p>Connection failed. You can close this window and try again.</p><script>window.close();</script></body></html>`;
@@ -40,7 +50,9 @@ export class AgentsMcpOAuthController {
     @Query('code') code?: string,
     @Query('error') error?: string,
     @Query('error_description') errorDescription?: string,
-    @Query('iss') iss?: string
+    @Query('iss') iss?: string,
+    @Query('installation_id') installationId?: string,
+    @Query('setup_action') setupAction?: string
   ): Promise<void> {
     if (!state) {
       throw new BadRequestException('Missing required OAuth parameter: state');
@@ -48,12 +60,23 @@ export class AgentsMcpOAuthController {
 
     const callbackError = error ? `${error}${errorDescription ? ` - ${errorDescription}` : ''}` : undefined;
 
+    // Reject `setup_action` values outside the documented set rather than
+    // forwarding them onto the command — GitHub's docs are stable but a
+    // malicious redirect could append `setup_action=evil` to the callback
+    // URL and we don't want that bypassing the command-level whitelist.
+    const normalizedSetupAction =
+      setupAction && SETUP_ACTION_WHITELIST.has(setupAction as McpOAuthSetupAction)
+        ? (setupAction as McpOAuthSetupAction)
+        : undefined;
+
     const result = await this.mcpOAuthCallbackUsecase.execute(
       McpOAuthCallbackCommand.create({
         state,
         providerCode: code,
         error: callbackError,
         iss,
+        installationId,
+        setupAction: normalizedSetupAction,
       })
     );
 

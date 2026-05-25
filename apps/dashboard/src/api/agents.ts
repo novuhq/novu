@@ -550,6 +550,71 @@ export function disableAgentMcpServer(
   });
 }
 
+const MCP_INSTALLATIONS_QUERY_KEY = 'fetchMcpInstallations' as const;
+
+export function getMcpInstallationsQueryKey(
+  environmentId: string | undefined,
+  agentIdentifier: string | undefined,
+  mcpId: string,
+  subscriberId: string | undefined
+) {
+  return [MCP_INSTALLATIONS_QUERY_KEY, environmentId, agentIdentifier, mcpId, subscriberId] as const;
+}
+
+export type McpInstallation = {
+  id: number;
+  account: {
+    login: string;
+    type: 'User' | 'Organization';
+    avatarUrl?: string;
+  };
+  repositorySelection: 'all' | 'selected';
+  repositoriesUrl?: string;
+  manageUrl: string;
+};
+
+/**
+ * Connection status mirrors the api-service `McpConnectionStatusEnum`. We
+ * intentionally do NOT import the enum from `@novu/shared` here — the wire
+ * type would force a circular dependency for what is effectively five
+ * literal strings. Keep this in lock-step with the backend.
+ */
+export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
+
+export type ListMcpInstallationsResponse = {
+  data: McpInstallation[];
+  connectionStatus: McpConnectionStatus;
+};
+
+export async function listMcpInstallations(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string,
+  subscriberId: string,
+  signal?: AbortSignal
+): Promise<ListMcpInstallationsResponse> {
+  const response = await get<{ data: ListMcpInstallationsResponse }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}/installations?subscriberId=${encodeURIComponent(subscriberId)}`,
+    { environment, signal }
+  );
+
+  return response.data;
+}
+
+export async function generateMcpOAuthUrl(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string,
+  subscriberId: string
+): Promise<{ authorizeUrl: string }> {
+  const response = await post<{ data: { authorizeUrl: string } }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}/oauth/url`,
+    { environment, body: { subscriberId } }
+  );
+
+  return response.data;
+}
+
 type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
 
 /** Enable or disable the Novu shared inbox for a single agent. */
