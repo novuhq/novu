@@ -127,13 +127,17 @@ export class MigrateAgentRuntime {
           session ? { session } : undefined
         );
 
-        const remainingDemoAgents = await this.agentRepository.count({
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-          'managedRuntime._integrationId': sourceIntegration._id,
-        });
+        const remainingDemoAgents = await this.agentRepository.find(
+          {
+            _environmentId: command.environmentId,
+            _organizationId: command.organizationId,
+            'managedRuntime._integrationId': sourceIntegration._id,
+          },
+          ['_id'],
+          session ? { session } : {}
+        );
 
-        if (remainingDemoAgents === 0) {
+        if (remainingDemoAgents.length === 0) {
           await this.integrationRepository.delete(
             {
               _id: sourceIntegration._id,

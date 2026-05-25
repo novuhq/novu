@@ -5,16 +5,13 @@ import {
   AgentRuntimeUnauthorizedError,
   decryptCredentials,
 } from '@novu/application-generic';
-// Stub at the source factory module rather than the barrel: TypeScript's `__exportStar` helper
-// installs a non-configurable getter on the package barrel, which `sinon.stub` cannot replace.
-// The barrel getter reads the property from this source module on every access, so stubbing here
-// transparently propagates to both `create-integration.usecase.ts` and `provision-managed-agent.usecase.ts`.
-import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+
+import { stubResolveAgentRuntime } from './helpers/stub-resolve-agent-runtime';
 
 const FAKE_API_KEY = 'sk-fake-anthropic-key-for-e2e';
 const FAKE_EXTERNAL_AGENT_ID = 'ext-agent-e2e-123';
@@ -91,7 +88,7 @@ describe('Managed Agents API #novu-v2', () => {
     await session.initialize();
 
     mockProvider = buildMockProvider();
-    sinon.stub(AgentRuntimeFactoryModule, 'getAgentRuntimeProvider').returns(mockProvider as never);
+    stubResolveAgentRuntime(mockProvider, { defaultApiKey: FAKE_API_KEY });
   });
 
   afterEach(async () => {

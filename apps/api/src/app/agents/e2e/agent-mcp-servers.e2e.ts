@@ -1,4 +1,3 @@
-import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
 import * as SsrfModule from '@novu/application-generic/build/main/utils/ssrf-url-validation';
 import {
   AgentMcpServerRepository,
@@ -16,6 +15,8 @@ import {
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
+
+import { stubResolveAgentRuntime } from './helpers/stub-resolve-agent-runtime';
 
 const FAKE_API_KEY = 'sk-fake-anthropic-key-for-e2e';
 const FAKE_EXTERNAL_AGENT_ID = 'ext-agent-mcp-e2e-123';
@@ -91,7 +92,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     await session.initialize();
 
     mockProvider = buildMockProvider();
-    sinon.stub(AgentRuntimeFactoryModule, 'getAgentRuntimeProvider').returns(mockProvider as never);
+    stubResolveAgentRuntime(mockProvider, { defaultApiKey: FAKE_API_KEY });
   });
 
   afterEach(async () => {

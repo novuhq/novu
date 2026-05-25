@@ -6,6 +6,8 @@ import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
+import { stubResolveAgentRuntime } from './helpers/stub-resolve-agent-runtime';
+
 const FAKE_MASTER_KEY = 'sk-ant-novu-master-key';
 const FAKE_EXTERNAL_AGENT_ID = 'ext-demo-agent-e2e';
 const FAKE_EXTERNAL_ENV_ID = 'env_01DemoClaudeE2E';
@@ -47,6 +49,7 @@ describe('Demo Managed Claude #novu-v2', () => {
   let session: UserSession;
   let mockProvider: ReturnType<typeof buildMockProvider>;
   let getAgentRuntimeProviderStub: sinon.SinonStub;
+  let resolveAgentRuntimeStub: sinon.SinonStub;
   const createdAgentIdentifiers: string[] = [];
   const createdIntegrationIds: string[] = [];
 
@@ -83,6 +86,32 @@ describe('Demo Managed Claude #novu-v2', () => {
     await session.initialize();
 
     mockProvider = buildMockProvider();
+    resolveAgentRuntimeStub = stubResolveAgentRuntime(mockProvider, {
+      resolve: (providerId, credentials) => {
+        if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+          return {
+            apiKey: FAKE_MASTER_KEY,
+            credentials: decryptCredentials(credentials ?? {}),
+            provider: mockProvider,
+            validateCredentialsInput: { apiKey: FAKE_MASTER_KEY },
+          };
+        }
+
+        if (providerId === AgentRuntimeProviderIdEnum.Anthropic) {
+          return {
+            apiKey: 'sk-user-anthropic-key',
+            credentials: decryptCredentials(credentials ?? {}),
+            provider: buildMockProvider({
+              providerId: AgentRuntimeProviderIdEnum.Anthropic,
+              createAgent: sinon.stub().resolves({ externalAgentId: 'ext-user-agent' }),
+            }),
+            validateCredentialsInput: { apiKey: 'sk-user-anthropic-key' },
+          };
+        }
+
+        return null;
+      },
+    });
     getAgentRuntimeProviderStub = sinon
       .stub(AgentRuntimeFactoryModule, 'getAgentRuntimeProvider')
       .callsFake((_providerId: string, apiKey?: string) => {
@@ -205,14 +234,12 @@ describe('Demo Managed Claude #novu-v2', () => {
     });
 
     mockProvider.getConfig.resetHistory();
-    getAgentRuntimeProviderStub.resetHistory();
+    resolveAgentRuntimeStub.resetHistory();
 
     const configRes = await session.testAgent.get(`/v1/agents/${encodeURIComponent(identifier)}/runtime/config`);
 
     expect(configRes.status).to.equal(200);
-    expect(getAgentRuntimeProviderStub.calledWith(AgentRuntimeProviderIdEnum.NovuAnthropic, FAKE_MASTER_KEY)).to.equal(
-      true
-    );
+    expect(resolveAgentRuntimeStub.calledWith(AgentRuntimeProviderIdEnum.NovuAnthropic)).to.equal(true);
     expect(mockProvider.getConfig.calledOnce).to.equal(true);
     expect(configRes.body.data.tools).to.be.an('array');
   });
