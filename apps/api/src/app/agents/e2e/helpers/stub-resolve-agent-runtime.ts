@@ -1,12 +1,13 @@
 import { decryptCredentials } from '@novu/application-generic';
+import type { IAgentRuntimeProvider } from '@novu/application-generic/build/main/agent-runtimes/i-agent-runtime-provider';
 import * as ResolveAgentRuntimeModule from '@novu/application-generic/build/main/agent-runtimes/resolve-agent-runtime';
 import { AgentRuntimeProviderIdEnum, type ICredentialsDto } from '@novu/shared';
 import sinon from 'sinon';
 
 type ResolvedAgentRuntimeStub = {
   apiKey: string;
-  credentials: Record<string, unknown>;
-  provider: unknown;
+  credentials: ICredentialsDto;
+  provider: IAgentRuntimeProvider;
   validateCredentialsInput: Record<string, unknown>;
 };
 
@@ -16,9 +17,9 @@ type ResolveAgentRuntimeStubOptions = {
 };
 
 function buildResolved(
-  mockProvider: unknown,
+  mockProvider: IAgentRuntimeProvider,
   apiKey: string,
-  credentials: Record<string, unknown> = {}
+  credentials: ICredentialsDto = {}
 ): ResolvedAgentRuntimeStub {
   return {
     apiKey,
@@ -29,7 +30,7 @@ function buildResolved(
 }
 
 export function stubResolveAgentRuntime(
-  mockProvider: unknown,
+  mockProvider: IAgentRuntimeProvider,
   options: ResolveAgentRuntimeStubOptions = {}
 ): sinon.SinonStub {
   const defaultApiKey = options.defaultApiKey ?? 'sk-fake-anthropic-key-for-e2e';
@@ -39,7 +40,7 @@ export function stubResolveAgentRuntime(
       return options.resolve(providerId, credentials);
     }
 
-    const decrypted = decryptCredentials(credentials ?? {});
+    const decrypted = decryptCredentials(credentials ?? {}) as ICredentialsDto;
 
     if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
       const masterKey = process.env.NOVU_MANAGED_CLAUDE_API_KEY;
@@ -54,5 +55,5 @@ export function stubResolveAgentRuntime(
     const apiKey = (decrypted.apiKey as string | undefined) ?? defaultApiKey;
 
     return buildResolved(mockProvider, apiKey, decrypted);
-  });
+  }) as sinon.SinonStub;
 }
