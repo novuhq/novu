@@ -347,25 +347,23 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const client = this.buildClient();
 
     try {
-      // Walk the session event log oldest-first looking for an MCP or
-      // builtin tool_use event whose evaluated_permission is "ask" — that's
-      // what parks the session in `requires_action`. The provider contract
-      // asks for the SINGLE OLDEST PENDING ask, so we must scan ascending
-      // and pick the first match (a descending walk would surface the
-      // newest unresolved ask instead). The `user.tool_confirmation`
-      // sentinel still short-circuits — if we encounter a confirmation
-      // event before any later ask, that confirmation already resolved a
-      // prior pending request and there's nothing left to ask the user.
+      // Walk the session event log oldest-first looking for the still-open
+      // tool-use ask that parks the session in `requires_action`. Anthropic
+      // emits one ask at a time and a subsequent `user.tool_confirmation`
+      // resolves the prior one, so we track the most-recent ask and clear
+      // it on each confirmation. The survivor at the end of the walk is
+      // the single unresolved ask (or `null` if the model emitted no ask
+      // or every ask has already been confirmed).
       const iterator = (client as any).beta.sessions.events.list(sessionId, {
         order: 'asc',
         types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
       });
 
+      let pending: PendingToolApproval | null = null;
+
       for await (const event of iterator) {
         if (event?.type === 'user.tool_confirmation') {
-          // A confirmation event encountered during an ascending walk
-          // resolves the most-recent prior ask — continue scanning so a
-          // later still-open ask can be surfaced.
+          pending = null;
           continue;
         }
 
@@ -380,7 +378,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           continue;
         }
 
-        return {
+        pending = {
           toolUseId,
           toolName,
           mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
@@ -388,7 +386,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         };
       }
 
-      return null;
+      return pending;
     } catch (err) {
       this.normaliseError(err);
     }
