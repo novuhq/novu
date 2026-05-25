@@ -8,6 +8,7 @@ import { useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { sendAgentWelcomeMessage } from '@/api/agents';
 import { slackQuickSetup } from '@/api/integrations';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { CodeBlock } from '@/components/primitives/code-block';
@@ -17,7 +18,6 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { API_HOSTNAME } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { buildAgentConnectionIdentifier } from '@/utils/connect-subscriber-id';
@@ -348,9 +348,7 @@ export function SlackSetupGuide({
   ) : null;
 
   const connectionIdentifier =
-    isUserLoaded && currentUser?._id
-      ? buildAgentConnectionIdentifier(currentUser._id, agent._id)
-      : null;
+    isUserLoaded && currentUser?._id ? buildAgentConnectionIdentifier(currentUser._id, agent._id) : null;
 
   const slackInstallConnectControl =
     isConnectSubscriberReady && connectionIdentifier && selectedIntegrationIdentifier ? (

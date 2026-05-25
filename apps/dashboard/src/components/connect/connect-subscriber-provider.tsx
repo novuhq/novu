@@ -1,5 +1,5 @@
 import { NovuProvider } from '@novu/react';
-import { createContext, type ComponentProps, type ReactNode } from 'react';
+import { type ComponentProps, createContext, type ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';

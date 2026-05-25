@@ -42,6 +42,7 @@ import { Landing1SignUpPage } from '@/pages/landing-1-signup';
 import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
+import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
@@ -80,7 +81,6 @@ import { UpsertVariablePage } from './pages/upsert-variable';
 import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
-import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
 import { ConnectProtectedRoute } from './routes/connect-protected-route';
 import { OnboardingParentRoute } from './routes/onboarding';
@@ -157,11 +157,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/onboarding',
-        element: (
-          <ConnectSubscriberProvider>
-            <OnboardingParentRoute />
-          </ConnectSubscriberProvider>
-        ),
+        element: <OnboardingParentRoute />,
         children: [
           {
             path: ROUTES.USECASE_SELECT,
