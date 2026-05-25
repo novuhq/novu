@@ -1,4 +1,4 @@
-import { PermissionsEnum } from '@novu/shared';
+import { isClaudePlatformConsoleProvider, PermissionsEnum } from '@novu/shared';
 import { RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { Badge } from '@/components/primitives/badge';
@@ -67,7 +67,7 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
         <div className="flex shrink-0 items-center gap-3">
           {agent.runtime === 'managed' &&
           agent.managedRuntime?.consoleUrl &&
-          agent.managedRuntime.providerId === 'anthropic' ? (
+          isClaudePlatformConsoleProvider(agent.managedRuntime.providerId) ? (
             <Button variant="secondary" mode="outline" size="xs" className="gap-1.5" asChild>
               <a href={agent.managedRuntime.consoleUrl} target="_blank" rel="noreferrer noopener">
                 <span>Open in</span>
