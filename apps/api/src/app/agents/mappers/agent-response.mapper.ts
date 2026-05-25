@@ -5,7 +5,13 @@ import {
   isValidAgentEmailSlugPrefix,
 } from '@novu/application-generic';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
-import { buildClaudePlatformAgentConsoleUrl, EmailProviderIdEnum, isClaudePlatformConsoleProvider, slugify } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  buildClaudePlatformAgentConsoleUrl,
+  EmailProviderIdEnum,
+  isClaudePlatformConsoleProvider,
+  slugify,
+} from '@novu/shared';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 
@@ -43,7 +49,7 @@ function buildAgentConsoleUrl(
   externalAgentId: string,
   externalWorkspaceId: string | undefined
 ): string | undefined {
-  if (!isClaudePlatformConsoleProvider(providerId)) {
+  if (!isClaudePlatformConsoleProvider(providerId) || providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
     return undefined;
   }
 
