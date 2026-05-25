@@ -7,6 +7,7 @@ import {
   isAnthropicAwsProvider,
   resolveAwsAnthropicCredentials,
   toValidateCredentialsInput,
+  type ResolvedAwsAnthropicCredentials,
 } from './anthropic/anthropic-aws-credentials';
 import type { IAgentRuntimeProvider, ValidateCredentialsInput } from './i-agent-runtime-provider';
 
@@ -15,6 +16,7 @@ export type ResolvedAgentRuntime = {
   credentials: ReturnType<typeof decryptCredentials>;
   provider: IAgentRuntimeProvider;
   validateCredentialsInput: ValidateCredentialsInput;
+  awsCredentials?: ResolvedAwsAnthropicCredentials;
 };
 
 export function resolveAgentRuntime(
@@ -49,11 +51,10 @@ export function resolveAgentRuntime(
     const validateCredentialsInput = toValidateCredentialsInput(decrypted as Record<string, unknown>);
 
     return {
-      apiKey: awsCredentials.apiKey ?? '',
+      apiKey: awsCredentials.apiKey,
       credentials: decrypted,
-      provider: createAnthropicProvider(AgentRuntimeProviderIdEnum.AnthropicAws, {
-        credentials: decrypted as Record<string, unknown>,
-      }),
+      awsCredentials,
+      provider: createAnthropicProvider(AgentRuntimeProviderIdEnum.AnthropicAws, { awsCredentials }),
       validateCredentialsInput,
     };
   }

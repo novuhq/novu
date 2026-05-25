@@ -1,5 +1,6 @@
 export * from './agent';
 export * from './ai';
+export * from './anthropic-aws';
 export * from './auth';
 export * from './billing';
 export * from './builder';

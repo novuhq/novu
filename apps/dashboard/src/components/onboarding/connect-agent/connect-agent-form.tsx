@@ -59,6 +59,7 @@ type ConnectAgentFormProps = {
   isClaudeSelected: boolean;
   apiKey: string;
   externalWorkspaceId: string;
+  region: string;
 
   templateSelection: TemplateSelection;
   isExistingMode: boolean;
@@ -98,6 +99,7 @@ type ConnectAgentFormProps = {
   onTemplateChange: (next: TemplateSelection) => void;
   onApiKeyChange: (next: string) => void;
   onExternalWorkspaceIdChange: (next: string) => void;
+  onRegionChange: (next: string) => void;
   onNameChange: (next: string) => void;
   onIdentifierChange: (next: string) => void;
   onIdentifierTouched: () => void;
@@ -201,6 +203,7 @@ export function ConnectAgentForm({
   isClaudeSelected,
   apiKey,
   externalWorkspaceId,
+  region,
   templateSelection,
   isExistingMode,
   isScratchMode,
@@ -228,6 +231,7 @@ export function ConnectAgentForm({
   onTemplateChange,
   onApiKeyChange,
   onExternalWorkspaceIdChange,
+  onRegionChange,
   onNameChange,
   onIdentifierChange,
   onIdentifierTouched,
@@ -310,6 +314,7 @@ export function ConnectAgentForm({
                 integrationName={integrationName}
                 apiKey={apiKey}
                 externalWorkspaceId={externalWorkspaceId}
+                region={region}
                 errors={errors}
                 disabled={disabled}
                 status={verifyStatus}
@@ -320,6 +325,7 @@ export function ConnectAgentForm({
                 onIntegrationNameChange={onIntegrationNameChange}
                 onApiKeyChange={onApiKeyChange}
                 onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+                onRegionChange={onRegionChange}
                 onVerify={onVerify}
                 onSave={onSaveIntegration}
               />

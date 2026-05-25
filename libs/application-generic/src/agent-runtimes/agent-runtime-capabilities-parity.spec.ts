@@ -10,16 +10,16 @@ import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
  * capability-bound contract (vault methods either work or throw the
  * documented `UnsupportedCapabilityError`).
  *
- * Adding a new managed runtime is a single registration in
- * `agent-runtime.factory.ts` + a catalog entry — this spec auto-covers it.
+ * Cloud providers register in `agent-runtime.factory.ts`; AWS uses
+ * `resolveAgentRuntime()` because credentials are multi-field.
  */
 
 function getProviderInstance(id: AgentRuntimeProviderIdEnum): IAgentRuntimeProvider {
   if (id === AgentRuntimeProviderIdEnum.AnthropicAws) {
     return createAnthropicProvider(id, {
-      credentials: {
+      awsCredentials: {
         region: 'us-east-1',
-        externalWorkspaceId: 'wrkspc_test',
+        workspaceId: 'wrkspc_test',
         apiKey: 'test-aws-key',
       },
     });
@@ -29,10 +29,14 @@ function getProviderInstance(id: AgentRuntimeProviderIdEnum): IAgentRuntimeProvi
 }
 
 describe('Agent runtime catalog ↔ registry parity', () => {
-  it('every catalog entry has a registered factory', () => {
+  it('every cloud catalog entry has a registered factory', () => {
     const registered = new Set(listRegisteredAgentRuntimeProviders());
 
     for (const entry of AGENT_RUNTIME_PROVIDERS) {
+      if (entry.providerId === AgentRuntimeProviderIdEnum.AnthropicAws) {
+        continue;
+      }
+
       expect(registered.has(entry.providerId as AgentRuntimeProviderIdEnum)).toBe(true);
     }
   });

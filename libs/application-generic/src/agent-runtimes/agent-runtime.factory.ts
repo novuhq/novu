@@ -16,9 +16,6 @@ const PROVIDER_REGISTRY = new Map<AgentRuntimeProviderIdEnum, ProviderFactory>([
   [AgentRuntimeProviderIdEnum.Anthropic, (apiKey) => createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey })],
   [AgentRuntimeProviderIdEnum.NovuAnthropic, (apiKey) =>
     createAnthropicProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, { apiKey })],
-  [AgentRuntimeProviderIdEnum.AnthropicAws, () => {
-    throw new Error('Use resolveAgentRuntime() for anthropic-aws — credentials cannot be reduced to an API key alone');
-  }],
 ]);
 
 /**

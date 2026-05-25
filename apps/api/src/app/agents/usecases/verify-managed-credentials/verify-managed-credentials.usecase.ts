@@ -1,10 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import {
-  createAnthropicProvider,
-  getAgentRuntimeProvider,
-  InstrumentUsecase,
-  toValidateCredentialsInput,
-} from '@novu/application-generic';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InstrumentUsecase, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 
 import { VerifyManagedCredentialsCommand } from './verify-managed-credentials.command';
@@ -23,23 +18,17 @@ export type VerifyManagedCredentialsResult = {
 export class VerifyManagedCredentials {
   @InstrumentUsecase()
   async execute(command: VerifyManagedCredentialsCommand): Promise<VerifyManagedCredentialsResult> {
-    if (command.providerId === AgentRuntimeProviderIdEnum.AnthropicAws) {
-      const credentials = {
-        region: command.region,
-        externalWorkspaceId: command.externalWorkspaceId,
-        apiKey: command.apiKey,
-      };
-      const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.AnthropicAws, { credentials });
-      await provider.validateCredentials(toValidateCredentialsInput(credentials));
-
-      return { valid: true };
-    }
-
-    const provider = getAgentRuntimeProvider(command.providerId, command.apiKey!);
-    await provider.validateCredentials({
+    const resolved = resolveAgentRuntime(command.providerId, {
       apiKey: command.apiKey,
+      region: command.region,
       externalWorkspaceId: command.externalWorkspaceId,
     });
+
+    if (!resolved) {
+      throw new BadRequestException('Incomplete credentials for the selected provider');
+    }
+
+    await resolved.provider.validateCredentials(resolved.validateCredentialsInput);
 
     return { valid: true };
   }

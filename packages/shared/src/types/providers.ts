@@ -57,6 +57,8 @@ export enum CredentialsKeyEnum {
   OutboundIntegrationId = 'outboundIntegrationId',
   /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. Auto-populated by the API — never entered by the user. */
   ExternalEnvironmentId = 'externalEnvironmentId',
+  /** Claude Platform on AWS: workspace ID (`wrkspc_…`) required for agent runtime dispatch. */
+  ExternalWorkspaceId = 'externalWorkspaceId',
 }
 
 export type ConfigurationKey = keyof IConfigurations;
@@ -164,13 +166,6 @@ export enum AgentRuntimeProviderIdEnum {
   Anthropic = 'anthropic',
   NovuAnthropic = 'novu-anthropic',
   AnthropicAws = 'anthropic-aws',
-}
-
-/** Authentication mode for Claude Platform on AWS integrations. IAM support is planned but not yet implemented. */
-export enum AwsAuthModeEnum {
-  ApiKey = 'api_key',
-  /** @deprecated Not yet supported — reserved for future IAM/SigV4 auth. */
-  Iam = 'iam',
 }
 
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */

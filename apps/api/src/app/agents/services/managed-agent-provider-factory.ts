@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { type IAgentRuntimeProvider, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
+import { type IAgentRuntimeProvider, PinoLogger, resolveAgentRuntime, type ResolvedAwsAnthropicCredentials } from '@novu/application-generic';
 import { type AgentEntity, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { cloudflare, thalamus, type WebhookProvider } from '@novu/thalamus';
@@ -60,37 +60,22 @@ export class ManagedAgentProviderFactory {
       throw new Error('Integration credentials are incomplete or invalid');
     }
 
-    const { credentials: creds, provider: runtimeProvider } = resolved;
+    const { credentials: creds, provider: runtimeProvider, awsCredentials, apiKey } = resolved;
     const providerId = integration.providerId as AgentRuntimeProviderIdEnum;
-
-    if (providerId === AgentRuntimeProviderIdEnum.AnthropicAws) {
-      if (!creds.externalEnvironmentId) {
-        throw new Error('Integration has no external environment id');
-      }
-
-      const webhookProvider = this.createAwsProvider({
-        credentials: creds,
-        agentId: agent.managedRuntime.externalAgentId,
-        environmentId: creds.externalEnvironmentId as string,
-      });
-      const runtime: ResolvedRuntime = { provider: webhookProvider, runtimeProvider };
-      this.providers.set(key, runtime);
-
-      return runtime;
-    }
-
-    const { apiKey } = resolved;
 
     if (!creds.externalEnvironmentId) {
       throw new Error('Integration has no external environment id');
     }
 
-    const provider = this.createCloudProvider(providerId, {
-      apiKey,
-      agentId: agent.managedRuntime.externalAgentId,
-      environmentId: creds.externalEnvironmentId as string,
-    });
-    const runtime: ResolvedRuntime = { provider, runtimeProvider };
+    const environmentId = creds.externalEnvironmentId as string;
+    const agentId = agent.managedRuntime.externalAgentId;
+
+    const webhookProvider =
+      awsCredentials != null
+        ? this.createAwsProvider({ awsCredentials, agentId, environmentId })
+        : this.createCloudProvider(providerId, { apiKey, agentId, environmentId });
+
+    const runtime: ResolvedRuntime = { provider: webhookProvider, runtimeProvider };
     this.providers.set(key, runtime);
 
     return runtime;
@@ -144,14 +129,14 @@ export class ManagedAgentProviderFactory {
   }
 
   private createAwsProvider(config: {
-    credentials: Record<string, unknown>;
+    awsCredentials: ResolvedAwsAnthropicCredentials;
     agentId: string;
     environmentId: string;
   }): WebhookProvider {
     const durable = this.buildDurableBackend();
 
     return thalamus.anthropic(
-      buildThalamusAwsAnthropicConfig(config.credentials, config.agentId, config.environmentId, durable)
+      buildThalamusAwsAnthropicConfig(config.awsCredentials, config.agentId, config.environmentId, durable)
     );
   }
 

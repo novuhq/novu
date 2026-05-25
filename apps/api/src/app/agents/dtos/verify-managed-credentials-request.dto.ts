@@ -12,12 +12,14 @@ export class VerifyManagedCredentialsRequestDto {
   @IsNotEmpty()
   providerId: AgentRuntimeProviderIdEnum;
 
-  @ApiPropertyOptional({ description: 'API key to validate against the provider.' })
+  @ApiProperty({ description: 'API key to validate against the provider.' })
   @IsString()
   @IsNotEmpty()
   apiKey: string;
 
-  @ApiPropertyOptional({ description: 'Optional workspace id; defaults to the provider default workspace.' })
+  @ApiPropertyOptional({
+    description: 'Workspace id for Anthropic cloud (optional) or required for Claude Platform on AWS.',
+  })
   @ValidateIf((body: VerifyManagedCredentialsRequestDto) => body.providerId === AgentRuntimeProviderIdEnum.AnthropicAws)
   @IsString()
   @IsNotEmpty()

@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { AGENTS_LIST_QUERY_KEY, type AgentResponse, type CreateAgentBody, createAgent } from '@/api/agents';
 import { resolveClaudeManagedProviderId } from '@/components/agents/connectors/claude-managed-integrations';
+import { buildManagedIntegrationCredentials } from '@/components/agents/create-agent-fields';
 import type { CreateAgentForm } from '@/components/agents/create-agent-fields';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
@@ -95,23 +96,16 @@ export function useCreateAgentMutation() {
             const selectedIntegration = cachedIntegrations?.find((integration) => integration._id === integrationId);
             managedProviderId = resolveClaudeManagedProviderId(selectedIntegration);
           } else {
-            const isAws = managedProviderId === AgentRuntimeProviderIdEnum.AnthropicAws;
-
             try {
               const { data: integration } = await createIntegration({
                 active: true,
                 kind: IntegrationKindEnum.AGENT,
                 providerId: managedProviderId,
-                credentials: isAws
-                  ? {
-                      region: region?.trim(),
-                      externalWorkspaceId: externalWorkspaceId?.trim(),
-                      apiKey,
-                    }
-                  : {
-                      apiKey,
-                      ...(externalWorkspaceId ? { externalWorkspaceId } : {}),
-                    },
+                credentials: buildManagedIntegrationCredentials(managedProviderId, {
+                  apiKey,
+                  region,
+                  externalWorkspaceId,
+                }),
                 name: integrationName?.trim() || name,
               });
 

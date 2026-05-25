@@ -5,6 +5,8 @@ import {
   RiArrowDownSLine,
   RiArrowUpSLine,
   RiCheckLine,
+  RiEyeLine,
+  RiEyeOffLine,
   RiLoader4Line,
   RiRefreshLine,
 } from 'react-icons/ri';
@@ -292,6 +294,15 @@ function ClaudeCloudCredentialFields({
               hasError={Boolean(errors.apiKey)}
               disabled={disabled}
               className="font-mono"
+              inlineTrailingNode={
+                <button
+                  type="button"
+                  onClick={() => setShowSecret((prev) => !prev)}
+                  aria-label={showSecret ? 'Hide API key' : 'Show API key'}
+                >
+                  {showSecret ? <RiEyeOffLine className="text-text-sub" /> : <RiEyeLine className="text-text-sub" />}
+                </button>
+              }
             />
             {errors.apiKey ? (
               <p className="text-error-base text-label-xs" role="alert">

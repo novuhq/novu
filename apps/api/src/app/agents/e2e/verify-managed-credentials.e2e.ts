@@ -1,6 +1,8 @@
 import { AgentRuntimeUnauthorizedError } from '@novu/application-generic';
 import * as AnthropicProviderModule from '@novu/application-generic/build/main/agent-runtimes/anthropic/anthropic-agent-runtime.provider';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
+import { UserSession } from '@novu/testing';
+import { expect } from 'chai';
 import sinon from 'sinon';
 
 const FAKE_API_KEY = 'sk-fake-anthropic-key-for-verify-e2e';
@@ -116,6 +118,11 @@ describe('Verify Managed Credentials API #novu-v2', () => {
       expect(res.status).to.equal(201);
       expect(res.body.data?.valid ?? res.body.valid).to.equal(true);
       expect(mockProvider.validateCredentials.calledOnce).to.be.true;
+      expect(mockProvider.validateCredentials.firstCall.args[0]).to.deep.equal({
+        apiKey: FAKE_API_KEY,
+        region: 'us-east-1',
+        externalWorkspaceId: 'wrkspc_test',
+      });
     });
   });
 });

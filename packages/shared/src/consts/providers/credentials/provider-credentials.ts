@@ -1503,6 +1503,13 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
     required: true,
   },
   {
+    key: CredentialsKeyEnum.ExternalWorkspaceId,
+    displayName: 'Workspace ID',
+    description: 'Claude Platform on AWS workspace ID (`wrkspc_…`). Required for agent runtime dispatch.',
+    type: 'string',
+    required: true,
+  },
+  {
     key: CredentialsKeyEnum.ExternalEnvironmentId,
     displayName: 'Environment ID',
     description: 'The environment ID auto-provisioned for this integration. Read-only.',
