@@ -32,8 +32,8 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
 
     const { body } = await session.testAgent.put('/v1/integrations/telegram').send(payload);
 
-    expect(body.statusCode).to.equal(400);
-    expect(body.message).to.include('integrationId');
+    expect(body.statusCode).to.equal(422);
+    expect(body.errors.integrationId.messages[0]).to.equal('integrationId must be a mongodb id');
   });
 
   it('should throw not found exception when integration is not found', async () => {
