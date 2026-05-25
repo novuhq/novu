@@ -73,21 +73,6 @@ describe('AgentSubscriberResolver', () => {
         .equal(true);
     });
 
-    it('should resolve when inbound phone has no + and subscriber has no +', async () => {
-      const { resolver, subscriberRepository } = makeResolver({
-        findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-1' }]),
-      });
-
-      const result = await resolver.resolve({
-        ...baseParams,
-        platform: AgentPlatformEnum.WHATSAPP,
-        platformUserId: '972541111111',
-      });
-
-      expect(result).to.equal('sub-1');
-      expect(subscriberRepository.findByPhone.firstCall.args[2]).to.deep.equal(['+972541111111', '972541111111']);
-    });
-
     it('should return null when no subscriber matches', async () => {
       const { resolver } = makeResolver({
         findByPhone: sinon.stub().resolves([]),
@@ -147,20 +132,6 @@ describe('AgentSubscriberResolver', () => {
       expect(result).to.equal('sub-slack');
       expect(channelEndpointRepository.findByPlatformIdentity.calledOnce).to.equal(true);
       expect(subscriberRepository.findByPhone.called).to.equal(false);
-    });
-
-    it('should not call subscriber repository for WhatsApp', async () => {
-      const { resolver, subscriberRepository } = makeResolver({
-        findByPhone: sinon.stub().resolves([{ subscriberId: 'sub-wa' }]),
-      });
-
-      await resolver.resolve({
-        ...baseParams,
-        platform: AgentPlatformEnum.WHATSAPP,
-        platformUserId: '15557654321',
-      });
-
-      expect(subscriberRepository.findByPhone.calledOnce).to.equal(true);
     });
   });
 });

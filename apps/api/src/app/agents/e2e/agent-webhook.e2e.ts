@@ -655,17 +655,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         createSentMessageFromMessage: () => mockSentMessage(),
         toJSON: () => ({ id: threadId }),
       };
-      const message = {
-        id: `whatsapp-msg-${Date.now()}`,
-        text,
-        author: {
-          userId: phone,
-          fullName: 'WhatsApp User',
-          userName: 'wauser',
-          isBot: false,
-        },
-        metadata: { dateSent: new Date() },
-      };
+      const message = mockMessage({ userId: phone, text, fullName: 'WhatsApp User' });
 
       await inboundHandler.handle(ctx.agentId, config, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 

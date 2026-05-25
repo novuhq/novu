@@ -77,11 +77,6 @@ export class AgentSubscriberResolver {
   }): Promise<string | null> {
     const { environmentId, organizationId, platformUserId } = params;
     const phoneCandidates = getPhoneLookupCandidates(platformUserId);
-
-    if (phoneCandidates.length === 0) {
-      return null;
-    }
-
     const matches = await this.subscriberRepository.findByPhone(environmentId, organizationId, phoneCandidates);
 
     if (matches.length > 1) {

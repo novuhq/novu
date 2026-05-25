@@ -6,7 +6,7 @@ export function getPhoneLookupCandidates(platformUserId: string): string[] {
   }
 
   const withPlus = trimmed.startsWith('+') ? trimmed : `+${trimmed}`;
-  const withoutPlus = trimmed.startsWith('+') ? trimmed.slice(1) : trimmed;
+  const withoutPlus = normalizePhoneForMeta(trimmed);
 
   return [...new Set([withPlus, withoutPlus])];
 }
