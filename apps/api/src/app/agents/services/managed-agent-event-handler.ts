@@ -10,6 +10,7 @@ import {
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { GenerateMcpOAuthUrlCommand } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
@@ -72,6 +73,11 @@ export class ManagedAgentEventHandler {
           );
         } catch (err) {
           this.logger.error(err, `onToolUseStart failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-tool-use-start',
+            sessionId,
+          });
         }
       },
 
@@ -95,6 +101,11 @@ export class ManagedAgentEventHandler {
           );
         } catch (err) {
           this.logger.error(err, `onToolUseDone failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-tool-use-done',
+            sessionId,
+          });
         }
       },
 
@@ -113,6 +124,11 @@ export class ManagedAgentEventHandler {
           );
         } catch (err) {
           this.logger.error(err, `onToolUseResult failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-tool-use-result',
+            sessionId,
+          });
         }
       },
 
@@ -155,6 +171,11 @@ export class ManagedAgentEventHandler {
           );
         } catch (err) {
           this.logger.error(err, `onFinish failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-finish',
+            sessionId,
+          });
           throw err;
         }
       },
@@ -164,6 +185,11 @@ export class ManagedAgentEventHandler {
           await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, runId);
         } catch (err) {
           this.logger.error(err, `onError handler failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-error-handler',
+            sessionId,
+          });
         }
       },
     };
@@ -234,6 +260,11 @@ export class ManagedAgentEventHandler {
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
+      captureAgentException(err, {
+        component: 'managed-agent-event-handler',
+        operation: 'deliver-error-message',
+        sessionId,
+      });
     }
   }
 
@@ -302,6 +333,12 @@ export class ManagedAgentEventHandler {
         },
         'GenerateMcpOAuthUrl failed; falling back to plain-text MCP-init error'
       );
+      captureAgentWarning(err, {
+        component: 'managed-agent-event-handler',
+        operation: 'generate-mcp-oauth-url',
+        sessionId,
+        agentIdentifier: metadata.agentIdentifier,
+      });
 
       return false;
     }
@@ -320,6 +357,11 @@ export class ManagedAgentEventHandler {
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver Connect card for session ${sessionId}`);
+      captureAgentException(err, {
+        component: 'managed-agent-event-handler',
+        operation: 'deliver-connect-card',
+        sessionId,
+      });
 
       return false;
     }
@@ -356,6 +398,11 @@ export class ManagedAgentEventHandler {
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver anonymous-user MCP reply for session ${sessionId}`);
+      captureAgentException(err, {
+        component: 'managed-agent-event-handler',
+        operation: 'deliver-anonymous-mcp-reply',
+        sessionId,
+      });
 
       return false;
     }
@@ -383,6 +430,11 @@ export class ManagedAgentEventHandler {
           { err: err instanceof Error ? err.message : String(err), sessionId },
           'getPendingToolApproval failed; cannot render Approve/Deny card'
         );
+        captureAgentWarning(err, {
+          component: 'managed-agent-event-handler',
+          operation: 'get-pending-tool-approval',
+          sessionId,
+        });
 
         return false;
       }
@@ -411,6 +463,11 @@ export class ManagedAgentEventHandler {
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver tool-approval card for session ${sessionId}`);
+      captureAgentException(err, {
+        component: 'managed-agent-event-handler',
+        operation: 'deliver-tool-approval-card',
+        sessionId,
+      });
 
       return false;
     }
@@ -455,6 +512,11 @@ export class ManagedAgentEventHandler {
         { err: err instanceof Error ? err.message : String(err), conversationId: metadata.conversationId },
         'Failed to resolve subscriberId from conversation participants'
       );
+      captureAgentWarning(err, {
+        component: 'managed-agent-event-handler',
+        operation: 'resolve-subscriber-from-conversation',
+        extra: { conversationId: metadata.conversationId },
+      });
 
       return undefined;
     }
