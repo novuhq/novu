@@ -37,6 +37,7 @@ import { PromptInput } from '../onboarding/connect-agent/prompt-input';
 import {
   getClaudeManagedAgentIntegrations,
   getPreferredClaudeManagedIntegration,
+  isDemoManagedClaudeIntegrationSelected,
 } from './connectors/claude-managed-integrations';
 import {
   ConnectorIntegrationDropdown,
@@ -204,8 +205,9 @@ export function CreateAgentDialog({
   // Custom Scaffold generation only produces name/identifier/systemPrompt and never touches any
   // Anthropic-managed infrastructure, so it has no reason to depend on the managed flag.
   const useAiGeneration = isManagedClaudeConnector ? isManagedEnabled : isScratchRuntime;
+  const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
-  const showScopeTabs = isManagedClaudeConnector;
+  const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
   const showManagedOptions = isManagedEnabled;
 
   // Hide managed connectors when the feature flag is off — the dropdown still lists them visually,
@@ -417,6 +419,17 @@ export function CreateAgentDialog({
     }
   };
 
+  // Demo Novu-managed Claude credentials cannot adopt an existing provider agent.
+  useEffect(() => {
+    if (!open) return;
+    if (!isDemoProviderSelected) return;
+    if (generationMode !== 'existing') return;
+
+    setGenerationMode('prompt');
+    setExternalAgentId('');
+    setExternalEnvironmentId('');
+  }, [open, isDemoProviderSelected, generationMode]);
+
   const handleGenerationModeChange = useCallback((next: AgentGenerationMode) => {
     setGenerationMode(next);
     if (next === 'prompt' || next === 'manual') {
@@ -541,7 +554,7 @@ export function CreateAgentDialog({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const isExistingMode = runtime === 'claude' && generationMode === 'existing';
+    const isExistingMode = runtime === 'claude' && !isDemoProviderSelected && generationMode === 'existing';
     const isPromptGenerationMode = useAiGeneration && generationMode === 'prompt';
 
     let generated: GeneratedManagedAgent | null = null;

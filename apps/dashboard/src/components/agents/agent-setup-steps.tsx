@@ -106,7 +106,7 @@ function ConnectPhaseRecap({
   summary: ConnectSummary;
   integrations: IIntegration[] | undefined;
 }) {
-  const display = deriveConnectSummaryDisplay(summary);
+  const display = deriveConnectSummaryDisplay(summary, integrations);
 
   return (
     <div className="flex flex-col gap-10">

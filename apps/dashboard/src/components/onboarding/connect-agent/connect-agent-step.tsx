@@ -5,7 +5,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import type { AgentResponse, GeneratedManagedAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { getClaudeManagedAgentIntegrations } from '@/components/agents/connectors/claude-managed-integrations';
+import {
+  getClaudeManagedAgentIntegrations,
+  isDemoManagedClaudeIntegrationSelected,
+} from '@/components/agents/connectors/claude-managed-integrations';
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
 import {
@@ -161,11 +164,14 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   // Custom Scaffold generation only produces name/identifier/systemPrompt — it does not touch
   // any Anthropic-managed infrastructure — so it has no reason to depend on that flag.
   const useAiGeneration = isClaudeSelected ? isManagedEnabled : isScratchRuntime;
+  const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
   const isExistingMode =
-    isClaudeSelected && (useAiGeneration ? generationMode === 'existing' : templateSelection.kind === 'existing');
+    isClaudeSelected &&
+    !isDemoProviderSelected &&
+    (useAiGeneration ? generationMode === 'existing' : templateSelection.kind === 'existing');
   const isScratchMode =
     (useAiGeneration && generationMode === 'manual') || (!useAiGeneration && templateSelection.kind === 'scratch');
-  const showExistingOption = isClaudeSelected;
+  const showExistingOption = isClaudeSelected && !isDemoProviderSelected;
   const existingOptionIcon = isClaudeSelected ? (
     <div className="bg-primary-base/10 text-primary-base flex size-4 items-center justify-center rounded-full">
       <ClaudeIcon className="size-3" />
