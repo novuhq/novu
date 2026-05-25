@@ -1,5 +1,4 @@
-import { useUser } from '@clerk/react';
-import { NovuProvider, SlackConnectButton } from '@novu/react';
+import { SlackConnectButton } from '@novu/react';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
@@ -16,10 +15,12 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { API_HOSTNAME } from '@/config';
+import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { apiHostnameManager } from '@/utils/api-hostname-manager';
+import { buildAgentConnectionIdentifier } from '@/utils/connect-subscriber-id';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { CopySlackMessageButton } from './agent-code-setup-section';
@@ -178,20 +179,18 @@ function QuickSetupStep({
   integrationId,
   agentId,
   subscriberId,
-  user,
+  connectionIdentifier,
   onSuccess,
 }: {
   integrationId: string;
   agentId: string;
   subscriberId: string;
-  user: { firstName?: string | null; lastName?: string | null; imageUrl?: string } | null | undefined;
+  connectionIdentifier: string;
   onSuccess: () => void;
 }) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const [configToken, setConfigToken] = useState('');
-
-  const connectionIdentifier = subscriberId;
 
   const mutation = useMutation({
     mutationFn: async () => {
@@ -213,26 +212,8 @@ function QuickSetupStep({
     },
   });
 
-  const novuProviderContent = currentEnvironment?.identifier ? (
-    <NovuProvider
-      subscriber={{
-        subscriberId,
-        firstName: user?.firstName ?? '',
-        lastName: user?.lastName ?? '',
-        avatar: user?.imageUrl ?? '',
-      }}
-      applicationIdentifier={currentEnvironment.identifier}
-      apiUrl={apiHostnameManager.getHostname()}
-      socketUrl={apiHostnameManager.getWebSocketHostname()}
-    >
-      {/* Mounting NovuProvider upserts the subscriber so it exists when the OAuth callback fires */}
-      <span />
-    </NovuProvider>
-  ) : null;
-
   return (
     <div className="flex flex-col gap-3">
-      {novuProviderContent}
       <Input
         size="xs"
         type="password"
@@ -274,7 +255,8 @@ export function SlackSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: SlackSetupGuideProps) {
-  const { user } = useUser();
+  const { currentUser, isUserLoaded } = useAuth();
+  const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
   const { currentEnvironment } = useEnvironment();
   const [, setSearchParams] = useSearchParams();
   const isQuickSetupEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_QUICK_SETUP_ENABLED, false);
@@ -365,37 +347,31 @@ export function SlackSetupGuide({
     </div>
   ) : null;
 
+  const connectionIdentifier =
+    isUserLoaded && currentUser?._id
+      ? buildAgentConnectionIdentifier(currentUser._id, agent._id)
+      : null;
+
   const slackInstallConnectControl =
-    user?.externalId && currentEnvironment?.identifier ? (
-      <NovuProvider
-        subscriber={{
-          subscriberId: `${user.externalId}:agent-quickstart:${agent._id}`,
-          firstName: user.firstName ?? '',
-          lastName: user.lastName ?? '',
-          avatar: user.imageUrl ?? '',
+    isConnectSubscriberReady && connectionIdentifier && selectedIntegrationIdentifier ? (
+      <SlackConnectButton
+        integrationIdentifier={selectedIntegrationIdentifier}
+        subscriberId={connectSubscriberId}
+        connectionIdentifier={connectionIdentifier}
+        connectionMode="subscriber"
+        connectLabel={`Install ${agent.name} ↗`}
+        connectedLabel="Connected to Slack"
+        onConnectSuccess={handleSlackOAuthSuccess}
+        onConnectError={(error: unknown) => {
+          showErrorToast('Failed to connect to Slack. Please try again.');
+          console.error(error);
         }}
-        applicationIdentifier={currentEnvironment.identifier}
-        apiUrl={apiHostnameManager.getHostname()}
-        socketUrl={apiHostnameManager.getWebSocketHostname()}
-      >
-        <SlackConnectButton
-          integrationIdentifier={selectedIntegrationIdentifier}
-          connectionIdentifier={`${user.externalId}:agent-quickstart:${agent._id}`}
-          connectionMode="subscriber"
-          connectLabel={`Install ${agent.name} ↗`}
-          connectedLabel="Connected to Slack"
-          onConnectSuccess={handleSlackOAuthSuccess}
-          onConnectError={(error: unknown) => {
-            showErrorToast('Failed to connect to Slack. Please try again.');
-            console.error(error);
-          }}
-          appearance={{
-            elements: {
-              channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
-            },
-          }}
-        />
-      </NovuProvider>
+        appearance={{
+          elements: {
+            channelConnectButton: 'nt-h-8 nt-px-3 nt-rounded-lg',
+          },
+        }}
+      />
     ) : null;
 
   const renderSlackInstallStepRightContent = (completePrerequisiteStepIndex: number) => (
@@ -432,12 +408,12 @@ export function SlackSetupGuide({
           <div className="flex min-w-0 flex-col gap-3">
             <SetupButton href="https://api.slack.com/apps">Slack App Configuration Token</SetupButton>
             {!isCredentialsSaved ? (
-              user?.externalId ? (
+              isConnectSubscriberReady && connectionIdentifier ? (
                 <QuickSetupStep
                   integrationId={integrationId}
                   agentId={agent._id}
-                  subscriberId={`${user.externalId}:agent-quickstart:${agent._id}`}
-                  user={user}
+                  subscriberId={connectSubscriberId}
+                  connectionIdentifier={connectionIdentifier}
                   onSuccess={handleQuickSetupSuccess}
                 />
               ) : null

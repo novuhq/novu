@@ -693,11 +693,11 @@ export async function sendWhatsAppTestTemplate(
   environment: IEnvironment,
   agentIdentifier: string,
   integrationIdentifier: string,
-  to: string
+  subscriberId: string
 ): Promise<SendWhatsAppTestTemplateResponse> {
   const response = await post<{ data: SendWhatsAppTestTemplateResponse }>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/whatsapp/test-template`,
-    { environment, body: { to } }
+    { environment, body: { subscriberId } }
   );
 
   return response.data;

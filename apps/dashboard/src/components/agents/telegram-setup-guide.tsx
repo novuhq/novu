@@ -1,4 +1,3 @@
-import { useUser } from '@clerk/react';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,7 +11,9 @@ import {
 } from '@/api/agents';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
@@ -66,16 +67,15 @@ export function TelegramSetupGuide({
 
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
-  const { user } = useUser();
+  const { currentUser, isUserLoaded } = useAuth();
 
-  // Build a stable per-agent subscriber id from the dashboard user so the test
-  // step can reach the same Novu subscriber row each time setup is revisited.
-  // Mirrors the Slack guide's `${user.externalId}:agent-quickstart:${agent._id}` pattern.
   const testSubscriberId = useMemo(() => {
-    if (!user?.externalId) return null;
+    if (!isUserLoaded || !currentUser?._id) {
+      return null;
+    }
 
-    return `${user.externalId}:agent-quickstart:${agent._id}`;
-  }, [user?.externalId, agent._id]);
+    return buildConnectSubscriberId(currentUser._id);
+  }, [currentUser?._id, isUserLoaded]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
   useEffect(() => {
