@@ -3,14 +3,14 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 
 export interface ToolProgressPayload {
   runId: string;
-  action: 'tool-use' | 'complete' | 'fail';
+  action: 'tool-use' | 'complete' | 'fail' | 'awaiting-approval';
   toolUseId?: string;
   toolName?: string;
   status?: 'running' | 'complete' | 'error';
   toolInput?: Record<string, unknown>;
 }
 
-export class HandleToolProgressCommand extends EnvironmentWithUserCommand {
+export class HandlePlanProgressCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
   conversationId: string;
