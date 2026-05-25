@@ -145,6 +145,9 @@ interface AgentToolsetPayloadEntry {
   type: string;
   configs?: AgentToolsetConfigEntry[];
   mcp_server_name?: string;
+  default_config?: {
+    permission_policy: { type: string };
+  };
 }
 
 function installUpdateConfigMockClient(
@@ -566,5 +569,11 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
     const enabledNames = toolset?.configs?.filter((c) => c.enabled).map((c) => c.name) ?? [];
     expect(enabledNames).to.include.members(['bash', 'web_search']);
     expect(enabledNames).to.not.include('read');
+
+    const mcpToolset = (updatePayload as { tools?: AgentToolsetPayloadEntry[] }).tools?.find(
+      (t) => t.type === 'mcp_toolset'
+    );
+    expect(mcpToolset?.mcp_server_name).to.equal('Slack');
+    expect(mcpToolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_allow' });
   });
 });
