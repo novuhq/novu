@@ -234,8 +234,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     agentTab: 'integrations',
   })}${location.search}`;
 
-  const integrationsStorePath = ROUTES.INTEGRATIONS;
-
   const navigateToGuide = (nextIntegrationIdentifier: string) => {
     if (!currentEnvironment?.slug) {
       return;
@@ -374,6 +372,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     integrationIdentifier != null
       ? links.find((link) => link.integration.identifier === integrationIdentifier)
       : undefined;
+
+  const integrationsStorePath = selectedIntegration
+    ? buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: selectedIntegration.integration._id })
+    : ROUTES.INTEGRATIONS;
+
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess

@@ -1,4 +1,4 @@
-import { ClerkLoaded } from '@clerk/clerk-react';
+import { ClerkLoaded } from '@clerk/react';
 import { ErrorBoundary, withProfiler } from '@sentry/react';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';

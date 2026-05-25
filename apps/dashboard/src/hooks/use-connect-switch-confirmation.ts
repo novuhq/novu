@@ -1,4 +1,4 @@
-import { useOrganizationList } from '@clerk/clerk-react';
+import { useOrganizationList } from '@clerk/react';
 import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useCrossAppNavigation } from '@/hooks/use-cross-app-navigation';
 import { APP_IDS, type AppId } from '@/utils/apps';

@@ -1,4 +1,4 @@
-import { useOrganization, useOrganizationList, useUser } from '@clerk/clerk-react';
+import { useOrganization, useOrganizationList, useUser } from '@clerk/react';
 import { FeatureFlagsKeysEnum, OrganizationProductTypeEnum, tryReadOrganizationProductType } from '@novu/shared';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';

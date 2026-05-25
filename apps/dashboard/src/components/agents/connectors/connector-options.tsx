@@ -76,7 +76,10 @@ export const CONNECTOR_OPTIONS: ConnectorOption[] = [
     label: 'AWS Claude Managed Agent',
     group: 'external',
     icon: AWS_AVATAR,
-    comingSoon: true,
+    comingSoon: false,
+    runtime: 'claude',
+    providerId: AgentRuntimeProviderIdEnum.AnthropicAws,
+    providerLabel: 'AWS Claude Platform',
   },
   {
     id: 'vertex',
@@ -113,4 +116,12 @@ export function getConnectorById(id: ConnectorId | undefined): ConnectorOption |
   if (!id) return undefined;
 
   return CONNECTOR_OPTIONS.find((o) => o.id === id);
+}
+
+export function getConnectorIdForProviderId(providerId: string): ConnectorId | undefined {
+  if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+    return 'claude';
+  }
+
+  return CONNECTOR_OPTIONS.find((option) => option.providerId === providerId)?.id;
 }

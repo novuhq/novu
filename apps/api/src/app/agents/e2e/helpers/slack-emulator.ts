@@ -104,6 +104,57 @@ export function clearRecordedCalls(): void {
   recordedCalls = [];
 }
 
+export interface SlackChannelSummary {
+  id: string;
+  name: string;
+}
+
+export interface SlackUserSummary {
+  id: string;
+  name: string;
+}
+
+export async function findEmulatorChannel(emulatorUrl: string, name: string): Promise<SlackChannelSummary> {
+  const res = await fetch(`${emulatorUrl}/api/conversations.list`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Bearer xoxb-test',
+    },
+    body: '',
+  });
+  const body = (await res.json()) as { ok: boolean; channels?: SlackChannelSummary[] };
+
+  if (!body.ok || !body.channels) {
+    throw new Error(`Failed to list emulator channels: ${JSON.stringify(body)}`);
+  }
+
+  const channel = body.channels.find((c) => c.name === name);
+  if (!channel) {
+    throw new Error(`Channel "${name}" not seeded in emulator (have: ${body.channels.map((c) => c.name).join(', ')})`);
+  }
+
+  return channel;
+}
+
+export async function findEmulatorUser(emulatorUrl: string, email: string): Promise<SlackUserSummary> {
+  const res = await fetch(`${emulatorUrl}/api/users.lookupByEmail`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: 'Bearer xoxb-test',
+    },
+    body: new URLSearchParams({ email }).toString(),
+  });
+  const body = (await res.json()) as { ok: boolean; user?: SlackUserSummary; error?: string };
+
+  if (!body.ok || !body.user) {
+    throw new Error(`Failed to look up emulator user "${email}": ${body.error ?? JSON.stringify(body)}`);
+  }
+
+  return body.user;
+}
+
 export async function startSlackEmulator(): Promise<EmulatorInstance> {
   if (emulator) return emulator;
 

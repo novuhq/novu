@@ -1,8 +1,10 @@
 import {
   ActorTypeEnum,
   ButtonTypeEnum,
+  buildDataFilterQuery,
   buildTagsQuery,
   ChannelTypeEnum,
+  type DataFilterMongoFragment,
   MessageActionStatusEnum,
   MessagesStatusEnum,
   SeverityLevelEnum,
@@ -78,6 +80,21 @@ function mergeTagsMongoFragment<MessageQueryT extends MessageQuery & EnforceEnvI
   }
 
   return query;
+}
+
+/** Merge a `$and`-shaped data filter fragment into the request query. */
+function mergeDataMongoFragment<MessageQueryT extends MessageQuery & EnforceEnvId>(
+  query: MessageQueryT,
+  fragment: DataFilterMongoFragment
+): MessageQueryT {
+  if (!fragment || !('$and' in fragment) || !fragment.$and || fragment.$and.length === 0) {
+    return query;
+  }
+
+  return {
+    ...query,
+    $and: [...(query.$and ?? []), ...fragment.$and],
+  };
 }
 
 export class MessageRepository extends BaseRepository<MessageDBModel, MessageEntity, EnforceEnvId> {
@@ -251,10 +268,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     if (query.data) {
-      requestQuery = {
-        ...getFlatObject({ data: query.data }),
-        ...requestQuery,
-      };
+      requestQuery = mergeDataMongoFragment(requestQuery, buildDataFilterQuery(query.data));
     }
 
     return requestQuery;
@@ -384,12 +398,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     }
 
     if (data) {
-      const flatData = getFlatObject({ data });
-
-      query = {
-        ...flatData,
-        ...query,
-      };
+      query = mergeDataMongoFragment(query, buildDataFilterQuery(data));
     }
 
     if (createdGte || createdLte) {
@@ -813,14 +822,16 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     const isFromSeen = from.seen !== undefined;
     const isFromRead = from.read !== undefined;
     const isFromArchived = from.archived !== undefined;
-    const flatData = from.data ? getFlatObject({ data: from.data }) : {};
 
     let query: MessageQuery & EnforceEnvId = {
-      ...flatData,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       ...(contextKeys && contextKeys?.length > 0 && { contextKeys: { $in: contextKeys } }),
     };
+
+    if (from.data) {
+      query = mergeDataMongoFragment(query, buildDataFilterQuery(from.data));
+    }
 
     if (from.tagGroups && from.tagGroups.length > 0) {
       query = mergeTagsMongoFragment(query, buildTagsQuery(from.tagGroups));
@@ -1178,14 +1189,15 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     };
     contextKeys?: string[];
   }): Promise<MessageEntity[]> {
-    const flatData = filters.data ? getFlatObject({ data: filters.data }) : {};
-
     let query: MessageQuery & EnforceEnvId = {
-      ...flatData,
       _environmentId: environmentId,
       _subscriberId: subscriberId,
       ...(contextKeys && contextKeys?.length > 0 && { contextKeys: { $in: contextKeys } }),
     };
+
+    if (filters.data) {
+      query = mergeDataMongoFragment(query, buildDataFilterQuery(filters.data));
+    }
 
     if (filters.tagGroups && filters.tagGroups.length > 0) {
       query = mergeTagsMongoFragment(query, buildTagsQuery(filters.tagGroups));

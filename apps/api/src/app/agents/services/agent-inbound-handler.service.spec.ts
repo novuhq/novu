@@ -39,6 +39,7 @@ describe('AgentInboundHandler', () => {
       linkTelegramExecute?: sinon.SinonStub;
       startCodeConsume?: sinon.SinonStub;
       findTelegramEndpointByIdentity?: sinon.SinonStub;
+      agentFindOne?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
@@ -62,9 +63,13 @@ describe('AgentInboundHandler', () => {
     };
     const managedAgentService = {
       dispatch: sinon.stub().resolves(undefined),
+      confirmToolApproval: sinon.stub().resolves(undefined),
+    };
+    const chatSdkService = {
+      registerInboundCallbacks: sinon.stub(),
     };
     const agentRepository = {
-      findOne: sinon.stub().resolves(null),
+      findOne: overrides.agentFindOne ?? sinon.stub().resolves(null),
     };
     const environmentRepository = {
       findOne: sinon.stub().resolves(null),
@@ -92,6 +97,7 @@ describe('AgentInboundHandler', () => {
       conversationService as any,
       bridgeExecutor as any,
       managedAgentService as any,
+      chatSdkService as any,
       agentRepository as any,
       subscriberRepository as any,
       environmentRepository as any,
@@ -437,6 +443,54 @@ describe('AgentInboundHandler', () => {
 
       expect(linkTelegramChatToSubscriber.execute.called).to.equal(false);
       expect(conversationService.createOrGetConversation.calledOnce).to.equal(true);
+    });
+  });
+
+  function makeActionThread() {
+    return {
+      id: 'thread1',
+      channelId: 'channel1',
+      isDM: false,
+    };
+  }
+
+  describe('handleAction', () => {
+    it('should skip bridge dispatch for link-button actions', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const thread = makeActionThread();
+      const action = { id: 'link-https://access.stripe.com/mcp/oauth2/authorize', value: undefined };
+
+      await handler.handleAction('agent1', config as any, thread as any, action as any, 'user1');
+
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('should skip bridge dispatch for managed agents on non-link actions', async () => {
+      const { handler, bridgeExecutor } = makeHandler({
+        agentFindOne: sinon.stub().resolves({
+          _id: 'agent1',
+          runtime: 'managed',
+          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
+        }),
+      });
+      const thread = makeActionThread();
+      const action = { id: 'custom-action', value: 'yes' };
+
+      await handler.handleAction('agent1', config as any, thread as any, action as any, 'user1');
+
+      expect(bridgeExecutor.execute.called).to.equal(false);
+    });
+
+    it('should forward self-hosted agent actions to the bridge', async () => {
+      const { handler, bridgeExecutor } = makeHandler();
+      const thread = makeActionThread();
+      const action = { id: 'ack', value: undefined };
+
+      await handler.handleAction('agent1', config as any, thread as any, action as any, 'user1');
+
+      expect(bridgeExecutor.execute.calledOnce).to.equal(true);
+      expect(bridgeExecutor.execute.firstCall.args[0].event).to.equal(AgentEventEnum.ON_ACTION);
+      expect(bridgeExecutor.execute.firstCall.args[0].action).to.deep.equal(action);
     });
   });
 

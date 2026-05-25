@@ -15,4 +15,4 @@ alwaysApply: false
 
 **Description**: Summarize what changed and why. List breaking changes. Add screenshots for UI changes. For non-trivial logic or architecture changes, include a concise Mermaid diagram (flow, sequence, or component) so reviewers can grasp the change at a glance.
 
-**Enterprise packages**: When changes touch `enterprise/`, also open a matching PR in `novuhq/packages-enterprise` on a branch from `next`.
+**Enterprise packages**: When changes touch `enterprise/`, also open a matching PR in `novuhq/packages-enterprise` on a branch from `next`, the Validate Submodule Sync test will fail an this is expected when pointing to the .source submodule in the novuhq/novu repository. Do not fix it.

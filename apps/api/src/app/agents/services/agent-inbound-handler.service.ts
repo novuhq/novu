@@ -1,5 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
+import {
+  AnalyticsService,
+  DEMO_QUOTA_EXHAUSTED_REPLY,
+  DemoQuotaExhaustedError,
+  PinoLogger,
+} from '@novu/application-generic';
 import {
   AgentRepository,
   ChannelEndpointRepository,
@@ -13,6 +18,7 @@ import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
@@ -22,7 +28,9 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
+import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
+import { isLinkButtonActionId, parseToolApprovalActionId } from './managed-agent-event-handler';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
 /**
@@ -201,13 +209,14 @@ export interface InboundReactionEvent {
 }
 
 @Injectable()
-export class AgentInboundHandler {
+export class AgentInboundHandler implements OnModuleInit {
   constructor(
     private readonly logger: PinoLogger,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly managedAgentService: ManagedAgentService,
+    private readonly chatSdkService: ChatSdkService,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly environmentRepository: EnvironmentRepository,
@@ -218,6 +227,15 @@ export class AgentInboundHandler {
     private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber
   ) {
     this.logger.setContext(this.constructor.name);
+  }
+
+  onModuleInit() {
+    this.chatSdkService.registerInboundCallbacks({
+      onMessage: (agentId, config, thread, message) =>
+        this.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE),
+      onAction: (agentId, config, thread, action, userId) => this.handleAction(agentId, config, thread, action, userId),
+      onReaction: (agentId, config, event) => this.handleReaction(agentId, config, event),
+    });
   }
 
   async handle(
@@ -247,6 +265,7 @@ export class AgentInboundHandler {
       })
       .catch((err) => {
         this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
+        captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
         return null;
       });
@@ -340,6 +359,11 @@ export class AgentInboundHandler {
         )
         .catch((err) => {
           this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
+          captureAgentWarning(err, {
+            component: 'agent-inbound-handler',
+            operation: 'store-first-platform-message-id',
+            agentId,
+          });
         });
     }
 
@@ -354,6 +378,11 @@ export class AgentInboundHandler {
           .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
           .catch((err) => {
             this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
+            captureAgentWarning(err, {
+              component: 'agent-inbound-handler',
+              operation: 'add-ack-reaction',
+              agentId,
+            });
           });
       }
     }
@@ -404,6 +433,23 @@ export class AgentInboundHandler {
         });
       }
     } catch (err) {
+      if (err instanceof DemoQuotaExhaustedError) {
+        applyPlatformThreadIdToThread(thread, platformThreadId);
+        const sent = await thread.post(DEMO_QUOTA_EXHAUSTED_REPLY);
+        const channel = this.conversationService.getPrimaryChannel(conversation);
+        await this.conversationService.persistAgentMessage({
+          conversationId: conversation._id,
+          channel,
+          platformMessageId: (sent as { id?: string })?.id ?? '',
+          agentIdentifier: config.agentIdentifier,
+          content: DEMO_QUOTA_EXHAUSTED_REPLY,
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+        });
+
+        return;
+      }
+
       if (err instanceof NoBridgeUrlError) {
         applyPlatformThreadIdToThread(thread, platformThreadId);
 
@@ -420,6 +466,11 @@ export class AgentInboundHandler {
               lookupErr,
               `[agent:${config.agentIdentifier}] Failed to resolve dashboard URL for no-bridge reply`
             );
+            captureAgentWarning(lookupErr, {
+              component: 'agent-inbound-handler',
+              operation: 'resolve-dashboard-url',
+              agentIdentifier: config.agentIdentifier,
+            });
           }
         }
 
@@ -501,6 +552,11 @@ export class AgentInboundHandler {
           await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
         } else {
           this.logger.error(err, `[agent:${agentId}] Unexpected failure linking Telegram chat to subscriber`);
+          captureAgentException(err, {
+            component: 'agent-inbound-handler',
+            operation: 'link-telegram-subscriber',
+            agentId,
+          });
           await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
         }
       }
@@ -531,6 +587,11 @@ export class AgentInboundHandler {
         err,
         `[agent:${agentId}] Failed to post Telegram subscriber-link reply for inbound message ${message.id ?? '<unknown>'}`
       );
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-telegram-subscriber-link-reply',
+        agentId,
+      });
     }
   }
 
@@ -580,6 +641,11 @@ export class AgentInboundHandler {
               err,
               `[agent:${agentId}] Subscriber resolution failed for reaction, continuing without subscriber`
             );
+            captureAgentWarning(err, {
+              component: 'agent-inbound-handler',
+              operation: 'resolve-subscriber-reaction',
+              agentId,
+            });
 
             return null;
           })
@@ -651,6 +717,11 @@ export class AgentInboundHandler {
           err,
           `[agent:${agentId}] Subscriber resolution failed for action, continuing without subscriber`
         );
+        captureAgentWarning(err, {
+          component: 'agent-inbound-handler',
+          operation: 'resolve-subscriber-action',
+          agentId,
+        });
 
         return null;
       });
@@ -683,6 +754,54 @@ export class AgentInboundHandler {
       conversationId: conversation._id,
       actionId: action.id,
     });
+
+    // MCP tool-approval routing: `ManagedAgentService` owns the Cloudflare
+    // durable session (post-#11156) and renders Approve/Deny cards with
+    // action ids of the form `mcp-approval:<verdict>:<toolUseId>`. Intercept
+    // those clicks here so they call `confirmToolApproval` to resume the
+    // parked Anthropic session — they must NOT fall through to the bridge
+    // (the user-defined `onAction` shouldn't see provider-internal tool-use ids).
+    const toolApproval = parseToolApprovalActionId(action.id);
+
+    if (toolApproval) {
+      await this.managedAgentService.confirmToolApproval({
+        conversationId: conversation._id,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        agentIdentifier: config.agentIdentifier,
+        integrationIdentifier: config.integrationIdentifier,
+        subscriberId: subscriberId ?? undefined,
+        platform: config.platform,
+        toolUseId: toolApproval.toolUseId,
+        approved: toolApproval.approved,
+      });
+
+      return;
+    }
+
+    // Managed agents do not use the self-hosted bridge and never configure bridgeUrl.
+    // Card interactions today are limited to Novu-internal flows only:
+    //   • mcp-approval:* — Approve/Deny tool-use (handled above)
+    //   • link-*         — link-button opens url in the browser; chat SDK still
+    //                      emits onAction but no server-side handler is needed
+    // Generic button clicks (custom ids, user-defined cards) are not supported
+    // on managed runtime yet — there is no bridge onAction and no managed-runtime
+    // action router to resume the provider session.
+    // TODO: route general managed-agent button clicks through ManagedAgentService
+    // (e.g. resume parked session / dispatch to runtime) instead of no-oping here.
+    if (isLinkButtonActionId(action.id)) {
+      return;
+    }
+
+    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+      '_id',
+      'runtime',
+      'managedRuntime',
+    ]);
+
+    if (agent?.runtime === 'managed' && agent.managedRuntime) {
+      return;
+    }
 
     const [subscriber, history] = await Promise.all([
       subscriberId

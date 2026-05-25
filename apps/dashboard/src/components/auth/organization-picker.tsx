@@ -1,4 +1,4 @@
-import { useOrganizationList, useUser } from '@clerk/clerk-react';
+import { useOrganizationList, useUser } from '@clerk/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';

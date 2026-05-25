@@ -1,5 +1,5 @@
-import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { Controller, useFieldArray, useFormContext } from 'react-hook-form';
 import { RiAddLine, RiDeleteBin2Line, RiErrorWarningLine } from 'react-icons/ri';
 import { Button } from '@/components/primitives/button';
 import { FormField } from '@/components/primitives/form/form';
@@ -11,9 +11,9 @@ import { useWorkflow } from '@/components/workflow-editor/workflow-provider';
 import { useParseVariables } from '@/hooks/use-parse-variables';
 import {
   getKeyValuePairsFromBody,
-  keyValuePairsToBodyString,
   type HttpRequestBodyValue,
   type KeyValuePair,
+  keyValuePairsToBodyString,
 } from './curl-utils';
 import { NovuSignatureHeader } from './novu-signature-header';
 import { SectionHeader } from './section-header';

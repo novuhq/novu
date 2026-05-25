@@ -1,4 +1,4 @@
-import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
+import { AGENT_RUNTIME_PROVIDERS, isClaudePlatformConsoleProvider } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { RiEditLine, RiInformationFill, RiLoopRightLine } from 'react-icons/ri';
@@ -25,7 +25,7 @@ function shortenIdentifier(value: string | undefined): string {
 }
 
 function ProviderBrand({ providerId }: { providerId: string }) {
-  if (providerId === 'anthropic') {
+  if (isClaudePlatformConsoleProvider(providerId)) {
     return (
       <span className="text-text-sub inline-flex items-center gap-1 text-label-xs font-medium">
         <ClaudeIcon className="size-3.5 shrink-0" aria-hidden />

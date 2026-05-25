@@ -42,6 +42,7 @@ import { Landing1SignUpPage } from '@/pages/landing-1-signup';
 import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
+import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
@@ -390,32 +391,37 @@ const router = createBrowserRouter([
                 ],
               },
               {
-                path: ROUTES.AGENTS,
-                element: <AgentsPage />,
-              },
-              {
-                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS_TAB,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
+                element: <ConnectSubscriberProvider />,
+                children: [
+                  {
+                    path: ROUTES.AGENTS,
+                    element: <AgentsPage />,
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
               {
                 path: ROUTES.DOMAINS,
@@ -616,7 +622,9 @@ const router = createBrowserRouter([
                 path: ROUTES.CONNECT_HOME,
                 element: (
                   <ConnectProtectedRoute>
-                    <Outlet />
+                    <ConnectSubscriberProvider>
+                      <Outlet />
+                    </ConnectSubscriberProvider>
                   </ConnectProtectedRoute>
                 ),
                 children: [

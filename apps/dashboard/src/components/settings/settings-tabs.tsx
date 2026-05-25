@@ -1,5 +1,5 @@
-import { UserProfile as ClerkUserProfile, OrganizationProfile } from '@clerk/clerk-react';
-import type { Appearance } from '@clerk/types';
+import { UserProfile as ClerkUserProfile, OrganizationProfile } from '@clerk/react';
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
@@ -47,7 +47,7 @@ type SettingsTabsProps = {
   hideBilling?: boolean;
 };
 
-const getClerkComponentAppearance = (isRbacEnabled: boolean): Appearance => ({
+const getClerkComponentAppearance = (isRbacEnabled: boolean): ClerkAppearanceTheme => ({
   variables: {
     colorPrimary: 'hsl(var(--bg-surface))',
     colorText: 'rgba(82, 88, 102, 0.95)',

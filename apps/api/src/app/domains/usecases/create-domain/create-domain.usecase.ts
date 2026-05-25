@@ -1,9 +1,5 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
-import {
-  getSharedAgentDomain,
-  isAgentSharedInboxEnabled,
-  ResourceValidatorService,
-} from '@novu/application-generic';
+import { getSharedAgentDomain, isAgentSharedInboxEnabled, ResourceValidatorService } from '@novu/application-generic';
 import { DomainEntity, DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
 

@@ -74,6 +74,7 @@ export function EmailAgentIntegrationGuide({
               agent={agent}
               integrationId={integrationId}
               defaultSenderName={integrationLink?.integration?.defaultSenderName}
+              sharedInboundAddress={integrationLink?.integration?.sharedInboundAddress}
             />
           </div>
         </div>

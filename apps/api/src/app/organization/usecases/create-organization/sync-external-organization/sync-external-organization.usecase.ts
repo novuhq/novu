@@ -142,7 +142,7 @@ export class SyncExternalOrganization {
       })
     );
 
-    if (organizationAfterChanges !== null) {
+    if (organizationAfterChanges) {
       await this.createCustomer(command.email, organizationAfterChanges._id);
     }
 

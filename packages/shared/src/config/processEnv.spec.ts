@@ -43,11 +43,7 @@ describe('resolveDotenvPath', () => {
       overrideDir,
       defaultDir,
       nodeEnv: 'production',
-      fileExists: existsFromSet([
-        'apps/worker/.env.production',
-        'apps/worker/.env',
-        'apps/worker/src/.env.production',
-      ]),
+      fileExists: existsFromSet(['apps/worker/.env.production', 'apps/worker/.env', 'apps/worker/src/.env.production']),
       join,
     });
 
@@ -123,11 +119,7 @@ describe('resolveDotenvPath', () => {
         overrideDir,
         defaultDir,
         nodeEnv: 'test',
-        fileExists: existsFromSet([
-          'apps/worker/.env.test',
-          'apps/worker/.env',
-          'apps/worker/src/.env.test',
-        ]),
+        fileExists: existsFromSet(['apps/worker/.env.test', 'apps/worker/.env', 'apps/worker/src/.env.test']),
         join,
       });
 
@@ -178,7 +170,7 @@ describe('resolveDotenvPath', () => {
       fileExists: existsFromSet(['apps/inbound-mail/.env.test', 'apps/inbound-mail/.env']),
       join,
     });
-    
+
     expect(chosen).toBe('apps/inbound-mail/.env.test');
   });
 });

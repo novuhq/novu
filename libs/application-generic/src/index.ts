@@ -11,6 +11,7 @@ export * from './http';
 export * from './instrumentation/index';
 export * from './logging/index';
 export * from './modules';
+export * from './oauth';
 export * from './pipes';
 export * from './resilience';
 export * from './schemas/channel-endpoint';

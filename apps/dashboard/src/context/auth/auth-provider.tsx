@@ -1,5 +1,5 @@
-import { useOrganization, useUser } from '@clerk/clerk-react';
-import type { OrganizationResource, UserResource } from '@clerk/types';
+import { useOrganization, useUser } from '@clerk/react';
+import type { OrganizationResource, UserResource } from '@clerk/shared/types';
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ConnectProvisioningOverlay } from '@/components/auth/connect-provisioning-overlay';

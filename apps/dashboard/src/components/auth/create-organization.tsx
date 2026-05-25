@@ -1,4 +1,4 @@
-import { useClerk } from '@clerk/clerk-react';
+import { useClerk } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';

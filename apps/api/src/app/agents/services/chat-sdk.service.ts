@@ -17,19 +17,31 @@ import {
   SsrfBlockedError,
 } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
-import type { SentMessageInfo } from '@novu/framework';
+import type { AgentAction, SentMessageInfo } from '@novu/framework';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
-import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
+import type { AdapterPostableMessage, Chat, EmojiValue, Message, PlanModel, ReactionEvent, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
-import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { FileRef, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, AgentConfigResolveSource, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentEmailActionClaims, AgentEmailActionTokenService } from './agent-email-action-token.service';
-import { AgentInboundHandler } from './agent-inbound-handler.service';
+import type { InboundReactionEvent } from './agent-inbound-handler.service';
+
+export interface InboundCallbacks {
+  onMessage: (agentId: string, config: ResolvedAgentConfig, thread: Thread, message: Message) => Promise<void>;
+  onAction: (
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    action: AgentAction,
+    userId: string
+  ) => Promise<void>;
+  onReaction: (agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent) => Promise<void>;
+}
 
 function getErrorResponseBody(err: unknown): unknown {
   if (!err || typeof err !== 'object') {
@@ -183,12 +195,12 @@ type PinnedFileResponse = {
 export class ChatSdkService implements OnModuleDestroy {
   private readonly instances: LRUCache<string, CachedChat>;
   private readonly pendingCreations = new Map<string, Promise<Chat>>();
+  private inboundCallbacks: InboundCallbacks | null = null;
 
   constructor(
     private readonly logger: PinoLogger,
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly inboundHandler: AgentInboundHandler,
     private readonly integrationRepository: IntegrationRepository,
     private readonly actionTokenService: AgentEmailActionTokenService,
     private readonly calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
@@ -201,6 +213,7 @@ export class ChatSdkService implements OnModuleDestroy {
       dispose: (cached, key) => {
         cached.chat.shutdown().catch((err) => {
           this.logger.error(err, `Failed to shut down evicted Chat instance ${key}`);
+          captureAgentException(err, { component: 'chat-sdk', operation: 'shutdown-evicted', extra: { instanceKey: key } });
         });
       },
     });
@@ -298,11 +311,16 @@ export class ChatSdkService implements OnModuleDestroy {
         await cached.chat.shutdown();
       } catch (err) {
         this.logger.error(err, `Failed to shut down Chat instance ${key}`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'shutdown', extra: { instanceKey: key } });
       }
     });
 
     await Promise.allSettled(shutdowns);
     this.instances.clear();
+  }
+
+  registerInboundCallbacks(callbacks: InboundCallbacks): void {
+    this.inboundCallbacks = callbacks;
   }
 
   async postToConversation(
@@ -390,6 +408,47 @@ export class ChatSdkService implements OnModuleDestroy {
     const edited = await editPromise.catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
+  }
+
+  async postPlanObject(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    platformThreadId: string,
+    model: PlanModel
+  ): Promise<SentMessageInfo | null> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const adapter = chat.getAdapter(platform);
+    if (typeof adapter.postObject !== 'function') {
+      return null;
+    }
+
+    const sent = await adapter.postObject(platformThreadId, 'plan', model).catch(toDeliveryError);
+
+    return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  async editPlanObject(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    platformThreadId: string,
+    platformMessageId: string,
+    model: PlanModel
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const adapter = chat.getAdapter(platform);
+    if (typeof adapter.editObject !== 'function') {
+      return;
+    }
+
+    await adapter.editObject(platformThreadId, platformMessageId, 'plan', model).catch(toDeliveryError);
   }
 
   private async prepareContentForDelivery(
@@ -1074,6 +1133,11 @@ export class ChatSdkService implements OnModuleDestroy {
         return buildAgentSharedInbox(slug, inboxRoutingKey);
       } catch (err) {
         this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
+        captureAgentWarning(err, {
+          component: 'chat-sdk',
+          operation: 'resolve-agent-inbound-address',
+          agentId: config.agentId,
+        });
       }
     }
 
@@ -1200,6 +1264,12 @@ export class ChatSdkService implements OnModuleDestroy {
         { err, environmentId: config.environmentId, agentId: config.agentId },
         'Failed to persist Novu demo email message for quota accounting'
       );
+      captureAgentWarning(err, {
+        component: 'chat-sdk',
+        operation: 'persist-demo-email-quota',
+        agentId: config.agentId,
+        extra: { environmentId: config.environmentId },
+      });
     }
 
     return { messageId: messageIdForReturn };
@@ -1238,8 +1308,18 @@ export class ChatSdkService implements OnModuleDestroy {
     return {
       debug: (msg: string, ctx?: Record<string, unknown>) => this.logger.debug(ctx ?? {}, msg),
       info: (msg: string, ctx?: Record<string, unknown>) => this.logger.info(ctx ?? {}, msg),
-      warn: (msg: string, ctx?: Record<string, unknown>) => this.logger.warn(ctx ?? {}, msg),
-      error: (msg: string, ctx?: Record<string, unknown>) => this.logger.error(ctx ?? {}, msg),
+      warn: (msg: string, ctx?: Record<string, unknown>) => {
+        this.logger.warn(ctx ?? {}, msg);
+        if (ctx?.err) {
+          captureAgentWarning(ctx.err, { component: 'chat-sdk', operation: 'chat-state-warn', extra: { message: msg } });
+        }
+      },
+      error: (msg: string, ctx?: Record<string, unknown>) => {
+        this.logger.error(ctx ?? {}, msg);
+        if (ctx?.err) {
+          captureAgentException(ctx.err, { component: 'chat-sdk', operation: 'chat-state-error', extra: { message: msg } });
+        }
+      },
     };
   }
 
@@ -1366,20 +1446,30 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   private registerEventHandlers(agentId: string, cached: CachedChat) {
+    if (!this.inboundCallbacks) {
+      this.logger.warn(`[agent:${agentId}] No inbound callbacks registered, skipping event handler setup`);
+
+      return;
+    }
+
+    const callbacks = this.inboundCallbacks;
+
     cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-new-mention', agentId });
       }
     });
 
     cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-subscribed-message', agentId });
       }
     });
 
@@ -1391,7 +1481,7 @@ export class ChatSdkService implements OnModuleDestroy {
           return;
         }
 
-        await this.inboundHandler.handleAction(
+        await callbacks.onAction(
           agentId,
           cached.config,
           event.thread as Thread,
@@ -1404,12 +1494,18 @@ export class ChatSdkService implements OnModuleDestroy {
         );
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
+        captureAgentException(err, {
+          component: 'chat-sdk',
+          operation: 'on-action',
+          agentId,
+          extra: { actionId: event.actionId },
+        });
       }
     });
 
     cached.chat.onReaction(async (event: ReactionEvent) => {
       try {
-        await this.inboundHandler.handleReaction(agentId, cached.config, {
+        await callbacks.onReaction(agentId, cached.config, {
           emoji: event.emoji,
           added: event.added,
           messageId: event.messageId,
@@ -1419,6 +1515,7 @@ export class ChatSdkService implements OnModuleDestroy {
         });
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling reaction`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-reaction', agentId });
       }
     });
   }

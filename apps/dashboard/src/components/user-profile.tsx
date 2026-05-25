@@ -1,4 +1,4 @@
-import { UserButton, useOrganization } from '@clerk/clerk-react';
+import { UserButton, useOrganization } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useMemo } from 'react';
 import { RiSignpostFill } from 'react-icons/ri';

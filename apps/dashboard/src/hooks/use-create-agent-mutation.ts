@@ -1,9 +1,12 @@
-import { AgentRuntimeProviderIdEnum, CLAUDE_BUILTIN_TOOLS, IntegrationKindEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, CLAUDE_BUILTIN_TOOLS, type IIntegration, IntegrationKindEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { AGENTS_LIST_QUERY_KEY, type AgentResponse, type CreateAgentBody, createAgent } from '@/api/agents';
+import { resolveClaudeManagedProviderId } from '@/components/agents/connectors/claude-managed-integrations';
+import { buildManagedIntegrationCredentials } from '@/components/agents/create-agent-fields';
 import type { CreateAgentForm } from '@/components/agents/create-agent-fields';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { QueryKeys } from '@/utils/query-keys';
 import { useCreateIntegration } from './use-create-integration';
 import { useDeleteIntegration } from './use-delete-integration';
 
@@ -43,10 +46,13 @@ export function useCreateAgentMutation() {
         externalAgentId,
         externalEnvironmentId,
         externalWorkspaceId,
+        region,
+        providerId: formProviderId,
         runtime,
         isExistingMode,
         integrationId: providedIntegrationId,
         integrationName,
+        managedOverrides,
       }: CreateAgentForm,
       options?: SubmitOptions
     ) => {
@@ -74,23 +80,32 @@ export function useCreateAgentMutation() {
         }
 
         if (runtime === 'claude') {
-          requireEnvironment(currentEnvironment, 'No environment selected');
+          const environment = requireEnvironment(currentEnvironment, 'No environment selected');
 
           let integrationId: string;
+          let managedProviderId = formProviderId ?? AgentRuntimeProviderIdEnum.Anthropic;
           // Tracks whether THIS submission provisioned the integration, so we only roll back our own.
           let createdIntegrationInThisSubmit = false;
 
           if (providedIntegrationId) {
             integrationId = providedIntegrationId;
+            const cachedIntegrations = queryClient.getQueryData<IIntegration[]>([
+              QueryKeys.fetchIntegrations,
+              environment._id,
+            ]);
+            const selectedIntegration = cachedIntegrations?.find((integration) => integration._id === integrationId);
+            managedProviderId = resolveClaudeManagedProviderId(selectedIntegration);
           } else {
             try {
               const { data: integration } = await createIntegration({
                 active: true,
                 kind: IntegrationKindEnum.AGENT,
-                providerId: AgentRuntimeProviderIdEnum.Anthropic,
-                // `externalWorkspaceId` is only sent when the user pasted a non-default workspace id —
-                // omitting it lets the backend fall back to the `default` workspace.
-                credentials: { apiKey, ...(externalWorkspaceId ? { externalWorkspaceId } : {}) },
+                providerId: managedProviderId,
+                credentials: buildManagedIntegrationCredentials(managedProviderId, {
+                  apiKey,
+                  region,
+                  externalWorkspaceId,
+                }),
                 name: integrationName?.trim() || name,
               });
 
@@ -104,25 +119,40 @@ export function useCreateAgentMutation() {
             }
           }
 
-          const request: CreateAgentBody = {
-            name,
-            identifier,
-            runtime: 'managed',
-            managedRuntime: isExistingMode
-              ? {
+          // When adopting an existing Claude agent the backend resolves the name and identifier
+          // from the provider, so we deliberately omit `name`, `identifier`, and `description`
+          // from the request and only send the `managedRuntime` pointer.
+          const request: CreateAgentBody = isExistingMode
+            ? {
+                runtime: 'managed',
+                managedRuntime: {
                   integrationId,
-                  providerId: AgentRuntimeProviderIdEnum.Anthropic,
+                  providerId: managedProviderId,
                   externalAgentId,
                   externalEnvironmentId,
-                }
-              : {
-                  integrationId,
-                  providerId: AgentRuntimeProviderIdEnum.Anthropic,
-                  model: 'claude-opus-4-5',
-                  systemPrompt: instructions || undefined,
-                  tools: CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
                 },
-          };
+              }
+            : {
+                name,
+                identifier,
+                runtime: 'managed',
+                managedRuntime: {
+                  integrationId,
+                  providerId: managedProviderId,
+                  model: 'claude-sonnet-4-6',
+                  systemPrompt: managedOverrides?.systemPrompt ?? instructions ?? undefined,
+                  tools: managedOverrides?.tools ?? CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type),
+                  ...(managedOverrides?.mcpServers ? { mcpServers: managedOverrides.mcpServers } : {}),
+                  ...(managedOverrides?.skills
+                    ? {
+                        skills: managedOverrides.skills.map((skill) => ({
+                          type: 'anthropic' as const,
+                          skillId: skill.skillId,
+                        })),
+                      }
+                    : {}),
+                },
+              };
 
           try {
             const created = await createAgentMutation.mutateAsync(request);
@@ -150,7 +180,7 @@ export function useCreateAgentMutation() {
         setIsPending(false);
       }
     },
-    [createAgentMutation, createIntegration, currentEnvironment, deleteIntegration]
+    [createAgentMutation, createIntegration, currentEnvironment, deleteIntegration, queryClient]
   );
 
   return { submit, isPending };

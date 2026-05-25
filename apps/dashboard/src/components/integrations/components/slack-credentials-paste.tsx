@@ -180,7 +180,8 @@ export function SlackCredentialsPaste({ control, setValue, isReadOnly }: SlackCr
           <div className="flex min-w-0 flex-col gap-1">
             <p className="text-text-strong text-label-xs font-medium leading-4">Skip the back and forth.</p>
             <p className="text-text-sub text-label-xs leading-4">
-              Copy your credentials block from Slack and paste it in the first input below, we&apos;ll auto-fill the fields.
+              Copy your credentials block from Slack and paste it in the first input below, we&apos;ll auto-fill the
+              fields.
             </p>
           </div>
         </div>
@@ -211,7 +212,7 @@ export function SlackCredentialsPaste({ control, setValue, isReadOnly }: SlackCr
             onChange={(event) => setDraft(event.target.value)}
             onPaste={handlePaste}
             placeholder={
-              "Paste the App Credentials section from Slack here.\nPasting straight into any field below works too."
+              'Paste the App Credentials section from Slack here.\nPasting straight into any field below works too.'
             }
             rows={6}
             className="font-mono text-xs"
@@ -308,8 +309,7 @@ function formatOverwrittenSuffix(count: number): string {
 function PasteOutcomeSummary({ outcome, onDismiss }: { outcome: ApplyOutcome; onDismiss: () => void }) {
   const tone = getOutcomeTone(outcome);
   const stillMissing = useMemo(
-    () =>
-      SLACK_FIELDS.filter((field) => !outcome.filled.includes(field) && !outcome.masked.includes(field)),
+    () => SLACK_FIELDS.filter((field) => !outcome.filled.includes(field) && !outcome.masked.includes(field)),
     [outcome.filled, outcome.masked]
   );
   const showStillEmpty = tone === 'success' && stillMissing.length > 0;
@@ -362,8 +362,8 @@ function MaskedFieldsHeadline({ outcome }: { outcome: ApplyOutcome }) {
     <>
       <p className="text-text-strong text-label-xs font-medium">{headline}</p>
       <p className="text-text-sub text-label-xs leading-4">
-        In Slack, click <span className="text-text-strong font-medium">Show</span> next to{' '}
-        {formatList(maskedNames)} to reveal {isSingular ? 'it' : 'them'}, then paste again.
+        In Slack, click <span className="text-text-strong font-medium">Show</span> next to {formatList(maskedNames)} to
+        reveal {isSingular ? 'it' : 'them'}, then paste again.
       </p>
     </>
   );

@@ -22,6 +22,8 @@ export enum TelemetryEvent {
   SKIP_ONBOARDING_CLICKED = 'Skip onboarding clicked - [Onboarding]',
   ONBOARDING_COMPLETED = 'Onboarding completed - [Onboarding]',
   ONBOARDING_CONNECT_AGENT_SUBMITTED = 'Onboarding connect agent submitted - [Onboarding]',
+  ONBOARDING_AGENT_PROMPT_GENERATED = 'Onboarding agent prompt generated - [Onboarding]',
+  ONBOARDING_AGENT_SUGGESTION_SELECTED = 'Onboarding agent suggestion selected - [Onboarding]',
   ONBOARDING_REDIRECT = 'Onboarding redirect - [Onboarding]',
   USECASE_SELECT_PAGE_VIEWED = 'Use case select page viewed - [Onboarding]',
   AGENTS_USECASE_PAGE_VIEWED = 'Agents use case page viewed - [Onboarding]',

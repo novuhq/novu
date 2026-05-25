@@ -1,9 +1,9 @@
 import { encryptCredentials } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
+  ChannelEndpointRepository,
   IntegrationRepository,
   SubscriberRepository,
-  ChannelEndpointRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import { testServer, UserSession } from '@novu/testing';

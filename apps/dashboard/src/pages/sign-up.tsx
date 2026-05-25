@@ -15,7 +15,7 @@ import {
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { getReferrer, getUtmParams } from '@/utils/tracking';
-import { SignUp as SignUpForm, useAuth, useOrganization, useUser } from '@clerk/clerk-react';
+import { SignUp as SignUpForm, useAuth, useOrganization, useUser } from '@clerk/react';
 import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 

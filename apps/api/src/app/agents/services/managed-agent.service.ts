@@ -1,227 +1,218 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import { decryptCredentials, PinoLogger } from '@novu/application-generic';
+import { Injectable, type OnModuleInit } from '@nestjs/common';
+import { type IAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
 import {
   type AgentEntity,
+  AgentRepository,
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
+  ConversationActivityTypeEnum,
   ConversationRepository,
-  IntegrationRepository,
+  SubscriberRepository,
 } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum } from '@novu/shared';
-import {
-  CredentialExpiredError,
-  cloudflare,
-  McpServerError,
-  type Message,
-  MessageRole,
-  SessionExpiredError,
-  type StreamPart,
-  thalamus,
-  type WebhookProvider,
-} from '@novu/thalamus';
+import { type Message, MessageRole } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
-import { LRUCache } from 'lru-cache';
-import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
-import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
+import type { Request, Response } from 'express';
+import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { AgentExecutionParams } from './bridge-executor.service';
+import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { ManagedAgentEventHandler } from './managed-agent-event-handler';
+import { ManagedAgentProviderFactory } from './managed-agent-provider-factory';
+import { McpConnectionVaultService } from './mcp-connection-vault.service';
 
-const MAX_CACHED_PROVIDERS = 200;
-const PROVIDER_TTL_MS = 30 * 60 * 1000;
+type WebhookSessionMetadata = {
+  conversationId: string;
+  environmentId: string;
+  organizationId: string;
+  agentIdentifier: string;
+  integrationIdentifier: string;
+  subscriberId?: string;
+  platform?: AgentPlatformEnum;
+};
 
 @Injectable()
-export class ManagedAgentService {
-  private readonly providers: LRUCache<string, WebhookProvider>;
-  private readonly webhookHandler: WebhookHandler | undefined;
+export class ManagedAgentService implements OnModuleInit {
+  private webhookHandler: WebhookHandler | undefined;
 
   constructor(
-    private readonly integrationRepository: IntegrationRepository,
+    private readonly agentRepository: AgentRepository,
+    private readonly providerFactory: ManagedAgentProviderFactory,
+    private readonly eventHandler: ManagedAgentEventHandler,
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
-    @Inject(forwardRef(() => HandleAgentReply))
-    private readonly handleAgentReply: HandleAgentReply,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly mcpConnectionVaultService: McpConnectionVaultService,
+    private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
-    this.providers = new LRUCache<string, WebhookProvider>({
-      max: MAX_CACHED_PROVIDERS,
-      ttl: PROVIDER_TTL_MS,
-    });
+  }
+
+  onModuleInit() {
     this.webhookHandler = this.initWebhookHandler();
   }
 
   async dispatch(context: AgentExecutionParams, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
-    const provider = await this.getOrCreateProvider(agent, context.config.environmentId);
-    const sessionId = context.conversation.externalSessionId ?? undefined;
+    await this.demoQuota.assertAllowed(context, agent);
+
+    const { provider, runtimeProvider } = await this.providerFactory.getOrCreate(agent, context.config.environmentId);
+    const vaultIds = await this.resolveVaultIdsForTurn(
+      agent,
+      context.config.environmentId,
+      context.config.organizationId,
+      context.subscriber?._id,
+      runtimeProvider
+    );
+    const existingSessionId = context.conversation.externalSessionId ?? undefined;
+    const sessionId = await this.reconcileSessionIdForVaultBinding(context, vaultIds, existingSessionId);
 
     const messages = sessionId
       ? [{ role: MessageRole.USER, content: context.message?.text ?? '' }]
       : await this.buildMessagesWithHistory(context);
 
-    const newSessionId = await provider.send({
+    const { sessionId: newSessionId } = await provider.send({
       messages,
       sessionId,
-      webhookMetadata: {
+      vaultIds,
+      webhookMetadata: this.buildWebhookMetadata({
+        conversationId: String(context.conversation._id),
         environmentId: context.config.environmentId,
         organizationId: context.config.organizationId,
-        conversationId: String(context.conversation._id),
         agentIdentifier: context.config.agentIdentifier,
         integrationIdentifier: context.config.integrationIdentifier,
-      },
+        subscriberId: context.subscriber?.subscriberId,
+        platform: context.config.platform,
+      }),
     });
 
     await this.conversationRepository.setExternalSessionIdIfMissing(
       context.config.environmentId,
       String(context.conversation._id),
-      newSessionId
+      newSessionId,
+      vaultIds[0]
     );
   }
 
-  getWebhookHandler(): WebhookHandler | undefined {
-    return this.webhookHandler;
-  }
+  /**
+   * Resume a session that was parked in `requires-action` by sending the
+   * user's verdict back through the provider as a `toolResults` entry.
+   */
+  async confirmToolApproval(params: {
+    conversationId: string;
+    environmentId: string;
+    organizationId: string;
+    agentIdentifier: string;
+    integrationIdentifier: string;
+    subscriberId?: string;
+    platform?: AgentPlatformEnum;
+    toolUseId: string;
+    approved: boolean;
+  }): Promise<void> {
+    const conversation = await this.conversationRepository.findOne(
+      { _id: params.conversationId, _environmentId: params.environmentId, _organizationId: params.organizationId },
+      '*'
+    );
 
-  async handleWebhookEvent(sessionId: string, metadata: Record<string, string>, event: StreamPart): Promise<void> {
-    if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
-      this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
-
-      return;
-    }
-
-    switch (event.type) {
-      case 'finish': {
-        await this.handleAgentReply.execute(
-          HandleAgentReplyCommand.create({
-            userId: 'system',
-            environmentId: metadata.environmentId,
-            organizationId: metadata.organizationId,
-            conversationId: metadata.conversationId,
-            agentIdentifier: metadata.agentIdentifier ?? '',
-            integrationIdentifier: metadata.integrationIdentifier ?? '',
-            reply: { markdown: event.response.content },
-          })
-        );
-        break;
-      }
-
-      case 'error': {
-        await this.handleErrorEvent(metadata, sessionId, event.error);
-        break;
-      }
-
-      default:
-        break;
-    }
-  }
-
-  private async handleErrorEvent(metadata: Record<string, string>, sessionId: string, error: Error): Promise<void> {
-    if (error instanceof SessionExpiredError) {
-      this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
-      await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
-
-      return;
-    }
-
-    const message = this.buildErrorMessage(error);
-
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          userId: 'system',
-          organizationId: metadata.organizationId,
-          environmentId: metadata.environmentId,
-          conversationId: metadata.conversationId,
-          agentIdentifier: metadata.agentIdentifier ?? '',
-          integrationIdentifier: metadata.integrationIdentifier ?? '',
-          reply: { markdown: message },
-        })
+    if (!conversation?.externalSessionId) {
+      this.logger.warn(
+        { conversationId: params.conversationId, toolUseId: params.toolUseId },
+        'Ignoring tool-approval click — conversation has no externalSessionId (stale card or already resolved)'
       );
-    } catch (err) {
-      this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
-    }
-  }
 
-  private buildErrorMessage(err: unknown): string {
-    if (err instanceof CredentialExpiredError) {
-      return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
-    }
-    if (err instanceof McpServerError) {
-      return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
+      return;
     }
 
-    return 'The agent is temporarily unavailable. Please try again later.';
-  }
+    const agent = await this.agentRepository.findOne(
+      { _id: conversation._agentId, _environmentId: params.environmentId },
+      ['_id', 'managedRuntime']
+    );
 
-  private async getOrCreateProvider(
-    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>,
-    environmentId: string
-  ): Promise<WebhookProvider> {
-    if (!agent.managedRuntime) {
-      throw new Error(`Agent ${agent._id} is not a managed agent`);
+    if (!agent?.managedRuntime) {
+      this.logger.warn(
+        { conversationId: params.conversationId, toolUseId: params.toolUseId },
+        'Ignoring tool-approval click — agent has no managedRuntime'
+      );
+
+      return;
     }
 
-    const key = `${agent.managedRuntime._integrationId}:${agent.managedRuntime.externalAgentId}`;
-    let provider = this.providers.get(key);
+    const { provider, runtimeProvider } = await this.providerFactory.getOrCreate(agent, params.environmentId);
+    const subscriberMongoId = params.subscriberId
+      ? (await this.subscriberRepository.findBySubscriberId(params.environmentId, params.subscriberId))?._id
+      : undefined;
+    const vaultIds = await this.resolveVaultIdsForTurn(
+      agent,
+      params.environmentId,
+      params.organizationId,
+      subscriberMongoId,
+      runtimeProvider
+    );
+    const sessionId = conversation.externalSessionId;
 
-    if (provider) {
-      return provider;
-    }
-
-    const integration = await this.integrationRepository.findOne({
-      _id: agent.managedRuntime._integrationId,
-      _environmentId: environmentId,
+    await provider.send({
+      messages: [],
+      sessionId,
+      vaultIds,
+      toolResults: [{ toolUseId: params.toolUseId, approved: params.approved, content: [] }],
+      webhookMetadata: this.buildWebhookMetadata({
+        conversationId: params.conversationId,
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        agentIdentifier: params.agentIdentifier,
+        integrationIdentifier: params.integrationIdentifier,
+        subscriberId: params.subscriberId,
+        platform: params.platform,
+      }),
     });
-    if (!integration?.credentials) {
-      throw new Error(`Integration ${agent.managedRuntime._integrationId} not found or has no credentials`);
-    }
-
-    const creds = decryptCredentials(integration.credentials);
-    if (!creds.apiKey) {
-      throw new Error('Integration has no API key');
-    }
-    if (!creds.externalEnvironmentId) {
-      throw new Error('Integration has no external environment id');
-    }
-
-    provider = this.createProvider(agent.managedRuntime.providerId, {
-      apiKey: creds.apiKey,
-      agentId: agent.managedRuntime.externalAgentId,
-      environmentId: creds.externalEnvironmentId,
-    });
-    this.providers.set(key, provider);
-
-    return provider;
   }
 
-  private createProvider(
-    providerId: AgentRuntimeProviderIdEnum,
-    config: { apiKey: string; agentId: string; environmentId: string }
-  ): WebhookProvider {
-    const cfUrl = process.env.THALAMUS_CF_URL;
-    if (!cfUrl) {
-      throw new Error('THALAMUS_CF_URL is required for managed agents');
+  async handleWebhook(req: Request, res: Response): Promise<void> {
+    if (!this.webhookHandler) {
+      res.status(503).json({ error: 'Webhook handler not configured' });
+
+      return;
     }
 
-    const webhookSecret = process.env.THALAMUS_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-      throw new Error('THALAMUS_WEBHOOK_SECRET is required for managed agents');
+    const rawBody = (req as Request & { rawBody?: Buffer }).rawBody?.toString('utf-8') ?? JSON.stringify(req.body);
+    const signature = req.headers['x-thalamus-signature'] as string | undefined;
+
+    const result = await this.webhookHandler.handleRaw(rawBody, signature ?? null);
+
+    res.status(result.status);
+    if (result.body) {
+      res.setHeader('Content-Type', 'application/json');
+      res.send(result.body);
+    } else {
+      res.end();
+    }
+  }
+
+  /**
+   * Thalamus only applies `vault_ids` when creating a session. If a conversation
+   * already has an `externalSessionId` that was opened against a different vault,
+   * reset the session so the next `provider.send` opens a fresh one.
+   */
+  private async reconcileSessionIdForVaultBinding(
+    context: AgentExecutionParams,
+    vaultIds: string[],
+    existingSessionId: string | undefined
+  ): Promise<string | undefined> {
+    if (!existingSessionId) {
+      return existingSessionId;
     }
 
-    switch (providerId) {
-      case AgentRuntimeProviderIdEnum.Anthropic:
-        return thalamus.anthropic({
-          ...config,
-          durable: cloudflare({
-            url: cfUrl,
-            apiKey: process.env.THALAMUS_CF_API_KEY,
-            webhook: {
-              url: `${process.env.API_ROOT_URL}/v1/agents/events`,
-              secret: webhookSecret,
-            },
-          }),
-        });
-      default:
-        throw new Error(`Unsupported agent runtime provider: ${providerId}`);
+    const targetVaultId = vaultIds[0];
+    const boundVaultId = context.conversation.managedSessionVaultId;
+
+    if (boundVaultId === targetVaultId) {
+      return existingSessionId;
     }
+
+    await this.conversationRepository.clearExternalSessionId(
+      context.config.environmentId,
+      String(context.conversation._id)
+    );
+
+    return undefined;
   }
 
   private initWebhookHandler(): WebhookHandler | undefined {
@@ -230,13 +221,7 @@ export class ManagedAgentService {
 
     return createWebhookHandler({
       secret,
-      onSessionEvents: (sessionId, metadata) => ({
-        onPart: (part) => {
-          this.handleWebhookEvent(sessionId, metadata, part).catch((err) => {
-            this.logger.error(err, `Failed to handle webhook event for session ${sessionId}`);
-          });
-        },
-      }),
+      onSessionEvents: (sessionId, runId, metadata) => this.eventHandler.createHandlers(sessionId, runId, metadata),
     });
   }
 
@@ -247,13 +232,56 @@ export class ManagedAgentService {
       50
     );
 
-    const messages: Message[] = history.reverse().map((entry) => ({
-      role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
-      content: entry.content,
-    }));
+    const messages: Message[] = history
+      .filter((entry) => entry.type !== ConversationActivityTypeEnum.SIGNAL)
+      .reverse()
+      .map((entry) => ({
+        role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
+        content: entry.content,
+      }));
 
     messages.push({ role: MessageRole.USER, content: context.message?.text ?? '' });
 
     return messages;
+  }
+
+  private async resolveVaultIdsForTurn(
+    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>,
+    environmentId: string,
+    organizationId: string,
+    subscriberMongoId: string | undefined,
+    runtimeProvider: IAgentRuntimeProvider
+  ): Promise<string[]> {
+    if (!agent.managedRuntime) {
+      return [];
+    }
+
+    return this.mcpConnectionVaultService.resolveVaultIds({
+      agentId: agent._id,
+      environmentId,
+      organizationId,
+      subscriberMongoId,
+      runtimeProvider,
+    });
+  }
+
+  private buildWebhookMetadata(input: WebhookSessionMetadata): Record<string, string> {
+    const metadata: Record<string, string> = {
+      conversationId: input.conversationId,
+      environmentId: input.environmentId,
+      organizationId: input.organizationId,
+      agentIdentifier: input.agentIdentifier,
+      integrationIdentifier: input.integrationIdentifier,
+    };
+
+    if (input.subscriberId) {
+      metadata.subscriberId = input.subscriberId;
+    }
+
+    if (input.platform) {
+      metadata.platform = input.platform;
+    }
+
+    return metadata;
   }
 }

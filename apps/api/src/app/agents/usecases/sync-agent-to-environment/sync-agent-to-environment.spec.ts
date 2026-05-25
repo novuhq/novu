@@ -1,11 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
-import type { AgentIntegrationEntity, AgentEntity, IntegrationEntity } from '@novu/dal';
+import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
 import { ChannelTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
-
-import { SyncAgentToEnvironment } from './sync-agent-to-environment.usecase';
 import { SyncAgentToEnvironmentCommand } from './sync-agent-to-environment.command';
+import { SyncAgentToEnvironment } from './sync-agent-to-environment.usecase';
 
 const SOURCE_ENV = 'source-env-id';
 const TARGET_ENV = 'target-env-id';
@@ -192,8 +191,17 @@ describe('SyncAgentToEnvironment usecase', () => {
       const targetAgent = makeAgent({ _id: 'target-id', _environmentId: TARGET_ENV });
       const sourceIntegration = makeIntegration({ _id: 'src-int-id' });
       const sourceLink = makeLink({ _integrationId: 'src-int-id' });
-      const existingStub = makeIntegration({ _id: 'existing-stub-id', _parentId: 'src-int-id', _environmentId: TARGET_ENV });
-      const existingTargetLink = makeLink({ _id: 'target-link-id', _agentId: 'target-id', _integrationId: 'existing-stub-id', _environmentId: TARGET_ENV });
+      const existingStub = makeIntegration({
+        _id: 'existing-stub-id',
+        _parentId: 'src-int-id',
+        _environmentId: TARGET_ENV,
+      });
+      const existingTargetLink = makeLink({
+        _id: 'target-link-id',
+        _agentId: 'target-id',
+        _integrationId: 'existing-stub-id',
+        _environmentId: TARGET_ENV,
+      });
 
       agentRepo.findOne.onFirstCall().resolves(sourceAgent);
       agentRepo.findOne.onSecondCall().resolves(targetAgent);
@@ -213,8 +221,17 @@ describe('SyncAgentToEnvironment usecase', () => {
     it('unlinks integrations that are no longer connected to the source agent', async () => {
       const sourceAgent = makeAgent();
       const targetAgent = makeAgent({ _id: 'target-id', _environmentId: TARGET_ENV });
-      const removedStub = makeIntegration({ _id: 'old-stub-id', _parentId: 'removed-src-int-id', _environmentId: TARGET_ENV });
-      const orphanedLink = makeLink({ _id: 'orphan-link-id', _agentId: 'target-id', _integrationId: 'old-stub-id', _environmentId: TARGET_ENV });
+      const removedStub = makeIntegration({
+        _id: 'old-stub-id',
+        _parentId: 'removed-src-int-id',
+        _environmentId: TARGET_ENV,
+      });
+      const orphanedLink = makeLink({
+        _id: 'orphan-link-id',
+        _agentId: 'target-id',
+        _integrationId: 'old-stub-id',
+        _environmentId: TARGET_ENV,
+      });
 
       agentRepo.findOne.onFirstCall().resolves(sourceAgent);
       agentRepo.findOne.onSecondCall().resolves(targetAgent);
@@ -240,7 +257,12 @@ describe('SyncAgentToEnvironment usecase', () => {
       const sourceAgent = makeAgent();
       const targetAgent = makeAgent({ _id: 'target-id', _environmentId: TARGET_ENV });
       const manualIntegration = makeIntegration({ _id: 'manual-id', _environmentId: TARGET_ENV });
-      const manualLink = makeLink({ _id: 'manual-link-id', _agentId: 'target-id', _integrationId: 'manual-id', _environmentId: TARGET_ENV });
+      const manualLink = makeLink({
+        _id: 'manual-link-id',
+        _agentId: 'target-id',
+        _integrationId: 'manual-id',
+        _environmentId: TARGET_ENV,
+      });
 
       agentRepo.findOne.onFirstCall().resolves(sourceAgent);
       agentRepo.findOne.onSecondCall().resolves(targetAgent);

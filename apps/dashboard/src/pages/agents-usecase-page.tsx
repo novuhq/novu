@@ -1,11 +1,10 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { CalendarDays, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { SetupStep } from '@/components/agents/setup-guide-primitives';
 import type { StepStatus } from '@/components/agents/setup-guide-step-utils';
-import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
 import { AgentFlowIllustration } from '@/components/onboarding/agent-flow-illustration';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
@@ -234,18 +233,6 @@ export function AgentsUsecasePage() {
         </Button>
       </div>
 
-      <div className="text-text-sub mt-4 flex items-center gap-2 text-xs">
-        <span>Have questions?</span>
-        <a
-          href={BOOK_DEMO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-text-strong inline-flex items-center gap-1 text-xs font-medium hover:underline"
-        >
-          <CalendarDays className="size-4" />
-          Book a demo
-        </a>
-      </div>
     </>
   );
 

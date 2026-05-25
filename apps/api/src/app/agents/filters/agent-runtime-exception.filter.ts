@@ -13,6 +13,7 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import type { Response } from 'express';
+import { captureAgentException } from '../utils/capture-agent-sentry';
 
 function httpStatusFromError(err: AgentRuntimeError): number {
   if (err instanceof AgentRuntimeUnauthorizedError) return HttpStatus.UNAUTHORIZED;
@@ -56,6 +57,16 @@ export class AgentRuntimeExceptionFilter implements ExceptionFilter {
         { code, providerId: exception.providerId, requestId: exception.requestId, message: exception.message },
         'Agent runtime provider error'
       );
+      captureAgentException(exception, {
+        component: 'agent-runtime-exception-filter',
+        operation: 'provider-error',
+        extra: {
+          code,
+          providerId: exception.providerId,
+          requestId: exception.requestId,
+          statusCode,
+        },
+      });
     }
 
     if (exception instanceof AgentRuntimeRateLimitedError) {

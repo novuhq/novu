@@ -13,6 +13,7 @@ import { MsTeamsOauthCallback } from './chat-oauth-callback/msteams-oauth-callba
 import { SlackOauthCallback } from './chat-oauth-callback/slack-oauth-callback/slack-oauth-callback.usecase';
 import { CheckIntegration } from './check-integration/check-integration.usecase';
 import { CheckIntegrationEMail } from './check-integration/check-integration-email.usecase';
+import { ConsumeIntegrationStoreTelegramMobileLink } from './consume-integration-store-telegram-mobile-link/consume-integration-store-telegram-mobile-link.usecase';
 import { CreateIntegration } from './create-integration/create-integration.usecase';
 import { CreateNovuIntegrations } from './create-novu-integrations/create-novu-integrations.usecase';
 import { GenerateAzureSetupOauthUrl } from './generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.usecase';
@@ -24,9 +25,8 @@ import { GenerateSlackOauthUrl } from './generate-chat-oath-url/generate-slack-o
 import { GenerateMsTeamsArmTemplate } from './generate-msteams-arm-template/generate-msteams-arm-template.usecase';
 import { GetMsTeamsArmTemplate } from './generate-msteams-arm-template/get-msteams-arm-template.usecase';
 import { GetInAppActivated } from './get-in-app-activated/get-in-app-activated.usecase';
-import { GetIntegrations } from './get-integrations/get-integrations.usecase';
-import { ConsumeIntegrationStoreTelegramMobileLink } from './consume-integration-store-telegram-mobile-link/consume-integration-store-telegram-mobile-link.usecase';
 import { GetIntegrationStoreTelegramMobileLinkStatus } from './get-integration-store-telegram-mobile-link-status/get-integration-store-telegram-mobile-link-status.usecase';
+import { GetIntegrations } from './get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatus } from './get-webhook-support-status/get-webhook-support-status.usecase';
 import { IssueIntegrationStoreTelegramMobileLink } from './issue-integration-store-telegram-mobile-link/issue-integration-store-telegram-mobile-link.usecase';
 import { MsTeamsHealthCheck } from './msteams-health-check/msteams-health-check.usecase';

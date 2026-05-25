@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import type { Attachment } from 'chat';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { captureAgentWarning } from '../utils/capture-agent-sentry';
 
 export interface StoredAttachment {
   type: string;
@@ -151,6 +152,7 @@ export class AgentAttachmentStorage {
         }
       } catch (err) {
         this.logger.warn(err, 'Inbound attachment processing failed');
+        captureAgentWarning(err, { component: 'agent-attachment-storage', operation: 'store-inbound' });
       }
     }
 
@@ -232,6 +234,7 @@ export class AgentAttachmentStorage {
         await this.storageService.uploadFile(storageKey, buffer, mimeType);
       } catch (err) {
         this.logger.warn(err, 'Failed to upload inbound attachment');
+        captureAgentWarning(err, { component: 'agent-attachment-storage', operation: 'upload-inbound' });
 
         return null;
       }
@@ -241,6 +244,7 @@ export class AgentAttachmentStorage {
         url = await this.storageService.getReadSignedUrl(storageKey, READ_URL_TTL_SECONDS);
       } catch (err) {
         this.logger.warn(err, 'Failed to sign inbound attachment after upload');
+        captureAgentWarning(err, { component: 'agent-attachment-storage', operation: 'sign-inbound-after-upload' });
       }
 
       return {
@@ -253,6 +257,7 @@ export class AgentAttachmentStorage {
       };
     } catch (err) {
       this.logger.warn(err, 'Failed to store inbound attachment');
+      captureAgentWarning(err, { component: 'agent-attachment-storage', operation: 'store-one' });
 
       return null;
     }

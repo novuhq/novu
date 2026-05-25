@@ -1,5 +1,6 @@
 import { ChannelTypeEnum, IIntegration } from '@novu/shared';
 import { useMemo } from 'react';
+import { useEnvironment } from '../context/environment/hooks';
 import { useFetchIntegrations } from './use-fetch-integrations';
 
 type PrimaryEmailIntegrationResult = {
@@ -10,15 +11,20 @@ type PrimaryEmailIntegrationResult = {
 };
 
 export function usePrimaryEmailIntegration(): PrimaryEmailIntegrationResult {
+  const { currentEnvironment } = useEnvironment();
   const { integrations, isLoading } = useFetchIntegrations();
 
   const primaryEmailIntegration = useMemo(() => {
     if (!integrations) return undefined;
 
     return integrations.find(
-      (integration) => integration.channel === ChannelTypeEnum.EMAIL && integration.active && integration.primary
+      (integration) =>
+        integration._environmentId === currentEnvironment?._id &&
+        integration.channel === ChannelTypeEnum.EMAIL &&
+        integration.active &&
+        integration.primary
     );
-  }, [integrations]);
+  }, [integrations, currentEnvironment?._id]);
 
   return {
     senderEmail: primaryEmailIntegration?.credentials?.from,

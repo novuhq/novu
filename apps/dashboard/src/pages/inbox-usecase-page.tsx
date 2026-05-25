@@ -1,4 +1,4 @@
-import { useOrganization, useUser } from '@clerk/clerk-react';
+import { useOrganization, useUser } from '@clerk/react';
 import type { IEnvironment } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';

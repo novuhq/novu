@@ -18,7 +18,7 @@ import {
   PRODUCT_QUERY_PARAM,
 } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
-import { ClerkProvider as _ClerkProvider } from '@clerk/clerk-react';
+import { ClerkProvider as _ClerkProvider } from '@clerk/react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
 

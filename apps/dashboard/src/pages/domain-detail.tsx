@@ -554,7 +554,7 @@ export function DomainDetailPage() {
                       (!hasSubmittedDomainConnectReturn || hasDomainConnectFailure) && (
                         <AutoConfigureButton
                           providerName={domainConnectProviderName}
-                          providerSlug={domain?.dnsProvider}
+                          providerSlug={domain?.dnsProvider?.toLowerCase()}
                           isLoading={startDomainAutoConfigure.isPending}
                           disabled={!canWriteDomains || startDomainAutoConfigure.isPending}
                           onClick={handleAutoConfigure}
@@ -764,7 +764,9 @@ type AutoConfigureButtonProps = {
 
 function AutoConfigureButton({ providerName, providerSlug, isLoading, disabled, onClick }: AutoConfigureButtonProps) {
   const ProviderIcon = getProviderIcon(providerSlug);
-  const isCloudflare = providerSlug?.toLowerCase() === 'cloudflare';
+  const normalizedProviderSlug = providerSlug?.toLowerCase();
+  const isCloudflare = normalizedProviderSlug === 'cloudflare';
+  const isVercel = normalizedProviderSlug === 'vercel';
 
   return (
     <button
@@ -776,7 +778,12 @@ function AutoConfigureButton({ providerName, providerSlug, isLoading, disabled, 
     >
       {ProviderIcon && (
         <ProviderIcon
-          className={cn('size-4 shrink-0', isCloudflare ? 'text-[#f38020]' : 'text-text-strong')}
+          className={cn(
+            'size-4 shrink-0',
+            isCloudflare && 'text-[#f38020]',
+            isVercel && 'text-foreground-950',
+            !isCloudflare && !isVercel && 'text-text-strong'
+          )}
           aria-hidden
         />
       )}

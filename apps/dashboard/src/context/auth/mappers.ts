@@ -1,4 +1,4 @@
-import type { OrganizationResource, UserResource } from '@clerk/types';
+import type { OrganizationResource, UserResource } from '@clerk/shared/types';
 import {
   type IOrganizationEntity,
   type IServicesHashes,
