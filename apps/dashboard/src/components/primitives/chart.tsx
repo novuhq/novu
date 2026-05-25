@@ -398,4 +398,4 @@ const NovuTooltip = React.forwardRef<HTMLDivElement, NovuTooltipProps>(
 );
 NovuTooltip.displayName = 'NovuTooltip';
 
-export { ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent, NovuTooltip, ChartStyle };
+export { ChartContainer, ChartTooltip, NovuTooltip };

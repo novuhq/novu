@@ -13,7 +13,7 @@ const INPUT_ICON_NAME = 'InputIcon';
 const INPUT_AFFIX_NAME = 'InputAffixButton';
 const INPUT_INLINE_AFFIX_NAME = 'InputInlineAffixButton';
 
-export const inputVariants = tv({
+const inputVariants = tv({
   slots: {
     root: [
       // base
@@ -361,9 +361,6 @@ function InputInlineAffix({
 InputInlineAffix.displayName = INPUT_INLINE_AFFIX_NAME;
 
 export {
-  InputAffix as Affix,
-  InputIcon as Icon,
-  InputInlineAffix as InlineAffix,
   Input,
   InputEl as InputPure,
   InputRoot,

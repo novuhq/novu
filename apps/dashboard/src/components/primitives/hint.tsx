@@ -7,7 +7,7 @@ import { tv, type VariantProps } from '@/utils/tv';
 const HINT_ROOT_NAME = 'HintRoot';
 const HINT_ICON_NAME = 'HintIcon';
 
-export const hintVariants = tv({
+const hintVariants = tv({
   slots: {
     root: 'group flex items-center gap-1 text-paragraph-xs text-text-sub',
     icon: 'size-4 shrink-0 text-text-soft self-start',
@@ -72,4 +72,4 @@ function HintIcon<T extends React.ElementType>({
 
 HintIcon.displayName = HINT_ICON_NAME;
 
-export { HintRoot as Hint, HintIcon, HintRoot as Root };
+export { HintRoot as Hint, HintIcon };

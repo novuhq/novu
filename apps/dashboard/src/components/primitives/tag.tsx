@@ -12,7 +12,7 @@ const TAG_ICON_NAME = 'TagIcon';
 const TAG_DISMISS_BUTTON_NAME = 'TagDismissButton';
 const TAG_DISMISS_ICON_NAME = 'TagDismissIcon';
 
-export const tagVariants = tv({
+const tagVariants = tv({
   slots: {
     root: [
       'group/tag inline-flex h-6 items-center gap-2 rounded-md px-2 text-label-xs text-text-sub',
@@ -184,4 +184,4 @@ const Tag = React.forwardRef<HTMLDivElement, TagProps>(
 );
 Tag.displayName = 'Tag';
 
-export { TagDismissButton as DismissButton, TagDismissIcon as DismissIcon, TagIcon as Icon, TagRoot as Root, Tag };
+export { TagDismissButton as DismissButton, TagIcon as Icon, TagRoot as Root, Tag };
