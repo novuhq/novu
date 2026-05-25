@@ -119,13 +119,13 @@ export function ConfigureCredentialsSection({
   const defaultCanSave = isAwsProvider
     ? integrationName.trim().length > 0 &&
       region.trim().length > 0 &&
-      externalWorkspaceId?.trim().length > 0 &&
+      Boolean(externalWorkspaceId?.trim()) &&
       apiKey.trim().length > 0
     : integrationName.trim().length > 0 && apiKey.trim().length > 0;
 
   const canSave = canSaveOverride ?? defaultCanSave;
   const defaultCanVerify = isAwsProvider
-    ? region.trim().length > 0 && externalWorkspaceId?.trim().length > 0 && apiKey.trim().length > 0
+    ? Boolean(region.trim()) && Boolean(externalWorkspaceId?.trim()) && apiKey.trim().length > 0
     : apiKey.trim().length > 0;
 
   const verifyEnabled = canVerify ?? defaultCanVerify;

@@ -20,6 +20,7 @@ import {
   hasFormErrors,
   type ManagedAgentRuntimeOverrides,
   type RuntimeType,
+  type VerifyStatus,
   validateCreateAgentForm,
 } from '@/components/agents/create-agent-fields';
 import { AGENT_TEMPLATES as DEFAULT_AGENT_TEMPLATES } from '@/components/connect/dashboard/agent-templates';
@@ -620,6 +621,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       externalAgentId,
       externalEnvironmentId,
       externalWorkspaceId,
+      region: region.trim() || undefined,
       selectedIntegrationId,
       integrationName,
     };

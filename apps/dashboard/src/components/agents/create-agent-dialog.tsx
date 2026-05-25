@@ -799,7 +799,7 @@ export function CreateAgentDialog({
                       instructions={instructions}
                       errors={errors}
                       isIdentifierTouched={isIdentifierTouched}
-                      isManagedClaudeConnector={isManagedClaudeConnector}
+                      isClaudeSelected={isManagedClaudeConnector}
                       disabled={isSubmitBusy}
                       onNameChange={(next) => {
                         setName(next);
@@ -865,7 +865,7 @@ export function CreateAgentDialog({
                   instructions={instructions}
                   errors={errors}
                   isIdentifierTouched={isIdentifierTouched}
-                  isManagedClaudeConnector={isManagedClaudeConnector}
+                  isClaudeSelected={isManagedClaudeConnector}
                   onNameChange={(next) => {
                     setName(next);
                     setErrors((prev) => ({ ...prev, name: undefined }));

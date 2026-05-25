@@ -1,11 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { type IAgentRuntimeProvider, PinoLogger, resolveAgentRuntime, type ResolvedAwsAnthropicCredentials } from '@novu/application-generic';
+import {
+  type IAgentRuntimeProvider,
+  PinoLogger,
+  resolveAgentRuntime,
+  type ResolvedAwsAnthropicCredentials,
+  toThalamusAwsAnthropicCredentials,
+} from '@novu/application-generic';
 import { type AgentEntity, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { cloudflare, thalamus, type WebhookProvider } from '@novu/thalamus';
 import { LRUCache } from 'lru-cache';
-
-import { buildThalamusAwsAnthropicConfig } from './thalamus-aws-anthropic-config';
 
 export interface ResolvedRuntime {
   provider: WebhookProvider;
@@ -67,13 +71,13 @@ export class ManagedAgentProviderFactory {
       throw new Error('Integration has no external environment id');
     }
 
-    const environmentId = creds.externalEnvironmentId as string;
+    const externalEnvironmentId = creds.externalEnvironmentId as string;
     const agentId = agent.managedRuntime.externalAgentId;
 
     const webhookProvider =
       awsCredentials != null
-        ? this.createAwsProvider({ awsCredentials, agentId, environmentId })
-        : this.createCloudProvider(providerId, { apiKey, agentId, environmentId });
+        ? this.createAwsProvider({ awsCredentials, agentId, environmentId: externalEnvironmentId })
+        : this.createCloudProvider(providerId, { apiKey, agentId, environmentId: externalEnvironmentId });
 
     const runtime: ResolvedRuntime = { provider: webhookProvider, runtimeProvider };
     this.providers.set(key, runtime);
@@ -135,9 +139,12 @@ export class ManagedAgentProviderFactory {
   }): WebhookProvider {
     const durable = this.buildDurableBackend();
 
-    return thalamus.anthropic(
-      buildThalamusAwsAnthropicConfig(config.awsCredentials, config.agentId, config.environmentId, durable)
-    );
+    return thalamus.anthropic({
+      agentId: config.agentId,
+      environmentId: config.environmentId,
+      durable,
+      ...toThalamusAwsAnthropicCredentials(config.awsCredentials),
+    });
   }
 
   private buildDurableBackend() {

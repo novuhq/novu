@@ -18,6 +18,7 @@ export type ConnectSummary = {
   externalAgentId: string;
   externalEnvironmentId: string;
   externalWorkspaceId: string;
+  region?: string;
   /**
    * Managed-runtime integration the user picked or just created during the connect phase.
    * Used in the recap to render the integration name inside the connector dropdown.

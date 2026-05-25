@@ -114,6 +114,7 @@ function ConnectPhaseRecap({
         isClaudeSelected={display.isClaudeSelected}
         apiKey={summary.apiKey}
         externalWorkspaceId={summary.externalWorkspaceId}
+        region={summary.region ?? ''}
         templateSelection={summary.templateSelection}
         isExistingMode={display.isExistingMode}
         isScratchMode={display.isScratchMode}
@@ -141,6 +142,7 @@ function ConnectPhaseRecap({
         onTemplateChange={noop}
         onApiKeyChange={noop}
         onExternalWorkspaceIdChange={noop}
+        onRegionChange={noop}
         onNameChange={noop}
         onIdentifierChange={noop}
         onIdentifierTouched={noop}
