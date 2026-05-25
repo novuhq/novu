@@ -70,20 +70,39 @@ export type McpOAuthCatalogEntry = DcrOAuthCatalogEntry | NovuAppOAuthCatalogEnt
  * picker as "Coming soon" — they exist in the catalog so users can discover
  * the roadmap, but they cannot be enabled until OAuth wiring is added.
  *
- * Today every wired entry is `{ mode: 'dcr' }`. `novu-app` and `user-app`
- * are type-defined but have zero entries — they ship with the credential
- * resolver service in a follow-up PR.
+ * Two OAuth modes are wired today:
  *
- * Each DCR entry below has been manually probed and verified to:
- *   1. Advertise its authorization server via Protected Resource Metadata
+ * - `dcr` entries — manually probed and verified to:
+ *   1. Advertise their authorization server via Protected Resource Metadata
  *      at `.well-known/oauth-protected-resource` (RFC 9728), and
- *   2. Expose a `registration_endpoint` (RFC 7591) on its AS metadata
+ *   2. Expose a `registration_endpoint` (RFC 7591) on AS metadata
  *      (RFC 8414), and
  *   3. Advertise `code_challenge_methods_supported: ["S256"]`.
+ *   Discovery happens at runtime in `McpOAuthDiscoveryService`; if any
+ *   upstream removes DCR support, `GenerateMcpOAuthUrl` surfaces a
+ *   `mcp_no_dcr_support` error on the connection's `lastError`.
  *
- * Discovery happens at runtime in `McpOAuthDiscoveryService`; if any upstream
- * removes DCR support, `GenerateMcpOAuthUrl` surfaces a `mcp_no_dcr_support`
- * error on the connection's `lastError`.
+ * - `novu-app` entries — hand-verified probe checklist (no live-probe CI;
+ *   onboarding a new entry is the same vetting Anthropic uses for its
+ *   Claude connectors). The checklist below is for ONBOARDING ONLY;
+ *   `GenerateMcpOAuthUrl` treats every probe step as best-effort at
+ *   runtime and falls back to the catalog values pinned here, so a
+ *   transient upstream outage never blocks consent:
+ *   1. PRM probe of the MCP URL returns a `WWW-Authenticate` challenge or
+ *      `.well-known/oauth-protected-resource` (used as a non-fatal hint
+ *      — `novu-app` skips RFC 8414 AS-metadata discovery entirely).
+ *   2. `authorizationEndpoint` / `tokenEndpoint` / `scopes` cross-checked
+ *      against the upstream's public OAuth docs; the scope list mirrors
+ *      what Anthropic's Claude connector requests.
+ *   3. Novu's pre-registered OAuth application exists in every
+ *      environment with a matching redirect URI pointing at
+ *      `{FRONT_BASE_URL}/v1/agents/mcp/oauth/callback`, and refresh-token
+ *      issuance is enabled on the app.
+ *   4. End-to-end consent + token exchange + refresh exercised in staging
+ *      before promotion to production.
+ *
+ * `user-app` is type-defined but has zero entries; it ships with the
+ * per-org credential table in a follow-up PR.
  */
 export type McpServer = {
   /** Stable identifier used as a key in selections */
@@ -136,6 +155,31 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://api.githubcopilot.com/mcp/',
     category: 'code',
     popular: true,
+    // GitHub does NOT advertise RFC 8414 AS metadata or RFC 7591 DCR, so the
+    // catalog pins the authorize/token endpoints and Novu uses its single
+    // pre-registered GitHub App (env-loaded `NOVU_GITHUB_MCP_APP_CLIENT_*`).
+    // Scopes mirror Anthropic's Claude GitHub connector verbatim so users
+    // see a familiar permission set on the consent screen.
+    oauth: {
+      mode: McpConnectionAuthModeEnum.NovuApp,
+      issuer: 'https://github.com',
+      authorizationEndpoint: 'https://github.com/login/oauth/authorize',
+      tokenEndpoint: 'https://github.com/login/oauth/access_token',
+      scopes: [
+        'repo',
+        'read:org',
+        'read:user',
+        'user:email',
+        'read:packages',
+        'write:packages',
+        'read:project',
+        'project',
+        'gist',
+        'notifications',
+        'workflow',
+        'codespace',
+      ],
+    },
   },
   {
     id: 'sentry',

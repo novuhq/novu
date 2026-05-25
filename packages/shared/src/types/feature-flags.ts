@@ -98,6 +98,14 @@ export enum FeatureFlagsKeysEnum {
   IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED = 'IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED',
   /** Enable the new app-rail dashboard shell with the Connect app surface. */
   IS_CONNECT_DASHBOARD_ENABLED = 'IS_CONNECT_DASHBOARD_ENABLED',
+  /**
+   * Enable MCP connections that use Novu's pre-registered OAuth app
+   * (`auth mode = 'novu-app'`). Gates both `EnableAgentMcpServer` for any
+   * catalog entry whose `oauth.mode === 'novu-app'` and `GenerateMcpOAuthUrl`
+   * when it resolves to the novu-app branch. DCR connections are never gated
+   * by this flag.
+   */
+  IS_MCP_NOVU_APP_ENABLED = 'IS_MCP_NOVU_APP_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

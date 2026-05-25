@@ -38,13 +38,18 @@ type McpsSheetProps = {
 
 /**
  * Gate the picker on auth modes the backend can actually complete, not just on
- * `oauth` presence. The `novu-app` / `user-app` modes are typed in the catalog
- * but the OAuth start/callback use cases still return `NotImplementedException`
- * for them, so surfacing those rows as toggle-able would only fail at mutation
- * time. Keep this set in lock-step with the modes wired in
+ * `oauth` presence. Keep this set in lock-step with the modes wired in
  * `generate-mcp-oauth-url.usecase.ts` / `mcp-oauth-callback.usecase.ts`.
+ *
+ * `novu-app` is included here but enable / authorize calls are additionally
+ * gated server-side by `IS_MCP_NOVU_APP_ENABLED`, so an org without the flag
+ * will see a 403 with `error: 'mcp_novu_app_disabled'` on toggle (surfaced
+ * via the existing `showErrorToast`). `user-app` is still typed-only.
  */
-const SUPPORTED_AUTH_MODES = new Set<McpConnectionAuthModeEnum>([McpConnectionAuthModeEnum.Dcr]);
+const SUPPORTED_AUTH_MODES = new Set<McpConnectionAuthModeEnum>([
+  McpConnectionAuthModeEnum.Dcr,
+  McpConnectionAuthModeEnum.NovuApp,
+]);
 
 function isMcpSupported(entry: McpServer): boolean {
   return entry.oauth !== undefined && SUPPORTED_AUTH_MODES.has(entry.oauth.mode);

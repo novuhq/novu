@@ -23,6 +23,7 @@ import type {
 import { AgentEventEnum } from '@novu/framework';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import type { Message } from 'chat';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
@@ -133,8 +134,18 @@ export class BridgeExecutorService {
 
       this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
         this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
+        captureAgentException(err, {
+          component: 'bridge-executor',
+          operation: 'bridge-delivery',
+          agentIdentifier,
+        });
         params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
           this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
+          captureAgentWarning(callbackErr, {
+            component: 'bridge-executor',
+            operation: 'on-bridge-failure-callback',
+            agentIdentifier,
+          });
         });
       });
     } catch (err) {
@@ -143,6 +154,11 @@ export class BridgeExecutorService {
       }
 
       this.logger.error(err, `[agent:${agentIdentifier}] Bridge setup failed — skipping bridge call`);
+      captureAgentException(err, {
+        component: 'bridge-executor',
+        operation: 'bridge-setup',
+        agentIdentifier,
+      });
     }
   }
 
@@ -475,6 +491,7 @@ export class BridgeExecutorService {
       return url;
     } catch (err) {
       this.logger.warn(err, 'Failed to sign agent attachment for history; omitting from bridge payload');
+      captureAgentWarning(err, { component: 'bridge-executor', operation: 'sign-history-attachment' });
 
       return null;
     }
@@ -528,6 +545,7 @@ export class BridgeExecutorService {
       return url;
     } catch (err) {
       this.logger.warn(err, 'Failed to sign stored attachment; omitting from bridge payload');
+      captureAgentWarning(err, { component: 'bridge-executor', operation: 'sign-stored-attachment' });
 
       return null;
     }

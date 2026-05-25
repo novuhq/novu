@@ -18,6 +18,7 @@ import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
@@ -264,6 +265,7 @@ export class AgentInboundHandler implements OnModuleInit {
       })
       .catch((err) => {
         this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
+        captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
 
         return null;
       });
@@ -357,6 +359,11 @@ export class AgentInboundHandler implements OnModuleInit {
         )
         .catch((err) => {
           this.logger.warn(err, `[agent:${agentId}] Failed to store firstPlatformMessageId`);
+          captureAgentWarning(err, {
+            component: 'agent-inbound-handler',
+            operation: 'store-first-platform-message-id',
+            agentId,
+          });
         });
     }
 
@@ -371,6 +378,11 @@ export class AgentInboundHandler implements OnModuleInit {
           .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
           .catch((err) => {
             this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
+            captureAgentWarning(err, {
+              component: 'agent-inbound-handler',
+              operation: 'add-ack-reaction',
+              agentId,
+            });
           });
       }
     }
@@ -454,6 +466,11 @@ export class AgentInboundHandler implements OnModuleInit {
               lookupErr,
               `[agent:${config.agentIdentifier}] Failed to resolve dashboard URL for no-bridge reply`
             );
+            captureAgentWarning(lookupErr, {
+              component: 'agent-inbound-handler',
+              operation: 'resolve-dashboard-url',
+              agentIdentifier: config.agentIdentifier,
+            });
           }
         }
 
@@ -535,6 +552,11 @@ export class AgentInboundHandler implements OnModuleInit {
           await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
         } else {
           this.logger.error(err, `[agent:${agentId}] Unexpected failure linking Telegram chat to subscriber`);
+          captureAgentException(err, {
+            component: 'agent-inbound-handler',
+            operation: 'link-telegram-subscriber',
+            agentId,
+          });
           await this.safePostInboundReply(thread, SUBSCRIBER_LINK_INVALID_REPLY, agentId, message);
         }
       }
@@ -565,6 +587,11 @@ export class AgentInboundHandler implements OnModuleInit {
         err,
         `[agent:${agentId}] Failed to post Telegram subscriber-link reply for inbound message ${message.id ?? '<unknown>'}`
       );
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-telegram-subscriber-link-reply',
+        agentId,
+      });
     }
   }
 
@@ -614,6 +641,11 @@ export class AgentInboundHandler implements OnModuleInit {
               err,
               `[agent:${agentId}] Subscriber resolution failed for reaction, continuing without subscriber`
             );
+            captureAgentWarning(err, {
+              component: 'agent-inbound-handler',
+              operation: 'resolve-subscriber-reaction',
+              agentId,
+            });
 
             return null;
           })
@@ -685,6 +717,11 @@ export class AgentInboundHandler implements OnModuleInit {
           err,
           `[agent:${agentId}] Subscriber resolution failed for action, continuing without subscriber`
         );
+        captureAgentWarning(err, {
+          component: 'agent-inbound-handler',
+          operation: 'resolve-subscriber-action',
+          agentId,
+        });
 
         return null;
       });

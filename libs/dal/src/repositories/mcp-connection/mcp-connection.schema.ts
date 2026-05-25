@@ -64,6 +64,25 @@ const oauthStateSchema = new Schema({
     type: Schema.Types.Date,
     required: false,
   },
+  /**
+   * `novu-app` mode only: AS `token_endpoint` copied from the catalog at
+   * authorize time so the callback can do the token exchange without a
+   * persistent `oauthClient` row. Cleared with the rest of `oauthState`
+   * when the connection lands in `connected`.
+   */
+  tokenEndpoint: {
+    type: Schema.Types.String,
+    required: false,
+  },
+  /**
+   * `novu-app` mode only: AS `authorization_endpoint` mirror of
+   * `tokenEndpoint`. Kept for parity so the callback can reconstruct an
+   * ephemeral `oauthClient` shape for vault push.
+   */
+  authorizationEndpoint: {
+    type: Schema.Types.String,
+    required: false,
+  },
 });
 
 const oauthClientSchema = new Schema(

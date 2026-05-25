@@ -1,7 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException, NotImplementedException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   createHash,
-  decryptCredentials,
   decryptMcpConnectionOAuthClient,
   encryptMcpConnectionAuth,
   type IAgentRuntimeProvider,
@@ -20,11 +19,22 @@ import {
   McpConnectionOAuthClient,
   McpConnectionRepository,
 } from '@novu/dal';
-import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
+import {
+  MCP_SERVERS,
+  McpConnectionAuthModeEnum,
+  McpConnectionStatusEnum,
+  type McpOAuthCatalogEntry,
+} from '@novu/shared';
+
 import { McpConnectionVaultService } from '../../services/mcp-connection-vault.service';
-import { McpOAuthDiscoveryService } from '../../services/mcp-oauth-discovery.service';
+import {
+  McpOAuthDiscoveryError,
+  McpOAuthDiscoveryService,
+  type McpOAuthErrorCode,
+} from '../../services/mcp-oauth-discovery.service';
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
+import { GetMcpNovuAppCredentials } from '../get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oauth-callback.command';
@@ -70,6 +80,7 @@ export class McpOAuthCallback {
     private readonly discoveryService: McpOAuthDiscoveryService,
     private readonly syncAgentMcpServers: SyncAgentMcpServers,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
+    private readonly getNovuAppCredentials: GetMcpNovuAppCredentials,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(McpOAuthCallback.name);
@@ -79,8 +90,19 @@ export class McpOAuthCallback {
     const stateData = await this.decodeAndValidateState(command.state);
 
     if (command.error) {
+      // OAuth 2 §4.1.2.1 — the AS-returned `error` param is attacker-influenced
+      // up to a short token. Map the standard `access_denied` to our
+      // specific `mcp_user_denied` code so the dashboard can render
+      // "You cancelled the consent" copy instead of generic failure.
+      //
+      // The controller concatenates `error` and `error_description` into a
+      // single string (e.g. "access_denied - The user cancelled"), so we
+      // pick off the OAuth error token from the head of the string before
+      // matching against the well-known codes.
       const safeMessage = sanitizeErrorMessage(command.error);
-      await this.markConnectionError(stateData, 'oauth_callback_error', safeMessage);
+      const errorToken = parseUpstreamErrorToken(command.error);
+      const errorCode: McpOAuthErrorCode | 'oauth_callback_error' = mapUpstreamCallbackErrorCode(errorToken);
+      await this.markConnectionError(stateData, errorCode, safeMessage);
 
       return { status: 'error', message: safeMessage };
     }
@@ -99,18 +121,14 @@ export class McpOAuthCallback {
       throw new BadRequestException(`MCP "${stateData.mcpId}" does not have OAuth connectivity configured.`);
     }
 
-    const oauthConfig = catalog.oauth;
+    const oauthConfig: McpOAuthCatalogEntry = catalog.oauth;
 
-    // Only DCR callbacks are wired today; `novu-app` and `user-app` ship
-    // alongside their own callback paths in the follow-up PR.
     switch (oauthConfig.mode) {
       case McpConnectionAuthModeEnum.Dcr:
-        break;
       case McpConnectionAuthModeEnum.NovuApp:
+        break;
       case McpConnectionAuthModeEnum.UserApp:
-        throw new NotImplementedException(
-          `MCP "${stateData.mcpId}" auth mode "${oauthConfig.mode}" is not yet supported.`
-        );
+        throw new BadRequestException(`MCP "${stateData.mcpId}" auth mode "${oauthConfig.mode}" is not yet supported.`);
       default: {
         const _exhaustive: never = oauthConfig;
 
@@ -166,11 +184,35 @@ export class McpOAuthCallback {
       );
     }
 
-    const oauthClient = this.requireOAuthClient(claimed);
+    let oauthClient: McpConnectionOAuthClient;
+    try {
+      oauthClient = this.resolveOAuthClientForExchange(claimed, oauthConfig, stateData);
+    } catch (err) {
+      if (err instanceof McpOAuthDiscoveryError) {
+        // The credential resolver raises a `McpOAuthDiscoveryError` when
+        // env vars vanished between authorize and callback. We mark the
+        // row, then re-throw as `BadRequestException` so the controller's
+        // standard redirect/fallback page kicks in instead of bubbling a
+        // 500 to the browser. The structured body carries the typed
+        // error code so the dashboard can render specific copy once
+        // `McpConnectionResponseDto` exposes `lastError`.
+        await this.markConnectionError(stateData, err.code, err.message);
+
+        throw new BadRequestException({
+          statusCode: 400,
+          message: err.message,
+          error: err.code,
+        });
+      }
+
+      throw err;
+    }
 
     // RFC 9207 §2.4 — validate the `iss` callback parameter against the
     // recorded expected issuer before the code touches any token endpoint.
-    await this.validateIssuer(command.iss, claimed, stateData);
+    // For novu-app the catalog already declares the upstream publishes no
+    // AS metadata, so we pass the mode and skip the well-known probe.
+    await this.validateIssuer(command.iss, claimed, stateData, oauthConfig.mode);
 
     const tokenResponse = await this.exchangeCode({
       claimed,
@@ -207,7 +249,7 @@ export class McpOAuthCallback {
       },
       {
         $set: {
-          authMode: McpConnectionAuthModeEnum.Dcr,
+          authMode: oauthConfig.mode,
           status: McpConnectionStatusEnum.Connected,
           auth,
           connectedAt: new Date(),
@@ -385,23 +427,87 @@ export class McpOAuthCallback {
     };
   }
 
-  private requireOAuthClient(claimed: McpConnectionEntity): McpConnectionOAuthClient {
-    if (!claimed.oauthClient) {
-      // Should be unreachable: every row that reaches PendingOAuth went
-      // through GenerateMcpOAuthUrl, which persists oauthClient before
-      // returning the authorize URL. If it's missing, treat as a malformed
-      // state rather than try to recover.
-      throw new BadRequestException('OAuth client credentials missing on connection; restart the flow.');
-    }
-    const decrypted = decryptMcpConnectionOAuthClient(claimed.oauthClient);
+  /**
+   * Build the `McpConnectionOAuthClient` shape the rest of the callback
+   * pipeline (token exchange, vault push, post-connect actions) consumes.
+   *
+   * - DCR: decrypt the row-persisted `oauthClient` (issued at authorize
+   *   time by `GenerateMcpOAuthUrl`).
+   *
+   * - novu-app: reconstruct an EPHEMERAL `McpConnectionOAuthClient` from
+   *   the env-loaded credentials + the AS endpoints that were copied onto
+   *   `oauthState` at authorize time. Nothing is persisted back to Mongo
+   *   for novu-app rows — the credentials live in env vars and the
+   *   endpoints stay on `oauthState` until the row lands in `connected`.
+   *
+   * Credential resolution errors (`mcp_novu_app_credentials_missing`)
+   * propagate as `McpOAuthDiscoveryError` so the caller can map them onto
+   * `lastError.code` without exposing env-var values in the response.
+   */
+  private resolveOAuthClientForExchange(
+    claimed: McpConnectionEntity,
+    oauthConfig: McpOAuthCatalogEntry,
+    stateData: McpOAuthState
+  ): McpConnectionOAuthClient {
+    if (oauthConfig.mode === McpConnectionAuthModeEnum.Dcr) {
+      if (!claimed.oauthClient) {
+        // Should be unreachable: every DCR row that reaches PendingOAuth
+        // went through GenerateMcpOAuthUrl, which persists oauthClient
+        // before returning the authorize URL. If it's missing, treat as a
+        // malformed state rather than try to recover.
+        throw new BadRequestException('OAuth client credentials missing on connection; restart the flow.');
+      }
 
-    return decrypted;
+      return decryptMcpConnectionOAuthClient(claimed.oauthClient);
+    }
+
+    // novu-app: the row was written WITHOUT an oauthClient field, and the
+    // endpoints come from `oauthState` (NOT the catalog — the catalog may
+    // have rotated between authorize and callback, but the row's
+    // `expectedIssuer` is the contract). The credentials come from env
+    // vars resolved at callback time.
+    const tokenEndpoint = claimed.oauthState?.tokenEndpoint;
+    const authorizationEndpoint = claimed.oauthState?.authorizationEndpoint;
+    const expectedIssuer = claimed.oauthState?.expectedIssuer;
+
+    if (!tokenEndpoint || !authorizationEndpoint || !expectedIssuer) {
+      throw new BadRequestException(
+        'novu-app OAuth state missing AS endpoints; restart the flow so the authorize-URL request re-records them.'
+      );
+    }
+
+    const credentials = this.getNovuAppCredentials.execute(stateData.mcpId);
+
+    // `claimed.createdAt` is set by Mongoose timestamps and is always
+    // present on a row that has reached PendingOAuth — but be explicit
+    // so a malformed row is rejected rather than silently rewriting
+    // history with "now" in vault metadata.
+    if (typeof claimed.createdAt !== 'string' || claimed.createdAt.length === 0) {
+      throw new BadRequestException('Connection createdAt is missing; restart the flow.');
+    }
+
+    // The novu-app scope list ultimately lives on the catalog (the
+    // authorize URL builder writes it into the consent request). Carry it
+    // forward onto the ephemeral oauthClient so vault push and audit
+    // surfaces match the DCR shape, which always sets `scopesGranted`.
+    const scopesGranted = oauthConfig.mode === McpConnectionAuthModeEnum.NovuApp ? oauthConfig.scopes : undefined;
+
+    return {
+      clientId: credentials.clientId,
+      clientSecret: credentials.clientSecret,
+      issuer: expectedIssuer,
+      authorizationEndpoint,
+      tokenEndpoint,
+      scopesGranted,
+      registeredAt: new Date(claimed.createdAt),
+    };
   }
 
   private async validateIssuer(
     iss: string | undefined,
     claimed: McpConnectionEntity,
-    stateData: McpOAuthState
+    stateData: McpOAuthState,
+    mode: McpConnectionAuthModeEnum
   ): Promise<void> {
     const expectedIssuer = claimed.oauthState?.expectedIssuer;
 
@@ -417,17 +523,25 @@ export class McpOAuthCallback {
     }
 
     let asIssParamSupported = false;
-    try {
-      const asMetadata = await this.discoveryService.discoverAuthorizationServer(expectedIssuer);
-      asIssParamSupported = asMetadata.authorizationResponseIssParameterSupported;
-    } catch (err) {
-      // AS metadata cache may have evicted and the AS is unreachable for
-      // a moment. Don't block the callback on a transient discovery failure;
-      // if `iss` is present we still compare it below.
-      this.logger.debug(
-        { issuer: expectedIssuer, err: err instanceof Error ? err.message : String(err) },
-        'AS metadata unavailable during callback; falling back to local iss check'
-      );
+    if (mode === McpConnectionAuthModeEnum.NovuApp) {
+      // novu-app catalog entries upstreams (e.g. GitHub) publish no
+      // RFC 8414 / OIDC AS metadata — the catalog comment says so and the
+      // pre-implementation probe verified it returns 404. The well-known
+      // discovery LRU never caches failures, so probing here would burn a
+      // 10s outbound timeout on every single callback. Skip outright.
+    } else {
+      try {
+        const asMetadata = await this.discoveryService.discoverAuthorizationServer(expectedIssuer);
+        asIssParamSupported = asMetadata.authorizationResponseIssParameterSupported;
+      } catch (err) {
+        // AS metadata cache may have evicted and the AS is unreachable for
+        // a moment. Don't block the callback on a transient discovery failure;
+        // if `iss` is present we still compare it below.
+        this.logger.debug(
+          { issuer: expectedIssuer, err: err instanceof Error ? err.message : String(err) },
+          'AS metadata unavailable during callback; falling back to local iss check'
+        );
+      }
     }
 
     if (iss) {
@@ -454,7 +568,11 @@ export class McpOAuthCallback {
     }
   }
 
-  private async markConnectionError(stateData: McpOAuthState, code: string, error: string): Promise<void> {
+  private async markConnectionError(
+    stateData: McpOAuthState,
+    code: McpOAuthErrorCode | 'oauth_callback_error' | 'mcp_post_connect_failed',
+    error: string
+  ): Promise<void> {
     // Only mark error if the row is still pending_oauth; never flip a
     // connected row to error from a callback (replay protection).
     await this.mcpConnectionRepository.update(
@@ -528,24 +646,48 @@ export class McpOAuthCallback {
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         const providerError = pickProviderErrorCode(response.body);
+        const mappedCode = mapTokenExchangeErrorCode(response.statusCode, providerError);
         this.logger.warn(
           {
             tokenEndpoint: oauthClient.tokenEndpoint,
             status: response.statusCode,
             providerError,
+            mappedCode,
           },
           'MCP OAuth token exchange returned non-2xx'
         );
 
         await this.markConnectionError(
           stateData,
-          'mcp_token_exchange_failed',
+          mappedCode,
           providerError ? `Token exchange failed: ${providerError}` : 'Token exchange failed.'
         );
 
         throw new BadRequestException(
           providerError ? `OAuth token exchange failed: ${providerError}` : 'OAuth token exchange failed.'
         );
+      }
+
+      // 2xx with a JSON `error` field — GitHub's `/login/oauth/access_token`
+      // returns 200 + `{ "error": "bad_verification_code" }` on token-side
+      // failures (yes, really) instead of a 4xx, so we re-run the same
+      // mapping on the body before treating it as success.
+      const inlineProviderError = pickProviderErrorCode(response.body);
+      if (inlineProviderError) {
+        const mappedCode = mapTokenExchangeErrorCode(response.statusCode, inlineProviderError);
+        this.logger.warn(
+          {
+            tokenEndpoint: oauthClient.tokenEndpoint,
+            status: response.statusCode,
+            providerError: inlineProviderError,
+            mappedCode,
+          },
+          'MCP OAuth token exchange returned 2xx with inline error'
+        );
+
+        await this.markConnectionError(stateData, mappedCode, `Token exchange failed: ${inlineProviderError}`);
+
+        throw new BadRequestException(`OAuth token exchange failed: ${inlineProviderError}`);
       }
 
       const parsed = parseTokenResponseBody(response.body);
@@ -653,6 +795,83 @@ function sanitizeErrorMessage(message: string): string {
   // no-control-characters-in-regex would suppress this hygiene rule.
   // biome-ignore lint/suspicious/noControlCharactersInRegex: intentional sanitization
   return message.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, MAX_ERROR_MESSAGE_LEN);
+}
+
+/**
+ * The controller concatenates `?error=…&error_description=…` into one
+ * string (`"<token> - <free-form description>"`). Pull the OAuth `error`
+ * token off the head so the mapping switches don't have to deal with the
+ * description tail. Returns `undefined` for blank/missing input so callers
+ * can fall through to the generic code.
+ */
+export function parseUpstreamErrorToken(raw: string | undefined): string | undefined {
+  if (!raw) return undefined;
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  // OAuth 2 §4.1.2.1 — `error` is a single VSCHAR-only token; never
+  // contains whitespace. Split on whitespace or the ` - ` separator the
+  // controller uses to glue in `error_description`.
+  const [head] = trimmed.split(/\s|-/, 1);
+
+  return head ?? undefined;
+}
+
+/**
+ * Map an AS-returned `error` token (from the authorize redirect, NOT the
+ * token endpoint) onto our error code union. Token-endpoint mapping uses
+ * the richer `mapTokenExchangeErrorCode`; this helper handles only the
+ * codes a real AS can send to the redirect.
+ */
+export function mapUpstreamCallbackErrorCode(
+  errorToken: string | undefined
+): McpOAuthErrorCode | 'oauth_callback_error' {
+  if (errorToken === 'access_denied') {
+    return 'mcp_user_denied';
+  }
+
+  return 'oauth_callback_error';
+}
+
+/**
+ * Map an upstream OAuth token-exchange error onto our `McpOAuthErrorCode`
+ * union. Conservative by default — anything we don't explicitly recognise
+ * lands on the generic `mcp_token_exchange_failed` so the dashboard
+ * doesn't render misleading copy.
+ *
+ * Currently recognised:
+ *  - `access_denied`                                       → `mcp_user_denied`
+ *  - `application_suspended` / `app_blocked` / 403 + "Resource not accessible by integration"
+ *                                                          → `mcp_github_org_block`
+ *  - everything else                                       → `mcp_token_exchange_failed`
+ *
+ * The `providerError` value is the sanitized OAuth `error` token (or
+ * `message` fallback) — never the full body — so it's safe to switch on.
+ *
+ * `mcp_app_not_installed` is exported on the error union for future use
+ * (a disconnect or installation-check flow could emit it by hitting
+ * `/applications/{client_id}/token` — see the plan's "Non-Goals"). The
+ * `/login/oauth/access_token` endpoint does NOT 404 for missing org
+ * approval — the consent screen simply never returns — so we deliberately
+ * do not map 404 here to avoid mis-labelling unrelated transport errors.
+ */
+export function mapTokenExchangeErrorCode(statusCode: number, providerError: string | undefined): McpOAuthErrorCode {
+  const normalised = providerError?.toLowerCase() ?? '';
+
+  if (normalised === 'access_denied') {
+    return 'mcp_user_denied';
+  }
+  if (normalised === 'application_suspended' || normalised === 'app_blocked') {
+    return 'mcp_github_org_block';
+  }
+  // GitHub surfaces the org-block as a 403 + body
+  // `"Resource not accessible by integration"` from the REST surface; the
+  // OAuth endpoint usually returns one of the codes above, but accept the
+  // free-form message as a fallback.
+  if (statusCode === 403 && normalised.includes('resource not accessible')) {
+    return 'mcp_github_org_block';
+  }
+
+  return 'mcp_token_exchange_failed';
 }
 
 function pickProviderErrorCode(body: unknown): string | undefined {

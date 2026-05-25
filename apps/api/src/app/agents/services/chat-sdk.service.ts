@@ -24,6 +24,7 @@ import { Request as ExpressRequest, Response as ExpressResponse } from 'express'
 import { LRUCache } from 'lru-cache';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { FileRef, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
 import { AgentConfigResolver, AgentConfigResolveSource, ResolvedAgentConfig } from './agent-config-resolver.service';
@@ -212,6 +213,7 @@ export class ChatSdkService implements OnModuleDestroy {
       dispose: (cached, key) => {
         cached.chat.shutdown().catch((err) => {
           this.logger.error(err, `Failed to shut down evicted Chat instance ${key}`);
+          captureAgentException(err, { component: 'chat-sdk', operation: 'shutdown-evicted', extra: { instanceKey: key } });
         });
       },
     });
@@ -309,6 +311,7 @@ export class ChatSdkService implements OnModuleDestroy {
         await cached.chat.shutdown();
       } catch (err) {
         this.logger.error(err, `Failed to shut down Chat instance ${key}`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'shutdown', extra: { instanceKey: key } });
       }
     });
 
@@ -1130,6 +1133,11 @@ export class ChatSdkService implements OnModuleDestroy {
         return buildAgentSharedInbox(slug, inboxRoutingKey);
       } catch (err) {
         this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
+        captureAgentWarning(err, {
+          component: 'chat-sdk',
+          operation: 'resolve-agent-inbound-address',
+          agentId: config.agentId,
+        });
       }
     }
 
@@ -1256,6 +1264,12 @@ export class ChatSdkService implements OnModuleDestroy {
         { err, environmentId: config.environmentId, agentId: config.agentId },
         'Failed to persist Novu demo email message for quota accounting'
       );
+      captureAgentWarning(err, {
+        component: 'chat-sdk',
+        operation: 'persist-demo-email-quota',
+        agentId: config.agentId,
+        extra: { environmentId: config.environmentId },
+      });
     }
 
     return { messageId: messageIdForReturn };
@@ -1294,8 +1308,18 @@ export class ChatSdkService implements OnModuleDestroy {
     return {
       debug: (msg: string, ctx?: Record<string, unknown>) => this.logger.debug(ctx ?? {}, msg),
       info: (msg: string, ctx?: Record<string, unknown>) => this.logger.info(ctx ?? {}, msg),
-      warn: (msg: string, ctx?: Record<string, unknown>) => this.logger.warn(ctx ?? {}, msg),
-      error: (msg: string, ctx?: Record<string, unknown>) => this.logger.error(ctx ?? {}, msg),
+      warn: (msg: string, ctx?: Record<string, unknown>) => {
+        this.logger.warn(ctx ?? {}, msg);
+        if (ctx?.err) {
+          captureAgentWarning(ctx.err, { component: 'chat-sdk', operation: 'chat-state-warn', extra: { message: msg } });
+        }
+      },
+      error: (msg: string, ctx?: Record<string, unknown>) => {
+        this.logger.error(ctx ?? {}, msg);
+        if (ctx?.err) {
+          captureAgentException(ctx.err, { component: 'chat-sdk', operation: 'chat-state-error', extra: { message: msg } });
+        }
+      },
     };
   }
 
@@ -1436,6 +1460,7 @@ export class ChatSdkService implements OnModuleDestroy {
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-new-mention', agentId });
       }
     });
 
@@ -1444,6 +1469,7 @@ export class ChatSdkService implements OnModuleDestroy {
         await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-subscribed-message', agentId });
       }
     });
 
@@ -1468,6 +1494,12 @@ export class ChatSdkService implements OnModuleDestroy {
         );
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
+        captureAgentException(err, {
+          component: 'chat-sdk',
+          operation: 'on-action',
+          agentId,
+          extra: { actionId: event.actionId },
+        });
       }
     });
 
@@ -1483,6 +1515,7 @@ export class ChatSdkService implements OnModuleDestroy {
         });
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling reaction`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-reaction', agentId });
       }
     });
   }

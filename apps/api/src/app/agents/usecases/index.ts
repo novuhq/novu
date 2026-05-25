@@ -14,6 +14,7 @@ import { GetAgent } from './get-agent/get-agent.usecase';
 import { GetAgentDemoQuota } from './get-agent-demo-quota/get-agent-demo-quota.usecase';
 import { GetAgentRuntimeConfig } from './get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { GetMcpConnectionStatus } from './get-mcp-connection-status/get-mcp-connection-status.usecase';
+import { GetMcpNovuAppCredentials } from './get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
 import { GetTelegramMobileLinkStatus } from './get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
 import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgress } from './handle-plan-progress/handle-plan-progress.usecase';
@@ -90,5 +91,6 @@ export const USE_CASES = [
   GenerateMcpOAuthUrl,
   McpOAuthCallback,
   GetMcpConnectionStatus,
+  GetMcpNovuAppCredentials,
   VerifyManagedCredentials,
 ];

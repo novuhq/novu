@@ -1,16 +1,12 @@
 import { createHash as nodeCreateHash, randomBytes } from 'node:crypto';
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-  NotImplementedException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
   createHash,
   decryptMcpConnectionOAuthClient,
   encodeOAuthState,
   encryptMcpConnectionOAuthClient,
+  FeatureFlagsService,
+  PinoLogger,
 } from '@novu/application-generic';
 import {
   AgentMcpServerEntity,
@@ -19,6 +15,7 @@ import {
   EnvironmentRepository,
   McpConnectionEntity,
   McpConnectionOAuthClient,
+  McpConnectionOAuthState,
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
@@ -30,16 +27,26 @@ import {
   McpConnectionStatusEnum,
   type McpOAuthCatalogEntry,
   type McpServer,
+  type NovuAppOAuthCatalogEntry,
 } from '@novu/shared';
 import { GenerateMcpOAuthUrlResponseDto } from '../../dtos/mcp-server.dto';
+import { assertMcpNovuAppFlagEnabled } from '../../services/assert-mcp-novu-app-flag-enabled';
 import {
   AuthorizationServerMetadata,
   DiscoveredProtectedResource,
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
 } from '../../services/mcp-oauth-discovery.service';
+import {
+  GetMcpNovuAppCredentials,
+  type NovuAppCredentials,
+} from '../get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
 import { GenerateMcpOAuthUrlCommand } from './generate-mcp-oauth-url.command';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from './mcp-oauth-state';
+
+type ResolvedOAuthConfig =
+  | { mode: McpConnectionAuthModeEnum.Dcr; catalog: DcrOAuthCatalogEntry }
+  | { mode: McpConnectionAuthModeEnum.NovuApp; catalog: NovuAppOAuthCatalogEntry; credentials: NovuAppCredentials };
 
 const NOVU_MCP_CLIENT_NAME = 'Novu';
 const DEFAULT_SOFTWARE_ID = 'novu-mcp-client';
@@ -47,22 +54,29 @@ const SOFTWARE_VERSION = process.env.NOVU_API_VERSION || 'dev';
 
 /**
  * Build the provider authorize URL for a `subscriber`-scoped MCP
- * OAuth flow that follows the MCP authorization spec
- * (`modelcontextprotocol.io/specification/draft/basic/authorization`).
+ * OAuth flow. Branches on the catalog's `oauth.mode`:
  *
- * Sequence:
- *  1. Discover PRM (RFC 9728) for the catalog MCP URL.
- *  2. Discover AS metadata (RFC 8414 / OIDC) for the chosen authorization
- *     server. Refuses to proceed unless `S256` is advertised.
- *  3. Reuse the per-subscriber DCR client from the existing mcp_connection
- *     row when issuer + secret-expiry still match; otherwise POST
- *     `{registration_endpoint}` (RFC 7591) and persist the new credentials.
- *  4. Generate a PKCE S256 challenge, record the expected issuer + canonical
- *     resource on `oauthState`, sign the redirect state with the env API key.
- *  5. Return the authorize URL with `client_id`, `redirect_uri`,
- *     `response_type=code`, `scope` (per spec scope-selection strategy),
- *     `state`, `code_challenge`, `code_challenge_method=S256`, and
- *     `resource` (RFC 8707).
+ * - `dcr` (MCP-spec default): discovers PRM (RFC 9728), discovers AS metadata
+ *   (RFC 8414 / OIDC), reuses or registers a per-subscriber DCR client
+ *   (RFC 7591) and persists it on the row. Refuses to proceed unless
+ *   `S256` is advertised.
+ *
+ * - `novu-app`: GitHub-style upstreams that publish NEITHER AS metadata
+ *   NOR DCR. PRM probe still runs (non-fatal — synthesised PRM is used on
+ *   failure), AS metadata discovery is skipped entirely, and the catalog
+ *   pins the authorize/token endpoints + scope list. The pre-registered
+ *   `client_id`/`client_secret` come from server env vars (resolved per
+ *   request through `GetMcpNovuAppCredentials`). No `oauthClient` row is
+ *   persisted; instead the AS endpoints land on `oauthState` so the
+ *   callback can do the token exchange without re-consulting the catalog.
+ *   Gated by `IS_MCP_NOVU_APP_ENABLED`.
+ *
+ * Common to both modes:
+ *  - Generate a PKCE S256 challenge, record `expectedIssuer` + canonical
+ *    `resource` on `oauthState`, sign the redirect state with the env API key.
+ *  - Return the authorize URL with `client_id`, `redirect_uri`,
+ *    `response_type=code`, `scope`, `state`, `code_challenge`,
+ *    `code_challenge_method=S256`, and `resource` (RFC 8707).
  */
 @Injectable()
 export class GenerateMcpOAuthUrl {
@@ -72,8 +86,13 @@ export class GenerateMcpOAuthUrl {
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly discoveryService: McpOAuthDiscoveryService
-  ) {}
+    private readonly discoveryService: McpOAuthDiscoveryService,
+    private readonly getNovuAppCredentials: GetMcpNovuAppCredentials,
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(GenerateMcpOAuthUrl.name);
+  }
 
   async execute(command: GenerateMcpOAuthUrlCommand): Promise<GenerateMcpOAuthUrlResponseDto> {
     const catalog = MCP_SERVERS.find((entry) => entry.id === command.mcpId);
@@ -82,7 +101,9 @@ export class GenerateMcpOAuthUrl {
       throw new BadRequestException(`Unknown MCP "${command.mcpId}".`);
     }
 
-    const oauthConfig = requireDcrCatalogEntry(catalog, command.mcpId);
+    if (!catalog.oauth) {
+      throw new BadRequestException(`MCP "${command.mcpId}" does not have OAuth connectivity configured.`);
+    }
 
     const agent = await this.agentRepository.findOne(
       {
@@ -110,21 +131,18 @@ export class GenerateMcpOAuthUrl {
       );
     }
 
+    // Catalog + agent + enablement are confirmed; only now do we run the
+    // LD getFlag + env credential probe. This matches the order in
+    // `EnableAgentMcpServer.execute()` and stops an authenticated caller
+    // from enumerating "is novu-app wired for this org" via 403/422
+    // differentiation against random agent identifiers.
+    const oauthConfig = await this.resolveOAuthConfig(catalog, command);
+
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
 
     if (!subscriber) {
       throw new NotFoundException(`Subscriber "${command.subscriberId}" not found in this environment.`);
     }
-
-    const { asMetadata, prm } = await this.resolveAuthorizationServer(catalog.url, command.mcpId);
-    const scopes = this.selectScopes(prm);
-    // RFC 8707 §2 — the `resource` indicator MUST be the canonical resource
-    // URI advertised by the protected resource. PRM exposes that explicitly
-    // (`prm.resource`); we fall back to the catalog URL only when discovery
-    // produced no resource value, otherwise the resource bound into the
-    // authorize+token requests would silently disagree with what the
-    // authorization server expects.
-    const resource = prm.resource ?? catalog.url;
 
     const existing = await this.mcpConnectionRepository.findSubscriberConnection({
       organizationId: command.organizationId,
@@ -133,37 +151,197 @@ export class GenerateMcpOAuthUrl {
       subscriberId: subscriber._id,
     });
 
-    const oauthClient = await this.ensureOAuthClient({
-      existing,
-      asMetadata,
-      oauthConfig,
-      scopes,
-    });
-
     const pkceVerifier = generatePkceVerifier();
 
-    await this.upsertPendingConnection({
+    if (oauthConfig.mode === McpConnectionAuthModeEnum.NovuApp) {
+      const resolved = await this.resolveServerEndpointsForNovuApp(catalog, oauthConfig);
+
+      await this.upsertPendingNovuAppConnection({
+        enablement,
+        subscriberMongoId: subscriber._id,
+        command,
+        pkceVerifier,
+        expectedIssuer: resolved.issuer,
+        resource: resolved.resource,
+        tokenEndpoint: resolved.tokenEndpoint,
+        authorizationEndpoint: resolved.authorizationEndpoint,
+        existing,
+      });
+
+      const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
+      const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
+        authorizationEndpoint: resolved.authorizationEndpoint,
+        expectedIssuer: resolved.issuer,
+        clientId: oauthConfig.credentials.clientId,
+        scopes: resolved.scopes,
+        resource: resolved.resource,
+        state,
+        pkceVerifier,
+      });
+
+      return { authorizeUrl };
+    }
+
+    // DCR mode — existing behaviour.
+    const resolved = await this.resolveServerEndpointsForDcr(catalog, command.mcpId);
+
+    const oauthClient = await this.ensureOAuthClient({
+      existing,
+      asMetadata: resolved.asMetadata,
+      oauthConfig: oauthConfig.catalog,
+      scopes: resolved.scopes,
+    });
+
+    await this.upsertPendingDcrConnection({
       enablement,
       subscriberMongoId: subscriber._id,
       command,
       pkceVerifier,
-      expectedIssuer: asMetadata.issuer,
-      resource,
+      expectedIssuer: resolved.asMetadata.issuer,
+      resource: resolved.resource,
       oauthClient,
       existing,
     });
 
     const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
-    const authorizeUrl = this.buildAuthorizeUrl({
-      asMetadata,
-      oauthClient,
-      scopes,
-      resource,
+    const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
+      authorizationEndpoint: resolved.asMetadata.authorizationEndpoint,
+      expectedIssuer: resolved.asMetadata.issuer,
+      clientId: oauthClient.clientId,
+      scopes: resolved.scopes,
+      resource: resolved.resource,
       state,
       pkceVerifier,
     });
 
     return { authorizeUrl };
+  }
+
+  /**
+   * Narrow the catalog entry to a runtime config — DCR catalog as-is, or
+   * a NovuApp catalog plus resolved credentials. NovuApp also gates the
+   * feature flag here. Callers MUST have already validated `catalog.oauth`
+   * exists (see `execute()`); we assert it here as a defence-in-depth check.
+   */
+  private async resolveOAuthConfig(
+    catalog: McpServer,
+    command: GenerateMcpOAuthUrlCommand
+  ): Promise<ResolvedOAuthConfig> {
+    if (!catalog.oauth) {
+      throw new BadRequestException(`MCP "${command.mcpId}" does not have OAuth connectivity configured.`);
+    }
+
+    const entry: McpOAuthCatalogEntry = catalog.oauth;
+
+    switch (entry.mode) {
+      case McpConnectionAuthModeEnum.Dcr:
+        return { mode: McpConnectionAuthModeEnum.Dcr, catalog: entry };
+      case McpConnectionAuthModeEnum.NovuApp: {
+        await assertMcpNovuAppFlagEnabled({
+          featureFlagsService: this.featureFlagsService,
+          mcpId: command.mcpId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        });
+
+        let credentials: NovuAppCredentials;
+        try {
+          credentials = this.getNovuAppCredentials.execute(command.mcpId);
+        } catch (err) {
+          if (err instanceof McpOAuthDiscoveryError) {
+            throw new UnprocessableEntityException({
+              statusCode: 422,
+              message: err.message,
+              error: err.code,
+            });
+          }
+          throw err;
+        }
+
+        return { mode: McpConnectionAuthModeEnum.NovuApp, catalog: entry, credentials };
+      }
+      case McpConnectionAuthModeEnum.UserApp:
+        throw new BadRequestException(`MCP "${command.mcpId}" auth mode "${entry.mode}" is not yet supported.`);
+      default: {
+        const _exhaustive: never = entry;
+
+        throw new Error(`Unhandled MCP OAuth mode: ${JSON.stringify(_exhaustive)}`);
+      }
+    }
+  }
+
+  /**
+   * Resolve AS endpoints + scope list for a DCR MCP.
+   *
+   * Runs PRM probe + AS metadata discovery (existing behaviour). Failures
+   * bubble up as 422s.
+   */
+  private async resolveServerEndpointsForDcr(
+    catalog: McpServer,
+    mcpId: string
+  ): Promise<{ asMetadata: AuthorizationServerMetadata; resource: string; scopes: string[] }> {
+    const { asMetadata, prm } = await this.resolveAuthorizationServer(catalog.url, mcpId);
+    const scopes = this.selectScopes(prm);
+    // RFC 8707 §2 — the `resource` indicator MUST be the canonical resource
+    // URI advertised by the protected resource. PRM exposes that explicitly;
+    // we fall back to the catalog URL only when discovery produced no
+    // resource value, otherwise the resource bound into the authorize+token
+    // requests would silently disagree with what the authorization server
+    // expects.
+    const resource = prm.resource ?? catalog.url;
+
+    return { asMetadata, resource, scopes };
+  }
+
+  /**
+   * Resolve AS endpoints + scope list for a novu-app MCP.
+   *
+   * PRM probe is BEST EFFORT — the catalog has been hand-vetted (see
+   * comment block on MCP_SERVERS) and the AS endpoints + scope list are
+   * pinned, so a transient probe failure must not block consent. AS
+   * metadata discovery is skipped entirely because non-DCR upstreams
+   * (e.g. GitHub) publish neither `.well-known/oauth-authorization-server`
+   * nor a registration endpoint.
+   */
+  private async resolveServerEndpointsForNovuApp(
+    catalog: McpServer,
+    oauthConfig: Extract<ResolvedOAuthConfig, { mode: McpConnectionAuthModeEnum.NovuApp }>
+  ): Promise<{
+    issuer: string;
+    authorizationEndpoint: string;
+    tokenEndpoint: string;
+    resource: string;
+    scopes: string[];
+  }> {
+    let prm: DiscoveredProtectedResource;
+    try {
+      prm = await this.discoveryService.discoverProtectedResource(catalog.url);
+    } catch (err) {
+      this.logger.warn(
+        { mcpId: catalog.id, mcpUrl: catalog.url, err: err instanceof Error ? err.message : String(err) },
+        'PRM probe failed for novu-app MCP; falling back to catalog'
+      );
+      prm = {
+        resource: catalog.url,
+        authorizationServers: [oauthConfig.catalog.issuer],
+        scopesSupported: [],
+        challengeScopes: undefined,
+      };
+    }
+
+    // Scope selection still respects the PRM challenge / supported scopes
+    // when present, so a server that advertises a tighter consent footprint
+    // doesn't get overridden by the catalog's superset. Falls back to the
+    // catalog's curated list (mirrors Anthropic's connector) otherwise.
+    const scopes = this.selectScopes(prm, oauthConfig.catalog.scopes);
+
+    return {
+      issuer: oauthConfig.catalog.issuer,
+      authorizationEndpoint: oauthConfig.catalog.authorizationEndpoint,
+      tokenEndpoint: oauthConfig.catalog.tokenEndpoint,
+      resource: prm.resource ?? catalog.url,
+      scopes,
+    };
   }
 
   private async resolveAuthorizationServer(
@@ -194,11 +372,15 @@ export class GenerateMcpOAuthUrl {
     return { asMetadata, prm };
   }
 
-  private selectScopes(prm: DiscoveredProtectedResource): string[] {
-    // RFC 9728 + MCP-spec Scope Selection Strategy:
-    //   1. Use the `scope` parameter from the initial WWW-Authenticate challenge.
-    //   2. Otherwise use all of `scopes_supported` from PRM.
-    //   3. Otherwise omit `scope` (return []).
+  /**
+   * RFC 9728 + MCP-spec Scope Selection Strategy:
+   *   1. Use the `scope` parameter from the initial WWW-Authenticate challenge.
+   *   2. Otherwise use all of `scopes_supported` from PRM.
+   *   3. Otherwise use `fallback` — `[]` for DCR (omit `scope`), the curated
+   *      catalog list for novu-app (a missing `scope` would cause the
+   *      upstream consent screen to silently downgrade the grant or 400).
+   */
+  private selectScopes(prm: DiscoveredProtectedResource, fallback: string[] = []): string[] {
     if (prm.challengeScopes && prm.challengeScopes.length > 0) {
       return prm.challengeScopes;
     }
@@ -206,7 +388,7 @@ export class GenerateMcpOAuthUrl {
       return prm.scopesSupported;
     }
 
-    return [];
+    return fallback;
   }
 
   private async ensureOAuthClient(args: {
@@ -274,7 +456,7 @@ export class GenerateMcpOAuthUrl {
     }
   }
 
-  private async upsertPendingConnection(args: {
+  private async upsertPendingDcrConnection(args: {
     enablement: AgentMcpServerEntity;
     subscriberMongoId: string;
     command: GenerateMcpOAuthUrlCommand;
@@ -286,7 +468,7 @@ export class GenerateMcpOAuthUrl {
   }): Promise<void> {
     const { enablement, subscriberMongoId, command, pkceVerifier, expectedIssuer, resource, oauthClient, existing } =
       args;
-    const oauthState = {
+    const oauthState: McpConnectionOAuthState = {
       pkceVerifier,
       initiatedAt: new Date(),
       expectedIssuer,
@@ -303,6 +485,7 @@ export class GenerateMcpOAuthUrl {
         },
         {
           $set: {
+            authMode: McpConnectionAuthModeEnum.Dcr,
             status: McpConnectionStatusEnum.PendingOAuth,
             oauthState,
             oauthClient: encryptedClient,
@@ -325,6 +508,80 @@ export class GenerateMcpOAuthUrl {
       status: McpConnectionStatusEnum.PendingOAuth,
       oauthState,
       oauthClient: encryptedClient,
+    });
+  }
+
+  /**
+   * `novu-app` upsert: the `oauthClient` field stays absent (no persistent
+   * DCR row). Instead `oauthState` carries the AS endpoints so the callback
+   * can reconstruct an ephemeral oauthClient + do the token exchange
+   * without re-consulting the catalog or env vars at write time.
+   *
+   * Also clears any stale `oauthClient` left over from a previous DCR-mode
+   * connection on the same (subscriber, mcp) — defence in depth, since a
+   * mode flip is otherwise possible only by editing the catalog.
+   */
+  private async upsertPendingNovuAppConnection(args: {
+    enablement: AgentMcpServerEntity;
+    subscriberMongoId: string;
+    command: GenerateMcpOAuthUrlCommand;
+    pkceVerifier: string;
+    expectedIssuer: string;
+    resource: string;
+    tokenEndpoint: string;
+    authorizationEndpoint: string;
+    existing: McpConnectionEntity | null;
+  }): Promise<void> {
+    const {
+      enablement,
+      subscriberMongoId,
+      command,
+      pkceVerifier,
+      expectedIssuer,
+      resource,
+      tokenEndpoint,
+      authorizationEndpoint,
+      existing,
+    } = args;
+    const oauthState: McpConnectionOAuthState = {
+      pkceVerifier,
+      initiatedAt: new Date(),
+      expectedIssuer,
+      resource,
+      tokenEndpoint,
+      authorizationEndpoint,
+    };
+
+    if (existing) {
+      await this.mcpConnectionRepository.update(
+        {
+          _id: existing._id,
+          _environmentId: command.environmentId,
+          _organizationId: command.organizationId,
+        },
+        {
+          $set: {
+            authMode: McpConnectionAuthModeEnum.NovuApp,
+            status: McpConnectionStatusEnum.PendingOAuth,
+            oauthState,
+          },
+          $unset: { lastError: 1, oauthClient: 1 },
+        }
+      );
+
+      return;
+    }
+
+    await this.mcpConnectionRepository.create({
+      _organizationId: command.organizationId,
+      _environmentId: command.environmentId,
+      scope: McpConnectionScopeEnum.Subscriber,
+      mcpId: command.mcpId,
+      _agentMcpServerId: enablement._id,
+      _subscriberId: subscriberMongoId,
+      authMode: McpConnectionAuthModeEnum.NovuApp,
+      status: McpConnectionStatusEnum.PendingOAuth,
+      oauthState,
     });
   }
 
@@ -356,17 +613,30 @@ export class GenerateMcpOAuthUrl {
     return encodeOAuthState(payload, signature);
   }
 
-  private buildAuthorizeUrl(args: {
-    asMetadata: AuthorizationServerMetadata;
-    oauthClient: McpConnectionOAuthClient;
+  /**
+   * Build the authorize URL from a (clientId, AS endpoints) pair.
+   *
+   * `expectedIssuer` is required so the caller can opt into a
+   * defence-in-depth check that `authorizationEndpoint`'s origin matches
+   * the issuer's origin. This catches accidental endpoint swaps inside
+   * the use case (e.g. mixing a DCR-discovered endpoint with a novu-app
+   * catalog issuer) before we send the user to a third-party URL.
+   * Cross-origin mismatches throw a 500-ish `Error` because they
+   * indicate a bug in this module, not a user-visible failure.
+   */
+  private buildAuthorizeUrlFromEndpoints(args: {
+    authorizationEndpoint: string;
+    expectedIssuer: string;
+    clientId: string;
     scopes: string[];
     resource: string;
     state: string;
     pkceVerifier: string;
   }): string {
-    const { asMetadata, oauthClient, scopes, resource, state, pkceVerifier } = args;
+    const { authorizationEndpoint, expectedIssuer, clientId, scopes, resource, state, pkceVerifier } = args;
+    assertSameOrigin(authorizationEndpoint, expectedIssuer);
     const params = new URLSearchParams({
-      client_id: oauthClient.clientId,
+      client_id: clientId,
       redirect_uri: buildMcpOAuthRedirectUri(),
       response_type: 'code',
       state,
@@ -379,7 +649,7 @@ export class GenerateMcpOAuthUrl {
       params.set('scope', scopes.join(' '));
     }
 
-    return `${asMetadata.authorizationEndpoint}?${params.toString()}`;
+    return `${authorizationEndpoint}?${params.toString()}`;
   }
 
   private async getEnvironmentApiKey(environmentId: string): Promise<string> {
@@ -467,28 +737,25 @@ function base64UrlEncode(buf: Buffer): string {
 }
 
 /**
- * Narrow a catalog entry to the DCR variant or surface a clear error. The
- * catalog locks each MCP to one OAuth mechanism; missing `oauth` is a 400
- * (the MCP isn't connectable yet) while `novu-app` and `user-app` land here
- * as `NotImplementedException` until the resolver service ships.
+ * Defence in depth: throw if `endpoint` does not live on the same origin as
+ * `issuer`. RFC 8414 §3 binds the issuer to its advertised endpoints, and
+ * the novu-app catalog hand-pins the relationship — a divergence here would
+ * be a coding mistake (wrong field copied into the URL builder), not a
+ * recoverable user error, so we surface a plain `Error` and let the global
+ * filter render the standard 500. We do NOT compare full URLs because a
+ * legitimate AS may serve `authorize` and `token` from sibling paths under
+ * the same origin.
  */
-function requireDcrCatalogEntry(catalog: McpServer, mcpId: string): DcrOAuthCatalogEntry {
-  if (!catalog.oauth) {
-    throw new BadRequestException(`MCP "${mcpId}" does not have OAuth connectivity configured.`);
+function assertSameOrigin(endpoint: string, issuer: string): void {
+  let endpointOrigin: string;
+  let issuerOrigin: string;
+  try {
+    endpointOrigin = new URL(endpoint).origin;
+    issuerOrigin = new URL(issuer).origin;
+  } catch {
+    throw new Error(`Invalid authorize endpoint or issuer URL ("${endpoint}", "${issuer}").`);
   }
-
-  const entry: McpOAuthCatalogEntry = catalog.oauth;
-
-  switch (entry.mode) {
-    case McpConnectionAuthModeEnum.Dcr:
-      return entry;
-    case McpConnectionAuthModeEnum.NovuApp:
-    case McpConnectionAuthModeEnum.UserApp:
-      throw new NotImplementedException(`MCP "${mcpId}" auth mode "${entry.mode}" is not yet supported.`);
-    default: {
-      const _exhaustive: never = entry;
-
-      throw new Error(`Unhandled MCP OAuth mode: ${JSON.stringify(_exhaustive)}`);
-    }
+  if (endpointOrigin !== issuerOrigin) {
+    throw new Error(`Authorize endpoint origin "${endpointOrigin}" does not match issuer origin "${issuerOrigin}".`);
   }
 }
