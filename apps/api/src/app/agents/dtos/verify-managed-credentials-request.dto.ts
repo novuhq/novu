@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AgentRuntimeProviderIdEnum } from '@novu/shared';
-import { IsEnum, IsNotEmpty, IsString, ValidateIf } from 'class-validator';
+import { AgentRuntimeProviderIdEnum, AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
+import { IsEnum, IsIn, IsNotEmpty, IsString, ValidateIf } from 'class-validator';
 
 export class VerifyManagedCredentialsRequestDto {
   @ApiProperty({
@@ -29,5 +29,6 @@ export class VerifyManagedCredentialsRequestDto {
   @ValidateIf((body: VerifyManagedCredentialsRequestDto) => body.providerId === AgentRuntimeProviderIdEnum.AnthropicAws)
   @IsString()
   @IsNotEmpty()
+  @IsIn([...AWS_CLAUDE_COMMERCIAL_REGIONS])
   region?: string;
 }

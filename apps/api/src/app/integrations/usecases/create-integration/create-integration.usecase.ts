@@ -250,7 +250,9 @@ export class CreateIntegration {
     const resolved = resolveAgentRuntime(providerId, command.credentials ?? {});
 
     if (!resolved) {
-      return;
+      throw new BadRequestException(
+        `Integration "${integrationId}" has incomplete runtime credentials. Complete setup before provisioning.`
+      );
     }
 
     const provider = resolved.provider;

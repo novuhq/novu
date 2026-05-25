@@ -791,8 +791,17 @@ export function createAnthropicProvider(
     init.awsCredentials = options.awsCredentials;
   } else if (options.apiKey) {
     init.apiKey = options.apiKey;
-  } else if (options.credentials && isAnthropicAwsProvider(providerId)) {
-    throw new Error('Use awsCredentials from resolveAgentRuntime() for anthropic-aws');
+  } else if (options.credentials) {
+    if (isAnthropicAwsProvider(providerId)) {
+      throw new Error('Use awsCredentials from resolveAgentRuntime() for anthropic-aws');
+    }
+
+    const legacyApiKey =
+      typeof options.credentials.apiKey === 'string' ? options.credentials.apiKey.trim() : undefined;
+
+    if (legacyApiKey) {
+      init.apiKey = legacyApiKey;
+    }
   }
 
   return new AnthropicAgentRuntimeProvider(init);

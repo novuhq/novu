@@ -62,6 +62,14 @@ describe('buildVerifyFingerprint', () => {
       })
     ).toBe('us-west-2:wrkspc_1:key');
   });
+
+  it('uses empty segments for missing AWS optional fields', () => {
+    expect(
+      buildVerifyFingerprint(AgentRuntimeProviderIdEnum.AnthropicAws, {
+        apiKey: 'key',
+      })
+    ).toBe(':key');
+  });
 });
 
 describe('hasCompleteManagedCredentials', () => {

@@ -1,3 +1,4 @@
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { CredentialsKeyEnum } from '../../../types';
 import { IConfigCredential } from '../provider.interface';
 
@@ -1492,8 +1493,9 @@ export const anthropicAwsAgentConfig: IConfigCredential[] = [
     key: CredentialsKeyEnum.Region,
     displayName: 'AWS Region',
     description: 'The AWS region where your Claude Platform workspace is provisioned.',
-    type: 'string',
+    type: 'dropdown',
     required: true,
+    dropdown: AWS_CLAUDE_COMMERCIAL_REGIONS.map((region) => ({ name: region, value: region })),
   },
   {
     key: CredentialsKeyEnum.ApiKey,

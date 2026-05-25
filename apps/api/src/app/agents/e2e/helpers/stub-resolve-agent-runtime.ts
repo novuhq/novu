@@ -4,16 +4,16 @@ import * as ResolveAgentRuntimeModule from '@novu/application-generic/build/main
 import { AgentRuntimeProviderIdEnum, type ICredentialsDto } from '@novu/shared';
 import sinon from 'sinon';
 
-type ResolvedAgentRuntimeStub = {
+interface ResolvedAgentRuntimeStub {
   apiKey: string;
   credentials: ICredentialsDto;
   provider: IAgentRuntimeProvider;
   validateCredentialsInput: Record<string, unknown>;
-};
+}
 
-type ResolveAgentRuntimeStubOptions = {
+interface ResolveAgentRuntimeStubOptions {
   resolve?: (providerId: string, credentials?: ICredentialsDto) => ResolvedAgentRuntimeStub | null;
-};
+}
 
 function buildResolved(
   mockProvider: IAgentRuntimeProvider,

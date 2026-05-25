@@ -2,6 +2,7 @@ import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { useId, useState } from 'react';
 import { RiArrowRightUpLine, RiEyeLine, RiEyeOffLine, RiInformation2Line } from 'react-icons/ri';
 import { Input } from '@/components/primitives/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import {
   AWS_CLAUDE_API_KEYS_HREF,
@@ -42,20 +43,18 @@ export function AwsClaudeCredentialsFields({
         <label htmlFor={regionId} className="text-text-sub text-label-xs font-medium">
           AWS Region
         </label>
-        <select
-          id={regionId}
-          value={region}
-          onChange={(e) => onRegionChange(e.target.value)}
-          disabled={disabled}
-          className="border-stroke-soft bg-bg-white text-text-strong h-8 rounded-md border px-2 text-label-xs"
-        >
-          <option value="">Select a region…</option>
-          {AWS_CLAUDE_COMMERCIAL_REGIONS.map((value) => (
-            <option key={value} value={value}>
-              {value}
-            </option>
-          ))}
-        </select>
+        <Select value={region || undefined} onValueChange={onRegionChange} disabled={disabled}>
+          <SelectTrigger id={regionId} size="2xs" aria-invalid={Boolean(errors.region)}>
+            <SelectValue placeholder="Select a region…" />
+          </SelectTrigger>
+          <SelectContent>
+            {AWS_CLAUDE_COMMERCIAL_REGIONS.map((value) => (
+              <SelectItem key={value} value={value}>
+                {value}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {errors.region ? (
           <p className="text-error-base text-label-xs" role="alert">
             {errors.region}
@@ -70,9 +69,13 @@ export function AwsClaudeCredentialsFields({
           </label>
           <Tooltip>
             <TooltipTrigger asChild>
-              <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
+              <button
+                type="button"
+                className="text-text-soft ml-0.5 inline-flex cursor-default items-center"
+                aria-label="Workspace ID help"
+              >
                 <RiInformation2Line className="size-3.5" aria-hidden />
-              </span>
+              </button>
             </TooltipTrigger>
             <TooltipContent className="max-w-xs">
               Required for Claude Platform on AWS. Find your `wrkspc_…` id under Workspaces in the AWS Console.

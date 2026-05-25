@@ -409,7 +409,13 @@ export function CreateAgentDialog({
     setSelectedIntegrationId(integration._id);
     setCredentialsPanelVisible(false);
     resetCredentials();
-    setErrors((prev) => ({ ...prev, apiKey: undefined, integrationName: undefined }));
+    setErrors((prev) => ({
+      ...prev,
+      apiKey: undefined,
+      integrationName: undefined,
+      region: undefined,
+      externalWorkspaceId: undefined,
+    }));
   };
 
   const handleRequestSetupCredentials = (option: ConnectorOption) => {

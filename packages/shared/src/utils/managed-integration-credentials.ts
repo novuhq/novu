@@ -34,7 +34,10 @@ export function buildVerifyFingerprint(
   fields: ManagedCredentialFields
 ): string {
   if (isAnthropicAwsProvider(providerId)) {
-    return `${fields.region?.trim()}:${fields.externalWorkspaceId?.trim()}:${fields.apiKey.trim()}`;
+    const region = fields.region?.trim() ?? '';
+    const workspaceId = fields.externalWorkspaceId?.trim() ?? '';
+
+    return `${region}:${workspaceId}:${fields.apiKey.trim()}`;
   }
 
   return fields.apiKey.trim();

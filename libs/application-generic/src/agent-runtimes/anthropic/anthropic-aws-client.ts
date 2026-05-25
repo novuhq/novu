@@ -1,5 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
+import { ANTHROPIC_REQUEST_TIMEOUT_MS } from './anthropic-cloud-client';
 import type { ResolvedAwsAnthropicCredentials } from './anthropic-aws-credentials';
 import type { AnthropicCompatibleClient } from './anthropic-cloud-client';
 
@@ -12,5 +13,7 @@ export async function createAnthropicAwsClient(
     awsRegion: credentials.region,
     workspaceId: credentials.workspaceId,
     apiKey: credentials.apiKey,
+    timeout: ANTHROPIC_REQUEST_TIMEOUT_MS,
+    maxRetries: 0,
   }) as Anthropic;
 }

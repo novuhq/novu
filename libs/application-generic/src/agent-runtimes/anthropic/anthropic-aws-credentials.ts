@@ -7,10 +7,15 @@ export type ResolvedAwsAnthropicCredentials = {
 };
 
 export function toValidateCredentialsInput(credentials: Record<string, unknown>): ValidateCredentialsInput {
+  const apiKey = typeof credentials.apiKey === 'string' ? credentials.apiKey.trim() : undefined;
+  const region = typeof credentials.region === 'string' ? credentials.region.trim() : undefined;
+  const externalWorkspaceId =
+    typeof credentials.externalWorkspaceId === 'string' ? credentials.externalWorkspaceId.trim() : undefined;
+
   return {
-    apiKey: credentials.apiKey as string | undefined,
-    region: credentials.region as string | undefined,
-    externalWorkspaceId: credentials.externalWorkspaceId as string | undefined,
+    apiKey: apiKey || undefined,
+    region: region || undefined,
+    externalWorkspaceId: externalWorkspaceId || undefined,
   };
 }
 
