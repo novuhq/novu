@@ -30,7 +30,19 @@ const MAX_SLUG_RETRIES = 3;
 
 type Status = 'idle' | 'working' | 'error';
 
-type Resolution = { type: 'switched' | 'created'; organizationId: string; organizationName: string };
+type Resolution =
+  | { type: 'switched' | 'created'; organizationId: string; organizationName: string }
+  | { type: 'manual' };
+
+function isMissingOrganizationError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false;
+  const errors = (error as { errors?: Array<{ code?: string }> }).errors;
+  if (!Array.isArray(errors)) return false;
+
+  return errors.some(
+    (entry) => entry?.code === 'organization_not_found' || entry?.code === 'resource_not_found'
+  );
+}
 
 function isSlugTakenError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
@@ -70,21 +82,47 @@ export function AutoCreateConnectOrganization() {
   const isMembershipListReady =
     isListLoaded && hasRevalidated && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
 
+  // `userMemberships` is read through a ref so the membership-refresh effect deps stay stable —
+  // including it directly causes the effect to re-run every time `revalidate()` flips Clerk's
+  // internal `isFetching`, and each cleanup would cancel the in-flight refresh before it could
+  // call `setHasRevalidated(true)`.
+  const userMembershipsRef = useRef(userMemberships);
+  userMembershipsRef.current = userMemberships;
+
   // Force a fresh fetch on mount so a user arriving after delete/leave doesn't see a tombstoned org.
+  // `hasRevalidated` is only flipped after the refetch resolves; flipping it synchronously creates a
+  // render window where `isMembershipListReady` reports true while `data` still holds the deleted org,
+  // which would then trip `setActive` against an id Clerk no longer knows about.
   useEffect(() => {
     if (!isListLoaded || hasRevalidated) return;
 
-    setHasRevalidated(true);
-    userMemberships?.revalidate?.();
-  }, [isListLoaded, hasRevalidated, userMemberships]);
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        await userMembershipsRef.current?.revalidate?.();
+      } catch {
+        // Revalidation failures shouldn't strand the user — fall through and let the resolver run.
+      } finally {
+        if (!cancelled) {
+          setHasRevalidated(true);
+        }
+      }
+    };
+
+    void refresh();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isListLoaded, hasRevalidated]);
 
   useEffect(() => {
     if (!isListLoaded || !userMemberships?.hasNextPage || userMemberships?.isFetching) {
       return;
     }
 
-    userMemberships.fetchNext?.();
-  }, [isListLoaded, userMemberships?.hasNextPage, userMemberships?.isFetching, userMemberships]);
+    userMembershipsRef.current?.fetchNext?.();
+  }, [isListLoaded, userMemberships?.hasNextPage, userMemberships?.isFetching]);
 
   const isCurrentOrgConnect =
     !!user &&
@@ -94,8 +132,17 @@ export function AutoCreateConnectOrganization() {
       organizationId: currentOrganization.id,
     });
 
+  const enterManualMode = useCallback(() => {
+    clearConnectProvisioning();
+    clearConnectAutoCreateSessionGuard();
+    setManualMode(true);
+  }, []);
+
   const provisionOrganization = useCallback(async (): Promise<Resolution> => {
-    const memberships = userMemberships?.data ?? [];
+    // Read via ref: the main effect already gates on `isMembershipListReady`, so the ref holds
+    // the same fresh data the effect saw, and dropping the live dep keeps this callback (and
+    // therefore `run`) stable across the `userMemberships` reference rotations that Clerk emits.
+    const memberships = userMembershipsRef.current?.data ?? [];
     const nextAction = resolveConnectOrgListAction(memberships);
 
     if (nextAction.type === 'switch') {
@@ -103,7 +150,18 @@ export function AutoCreateConnectOrganization() {
         throw new Error('Organization switching is not available right now.');
       }
 
-      await setActive({ organization: nextAction.organizationId });
+      try {
+        await setActive({ organization: nextAction.organizationId });
+      } catch (error) {
+        // The cached membership was tombstoned (e.g. deleted in another tab). Treat as manual create
+        // so we never leave the session pointing at an id Clerk has already removed — otherwise the
+        // satellite handshake redirects to Platform's sign-in URL.
+        if (isMissingOrganizationError(error)) {
+          return { type: 'manual' };
+        }
+
+        throw error;
+      }
 
       const switchedMembership = memberships.find(
         (membership) => membership.organization.id === nextAction.organizationId
@@ -159,7 +217,7 @@ export function AutoCreateConnectOrganization() {
     await setActive({ organization: createdOrgId });
 
     return { type: 'created', organizationId: createdOrgId, organizationName };
-  }, [createOrganization, setActive, organizationName, userMemberships?.data, user?.id]);
+  }, [createOrganization, setActive, organizationName, user?.id]);
 
   const run = useCallback(async () => {
     setStatus('working');
@@ -167,6 +225,13 @@ export function AutoCreateConnectOrganization() {
 
     try {
       const resolution = await provisionOrganization();
+
+      if (resolution.type === 'manual') {
+        setStatus('idle');
+        enterManualMode();
+
+        return;
+      }
 
       track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
         location: 'web',
@@ -189,7 +254,7 @@ export function AutoCreateConnectOrganization() {
       setStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'Failed to set up your Connect workspace');
     }
-  }, [provisionOrganization, track, isAgentsEnabled, navigate]);
+  }, [provisionOrganization, enterManualMode, track, isAgentsEnabled, navigate]);
 
   useEffect(() => {
     if (!isUserLoaded || !user) return;
@@ -206,19 +271,25 @@ export function AutoCreateConnectOrganization() {
     if (!isMembershipListReady || !userMemberships?.data) return;
 
     const nextAction = resolveConnectOrgListAction(userMemberships.data);
+    hasStartedRef.current = true;
 
     if (nextAction.type === 'manualCreate') {
-      hasStartedRef.current = true;
-      clearConnectProvisioning();
-      clearConnectAutoCreateSessionGuard();
-      setManualMode(true);
+      enterManualMode();
 
       return;
     }
 
-    hasStartedRef.current = true;
     void run();
-  }, [isUserLoaded, user, isCurrentOrgConnect, isMembershipListReady, userMemberships?.data, navigate, run]);
+  }, [
+    isUserLoaded,
+    user,
+    isCurrentOrgConnect,
+    isMembershipListReady,
+    userMemberships?.data,
+    navigate,
+    run,
+    enterManualMode,
+  ]);
 
   const handleRetry = () => {
     hasStartedRef.current = false;

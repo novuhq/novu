@@ -357,13 +357,37 @@ export function OrganizationPicker({
 
   const [hasRevalidated, setHasRevalidated] = useState(false);
 
+  // Read through a ref so calling `revalidate()` (which flips Clerk's internal state and rotates
+  // the `userMemberships` reference) doesn't re-fire this effect and cancel the in-flight refresh
+  // before `setHasRevalidated(true)` runs.
+  const userMembershipsRef = useRef(userMemberships);
+  userMembershipsRef.current = userMemberships;
+
   // Force a fresh fetch on mount so a user arriving after delete/leave doesn't see a tombstoned org.
+  // `hasRevalidated` is flipped only after the refetch promise resolves so the picker never renders
+  // a deleted membership the user could click and re-activate.
   useEffect(() => {
     if (!isLoaded || hasRevalidated) return;
 
-    setHasRevalidated(true);
-    userMemberships?.revalidate?.();
-  }, [isLoaded, hasRevalidated, userMemberships]);
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        await userMembershipsRef.current?.revalidate?.();
+      } catch {
+        // Revalidation failures shouldn't strand the user — show whatever is cached.
+      } finally {
+        if (!cancelled) {
+          setHasRevalidated(true);
+        }
+      }
+    };
+
+    void refresh();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoaded, hasRevalidated]);
 
   // Drain pagination so productType filtering runs against the full membership list.
   useEffect(() => {
