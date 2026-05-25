@@ -771,6 +771,8 @@ describe('Managed Agents API #novu-v2', () => {
 
     it('should adopt an existing provider agent, auto-generating name and identifier', async () => {
       const integrationId = await createAgentRuntimeIntegration();
+      mockProvider.validateCredentials.resetHistory();
+      mockProvider.getAgent.resetHistory();
       const res = await session.testAgent.post('/v1/agents').send(adoptBody(integrationId));
 
       expect(res.status).to.equal(201);
