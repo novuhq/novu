@@ -14,6 +14,7 @@ import {
   type MetaErrorSummary,
   sendWhatsAppTemplate,
 } from '../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
+import { normalizePhoneForMeta } from '../../utils/phone-normalization';
 import { SendWhatsAppTestTemplateCommand } from './send-whatsapp-test-template.command';
 
 const TEMPLATE_NAME = 'hello_world';
@@ -44,12 +45,6 @@ export interface SendWhatsAppTestTemplateResult {
   success: boolean;
   messageId?: string;
   error?: SendWhatsAppTestTemplateError;
-}
-
-function normalizeRecipient(value: string): string {
-  const trimmed = value.trim();
-  // Meta accepts E.164 without the + sign.
-  return trimmed.startsWith('+') ? trimmed.slice(1) : trimmed;
 }
 
 @Injectable()
@@ -149,7 +144,7 @@ export class SendWhatsAppTestTemplate {
       response = await sendWhatsAppTemplate({
         accessToken,
         phoneNumberId,
-        to: normalizeRecipient(subscriberPhone),
+        to: normalizePhoneForMeta(subscriberPhone),
         templateName: TEMPLATE_NAME,
         languageCode: TEMPLATE_LANGUAGE,
       });

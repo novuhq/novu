@@ -10,6 +10,7 @@ import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
 import sinon from 'sinon';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
+import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { AgentConfigResolver } from '../services/agent-config-resolver.service';
 import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
 import { AgentExecutionParams, BridgeExecutorService } from '../services/bridge-executor.service';
@@ -633,6 +634,76 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
         conversation!._id
       );
       expect(activitiesAfter.length).to.equal(activitiesBefore.length);
+    });
+  });
+
+  describe('WhatsApp subscriber resolution', () => {
+    async function invokeWhatsAppInbound(phone: string, text: string) {
+      const baseConfig = await configResolver.resolve(ctx.agentId, ctx.integrationIdentifier);
+      const config = {
+        ...baseConfig,
+        platform: AgentPlatformEnum.WHATSAPP,
+      };
+      const threadId = `whatsapp:${phone}`;
+      const thread = {
+        id: threadId,
+        channelId: threadId,
+        isDM: true,
+        startTyping: async () => {},
+        subscribe: async () => {},
+        post: async () => mockSentMessage(),
+        createSentMessageFromMessage: () => mockSentMessage(),
+        toJSON: () => ({ id: threadId }),
+      };
+      const message = {
+        id: `whatsapp-msg-${Date.now()}`,
+        text,
+        author: {
+          userId: phone,
+          fullName: 'WhatsApp User',
+          userName: 'wauser',
+          isBot: false,
+        },
+        metadata: { dateSent: new Date() },
+      };
+
+      await inboundHandler.handle(ctx.agentId, config, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      return threadId;
+    }
+
+    it('should create participant as subscriber when subscriber.phone matches inbound author.userId', async () => {
+      const subscriberRepository = new SubscriberRepository();
+      const subscriber = await subscriberRepository.create({
+        subscriberId: `sub-wa-e2e-${Date.now()}`,
+        firstName: 'WhatsApp',
+        lastName: 'Subscriber',
+        phone: '+972541111111',
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+      });
+
+      const threadId = await invokeWhatsAppInbound('972541111111', 'Hello from WhatsApp');
+
+      const conversation = await conversationRepository.findByPlatformThread(
+        ctx.session.environment._id,
+        ctx.session.organization._id,
+        ctx.agentId,
+        ctx.integrationId,
+        threadId
+      );
+
+      expect(conversation).to.exist;
+
+      const subParticipant = conversation!.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      );
+      expect(subParticipant).to.exist;
+      expect(subParticipant!.id).to.equal(subscriber.subscriberId);
+
+      const activities = await activityRepository.findByConversation(ctx.session.environment._id, conversation!._id);
+      const userActivity = activities.find((a) => a.content === 'Hello from WhatsApp');
+      expect(userActivity!.senderType).to.equal(ConversationActivitySenderTypeEnum.SUBSCRIBER);
     });
   });
 });
