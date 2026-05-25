@@ -50,9 +50,12 @@ export class HandleAgentReply {
       !command.edit &&
       !command.resolve &&
       !command.signals?.length &&
-      !command.addReactions?.length
+      !command.addReactions?.length &&
+      !command.plan
     ) {
-      throw new BadRequestException('At least one of reply, edit, resolve, signals, or addReactions must be provided');
+      throw new BadRequestException(
+        'At least one of reply, edit, resolve, signals, addReactions, or plan must be provided'
+      );
     }
 
     const conversation = await this.conversationService.getConversation(
@@ -69,6 +72,10 @@ export class HandleAgentReply {
 
     if (command.edit) {
       return this.deliverEdit(command, conversation, channel, command.edit, agentName);
+    }
+
+    if (command.plan) {
+      return this.deliverPlan(command, conversation, channel, command.plan);
     }
 
     const needsConfig = !!(command.reply || command.resolve || command.signals?.length);
@@ -226,6 +233,34 @@ export class HandleAgentReply {
     });
 
     return sent;
+  }
+
+  private async deliverPlan(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel,
+    plan: NonNullable<HandleAgentReplyCommand['plan']>
+  ): Promise<SentMessageInfo | null> {
+    if (plan.messageId) {
+      await this.chatSdkService.editPlanObject(
+        conversation._agentId,
+        command.integrationIdentifier,
+        channel.platform,
+        channel.platformThreadId,
+        plan.messageId,
+        plan.model
+      );
+
+      return { messageId: plan.messageId, platformThreadId: channel.platformThreadId };
+    }
+
+    return this.chatSdkService.postPlanObject(
+      conversation._agentId,
+      command.integrationIdentifier,
+      channel.platform,
+      channel.platformThreadId,
+      plan.model
+    );
   }
 
   private extractTextFallback(content: ReplyContentDto): string {

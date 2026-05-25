@@ -16,7 +16,7 @@ import { GetAgentRuntimeConfig } from './get-agent-runtime-config/get-agent-runt
 import { GetMcpConnectionStatus } from './get-mcp-connection-status/get-mcp-connection-status.usecase';
 import { GetTelegramMobileLinkStatus } from './get-telegram-mobile-link-status/get-telegram-mobile-link-status.usecase';
 import { HandleAgentReply } from './handle-agent-reply/handle-agent-reply.usecase';
-import { HandleToolProgress } from './handle-tool-progress/handle-tool-progress.usecase';
+import { HandlePlanProgress } from './handle-plan-progress/handle-plan-progress.usecase';
 import { IssueTelegramMobileLink } from './issue-telegram-mobile-link/issue-telegram-mobile-link.usecase';
 import { IssueTelegramSubscriberLink } from './issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
 import { LinkTelegramChatToSubscriber } from './link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -77,7 +77,7 @@ export const USE_CASES = [
   MigrateAgentRuntime,
   RemoveAgentIntegration,
   HandleAgentReply,
-  HandleToolProgress,
+  HandlePlanProgress,
   ProvisionManagedAgent,
   SendAgentTestEmail,
   SendAgentWelcomeMessage,

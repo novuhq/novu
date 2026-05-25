@@ -1,0 +1,630 @@
+import { Injectable } from '@nestjs/common';
+import type { PendingToolApproval } from '@novu/application-generic';
+import { type IAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import { ConversationParticipantTypeEnum, ConversationRepository } from '@novu/dal';
+import { MCP_SERVERS } from '@novu/shared';
+import {
+  CredentialExpiredError,
+  McpServerError,
+  SessionExpiredError,
+  type Response as ThalamusResponse,
+} from '@novu/thalamus';
+import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { GenerateMcpOAuthUrlCommand } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
+import { GenerateMcpOAuthUrl } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
+import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
+import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/handle-plan-progress.command';
+import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
+import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { ManagedAgentProviderFactory } from './managed-agent-provider-factory';
+
+export const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
+
+const PARKED_SESSION_ERROR_PATTERN = /waiting on responses to events/i;
+
+interface BaseCommandFields {
+  userId: string;
+  environmentId: string;
+  organizationId: string;
+  conversationId: string;
+  agentIdentifier: string;
+  integrationIdentifier: string;
+}
+
+@Injectable()
+export class ManagedAgentEventHandler {
+  constructor(
+    private readonly providerFactory: ManagedAgentProviderFactory,
+    private readonly conversationRepository: ConversationRepository,
+    private readonly handleAgentReply: HandleAgentReply,
+    private readonly handlePlanProgress: HandlePlanProgress,
+    private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly demoQuota: DemoClaudeQuotaPolicy,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  createHandlers(sessionId: string, runId: string, metadata: Record<string, string>) {
+    if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
+      this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
+
+      return {};
+    }
+
+    const baseFields = this.buildBaseFields(metadata);
+
+    return {
+      onToolUseStart: async (event: { toolUseId: string; toolName: string }) => {
+        try {
+          await this.handlePlanProgress.execute(
+            HandlePlanProgressCommand.create({
+              ...baseFields,
+              toolProgress: {
+                runId,
+                action: 'tool-use',
+                toolUseId: event.toolUseId,
+                toolName: event.toolName,
+                status: 'running',
+              },
+            })
+          );
+        } catch (err) {
+          this.logger.error(err, `onToolUseStart failed: session=${sessionId}`);
+        }
+      },
+
+      onToolUseDone: async (event: { toolUseId: string; toolName: string; input?: Record<string, unknown> }) => {
+        try {
+          if (!event.input || Object.keys(event.input).length === 0) {
+            return;
+          }
+          await this.handlePlanProgress.execute(
+            HandlePlanProgressCommand.create({
+              ...baseFields,
+              toolProgress: {
+                runId,
+                action: 'tool-use',
+                toolUseId: event.toolUseId,
+                toolName: event.toolName,
+                status: 'running',
+                toolInput: event.input,
+              },
+            })
+          );
+        } catch (err) {
+          this.logger.error(err, `onToolUseDone failed: session=${sessionId}`);
+        }
+      },
+
+      onToolUseResult: async (event: { toolUseId: string; isError?: boolean }) => {
+        try {
+          await this.handlePlanProgress.execute(
+            HandlePlanProgressCommand.create({
+              ...baseFields,
+              toolProgress: {
+                runId,
+                action: 'tool-use',
+                toolUseId: event.toolUseId,
+                status: event.isError === true ? 'error' : 'complete',
+              },
+            })
+          );
+        } catch (err) {
+          this.logger.error(err, `onToolUseResult failed: session=${sessionId}`);
+        }
+      },
+
+      onFinish: async (event: { response: ThalamusResponse }) => {
+        try {
+          if (event.response.finishReason === 'requires-action') {
+            const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
+            if (runtimeProvider) {
+              const delivered = await this.tryDeliverToolApprovalCard(
+                metadata,
+                sessionId,
+                runtimeProvider,
+                extractPendingToolApproval(event.response)
+              );
+
+              if (delivered) {
+                await this.handlePlanProgress.execute(
+                  HandlePlanProgressCommand.create({
+                    ...baseFields,
+                    toolProgress: { runId, action: 'awaiting-approval' },
+                  })
+                );
+
+                return;
+              }
+            }
+          }
+
+          await this.handleAgentReply.execute(
+            HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: event.response.content } })
+          );
+          await this.demoQuota.recordUsage(
+            metadata.environmentId,
+            metadata.organizationId,
+            metadata.conversationId,
+            event.response.usage
+          );
+          await this.handlePlanProgress.execute(
+            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { runId, action: 'complete' } })
+          );
+        } catch (err) {
+          this.logger.error(err, `onFinish failed: session=${sessionId}`);
+          throw err;
+        }
+      },
+
+      onError: async (event: { error: Error }) => {
+        try {
+          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, runId);
+        } catch (err) {
+          this.logger.error(err, `onError handler failed: session=${sessionId}`);
+        }
+      },
+    };
+  }
+
+  private buildBaseFields(metadata: Record<string, string>): BaseCommandFields {
+    return {
+      userId: 'system',
+      environmentId: metadata.environmentId,
+      organizationId: metadata.organizationId,
+      conversationId: metadata.conversationId,
+      agentIdentifier: metadata.agentIdentifier ?? '',
+      integrationIdentifier: metadata.integrationIdentifier ?? '',
+    };
+  }
+
+  private async handleErrorEvent(
+    metadata: Record<string, string>,
+    sessionId: string,
+    error: Error,
+    baseCommand: BaseCommandFields,
+    runId: string
+  ): Promise<void> {
+    if (error instanceof SessionExpiredError) {
+      this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
+      await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
+
+      return;
+    }
+
+    const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
+
+    if (runtimeProvider && typeof error.message === 'string' && PARKED_SESSION_ERROR_PATTERN.test(error.message)) {
+      const delivered = await this.tryDeliverToolApprovalCard(metadata, sessionId, runtimeProvider);
+
+      if (delivered) {
+        await this.handlePlanProgress.execute(
+          HandlePlanProgressCommand.create({
+            ...baseCommand,
+            toolProgress: { runId, action: 'awaiting-approval' },
+          })
+        );
+
+        return;
+      }
+    }
+
+    if (runtimeProvider) {
+      const initFailure = runtimeProvider.parseMcpInitFailure(error);
+
+      if (initFailure) {
+        const delivered = await this.tryDeliverMcpConnectCard(metadata, sessionId, initFailure.mcpServerName);
+
+        if (delivered) {
+          return;
+        }
+      }
+    }
+
+    const message = buildErrorMessage(error);
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
+      );
+      await this.handlePlanProgress.execute(
+        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { runId, action: 'fail' } })
+      );
+    } catch (err) {
+      this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
+    }
+  }
+
+  /**
+   * Lazy-OAuth path for an MCP-init failure. Returns `true` when a reply was
+   * successfully delivered to the user (a Connect card on the happy path, or
+   * a platform-aware "your account isn't linked yet" message when the
+   * platform user has no subscriber); `false` for unrecoverable misses
+   * (unknown server, MCP not on the Novu-OAuth allow-list, discovery
+   * failure, network error). Callers fall back to the plain-text
+   * `buildErrorMessage` path so the user still sees *something*.
+   */
+  private async tryDeliverMcpConnectCard(
+    metadata: Record<string, string>,
+    sessionId: string,
+    mcpServerName: string
+  ): Promise<boolean> {
+    const subscriberId = await this.resolveSubscriberIdFromMetadata(metadata);
+
+    if (!subscriberId) {
+      this.logger.warn(
+        {
+          sessionId,
+          mcpServerName,
+          conversationId: metadata.conversationId,
+          platform: metadata.platform,
+        },
+        'MCP OAuth needed but session has no subscriber context — surfacing platform-aware "not linked" reply'
+      );
+
+      return this.deliverAnonymousUserMcpReply(metadata, sessionId, mcpServerName);
+    }
+
+    const mcpId = resolveMcpIdByName(mcpServerName);
+
+    if (!mcpId) {
+      this.logger.warn(
+        { sessionId, mcpServerName },
+        'MCP-init failure references a server not in MCP_SERVERS catalog; skipping Connect card'
+      );
+
+      return false;
+    }
+
+    let authorizeUrl: string;
+
+    try {
+      const result = await this.generateMcpOAuthUrl.execute(
+        GenerateMcpOAuthUrlCommand.create({
+          userId: 'system',
+          environmentId: metadata.environmentId,
+          organizationId: metadata.organizationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          mcpId,
+          subscriberId,
+        })
+      );
+      authorizeUrl = result.authorizeUrl;
+    } catch (err) {
+      this.logger.warn(
+        {
+          err: err instanceof Error ? err.message : String(err),
+          sessionId,
+          mcpId,
+          agentIdentifier: metadata.agentIdentifier,
+        },
+        'GenerateMcpOAuthUrl failed; falling back to plain-text MCP-init error'
+      );
+
+      return false;
+    }
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: 'system',
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
+          reply: { card: buildConnectCard(mcpServerName, authorizeUrl) },
+        })
+      );
+    } catch (err) {
+      this.logger.error(err, `Failed to deliver Connect card for session ${sessionId}`);
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Deliver a platform-aware "your account isn't linked" reply. Used when an
+   * MCP-init failure fires for a platform user we can't map to a Novu
+   * subscriber — the lazy-OAuth Connect card path requires a subscriberId so
+   * it can't help here. Returns `true` on successful delivery so
+   * `tryDeliverMcpConnectCard` can short-circuit cleanly.
+   */
+  private async deliverAnonymousUserMcpReply(
+    metadata: Record<string, string>,
+    sessionId: string,
+    mcpServerName: string
+  ): Promise<boolean> {
+    const platform = metadata.platform as AgentPlatformEnum | undefined;
+    const message = buildAnonymousUserMcpMessage(platform, mcpServerName);
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: 'system',
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
+          reply: { markdown: message },
+        })
+      );
+    } catch (err) {
+      this.logger.error(err, `Failed to deliver anonymous-user MCP reply for session ${sessionId}`);
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Surface an Approve/Deny card for the single oldest pending tool-use
+   * approval on the session. Returns `true` when the card was successfully delivered.
+   */
+  private async tryDeliverToolApprovalCard(
+    metadata: Record<string, string>,
+    sessionId: string,
+    runtimeProvider: IAgentRuntimeProvider,
+    knownPending?: PendingToolApproval | null
+  ): Promise<boolean> {
+    let pending: PendingToolApproval | null = knownPending ?? null;
+
+    if (!pending) {
+      try {
+        pending = await runtimeProvider.getPendingToolApproval(sessionId);
+      } catch (err) {
+        this.logger.warn(
+          { err: err instanceof Error ? err.message : String(err), sessionId },
+          'getPendingToolApproval failed; cannot render Approve/Deny card'
+        );
+
+        return false;
+      }
+    }
+
+    if (!pending) {
+      this.logger.warn(
+        { sessionId, conversationId: metadata.conversationId },
+        'Session is parked on requires-action but no pending tool approval was located'
+      );
+
+      return false;
+    }
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: 'system',
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
+          reply: { card: buildToolApprovalCard(pending) },
+        })
+      );
+    } catch (err) {
+      this.logger.error(err, `Failed to deliver tool-approval card for session ${sessionId}`);
+
+      return false;
+    }
+
+    return true;
+  }
+
+  private async tryGetRuntimeProvider(metadata: Record<string, string>): Promise<IAgentRuntimeProvider | null> {
+    if (!metadata.environmentId || !metadata.agentIdentifier) {
+      return null;
+    }
+
+    return this.providerFactory.tryGetByAgentIdentifier(metadata.agentIdentifier, metadata.environmentId);
+  }
+
+  /**
+   * Webhook metadata carries `subscriberId` for sessions opened by a subscriber.
+   * Falls back to looking up the conversation's subscriber participant.
+   */
+  private async resolveSubscriberIdFromMetadata(metadata: Record<string, string>): Promise<string | undefined> {
+    if (metadata.subscriberId) {
+      return metadata.subscriberId;
+    }
+
+    if (!metadata.conversationId || !metadata.environmentId) {
+      return undefined;
+    }
+
+    try {
+      const conversation = await this.conversationRepository.findOne(
+        { _id: metadata.conversationId, _environmentId: metadata.environmentId },
+        '*'
+      );
+
+      const subscriberParticipant = conversation?.participants.find(
+        (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
+      );
+
+      return subscriberParticipant?.id;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), conversationId: metadata.conversationId },
+        'Failed to resolve subscriberId from conversation participants'
+      );
+
+      return undefined;
+    }
+  }
+}
+
+export function parseToolApprovalActionId(id: string | undefined): { approved: boolean; toolUseId: string } | null {
+  if (!id) return null;
+  const parts = id.split(':');
+  if (parts.length !== 3 || parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
+
+  const verdict = parts[1];
+  const toolUseId = parts[2];
+  if ((verdict !== 'approve' && verdict !== 'deny') || !toolUseId) return null;
+
+  return { approved: verdict === 'approve', toolUseId };
+}
+
+export function isLinkButtonActionId(id: string | undefined): boolean {
+  return typeof id === 'string' && id.startsWith('link-');
+}
+
+function extractPendingToolApproval(response: ThalamusResponse): PendingToolApproval | null {
+  const actionsRequired = response.actionsRequired;
+  if (!Array.isArray(actionsRequired) || actionsRequired.length === 0) {
+    return null;
+  }
+
+  for (const action of actionsRequired) {
+    if (action.type === 'mcp-approval') {
+      return {
+        toolUseId: action.toolUseId,
+        toolName: action.toolName,
+        mcpServerName: action.serverName,
+        input: action.input,
+      };
+    }
+
+    if (action.type === 'tool-confirmation') {
+      return {
+        toolUseId: action.toolUseId,
+        toolName: action.toolName,
+        input: action.input,
+      };
+    }
+  }
+
+  return null;
+}
+
+function resolveMcpIdByName(mcpServerName: string): string | undefined {
+  const target = mcpServerName.toLowerCase();
+  const match = MCP_SERVERS.find((s) => s.name.toLowerCase() === target);
+
+  return match?.id;
+}
+
+function buildConnectCard(mcpServerName: string, authorizeUrl: string): Record<string, unknown> {
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content: `I need access to your ${mcpServerName} account to answer this. Connect ${mcpServerName} and I'll pick up where we left off — no need to retype your question.`,
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: `Connect ${mcpServerName}`,
+            url: authorizeUrl,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function buildToolApprovalCard(pending: PendingToolApproval): Record<string, unknown> {
+  const serverLabel = pending.mcpServerName ? ` from ${pending.mcpServerName}` : '';
+  const inputPreview = formatToolInputPreview(pending.input);
+
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content: `I'd like to call \`${pending.toolName}\`${serverLabel} to answer this. Approve to let me run it, or deny to skip.`,
+      },
+      ...(inputPreview ? [{ type: 'text', content: inputPreview }] : []),
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'button',
+            id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${pending.toolUseId}`,
+            label: 'Approve',
+            style: 'primary',
+          },
+          {
+            type: 'button',
+            id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${pending.toolUseId}`,
+            label: 'Deny',
+            style: 'danger',
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function buildErrorMessage(err: unknown): string {
+  if (err instanceof CredentialExpiredError) {
+    return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
+  }
+  if (err instanceof McpServerError) {
+    return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
+  }
+
+  if (err instanceof Error) {
+    const mcpInitMatch = err.message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
+    if (mcpInitMatch) {
+      const serverName = mcpInitMatch[1];
+
+      return (
+        `I couldn't connect to the **${serverName}** MCP server — no credential is stored for it. ` +
+        `Connect ${serverName} from this agent's integration settings (or remove it from the agent's MCP list) and try again.`
+      );
+    }
+  }
+
+  return 'The agent is temporarily unavailable. Please try again later.';
+}
+
+const PLATFORM_DISPLAY_NAMES: Record<AgentPlatformEnum, string> = {
+  [AgentPlatformEnum.SLACK]: 'Slack',
+  [AgentPlatformEnum.TEAMS]: 'Teams',
+  [AgentPlatformEnum.WHATSAPP]: 'WhatsApp',
+  [AgentPlatformEnum.EMAIL]: 'email',
+  [AgentPlatformEnum.TELEGRAM]: 'Telegram',
+};
+
+export function buildAnonymousUserMcpMessage(platform: AgentPlatformEnum | undefined, mcpServerName: string): string {
+  const platformLabel = platform ? PLATFORM_DISPLAY_NAMES[platform] : 'chat';
+
+  return `I can't connect to **${mcpServerName}** because your ${platformLabel} account isn't linked to a Novu subscriber`;
+}
+
+function formatToolInputPreview(input: Record<string, unknown> | undefined): string | null {
+  if (!input || typeof input !== 'object') {
+    return null;
+  }
+
+  const keys = Object.keys(input);
+  if (keys.length === 0) {
+    return null;
+  }
+
+  let serialised: string;
+  try {
+    serialised = JSON.stringify(input, null, 2);
+  } catch {
+    return null;
+  }
+
+  const capped = serialised.length > 600 ? `${serialised.slice(0, 597)}...` : serialised;
+
+  return `\`\`\`json\n${capped}\n\`\`\``;
+}

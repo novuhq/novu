@@ -8,7 +8,7 @@ describe('buildAnonymousUserMcpMessage', () => {
 
     expect(message).to.contain('**Linear**');
     expect(message).to.contain('Slack account');
-    expect(message).to.contain('isn\'t linked to a Novu subscriber');
+    expect(message).to.contain("isn't linked to a Novu subscriber");
   });
 
   it('mentions Teams when the platform is Teams', () => {
@@ -28,7 +28,7 @@ describe('buildAnonymousUserMcpMessage', () => {
 
     expect(message).to.contain('**Linear**');
     expect(message).to.contain('Telegram account');
-    expect(message).to.contain('isn\'t linked to a Novu subscriber');
+    expect(message).to.contain("isn't linked to a Novu subscriber");
   });
 
   it('mentions Email when the platform is Email', () => {

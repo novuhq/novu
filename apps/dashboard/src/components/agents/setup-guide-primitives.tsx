@@ -18,6 +18,7 @@ import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useUpdateIntegration } from '@/hooks/use-update-integration';
+import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { cn } from '@/utils/ui';
 import type { StepStatus } from './setup-guide-step-utils';
 
@@ -315,7 +316,7 @@ export function ListeningStatus({
             {connectedAt ? connectedMessage : listeningMessage}
           </p>
         </div>
-        <ExternalLink href="https://docs.novu.co/agents/overview" variant="documentation">
+        <ExternalLink href={AGENTS_DOCS_PROVIDERS_URL} variant="documentation">
           Learn more in docs
         </ExternalLink>
       </div>

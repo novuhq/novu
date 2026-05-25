@@ -29,6 +29,7 @@ import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
+import { isLinkButtonActionId, parseToolApprovalActionId } from './managed-agent-event-handler';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
 /**
@@ -96,32 +97,6 @@ function asRecord(value: unknown): Record<string, unknown> | undefined {
   }
 
   return value as Record<string, unknown>;
-}
-
-/**
- * Action-id shape rendered by `ManagedAgentService.buildToolApprovalCard`:
- * `mcp-approval:<approve|deny>:<toolUseId>`. Returns `null` for anything
- * else so the caller can fall through to its existing bridge dispatch.
- */
-function parseToolApprovalActionId(id: string | undefined): { approved: boolean; toolUseId: string } | null {
-  if (!id) return null;
-  const parts = id.split(':');
-  if (parts.length !== 3 || parts[0] !== 'mcp-approval') return null;
-
-  const verdict = parts[1];
-  const toolUseId = parts[2];
-  if ((verdict !== 'approve' && verdict !== 'deny') || !toolUseId) return null;
-
-  return { approved: verdict === 'approve', toolUseId };
-}
-
-/**
- * Action-id shape emitted by the chat SDK when a card `link-button` is clicked.
- * The platform opens `url` in the user's browser; no bridge `onAction` dispatch
- * is required (and managed agents never have a bridge URL configured).
- */
-function isLinkButtonActionId(id: string | undefined): boolean {
-  return typeof id === 'string' && id.startsWith('link-');
 }
 
 function getMessageRawEvent(message: Message): Record<string, unknown> | undefined {

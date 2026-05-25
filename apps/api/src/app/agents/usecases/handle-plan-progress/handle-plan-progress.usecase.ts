@@ -1,15 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
-import {
-  ConversationActivityEntity,
-  ConversationActivityRepository,
-  type ConversationChannel,
-  type ConversationEntity,
-} from '@novu/dal';
+import { ConversationActivityEntity, ConversationActivityRepository, type ConversationChannel } from '@novu/dal';
 import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../services/agent-conversation.service';
-import { ChatSdkService } from '../../services/chat-sdk.service';
-import { HandleToolProgressCommand, type ToolProgressPayload } from './handle-tool-progress.command';
+import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';
+import { HandlePlanProgressCommand, type ToolProgressPayload } from './handle-plan-progress.command';
 
 interface ToolTask {
   toolUseId: string;
@@ -19,17 +15,17 @@ interface ToolTask {
 }
 
 @Injectable()
-export class HandleToolProgress {
+export class HandlePlanProgress {
   constructor(
     private readonly activityRepository: ConversationActivityRepository,
     private readonly conversationService: AgentConversationService,
-    private readonly chatSdkService: ChatSdkService,
+    private readonly handleAgentReply: HandleAgentReply,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: HandleToolProgressCommand): Promise<void> {
+  async execute(command: HandlePlanProgressCommand): Promise<void> {
     const conversation = await this.conversationService.getConversation(
       command.conversationId,
       command.environmentId,
@@ -49,17 +45,22 @@ export class HandleToolProgress {
     );
 
     if (toolProgress.action === 'tool-use') {
-      await this.handleToolUse(command, conversation, channel, toolProgress, existingActivities);
+      await this.handleToolUse(command, channel, toolProgress, existingActivities);
 
       return;
     }
 
-    await this.handleFinalize(command, conversation, channel, toolProgress, existingActivities);
+    if (toolProgress.action === 'awaiting-approval') {
+      await this.handleAwaitingApproval(command, existingActivities);
+
+      return;
+    }
+
+    await this.handleFinalize(command, toolProgress, existingActivities);
   }
 
   private async handleToolUse(
-    command: HandleToolProgressCommand,
-    conversation: ConversationEntity,
+    command: HandlePlanProgressCommand,
     channel: ConversationChannel,
     toolProgress: ToolProgressPayload,
     existingActivities: ConversationActivityEntity[]
@@ -77,21 +78,32 @@ export class HandleToolProgress {
     tasks.set(toolProgress.toolUseId, { toolUseId: toolProgress.toolUseId, toolName, status, details });
 
     const model = this.toModel('Thinking…', tasks, false);
-    const planMessageId = await this.postOrEditPlan(
-      conversation,
-      channel,
-      command,
-      this.findPlanMessageId(existingActivities),
-      model
-    );
+    const planMessageId = await this.postOrEditPlan(command, this.findPlanMessageId(existingActivities), model);
 
     await this.persistToolActivity(command, channel, toolProgress, toolName, details, planMessageId);
   }
 
+  private async handleAwaitingApproval(
+    command: HandlePlanProgressCommand,
+    existingActivities: ConversationActivityEntity[]
+  ): Promise<void> {
+    const planMessageId = this.findPlanMessageId(existingActivities);
+    if (!existingActivities.length || !planMessageId) {
+      return;
+    }
+
+    const tasks = this.collectTasks(existingActivities);
+    for (const task of tasks.values()) {
+      if (task.status === 'in_progress') {
+        task.status = 'in_progress';
+      }
+    }
+
+    await this.postOrEditPlan(command, planMessageId, this.toModel('Waiting for approval…', tasks, false));
+  }
+
   private async handleFinalize(
-    command: HandleToolProgressCommand,
-    conversation: ConversationEntity,
-    channel: ConversationChannel,
+    command: HandlePlanProgressCommand,
     toolProgress: ToolProgressPayload,
     existingActivities: ConversationActivityEntity[]
   ): Promise<void> {
@@ -108,39 +120,28 @@ export class HandleToolProgress {
       task.status = finalStatus;
     }
 
-    await this.postOrEditPlan(conversation, channel, command, planMessageId, this.toModel(title, tasks, true));
+    await this.postOrEditPlan(command, planMessageId, this.toModel(title, tasks, true));
   }
 
   private async postOrEditPlan(
-    conversation: ConversationEntity,
-    channel: ConversationChannel,
-    command: HandleToolProgressCommand,
+    command: HandlePlanProgressCommand,
     existingMessageId: string | undefined,
     model: PlanModel
   ): Promise<string | undefined> {
     try {
-      if (existingMessageId) {
-        await this.chatSdkService.editPlanObject(
-          conversation._agentId,
-          command.integrationIdentifier,
-          channel.platform,
-          channel.platformThreadId,
-          existingMessageId,
-          model
-        );
-
-        return existingMessageId;
-      }
-
-      const sent = await this.chatSdkService.postPlanObject(
-        conversation._agentId,
-        command.integrationIdentifier,
-        channel.platform,
-        channel.platformThreadId,
-        model
+      const result = await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: 'system',
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          conversationId: command.conversationId,
+          agentIdentifier: command.agentIdentifier,
+          integrationIdentifier: command.integrationIdentifier,
+          plan: { model, messageId: existingMessageId },
+        })
       );
 
-      return sent?.messageId;
+      return result?.messageId ?? existingMessageId;
     } catch (err) {
       this.logger.warn(err, 'Failed to post/edit plan card');
 
@@ -149,7 +150,7 @@ export class HandleToolProgress {
   }
 
   private async persistToolActivity(
-    command: HandleToolProgressCommand,
+    command: HandlePlanProgressCommand,
     channel: ConversationChannel,
     toolProgress: ToolProgressPayload,
     toolName: string,

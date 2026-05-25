@@ -157,9 +157,7 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       stableSince = Date.now();
     }
 
-    throw new Error(
-      `Bridge calls did not settle within ${timeoutMs}ms (last count: ${bridgeCalls.length})`
-    );
+    throw new Error(`Bridge calls did not settle within ${timeoutMs}ms (last count: ${bridgeCalls.length})`);
   }
 
   async function waitForBridgeCallCount(expected: number): Promise<void> {

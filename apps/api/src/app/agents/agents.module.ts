@@ -39,6 +39,8 @@ import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { DemoClaudeQuotaPolicy } from './services/demo-claude-quota-policy.service';
 import { ManagedAgentService } from './services/managed-agent.service';
+import { ManagedAgentEventHandler } from './services/managed-agent-event-handler';
+import { ManagedAgentProviderFactory } from './services/managed-agent-provider-factory';
 import { McpConnectionVaultService } from './services/mcp-connection-vault.service';
 import { McpOAuthDiscoveryService } from './services/mcp-oauth-discovery.service';
 import { TelegramMobileLinkTokenService } from './services/telegram-mobile-link-token.service';
@@ -81,6 +83,8 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
+    ManagedAgentProviderFactory,
+    ManagedAgentEventHandler,
     ManagedAgentService,
     McpConnectionVaultService,
     DemoClaudeQuotaPolicy,

@@ -389,7 +389,7 @@ export function ConnectAgentForm({
         }
         extraContent={
           <div className="flex flex-col gap-5">
-            {usePromptUi && aiGeneration && scope === 'create' ? (
+            {usePromptUi && aiGeneration && aiMode === 'prompt' ? (
               <AgentSuggestionPills
                 suggestions={aiGeneration.suggestions}
                 onSelect={aiGeneration.onSelectSuggestion}
@@ -404,7 +404,7 @@ export function ConnectAgentForm({
                 onExternalAgentIdChange={onExternalAgentIdChange}
                 onExternalEnvironmentIdChange={onExternalEnvironmentIdChange}
               />
-            ) : isScratchMode ? (
+            ) : !usePromptUi && isScratchMode ? (
               <ScratchAgentFields
                 isColumnsLayout
                 name={name}

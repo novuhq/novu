@@ -178,6 +178,18 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     }
   }, [showExistingOption, templateSelection.kind]);
 
+  // Same idea for the AI flow: when the connector no longer supports linking an existing agent,
+  // collapse `'existing'` back to `'prompt'`. Otherwise the right-column form has no matching
+  // branch (existing-fields are gated on Claude, and the scope tabs that would let the user pick
+  // a new mode are hidden), so section 2 would render empty with no way to recover.
+  useEffect(() => {
+    if (!showExistingOption && generationMode === 'existing') {
+      setGenerationMode('prompt');
+      setExternalAgentId('');
+      setExternalEnvironmentId('');
+    }
+  }, [showExistingOption, generationMode]);
+
   // Auto-select the first existing integration of the chosen provider on mount / when the connector
   // changes / when integrations finish loading. If none exist, open the inline credentials section.
   // We intentionally wait for `integrations` to be defined — on the onboarding entry-point the list
