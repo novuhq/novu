@@ -2,12 +2,11 @@ import { useOrganization, useUser } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiCalendarEventLine } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { AgentSetupSteps } from '@/components/agents/agent-setup-steps';
 import type { RuntimeType } from '@/components/agents/create-agent-fields';
-import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
 import {
   AgentFlowIllustration,
   type AgentFlowRuntime,
@@ -99,19 +98,6 @@ function SkipBanner({ onSkip }: SkipBannerProps) {
         <span className="text-text-strong">Not the right time?</span> Skip for now and finish setup later.
       </p>
       <div className="flex items-center gap-2">
-        <a
-          href={BOOK_DEMO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="border-stroke-soft text-text-sub inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea]"
-          style={{
-            backgroundImage:
-              'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.02) 100%), linear-gradient(90deg, #fff 0%, #fff 100%)',
-          }}
-        >
-          <RiCalendarEventLine className="size-4" />
-          Book a demo
-        </a>
         <button
           type="button"
           onClick={onSkip}
