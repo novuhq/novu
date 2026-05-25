@@ -275,7 +275,7 @@ export function AgentsList() {
               trailingIcon={RiArrowRightSLine}
               onClick={() => setCreateOpen(true)}
             >
-              Create agent
+              Setup an agent
             </PermissionButton>
           }
         />

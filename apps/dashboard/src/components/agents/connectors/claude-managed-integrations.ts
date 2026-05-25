@@ -14,7 +14,7 @@ export function isClaudeManagedAgentIntegration(
     return false;
   }
 
-  if (providerId && integration.providerId !== providerId) {
+  if (providerId && !integration.providerId.includes(providerId)) {
     return false;
   }
 
@@ -33,17 +33,19 @@ export function getClaudeManagedAgentIntegrations(
   integrations: IIntegration[] | undefined,
   providerId?: AgentRuntimeProviderIdEnum
 ): IIntegration[] {
-  return (integrations ?? []).filter((integration) => isClaudeManagedAgentIntegration(integration, providerId)).sort((left, right) => {
-    if (left.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
-      return -1;
-    }
+  return (integrations ?? [])
+    .filter((integration) => isClaudeManagedAgentIntegration(integration, providerId))
+    .sort((left, right) => {
+      if (left.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+        return -1;
+      }
 
-    if (right.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
-      return 1;
-    }
+      if (right.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+        return 1;
+      }
 
-    return 0;
-  });
+      return 0;
+    });
 }
 
 export function getPreferredClaudeManagedIntegration(
