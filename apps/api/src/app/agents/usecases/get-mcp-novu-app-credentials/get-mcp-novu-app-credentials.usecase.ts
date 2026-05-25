@@ -47,8 +47,11 @@ export class GetMcpNovuAppCredentials {
       );
     }
 
-    const clientId = process.env[mapping.clientIdEnv];
-    const clientSecret = process.env[mapping.clientSecretEnv];
+    // Trim before the presence check so whitespace-only values (a common
+    // shell/.env footgun) are treated as "missing" rather than passed
+    // through as garbage `client_id` / `client_secret` to the token endpoint.
+    const clientId = process.env[mapping.clientIdEnv]?.trim();
+    const clientSecret = process.env[mapping.clientSecretEnv]?.trim();
 
     if (!clientId || !clientSecret) {
       const missing = [clientId ? null : mapping.clientIdEnv, clientSecret ? null : mapping.clientSecretEnv].filter(

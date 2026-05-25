@@ -98,6 +98,32 @@ describe('GetMcpNovuAppCredentials', () => {
     }
   });
 
+  it('treats whitespace-only env vars as missing and trims surrounding whitespace from real values', () => {
+    process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID = '   ';
+    process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET = '\t\n';
+
+    try {
+      usecase.execute('github');
+      expect.fail('expected throw');
+    } catch (err) {
+      expect(err).to.be.instanceOf(McpOAuthDiscoveryError);
+      expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_novu_app_credentials_missing');
+      expect((err as McpOAuthDiscoveryError).message).to.contain('NOVU_GITHUB_MCP_APP_CLIENT_ID');
+      expect((err as McpOAuthDiscoveryError).message).to.contain('NOVU_GITHUB_MCP_APP_CLIENT_SECRET');
+    }
+
+    // …and when the values are non-empty after trimming, return the
+    // trimmed credentials so a trailing newline in `.env` doesn't poison
+    // the token-exchange request body.
+    process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID = '  Iv23livefakeclientid  ';
+    process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET = 'ghs_fakeclientsecret\n';
+
+    expect(usecase.execute('github')).to.deep.equal({
+      clientId: 'Iv23livefakeclientid',
+      clientSecret: 'ghs_fakeclientsecret',
+    });
+  });
+
   it('does not leak the resolved client_secret in the thrown message', () => {
     process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID = 'set';
     process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET = 'super-secret-do-not-log';
