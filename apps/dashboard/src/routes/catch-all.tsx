@@ -42,8 +42,6 @@ export const CatchAllRoute = () => {
     }
   }
 
-  // Fall back to the current product's home. On the Connect hostname this lands the user on
-  // /env/:slug/connect; on Platform it stays at /env/:slug/workflows.
   const homePath = buildAppHomeRoute(getCurrentAppId(location.pathname), currentEnvironment.slug);
 
   return <Navigate to={homePath ?? ROUTES.ENV} />;

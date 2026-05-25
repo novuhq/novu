@@ -65,8 +65,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const needsOrgResolution = (() => {
       if (IS_NOVU_CONNECT) {
-        // Connect requires an active Connect workspace. Platform orgs (including legacy orgs
-        // without `productType` yet) must go through auto-create / auto-switch on org-list.
         return (
           !clerkOrganization ||
           !isActiveConnectWorkspace(clerkOrganization.publicMetadata, {
@@ -76,8 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         );
       }
 
-      // Platform: redirect when there is no org, or the active org is explicitly Connect.
-      // Legacy orgs without productType stay on Platform (avoids duplicate Connect orgs mid-sync).
+      // Orgs without productType stay on Platform to avoid duplicating Connect orgs mid-sync.
       return !clerkOrganization || isConnectWorkspace(clerkOrganization.publicMetadata);
     })();
 

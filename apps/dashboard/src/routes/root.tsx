@@ -51,14 +51,7 @@ const RootRouteInternal = () => {
     <ErrorBoundary fallback={({ error, eventId }) => <RootRouteErrorFallback error={error} eventId={eventId} />}>
       <QueryClientProvider client={queryClient}>
         <ClerkProvider>
-          {/*
-           * Hold rendering until Clerk's bootstrap completes. On cross-origin satellite cold
-           * loads the SDK has to bounce to the primary host for a handshake before it can
-           * commit a final auth state — without this gate we'd briefly mount the dashboard
-           * shell (or the auth layout) and then unmount it when the redirect fires, producing
-           * a visible flash. The gate is brief: cookie-only handshake in production (`*.novu.co`
-           * shares a parent domain) and a single redirect roundtrip in dev.
-           */}
+          {/* Hold rendering until Clerk bootstraps to avoid a flash during satellite handshake. */}
           <ClerkLoaded>
             <SegmentProvider>
               <CustomerIoProvider>

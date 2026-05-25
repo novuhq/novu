@@ -36,41 +36,22 @@ export const LEGACY_DASHBOARD_URL =
 
 export const DASHBOARD_URL = window._env_?.VITE_DASHBOARD_URL || import.meta.env.VITE_DASHBOARD_URL;
 
-/**
- * Hostname (host:port) that serves the Novu Connect product. Connect runs as a Clerk satellite
- * of the Platform domain — sign-in/sign-up only happen on Platform, and the session is shared
- * via Clerk cookie sync. When empty, Connect is not deployed for this build (self-hosted /
- * dev-without-Connect setups).
- */
+// Connect satellite hostname. Empty when Connect is not deployed (self-hosted/dev).
 export const NOVU_CONNECT_HOSTNAME =
   window._env_?.VITE_NOVU_CONNECT_HOSTNAME || import.meta.env.VITE_NOVU_CONNECT_HOSTNAME || '';
 
-/**
- * Hostname (host:port) of the Novu Platform deployment — the Clerk PRIMARY domain. Connect (the
- * satellite) reads this to build absolute sign-in / sign-up / switcher URLs back to Platform.
- * Required when `NOVU_CONNECT_HOSTNAME` is set.
- */
+// Clerk primary hostname. Required when `NOVU_CONNECT_HOSTNAME` is set.
 export const NOVU_PLATFORM_HOSTNAME =
   window._env_?.VITE_NOVU_PLATFORM_HOSTNAME || import.meta.env.VITE_NOVU_PLATFORM_HOSTNAME || '';
 
-/**
- * Whether the Platform↔Connect hostname split is configured for this deployment. When false,
- * Connect simply isn't available — self-hosted / community builds get a Platform-only UX.
- */
 export const IS_HOSTNAME_SPLIT_ENABLED = NOVU_CONNECT_HOSTNAME.length > 0;
 
-/** True when the current page is loaded from the Connect satellite hostname. */
 export const IS_NOVU_CONNECT =
   IS_HOSTNAME_SPLIT_ENABLED &&
   typeof window !== 'undefined' &&
   window.location.host === NOVU_CONNECT_HOSTNAME;
 
-/**
- * True when the current page is loaded from the Platform primary hostname. When the split is
- * configured but the visitor's host matches neither (e.g. a custom preview URL), we still treat
- * the request as Platform — Connect must be served from its explicit hostname to enable the
- * satellite Clerk flow.
- */
+// Defaults to Platform when the split is configured but the host matches neither.
 export const IS_NOVU_PLATFORM = !IS_NOVU_CONNECT;
 
 export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT_APP_ID;

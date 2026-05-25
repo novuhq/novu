@@ -90,8 +90,6 @@ export const FreeTrialCard = ({ subscription, daysLeft }: { subscription?: GetSu
   const pluralizedDays = pluralizeDaysLeft(daysLeft);
   const currentApp = useCurrentApp();
   const isConnect = currentApp === APP_IDS.CONNECT;
-  // The Connect logomark already ships with its own background; rendering it inside the dark
-  // pill would clip the orb, so we drop the surrounding circle on Connect surfaces.
   const Logo: BrandLogo = isConnect ? ConnectLogo : LogoCircle;
 
   const cardClassName = 'bg-background group relative mb-2 flex cursor-pointer flex-col gap-2 rounded-lg p-3 shadow';

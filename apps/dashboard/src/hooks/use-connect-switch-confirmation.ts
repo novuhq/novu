@@ -61,12 +61,7 @@ export function useConnectSwitchConfirmation({
 
   const handleConfirm = useCallback(() => {
     setIsModalOpen(false);
-    /*
-     * Set the same-origin sessionStorage flag (used as a fallback when hostname split is off
-     * and Platform/Connect share an origin), then append `?provision=1` to the destination URL
-     * so the cross-origin handoff carries the intent — `beginConnectProvisioning()` alone
-     * can't reach Connect's sessionStorage.
-     */
+    // Set the same-origin flag and append `?provision=1` for the cross-origin handoff.
     beginConnectProvisioning();
     navigateCrossApp(withConnectProvisioningIntent(href), openInNewTab);
   }, [href, navigateCrossApp, openInNewTab]);

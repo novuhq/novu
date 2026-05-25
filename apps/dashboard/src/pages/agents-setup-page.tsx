@@ -31,9 +31,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 function goToPostOnboardingRoute(target: string, navigate: (path: string) => void) {
-  // Cross-origin destinations (Platform → Connect host or vice-versa) need a full page nav so
-  // the browser sends a real request to the other host; react-router's `navigate` would only
-  // update the in-app history.
+  // Absolute URLs need a full page nav so the browser actually crosses origins.
   if (isAbsoluteUrl(target)) {
     window.location.assign(target);
 
@@ -176,7 +174,6 @@ export function AgentsSetupPage() {
   const agentRoutes = useAgentRoutes();
 
   const [searchParams] = useSearchParams();
-  // Hostname-aware: on the Connect host this resolves to `connect` even without `?appId=`.
   const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
   const isConnectFlow = appId === APP_IDS.CONNECT;
   const isConnectHost = IS_NOVU_CONNECT || isConnectFlow;
@@ -262,13 +259,10 @@ export function AgentsSetupPage() {
 
   const handleBackToConnect = useCallback(() => setPhase('connect'), []);
 
-  // Connect users land here directly from org create (no usecase picker before this step), so
-  // the back affordance only makes sense once they've advanced to the details phase.
+  // Connect skips the usecase picker, so there's no back target for the connect phase.
   const handleBackFromConnectPhase = isConnectFlow ? undefined : () => navigate(ROUTES.USECASE_SELECT);
 
   if (!isAgentsEnabled) {
-    // Connect users skip the usecase picker entirely, so the inbox fallback is a dead-end for
-    // them. Send them to the root and let the global guards resolve to the right app home.
     return <Navigate to={isConnectFlow ? ROUTES.ROOT : ROUTES.INBOX_USECASE} replace />;
   }
 

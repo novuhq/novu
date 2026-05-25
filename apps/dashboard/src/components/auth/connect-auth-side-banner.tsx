@@ -4,20 +4,7 @@ import { GithubIcon, LinearIcon, NotionIcon } from '@/components/icons/mcp';
 import { ConnectBrandLogo } from './connect-brand-logo';
 import { TrustedCompanies } from './trusted-companies';
 
-/**
- * Connect-branded left panel rendered on `/auth/sign-in` and `/auth/sign-up` when the dashboard
- * is served from the Connect hostname. Implements Figma node `7133:47274` — the Platform
- * equivalent is `AuthSideBanner` and the layout mirrors it (same outer width budget, vertical
- * rhythm, and "hidden on mobile" behavior for the feature list and trusted-by row).
- *
- * Spacing/sizing is taken directly from the Figma frames so the visual matches 1:1:
- *  - Outer frame (`7133:47274` Content): 562 wide, p-5, gap-[52px] between text and brands
- *  - Text section (`7133:47275` Text): gap-6 (24px) between Header Section and List
- *  - Header section (`7133:47276`): gap-4 between logomark row and the title block
- *  - Title block (`7133:47296`): max-w-[331px] so the headline wraps after "agent."
- *  - List (`7133:47302`): py-3 + gap-1.5 between rows; each row is 24px tall, icon → text gap-2
- *  - Integration pill (`Tag [1.0]`): bg/border weak-50, rounded-[4px], px-1 py-0.5, gap-1
- */
+// Connect-branded side panel on `/auth/sign-in` and `/auth/sign-up` — Connect equivalent of `AuthSideBanner`.
 export function ConnectAuthSideBanner() {
   return (
     <div className="inline-flex h-full w-full min-w-[562px] shrink-0 max-w-[562px] flex-col items-start justify-center gap-[52px] p-5">
@@ -110,7 +97,6 @@ function FeatureRow({ children }: { children: ReactNode }) {
 interface IntegrationPillProps {
   icon: ReactNode;
   children: ReactNode;
-  /** Slight tilt that gives the row its playful Figma feel. */
   rotate?: number;
 }
 
@@ -126,11 +112,7 @@ function IntegrationPill({ icon, children, rotate = 0 }: IntegrationPillProps) {
   );
 }
 
-/**
- * Lightweight 12 px check-in-circle matching the Figma "check-circle" instance (soft grey). The
- * existing `CircleCheck` component defaults to a green stroke meant for completed-step UI, so we
- * inline a smaller, neutral variant here instead.
- */
+// 12 px neutral check-in-circle — `CircleCheck` is green and meant for completed-step UI.
 function CheckCircleSoft({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">

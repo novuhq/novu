@@ -10,10 +10,6 @@ export type ConnectLogomarkProps = Omit<React.ComponentPropsWithoutRef<'img'>, '
   treatment?: ConnectLogoTreatment;
 };
 
-/**
- * Novu Connect logomark (4× PNG from Figma). Use on light surfaces by default; pass
- * `surface="dark"` when the orb sits on a dark background.
- */
 export function ConnectLogomark({
   surface = 'light',
   treatment = 'color',

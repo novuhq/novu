@@ -43,10 +43,7 @@ type OrganizationMembershipLike = {
 type OrganizationPickerProps = {
   afterCreateOrganizationUrl: string;
   afterSelectOrganizationUrl: string;
-  /**
-   * Sign-out handler the parent passes in. The picker delegates here when the user
-   * cancels the create form with no remaining org options to fall back to.
-   */
+  // Invoked when the user cancels the create form with no orgs to fall back to.
   onSignOut: () => void | Promise<void>;
 };
 
@@ -449,13 +446,7 @@ function CreateOrganizationView({
   );
 }
 
-/**
- * Custom replacement for Clerk's <OrganizationList/> on the org-list / create-organization
- * route. Filters memberships by `publicMetadata.productType` so the Platform host only ever
- * lists Platform orgs and the Connect host only ever lists Connect orgs — Clerk's prebuilt
- * widget shows everything regardless. Region-based filtering is intentionally out of scope
- * for now and can layer on later.
- */
+// Replacement for Clerk's <OrganizationList/> that filters memberships by `publicMetadata.productType`.
 export function OrganizationPicker({
   afterCreateOrganizationUrl,
   afterSelectOrganizationUrl,
@@ -473,12 +464,7 @@ export function OrganizationPicker({
 
   const [hasRevalidated, setHasRevalidated] = useState(false);
 
-  /*
-   * Force a fresh fetch on mount. Clerk caches the membership list across the dashboard
-   * session, so a user arriving here right after deleting/leaving their last org would
-   * otherwise still see that org listed (and clicking it would try to `setActive` into a
-   * tombstoned id). Revalidating once on mount keeps the picker honest.
-   */
+  // Force a fresh fetch on mount so a user arriving after delete/leave doesn't see a tombstoned org.
   useEffect(() => {
     if (!isLoaded || hasRevalidated) return;
 
@@ -486,11 +472,7 @@ export function OrganizationPicker({
     userMemberships?.revalidate?.();
   }, [isLoaded, hasRevalidated, userMemberships]);
 
-  /*
-   * Drain pagination so we filter against the full list — otherwise a user with a Connect
-   * org on page 2 would see an empty Platform picker and be pushed straight into the create
-   * form. Mirrors the AutoCreateConnectOrganization paging guard.
-   */
+  // Drain pagination so productType filtering runs against the full membership list.
   useEffect(() => {
     if (!isLoaded || !userMemberships?.hasNextPage || userMemberships?.isFetching) {
       return;
@@ -515,11 +497,6 @@ export function OrganizationPicker({
   const hasTrackedRef = useRef(false);
   const hasInitializedViewRef = useRef(false);
 
-  /*
-   * Initial view: when the membership list is fully loaded and the user has zero matching
-   * orgs, drop straight into the create form (matches the legacy Clerk widget behavior).
-   * Otherwise show the picker.
-   */
   useEffect(() => {
     if (!isMembershipListReady || hasInitializedViewRef.current) return;
 
@@ -559,10 +536,7 @@ export function OrganizationPicker({
       let createdOrg: Awaited<ReturnType<typeof createOrganization>> | null = null;
       let lastError: unknown = null;
 
-      /*
-       * Clerk validates slug uniqueness server-side. On collision we retry with a numeric
-       * suffix so users on common org names ("Acme") don't have to rename manually.
-       */
+      // Retry with a numeric suffix on slug collision so common names don't need manual renames.
       for (let attempt = 0; attempt < SLUG_RETRY_LIMIT; attempt += 1) {
         const candidateSlug = attempt === 0 ? slug : `${slug}-${Math.floor(Math.random() * 9000 + 1000)}`;
 
@@ -589,22 +563,13 @@ export function OrganizationPicker({
         try {
           await createdOrg.setLogo({ file: logoFile });
         } catch (error) {
-          /*
-           * Logo upload is best-effort — the org already exists, so we surface the error
-           * but continue with the activation/redirect rather than rolling back.
-           */
+          // Logo upload is best-effort — the org already exists so we don't roll back.
           const message = readClerkErrorMessage(error, 'Logo upload failed. You can retry from settings.');
           showErrorToast(message, 'Logo upload failed');
         }
       }
 
-      /*
-       * On the Connect host, the freshly-created org's `publicMetadata.productType` is written
-       * server-side during `sync-external-organization` (driven by the X-Novu-Product-Type
-       * header on the next API call). Until that lands, `isActiveConnectWorkspace` would read
-       * an undefined productType and the AuthProvider would bounce the user back here. The
-       * session guard mirrors the auto-provision flow and bridges that lag.
-       */
+      // `productType: connect` is written server-side during sync; the guard bridges that lag.
       if (productFilter === 'connect' && user?.id) {
         writeConnectAutoCreateSessionGuard(user.id, createdOrg.id);
       }

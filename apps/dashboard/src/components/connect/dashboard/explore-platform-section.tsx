@@ -11,9 +11,6 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 export function ExplorePlatformSection() {
   const { currentEnvironment } = useEnvironment();
   const environmentSlug = currentEnvironment?.slug;
-  // When the hostname split is configured we send users to the Platform host in a new tab so
-  // they keep their Connect tab open; otherwise we use an in-app link to keep dev/self-hosted
-  // single-origin setups working.
   const externalPlatformHref = buildOtherAppExternalUrl(APP_IDS.NOVU, environmentSlug);
   const samePagePlatformHref = environmentSlug ? buildRoute(ROUTES.WORKFLOWS, { environmentSlug }) : ROUTES.ROOT;
   const platformHref = IS_HOSTNAME_SPLIT_ENABLED ? (externalPlatformHref ?? samePagePlatformHref) : samePagePlatformHref;

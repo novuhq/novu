@@ -15,12 +15,7 @@ export function ConnectProtectedRoute({ children }: ConnectProtectedRouteProps) 
   const isConnectFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
   const { currentEnvironment } = useEnvironment();
 
-  /*
-   * Connect is exclusively served from the Connect satellite host. The hostname split must be
-   * configured and we must actually be on the Connect host. The LD flag continues to act as a
-   * per-tenant rollout gate on top of that. `HostnameGuard` redirects Platform-side `/connect/*`
-   * bookmarks before this route ever mounts.
-   */
+  // Hostname split + Connect host + LD rollout flag must all align.
   const isAllowed = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT && isConnectFlagEnabled;
 
   if (!isAllowed) {

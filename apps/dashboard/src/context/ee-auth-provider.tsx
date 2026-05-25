@@ -38,17 +38,8 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }
 
-  /**
-   * Clerk's `routerPush`/`routerReplace` receive in-app paths and the occasional absolute URL
-   * (cross-origin sign-in handoff). For absolute URLs we have to escape React Router and use
-   * the browser's navigation so we actually cross origins.
-   *
-   * Clerk drives its own internal sub-route navigation for sign-in / sign-up flows (e.g.
-   * `/auth/sign-in` → `/auth/sign-in/factor-one`). React Router's `navigate(path)` drops the
-   * current query string, which would strip the `?product=connect` flag mid-flow and cause
-   * the primary's auth page to fall back to Platform branding. We re-attach the flag whenever
-   * Clerk pushes us into a different auth path inside the same flow.
-   */
+  // Escape React Router for absolute URLs (cross-origin handoff) and re-attach `?product=` so
+  // Clerk's internal sub-route pushes don't strip the Connect-branding flag mid-flow.
   const navigateClerk = (to: string, replace = false) => {
     if (isAbsoluteUrl(to)) {
       if (replace) {
@@ -82,15 +73,8 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     }
   };
 
-  /*
-   * Satellite mode (Connect host): Clerk owns session sync. On every cold visit the SDK
-   * auto-redirects to the primary's handshake endpoint, picks up the cookie, and bounces back —
-   * no clicks required and no token-in-hash to babysit. `signInUrl`/`signUpUrl` must be
-   * absolute URLs back to the primary because sign-in flows are only allowed there.
-   *
-   * Primary mode (Platform host): standard Clerk config plus `allowedRedirectOrigins` for the
-   * Connect satellite so post-auth `forceRedirectUrl` back to connect.novu.co is honored.
-   */
+  // Sign-in flows are only allowed on the primary; satellite must point `signInUrl`/`signUpUrl`
+  // back to it. Primary lists the Connect origin in `allowedRedirectOrigins` for post-auth bounce.
   const isSatellite = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
 
   const satelliteSignInUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });

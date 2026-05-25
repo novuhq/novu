@@ -29,11 +29,6 @@ export function ConnectSettingsPage() {
     <>
       <PageMeta title="Connect · Settings" />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Settings</h1>}>
-        {/*
-         * Connect intentionally hides Billing for now — a dedicated Connect billing flow is
-         * coming. Until then, any visit to `/connect/settings/billing` is bounced to the
-         * Account tab by SettingsTabs's effect, and inline upgrade prompts are suppressed.
-         */}
         <SettingsTabs rootRoute={rootRoute} routes={routes} hideBilling />
       </DashboardLayout>
     </>

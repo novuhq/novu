@@ -11,11 +11,7 @@ type CrossAppLinkProps = {
   children: ReactNode;
 };
 
-/**
- * Cross-origin product switcher. With Clerk satellite domains the Platform and Connect hosts
- * share one session via cookie sync, so we just hand off to the browser — Clerk's SDK on the
- * destination performs the handshake automatically on first load.
- */
+// Hands off to the browser for cross-origin hrefs; Clerk satellite sync picks up the session.
 export function CrossAppLink({ href, openInNewTab, className, onClick, children, ...rest }: CrossAppLinkProps) {
   const isCrossOrigin = IS_HOSTNAME_SPLIT_ENABLED && isAbsoluteUrl(href);
 

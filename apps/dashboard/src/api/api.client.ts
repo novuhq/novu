@@ -141,11 +141,6 @@ export function getApiBaseUrl(): string {
   return apiHostnameManager.getHostname();
 }
 
-/**
- * Maps the dashboard's product context to the canonical Clerk/Mongo `productType` value so the
- * API can persist it on the organization during sync. The `novu` AppId corresponds to the
- * Platform product; Connect maps 1:1.
- */
 function getProductTypeHeader(): OrganizationProductTypeEnum {
   return getCurrentAppId() === APP_IDS.CONNECT
     ? OrganizationProductTypeEnum.CONNECT

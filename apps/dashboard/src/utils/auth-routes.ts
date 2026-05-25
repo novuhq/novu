@@ -1,11 +1,6 @@
 import { ROUTES } from '@/utils/routes';
 
-/**
- * Public Clerk auth pages (sign-in, sign-up, forgot password, etc.). The auth-provider must not
- * fire org-resolution redirects while the user is on these pages — both because the session may
- * still be settling after a satellite cookie sync and because org-list / invitation-accept have
- * their own bespoke org logic.
- */
+// Public Clerk auth pages. Excludes org-list and invitation-accept which run their own org logic.
 export function isPublicAuthPath(pathname: string): boolean {
   if (!pathname.startsWith('/auth/')) {
     return false;

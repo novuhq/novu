@@ -1,4 +1,3 @@
-/** Active while Connect org provisioning runs (org-list through agent-setup env load). */
 export const CONNECT_PROVISIONING_KEY = 'novu.connect.provisioning';
 export const CONNECT_PROVISION_QUERY = 'provision';
 
@@ -26,7 +25,7 @@ export function beginConnectProvisioning(): void {
     sessionStorage.setItem(CONNECT_PROVISIONING_KEY, '1');
     notifyConnectProvisioningChange();
   } catch {
-    /* sessionStorage unavailable */
+    // sessionStorage unavailable
   }
 }
 
@@ -45,7 +44,7 @@ export function clearConnectProvisioning(): void {
     sessionStorage.removeItem(CONNECT_PROVISIONING_KEY);
     notifyConnectProvisioningChange();
   } catch {
-    /* sessionStorage unavailable */
+    // sessionStorage unavailable
   }
 }
 
@@ -56,13 +55,8 @@ export function buildConnectProvisionOrgListPath(orgListPath: string): string {
   return `${url.pathname}${url.search}`;
 }
 
-/**
- * Cross-origin variant of {@link buildConnectProvisionOrgListPath}: takes either a relative
- * path or an absolute URL and returns it with `?provision=1` appended, preserving the input
- * shape (relative stays relative, absolute stays absolute). Use this for the Platform → Connect
- * cross-origin handoff where `beginConnectProvisioning()` alone is useless because sessionStorage
- * is per-origin — the query param is what Connect's mount effect reads to set its own flag.
- */
+// Appends `?provision=1` to a relative path or absolute URL so the intent survives a
+// cross-origin handoff (sessionStorage is per-origin and not visible to the destination).
 export function withConnectProvisioningIntent(href: string): string {
   if (!href) return href;
 

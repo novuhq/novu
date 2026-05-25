@@ -1,11 +1,7 @@
 import { IS_HOSTNAME_SPLIT_ENABLED, NOVU_CONNECT_HOSTNAME, NOVU_PLATFORM_HOSTNAME } from '@/config';
 import { ROUTES } from '@/utils/routes';
 
-/**
- * Query param the Platform primary uses to decide which sign-in/sign-up UI to render. Set when
- * a visitor lands on the primary by way of the Connect satellite — both the Clerk SDK's
- * `signInUrl`/`signUpUrl` and direct app-rail navigation propagate it.
- */
+// Set when a Connect visitor is sent to Platform sign-in so the primary renders Connect branding.
 export const PRODUCT_QUERY_PARAM = 'product';
 export const CONNECT_PRODUCT_VALUE = 'connect';
 
@@ -52,15 +48,9 @@ function appendProductParam(path: string, product?: typeof CONNECT_PRODUCT_VALUE
 }
 
 type PrimaryAuthUrlOptions = {
-  /** Set to 'connect' so the primary's sign-in page renders Connect-branded UI. */
   product?: typeof CONNECT_PRODUCT_VALUE;
 };
 
-/**
- * Absolute URL to the Platform primary's sign-in page. Used as Clerk's `signInUrl` from the
- * Connect satellite — when an unauthenticated visitor lands on connect.novu.co, the Clerk SDK
- * auto-redirects them here so they only ever sign in on the primary domain.
- */
 export function buildPrimarySignInUrl(options?: PrimaryAuthUrlOptions): string {
   return buildAbsolutePlatformUrl(appendProductParam(ROUTES.SIGN_IN, options?.product));
 }

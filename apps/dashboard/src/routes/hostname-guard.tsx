@@ -9,16 +9,8 @@ type HostnameGuardProps = {
   children: ReactNode;
 };
 
-/**
- * Enforces strict host-product separation:
- *
- *  - Connect host: any `/env/:slug/*` path that isn't a Connect route collapses to Connect home.
- *  - Platform host: stale `/env/:slug/connect/*` bookmarks cross-origin redirect to the Connect
- *    satellite. Clerk satellite sync picks the session up on arrival — no auth handshake
- *    bookkeeping needed here.
- *  - Auth / onboarding / settings paths are shared across both hosts and pass through.
- *  - Split disabled: no-op (self-hosted / community builds don't surface Connect at all).
- */
+// Connect host: collapses non-Connect `/env/:slug/*` paths to Connect home.
+// Platform host: cross-origin redirects stale `/env/:slug/connect/*` bookmarks to the satellite.
 export function HostnameGuard({ children }: HostnameGuardProps) {
   const location = useLocation();
   const { currentEnvironment } = useEnvironment();

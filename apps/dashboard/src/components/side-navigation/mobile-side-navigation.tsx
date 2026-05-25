@@ -23,8 +23,6 @@ type MobileBrand = {
   label: string;
 };
 
-// Both brands render their full-color mark — no greyed-out variants — matching the desktop
-// AppRail and the Figma reference (nodes 7302:35199 and 7302:35237).
 const PLATFORM_BRAND: MobileBrand = {
   id: APP_IDS.NOVU,
   Icon: LogoCircle,

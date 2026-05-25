@@ -2,10 +2,6 @@ import { useCallback } from 'react';
 import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { isAbsoluteUrl } from '@/utils/apps';
 
-/**
- * Cross-origin navigation between the Platform and Connect hosts. Clerk satellite domains keep
- * the session in sync via cookies, so we just delegate to the browser — no token-in-hash dance.
- */
 export function useCrossAppNavigation() {
   return useCallback((href: string, openInNewTab = false) => {
     const isCrossOrigin = IS_HOSTNAME_SPLIT_ENABLED && isAbsoluteUrl(href);

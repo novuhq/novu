@@ -43,11 +43,7 @@ type SettingsTabsProps = {
    * this URL we default to the account tab.
    */
   rootRoute: string;
-  /**
-   * Hides the Billing tab/content and the inline upgrade prompts that link to it. Used by
-   * Connect while we figure out its dedicated billing flow — old `/settings/billing` URLs
-   * still redirect to the account tab via the existing fallback effect.
-   */
+  // Hides the Billing tab and its inline upgrade prompts. Used by Connect.
   hideBilling?: boolean;
 };
 

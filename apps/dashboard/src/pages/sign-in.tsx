@@ -28,22 +28,12 @@ export const SignInPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  /**
-   * Connect-branded sign-in is driven by the query param the satellite appends to Clerk's
-   * `signInUrl`. We also fall back to `IS_NOVU_CONNECT` so visiting `/auth/sign-in` directly on
-   * the satellite (e.g. via a stale tab) renders Connect copy before the satellite redirect
-   * fires.
-   */
   const isConnectSignIn = useMemo(
     () => searchParams.get(PRODUCT_QUERY_PARAM) === CONNECT_PRODUCT_VALUE || IS_NOVU_CONNECT,
     [searchParams]
   );
 
-  /*
-   * Sign-in only runs on the primary domain. If the satellite renders this page (direct nav
-   * or hot-tab) we hard-redirect to the primary's sign-in carrying the Connect flag so the
-   * primary renders Connect-branded UI.
-   */
+  // Sign-in only runs on the primary; satellite visitors bounce back with the Connect flag.
   useEffect(() => {
     if (IS_NOVU_CONNECT) {
       window.location.replace(buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE }));
@@ -74,10 +64,6 @@ export const SignInPage = () => {
           organizationId: organization.id,
         })
       ) {
-        /*
-         * Authenticated Connect user signing in on the primary — send them to the Connect
-         * satellite. Clerk's session sync on the satellite picks up the cookie automatically.
-         */
         window.location.assign(buildAbsoluteConnectUrl(ROUTES.ENV));
 
         return;
@@ -102,8 +88,7 @@ export const SignInPage = () => {
     []
   );
 
-  // Keep the `?product=connect` flag attached when Clerk's internal sign-in/sign-up link
-  // navigates the user across the auth flow — otherwise the sister page loses Connect branding.
+  // Preserve `?product=connect` across the Clerk sign-in ↔ sign-up link so branding survives.
   const signUpUrlWithProduct = isConnectSignIn
     ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
     : ROUTES.SIGN_UP;

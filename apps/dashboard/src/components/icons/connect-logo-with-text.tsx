@@ -10,14 +10,9 @@ import { cn } from '@/utils/ui';
 export type ConnectLogoWithTextProps = Omit<React.ComponentPropsWithoutRef<'img'>, 'src' | 'alt' | 'width' | 'height'> & {
   surface?: ConnectLogoSurface;
   treatment?: ConnectLogoTreatment;
-  /** CSS height; width follows the Figma lockup aspect ratio unless overridden via className. */
   displayHeight?: number;
 };
 
-/**
- * Novu Connect horizontal lockup (orb + wordmark) as a single 4× PNG.
- * Use `mix-blend-screen` on light surfaces when the export has a black matte.
- */
 export function ConnectLogoWithText({
   surface = 'light',
   treatment = 'color',

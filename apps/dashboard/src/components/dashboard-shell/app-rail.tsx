@@ -26,9 +26,6 @@ type BrandConfig = {
   features: string[];
 };
 
-// Each tile is 40x40 with a 20x20 icon centered inside it (matches Figma nodes 7302:35199 and
-// 7302:35237). Both brands always render their full-color logo — see the user-facing rule that
-// the Novu mark must never be greyed out, even when used as the switcher target in Connect.
 const PLATFORM_BRAND: BrandConfig = {
   id: APP_IDS.NOVU,
   Icon: LogoCircle,
@@ -90,8 +87,6 @@ function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherT
       openInNewTab: isExternal && openInNewTab,
     });
 
-  // Figma node 7302:35237: switcher tile has no border/background — only a subtle hover state
-  // for affordance. The icon stays at full saturation in both states.
   const content = (
     <span className="hover:bg-bg-weak flex size-10 items-center justify-center rounded-lg transition-colors">
       <Icon className="size-5" aria-hidden />
@@ -144,12 +139,7 @@ export function AppRail() {
   const currentBrand = isConnect ? CONNECT_BRAND : PLATFORM_BRAND;
   const otherBrand = isConnect ? PLATFORM_BRAND : CONNECT_BRAND;
 
-  /*
-   * Cross-origin switcher URLs. The destination Clerk SDK runs satellite session sync on
-   * first load, so a plain navigation is enough — no token-in-hash plumbing required. We
-   * always target the org-resolution entry on the destination so the right product workspace
-   * is picked up before the app shell renders.
-   */
+  // Route through org-list so the destination resolves the right product workspace first.
   const otherAppHref = IS_HOSTNAME_SPLIT_ENABLED
     ? buildOtherAppExternalUrl(otherBrand.id, envSlug, { useOrgResolutionEntry: true })
     : buildAppHomeRoute(otherBrand.id, envSlug);

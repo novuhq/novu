@@ -30,8 +30,6 @@ export function MobileDesktopPrompt() {
 
   if (isDismissed) return null;
 
-  // Connect surfaces only show the Connect logomark — the Novu mark is reserved for the rail
-  // switcher, which is the single place both brands are allowed to appear together.
   const brandLabel = isConnect ? 'Novu Connect' : 'Novu';
   const productCopy = isConnect ? 'Novu Connect' : "Novu's dashboard";
   const desktopUrl = isConnect ? (NOVU_CONNECT_HOSTNAME || 'connect.novu.co') : 'dashboard.novu.co';

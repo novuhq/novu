@@ -53,13 +53,9 @@ function OrganizationForm() {
   const [searchParams] = useSearchParams();
   const clerk = useClerk();
 
-  // Hostname-aware: defaults to Connect when running on the Connect host, otherwise reads
-  // the explicit `?appId=` param (Platform → Connect handoff case).
   const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
 
-  // Only forward `?appId=` when it was set explicitly on the URL (Platform → Connect
-  // cross-origin handoff). When the user is already on the Connect hostname, hostname
-  // detection alone is enough — onboarding URLs stay clean.
+  // Only forward `?appId=` when it was set explicitly — hostname detection covers the rest.
   const explicitAppId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
   const afterCreateUrl = withAppId(getPostOrgCreateRoute(appId, isAgentsEnabled), explicitAppId);
   const afterSelectUrl = withAppId(ROUTES.ENV, explicitAppId);
@@ -131,16 +127,7 @@ function PageContent() {
   );
 }
 
-/**
- * Manual org-list / create-organization UI. Host-aware: the embedded `<OrganizationPicker/>`
- * filters memberships to the current product (Platform or Connect) via `publicMetadata.productType`.
- *
- * On the Connect host this is rendered as a fallback by `AutoCreateConnectOrganization` when the
- * resolver returns `manualCreate` (no Connect membership + no provisioning intent — typical
- * after the user left or deleted their last Connect org). Page-level routing in
- * `pages/organization-list.tsx` keeps Connect arrivals going through AutoCreate first so silent
- * switch / first-time provisioning still happen without flashing this UI.
- */
+// Embedded `<OrganizationPicker/>` filters memberships by `publicMetadata.productType`.
 export default function OrganizationCreate() {
   return (
     <div className="flex w-full flex-1 flex-row items-center justify-center">

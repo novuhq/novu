@@ -1,19 +1,5 @@
 import { OrganizationProductTypeEnum, tryReadOrganizationProductType } from '@novu/shared';
 
-/**
- * Connect-vs-Platform predicates. Reach for the right one — they intentionally differ on how
- * they treat missing metadata and the freshly-created-but-not-yet-synced edge case.
- *
- * | Predicate                              | Returns true when                                                                | Use it for                                                          |
- * | -------------------------------------- | -------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
- * | `tryReadOrganizationProductType`       | metadata has explicit `connect` or `platform` (else `undefined`)                 | distinguishing "missing" from "platform" (auth redirect logic)      |
- * | `resolveOrganizationProductType`       | always returns a value, defaulting to `platform` when missing                    | non-redirect persistence + display where defaulting is safe         |
- * | `isConnectWorkspace(meta)`             | metadata is explicitly `productType: connect`                                     | org-switcher filtering, "is this membership Connect" decisions       |
- * | `hasExplicitConnectMembership(list)`   | any membership has explicit `productType: connect`                                | "do we still need the first-visit switch confirmation?"             |
- * | `findExistingConnectMembership(list)`  | any explicit Connect membership, or one matching the auto-create session guard    | org-list resolution before/after the backend metadata write lands    |
- * | `isActiveConnectWorkspace(meta, opts)` | the active org is explicit Connect, or matches the auto-create session guard      | the Connect host's "is the current session Connect?" check          |
- */
-
 const AUTO_CREATE_SESSION_GUARD_KEY = 'novu.connect.autoCreate';
 
 type ConnectAutoCreateGuard = {
@@ -58,7 +44,6 @@ export function findExistingConnectMembership(
   });
 }
 
-/** Only explicit Connect workspaces — used for first-visit switch confirmation. */
 export function hasExplicitConnectMembership(memberships: ConnectMembershipCandidate[]): boolean {
   return memberships.some(
     (membership) =>
@@ -78,7 +63,7 @@ function parseConnectAutoCreateSessionGuard(raw: string | null): ConnectAutoCrea
       return parsed;
     }
   } catch {
-    /* legacy string guard — ignore */
+    // ignore legacy string guard
   }
 
   return null;
@@ -99,7 +84,7 @@ export function writeConnectAutoCreateSessionGuard(userId: string, organizationI
     const payload: ConnectAutoCreateGuard = { userId, organizationId };
     window.sessionStorage.setItem(AUTO_CREATE_SESSION_GUARD_KEY, JSON.stringify(payload));
   } catch {
-    /* sessionStorage unavailable — best-effort guard */
+    // sessionStorage unavailable
   }
 }
 
@@ -108,14 +93,11 @@ export function clearConnectAutoCreateSessionGuard(): void {
   try {
     window.sessionStorage.removeItem(AUTO_CREATE_SESSION_GUARD_KEY);
   } catch {
-    /* sessionStorage unavailable */
+    // sessionStorage unavailable
   }
 }
 
-/**
- * Whether the active Clerk org is a Connect workspace. Only explicit `productType: connect`
- * counts, except the org id we just created this session before backend metadata sync lands.
- */
+// True for explicit Connect orgs, plus the just-created org id that hasn't synced metadata yet.
 export function isActiveConnectWorkspace(
   publicMetadata: Record<string, unknown> | undefined,
   options?: { userId?: string; organizationId?: string }
@@ -144,7 +126,6 @@ export function isActiveConnectWorkspace(
   return false;
 }
 
-/** Org switcher filter for the Connect host — only explicit Connect workspaces. */
 export function isConnectWorkspace(publicMetadata: Record<string, unknown> | undefined): boolean {
   return tryReadOrganizationProductType(publicMetadata) === OrganizationProductTypeEnum.CONNECT;
 }

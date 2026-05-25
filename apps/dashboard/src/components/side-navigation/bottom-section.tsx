@@ -4,14 +4,7 @@ import { ROUTES } from '../../utils/routes';
 import { NavigationGroup } from './navigation-group';
 import { NavigationLink } from './navigation-link';
 
-/**
- * Bottom slot of the Connect side navigation.
- *
- * Note: trial and usage cards (FreeTrialCard / UsageCard) used to render here, but they both
- * deep-link into `/settings/billing`, which Connect intentionally hides until its dedicated
- * billing flow ships. Restore them once Connect billing exists — see the Billing tab gate in
- * `settings-tabs.tsx`.
- */
+// TODO: restore FreeTrialCard / UsageCard once Connect has its own billing flow.
 export function BottomSection() {
   if (IS_SELF_HOSTED) {
     return null;

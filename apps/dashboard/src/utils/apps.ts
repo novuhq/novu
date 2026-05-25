@@ -8,20 +8,10 @@ export const APP_IDS = {
   CONNECT: 'connect',
 } as const satisfies Record<string, AppId>;
 
-/**
- * Matches the legacy `/env/:slug/connect/*` paths. Connect doesn't render on the Platform host
- * anymore, but bookmarks and stale links still arrive here — `HostnameGuard` uses this to do a
- * one-shot redirect to the Connect satellite.
- */
+// Matches stale `/env/:slug/connect/*` bookmarks for the Platform → Connect host redirect.
 export const LEGACY_CONNECT_PATH_REGEX = /^\/env\/[^/]+\/connect(\/.*)?$/;
 
-/**
- * Current product is driven exclusively by `window.location.host`. Connect requires the
- * hostname split to be configured; everywhere else this resolves to Platform.
- *
- * `pathname` is accepted for backward compatibility but is intentionally ignored — there's no
- * legacy in-path Connect to detect.
- */
+// `pathname` is accepted for backward compatibility but ignored — product is hostname-driven.
 export function getCurrentAppId(_pathname?: string): AppId {
   if (IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT) {
     return APP_IDS.CONNECT;
@@ -42,14 +32,8 @@ export function buildAppHomeRoute(appId: AppId, environmentSlug: string | undefi
   return buildRoute(ROUTES.WORKFLOWS, { environmentSlug });
 }
 
-/**
- * Build an absolute URL pointing at the other product. Returns:
- *  - `https://{hostname}{path}` when the corresponding hostname env var is set
- *  - the bare path (same-origin) as a fallback when no hostname is configured
- *  - undefined when no env slug is available so callers can disable the link
- */
 type BuildOtherAppExternalUrlOptions = {
-  /** Cross-app entry runs org resolution on org-list before loading the app shell. */
+  // Route through org-list so cross-app entry resolves the target product workspace first.
   useOrgResolutionEntry?: boolean;
 };
 
@@ -75,10 +59,6 @@ export function buildOtherAppExternalUrl(
   return `${window.location.protocol}//${host}${path}`;
 }
 
-/**
- * Returns true when the given path string is an absolute URL (different origin). Helps callers
- * pick between `window.location.assign` and react-router `navigate`.
- */
 export function isAbsoluteUrl(target: string): boolean {
   return /^https?:\/\//i.test(target);
 }

@@ -4,8 +4,6 @@ import { motion } from 'motion/react';
 import { ComponentType, useEffect, useState } from 'react';
 import { RiCheckboxCircleFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 
-// LogoCircle is an SVG component, ConnectLogo is an <img> wrapper — both only receive
-// `className` in this surface, so we type the variant logo as a class-only component.
 type LoaderLogoComponent = ComponentType<{ className?: string }>;
 
 type OnboardingLoaderVariant = 'platform' | 'connect';
