@@ -1,20 +1,14 @@
 import { useOrganizationList, useUser } from '@clerk/clerk-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import {
-  RiAddCircleLine,
-  RiArrowRightSLine,
-  RiErrorWarningLine,
-  RiImageLine,
-  RiLoader4Line,
-  RiUploadCloud2Line,
-} from 'react-icons/ri';
+import { RiAddCircleLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { IS_NOVU_CONNECT } from '@/config';
+import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, type AppId } from '@/utils/apps';
 import { isConnectWorkspace, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
@@ -22,8 +16,6 @@ import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
-const MAX_LOGO_BYTES = 10 * 1024 * 1024;
-const ACCEPTED_LOGO_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
 const SLUG_MAX_LENGTH = 50;
 const SLUG_RETRY_LIMIT = 3;
 
@@ -228,101 +220,11 @@ function OrganizationListView({
   );
 }
 
-type LogoFieldProps = {
-  file: File | null;
-  previewUrl: string | null;
-  onChange: (file: File | null) => void;
-  disabled?: boolean;
-};
-
-function LogoField({ file, previewUrl, onChange, disabled }: LogoFieldProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleFiles = useCallback(
-    (files: FileList | null) => {
-      if (!files || files.length === 0) return;
-
-      const next = files[0];
-
-      if (!ACCEPTED_LOGO_TYPES.includes(next.type)) {
-        setError('Use a PNG, JPG, WebP, or SVG image.');
-
-        return;
-      }
-
-      if (next.size > MAX_LOGO_BYTES) {
-        setError('Image must be 10MB or smaller.');
-
-        return;
-      }
-
-      setError(null);
-      onChange(next);
-    },
-    [onChange]
-  );
-
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-label-xs text-text-strong font-medium">Logo</span>
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          disabled={disabled}
-          className={cn(
-            'border-stroke-soft bg-bg-weak relative flex size-16 items-center justify-center overflow-hidden rounded-lg border border-dashed',
-            'hover:border-stroke-strong transition-colors',
-            'disabled:cursor-default disabled:opacity-60'
-          )}
-          aria-label="Upload organization logo"
-        >
-          {previewUrl ? (
-            <img src={previewUrl} alt="Logo preview" className="size-full object-cover" />
-          ) : (
-            <RiImageLine className="text-text-soft size-5" />
-          )}
-        </button>
-        <div className="flex flex-col gap-1">
-          <Button
-            type="button"
-            variant="secondary"
-            mode="outline"
-            size="xs"
-            onClick={() => inputRef.current?.click()}
-            disabled={disabled}
-            leadingIcon={file ? undefined : RiUploadCloud2Line}
-          >
-            {file ? 'Replace' : 'Upload'}
-          </Button>
-          <span className="text-label-xs text-text-soft">Recommended size 1:1, up to 10MB.</span>
-        </div>
-      </div>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={ACCEPTED_LOGO_TYPES.join(',')}
-        className="hidden"
-        onChange={(event) => {
-          handleFiles(event.target.files);
-          event.target.value = '';
-        }}
-      />
-      {error ? (
-        <span className="text-label-xs text-error-base inline-flex items-center gap-1">
-          <RiErrorWarningLine className="size-3.5" /> {error}
-        </span>
-      ) : null}
-    </div>
-  );
-}
-
 type CreateOrganizationViewProps = {
   defaultName?: string;
   hasExistingOrgs: boolean;
   onCancel: () => void;
-  onSubmit: (input: { name: string; slug: string; logoFile: File | null }) => Promise<void>;
+  onSubmit: (input: { name: string; slug: string }) => Promise<void>;
   isSubmitting: boolean;
   productFilter: ProductFilter;
 };
@@ -338,23 +240,9 @@ function CreateOrganizationView({
   const [name, setName] = useState(defaultName);
   const [slug, setSlug] = useState(() => slugify(defaultName));
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const shouldShowRegionSelector = useShouldShowRegionSelector();
   const nameId = useId();
   const slugId = useId();
-
-  useEffect(() => {
-    if (!logoFile) {
-      setLogoPreview(null);
-
-      return;
-    }
-
-    const url = URL.createObjectURL(logoFile);
-    setLogoPreview(url);
-
-    return () => URL.revokeObjectURL(url);
-  }, [logoFile]);
 
   useEffect(() => {
     if (!slugManuallyEdited) {
@@ -376,7 +264,6 @@ function CreateOrganizationView({
     await onSubmit({
       name: trimmedName,
       slug: trimmedSlug,
-      logoFile,
     });
   };
 
@@ -389,7 +276,12 @@ function CreateOrganizationView({
         </p>
       </div>
 
-      <LogoField file={logoFile} previewUrl={logoPreview} onChange={setLogoFile} disabled={isSubmitting} />
+      {shouldShowRegionSelector ? (
+        <div className="flex items-center gap-2">
+          <span className="text-label-xs text-text-strong font-medium">Region:</span>
+          <RegionSelector />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-1.5">
         <label htmlFor={nameId} className="text-label-xs text-text-strong font-medium">
@@ -528,7 +420,7 @@ export function OrganizationPicker({
   );
 
   const handleCreate = useCallback(
-    async ({ name, slug, logoFile }: { name: string; slug: string; logoFile: File | null }) => {
+    async ({ name, slug }: { name: string; slug: string }) => {
       if (!createOrganization || !setActive) return;
 
       setIsCreating(true);
@@ -557,16 +449,6 @@ export function OrganizationPicker({
         setIsCreating(false);
 
         return;
-      }
-
-      if (logoFile) {
-        try {
-          await createdOrg.setLogo({ file: logoFile });
-        } catch (error) {
-          // Logo upload is best-effort — the org already exists so we don't roll back.
-          const message = readClerkErrorMessage(error, 'Logo upload failed. You can retry from settings.');
-          showErrorToast(message, 'Logo upload failed');
-        }
       }
 
       // `productType: connect` is written server-side during sync; the guard bridges that lag.

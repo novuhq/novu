@@ -95,7 +95,21 @@ function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherT
   );
 
   if (!to) {
-    return <span className="cursor-not-allowed opacity-50">{content}</span>;
+    // `to` is undefined only while the current environment hasn't resolved yet
+    // (see buildAppHomeRoute / buildOtherAppExternalUrl in @/utils/apps).
+    const disabledMessage = `${tooltip} — unavailable until your environment is ready`;
+
+    return (
+      <button
+        type="button"
+        aria-disabled="true"
+        aria-label={disabledMessage}
+        title={disabledMessage}
+        className="cursor-not-allowed opacity-50"
+      >
+        {content}
+      </button>
+    );
   }
 
   return (

@@ -3,7 +3,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { OrganizationPicker } from '@/components/auth/organization-picker';
-import { RegionSelector } from '@/context/region';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import {
@@ -61,21 +61,25 @@ function OrganizationForm() {
   const afterSelectUrl = withAppId(ROUTES.ENV, explicitAppId);
 
   const handleSignOut = useCallback(async () => {
-    await clerk.signOut({ redirectUrl: buildAfterSignOutUrl() });
+    const fallbackUrl = buildAfterSignOutUrl();
+
+    try {
+      await clerk.signOut({ redirectUrl: fallbackUrl });
+    } catch (error) {
+      console.error('Failed to sign out via Clerk', error);
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      showErrorToast(`Unable to sign out. ${message}`, 'Sign out failed');
+      // Safe fallback so the user isn't stranded on the org-picker if Clerk's redirect never runs.
+      window.location.assign(fallbackUrl);
+    }
   }, [clerk]);
 
   return (
-    <div className="relative">
-      <div className="absolute -top-14 left-4 z-20">
-        <RegionSelector />
-      </div>
-
-      <OrganizationPicker
-        afterCreateOrganizationUrl={afterCreateUrl}
-        afterSelectOrganizationUrl={afterSelectUrl}
-        onSignOut={handleSignOut}
-      />
-    </div>
+    <OrganizationPicker
+      afterCreateOrganizationUrl={afterCreateUrl}
+      afterSelectOrganizationUrl={afterSelectUrl}
+      onSignOut={handleSignOut}
+    />
   );
 }
 
