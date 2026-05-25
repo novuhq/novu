@@ -12,7 +12,6 @@ type ResolvedAgentRuntimeStub = {
 };
 
 type ResolveAgentRuntimeStubOptions = {
-  defaultApiKey?: string;
   resolve?: (providerId: string, credentials?: ICredentialsDto) => ResolvedAgentRuntimeStub | null;
 };
 
@@ -33,8 +32,6 @@ export function stubResolveAgentRuntime(
   mockProvider: IAgentRuntimeProvider,
   options: ResolveAgentRuntimeStubOptions = {}
 ): sinon.SinonStub {
-  const defaultApiKey = options.defaultApiKey ?? 'sk-fake-anthropic-key-for-e2e';
-
   return sinon.stub(ResolveAgentRuntimeModule, 'resolveAgentRuntime').callsFake((providerId: string, credentials?: ICredentialsDto) => {
     if (options.resolve) {
       return options.resolve(providerId, credentials);
@@ -52,7 +49,11 @@ export function stubResolveAgentRuntime(
       return buildResolved(mockProvider, masterKey, decrypted);
     }
 
-    const apiKey = (decrypted.apiKey as string | undefined) ?? defaultApiKey;
+    const apiKey = decrypted.apiKey as string | undefined;
+
+    if (!apiKey) {
+      return null;
+    }
 
     return buildResolved(mockProvider, apiKey, decrypted);
   }) as sinon.SinonStub;

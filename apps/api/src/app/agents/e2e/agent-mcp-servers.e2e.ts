@@ -92,7 +92,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     await session.initialize();
 
     mockProvider = buildMockProvider();
-    stubResolveAgentRuntime(mockProvider, { defaultApiKey: FAKE_API_KEY });
+    stubResolveAgentRuntime(mockProvider);
   });
 
   afterEach(async () => {

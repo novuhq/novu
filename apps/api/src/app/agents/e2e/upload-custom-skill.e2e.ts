@@ -179,7 +179,7 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
     await session.initialize();
 
     mockProvider = buildMockProvider();
-    stubResolveAgentRuntime(mockProvider, { defaultApiKey: FAKE_API_KEY });
+    stubResolveAgentRuntime(mockProvider);
     fetchStub = null;
   });
 
