@@ -1,9 +1,3 @@
-/**
- * Helpers for the silent Connect onboarding flow. On the Novu Connect host we skip the manual
- * org creation form and provision a Clerk organization named after the signed-in user. A short
- * random suffix on the slug avoids collisions when two users have similar first names.
- */
-
 const SLUG_SUFFIX_LENGTH = 6;
 const FALLBACK_NAME = 'My Org';
 
