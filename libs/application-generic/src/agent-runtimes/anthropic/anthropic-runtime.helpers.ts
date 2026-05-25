@@ -194,7 +194,11 @@ export function mapMcpServer(raw: Record<string, unknown>): AgentMcpServerDto {
 
 /**
  * The agent response `tools` array contains toolset objects, not plain tool entries.
- * Flatten them into individual AgentToolDto entries for our internal representation.
+ * Flatten builtin toolset configs into individual AgentToolDto entries.
+ *
+ * `mcp_toolset` entries are intentionally ignored here — MCP servers are modeled
+ * separately via `agent.mcp_servers` (and Novu's enablement table), matching how
+ * Claude surfaces built-in tools vs MCP integrations in its own UI.
  */
 export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
   if (raw.type === 'agent_toolset_20260401') {
@@ -205,16 +209,6 @@ export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
         name: c.name as string,
         type: 'builtin' as const,
       }));
-  }
-
-  if (raw.type === 'mcp_toolset') {
-    return [
-      {
-        externalId: raw.mcp_server_name as string,
-        name: raw.mcp_server_name as string,
-        type: 'custom' as const,
-      },
-    ];
   }
 
   return [];

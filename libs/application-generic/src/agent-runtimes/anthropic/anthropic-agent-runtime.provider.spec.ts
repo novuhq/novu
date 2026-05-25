@@ -398,6 +398,46 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
   });
 });
 
+describe('AnthropicAgentRuntimeProvider.getConfig', () => {
+  it('does not map mcp_toolset entries into tools', async () => {
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
+
+    const retrieve = jest.fn().mockResolvedValue({
+      model: 'claude-sonnet-4-5',
+      system: 'You are helpful',
+      tools: [
+        {
+          type: 'agent_toolset_20260401',
+          configs: [{ name: 'bash', enabled: true }],
+        },
+        {
+          type: 'mcp_toolset',
+          mcp_server_name: 'HubSpot',
+        },
+      ],
+      mcp_servers: [{ name: 'HubSpot', url: 'https://mcp.hubspot.com/mcp' }],
+      skills: [],
+    });
+
+    const mockClient = {
+      beta: {
+        agents: {
+          retrieve,
+        },
+      },
+    };
+
+    (provider as unknown as { buildClient: () => unknown }).buildClient = () => mockClient;
+
+    const result = await provider.getConfig('ext-agent-id');
+
+    expect(result.tools).to.deep.equal([{ externalId: 'bash', name: 'bash', type: 'builtin' }]);
+    expect(result.mcpServers).to.deep.equal([
+      { externalId: 'HubSpot', name: 'HubSpot', url: 'https://mcp.hubspot.com/mcp' },
+    ]);
+  });
+});
+
 describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   it('uses tool externalId (not display name) when serialising the toolset payload', async () => {
     const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
