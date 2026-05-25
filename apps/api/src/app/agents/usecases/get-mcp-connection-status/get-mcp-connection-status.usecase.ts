@@ -68,7 +68,7 @@ export class GetMcpConnectionStatus {
     // underlying `$unset: lastError` doesn't always fire (e.g. when the
     // pending claim runs but token exchange succeeds via a different
     // code path). Without this gate, a stale error would render forever.
-    const lastError = this.buildLastErrorView(connection.status, connection.lastError);
+    const lastError = this.buildLastErrorView(connection.status as McpConnectionStatusEnum, connection.lastError);
 
     return {
       id: connection._id,
@@ -85,7 +85,7 @@ export class GetMcpConnectionStatus {
   }
 
   private buildLastErrorView(
-    status: string,
+    status: McpConnectionStatusEnum,
     lastError: { code: string; message: string; at: Date | string } | undefined
   ): { code: string; message: string; at: string } | undefined {
     if (status !== McpConnectionStatusEnum.Error || !lastError) {

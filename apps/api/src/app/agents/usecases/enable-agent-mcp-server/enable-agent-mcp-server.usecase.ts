@@ -1,16 +1,11 @@
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, FeatureFlagsService } from '@novu/application-generic';
 import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository } from '@novu/dal';
-import { FeatureFlagsKeysEnum, MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
 
 import { trackAgentMcpServerEnabled } from '../../agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../dtos/mcp-server.dto';
+import { assertMcpNovuAppFlagEnabled } from '../../services/assert-mcp-novu-app-flag-enabled';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';
@@ -91,19 +86,12 @@ export class EnableAgentMcpServer {
     // gated by this flag — the catalog has already paid the per-MCP probe
     // cost and the auth flow does not depend on Novu-managed credentials.
     if (defaultAuthMode === McpConnectionAuthModeEnum.NovuApp) {
-      const novuAppEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_MCP_NOVU_APP_ENABLED,
-        defaultValue: false,
-        environment: { _id: command.environmentId },
-        organization: { _id: command.organizationId },
+      await assertMcpNovuAppFlagEnabled({
+        featureFlagsService: this.featureFlagsService,
+        mcpId: command.mcpId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
       });
-      if (!novuAppEnabled) {
-        throw new ForbiddenException({
-          statusCode: 403,
-          message: `MCP "${command.mcpId}" requires the novu-app integration which is not enabled for this organization.`,
-          error: 'mcp_novu_app_disabled',
-        });
-      }
     }
 
     const row = existing

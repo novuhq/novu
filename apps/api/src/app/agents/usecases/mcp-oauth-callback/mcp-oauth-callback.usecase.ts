@@ -798,28 +798,6 @@ function sanitizeErrorMessage(message: string): string {
 }
 
 /**
- * Map an upstream OAuth token-exchange error onto our `McpOAuthErrorCode`
- * union. Conservative by default — anything we don't explicitly recognise
- * lands on the generic `mcp_token_exchange_failed` so the dashboard
- * doesn't render misleading copy.
- *
- * Currently recognised:
- *  - `access_denied`                                       → `mcp_user_denied`
- *  - `application_suspended` / `app_blocked` / 403 + "Resource not accessible by integration"
- *                                                          → `mcp_github_org_block`
- *  - everything else                                       → `mcp_token_exchange_failed`
- *
- * The `providerError` value is the sanitized OAuth `error` token (or
- * `message` fallback) — never the full body — so it's safe to switch on.
- *
- * `mcp_app_not_installed` is exported on the error union for future use
- * (a disconnect or installation-check flow could emit it by hitting
- * `/applications/{client_id}/token` — see the plan's "Non-Goals"). The
- * `/login/oauth/access_token` endpoint does NOT 404 for missing org
- * approval — the consent screen simply never returns — so we deliberately
- * do not map 404 here to avoid mis-labelling unrelated transport errors.
- */
-/**
  * The controller concatenates `?error=…&error_description=…` into one
  * string (`"<token> - <free-form description>"`). Pull the OAuth `error`
  * token off the head so the mapping switches don't have to deal with the
@@ -854,6 +832,28 @@ export function mapUpstreamCallbackErrorCode(
   return 'oauth_callback_error';
 }
 
+/**
+ * Map an upstream OAuth token-exchange error onto our `McpOAuthErrorCode`
+ * union. Conservative by default — anything we don't explicitly recognise
+ * lands on the generic `mcp_token_exchange_failed` so the dashboard
+ * doesn't render misleading copy.
+ *
+ * Currently recognised:
+ *  - `access_denied`                                       → `mcp_user_denied`
+ *  - `application_suspended` / `app_blocked` / 403 + "Resource not accessible by integration"
+ *                                                          → `mcp_github_org_block`
+ *  - everything else                                       → `mcp_token_exchange_failed`
+ *
+ * The `providerError` value is the sanitized OAuth `error` token (or
+ * `message` fallback) — never the full body — so it's safe to switch on.
+ *
+ * `mcp_app_not_installed` is exported on the error union for future use
+ * (a disconnect or installation-check flow could emit it by hitting
+ * `/applications/{client_id}/token` — see the plan's "Non-Goals"). The
+ * `/login/oauth/access_token` endpoint does NOT 404 for missing org
+ * approval — the consent screen simply never returns — so we deliberately
+ * do not map 404 here to avoid mis-labelling unrelated transport errors.
+ */
 export function mapTokenExchangeErrorCode(statusCode: number, providerError: string | undefined): McpOAuthErrorCode {
   const normalised = providerError?.toLowerCase() ?? '';
 

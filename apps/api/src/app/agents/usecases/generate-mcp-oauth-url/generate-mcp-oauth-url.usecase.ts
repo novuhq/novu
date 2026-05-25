@@ -1,11 +1,5 @@
 import { createHash as nodeCreateHash, randomBytes } from 'node:crypto';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
   createHash,
   decryptMcpConnectionOAuthClient,
@@ -27,7 +21,6 @@ import {
 } from '@novu/dal';
 import {
   type DcrOAuthCatalogEntry,
-  FeatureFlagsKeysEnum,
   MCP_SERVERS,
   McpConnectionAuthModeEnum,
   McpConnectionScopeEnum,
@@ -37,6 +30,7 @@ import {
   type NovuAppOAuthCatalogEntry,
 } from '@novu/shared';
 import { GenerateMcpOAuthUrlResponseDto } from '../../dtos/mcp-server.dto';
+import { assertMcpNovuAppFlagEnabled } from '../../services/assert-mcp-novu-app-flag-enabled';
 import {
   AuthorizationServerMetadata,
   DiscoveredProtectedResource,
@@ -243,19 +237,12 @@ export class GenerateMcpOAuthUrl {
       case McpConnectionAuthModeEnum.Dcr:
         return { mode: McpConnectionAuthModeEnum.Dcr, catalog: entry };
       case McpConnectionAuthModeEnum.NovuApp: {
-        const enabled = await this.featureFlagsService.getFlag({
-          key: FeatureFlagsKeysEnum.IS_MCP_NOVU_APP_ENABLED,
-          defaultValue: false,
-          environment: { _id: command.environmentId },
-          organization: { _id: command.organizationId },
+        await assertMcpNovuAppFlagEnabled({
+          featureFlagsService: this.featureFlagsService,
+          mcpId: command.mcpId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
         });
-        if (!enabled) {
-          throw new ForbiddenException({
-            statusCode: 403,
-            message: `MCP "${command.mcpId}" requires the novu-app integration which is not enabled for this organization.`,
-            error: 'mcp_novu_app_disabled',
-          });
-        }
 
         let credentials: NovuAppCredentials;
         try {
@@ -346,7 +333,7 @@ export class GenerateMcpOAuthUrl {
     // when present, so a server that advertises a tighter consent footprint
     // doesn't get overridden by the catalog's superset. Falls back to the
     // catalog's curated list (mirrors Anthropic's connector) otherwise.
-    const scopes = this.selectScopesForNovuApp(prm, oauthConfig.catalog.scopes);
+    const scopes = this.selectScopes(prm, oauthConfig.catalog.scopes);
 
     return {
       issuer: oauthConfig.catalog.issuer,
@@ -385,33 +372,15 @@ export class GenerateMcpOAuthUrl {
     return { asMetadata, prm };
   }
 
-  private selectScopes(prm: DiscoveredProtectedResource): string[] {
-    // RFC 9728 + MCP-spec Scope Selection Strategy:
-    //   1. Use the `scope` parameter from the initial WWW-Authenticate challenge.
-    //   2. Otherwise use all of `scopes_supported` from PRM.
-    //   3. Otherwise omit `scope` (return []).
-    //
-    // NOTE: novu-app uses `selectScopesForNovuApp` which diverges on the
-    // third branch (catalog scopes fallback). Do NOT unify the two
-    // functions — see that method's doc comment for the rationale.
-    if (prm.challengeScopes && prm.challengeScopes.length > 0) {
-      return prm.challengeScopes;
-    }
-    if (prm.scopesSupported.length > 0) {
-      return prm.scopesSupported;
-    }
-
-    return [];
-  }
-
   /**
-   * Scope selection for novu-app: same priority order as DCR but with the
-   * curated catalog list (mirrors Anthropic's connector) as the final
-   * fallback instead of `[]`. We never want a novu-app authorize URL with
-   * no `scope` param — the upstream consent screen would either silently
-   * downgrade the grant or 400.
+   * RFC 9728 + MCP-spec Scope Selection Strategy:
+   *   1. Use the `scope` parameter from the initial WWW-Authenticate challenge.
+   *   2. Otherwise use all of `scopes_supported` from PRM.
+   *   3. Otherwise use `fallback` — `[]` for DCR (omit `scope`), the curated
+   *      catalog list for novu-app (a missing `scope` would cause the
+   *      upstream consent screen to silently downgrade the grant or 400).
    */
-  private selectScopesForNovuApp(prm: DiscoveredProtectedResource, catalogScopes: string[]): string[] {
+  private selectScopes(prm: DiscoveredProtectedResource, fallback: string[] = []): string[] {
     if (prm.challengeScopes && prm.challengeScopes.length > 0) {
       return prm.challengeScopes;
     }
@@ -419,7 +388,7 @@ export class GenerateMcpOAuthUrl {
       return prm.scopesSupported;
     }
 
-    return catalogScopes;
+    return fallback;
   }
 
   private async ensureOAuthClient(args: {
