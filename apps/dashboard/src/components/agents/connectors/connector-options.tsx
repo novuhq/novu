@@ -117,3 +117,11 @@ export function getConnectorById(id: ConnectorId | undefined): ConnectorOption |
 
   return CONNECTOR_OPTIONS.find((o) => o.id === id);
 }
+
+export function getConnectorIdForProviderId(providerId: string): ConnectorId | undefined {
+  if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+    return 'claude';
+  }
+
+  return CONNECTOR_OPTIONS.find((option) => option.providerId === providerId)?.id;
+}

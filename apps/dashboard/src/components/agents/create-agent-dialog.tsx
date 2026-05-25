@@ -34,12 +34,20 @@ import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from '../onboarding/connect-agent/agent-suggestion-pills';
 import { GenerationStatus, type GenerationStep } from '../onboarding/connect-agent/generation-status';
 import { PromptInput } from '../onboarding/connect-agent/prompt-input';
-import { getClaudeManagedAgentIntegrations } from './connectors/claude-managed-integrations';
+import {
+  getClaudeManagedAgentIntegrations,
+  getPreferredClaudeManagedIntegration,
+} from './connectors/claude-managed-integrations';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
 } from './connectors/connector-integration-dropdown';
-import { type ConnectorId, type ConnectorOption, getConnectorById } from './connectors/connector-options';
+import {
+  type ConnectorId,
+  type ConnectorOption,
+  getConnectorById,
+  getConnectorIdForProviderId,
+} from './connectors/connector-options';
 import {
   AGENT_TEMPLATES,
   type AgentTemplate,
@@ -177,6 +185,9 @@ export function CreateAgentDialog({
   // Holds the integration id from "Save integration" until it appears in the fetched list, so the
   // auto-select effect does not overwrite it or reopen the credentials section during refetch.
   const pinnedIntegrationIdRef = useRef<string | null>(null);
+  // On dialog open, prefer the first managed integration across provider types (e.g. AWS Claude
+  // when Anthropic has none). Cleared once the user picks a connector or a provider match is found.
+  const preferAnyManagedIntegrationRef = useRef(true);
 
   const {
     generate: generateManagedAgent,
@@ -247,12 +258,30 @@ export function CreateAgentDialog({
     }
 
     if (matchingAnthropicIntegrations.length > 0) {
+      preferAnyManagedIntegrationRef.current = false;
       setSelectedIntegrationId(matchingAnthropicIntegrations[0]._id);
-    } else {
-      setSelectedIntegrationId(undefined);
-      setCredentialsPanelVisible(true);
-      setCredentialsPanelExpanded(true);
+
+      return;
     }
+
+    if (preferAnyManagedIntegrationRef.current) {
+      const preferred = getPreferredClaudeManagedIntegration(integrations);
+      if (preferred) {
+        const connectorForPreferred = getConnectorIdForProviderId(preferred.providerId);
+        if (connectorForPreferred) {
+          setConnectorId(connectorForPreferred);
+        }
+        preferAnyManagedIntegrationRef.current = false;
+        setSelectedIntegrationId(preferred._id);
+
+        return;
+      }
+    }
+
+    preferAnyManagedIntegrationRef.current = false;
+    setSelectedIntegrationId(undefined);
+    setCredentialsPanelVisible(true);
+    setCredentialsPanelExpanded(true);
   }, [
     open,
     isSubmitting,
@@ -260,6 +289,7 @@ export function CreateAgentDialog({
     matchingAnthropicIntegrations,
     selectedIntegrationId,
     credentialsPanelVisible,
+    integrations,
   ]);
 
   // Default integration name = "<Provider> <next-index>"
@@ -309,6 +339,7 @@ export function CreateAgentDialog({
     setIsIdentifierTouched(false);
     setShowSavedBadge(false);
     pinnedIntegrationIdRef.current = null;
+    preferAnyManagedIntegrationRef.current = true;
     if (savedBadgeTimerRef.current) {
       clearTimeout(savedBadgeTimerRef.current);
       savedBadgeTimerRef.current = null;
@@ -367,6 +398,7 @@ export function CreateAgentDialog({
   );
 
   const handleSelectConnector = (id: ConnectorId) => {
+    preferAnyManagedIntegrationRef.current = false;
     setConnectorId(id);
 
     const next = getConnectorById(id);
