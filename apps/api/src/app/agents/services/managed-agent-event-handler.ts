@@ -6,7 +6,9 @@ import { MCP_SERVERS } from '@novu/shared';
 import {
   CredentialExpiredError,
   McpServerError,
+  type SessionEventContext,
   SessionExpiredError,
+  type StreamCallbacks,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
@@ -47,7 +49,9 @@ export class ManagedAgentEventHandler {
     this.logger.setContext(this.constructor.name);
   }
 
-  createHandlers(sessionId: string, runId: string, metadata: Record<string, string>) {
+  createHandlers(context: SessionEventContext): StreamCallbacks {
+    const { sessionId, turnId, metadata } = context;
+
     if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
       this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
 
@@ -63,7 +67,7 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                runId,
+                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
@@ -90,7 +94,7 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                runId,
+                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
@@ -115,7 +119,7 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                runId,
+                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 status: event.isError === true ? 'error' : 'complete',
@@ -137,9 +141,16 @@ export class ManagedAgentEventHandler {
           if (event.response.finishReason === 'requires-action') {
             const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
             if (runtimeProvider) {
+              if (event.response.content) {
+                await this.handleAgentReply.execute(
+                  HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: event.response.content } })
+                );
+              }
+
               const delivered = await this.tryDeliverToolApprovalCard(
                 metadata,
                 sessionId,
+                turnId,
                 runtimeProvider,
                 extractPendingToolApproval(event.response)
               );
@@ -148,7 +159,7 @@ export class ManagedAgentEventHandler {
                 await this.handlePlanProgress.execute(
                   HandlePlanProgressCommand.create({
                     ...baseFields,
-                    toolProgress: { runId, action: 'awaiting-approval' },
+                    toolProgress: { turnId, action: 'awaiting-approval' },
                   })
                 );
 
@@ -167,7 +178,7 @@ export class ManagedAgentEventHandler {
             event.response.usage
           );
           await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { runId, action: 'complete' } })
+            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { turnId, action: 'complete' } })
           );
         } catch (err) {
           this.logger.error(err, `onFinish failed: session=${sessionId}`);
@@ -182,7 +193,7 @@ export class ManagedAgentEventHandler {
 
       onError: async (event: { error: Error }) => {
         try {
-          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, runId);
+          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, turnId);
         } catch (err) {
           this.logger.error(err, `onError handler failed: session=${sessionId}`);
           captureAgentException(err, {
@@ -211,7 +222,7 @@ export class ManagedAgentEventHandler {
     sessionId: string,
     error: Error,
     baseCommand: BaseCommandFields,
-    runId: string
+    turnId: string
   ): Promise<void> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
@@ -223,13 +234,13 @@ export class ManagedAgentEventHandler {
     const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
 
     if (runtimeProvider && typeof error.message === 'string' && PARKED_SESSION_ERROR_PATTERN.test(error.message)) {
-      const delivered = await this.tryDeliverToolApprovalCard(metadata, sessionId, runtimeProvider);
+      const delivered = await this.tryDeliverToolApprovalCard(metadata, sessionId, turnId, runtimeProvider);
 
       if (delivered) {
         await this.handlePlanProgress.execute(
           HandlePlanProgressCommand.create({
             ...baseCommand,
-            toolProgress: { runId, action: 'awaiting-approval' },
+            toolProgress: { turnId, action: 'awaiting-approval' },
           })
         );
 
@@ -256,7 +267,7 @@ export class ManagedAgentEventHandler {
         HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
       );
       await this.handlePlanProgress.execute(
-        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { runId, action: 'fail' } })
+        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { turnId, action: 'fail' } })
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
@@ -417,6 +428,7 @@ export class ManagedAgentEventHandler {
   private async tryDeliverToolApprovalCard(
     metadata: Record<string, string>,
     sessionId: string,
+    turnId: string,
     runtimeProvider: IAgentRuntimeProvider,
     knownPending?: PendingToolApproval | null
   ): Promise<boolean> {
@@ -458,7 +470,7 @@ export class ManagedAgentEventHandler {
           conversationId: metadata.conversationId,
           agentIdentifier: metadata.agentIdentifier ?? '',
           integrationIdentifier: metadata.integrationIdentifier ?? '',
-          reply: { card: buildToolApprovalCard(pending) },
+          reply: { card: buildToolApprovalCard(pending, turnId) },
         })
       );
     } catch (err) {
@@ -523,16 +535,19 @@ export class ManagedAgentEventHandler {
   }
 }
 
-export function parseToolApprovalActionId(id: string | undefined): { approved: boolean; toolUseId: string } | null {
+export function parseToolApprovalActionId(
+  id: string | undefined
+): { approved: boolean; toolUseId: string; turnId: string } | null {
   if (!id) return null;
   const parts = id.split(':');
-  if (parts.length !== 3 || parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
+  if (parts.length !== 4 || parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
 
   const verdict = parts[1];
   const toolUseId = parts[2];
-  if ((verdict !== 'approve' && verdict !== 'deny') || !toolUseId) return null;
+  const turnId = parts[3];
+  if ((verdict !== 'approve' && verdict !== 'deny') || !toolUseId || !turnId) return null;
 
-  return { approved: verdict === 'approve', toolUseId };
+  return { approved: verdict === 'approve', toolUseId, turnId };
 }
 
 export function isLinkButtonActionId(id: string | undefined): boolean {
@@ -598,7 +613,7 @@ function buildConnectCard(mcpServerName: string, authorizeUrl: string): Record<s
   };
 }
 
-function buildToolApprovalCard(pending: PendingToolApproval): Record<string, unknown> {
+function buildToolApprovalCard(pending: PendingToolApproval, turnId: string): Record<string, unknown> {
   const serverLabel = pending.mcpServerName ? ` from ${pending.mcpServerName}` : '';
   const inputPreview = formatToolInputPreview(pending.input);
 
@@ -616,13 +631,13 @@ function buildToolApprovalCard(pending: PendingToolApproval): Record<string, unk
         children: [
           {
             type: 'button',
-            id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${pending.toolUseId}`,
+            id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${pending.toolUseId}:${turnId}`,
             label: 'Approve',
             style: 'primary',
           },
           {
             type: 'button',
-            id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${pending.toolUseId}`,
+            id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${pending.toolUseId}:${turnId}`,
             label: 'Deny',
             style: 'danger',
           },

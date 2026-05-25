@@ -774,6 +774,7 @@ export class AgentInboundHandler implements OnModuleInit {
         platform: config.platform,
         toolUseId: toolApproval.toolUseId,
         approved: toolApproval.approved,
+        turnId: toolApproval.turnId,
       });
 
       return;

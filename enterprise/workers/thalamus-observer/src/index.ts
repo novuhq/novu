@@ -62,6 +62,8 @@ export interface Env {
 export interface ObservationParams {
   sessionId: string;
   runId: string;
+  /** Stable turn identifier — groups multiple send() calls within one user interaction. */
+  turnId: string;
   streamUrl: string;
   headers: Record<string, string>;
   lastEventId?: string;
@@ -403,7 +405,7 @@ export class SessionObserver extends Agent<Env, State> {
   }
 
   private async deliverOne(row: EventRow, event: StreamPart, params: ObservationParams): Promise<DeliveryOutcome> {
-    const { sessionId, runId, provider, webhook } = params;
+    const { sessionId, runId, turnId, provider, webhook } = params;
 
     if (row.attempts >= MAX_ATTEMPTS) return 'exhausted';
 
@@ -412,6 +414,7 @@ export class SessionObserver extends Agent<Env, State> {
     const body = JSON.stringify({
       sessionId,
       runId,
+      turnId,
       sequence: row.sequence,
       timestamp: row.created_at,
       provider,
@@ -534,6 +537,7 @@ function validateObservationParams(body: unknown): body is ObservationParams {
   const obj = body as Record<string, unknown>;
   if (typeof obj.sessionId !== 'string' || obj.sessionId.length === 0) return false;
   if (typeof obj.runId !== 'string' || obj.runId.length === 0) return false;
+  if (typeof obj.turnId !== 'string' || obj.turnId.length === 0) return false;
   if (typeof obj.streamUrl !== 'string') return false;
   try {
     new URL(obj.streamUrl);

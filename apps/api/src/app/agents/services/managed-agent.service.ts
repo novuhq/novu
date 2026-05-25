@@ -106,6 +106,7 @@ export class ManagedAgentService implements OnModuleInit {
     platform?: AgentPlatformEnum;
     toolUseId: string;
     approved: boolean;
+    turnId: string;
   }): Promise<void> {
     const conversation = await this.conversationRepository.findOne(
       { _id: params.conversationId, _environmentId: params.environmentId, _organizationId: params.organizationId },
@@ -152,6 +153,7 @@ export class ManagedAgentService implements OnModuleInit {
       messages: [],
       sessionId,
       vaultIds,
+      turnId: params.turnId,
       toolResults: [{ toolUseId: params.toolUseId, approved: params.approved, content: [] }],
       webhookMetadata: this.buildWebhookMetadata({
         conversationId: params.conversationId,
@@ -221,7 +223,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     return createWebhookHandler({
       secret,
-      onSessionEvents: (sessionId, runId, metadata) => this.eventHandler.createHandlers(sessionId, runId, metadata),
+      onSessionEvents: (context) => this.eventHandler.createHandlers(context),
     });
   }
 

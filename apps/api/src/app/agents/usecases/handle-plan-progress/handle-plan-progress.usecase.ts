@@ -38,10 +38,10 @@ export class HandlePlanProgress {
     const channel = this.conversationService.getPrimaryChannel(conversation);
     const { toolProgress } = command;
 
-    const existingActivities = await this.activityRepository.findToolActivitiesByRunId(
+    const existingActivities = await this.activityRepository.findToolActivitiesByTurnId(
       command.environmentId,
       command.conversationId,
-      toolProgress.runId
+      toolProgress.turnId
     );
 
     if (toolProgress.action === 'tool-use') {
@@ -168,7 +168,7 @@ export class HandlePlanProgress {
       signalData: {
         type: 'tool-use',
         payload: {
-          runId: toolProgress.runId,
+          turnId: toolProgress.turnId,
           planMessageId,
           toolUseId: toolProgress.toolUseId,
           toolName,
