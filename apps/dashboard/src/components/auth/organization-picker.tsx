@@ -240,7 +240,8 @@ function CreateOrganizationView({
   const [name, setName] = useState(defaultName);
   const [slug, setSlug] = useState(() => slugify(defaultName));
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  const shouldShowRegionSelector = useShouldShowRegionSelector();
+  // Connect workspaces are pinned to a single region, so the selector never applies there.
+  const shouldShowRegionSelector = useShouldShowRegionSelector() && productFilter !== 'connect';
   const nameId = useId();
   const slugId = useId();
 

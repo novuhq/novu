@@ -31,12 +31,13 @@ export function withAppId(path: string, appId: AppId | undefined): string {
   return `${path}${separator}${APP_ID_PARAM}=${appId}`;
 }
 
-export function getPostOrgCreateRoute(appId: AppId, isAgentsEnabled: boolean): string {
+export function getPostOrgCreateRoute(appId: AppId, _isAgentsEnabled: boolean): string {
   if (appId === APP_IDS.CONNECT) {
     return ROUTES.AGENTS_SETUP;
   }
 
-  return isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE;
+  // Platform skips the usecase picker and starts directly with notifications/inbox.
+  return ROUTES.INBOX_USECASE;
 }
 
 // May return an absolute URL when crossing to the other product host — callers must check
