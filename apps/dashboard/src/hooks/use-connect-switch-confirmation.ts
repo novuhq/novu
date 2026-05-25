@@ -2,7 +2,11 @@ import { useOrganizationList } from '@clerk/clerk-react';
 import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useCrossAppNavigation } from '@/hooks/use-cross-app-navigation';
 import { APP_IDS, type AppId } from '@/utils/apps';
-import { beginConnectProvisioning, hasExplicitConnectMembership } from '@/utils/connect';
+import {
+  beginConnectProvisioning,
+  hasExplicitConnectMembership,
+  withConnectProvisioningIntent,
+} from '@/utils/connect';
 
 type UseConnectSwitchConfirmationOptions = {
   targetAppId: AppId;
@@ -57,8 +61,14 @@ export function useConnectSwitchConfirmation({
 
   const handleConfirm = useCallback(() => {
     setIsModalOpen(false);
+    /*
+     * Set the same-origin sessionStorage flag (used as a fallback when hostname split is off
+     * and Platform/Connect share an origin), then append `?provision=1` to the destination URL
+     * so the cross-origin handoff carries the intent — `beginConnectProvisioning()` alone
+     * can't reach Connect's sessionStorage.
+     */
     beginConnectProvisioning();
-    navigateCrossApp(href, openInNewTab);
+    navigateCrossApp(withConnectProvisioningIntent(href), openInNewTab);
   }, [href, navigateCrossApp, openInNewTab]);
 
   return {

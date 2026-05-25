@@ -1,3 +1,7 @@
+import { useOrganization, useOrganizationList, useUser } from '@clerk/clerk-react';
+import { FeatureFlagsKeysEnum, OrganizationProductTypeEnum, tryReadOrganizationProductType } from '@novu/shared';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -13,22 +17,25 @@ import {
   resolveConnectOrgListAction,
   writeConnectAutoCreateSessionGuard,
 } from '@/utils/connect';
-import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { getPostOrgCreateRoute } from '@/utils/onboarding-redirect';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { useClerk, useOrganization, useOrganizationList, useUser } from '@clerk/clerk-react';
-import { FeatureFlagsKeysEnum, OrganizationProductTypeEnum, tryReadOrganizationProductType } from '@novu/shared';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+
+/*
+ * Lazy + suspense to break a potential render-time cycle: this module is imported by
+ * `pages/organization-list.tsx`, and `OrganizationCreate` (which we render as the manual
+ * fallback) lives in the same `components/auth` folder. Static dual-import would force a
+ * circular module graph; lazy import keeps the dependency one-way.
+ */
+const OrganizationCreateLazy = lazy(() =>
+  import('@/components/auth/create-organization').then((module) => ({ default: module.default }))
+);
 
 const MAX_SLUG_RETRIES = 3;
 
 type Status = 'idle' | 'working' | 'error';
 
-type Resolution =
-  | { type: 'switched' | 'created'; organizationId: string; organizationName: string }
-  | { type: 'signOut' };
+type Resolution = { type: 'switched' | 'created'; organizationId: string; organizationName: string };
 
 function isSlugTakenError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
@@ -43,11 +50,13 @@ function isSlugTakenError(error: unknown): boolean {
 }
 
 /**
- * Silent Connect org provisioning on the org-list route. UI is handled by ConnectProvisioningOverlay.
+ * Connect org-list resolver. Three outcomes:
+ *  - `switch` / `create` → run silently and route into the app (UI handled by ConnectProvisioningOverlay)
+ *  - `manualCreate` → render `<OrganizationCreate/>` so the user can manually pick or create a Connect
+ *    workspace, matching Platform's UX for the delete/leave-last-org case.
  */
 export function AutoCreateConnectOrganization() {
   const navigate = useNavigate();
-  const clerk = useClerk();
   const { user, isLoaded: isUserLoaded } = useUser();
   const { organization: currentOrganization } = useOrganization();
   const {
@@ -63,11 +72,28 @@ export function AutoCreateConnectOrganization() {
 
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [manualMode, setManualMode] = useState(false);
+  const [hasRevalidated, setHasRevalidated] = useState(false);
   const hasStartedRef = useRef(false);
 
   const organizationName = useMemo(() => buildConnectOrganizationName(user?.firstName), [user?.firstName]);
 
-  const isMembershipListReady = isListLoaded && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
+  const isMembershipListReady =
+    isListLoaded && hasRevalidated && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
+
+  /*
+   * Force a fresh membership fetch on mount. Clerk caches the list across the dashboard
+   * session, so a user arriving here right after deleting/leaving their last org would
+   * otherwise see their now-deleted membership and the resolver would try to `setActive`
+   * into a tombstoned org id. Revalidating once on mount keeps this single guarded entry
+   * point honest.
+   */
+  useEffect(() => {
+    if (!isListLoaded || hasRevalidated) return;
+
+    setHasRevalidated(true);
+    userMemberships?.revalidate?.();
+  }, [isListLoaded, hasRevalidated, userMemberships]);
 
   useEffect(() => {
     if (!isListLoaded || !userMemberships?.hasNextPage || userMemberships?.isFetching) {
@@ -85,6 +111,11 @@ export function AutoCreateConnectOrganization() {
       organizationId: currentOrganization.id,
     });
 
+  /*
+   * Only `switch` and `create` resolutions reach `provisionOrganization`. The `manualCreate`
+   * branch is intercepted in the entry-point effect and renders `<OrganizationCreate/>` so
+   * users who just left/deleted their last Connect org get the same picker Platform uses.
+   */
   const provisionOrganization = useCallback(async (): Promise<Resolution> => {
     const memberships = userMemberships?.data ?? [];
     const nextAction = resolveConnectOrgListAction(memberships);
@@ -113,10 +144,6 @@ export function AutoCreateConnectOrganization() {
         organizationId: nextAction.organizationId,
         organizationName: nextAction.organizationName,
       };
-    }
-
-    if (nextAction.type === 'signOut') {
-      return { type: 'signOut' };
     }
 
     if (!createOrganization || !setActive) {
@@ -169,14 +196,6 @@ export function AutoCreateConnectOrganization() {
     try {
       const resolution = await provisionOrganization();
 
-      if (resolution.type === 'signOut') {
-        clearConnectProvisioning();
-        clearConnectAutoCreateSessionGuard();
-        await clerk.signOut({ redirectUrl: buildAfterSignOutUrl() });
-
-        return;
-      }
-
       track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
         location: 'web',
         organizationId: resolution.organizationId,
@@ -198,12 +217,12 @@ export function AutoCreateConnectOrganization() {
       setStatus('error');
       setErrorMessage(error instanceof Error ? error.message : 'Failed to set up your Connect workspace');
     }
-  }, [provisionOrganization, track, isAgentsEnabled, navigate, clerk]);
+  }, [provisionOrganization, track, isAgentsEnabled, navigate]);
 
   /*
    * Single guarded entry point. Either the active Clerk org is already a Connect workspace —
    * in which case we just clear the provisioning intent and bounce to /env — or we wait until
-   * the membership list has fully paginated and then run the switch/create/sign-out resolver.
+   * the membership list has fully paginated and then resolve to switch/create/manualCreate.
    * One ref guards both branches so concurrent state changes can't kick off two flows.
    */
   useEffect(() => {
@@ -220,6 +239,22 @@ export function AutoCreateConnectOrganization() {
 
     if (!isMembershipListReady || !userMemberships?.data) return;
 
+    const nextAction = resolveConnectOrgListAction(userMemberships.data);
+
+    if (nextAction.type === 'manualCreate') {
+      hasStartedRef.current = true;
+      /*
+       * No Connect membership and no provisioning intent — typical after delete/leave. Drop
+       * any stale provisioning/guard flags and let the user pick or create a workspace
+       * manually instead of signing them out.
+       */
+      clearConnectProvisioning();
+      clearConnectAutoCreateSessionGuard();
+      setManualMode(true);
+
+      return;
+    }
+
     hasStartedRef.current = true;
     void run();
   }, [isUserLoaded, user, isCurrentOrgConnect, isMembershipListReady, userMemberships?.data, navigate, run]);
@@ -229,6 +264,14 @@ export function AutoCreateConnectOrganization() {
     beginConnectProvisioning();
     void run();
   };
+
+  if (manualMode) {
+    return (
+      <Suspense fallback={null}>
+        <OrganizationCreateLazy />
+      </Suspense>
+    );
+  }
 
   if (status === 'error' && !isConnectProvisioningActive()) {
     return (

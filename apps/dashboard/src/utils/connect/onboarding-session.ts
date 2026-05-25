@@ -56,6 +56,32 @@ export function buildConnectProvisionOrgListPath(orgListPath: string): string {
   return `${url.pathname}${url.search}`;
 }
 
+/**
+ * Cross-origin variant of {@link buildConnectProvisionOrgListPath}: takes either a relative
+ * path or an absolute URL and returns it with `?provision=1` appended, preserving the input
+ * shape (relative stays relative, absolute stays absolute). Use this for the Platform → Connect
+ * cross-origin handoff where `beginConnectProvisioning()` alone is useless because sessionStorage
+ * is per-origin — the query param is what Connect's mount effect reads to set its own flag.
+ */
+export function withConnectProvisioningIntent(href: string): string {
+  if (!href) return href;
+
+  try {
+    const isAbsolute = /^https?:\/\//i.test(href);
+    const fallbackBase = typeof window !== 'undefined' ? window.location.origin : 'http://local';
+    const url = new URL(href, fallbackBase);
+    url.searchParams.set(CONNECT_PROVISION_QUERY, '1');
+
+    if (isAbsolute) {
+      return url.toString();
+    }
+
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return href;
+  }
+}
+
 export function consumeConnectProvisionIntentFromLocation(): boolean {
   if (typeof window === 'undefined') {
     return false;
