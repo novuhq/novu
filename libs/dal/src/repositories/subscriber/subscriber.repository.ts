@@ -43,7 +43,7 @@ export class SubscriberRepository extends BaseRepository<SubscriberDBModel, Subs
         _organizationId: organizationId,
         phone: { $in: phoneCandidates },
       },
-      undefined,
+      'subscriberId',
       { limit: 2 }
     );
   }
