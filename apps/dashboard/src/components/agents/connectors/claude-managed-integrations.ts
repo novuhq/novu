@@ -14,8 +14,15 @@ export function isClaudeManagedAgentIntegration(
     return false;
   }
 
-  if (providerId && integration.providerId !== providerId) {
-    return false;
+  if (providerId) {
+    const matchesConnector =
+      integration.providerId === providerId ||
+      (providerId === AgentRuntimeProviderIdEnum.Anthropic &&
+        integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic);
+
+    if (!matchesConnector) {
+      return false;
+    }
   }
 
   if (!CLAUDE_MANAGED_PROVIDER_IDS.has(integration.providerId)) {
