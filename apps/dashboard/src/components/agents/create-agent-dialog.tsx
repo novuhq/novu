@@ -148,6 +148,7 @@ export function CreateAgentDialog({
   const [instructions, setInstructions] = useState(initialInstructions ?? '');
   const [apiKey, setApiKey] = useState('');
   const [externalWorkspaceId, setExternalWorkspaceId] = useState('');
+  const [region, setRegion] = useState('');
   const [integrationName, setIntegrationName] = useState('');
   const [externalAgentId, setExternalAgentId] = useState('');
   const [externalEnvironmentId, setExternalEnvironmentId] = useState('');
@@ -172,18 +173,16 @@ export function CreateAgentDialog({
   } = useGenerateManagedAgent();
 
   const selectedConnector = getConnectorById(connectorId);
-  const isClaudeSelected = connectorId === 'claude';
+  const isManagedClaudeConnector = connectorId === 'claude' || connectorId === 'claude-aws';
   const runtime = selectedConnector?.runtime ?? 'scratch';
   const isScratchRuntime = runtime === 'scratch';
   // The "Generate from prompt" surface is available for both managed Claude (when the
   // managed-runtime flag is on) and for the self-hosted Custom Scaffold flow unconditionally —
   // Custom Scaffold generation only produces name/identifier/systemPrompt and never touches any
   // Anthropic-managed infrastructure, so it has no reason to depend on the managed flag.
-  const useAiGeneration = isClaudeSelected ? isManagedEnabled : isScratchRuntime;
+  const useAiGeneration = isManagedClaudeConnector ? isManagedEnabled : isScratchRuntime;
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
-  // Whether the segmented "Create new agent" / "Connect existing agent" tabs apply. They only
-  // make sense for the managed Claude flow, since other runtimes can't adopt a remote agent.
-  const showScopeTabs = isClaudeSelected;
+  const showScopeTabs = isManagedClaudeConnector;
   const showManagedOptions = isManagedEnabled;
 
   // Hide managed connectors when the feature flag is off — the dropdown still lists them visually,
@@ -200,7 +199,7 @@ export function CreateAgentDialog({
   const matchingAnthropicIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
 
-    return getClaudeManagedAgentIntegrations(integrations);
+    return getClaudeManagedAgentIntegrations(integrations, selectedConnector.providerId);
   }, [integrations, selectedConnector?.providerId]);
 
   // Auto-select the first existing integration of the chosen provider on open / when the connector
@@ -292,6 +291,7 @@ export function CreateAgentDialog({
     setInstructions('');
     setApiKey('');
     setExternalWorkspaceId('');
+    setRegion('');
     setIntegrationName('');
     setExternalAgentId('');
     setExternalEnvironmentId('');
@@ -415,39 +415,42 @@ export function CreateAgentDialog({
     setCredentialsPanelExpanded(true);
 
     if (option.providerLabel && !integrationName.trim()) {
-      const nextIndex = getClaudeManagedAgentIntegrations(integrations).length + 1;
+      const nextIndex = getClaudeManagedAgentIntegrations(integrations, option.providerId).length + 1;
       setIntegrationName(`${option.providerLabel} ${nextIndex}`);
     }
   };
 
-  const handleVerify = (keyToVerify: string) => {
+  const handleVerify = () => {
     if (!selectedConnector?.providerId) return;
-    const trimmedApiKey = keyToVerify.trim();
-    const trimmedWorkspaceId = externalWorkspaceId.trim();
-    if (!trimmedApiKey) return;
     if (verifyMutation.isPending) return;
-    if (lastVerifiedKeyRef.current === trimmedApiKey && verifyStatus === 'valid') return;
 
-    lastVerifiedKeyRef.current = trimmedApiKey;
+    const verifyKey =
+      selectedConnector.providerId === AgentRuntimeProviderIdEnum.AnthropicAws
+        ? `${region}:${externalWorkspaceId}:${apiKey}`
+        : apiKey.trim();
+
+    if (lastVerifiedKeyRef.current === verifyKey && verifyStatus === 'valid') return;
+
+    lastVerifiedKeyRef.current = verifyKey;
     setVerifyStatus('verifying');
     setVerifyMessage(undefined);
 
     verifyMutation.mutate(
       {
         providerId: selectedConnector.providerId,
-        apiKey: trimmedApiKey,
-        externalWorkspaceId: trimmedWorkspaceId || undefined,
+        apiKey: apiKey.trim() || undefined,
+        externalWorkspaceId: externalWorkspaceId.trim() || undefined,
+        region: region.trim() || undefined,
       },
       {
         onSuccess: () => {
-          // Drop stale responses if the api-key changed during the request.
-          if (lastVerifiedKeyRef.current !== keyToVerify) return;
+          if (lastVerifiedKeyRef.current !== verifyKey) return;
           setVerifyStatus('valid');
           setVerifyMessage(undefined);
           setErrors((prev) => ({ ...prev, apiKey: undefined }));
         },
         onError: (err) => {
-          if (lastVerifiedKeyRef.current !== keyToVerify) return;
+          if (lastVerifiedKeyRef.current !== verifyKey) return;
           setVerifyStatus('invalid');
           setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
         },
@@ -466,21 +469,31 @@ export function CreateAgentDialog({
   const handleSaveIntegration = async () => {
     if (!selectedConnector?.providerId) return;
 
-    const trimmedApiKey = apiKey.trim();
     const trimmedName = integrationName.trim();
-    const trimmedWorkspaceId = externalWorkspaceId.trim();
+    const isAws = selectedConnector.providerId === AgentRuntimeProviderIdEnum.AnthropicAws;
 
-    if (!trimmedApiKey || !trimmedName) return;
+    if (!trimmedName) return;
+    if (isAws) {
+      if (!region.trim() || !externalWorkspaceId.trim() || !apiKey.trim()) return;
+    } else if (!apiKey.trim()) {
+      return;
+    }
 
     try {
       const { data: integration } = await createIntegration({
         active: true,
         kind: IntegrationKindEnum.AGENT,
         providerId: selectedConnector.providerId,
-        credentials: {
-          apiKey: trimmedApiKey,
-          ...(trimmedWorkspaceId ? { externalWorkspaceId: trimmedWorkspaceId } : {}),
-        },
+        credentials: isAws
+          ? {
+              region: region.trim(),
+              externalWorkspaceId: externalWorkspaceId.trim(),
+              apiKey: apiKey.trim(),
+            }
+          : {
+              apiKey: apiKey.trim(),
+              ...(externalWorkspaceId.trim() ? { externalWorkspaceId: externalWorkspaceId.trim() } : {}),
+            },
         name: trimmedName,
       });
 
@@ -500,6 +513,7 @@ export function CreateAgentDialog({
       setSelectedIntegrationId(integration._id);
       setApiKey('');
       setExternalWorkspaceId('');
+      setRegion('');
       setVerifyStatus('idle');
       setVerifyMessage(undefined);
       lastVerifiedKeyRef.current = null;
@@ -536,10 +550,13 @@ export function CreateAgentDialog({
       // Anthropic API key is only required when we provision the agent on Claude's managed
       // runtime. The Custom Scaffold flow generates name/identifier/systemPrompt only and the
       // user runs the agent on their own runtime, so no provider credentials are needed.
-      if (isClaudeSelected && !selectedIntegrationId && !apiKey.trim()) {
-        setErrors((prev) => ({ ...prev, apiKey: 'Anthropic API key is required.' }));
+      if (isManagedClaudeConnector && !selectedIntegrationId && !apiKey.trim()) {
+        const isAws = selectedConnector?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws;
+        if (!isAws) {
+          setErrors((prev) => ({ ...prev, apiKey: 'Anthropic API key is required.' }));
 
-        return;
+          return;
+        }
       }
 
       setIsSubmitInFlight(true);
@@ -547,7 +564,7 @@ export function CreateAgentDialog({
       try {
         generated = await generateManagedAgent({
           prompt: trimmedPrompt,
-          runtime: isClaudeSelected ? 'managed' : 'self-hosted',
+          runtime: isManagedClaudeConnector ? 'managed' : 'self-hosted',
         });
       } catch (err) {
         setIsSubmitInFlight(false);
@@ -579,9 +596,11 @@ export function CreateAgentDialog({
       apiKey,
       runtime,
       isExistingMode,
+      providerId: selectedConnector?.providerId,
       externalAgentId,
       externalEnvironmentId,
       externalWorkspaceId,
+      region,
       integrationId: selectedIntegrationId,
       integrationName,
     });
@@ -608,9 +627,11 @@ export function CreateAgentDialog({
         apiKey: apiKey.trim(),
         runtime,
         isExistingMode,
+        providerId: selectedConnector?.providerId,
         externalAgentId: externalAgentId.trim(),
         externalEnvironmentId: externalEnvironmentId.trim(),
         externalWorkspaceId: externalWorkspaceId.trim() || undefined,
+        region: region.trim() || undefined,
         integrationId: selectedIntegrationId,
         integrationName: integrationName.trim() || undefined,
         managedOverrides,
@@ -624,7 +645,7 @@ export function CreateAgentDialog({
   };
 
   const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
-  const showCredentialsSection = isClaudeSelected && credentialsPanelVisible;
+  const showCredentialsSection = isManagedClaudeConnector && credentialsPanelVisible;
   const isSubmitBusy = isSubmitting || isGenerating || isSubmitInFlight;
   const promptHeader = generationMode === 'existing' ? null : PROMPT_HEADER[generationMode];
 
@@ -685,6 +706,7 @@ export function CreateAgentDialog({
                   integrationName={integrationName}
                   apiKey={apiKey}
                   externalWorkspaceId={externalWorkspaceId}
+                  region={region}
                   errors={errors}
                   disabled={isSubmitting}
                   status={verifyStatus}
@@ -699,7 +721,12 @@ export function CreateAgentDialog({
                   onApiKeyChange={handleApiKeyChange}
                   onExternalWorkspaceIdChange={(next) => {
                     setExternalWorkspaceId(next);
-                    // Invalidate the previous verification so the user re-verifies after changing scope.
+                    setVerifyStatus('idle');
+                    setVerifyMessage(undefined);
+                    lastVerifiedKeyRef.current = null;
+                  }}
+                  onRegionChange={(next) => {
+                    setRegion(next);
                     setVerifyStatus('idle');
                     setVerifyMessage(undefined);
                     lastVerifiedKeyRef.current = null;
@@ -789,7 +816,7 @@ export function CreateAgentDialog({
                       instructions={instructions}
                       errors={errors}
                       isIdentifierTouched={isIdentifierTouched}
-                      isClaudeSelected={isClaudeSelected}
+                      isManagedClaudeConnector={isManagedClaudeConnector}
                       disabled={isSubmitBusy}
                       onNameChange={(next) => {
                         setName(next);
@@ -855,7 +882,7 @@ export function CreateAgentDialog({
                   instructions={instructions}
                   errors={errors}
                   isIdentifierTouched={isIdentifierTouched}
-                  isClaudeSelected={isClaudeSelected}
+                  isManagedClaudeConnector={isManagedClaudeConnector}
                   onNameChange={(next) => {
                     setName(next);
                     setErrors((prev) => ({ ...prev, name: undefined }));

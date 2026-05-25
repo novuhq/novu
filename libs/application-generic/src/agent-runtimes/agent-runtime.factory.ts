@@ -13,8 +13,12 @@ type ProviderFactory = (apiKey: string) => IAgentRuntimeProvider;
  * concrete class.
  */
 const PROVIDER_REGISTRY = new Map<AgentRuntimeProviderIdEnum, ProviderFactory>([
-  [AgentRuntimeProviderIdEnum.Anthropic, createAnthropicProvider],
-  [AgentRuntimeProviderIdEnum.NovuAnthropic, createAnthropicProvider],
+  [AgentRuntimeProviderIdEnum.Anthropic, (apiKey) => createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey })],
+  [AgentRuntimeProviderIdEnum.NovuAnthropic, (apiKey) =>
+    createAnthropicProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, { apiKey })],
+  [AgentRuntimeProviderIdEnum.AnthropicAws, () => {
+    throw new Error('Use resolveAgentRuntime() for anthropic-aws — credentials cannot be reduced to an API key alone');
+  }],
 ]);
 
 /**

@@ -1,7 +1,7 @@
 import { AgentRuntimeProviderIdEnum } from '../../types/providers';
 import { CLAUDE_ANTHROPIC_SKILLS, type ClaudeAnthropicSkill } from './claude-skills';
 import { CLAUDE_BUILTIN_TOOLS, type ClaudeBuiltinTool } from './claude-tools';
-import { anthropicAgentConfig } from './credentials';
+import { anthropicAgentConfig, anthropicAwsAgentConfig } from './credentials';
 import type { IConfigCredential, ILogoFileName } from './provider.interface';
 
 export { AgentRuntimeProviderIdEnum };
@@ -55,6 +55,23 @@ export const AGENT_RUNTIME_PROVIDERS: AgentRuntimeProvider[] = [
     statusUrl: 'https://status.anthropic.com',
     logoFileName: { light: 'anthropic.svg', dark: 'anthropic.svg' },
     credentials: anthropicAgentConfig,
+    capabilities: {
+      mcpServers: true,
+      tools: true,
+      model: true,
+      systemPrompt: true,
+      skills: true,
+      tokenVault: true,
+    },
+    availableTools: CLAUDE_BUILTIN_TOOLS,
+    availableSkills: CLAUDE_ANTHROPIC_SKILLS,
+  },
+  {
+    providerId: AgentRuntimeProviderIdEnum.AnthropicAws,
+    displayName: 'Claude Platform on AWS',
+    docsUrl: 'https://docs.aws.amazon.com/claude-platform/latest/userguide/setup.html',
+    logoFileName: { light: 'ses.svg', dark: 'ses.svg' },
+    credentials: anthropicAwsAgentConfig,
     capabilities: {
       mcpServers: true,
       tools: true,

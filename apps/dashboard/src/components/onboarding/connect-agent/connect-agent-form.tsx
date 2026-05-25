@@ -109,7 +109,7 @@ type ConnectAgentFormProps = {
   onRequestSetupCredentials: (option: ConnectorOption) => void;
   onCredentialsExpandedChange: (expanded: boolean) => void;
   onIntegrationNameChange: (next: string) => void;
-  onVerify: (apiKey: string) => void;
+  onVerify: () => void;
   onSaveIntegration: () => void;
 
   /**

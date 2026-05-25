@@ -163,6 +163,14 @@ export enum InAppProviderIdEnum {
 export enum AgentRuntimeProviderIdEnum {
   Anthropic = 'anthropic',
   NovuAnthropic = 'novu-anthropic',
+  AnthropicAws = 'anthropic-aws',
+}
+
+/** Authentication mode for Claude Platform on AWS integrations. IAM support is planned but not yet implemented. */
+export enum AwsAuthModeEnum {
+  ApiKey = 'api_key',
+  /** @deprecated Not yet supported — reserved for future IAM/SigV4 auth. */
+  Iam = 'iam',
 }
 
 /** Distinguishes integrations used for notification delivery from those used as agent runtimes. */

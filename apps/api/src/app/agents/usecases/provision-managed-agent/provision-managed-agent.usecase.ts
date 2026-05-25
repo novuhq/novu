@@ -7,6 +7,7 @@ import {
   getNovuManagedClaudeApiKey,
   PinoLogger,
   resolveAgentRuntime,
+  type ResolvedAgentRuntime,
 } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, type ICredentialsDto, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
@@ -57,15 +58,11 @@ export class ProvisionManagedAgent {
 
     this.assertDemoIntegrationAdoptAllowed(integration.providerId, command);
 
-    const { decryptedCredentials, resolvedApiKey } = await this.ensureCredentialsProvisioned(
-      integration,
-      command,
-      session
-    );
+    const resolved = await this.ensureCredentialsProvisioned(integration, command, session);
+    const { credentials: decryptedCredentials, provider: runtimeProvider, validateCredentialsInput } = resolved;
 
     const resolvedIntegrationId = integration._id;
     const runtimeProviderId = integration.providerId as AgentRuntimeProviderIdEnum;
-    const runtimeProvider = getAgentRuntimeProvider(runtimeProviderId, resolvedApiKey);
 
     if (command.externalEnvironmentId && command.externalEnvironmentId !== decryptedCredentials.externalEnvironmentId) {
       const providerEnvironment = await runtimeProvider.getEnvironment(command.externalEnvironmentId);
@@ -97,7 +94,7 @@ export class ProvisionManagedAgent {
       adoptedName = agentInfo.name;
     } else {
       // ── Provision mode ────────────────────────────────────────────────────
-      await runtimeProvider.validateCredentials(resolvedApiKey);
+      await runtimeProvider.validateCredentials(validateCredentialsInput);
 
       const resolvedMcpServers = command.mcpServers ? resolveMcpServersById(command.mcpServers) : undefined;
 
@@ -240,7 +237,7 @@ export class ProvisionManagedAgent {
     integration: { _id: string; credentials?: ICredentialsDto; providerId: string; name?: string },
     command: ProvisionManagedAgentCommand,
     session: ClientSession | null
-  ): Promise<{ decryptedCredentials: ReturnType<typeof decryptCredentials>; resolvedApiKey: string }> {
+  ): Promise<ResolvedAgentRuntime> {
     const isNovuManagedClaude = integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
 
     if (isNovuManagedClaude) {
@@ -275,18 +272,23 @@ export class ProvisionManagedAgent {
         decryptedCredentials = decryptCredentials(nextCredentials);
       }
 
-      return { decryptedCredentials, resolvedApiKey };
+      return {
+        apiKey: resolvedApiKey,
+        credentials: decryptedCredentials,
+        provider: getAgentRuntimeProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, resolvedApiKey),
+        validateCredentialsInput: { apiKey: resolvedApiKey },
+      };
     }
 
     const resolved = resolveAgentRuntime(integration.providerId, integration.credentials);
 
     if (!resolved) {
       throw new UnprocessableEntityException(
-        `Integration "${command.integrationId}" has no API key configured. Please complete the integration setup.`
+        `Integration "${command.integrationId}" has incomplete credentials. Please complete the integration setup.`
       );
     }
 
-    return { decryptedCredentials: resolved.credentials, resolvedApiKey: resolved.apiKey };
+    return resolved;
   }
 
   private async persistAgentMcpServers(

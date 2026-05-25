@@ -2,13 +2,19 @@ import { AgentRuntimeProviderIdEnum, type ICredentialsDto } from '@novu/shared';
 
 import { decryptCredentials } from '../encryption/encrypt-provider';
 import { areNovuManagedClaudeCredentialsSet, getNovuManagedClaudeApiKey } from '../utils/novu-integrations';
-import { getAgentRuntimeProvider } from './agent-runtime.factory';
-import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
+import { createAnthropicProvider } from './anthropic/anthropic-agent-runtime.provider';
+import {
+  isAnthropicAwsProvider,
+  resolveAwsAnthropicCredentials,
+  toValidateCredentialsInput,
+} from './anthropic/anthropic-aws-credentials';
+import type { IAgentRuntimeProvider, ValidateCredentialsInput } from './i-agent-runtime-provider';
 
 export type ResolvedAgentRuntime = {
   apiKey: string;
   credentials: ReturnType<typeof decryptCredentials>;
   provider: IAgentRuntimeProvider;
+  validateCredentialsInput: ValidateCredentialsInput;
 };
 
 export function resolveAgentRuntime(
@@ -26,11 +32,32 @@ export function resolveAgentRuntime(
     return {
       apiKey,
       credentials: decrypted,
-      provider: getAgentRuntimeProvider(providerId as AgentRuntimeProviderIdEnum, apiKey),
+      provider: createAnthropicProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, { apiKey }),
+      validateCredentialsInput: { apiKey },
     };
   }
 
   const decrypted = decryptCredentials(credentials ?? {});
+
+  if (isAnthropicAwsProvider(providerId)) {
+    const awsCredentials = resolveAwsAnthropicCredentials(decrypted as Record<string, unknown>);
+
+    if (!awsCredentials) {
+      return null;
+    }
+
+    const validateCredentialsInput = toValidateCredentialsInput(decrypted as Record<string, unknown>);
+
+    return {
+      apiKey: awsCredentials.apiKey ?? '',
+      credentials: decrypted,
+      provider: createAnthropicProvider(AgentRuntimeProviderIdEnum.AnthropicAws, {
+        credentials: decrypted as Record<string, unknown>,
+      }),
+      validateCredentialsInput,
+    };
+  }
+
   const apiKey = decrypted.apiKey as string | undefined;
 
   if (!apiKey) {
@@ -40,6 +67,7 @@ export function resolveAgentRuntime(
   return {
     apiKey,
     credentials: decrypted,
-    provider: getAgentRuntimeProvider(providerId as AgentRuntimeProviderIdEnum, apiKey),
+    provider: createAnthropicProvider(providerId as AgentRuntimeProviderIdEnum, { apiKey }),
+    validateCredentialsInput: { apiKey },
   };
 }

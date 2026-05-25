@@ -1,5 +1,5 @@
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -8,11 +8,17 @@ export class VerifyManagedCredentialsCommand extends EnvironmentWithUserCommand 
   @IsEnum(AgentRuntimeProviderIdEnum)
   providerId: AgentRuntimeProviderIdEnum;
 
-  @IsNotEmpty()
   @IsString()
+  @IsNotEmpty()
   apiKey: string;
 
-  @IsOptional()
+  @ValidateIf((command: VerifyManagedCredentialsCommand) => command.providerId === AgentRuntimeProviderIdEnum.AnthropicAws)
   @IsString()
+  @IsNotEmpty()
   externalWorkspaceId?: string;
+
+  @ValidateIf((command: VerifyManagedCredentialsCommand) => command.providerId === AgentRuntimeProviderIdEnum.AnthropicAws)
+  @IsString()
+  @IsNotEmpty()
+  region?: string;
 }

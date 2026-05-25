@@ -101,8 +101,8 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
     }
   };
 
-  const handleVerify = (keyToVerify: string) => {
-    const trimmedApiKey = keyToVerify.trim();
+  const handleVerify = () => {
+    const trimmedApiKey = apiKey.trim();
 
     if (!trimmedApiKey || verifyMutation.isPending) {
       return;

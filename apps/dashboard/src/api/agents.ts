@@ -257,6 +257,7 @@ export type VerifyManagedCredentialsBody = {
   providerId: AgentRuntimeProviderIdEnum;
   apiKey: string;
   externalWorkspaceId?: string;
+  region?: string;
 };
 
 export type VerifyManagedCredentialsResponse = { valid: true };

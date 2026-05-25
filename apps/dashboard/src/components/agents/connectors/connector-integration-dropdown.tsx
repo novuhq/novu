@@ -95,7 +95,7 @@ export function ConnectorIntegrationDropdown({
   const matchingIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
 
-    return getClaudeManagedAgentIntegrations(integrations);
+    return getClaudeManagedAgentIntegrations(integrations, selectedConnector.providerId);
   }, [integrations, selectedConnector?.providerId]);
 
   const selectedIntegration = useMemo(

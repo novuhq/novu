@@ -3,11 +3,8 @@ import { useId, useState } from 'react';
 import {
   RiAlertLine,
   RiArrowDownSLine,
-  RiArrowRightUpLine,
   RiArrowUpSLine,
   RiCheckLine,
-  RiEyeLine,
-  RiEyeOffLine,
   RiLoader4Line,
   RiRefreshLine,
 } from 'react-icons/ri';
@@ -16,12 +13,8 @@ import { CompactButton } from '@/components/primitives/button-compact';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/primitives/collapsible';
 import { Input } from '@/components/primitives/input';
 import { cn } from '@/utils/ui';
-import {
-  ANTHROPIC_API_KEY_HREF,
-  CLAUDE_WORKSPACE_HREF,
-  type CreateAgentFormErrors,
-  DEFAULT_CLAUDE_WORKSPACE_ID,
-} from './types';
+import { AwsClaudeCredentialsFields } from './aws-claude-credentials-fields';
+import { type CreateAgentFormErrors } from './types';
 
 export type VerifyStatus = 'idle' | 'verifying' | 'valid' | 'invalid';
 
@@ -31,6 +24,7 @@ type ConfigureCredentialsSectionProps = {
   integrationName: string;
   apiKey: string;
   externalWorkspaceId?: string;
+  region?: string;
   errors: CreateAgentFormErrors;
   disabled?: boolean;
   status: VerifyStatus;
@@ -43,8 +37,11 @@ type ConfigureCredentialsSectionProps = {
   onIntegrationNameChange: (next: string) => void;
   onApiKeyChange: (next: string) => void;
   onExternalWorkspaceIdChange: (next: string) => void;
-  onVerify: (apiKey: string) => void;
+  onRegionChange?: (next: string) => void;
+  onVerify: () => void;
   onSave: () => void;
+  canVerify?: boolean;
+  canSave?: boolean;
 };
 
 function StatusRow({ status, message }: { status: VerifyStatus; message?: string }) {
@@ -88,10 +85,12 @@ function StatusRow({ status, message }: { status: VerifyStatus; message?: string
 }
 
 export function ConfigureCredentialsSection({
+  providerId,
   providerLabel,
   integrationName,
   apiKey,
   externalWorkspaceId,
+  region = '',
   errors,
   disabled,
   status,
@@ -104,23 +103,30 @@ export function ConfigureCredentialsSection({
   onIntegrationNameChange,
   onApiKeyChange,
   onExternalWorkspaceIdChange,
+  onRegionChange,
   onVerify,
   onSave,
+  canVerify,
+  canSave: canSaveOverride,
 }: ConfigureCredentialsSectionProps) {
   const fieldId = useId();
   const integrationNameId = `${fieldId}-integration-name`;
-  const apiKeyId = `${fieldId}-api-key`;
-  const workspaceIdInputId = `${fieldId}-workspace-id`;
   const contentId = `${fieldId}-content`;
-  const [showSecret, setShowSecret] = useState(false);
+  const isAwsProvider = providerId === AgentRuntimeProviderIdEnum.AnthropicAws;
 
-  const handleVerifyClick = () => {
-    const trimmed = apiKey.trim();
-    if (!trimmed) return;
-    onVerify(trimmed);
-  };
+  const defaultCanSave = isAwsProvider
+    ? integrationName.trim().length > 0 &&
+      region.trim().length > 0 &&
+      externalWorkspaceId?.trim().length > 0 &&
+      apiKey.trim().length > 0
+    : integrationName.trim().length > 0 && apiKey.trim().length > 0;
 
-  const canSave = integrationName.trim().length > 0 && apiKey.trim().length > 0;
+  const canSave = canSaveOverride ?? defaultCanSave;
+  const defaultCanVerify = isAwsProvider
+    ? region.trim().length > 0 && externalWorkspaceId?.trim().length > 0 && apiKey.trim().length > 0
+    : apiKey.trim().length > 0;
+
+  const verifyEnabled = canVerify ?? defaultCanVerify;
 
   return (
     <Collapsible
@@ -186,22 +192,95 @@ export function ConfigureCredentialsSection({
             ) : null}
           </div>
 
+          {isAwsProvider ? (
+            <AwsClaudeCredentialsFields
+              region={region}
+              externalWorkspaceId={externalWorkspaceId ?? ''}
+              apiKey={apiKey}
+              errors={errors}
+              disabled={disabled}
+              onRegionChange={onRegionChange ?? (() => undefined)}
+              onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+              onApiKeyChange={onApiKeyChange}
+            />
+          ) : (
+            <ClaudeCloudCredentialFields
+              providerLabel={providerLabel}
+              apiKey={apiKey}
+              externalWorkspaceId={externalWorkspaceId}
+              errors={errors}
+              disabled={disabled}
+              status={status}
+              statusMessage={statusMessage}
+              verifyEnabled={verifyEnabled}
+              onApiKeyChange={onApiKeyChange}
+              onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+              onVerify={onVerify}
+            />
+          )}
+
+          {isAwsProvider ? (
+            <div className="flex items-center gap-1.5 overflow-hidden pt-1">
+              <StatusRow status={status} message={statusMessage} />
+              <span className="text-text-soft text-label-xs leading-4" aria-hidden>
+                ·
+              </span>
+              <button
+                type="button"
+                disabled={disabled || !verifyEnabled}
+                onClick={onVerify}
+                className={cn(
+                  'text-text-soft hover:text-text-sub inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 disabled:opacity-60'
+                )}
+              >
+                Verify connection
+                <RiRefreshLine className="min-w-3.5 size-3.5" aria-hidden />
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function ClaudeCloudCredentialFields({
+  providerLabel,
+  apiKey,
+  externalWorkspaceId,
+  errors,
+  disabled,
+  status,
+  statusMessage,
+  verifyEnabled,
+  onApiKeyChange,
+  onExternalWorkspaceIdChange,
+  onVerify,
+}: {
+  providerLabel: string;
+  apiKey: string;
+  externalWorkspaceId?: string;
+  errors: CreateAgentFormErrors;
+  disabled?: boolean;
+  status: VerifyStatus;
+  statusMessage?: string;
+  verifyEnabled: boolean;
+  onApiKeyChange: (next: string) => void;
+  onExternalWorkspaceIdChange: (next: string) => void;
+  onVerify: () => void;
+}) {
+  const fieldId = useId();
+  const apiKeyId = `${fieldId}-api-key`;
+  const workspaceIdInputId = `${fieldId}-workspace-id`;
+  const [showSecret, setShowSecret] = useState(false);
+
+  return (
+    <>
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-px">
               <label htmlFor={apiKeyId} className="text-text-sub text-label-xs font-medium">
                 {providerLabel} API key
               </label>
-              <div className="ml-auto">
-                <a
-                  href={ANTHROPIC_API_KEY_HREF}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium"
-                >
-                  Get API Key
-                  <RiArrowRightUpLine className="size-3.5" aria-hidden />
-                </a>
-              </div>
             </div>
             <Input
               id={apiKeyId}
@@ -212,27 +291,10 @@ export function ConfigureCredentialsSection({
               placeholder={`Paste the ${providerLabel} API key here…`}
               hasError={Boolean(errors.apiKey)}
               disabled={disabled}
-              aria-invalid={errors.apiKey ? true : undefined}
-              aria-describedby={errors.apiKey ? `${apiKeyId}-error` : undefined}
               className="font-mono"
-              inlineTrailingNode={
-                <button
-                  type="button"
-                  onClick={() => setShowSecret((prev) => !prev)}
-                  aria-label={showSecret ? 'Hide API key' : 'Show API key'}
-                  aria-pressed={showSecret}
-                  disabled={disabled}
-                >
-                  {showSecret ? (
-                    <RiEyeOffLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
-                  ) : (
-                    <RiEyeLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
-                  )}
-                </button>
-              }
             />
             {errors.apiKey ? (
-              <p id={`${apiKeyId}-error`} className="text-error-base text-label-xs" role="alert">
+              <p className="text-error-base text-label-xs" role="alert">
                 {errors.apiKey}
               </p>
             ) : null}
@@ -244,8 +306,8 @@ export function ConfigureCredentialsSection({
               </span>
               <button
                 type="button"
-                disabled={disabled || !apiKey.trim()}
-                onClick={handleVerifyClick}
+                disabled={disabled || !verifyEnabled}
+                onClick={onVerify}
                 className={cn(
                   'text-text-soft hover:text-text-sub inline-flex items-center gap-0.5 text-label-xs font-medium leading-4 disabled:opacity-60'
                 )}
@@ -257,35 +319,19 @@ export function ConfigureCredentialsSection({
           </div>
 
           <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-px">
-              <label htmlFor={workspaceIdInputId} className="text-text-sub text-label-xs font-medium">
-                Workspace ID
-              </label>
-              <span className="text-text-soft text-label-xs ml-1 leading-4">(Optional)</span>
-              <div className="ml-auto">
-                <a
-                  href={CLAUDE_WORKSPACE_HREF}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium"
-                >
-                  Find Workspace ID
-                  <RiArrowRightUpLine className="size-3.5" aria-hidden />
-                </a>
-              </div>
-            </div>
+            <label htmlFor={workspaceIdInputId} className="text-text-sub text-label-xs font-medium">
+              Workspace ID <span className="text-text-soft">(Optional)</span>
+            </label>
             <Input
               id={workspaceIdInputId}
               size="xs"
               value={externalWorkspaceId ?? ''}
               onChange={(e) => onExternalWorkspaceIdChange(e.target.value)}
-              placeholder={DEFAULT_CLAUDE_WORKSPACE_ID}
+              placeholder="default"
               className="font-mono"
               disabled={disabled}
             />
           </div>
-        </div>
-      </CollapsibleContent>
-    </Collapsible>
+    </>
   );
 }

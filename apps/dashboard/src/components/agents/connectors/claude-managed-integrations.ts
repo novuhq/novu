@@ -3,10 +3,18 @@ import { AgentRuntimeProviderIdEnum, type IIntegration, IntegrationKindEnum } fr
 const CLAUDE_MANAGED_PROVIDER_IDS: ReadonlySet<string> = new Set([
   AgentRuntimeProviderIdEnum.NovuAnthropic,
   AgentRuntimeProviderIdEnum.Anthropic,
+  AgentRuntimeProviderIdEnum.AnthropicAws,
 ]);
 
-export function isClaudeManagedAgentIntegration(integration: IIntegration): boolean {
+export function isClaudeManagedAgentIntegration(
+  integration: IIntegration,
+  providerId?: AgentRuntimeProviderIdEnum
+): boolean {
   if (integration.kind !== IntegrationKindEnum.AGENT) {
+    return false;
+  }
+
+  if (providerId && integration.providerId !== providerId) {
     return false;
   }
 
@@ -21,8 +29,11 @@ export function isClaudeManagedAgentIntegration(integration: IIntegration): bool
   return true;
 }
 
-export function getClaudeManagedAgentIntegrations(integrations: IIntegration[] | undefined): IIntegration[] {
-  return (integrations ?? []).filter(isClaudeManagedAgentIntegration).sort((left, right) => {
+export function getClaudeManagedAgentIntegrations(
+  integrations: IIntegration[] | undefined,
+  providerId?: AgentRuntimeProviderIdEnum
+): IIntegration[] {
+  return (integrations ?? []).filter((integration) => isClaudeManagedAgentIntegration(integration, providerId)).sort((left, right) => {
     if (left.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
       return -1;
     }
@@ -36,14 +47,19 @@ export function getClaudeManagedAgentIntegrations(integrations: IIntegration[] |
 }
 
 export function getPreferredClaudeManagedIntegration(
-  integrations: IIntegration[] | undefined
+  integrations: IIntegration[] | undefined,
+  providerId?: AgentRuntimeProviderIdEnum
 ): IIntegration | undefined {
-  return getClaudeManagedAgentIntegrations(integrations)[0];
+  return getClaudeManagedAgentIntegrations(integrations, providerId)[0];
 }
 
 export function resolveClaudeManagedProviderId(integration: IIntegration | undefined): AgentRuntimeProviderIdEnum {
   if (integration?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
     return AgentRuntimeProviderIdEnum.NovuAnthropic;
+  }
+
+  if (integration?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws) {
+    return AgentRuntimeProviderIdEnum.AnthropicAws;
   }
 
   return AgentRuntimeProviderIdEnum.Anthropic;

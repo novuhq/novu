@@ -1486,3 +1486,27 @@ export const anthropicAgentConfig: IConfigCredential[] = [
     required: false,
   },
 ];
+
+export const anthropicAwsAgentConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'AWS Region',
+    description: 'The AWS region where your Claude Platform workspace is provisioned.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'AWS API Key',
+    description: 'API key generated in the AWS Console under Claude Platform on AWS.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ExternalEnvironmentId,
+    displayName: 'Environment ID',
+    description: 'The environment ID auto-provisioned for this integration. Read-only.',
+    type: 'string',
+    required: false,
+  },
+];

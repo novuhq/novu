@@ -215,6 +215,7 @@ export class AgentsController {
         providerId: body.providerId,
         apiKey: body.apiKey,
         externalWorkspaceId: body.externalWorkspaceId,
+        region: body.region,
       })
     );
   }

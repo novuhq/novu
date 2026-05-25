@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
-import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, ValidateIf } from 'class-validator';
 
 export class VerifyManagedCredentialsRequestDto {
   @ApiProperty({
@@ -12,13 +12,20 @@ export class VerifyManagedCredentialsRequestDto {
   @IsNotEmpty()
   providerId: AgentRuntimeProviderIdEnum;
 
-  @ApiProperty({ description: 'API key to validate against the provider.' })
+  @ApiPropertyOptional({ description: 'API key to validate against the provider.' })
   @IsString()
   @IsNotEmpty()
   apiKey: string;
 
   @ApiPropertyOptional({ description: 'Optional workspace id; defaults to the provider default workspace.' })
+  @ValidateIf((body: VerifyManagedCredentialsRequestDto) => body.providerId === AgentRuntimeProviderIdEnum.AnthropicAws)
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   externalWorkspaceId?: string;
+
+  @ApiPropertyOptional({ description: 'AWS region for Claude Platform on AWS.' })
+  @ValidateIf((body: VerifyManagedCredentialsRequestDto) => body.providerId === AgentRuntimeProviderIdEnum.AnthropicAws)
+  @IsString()
+  @IsNotEmpty()
+  region?: string;
 }

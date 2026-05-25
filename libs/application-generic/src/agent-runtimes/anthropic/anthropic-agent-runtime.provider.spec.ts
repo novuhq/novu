@@ -47,6 +47,7 @@ jest.mock('@anthropic-ai/sdk', () => {
 // eslint-disable-next-line import/first, import/order
 import Anthropic from '@anthropic-ai/sdk';
 // eslint-disable-next-line import/first, import/order
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { AnthropicAgentRuntimeProvider, createAnthropicProvider } from './anthropic-agent-runtime.provider';
 
 const SKILL_MD = `---
@@ -180,7 +181,7 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
     mockClient = buildMockClient();
     (Anthropic as unknown as jest.Mock).mockReset();
     (Anthropic as unknown as jest.Mock).mockImplementation(() => mockClient);
-    provider = new AnthropicAgentRuntimeProvider('test-key');
+    provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
   });
 
   afterEach(() => {
@@ -399,7 +400,7 @@ describe('AnthropicAgentRuntimeProvider.uploadSkill', () => {
 
 describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   it('uses tool externalId (not display name) when serialising the toolset payload', async () => {
-    const provider = createAnthropicProvider('test-key');
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
     const retrieve = jest.fn().mockResolvedValue({
       version: 1,
@@ -447,7 +448,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   });
 
   it('treats an empty tools array as "disable all tools" by emitting enabled=false for every catalog entry', async () => {
-    const provider = createAnthropicProvider('test-key');
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
     const retrieve = jest.fn().mockResolvedValue({
       version: 1,
@@ -480,7 +481,7 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
   });
 
   it('preserves currently-enabled tools (by externalId) when only mcpServers is patched', async () => {
-    const provider = createAnthropicProvider('test-key');
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
 
     const retrieve = jest.fn().mockResolvedValue({
       version: 1,

@@ -1,9 +1,11 @@
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage } from '@novu/shared';
 import type { CreateAgentForm, CreateAgentFormErrors } from './types';
 
 export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormErrors {
   const errors: CreateAgentFormErrors = {};
   const isExistingMode = form.runtime === 'claude' && form.isExistingMode;
+  const isAwsProvider = form.providerId === AgentRuntimeProviderIdEnum.AnthropicAws;
 
   if (!isExistingMode) {
     const trimmedName = form.name.trim();
@@ -18,11 +20,25 @@ export function validateCreateAgentForm(form: CreateAgentForm): CreateAgentFormE
     }
   }
 
-  if (form.runtime === 'claude' && !form.integrationId && !form.apiKey.trim()) {
-    errors.apiKey = 'Anthropic API key is required.';
+  if (form.runtime === 'claude' && !form.integrationId) {
+    if (isAwsProvider) {
+      if (!form.region?.trim()) {
+        errors.region = 'AWS region is required.';
+      }
+
+      if (!form.externalWorkspaceId?.trim()) {
+        errors.externalWorkspaceId = 'Workspace ID is required.';
+      }
+
+      if (!form.apiKey.trim()) {
+        errors.apiKey = 'AWS API key is required.';
+      }
+    } else if (!form.apiKey.trim()) {
+      errors.apiKey = 'Anthropic API key is required.';
+    }
   }
 
-  if (form.runtime === 'claude' && !form.integrationId && form.apiKey.trim() && !form.integrationName?.trim()) {
+  if (form.runtime === 'claude' && !form.integrationId && !form.integrationName?.trim()) {
     errors.integrationName = 'Integration name is required.';
   }
 

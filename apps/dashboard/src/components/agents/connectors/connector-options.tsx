@@ -76,7 +76,10 @@ export const CONNECTOR_OPTIONS: ConnectorOption[] = [
     label: 'AWS Claude Managed Agent',
     group: 'external',
     icon: AWS_AVATAR,
-    comingSoon: true,
+    comingSoon: false,
+    runtime: 'claude',
+    providerId: AgentRuntimeProviderIdEnum.AnthropicAws,
+    providerLabel: 'AWS Claude Platform',
   },
   {
     id: 'vertex',

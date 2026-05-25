@@ -5,6 +5,8 @@ import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { cloudflare, thalamus, type WebhookProvider } from '@novu/thalamus';
 import { LRUCache } from 'lru-cache';
 
+import { buildThalamusAwsAnthropicConfig } from './thalamus-aws-anthropic-config';
+
 export interface ResolvedRuntime {
   provider: WebhookProvider;
   runtimeProvider: IAgentRuntimeProvider;
@@ -55,16 +57,35 @@ export class ManagedAgentProviderFactory {
     const resolved = resolveAgentRuntime(integration.providerId, integration.credentials);
 
     if (!resolved) {
-      throw new Error('Integration has no API key configured');
+      throw new Error('Integration credentials are incomplete or invalid');
     }
 
-    const { apiKey, credentials: creds, provider: runtimeProvider } = resolved;
+    const { credentials: creds, provider: runtimeProvider } = resolved;
+    const providerId = integration.providerId as AgentRuntimeProviderIdEnum;
+
+    if (providerId === AgentRuntimeProviderIdEnum.AnthropicAws) {
+      if (!creds.externalEnvironmentId) {
+        throw new Error('Integration has no external environment id');
+      }
+
+      const webhookProvider = this.createAwsProvider({
+        credentials: creds,
+        agentId: agent.managedRuntime.externalAgentId,
+        environmentId: creds.externalEnvironmentId as string,
+      });
+      const runtime: ResolvedRuntime = { provider: webhookProvider, runtimeProvider };
+      this.providers.set(key, runtime);
+
+      return runtime;
+    }
+
+    const { apiKey } = resolved;
 
     if (!creds.externalEnvironmentId) {
       throw new Error('Integration has no external environment id');
     }
 
-    const provider = this.createProvider(integration.providerId as AgentRuntimeProviderIdEnum, {
+    const provider = this.createCloudProvider(providerId, {
       apiKey,
       agentId: agent.managedRuntime.externalAgentId,
       environmentId: creds.externalEnvironmentId as string,
@@ -104,10 +125,37 @@ export class ManagedAgentProviderFactory {
     }
   }
 
-  private createProvider(
+  private createCloudProvider(
     providerId: AgentRuntimeProviderIdEnum,
     config: { apiKey: string; agentId: string; environmentId: string }
   ): WebhookProvider {
+    const durable = this.buildDurableBackend();
+
+    switch (providerId) {
+      case AgentRuntimeProviderIdEnum.Anthropic:
+      case AgentRuntimeProviderIdEnum.NovuAnthropic:
+        return thalamus.anthropic({
+          ...config,
+          durable,
+        });
+      default:
+        throw new Error(`Unsupported agent runtime provider: ${providerId}`);
+    }
+  }
+
+  private createAwsProvider(config: {
+    credentials: Record<string, unknown>;
+    agentId: string;
+    environmentId: string;
+  }): WebhookProvider {
+    const durable = this.buildDurableBackend();
+
+    return thalamus.anthropic(
+      buildThalamusAwsAnthropicConfig(config.credentials, config.agentId, config.environmentId, durable)
+    );
+  }
+
+  private buildDurableBackend() {
     const cfUrl = process.env.THALAMUS_CF_URL;
     if (!cfUrl) {
       throw new Error('THALAMUS_CF_URL is required for managed agents');
@@ -123,22 +171,13 @@ export class ManagedAgentProviderFactory {
       throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL is required for managed agents');
     }
 
-    switch (providerId) {
-      case AgentRuntimeProviderIdEnum.Anthropic:
-      case AgentRuntimeProviderIdEnum.NovuAnthropic:
-        return thalamus.anthropic({
-          ...config,
-          durable: cloudflare({
-            url: cfUrl,
-            apiKey: process.env.THALAMUS_CF_API_KEY,
-            webhook: {
-              url: `${webhookBaseUrl}/v1/agents/events`,
-              secret: webhookSecret,
-            },
-          }),
-        });
-      default:
-        throw new Error(`Unsupported agent runtime provider: ${providerId}`);
-    }
+    return cloudflare({
+      url: cfUrl,
+      apiKey: process.env.THALAMUS_CF_API_KEY,
+      webhook: {
+        url: `${webhookBaseUrl}/v1/agents/events`,
+        secret: webhookSecret,
+      },
+    });
   }
 }

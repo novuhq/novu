@@ -37,10 +37,23 @@ import type {
   UploadSkillResult,
   UpsertVaultCredentialInput,
   UpsertVaultCredentialResult,
+  ValidateCredentialsInput,
   VaultCredentialAuth,
 } from '../i-agent-runtime-provider';
+import {
+  isAnthropicAwsProvider,
+  resolveAwsAnthropicCredentials,
+  type ResolvedAwsAnthropicCredentials,
+} from './anthropic-aws-credentials';
 
-const PROVIDER_ID = AgentRuntimeProviderIdEnum.Anthropic;
+type AnthropicCompatibleClient = Anthropic;
+
+export type AnthropicProviderInit = {
+  providerId: AgentRuntimeProviderIdEnum;
+  apiKey?: string;
+  credentials?: Record<string, unknown>;
+};
+
 const DEFAULT_MODEL = 'claude-sonnet-4-6';
 /** Single retry jitter window in ms */
 const RETRY_JITTER_MS = 500;
@@ -61,58 +74,127 @@ const MAX_DISPLAY_TITLE_LENGTH = 64;
 const MCP_INIT_ERROR_PATTERN = /^MCP server '([^']+)' initialize failed/;
 
 export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
-  readonly providerId = PROVIDER_ID;
+  readonly providerId: AgentRuntimeProviderIdEnum;
 
-  readonly capabilities: AgentRuntimeCapabilities = AGENT_RUNTIME_PROVIDERS.find(
-    (p) => p.providerId === PROVIDER_ID
-  ).capabilities;
+  readonly capabilities: AgentRuntimeCapabilities;
 
-  constructor(private readonly _apiKey: string) {
+  private readonly _apiKey?: string;
+  private readonly _awsCredentials?: ResolvedAwsAnthropicCredentials;
+  private awsClientPromise?: Promise<AnthropicCompatibleClient>;
+
+  constructor(init: AnthropicProviderInit) {
     super();
+    this.providerId = init.providerId;
+    this.capabilities =
+      AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === init.providerId)?.capabilities ??
+      AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === AgentRuntimeProviderIdEnum.Anthropic)!.capabilities;
+
+    if (isAnthropicAwsProvider(init.providerId)) {
+      const resolved = resolveAwsAnthropicCredentials(init.credentials ?? {});
+
+      if (!resolved) {
+        throw new Error('AWS Claude credentials require region, workspace ID, and API key');
+      }
+
+      this._awsCredentials = resolved;
+    } else {
+      if (!init.apiKey) {
+        throw new Error('Anthropic cloud provider requires an API key');
+      }
+
+      this._apiKey = init.apiKey;
+    }
   }
 
-  private buildClient(apiKey: string = this._apiKey): Anthropic {
+  private buildCloudClient(apiKey: string): Anthropic {
     return new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
   }
 
+  private async buildAwsClient(credentials: ResolvedAwsAnthropicCredentials): Promise<AnthropicCompatibleClient> {
+    const { AnthropicAws } = await import('@anthropic-ai/aws-sdk');
+
+    return new AnthropicAws({
+      awsRegion: credentials.region,
+      workspaceId: credentials.workspaceId,
+      apiKey: credentials.apiKey,
+    }) as AnthropicCompatibleClient;
+  }
+
+  private async getClient(input?: ValidateCredentialsInput): Promise<AnthropicCompatibleClient> {
+    if (this._awsCredentials) {
+      if (input) {
+        const override = resolveAwsAnthropicCredentials({
+          region: input.region ?? this._awsCredentials.region,
+          externalWorkspaceId: input.externalWorkspaceId ?? this._awsCredentials.workspaceId,
+          apiKey: input.apiKey ?? this._awsCredentials.apiKey,
+        });
+
+        if (!override) {
+          throw new AgentRuntimeBadRequestError(
+            'Invalid AWS Claude credentials',
+            AgentRuntimeProviderIdEnum.AnthropicAws
+          );
+        }
+
+        return this.buildAwsClient(override);
+      }
+
+      if (!this.awsClientPromise) {
+        this.awsClientPromise = this.buildAwsClient(this._awsCredentials);
+      }
+
+      return this.awsClientPromise;
+    }
+
+    const apiKey = input?.apiKey ?? this._apiKey;
+
+    if (!apiKey) {
+      throw new AgentRuntimeBadRequestError('API key is required', this.providerId);
+    }
+
+    return this.buildCloudClient(apiKey);
+  }
+
   private normaliseError(err: unknown): never {
+    const providerId = this.providerId;
+
     if (err instanceof APIConnectionTimeoutError) {
-      throw new AgentRuntimeTimeoutError(err.message, PROVIDER_ID);
+      throw new AgentRuntimeTimeoutError(err.message, providerId);
     }
 
     if (err instanceof APIConnectionError) {
-      throw new AgentRuntimeNetworkError(err.message, PROVIDER_ID);
+      throw new AgentRuntimeNetworkError(err.message, providerId);
     }
 
     if (err instanceof APIError) {
       const requestId = err.requestID ?? err.headers?.get?.('request-id') ?? undefined;
 
       if (err.status === 401) {
-        throw new AgentRuntimeUnauthorizedError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeUnauthorizedError(err.message, providerId, requestId);
       }
       if (err.status === 403) {
-        throw new AgentRuntimeForbiddenError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeForbiddenError(err.message, providerId, requestId);
       }
       if (err.status === 404) {
-        throw new AgentRuntimeNotFoundError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeNotFoundError(err.message, providerId, requestId);
       }
       if (err.status === 429) {
         const retryAfterMs = parseRetryAfter(err.headers?.get?.('retry-after') ?? undefined);
 
-        throw new AgentRuntimeRateLimitedError(err.message, PROVIDER_ID, retryAfterMs, requestId);
+        throw new AgentRuntimeRateLimitedError(err.message, providerId, retryAfterMs, requestId);
       }
       if (err.status === 529) {
-        throw new AgentRuntimeOverloadedError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeOverloadedError(err.message, providerId, requestId);
       }
       if (err.status >= 500) {
-        throw new AgentRuntimeServiceUnavailableError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeServiceUnavailableError(err.message, providerId, requestId);
       }
       if (err.status === 400 || err.status === 422) {
-        throw new AgentRuntimeBadRequestError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeBadRequestError(err.message, providerId, requestId);
       }
     }
 
-    throw new AgentRuntimeUnknownError(err instanceof Error ? err.message : 'Unknown error', PROVIDER_ID);
+    throw new AgentRuntimeUnknownError(err instanceof Error ? err.message : 'Unknown error', providerId);
   }
 
   /** Wraps an async call with a single retry (with jitter) for transient errors. */
@@ -129,8 +211,8 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
-  async validateCredentials(apiKey: string): Promise<void> {
-    const client = this.buildClient(apiKey);
+  async validateCredentials(input: ValidateCredentialsInput): Promise<void> {
+    const client = await this.getClient(input);
     try {
       // A cheap read-only call to verify the key
       await client.models.list({ limit: 1 });
@@ -140,7 +222,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async createAgent(input: CreateAgentInput): Promise<CreateAgentResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     // Not retried: agent creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable agent upstream.
@@ -165,7 +247,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async getAgent(externalAgentId: string): Promise<GetAgentResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     return this.withRetry(async () => {
       try {
@@ -179,7 +261,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     try {
       const env = await client.beta.environments.retrieve(externalEnvironmentId);
@@ -194,7 +276,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async deleteAgent(externalAgentId: string): Promise<void> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     await this.withRetry(async () => {
       try {
@@ -206,7 +288,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async getConfig(externalAgentId: string): Promise<AgentRuntimeConfigDto> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     return this.withRetry(async () => {
       try {
@@ -226,7 +308,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     return this.withRetry(async () => {
       try {
@@ -281,7 +363,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
     const resourceStem = input.resourceName ?? input.integrationName;
 
     // Not retried: environment creation is not idempotent.
@@ -320,7 +402,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       return;
     }
 
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     if (externalEnvironmentId) {
       await this.withRetry(async () => {
@@ -344,7 +426,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     try {
       // Walk the session event log oldest-first looking for an MCP or
@@ -415,7 +497,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async createVault(input: CreateVaultInput): Promise<CreateVaultResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     // Not retried: vault creation is not idempotent and a retry after a
     // dropped response would mint a second vault and permanently orphan the
@@ -433,7 +515,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
     const vaultId = input.externalVaultId;
     const existingCredentialId = input.existingCredentialId;
 
@@ -561,7 +643,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async deleteVaultCredential(input: DeleteVaultCredentialInput): Promise<void> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     await this.withRetry(async () => {
       try {
@@ -584,11 +666,11 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     if (!directoryName) {
       throw new AgentRuntimeBadRequestError(
         'SKILL.md must declare a `name` in its YAML frontmatter — Anthropic requires the bundle folder name to match it.',
-        PROVIDER_ID
+        this.providerId
       );
     }
 
-    const client = this.buildClient();
+    const client = await this.getClient();
     const displayTitle = input.displayTitle
       ? truncateWithEllipsis(input.displayTitle, MAX_DISPLAY_TITLE_LENGTH)
       : undefined;
@@ -735,8 +817,11 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 }
 
-export function createAnthropicProvider(apiKey: string): AnthropicAgentRuntimeProvider {
-  return new AnthropicAgentRuntimeProvider(apiKey);
+export function createAnthropicProvider(
+  providerId: AgentRuntimeProviderIdEnum,
+  options: { apiKey?: string; credentials?: Record<string, unknown> } = {}
+): AnthropicAgentRuntimeProvider {
+  return new AnthropicAgentRuntimeProvider({ providerId, ...options });
 }
 
 // ─── helpers ────────────────────────────────────────────────────────────────

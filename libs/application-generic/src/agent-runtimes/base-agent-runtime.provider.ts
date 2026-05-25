@@ -18,6 +18,7 @@ import type {
   UploadSkillResult,
   UpsertVaultCredentialInput,
   UpsertVaultCredentialResult,
+  ValidateCredentialsInput,
 } from './i-agent-runtime-provider';
 
 /**
@@ -37,7 +38,7 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
 
   abstract readonly capabilities: AgentRuntimeCapabilities;
 
-  abstract validateCredentials(apiKey: string): Promise<void>;
+  abstract validateCredentials(input: ValidateCredentialsInput): Promise<void>;
 
   abstract createAgent(input: CreateAgentInput): Promise<CreateAgentResult>;
 

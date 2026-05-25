@@ -37,6 +37,7 @@
     "reflect-metadata": "0.2.2"
   },
   "dependencies": {
+    "@anthropic-ai/aws-sdk": "0.3.0",
     "@anthropic-ai/sdk": "0.95.1",
     "@aws-sdk/client-s3": "^3.971.0",
     "@aws-sdk/client-sqs": "^3.971.0",

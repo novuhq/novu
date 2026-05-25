@@ -52,6 +52,10 @@ function buildAgentConsoleUrl(
     return `https://platform.claude.com/workspaces/${workspaceId}/agents/${encodeURIComponent(externalAgentId)}`;
   }
 
+  if (providerId === AgentRuntimeProviderIdEnum.AnthropicAws) {
+    return `https://console.aws.amazon.com/claude/home`;
+  }
+
   return undefined;
 }
 

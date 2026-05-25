@@ -174,6 +174,12 @@ export type UploadSkillResult = {
   version: string | null;
 };
 
+export type ValidateCredentialsInput = {
+  apiKey?: string;
+  region?: string;
+  externalWorkspaceId?: string;
+};
+
 export interface IAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
   readonly capabilities: AgentRuntimeCapabilities;
@@ -182,7 +188,7 @@ export interface IAgentRuntimeProvider {
    * Validate the supplied credentials against the provider's API.
    * Throws AgentRuntimeUnauthorizedError / AgentRuntimeForbiddenError on failure.
    */
-  validateCredentials(apiKey: string): Promise<void>;
+  validateCredentials(input: ValidateCredentialsInput): Promise<void>;
 
   /**
    * Create a new agent on the provider side.

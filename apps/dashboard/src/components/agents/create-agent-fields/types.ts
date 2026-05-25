@@ -1,3 +1,5 @@
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
+
 export type RuntimeType = 'scratch' | 'claude' | 'vertex';
 
 export type CreateAgentMode = 'create' | 'existing';
@@ -16,13 +18,15 @@ export type CreateAgentForm = {
   apiKey: string;
   runtime: RuntimeType;
   isExistingMode: boolean;
+  providerId?: AgentRuntimeProviderIdEnum;
   externalAgentId?: string;
   externalEnvironmentId?: string;
   /**
    * Optional Anthropic workspace id. Empty/omitted means "use the default workspace".
-   * Custom workspaces are identified by a `wrkspc_…` id.
+   * For AWS Claude Platform this is required (`wrkspc_…`).
    */
   externalWorkspaceId?: string;
+  region?: string;
   /**
    * Existing managed-runtime integration to attach the agent to. When present, `apiKey` is ignored
    * and a new integration is NOT created.
@@ -51,6 +55,8 @@ export type CreateAgentFormErrors = {
   name?: string;
   identifier?: string;
   apiKey?: string;
+  region?: string;
+  externalWorkspaceId?: string;
   externalAgentId?: string;
   externalEnvironmentId?: string;
   integrationName?: string;
@@ -62,6 +68,9 @@ export const ANTHROPIC_API_KEY_HREF = 'https://console.anthropic.com/settings/ke
 export const CLAUDE_AGENT_ID_HREF = 'https://docs.claude.com/en/api/agents-list';
 export const CLAUDE_ENVIRONMENT_ID_HREF = 'https://docs.claude.com/en/api/agents-list';
 export const CLAUDE_WORKSPACE_HREF = 'https://console.anthropic.com/settings/workspaces';
+export const AWS_CLAUDE_SETUP_HREF = 'https://docs.aws.amazon.com/claude-platform/latest/userguide/setup.html';
+export const AWS_CLAUDE_API_KEYS_HREF =
+  'https://docs.aws.amazon.com/claude-platform/latest/userguide/authentication.html';
 
 export const AGENT_TEMPLATES: AgentTemplate[] = [
   {

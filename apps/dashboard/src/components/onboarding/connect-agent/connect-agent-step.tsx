@@ -163,7 +163,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const matchingAnthropicIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
 
-    return getClaudeManagedAgentIntegrations(integrations);
+    return getClaudeManagedAgentIntegrations(integrations, selectedConnector?.providerId);
   }, [integrations, selectedConnector?.providerId]);
 
   useEffect(() => {
@@ -362,7 +362,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       lastVerifiedKeyRef.current = null;
 
       if (option.providerLabel && !integrationName.trim()) {
-        const nextIndex = getClaudeManagedAgentIntegrations(integrations).length + 1;
+        const nextIndex = getClaudeManagedAgentIntegrations(integrations, option.providerId).length + 1;
         setIntegrationName(`${option.providerLabel} ${nextIndex}`);
       }
     },
@@ -383,38 +383,39 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     lastVerifiedKeyRef.current = null;
   }, []);
 
-  const handleVerify = useCallback(
-    (keyToVerify: string) => {
+  const handleVerify = useCallback(() => {
       if (!selectedConnector?.providerId) return;
+      const trimmedApiKey = apiKey.trim();
+      if (!trimmedApiKey) return;
       if (verifyMutation.isPending) return;
-      if (lastVerifiedKeyRef.current === keyToVerify && verifyStatus === 'valid') return;
+      if (lastVerifiedKeyRef.current === trimmedApiKey && verifyStatus === 'valid') return;
 
-      lastVerifiedKeyRef.current = keyToVerify;
+      lastVerifiedKeyRef.current = trimmedApiKey;
       setVerifyStatus('verifying');
       setVerifyMessage(undefined);
 
       verifyMutation.mutate(
         {
           providerId: selectedConnector.providerId,
-          apiKey: keyToVerify,
+          apiKey: trimmedApiKey,
           externalWorkspaceId: externalWorkspaceId || undefined,
         },
         {
           onSuccess: () => {
-            if (lastVerifiedKeyRef.current !== keyToVerify) return;
+            if (lastVerifiedKeyRef.current !== trimmedApiKey) return;
             setVerifyStatus('valid');
             setVerifyMessage(undefined);
             setErrors((prev) => ({ ...prev, apiKey: undefined }));
           },
           onError: (err) => {
-            if (lastVerifiedKeyRef.current !== keyToVerify) return;
+            if (lastVerifiedKeyRef.current !== trimmedApiKey) return;
             setVerifyStatus('invalid');
             setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
           },
         }
       );
     },
-    [selectedConnector?.providerId, externalWorkspaceId, verifyMutation, verifyStatus]
+    [selectedConnector?.providerId, apiKey, externalWorkspaceId, verifyMutation, verifyStatus]
   );
 
   const handleSaveIntegration = useCallback(async () => {

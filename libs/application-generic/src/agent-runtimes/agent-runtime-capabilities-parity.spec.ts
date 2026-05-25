@@ -1,4 +1,5 @@
 import { AGENT_RUNTIME_PROVIDERS, AgentRuntimeProviderIdEnum } from '@novu/shared';
+import { createAnthropicProvider } from './anthropic/anthropic-agent-runtime.provider';
 import { getAgentRuntimeProvider, listRegisteredAgentRuntimeProviders } from './agent-runtime.factory';
 import { UnsupportedCapabilityError } from './errors';
 import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
@@ -14,6 +15,16 @@ import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
  */
 
 function getProviderInstance(id: AgentRuntimeProviderIdEnum): IAgentRuntimeProvider {
+  if (id === AgentRuntimeProviderIdEnum.AnthropicAws) {
+    return createAnthropicProvider(id, {
+      credentials: {
+        region: 'us-east-1',
+        externalWorkspaceId: 'wrkspc_test',
+        apiKey: 'test-aws-key',
+      },
+    });
+  }
+
   return getAgentRuntimeProvider(id, 'test-key');
 }
 
