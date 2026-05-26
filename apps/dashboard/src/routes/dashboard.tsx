@@ -4,6 +4,7 @@ import { CommandPalette } from '@/components/command-palette';
 import { CommandPaletteProvider } from '@/components/command-palette/command-palette-provider';
 import { Toaster } from '@/components/primitives/sonner';
 import { OptInProvider } from '@/context/opt-in-provider';
+import { HostnameGuard } from './hostname-guard';
 import { ProtectedRoute } from './protected-route';
 
 export const DashboardRoute = () => {
@@ -12,7 +13,9 @@ export const DashboardRoute = () => {
       <OptInProvider>
         <AiDrawerProvider>
           <CommandPaletteProvider>
-            <Outlet />
+            <HostnameGuard>
+              <Outlet />
+            </HostnameGuard>
             <CommandPalette />
             <Toaster />
           </CommandPaletteProvider>

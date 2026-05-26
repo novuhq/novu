@@ -1,18 +1,21 @@
-import { OrganizationList as OrganizationListForm, useOrganization } from '@clerk/react';
+import { useClerk } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { RegionSelector, useRegion } from '@/context/region';
+import { OrganizationPicker } from '@/components/auth/organization-picker';
+import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
-import { useTelemetry } from '../../hooks/use-telemetry';
-import { clerkSignupAppearance } from '../../utils/clerk-appearance';
-import { getOnboardingAppId, withAppId } from '../../utils/onboarding-redirect';
+import {
+  getOnboardingAppId,
+  getPostOrgCreateRoute,
+  resolveOnboardingAppId,
+  withAppId,
+} from '../../utils/onboarding-redirect';
 import { ROUTES } from '../../utils/routes';
-import { TelemetryEvent } from '../../utils/telemetry';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
 import { AuthCard } from './auth-card';
 
-// Constants
 const HEADER_CONFIG = {
   title: 'Create an organization',
   description: 'Create an organization to get started',
@@ -21,26 +24,12 @@ const HEADER_CONFIG = {
   showStepper: false,
 } as const;
 
-const ORGANIZATION_FORM_BASE_CONFIG = {
-  hidePersonal: true,
-  skipInvitationScreen: true,
-} as const;
-
-const FORM_APPEARANCE = {
-  elements: {
-    ...clerkSignupAppearance.elements,
-    cardBox: { boxShadow: 'none' },
-    card: { paddingTop: 0, padding: 0 },
-  },
-} as const;
-
 const ILLUSTRATION_CONFIG = {
   src: '/images/auth/ui-org.svg',
   alt: 'Novu dashboard overview',
   className: 'opacity-70',
 } as const;
 
-// Types
 interface FormContainerProps {
   children: React.ReactNode;
 }
@@ -51,7 +40,6 @@ interface IllustrationProps {
   className?: string;
 }
 
-// Small Components
 function FormContainer({ children }: FormContainerProps) {
   return (
     <div className="flex w-full items-center p-6 md:min-w-[564px] md:max-w-[564px] md:p-[60px]">
@@ -61,47 +49,37 @@ function FormContainer({ children }: FormContainerProps) {
 }
 
 function OrganizationForm() {
-  const [showRegionSelector, setShowRegionSelector] = useState(false);
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const [searchParams] = useSearchParams();
-  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
+  const clerk = useClerk();
 
-  useEffect(() => {
-    const observer = new MutationObserver(() => {
-      const nameInput = document.querySelector('input[name="name"]');
-      const isOnFormPage = !!nameInput;
+  const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
 
-      if (isOnFormPage !== showRegionSelector) {
-        setShowRegionSelector(isOnFormPage);
-      }
-    });
+  // Only forward `?appId=` when it was set explicitly — hostname detection covers the rest.
+  const explicitAppId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
+  const afterCreateUrl = withAppId(getPostOrgCreateRoute(appId, isAgentsEnabled), explicitAppId);
+  const afterSelectUrl = withAppId(ROUTES.ENV, explicitAppId);
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-    });
+  const handleSignOut = useCallback(async () => {
+    const fallbackUrl = buildAfterSignOutUrl();
 
-    return () => observer.disconnect();
-  }, [showRegionSelector]);
-
-  const afterCreateUrl = withAppId(isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE, appId);
-  const afterSelectUrl = withAppId(ROUTES.ENV, appId);
+    try {
+      await clerk.signOut({ redirectUrl: fallbackUrl });
+    } catch (error) {
+      console.error('Failed to sign out via Clerk', error);
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      showErrorToast(`Unable to sign out. ${message}`, 'Sign out failed');
+      // Safe fallback so the user isn't stranded on the org-picker if Clerk's redirect never runs.
+      window.location.assign(fallbackUrl);
+    }
+  }, [clerk]);
 
   return (
-    <div className="relative">
-      {showRegionSelector && (
-        <div className="absolute -top-14 left-4 z-20">
-          <RegionSelector />
-        </div>
-      )}
-
-      <OrganizationListForm
-        appearance={FORM_APPEARANCE}
-        {...ORGANIZATION_FORM_BASE_CONFIG}
-        afterCreateOrganizationUrl={afterCreateUrl}
-        afterSelectOrganizationUrl={afterSelectUrl}
-      />
-    </div>
+    <OrganizationPicker
+      afterCreateOrganizationUrl={afterCreateUrl}
+      afterSelectOrganizationUrl={afterSelectUrl}
+      onSignOut={handleSignOut}
+    />
   );
 }
 
@@ -153,27 +131,8 @@ function PageContent() {
   );
 }
 
+// Embedded `<OrganizationPicker/>` filters memberships by `publicMetadata.productType`.
 export default function OrganizationCreate() {
-  const { organization } = useOrganization();
-  const { selectedRegion } = useRegion();
-  const track = useTelemetry();
-  const hasTrackedRef = useRef(false);
-  const trackedOrgIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (organization?.id && !hasTrackedRef.current && trackedOrgIdRef.current !== organization.id) {
-      hasTrackedRef.current = true;
-      trackedOrgIdRef.current = organization.id;
-
-      track(TelemetryEvent.CREATE_ORGANIZATION_FORM_SUBMITTED, {
-        location: 'web',
-        organizationId: organization.id,
-        organizationName: organization.name,
-        region: selectedRegion,
-      });
-    }
-  }, [organization?.id, organization?.name, selectedRegion, track]);
-
   return (
     <div className="flex w-full flex-1 flex-row items-center justify-center">
       <AuthCard>

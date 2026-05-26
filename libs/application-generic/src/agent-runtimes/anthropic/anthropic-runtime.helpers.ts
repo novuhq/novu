@@ -193,6 +193,18 @@ export function mapMcpServer(raw: Record<string, unknown>): AgentMcpServerDto {
 }
 
 /**
+ * Default permission policy for managed-agent toolsets we provision.
+ * Builtin tools default to `always_allow` when omitted, but MCP toolsets
+ * default to `always_ask` — we set this explicitly on both so Novu-created
+ * agents do not pause for approval on every tool invocation.
+ *
+ * @see https://platform.claude.com/docs/en/managed-agents/permission-policies
+ */
+export const MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG = {
+  permission_policy: { type: 'always_allow' },
+} as const;
+
+/**
  * The agent response `tools` array contains toolset objects, not plain tool entries.
  * Flatten builtin toolset configs into individual AgentToolDto entries.
  *
@@ -241,12 +253,17 @@ export function buildToolsPayload(
 
   payload.push({
     type: 'agent_toolset_20260401',
+    default_config: MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG,
     configs: allToolNames.map((name) => ({ name, enabled: enabledSet.has(name) })),
   });
 
   if (mcpServers) {
     for (const server of mcpServers) {
-      payload.push({ type: 'mcp_toolset', mcp_server_name: server.name });
+      payload.push({
+        type: 'mcp_toolset',
+        mcp_server_name: server.name,
+        default_config: MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG,
+      });
     }
   }
 

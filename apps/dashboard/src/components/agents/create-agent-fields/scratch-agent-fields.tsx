@@ -118,7 +118,7 @@ export function ScratchAgentFields({
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1">
           <label htmlFor={instructionsId} className="text-text-strong text-label-xs font-medium">
-            Instructions
+            {showSystemPromptHelper ? 'Instructions' : 'Description'}
           </label>
           {showSystemPromptHelper && (
             <span className="text-text-soft text-paragraph-xs ml-auto">(Sent to Claude as the system prompt)</span>

@@ -34,12 +34,21 @@ import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from '../onboarding/connect-agent/agent-suggestion-pills';
 import { GenerationStatus, type GenerationStep } from '../onboarding/connect-agent/generation-status';
 import { PromptInput } from '../onboarding/connect-agent/prompt-input';
-import { getClaudeManagedAgentIntegrations } from './connectors/claude-managed-integrations';
+import {
+  getClaudeManagedAgentIntegrations,
+  getPreferredClaudeManagedIntegration,
+  isDemoManagedClaudeIntegrationSelected,
+} from './connectors/claude-managed-integrations';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
 } from './connectors/connector-integration-dropdown';
-import { type ConnectorId, type ConnectorOption, getConnectorById } from './connectors/connector-options';
+import {
+  type ConnectorId,
+  type ConnectorOption,
+  getConnectorById,
+  getConnectorIdForProviderId,
+} from './connectors/connector-options';
 import {
   AGENT_TEMPLATES,
   type AgentTemplate,
@@ -47,10 +56,10 @@ import {
   buildVerifyCredentialsPayload,
   buildVerifyFingerprint,
   ConfigureCredentialsSection,
-  hasCompleteManagedCredentials,
   type CreateAgentForm,
   type CreateAgentFormErrors,
   ExistingAgentFields,
+  hasCompleteManagedCredentials,
   hasFormErrors,
   type ManagedAgentRuntimeOverrides,
   ScratchAgentFields,
@@ -177,6 +186,9 @@ export function CreateAgentDialog({
   // Holds the integration id from "Save integration" until it appears in the fetched list, so the
   // auto-select effect does not overwrite it or reopen the credentials section during refetch.
   const pinnedIntegrationIdRef = useRef<string | null>(null);
+  // On dialog open, prefer the first managed integration across provider types (e.g. AWS Claude
+  // when Anthropic has none). Cleared once the user picks a connector or a provider match is found.
+  const preferAnyManagedIntegrationRef = useRef(true);
 
   const {
     generate: generateManagedAgent,
@@ -187,14 +199,13 @@ export function CreateAgentDialog({
   const selectedConnector = getConnectorById(connectorId);
   const isManagedClaudeConnector = selectedConnector?.runtime === 'claude';
   const runtime = selectedConnector?.runtime ?? 'scratch';
-  const isScratchRuntime = runtime === 'scratch';
-  // The "Generate from prompt" surface is available for both managed Claude (when the
-  // managed-runtime flag is on) and for the self-hosted Custom Scaffold flow unconditionally —
-  // Custom Scaffold generation only produces name/identifier/systemPrompt and never touches any
-  // Anthropic-managed infrastructure, so it has no reason to depend on the managed flag.
-  const useAiGeneration = isManagedClaudeConnector ? isManagedEnabled : isScratchRuntime;
+  // The "Generate from prompt" surface is reserved for managed Claude (when the managed-runtime
+  // flag is on). The Custom Scaffold flow always renders the manual ScratchAgentFields form, so
+  // teams writing their own runtime see exactly the inputs they need to fill in.
+  const useAiGeneration = isManagedClaudeConnector && isManagedEnabled;
+  const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
-  const showScopeTabs = isManagedClaudeConnector;
+  const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
   const showManagedOptions = isManagedEnabled;
 
   // Hide managed connectors when the feature flag is off — the dropdown still lists them visually,
@@ -247,12 +258,30 @@ export function CreateAgentDialog({
     }
 
     if (matchingAnthropicIntegrations.length > 0) {
+      preferAnyManagedIntegrationRef.current = false;
       setSelectedIntegrationId(matchingAnthropicIntegrations[0]._id);
-    } else {
-      setSelectedIntegrationId(undefined);
-      setCredentialsPanelVisible(true);
-      setCredentialsPanelExpanded(true);
+
+      return;
     }
+
+    if (preferAnyManagedIntegrationRef.current) {
+      const preferred = getPreferredClaudeManagedIntegration(integrations);
+      if (preferred) {
+        const connectorForPreferred = getConnectorIdForProviderId(preferred.providerId);
+        if (connectorForPreferred) {
+          setConnectorId(connectorForPreferred);
+        }
+        preferAnyManagedIntegrationRef.current = false;
+        setSelectedIntegrationId(preferred._id);
+
+        return;
+      }
+    }
+
+    preferAnyManagedIntegrationRef.current = false;
+    setSelectedIntegrationId(undefined);
+    setCredentialsPanelVisible(true);
+    setCredentialsPanelExpanded(true);
   }, [
     open,
     isSubmitting,
@@ -260,6 +289,7 @@ export function CreateAgentDialog({
     matchingAnthropicIntegrations,
     selectedIntegrationId,
     credentialsPanelVisible,
+    integrations,
   ]);
 
   // Default integration name = "<Provider> <next-index>"
@@ -309,6 +339,7 @@ export function CreateAgentDialog({
     setIsIdentifierTouched(false);
     setShowSavedBadge(false);
     pinnedIntegrationIdRef.current = null;
+    preferAnyManagedIntegrationRef.current = true;
     if (savedBadgeTimerRef.current) {
       clearTimeout(savedBadgeTimerRef.current);
       savedBadgeTimerRef.current = null;
@@ -352,21 +383,8 @@ export function CreateAgentDialog({
     });
   }, []);
 
-  // Legacy fallback (AI generation unavailable): pre-fill the manual form fields directly.
-  const handleSelectTemplate = useCallback(
-    (template: AgentTemplate) => {
-      setName(template.name);
-      if (!isIdentifierTouched) {
-        setIdentifier(slugify(template.name));
-        setErrors((prev) => ({ ...prev, identifier: undefined }));
-      }
-      setInstructions(template.instructions);
-      setErrors((prev) => ({ ...prev, name: undefined }));
-    },
-    [isIdentifierTouched]
-  );
-
   const handleSelectConnector = (id: ConnectorId) => {
+    preferAnyManagedIntegrationRef.current = false;
     setConnectorId(id);
 
     const next = getConnectorById(id);
@@ -384,6 +402,17 @@ export function CreateAgentDialog({
       setExternalEnvironmentId('');
     }
   };
+
+  // Demo Novu-managed Claude credentials cannot adopt an existing provider agent.
+  useEffect(() => {
+    if (!open) return;
+    if (!isDemoProviderSelected) return;
+    if (generationMode !== 'existing') return;
+
+    setGenerationMode('prompt');
+    setExternalAgentId('');
+    setExternalEnvironmentId('');
+  }, [open, isDemoProviderSelected, generationMode]);
 
   const handleGenerationModeChange = useCallback((next: AgentGenerationMode) => {
     setGenerationMode(next);
@@ -443,19 +472,18 @@ export function CreateAgentDialog({
     setVerifyMessage(undefined);
 
     verifyMutation.mutate(buildVerifyCredentialsPayload(selectedConnector.providerId, fields), {
-        onSuccess: () => {
-          if (lastVerifiedKeyRef.current !== verifyKey) return;
-          setVerifyStatus('valid');
-          setVerifyMessage(undefined);
-          setErrors((prev) => ({ ...prev, apiKey: undefined }));
-        },
-        onError: (err) => {
-          if (lastVerifiedKeyRef.current !== verifyKey) return;
-          setVerifyStatus('invalid');
-          setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
-        },
-      }
-    );
+      onSuccess: () => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('valid');
+        setVerifyMessage(undefined);
+        setErrors((prev) => ({ ...prev, apiKey: undefined }));
+      },
+      onError: (err) => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('invalid');
+        setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
+      },
+    });
   };
 
   const handleApiKeyChange = (next: string) => {
@@ -509,7 +537,7 @@ export function CreateAgentDialog({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const isExistingMode = runtime === 'claude' && generationMode === 'existing';
+    const isExistingMode = runtime === 'claude' && !isDemoProviderSelected && generationMode === 'existing';
     const isPromptGenerationMode = useAiGeneration && generationMode === 'prompt';
 
     let generated: GeneratedManagedAgent | null = null;
@@ -851,28 +879,25 @@ export function CreateAgentDialog({
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                <AgentSuggestionPills suggestions={AGENT_TEMPLATES} onSelect={handleSelectTemplate} />
-
-                <ScratchAgentFields
-                  name={name}
-                  identifier={identifier}
-                  instructions={instructions}
-                  errors={errors}
-                  isIdentifierTouched={isIdentifierTouched}
-                  isClaudeSelected={isManagedClaudeConnector}
-                  onNameChange={(next) => {
-                    setName(next);
-                    setErrors((prev) => ({ ...prev, name: undefined }));
-                  }}
-                  onIdentifierChange={(next) => {
-                    setIdentifier(next);
-                    setErrors((prev) => ({ ...prev, identifier: undefined }));
-                  }}
-                  onIdentifierTouched={() => setIsIdentifierTouched(true)}
-                  onInstructionsChange={setInstructions}
-                />
-              </div>
+              <ScratchAgentFields
+                name={name}
+                identifier={identifier}
+                instructions={instructions}
+                errors={errors}
+                isIdentifierTouched={isIdentifierTouched}
+                isClaudeSelected={isManagedClaudeConnector}
+                disabled={isSubmitBusy}
+                onNameChange={(next) => {
+                  setName(next);
+                  setErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+                onIdentifierChange={(next) => {
+                  setIdentifier(next);
+                  setErrors((prev) => ({ ...prev, identifier: undefined }));
+                }}
+                onIdentifierTouched={() => setIsIdentifierTouched(true)}
+                onInstructionsChange={setInstructions}
+              />
             )}
           </div>
 

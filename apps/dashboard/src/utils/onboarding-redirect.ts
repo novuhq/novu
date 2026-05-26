@@ -1,4 +1,5 @@
-import { APP_IDS, type AppId } from './apps';
+import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
+import { APP_IDS, type AppId, buildOtherAppExternalUrl, getCurrentAppId } from './apps';
 import { buildRoute, ROUTES } from './routes';
 
 const APP_ID_PARAM = 'appId';
@@ -15,6 +16,11 @@ export function getOnboardingAppId(search: URLSearchParams): AppId | undefined {
   return undefined;
 }
 
+// Prefers explicit `?appId=` (cross-host handoff) and falls back to the current hostname.
+export function resolveOnboardingAppId(search: URLSearchParams): AppId {
+  return getOnboardingAppId(search) ?? getCurrentAppId();
+}
+
 export function withAppId(path: string, appId: AppId | undefined): string {
   if (!appId) {
     return path;
@@ -25,8 +31,27 @@ export function withAppId(path: string, appId: AppId | undefined): string {
   return `${path}${separator}${APP_ID_PARAM}=${appId}`;
 }
 
+export function getPostOrgCreateRoute(appId: AppId, _isAgentsEnabled: boolean): string {
+  if (appId === APP_IDS.CONNECT) {
+    return ROUTES.AGENTS_SETUP;
+  }
+
+  // Platform skips the usecase picker and starts directly with notifications/inbox.
+  return ROUTES.INBOX_USECASE;
+}
+
+// May return an absolute URL when crossing to the other product host — callers must check
+// `apps.isAbsoluteUrl` and use `window.location.assign` so the cross-origin navigation happens.
 export function getPostOnboardingRoute(appId: AppId | undefined, environmentSlug: string): string {
   if (appId === APP_IDS.CONNECT) {
+    if (IS_HOSTNAME_SPLIT_ENABLED) {
+      const external = buildOtherAppExternalUrl(APP_IDS.CONNECT, environmentSlug);
+
+      if (external) {
+        return external;
+      }
+    }
+
     return buildRoute(ROUTES.CONNECT_HOME, { environmentSlug });
   }
 

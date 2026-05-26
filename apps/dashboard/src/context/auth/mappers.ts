@@ -1,5 +1,12 @@
 import type { OrganizationResource, UserResource } from '@clerk/shared/types';
-import type { IOrganizationEntity, IServicesHashes, IUserEntity, JobTitleEnum, ProductUseCases } from '@novu/shared';
+import {
+  type IOrganizationEntity,
+  type IServicesHashes,
+  type IUserEntity,
+  type JobTitleEnum,
+  type ProductUseCases,
+  resolveOrganizationProductType,
+} from '@novu/shared';
 
 export const toUserEntity = (clerkUser: UserResource): IUserEntity => {
   /*
@@ -42,5 +49,6 @@ export const toOrganizationEntity = (clerkOrganization: OrganizationResource): I
     domain: clerkOrganization.publicMetadata.domain as string,
     productUseCases: clerkOrganization.publicMetadata.productUseCases as ProductUseCases,
     language: clerkOrganization.publicMetadata.language as string[],
+    productType: resolveOrganizationProductType(clerkOrganization.publicMetadata),
   };
 };

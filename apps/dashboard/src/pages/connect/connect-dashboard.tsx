@@ -3,7 +3,6 @@ import { ConnectWelcomeHeading } from '@/components/connect/dashboard/connect-we
 import { ExplorePlatformSection } from '@/components/connect/dashboard/explore-platform-section';
 import { RecentConversationsSection } from '@/components/connect/dashboard/recent-conversations-section';
 import { SetThingsUpSection } from '@/components/connect/dashboard/set-things-up-section';
-import { StartFromTemplateSection } from '@/components/connect/dashboard/start-from-template-section';
 import { useConnectSetupSteps } from '@/components/connect/dashboard/use-connect-setup-steps';
 import { WhatsNextSection } from '@/components/connect/dashboard/whats-next-section';
 import { DashboardLayout } from '@/components/dashboard-layout';
@@ -24,7 +23,7 @@ export function ConnectDashboardPage() {
               <RecentConversationsSection />
             </div>
             <aside className="flex flex-col gap-2.5">
-              {isComplete ? <WhatsNextSection /> : <StartFromTemplateSection />}
+              {isComplete ? <WhatsNextSection /> : null}
               <ConnectResourcesSection />
               <ExplorePlatformSection />
             </aside>

@@ -1,4 +1,4 @@
-import { RedirectToSignIn, Show } from '@clerk/react';
+import { RedirectToSignIn, Show, useAuth, useClerk } from '@clerk/react';
 import { Outlet } from 'react-router-dom';
 import { AuthLayout } from '@/components/auth-layout';
 
@@ -11,6 +11,13 @@ export const AuthRoute = () => {
 };
 
 export const ProtectedAuthRoute = () => {
+  const { isLoaded } = useAuth();
+  const clerk = useClerk();
+
+  if (!isLoaded || !clerk.loaded) {
+    return null;
+  }
+
   return (
     <>
       <Show when="signed-in">
@@ -19,7 +26,7 @@ export const ProtectedAuthRoute = () => {
         </AuthLayout>
       </Show>
       <Show when="signed-out">
-        <RedirectToSignIn />
+        <RedirectToSignIn redirectUrl={typeof window !== 'undefined' ? window.location.href : undefined} />
       </Show>
     </>
   );

@@ -9,7 +9,7 @@ export function RecentConversationsSection() {
   const { currentEnvironment } = useEnvironment();
 
   const conversationsPath = currentEnvironment?.slug
-    ? buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug })
+    ? buildRoute(ROUTES.CONNECT_CONVERSATIONS, { environmentSlug: currentEnvironment.slug })
     : undefined;
 
   return (
@@ -28,7 +28,11 @@ export function RecentConversationsSection() {
           </Link>
         ) : null}
       </div>
-      <ConversationsContent className="border-stroke-soft rounded-lg border bg-bg-white" contentHeight="h-[420px]" />
+      <ConversationsContent
+        className="border-stroke-soft rounded-lg border bg-bg-white"
+        contentHeight="h-[420px]"
+        redirectConversationSelectionTo={conversationsPath}
+      />
     </div>
   );
 }

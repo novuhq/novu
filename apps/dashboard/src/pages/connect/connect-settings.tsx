@@ -29,7 +29,7 @@ export function ConnectSettingsPage() {
     <>
       <PageMeta title="Connect · Settings" />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">Settings</h1>}>
-        <SettingsTabs rootRoute={rootRoute} routes={routes} />
+        <SettingsTabs rootRoute={rootRoute} routes={routes} hideBilling />
       </DashboardLayout>
     </>
   );

@@ -104,7 +104,7 @@ export const CONNECTOR_OPTIONS: ConnectorOption[] = [
   },
   {
     id: 'custom-scaffold',
-    label: 'Custom scaffold [AI SDK, LangChain]',
+    label: 'Custom code (AI SDK, langchain, etc...)',
     group: 'custom',
     icon: CUSTOM_CODE_AVATAR,
     comingSoon: false,
@@ -116,4 +116,12 @@ export function getConnectorById(id: ConnectorId | undefined): ConnectorOption |
   if (!id) return undefined;
 
   return CONNECTOR_OPTIONS.find((o) => o.id === id);
+}
+
+export function getConnectorIdForProviderId(providerId: string): ConnectorId | undefined {
+  if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+    return 'claude';
+  }
+
+  return CONNECTOR_OPTIONS.find((option) => option.providerId === providerId)?.id;
 }

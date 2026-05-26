@@ -2,12 +2,11 @@ import { useOrganization, useUser } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowLeftSLine, RiArrowRightSLine, RiCalendarEventLine } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { AgentSetupSteps } from '@/components/agents/agent-setup-steps';
 import type { RuntimeType } from '@/components/agents/create-agent-fields';
-import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
 import {
   AgentFlowIllustration,
   type AgentFlowRuntime,
@@ -18,14 +17,28 @@ import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
+import { IS_NOVU_CONNECT } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { getOnboardingAppId, getPostOnboardingRoute, withAppId } from '@/utils/onboarding-redirect';
+import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
+import { clearConnectProvisioning, isConnectProvisioningActive } from '@/utils/connect';
+import { getPostOnboardingRoute, resolveOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
+
+function goToPostOnboardingRoute(target: string, navigate: (path: string) => void) {
+  // Absolute URLs need a full page nav so the browser actually crosses origins.
+  if (isAbsoluteUrl(target)) {
+    window.location.assign(target);
+
+    return;
+  }
+
+  navigate(target);
+}
 
 type LoadingPhase = 'initializing' | 'loading' | 'ready' | 'error';
 type SetupPhase = 'connect' | 'details';
@@ -99,19 +112,6 @@ function SkipBanner({ onSkip }: SkipBannerProps) {
         <span className="text-text-strong">Not the right time?</span> Skip for now and finish setup later.
       </p>
       <div className="flex items-center gap-2">
-        <a
-          href={BOOK_DEMO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="border-stroke-soft text-text-sub inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea]"
-          style={{
-            backgroundImage:
-              'linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.02) 100%), linear-gradient(90deg, #fff 0%, #fff 100%)',
-          }}
-        >
-          <RiCalendarEventLine className="size-4" />
-          Book a demo
-        </a>
         <button
           type="button"
           onClick={onSkip}
@@ -160,7 +160,9 @@ export function AgentsSetupPage() {
   const agentRoutes = useAgentRoutes();
 
   const [searchParams] = useSearchParams();
-  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
+  const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
+  const isConnectFlow = appId === APP_IDS.CONNECT;
+  const isConnectHost = IS_NOVU_CONNECT || isConnectFlow;
 
   const [envLoaded, setEnvLoaded] = useState(false);
   const { environments } = useFetchEnvironments({
@@ -178,6 +180,14 @@ export function AgentsSetupPage() {
       setEnvLoaded(true);
     }
   }, [environments, user, organization]);
+
+  useEffect(() => {
+    if (!currentEnvironment || loadingPhase !== 'ready') {
+      return;
+    }
+
+    clearConnectProvisioning();
+  }, [currentEnvironment, loadingPhase]);
 
   useEffect(() => {
     telemetry(TelemetryEvent.AGENTS_SETUP_PAGE_VIEWED);
@@ -204,7 +214,7 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'skip' });
 
     if (currentEnvironment?.slug) {
-      void navigate(getPostOnboardingRoute(appId, currentEnvironment.slug));
+      goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
 
       return;
     }
@@ -217,7 +227,7 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'complete' });
 
     if (currentEnvironment?.slug) {
-      void navigate(getPostOnboardingRoute(appId, currentEnvironment.slug));
+      goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
     }
   }, [appId, currentEnvironment?.slug, navigate, telemetry]);
 
@@ -235,15 +245,22 @@ export function AgentsSetupPage() {
 
   const handleBackToConnect = useCallback(() => setPhase('connect'), []);
 
+  // Connect skips the usecase picker, so there's no back target for the connect phase.
+  const handleBackFromConnectPhase = isConnectFlow ? undefined : () => navigate(ROUTES.USECASE_SELECT);
+
   if (!isAgentsEnabled) {
-    return <Navigate to={ROUTES.INBOX_USECASE} replace />;
+    return <Navigate to={isConnectFlow ? ROUTES.ROOT : ROUTES.INBOX_USECASE} replace />;
   }
 
   if (!currentEnvironment || loadingPhase !== 'ready') {
+    if (isConnectHost && isConnectProvisioningActive()) {
+      return null;
+    }
+
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <PageMeta title="Let's connect your agent to where you work" />
-        <OnboardingLoader />
+        <PageMeta title={isConnectHost ? 'Build and distribute agents' : "Let's connect your agent to where you work"} />
+        <OnboardingLoader variant={isConnectHost ? 'connect' : 'platform'} />
       </div>
     );
   }
@@ -253,7 +270,7 @@ export function AgentsSetupPage() {
       <PageMeta title="Let's connect your agent to where you work" />
       <StepHeader
         current={phase === 'connect' ? 2 : 3}
-        onBack={phase === 'connect' ? () => navigate(ROUTES.USECASE_SELECT) : handleBackToConnect}
+        onBack={phase === 'connect' ? handleBackFromConnectPhase : handleBackToConnect}
       />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">
