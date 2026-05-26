@@ -1,37 +1,22 @@
 import { useCallback } from 'react';
-import { useAuth, useClerk } from '@clerk/react';
-import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { isSafeNavigationHref } from '@/utils/apps';
-import { navigateWithClerkSessionIfCrossOrigin } from '@/utils/connect/clerk-cross-origin-auth';
-import { isConnectHostnameUrl } from '@/utils/product-auth-urls';
 
+// Plain cross-origin navigation. The Connect satellite Clerk SDK handles session sync via its
+// built-in handshake on the destination page — wrapping with `clerk.redirectWithAuth` here caused
+// a `__clerk_synced=false` redirect loop with Platform.
 export function useCrossAppNavigation() {
-  const { isSignedIn, isLoaded } = useAuth();
-  const clerk = useClerk();
+  return useCallback((href: string, openInNewTab = false) => {
+    // Whitelist http(s) / relative hrefs so callers can't smuggle `javascript:` / `data:` URLs in.
+    if (!isSafeNavigationHref(href)) {
+      return;
+    }
 
-  return useCallback(
-    (href: string, openInNewTab = false) => {
-      if (!isSafeNavigationHref(href)) {
-        return;
-      }
+    if (openInNewTab) {
+      window.open(href, '_blank', 'noopener,noreferrer');
 
-      if (openInNewTab) {
-        window.open(href, '_blank', 'noopener,noreferrer');
+      return;
+    }
 
-        return;
-      }
-
-      const shouldSyncClerkSession =
-        IS_HOSTNAME_SPLIT_ENABLED && isConnectHostnameUrl(href) && isLoaded && isSignedIn && clerk.loaded;
-
-      if (shouldSyncClerkSession) {
-        void navigateWithClerkSessionIfCrossOrigin(clerk, href);
-
-        return;
-      }
-
-      window.location.assign(href);
-    },
-    [clerk, isLoaded, isSignedIn]
-  );
+    window.location.assign(href);
+  }, []);
 }

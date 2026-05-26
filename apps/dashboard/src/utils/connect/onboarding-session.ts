@@ -95,3 +95,30 @@ export function consumeConnectProvisionIntentFromLocation(): boolean {
 
   return true;
 }
+
+/**
+ * True when the current Connect visit was initiated by an explicit provisioning intent —
+ * either the cross-origin `?provision=1` query param (Platform → Connect handoff) or the
+ * same-origin sessionStorage flag set by the Connect-switch modal.
+ *
+ * Read SYNCHRONOUSLY during render so the org-list page can decide between auto-provisioning
+ * (post-sign-up, post-modal) and rendering the regular picker (post-delete, manual nav from
+ * Platform with existing Connect orgs). Side-effect free.
+ */
+export function hasConnectProvisionIntent(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  if (isConnectProvisioningActive()) {
+    return true;
+  }
+
+  try {
+    const params = new URLSearchParams(window.location.search);
+
+    return params.get(CONNECT_PROVISION_QUERY) === '1';
+  } catch {
+    return false;
+  }
+}

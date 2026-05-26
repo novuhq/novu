@@ -1,3 +1,6 @@
+import { SignUp as SignUpForm, useAuth } from '@clerk/react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AuthSideBanner } from '@/components/auth/auth-side-banner';
 import { ConnectAuthSideBanner } from '@/components/auth/connect-auth-side-banner';
 import { RegionPicker } from '@/components/auth/region-picker';
@@ -5,62 +8,42 @@ import { PageMeta } from '@/components/page-meta';
 import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import {
-  beginConnectProvisioning,
-  buildConnectProvisionOrgListPath,
-  navigateToConnectWithClerkSession,
-  redirectSatelliteToPrimarySignUp,
-} from '@/utils/connect';
+import { beginConnectProvisioning, buildConnectProvisionOrgListPath } from '@/utils/connect';
 import { markInvitationAcceptIfPresent } from '@/utils/invitation-accept-signal';
 import {
   buildAbsoluteConnectUrl,
+  buildPrimarySignUpUrl,
   CONNECT_PRODUCT_VALUE,
   PRODUCT_QUERY_PARAM,
-  readConnectSatelliteReturnUrl,
-  resolveConnectSatelliteReturnUrl,
 } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { getReferrer, getUtmParams } from '@/utils/tracking';
-import { SignUp as SignUpForm, useAuth, useClerk } from '@clerk/react';
-import { useEffect, useMemo, useRef } from 'react';
-import { useLocation, useSearchParams } from 'react-router-dom';
 
 export const SignUpPage = () => {
   const segment = useSegment();
   const { isSignedIn, isLoaded } = useAuth();
-  const clerk = useClerk();
-  const location = useLocation();
   const [searchParams] = useSearchParams();
-  const hasRedirectedToPrimaryRef = useRef(false);
-  const hasRedirectedToConnectRef = useRef(false);
+  const hasRedirectedRef = useRef(false);
 
   const isConnectSignUp = useMemo(
     () => searchParams.get(PRODUCT_QUERY_PARAM) === CONNECT_PRODUCT_VALUE || IS_NOVU_CONNECT,
     [searchParams]
   );
 
-  const connectSatelliteReturnUrl = useMemo(
-    () => readConnectSatelliteReturnUrl(searchParams),
-    [searchParams, location.hash, location.search]
-  );
-
-  const connectDefaultDestination = useMemo(
+  // Clean Connect provisioning entry point. Always the same URL — Clerk's satellite domain SDK
+  // performs the session-sync handshake natively when the destination page loads.
+  const connectProvisionRedirect = useMemo(
     () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
     []
   );
 
-  // Sign-up flows are primary-only — bounce satellite visitors via Clerk.buildSignUpUrl (sync params).
+  // Sign-up flows are primary-only — bounce satellite visitors back with Connect branding.
   useEffect(() => {
-    if (!IS_NOVU_CONNECT || !clerk.loaded || hasRedirectedToPrimaryRef.current) {
-      return;
+    if (IS_NOVU_CONNECT) {
+      window.location.replace(buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE }));
     }
-
-    hasRedirectedToPrimaryRef.current = true;
-    const returnUrl = resolveConnectSatelliteReturnUrl(searchParams);
-
-    redirectSatelliteToPrimarySignUp(clerk, returnUrl);
-  }, [searchParams, location.hash, location.search, clerk.loaded, clerk]);
+  }, []);
 
   // Capture invite-link entry (`__clerk_ticket` in the URL) BEFORE Clerk consumes the ticket
   // during sign-up. The picker reads this signal later to decide whether to hop across products.
@@ -78,9 +61,12 @@ export const SignUpPage = () => {
     });
   }, []);
 
-  // Primary → Connect after auth: Clerk redirectWithAuth syncs the session to the satellite.
+  // Already-signed-in user landing on `/auth/sign-up` with Connect intent — hand off to Connect
+  // immediately. We deliberately drop any inbound `redirect_url` (e.g. a stale `?__clerk_synced=false`
+  // Connect URL) and always go to the clean provision entry point — Clerk's satellite SDK syncs
+  // the session on arrival. Honoring the stale return URL is what caused the redirect loop.
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || !clerk.loaded || hasRedirectedToConnectRef.current) {
+    if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || hasRedirectedRef.current) {
       return;
     }
 
@@ -88,21 +74,18 @@ export const SignUpPage = () => {
       return;
     }
 
-    hasRedirectedToConnectRef.current = true;
-
-    const destination = connectSatelliteReturnUrl ?? connectDefaultDestination;
-
-    if (!connectSatelliteReturnUrl) {
-      beginConnectProvisioning();
-    }
-
-    void navigateToConnectWithClerkSession(clerk, destination);
-  }, [isLoaded, isSignedIn, isConnectSignUp, connectSatelliteReturnUrl, connectDefaultDestination, clerk]);
+    hasRedirectedRef.current = true;
+    beginConnectProvisioning();
+    window.location.assign(connectProvisionRedirect);
+  }, [isLoaded, isSignedIn, isConnectSignUp, connectProvisionRedirect]);
 
   const signInUrlWithProduct = isConnectSignUp
     ? `${ROUTES.SIGN_IN}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
     : ROUTES.SIGN_IN;
 
+  // Render nothing while redirecting:
+  //   - On the satellite (`IS_NOVU_CONNECT`) the page is mid-replace to primary.
+  //   - On the primary when the user is already signed in the effect above is handling the bounce.
   if (IS_NOVU_CONNECT || (isLoaded && isSignedIn)) {
     return null;
   }
@@ -119,7 +102,7 @@ export const SignUpPage = () => {
             path={ROUTES.SIGN_UP}
             signInUrl={signInUrlWithProduct}
             appearance={clerkSignupAppearance}
-            forceRedirectUrl={isConnectSignUp ? undefined : ROUTES.SIGNUP_ORGANIZATION_LIST}
+            forceRedirectUrl={isConnectSignUp ? connectProvisionRedirect : ROUTES.SIGNUP_ORGANIZATION_LIST}
           />
           {!IS_SELF_HOSTED && !isConnectSignUp && <RegionPicker />}
         </div>

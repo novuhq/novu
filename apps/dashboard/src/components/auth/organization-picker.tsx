@@ -1,4 +1,4 @@
-import { useOrganizationList, useUser, useClerk } from '@clerk/react';
+import { useOrganizationList, useUser } from '@clerk/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
@@ -12,12 +12,9 @@ import { IS_NOVU_CONNECT } from '@/config';
 import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, type AppId } from '@/utils/apps';
-import { isConnectWorkspace, navigateWithClerkSessionIfCrossOrigin, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
+import { isConnectWorkspace, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
 import { buildOtherProductOrgListUrl } from '@/utils/cross-product-redirect';
-import {
-  clearInvitationAcceptPending,
-  isInvitationAcceptPending,
-} from '@/utils/invitation-accept-signal';
+import { clearInvitationAcceptPending, isInvitationAcceptPending } from '@/utils/invitation-accept-signal';
 import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -97,10 +94,7 @@ function isMatchingMembership(membership: OrganizationMembershipLike, filter: Pr
  * True when the user has at least one membership belonging to the OTHER product host.
  * Used exclusively in the invite-accept path — see the routing effect below.
  */
-function hasCrossProductMembership(
-  memberships: OrganizationMembershipLike[],
-  currentFilter: ProductFilter
-): boolean {
+function hasCrossProductMembership(memberships: OrganizationMembershipLike[], currentFilter: ProductFilter): boolean {
   const otherFilter: ProductFilter = currentFilter === 'connect' ? 'platform' : 'connect';
 
   return memberships.some((membership) => isMatchingMembership(membership, otherFilter));
@@ -320,9 +314,7 @@ function CreateOrganizationView({
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-5">
       <div className="flex flex-col gap-1">
         <h1 className="text-label-md text-text-strong font-medium">Create Organization</h1>
-        <p className="text-label-sm text-text-sub">
-          Set up your {productLabel} workspace.
-        </p>
+        <p className="text-label-sm text-text-sub">Set up your {productLabel} workspace.</p>
       </div>
 
       {shouldShowRegionSelector ? (
@@ -395,7 +387,6 @@ export function OrganizationPicker({
 }: OrganizationPickerProps) {
   const track = useTelemetry();
   const { user } = useUser();
-  const clerk = useClerk();
 
   const productFilter = useMemo(getProductFilter, []);
   const productAppId = useMemo(() => getProductAppId(productFilter), [productFilter]);
@@ -456,8 +447,7 @@ export function OrganizationPicker({
   //     cross-product redirect decisions on the complete list (a matching org might sit on
   //     page 2; the cross-product check needs all pages drained to be accurate).
   const isFirstPageReady = isLoaded && hasRevalidated;
-  const isFullListLoaded =
-    isFirstPageReady && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
+  const isFullListLoaded = isFirstPageReady && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
 
   const allMemberships = useMemo<OrganizationMembershipLike[]>(
     () => (userMemberships?.data ?? []) as OrganizationMembershipLike[],
@@ -499,9 +489,11 @@ export function OrganizationPicker({
     if (isInvitationAcceptPending() && hasCrossProductMembership(allMemberships, productFilter)) {
       const otherProductUrl = buildOtherProductOrgListUrl(productFilter);
 
-      if (otherProductUrl && clerk.loaded) {
+      if (otherProductUrl) {
         clearInvitationAcceptPending();
-        void navigateWithClerkSessionIfCrossOrigin(clerk, otherProductUrl);
+        // Plain cross-origin nav — Clerk's satellite SDK handles session sync on the destination
+        // page. Wrapping with `clerk.redirectWithAuth` here caused redirect loops with `__clerk_synced=false`.
+        window.location.assign(otherProductUrl);
 
         return;
       }
@@ -509,7 +501,7 @@ export function OrganizationPicker({
 
     clearInvitationAcceptPending();
     setView('create');
-  }, [isFullListLoaded, filteredMemberships.length, allMemberships, productFilter, clerk.loaded, clerk]);
+  }, [isFullListLoaded, filteredMemberships.length, allMemberships, productFilter]);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {
