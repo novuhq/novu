@@ -78,6 +78,7 @@ export const SignUpPage = () => {
     });
   }, []);
 
+  // Primary → Connect after auth: Clerk redirectWithAuth syncs the session to the satellite.
   useEffect(() => {
     if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || !clerk.loaded || hasRedirectedToConnectRef.current) {
       return;
@@ -95,10 +96,8 @@ export const SignUpPage = () => {
       beginConnectProvisioning();
     }
 
-    navigateToConnectWithClerkSession(clerk, destination);
+    void navigateToConnectWithClerkSession(clerk, destination);
   }, [isLoaded, isSignedIn, isConnectSignUp, connectSatelliteReturnUrl, connectDefaultDestination, clerk]);
-
-  const connectProvisionRedirect = useMemo(() => connectDefaultDestination, [connectDefaultDestination]);
 
   const signInUrlWithProduct = isConnectSignUp
     ? `${ROUTES.SIGN_IN}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
@@ -120,7 +119,7 @@ export const SignUpPage = () => {
             path={ROUTES.SIGN_UP}
             signInUrl={signInUrlWithProduct}
             appearance={clerkSignupAppearance}
-            forceRedirectUrl={isConnectSignUp ? connectProvisionRedirect : ROUTES.SIGNUP_ORGANIZATION_LIST}
+            forceRedirectUrl={isConnectSignUp ? undefined : ROUTES.SIGNUP_ORGANIZATION_LIST}
           />
           {!IS_SELF_HOSTED && !isConnectSignUp && <RegionPicker />}
         </div>

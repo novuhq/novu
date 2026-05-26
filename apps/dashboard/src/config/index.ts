@@ -53,21 +53,7 @@ function getHostnameWithoutPort(host: string): string {
   return normalizeAppHost(host).split(':')[0];
 }
 
-/** Clerk proxy CNAME only exists on deployed Connect domains — not localhost dev hosts. */
-function shouldUseDefaultClerkProxy(connectHostname: string): boolean {
-  const hostname = getHostnameWithoutPort(connectHostname);
-
-  return hostname !== 'localhost' && !hostname.endsWith('.localhost');
-}
-
-// Clerk FAPI proxy on the Connect satellite (CNAME `clerk.<connect-domain>` → frontend-api.clerk.services).
-// Auto-default on deployed hosts only; set VITE_CLERK_PROXY_URL explicitly when needed.
-export const CLERK_PROXY_URL =
-  window._env_?.VITE_CLERK_PROXY_URL ||
-  import.meta.env.VITE_CLERK_PROXY_URL ||
-  (NOVU_CONNECT_HOSTNAME && shouldUseDefaultClerkProxy(NOVU_CONNECT_HOSTNAME)
-    ? `https://clerk.${getHostnameWithoutPort(NOVU_CONNECT_HOSTNAME)}`
-    : '');
+export { getHostnameWithoutPort };
 
 // Fail fast when the hostname split is half-configured. Without `NOVU_PLATFORM_HOSTNAME`,
 // satellite → primary handoffs (Clerk sign-in, cross-product redirects) silently break.

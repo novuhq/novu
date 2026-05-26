@@ -80,6 +80,8 @@ export const SignInPage = () => {
     });
   }, []);
 
+  // Primary → Connect after auth: Clerk redirectWithAuth syncs the session to the satellite.
+  // Do not set forceRedirectUrl to a cross-origin Connect URL — that skips the handshake.
   useEffect(() => {
     if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || !clerk.loaded || hasRedirectedToConnectRef.current) {
       return;
@@ -94,7 +96,7 @@ export const SignInPage = () => {
         beginConnectProvisioning();
       }
 
-      navigateToConnectWithClerkSession(clerk, destination);
+      void navigateToConnectWithClerkSession(clerk, destination);
 
       return;
     }
@@ -112,8 +114,6 @@ export const SignInPage = () => {
     clerk,
     navigate,
   ]);
-
-  const connectProvisionRedirect = useMemo(() => connectDefaultDestination, [connectDefaultDestination]);
 
   // Preserve `?product=connect` across the Clerk sign-in ↔ sign-up link so branding survives.
   const signUpUrlWithProduct = isConnectSignIn
@@ -138,7 +138,6 @@ export const SignInPage = () => {
             path={ROUTES.SIGN_IN}
             signUpUrl={signUpUrlWithProduct}
             appearance={clerkSignupAppearance}
-            forceRedirectUrl={isConnectSignIn ? connectProvisionRedirect : undefined}
           />
           {!IS_SELF_HOSTED && !isConnectSignIn && <RegionPicker />}
         </div>

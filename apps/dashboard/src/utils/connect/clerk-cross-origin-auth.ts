@@ -1,63 +1,27 @@
 import { isConnectHostnameUrl } from '@/utils/product-auth-urls';
 
-// Clerk + Netlify: CDN can cache handshake redirects and cause infinite auth loops.
-const CLERK_NETLIFY_CACHE_BUST_PARAM = '__clerk_netlify_cache_bust';
-
-function isLocalDevRuntime(): boolean {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const hostname = window.location.hostname;
-
-  return hostname === 'localhost' || hostname.endsWith('.localhost');
-}
-
 type ClerkCrossOriginAuth = {
   loaded: boolean;
   redirectWithAuth: (to: string) => Promise<unknown>;
-  buildUrlWithAuth: (to: string) => string;
   buildSignInUrl: (opts?: { signInForceRedirectUrl?: string | null }) => string;
   buildSignUpUrl: (opts?: { signUpForceRedirectUrl?: string | null }) => string;
 };
 
-function withNetlifyHandshakeCacheBust(url: string): string {
-  if (isLocalDevRuntime()) {
-    return url;
-  }
-
-  try {
-    const parsed = new URL(url);
-
-    if (parsed.searchParams.has('__clerk_handshake')) {
-      return url;
-    }
-
-    if (!parsed.searchParams.has(CLERK_NETLIFY_CACHE_BUST_PARAM)) {
-      parsed.searchParams.set(CLERK_NETLIFY_CACHE_BUST_PARAM, Date.now().toString());
-    }
-
-    return parsed.toString();
-  } catch {
-    return url;
-  }
-}
-
-function navigateWithDecoratedAuthUrl(clerk: ClerkCrossOriginAuth, destination: string): void {
-  const authedUrl = withNetlifyHandshakeCacheBust(clerk.buildUrlWithAuth(destination));
-
-  window.location.assign(authedUrl);
-}
-
-/** Primary → Connect handoff: decorates the URL so Clerk propagates the session to the satellite. */
-export function navigateToConnectWithClerkSession(clerk: ClerkCrossOriginAuth, destination: string): void {
-  navigateWithDecoratedAuthUrl(clerk, destination);
+/** Primary → Connect handoff: Clerk syncs the session to the satellite domain. */
+export async function navigateToConnectWithClerkSession(
+  clerk: ClerkCrossOriginAuth,
+  destination: string
+): Promise<void> {
+  await clerk.redirectWithAuth(destination);
 }
 
 /** Cross-product navigation — Connect targets must go through Clerk session sync. */
-export function navigateWithClerkSessionIfCrossOrigin(clerk: ClerkCrossOriginAuth, destination: string): void {
+export async function navigateWithClerkSessionIfCrossOrigin(
+  clerk: ClerkCrossOriginAuth,
+  destination: string
+): Promise<void> {
   if (isConnectHostnameUrl(destination)) {
-    navigateToConnectWithClerkSession(clerk, destination);
+    await navigateToConnectWithClerkSession(clerk, destination);
 
     return;
   }
@@ -71,7 +35,7 @@ export function redirectSatelliteToPrimarySignIn(clerk: ClerkCrossOriginAuth, re
     returnUrl ? { signInForceRedirectUrl: returnUrl } : undefined
   );
 
-  window.location.replace(withNetlifyHandshakeCacheBust(primarySignInUrl));
+  window.location.replace(primarySignInUrl);
 }
 
 /** Connect satellite → primary sign-up with optional post-auth return to Connect. */
@@ -80,5 +44,5 @@ export function redirectSatelliteToPrimarySignUp(clerk: ClerkCrossOriginAuth, re
     returnUrl ? { signUpForceRedirectUrl: returnUrl } : undefined
   );
 
-  window.location.replace(withNetlifyHandshakeCacheBust(primarySignUpUrl));
+  window.location.replace(primarySignUpUrl);
 }

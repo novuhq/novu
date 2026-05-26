@@ -501,7 +501,7 @@ export function OrganizationPicker({
 
       if (otherProductUrl && clerk.loaded) {
         clearInvitationAcceptPending();
-        navigateWithClerkSessionIfCrossOrigin(clerk, otherProductUrl);
+        void navigateWithClerkSessionIfCrossOrigin(clerk, otherProductUrl);
 
         return;
       }
