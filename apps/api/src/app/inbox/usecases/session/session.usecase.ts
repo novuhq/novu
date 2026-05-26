@@ -73,8 +73,6 @@ import {
   KEYLESS_WORKFLOW_IDENTIFIER,
 } from '../../utils';
 import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
-import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
-import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
@@ -93,7 +91,6 @@ export class Session {
     private authService: AuthService,
     private selectIntegration: SelectIntegration,
     private analyticsService: AnalyticsService,
-    private notificationsCount: NotificationsCount,
     private integrationRepository: IntegrationRepository,
     private organizationRepository: CommunityOrganizationRepository,
     private communityOrganizationRepository: CommunityOrganizationRepository,
@@ -157,32 +154,29 @@ export class Session {
       }
     }
 
-    const contextKeys = await this.resolveContexts(
-      environment._id,
-      environment._organizationId,
-      command.requestData.context
-    );
-
-    const subscriberEntity = await this.createSubscriber.execute(
-      CreateOrUpdateSubscriberCommand.create({
-        environmentId: environment._id,
-        organizationId: environment._organizationId,
-        subscriberId: subscriber.subscriberId,
-        firstName: subscriber.firstName,
-        lastName: subscriber.lastName,
-        phone: subscriber.phone,
-        email: subscriber.email,
-        avatar: subscriber.avatar,
-        locale: subscriber.locale,
-        data: subscriber.data as CustomDataType,
-        timezone: subscriber.timezone,
-        allowUpdate: isHmacValid(
-          environment.apiKeys[0].key,
-          subscriber.subscriberId,
-          command.requestData.subscriberHash
-        ),
-      })
-    );
+    const [contextKeys, subscriberEntity] = await Promise.all([
+      this.resolveContexts(environment._id, environment._organizationId, command.requestData.context),
+      this.createSubscriber.execute(
+        CreateOrUpdateSubscriberCommand.create({
+          environmentId: environment._id,
+          organizationId: environment._organizationId,
+          subscriberId: subscriber.subscriberId,
+          firstName: subscriber.firstName,
+          lastName: subscriber.lastName,
+          phone: subscriber.phone,
+          email: subscriber.email,
+          avatar: subscriber.avatar,
+          locale: subscriber.locale,
+          data: subscriber.data as CustomDataType,
+          timezone: subscriber.timezone,
+          allowUpdate: isHmacValid(
+            environment.apiKeys[0].key,
+            subscriber.subscriberId,
+            command.requestData.subscriberHash
+          ),
+        })
+      ),
+    ]);
 
     this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.SESSION_INITIALIZED, '', {
       _organization: environment._organizationId,
@@ -192,30 +186,35 @@ export class Session {
       context: contextKeys,
     });
 
-    const { data } = await this.notificationsCount.execute(
-      NotificationsCountCommand.create({
-        organizationId: environment._organizationId,
-        environmentId: environment._id,
-        subscriberId: subscriber.subscriberId,
-        filters: [{ read: false, snoozed: false }],
-        subscriber: subscriberEntity,
-        contextKeys,
-      })
-    );
-    const [{ count: totalUnreadCount }] = data;
+    const unreadCountFilter = { read: false, snoozed: false } as const;
 
-    // get severity-based unread counts
-    const severityCounts = await this.messageRepository.getCountBySeverity(
-      environment._id,
-      subscriberEntity._id,
-      ChannelTypeEnum.IN_APP,
-      { read: false, snoozed: false },
-      { limit: MAX_NOTIFICATIONS_COUNT },
-      contextKeys
-    );
+    const [severityCounts, token, organization, existingSchedule] = await Promise.all([
+      this.messageRepository.getCountBySeverity(
+        environment._id,
+        subscriberEntity._id,
+        ChannelTypeEnum.IN_APP,
+        unreadCountFilter,
+        { limit: MAX_NOTIFICATIONS_COUNT },
+        contextKeys
+      ),
+      this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
+      this.organizationRepository.findById(environment._organizationId),
+      this.getSubscriberSchedule.execute(
+        GetSubscriberScheduleCommand.create({
+          organizationId: environment._organizationId,
+          environmentId: environment._id,
+          _subscriberId: subscriberEntity._id,
+          contextKeys,
+        })
+      ),
+    ]);
+
+    if (!organization) {
+      throw new NotFoundException('Organization not found');
+    }
 
     const unreadCount: SubscriberSessionResponseDto['unreadCount'] = {
-      total: totalUnreadCount,
+      total: 0,
       severity: {
         high: 0,
         medium: 0,
@@ -227,26 +226,19 @@ export class Session {
     for (const { severity, count } of severityCounts) {
       if (severity in unreadCount.severity) {
         unreadCount.severity[severity] = count;
+        unreadCount.total += count;
       }
     }
 
-    const [token, organization] = await Promise.all([
-      this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
-      this.organizationRepository.findById(environment._organizationId),
-    ]);
-
-    if (!organization) {
-      throw new NotFoundException('Organization not found');
-    }
-
-    const schedulePromise = this.createDefaultSchedule({
+    const schedule = await this.resolveDefaultSchedule({
       environment,
       defaultSchedule: command.requestData.defaultSchedule,
       subscriber: subscriberEntity,
       contextKeys,
+      existingSchedule,
     });
 
-    const [{ removeNovuBranding }, maxSnoozeDurationHours, schedule] = await Promise.all([
+    const [{ removeNovuBranding }, maxSnoozeDurationHours] = await Promise.all([
       this.getOrganizationSettingsUsecase.execute(
         GetOrganizationSettingsCommand.create({
           organizationId: environment._organizationId,
@@ -254,20 +246,48 @@ export class Session {
         })
       ),
       this.getMaxSnoozeDurationHours(organization.apiServiceLevel),
-      schedulePromise,
     ]);
 
-    /**
-     * We want to prevent the playground inbox demo from marking the integration as connected
-     * And only treat the real customer domain or local environment as valid origins
-     */
-    const isOriginFromNovu = ALLOWED_ORIGINS_REGEX.test(command.origin ?? '');
-    if (!isOriginFromNovu && !inAppIntegration.connected) {
-      this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.INBOX_CONNECTED, '', {
-        _organization: environment._organizationId,
-        environmentName: environment.name,
-      });
+    void this.markInAppIntegrationConnectedIfNeeded({
+      command,
+      environment,
+      inAppIntegration,
+    });
 
+    return {
+      applicationIdentifier: environment.identifier,
+      token,
+      totalUnreadCount: unreadCount.total,
+      unreadCount,
+      removeNovuBranding,
+      maxSnoozeDurationHours,
+      isDevelopmentMode: this.isInboxDevelopmentMode(environment),
+      schedule,
+      contextKeys,
+    };
+  }
+
+  private async markInAppIntegrationConnectedIfNeeded({
+    command,
+    environment,
+    inAppIntegration,
+  }: {
+    command: SessionCommand;
+    environment: EnvironmentEntity;
+    inAppIntegration: { _id: string; connected?: boolean };
+  }): Promise<void> {
+    const isOriginFromNovu = ALLOWED_ORIGINS_REGEX.test(command.origin ?? '');
+
+    if (isOriginFromNovu || inAppIntegration.connected) {
+      return;
+    }
+
+    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.INBOX_CONNECTED, '', {
+      _organization: environment._organizationId,
+      environmentName: environment.name,
+    });
+
+    try {
       await this.integrationRepository.updateOne(
         {
           _id: inAppIntegration._id,
@@ -280,43 +300,26 @@ export class Session {
           },
         }
       );
+    } catch (error) {
+      this.logger.error({ err: error }, 'Failed to mark in-app integration as connected');
     }
-
-    return {
-      applicationIdentifier: environment.identifier,
-      token,
-      totalUnreadCount,
-      unreadCount,
-      removeNovuBranding,
-      maxSnoozeDurationHours,
-      isDevelopmentMode: this.isInboxDevelopmentMode(environment),
-      schedule,
-      contextKeys,
-    };
   }
 
-  private async createDefaultSchedule({
+  private async resolveDefaultSchedule({
     environment,
     defaultSchedule,
     subscriber,
     contextKeys,
+    existingSchedule,
   }: {
     environment: EnvironmentEntity;
     defaultSchedule?: ScheduleDto;
     subscriber: SubscriberEntity;
     contextKeys: string[];
+    existingSchedule?: Schedule;
   }): Promise<Schedule | undefined> {
-    const schedule = await this.getSubscriberSchedule.execute(
-      GetSubscriberScheduleCommand.create({
-        organizationId: environment._organizationId,
-        environmentId: environment._id,
-        _subscriberId: subscriber._id,
-        contextKeys,
-      })
-    );
-
-    if (schedule || !defaultSchedule) {
-      return schedule;
+    if (existingSchedule || !defaultSchedule) {
+      return existingSchedule;
     }
 
     const updatedGlobalPreference = await this.updatePreferencesUsecase.execute(

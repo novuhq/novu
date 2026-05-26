@@ -35,7 +35,6 @@ import { GetOrganizationSettings } from '../../../organization/usecases/get-orga
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import { AnalyticsEventsEnum } from '../../utils';
 import * as encryption from '../../utils/encryption';
-import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
 import { Session } from './session.usecase';
@@ -60,6 +59,8 @@ const mockIntegration = {
 const mockSeverityCounts = [
   { severity: SeverityLevelEnum.HIGH, count: 10 },
   { severity: SeverityLevelEnum.MEDIUM, count: 20 },
+  { severity: SeverityLevelEnum.LOW, count: 0 },
+  { severity: SeverityLevelEnum.NONE, count: 0 },
 ];
 
 describe('Session', () => {
@@ -69,7 +70,6 @@ describe('Session', () => {
   let authService: sinon.SinonStubbedInstance<AuthService>;
   let selectIntegration: sinon.SinonStubbedInstance<SelectIntegration>;
   let analyticsService: sinon.SinonStubbedInstance<AnalyticsService>;
-  let notificationsCount: sinon.SinonStubbedInstance<NotificationsCount>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let organizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
   let communityOrganizationRepository: sinon.SinonStubbedInstance<CommunityOrganizationRepository>;
@@ -94,7 +94,6 @@ describe('Session', () => {
     authService = sinon.createStubInstance(AuthService);
     selectIntegration = sinon.createStubInstance(SelectIntegration);
     analyticsService = sinon.createStubInstance(AnalyticsService);
-    notificationsCount = sinon.createStubInstance(NotificationsCount);
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     organizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
     communityOrganizationRepository = sinon.createStubInstance(CommunityOrganizationRepository);
@@ -119,7 +118,6 @@ describe('Session', () => {
       authService as any,
       selectIntegration as any,
       analyticsService as any,
-      notificationsCount as any,
       integrationRepository as any,
       organizationRepository as any,
       communityOrganizationRepository as any,
@@ -140,6 +138,7 @@ describe('Session', () => {
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
+    getSubscriberSchedule.execute.resolves(undefined);
   });
 
   it('should set isDevelopmentMode to false for live (prod type) environment regardless of display name', async () => {
@@ -160,14 +159,12 @@ describe('Session', () => {
     };
     const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: [{ count: 0, filter: {} }] };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
@@ -190,7 +187,6 @@ describe('Session', () => {
 
     const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: [{ count: 0, filter: {} }] };
     const token = 'token';
 
     const legacyProdNamed = {
@@ -204,7 +200,6 @@ describe('Session', () => {
     organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
@@ -278,7 +273,6 @@ describe('Session', () => {
     };
     const subscriber = { _id: 'subscriber-id' };
     const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
-    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves({
@@ -290,7 +284,6 @@ describe('Session', () => {
     organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves(mockIntegration);
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
@@ -318,14 +311,12 @@ describe('Session', () => {
     const subscriber = { _id: 'subscriber-id' };
     const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
-    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
 
     getOrganizationSettingsUsecase.execute.resolves({
@@ -359,14 +350,12 @@ describe('Session', () => {
     const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
     const integration = { ...mockIntegration, credentials: { hmac: false } };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     selectIntegration.execute.resolves(integration);
     organizationRepository.findById.resolves(organization as any);
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
@@ -376,7 +365,7 @@ describe('Session', () => {
     const response: SubscriberSessionResponseDto = await session.execute(command);
 
     expect(response.token).to.equal(token);
-    expect(response.unreadCount.total).to.equal(notificationCount.data[0].count);
+    expect(response.unreadCount.total).to.equal(30);
     expect(response.unreadCount.severity[SeverityLevelEnum.HIGH]).to.equal(mockSeverityCounts[0].count);
     expect(response.unreadCount.severity[SeverityLevelEnum.MEDIUM]).to.equal(mockSeverityCounts[1].count);
     expect(response.unreadCount.severity[SeverityLevelEnum.LOW]).to.equal(0);
@@ -405,14 +394,12 @@ describe('Session', () => {
     const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const integration = { ...mockIntegration, credentials: { hmac: false } };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
     organizationRepository.findById.resolves(organization as any);
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     selectIntegration.execute.resolves(integration);
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
@@ -457,7 +444,6 @@ describe('Session', () => {
     };
     const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
     const mockContexts = [{ key: 'projectId:project-456' }, { key: 'teamId:team-123' }];
 
@@ -465,7 +451,6 @@ describe('Session', () => {
     organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
@@ -507,7 +492,6 @@ describe('Session', () => {
     };
     const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
     const mockContexts = [{ key: 'teamId:team-123' }];
 
@@ -515,7 +499,6 @@ describe('Session', () => {
     organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves(mockIntegration);
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,
@@ -560,14 +543,12 @@ describe('Session', () => {
     };
     const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
     const subscriber = { _id: 'subscriber-id' };
-    const notificationCount = { data: [{ count: 10, filter: {} }] };
     const token = 'token';
 
     environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
     organizationRepository.findById.resolves(organization as any);
     selectIntegration.execute.resolves({ ...mockIntegration, credentials: { hmac: false } });
     createSubscriber.execute.resolves(subscriber as any);
-    notificationsCount.execute.resolves(notificationCount);
     authService.getSubscriberWidgetToken.resolves(token);
     getOrganizationSettingsUsecase.execute.resolves({
       removeNovuBranding: false,

@@ -489,15 +489,36 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
     contextKeys?: string[]
   ): Promise<{ severity: SeverityLevelEnum; count: number }[]> {
+    const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query, contextKeys);
+
     const severityLevels = Object.values(SeverityLevelEnum);
+    const countsBySeverity = new Map(severityLevels.map((severity) => [severity, 0]));
 
-    const promises = severityLevels.map((severity) =>
-      this.getCount(environmentId, subscriberId, channel, { ...query, severity: [severity] }, options, contextKeys)
-    );
+    const aggregationResults: Array<{ _id: SeverityLevelEnum; count: number }> = await BaseRepository.prototype.aggregate
+      .call(
+        this,
+        [
+          { $match: requestQuery },
+          {
+            $group: {
+              _id: { $ifNull: ['$severity', SeverityLevelEnum.NONE] },
+              count: { $sum: 1 },
+            },
+          },
+        ],
+        { readPreference: 'secondaryPreferred' }
+      );
 
-    const results = await Promise.all(promises);
+    for (const { _id: severity, count } of aggregationResults) {
+      if (countsBySeverity.has(severity)) {
+        countsBySeverity.set(severity, count);
+      }
+    }
 
-    return results.map((result, index) => ({ severity: severityLevels[index], count: result }));
+    return severityLevels.map((severity) => ({
+      severity,
+      count: Math.min(countsBySeverity.get(severity) ?? 0, options.limit),
+    }));
   }
 
   private getReadSeenUpdateQuery(
