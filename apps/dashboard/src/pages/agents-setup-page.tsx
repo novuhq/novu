@@ -24,7 +24,7 @@ import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
-import { clearConnectProvisioning, isConnectProvisioningActive } from '@/utils/connect';
+import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { getPostOnboardingRoute, resolveOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -172,6 +172,13 @@ export function AgentsSetupPage() {
   });
 
   const loadingPhase = useAgentEnvLoading(currentOrganization?._id);
+  const provisioningActive = useOnboardingProvisioningActive();
+  const isDataReady = Boolean(currentEnvironment) && loadingPhase === 'ready';
+
+  useOnboardingProvisioningDismiss({
+    isReady: isDataReady,
+    fallbackVariant: isConnectHost ? 'connect' : 'platform',
+  });
 
   useEffect(() => {
     if (environments?.length) {
@@ -180,14 +187,6 @@ export function AgentsSetupPage() {
       setEnvLoaded(true);
     }
   }, [environments, user, organization]);
-
-  useEffect(() => {
-    if (!currentEnvironment || loadingPhase !== 'ready') {
-      return;
-    }
-
-    clearConnectProvisioning();
-  }, [currentEnvironment, loadingPhase]);
 
   useEffect(() => {
     telemetry(TelemetryEvent.AGENTS_SETUP_PAGE_VIEWED);
@@ -252,8 +251,8 @@ export function AgentsSetupPage() {
     return <Navigate to={isConnectFlow ? ROUTES.ROOT : ROUTES.INBOX_USECASE} replace />;
   }
 
-  if (!currentEnvironment || loadingPhase !== 'ready') {
-    if (isConnectHost && isConnectProvisioningActive()) {
+  if (!isDataReady || provisioningActive) {
+    if (provisioningActive) {
       return null;
     }
 

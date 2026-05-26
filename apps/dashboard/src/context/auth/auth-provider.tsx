@@ -2,7 +2,7 @@ import { useClerk, useOrganization, useUser } from '@clerk/react';
 import type { OrganizationResource, UserResource } from '@clerk/shared/types';
 import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ConnectProvisioningOverlay } from '@/components/auth/connect-provisioning-overlay';
+import { OnboardingProvisioningOverlay } from '@/components/auth/connect-provisioning-overlay';
 import { IS_NOVU_CONNECT } from '@/config';
 import { isPublicAuthPath } from '@/utils/auth-routes';
 import { isActiveConnectWorkspace, isConnectWorkspace } from '@/utils/connect';
@@ -154,7 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {IS_NOVU_CONNECT ? <ConnectProvisioningOverlay /> : null}
+      <OnboardingProvisioningOverlay />
       {shouldBlockChildren ? null : children}
     </AuthContext.Provider>
   );

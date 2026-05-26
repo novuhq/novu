@@ -6,7 +6,7 @@ import { RiCheckboxCircleFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/
 
 type LoaderLogoComponent = ComponentType<{ className?: string }>;
 
-type OnboardingLoaderVariant = 'platform' | 'connect';
+export type OnboardingLoaderVariant = 'platform' | 'connect';
 
 type LoaderStep = { id: string; text: string };
 
@@ -44,13 +44,29 @@ const VARIANT_CONFIG: Record<
 const ITEM_HEIGHT = 20;
 const GAP = 12;
 const CONTAINER_HEIGHT = 140;
-const STEP_DELAY_MS = 1500;
+export const ONBOARDING_STEP_DELAY_MS = 1500;
+export const PLATFORM_STEP_COUNT = PLATFORM_STEPS.length;
+export const CONNECT_STEP_COUNT = CONNECT_STEPS.length;
+
+const STEP_DELAY_MS = ONBOARDING_STEP_DELAY_MS;
 
 type OnboardingLoaderProps = {
   variant?: OnboardingLoaderVariant;
+  /** When set, step progress resumes from elapsed time instead of restarting at step 0. */
+  startedAt?: number | null;
 };
 
 type StepStatus = 'success' | 'progress' | 'pending';
+
+function getInitialActiveIndex(stepCount: number, startedAt?: number | null): number {
+  if (!startedAt) {
+    return 0;
+  }
+
+  const index = Math.floor((Date.now() - startedAt) / STEP_DELAY_MS);
+
+  return Math.min(Math.max(0, index), stepCount - 1);
+}
 
 function getStepStatus(index: number, activeIndex: number): StepStatus {
   if (index < activeIndex) return 'success';
@@ -59,9 +75,10 @@ function getStepStatus(index: number, activeIndex: number): StepStatus {
   return 'pending';
 }
 
-export function OnboardingLoader({ variant = 'platform' }: OnboardingLoaderProps) {
+export function OnboardingLoader({ variant = 'platform', startedAt = null }: OnboardingLoaderProps) {
   const { steps: stepDefs, title, Logo } = VARIANT_CONFIG[variant];
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(() => getInitialActiveIndex(stepDefs.length, startedAt));
+  const isResuming = activeIndex > 0;
 
   // Keep `activeIndex` in range when the variant (and therefore `stepDefs.length`) changes — a
   // shorter steps list could leave a previously-valid index hanging off the end and the y-offset
@@ -90,7 +107,7 @@ export function OnboardingLoader({ variant = 'platform' }: OnboardingLoaderProps
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6">
       <motion.div
-        initial={{ opacity: 0, scale: 0.8 }}
+        initial={isResuming ? false : { opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
         className="flex flex-col items-center gap-4"
@@ -99,9 +116,9 @@ export function OnboardingLoader({ variant = 'platform' }: OnboardingLoaderProps
           <Logo className="size-10" />
         </motion.div>
         <motion.span
-          initial={{ opacity: 0, y: 8 }}
+          initial={isResuming ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4 }}
+          transition={{ delay: isResuming ? 0 : 0.2, duration: 0.4 }}
           className="text-label-md text-text-strong font-medium"
         >
           {title}

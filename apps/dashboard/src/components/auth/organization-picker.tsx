@@ -2,6 +2,7 @@ import { useOrganizationList, useUser } from '@clerk/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
@@ -11,8 +12,13 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { IS_NOVU_CONNECT } from '@/config';
 import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS, type AppId } from '@/utils/apps';
-import { isConnectWorkspace, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
+import { APP_IDS, type AppId, isAbsoluteUrl } from '@/utils/apps';
+import {
+  beginOnboardingProvisioning,
+  clearOnboardingProvisioning,
+  isConnectWorkspace,
+  writeConnectAutoCreateSessionGuard,
+} from '@/utils/connect';
 import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -375,6 +381,7 @@ export function OrganizationPicker({
 }: OrganizationPickerProps) {
   const track = useTelemetry();
   const { user } = useUser();
+  const navigate = useNavigate();
 
   const productFilter = useMemo(getProductFilter, []);
   const productAppId = useMemo(() => getProductAppId(productFilter), [productFilter]);
@@ -493,7 +500,10 @@ export function OrganizationPicker({
     async ({ name, slug }: { name: string; slug: string }) => {
       if (!createOrganization || !setActive) return;
 
+      const provisioningVariant = productFilter === 'connect' ? 'connect' : 'platform';
+
       setIsCreating(true);
+      beginOnboardingProvisioning(provisioningVariant);
 
       let createdOrg: Awaited<ReturnType<typeof createOrganization>> | null = null;
       let lastError: unknown = null;
@@ -514,6 +524,7 @@ export function OrganizationPicker({
       }
 
       if (!createdOrg) {
+        clearOnboardingProvisioning();
         const message = readClerkErrorMessage(lastError, 'Failed to create organization.');
         showErrorToast(message, 'Create organization failed');
         setIsCreating(false);
@@ -529,6 +540,7 @@ export function OrganizationPicker({
       try {
         await setActive({ organization: createdOrg.id });
       } catch (error) {
+        clearOnboardingProvisioning();
         const message = readClerkErrorMessage(error, 'Failed to activate the new organization.');
         showErrorToast(message, 'Activation failed');
         setIsCreating(false);
@@ -545,9 +557,15 @@ export function OrganizationPicker({
       });
       hasTrackedRef.current = true;
 
-      window.location.assign(afterCreateOrganizationUrl);
+      if (isAbsoluteUrl(afterCreateOrganizationUrl)) {
+        window.location.assign(afterCreateOrganizationUrl);
+
+        return;
+      }
+
+      void navigate(afterCreateOrganizationUrl);
     },
-    [createOrganization, setActive, afterCreateOrganizationUrl, productAppId, productFilter, track, user?.id]
+    [createOrganization, setActive, afterCreateOrganizationUrl, productAppId, productFilter, track, user?.id, navigate]
   );
 
   const handleCancel = useCallback(() => {
