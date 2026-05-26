@@ -306,7 +306,7 @@ jobs:
 
       - name: Whitelist Runner IP
         id: whitelist
-        uses: novuhq/clickhouse-cloud-whitelist-ip-action@32ff9cd48465bee922112d01a6276195a23556e6 # v1.1.0
+        uses: novuhq/clickhouse-cloud-whitelist-ip-action@7594062e821f1f28af7673bf82e4df9ca2e78636 # v1.0.0
         with:
           clickhouse-org-id: ${{ secrets.CLICKHOUSE_ORG_ID }}
           clickhouse-service-id: ${{ secrets.CLICKHOUSE_SERVICE_ID }}

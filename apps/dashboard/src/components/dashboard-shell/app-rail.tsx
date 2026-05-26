@@ -4,7 +4,6 @@ import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
 import { CustomerSupportButton } from '@/components/header-navigation/customer-support-button';
 import { ConnectLogo } from '@/components/icons/connect-logo';
 import { LogoCircle } from '@/components/icons/logo-circle';
-import { InboxButton } from '@/components/inbox-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UserProfile } from '@/components/user-profile';
 import { IS_ENTERPRISE, IS_HOSTNAME_SPLIT_ENABLED, IS_SELF_HOSTED } from '@/config';
@@ -33,7 +32,7 @@ const PLATFORM_BRAND: BrandConfig = {
   tooltip: 'Open Novu Platform',
   subtitle: 'Notifications for your product',
   features: [
-    'Multi-channel workflows for email, push, and in-app.',
+    'Email, push, and in-app workflows.',
     'Embed Novu Inbox directly in your product.',
     'Manage subscribers and deliver at scale.',
   ],
@@ -137,7 +136,7 @@ function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherT
           size="lg"
           className="border-stroke-weak w-auto overflow-hidden rounded-lg border p-0 shadow-md"
         >
-          <AppSwitcherTooltipContent Icon={Icon} label={label} subtitle={subtitle} features={features} />
+          <AppSwitcherTooltipContent label={label} subtitle={subtitle} features={features} />
         </TooltipContent>
       </Tooltip>
       {showConnectSwitchModal ? (
@@ -176,7 +175,6 @@ export function AppRail() {
 
       <div className="flex flex-col items-center gap-3">
         {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
-        <InboxButton align="start" side="top" />
         <UserProfile />
       </div>
     </aside>

@@ -88,6 +88,7 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
             <UserProfile />
           </>
         )}
+        {hideRestItems && <InboxButton />}
       </div>
     </div>
   );

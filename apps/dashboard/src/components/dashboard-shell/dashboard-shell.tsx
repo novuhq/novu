@@ -2,6 +2,7 @@ import { Fragment, ReactNode, useEffect, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
+import { InboxButton } from '@/components/inbox-button';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { ConnectSideNavigation } from '@/components/side-navigation/connect-side-navigation';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
@@ -172,6 +173,7 @@ export function DashboardShell({
                   >
                     <RiSearchLine className="size-3 text-text-sub" />
                   </Button>
+                  <InboxButton />
                 </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
