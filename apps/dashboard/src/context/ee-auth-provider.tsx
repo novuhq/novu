@@ -88,6 +88,13 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     ? {
         isSatellite: true as const,
         domain: getHostnameWithoutPort(NOVU_CONNECT_HOSTNAME),
+        // Clerk v6 / Core 3 flipped the satellite default from auto-sync ON to OFF (#7597), so
+        // Connect now treats every first page load as anonymous unless cookies are already
+        // present — primary's sign-in then bounces back to a still-anonymous satellite and we
+        // loop. We rely on the Core 2 behavior (auto-handshake with primary on first load) so
+        // an already-signed-in user on Platform is recognized on Connect without re-auth.
+        // See https://clerk.com/docs/guides/development/upgrading/upgrade-guides/core-3
+        satelliteAutoSync: true,
       }
     : {};
 
