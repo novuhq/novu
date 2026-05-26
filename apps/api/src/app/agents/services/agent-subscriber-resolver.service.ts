@@ -190,6 +190,20 @@ export class AgentSubscriberResolver {
    *
    * Throws for non-provisionable platforms; callers MUST route reactions,
    * actions, and non-Slack/Teams inbound through `resolveOnly`.
+   *
+   * Known limitation — bounded cap-overshoot under concurrency:
+   *   `assertCapNotReached` is a read-before-write check that is intentionally
+   *   not wrapped in a transaction. Two concurrent first-messages from
+   *   *different* users can both observe `count < limit` and both succeed,
+   *   so an org may end up at `limit + 1` (or `limit + N` for N concurrent
+   *   distinct users). The overshoot is bounded to one extra subscriber per
+   *   racing inbound — not unbounded leakage — and counters re-converge on
+   *   the next inbound that finds the org at `count >= limit`. Tightening
+   *   this further would require a Mongo transaction or distributed lock
+   *   around the cap query + the two writes, which is overkill for the
+   *   blast-radius and would also serialize a hot path. If the overshoot
+   *   becomes load-bearing, the right move is a per-org Redis lease around
+   *   `assertCapNotReached + provision`, not a server-side transaction.
    */
   async resolveOrProvision(params: ResolveOrProvisionParams): Promise<string> {
     if (!AUTO_PROVISION_PLATFORMS.has(params.platform)) {
@@ -288,7 +302,7 @@ export class AgentSubscriberResolver {
   private async getOrganizationProductType(organizationId: string): Promise<OrganizationProductTypeEnum | undefined> {
     const organization = await this.organizationRepository.findById(organizationId);
 
-    return organization?.productType ?? undefined;
+    return organization?.productType;
   }
 
   private async assertCapNotReached(params: ResolveOrProvisionParams): Promise<void> {
