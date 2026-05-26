@@ -22,6 +22,14 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { TeamMembers } from '@/utils/better-auth/components/team-members';
 import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index';
+import { ROUTES } from '@/utils/routes';
+
+// Pin Clerk's post-leave/delete redirect to the local `/auth/organization-list`. Without this,
+// Clerk falls back to `<ClerkProvider signInUrl>`, which on the Connect satellite points at
+// Platform's sign-in — so deleting a Connect org would kick the user out of Connect even when
+// they still have Connect work to do. Keeping it same-host lets `AuthProvider` clear any cross-
+// product org Clerk auto-activates and lets the picker render this product's empty state.
+const AFTER_LEAVE_ORG_URL = ROUTES.SIGNUP_ORGANIZATION_LIST;
 
 const FADE_ANIMATION = {
   initial: { opacity: 0 },
@@ -233,7 +241,7 @@ export function SettingsTabs({ routes, rootRoute, hideBilling = false }: Setting
                   />
                 )}
                 {EE_AUTH_PROVIDER === 'clerk' ? (
-                  <OrganizationProfile appearance={clerkAppearance}>
+                  <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL}>
                     <OrganizationProfile.Page label="general" />
                   </OrganizationProfile>
                 ) : (
