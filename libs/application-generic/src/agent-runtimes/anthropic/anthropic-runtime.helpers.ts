@@ -200,8 +200,8 @@ export function mapMcpServer(raw: Record<string, unknown>): AgentMcpServerDto {
  *
  * @see https://platform.claude.com/docs/en/managed-agents/permission-policies
  */
-export const MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG = {
-  permission_policy: { type: 'always_allow' },
+export const MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG = {
+  permission_policy: { type: 'always_ask' },
 } as const;
 
 /**
@@ -253,7 +253,7 @@ export function buildToolsPayload(
 
   payload.push({
     type: 'agent_toolset_20260401',
-    default_config: MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG,
+    default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
     configs: allToolNames.map((name) => ({ name, enabled: enabledSet.has(name) })),
   });
 
@@ -262,7 +262,7 @@ export function buildToolsPayload(
       payload.push({
         type: 'mcp_toolset',
         mcp_server_name: server.name,
-        default_config: MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG,
+        default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
       });
     }
   }

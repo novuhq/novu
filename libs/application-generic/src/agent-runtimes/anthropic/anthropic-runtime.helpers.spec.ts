@@ -1,10 +1,6 @@
 import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
 import { expect } from 'chai';
-import {
-  buildToolsPayload,
-  MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG,
-  mapToolset,
-} from './anthropic-runtime.helpers';
+import { buildToolsPayload, MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG, mapToolset } from './anthropic-runtime.helpers';
 
 describe('mapToolset', () => {
   it('maps enabled builtin toolset configs to AgentToolDto entries', () => {
@@ -38,12 +34,12 @@ describe('buildToolsPayload', () => {
     const payload = buildToolsPayload(['bash'], undefined);
     const toolset = payload[0] as {
       type: string;
-      default_config: typeof MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG;
+      default_config: typeof MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG;
       configs: Array<{ name: string; enabled: boolean }>;
     };
 
     expect(toolset.type).to.equal('agent_toolset_20260401');
-    expect(toolset.default_config).to.deep.equal(MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG);
+    expect(toolset.default_config).to.deep.equal(MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG);
     expect(toolset.configs).to.have.lengthOf(CLAUDE_BUILTIN_TOOLS.length);
 
     const bashConfig = toolset.configs.find((c) => c.name === 'bash');
@@ -57,7 +53,7 @@ describe('buildToolsPayload', () => {
     expect(mcpToolset).to.deep.equal({
       type: 'mcp_toolset',
       mcp_server_name: 'GitHub',
-      default_config: MANAGED_AGENT_ALWAYS_ALLOW_DEFAULT_CONFIG,
+      default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
     });
   });
 });
