@@ -81,6 +81,8 @@ function buildSkillCatalog(): string {
   return CLAUDE_ANTHROPIC_SKILLS.map((skill) => `- ${skill.skillId} (${skill.name}): ${skill.description}`).join('\n');
 }
 
+const GENERATED_AGENT_RESPONSE_STYLE = `Include guidance that the agent should match reply length to each message: concise and direct when a short answer suffices; more thorough only when the user asks for analysis, reports, or step-by-step work. Avoid filler, repetition, and default verbosity — write like a helpful colleague. Do not impose fixed character or token limits; scale naturally with the ask.`;
+
 function buildSelfHostedSystemPrompt(): string {
   return `You are an expert AI agent architect for Novu. The user will describe — in plain English — what they want an agent to do. Your job is to scaffold the bare-bones agent metadata that Novu will use to provision a self-hosted agent runtime (AI SDK, LangChain, custom code, etc.). The user wires up their own tools, MCP servers and integrations — do NOT pick any of those.
 
@@ -88,6 +90,7 @@ Pick a clear human name, derive a kebab-case identifier, and write a system prom
 
 ## System prompt
 The \`systemPrompt\` is sent verbatim to the agent. Address the agent in second person ("You are a…"), describe its role, scope, tone, and the workflow it should follow when invoked. Do not reference Anthropic-specific tools, MCPs or skills — the runtime is custom.
+${GENERATED_AGENT_RESPONSE_STYLE}
 
 Return a JSON object matching the provided schema. Do not include any commentary outside the schema.`;
 }
@@ -121,6 +124,7 @@ You MUST select Claude built-in tools, MCP servers, and Anthropic Skills ONLY fr
 
 ## System prompt
 The \`systemPrompt\` is sent verbatim to Claude. Address the agent in second person ("You are a…"), describe its role, scope, tone, and the workflow it should follow when invoked. Do not enumerate the tool/MCP/skill IDs in the systemPrompt — Anthropic wires them in automatically.
+${GENERATED_AGENT_RESPONSE_STYLE}
 
 ## Identifier
 The \`identifier\` MUST be a kebab-case slug of the \`name\` (lowercase, hyphen-separated, ASCII only).
@@ -145,7 +149,7 @@ function buildUserPrompt(prompt: string): string {
 ${prompt.trim()}
 """
 
-Generate the complete agent configuration JSON. Pick a clear human name, derive a matching kebab-case identifier, write the systemPrompt as if instructing the agent, and select only the tools, MCP servers, and skills this agent actually needs — leave any array empty when its domain does not call for it.`;
+Generate the complete agent configuration JSON. Pick a clear human name, derive a matching kebab-case identifier, write the systemPrompt as if instructing the agent (with response-length guidance that scales to each message — not uniformly verbose), and select only the tools, MCP servers, and skills this agent actually needs — leave any array empty when its domain does not call for it.`;
 }
 
 /**
