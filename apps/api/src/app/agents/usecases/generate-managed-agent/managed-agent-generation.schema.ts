@@ -31,7 +31,7 @@ export const managedAgentGenerationSchema = z.object({
     .min(1)
     .max(4000)
     .describe(
-      'The full system prompt sent to Claude. Speak in second person to the agent ("You are…"). Describe role, scope, tone, and the workflow it should follow. Reference the available tools/MCPs/skills naturally without hard-coding them.'
+      'The full system prompt sent to Claude. Speak in second person ("You are…"). Keep it concise (150–400 words). Describe role, scope, tone, and workflow. Instruct the agent to reply briefly in messaging channels, match length to the question, and use markdown sparingly for scannability. Reference tools/MCPs/skills naturally without hard-coding IDs.'
     ),
   tools: z
     .array(z.enum(TOOL_TYPES))
