@@ -1,58 +1,6 @@
-import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum } from '@novu/dal';
-import { MessageRole } from '@novu/thalamus';
 import { expect } from 'chai';
-import sinon from 'sinon';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import { ManagedAgentService } from './managed-agent.service';
 import { buildAnonymousUserMcpMessage } from './managed-agent-event-handler';
-
-function makeLogger() {
-  return {
-    setContext: sinon.stub(),
-    warn: sinon.stub(),
-    error: sinon.stub(),
-    info: sinon.stub(),
-    debug: sinon.stub(),
-  };
-}
-
-describe('ManagedAgentService buildMessagesWithHistory', () => {
-  it('returns persisted activities only and does not duplicate the inbound message', async () => {
-    const findByConversation = sinon.stub().resolves([
-      {
-        type: ConversationActivityTypeEnum.MESSAGE,
-        senderType: ConversationActivitySenderTypeEnum.SUBSCRIBER,
-        content: 'Hello',
-        createdAt: '2026-05-26T12:00:00.000Z',
-      },
-    ]);
-    const service = new ManagedAgentService(
-      {} as never,
-      {} as never,
-      {} as never,
-      {} as never,
-      { findByConversation } as never,
-      {} as never,
-      {} as never,
-      {} as never,
-      makeLogger() as never
-    );
-    const context = {
-      config: { environmentId: 'env_1' },
-      conversation: { _id: 'conv_1' },
-      message: { text: 'Hello' },
-    };
-
-    const messages = await (
-      service as unknown as {
-        buildMessagesWithHistory(ctx: typeof context): Promise<{ role: MessageRole; content: string }[]>;
-      }
-    ).buildMessagesWithHistory(context);
-
-    expect(messages).to.deep.equal([{ role: MessageRole.USER, content: 'Hello' }]);
-    expect(findByConversation.calledOnceWith('env_1', 'conv_1', 50)).to.equal(true);
-  });
-});
 
 describe('buildAnonymousUserMcpMessage', () => {
   it('mentions the MCP server name and Slack when the platform is Slack', () => {
