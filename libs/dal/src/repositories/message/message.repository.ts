@@ -489,6 +489,28 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
     contextKeys?: string[]
   ): Promise<{ severity: SeverityLevelEnum; count: number }[]> {
+    const severityLevels = Object.values(SeverityLevelEnum);
+
+    const promises = severityLevels.map((severity) =>
+      this.getCount(environmentId, subscriberId, channel, { ...query, severity: [severity] }, options, contextKeys)
+    );
+
+    const results = await Promise.all(promises);
+
+    return results.map((result, index) => ({ severity: severityLevels[index], count: result }));
+  }
+
+  async getCountBySeverityAggregated(
+    environmentId: string,
+    subscriberId: string,
+    channel: ChannelTypeEnum,
+    query: {
+      read?: boolean;
+      snoozed?: boolean;
+    } = {},
+    options: { limit: number; skip?: number } = { limit: 100, skip: 0 },
+    contextKeys?: string[]
+  ): Promise<{ severity: SeverityLevelEnum; count: number }[]> {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query, contextKeys);
     const matchQuery = this.convertMessageMatchQueryForAggregation(requestQuery, environmentId, subscriberId);
 

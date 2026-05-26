@@ -138,6 +138,8 @@ describe('Session', () => {
     );
 
     messageRepository.getCountBySeverity.resolves(mockSeverityCounts);
+    messageRepository.getCountBySeverityAggregated.resolves(mockSeverityCounts);
+    featureFlagsService.getFlag.resolves(false);
     getSubscriberSchedule.execute.resolves(undefined);
   });
 
@@ -379,6 +381,40 @@ describe('Session', () => {
         context: [],
       })
     ).to.be.true;
+  });
+
+  it('should use aggregated severity counts when the feature flag is enabled', async () => {
+    const command: SessionCommand = {
+      requestData: {
+        applicationIdentifier: 'app-id',
+        subscriber: {
+          subscriberId: 'subscriber-id',
+        },
+        subscriberHash: 'hash',
+      },
+    };
+
+    const organization = { _id: 'org-id', apiServiceLevel: ApiServiceLevelEnum.FREE };
+    const environment = { _id: 'env-id', _organizationId: 'org-id', name: 'env-name', apiKeys: [{ key: 'api-key' }] };
+    const integration = { ...mockIntegration, credentials: { hmac: false } };
+    const subscriber = { _id: 'subscriber-id' };
+    const token = 'token';
+
+    featureFlagsService.getFlag.resolves(true);
+    environmentRepository.findEnvironmentByIdentifier.resolves(environment as any);
+    selectIntegration.execute.resolves(integration);
+    organizationRepository.findById.resolves(organization as any);
+    createSubscriber.execute.resolves(subscriber as any);
+    authService.getSubscriberWidgetToken.resolves(token);
+    getOrganizationSettingsUsecase.execute.resolves({
+      removeNovuBranding: false,
+      defaultLocale: 'en_US',
+    });
+
+    await session.execute(command);
+
+    expect(messageRepository.getCountBySeverityAggregated.calledOnce).to.be.true;
+    expect(messageRepository.getCountBySeverity.called).to.be.false;
   });
 
   it('should return the correct maxSnoozeDurationHours value for different service levels', async () => {

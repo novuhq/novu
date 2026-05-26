@@ -187,16 +187,32 @@ export class Session {
     });
 
     const unreadCountFilter = { read: false, snoozed: false } as const;
+    const isSeverityAggregationEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_INBOX_SESSION_SEVERITY_AGGREGATION_ENABLED,
+      defaultValue: false,
+      organization: { _id: environment._organizationId },
+    });
+
+    const severityCountsPromise = isSeverityAggregationEnabled
+      ? this.messageRepository.getCountBySeverityAggregated(
+          environment._id,
+          subscriberEntity._id,
+          ChannelTypeEnum.IN_APP,
+          unreadCountFilter,
+          { limit: MAX_NOTIFICATIONS_COUNT },
+          contextKeys
+        )
+      : this.messageRepository.getCountBySeverity(
+          environment._id,
+          subscriberEntity._id,
+          ChannelTypeEnum.IN_APP,
+          unreadCountFilter,
+          { limit: MAX_NOTIFICATIONS_COUNT },
+          contextKeys
+        );
 
     const [severityCounts, token, organization, existingSchedule] = await Promise.all([
-      this.messageRepository.getCountBySeverity(
-        environment._id,
-        subscriberEntity._id,
-        ChannelTypeEnum.IN_APP,
-        unreadCountFilter,
-        { limit: MAX_NOTIFICATIONS_COUNT },
-        contextKeys
-      ),
+      severityCountsPromise,
       this.authService.getSubscriberWidgetToken(subscriberEntity, contextKeys),
       this.organizationRepository.findById(environment._organizationId),
       this.getSubscriberSchedule.execute(
