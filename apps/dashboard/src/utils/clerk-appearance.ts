@@ -1,7 +1,40 @@
-import type { SignInTheme, SignUpTheme } from '@clerk/types';
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 
-export const clerkSignupAppearance: SignUpTheme | SignInTheme = {
+const lastAuthenticationStrategyBadgeLight = {
+  fontSize: '10px',
+  fontWeight: '500',
+  lineHeight: '1',
+  height: 'auto',
+  minHeight: 'unset',
+  padding: '2px 6px',
+  background: 'hsl(var(--neutral-100))',
+  color: 'hsl(var(--neutral-500))',
+  border: '1px solid hsl(var(--neutral-200))',
+  borderRadius: '4px',
+  boxShadow: 'none',
+  letterSpacing: 'normal',
+  transform: 'translate(8px, calc(-50% - 1px))',
+} as const;
+
+const lastAuthenticationStrategyBadgeDark = {
+  fontSize: '10px',
+  fontWeight: '500',
+  lineHeight: '1',
+  height: 'auto',
+  minHeight: 'unset',
+  padding: '2px 6px',
+  background: 'rgba(255, 255, 255, 0.08)',
+  color: 'rgba(255, 255, 255, 0.55)',
+  border: '1px solid rgba(255, 255, 255, 0.12)',
+  borderRadius: '4px',
+  boxShadow: 'none',
+  letterSpacing: 'normal',
+  transform: 'translate(8px, calc(-50% - 1px))',
+} as const;
+
+export const clerkSignupAppearance: ClerkAppearanceTheme = {
   elements: {
+    lastAuthenticationStrategyBadge: lastAuthenticationStrategyBadgeLight,
     headerTitle: {
       fontWeight: '500',
     },
@@ -22,8 +55,9 @@ export const clerkSignupAppearance: SignUpTheme | SignInTheme = {
   },
 } as const;
 
-export const clerkLandingSignupAppearance: SignUpTheme | SignInTheme = {
+export const clerkLandingSignupAppearance: ClerkAppearanceTheme = {
   elements: {
+    lastAuthenticationStrategyBadge: lastAuthenticationStrategyBadgeDark,
     headerTitle: {
       fontWeight: '500',
     },

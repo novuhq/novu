@@ -1,9 +1,4 @@
-import {
-  BadGatewayException,
-  ConflictException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { BadGatewayException, ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ChannelTypeEnum, ChatProviderIdEnum, slugify } from '@novu/shared';
 import Axios from 'axios';
@@ -155,9 +150,7 @@ export class ConsumeIntegrationStoreTelegramMobileLink {
         });
 
         if (!data.ok || !data.result?.username) {
-          throw new BadGatewayException(
-            `Telegram getMe failed: ${data.description ?? 'username not returned'}`
-          );
+          throw new BadGatewayException(`Telegram getMe failed: ${data.description ?? 'username not returned'}`);
         }
 
         return data.result.username;

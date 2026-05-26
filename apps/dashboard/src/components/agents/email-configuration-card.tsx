@@ -55,7 +55,11 @@ export function EmailConfigurationCardBody({
         divider
       >
         <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
-        {isOutboundDemo ? <DemoProviderHint /> : <ManageLink to={ROUTES.INTEGRATIONS}>Manage email providers</ManageLink>}
+        {isOutboundDemo ? (
+          <DemoProviderHint />
+        ) : (
+          <ManageLink to={ROUTES.INTEGRATIONS}>Manage email providers</ManageLink>
+        )}
       </CardRow>
 
       <CardRow
@@ -83,8 +87,8 @@ function DemoProviderHint() {
     <div className="bg-bg-weak border-stroke-weak text-text-sub flex items-start gap-2 rounded-md border px-2 py-1.5">
       <RiInformation2Fill className="text-away-base mt-px size-3.5 shrink-0" aria-hidden />
       <p className="text-paragraph-xs leading-4">
-        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider
-        to send at scale.
+        The demo sender is rate-limited and intended for testing only. Connect SendGrid, Resend, or another provider to
+        send at scale.
       </p>
     </div>
   );

@@ -1,4 +1,4 @@
-import { type IIntegration, IntegrationKindEnum } from '@novu/shared';
+import { type IIntegration } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -9,10 +9,16 @@ import {
   RiCheckLine,
   RiExpandUpDownLine,
 } from 'react-icons/ri';
+import {
+  DemoCredentialBadge,
+  DemoCredentialDropdownItem,
+} from '@/components/integrations/components/demo-credential-badge';
+import { isDemoIntegration } from '@/components/integrations/components/utils/helpers';
 import { Badge } from '@/components/primitives/badge';
 import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
 import { cn } from '@/utils/ui';
+import { getClaudeManagedAgentIntegrations } from './claude-managed-integrations';
 import { CONNECTOR_OPTIONS, type ConnectorId, type ConnectorOption, getConnectorById } from './connector-options';
 
 const GROUP_HEADING_CLASSNAME =
@@ -89,9 +95,7 @@ export function ConnectorIntegrationDropdown({
   const matchingIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
 
-    return (integrations ?? []).filter(
-      (i) => i.kind === IntegrationKindEnum.AGENT && i.providerId === selectedConnector.providerId
-    );
+    return getClaudeManagedAgentIntegrations(integrations, selectedConnector.providerId);
   }, [integrations, selectedConnector?.providerId]);
 
   const selectedIntegration = useMemo(
@@ -167,6 +171,10 @@ export function ConnectorIntegrationDropdown({
       return null;
     }
 
+    if (isDemoIntegration(selectedIntegration.providerId)) {
+      return <DemoCredentialBadge className="min-w-0 max-w-full" />;
+    }
+
     return (
       <Badge
         color="gray"
@@ -223,6 +231,7 @@ export function ConnectorIntegrationDropdown({
         <CommandGroup heading="Existing" className={GROUP_HEADING_CLASSNAME}>
           {matchingIntegrations.map((integration) => {
             const isCurrent = integration._id === selectedIntegrationId;
+            const isDemo = isDemoIntegration(integration.providerId);
 
             return (
               <CommandItem
@@ -232,20 +241,30 @@ export function ConnectorIntegrationDropdown({
                   onSelectIntegration(integration);
                   setOpen(false);
                 }}
-                className={cn(
-                  'flex min-w-0 items-center gap-2 rounded-md p-1 cursor-pointer',
-                  isCurrent && 'bg-bg-muted'
-                )}
+                className="flex min-w-0 cursor-pointer p-0"
               >
-                <div className="flex w-full min-w-0 items-center gap-1.5 break-normal">
-                  {selectedConnector.icon}
-                  <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
-                    {integration.name}
-                  </span>
-                  <span className="text-text-soft text-label-xs shrink-0 truncate font-mono">
-                    {integration.identifier}
-                  </span>
-                </div>
+                {isDemo ? (
+                  <DemoCredentialDropdownItem
+                    providerId={integration.providerId}
+                    providerDisplayName={integration.name}
+                    isSelected={isCurrent}
+                  />
+                ) : (
+                  <div
+                    className={cn(
+                      'flex w-full min-w-0 items-center gap-1.5 break-normal p-1',
+                      isCurrent && 'bg-bg-muted'
+                    )}
+                  >
+                    {selectedConnector.icon}
+                    <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
+                      {integration.name}
+                    </span>
+                    <span className="text-text-soft text-label-xs shrink-0 truncate font-mono">
+                      {integration.identifier}
+                    </span>
+                  </div>
+                )}
               </CommandItem>
             );
           })}

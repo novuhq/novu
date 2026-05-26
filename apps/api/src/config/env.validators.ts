@@ -86,6 +86,9 @@ export const envValidators = {
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  NOVU_MANAGED_CLAUDE_API_KEY: str({ default: undefined }),
+  MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS: num({ default: 10 }),
+  MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION: num({ default: 100_000 }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {
@@ -118,6 +121,17 @@ export const envValidators = {
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
+      ...(['production', 'dev'].includes(processEnv.NODE_ENV)
+        ? {
+            THALAMUS_CF_API_KEY: str(),
+            THALAMUS_CF_URL: url(),
+            THALAMUS_WEBHOOK_SECRET: str(),
+          }
+        : {
+            THALAMUS_CF_API_KEY: str({ default: undefined }),
+            THALAMUS_CF_URL: url({ default: undefined }),
+            THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+          }),
     }),
 
   // Feature Flags

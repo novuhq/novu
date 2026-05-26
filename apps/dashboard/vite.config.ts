@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => {
       alias: {
         ...(isCommunitySelHosted
           ? {
-              '@clerk/clerk-react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx'),
+              '@clerk/react': path.resolve(__dirname, './src/utils/self-hosted/index.tsx'),
               '@/components/side-navigation/organization-dropdown-clerk': path.resolve(
                 __dirname,
                 './src/utils/self-hosted/organization-switcher.tsx'
@@ -93,7 +93,7 @@ export default defineConfig(({ mode }) => {
             }
           : eeAuthProvider === 'better-auth'
             ? {
-                '@clerk/clerk-react': path.resolve(__dirname, './src/utils/better-auth/index.tsx'),
+                '@clerk/react': path.resolve(__dirname, './src/utils/better-auth/index.tsx'),
                 '@/context/region': path.resolve(__dirname, './src/context/region/index.self-hosted.ts'),
                 '@/components/side-navigation/organization-dropdown-clerk': path.resolve(
                   __dirname,

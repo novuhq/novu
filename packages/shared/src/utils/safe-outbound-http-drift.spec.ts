@@ -1,11 +1,10 @@
-import { describe, expect, it } from 'vitest';
-import { SsrfBlockedError as SharedSsrfBlockedError, isPrivateIp as sharedIsPrivateIp } from './ssrf-url-validation';
-
 // The inlined copy lives outside this package's rootDir. Compute the path at
 // runtime so the TypeScript build does not traverse into libs/application-generic
 // and emit stray artifacts there. Vitest runs in Node and resolves the path
 // against the spec's __dirname.
 import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { SsrfBlockedError as SharedSsrfBlockedError, isPrivateIp as sharedIsPrivateIp } from './ssrf-url-validation';
 
 const inlinedPath = join(
   __dirname,
@@ -61,6 +60,10 @@ describe('safe outbound HTTP — shared vs application-generic drift check', () 
       '192.168.1.1',
       // Link-local v4 / metadata
       '169.254.169.254',
+      // RFC6598 shared address space (100.64.0.0/10)
+      '100.64.0.1',
+      '100.100.100.200',
+      '100.127.255.255',
       // Public IPv4
       '1.1.1.1',
       '8.8.8.8',
@@ -76,6 +79,7 @@ describe('safe outbound HTTP — shared vs application-generic drift check', () 
       '::ffff:10.0.0.1',
       '::ffff:192.168.1.1',
       '::ffff:169.254.1.1',
+      '::ffff:100.100.100.200',
       // Public IPv6
       '2001:4860:4860::8888',
     ];

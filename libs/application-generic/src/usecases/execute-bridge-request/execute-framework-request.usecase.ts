@@ -106,6 +106,11 @@ export class ExecuteFrameworkRequest {
 
     this.logger.debug(`Making bridge request to \`${url}\``);
 
+    const enforceSsrfProtection =
+      command.enforceSsrfProtection === true ||
+      !!command.statelessBridgeUrl ||
+      command.workflowOrigin === ResourceOriginEnum.EXTERNAL;
+
     try {
       const response = await this.httpClient.request<ExecuteBridgeRequestDto<T>>({
         url,
@@ -117,10 +122,11 @@ export class ExecuteFrameworkRequest {
           limit: retriesLimit,
         },
         rejectUnauthorized: environment.name.toLowerCase() === 'production',
-        // Opt-in SSRF guard for user-supplied bridge URLs (sync / validate).
-        // The safe outbound layer pins the connection to a validated public
-        // IP and re-runs the policy on every redirect target.
-        enforceSsrfProtection: command.enforceSsrfProtection === true,
+        // DNS-pinned SSRF guard for user- or environment-controlled bridge
+        // targets (stateless bridgeUrl, EXTERNAL origin, or explicit opt-in).
+        // The safe outbound layer pins the connection to a validated public IP
+        // and re-runs the policy on every redirect target.
+        enforceSsrfProtection,
         onRetry: ({ statusCode, errorCode, delay }) => {
           if (statusCode) {
             this.logger.info(`Retryable status code ${statusCode} detected. Retrying in ${delay}ms`);

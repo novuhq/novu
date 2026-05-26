@@ -1,4 +1,4 @@
-import { SignUp as SignUpForm } from '@clerk/clerk-react';
+import { SignUp as SignUpForm } from '@clerk/react';
 import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { RegionPicker } from '@/components/auth/region-picker';

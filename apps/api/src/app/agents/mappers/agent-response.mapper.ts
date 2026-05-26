@@ -5,7 +5,13 @@ import {
   isValidAgentEmailSlugPrefix,
 } from '@novu/application-generic';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, EmailProviderIdEnum, slugify } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  buildClaudePlatformAgentConsoleUrl,
+  EmailProviderIdEnum,
+  isClaudePlatformConsoleProvider,
+  slugify,
+} from '@novu/shared';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 
@@ -37,22 +43,17 @@ export type ManagedRuntimeHydration = {
   externalWorkspaceId?: string;
 };
 
-/** Default Claude workspace id — every Anthropic org has an auto-created Default Workspace addressed as `default`. */
-const DEFAULT_CLAUDE_WORKSPACE_ID = 'default';
-
 /** Builds a deep link to the agent in the provider console, or `undefined` for unknown providers. */
 function buildAgentConsoleUrl(
   providerId: string,
   externalAgentId: string,
   externalWorkspaceId: string | undefined
 ): string | undefined {
-  if (providerId === AgentRuntimeProviderIdEnum.Anthropic) {
-    const workspaceId = encodeURIComponent(externalWorkspaceId?.trim() || DEFAULT_CLAUDE_WORKSPACE_ID);
-
-    return `https://platform.claude.com/workspaces/${workspaceId}/agents/${encodeURIComponent(externalAgentId)}`;
+  if (!isClaudePlatformConsoleProvider(providerId) || providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+    return undefined;
   }
 
-  return undefined;
+  return buildClaudePlatformAgentConsoleUrl(externalAgentId, externalWorkspaceId);
 }
 
 export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHydration): AgentResponseDto {
@@ -136,7 +137,6 @@ function resolveSharedInboxAddress(
     return undefined;
   }
 }
-
 
 function deriveFallbackSlug(agent: SharedInboxAgentContext): string | undefined {
   const candidate = slugify(agent.identifier ?? agent.name ?? '')

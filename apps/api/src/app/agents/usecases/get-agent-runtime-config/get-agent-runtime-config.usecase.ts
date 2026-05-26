@@ -1,16 +1,21 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
-import { AgentRepository, IntegrationRepository } from '@novu/dal';
+import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
+import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
 import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
+import { projectMcpRowsToCatalog } from '../../utils/project-mcp-servers';
 import { GetAgentRuntimeConfigCommand } from './get-agent-runtime-config.command';
 
 @Injectable()
 export class GetAgentRuntimeConfig {
   constructor(
     private readonly agentRepository: AgentRepository,
-    private readonly integrationRepository: IntegrationRepository
-  ) {}
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: GetAgentRuntimeConfigCommand): Promise<AgentRuntimeConfigResponseDto> {
     const agent = await this.agentRepository.findOne(
@@ -45,10 +50,32 @@ export class GetAgentRuntimeConfig {
       throw new NotFoundException(`Runtime integration not found for agent "${command.identifier}".`);
     }
 
-    const decryptedCredentials = decryptCredentials(integration.credentials);
-    const runtimeProvider = getAgentRuntimeProvider(providerId, decryptedCredentials.apiKey!);
+    const resolved = resolveAgentRuntime(providerId, integration.credentials);
 
-    const config = await runtimeProvider.getConfig(externalAgentId);
+    if (!resolved) {
+      throw new UnprocessableEntityException(
+        `Integration for agent "${command.identifier}" has no API key configured. Please complete the integration setup.`
+      );
+    }
+
+    const runtimeProvider = resolved.provider;
+
+    // Mongo is authoritative for the agent's MCP list. Other runtime fields
+    // (model, system prompt, tools, skills) still come live from the provider.
+    const [config, mcpRows] = await Promise.all([
+      runtimeProvider.getConfig(externalAgentId),
+      this.agentMcpServerRepository.findByAgent({
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        agentId: agent._id,
+        enabledOnly: true,
+      }),
+    ]);
+
+    const mcpServers = projectMcpRowsToCatalog(mcpRows, this.logger, {
+      agentId: agent._id,
+      useCase: GetAgentRuntimeConfig.name,
+    });
 
     const providerEntry = AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === providerId);
 
@@ -59,13 +86,14 @@ export class GetAgentRuntimeConfig {
           model: providerEntry.capabilities.model,
           systemPrompt: providerEntry.capabilities.systemPrompt,
           skills: providerEntry.capabilities.skills,
+          tokenVault: providerEntry.capabilities.tokenVault ?? false,
         }
       : undefined;
 
     const result: AgentRuntimeConfigResponseDto = {
       model: config.model,
       systemPrompt: config.systemPrompt,
-      mcpServers: config.mcpServers,
+      mcpServers,
       tools: config.tools,
       ...(config.skills !== undefined ? { skills: config.skills } : {}),
       ...(capabilities !== undefined ? { capabilities } : {}),

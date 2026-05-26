@@ -17,6 +17,7 @@ import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { ConversationStatusBadge } from './conversation-status-badge';
 import { SubscriberFallbackAvatar } from './subscriber-fallback-avatar';
+import { ToolProgressCard } from './tool-progress-card';
 
 type ConversationTimelineProps = {
   activities: ConversationActivityDto[];
@@ -248,6 +249,41 @@ function ResolvedFooter({ totalCount }: { totalCount: number }) {
   );
 }
 
+type TimelineEntry =
+  | { type: 'single'; key: string; activity: ConversationActivityDto }
+  | { type: 'tool-progress'; key: string; activities: ConversationActivityDto[] };
+
+function isToolUseSignal(activity: ConversationActivityDto): boolean {
+  return activity.type === 'signal' && activity.signalData?.type === 'tool-use';
+}
+
+function groupActivitiesForTimeline(activities: ConversationActivityDto[]): TimelineEntry[] {
+  const result: TimelineEntry[] = [];
+  const toolGroups = new Map<string, ConversationActivityDto[]>();
+
+  for (const activity of activities) {
+    if (isToolUseSignal(activity)) {
+      const runId = String((activity.signalData?.payload as Record<string, unknown>)?.runId ?? '');
+      if (!runId) {
+        result.push({ type: 'single', key: activity._id, activity });
+        continue;
+      }
+
+      let group = toolGroups.get(runId);
+      if (!group) {
+        group = [];
+        toolGroups.set(runId, group);
+        result.push({ type: 'tool-progress', key: `tools-${runId}`, activities: group });
+      }
+      group.push(activity);
+    } else {
+      result.push({ type: 'single', key: activity._id, activity });
+    }
+  }
+
+  return result;
+}
+
 export function ConversationTimeline({
   activities,
   isLoading,
@@ -292,10 +328,16 @@ export function ConversationTimeline({
       </div>
 
       <div className="flex flex-col">
-        {activities.map((activity, index) => (
-          <Fragment key={activity._id}>
+        {groupActivitiesForTimeline(activities).map((entry, index) => (
+          <Fragment key={entry.key}>
             {index > 0 && <TimelineDivider />}
-            {activity.type === 'message' ? <MessageCard activity={activity} /> : <InlineLogRow activity={activity} />}
+            {entry.type === 'tool-progress' ? (
+              <ToolProgressCard activities={entry.activities} />
+            ) : entry.activity.type === 'message' ? (
+              <MessageCard activity={entry.activity} />
+            ) : (
+              <InlineLogRow activity={entry.activity} />
+            )}
           </Fragment>
         ))}
 

@@ -280,6 +280,13 @@ function BridgeConnectionStatus({ connected, onAddProvider }: { connected: boole
 type AgentCodeSetupSectionProps = {
   agent: AgentResponse;
   stepOffset: number;
+  /**
+   * Total number of steps across every visible section in the current context.
+   * Used to render the "X/Y SETUP AGENT HANDLER" section label so the count
+   * matches what the user actually sees (onboarding vs agent details, managed
+   * vs self-hosted).
+   */
+  totalSteps: number;
   providerId?: string;
   onBridgeConnected?: () => void;
   onAddProvider?: () => void;
@@ -288,6 +295,7 @@ type AgentCodeSetupSectionProps = {
 export function AgentCodeSetupSection({
   agent,
   stepOffset,
+  totalSteps,
   providerId,
   onBridgeConnected,
   onAddProvider,
@@ -310,7 +318,7 @@ export function AgentCodeSetupSection({
       <SetupStep
         index={stepOffset}
         status={deriveStepStatus(stepOffset, firstIncompleteStep)}
-        sectionLabel="2/2 SETUP AGENT HANDLER"
+        sectionLabel={`${stepOffset}/${totalSteps} SETUP AGENT HANDLER`}
         title={
           <span className="inline-flex items-center gap-1">
             Scaffold your agent project

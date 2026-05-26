@@ -182,9 +182,7 @@ function formatFromHeader(name: string, email: string): string {
 function PreviewRow({ label, value, muted }: { label: string; value: string; muted: boolean }) {
   return (
     <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] items-baseline gap-x-3 gap-y-0">
-      <span className="text-text-soft text-[10px] shrink-0 font-medium uppercase leading-4">
-        {label}
-      </span>
+      <span className="text-text-soft text-[10px] shrink-0 font-medium uppercase leading-4">{label}</span>
       <span
         className={
           muted

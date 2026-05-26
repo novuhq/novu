@@ -12,6 +12,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { PinoLogger } from '@novu/application-generic';
 import type { Signal } from '@novu/framework';
 import { UserSessionData } from '@novu/shared';
 import { Request, Response } from 'express';
@@ -26,7 +27,6 @@ import { ChatSdkService } from './services/chat-sdk.service';
 import { ManagedAgentService } from './services/managed-agent.service';
 import { HandleAgentReplyCommand } from './usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
-import { sendWebResponse, toWebRequest } from './utils/express-to-web-request';
 
 @Controller('/agents')
 @UseGuards(AgentConversationEnabledGuard)
@@ -35,21 +35,15 @@ export class AgentsWebhookController {
   constructor(
     private chatSdkService: ChatSdkService,
     private handleAgentReplyUsecase: HandleAgentReply,
-    private managedAgentService: ManagedAgentService
-  ) {}
+    private managedAgentService: ManagedAgentService,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @Post('/events')
   async handleThalamusEvent(@Req() req: Request, @Res() res: Response) {
-    const handler = this.managedAgentService.getWebhookHandler();
-    if (!handler) {
-      res.status(503).json({ error: 'Webhook handler not configured' });
-
-      return;
-    }
-
-    const webRequest = toWebRequest(req);
-    const webResponse = await handler.handle(webRequest);
-    await sendWebResponse(webResponse, res);
+    await this.managedAgentService.handleWebhook(req, res);
   }
 
   @Post('/:agentId/reply')

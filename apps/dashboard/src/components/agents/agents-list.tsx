@@ -28,6 +28,7 @@ import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { APP_IDS } from '@/utils/apps';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -301,12 +302,7 @@ export function AgentsList() {
               </TooltipTrigger>
               <TooltipContent className="max-w-60">
                 {'Add agents in your development environment. '}
-                <a
-                  href="https://docs.novu.co/platform/agents"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="underline"
-                >
+                <a href={AGENTS_DOCS_PROVIDERS_URL} target="_blank" rel="noreferrer noopener" className="underline">
                   Learn More ↗
                 </a>
               </TooltipContent>

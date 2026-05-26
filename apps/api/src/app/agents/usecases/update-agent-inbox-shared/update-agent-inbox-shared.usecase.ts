@@ -1,11 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { isAgentSharedInboxEnabled, InstrumentUsecase } from '@novu/application-generic';
-import {
-  AgentIntegrationRepository,
-  AgentRepository,
-  DomainRouteRepository,
-  IntegrationRepository,
-} from '@novu/dal';
+import { InstrumentUsecase, isAgentSharedInboxEnabled } from '@novu/application-generic';
+import { AgentIntegrationRepository, AgentRepository, DomainRouteRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, DomainRouteTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto } from '../../dtos';
@@ -85,11 +80,11 @@ export class UpdateAgentInboxShared {
       throw new NotFoundException('No Novu Email integration found for this agent.');
     }
 
-    return toAgentIntegrationResponse(
-      link,
-      refreshed,
-      { _id: agent._id, identifier: agent.identifier, name: agent.name }
-    );
+    return toAgentIntegrationResponse(link, refreshed, {
+      _id: agent._id,
+      identifier: agent.identifier,
+      name: agent.name,
+    });
   }
 
   private async loadNovuAgentIntegration(agentId: string, environmentId: string, organizationId: string) {

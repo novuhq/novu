@@ -10,6 +10,7 @@ import {
   ConsumedActionToken,
   PeekedActionToken,
 } from './services/agent-email-action-token.service';
+import { captureAgentException, captureAgentWarning } from './utils/capture-agent-sentry';
 import { AgentActionPreDispatchError, ChatSdkService } from './services/chat-sdk.service';
 
 const EXECUTE_PATH = '/v1/agents/email/actions/execute';
@@ -64,6 +65,7 @@ export class AgentEmailActionsController {
     } catch (err) {
       if (err instanceof AgentEmailActionCacheUnavailableError) {
         this.logger.warn(err, 'Cache unavailable while peeking agent email action token');
+        captureAgentWarning(err, { component: 'agent-email-actions', operation: 'peek-action-token' });
         this.sendHtml(res, HttpStatus.SERVICE_UNAVAILABLE, renderTryAgainPage());
 
         return;
@@ -118,6 +120,7 @@ export class AgentEmailActionsController {
     } catch (err) {
       if (err instanceof AgentEmailActionCacheUnavailableError) {
         this.logger.warn(err, 'Cache unavailable while consuming agent email action token');
+        captureAgentWarning(err, { component: 'agent-email-actions', operation: 'consume-action-token' });
         this.sendHtml(res, HttpStatus.SERVICE_UNAVAILABLE, renderTryAgainPage());
 
         return;
@@ -137,6 +140,13 @@ export class AgentEmailActionsController {
       await this.chatSdkService.processEmailAction(claims);
     } catch (err) {
       this.logger.error(err, `Failed to process agent email action ${claims.actionId} for agent ${claims.agentId}`);
+      captureAgentException(err, {
+        component: 'agent-email-actions',
+        operation: 'process-email-action',
+        agentId: claims.agentId,
+        integrationIdentifier: claims.integrationIdentifier,
+        extra: { actionId: claims.actionId, preDispatch: err instanceof AgentActionPreDispatchError },
+      });
 
       // Only re-release the token when the failure is provably *pre-dispatch* (token
       // validation, config resolution, adapter setup) — at which point no user-facing side
@@ -147,6 +157,11 @@ export class AgentEmailActionsController {
       if (err instanceof AgentActionPreDispatchError) {
         await this.tokenService.releaseActionToken(token, consumed).catch((releaseErr) => {
           this.logger.warn(releaseErr, `Failed to release agent email action token after pre-dispatch failure`);
+          captureAgentWarning(releaseErr, {
+            component: 'agent-email-actions',
+            operation: 'release-action-token',
+            agentId: claims.agentId,
+          });
         });
       }
 

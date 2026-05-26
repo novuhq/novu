@@ -1,6 +1,6 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ArrowRight } from 'lucide-react';
-import { useCallback, useId, useMemo, type ComponentProps } from 'react';
+import { type ComponentProps, useCallback, useId, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Area, ComposedChart, XAxis, YAxis } from 'recharts';
 import { type WorkflowRunsTrendDataPoint } from '../../../api/activity';

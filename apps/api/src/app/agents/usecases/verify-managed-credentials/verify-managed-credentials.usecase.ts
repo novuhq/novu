@@ -1,5 +1,5 @@
-import { Injectable } from '@nestjs/common';
-import { getAgentRuntimeProvider, InstrumentUsecase } from '@novu/application-generic';
+import { BadRequestException, Injectable } from '@nestjs/common';
+import { InstrumentUsecase, resolveAgentRuntime } from '@novu/application-generic';
 
 import { VerifyManagedCredentialsCommand } from './verify-managed-credentials.command';
 
@@ -8,7 +8,7 @@ export type VerifyManagedCredentialsResult = {
 };
 
 /**
- * Stateless API-key verification for managed-runtime providers. Delegates to the runtime provider's
+ * Stateless credential verification for managed-runtime providers. Delegates to the runtime provider's
  * `validateCredentials()` which performs a cheap read-only call against the upstream API. Errors are
  * propagated as `AgentRuntimeError` subclasses and translated to HTTP status codes by
  * `AgentRuntimeExceptionFilter`.
@@ -17,8 +17,17 @@ export type VerifyManagedCredentialsResult = {
 export class VerifyManagedCredentials {
   @InstrumentUsecase()
   async execute(command: VerifyManagedCredentialsCommand): Promise<VerifyManagedCredentialsResult> {
-    const provider = getAgentRuntimeProvider(command.providerId, command.apiKey);
-    await provider.validateCredentials(command.apiKey);
+    const resolved = resolveAgentRuntime(command.providerId, {
+      apiKey: command.apiKey,
+      region: command.region,
+      externalWorkspaceId: command.externalWorkspaceId,
+    });
+
+    if (!resolved) {
+      throw new BadRequestException('Incomplete credentials for the selected provider');
+    }
+
+    await resolved.provider.validateCredentials(resolved.validateCredentialsInput);
 
     return { valid: true };
   }

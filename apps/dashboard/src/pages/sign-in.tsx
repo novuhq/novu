@@ -1,4 +1,4 @@
-import { SignIn as SignInForm, useAuth } from '@clerk/clerk-react';
+import { SignIn as SignInForm, useAuth } from '@clerk/react';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
