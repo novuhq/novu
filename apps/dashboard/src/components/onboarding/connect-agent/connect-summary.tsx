@@ -1,7 +1,7 @@
-import type { RuntimeType } from '@/components/agents/create-agent-fields';
-import { isDemoManagedClaudeIntegrationSelected } from '@/components/agents/connectors/claude-managed-integrations';
-import { ClaudeIcon } from '@/components/icons/claude';
 import type { IIntegration } from '@novu/shared';
+import { isDemoManagedClaudeIntegrationSelected } from '@/components/agents/connectors/claude-managed-integrations';
+import type { RuntimeType } from '@/components/agents/create-agent-fields';
+import { ClaudeIcon } from '@/components/icons/claude';
 import { type ConnectorId, getConnectorById } from './connector-options';
 import type { TemplateSelection } from './template-dropdown';
 
@@ -45,13 +45,10 @@ function resolveRuntime(connectorId: ConnectorId): RuntimeType {
 export function deriveConnectSummaryDisplay(summary: ConnectSummary, integrations?: IIntegration[]) {
   const runtime = resolveRuntime(summary.connectorId);
   const isClaudeSelected = runtime === 'claude';
-  const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(
-    integrations,
-    summary.selectedIntegrationId
-  );
-  const isExistingMode =
-    isClaudeSelected && !isDemoProviderSelected && summary.templateSelection.kind === 'existing';
-  const isScratchMode = summary.templateSelection.kind === 'scratch';
+  const isScratchRuntime = runtime === 'scratch';
+  const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, summary.selectedIntegrationId);
+  const isExistingMode = isClaudeSelected && !isDemoProviderSelected && summary.templateSelection.kind === 'existing';
+  const isScratchMode = isScratchRuntime || summary.templateSelection.kind === 'scratch';
   const showExistingOption = isClaudeSelected && !isDemoProviderSelected;
   const existingOptionIcon = isClaudeSelected ? (
     <div className="bg-primary-base/10 text-primary-base flex size-4 items-center justify-center rounded-full">
@@ -59,5 +56,12 @@ export function deriveConnectSummaryDisplay(summary: ConnectSummary, integration
     </div>
   ) : undefined;
 
-  return { isClaudeSelected, isExistingMode, isScratchMode, showExistingOption, existingOptionIcon };
+  return {
+    isClaudeSelected,
+    isScratchRuntime,
+    isExistingMode,
+    isScratchMode,
+    showExistingOption,
+    existingOptionIcon,
+  };
 }

@@ -56,10 +56,10 @@ import {
   buildVerifyCredentialsPayload,
   buildVerifyFingerprint,
   ConfigureCredentialsSection,
-  hasCompleteManagedCredentials,
   type CreateAgentForm,
   type CreateAgentFormErrors,
   ExistingAgentFields,
+  hasCompleteManagedCredentials,
   hasFormErrors,
   type ManagedAgentRuntimeOverrides,
   ScratchAgentFields,
@@ -199,12 +199,10 @@ export function CreateAgentDialog({
   const selectedConnector = getConnectorById(connectorId);
   const isManagedClaudeConnector = selectedConnector?.runtime === 'claude';
   const runtime = selectedConnector?.runtime ?? 'scratch';
-  const isScratchRuntime = runtime === 'scratch';
-  // The "Generate from prompt" surface is available for both managed Claude (when the
-  // managed-runtime flag is on) and for the self-hosted Custom Scaffold flow unconditionally —
-  // Custom Scaffold generation only produces name/identifier/systemPrompt and never touches any
-  // Anthropic-managed infrastructure, so it has no reason to depend on the managed flag.
-  const useAiGeneration = isManagedClaudeConnector ? isManagedEnabled : isScratchRuntime;
+  // The "Generate from prompt" surface is reserved for managed Claude (when the managed-runtime
+  // flag is on). The Custom Scaffold flow always renders the manual ScratchAgentFields form, so
+  // teams writing their own runtime see exactly the inputs they need to fill in.
+  const useAiGeneration = isManagedClaudeConnector && isManagedEnabled;
   const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
   const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
@@ -385,20 +383,6 @@ export function CreateAgentDialog({
     });
   }, []);
 
-  // Legacy fallback (AI generation unavailable): pre-fill the manual form fields directly.
-  const handleSelectTemplate = useCallback(
-    (template: AgentTemplate) => {
-      setName(template.name);
-      if (!isIdentifierTouched) {
-        setIdentifier(slugify(template.name));
-        setErrors((prev) => ({ ...prev, identifier: undefined }));
-      }
-      setInstructions(template.instructions);
-      setErrors((prev) => ({ ...prev, name: undefined }));
-    },
-    [isIdentifierTouched]
-  );
-
   const handleSelectConnector = (id: ConnectorId) => {
     preferAnyManagedIntegrationRef.current = false;
     setConnectorId(id);
@@ -488,19 +472,18 @@ export function CreateAgentDialog({
     setVerifyMessage(undefined);
 
     verifyMutation.mutate(buildVerifyCredentialsPayload(selectedConnector.providerId, fields), {
-        onSuccess: () => {
-          if (lastVerifiedKeyRef.current !== verifyKey) return;
-          setVerifyStatus('valid');
-          setVerifyMessage(undefined);
-          setErrors((prev) => ({ ...prev, apiKey: undefined }));
-        },
-        onError: (err) => {
-          if (lastVerifiedKeyRef.current !== verifyKey) return;
-          setVerifyStatus('invalid');
-          setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
-        },
-      }
-    );
+      onSuccess: () => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('valid');
+        setVerifyMessage(undefined);
+        setErrors((prev) => ({ ...prev, apiKey: undefined }));
+      },
+      onError: (err) => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('invalid');
+        setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
+      },
+    });
   };
 
   const handleApiKeyChange = (next: string) => {
@@ -896,28 +879,25 @@ export function CreateAgentDialog({
                 </AnimatePresence>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                <AgentSuggestionPills suggestions={AGENT_TEMPLATES} onSelect={handleSelectTemplate} />
-
-                <ScratchAgentFields
-                  name={name}
-                  identifier={identifier}
-                  instructions={instructions}
-                  errors={errors}
-                  isIdentifierTouched={isIdentifierTouched}
-                  isClaudeSelected={isManagedClaudeConnector}
-                  onNameChange={(next) => {
-                    setName(next);
-                    setErrors((prev) => ({ ...prev, name: undefined }));
-                  }}
-                  onIdentifierChange={(next) => {
-                    setIdentifier(next);
-                    setErrors((prev) => ({ ...prev, identifier: undefined }));
-                  }}
-                  onIdentifierTouched={() => setIsIdentifierTouched(true)}
-                  onInstructionsChange={setInstructions}
-                />
-              </div>
+              <ScratchAgentFields
+                name={name}
+                identifier={identifier}
+                instructions={instructions}
+                errors={errors}
+                isIdentifierTouched={isIdentifierTouched}
+                isClaudeSelected={isManagedClaudeConnector}
+                disabled={isSubmitBusy}
+                onNameChange={(next) => {
+                  setName(next);
+                  setErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+                onIdentifierChange={(next) => {
+                  setIdentifier(next);
+                  setErrors((prev) => ({ ...prev, identifier: undefined }));
+                }}
+                onIdentifierTouched={() => setIsIdentifierTouched(true)}
+                onInstructionsChange={setInstructions}
+              />
             )}
           </div>
 
