@@ -1,6 +1,6 @@
-interface TrustedCompaniesProps {
+type TrustedCompaniesProps = {
   label?: string;
-}
+};
 
 export function TrustedCompanies({ label = 'TRUSTED BY' }: TrustedCompaniesProps) {
   return (

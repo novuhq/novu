@@ -68,38 +68,42 @@ export function ExplorePlatformSection() {
         </div>
       </div>
 
-      {IS_HOSTNAME_SPLIT_ENABLED ? (
-        <CrossAppLink
-          href={platformHref}
-          openInNewTab
-          className="border border-bg-soft bg-bg-white hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-stroke-strong text-text-sub group flex w-full items-center justify-center gap-0.5 rounded-md py-1.5 pl-2 pr-1.5 text-label-xs font-medium shadow-[0px_0px_0px_1px_var(--stroke-soft),0px_1px_3px_0px_rgba(14,18,27,0.12)] transition-colors focus-visible:outline-none focus-visible:ring-2"
-        >
-          <span>Explore</span>
-          <span className="flex items-center gap-1 px-1">
-            <PlatformIcon className="text-text-sub size-4" aria-hidden />
-            <span>Platform</span>
-          </span>
-          <RiArrowRightSLine
-            className="text-text-soft size-4 transition-transform duration-200 group-hover:translate-x-0.5"
-            aria-hidden
-          />
-        </CrossAppLink>
-      ) : (
-        <Link
-          to={platformHref}
-          className="border border-bg-soft bg-bg-white hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-stroke-strong text-text-sub group flex w-full items-center justify-center gap-0.5 rounded-md py-1.5 pl-2 pr-1.5 text-label-xs font-medium shadow-[0px_0px_0px_1px_var(--stroke-soft),0px_1px_3px_0px_rgba(14,18,27,0.12)] transition-colors focus-visible:outline-none focus-visible:ring-2"
-        >
-          <span>Explore</span>
-          <span className="flex items-center gap-1 px-1">
-            <PlatformIcon className="text-text-sub size-4" aria-hidden />
-            <span>Platform</span>
-          </span>
-          <RiArrowRightSLine
-            className="text-text-soft size-4 transition-transform duration-200 group-hover:translate-x-0.5"
-            aria-hidden
-          />
-        </Link>
-      )}
+      <PlatformLink platformHref={platformHref} />
     </div>
+  );
+}
+
+const PLATFORM_LINK_CLASSNAME =
+  'border border-bg-soft bg-bg-white hover:bg-bg-weak focus-visible:bg-bg-weak focus-visible:ring-stroke-strong text-text-sub group flex w-full items-center justify-center gap-0.5 rounded-md py-1.5 pl-2 pr-1.5 text-label-xs font-medium shadow-[0px_0px_0px_1px_var(--stroke-soft),0px_1px_3px_0px_rgba(14,18,27,0.12)] transition-colors focus-visible:outline-none focus-visible:ring-2';
+
+function PlatformLinkContent() {
+  return (
+    <>
+      <span>Explore</span>
+      <span className="flex items-center gap-1 px-1">
+        <PlatformIcon className="text-text-sub size-4" aria-hidden />
+        <span>Platform</span>
+      </span>
+      <RiArrowRightSLine
+        className="text-text-soft size-4 transition-transform duration-200 group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </>
+  );
+}
+
+function PlatformLink({ platformHref }: { platformHref: string }) {
+  if (IS_HOSTNAME_SPLIT_ENABLED) {
+    return (
+      <CrossAppLink href={platformHref} openInNewTab className={PLATFORM_LINK_CLASSNAME}>
+        <PlatformLinkContent />
+      </CrossAppLink>
+    );
+  }
+
+  return (
+    <Link to={platformHref} className={PLATFORM_LINK_CLASSNAME}>
+      <PlatformLinkContent />
+    </Link>
   );
 }

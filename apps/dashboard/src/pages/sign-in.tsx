@@ -100,6 +100,11 @@ export const SignInPage = () => {
     ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
     : ROUTES.SIGN_UP;
 
+  // Render nothing while the satellite redirects to the primary so we don't flash the form.
+  if (IS_NOVU_CONNECT) {
+    return null;
+  }
+
   return (
     <div className="flex min-h-screen w-full flex-col md:max-w-[1120px] md:flex-row md:gap-36">
       <PageMeta title={isConnectSignIn ? 'Sign in to Novu Connect' : 'Sign in to Novu'} />

@@ -50,9 +50,25 @@ type OnboardingLoaderProps = {
   variant?: OnboardingLoaderVariant;
 };
 
+type StepStatus = 'success' | 'progress' | 'pending';
+
+function getStepStatus(index: number, activeIndex: number): StepStatus {
+  if (index < activeIndex) return 'success';
+  if (index === activeIndex) return 'progress';
+
+  return 'pending';
+}
+
 export function OnboardingLoader({ variant = 'platform' }: OnboardingLoaderProps) {
   const { steps: stepDefs, title, Logo } = VARIANT_CONFIG[variant];
   const [activeIndex, setActiveIndex] = useState(0);
+
+  // Keep `activeIndex` in range when the variant (and therefore `stepDefs.length`) changes — a
+  // shorter steps list could leave a previously-valid index hanging off the end and the y-offset
+  // animation would over-translate the strip.
+  useEffect(() => {
+    setActiveIndex((prev) => Math.min(prev, Math.max(0, stepDefs.length - 1)));
+  }, [stepDefs.length]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -66,11 +82,10 @@ export function OnboardingLoader({ variant = 'platform' }: OnboardingLoaderProps
     return () => clearInterval(interval);
   }, [stepDefs.length]);
 
-  const steps = stepDefs.map((step, index) => {
-    const stepStatus = index < activeIndex ? 'success' : index === activeIndex ? 'progress' : 'pending';
-
-    return { ...step, status: stepStatus };
-  });
+  const steps = stepDefs.map((step, index) => ({
+    ...step,
+    status: getStepStatus(index, activeIndex),
+  }));
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-6">

@@ -24,8 +24,16 @@ export enum HttpRequestHeaderKeysEnum {
   X_NOVU_PRODUCT_TYPE = 'X-Novu-Product-Type',
 }
 
-// Compile-time guarantee that the enum value matches the shared constant.
-const _productTypeHeaderInSync: typeof NOVU_PRODUCT_TYPE_HEADER = HttpRequestHeaderKeysEnum.X_NOVU_PRODUCT_TYPE;
+// Bidirectional compile-time guarantee that the enum value matches the shared constant. The
+// template literal `${...}` coerces the nominal enum member type to its underlying string
+// literal, so `AssertEqual` can compare it against the shared `as const` constant in both
+// directions — neither side can drift without a TS error.
+type AssertEqual<A, B> = A extends B ? (B extends A ? true : never) : never;
+const _productTypeHeaderInSync: AssertEqual<
+  typeof NOVU_PRODUCT_TYPE_HEADER,
+  `${HttpRequestHeaderKeysEnum.X_NOVU_PRODUCT_TYPE}`
+> = true;
+void _productTypeHeaderInSync;
 testHttpHeaderEnumValidity(HttpRequestHeaderKeysEnum);
 
 export enum HttpResponseHeaderKeysEnum {

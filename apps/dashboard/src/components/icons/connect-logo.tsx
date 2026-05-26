@@ -1,7 +1,2 @@
-import { ConnectLogomark, type ConnectLogomarkProps } from '@/components/icons/connect-logomark';
-
-export type ConnectLogoProps = ConnectLogomarkProps;
-
-export function ConnectLogo(props: ConnectLogoProps) {
-  return <ConnectLogomark {...props} />;
-}
+// Stable alias so callers can import `ConnectLogo` while the underlying component is `ConnectLogomark`.
+export { ConnectLogomark as ConnectLogo, type ConnectLogomarkProps as ConnectLogoProps } from '@/components/icons/connect-logomark';

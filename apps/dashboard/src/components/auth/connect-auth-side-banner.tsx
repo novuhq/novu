@@ -44,7 +44,7 @@ export function ConnectAuthSideBanner() {
                 />
               }
             >
-              Whatsapp
+              WhatsApp
             </IntegrationPill>
             <IntegrationPill
               rotate={-1}
