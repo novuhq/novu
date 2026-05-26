@@ -14,6 +14,8 @@ import {
   InstrumentUsecase,
   MailFactory,
   messageWebhookMapper,
+  omitNovuSenderFieldsFromEmailProviderPassthrough,
+  resolveNovuEmailSenderFields,
   SelectIntegration,
   SelectVariant,
   SendWebhookMessage,
@@ -505,7 +507,7 @@ export class SendMessageEmail extends SendMessageBase {
     try {
       const result = await mailHandler.send({
         ...mailData,
-        bridgeProviderData: this.combineOverrides(
+        bridgeProviderData: this.combineEmailProviderOverrides(
           command.bridgeData,
           command.overrides,
           command.step.stepId,
@@ -684,7 +686,9 @@ export class SendMessageEmail extends SendMessageBase {
   /**
    * Builds the merged provider overrides object for email sending.
    *
-   * Provider-specific fields (cc/bcc/from/replyTo/etc.) can arrive in three shapes:
+   * Provider-specific fields (cc/bcc/from/senderName/replyTo/etc.) can arrive in three shapes:
+   * `from` (email address) and `senderName` (display name) use Novu field names and are mapped
+   * to each provider by the mail handler — they must not be passed through as raw provider fields.
    *   1. Deprecated channel bucket:     `overrides.email`
    *   2. Deprecated flat provider key:  `overrides.<providerId>`
    *   3. Modern nested providers shape: `overrides.providers.<providerId>`
@@ -693,6 +697,21 @@ export class SendMessageEmail extends SendMessageBase {
    * All three are merged (step-level wins) so values like `cc` reach `createMailData`
    * and downstream providers (e.g. SendGrid `personalizations[0].cc`).
    */
+  /**
+   * Merges provider overrides for passthrough while keeping Novu `from` + `senderName` on
+   * `IEmailOptions` so each provider maps them to its native sender format.
+   */
+  private combineEmailProviderOverrides(
+    bridgeData: Record<string, unknown> | null | undefined,
+    overrides: SendMessageChannelCommand['overrides'],
+    stepId: string | undefined,
+    providerId: string
+  ): Record<string, unknown> {
+    const combined = this.combineOverrides(bridgeData, overrides, stepId, providerId);
+
+    return omitNovuSenderFieldsFromEmailProviderPassthrough(combined);
+  }
+
   private buildEmailProviderOverrides(
     command: SendMessageChannelCommand,
     providerId: string | undefined,
@@ -744,7 +763,8 @@ function hasEmailOverrideRecipients(emailOverrides?: Record<string, unknown>): b
 const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
   const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
   const replaceToRecipient = overrides?.replaceToRecipient === true;
-  const from = overrides?.from || options.from;
+  const { from: overrideFrom, senderName: overrideSenderName } = resolveNovuEmailSenderFields(overrides);
+  const from = overrideFrom || options.from;
 
   let to: string[];
 
@@ -771,7 +791,7 @@ const createMailData = (options: IEmailOptions, overrides: Record<string, any>):
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
     ...ipPoolName,
-    senderName: overrides?.senderName || options.senderName,
+    senderName: overrideSenderName || options.senderName,
     subject: overrides?.subject || options.subject,
     customData: overrides?.customData || {},
     headers: overrides?.headers || {},

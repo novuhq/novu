@@ -11,6 +11,7 @@ export * from './deepmerge';
 export * from './digest';
 export * from './duration-utils';
 export * from './email-normalization';
+export * from './email-provider-overrides';
 export * from './exceptions';
 export * from './filter';
 export * from './filter-processing-details';

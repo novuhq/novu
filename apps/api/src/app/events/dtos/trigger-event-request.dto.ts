@@ -153,9 +153,12 @@ export class TriggerOverrides {
   channels?: ChannelOverrides;
 
   @ApiPropertyOptional({
-    description: 'Overrides the provider configuration for the entire workflow and all steps',
+    description:
+      'Overrides the provider configuration for the entire workflow and all steps. For email providers, use `from` for the sender address and `senderName` for the display name.',
     example: {
       sendgrid: {
+        from: 'sender@example.com',
+        senderName: 'Acme Inc',
         templateId: '1234567890',
       },
     },
