@@ -18,6 +18,19 @@
   to = "/index.html"
   status = 200
 
+# Clerk satellite handshakes redirect through /auth/* — prevent Netlify CDN from caching
+# stale 200/index.html responses during cross-domain session sync (known Clerk + Netlify issue).
+[[headers]]
+  for = "/auth/*"
+  [headers.values]
+    Cache-Control = "private, no-cache, no-store, must-revalidate"
+    Netlify-CDN-Cache-Control = "private, no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Netlify-CDN-Cache-Control = "private, no-cache"
+
 [[headers]]
   for = "/*"
   [headers.values]

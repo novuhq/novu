@@ -1,4 +1,4 @@
-import { useOrganizationList, useUser } from '@clerk/react';
+import { useOrganizationList, useUser, useClerk } from '@clerk/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
@@ -12,7 +12,7 @@ import { IS_NOVU_CONNECT } from '@/config';
 import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, type AppId } from '@/utils/apps';
-import { isConnectWorkspace, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
+import { isConnectWorkspace, navigateWithClerkSessionIfCrossOrigin, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
 import { buildOtherProductOrgListUrl } from '@/utils/cross-product-redirect';
 import {
   clearInvitationAcceptPending,
@@ -395,6 +395,7 @@ export function OrganizationPicker({
 }: OrganizationPickerProps) {
   const track = useTelemetry();
   const { user } = useUser();
+  const clerk = useClerk();
 
   const productFilter = useMemo(getProductFilter, []);
   const productAppId = useMemo(() => getProductAppId(productFilter), [productFilter]);
@@ -498,9 +499,9 @@ export function OrganizationPicker({
     if (isInvitationAcceptPending() && hasCrossProductMembership(allMemberships, productFilter)) {
       const otherProductUrl = buildOtherProductOrgListUrl(productFilter);
 
-      if (otherProductUrl) {
+      if (otherProductUrl && clerk.loaded) {
         clearInvitationAcceptPending();
-        window.location.assign(otherProductUrl);
+        navigateWithClerkSessionIfCrossOrigin(clerk, otherProductUrl);
 
         return;
       }
@@ -508,7 +509,7 @@ export function OrganizationPicker({
 
     clearInvitationAcceptPending();
     setView('create');
-  }, [isFullListLoaded, filteredMemberships.length, allMemberships, productFilter]);
+  }, [isFullListLoaded, filteredMemberships.length, allMemberships, productFilter, clerk.loaded, clerk]);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {

@@ -6,12 +6,15 @@ import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { buildAppHomeRoute, getCurrentAppId } from '@/utils/apps';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import { beginConnectProvisioning, buildConnectProvisionOrgListPath, isActiveConnectWorkspace } from '@/utils/connect';
+import {
+  beginConnectProvisioning,
+  buildConnectProvisionOrgListPath,
+  navigateToConnectWithClerkSession,
+  redirectSatelliteToPrimarySignIn,
+} from '@/utils/connect';
 import { markInvitationAcceptIfPresent } from '@/utils/invitation-accept-signal';
 import {
-  appendRedirectUrl,
   buildAbsoluteConnectUrl,
-  buildPrimarySignInUrl,
   CONNECT_PRODUCT_VALUE,
   PRODUCT_QUERY_PARAM,
   readConnectSatelliteReturnUrl,
@@ -20,17 +23,19 @@ import {
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { getReferrer, getUtmParams } from '@/utils/tracking';
-import { SignIn as SignInForm, useAuth, useOrganization, useUser } from '@clerk/react';
-import { useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { SignIn as SignInForm, useAuth, useClerk } from '@clerk/react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 export const SignInPage = () => {
   const segment = useSegment();
   const { isSignedIn, isLoaded } = useAuth();
-  const { user, isLoaded: isUserLoaded } = useUser();
-  const { organization, isLoaded: isOrganizationLoaded } = useOrganization();
+  const clerk = useClerk();
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
+  const hasRedirectedToPrimaryRef = useRef(false);
+  const hasRedirectedToConnectRef = useRef(false);
 
   const isConnectSignIn = useMemo(
     () => searchParams.get(PRODUCT_QUERY_PARAM) === CONNECT_PRODUCT_VALUE || IS_NOVU_CONNECT,
@@ -39,21 +44,25 @@ export const SignInPage = () => {
 
   const connectSatelliteReturnUrl = useMemo(
     () => readConnectSatelliteReturnUrl(searchParams),
-    [searchParams]
+    [searchParams, location.hash, location.search]
   );
 
-  // Sign-in only runs on the primary; satellite visitors bounce back with the Connect flag.
+  const connectDefaultDestination = useMemo(
+    () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
+    []
+  );
+
+  // Sign-in only runs on the primary; satellite visitors bounce via Clerk.buildSignInUrl (sync params).
   useEffect(() => {
-    if (!IS_NOVU_CONNECT) {
+    if (!IS_NOVU_CONNECT || !clerk.loaded || hasRedirectedToPrimaryRef.current) {
       return;
     }
 
-    const primarySignInUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });
+    hasRedirectedToPrimaryRef.current = true;
     const returnUrl = resolveConnectSatelliteReturnUrl(searchParams);
-    const targetUrl = returnUrl ? appendRedirectUrl(primarySignInUrl, returnUrl) : primarySignInUrl;
 
-    window.location.replace(targetUrl);
-  }, [searchParams]);
+    redirectSatelliteToPrimarySignIn(clerk, returnUrl);
+  }, [searchParams, location.hash, location.search, clerk.loaded, clerk]);
 
   // Capture invite-link entry (`__clerk_ticket` in the URL) BEFORE Clerk consumes the ticket
   // during sign-in. The picker reads this signal later to decide whether to hop across products.
@@ -72,35 +81,20 @@ export const SignInPage = () => {
   }, []);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    if (IS_NOVU_CONNECT) return; // satellite is mid-redirect to primary; let it finish.
+    if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || !clerk.loaded || hasRedirectedToConnectRef.current) {
+      return;
+    }
 
     if (isConnectSignIn) {
-      // Satellite handshake: return via Clerk's redirect_url so the Connect session syncs.
-      if (connectSatelliteReturnUrl) {
-        window.location.assign(connectSatelliteReturnUrl);
+      hasRedirectedToConnectRef.current = true;
 
-        return;
+      const destination = connectSatelliteReturnUrl ?? connectDefaultDestination;
+
+      if (!connectSatelliteReturnUrl) {
+        beginConnectProvisioning();
       }
 
-      if (!isUserLoaded || !isOrganizationLoaded) return;
-
-      if (
-        organization &&
-        isActiveConnectWorkspace(organization.publicMetadata, {
-          userId: user?.id,
-          organizationId: organization.id,
-        })
-      ) {
-        window.location.assign(buildAbsoluteConnectUrl(ROUTES.ENV));
-
-        return;
-      }
-
-      beginConnectProvisioning();
-      window.location.assign(
-        buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST))
-      );
+      navigateToConnectWithClerkSession(clerk, destination);
 
       return;
     }
@@ -112,19 +106,14 @@ export const SignInPage = () => {
   }, [
     isLoaded,
     isSignedIn,
-    isUserLoaded,
-    isOrganizationLoaded,
-    organization,
-    user?.id,
     isConnectSignIn,
     connectSatelliteReturnUrl,
+    connectDefaultDestination,
+    clerk,
     navigate,
   ]);
 
-  const connectProvisionRedirect = useMemo(
-    () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
-    []
-  );
+  const connectProvisionRedirect = useMemo(() => connectDefaultDestination, [connectDefaultDestination]);
 
   // Preserve `?product=connect` across the Clerk sign-in ↔ sign-up link so branding survives.
   const signUpUrlWithProduct = isConnectSignIn

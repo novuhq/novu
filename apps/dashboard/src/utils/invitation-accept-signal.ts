@@ -9,13 +9,18 @@
  * only Connect workspace would bounce them off Connect entirely.
  */
 
+import { readClerkAuthParamFromLocation } from '@/utils/product-auth-urls';
+
 const CLERK_TICKET_PARAM = '__clerk_ticket';
 const FLAG_KEY = 'novu.inviteAcceptPending';
 const FLAG_VALUE = '1';
 
 export function markInvitationAcceptIfPresent(searchParams: URLSearchParams): void {
   if (typeof window === 'undefined') return;
-  if (!searchParams.has(CLERK_TICKET_PARAM)) return;
+
+  if (!readClerkAuthParamFromLocation(CLERK_TICKET_PARAM, searchParams)) {
+    return;
+  }
 
   try {
     window.sessionStorage.setItem(FLAG_KEY, FLAG_VALUE);

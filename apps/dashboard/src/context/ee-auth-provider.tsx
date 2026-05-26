@@ -1,11 +1,13 @@
 import { buttonVariants } from '@/components/primitives/button';
 import {
   CLERK_PUBLISHABLE_KEY,
+  CLERK_PROXY_URL,
   EE_AUTH_PROVIDER,
   IS_ENTERPRISE,
   IS_HOSTNAME_SPLIT_ENABLED,
   IS_NOVU_CONNECT,
   IS_SELF_HOSTED,
+  normalizeAppHost,
   NOVU_CONNECT_HOSTNAME,
   NOVU_PLATFORM_HOSTNAME,
 } from '@/config';
@@ -86,18 +88,19 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   const satelliteProps = isSatellite
     ? {
         isSatellite: true as const,
-        domain: NOVU_CONNECT_HOSTNAME,
+        domain: normalizeAppHost(NOVU_CONNECT_HOSTNAME).split(':')[0],
+        ...(CLERK_PROXY_URL ? { proxyUrl: CLERK_PROXY_URL } : {}),
       }
     : {};
 
   const allowedRedirectOrigins: Array<string | RegExp> = [
     'http://localhost:*',
     ...(typeof window !== 'undefined' ? [window.location.origin] : []),
-    ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_PLATFORM_HOSTNAME && typeof window !== 'undefined'
-      ? [`${window.location.protocol}//${NOVU_PLATFORM_HOSTNAME}`]
+    ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_PLATFORM_HOSTNAME
+      ? [`https://${normalizeAppHost(NOVU_PLATFORM_HOSTNAME).split(':')[0]}`]
       : []),
-    ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_CONNECT_HOSTNAME && typeof window !== 'undefined'
-      ? [`${window.location.protocol}//${NOVU_CONNECT_HOSTNAME}`]
+    ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_CONNECT_HOSTNAME
+      ? [`https://${normalizeAppHost(NOVU_CONNECT_HOSTNAME).split(':')[0]}`]
       : []),
   ];
 

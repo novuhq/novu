@@ -44,6 +44,18 @@ export const NOVU_CONNECT_HOSTNAME =
 export const NOVU_PLATFORM_HOSTNAME =
   window._env_?.VITE_NOVU_PLATFORM_HOSTNAME || import.meta.env.VITE_NOVU_PLATFORM_HOSTNAME || '';
 
+/** Lowercase host comparison — env may omit port locally while `location.host` includes it. */
+export function normalizeAppHost(host: string): string {
+  return host.trim().toLowerCase();
+}
+
+// Clerk FAPI proxy on the Connect satellite (CNAME `clerk.<connect-domain>` → frontend-api.clerk.services).
+// Required for reliable satellite session sync on static hosts (Netlify); optional locally.
+export const CLERK_PROXY_URL =
+  window._env_?.VITE_CLERK_PROXY_URL ||
+  import.meta.env.VITE_CLERK_PROXY_URL ||
+  (NOVU_CONNECT_HOSTNAME ? `https://clerk.${normalizeAppHost(NOVU_CONNECT_HOSTNAME).split(':')[0]}` : '');
+
 // Fail fast when the hostname split is half-configured. Without `NOVU_PLATFORM_HOSTNAME`,
 // satellite → primary handoffs (Clerk sign-in, cross-product redirects) silently break.
 if (NOVU_CONNECT_HOSTNAME && !NOVU_PLATFORM_HOSTNAME) {
@@ -58,7 +70,7 @@ export const IS_HOSTNAME_SPLIT_ENABLED = NOVU_CONNECT_HOSTNAME.length > 0;
 export const IS_NOVU_CONNECT =
   IS_HOSTNAME_SPLIT_ENABLED &&
   typeof window !== 'undefined' &&
-  window.location.host === NOVU_CONNECT_HOSTNAME;
+  normalizeAppHost(window.location.host) === normalizeAppHost(NOVU_CONNECT_HOSTNAME);
 
 // True when the hostname split is disabled (single-host deploys) AND when the split is enabled
 // but the current host does not match `NOVU_CONNECT_HOSTNAME`. Mirrors `IS_NOVU_CONNECT` /
