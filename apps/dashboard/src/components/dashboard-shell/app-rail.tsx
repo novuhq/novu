@@ -137,7 +137,7 @@ function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherT
           size="lg"
           className="border-stroke-weak w-auto overflow-hidden rounded-lg border p-0 shadow-md"
         >
-          <AppSwitcherTooltipContent Icon={Icon} label={label} subtitle={subtitle} features={features} />
+          <AppSwitcherTooltipContent label={label} subtitle={subtitle} features={features} />
         </TooltipContent>
       </Tooltip>
       {showConnectSwitchModal ? (
