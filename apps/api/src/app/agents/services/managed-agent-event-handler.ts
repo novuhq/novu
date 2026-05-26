@@ -59,7 +59,11 @@ export class ManagedAgentEventHandler {
 
     const baseFields = this.buildBaseFields(metadata);
     return {
-      onToolUseStart: async (event: { toolUseId: string; toolName: string }) => {
+      onToolUseStart: async (event: {
+        toolUseId: string;
+        toolName: string;
+        source?: { type: string; serverName?: string };
+      }) => {
         try {
           await this.handlePlanProgress.execute(
             HandlePlanProgressCommand.create({
@@ -69,6 +73,7 @@ export class ManagedAgentEventHandler {
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
+                mcpServerName: event.source?.type === 'mcp' ? event.source.serverName : undefined,
                 status: 'running',
               },
             })
@@ -83,7 +88,12 @@ export class ManagedAgentEventHandler {
         }
       },
 
-      onToolUseDone: async (event: { toolUseId: string; toolName: string; input?: Record<string, unknown> }) => {
+      onToolUseDone: async (event: {
+        toolUseId: string;
+        toolName: string;
+        input?: Record<string, unknown>;
+        source?: { type: string; serverName?: string };
+      }) => {
         try {
           if (!event.input || Object.keys(event.input).length === 0) {
             return;
@@ -96,6 +106,7 @@ export class ManagedAgentEventHandler {
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
+                mcpServerName: event.source?.type === 'mcp' ? event.source.serverName : undefined,
                 status: 'running',
                 toolInput: event.input,
               },
@@ -593,8 +604,9 @@ function buildToolApprovalCard(pendingTools: PendingToolApproval[], turnId: stri
   const serverLabel = tool.mcpServerName ? ` from ${tool.mcpServerName}` : '';
   const toolLabel = formatToolLabel(tool);
 
-  const description = tool.input
-    ? `I'd like to call \`${tool.toolName}\`${serverLabel}:\n\`\`\`\n${summariseInput(tool.input)}\n\`\`\``
+  const inputSummary = tool.input ? summariseInput(tool.input) : '';
+  const description = inputSummary
+    ? `I'd like to call \`${tool.toolName}\`${serverLabel}:\n\`\`\`\n${inputSummary}\n\`\`\``
     : `I'd like to call \`${tool.toolName}\`${serverLabel}.`;
 
   const children: Record<string, unknown>[] = [{ type: 'text', content: description }];
@@ -673,6 +685,7 @@ export function buildToolApprovalVerdictCard(
 
 function summariseInput(input: Record<string, unknown>): string {
   const firstValue = Object.values(input)[0];
+  if (firstValue === undefined) return '';
   const text = typeof firstValue === 'string' ? firstValue : JSON.stringify(firstValue);
 
   return text.length > 80 ? `${text.slice(0, 77)}...` : text;

@@ -6,6 +6,7 @@ export interface ToolProgressPayload {
   action: 'tool-use' | 'complete' | 'fail' | 'awaiting-approval' | 'approved' | 'denied';
   toolUseId?: string;
   toolName?: string;
+  mcpServerName?: string;
   status?: 'running' | 'complete' | 'error';
   toolInput?: Record<string, unknown>;
 }

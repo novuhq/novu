@@ -10,6 +10,7 @@ import { HandlePlanProgressCommand, type ToolProgressPayload } from './handle-pl
 interface ToolTask {
   toolUseId: string;
   toolName: string;
+  mcpServerName?: string;
   status: PlanTaskStatus;
   details?: string;
 }
@@ -78,10 +79,11 @@ export class HandlePlanProgress {
     const tasks = this.collectTasks(existingActivities);
     const existing = tasks.get(toolProgress.toolUseId);
     const toolName = toolProgress.toolName || existing?.toolName || 'Tool';
+    const mcpServerName = toolProgress.mcpServerName || existing?.mcpServerName;
     const status: PlanTaskStatus = toolProgress.status === 'running' ? 'in_progress' : toolProgress.status;
     const details = formatToolInputSummary(toolProgress.toolInput) || existing?.details;
 
-    tasks.set(toolProgress.toolUseId, { toolUseId: toolProgress.toolUseId, toolName, status, details });
+    tasks.set(toolProgress.toolUseId, { toolUseId: toolProgress.toolUseId, toolName, mcpServerName, status, details });
 
     const model = this.toModel('Thinking…', tasks, false);
     const planMessageId = await this.postOrEditPlan(command, this.findPlanMessageId(existingActivities), model);
@@ -194,6 +196,7 @@ export class HandlePlanProgress {
           planMessageId,
           toolUseId: toolProgress.toolUseId,
           toolName,
+          mcpServerName: toolProgress.mcpServerName,
           status: toolProgress.status,
           ...(details ? { details } : {}),
         },
@@ -232,6 +235,7 @@ export class HandlePlanProgress {
         tasks.set(toolUseId, {
           toolUseId,
           toolName: String(payload.toolName),
+          mcpServerName: (payload.mcpServerName as string) || existing?.mcpServerName,
           status,
           details: details || existing?.details,
         });
@@ -246,7 +250,7 @@ export class HandlePlanProgress {
   private toModel(title: string, tasks: Map<string, ToolTask>, isFinalized: boolean): PlanModel {
     const planTasks = [...tasks.values()].map((t) => ({
       id: t.toolUseId,
-      title: t.toolName,
+      title: t.mcpServerName ? `${t.mcpServerName}: ${t.toolName}` : t.toolName,
       status: t.status,
       ...(t.details ? { details: { markdown: t.details } } : {}),
     }));
