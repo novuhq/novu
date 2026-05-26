@@ -2,6 +2,13 @@ import { AgentRuntimeProviderIdEnum } from '../../types/providers';
 
 export type AgentRuntime = 'self-hosted' | 'managed';
 
+/**
+ * Discovery scope of an agent. Today only `public` is exposed to customers,
+ * but the field is persisted now so the upcoming private-agents feature can
+ * land without a schema migration. Treat a missing value as `public`.
+ */
+export type AgentVisibility = 'public' | 'private';
+
 export type ManagedRuntimeConfigDto = {
   /** The agent-runtime provider (e.g. 'anthropic') */
   providerId: AgentRuntimeProviderIdEnum;

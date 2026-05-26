@@ -1,4 +1,4 @@
-import type { AgentRuntime, ManagedRuntimeConfigDto } from '@novu/shared';
+import type { AgentRuntime, AgentVisibility, ManagedRuntimeConfigDto } from '@novu/shared';
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -41,6 +41,14 @@ export class AgentEntity {
    * Absence of this field is treated as 'self-hosted' for backward compatibility.
    */
   runtime?: AgentRuntime;
+
+  /**
+   * Discovery scope of the agent — `public` agents are listed to the
+   * organization at large, `private` agents are reserved for the future
+   * privacy/sharing feature. Today every agent is created `public`; absence
+   * of the field is treated as `public`.
+   */
+  visibility?: AgentVisibility;
 
   /**
    * Present only when runtime === 'managed'. Holds the stable provider identifiers
