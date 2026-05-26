@@ -72,6 +72,9 @@ const SAFE_NAVIGATION_PROTOCOLS = new Set(['http:', 'https:']);
  */
 export function isSafeNavigationHref(href: string): boolean {
   if (!href) return false;
+  // Reject protocol-relative URLs (e.g. `//evil.example`) before the "starts with `/`" shortcut —
+  // browsers resolve them against the current scheme and can leak the user to arbitrary hosts.
+  if (href.startsWith('//')) return false;
   if (href.startsWith('/') || href.startsWith('#') || href.startsWith('?')) return true;
 
   try {

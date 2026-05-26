@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { RiDashboardLine, RiDiscussLine, RiKey2Line, RiRobot2Line, RiSettings4Line } from 'react-icons/ri';
+import { RiDashboardLine, RiDiscussLine, RiRobot2Line, RiSettings4Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { Command, CommandExecutionContext } from '../command-types';
@@ -37,7 +37,6 @@ export function useConnectNavigationCommands(context: CommandExecutionContext): 
       ROUTES.CONNECT_CONVERSATIONS,
       <RiDiscussLine />
     ),
-    createNavigationCommand('connect-api-keys', 'API Keys', ROUTES.CONNECT_API_KEYS, <RiKey2Line />),
     createNavigationCommand('connect-settings', 'Settings', ROUTES.CONNECT_SETTINGS, <RiSettings4Line />),
   ];
 }
