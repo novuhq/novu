@@ -9,7 +9,6 @@ import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { beginConnectProvisioning, buildConnectProvisionOrgListPath } from '@/utils/connect';
-import { markInvitationAcceptIfPresent } from '@/utils/invitation-accept-signal';
 import {
   buildAbsoluteConnectUrl,
   buildPrimarySignUpUrl,
@@ -44,12 +43,6 @@ export const SignUpPage = () => {
       window.location.replace(buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE }));
     }
   }, []);
-
-  // Capture invite-link entry (`__clerk_ticket` in the URL) BEFORE Clerk consumes the ticket
-  // during sign-up. The picker reads this signal later to decide whether to hop across products.
-  useEffect(() => {
-    markInvitationAcceptIfPresent(searchParams);
-  }, [searchParams]);
 
   useEffect(() => {
     const utmParams = getUtmParams();

@@ -13,8 +13,6 @@ import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, type AppId } from '@/utils/apps';
 import { isConnectWorkspace, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
-import { buildOtherProductOrgListUrl } from '@/utils/cross-product-redirect';
-import { clearInvitationAcceptPending, isInvitationAcceptPending } from '@/utils/invitation-accept-signal';
 import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -88,16 +86,6 @@ function isMatchingMembership(membership: OrganizationMembershipLike, filter: Pr
   const metadata = membership.organization.publicMetadata;
 
   return filter === 'connect' ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
-}
-
-/**
- * True when the user has at least one membership belonging to the OTHER product host.
- * Used exclusively in the invite-accept path — see the routing effect below.
- */
-function hasCrossProductMembership(memberships: OrganizationMembershipLike[], currentFilter: ProductFilter): boolean {
-  const otherFilter: ProductFilter = currentFilter === 'connect' ? 'platform' : 'connect';
-
-  return memberships.some((membership) => isMatchingMembership(membership, otherFilter));
 }
 
 function isSlugTakenError(error: unknown): boolean {
@@ -466,42 +454,20 @@ export function OrganizationPicker({
   const hasTrackedRef = useRef(false);
   const hasInitializedViewRef = useRef(false);
 
-  // Initial routing decision once the full membership list is in.
-  //
-  // The cross-product redirect is gated on `isInvitationAcceptPending()` — a session-scoped
-  // marker set on `/auth/sign-in` and `/auth/sign-up` when the URL carries `__clerk_ticket`.
-  // That way an invite-accept landing on the wrong host bounces to the right product, but a
-  // user who just deleted their last Connect workspace stays put on Connect (which then falls
-  // through to the create form / `AutoCreateConnectOrganization`, matching the prior behavior).
+  // Initial routing decision once the full membership list is in. If there are zero matching
+  // workspaces (post-delete, post-leave, or a fresh sign-up that didn't auto-provision), drop
+  // into the create form. No cross-product bouncing: invited memberships often arrive without
+  // `publicMetadata.productType` set yet, so any host-hop decision based on that metadata is
+  // unreliable — better to let the user create / pick on the host they're currently on.
   useEffect(() => {
     if (!isFullListLoaded || hasInitializedViewRef.current) return;
 
     hasInitializedViewRef.current = true;
 
-    if (filteredMemberships.length > 0) {
-      // User has at least one matching workspace — clear any stale invite flag so it can't
-      // leak into a later navigation, then let them pick from the list.
-      clearInvitationAcceptPending();
-
-      return;
+    if (filteredMemberships.length === 0) {
+      setView('create');
     }
-
-    if (isInvitationAcceptPending() && hasCrossProductMembership(allMemberships, productFilter)) {
-      const otherProductUrl = buildOtherProductOrgListUrl(productFilter);
-
-      if (otherProductUrl) {
-        clearInvitationAcceptPending();
-        // Plain cross-origin nav — Clerk's satellite SDK handles session sync on the destination
-        // page. Wrapping with `clerk.redirectWithAuth` here caused redirect loops with `__clerk_synced=false`.
-        window.location.assign(otherProductUrl);
-
-        return;
-      }
-    }
-
-    clearInvitationAcceptPending();
-    setView('create');
-  }, [isFullListLoaded, filteredMemberships.length, allMemberships, productFilter]);
+  }, [isFullListLoaded, filteredMemberships.length]);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {
