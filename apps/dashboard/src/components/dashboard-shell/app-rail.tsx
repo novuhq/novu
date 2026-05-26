@@ -4,7 +4,6 @@ import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
 import { CustomerSupportButton } from '@/components/header-navigation/customer-support-button';
 import { ConnectLogo } from '@/components/icons/connect-logo';
 import { LogoCircle } from '@/components/icons/logo-circle';
-import { InboxButton } from '@/components/inbox-button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { UserProfile } from '@/components/user-profile';
 import { IS_ENTERPRISE, IS_HOSTNAME_SPLIT_ENABLED, IS_SELF_HOSTED } from '@/config';
@@ -176,7 +175,6 @@ export function AppRail() {
 
       <div className="flex flex-col items-center gap-3">
         {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
-        <InboxButton align="start" side="top" />
         <UserProfile />
       </div>
     </aside>
