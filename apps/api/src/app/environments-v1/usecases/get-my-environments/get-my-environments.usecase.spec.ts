@@ -39,7 +39,6 @@ describe('GetMyEnvironments', () => {
   });
 
   afterEach(() => {
-    findOrganizationEnvironmentsStub.restore();
     sinon.restore();
   });
 
@@ -71,6 +70,20 @@ describe('GetMyEnvironments', () => {
     for (const environment of result) {
       expect(environment.apiKeys).to.have.lengthOf(1);
       expect(environment.apiKeys[0].key).to.match(/^decrypted-/);
+    }
+  });
+
+  it('should not return apiKeys for any environment when returnApiKeys is false', async () => {
+    const result = await getMyEnvironments.execute(
+      GetMyEnvironmentsCommand.create({
+        organizationId: 'org-1',
+        returnApiKeys: false,
+        apiKeysEnvironmentId: 'env-dev',
+      })
+    );
+
+    for (const environment of result) {
+      expect(environment.apiKeys).to.have.lengthOf(0);
     }
   });
 });
