@@ -88,7 +88,6 @@ Pick a clear human name, derive a kebab-case identifier, and write a system prom
 
 ## System prompt
 The \`systemPrompt\` is sent verbatim to the agent. Address the agent in second person ("You are a…"), describe its role, scope, tone, and the workflow it should follow when invoked. Do not reference Anthropic-specific tools, MCPs or skills — the runtime is custom.
-Keep the systemPrompt itself concise (roughly 150–400 words). These agents run in messaging platforms (Slack, Teams, etc.) — instruct the agent to reply concisely, match response length to the question, and use markdown only when it aids scannability (short bullets, bold labels). Avoid essay-length replies, preamble, and filler unless the user explicitly asks for a deep dive.
 
 Return a JSON object matching the provided schema. Do not include any commentary outside the schema.`;
 }
@@ -122,7 +121,6 @@ You MUST select Claude built-in tools, MCP servers, and Anthropic Skills ONLY fr
 
 ## System prompt
 The \`systemPrompt\` is sent verbatim to Claude. Address the agent in second person ("You are a…"), describe its role, scope, tone, and the workflow it should follow when invoked. Do not enumerate the tool/MCP/skill IDs in the systemPrompt — Anthropic wires them in automatically.
-Keep the systemPrompt itself concise (roughly 150–400 words). These agents run in messaging platforms (Slack, Teams, etc.) — instruct the agent to reply concisely, match response length to the question, and use markdown only when it aids scannability (short bullets, bold labels). Avoid essay-length replies, preamble, and filler unless the user explicitly asks for a deep dive.
 
 ## Identifier
 The \`identifier\` MUST be a kebab-case slug of the \`name\` (lowercase, hyphen-separated, ASCII only).
@@ -147,7 +145,7 @@ function buildUserPrompt(prompt: string): string {
 ${prompt.trim()}
 """
 
-Generate the complete agent configuration JSON. Pick a clear human name, derive a matching kebab-case identifier, write a concise systemPrompt suited for a messaging platform (brief replies, proportional to the question), and select only the tools, MCP servers, and skills this agent actually needs — leave any array empty when its domain does not call for it.`;
+Generate the complete agent configuration JSON. Pick a clear human name, derive a matching kebab-case identifier, write the systemPrompt as if instructing the agent, and select only the tools, MCP servers, and skills this agent actually needs — leave any array empty when its domain does not call for it.`;
 }
 
 /**

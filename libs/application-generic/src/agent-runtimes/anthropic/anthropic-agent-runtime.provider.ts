@@ -40,6 +40,10 @@ import type {
   ValidateCredentialsInput,
   VaultCredentialAuth,
 } from '../i-agent-runtime-provider';
+import {
+  composeManagedAgentSystemPrompt,
+  stripManagedAgentSystemPromptSuffix,
+} from '../compose-managed-agent-system-prompt';
 import { AnthropicClientResolver } from './anthropic-client-resolver';
 import { type ResolvedAwsAnthropicCredentials } from './anthropic-aws-credentials';
 import { type AnthropicCompatibleClient } from './anthropic-cloud-client';
@@ -194,7 +198,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
-        ...(input.systemPrompt ? { system: input.systemPrompt } : {}),
+        system: composeManagedAgentSystemPrompt(input.systemPrompt),
         ...(input.mcpServers && input.mcpServers.length > 0
           ? { mcp_servers: input.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url })) }
           : {}),
@@ -258,7 +262,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
         return {
           model: agent.model?.id ?? agent.model ?? DEFAULT_MODEL,
-          systemPrompt: agent.system ?? '',
+          systemPrompt: stripManagedAgentSystemPromptSuffix(agent.system ?? ''),
           mcpServers: ((agent.mcp_servers as any[]) ?? []).map(mapMcpServer),
           tools: ((agent.tools as any[]) ?? []).flatMap(mapToolset),
           skills: ((agent.skills as any[]) ?? []).map(mapSkill),
@@ -285,7 +289,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         };
 
         if (patch.model !== undefined) updatePayload.model = patch.model;
-        if (patch.systemPrompt !== undefined) updatePayload.system = patch.systemPrompt;
+        if (patch.systemPrompt !== undefined) {
+          updatePayload.system = composeManagedAgentSystemPrompt(patch.systemPrompt);
+        }
         if (patch.mcpServers !== undefined) {
           updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
         }
@@ -313,7 +319,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
         return {
           model: updated.model?.id ?? updated.model ?? DEFAULT_MODEL,
-          systemPrompt: updated.system ?? '',
+          systemPrompt: stripManagedAgentSystemPromptSuffix(updated.system ?? ''),
           mcpServers: ((updated.mcp_servers as any[]) ?? []).map(mapMcpServer),
           tools: ((updated.tools as any[]) ?? []).flatMap(mapToolset),
           skills: ((updated.skills as any[]) ?? []).map(mapSkill),

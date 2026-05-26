@@ -1,3 +1,4 @@
+export * from './compose-managed-agent-system-prompt';
 export * from './agent-runtime.factory';
 export * from './anthropic/anthropic-agent-runtime.provider';
 export * from './anthropic/anthropic-aws-credentials';
