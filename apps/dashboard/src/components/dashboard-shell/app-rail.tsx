@@ -66,7 +66,7 @@ function BrandTile({ brand }: BrandTileProps) {
       aria-current="page"
       className="bg-bg-weak border-stroke-weak flex size-10 items-center justify-center rounded-lg border"
     >
-      <Icon className="size-5" aria-hidden />
+      <Icon className="size-7" aria-hidden />
     </span>
   );
 }
@@ -88,8 +88,11 @@ function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherT
     });
 
   const content = (
-    <span className="hover:bg-bg-weak flex size-10 items-center justify-center rounded-lg transition-colors">
-      <Icon className="size-5" aria-hidden />
+    <span className="group hover:bg-bg-weak flex size-10 items-center justify-center rounded-lg transition-colors">
+      <Icon
+        className="size-7 grayscale transition-[filter] duration-200 ease-out group-hover:grayscale-0"
+        aria-hidden
+      />
       <span className="sr-only">{label}</span>
     </span>
   );

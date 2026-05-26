@@ -13,6 +13,11 @@ import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, type AppId } from '@/utils/apps';
 import { isConnectWorkspace, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
+import { buildOtherProductOrgListUrl } from '@/utils/cross-product-redirect';
+import {
+  clearInvitationAcceptPending,
+  isInvitationAcceptPending,
+} from '@/utils/invitation-accept-signal';
 import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -82,6 +87,19 @@ function isMatchingMembership(membership: OrganizationMembershipLike, filter: Pr
   const metadata = membership.organization.publicMetadata;
 
   return filter === 'connect' ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
+}
+
+/**
+ * True when the user has at least one membership belonging to the OTHER product host.
+ * Used exclusively in the invite-accept path — see the routing effect below.
+ */
+function hasCrossProductMembership(
+  memberships: OrganizationMembershipLike[],
+  currentFilter: ProductFilter
+): boolean {
+  const otherFilter: ProductFilter = currentFilter === 'connect' ? 'platform' : 'connect';
+
+  return memberships.some((membership) => isMatchingMembership(membership, otherFilter));
 }
 
 function isSlugTakenError(error: unknown): boolean {
@@ -383,14 +401,14 @@ export function OrganizationPicker({
   const [hasRevalidated, setHasRevalidated] = useState(false);
 
   // Read through a ref so calling `revalidate()` (which flips Clerk's internal state and rotates
-  // the `userMemberships` reference) doesn't re-fire this effect and cancel the in-flight refresh
-  // before `setHasRevalidated(true)` runs.
+  // the resource reference) doesn't re-fire effects and cancel the in-flight refresh before
+  // `setHasRevalidated(true)` runs.
   const userMembershipsRef = useRef(userMemberships);
   userMembershipsRef.current = userMemberships;
 
-  // Force a fresh fetch on mount so a user arriving after delete/leave doesn't see a tombstoned org.
-  // `hasRevalidated` is flipped only after the refetch promise resolves so the picker never renders
-  // a deleted membership the user could click and re-activate.
+  // Force a fresh fetch on mount so a user arriving after delete/leave doesn't see a tombstoned
+  // org, and so a freshly-accepted invitation membership (e.g. from a Clerk-hosted accept page)
+  // shows up immediately when the user is redirected back to Novu.
   useEffect(() => {
     if (!isLoaded || hasRevalidated) return;
 
@@ -428,18 +446,22 @@ export function OrganizationPicker({
   // Two readiness signals:
   //   - `isFirstPageReady` — render the picker as soon as page 1 lands so users with many orgs
   //     don't wait on a full-screen spinner while later pages stream in.
-  //   - `isFullListLoaded` — gate the "auto-switch to create view if empty" decision so a
-  //     filtered-out page 1 (e.g., only Connect orgs match but they sit on page 2) doesn't
-  //     incorrectly bounce the user into the create form.
+  //   - `isFullListLoaded` — gate both the "auto-switch to create view if empty" and the
+  //     cross-product redirect decisions on the complete list (a matching org might sit on
+  //     page 2; the cross-product check needs all pages drained to be accurate).
   const isFirstPageReady = isLoaded && hasRevalidated;
   const isFullListLoaded =
     isFirstPageReady && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
 
-  const filteredMemberships = useMemo<OrganizationMembershipLike[]>(() => {
-    const data = (userMemberships?.data ?? []) as OrganizationMembershipLike[];
+  const allMemberships = useMemo<OrganizationMembershipLike[]>(
+    () => (userMemberships?.data ?? []) as OrganizationMembershipLike[],
+    [userMemberships?.data]
+  );
 
-    return data.filter((membership) => isMatchingMembership(membership, productFilter));
-  }, [userMemberships?.data, productFilter]);
+  const filteredMemberships = useMemo<OrganizationMembershipLike[]>(
+    () => allMemberships.filter((membership) => isMatchingMembership(membership, productFilter)),
+    [allMemberships, productFilter]
+  );
 
   const [view, setView] = useState<View>('picker');
   const [isSelecting, setIsSelecting] = useState(false);
@@ -448,15 +470,40 @@ export function OrganizationPicker({
   const hasTrackedRef = useRef(false);
   const hasInitializedViewRef = useRef(false);
 
+  // Initial routing decision once the full membership list is in.
+  //
+  // The cross-product redirect is gated on `isInvitationAcceptPending()` — a session-scoped
+  // marker set on `/auth/sign-in` and `/auth/sign-up` when the URL carries `__clerk_ticket`.
+  // That way an invite-accept landing on the wrong host bounces to the right product, but a
+  // user who just deleted their last Connect workspace stays put on Connect (which then falls
+  // through to the create form / `AutoCreateConnectOrganization`, matching the prior behavior).
   useEffect(() => {
     if (!isFullListLoaded || hasInitializedViewRef.current) return;
 
     hasInitializedViewRef.current = true;
 
-    if (filteredMemberships.length === 0) {
-      setView('create');
+    if (filteredMemberships.length > 0) {
+      // User has at least one matching workspace — clear any stale invite flag so it can't
+      // leak into a later navigation, then let them pick from the list.
+      clearInvitationAcceptPending();
+
+      return;
     }
-  }, [isFullListLoaded, filteredMemberships.length]);
+
+    if (isInvitationAcceptPending() && hasCrossProductMembership(allMemberships, productFilter)) {
+      const otherProductUrl = buildOtherProductOrgListUrl(productFilter);
+
+      if (otherProductUrl) {
+        clearInvitationAcceptPending();
+        window.location.assign(otherProductUrl);
+
+        return;
+      }
+    }
+
+    clearInvitationAcceptPending();
+    setView('create');
+  }, [isFullListLoaded, filteredMemberships.length, allMemberships, productFilter]);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {
@@ -552,7 +599,8 @@ export function OrganizationPicker({
   // Show the full-screen spinner only while page 1 is in flight. Once page 1 lands we render the
   // picker and surface the inline "Loading more…" row for any subsequent pages — same model as
   // `OrganizationDropdown`. Exception: if page 1 yields no matching orgs but more pages are
-  // still streaming, keep the spinner so we don't briefly render an empty header.
+  // still streaming, keep the spinner so we don't briefly render an empty header and falsely
+  // run the cross-product redirect.
   const isStreamingMorePages = isFirstPageReady && !isFullListLoaded;
   const shouldWaitForMorePages = isStreamingMorePages && filteredMemberships.length === 0;
 
