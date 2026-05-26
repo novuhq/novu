@@ -103,15 +103,7 @@ Read more about how to add a [notification center Inbox](https://docs.novu.co/in
 
 ## Providers
 
-Novu provides a single API to manage providers across multiple channels with a simple-to-use API and UI interface. Each integration links to its implementation in [`packages/providers`](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib).
-
-| Channel | Integrations |
-| --- | ---: |
-| 💌 Email | 19 |
-| 📞 SMS | 37 |
-| 📱 Push | 8 |
-| 💬 Chat | 12 |
-| 📥 In-App | 1 |
+Novu provides a single API to manage providers across multiple channels with a simple-to-use API and UI interface.
 
 Expand a channel below to browse supported providers.
 
