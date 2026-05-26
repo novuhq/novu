@@ -1,7 +1,17 @@
 import { isConnectHostnameUrl } from '@/utils/product-auth-urls';
 
-// Clerk + Netlify: CDN can cache handshake redirects and cause infinite auth loops (dev + some prod configs).
+// Clerk + Netlify: CDN can cache handshake redirects and cause infinite auth loops.
 const CLERK_NETLIFY_CACHE_BUST_PARAM = '__clerk_netlify_cache_bust';
+
+function isLocalDevRuntime(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const hostname = window.location.hostname;
+
+  return hostname === 'localhost' || hostname.endsWith('.localhost');
+}
 
 type ClerkCrossOriginAuth = {
   loaded: boolean;
@@ -12,6 +22,10 @@ type ClerkCrossOriginAuth = {
 };
 
 function withNetlifyHandshakeCacheBust(url: string): string {
+  if (isLocalDevRuntime()) {
+    return url;
+  }
+
   try {
     const parsed = new URL(url);
 
