@@ -408,12 +408,11 @@ export class SessionObserver extends Agent<Env, State> {
           }
           if (event.type === 'finish') {
             const isIntermediate =
-              event.type === 'finish' &&
               (event as { response?: { finishReason?: string } }).response?.finishReason === 'requires-action';
             if (isIntermediate) {
               this.markDelivered(row.id);
 
-              return;
+              continue;
             }
             this.cleanupEvents(sessionId);
             this.setState({ observation: null });
