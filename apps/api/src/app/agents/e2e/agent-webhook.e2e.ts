@@ -624,6 +624,24 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       const textChild = card.children.find((c) => c.type === 'text');
       expect(textChild).to.exist;
       expect(textChild!.content).to.contain('agent capacity');
+
+      const overflowSubscribers = await subscriberRepository.find({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        'data.__novu_platformUserId': 'U_CAP_OVERFLOW',
+      });
+      expect(overflowSubscribers.length, 'cap-blocked inbound must not create a Subscriber row').to.equal(0);
+
+      const channelEndpointRepository = new ChannelEndpointRepository();
+      const overflowEndpoint = await channelEndpointRepository.findByPlatformIdentity({
+        _environmentId: ctx.session.environment._id,
+        _organizationId: ctx.session.organization._id,
+        integrationIdentifier: ctx.integrationIdentifier,
+        type: ENDPOINT_TYPES.SLACK_USER,
+        endpointField: 'userId',
+        endpointValue: 'U_CAP_OVERFLOW',
+      });
+      expect(overflowEndpoint, 'cap-blocked inbound must not create a ChannelEndpoint row').to.not.exist;
     });
   });
 

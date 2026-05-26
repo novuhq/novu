@@ -267,16 +267,19 @@ export class ManagedAgentEventHandler {
   }
 
   /**
-   * Lazy-OAuth path for an MCP-init failure. Returns `true` when a Connect
-   * card was successfully delivered to the user; `false` for unrecoverable
-   * misses (no subscriber context, unknown server, MCP not on the Novu-OAuth
-   * allow-list, discovery failure, network error). Callers fall back to the
-   * plain-text `buildErrorMessage` path so the user still sees *something*.
+   * Lazy-OAuth path for an MCP-init failure. Returns `true` when a reply was
+   * successfully delivered to the user (a Connect card on the happy path, or
+   * a neutral "temporarily unavailable" message when subscriber context is
+   * missing); `false` for unrecoverable misses (unknown server, MCP not on
+   * the Novu-OAuth allow-list, discovery failure, network error). Callers
+   * fall back to the plain-text `buildErrorMessage` path on `false`.
    *
    * Subscriber context is guaranteed for Slack/Teams via the inbound
-   * auto-provision flow in `AgentSubscriberResolver.resolveOrProvision`. The
-   * `!subscriberId` branch is now defence-in-depth and never expected to fire
-   * for the platforms that route through managed agents today.
+   * auto-provision flow. The `!subscriberId` branch is defence-in-depth for
+   * the lookup-only platforms (WhatsApp / Email / Telegram) where an
+   * unlinked user might still reach managed-agent dispatch — it surfaces
+   * neutral copy instead of the generic "connect MCP from integration
+   * settings" message, which is misleading for end users.
    */
   private async tryDeliverMcpConnectCard(
     metadata: Record<string, string>,
@@ -293,10 +296,10 @@ export class ManagedAgentEventHandler {
           conversationId: metadata.conversationId,
           platform: metadata.platform,
         },
-        'MCP OAuth needed but session has no subscriber context — falling back to plain-text MCP-init error.'
+        'MCP OAuth needed but session has no subscriber context — sending neutral fallback reply.'
       );
 
-      return false;
+      return this.deliverNeutralMcpUnavailableReply(metadata, sessionId, mcpServerName);
     }
 
     const mcpId = resolveMcpIdByName(mcpServerName);
@@ -361,6 +364,45 @@ export class ManagedAgentEventHandler {
       captureAgentException(err, {
         component: 'managed-agent-event-handler',
         operation: 'deliver-connect-card',
+        sessionId,
+      });
+
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Neutral copy for the no-subscriber MCP-init branch. Replaces the legacy
+   * generic "connect MCP from integration settings" copy, which is misleading
+   * for an end user who can't perform that action themselves. Returns `true`
+   * on delivery so the caller skips the plain-text fallback.
+   */
+  private async deliverNeutralMcpUnavailableReply(
+    metadata: Record<string, string>,
+    sessionId: string,
+    mcpServerName: string
+  ): Promise<boolean> {
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: 'system',
+          organizationId: metadata.organizationId,
+          environmentId: metadata.environmentId,
+          conversationId: metadata.conversationId,
+          agentIdentifier: metadata.agentIdentifier ?? '',
+          integrationIdentifier: metadata.integrationIdentifier ?? '',
+          reply: {
+            markdown: `I can't reach **${mcpServerName}** for this request right now. Please try again later.`,
+          },
+        })
+      );
+    } catch (err) {
+      this.logger.error(err, `Failed to deliver neutral MCP fallback for session ${sessionId}`);
+      captureAgentException(err, {
+        component: 'managed-agent-event-handler',
+        operation: 'deliver-neutral-mcp-unavailable',
         sessionId,
       });
 

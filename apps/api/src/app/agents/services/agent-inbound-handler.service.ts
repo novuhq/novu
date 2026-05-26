@@ -27,6 +27,7 @@ import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
+import { isAutoProvisionPlatform } from '../utils/platform-endpoint-config';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
@@ -106,25 +107,24 @@ The agent is unavailable right now. Please try again later.`;
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
-const AUTO_PROVISION_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set([
-  AgentPlatformEnum.SLACK,
-  AgentPlatformEnum.TEAMS,
-]);
-
-const CAPACITY_PLATFORM_LABELS: Partial<Record<AgentPlatformEnum, string>> = {
+/**
+ * Workspace-label copy keyed by every platform in `AUTO_PROVISION_PLATFORMS`.
+ * Adding a future auto-provision platform without a label here fails the
+ * type check at the map literal — exactly where you want the reminder.
+ */
+type AutoProvisionPlatform = AgentPlatformEnum.SLACK | AgentPlatformEnum.TEAMS;
+const CAPACITY_PLATFORM_LABELS: Record<AutoProvisionPlatform, string> = {
   [AgentPlatformEnum.SLACK]: 'Slack workspace',
   [AgentPlatformEnum.TEAMS]: 'Teams workspace',
 };
 
-function buildCapacityReachedCard(platform: AgentPlatformEnum): CardElement {
-  const platformLabel = CAPACITY_PLATFORM_LABELS[platform] ?? 'workspace';
-
+function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement {
   return {
     type: 'card',
     children: [
       {
         type: 'text',
-        content: `This ${platformLabel} has reached the agent capacity included with your current Novu plan. Ask your workspace admin to invite you, or upgrade to a higher tier to keep this agent available to new teammates.`,
+        content: `This ${CAPACITY_PLATFORM_LABELS[platform]} has reached the agent capacity included with your current Novu plan. Ask your workspace admin to invite you, or upgrade to a higher tier to keep this agent available to new teammates.`,
       },
       { type: 'divider' },
       {
@@ -140,10 +140,6 @@ function buildCapacityReachedCard(platform: AgentPlatformEnum): CardElement {
       },
     ],
   };
-}
-
-function isAutoProvisionPlatform(platform: AgentPlatformEnum): boolean {
-  return AUTO_PROVISION_PLATFORMS.has(platform);
 }
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
@@ -352,17 +348,30 @@ export class AgentInboundHandler implements OnModuleInit {
         return;
       }
 
-      this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
       captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
+
+      /**
+       * For SLACK / TEAMS `resolveOrProvision` is contractually expected to
+       * return a subscriber or throw one of the typed sentinels above. An
+       * unknown error here means we don't know the subscriber state — keep
+       * dispatch off and surface the failure rather than silently degrading
+       * to a PLATFORM_USER participant the upstream removed-anonymous-state
+       * contract was meant to eliminate.
+       */
+      if (isAutoProvisionPlatform(config.platform)) {
+        throw err;
+      }
+
+      this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
       subscriberId = null;
     }
 
     /**
-     * For SLACK and TEAMS, `resolveOrProvision` always returns a non-null
-     * subscriberId (or throws — handled above), so the `PLATFORM_USER`
-     * fallback below is unreachable. We keep the fallback in place because
-     * WhatsApp / Email / Telegram still legitimately resolve to null and rely
-     * on the synthetic platform-user participant.
+     * For SLACK / TEAMS the resolver returns non-null or throws (handled
+     * above), so the `PLATFORM_USER` fallback never fires for them. The
+     * fallback remains for WhatsApp / Email / Telegram, which still
+     * legitimately resolve to null and rely on the synthetic platform-user
+     * participant.
      */
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
@@ -689,8 +698,16 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
     applyPlatformThreadIdToThread(thread, platformThreadId);
 
+    /**
+     * `ConnectOrgSubscriberCapExceededError` is only thrown by
+     * `resolveOrProvision`, which itself only runs for `AUTO_PROVISION_PLATFORMS`.
+     * The cast narrows `config.platform` to the union the card builder
+     * accepts and keeps the exhaustive-record check honest.
+     */
+    const platform = config.platform as AutoProvisionPlatform;
+
     try {
-      await thread.post(buildCapacityReachedCard(config.platform));
+      await thread.post(buildCapacityReachedCard(platform));
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post auto-provision capacity-reached card`);
       captureAgentWarning(err, {

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import {
   AnalyticsService,
@@ -5,39 +6,47 @@ import {
   CreateOrUpdateSubscriberUseCase,
   FeatureFlagsService,
   PinoLogger,
-  shortId,
 } from '@novu/application-generic';
-import { ChannelEndpointRepository, CommunityOrganizationRepository, SubscriberRepository } from '@novu/dal';
-import { ChannelEndpointType, ENDPOINT_TYPES, FeatureFlagsKeysEnum, OrganizationProductTypeEnum } from '@novu/shared';
+import {
+  ChannelEndpointRepository,
+  CommunityOrganizationRepository,
+  isDuplicateKeyError,
+  SubscriberRepository,
+} from '@novu/dal';
+import { FeatureFlagsKeysEnum, OrganizationProductTypeEnum } from '@novu/shared';
 import { CreateChannelEndpointCommand } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import { captureAgentWarning } from '../utils/capture-agent-sentry';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../utils/email-normalization';
 import { getPhoneLookupCandidates } from '../utils/phone-normalization';
-import { PLATFORM_ENDPOINT_CONFIG } from '../utils/platform-endpoint-config';
+import { AUTO_PROVISION_PLATFORMS, PLATFORM_ENDPOINT_CONFIG } from '../utils/platform-endpoint-config';
 
 /**
- * Sentinel value written to `subscriber.data.__novu_source` for every
- * subscriber the resolver auto-creates from an inbound platform message.
- * The countability cap (and the sparse index that backs it) relies on this
- * marker — never mutate the value without coordinating both.
+ * Provenance keys stamped on every auto-provisioned `Subscriber.data` blob.
+ * Centralised so the resolver, the cap query, the sparse index in
+ * `subscriber.schema.ts`, and tests stay in lockstep — a typo anywhere else
+ * would silently de-link the cap counter from the rows it's supposed to
+ * count. Flat scalar keys because `SubscriberCustomData` is a
+ * `Record<string, scalar>`.
+ */
+export const AGENT_PROVISION_DATA_KEYS = {
+  source: '__novu_source',
+  platform: '__novu_platform',
+  platformUserId: '__novu_platformUserId',
+  agentIdentifier: '__novu_agentIdentifier',
+  firstSeenAt: '__novu_firstSeenAt',
+} as const;
+
+/**
+ * Sentinel value written to `Subscriber.data[AGENT_PROVISION_DATA_KEYS.source]`
+ * for every subscriber the resolver auto-creates from an inbound platform
+ * message. The cap counter (and the sparse index that backs it) uses this
+ * marker — never mutate without coordinating the index and the cap query.
  */
 export const AGENT_PLATFORM_PROVISION_SOURCE = 'agent-platform-provision' as const;
 
 /** Default cap applied to Connect orgs when LaunchDarkly does not override. */
 export const DEFAULT_CONNECT_ORG_AUTO_PROVISIONED_SUBSCRIBERS_LIMIT = 25;
-
-/**
- * Platforms whose inbound message path auto-provisions a Subscriber when the
- * platform identity is unrecognised. Everything else (WhatsApp by phone,
- * Email by address, Telegram via `/start` deep-link) keeps its existing
- * lookup-only semantics.
- */
-const PROVISIONABLE_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set([
-  AgentPlatformEnum.SLACK,
-  AgentPlatformEnum.TEAMS,
-]);
 
 export interface ResolveSubscriberParams {
   environmentId: string;
@@ -168,27 +177,25 @@ export class AgentSubscriberResolver {
    * Lookup-or-provision for Slack/Teams inbound text messages.
    *
    * Branches:
+   *   - Author is a bot → throw `BotAuthorSkippedError` (runs before lookup so
+   *     bot-authored messages cannot reach the bridge even when the bot's
+   *     identity is already linked to a subscriber).
    *   - Hit on lookup → return existing subscriberId.
-   *   - Miss + author is a bot → throw `BotAuthorSkippedError`.
    *   - Miss + Connect org at cap → throw `ConnectOrgSubscriberCapExceededError`.
-   *   - Miss otherwise → upsert Subscriber + ChannelEndpoint (race-safe via the
-   *     `unique_platform_user_per_integration` partial index) and return the
-   *     new subscriberId. On E11000, re-read the winner row and return its id;
-   *     the orphan Subscriber is logged but left in place.
+   *   - Miss otherwise → upsert Subscriber + ChannelEndpoint and return the
+   *     new subscriberId. The subscriberId is deterministic from
+   *     `(orgId, integrationIdentifier, platform, platformUserId)`, so any
+   *     retry — race-loss, transient error, redelivery — lands on the same
+   *     `Subscriber` row instead of accumulating phantoms toward the cap.
    *
-   * Throws an internal error for non-provisionable platforms; callers MUST
-   * route reactions, actions, and non-Slack/Teams inbound through `resolveOnly`.
+   * Throws for non-provisionable platforms; callers MUST route reactions,
+   * actions, and non-Slack/Teams inbound through `resolveOnly`.
    */
   async resolveOrProvision(params: ResolveOrProvisionParams): Promise<string> {
-    if (!PROVISIONABLE_PLATFORMS.has(params.platform)) {
+    if (!AUTO_PROVISION_PLATFORMS.has(params.platform)) {
       throw new Error(
         `resolveOrProvision called for unsupported platform "${params.platform}". Route through resolveOnly instead.`
       );
-    }
-
-    const existing = await this.resolveOnly(params);
-    if (existing) {
-      return existing;
     }
 
     if (params.authorIsBot) {
@@ -199,6 +206,11 @@ export class AgentSubscriberResolver {
         agentIdentifier: params.agentIdentifier,
       });
       throw new BotAuthorSkippedError(params.platform, params.platformUserId);
+    }
+
+    const existing = await this.resolveOnly(params);
+    if (existing) {
+      return existing;
     }
 
     const productType = await this.getOrganizationProductType(params.organizationId);
@@ -289,7 +301,7 @@ export class AgentSubscriberResolver {
     const count = await this.subscriberRepository.count(
       {
         _organizationId: params.organizationId,
-        'data.__novu_source': AGENT_PLATFORM_PROVISION_SOURCE,
+        [`data.${AGENT_PROVISION_DATA_KEYS.source}`]: AGENT_PLATFORM_PROVISION_SOURCE,
       },
       limit + 1
     );
@@ -312,7 +324,27 @@ export class AgentSubscriberResolver {
     params: ResolveOrProvisionParams,
     productType: OrganizationProductTypeEnum | undefined
   ): Promise<string> {
-    const subscriberId = `sub_${shortId(12)}`;
+    const endpointConfig = PLATFORM_ENDPOINT_CONFIG[params.platform];
+    if (!endpointConfig) {
+      throw new Error(`No endpoint config for auto-provision platform "${params.platform}"`);
+    }
+
+    /**
+     * Deterministic subscriberId derived from the platform identity tuple
+     * keeps `createOrUpdateSubscriber` idempotent across retries — any
+     * race-loser, transient error, or redelivered webhook lands on the
+     * same `Subscriber` row instead of leaving orphan rows that the
+     * Connect-org cap query would happily count. The Subscriber upsert
+     * runs first; the ChannelEndpoint write is gated by the partial
+     * unique index, and on E11000 we read back the winner row (whose
+     * `subscriberId` is necessarily the same deterministic value).
+     */
+    const subscriberId = buildPlatformSubscriberId({
+      organizationId: params.organizationId,
+      integrationIdentifier: params.integrationIdentifier,
+      platform: params.platform,
+      platformUserId: params.platformUserId,
+    });
     const firstName = params.authorFullName?.trim() || params.authorUserName?.trim() || undefined;
     const firstSeenAt = new Date().toISOString();
 
@@ -323,16 +355,14 @@ export class AgentSubscriberResolver {
         subscriberId,
         ...(firstName ? { firstName } : {}),
         data: {
-          __novu_source: AGENT_PLATFORM_PROVISION_SOURCE,
-          __novu_platform: params.platform,
-          __novu_platformUserId: params.platformUserId,
-          __novu_agentIdentifier: params.agentIdentifier,
-          __novu_firstSeenAt: firstSeenAt,
+          [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
+          [AGENT_PROVISION_DATA_KEYS.platform]: params.platform,
+          [AGENT_PROVISION_DATA_KEYS.platformUserId]: params.platformUserId,
+          [AGENT_PROVISION_DATA_KEYS.agentIdentifier]: params.agentIdentifier,
+          [AGENT_PROVISION_DATA_KEYS.firstSeenAt]: firstSeenAt,
         },
       })
     );
-
-    const endpointType = this.endpointTypeFor(params.platform);
 
     try {
       await this.createChannelEndpoint.execute(
@@ -341,7 +371,7 @@ export class AgentSubscriberResolver {
           organizationId: params.organizationId,
           integrationIdentifier: params.integrationIdentifier,
           subscriberId,
-          type: endpointType,
+          type: endpointConfig.endpointType,
           endpoint: { userId: params.platformUserId },
         })
       );
@@ -354,41 +384,16 @@ export class AgentSubscriberResolver {
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
         integrationIdentifier: params.integrationIdentifier,
-        type: endpointType,
-        endpointField: 'userId',
+        type: endpointConfig.endpointType,
+        endpointField: endpointConfig.identityField,
         endpointValue: params.platformUserId,
       });
 
       if (!winner) {
-        // Duplicate key fired but no winning row is visible. Likely a partial
-        // index edge or transient read; surface the original error to the
-        // caller rather than fabricate a subscriberId.
+        // Duplicate key fired but no winning row visible — pathological
+        // partial-index edge or transient read; surface the original error.
         throw err;
       }
-
-      this.logger.warn(
-        {
-          orphanSubscriberId: subscriberId,
-          winnerSubscriberId: winner.subscriberId,
-          organizationId: params.organizationId,
-          environmentId: params.environmentId,
-          platform: params.platform,
-          platformUserId: params.platformUserId,
-        },
-        'Lost ChannelEndpoint provision race; orphan Subscriber created without a platform identity binding.'
-      );
-      captureAgentWarning(err, {
-        component: 'agent-subscriber-resolver',
-        operation: 'provision-channel-endpoint-race-loss',
-        platform: params.platform,
-        agentIdentifier: params.agentIdentifier,
-        extra: {
-          organizationId: params.organizationId,
-          environmentId: params.environmentId,
-          orphanSubscriberId: subscriberId,
-          winnerSubscriberId: winner.subscriberId,
-        },
-      });
 
       return winner.subscriberId;
     }
@@ -408,20 +413,24 @@ export class AgentSubscriberResolver {
 
     return subscriberId;
   }
-
-  private endpointTypeFor(platform: AgentPlatformEnum): ChannelEndpointType {
-    if (platform === AgentPlatformEnum.SLACK) return ENDPOINT_TYPES.SLACK_USER;
-    if (platform === AgentPlatformEnum.TEAMS) return ENDPOINT_TYPES.MS_TEAMS_USER;
-
-    throw new Error(`endpointTypeFor called with unsupported platform "${platform}"`);
-  }
 }
 
 /**
- * MongoDB duplicate-key sentinel (E11000). Mirrors the helper in
- * `mcp-connection-vault.service.ts` — kept local to avoid an inter-service
- * import for a one-line predicate.
+ * 12 base64url characters from a SHA-256 of the platform-identity tuple. ≈ 72
+ * bits of entropy — collision-safe within an environment against
+ * customer-created subscriberIds, and short enough to remain readable in
+ * logs and dashboard URLs. Deterministic so retries against the same tuple
+ * resolve to the same `Subscriber` row.
  */
-function isDuplicateKeyError(err: unknown): boolean {
-  return Boolean(err && typeof err === 'object' && 'code' in err && (err as { code: unknown }).code === 11000);
+function buildPlatformSubscriberId(params: {
+  organizationId: string;
+  integrationIdentifier: string;
+  platform: AgentPlatformEnum;
+  platformUserId: string;
+}): string {
+  const fingerprint = createHash('sha256')
+    .update(`${params.organizationId}:${params.integrationIdentifier}:${params.platform}:${params.platformUserId}`)
+    .digest('base64url');
+
+  return `sub_${fingerprint.slice(0, 12)}`;
 }

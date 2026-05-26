@@ -23,3 +23,20 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
     identityField: 'chatId',
   },
 };
+
+/**
+ * Platforms whose inbound message path auto-provisions a Subscriber +
+ * ChannelEndpoint on first mention. Single source of truth shared by the
+ * resolver (`resolveOrProvision`) and the inbound handler (branching between
+ * `resolveOrProvision` and `resolveOnly`). Other platforms keep their existing
+ * lookup-only semantics: WhatsApp by phone, Email by address, Telegram via
+ * `/start` deep-link.
+ */
+export const AUTO_PROVISION_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set([
+  AgentPlatformEnum.SLACK,
+  AgentPlatformEnum.TEAMS,
+]);
+
+export function isAutoProvisionPlatform(platform: AgentPlatformEnum): boolean {
+  return AUTO_PROVISION_PLATFORMS.has(platform);
+}

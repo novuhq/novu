@@ -4,6 +4,7 @@ import sinon from 'sinon';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import {
   AGENT_PLATFORM_PROVISION_SOURCE,
+  AGENT_PROVISION_DATA_KEYS,
   AgentSubscriberResolver,
   BotAuthorSkippedError,
   ConnectOrgSubscriberCapExceededError,
@@ -249,12 +250,12 @@ describe('AgentSubscriberResolver', () => {
       expect(subscriberCommand.subscriberId).to.equal(result);
       expect(subscriberCommand.firstName).to.equal('Alice Smith');
       expect(subscriberCommand.data).to.deep.include({
-        __novu_source: AGENT_PLATFORM_PROVISION_SOURCE,
-        __novu_platform: AgentPlatformEnum.SLACK,
-        __novu_platformUserId: 'U_NEW',
-        __novu_agentIdentifier: 'agent-test',
+        [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
+        [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.SLACK,
+        [AGENT_PROVISION_DATA_KEYS.platformUserId]: 'U_NEW',
+        [AGENT_PROVISION_DATA_KEYS.agentIdentifier]: 'agent-test',
       });
-      expect(typeof subscriberCommand.data.__novu_firstSeenAt).to.equal('string');
+      expect(typeof subscriberCommand.data[AGENT_PROVISION_DATA_KEYS.firstSeenAt]).to.equal('string');
 
       expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
       const endpointCommand = createChannelEndpoint.execute.firstCall.args[0];
@@ -264,6 +265,25 @@ describe('AgentSubscriberResolver', () => {
 
       const trackedEvents = analyticsService.track.getCalls().map((call) => call.args[0]);
       expect(trackedEvents).to.deep.equal(['[Agent Platform] - Subscriber auto-provisioned']);
+    });
+
+    it('derives the same subscriberId across calls for the same platform identity tuple', async () => {
+      const { resolver: r1, createOrUpdateSubscriber: u1 } = makeResolver();
+      const { resolver: r2, createOrUpdateSubscriber: u2 } = makeResolver();
+
+      const first = await r1.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.SLACK,
+        platformUserId: 'U_DETERMINISTIC',
+      });
+      const second = await r2.resolveOrProvision({
+        ...baseProvisionParams,
+        platform: AgentPlatformEnum.SLACK,
+        platformUserId: 'U_DETERMINISTIC',
+      });
+
+      expect(first).to.equal(second);
+      expect(u1.execute.firstCall.args[0].subscriberId).to.equal(u2.execute.firstCall.args[0].subscriberId);
     });
 
     it('falls back to authorUserName when authorFullName is missing', async () => {
@@ -297,7 +317,8 @@ describe('AgentSubscriberResolver', () => {
 
   describe('resolveOrProvision — bot author short-circuit', () => {
     it('throws BotAuthorSkippedError and writes nothing when authorIsBot is true', async () => {
-      const { resolver, createOrUpdateSubscriber, createChannelEndpoint, analyticsService } = makeResolver();
+      const { resolver, createOrUpdateSubscriber, createChannelEndpoint, analyticsService, channelEndpointRepository } =
+        makeResolver();
 
       try {
         await resolver.resolveOrProvision({
@@ -311,36 +332,44 @@ describe('AgentSubscriberResolver', () => {
         expect(err).to.be.instanceof(BotAuthorSkippedError);
       }
 
+      // Bot check runs BEFORE the lookup so bot-authored messages never reach
+      // the bridge — no DB lookups, no provisioning writes.
+      expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
       expect(createOrUpdateSubscriber.execute.called).to.equal(false);
       expect(createChannelEndpoint.execute.called).to.equal(false);
       const trackedEvents = analyticsService.track.getCalls().map((call) => call.args[0]);
       expect(trackedEvents).to.deep.equal(['[Agent Platform] - Bot author inbound skipped']);
     });
 
-    it('still returns the existing subscriberId when a bot author hits an already-linked identity', async () => {
-      const { resolver, analyticsService } = makeResolver({
+    it('rejects already-linked bot identities — bot check runs before the platform-identity lookup', async () => {
+      const { resolver, channelEndpointRepository } = makeResolver({
         findByPlatformIdentity: sinon.stub().resolves({ subscriberId: 'sub-linked' }),
       });
 
-      const result = await resolver.resolveOrProvision({
-        ...baseProvisionParams,
-        platform: AgentPlatformEnum.SLACK,
-        platformUserId: 'U_LINKED_BOT',
-        authorIsBot: true,
-      });
+      try {
+        await resolver.resolveOrProvision({
+          ...baseProvisionParams,
+          platform: AgentPlatformEnum.SLACK,
+          platformUserId: 'U_LINKED_BOT',
+          authorIsBot: true,
+        });
+        expect.fail('Expected BotAuthorSkippedError even for an already-linked identity');
+      } catch (err) {
+        expect(err).to.be.instanceof(BotAuthorSkippedError);
+      }
 
-      expect(result).to.equal('sub-linked');
-      expect(analyticsService.track.called).to.equal(false);
+      expect(channelEndpointRepository.findByPlatformIdentity.called).to.equal(false);
     });
   });
 
   describe('resolveOrProvision — Connect-org cap', () => {
     it('throws ConnectOrgSubscriberCapExceededError when the org is CONNECT and at cap', async () => {
+      const subscriberCount = sinon.stub().resolves(25);
       const { resolver, createOrUpdateSubscriber, createChannelEndpoint, analyticsService, featureFlagsService } =
         makeResolver({
           organizationFindById: sinon.stub().resolves({ productType: OrganizationProductTypeEnum.CONNECT }),
           featureFlagGet: sinon.stub().resolves(25),
-          subscriberCount: sinon.stub().resolves(25),
+          subscriberCount,
         });
 
       try {
@@ -364,6 +393,10 @@ describe('AgentSubscriberResolver', () => {
 
       const flagCall = featureFlagsService.getFlag.firstCall.args[0];
       expect(flagCall.key).to.equal(FeatureFlagsKeysEnum.MAX_CONNECT_ORG_AUTO_PROVISIONED_SUBSCRIBERS_NUMBER);
+
+      // The cap query MUST pass a bounded `limit + 1` second argument so we
+      // don't degrade to a full-collection countDocuments on large orgs.
+      expect(subscriberCount.firstCall.args[1]).to.equal(26);
     });
 
     it('allows provisioning when CONNECT org is under the cap', async () => {
@@ -409,7 +442,7 @@ describe('AgentSubscriberResolver', () => {
       findByPlatformIdentity.onFirstCall().resolves(null);
       findByPlatformIdentity.onSecondCall().resolves(winner);
 
-      const { resolver, createChannelEndpoint, logger } = makeResolver({
+      const { resolver, createChannelEndpoint } = makeResolver({
         findByPlatformIdentity,
         createChannelEndpointExecute: sinon.stub().rejects(DUPLICATE_KEY_ERROR),
       });
@@ -420,10 +453,13 @@ describe('AgentSubscriberResolver', () => {
         platformUserId: 'U_RACE',
       });
 
+      // Under deterministic subscriberIds the winner's id matches what we
+      // would have generated locally, so returning the winner's row
+      // converges every racer on a single `Subscriber` without leaving
+      // orphan rows behind to log or clean up.
       expect(result).to.equal('sub-winner');
       expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
       expect(findByPlatformIdentity.calledTwice).to.equal(true);
-      expect(logger.warn.called).to.equal(true);
     });
 
     it('re-throws non-duplicate errors from createChannelEndpoint', async () => {
