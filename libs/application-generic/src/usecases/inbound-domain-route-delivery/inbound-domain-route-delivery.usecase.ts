@@ -206,12 +206,30 @@ export class InboundDomainRouteDelivery {
       subject: mail.subject,
       text: mail.text || undefined,
       html: mail.html || undefined,
-      attachments: mail.attachments?.map((att) => ({
-        filename: att.filename,
-        contentType: att.contentType,
-        size: att.size,
-        url: att.url,
-      })),
+      attachments: mail.attachments?.map((att) => {
+        /*
+         * Inline-mode (S3-not-configured) fallback: the inbound-mail server
+         * embedded the binary in the queue payload. Forward it to the agent
+         * webhook as base64 — the downstream `chat-adapter-email` parser
+         * already accepts both `contentBase64` and `url` (see
+         * packages/chat-adapter-email/src/message-parser.ts).
+         */
+        if (!att.url && att.content && Array.isArray(att.content.data)) {
+          return {
+            filename: att.filename,
+            contentType: att.contentType,
+            size: att.size,
+            contentBase64: Buffer.from(att.content.data).toString('base64'),
+          };
+        }
+
+        return {
+          filename: att.filename,
+          contentType: att.contentType,
+          size: att.size,
+          url: att.url,
+        };
+      }),
       date: (() => {
         const d = new Date(mail.date as unknown as string);
 

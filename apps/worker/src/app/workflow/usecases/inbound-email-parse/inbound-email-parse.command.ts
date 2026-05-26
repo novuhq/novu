@@ -18,6 +18,11 @@ import { IsArray, IsDefined, IsNumber, IsOptional, IsString, ValidateNested } fr
  * nested array items stay as plain objects unless @Type points to a class with
  * its own decorators — interfaces are erased at runtime, so typing this array as
  * IInboundParseAttachment[] silently disables item-level validation.
+ *
+ * `url`, `storagePath`, and `content` are intentionally @IsOptional() — see
+ * IInboundParseAttachment for the discriminator: S3-mode payloads carry
+ * `url` + `storagePath`; inline-mode (S3-not-configured) payloads carry
+ * `content` instead.
  */
 export class InboundParseAttachmentCommand implements IInboundParseAttachment {
   @IsDefined()
@@ -32,13 +37,16 @@ export class InboundParseAttachmentCommand implements IInboundParseAttachment {
   @IsNumber()
   size: number;
 
-  @IsDefined()
+  @IsOptional()
   @IsString()
-  url: string;
+  url?: string;
 
-  @IsDefined()
+  @IsOptional()
   @IsString()
-  storagePath: string;
+  storagePath?: string;
+
+  @IsOptional()
+  content?: { type: 'Buffer'; data: number[] };
 }
 
 export class InboundEmailParseCommand extends BaseCommand implements IInboundParseDataDto {

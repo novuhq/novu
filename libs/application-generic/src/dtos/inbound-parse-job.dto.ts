@@ -1,17 +1,40 @@
 import { IBulkJobParams, IJobParams } from '../services/queues/queue-base.service';
 
 /**
- * Slim attachment metadata stored in the BullMQ queue payload.
- * The binary content is stored in S3; consumers access it via the presigned `url`.
+ * Attachment metadata stored in the BullMQ queue payload. Two shapes coexist
+ * depending on whether the inbound-mail server has S3 configured:
+ *
+ * - **S3 mode** (Novu Cloud / self-hosted with `S3_BUCKET_NAME`): the binary is
+ *   uploaded to S3 and only slim metadata + a presigned `url` + the internal
+ *   `storagePath` travel through Redis. The worker rehydrates `content` from
+ *   S3 for legacy webhook consumers via `AttachmentRehydrator`.
+ *
+ * - **Inline mode** (self-hosted without `S3_BUCKET_NAME` — pre-PR #11053
+ *   fallback): the binary travels inside the queue payload as `content` (the
+ *   mailparser legacy `{ type: 'Buffer', data: number[] }` shape). `url` and
+ *   `storagePath` are absent and the rehydrator passes `content` through
+ *   unchanged. Capped at 5 MB per attachment by the inbound-mail server.
  */
 export interface IInboundParseAttachment {
   filename: string;
   contentType: string;
   size: number;
-  /** Presigned GET URL valid for INBOUND_ATTACHMENT_URL_TTL_SECONDS (default 7 days). */
-  url: string;
-  /** Internal S3 key — used by the worker to rehydrate content for legacy webhooks. */
-  storagePath: string;
+  /**
+   * Presigned GET URL valid for INBOUND_ATTACHMENT_URL_TTL_SECONDS (default 7 days).
+   * Absent in inline-mode payloads (S3 not configured).
+   */
+  url?: string;
+  /**
+   * Internal S3 key — used by the worker to rehydrate content for legacy webhooks.
+   * Absent in inline-mode payloads (S3 not configured).
+   */
+  storagePath?: string;
+  /**
+   * Inline binary content — present only when the inbound-mail server is
+   * running without S3 configured. Mutually exclusive with `url`/`storagePath`
+   * in normal operation.
+   */
+  content?: { type: 'Buffer'; data: number[] };
 }
 
 export interface IInboundParseDataDto {
