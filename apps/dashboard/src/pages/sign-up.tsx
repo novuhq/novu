@@ -8,10 +8,13 @@ import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { beginConnectProvisioning, buildConnectProvisionOrgListPath, isActiveConnectWorkspace } from '@/utils/connect';
 import { markInvitationAcceptIfPresent } from '@/utils/invitation-accept-signal';
 import {
+  appendRedirectUrl,
   buildAbsoluteConnectUrl,
   buildPrimarySignUpUrl,
   CONNECT_PRODUCT_VALUE,
   PRODUCT_QUERY_PARAM,
+  readConnectSatelliteReturnUrl,
+  resolveConnectSatelliteReturnUrl,
 } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -32,12 +35,23 @@ export const SignUpPage = () => {
     [searchParams]
   );
 
+  const connectSatelliteReturnUrl = useMemo(
+    () => readConnectSatelliteReturnUrl(searchParams),
+    [searchParams]
+  );
+
   // Sign-up flows are primary-only — bounce satellite visitors back with Connect branding.
   useEffect(() => {
-    if (IS_NOVU_CONNECT) {
-      window.location.replace(buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE }));
+    if (!IS_NOVU_CONNECT) {
+      return;
     }
-  }, []);
+
+    const primarySignUpUrl = buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE });
+    const returnUrl = resolveConnectSatelliteReturnUrl(searchParams);
+    const targetUrl = returnUrl ? appendRedirectUrl(primarySignUpUrl, returnUrl) : primarySignUpUrl;
+
+    window.location.replace(targetUrl);
+  }, [searchParams]);
 
   // Capture invite-link entry (`__clerk_ticket` in the URL) BEFORE Clerk consumes the ticket
   // during sign-up. The picker reads this signal later to decide whether to hop across products.
@@ -59,6 +73,13 @@ export const SignUpPage = () => {
     if (!isLoaded || !isSignedIn) return;
     if (IS_NOVU_CONNECT) return;
     if (!isConnectSignUp) return;
+
+    if (connectSatelliteReturnUrl) {
+      window.location.assign(connectSatelliteReturnUrl);
+
+      return;
+    }
+
     if (!isUserLoaded || !isOrganizationLoaded) return;
 
     if (
@@ -75,7 +96,16 @@ export const SignUpPage = () => {
 
     beginConnectProvisioning();
     window.location.assign(buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)));
-  }, [isLoaded, isSignedIn, isUserLoaded, isOrganizationLoaded, organization, user?.id, isConnectSignUp]);
+  }, [
+    isLoaded,
+    isSignedIn,
+    isUserLoaded,
+    isOrganizationLoaded,
+    organization,
+    user?.id,
+    isConnectSignUp,
+    connectSatelliteReturnUrl,
+  ]);
 
   const connectProvisionRedirect = useMemo(
     () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
@@ -85,6 +115,10 @@ export const SignUpPage = () => {
   const signInUrlWithProduct = isConnectSignUp
     ? `${ROUTES.SIGN_IN}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
     : ROUTES.SIGN_IN;
+
+  if (IS_NOVU_CONNECT || (isLoaded && isSignedIn)) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col md:max-w-[1120px] md:flex-row md:gap-36">

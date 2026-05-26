@@ -9,10 +9,13 @@ import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { beginConnectProvisioning, buildConnectProvisionOrgListPath, isActiveConnectWorkspace } from '@/utils/connect';
 import { markInvitationAcceptIfPresent } from '@/utils/invitation-accept-signal';
 import {
+  appendRedirectUrl,
   buildAbsoluteConnectUrl,
   buildPrimarySignInUrl,
   CONNECT_PRODUCT_VALUE,
   PRODUCT_QUERY_PARAM,
+  readConnectSatelliteReturnUrl,
+  resolveConnectSatelliteReturnUrl,
 } from '@/utils/product-auth-urls';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -34,12 +37,23 @@ export const SignInPage = () => {
     [searchParams]
   );
 
+  const connectSatelliteReturnUrl = useMemo(
+    () => readConnectSatelliteReturnUrl(searchParams),
+    [searchParams]
+  );
+
   // Sign-in only runs on the primary; satellite visitors bounce back with the Connect flag.
   useEffect(() => {
-    if (IS_NOVU_CONNECT) {
-      window.location.replace(buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE }));
+    if (!IS_NOVU_CONNECT) {
+      return;
     }
-  }, []);
+
+    const primarySignInUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });
+    const returnUrl = resolveConnectSatelliteReturnUrl(searchParams);
+    const targetUrl = returnUrl ? appendRedirectUrl(primarySignInUrl, returnUrl) : primarySignInUrl;
+
+    window.location.replace(targetUrl);
+  }, [searchParams]);
 
   // Capture invite-link entry (`__clerk_ticket` in the URL) BEFORE Clerk consumes the ticket
   // during sign-in. The picker reads this signal later to decide whether to hop across products.
@@ -62,6 +76,13 @@ export const SignInPage = () => {
     if (IS_NOVU_CONNECT) return; // satellite is mid-redirect to primary; let it finish.
 
     if (isConnectSignIn) {
+      // Satellite handshake: return via Clerk's redirect_url so the Connect session syncs.
+      if (connectSatelliteReturnUrl) {
+        window.location.assign(connectSatelliteReturnUrl);
+
+        return;
+      }
+
       if (!isUserLoaded || !isOrganizationLoaded) return;
 
       if (
@@ -88,7 +109,17 @@ export const SignInPage = () => {
       buildAppHomeRoute(getCurrentAppId(), 'default') ?? buildRoute(ROUTES.WORKFLOWS, { environmentSlug: 'default' });
 
     navigate(home, { replace: true });
-  }, [isLoaded, isSignedIn, isUserLoaded, isOrganizationLoaded, organization, user?.id, isConnectSignIn, navigate]);
+  }, [
+    isLoaded,
+    isSignedIn,
+    isUserLoaded,
+    isOrganizationLoaded,
+    organization,
+    user?.id,
+    isConnectSignIn,
+    connectSatelliteReturnUrl,
+    navigate,
+  ]);
 
   const connectProvisionRedirect = useMemo(
     () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
@@ -100,8 +131,9 @@ export const SignInPage = () => {
     ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
     : ROUTES.SIGN_UP;
 
-  // Render nothing while the satellite redirects to the primary so we don't flash the form.
-  if (IS_NOVU_CONNECT) {
+  // Render nothing while redirecting — mounting <SignIn> while signed in makes Clerk bounce to the
+  // home URL and causes a Platform ↔ Connect redirect loop during the satellite handshake.
+  if (IS_NOVU_CONNECT || (isLoaded && isSignedIn)) {
     return null;
   }
 
