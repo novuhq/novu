@@ -538,10 +538,16 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       }
     }
 
-    return severityLevels.map((severity) => ({
-      severity,
-      count: Math.min(countsBySeverity.get(severity) ?? 0, options.limit),
-    }));
+    const skip = Math.max(options.skip ?? 0, 0);
+
+    return severityLevels.map((severity) => {
+      const afterSkip = Math.max((countsBySeverity.get(severity) ?? 0) - skip, 0);
+
+      return {
+        severity,
+        count: Math.min(afterSkip, options.limit),
+      };
+    });
   }
 
   private convertMessageMatchQueryForAggregation(
