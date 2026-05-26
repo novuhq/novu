@@ -47,16 +47,17 @@ export type AgentGenerationBindings = {
    * disabled. Use after the LLM call has settled and the agent is being provisioned.
    */
   isCancelDisabled?: boolean;
-  /**
-   * Marks the Custom Scaffold flow. Drives copy and tone: scratch agents only get a
-   * generated name/identifier/system prompt — no tools/MCPs/skills are attached.
-   */
-  isScratchRuntime?: boolean;
 };
 
 type ConnectAgentFormProps = {
   connectorId: ConnectorId;
   isClaudeSelected: boolean;
+  /**
+   * When true, the connector runs on the Custom Scaffold (self-hosted) runtime. We collapse the
+   * second setup step into a plain manual form (no AI prompt UI, no template dropdown, no
+   * suggestion pills) so teams writing their own runtime see exactly the inputs they need.
+   */
+  isScratchRuntime: boolean;
   apiKey: string;
   externalWorkspaceId: string;
   region: string;
@@ -201,6 +202,7 @@ function AgentScopeTabs({
 export function ConnectAgentForm({
   connectorId,
   isClaudeSelected,
+  isScratchRuntime,
   apiKey,
   externalWorkspaceId,
   region,
@@ -250,7 +252,6 @@ export function ConnectAgentForm({
   const selectedConnector = getConnectorById(connectorId);
   const showCredentialsSection = isClaudeSelected && credentialsPanelVisible && Boolean(selectedConnector?.providerId);
   const usePromptUi = Boolean(aiGeneration);
-  const isScratchRuntime = Boolean(aiGeneration?.isScratchRuntime);
   const aiMode = aiGeneration?.mode ?? 'prompt';
   const scope: AgentScope = aiMode === 'existing' ? 'existing' : 'create';
   // Total steps across the full onboarding flow:
@@ -265,14 +266,7 @@ export function ConnectAgentForm({
   // In `'existing'` scope the segmented tabs above replace it, so we omit it entirely.
   const header = aiMode === 'existing' ? null : RIGHT_HEADER_BY_MODE[aiMode];
   const showScopeTabs = usePromptUi && showExistingOption;
-  const promptStepDescription = isScratchRuntime
-    ? 'Pick a starter or describe what your agent should do — we generate the name, identifier, and system prompt. Wire up your own tools, MCPs, and integrations in code.'
-    : 'Pick a starter or describe what your agent should do — we configure the tools, MCPs, skills, and system prompt for you.';
-  const promptStepTitle = scope === 'existing' ? 'Connect your existing agent' : 'Start from a template';
-  const promptStepDescriptionResolved =
-    scope === 'existing'
-      ? 'Paste the Claude Agent ID and Environment ID of an existing managed agent and Novu will route conversations to it.'
-      : promptStepDescription;
+  const { stepTitle, stepDescription } = resolveStepCopy({ isScratchRuntime, usePromptUi, scope });
 
   return (
     <>
@@ -341,12 +335,8 @@ export function ConnectAgentForm({
       <SetupStep
         index={2}
         status="completed"
-        title={usePromptUi ? promptStepTitle : 'Start from a template'}
-        description={
-          usePromptUi
-            ? promptStepDescriptionResolved
-            : 'Create an agent and deploy it to Anthropic from the starter templates. You can also bring in existing agents later.'
-        }
+        title={stepTitle}
+        description={stepDescription}
         headerSlot={
           showScopeTabs && aiGeneration ? (
             <AgentScopeTabs
@@ -358,83 +348,316 @@ export function ConnectAgentForm({
         }
         rightContent={
           <div className="flex w-full flex-col gap-2.5">
-            {usePromptUi && aiGeneration ? (
-              <PromptModeContent
-                aiGeneration={aiGeneration}
-                header={header}
-                disabled={disabled}
-                isExistingMode={isExistingMode}
-                name={name}
-                identifier={identifier}
-                instructions={instructions}
-                isIdentifierTouched={isIdentifierTouched}
-                externalAgentId={externalAgentId}
-                externalEnvironmentId={externalEnvironmentId}
-                errors={errors}
-                onNameChange={onNameChange}
-                onIdentifierChange={onIdentifierChange}
-                onIdentifierTouched={onIdentifierTouched}
-                onInstructionsChange={onInstructionsChange}
-                onExternalAgentIdChange={onExternalAgentIdChange}
-                onExternalEnvironmentIdChange={onExternalEnvironmentIdChange}
-                submitSlot={submitSlot}
-              />
-            ) : (
-              <>
-                <TemplateDropdown
-                  selection={templateSelection}
-                  onSelect={onTemplateChange}
-                  showExistingOption={showExistingOption}
-                  existingOptionIcon={existingOptionIcon}
-                  disabled={disabled}
-                />
-                {isClaudeSelected && templateSelection.kind !== 'existing' && (
-                  <p className="text-text-soft text-label-xs font-normal leading-4 flex items-center gap-1">
-                    <RiInformation2Line className="size-3.5" aria-hidden /> Sent to Claude as the system prompt.
-                  </p>
-                )}
-              </>
-            )}
+            {renderRightColumn({
+              isScratchRuntime,
+              usePromptUi,
+              aiGeneration,
+              header,
+              disabled,
+              isClaudeSelected,
+              isExistingMode,
+              name,
+              identifier,
+              instructions,
+              isIdentifierTouched,
+              externalAgentId,
+              externalEnvironmentId,
+              errors,
+              templateSelection,
+              showExistingOption,
+              existingOptionIcon,
+              onTemplateChange,
+              onNameChange,
+              onIdentifierChange,
+              onIdentifierTouched,
+              onInstructionsChange,
+              onExternalAgentIdChange,
+              onExternalEnvironmentIdChange,
+              submitSlot,
+            })}
           </div>
         }
         extraContent={
-          <div className="flex flex-col gap-5">
-            {usePromptUi && aiGeneration && aiMode === 'prompt' ? (
-              <AgentSuggestionPills
-                suggestions={aiGeneration.suggestions}
-                onSelect={aiGeneration.onSelectSuggestion}
-                disabled={disabled}
-              />
-            ) : !usePromptUi && isExistingMode ? (
-              <ExistingAgentFields
-                externalAgentId={externalAgentId}
-                externalEnvironmentId={externalEnvironmentId}
-                errors={errors}
-                disabled={disabled}
-                onExternalAgentIdChange={onExternalAgentIdChange}
-                onExternalEnvironmentIdChange={onExternalEnvironmentIdChange}
-              />
-            ) : !usePromptUi && isScratchMode ? (
-              <ScratchAgentFields
-                isColumnsLayout
-                name={name}
-                identifier={identifier}
-                instructions={instructions}
-                errors={errors}
-                isIdentifierTouched={isIdentifierTouched}
-                isClaudeSelected={isClaudeSelected}
-                disabled={disabled}
-                onNameChange={onNameChange}
-                onIdentifierChange={onIdentifierChange}
-                onIdentifierTouched={onIdentifierTouched}
-                onInstructionsChange={onInstructionsChange}
-              />
-            ) : null}
-          </div>
+          isScratchRuntime ? null : (
+            <div className="flex flex-col gap-5">
+              {renderExtraContent({
+                usePromptUi,
+                aiMode,
+                aiGeneration,
+                disabled,
+                isClaudeSelected,
+                isExistingMode,
+                isScratchMode,
+                name,
+                identifier,
+                instructions,
+                isIdentifierTouched,
+                externalAgentId,
+                externalEnvironmentId,
+                errors,
+                onNameChange,
+                onIdentifierChange,
+                onIdentifierTouched,
+                onInstructionsChange,
+                onExternalAgentIdChange,
+                onExternalEnvironmentIdChange,
+              })}
+            </div>
+          )
         }
       />
     </>
   );
+}
+
+function resolveStepCopy({
+  isScratchRuntime,
+  usePromptUi,
+  scope,
+}: {
+  isScratchRuntime: boolean;
+  usePromptUi: boolean;
+  scope: AgentScope;
+}): { stepTitle: string; stepDescription: string } {
+  if (isScratchRuntime) {
+    return {
+      stepTitle: 'Configure your agent',
+      stepDescription:
+        'Give your agent a name, identifier, and description. Wire up your own tools, MCPs, and integrations in code.',
+    };
+  }
+
+  if (usePromptUi) {
+    if (scope === 'existing') {
+      return {
+        stepTitle: 'Connect your existing agent',
+        stepDescription:
+          'Paste the Claude Agent ID and Environment ID of an existing managed agent and Novu will route conversations to it.',
+      };
+    }
+
+    return {
+      stepTitle: 'Start from a template',
+      stepDescription:
+        'Pick a starter or describe what your agent should do — we configure the tools, MCPs, skills, and system prompt for you.',
+    };
+  }
+
+  return {
+    stepTitle: 'Start from a template',
+    stepDescription:
+      'Create an agent and deploy it to Anthropic from the starter templates. You can also bring in existing agents later.',
+  };
+}
+
+type RightColumnArgs = {
+  isScratchRuntime: boolean;
+  usePromptUi: boolean;
+  aiGeneration: AgentGenerationBindings | undefined;
+  header: RightHeader | null;
+  disabled?: boolean;
+  isClaudeSelected: boolean;
+  isExistingMode: boolean;
+  name: string;
+  identifier: string;
+  instructions: string;
+  isIdentifierTouched: boolean;
+  externalAgentId: string;
+  externalEnvironmentId: string;
+  errors: CreateAgentFormErrors;
+  templateSelection: TemplateSelection;
+  showExistingOption: boolean;
+  existingOptionIcon?: ReactNode;
+  onTemplateChange: (next: TemplateSelection) => void;
+  onNameChange: (next: string) => void;
+  onIdentifierChange: (next: string) => void;
+  onIdentifierTouched: () => void;
+  onInstructionsChange: (next: string) => void;
+  onExternalAgentIdChange: (next: string) => void;
+  onExternalEnvironmentIdChange: (next: string) => void;
+  submitSlot?: ReactNode;
+};
+
+function renderRightColumn({
+  isScratchRuntime,
+  usePromptUi,
+  aiGeneration,
+  header,
+  disabled,
+  isClaudeSelected,
+  isExistingMode,
+  name,
+  identifier,
+  instructions,
+  isIdentifierTouched,
+  externalAgentId,
+  externalEnvironmentId,
+  errors,
+  templateSelection,
+  showExistingOption,
+  existingOptionIcon,
+  onTemplateChange,
+  onNameChange,
+  onIdentifierChange,
+  onIdentifierTouched,
+  onInstructionsChange,
+  onExternalAgentIdChange,
+  onExternalEnvironmentIdChange,
+  submitSlot,
+}: RightColumnArgs) {
+  if (isScratchRuntime) {
+    return (
+      <>
+        <ScratchAgentFields
+          isColumnsLayout
+          name={name}
+          identifier={identifier}
+          instructions={instructions}
+          errors={errors}
+          isIdentifierTouched={isIdentifierTouched}
+          isClaudeSelected={false}
+          disabled={disabled}
+          onNameChange={onNameChange}
+          onIdentifierChange={onIdentifierChange}
+          onIdentifierTouched={onIdentifierTouched}
+          onInstructionsChange={onInstructionsChange}
+        />
+        {submitSlot}
+      </>
+    );
+  }
+
+  if (usePromptUi && aiGeneration) {
+    return (
+      <PromptModeContent
+        aiGeneration={aiGeneration}
+        header={header}
+        disabled={disabled}
+        isExistingMode={isExistingMode}
+        name={name}
+        identifier={identifier}
+        instructions={instructions}
+        isIdentifierTouched={isIdentifierTouched}
+        externalAgentId={externalAgentId}
+        externalEnvironmentId={externalEnvironmentId}
+        errors={errors}
+        onNameChange={onNameChange}
+        onIdentifierChange={onIdentifierChange}
+        onIdentifierTouched={onIdentifierTouched}
+        onInstructionsChange={onInstructionsChange}
+        onExternalAgentIdChange={onExternalAgentIdChange}
+        onExternalEnvironmentIdChange={onExternalEnvironmentIdChange}
+        submitSlot={submitSlot}
+      />
+    );
+  }
+
+  return (
+    <>
+      <TemplateDropdown
+        selection={templateSelection}
+        onSelect={onTemplateChange}
+        showExistingOption={showExistingOption}
+        existingOptionIcon={existingOptionIcon}
+        disabled={disabled}
+      />
+      {isClaudeSelected && templateSelection.kind !== 'existing' && (
+        <p className="text-text-soft text-label-xs font-normal leading-4 flex items-center gap-1">
+          <RiInformation2Line className="size-3.5" aria-hidden /> Sent to Claude as the system prompt.
+        </p>
+      )}
+    </>
+  );
+}
+
+type ExtraContentArgs = {
+  usePromptUi: boolean;
+  aiMode: AgentGenerationMode;
+  aiGeneration: AgentGenerationBindings | undefined;
+  disabled?: boolean;
+  isClaudeSelected: boolean;
+  isExistingMode: boolean;
+  isScratchMode: boolean;
+  name: string;
+  identifier: string;
+  instructions: string;
+  isIdentifierTouched: boolean;
+  externalAgentId: string;
+  externalEnvironmentId: string;
+  errors: CreateAgentFormErrors;
+  onNameChange: (next: string) => void;
+  onIdentifierChange: (next: string) => void;
+  onIdentifierTouched: () => void;
+  onInstructionsChange: (next: string) => void;
+  onExternalAgentIdChange: (next: string) => void;
+  onExternalEnvironmentIdChange: (next: string) => void;
+};
+
+function renderExtraContent({
+  usePromptUi,
+  aiMode,
+  aiGeneration,
+  disabled,
+  isClaudeSelected,
+  isExistingMode,
+  isScratchMode,
+  name,
+  identifier,
+  instructions,
+  isIdentifierTouched,
+  externalAgentId,
+  externalEnvironmentId,
+  errors,
+  onNameChange,
+  onIdentifierChange,
+  onIdentifierTouched,
+  onInstructionsChange,
+  onExternalAgentIdChange,
+  onExternalEnvironmentIdChange,
+}: ExtraContentArgs) {
+  if (usePromptUi && aiGeneration && aiMode === 'prompt') {
+    return (
+      <AgentSuggestionPills
+        suggestions={aiGeneration.suggestions}
+        onSelect={aiGeneration.onSelectSuggestion}
+        disabled={disabled}
+      />
+    );
+  }
+
+  if (!usePromptUi && isExistingMode) {
+    return (
+      <ExistingAgentFields
+        externalAgentId={externalAgentId}
+        externalEnvironmentId={externalEnvironmentId}
+        errors={errors}
+        disabled={disabled}
+        onExternalAgentIdChange={onExternalAgentIdChange}
+        onExternalEnvironmentIdChange={onExternalEnvironmentIdChange}
+      />
+    );
+  }
+
+  if (!usePromptUi && isScratchMode) {
+    return (
+      <ScratchAgentFields
+        isColumnsLayout
+        name={name}
+        identifier={identifier}
+        instructions={instructions}
+        errors={errors}
+        isIdentifierTouched={isIdentifierTouched}
+        isClaudeSelected={isClaudeSelected}
+        disabled={disabled}
+        onNameChange={onNameChange}
+        onIdentifierChange={onIdentifierChange}
+        onIdentifierTouched={onIdentifierTouched}
+        onInstructionsChange={onInstructionsChange}
+      />
+    );
+  }
+
+  return null;
 }
 
 type RightHeader = (typeof RIGHT_HEADER_BY_MODE)[Exclude<AgentGenerationMode, 'existing'>];
