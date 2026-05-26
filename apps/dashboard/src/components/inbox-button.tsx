@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { Bell, Inbox, InboxContent, useNovu } from '@novu/react';
 import { useEffect, useMemo, useState } from 'react';
 import { Popover, PopoverContent, PopoverPortal, PopoverTrigger } from '@/components/primitives/popover';

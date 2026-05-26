@@ -1,8 +1,8 @@
 import { useLocation } from 'react-router-dom';
-import { type AppId, getAppIdFromPathname } from '@/utils/apps';
+import { type AppId, getCurrentAppId } from '@/utils/apps';
 
 export function useCurrentApp(): AppId {
   const location = useLocation();
 
-  return getAppIdFromPathname(location.pathname);
+  return getCurrentAppId(location.pathname);
 }

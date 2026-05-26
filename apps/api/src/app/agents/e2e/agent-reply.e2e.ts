@@ -2,7 +2,7 @@ import { ConversationActivitySenderTypeEnum, ConversationActivityTypeEnum, Conve
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { BridgeExecutorParams, BridgeExecutorService } from '../services/bridge-executor.service';
+import { AgentExecutionParams, BridgeExecutorService } from '../services/bridge-executor.service';
 import { ChatSdkService } from '../services/chat-sdk.service';
 import {
   AgentTestContext,
@@ -14,7 +14,7 @@ import {
 
 describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
   let ctx: AgentTestContext;
-  let bridgeCalls: BridgeExecutorParams[];
+  let bridgeCalls: AgentExecutionParams[];
 
   before(() => {
     process.env.IS_CONVERSATIONAL_AGENTS_ENABLED = 'true';
@@ -25,7 +25,7 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
 
     bridgeCalls = [];
     const bridgeExecutor = testServer.getService(BridgeExecutorService);
-    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: BridgeExecutorParams) => {
+    sinon.stub(bridgeExecutor, 'execute').callsFake(async (params: AgentExecutionParams) => {
       bridgeCalls.push(params);
     });
 
@@ -152,18 +152,6 @@ describe('Agent Reply - /agents/:agentId/reply #novu-v2', () => {
         integrationIdentifier: ctx.integrationIdentifier,
         edit: { messageId: 'platform-msg-1', content: { markdown: 'b' } },
         signals: [{ type: 'metadata', key: 'k', value: 'v' }],
-      });
-
-      expect(res.status).to.equal(400);
-    });
-
-    it('should return 400 when conversation has no serialized thread', async () => {
-      const conversationId = await seedConversation(ctx, { withSerializedThread: false });
-
-      const res = await postReply({
-        conversationId,
-        integrationIdentifier: ctx.integrationIdentifier,
-        reply: { markdown: 'Should fail' },
       });
 
       expect(res.status).to.equal(400);

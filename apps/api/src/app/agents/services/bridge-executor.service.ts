@@ -23,10 +23,24 @@ import type {
 import { AgentEventEnum } from '@novu/framework';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import type { Message } from 'chat';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 
 const MAX_RETRIES = 2;
+
+/** Agent bridge replyUrl: prefer API_ROOT_URL, else localhost on PORT (default 3000). */
+function resolveAgentReplyApiOrigin(): string {
+  const apiRootUrl = process.env.API_ROOT_URL?.replace(/\/$/, '');
+
+  if (apiRootUrl) {
+    return apiRootUrl;
+  }
+
+  const port = process.env.PORT || '3000';
+
+  return `http://localhost:${port}`;
+}
 const RETRY_BASE_DELAY_MS = 500;
 const AGENTS_STORAGE_FOLDER = 'agents';
 const ATTACHMENT_SIGNING_CONCURRENCY = 4;
@@ -66,7 +80,7 @@ export interface BridgeReaction {
   sourceMessageStoredAttachments?: StoredAttachment[];
 }
 
-export interface BridgeExecutorParams {
+export interface AgentExecutionParams {
   event: AgentEventEnum;
   config: ResolvedAgentConfig;
   conversation: ConversationEntity;
@@ -77,6 +91,8 @@ export interface BridgeExecutorParams {
   action?: AgentAction;
   reaction?: BridgeReaction;
   storedAttachments?: StoredAttachment[];
+  /** Called after all retries are exhausted and the bridge remains unreachable. */
+  onBridgeFailure?: (error: Error) => Promise<void>;
 }
 
 export class NoBridgeUrlError extends Error {
@@ -96,7 +112,7 @@ export class BridgeExecutorService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(params: BridgeExecutorParams): Promise<void> {
+  async execute(params: AgentExecutionParams): Promise<void> {
     const agentIdentifier = params.config.agentIdentifier;
 
     try {
@@ -118,6 +134,19 @@ export class BridgeExecutorService {
 
       this.fireWithRetries(bridgeUrl, payload, secretKey, agentIdentifier).catch((err) => {
         this.logger.error(err, `[agent:${agentIdentifier}] Bridge delivery failed after ${MAX_RETRIES + 1} attempts`);
+        captureAgentException(err, {
+          component: 'bridge-executor',
+          operation: 'bridge-delivery',
+          agentIdentifier,
+        });
+        params.onBridgeFailure?.(err instanceof Error ? err : new Error(String(err))).catch((callbackErr) => {
+          this.logger.warn(callbackErr, `[agent:${agentIdentifier}] onBridgeFailure callback threw`);
+          captureAgentWarning(callbackErr, {
+            component: 'bridge-executor',
+            operation: 'on-bridge-failure-callback',
+            agentIdentifier,
+          });
+        });
       });
     } catch (err) {
       if (err instanceof NoBridgeUrlError) {
@@ -125,6 +154,11 @@ export class BridgeExecutorService {
       }
 
       this.logger.error(err, `[agent:${agentIdentifier}] Bridge setup failed — skipping bridge call`);
+      captureAgentException(err, {
+        component: 'bridge-executor',
+        operation: 'bridge-setup',
+        agentIdentifier,
+      });
     }
   }
 
@@ -225,12 +259,11 @@ export class BridgeExecutorService {
     return url.toString();
   }
 
-  private async buildPayload(params: BridgeExecutorParams): Promise<AgentBridgeRequest> {
+  private async buildPayload(params: AgentExecutionParams): Promise<AgentBridgeRequest> {
     const { event, config, conversation, subscriber, history, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
-    const apiRootUrl = process.env.API_ROOT_URL || 'http://localhost:3000';
-    const replyUrl = `${apiRootUrl}/v1/agents/${agentIdentifier}/reply`;
+    const replyUrl = `${resolveAgentReplyApiOrigin()}/v1/agents/${agentIdentifier}/reply`;
 
     const timestamp = new Date().toISOString();
 
@@ -458,6 +491,7 @@ export class BridgeExecutorService {
       return url;
     } catch (err) {
       this.logger.warn(err, 'Failed to sign agent attachment for history; omitting from bridge payload');
+      captureAgentWarning(err, { component: 'bridge-executor', operation: 'sign-history-attachment' });
 
       return null;
     }
@@ -511,6 +545,7 @@ export class BridgeExecutorService {
       return url;
     } catch (err) {
       this.logger.warn(err, 'Failed to sign stored attachment; omitting from bridge payload');
+      captureAgentWarning(err, { component: 'bridge-executor', operation: 'sign-stored-attachment' });
 
       return null;
     }

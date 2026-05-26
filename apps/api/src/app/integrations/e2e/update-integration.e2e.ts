@@ -21,6 +21,21 @@ describe('Update Integration - /integrations/:integrationId (PUT) #novu-v2', () 
     await session.initialize();
   });
 
+  it('should reject integration id that is not a MongoDB ObjectId', async () => {
+    const payload = {
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      credentials: { apiKey: 'new_key', secretKey: 'new_secret' },
+      active: true,
+      check: false,
+    };
+
+    const { body } = await session.testAgent.put('/v1/integrations/telegram').send(payload);
+
+    expect(body.statusCode).to.equal(422);
+    expect(body.errors.integrationId.messages[0]).to.equal('integrationId must be a mongodb id');
+  });
+
   it('should throw not found exception when integration is not found', async () => {
     const integrationId = IntegrationRepository.createObjectId();
     const payload = {

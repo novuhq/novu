@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService, decryptCredentials, getAgentRuntimeProvider } from '@novu/application-generic';
+import { AnalyticsService, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 
 import { trackAgentDeleted } from '../../agent-analytics';
 import { CleanupNovuEmail } from '../cleanup-novu-email/cleanup-novu-email.usecase';
@@ -71,6 +72,13 @@ export class DeleteAgent {
     managedRuntime: { providerId: string; _integrationId: string; externalAgentId: string },
     command: DeleteAgentCommand
   ): Promise<void> {
+    // Demo agents share Novu's Anthropic account; upstream archive is skipped to avoid
+    // cross-tenant deletes when a foreign externalAgentId is linked. Orphans are
+    // cleaned up by platform maintenance.
+    if (managedRuntime.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+      return;
+    }
+
     const integration = await this.integrationRepository.findOne(
       {
         _id: managedRuntime._integrationId,
@@ -84,14 +92,12 @@ export class DeleteAgent {
       return;
     }
 
-    const decryptedCredentials = decryptCredentials(integration.credentials);
+    const resolved = resolveAgentRuntime(managedRuntime.providerId, integration.credentials);
 
-    if (!decryptedCredentials.apiKey) {
+    if (!resolved) {
       return;
     }
 
-    const runtimeProvider = getAgentRuntimeProvider(managedRuntime.providerId, decryptedCredentials.apiKey);
-
-    await runtimeProvider.deleteAgent(managedRuntime.externalAgentId);
+    await resolved.provider.deleteAgent(managedRuntime.externalAgentId);
   }
 }

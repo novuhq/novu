@@ -33,7 +33,7 @@ export class ListAgents {
       identifier: command.identifier,
     });
 
-    const integrationsByAgentId = await this.loadIntegrationsForAgents(
+    const summariesByAgentId = await this.loadIntegrationsForAgents(
       command.environmentId,
       command.organizationId,
       pagination.agents
@@ -42,7 +42,7 @@ export class ListAgents {
     return {
       data: pagination.agents.map((agent) => ({
         ...toAgentResponse(agent),
-        integrations: integrationsByAgentId.get(agent._id) ?? [],
+        integrations: summariesByAgentId.get(agent._id) ?? [],
       })),
       next: pagination.next,
       previous: pagination.previous,
@@ -56,10 +56,10 @@ export class ListAgents {
     organizationId: string,
     agents: { _id: string }[]
   ): Promise<Map<string, AgentIntegrationSummaryDto[]>> {
-    const result = new Map<string, AgentIntegrationSummaryDto[]>();
+    const summariesByAgentId = new Map<string, AgentIntegrationSummaryDto[]>();
 
     if (agents.length === 0) {
-      return result;
+      return summariesByAgentId;
     }
 
     const agentIds = agents.map((a) => a._id);
@@ -73,10 +73,10 @@ export class ListAgents {
 
     if (integrationIds.length === 0) {
       for (const id of agentIds) {
-        result.set(id, []);
+        summariesByAgentId.set(id, []);
       }
 
-      return result;
+      return summariesByAgentId;
     }
 
     const integrations = await this.integrationRepository.find(
@@ -111,23 +111,23 @@ export class ListAgents {
       }
 
       dedupe.add(summary.integrationId);
-      const list = result.get(link._agentId) ?? [];
+      const list = summariesByAgentId.get(link._agentId) ?? [];
       list.push(summary);
 
-      result.set(link._agentId, list);
+      summariesByAgentId.set(link._agentId, list);
     }
 
     for (const id of agentIds) {
-      if (!result.has(id)) {
-        result.set(id, []);
+      if (!summariesByAgentId.has(id)) {
+        summariesByAgentId.set(id, []);
       } else {
-        const list = result.get(id) ?? [];
+        const list = summariesByAgentId.get(id) ?? [];
         const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name));
 
-        result.set(id, sorted);
+        summariesByAgentId.set(id, sorted);
       }
     }
 
-    return result;
+    return summariesByAgentId;
   }
 }

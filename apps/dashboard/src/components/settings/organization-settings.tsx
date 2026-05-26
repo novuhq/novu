@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
-import { OrganizationProfile } from '@clerk/clerk-react';
-import type { Appearance } from '@clerk/types';
+import { OrganizationProfile } from '@clerk/react';
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import { PermissionsEnum } from '@novu/shared';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -11,7 +11,7 @@ import { OrganizationSettings as BetterAuthOrganizationSettings } from '@/utils/
 import { Protect } from '@/utils/protect';
 import { NovuBrandingSwitch } from './novu-branding-switch';
 
-export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Appearance }) {
+export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: ClerkAppearanceTheme }) {
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
   const updateOrganizationSettings = useUpdateOrganizationSettings();
 

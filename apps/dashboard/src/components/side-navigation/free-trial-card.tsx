@@ -1,6 +1,10 @@
 import { GetSubscriptionDto } from '@novu/shared';
+import { ComponentType } from 'react';
 import { RiArrowRightDoubleLine, RiInformationFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
+import { ConnectLogo } from '@/components/icons/connect-logo';
+import { useCurrentApp } from '@/hooks/use-current-app';
+import { APP_IDS } from '@/utils/apps';
 import { ROUTES } from '@/utils/routes';
 import { LogoCircle } from '../icons';
 import { Button } from '../primitives/button';
@@ -13,22 +17,32 @@ const pluralizeDaysLeft = (numberOfDays: number) => {
   return `${numberOfDays} day${numberOfDays > 1 ? 's' : ''}`;
 };
 
+type BrandLogo = ComponentType<{ className?: string }>;
+
 const CardContent = ({
   pluralizedDays,
   daysTotal,
   daysLeft,
+  Logo,
+  showLogoBackground,
 }: {
   pluralizedDays: string;
   daysTotal: number;
   daysLeft: number;
+  Logo: BrandLogo;
+  showLogoBackground: boolean;
 }) => (
   <>
     <div className="flex items-center gap-1.5">
-      <div
-        className={`flex h-4 w-4 items-center justify-center rounded-full bg-neutral-700 ${transition} group-hover:bg-neutral-0`}
-      >
-        <LogoCircle className={`h-3 w-3 ${transition} group-hover:h-4 group-hover:w-4`} />
-      </div>
+      {showLogoBackground ? (
+        <div
+          className={`flex h-4 w-4 items-center justify-center rounded-full bg-neutral-700 ${transition} group-hover:bg-neutral-0`}
+        >
+          <Logo className={`h-3 w-3 ${transition} group-hover:h-4 group-hover:w-4`} />
+        </div>
+      ) : (
+        <Logo className={`h-4 w-4 ${transition}`} />
+      )}
       <span className="text-foreground-950 text-sm">{pluralizedDays} left on trial</span>
       <Tooltip>
         <TooltipTrigger className="ml-auto">
@@ -74,12 +88,21 @@ const CardContent = ({
 export const FreeTrialCard = ({ subscription, daysLeft }: { subscription?: GetSubscriptionDto; daysLeft: number }) => {
   const daysTotal = subscription && subscription.trial.daysTotal > 0 ? subscription.trial.daysTotal : 100;
   const pluralizedDays = pluralizeDaysLeft(daysLeft);
+  const currentApp = useCurrentApp();
+  const isConnect = currentApp === APP_IDS.CONNECT;
+  const Logo: BrandLogo = isConnect ? ConnectLogo : LogoCircle;
 
   const cardClassName = 'bg-background group relative mb-2 flex cursor-pointer flex-col gap-2 rounded-lg p-3 shadow';
 
   return (
     <Link to={ROUTES.SETTINGS_BILLING} className={cardClassName}>
-      <CardContent pluralizedDays={pluralizedDays} daysTotal={daysTotal} daysLeft={daysLeft} />
+      <CardContent
+        pluralizedDays={pluralizedDays}
+        daysTotal={daysTotal}
+        daysLeft={daysLeft}
+        Logo={Logo}
+        showLogoBackground={!isConnect}
+      />
     </Link>
   );
 };

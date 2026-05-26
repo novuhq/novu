@@ -19,7 +19,13 @@ import {
   NotificationTemplateRepository,
   PreferencesRepository,
 } from '@novu/dal';
-import { ApiServiceLevelEnum, ChannelTypeEnum, EnvironmentTypeEnum, InAppProviderIdEnum, SeverityLevelEnum } from '@novu/shared';
+import {
+  ApiServiceLevelEnum,
+  ChannelTypeEnum,
+  EnvironmentTypeEnum,
+  InAppProviderIdEnum,
+  SeverityLevelEnum,
+} from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { AuthService } from '../../../auth/services/auth.service';

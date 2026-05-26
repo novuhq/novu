@@ -1,7 +1,6 @@
-import { FeatureFlagsKeysEnum, MemberRoleEnum, PermissionsEnum } from '@novu/shared';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
 import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '../../config';
 import { authClient } from './client';
@@ -20,34 +19,12 @@ import {
   UserProfile as UserProfileComponent,
   VerifyEmail as VerifyEmailComponent,
 } from './components';
+import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { ROLE_PERMISSIONS } from './role-permissions';
+import { Show } from './show';
+import { useCursorAgentAutoLogin } from './use-cursor-agent-auto-login';
 
-type BetterAuthUser = {
-  id: string;
-  email: string;
-  name: string;
-  image?: string;
-  emailVerified: boolean;
-};
-
-type BetterAuthOrganization = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-type AuthContextType = {
-  user: BetterAuthUser | null;
-  organization: BetterAuthOrganization | null;
-  memberRole: MemberRoleEnum | null;
-  isLoaded: boolean;
-  signOut: () => Promise<void>;
-  getToken: () => Promise<string | null>;
-  refreshSession: () => Promise<void>;
-  has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean;
-};
-
-const AuthContext = createContext<AuthContextType | null>(null);
+export { Show };
 
 export function ClerkProvider({ children }: { children: React.ReactNode }) {
   const { data: sessionData, isPending, refetch } = authClient.useSession();
@@ -143,18 +120,40 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
     [memberRole]
   );
 
+  const isLoaded = !isPending && !isOrgLoading;
+  const isSignedIn = !!user;
+
+  const { isAutoLoginPending, isAutoLoginFailed } = useCursorAgentAutoLogin({
+    isLoaded,
+    isSignedIn,
+    refreshSession,
+  });
+
   const value = useMemo(
     () => ({
       user,
       organization: organization || null,
       memberRole,
-      isLoaded: !isPending && !isOrgLoading,
+      isLoaded,
       signOut,
       getToken,
       refreshSession,
       has,
+      isAutoLoginPending,
+      isAutoLoginFailed,
     }),
-    [user, organization, memberRole, isPending, isOrgLoading, refreshSession, signOut, getToken, has]
+    [
+      user,
+      organization,
+      memberRole,
+      isLoaded,
+      refreshSession,
+      signOut,
+      getToken,
+      has,
+      isAutoLoginPending,
+      isAutoLoginFailed,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -355,6 +354,18 @@ export function RedirectToSignIn() {
 }
 
 export function SignIn() {
+  const context = useContext(AuthContext);
+  const isAutoLoginPending = context?.isAutoLoginPending ?? false;
+  const isAutoLoginFailed = context?.isAutoLoginFailed ?? false;
+
+  if (isAutoLoginPending && !isAutoLoginFailed) {
+    return (
+      <div className="mx-auto w-full max-w-md pt-12 text-center">
+        <p className="text-sm text-foreground-600">Signing in to the agent environment…</p>
+      </div>
+    );
+  }
+
   return <SignInComponent />;
 }
 
@@ -399,13 +410,11 @@ export function OrganizationList(props?: {
   afterSelectOrganizationUrl?: string;
   afterCreateOrganizationUrl?: string;
 }) {
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const defaultCreateUrl = isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE;
-
+  // Platform skips the usecase picker and starts directly with notifications/inbox.
   return (
     <OrganizationCreateComponent
       afterSelectOrganizationUrl={props?.afterSelectOrganizationUrl || ROUTES.ENV}
-      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || defaultCreateUrl}
+      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || ROUTES.INBOX_USECASE}
     />
   );
 }

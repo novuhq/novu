@@ -501,79 +501,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     return result.data;
   }
 
-  async getActiveSubscribersData(
-    environmentId: string,
-    organizationId: string,
-    startDate: Date,
-    endDate: Date,
-    previousStartDate: Date,
-    previousEndDate: Date,
-    workflowIds?: string[]
-  ): Promise<{ currentPeriod: number; previousPeriod: number }> {
-    const workflowFilter =
-      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
-
-    // Query for current period
-    const currentPeriodQuery = `
-      SELECT count(DISTINCT external_subscriber_id) as count
-      FROM workflow_runs FINAL
-      WHERE 
-        environment_id = {environmentId:String} 
-        AND organization_id = {organizationId:String}
-        AND created_at >= {startDate:DateTime64(3)}
-        AND created_at <= {endDate:DateTime64(3)}
-        ${workflowFilter}
-    `;
-
-    // Query for previous period
-    const previousPeriodQuery = `
-      SELECT count(DISTINCT external_subscriber_id) as count
-      FROM workflow_runs FINAL
-      WHERE 
-        environment_id = {environmentId:String} 
-        AND organization_id = {organizationId:String}
-        AND created_at >= {previousStartDate:DateTime64(3)}
-        AND created_at <= {previousEndDate:DateTime64(3)}
-        ${workflowFilter}
-    `;
-
-    const baseParams: Record<string, unknown> = {
-      environmentId,
-      organizationId,
-    };
-
-    if (workflowIds && workflowIds.length > 0) {
-      baseParams.workflowIds = workflowIds;
-    }
-
-    const [currentResult, previousResult] = await Promise.all([
-      this.clickhouseService.query<{ count: string }>({
-        query: currentPeriodQuery,
-        params: {
-          ...baseParams,
-          startDate: LogRepository.formatDateTime64(startDate),
-          endDate: LogRepository.formatDateTime64(endDate),
-        },
-      }),
-      this.clickhouseService.query<{ count: string }>({
-        query: previousPeriodQuery,
-        params: {
-          ...baseParams,
-          previousStartDate: LogRepository.formatDateTime64(previousStartDate),
-          previousEndDate: LogRepository.formatDateTime64(previousEndDate),
-        },
-      }),
-    ]);
-
-    const currentPeriod = parseInt(currentResult.data[0]?.count || '0', 10);
-    const previousPeriod = parseInt(previousResult.data[0]?.count || '0', 10);
-
-    return {
-      currentPeriod,
-      previousPeriod,
-    };
-  }
-
   async getWorkflowRunsMetricData(
     environmentId: string,
     organizationId: string,
@@ -687,53 +614,6 @@ export class WorkflowRunRepository extends LogRepository<typeof workflowRunSchem
     const result = await this.clickhouseService.query<{
       date: string;
       status: string;
-      count: string;
-    }>({
-      query,
-      params,
-    });
-
-    return result.data;
-  }
-
-  async getActiveSubscribersTrendData(
-    environmentId: string,
-    organizationId: string,
-    startDate: Date,
-    endDate: Date,
-    workflowIds?: string[]
-  ): Promise<Array<{ date: string; count: string }>> {
-    const workflowFilter =
-      workflowIds && workflowIds.length > 0 ? 'AND workflow_id IN {workflowIds:Array(String)}' : '';
-
-    const query = `
-      SELECT 
-        toDate(created_at) as date,
-        count(DISTINCT external_subscriber_id) as count
-      FROM workflow_runs FINAL
-      WHERE 
-        environment_id = {environmentId:String} 
-        AND organization_id = {organizationId:String}
-        AND created_at >= {startDate:DateTime64(3)}
-        AND created_at <= {endDate:DateTime64(3)}
-        ${workflowFilter}
-      GROUP BY date
-      ORDER BY date
-    `;
-
-    const params: Record<string, unknown> = {
-      environmentId,
-      organizationId,
-      startDate: LogRepository.formatDateTime64(startDate),
-      endDate: LogRepository.formatDateTime64(endDate),
-    };
-
-    if (workflowIds && workflowIds.length > 0) {
-      params.workflowIds = workflowIds;
-    }
-
-    const result = await this.clickhouseService.query<{
-      date: string;
       count: string;
     }>({
       query,

@@ -207,6 +207,50 @@ export function trackAgentTestEmailSent(
   });
 }
 
+export function trackAgentMcpServerEnabled(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    agentIdentifier: string;
+    mcpId: string;
+    defaultScope: string;
+    defaultAuthMode: string;
+  }
+): void {
+  analytics.track(`Agent MCP Enabled - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    agentIdentifier: params.agentIdentifier,
+    mcpId: params.mcpId,
+    defaultScope: params.defaultScope,
+    defaultAuthMode: params.defaultAuthMode,
+  });
+}
+
+export function trackAgentMcpServerDisabled(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    agentIdentifier: string;
+    mcpId: string;
+  }
+): void {
+  analytics.track(`Agent MCP Disabled - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    agentIdentifier: params.agentIdentifier,
+    mcpId: params.mcpId,
+  });
+}
+
 /** Fired once per agent–integration when the first inbound webhook is successfully resolved (sets connectedAt). */
 export function trackAgentIntegrationFirstWebhook(
   analytics: AnalyticsService,

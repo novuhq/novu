@@ -15,11 +15,6 @@ export class AgentMcpServerDto {
   @ApiProperty()
   @IsString()
   url: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  authToken?: string;
 }
 
 export class AgentToolDto {
@@ -71,6 +66,13 @@ export class AgentRuntimeCapabilitiesDto {
 
   @ApiProperty()
   skills: boolean;
+
+  @ApiProperty({
+    description:
+      'Provider exposes a token-vault API where Novu can push OAuth tokens obtained from an MCP handshake. ' +
+      'When false, Novu keeps tokens in its own encrypted store.',
+  })
+  tokenVault: boolean;
 }
 
 export class AgentRuntimeConfigResponseDto {
@@ -103,13 +105,6 @@ export class PatchAgentRuntimeConfigRequestDto {
   @IsOptional()
   @IsString()
   systemPrompt?: string;
-
-  @ApiPropertyOptional({ type: [AgentMcpServerDto] })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => AgentMcpServerDto)
-  mcpServers?: AgentMcpServerDto[];
 
   @ApiPropertyOptional({ type: [AgentToolDto] })
   @IsOptional()
@@ -147,6 +142,13 @@ export class ManagedRuntimeDto {
   @IsOptional()
   @IsString()
   externalAgentId?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID of an existing environment on the provider platform. When set, Novu adopts the environment.',
+  })
+  @IsOptional()
+  @IsString()
+  externalEnvironmentId?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

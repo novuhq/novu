@@ -1,12 +1,18 @@
-import { useOrganization, useUser } from '@clerk/clerk-react';
-import type { OrganizationResource, UserResource } from '@clerk/types';
+import { useOrganization, useUser } from '@clerk/react';
+import type { OrganizationResource, UserResource } from '@clerk/shared/types';
 import { ReactNode, useCallback, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ConnectProvisioningOverlay } from '@/components/auth/connect-provisioning-overlay';
+import { IS_NOVU_CONNECT } from '@/config';
+import { isPublicAuthPath } from '@/utils/auth-routes';
+import { isActiveConnectWorkspace, isConnectWorkspace } from '@/utils/connect';
 import { ROUTES } from '@/utils/routes';
 import { AuthContext } from './auth-context';
 import { toOrganizationEntity, toUserEntity } from './mappers';
 import type { AuthContextValue } from './types';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const navigate = useNavigate();
   const { user: clerkUser, isLoaded: isUserLoaded } = useUser();
   const { organization: clerkOrganization, isLoaded: isOrganizationLoaded } = useOrganization();
 
@@ -51,19 +57,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
      *
      * See https://clerk.com/docs/organizations/force-organizations#limit-access-using-the-clerk-middleware-helper
      */
-    const isOnOrgListPage = window.location.pathname === ROUTES.SIGNUP_ORGANIZATION_LIST;
-    const isOnInvitationPage = window.location.pathname === ROUTES.INVITATION_ACCEPT;
+    const pathname = window.location.pathname;
+    const isOnOrgListPage = pathname === ROUTES.SIGNUP_ORGANIZATION_LIST;
+    const isOnInvitationPage = pathname.startsWith(ROUTES.INVITATION_ACCEPT);
 
-    if (clerkUser && !clerkOrganization && !isOnOrgListPage && !isOnInvitationPage) {
+    if (!clerkUser || isOnOrgListPage || isOnInvitationPage || isPublicAuthPath(pathname)) return;
+
+    const needsOrgResolution = (() => {
+      if (IS_NOVU_CONNECT) {
+        return (
+          !clerkOrganization ||
+          !isActiveConnectWorkspace(clerkOrganization.publicMetadata, {
+            userId: clerkUser.id,
+            organizationId: clerkOrganization.id,
+          })
+        );
+      }
+
+      // Orgs without productType stay on Platform to avoid duplicating Connect orgs mid-sync.
+      return !clerkOrganization || isConnectWorkspace(clerkOrganization.publicMetadata);
+    })();
+
+    if (needsOrgResolution) {
       const pendingInvitationId = sessionStorage.getItem('pendingInvitationId');
 
       if (pendingInvitationId) {
         return redirectTo({ url: `${ROUTES.INVITATION_ACCEPT}?id=${pendingInvitationId}` });
       }
 
-      return redirectTo({ url: ROUTES.SIGNUP_ORGANIZATION_LIST });
+      navigate(ROUTES.SIGNUP_ORGANIZATION_LIST, { replace: true });
+
+      return;
     }
-  }, [isUserLoaded, isOrganizationLoaded, clerkUser, clerkOrganization, redirectTo]);
+  }, [isUserLoaded, isOrganizationLoaded, clerkUser, clerkOrganization, redirectTo, navigate]);
 
   const currentUser = useMemo(
     () => (clerkUser ? toUserEntity(clerkUser as unknown as UserResource) : undefined),
@@ -85,5 +111,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     [isUserLoaded, isOrganizationLoaded, currentUser, currentOrganization]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {IS_NOVU_CONNECT ? <ConnectProvisioningOverlay /> : null}
+      {children}
+    </AuthContext.Provider>
+  );
 };

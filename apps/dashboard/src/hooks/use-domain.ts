@@ -3,10 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   type DomainConnectStatusResponse,
   type DomainResponse,
-  type UpdateDomainBody,
   fetchDomain,
   fetchDomainAutoConfigure,
   startDomainAutoConfigure,
+  type UpdateDomainBody,
   updateDomain,
   verifyDomain,
 } from '@/api/domains';

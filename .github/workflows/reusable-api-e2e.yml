@@ -28,7 +28,7 @@ jobs:
       id-token: write
       packages: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         name: Checkout with submodules
         if: ${{ inputs.ee }}
         with:
@@ -36,7 +36,7 @@ jobs:
           token: ${{ secrets.SUBMODULES_TOKEN }}
 
       # Else checkout without submodules if the token is not provided
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         name: Checkout
         if: ${{ !inputs.ee }}
 
