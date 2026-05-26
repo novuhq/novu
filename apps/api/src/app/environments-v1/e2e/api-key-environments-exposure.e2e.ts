@@ -54,6 +54,29 @@ describe('Environment API keys exposure to API-key auth - /environments #novu-v2
       expect(productionEnvironment.apiKeys).to.be.an('array').that.has.lengthOf(0);
     });
 
+    it('should return decrypted apiKeys for every environment when IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED is true', async () => {
+      const previousFlagValue = process.env.IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED;
+      process.env.IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED = 'true';
+
+      try {
+        const { body } = await session.testAgent
+          .get('/v1/environments')
+          .set('authorization', `ApiKey ${session.apiKey}`);
+
+        expect(body.data.length).to.be.greaterThanOrEqual(2);
+        for (const environment of body.data) {
+          expect(environment.apiKeys).to.be.an('array').that.has.lengthOf(1);
+          expect(environment.apiKeys[0].key).to.not.contain(NOVU_ENCRYPTION_SUB_MASK);
+        }
+      } finally {
+        if (previousFlagValue === undefined) {
+          delete process.env.IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED;
+        } else {
+          process.env.IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED = previousFlagValue;
+        }
+      }
+    });
+
     it('should still return decrypted apiKeys for every environment when authenticated via session token', async () => {
       const { body } = await session.testAgent.get('/v1/environments');
 

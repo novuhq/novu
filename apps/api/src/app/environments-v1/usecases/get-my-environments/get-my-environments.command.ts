@@ -14,7 +14,8 @@ export class GetMyEnvironmentsCommand extends BaseCommand {
   /**
    * When set, decrypted API keys are only returned for the environment whose
    * `_id` matches this value. Used to scope API-key callers to their own
-   * environment while still letting session-token (dashboard) callers see all.
+   * environment (unless `IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED` is on) while
+   * still letting session-token (dashboard) callers see all.
    */
   @IsOptional()
   readonly apiKeysEnvironmentId?: string;
