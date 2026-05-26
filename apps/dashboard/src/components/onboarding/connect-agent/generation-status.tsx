@@ -12,14 +12,25 @@ type GenerationStatusProps = {
   steps: ReadonlyArray<GenerationStep>;
   stepDelayMs?: number;
   className?: string;
+  /**
+   * Height of the scrolling viewport in pixels. Lower this when embedding the status inside a
+   * fixed-height region (e.g. a dialog footer) so the container does not push the parent taller.
+   * The fade mask scales with this value, so very small heights effectively show a single row.
+   */
+  containerHeight?: number;
 };
 
 const DEFAULT_STEP_DELAY_MS = 2000;
 const ITEM_HEIGHT = 16;
 const GAP = 8;
-const CONTAINER_HEIGHT = 80;
+const DEFAULT_CONTAINER_HEIGHT = 80;
 
-export function GenerationStatus({ steps, stepDelayMs = DEFAULT_STEP_DELAY_MS, className }: GenerationStatusProps) {
+export function GenerationStatus({
+  steps,
+  stepDelayMs = DEFAULT_STEP_DELAY_MS,
+  className,
+  containerHeight = DEFAULT_CONTAINER_HEIGHT,
+}: GenerationStatusProps) {
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
@@ -33,7 +44,7 @@ export function GenerationStatus({ steps, stepDelayMs = DEFAULT_STEP_DELAY_MS, c
   }, [steps.length, stepDelayMs]);
 
   return (
-    <div className={cn('relative flex flex-col overflow-hidden', className)} style={{ minHeight: CONTAINER_HEIGHT }}>
+    <div className={cn('relative flex flex-col overflow-hidden', className)} style={{ height: containerHeight }}>
       <div
         className="absolute inset-0 overflow-hidden"
         style={{
@@ -45,7 +56,7 @@ export function GenerationStatus({ steps, stepDelayMs = DEFAULT_STEP_DELAY_MS, c
           className="absolute left-0 right-0 flex flex-col"
           style={{ gap: GAP }}
           initial={false}
-          animate={{ y: CONTAINER_HEIGHT / 2 - ITEM_HEIGHT / 2 - activeIndex * (ITEM_HEIGHT + GAP) }}
+          animate={{ y: containerHeight / 2 - ITEM_HEIGHT / 2 - activeIndex * (ITEM_HEIGHT + GAP) }}
           transition={{ type: 'tween', ease: 'easeInOut' }}
         >
           {steps.map((step, index) => {

@@ -101,6 +101,10 @@ const GENERATION_STEPS: ReadonlyArray<GenerationStep> = [
 
 const MIN_PROMPT_LENGTH = 8;
 
+// Matches the dialog footer button's `h-14` (56px) so the animated status sits inside the footer
+// instead of stretching it taller while the agent is being generated.
+const FOOTER_STATUS_HEIGHT = 56;
+
 const PROMPT_HEADER: Record<
   Exclude<AgentGenerationMode, 'existing'>,
   { label: string; toggleLabel: string; toggleTo: Exclude<AgentGenerationMode, 'existing'>; toggleIcon?: 'sparkles' }
@@ -868,8 +872,12 @@ export function CreateAgentDialog({
           <div className="bg-bg-weak border-stroke-soft flex items-center gap-3 border-t px-4 py-3">
             {isSubmitBusy && generationMode === 'prompt' ? (
               <>
-                <div className="min-w-0 flex-1">
-                  <GenerationStatus steps={GENERATION_STEPS} />
+                <div className="flex h-14 -mt-3 -mb-3 min-w-0 flex-1 items-center">
+                  <GenerationStatus
+                    steps={GENERATION_STEPS}
+                    containerHeight={FOOTER_STATUS_HEIGHT}
+                    className="w-full"
+                  />
                 </div>
                 <Button
                   type="button"
