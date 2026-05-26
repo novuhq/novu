@@ -56,6 +56,12 @@ export class HandlePlanProgress {
       return;
     }
 
+    if (toolProgress.action === 'approved' || toolProgress.action === 'denied') {
+      await this.handleVerdictUpdate(command, toolProgress.action, existingActivities);
+
+      return;
+    }
+
     await this.handleFinalize(command, toolProgress, existingActivities);
   }
 
@@ -100,6 +106,22 @@ export class HandlePlanProgress {
     }
 
     await this.postOrEditPlan(command, planMessageId, this.toModel('Waiting for approval…', tasks, false));
+  }
+
+  private async handleVerdictUpdate(
+    command: HandlePlanProgressCommand,
+    verdict: 'approved' | 'denied',
+    existingActivities: ConversationActivityEntity[]
+  ): Promise<void> {
+    const planMessageId = this.findPlanMessageId(existingActivities);
+    if (!existingActivities.length || !planMessageId) {
+      return;
+    }
+
+    const title = verdict === 'approved' ? 'Approved, resuming…' : 'Denied, resuming…';
+    const tasks = this.collectTasks(existingActivities);
+
+    await this.postOrEditPlan(command, planMessageId, this.toModel(title, tasks, false));
   }
 
   private async handleFinalize(

@@ -40,8 +40,8 @@ import type {
   ValidateCredentialsInput,
   VaultCredentialAuth,
 } from '../i-agent-runtime-provider';
-import { AnthropicClientResolver } from './anthropic-client-resolver';
 import { type ResolvedAwsAnthropicCredentials } from './anthropic-aws-credentials';
+import { AnthropicClientResolver } from './anthropic-client-resolver';
 import { type AnthropicCompatibleClient } from './anthropic-cloud-client';
 import {
   buildMcpOAuthCreateAuth,
@@ -387,27 +387,24 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
-  async getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null> {
+  async getAllPendingToolApprovals(sessionId: string): Promise<PendingToolApproval[]> {
     const client = await this.getClient();
 
     try {
-      // Walk the session event log oldest-first looking for the still-open
-      // tool-use ask that parks the session in `requires_action`. Anthropic
-      // emits one ask at a time and a subsequent `user.tool_confirmation`
-      // resolves the prior one, so we track the most-recent ask and clear
-      // it on each confirmation. The survivor at the end of the walk is
-      // the single unresolved ask (or `null` if the model emitted no ask
-      // or every ask has already been confirmed).
       const iterator = (client as any).beta.sessions.events.list(sessionId, {
         order: 'asc',
         types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
       });
 
-      let pending: PendingToolApproval | null = null;
+      const pendingById = new Map<string, PendingToolApproval>();
 
       for await (const event of iterator) {
         if (event?.type === 'user.tool_confirmation') {
-          pending = null;
+          const confirmedToolUseId = event.tool_use_id as string | undefined;
+          if (confirmedToolUseId) {
+            pendingById.delete(confirmedToolUseId);
+          }
+
           continue;
         }
 
@@ -422,15 +419,15 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           continue;
         }
 
-        pending = {
+        pendingById.set(toolUseId, {
           toolUseId,
           toolName,
           mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
           input: (event.input as Record<string, unknown> | undefined) ?? undefined,
-        };
+        });
       }
 
-      return pending;
+      return [...pendingById.values()];
     } catch (err) {
       this.normaliseError(err);
     }
@@ -721,7 +718,10 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
    * apply `source === 'custom'` client-side so we never accidentally try to
    * version-append an Anthropic built-in (`pdf`, `xlsx`, `pptx`, `docx`).
    */
-  private async findExistingSkillIdByDisplayTitle(client: AnthropicCompatibleClient, displayTitle: string): Promise<string | null> {
+  private async findExistingSkillIdByDisplayTitle(
+    client: AnthropicCompatibleClient,
+    displayTitle: string
+  ): Promise<string | null> {
     try {
       const iterator = (client as any).beta.skills.list({ limit: 100 }) as AsyncIterable<{
         id: string;
@@ -796,8 +796,7 @@ export function createAnthropicProvider(
       throw new Error('Use awsCredentials from resolveAgentRuntime() for anthropic-aws');
     }
 
-    const legacyApiKey =
-      typeof options.credentials.apiKey === 'string' ? options.credentials.apiKey.trim() : undefined;
+    const legacyApiKey = typeof options.credentials.apiKey === 'string' ? options.credentials.apiKey.trim() : undefined;
 
     if (legacyApiKey) {
       init.apiKey = legacyApiKey;

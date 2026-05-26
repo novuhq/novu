@@ -258,13 +258,13 @@ export interface IAgentRuntimeProvider {
 
   /**
    * Inspect a session that ended in `requires-action` (or was rejected for
-   * "waiting on responses to events") and return the single oldest pending
-   * tool-confirmation request, or `null` if none can be located.
+   * "waiting on responses to events") and return every pending
+   * tool-confirmation request, oldest first.
    *
-   * Providers without a session-scoped event log return `null`; callers fall
+   * Providers without a session-scoped event log return `[]`; callers fall
    * back to a generic error reply.
    */
-  getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null>;
+  getAllPendingToolApprovals(sessionId: string): Promise<PendingToolApproval[]>;
 
   /**
    * Create an empty credential vault on the provider (Anthropic: `vlt_…`).

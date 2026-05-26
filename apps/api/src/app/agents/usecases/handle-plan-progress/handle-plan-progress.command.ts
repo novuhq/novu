@@ -3,7 +3,7 @@ import { EnvironmentWithUserCommand } from '../../../shared/commands/project.com
 
 export interface ToolProgressPayload {
   turnId: string;
-  action: 'tool-use' | 'complete' | 'fail' | 'awaiting-approval';
+  action: 'tool-use' | 'complete' | 'fail' | 'awaiting-approval' | 'approved' | 'denied';
   toolUseId?: string;
   toolName?: string;
   status?: 'running' | 'complete' | 'error';
