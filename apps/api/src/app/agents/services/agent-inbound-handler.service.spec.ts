@@ -44,7 +44,8 @@ describe('AgentInboundHandler', () => {
   ) {
     const logger = makeLogger();
     const subscriberResolver = {
-      resolve: sinon.stub().resolves(null),
+      resolveOnly: sinon.stub().resolves(null),
+      resolveOrProvision: sinon.stub().resolves(`sub_${Math.random().toString(36).slice(2, 14)}`),
     };
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),

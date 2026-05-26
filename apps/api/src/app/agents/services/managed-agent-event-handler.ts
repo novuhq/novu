@@ -12,7 +12,6 @@ import {
   type StreamCallbacks,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import { GenerateMcpOAuthUrlCommand } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
@@ -268,13 +267,16 @@ export class ManagedAgentEventHandler {
   }
 
   /**
-   * Lazy-OAuth path for an MCP-init failure. Returns `true` when a reply was
-   * successfully delivered to the user (a Connect card on the happy path, or
-   * a platform-aware "your account isn't linked yet" message when the
-   * platform user has no subscriber); `false` for unrecoverable misses
-   * (unknown server, MCP not on the Novu-OAuth allow-list, discovery
-   * failure, network error). Callers fall back to the plain-text
-   * `buildErrorMessage` path so the user still sees *something*.
+   * Lazy-OAuth path for an MCP-init failure. Returns `true` when a Connect
+   * card was successfully delivered to the user; `false` for unrecoverable
+   * misses (no subscriber context, unknown server, MCP not on the Novu-OAuth
+   * allow-list, discovery failure, network error). Callers fall back to the
+   * plain-text `buildErrorMessage` path so the user still sees *something*.
+   *
+   * Subscriber context is guaranteed for Slack/Teams via the inbound
+   * auto-provision flow in `AgentSubscriberResolver.resolveOrProvision`. The
+   * `!subscriberId` branch is now defence-in-depth and never expected to fire
+   * for the platforms that route through managed agents today.
    */
   private async tryDeliverMcpConnectCard(
     metadata: Record<string, string>,
@@ -291,10 +293,10 @@ export class ManagedAgentEventHandler {
           conversationId: metadata.conversationId,
           platform: metadata.platform,
         },
-        'MCP OAuth needed but session has no subscriber context — surfacing platform-aware "not linked" reply'
+        'MCP OAuth needed but session has no subscriber context — falling back to plain-text MCP-init error.'
       );
 
-      return this.deliverAnonymousUserMcpReply(metadata, sessionId, mcpServerName);
+      return false;
     }
 
     const mcpId = resolveMcpIdByName(mcpServerName);
@@ -359,47 +361,6 @@ export class ManagedAgentEventHandler {
       captureAgentException(err, {
         component: 'managed-agent-event-handler',
         operation: 'deliver-connect-card',
-        sessionId,
-      });
-
-      return false;
-    }
-
-    return true;
-  }
-
-  /**
-   * Deliver a platform-aware "your account isn't linked" reply. Used when an
-   * MCP-init failure fires for a platform user we can't map to a Novu
-   * subscriber — the lazy-OAuth Connect card path requires a subscriberId so
-   * it can't help here. Returns `true` on successful delivery so
-   * `tryDeliverMcpConnectCard` can short-circuit cleanly.
-   */
-  private async deliverAnonymousUserMcpReply(
-    metadata: Record<string, string>,
-    sessionId: string,
-    mcpServerName: string
-  ): Promise<boolean> {
-    const platform = metadata.platform as AgentPlatformEnum | undefined;
-    const message = buildAnonymousUserMcpMessage(platform, mcpServerName);
-
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          userId: 'system',
-          organizationId: metadata.organizationId,
-          environmentId: metadata.environmentId,
-          conversationId: metadata.conversationId,
-          agentIdentifier: metadata.agentIdentifier ?? '',
-          integrationIdentifier: metadata.integrationIdentifier ?? '',
-          reply: { markdown: message },
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `Failed to deliver anonymous-user MCP reply for session ${sessionId}`);
-      captureAgentException(err, {
-        component: 'managed-agent-event-handler',
-        operation: 'deliver-anonymous-mcp-reply',
         sessionId,
       });
 
@@ -712,18 +673,4 @@ function buildErrorMessage(err: unknown): string {
   }
 
   return 'The agent is temporarily unavailable. Please try again later.';
-}
-
-const PLATFORM_DISPLAY_NAMES: Record<AgentPlatformEnum, string> = {
-  [AgentPlatformEnum.SLACK]: 'Slack',
-  [AgentPlatformEnum.TEAMS]: 'Teams',
-  [AgentPlatformEnum.WHATSAPP]: 'WhatsApp',
-  [AgentPlatformEnum.EMAIL]: 'email',
-  [AgentPlatformEnum.TELEGRAM]: 'Telegram',
-};
-
-export function buildAnonymousUserMcpMessage(platform: AgentPlatformEnum | undefined, mcpServerName: string): string {
-  const platformLabel = platform ? PLATFORM_DISPLAY_NAMES[platform] : 'chat';
-
-  return `I can't connect to **${mcpServerName}** because your ${platformLabel} account isn't linked to a Novu subscriber`;
 }

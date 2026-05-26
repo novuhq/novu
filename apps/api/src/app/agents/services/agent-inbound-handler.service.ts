@@ -30,7 +30,11 @@ import { captureAgentException, captureAgentWarning } from '../utils/capture-age
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
-import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
+import {
+  AgentSubscriberResolver,
+  BotAuthorSkippedError,
+  ConnectOrgSubscriberCapExceededError,
+} from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
@@ -99,6 +103,48 @@ function buildNoBridgeReply(dashboardUrl?: string): CardElement {
 const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
 
 The agent is unavailable right now. Please try again later.`;
+
+const NOVU_PRICING_URL = 'https://novu.co/pricing';
+
+const AUTO_PROVISION_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set([
+  AgentPlatformEnum.SLACK,
+  AgentPlatformEnum.TEAMS,
+]);
+
+const CAPACITY_PLATFORM_LABELS: Partial<Record<AgentPlatformEnum, string>> = {
+  [AgentPlatformEnum.SLACK]: 'Slack workspace',
+  [AgentPlatformEnum.TEAMS]: 'Teams workspace',
+};
+
+function buildCapacityReachedCard(platform: AgentPlatformEnum): CardElement {
+  const platformLabel = CAPACITY_PLATFORM_LABELS[platform] ?? 'workspace';
+
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content: `This ${platformLabel} has reached the agent capacity included with your current Novu plan. Ask your workspace admin to invite you, or upgrade to a higher tier to keep this agent available to new teammates.`,
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'View Novu pricing',
+            url: NOVU_PRICING_URL,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function isAutoProvisionPlatform(platform: AgentPlatformEnum): boolean {
+  return AUTO_PROVISION_PLATFORMS.has(platform);
+}
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object') {
@@ -265,21 +311,59 @@ export class AgentInboundHandler implements OnModuleInit {
       }
     }
 
-    const subscriberId = await this.subscriberResolver
-      .resolve({
-        environmentId: config.environmentId,
-        organizationId: config.organizationId,
-        platform: config.platform,
-        platformUserId: message.author.userId,
-        integrationIdentifier: config.integrationIdentifier,
-      })
-      .catch((err) => {
-        this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
-        captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
+    let subscriberId: string | null;
+    try {
+      subscriberId = isAutoProvisionPlatform(config.platform)
+        ? await this.subscriberResolver.resolveOrProvision({
+            environmentId: config.environmentId,
+            organizationId: config.organizationId,
+            platform: config.platform,
+            platformUserId: message.author.userId,
+            integrationIdentifier: config.integrationIdentifier,
+            agentIdentifier: config.agentIdentifier,
+            authorFullName: message.author.fullName,
+            authorUserName: message.author.userName,
+            // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
+            authorIsBot: message.author.isBot === true,
+          })
+        : await this.subscriberResolver.resolveOnly({
+            environmentId: config.environmentId,
+            organizationId: config.organizationId,
+            platform: config.platform,
+            platformUserId: message.author.userId,
+            integrationIdentifier: config.integrationIdentifier,
+          });
+    } catch (err) {
+      if (err instanceof BotAuthorSkippedError) {
+        this.logger.debug(
+          `[agent:${agentId}] Inbound from bot author ${config.platform}:${message.author.userId} skipped without dispatch`
+        );
 
-        return null;
-      });
+        return;
+      }
 
+      if (err instanceof ConnectOrgSubscriberCapExceededError) {
+        this.logger.warn(
+          { agentId, organizationId: config.organizationId, count: err.count, limit: err.limit },
+          'Connect org at auto-provisioned subscriber cap — posting tier-upgrade card and skipping dispatch.'
+        );
+        await this.postCapacityReachedReply(agentId, config, thread, message);
+
+        return;
+      }
+
+      this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
+      captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
+      subscriberId = null;
+    }
+
+    /**
+     * For SLACK and TEAMS, `resolveOrProvision` always returns a non-null
+     * subscriberId (or throws — handled above), so the `PLATFORM_USER`
+     * fallback below is unreachable. We keep the fallback in place because
+     * WhatsApp / Email / Telegram still legitimately resolve to null and rely
+     * on the synthetic platform-user participant.
+     */
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
       ? ConversationParticipantTypeEnum.SUBSCRIBER
@@ -589,6 +673,35 @@ export class AgentInboundHandler implements OnModuleInit {
     return true;
   }
 
+  /**
+   * Surface the tier-upgrade prompt when the Connect-org auto-provisioned
+   * subscriber cap is hit. The thread is patched so the reply lands on the
+   * actual platform thread (mirrors `applyPlatformThreadIdToThread` usage
+   * elsewhere in this file). Errors are logged but swallowed — failing to
+   * post the capacity card should not crash the inbound webhook.
+   */
+  private async postCapacityReachedReply(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message
+  ): Promise<void> {
+    const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
+    applyPlatformThreadIdToThread(thread, platformThreadId);
+
+    try {
+      await thread.post(buildCapacityReachedCard(config.platform));
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to post auto-provision capacity-reached card`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-capacity-reached-card',
+        agentId,
+        platform: config.platform,
+      });
+    }
+  }
+
   private async safePostInboundReply(thread: Thread, text: string, agentId: string, message: Message): Promise<void> {
     try {
       await thread.post(text);
@@ -639,7 +752,7 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const subscriberId = platformUserId
       ? await this.subscriberResolver
-          .resolve({
+          .resolveOnly({
             environmentId: config.environmentId,
             organizationId: config.organizationId,
             platform: config.platform,
@@ -715,7 +828,7 @@ export class AgentInboundHandler implements OnModuleInit {
     userId: string
   ): Promise<void> {
     const subscriberId = await this.subscriberResolver
-      .resolve({
+      .resolveOnly({
         environmentId: config.environmentId,
         organizationId: config.organizationId,
         platform: config.platform,
