@@ -1,9 +1,6 @@
-<div align="center">
-  <a href="https://go.novu.co/github?utm_campaign=readme-logo" target="_blank" rel="noopener noreferrer"
->
-  <img alt="Novu Logo" src=".github/assets/novu-logo.svg" width="280"/>
-  </a>
-</div>
+<a href="https://go.novu.co/github?utm_campaign=readme-logo" target="_blank" rel="noopener noreferrer">
+  <img alt="Novu Logo" src=".github/assets/novu-logo.svg" width="100%"/>
+</a>
 
 <br/>
 <p align="center">
