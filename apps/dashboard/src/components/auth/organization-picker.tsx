@@ -24,8 +24,12 @@ import { cn } from '@/utils/ui';
 
 const SLUG_MAX_LENGTH = 50;
 const SLUG_RETRY_LIMIT = 3;
-// ~6 rows tall (each row ≈ 56px). Past that the list scrolls and the Create CTA stays pinned.
-const ORG_LIST_MAX_HEIGHT = 'max-h-[336px]';
+// Row ≈ 56px (size-8 avatar + py-3). Cap visible rows at 6, past that the list scrolls.
+const ORG_LIST_VISIBLE_ROWS = 6;
+// Fixed height — Radix ScrollArea's Viewport uses h-full, which needs a definite parent
+// height to scroll. `max-h` alone leaves the Viewport auto-sized so content gets clipped
+// without a scrollbar appearing. Applied only when scrolling is actually needed.
+const ORG_LIST_SCROLL_HEIGHT = 'h-[336px]';
 // Clerk defaults to 10 per page — we override because the picker filters by `productType` and
 // needs the full list before it can decide whether to auto-switch to the create view. Bumping
 // to 100 (well under Clerk's 500 cap) puts virtually every real-world user on a single round trip.
@@ -207,6 +211,7 @@ function OrganizationListView({
   isLoadingMore,
 }: OrganizationListViewProps) {
   const productLabel = productFilter === 'connect' ? 'Novu Connect' : 'Novu Cloud';
+  const shouldScroll = memberships.length > ORG_LIST_VISIBLE_ROWS || isLoadingMore;
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -216,7 +221,7 @@ function OrganizationListView({
       </div>
 
       <div className="flex min-h-0 flex-col">
-        <ScrollArea className={cn('w-full', ORG_LIST_MAX_HEIGHT)}>
+        <ScrollArea className={cn('w-full', shouldScroll && ORG_LIST_SCROLL_HEIGHT)}>
           {/* `pr-2` reserves room for the overlay scrollbar so the row chevron doesn't get clipped. */}
           <div className="flex flex-col pr-2">
             <AnimatePresence initial={false} mode="popLayout">
