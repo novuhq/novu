@@ -194,9 +194,8 @@ export function mapMcpServer(raw: Record<string, unknown>): AgentMcpServerDto {
 
 /**
  * Default permission policy for managed-agent toolsets we provision.
- * Builtin tools default to `always_allow` when omitted, but MCP toolsets
- * default to `always_ask` — we set this explicitly on both so Novu-created
- * agents do not pause for approval on every tool invocation.
+ * Both builtin and MCP toolsets are set to `always_ask` so that every tool
+ * invocation requires explicit user approval before execution.
  *
  * @see https://platform.claude.com/docs/en/managed-agents/permission-policies
  */
