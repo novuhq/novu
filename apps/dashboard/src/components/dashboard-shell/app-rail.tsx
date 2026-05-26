@@ -32,7 +32,7 @@ const PLATFORM_BRAND: BrandConfig = {
   tooltip: 'Open Novu Platform',
   subtitle: 'Notifications for your product',
   features: [
-    'Multi-channel workflows for email, push, and in-app.',
+    'Email, push, and in-app workflows.',
     'Embed Novu Inbox directly in your product.',
     'Manage subscribers and deliver at scale.',
   ],
