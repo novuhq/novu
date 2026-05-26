@@ -230,6 +230,8 @@ export class Session {
       }
     }
 
+    unreadCount.total = Math.min(unreadCount.total, MAX_NOTIFICATIONS_COUNT);
+
     const schedule = await this.resolveDefaultSchedule({
       environment,
       defaultSchedule: command.requestData.defaultSchedule,
@@ -282,12 +284,12 @@ export class Session {
       return;
     }
 
-    this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.INBOX_CONNECTED, '', {
-      _organization: environment._organizationId,
-      environmentName: environment.name,
-    });
-
     try {
+      this.analyticsService.mixpanelTrack(AnalyticsEventsEnum.INBOX_CONNECTED, '', {
+        _organization: environment._organizationId,
+        environmentName: environment.name,
+      });
+
       await this.integrationRepository.updateOne(
         {
           _id: inAppIntegration._id,

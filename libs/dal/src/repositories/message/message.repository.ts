@@ -490,6 +490,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
     contextKeys?: string[]
   ): Promise<{ severity: SeverityLevelEnum; count: number }[]> {
     const requestQuery = await this.getFilterQueryForMessage(environmentId, subscriberId, channel, query, contextKeys);
+    const matchQuery = this.convertMessageMatchQueryForAggregation(requestQuery, environmentId, subscriberId);
 
     const severityLevels = Object.values(SeverityLevelEnum);
     const countsBySeverity = new Map(severityLevels.map((severity) => [severity, 0]));
@@ -498,7 +499,7 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       .call(
         this,
         [
-          { $match: requestQuery },
+          { $match: matchQuery },
           {
             $group: {
               _id: { $ifNull: ['$severity', SeverityLevelEnum.NONE] },
@@ -519,6 +520,28 @@ export class MessageRepository extends BaseRepository<MessageDBModel, MessageEnt
       severity,
       count: Math.min(countsBySeverity.get(severity) ?? 0, options.limit),
     }));
+  }
+
+  private convertMessageMatchQueryForAggregation(
+    query: MessageQuery & EnforceEnvId,
+    environmentId: string,
+    subscriberId: string
+  ): Record<string, unknown> {
+    const matchQuery: Record<string, unknown> = {
+      ...query,
+      _environmentId: this.convertStringToObjectId(environmentId),
+      _subscriberId: this.convertStringToObjectId(subscriberId),
+    };
+
+    if (matchQuery._feedId && typeof matchQuery._feedId === 'object' && '$in' in (matchQuery._feedId as object)) {
+      const feedId = matchQuery._feedId as { $in: string[] };
+
+      matchQuery._feedId = {
+        $in: feedId.$in.map((id) => this.convertStringToObjectId(id)),
+      };
+    }
+
+    return matchQuery;
   }
 
   private getReadSeenUpdateQuery(
