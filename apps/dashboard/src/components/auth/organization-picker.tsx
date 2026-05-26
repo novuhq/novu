@@ -6,6 +6,7 @@ import { RiAddCircleLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/r
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
+import { ScrollArea } from '@/components/primitives/scroll-area';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { IS_NOVU_CONNECT } from '@/config';
 import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
@@ -18,6 +19,12 @@ import { cn } from '@/utils/ui';
 
 const SLUG_MAX_LENGTH = 50;
 const SLUG_RETRY_LIMIT = 3;
+// ~6 rows tall (each row ≈ 56px). Past that the list scrolls and the Create CTA stays pinned.
+const ORG_LIST_MAX_HEIGHT = 'max-h-[336px]';
+// Clerk defaults to 10 per page — we override because the picker filters by `productType` and
+// needs the full list before it can decide whether to auto-switch to the create view. Bumping
+// to 100 (well under Clerk's 500 cap) puts virtually every real-world user on a single round trip.
+const MEMBERSHIPS_PAGE_SIZE = 100;
 
 type ProductFilter = 'platform' | 'connect';
 
@@ -168,6 +175,8 @@ type OrganizationListViewProps = {
   productFilter: ProductFilter;
   isBusy: boolean;
   busyId: string | null;
+  // True while additional pages are streaming in from Clerk after page 1 has rendered.
+  isLoadingMore: boolean;
 };
 
 function OrganizationListView({
@@ -177,6 +186,7 @@ function OrganizationListView({
   productFilter,
   isBusy,
   busyId,
+  isLoadingMore,
 }: OrganizationListViewProps) {
   const productLabel = productFilter === 'connect' ? 'Novu Connect' : 'Novu Cloud';
 
@@ -187,25 +197,40 @@ function OrganizationListView({
         <p className="text-label-sm text-text-sub">to continue to {productLabel}</p>
       </div>
 
-      <div className="flex flex-col">
-        <AnimatePresence initial={false} mode="popLayout">
-          {memberships.map((membership) => (
-            <OrganizationRow
-              key={membership.id}
-              membership={membership}
-              onSelect={onSelect}
-              isBusy={isBusy}
-              busyId={busyId}
-            />
-          ))}
-        </AnimatePresence>
+      <div className="flex min-h-0 flex-col">
+        <ScrollArea className={cn('w-full', ORG_LIST_MAX_HEIGHT)}>
+          {/* `pr-2` reserves room for the overlay scrollbar so the row chevron doesn't get clipped. */}
+          <div className="flex flex-col pr-2">
+            <AnimatePresence initial={false} mode="popLayout">
+              {memberships.map((membership) => (
+                <OrganizationRow
+                  key={membership.id}
+                  membership={membership}
+                  onSelect={onSelect}
+                  isBusy={isBusy}
+                  busyId={busyId}
+                />
+              ))}
+            </AnimatePresence>
+
+            {isLoadingMore ? (
+              <div
+                className="border-stroke-soft flex items-center justify-center gap-2 border-t py-3"
+                aria-live="polite"
+              >
+                <RiLoader4Line className="text-text-sub size-4 animate-spin" />
+                <span className="text-label-xs text-text-sub">Loading more organizations…</span>
+              </div>
+            ) : null}
+          </div>
+        </ScrollArea>
 
         <button
           type="button"
           onClick={onCreateClick}
           disabled={isBusy}
           className={cn(
-            'group flex w-full items-center gap-3 px-1 py-3 text-left transition-colors',
+            'group flex w-full shrink-0 items-center gap-3 px-1 py-3 text-left transition-colors',
             'border-t border-stroke-soft',
             'hover:bg-bg-weak/40 disabled:cursor-default disabled:opacity-60'
           )}
@@ -352,7 +377,7 @@ export function OrganizationPicker({
   const productAppId = useMemo(() => getProductAppId(productFilter), [productFilter]);
 
   const { isLoaded, userMemberships, createOrganization, setActive } = useOrganizationList({
-    userMemberships: { infinite: true },
+    userMemberships: { infinite: true, pageSize: MEMBERSHIPS_PAGE_SIZE },
   });
 
   const [hasRevalidated, setHasRevalidated] = useState(false);
@@ -389,7 +414,9 @@ export function OrganizationPicker({
     };
   }, [isLoaded, hasRevalidated]);
 
-  // Drain pagination so productType filtering runs against the full membership list.
+  // Drain pagination so productType filtering runs against the full membership list. Mirrors
+  // the pre-fetch behavior in `OrganizationDropdown` when its region filter is active — both
+  // need a complete list before they can safely render filtered results.
   useEffect(() => {
     if (!isLoaded || !userMemberships?.hasNextPage || userMemberships?.isFetching) {
       return;
@@ -398,8 +425,15 @@ export function OrganizationPicker({
     userMemberships.fetchNext?.();
   }, [isLoaded, userMemberships?.hasNextPage, userMemberships?.isFetching, userMemberships]);
 
-  const isMembershipListReady =
-    isLoaded && hasRevalidated && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
+  // Two readiness signals:
+  //   - `isFirstPageReady` — render the picker as soon as page 1 lands so users with many orgs
+  //     don't wait on a full-screen spinner while later pages stream in.
+  //   - `isFullListLoaded` — gate the "auto-switch to create view if empty" decision so a
+  //     filtered-out page 1 (e.g., only Connect orgs match but they sit on page 2) doesn't
+  //     incorrectly bounce the user into the create form.
+  const isFirstPageReady = isLoaded && hasRevalidated;
+  const isFullListLoaded =
+    isFirstPageReady && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
 
   const filteredMemberships = useMemo<OrganizationMembershipLike[]>(() => {
     const data = (userMemberships?.data ?? []) as OrganizationMembershipLike[];
@@ -415,14 +449,14 @@ export function OrganizationPicker({
   const hasInitializedViewRef = useRef(false);
 
   useEffect(() => {
-    if (!isMembershipListReady || hasInitializedViewRef.current) return;
+    if (!isFullListLoaded || hasInitializedViewRef.current) return;
 
     hasInitializedViewRef.current = true;
 
     if (filteredMemberships.length === 0) {
       setView('create');
     }
-  }, [isMembershipListReady, filteredMemberships.length]);
+  }, [isFullListLoaded, filteredMemberships.length]);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {
@@ -515,7 +549,14 @@ export function OrganizationPicker({
     void onSignOut();
   }, [filteredMemberships.length, onSignOut]);
 
-  if (!isMembershipListReady) {
+  // Show the full-screen spinner only while page 1 is in flight. Once page 1 lands we render the
+  // picker and surface the inline "Loading more…" row for any subsequent pages — same model as
+  // `OrganizationDropdown`. Exception: if page 1 yields no matching orgs but more pages are
+  // still streaming, keep the spinner so we don't briefly render an empty header.
+  const isStreamingMorePages = isFirstPageReady && !isFullListLoaded;
+  const shouldWaitForMorePages = isStreamingMorePages && filteredMemberships.length === 0;
+
+  if (!isFirstPageReady || shouldWaitForMorePages) {
     return (
       <div className="flex min-h-[280px] w-full items-center justify-center">
         <RiLoader4Line className="text-text-sub size-5 animate-spin" />
@@ -543,6 +584,7 @@ export function OrganizationPicker({
       productFilter={productFilter}
       isBusy={isSelecting || isCreating}
       busyId={selectingId}
+      isLoadingMore={isStreamingMorePages}
     />
   );
 }

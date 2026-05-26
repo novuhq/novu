@@ -27,6 +27,9 @@ const OrganizationCreateLazy = lazy(() =>
 );
 
 const MAX_SLUG_RETRIES = 3;
+// Match the picker — bypass Clerk's default 10/page so the membership drain finishes in one
+// round trip for virtually every user (Clerk caps at 500).
+const MEMBERSHIPS_PAGE_SIZE = 100;
 
 type Status = 'idle' | 'working' | 'error';
 
@@ -66,7 +69,7 @@ export function AutoCreateConnectOrganization() {
     userMemberships,
     isLoaded: isListLoaded,
   } = useOrganizationList({
-    userMemberships: { infinite: true },
+    userMemberships: { infinite: true, pageSize: MEMBERSHIPS_PAGE_SIZE },
   });
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const track = useTelemetry();
