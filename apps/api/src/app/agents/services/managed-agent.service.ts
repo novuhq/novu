@@ -4,8 +4,6 @@ import {
   type AgentEntity,
   AgentRepository,
   ConversationActivityRepository,
-  ConversationActivitySenderTypeEnum,
-  ConversationActivityTypeEnum,
   ConversationRepository,
   SubscriberRepository,
 } from '@novu/dal';
@@ -17,6 +15,7 @@ import type { AgentExecutionParams } from './bridge-executor.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory';
+import { buildSessionBootstrapMessages } from './managed-agent-session-bootstrap';
 import { McpConnectionVaultService } from './mcp-connection-vault.service';
 
 type WebhookSessionMetadata = {
@@ -67,7 +66,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     const messages = sessionId
       ? [{ role: MessageRole.USER, content: context.message?.text ?? '' }]
-      : await this.buildMessagesWithHistory(context);
+      : await this.buildSessionBootstrapMessages(context);
 
     const { sessionId: newSessionId } = await provider.send({
       messages,
@@ -230,22 +229,18 @@ export class ManagedAgentService implements OnModuleInit {
     });
   }
 
-  private async buildMessagesWithHistory(context: AgentExecutionParams): Promise<Message[]> {
-    const history = await this.conversationActivityRepository.findByConversation(
+  private async buildSessionBootstrapMessages(context: AgentExecutionParams): Promise<Message[]> {
+    const activities = await this.conversationActivityRepository.findByConversation(
       context.config.environmentId,
       String(context.conversation._id),
       50
     );
 
-    const messages: Message[] = history
-      .filter((entry) => entry.type !== ConversationActivityTypeEnum.SIGNAL)
-      .reverse()
-      .map((entry) => ({
-        role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
-        content: entry.content,
-      }));
-
-    return messages;
+    return buildSessionBootstrapMessages({
+      activities,
+      currentPlatformMessageId: context.message?.id,
+      currentText: context.message?.text ?? '',
+    });
   }
 
   private async resolveVaultIdsForTurn(
