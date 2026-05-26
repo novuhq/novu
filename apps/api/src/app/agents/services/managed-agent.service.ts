@@ -245,7 +245,7 @@ export class ManagedAgentService implements OnModuleInit {
         content: entry.content,
       }));
 
-    messages.push({ role: MessageRole.USER, content: context.message?.text ?? '' });
+    // Inbound handler persists the current message before dispatch; do not append context.message again.
 
     return messages;
   }
