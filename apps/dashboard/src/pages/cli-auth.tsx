@@ -1,4 +1,4 @@
-import { useAuth as useClerkAuth } from '@clerk/clerk-react';
+import { useAuth as useClerkAuth } from '@clerk/react';
 import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
