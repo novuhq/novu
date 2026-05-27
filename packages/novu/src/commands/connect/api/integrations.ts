@@ -34,6 +34,23 @@ export async function createSlackIntegration(
   return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
 }
 
+export async function createTelegramIntegration(
+  client: ConnectApiClient,
+  input: { name: string; environmentId: string }
+): Promise<IntegrationRecord> {
+  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+    providerId: 'telegram',
+    channel: 'chat',
+    name: input.name,
+    active: true,
+    credentials: {},
+    _environmentId: input.environmentId,
+  });
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
+}
+
 export async function slackQuickSetup(
   client: ConnectApiClient,
   integrationId: string,

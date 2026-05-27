@@ -569,6 +569,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations/:integrationId/telegram/configure')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(ConfigureTelegramWebhookResponseDto, 200)
   @ApiOperation({
@@ -598,6 +599,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations/:integrationId/telegram/mobile-link')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueTelegramMobileLinkResponseDto, 200)
   @ApiOperation({
@@ -629,6 +631,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations/:integrationId/telegram/subscriber-link')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueTelegramSubscriberLinkResponseDto, 200)
   @ApiOperation({

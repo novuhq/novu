@@ -83,6 +83,29 @@ export function createLoggingUI(): ConnectUI {
       stop();
       console.log(`${chalk.yellow('!')} ${choice} is coming soon — set it up in the dashboard for now.`);
     },
+    addingTelegramIntegration() {
+      start('Linking Telegram to your agent…');
+    },
+    showTelegramIntro(_opts) {
+      stop();
+
+      return Promise.reject(
+        new Error(
+          'Telegram setup is interactive only (3 QR scans). Run `npx novu connect` without --ci to walk through it.'
+        )
+      );
+    },
+    showTelegramLinkToken({ mobileUrl }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Open on your phone to paste the bot token: ${chalk.underline(mobileUrl)}`);
+    },
+    showTelegramTest({ deepLinkUrl, botUsername }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Open Telegram and tap Start on @${botUsername}: ${chalk.underline(deepLinkUrl)}`);
+    },
+    telegramConnected() {
+      succeed('Telegram connected');
+    },
     addingSlackIntegration() {
       start('Linking Slack to your agent…');
     },
@@ -119,13 +142,19 @@ export function createLoggingUI(): ConnectUI {
       const agentUrl = result.environmentSlug
         ? `${result.dashboardUrl}/env/${result.environmentSlug}/agents/${encodeURIComponent(result.agent.identifier)}`
         : `${result.dashboardUrl}/agents/${encodeURIComponent(result.agent.identifier)}`;
+      const channelLabel =
+        result.connectedChannel === 'slack'
+          ? 'Slack'
+          : result.connectedChannel === 'telegram'
+            ? 'Telegram'
+            : null;
       console.log('');
       console.log(`${chalk.green('✓')} Your agent is live.`);
       console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
-      if (result.slackConnected) {
-        console.log(`  ${chalk.cyan('→')} Check Slack — your agent just messaged you.`);
+      if (channelLabel) {
+        console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
       } else {
-        console.log(`  ${chalk.gray('Slack was not connected.')}`);
+        console.log(`  ${chalk.gray('No channel connected.')}`);
       }
       console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
     },

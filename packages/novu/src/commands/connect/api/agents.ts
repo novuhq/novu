@@ -116,3 +116,104 @@ export async function sendAgentWelcomeMessage(
     integrationIdentifier,
   });
 }
+
+// ---- Telegram --------------------------------------------------------------
+
+export interface TelegramConfigureResult {
+  webhookUrl: string;
+  configuredAt: string;
+  botUsername: string;
+}
+
+export interface TelegramMobileLinkResult {
+  /** Signed JWT identifying this mobile-setup session. */
+  token: string;
+  /** Absolute URL the user opens on their phone to paste the BotFather token. */
+  url: string;
+  /** ISO-8601 expiry. */
+  expiresAt: string;
+}
+
+export interface TelegramSubscriberLinkResult {
+  /** `https://t.me/<bot>?start=<code>` — opens Telegram on phone, sends `/start <code>` to the bot. */
+  deepLinkUrl: string;
+  /** Bot username (no leading `@`). */
+  botUsername: string;
+  expiresAt: string;
+}
+
+export async function configureTelegramAgentWebhook(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  integrationId: string
+): Promise<TelegramConfigureResult> {
+  const res = await client.axios.post<{ data?: TelegramConfigureResult } | TelegramConfigureResult>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/configure`,
+    {}
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as TelegramConfigureResult);
+}
+
+export async function issueTelegramMobileLink(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  integrationId: string,
+  subscriberId?: string
+): Promise<TelegramMobileLinkResult> {
+  const res = await client.axios.post<{ data?: TelegramMobileLinkResult } | TelegramMobileLinkResult>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/mobile-link`,
+    subscriberId ? { subscriberId } : {}
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as TelegramMobileLinkResult);
+}
+
+export interface TelegramMobileLinkStatus {
+  valid: boolean;
+  reason?: 'expired' | 'used' | 'invalid';
+  agentName?: string;
+  providerName?: string;
+}
+
+/**
+ * Public endpoint — needs no auth header (the signed JWT in the query string
+ * authenticates the request). We're polling this to detect when the user
+ * has finished pasting their BotFather token on the mobile setup page; the
+ * server marks the token's jti as consumed and subsequent status checks
+ * return `{ valid: false, reason: 'used' }`.
+ *
+ * Why this and not `GET /v1/integrations`: ApiKey-authed callers never get
+ * decrypted credentials back from the integration list endpoint (intentional
+ * security gate in canUserAccessCredentials), so we can't see the bot-token
+ * field flip from undefined → set. The status endpoint sidesteps that.
+ */
+export async function getTelegramMobileLinkStatus(
+  client: ConnectApiClient,
+  token: string
+): Promise<TelegramMobileLinkStatus> {
+  const res = await client.axios.get<{ data?: TelegramMobileLinkStatus } | TelegramMobileLinkStatus>(
+    '/v1/agents/public/telegram/mobile-configure/status',
+    { params: { token } }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as TelegramMobileLinkStatus);
+}
+
+export async function issueTelegramSubscriberLink(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  integrationId: string,
+  subscriberId: string
+): Promise<TelegramSubscriberLinkResult> {
+  const res = await client.axios.post<{ data?: TelegramSubscriberLinkResult } | TelegramSubscriberLinkResult>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
+    { subscriberId }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as TelegramSubscriberLinkResult);
+}

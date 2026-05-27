@@ -131,7 +131,7 @@ program
   .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')
   .option(
     '--channel <name>',
-    `Channel to connect (skips the picker). One of: ${CHANNEL_CHOICES.join(', ')}. Only "slack" is implemented today.`
+    `Channel to connect (skips the picker). One of: ${CHANNEL_CHOICES.join(', ')}. "slack" and "telegram" are implemented today.`
   )
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(

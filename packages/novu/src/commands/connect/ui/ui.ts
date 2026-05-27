@@ -25,6 +25,27 @@ export interface ConnectUI {
   /** Render a "coming soon" message for a channel that isn't wired up yet. */
   channelComingSoon(choice: ChannelChoice): void;
 
+  // Telegram path
+  addingTelegramIntegration(): void;
+  /**
+   * Step 1: walk the user through creating a bot with @BotFather. Renders a
+   * scannable QR pointing at `t.me/botfather`. Resolves when the user hits
+   * Enter to advance.
+   */
+  showTelegramIntro(opts: { botfatherQr: string }): Promise<void>;
+  /**
+   * Step 2: render the mobile-link QR. Fire-and-forget — the pipeline owns
+   * the polling loop and transitions away from this phase when the bot token
+   * lands on the integration.
+   */
+  showTelegramLinkToken(opts: { mobileQr: string; mobileUrl: string }): void;
+  /**
+   * Step 3: render the `t.me/<bot>?start=<code>` deep-link QR. Pipeline polls
+   * the agent's Telegram integration link for `connectedAt`.
+   */
+  showTelegramTest(opts: { deepLinkQr: string; deepLinkUrl: string; botUsername: string }): void;
+  telegramConnected(): void;
+
   // Slack path
   addingSlackIntegration(): void;
   /**
@@ -44,7 +65,12 @@ export interface ConnectUI {
   sendingWelcome(): void;
 
   // Outcome
-  success(result: { agent: AgentSummary; dashboardUrl: string; environmentSlug: string | null; slackConnected: boolean }): void;
+  success(result: {
+    agent: AgentSummary;
+    dashboardUrl: string;
+    environmentSlug: string | null;
+    connectedChannel: ChannelChoice | null;
+  }): void;
   failure(message: string): void;
 
   /** Tear down (Ink unmount) and return the final exit code. */

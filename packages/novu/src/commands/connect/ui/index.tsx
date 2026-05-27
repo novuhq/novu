@@ -116,6 +116,23 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     channelComingSoon(_choice) {
       // The success screen will render the "skipped" state — no interim screen needed.
     },
+    addingTelegramIntegration() {
+      store.phase.set({ kind: 'adding-telegram' });
+    },
+    showTelegramIntro({ botfatherQr }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'telegram-intro', botfatherQr, resolve });
+      });
+    },
+    showTelegramLinkToken({ mobileQr, mobileUrl }) {
+      store.phase.set({ kind: 'telegram-link-token', mobileQr, mobileUrl });
+    },
+    showTelegramTest({ deepLinkQr, deepLinkUrl, botUsername }) {
+      store.phase.set({ kind: 'telegram-test', deepLinkQr, deepLinkUrl, botUsername });
+    },
+    telegramConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
     addingSlackIntegration() {
       store.phase.set({ kind: 'adding-slack' });
     },
@@ -148,7 +165,7 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         agent: result.agent,
         dashboardUrl: result.dashboardUrl,
         environmentSlug: result.environmentSlug,
-        slackConnected: result.slackConnected,
+        connectedChannel: result.connectedChannel,
       });
     },
     failure(message) {

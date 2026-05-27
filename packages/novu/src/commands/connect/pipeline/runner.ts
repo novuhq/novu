@@ -1,4 +1,5 @@
 import open from 'open';
+import QRCode from 'qrcode';
 import { resolveAuth } from '../../wizard/auth/resolve-auth';
 import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { CONNECT_EVENTS, trackConnect } from '../analytics/events';
@@ -6,8 +7,12 @@ import {
   type AgentIntegrationLink,
   type AgentRecord,
   addAgentIntegration,
+  configureTelegramAgentWebhook,
   createManagedAgent,
   generateAgent,
+  getTelegramMobileLinkStatus,
+  issueTelegramMobileLink,
+  issueTelegramSubscriberLink,
   listAgentIntegrations,
   listAgents,
   sendAgentWelcomeMessage,
@@ -16,6 +21,7 @@ import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../
 import {
   countChannelConnectionsForIntegration,
   createSlackIntegration,
+  createTelegramIntegration,
   generateConnectOauthUrl,
   type IntegrationRecord,
   listIntegrations,
@@ -27,12 +33,17 @@ import type { ConnectUI } from '../ui/ui';
 
 const SLACK_POLL_INTERVAL_MS = 2_000;
 const SLACK_POLL_TIMEOUT_MS = 5 * 60 * 1000;
+const TELEGRAM_POLL_INTERVAL_MS = 2_000;
+const TELEGRAM_POLL_TIMEOUT_MS = 5 * 60 * 1000;
+const BOTFATHER_URL = 'https://t.me/botfather';
 
 // Provider identifiers — the source of truth lives in @novu/shared, but we
 // duplicate the string literals here so the CLI does not gain a transitive
 // dependency on the API-internal enums.
 const NOVU_ANTHROPIC_PROVIDER_ID = 'novu-anthropic';
 const SLACK_PROVIDER_ID = 'slack';
+const TELEGRAM_PROVIDER_ID = 'telegram';
+const TELEGRAM_CHANNEL = 'chat';
 const AGENT_INTEGRATION_KIND = 'agent';
 
 export interface ConnectPipelineInput {
@@ -88,36 +99,66 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     ui.agentCreated(agent);
 
-    // 3. Slack connect step (unless skipped).
-    let slackConnected = false;
-    let slackIntegration: IntegrationRecord | null = null;
+    // 3. Channel connect step (unless skipped). The picker today surfaces
+    // `slack` and `telegram` as live options; everything else routes to the
+    // friendly `channelComingSoon` no-op so the agent still ends up created.
+    let channelConnected = false;
+    let connectedChannel: ChannelChoice | null = null;
+    let connectedIntegration: IntegrationRecord | null = null;
 
-    // Resolve which channel to wire up. Slack is the only channel implemented
-    // today; other picks short-circuit with a friendly "coming soon" message.
-    // Resolution precedence: `--skip-slack` (legacy) → `--channel` flag →
-    // interactive picker → default `slack` in non-interactive mode.
+    // Resolution precedence: `--skip-slack` (legacy alias) → `--channel` flag
+    // → interactive picker → default `slack` in non-interactive mode.
     const channel: ChannelChoice = options.skipSlack ? 'skip' : (options.channel ?? (await ui.pickChannel()));
 
-    if (channel === 'skip') {
-      ui.slackSkipped();
-    } else if (channel !== 'slack') {
-      ui.channelComingSoon(channel);
-    } else {
-      // The Slack OAuth callback creates the SLACK_USER endpoint only when it
-      // has a `subscriberId`. We need a real subscriber the API can attach
-      // that endpoint to, otherwise welcome-message later finds nothing to DM.
-      // Match the dashboard's convention: `connect:<userId>`.
-      const subscriberId = await ensureSubscriberForUser(client, auth);
-      const result = await connectSlackForAgent(client, agent, ui, options, auth.environmentId, subscriberId, track);
-      slackIntegration = result.integration;
-      slackConnected = result.connected;
+    switch (channel) {
+      case 'skip':
+        ui.slackSkipped();
+        break;
+      case 'slack': {
+        // The Slack OAuth callback creates the SLACK_USER endpoint only when
+        // it has a `subscriberId`. We need a real subscriber the API can
+        // attach that endpoint to, otherwise welcome-message later finds
+        // nothing to DM. Match the dashboard's convention: `connect:<userId>`.
+        const subscriberId = await ensureSubscriberForUser(client, auth);
+        const result = await connectSlackForAgent(
+          client,
+          agent,
+          ui,
+          options,
+          auth.environmentId,
+          subscriberId,
+          track
+        );
+        connectedIntegration = result.integration;
+        channelConnected = result.connected;
+        if (channelConnected) connectedChannel = 'slack';
+        break;
+      }
+      case 'telegram': {
+        const subscriberId = await ensureSubscriberForUser(client, auth);
+        const result = await connectTelegramForAgent(
+          client,
+          agent,
+          ui,
+          auth.environmentId,
+          subscriberId,
+          track
+        );
+        connectedIntegration = result.integration;
+        channelConnected = result.connected;
+        if (channelConnected) connectedChannel = 'telegram';
+        break;
+      }
+      default:
+        ui.channelComingSoon(channel);
+        break;
     }
 
     // 4. Trigger the welcome DM so the user sees the agent come alive.
-    if (slackConnected && slackIntegration) {
+    if (channelConnected && connectedIntegration) {
       ui.sendingWelcome();
       try {
-        await sendAgentWelcomeMessage(client, agent.identifier, slackIntegration.identifier);
+        await sendAgentWelcomeMessage(client, agent.identifier, connectedIntegration.identifier);
         track(CONNECT_EVENTS.WELCOME_SENT, { agent: agent.identifier });
       } catch (err) {
         // A failed welcome DM is not fatal — surface it but don't blow up the run.
@@ -129,10 +170,10 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       agent,
       dashboardUrl: auth.dashboardUrl.replace(/\/$/, ''),
       environmentSlug: auth.environmentSlug ?? null,
-      slackConnected,
+      connectedChannel,
     });
 
-    track(CONNECT_EVENTS.COMPLETED, { flow, slackConnected });
+    track(CONNECT_EVENTS.COMPLETED, { flow, channel: connectedChannel ?? channel });
 
     const exitCode = await ui.shutdown();
 
@@ -423,6 +464,253 @@ async function pollForSlackConnection(
   }
 
   return false;
+}
+
+// ---- Telegram -------------------------------------------------------------
+
+/**
+ * Wire Telegram to the given agent — mirrors `connectSlackForAgent` in shape
+ * but the OAuth-equivalent here is a 3-step phone dance:
+ *
+ *  1. Walk the user through creating a bot in BotFather (no API call).
+ *  2. Issue a short-lived mobile-link URL, render it as a QR, and poll the
+ *     integration for `credentials.token` — set by the public mobile-consume
+ *     endpoint once the user pastes the BotFather token on their phone. The
+ *     consume endpoint also runs `configure-webhook` server-side, so we don't
+ *     need to call configure ourselves after polling completes.
+ *  3. Issue a subscriber-link deep link, render it as a QR, and poll the
+ *     agent's Telegram integration link for `connectedAt` — set on first
+ *     inbound webhook message, which is the `/start <code>` that Telegram
+ *     sends when the user taps Start on the bot.
+ *
+ * Re-runs against an agent that already has a connected Telegram link
+ * short-circuit straight to the welcome step.
+ */
+async function connectTelegramForAgent(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  ui: ConnectUI,
+  environmentId: string,
+  subscriberId: string,
+  track: (event: string, data?: Record<string, unknown>) => void
+): Promise<{ connected: boolean; integration: IntegrationRecord }> {
+  ui.addingTelegramIntegration();
+
+  const integration = await resolveTelegramIntegrationForAgent(client, agent, environmentId);
+
+  const links = await listAgentIntegrations(client, agent.identifier);
+  const existingLink = links.find((l) => l.integrationIdentifier === integration.identifier);
+  if (!existingLink) {
+    try {
+      await addAgentIntegration(client, agent.identifier, integration.identifier);
+    } catch (err) {
+      if (!(err instanceof NovuApiError) || err.status !== 409) throw err;
+    }
+  } else if (existingLink.connectedAt) {
+    ui.telegramConnected();
+    track(CONNECT_EVENTS.SLACK_CONNECTED, {
+      agent: agent.identifier,
+      channel: 'telegram',
+      alreadyConnected: true,
+    });
+
+    return { connected: true, integration };
+  }
+
+  // ---- Step 1: BotFather intro ----
+  const botfatherQr = await renderQR(BOTFATHER_URL);
+  await ui.showTelegramIntro({ botfatherQr });
+
+  // ---- Step 2: mobile-link → poll the public status endpoint ----
+  // ApiKey-authed callers can't see `credentials.token` on the integration
+  // (it's stripped by canUserAccessCredentials for security), so we instead
+  // poll the public mobile-link status endpoint: when the user pastes the
+  // bot token on their phone, the server marks the JWT's jti as consumed,
+  // and `reason: 'used'` is our completion signal.
+  const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
+  const mobileQr = await renderQR(mobileLink.url);
+  ui.showTelegramLinkToken({ mobileQr, mobileUrl: mobileLink.url });
+
+  const tokenSaved = await pollForTelegramTokenSaved(client, mobileLink.token);
+  if (!tokenSaved) {
+    throw new Error(
+      `The bot token wasn't saved within ${Math.round(TELEGRAM_POLL_TIMEOUT_MS / 1000)} seconds. ` +
+        'Re-run `npx novu connect` to get a fresh setup link.'
+    );
+  }
+
+  // The mobile consume endpoint runs configure-webhook for us. As a defensive
+  // fallback (in case the user pasted a token directly via some other path and
+  // the webhook never got registered), trigger configure here and ignore the
+  // 409/400 noise that an already-configured webhook would produce.
+  try {
+    await configureTelegramAgentWebhook(client, agent.identifier, integration._id);
+  } catch (err) {
+    if (err instanceof NovuApiError && (err.status === 400 || err.status === 409)) {
+      // Already configured by the consume endpoint — fine.
+    } else {
+      throw err;
+    }
+  }
+
+  // ---- Step 3: subscriber-link → poll for connectedAt ----
+  const subscriberLink = await issueTelegramSubscriberLink(client, agent.identifier, integration._id, subscriberId);
+  const deepLinkQr = await renderQR(subscriberLink.deepLinkUrl);
+  ui.showTelegramTest({
+    deepLinkQr,
+    deepLinkUrl: subscriberLink.deepLinkUrl,
+    botUsername: subscriberLink.botUsername,
+  });
+
+  const connected = await pollForTelegramConnected(client, agent.identifier, integration.identifier);
+  if (!connected) {
+    throw new Error(
+      `We didn't see a /start message on @${subscriberLink.botUsername} within ` +
+        `${Math.round(TELEGRAM_POLL_TIMEOUT_MS / 1000)} seconds. Re-run \`npx novu connect\` once you've ` +
+        'opened the bot in Telegram and tapped Start.'
+    );
+  }
+
+  ui.telegramConnected();
+  track(CONNECT_EVENTS.SLACK_CONNECTED, {
+    agent: agent.identifier,
+    channel: 'telegram',
+    alreadyConnected: false,
+  });
+
+  return { connected: true, integration };
+}
+
+/**
+ * Pick the Telegram integration for this agent. Reuses one already linked to
+ * the agent if present; otherwise creates a fresh, agent-branded integration.
+ * Same isolation model as Slack: each agent gets its OWN Telegram bot so the
+ * `@<botname>` shown in Telegram matches the agent.
+ */
+async function resolveTelegramIntegrationForAgent(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  environmentId: string
+): Promise<IntegrationRecord> {
+  const links = await listAgentIntegrations(client, agent.identifier);
+  const alreadyLinked = links.find(
+    (l) => l.providerId === TELEGRAM_PROVIDER_ID && l.channel === TELEGRAM_CHANNEL && l.active !== false
+  );
+  if (alreadyLinked) {
+    const integrations = await listIntegrations(client);
+    const integration = integrations.find((i) => i.identifier === alreadyLinked.integrationIdentifier);
+    if (integration) return integration;
+    // Stale link with no matching integration — fall through and create new.
+  }
+
+  return createTelegramIntegration(client, { name: agent.name, environmentId });
+}
+
+/**
+ * Poll the public mobile-link status endpoint. The JWT we issued in step 2
+ * becomes `reason: 'used'` after the user's phone successfully POSTs the bot
+ * token to the consume endpoint. `'expired'` means the 5-minute TTL elapsed
+ * before the user finished — treat as timeout. `'invalid'` shouldn't happen
+ * for a freshly-issued token; surface as timeout too.
+ */
+async function pollForTelegramTokenSaved(client: ConnectApiClient, mobileLinkToken: string): Promise<boolean> {
+  const deadline = Date.now() + TELEGRAM_POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    try {
+      const status = await getTelegramMobileLinkStatus(client, mobileLinkToken);
+      if (!status.valid && status.reason === 'used') return true;
+      if (!status.valid) return false;
+    } catch {
+      // transient — keep polling
+    }
+    await sleep(TELEGRAM_POLL_INTERVAL_MS);
+  }
+
+  return false;
+}
+
+async function pollForTelegramConnected(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  telegramIntegrationIdentifier: string
+): Promise<boolean> {
+  const deadline = Date.now() + TELEGRAM_POLL_TIMEOUT_MS;
+  while (Date.now() < deadline) {
+    try {
+      const links = await listAgentIntegrations(client, agentIdentifier);
+      const link = links.find((l) => l.integrationIdentifier === telegramIntegrationIdentifier);
+      if (link?.connectedAt) return true;
+    } catch {
+      // transient — keep polling
+    }
+    await sleep(TELEGRAM_POLL_INTERVAL_MS);
+  }
+
+  return false;
+}
+
+/**
+ * Half-block ASCII QR for terminal rendering.
+ *
+ * We tried denser glyph packings (quadrant blocks `▘▝▖▗`, braille `⠁⠂⠄`)
+ * to shrink the QR's terminal footprint. Both worked visually but failed
+ * to scan on phones:
+ *
+ * - Quadrant blocks make modules 2× taller than wide on standard 2:1
+ *   terminal cells — phone scanners want square modules.
+ * - Braille dots render with visible gaps between them in most terminal
+ *   fonts, so "dark" QR cells aren't solid enough for scanners.
+ *
+ * Half-blocks (`▀ ▄ █`) fill cells solidly and give square modules (1
+ * module = 1 char column wide × half a char row tall, which equals the
+ * cell width on a 2:1 cell). They're what `qrcode-terminal` and similar
+ * libraries use by default precisely because they scan reliably.
+ *
+ * The tradeoff is width: a Version-11 QR (the smallest that fits the
+ * mobile-link's signed JWT at `L` error correction) is ~57 modules,
+ * which renders as ~61 chars wide with our 2-module quiet zone. If
+ * that's still too wide, the right fix is shortening the URL server-side
+ * (e.g. swap the JWT for an opaque DB-resolved token), not denser glyphs.
+ *
+ * Defaults to `L` error correction (7%) because terminal display is
+ * lossless — extra redundancy only adds modules without scan benefit.
+ */
+async function renderQR(text: string, errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'L'): Promise<string> {
+  const qr = QRCode.create(text, { errorCorrectionLevel });
+  const { data, size } = qr.modules;
+
+  // Quiet zone — spec asks for 4 modules of margin; 2 is the practical
+  // minimum that still scans on modern phone cameras and saves 4 chars of
+  // width over the spec default.
+  const QUIET = 2;
+  const total = size + QUIET * 2;
+  // Pad height to an even module count so half-block packing (2 modules
+  // per terminal row) doesn't drop a ragged last row.
+  const paddedH = total + (total % 2);
+
+  const isDark = (col: number, row: number): boolean => {
+    const c = col - QUIET;
+    const r = row - QUIET;
+    if (c < 0 || c >= size || r < 0 || r >= size) return false;
+
+    return data[r * size + c] === 1;
+  };
+
+  const lines: string[] = [];
+  for (let row = 0; row < paddedH; row += 2) {
+    let line = '';
+    for (let col = 0; col < total; col++) {
+      const top = isDark(col, row);
+      const bot = isDark(col, row + 1);
+      if (top && bot) line += '█';
+      else if (top) line += '▀';
+      else if (bot) line += '▄';
+      else line += ' ';
+    }
+    lines.push(line);
+  }
+
+  return lines.join('\n');
 }
 
 function sleep(ms: number): Promise<void> {

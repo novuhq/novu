@@ -3790,6 +3790,9 @@ importers:
       prompts:
         specifier: 2.4.2
         version: 2.4.2
+      qrcode:
+        specifier: ^1.5.4
+        version: 1.5.4
       react:
         specifier: ^19.2.0
         version: 19.2.3
@@ -3833,6 +3836,9 @@ importers:
       '@types/prompts':
         specifier: 2.4.2
         version: 2.4.2
+      '@types/qrcode':
+        specifier: ^1.5.5
+        version: 1.5.6
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.8
@@ -14756,6 +14762,9 @@ packages:
   '@types/prop-types@15.7.15':
     resolution: {integrity: sha512-F6bEyamV9jKGAFBEmlQnesRPGOQqS2+Uwi0Em15xenOxHaf2hv6L8YCVn3rPdPJOiJfPiCnLIRyvwVaqMY3MIw==}
 
+  '@types/qrcode@1.5.6':
+    resolution: {integrity: sha512-te7NQcV2BOvdj2b1hCAHzAoMNuj65kNBMz0KBaxM6c3VGBOhU0dURQKOtH8CFNI/dsKkwlv32p26qYQTWoB5bw==}
+
   '@types/qs@6.9.7':
     resolution: {integrity: sha512-FGa1F62FT09qcrueBA6qYTrJPVDzah9a+493+o2PCXsesWHIn27G98TsSMs3WPNbZIEj4+VJf6saSFpvD+3Zsw==}
 
@@ -18034,6 +18043,9 @@ packages:
   diff@9.0.0:
     resolution: {integrity: sha512-svtcdpS8CgJyqAjEQIXdb3OjhFVVYjzGAPO8WGCmRbrml64SPw/jJD4GoE98aR7r25A0XcgrK3F02yw9R/vhQw==}
     engines: {node: '>=0.3.1'}
+
+  dijkstrajs@1.0.3:
+    resolution: {integrity: sha512-qiSlmBq9+BCdCA/L46dw8Uy93mloxsPSbwnm5yrKn2vMPiy8KyAskTF6zuV/j5BMsmOGZDPs7KjU+mjb670kfA==}
 
   dir-glob@2.2.2:
     resolution: {integrity: sha512-f9LBi5QWzIW3I6e//uxZoLBlUt9kcp66qo0sSCxL6YZKc75R1c4MFCoe/LaZiBGmgujvQdxc5Bn3QhfyvK5Hsw==}
@@ -23515,6 +23527,10 @@ packages:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
     engines: {node: '>=4'}
 
+  pngjs@5.0.0:
+    resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
+    engines: {node: '>=10.13.0'}
+
   pnpm@11.0.9:
     resolution: {integrity: sha512-NM6C5ngCM8+crYaFApqPgdLgYZbFqbrZiHn3QklAxoF8TkUk+304uFU87tSLl1i4668avTYAwjLEyM9zZghvOA==}
     engines: {node: '>=22.13'}
@@ -24209,6 +24225,11 @@ packages:
 
   qr.js@0.0.0:
     resolution: {integrity: sha512-c4iYnWb+k2E+vYpRimHqSu575b1/wKl4XFeJGpFmrJQz5I88v9aY2czh7s0w36srfCM1sXgC/xpoJz5dJfq+OQ==}
+
+  qrcode@1.5.4:
+    resolution: {integrity: sha512-1ca71Zgiu6ORjHqFBDpnSMTR2ReToX4l1Au1VFLyVeBTFavzQnv5JxMFr3ukHVKpSrSA2MCk0lNJSykjUfz7Zg==}
+    engines: {node: '>=10.13.0'}
+    hasBin: true
 
   qs@6.15.2:
     resolution: {integrity: sha512-Rzq0KEyX/w/tEybncDgdkZrJgVUsUMk3xjh3t5bv3S1HTAtg+uOYt72+ZfwiQwKdysThkTBdL/rTi6HDmX9Ddw==}
@@ -43322,6 +43343,10 @@ snapshots:
 
   '@types/prop-types@15.7.15': {}
 
+  '@types/qrcode@1.5.6':
+    dependencies:
+      '@types/node': 22.15.13
+
   '@types/qs@6.9.7': {}
 
   '@types/range-parser@1.2.4': {}
@@ -47210,6 +47235,8 @@ snapshots:
   diff@5.2.2: {}
 
   diff@9.0.0: {}
+
+  dijkstrajs@1.0.3: {}
 
   dir-glob@2.2.2:
     dependencies:
@@ -54492,6 +54519,8 @@ snapshots:
 
   pluralize@8.0.0: {}
 
+  pngjs@5.0.0: {}
+
   pnpm@11.0.9: {}
 
   points-on-curve@0.2.0: {}
@@ -55293,6 +55322,12 @@ snapshots:
       - supports-color
 
   qr.js@0.0.0: {}
+
+  qrcode@1.5.4:
+    dependencies:
+      dijkstrajs: 1.0.3
+      pngjs: 5.0.0
+      yargs: 15.4.1
 
   qs@6.15.2:
     dependencies:

@@ -1,5 +1,5 @@
 import { Select, Spinner, TextInput } from '@inkjs/ui';
-import { Box, Text, useApp } from 'ink';
+import { Box, Text, useApp, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { ConnectStore } from './store';
@@ -104,9 +104,9 @@ function renderPhase(phase: ReturnType<ConnectStore['phase']['get']>): React.Rea
     case 'pick-channel': {
       const options = [
         { label: 'Slack (recommended)', value: 'slack' },
+        { label: 'Telegram', value: 'telegram' },
         { label: 'Email — coming soon', value: 'email' },
         { label: 'WhatsApp — coming soon', value: 'whatsapp' },
-        { label: 'Telegram — coming soon', value: 'telegram' },
         { label: 'Microsoft Teams — coming soon', value: 'teams' },
         { label: 'Skip — set up later in dashboard', value: 'skip' },
       ];
@@ -175,6 +175,49 @@ function renderPhase(phase: ReturnType<ConnectStore['phase']['get']>): React.Rea
         </Box>
       );
 
+    case 'adding-telegram':
+      return <SpinnerLine label="Linking Telegram to your agent…" />;
+
+    case 'telegram-intro':
+      return <TelegramIntroScreen botfatherQr={phase.botfatherQr} onContinue={phase.resolve} />;
+
+    case 'telegram-link-token':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold color="cyan">
+            Step 2 of 3 · Save your bot token
+          </Text>
+          <Text dimColor>
+            Scan with your phone to open a page where you can paste the BotFather token. We'll handle
+            registering the webhook for you.
+          </Text>
+          <Text>{phase.mobileQr}</Text>
+          <Box flexDirection="column">
+            <Text dimColor>Or open this on your phone:</Text>
+            <Text color="cyan">{phase.mobileUrl}</Text>
+          </Box>
+          <SpinnerLine label="Waiting for your bot token…" />
+        </Box>
+      );
+
+    case 'telegram-test':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold color="cyan">
+            Step 3 of 3 · Say hello to your bot
+          </Text>
+          <Text dimColor>
+            Scan to open <Text color="white">@{phase.botUsername}</Text> in Telegram and tap Start.
+          </Text>
+          <Text>{phase.deepLinkQr}</Text>
+          <Box flexDirection="column">
+            <Text dimColor>Or open this link:</Text>
+            <Text color="cyan">{phase.deepLinkUrl}</Text>
+          </Box>
+          <SpinnerLine label="Waiting for /start in Telegram…" />
+        </Box>
+      );
+
     case 'sending-welcome':
       return <SpinnerLine label="Asking your agent to say hello in Slack…" />;
 
@@ -200,7 +243,7 @@ function Header(): React.ReactElement {
       <Text bold color="magenta">
         novu connect
       </Text>
-      <Text dimColor>Create a managed agent and connect it to Slack — all from your terminal.</Text>
+      <Text dimColor>Create a managed agent and connect it to your team — all from your terminal.</Text>
     </Box>
   );
 }
@@ -210,6 +253,53 @@ function SpinnerLine({ label }: { label: string }): React.ReactElement {
     <Box gap={1}>
       <Spinner />
       <Text>{label}</Text>
+    </Box>
+  );
+}
+
+function TelegramIntroScreen({
+  botfatherQr,
+  onContinue,
+}: {
+  botfatherQr: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  // Any key advances. Most users will press Enter; `return` from useInput's
+  // key arg covers that explicitly so the affordance reads cleanly.
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') {
+      onContinue();
+    }
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold color="cyan">
+        Step 1 of 3 · Create your Telegram bot
+      </Text>
+      <Box flexDirection="column">
+        <Text>
+          <Text color="white" bold>
+            1.
+          </Text>{' '}
+          Open Telegram and message <Text color="cyan">@BotFather</Text>.
+        </Text>
+        <Text>
+          <Text color="white" bold>
+            2.
+          </Text>{' '}
+          Run <Text color="magenta">/newbot</Text>, choose a name and username.
+        </Text>
+        <Text>
+          <Text color="white" bold>
+            3.
+          </Text>{' '}
+          Keep the BotFather chat open — you'll paste the token from there in the next step.
+        </Text>
+      </Box>
+      <Text dimColor>Or scan to open BotFather on your phone:</Text>
+      <Text>{botfatherQr}</Text>
+      <Text dimColor>Press Enter when you have your bot token →</Text>
     </Box>
   );
 }
@@ -399,10 +489,17 @@ function SuccessView({
 }: {
   phase: Extract<ReturnType<ConnectStore['phase']['get']>, { kind: 'success' }>;
 }): React.ReactElement {
-  const { agent, dashboardUrl, environmentSlug, slackConnected } = phase;
+  const { agent, dashboardUrl, environmentSlug, connectedChannel } = phase;
   const agentUrl = environmentSlug
     ? `${dashboardUrl}/env/${environmentSlug}/agents/${encodeURIComponent(agent.identifier)}`
     : `${dashboardUrl}/agents/${encodeURIComponent(agent.identifier)}`;
+
+  const channelLabel =
+    connectedChannel === 'slack'
+      ? 'Slack'
+      : connectedChannel === 'telegram'
+        ? 'Telegram'
+        : null;
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -411,10 +508,10 @@ function SuccessView({
         <Text>
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
-        {slackConnected ? (
-          <Text color="cyan">Check Slack — your agent just messaged you.</Text>
+        {channelLabel ? (
+          <Text color="cyan">Check {channelLabel} — your agent just messaged you.</Text>
         ) : (
-          <Text dimColor>Skipped Slack. Run `npx novu connect` again to wire it up.</Text>
+          <Text dimColor>No channel connected. Run `npx novu connect` again to wire one up.</Text>
         )}
         <Text>
           <Text bold>Dashboard:</Text> {agentUrl}
