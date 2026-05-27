@@ -31,7 +31,7 @@ import { Result } from "../types/fp.js";
  * Update a variable
  *
  * @remarks
- * Updates an existing environment variable. Providing values replaces all existing per-environment values.
+ * Updates an existing environment variable. Providing `values` merges them into the existing per-environment values by `_environmentId`; envs not present in the request keep their stored value. Submitting the masked secret placeholder (the value returned by read endpoints for secret variables) as a real value is rejected.
  *
  * This operation requires either {@link Security.bearerAuth} or {@link Security.secretKey} to be set on the `security` parameter when initializing the SDK.
  */

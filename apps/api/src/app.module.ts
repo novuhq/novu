@@ -86,7 +86,10 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
     }
 
     if (require('@novu/ee-api')?.ConversationsModule) {
-      modules.push(require('@novu/ee-api')?.ConversationsModule);
+      modules.push({
+        module: class ConversationsModuleHost {},
+        imports: [SharedModule, require('@novu/ee-api').ConversationsModule],
+      });
     }
 
     modules.push(SupportModule);

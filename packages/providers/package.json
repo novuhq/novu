@@ -51,7 +51,7 @@
     "@vonage/auth": "^1.7.0",
     "@vonage/server-sdk": "^3.10.0",
     "africastalking": "^0.7.9",
-    "axios": "^1.15.2",
+    "axios": "^1.16.1",
     "braze-api": "^2.5.6",
     "cross-fetch": "^4.0.0",
     "date-fns": "2.29.3",
@@ -74,16 +74,18 @@
     "qs": "^6.11.0",
     "resend": "^6.0.3",
     "sms77-client": "^2.14.0",
+    "sns-validator": "^0.3.5",
     "svix": "^1.29.0",
     "telnyx": "^1.23.0",
     "twilio": "^4.19.3",
-    "uuid": "^9.0.0"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.23.2",
     "@babel/preset-typescript": "^7.13.0",
     "@types/node-mailjet": "^4.0.0",
     "@types/nodemailer": "^8.0.0",
+    "@types/sns-validator": "^0.3.3",
     "@types/sparkpost": "^2.1.5",
     "@types/uuid": "^8.3.4",
     "codecov": "^3.5.0",
@@ -94,7 +96,7 @@
     "ts-node": "~10.9.1",
     "typedoc": "^0.24.0",
     "typescript": "5.6.2",
-    "uuid": "^9.0.0",
+    "uuid": "^11.1.1",
     "vitest": "2.1.9"
   },
   "nx": {

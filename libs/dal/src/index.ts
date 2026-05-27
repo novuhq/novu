@@ -1,6 +1,7 @@
 export * from './dal.service';
 export * from './repositories/agent';
 export * from './repositories/agent-integration';
+export * from './repositories/agent-mcp-server';
 export * from './repositories/ai-chat';
 export * from './repositories/base-repository';
 export * from './repositories/base-repository-v2';
@@ -22,6 +23,7 @@ export * from './repositories/job';
 export * from './repositories/layout';
 export * from './repositories/localization';
 export * from './repositories/localization-group';
+export * from './repositories/mcp-connection';
 export * from './repositories/member';
 export * from './repositories/message';
 export * from './repositories/message-template';

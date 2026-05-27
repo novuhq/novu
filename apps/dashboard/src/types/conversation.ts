@@ -3,6 +3,7 @@ import { ConversationFilters } from '@/api/conversations';
 export type ConversationFiltersData = {
   dateRange: string;
   subscriberId: string;
+  agentId: string;
   provider: string[];
   conversationId: string;
 };

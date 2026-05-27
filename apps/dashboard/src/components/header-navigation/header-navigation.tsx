@@ -20,10 +20,20 @@ type HeaderNavigationProps = HTMLAttributes<HTMLDivElement> & {
   startItems?: ReactNode;
   hideBridgeUrl?: boolean;
   showMobileNav?: boolean;
+  hideRestItems?: boolean;
+  hidePublish?: boolean;
 };
 
 export const HeaderNavigation = (props: HeaderNavigationProps) => {
-  const { startItems, hideBridgeUrl = false, showMobileNav = false, className, ...rest } = props;
+  const {
+    startItems,
+    hideBridgeUrl = false,
+    showMobileNav = false,
+    hideRestItems = false,
+    hidePublish = false,
+    className,
+    ...rest
+  } = props;
   const { currentEnvironment } = useEnvironment();
   const has = useHasPermission();
   const canPublish = has({ permission: PermissionsEnum.ENVIRONMENT_WRITE });
@@ -62,18 +72,23 @@ export const HeaderNavigation = (props: HeaderNavigationProps) => {
           <RiSearchLine className="size-3 text-text-sub" />
         </Button>
         <span className="hidden md:contents">
-          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && canPublish && <PublishButton />}
+          {currentEnvironment?.type === EnvironmentTypeEnum.DEV && canPublish && !hidePublish && <PublishButton />}
           {!hideBridgeUrl ? <EditBridgeUrlButton /> : null}
-          {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
         </span>
-        <div className="flex items-center gap-2">
-          <InboxButton />
-          <div className="hidden h-4 w-px bg-neutral-200 md:block" />
-          <span className="hidden md:inline-flex">
-            <RegionSelector />
-          </span>
-        </div>
-        <UserProfile />
+        {!hideRestItems && (
+          <>
+            <div className="flex items-center gap-2">
+              {!(IS_SELF_HOSTED && IS_ENTERPRISE) && <CustomerSupportButton />}
+              <InboxButton />
+              <div className="hidden h-4 w-px bg-neutral-200 md:block" />
+              <span className="hidden md:inline-flex">
+                <RegionSelector />
+              </span>
+            </div>
+            <UserProfile />
+          </>
+        )}
+        {hideRestItems && <InboxButton />}
       </div>
     </div>
   );

@@ -5,11 +5,13 @@ import { getRegionConfig, useRegion } from '@/context/region';
 import { useAuth } from './auth/hooks';
 import { useCustomerIo } from './customer-io/hooks';
 import { useSegment } from './segment/hooks';
+import { useSnitcher } from './snitcher/hooks';
 
 export function IdentityProvider({ children }: { children: React.ReactNode }) {
   const ldClient = useLDClient();
   const segment = useSegment();
   const customerIo = useCustomerIo();
+  const snitcher = useSnitcher();
   const { currentUser, currentOrganization } = useAuth();
   const { selectedRegion } = useRegion();
   const hasIdentifiedOrg = useRef(false);
@@ -25,6 +27,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
       if (!hasIdentifiedOrg.current) {
         segment.identify(currentUser);
         customerIo.identify(currentUser);
+        snitcher.identify(currentUser, currentOrganization);
 
         sentrySetUser({
           email: currentUser.email ?? '',
@@ -70,7 +73,7 @@ export function IdentityProvider({ children }: { children: React.ReactNode }) {
     } else {
       sentrySetUser(null);
     }
-  }, [ldClient, currentOrganization, currentUser, segment, customerIo, selectedRegion]);
+  }, [ldClient, currentOrganization, currentUser, segment, customerIo, snitcher, selectedRegion]);
 
   return <>{children}</>;
 }

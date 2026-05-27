@@ -3,6 +3,17 @@ import { EmailEventStatusEnum } from '@novu/stateless';
 import { describe, expect, test, vi } from 'vitest';
 import { SESEmailProvider } from './ses.provider';
 
+// Stub sns-validator so URL/structure tests don't perform real HTTPS cert downloads.
+// Tests assert the URL was either rejected before reaching the validator (Invalid AWS
+// certificate URL) or reached it and surfaced this stub error.
+vi.mock('sns-validator', () => ({
+  default: class {
+    validate(_msg: unknown, cb: (err: Error | null) => void) {
+      cb(new Error('stubbed validator: signature not checked in unit tests'));
+    }
+  },
+}));
+
 const mockConfig = {
   region: 'us-east-1',
   senderName: 'Test',
@@ -239,21 +250,13 @@ describe('Certificate URL Security Validation', () => {
   });
 
   test('should accept valid AWS SNS certificate URLs', async () => {
-    // Mock fetch to prevent actual HTTP requests
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      text: async () => 'mock-certificate',
-    });
-    vi.stubGlobal('fetch', mockFetch);
-
     const provider = new SESEmailProvider(mockConfig);
     const validUrls = [
-      'https://sns.amazonaws.com/SimpleNotificationService.pem',
-      'https://sns.us-east-1.amazonaws.com/cert.pem',
-      'https://sns.eu-west-1.amazonaws.com/cert.pem',
-      'https://sns.ap-southeast-2.amazonaws.com/cert.pem',
-      'https://sns.us-gov-west-1.amazonaws.com/cert.pem',
-      'https://s3.amazonaws.com/sns-certificates/cert.pem',
+      'https://sns.amazonaws.com/SimpleNotificationService-abc123.pem',
+      'https://sns.us-east-1.amazonaws.com/SimpleNotificationService-abc123.pem',
+      'https://sns.eu-west-1.amazonaws.com/SimpleNotificationService-def456.pem',
+      'https://sns.ap-southeast-2.amazonaws.com/SimpleNotificationService-ghi789.pem',
+      'https://sns.us-gov-west-1.amazonaws.com/SimpleNotificationService-jkl012.pem',
     ];
 
     for (const url of validUrls) {
@@ -266,19 +269,59 @@ describe('Certificate URL Security Validation', () => {
       expect(result.success).toBe(false);
       expect(result.message).not.toContain('Invalid AWS certificate URL');
     }
+  });
 
-    vi.unstubAllGlobals();
+  test('should reject S3-hosted certificate URLs (the disclosed bypass)', async () => {
+    const provider = new SESEmailProvider(mockConfig);
+    const s3Urls = [
+      'https://s3.amazonaws.com/sns-certificates/SimpleNotificationService-abc123.pem',
+      'https://s3.amazonaws.com/attacker-bucket/fake-cert.pem',
+      'https://s3.amazonaws.com/any-bucket/SimpleNotificationService-xyz.pem',
+    ];
+
+    for (const url of s3Urls) {
+      const result = await provider.verifySignature({
+        rawBody: null,
+        body: createMockSnsMessage(url),
+        headers: { 'x-amz-sns-message-type': 'Notification' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Invalid AWS certificate URL');
+    }
+  });
+
+  test('should reject SNS hosts with non-canonical paths (path-pinning)', async () => {
+    const provider = new SESEmailProvider(mockConfig);
+    const badPathUrls = [
+      'https://sns.us-east-1.amazonaws.com/cert.pem',
+      'https://sns.us-east-1.amazonaws.com/random.pem',
+      'https://sns.us-east-1.amazonaws.com/SimpleNotificationService-abc123.pem.evil',
+      'https://sns.us-east-1.amazonaws.com/foo/SimpleNotificationService-abc.pem',
+      'https://sns.amazonaws.com/SimpleNotificationService-abc.pem.txt',
+    ];
+
+    for (const url of badPathUrls) {
+      const result = await provider.verifySignature({
+        rawBody: null,
+        body: createMockSnsMessage(url),
+        headers: { 'x-amz-sns-message-type': 'Notification' },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Invalid AWS certificate URL');
+    }
   });
 
   test('should reject malicious certificate URLs with subdomain injection', async () => {
     const provider = new SESEmailProvider(mockConfig);
     const maliciousUrls = [
-      'https://sns.evil.amazonaws.com/cert.pem', // Subdomain injection
-      'https://sns.malicious-site.amazonaws.com/cert.pem', // Subdomain injection
-      'https://sns.attacker.amazonaws.com/cert.pem', // Subdomain injection
-      'https://sns.amazonaws.com.evil.com/cert.pem', // Domain spoofing
-      'https://evil.sns.amazonaws.com/cert.pem', // Prefix injection
-      'https://amazonaws.com.evil.com/cert.pem', // Domain spoofing
+      'https://sns.evil.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.malicious-site.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.attacker.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.amazonaws.com.evil.com/SimpleNotificationService-abc.pem',
+      'https://evil.sns.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://amazonaws.com.evil.com/SimpleNotificationService-abc.pem',
     ];
 
     for (const url of maliciousUrls) {
@@ -296,9 +339,9 @@ describe('Certificate URL Security Validation', () => {
   test('should reject non-HTTPS certificate URLs', async () => {
     const provider = new SESEmailProvider(mockConfig);
     const insecureUrls = [
-      'http://sns.amazonaws.com/cert.pem',
-      'ftp://sns.amazonaws.com/cert.pem',
-      'sns.amazonaws.com/cert.pem',
+      'http://sns.amazonaws.com/SimpleNotificationService-abc.pem',
+      'ftp://sns.amazonaws.com/SimpleNotificationService-abc.pem',
+      'sns.amazonaws.com/SimpleNotificationService-abc.pem',
     ];
 
     for (const url of insecureUrls) {
@@ -316,10 +359,10 @@ describe('Certificate URL Security Validation', () => {
   test('should reject certificate URLs from non-AWS domains', async () => {
     const provider = new SESEmailProvider(mockConfig);
     const nonAwsUrls = [
-      'https://evil.com/sns.amazonaws.com/cert.pem',
-      'https://example.com/cert.pem',
-      'https://sns.fake-aws.com/cert.pem',
-      'https://amazonaws.evil.com/cert.pem',
+      'https://evil.com/sns.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://example.com/SimpleNotificationService-abc.pem',
+      'https://sns.fake-aws.com/SimpleNotificationService-abc.pem',
+      'https://amazonaws.evil.com/SimpleNotificationService-abc.pem',
     ];
 
     for (const url of nonAwsUrls) {
@@ -335,21 +378,14 @@ describe('Certificate URL Security Validation', () => {
   });
 
   test('should validate regional SNS endpoints correctly', async () => {
-    // Mock fetch to prevent actual HTTP requests
-    const mockFetch = vi.fn().mockResolvedValue({
-      ok: false,
-      text: async () => 'mock-certificate',
-    });
-    vi.stubGlobal('fetch', mockFetch);
-
     const provider = new SESEmailProvider(mockConfig);
     const regionalUrls = [
-      'https://sns.us-east-1.amazonaws.com/cert.pem',
-      'https://sns.us-west-2.amazonaws.com/cert.pem',
-      'https://sns.eu-central-1.amazonaws.com/cert.pem',
-      'https://sns.ap-northeast-1.amazonaws.com/cert.pem',
-      'https://sns.ca-central-1.amazonaws.com/cert.pem',
-      'https://sns.us-gov-east-1.amazonaws.com/cert.pem',
+      'https://sns.us-east-1.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.us-west-2.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.eu-central-1.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.ap-northeast-1.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.ca-central-1.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.us-gov-east-1.amazonaws.com/SimpleNotificationService-abc.pem',
     ];
 
     for (const url of regionalUrls) {
@@ -362,19 +398,17 @@ describe('Certificate URL Security Validation', () => {
       expect(result.success).toBe(false);
       expect(result.message).not.toContain('Invalid AWS certificate URL');
     }
-
-    vi.unstubAllGlobals();
   });
 
   test('should reject invalid regional patterns', async () => {
     const provider = new SESEmailProvider(mockConfig);
     const invalidRegionalUrls = [
-      'https://sns.invalid-region.amazonaws.com/cert.pem',
-      'https://sns.us-east-99.amazonaws.com/cert.pem',
-      'https://sns.evil-central-1.amazonaws.com/cert.pem',
-      'https://sns..amazonaws.com/cert.pem',
-      'https://sns.us-.amazonaws.com/cert.pem',
-      'https://sns.-east-1.amazonaws.com/cert.pem',
+      'https://sns.invalid-region.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.us-east-99.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.evil-central-1.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns..amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.us-.amazonaws.com/SimpleNotificationService-abc.pem',
+      'https://sns.-east-1.amazonaws.com/SimpleNotificationService-abc.pem',
     ];
 
     for (const url of invalidRegionalUrls) {
@@ -387,5 +421,37 @@ describe('Certificate URL Security Validation', () => {
       expect(result.success).toBe(false);
       expect(result.message).toContain('Invalid AWS certificate URL');
     }
+  });
+
+  test('should accept SignatureVersion 2 (RSA-SHA256)', async () => {
+    const provider = new SESEmailProvider(mockConfig);
+    const result = await provider.verifySignature({
+      rawBody: null,
+      body: {
+        ...createMockSnsMessage('https://sns.us-east-1.amazonaws.com/SimpleNotificationService-abc.pem'),
+        SignatureVersion: '2',
+      },
+      headers: { 'x-amz-sns-message-type': 'Notification' },
+    });
+
+    // URL passed; rejection comes from the stubbed sns-validator, not from version check.
+    expect(result.success).toBe(false);
+    expect(result.message).not.toContain('Unsupported signature version');
+    expect(result.message).not.toContain('Invalid AWS certificate URL');
+  });
+
+  test('should reject unsupported SignatureVersion values', async () => {
+    const provider = new SESEmailProvider(mockConfig);
+    const result = await provider.verifySignature({
+      rawBody: null,
+      body: {
+        ...createMockSnsMessage('https://sns.us-east-1.amazonaws.com/SimpleNotificationService-abc.pem'),
+        SignatureVersion: '99',
+      },
+      headers: { 'x-amz-sns-message-type': 'Notification' },
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.message).toContain('Unsupported signature version');
   });
 });

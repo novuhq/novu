@@ -93,7 +93,7 @@ const BottomSection = ({
   );
 };
 
-export const SideNavigation = () => {
+export const LegacySideNavigation = () => {
   const { subscription, daysLeft, isLoading: isLoadingSubscription } = useFetchSubscription();
   const isTrialActive = subscription?.trial.isActive;
   const isFreeTier = subscription?.apiServiceLevel === ApiServiceLevelEnum.FREE;
@@ -110,7 +110,7 @@ export const SideNavigation = () => {
   };
 
   return (
-    <aside className="bg-neutral-alpha-50 relative flex h-full w-[275px] shrink-0 flex-col">
+    <aside className="relative flex h-full w-[225px] shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown
@@ -142,7 +142,12 @@ export const SideNavigation = () => {
                 }
               >
                 <RiRobot2Line className="size-4" />
-                <span>Agents</span>
+                <span>
+                  Agents{' '}
+                  <Badge variant="lighter" className="text-xs">
+                    BETA
+                  </Badge>
+                </span>
               </NavigationLink>
             </NavigationGroup>
 

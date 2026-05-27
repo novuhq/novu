@@ -87,6 +87,11 @@ export interface IConfigCredential {
   placeholder?: string;
   type: CredentialsType;
   required: boolean;
+  /**
+   * When true, the credential is managed automatically (e.g. server-generated)
+   * and should not be rendered in the integration settings form.
+   */
+  hidden?: boolean;
   tooltip?: {
     text: string;
     when?: boolean;

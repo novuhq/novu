@@ -27,6 +27,7 @@ import {
   MetricsModule,
   ProcessTenant,
   QueuesModule,
+  SafeOutboundHttpService,
   StepRunRepository,
   StorageHelperService,
   storageService,
@@ -138,6 +139,7 @@ const PROVIDERS = [
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   HttpClientService,
+  SafeOutboundHttpService,
   ...ANALYTICS_PROVIDERS,
 ];
 

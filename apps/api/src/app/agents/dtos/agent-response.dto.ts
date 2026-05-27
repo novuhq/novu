@@ -1,7 +1,39 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import type { AgentRuntime } from '@novu/shared';
 
 import { AgentBehaviorDto } from './agent-behavior.dto';
 import { AgentIntegrationSummaryDto } from './agent-integration-summary.dto';
+
+export class ManagedRuntimeResponseDto {
+  @ApiProperty()
+  providerId: string;
+
+  @ApiProperty()
+  integrationId: string;
+
+  @ApiProperty()
+  externalAgentId: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The provider-side environment that hosts this agent. ' +
+      'Hydrated from the linked integration credentials. Absent when the integration has not been provisioned.',
+  })
+  externalEnvironmentId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'The provider-side workspace id used in console deep links. ' +
+      "Defaults to `'default'` (the auto-created Default Workspace). " +
+      'Hydrated from the linked integration credentials.',
+  })
+  externalWorkspaceId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Deep link to the agent in the provider console (e.g. platform.claude.com).',
+  })
+  consoleUrl?: string;
+}
 
 export class AgentResponseDto {
   @ApiProperty()
@@ -30,6 +62,18 @@ export class AgentResponseDto {
 
   @ApiPropertyOptional({ description: 'Whether the dev bridge override is active' })
   devBridgeActive?: boolean;
+
+  @ApiPropertyOptional({
+    enum: ['self-hosted', 'managed'],
+    description: 'Whether the agent brain is self-hosted (bridge) or managed by a third-party provider',
+  })
+  runtime?: AgentRuntime;
+
+  @ApiPropertyOptional({
+    type: ManagedRuntimeResponseDto,
+    description: 'Present when runtime is "managed". Contains provider and external identifiers.',
+  })
+  managedRuntime?: ManagedRuntimeResponseDto;
 
   @ApiProperty()
   _environmentId: string;

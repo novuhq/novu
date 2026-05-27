@@ -1,4 +1,6 @@
 import type { IncomingHttpHeaders } from 'node:http';
+import { BadRequestException } from '@nestjs/common';
+import { MailFactory } from '@novu/application-generic';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
@@ -28,32 +30,38 @@ describe('ChatSdkService', () => {
       setContext: sinon.stub(),
     };
 
-    return new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any);
+    return new ChatSdkService(
+      logger as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      { create: sinon.stub().resolves({ _id: 'm' }) } as any
+    );
   }
 
   describe('prepareContentForDelivery', () => {
-    it('should reject card replies with file attachments', async () => {
+    it('should materialize files for card replies on supported platforms', async () => {
       const service = makeService();
+      const result = await (service as any).prepareContentForDelivery(
+        {
+          card: { type: 'card', title: 'Report', children: [] },
+          files: [
+            {
+              filename: 'sample.jpg',
+              mimeType: 'image/jpeg',
+              data: Buffer.from('hello').toString('base64'),
+            },
+          ],
+        },
+        'whatsapp'
+      );
 
-      try {
-        await (service as any).prepareContentForDelivery(
-          {
-            card: { type: 'card', title: 'Report', children: [] },
-            files: [
-              {
-                filename: 'sample.txt',
-                data: Buffer.from('hello').toString('base64'),
-              },
-            ],
-          },
-          'slack'
-        );
-        throw new Error('Expected prepareContentForDelivery to throw');
-      } catch (err) {
-        expect((err as Error).message).to.include(
-          'File attachments are only supported with string or markdown replies, not cards.'
-        );
-      }
+      expect(result.card).to.exist;
+      expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
+      expect(result.files[0].filename).to.equal('sample.jpg');
     });
 
     it('should convert base64 file data to a Buffer before passing content to the chat SDK', async () => {
@@ -348,7 +356,16 @@ describe('ChatSdkService', () => {
         info: sinon.stub(),
         setContext: sinon.stub(),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any);
+      const service = new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        { create: sinon.stub().resolves({ _id: 'm' }) } as any
+      );
 
       const result = await (service as any).prepareContentForDelivery(
         {
@@ -368,32 +385,26 @@ describe('ChatSdkService', () => {
       });
     });
 
-    it('should drop files with a warning for whatsapp', async () => {
-      const logger = {
-        warn: sinon.stub(),
-        error: sinon.stub(),
-        debug: sinon.stub(),
-        info: sinon.stub(),
-        setContext: sinon.stub(),
-      };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, {} as any);
-
+    it('should convert base64 file data to a Buffer for whatsapp', async () => {
+      const service = makeService();
       const result = await (service as any).prepareContentForDelivery(
         {
           markdown: 'Here is the file',
-          files: [{ filename: 'sample.txt', data: Buffer.from('hello').toString('base64') }],
+          files: [
+            {
+              filename: 'sample.txt',
+              mimeType: 'text/plain',
+              data: Buffer.from('hello').toString('base64'),
+            },
+          ],
         },
-        'whatsapp',
-        'agent-id'
+        'whatsapp'
       );
 
-      expect(result.files).to.equal(undefined);
-      expect(logger.warn.calledOnce).to.equal(true);
-      expect(logger.warn.firstCall.args[0]).to.deep.include({
-        agentId: 'agent-id',
-        platform: 'whatsapp',
-        droppedCount: 1,
-      });
+      expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
+      expect(result.files[0].data.toString()).to.equal('hello');
+      expect(result.files[0].filename).to.equal('sample.txt');
+      expect(result.files[0].mimeType).to.equal('text/plain');
     });
   });
 
@@ -417,7 +428,16 @@ describe('ChatSdkService', () => {
           active: true,
         }),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, integrationRepository as any);
+      const service = new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        integrationRepository as any,
+        {} as any,
+        {} as any,
+        { create: sinon.stub().resolves({ _id: 'm' }) } as any
+      );
       const sendEmail = (service as any).buildSendEmailCallback(
         {
           environmentId: 'env-id',
@@ -478,7 +498,16 @@ describe('ChatSdkService', () => {
           active: true,
         }),
       };
-      const service = new ChatSdkService(logger as any, {} as any, {} as any, {} as any, integrationRepository as any);
+      const service = new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        integrationRepository as any,
+        {} as any,
+        {} as any,
+        { create: sinon.stub().resolves({ _id: 'm' }) } as any
+      );
       const sendEmail = (service as any).buildSendEmailCallback(
         {
           environmentId: 'env-id',
@@ -509,6 +538,160 @@ describe('ChatSdkService', () => {
         outboundIntegrationId: 'outbound-integration-id',
       });
       expect(logger.warn.firstCall.args[1]).to.include('no messageId was supplied');
+    });
+  });
+
+  describe('sendViaNovuDemoProvider', () => {
+    let novuEnterprise: string | undefined;
+    let isSelfHosted: string | undefined;
+    let sharedInboundDomain: string | undefined;
+    let novuEmailApiKey: string | undefined;
+
+    beforeEach(() => {
+      novuEnterprise = process.env.NOVU_ENTERPRISE;
+      isSelfHosted = process.env.IS_SELF_HOSTED;
+      sharedInboundDomain = process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+      novuEmailApiKey = process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
+
+      process.env.NOVU_ENTERPRISE = 'true';
+      delete process.env.IS_SELF_HOSTED;
+      process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = 'agentconnect.sh';
+      process.env.NOVU_EMAIL_INTEGRATION_API_KEY = 'test-key';
+    });
+
+    afterEach(() => {
+      if (novuEnterprise === undefined) delete process.env.NOVU_ENTERPRISE;
+      else process.env.NOVU_ENTERPRISE = novuEnterprise;
+
+      if (isSelfHosted === undefined) delete process.env.IS_SELF_HOSTED;
+      else process.env.IS_SELF_HOSTED = isSelfHosted;
+
+      if (sharedInboundDomain === undefined) delete process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN;
+      else process.env.NOVU_AGENT_SHARED_INBOUND_DOMAIN = sharedInboundDomain;
+
+      if (novuEmailApiKey === undefined) delete process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
+      else process.env.NOVU_EMAIL_INTEGRATION_API_KEY = novuEmailApiKey;
+
+      sinon.restore();
+    });
+
+    function makeSendViaService(deps: {
+      calculateLimit?: { execute: sinon.SinonStub };
+      messageCreate?: sinon.SinonStub;
+    }) {
+      const logger = {
+        warn: sinon.stub(),
+        error: sinon.stub(),
+        debug: sinon.stub(),
+        info: sinon.stub(),
+        setContext: sinon.stub(),
+      };
+
+      const calculateLimitNovuIntegration = deps.calculateLimit ?? {
+        execute: sinon.stub().resolves({ limit: 300, count: 0 }),
+      };
+
+      const messageRepository = {
+        create: deps.messageCreate ?? sinon.stub().resolves({ _id: 'msg-1' }),
+      };
+
+      return new ChatSdkService(
+        logger as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        {} as any,
+        calculateLimitNovuIntegration as any,
+        messageRepository as any
+      );
+    }
+
+    const demoConfig = {
+      environmentId: 'env-id',
+      organizationId: 'org-id',
+      agentId: 'agent-1',
+      credentials: {
+        emailSlugPrefix: 'support',
+        inboxRoutingKey: 'abcd1234',
+        senderName: 'Support',
+      },
+    };
+
+    const demoParams = {
+      from: 'fallback@example.com',
+      to: 'user@example.com',
+      subject: 'Hello',
+      html: '<p>Hi</p>',
+      messageId: '<mid@example.com>',
+    };
+
+    const demoIntegration = {
+      _id: 'novu-demo-id',
+      _environmentId: 'env-id',
+      _organizationId: 'org-id',
+      providerId: EmailProviderIdEnum.Novu,
+      channel: ChannelTypeEnum.EMAIL,
+      name: 'Novu Email',
+      identifier: 'novu-email-demo',
+      active: true,
+      primary: true,
+      credentials: {},
+    };
+
+    it('throws when Novu demo email credentials are not configured', async () => {
+      delete process.env.NOVU_EMAIL_INTEGRATION_API_KEY;
+      const messageCreate = sinon.stub().resolves({ _id: 'msg-1' });
+      const service = makeSendViaService({ messageCreate });
+
+      try {
+        await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams, demoIntegration);
+        throw new Error('Expected sendViaNovuDemoProvider to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('not configured on this deployment');
+        expect(messageCreate.called).to.equal(false);
+      }
+    });
+
+    it('persists a Message with providerId Novu after successful send for quota accounting', async () => {
+      const messageCreate = sinon.stub().resolves({ _id: 'msg-1' });
+      const service = makeSendViaService({ messageCreate });
+      const sendStub = sinon.stub().resolves({ id: 'sg-123' });
+      sinon.stub(MailFactory.prototype, 'getHandler').returns({ send: sendStub });
+
+      const result = await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams, demoIntegration);
+
+      expect(result).to.deep.equal({ messageId: 'sg-123' });
+      expect(sendStub.calledOnce).to.equal(true);
+      expect(messageCreate.calledOnce).to.equal(true);
+      expect(messageCreate.firstCall.args[0]).to.include({
+        _environmentId: 'env-id',
+        _organizationId: 'org-id',
+        channel: ChannelTypeEnum.EMAIL,
+        providerId: EmailProviderIdEnum.Novu,
+        email: 'user@example.com',
+        subject: 'Hello',
+        transactionId: 'sg-123',
+      });
+      expect(messageCreate.firstCall.args[0].tags).to.deep.equal(['agent-demo-reply']);
+    });
+
+    it('throws when the Novu demo quota is exhausted', async () => {
+      const calculateLimit = {
+        execute: sinon.stub().resolves({ limit: 300, count: 300 }),
+      };
+      const messageCreate = sinon.stub().resolves({ _id: 'msg-1' });
+      const service = makeSendViaService({ calculateLimit, messageCreate });
+
+      try {
+        await (service as any).sendViaNovuDemoProvider(demoConfig, demoParams, demoIntegration);
+        throw new Error('Expected sendViaNovuDemoProvider to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+        expect((err as BadRequestException).message).to.include('quota exhausted');
+        expect(messageCreate.called).to.equal(false);
+      }
     });
   });
 });

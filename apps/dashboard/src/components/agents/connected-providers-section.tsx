@@ -11,20 +11,24 @@ import {
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { buildRoute } from '@/utils/routes';
 
 type ConnectedProvidersSectionProps = {
   agent: AgentResponse;
 };
 
-function ProviderCard({ link }: { link: AgentIntegrationLink }) {
+function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) {
   const providerMeta = novuProviders.find((p) => p.id === link.integration.providerId);
   const displayName = providerMeta?.displayName ?? link.integration.name;
 
   return (
-    <div className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5">
+    <Link
+      to={to}
+      className="flex min-w-[150px] max-w-[160px] flex-1 flex-col gap-1.5 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
       <div
-        className="border-stroke-soft/50 flex min-h-[80px] items-center justify-center rounded-lg border-[0.5px] px-6 py-4"
+        className="border-stroke-soft/50 flex min-h-[80px] items-center justify-center rounded-lg border-[0.5px] px-6 py-4 transition-colors hover:border-stroke-soft"
         style={{
           backgroundImage:
             'linear-gradient(22deg, rgba(200,200,200,0) 51%, rgba(200,200,200,0.1) 88%), linear-gradient(90deg, rgba(251,251,251,0.1) 0%, rgba(251,251,251,0.1) 100%), linear-gradient(90deg, #fff 0%, #fff 100%)',
@@ -35,7 +39,7 @@ function ProviderCard({ link }: { link: AgentIntegrationLink }) {
         </div>
       </div>
       <span className="text-text-strong text-label-xs font-medium leading-4">{displayName}</span>
-    </div>
+    </Link>
   );
 }
 
@@ -54,7 +58,7 @@ function AddProviderCard({ to }: { to: string }) {
         </div>
       </div>
       <div className="flex items-center gap-1">
-        <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">Add new provider</span>
+        <span className="text-text-sub text-label-xs flex-1 font-medium leading-4">Add new channel</span>
         <RiArrowRightSLine className="text-text-sub size-4 shrink-0" />
       </div>
     </Link>
@@ -73,6 +77,7 @@ function ProviderCardSkeleton() {
 export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionProps) {
   const { currentEnvironment } = useEnvironment();
   const location = useLocation();
+  const agentRoutes = useAgentRoutes();
 
   const integrationsQuery = useQuery({
     queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
@@ -85,7 +90,7 @@ export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionPr
     enabled: Boolean(currentEnvironment && agent.identifier),
   });
 
-  const integrationsTabPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+  const integrationsTabPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',
@@ -96,15 +101,15 @@ export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionPr
 
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
-      <div className="flex items-center justify-between px-2 py-1.5">
+      <div className="flex items-center justify-between px-2 pt-1 pb-1.5">
         <span className="text-text-soft font-code text-[11px] font-medium uppercase leading-4 tracking-wider">
-          Connected providers
+          Connected channels
         </span>
         <Link
           to={integrationsTabPath}
-          className="text-text-sub hover:text-text-strong flex items-center gap-0.5 rounded-lg p-1.5 text-label-xs font-medium transition-colors"
+          className="text-text-sub hover:text-text-strong flex items-center gap-0.5 rounded-lg text-label-xs font-medium transition-colors p-0"
         >
-          Manage integrations
+          Manage channels
           <RiArrowRightLine className="size-4" />
         </Link>
       </div>
@@ -119,7 +124,15 @@ export function ConnectedProvidersSection({ agent }: ConnectedProvidersSectionPr
           ) : (
             <>
               {links.map((link) => (
-                <ProviderCard key={link._id} link={link} />
+                <ProviderCard
+                  key={link._id}
+                  link={link}
+                  to={`${buildRoute(agentRoutes.integrationDetail, {
+                    environmentSlug: currentEnvironment?.slug ?? '',
+                    agentIdentifier: encodeURIComponent(agent.identifier),
+                    integrationIdentifier: encodeURIComponent(link.integration.identifier),
+                  })}${location.search}`}
+                />
               ))}
               <AddProviderCard to={integrationsTabPath} />
             </>

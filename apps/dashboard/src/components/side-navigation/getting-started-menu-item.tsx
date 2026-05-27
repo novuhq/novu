@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { motion } from 'motion/react';
 import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useEnvironment } from '@/context/environment/hooks';

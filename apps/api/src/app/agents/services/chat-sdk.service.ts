@@ -1,28 +1,47 @@
+import { randomUUID } from 'node:crypto';
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import * as https from 'node:https';
 import { BadGatewayException, BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import {
+  areNovuEmailCredentialsSet,
+  assertSafeOutboundUrl,
+  buildAgentSharedInbox,
   CacheService,
+  CalculateLimitNovuIntegration,
   decryptCredentials,
+  isAgentSharedInboxEnabled,
   isPrivateIp,
   MailFactory,
   PinoLogger,
-  validateUrlSsrf,
+  SsrfBlockedError,
 } from '@novu/application-generic';
-import { IntegrationRepository } from '@novu/dal';
-import type { SentMessageInfo } from '@novu/framework';
+import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
+import type { AgentAction, SentMessageInfo } from '@novu/framework';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
-import type { AdapterPostableMessage, Chat, EmojiValue, Message, ReactionEvent, Thread } from 'chat';
+import type { AdapterPostableMessage, Chat, EmojiValue, Message, PlanModel, ReactionEvent, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
-import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
 import type { FileRef, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { esmImport } from '../utils/esm-import';
 import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
-import { AgentConfigResolver, ResolvedAgentConfig } from './agent-config-resolver.service';
-import { AgentInboundHandler } from './agent-inbound-handler.service';
+import { AgentConfigResolver, AgentConfigResolveSource, ResolvedAgentConfig } from './agent-config-resolver.service';
+import { AgentEmailActionClaims, AgentEmailActionTokenService } from './agent-email-action-token.service';
+import type { InboundReactionEvent } from './agent-inbound-handler.service';
+
+export interface InboundCallbacks {
+  onMessage: (agentId: string, config: ResolvedAgentConfig, thread: Thread, message: Message) => Promise<void>;
+  onAction: (
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    action: AgentAction,
+    userId: string
+  ) => Promise<void>;
+  onReaction: (agentId: string, config: ResolvedAgentConfig, event: InboundReactionEvent) => Promise<void>;
+}
 
 function getErrorResponseBody(err: unknown): unknown {
   if (!err || typeof err !== 'object') {
@@ -63,6 +82,44 @@ function wrapMsgId(id: string): string {
   return trimmed.startsWith('<') && trimmed.endsWith('>') ? trimmed : `<${trimmed}>`;
 }
 
+function resolveAgentEmailSenderName(config: ResolvedAgentConfig): string {
+  return config.credentials.senderName?.trim() || config.agentName;
+}
+
+/**
+ * Thrown by `ChatSdkService.processEmailAction` when a failure is provably pre-dispatch —
+ * i.e. token validation, agent-config lookup, or chat/adapter setup failed before the chat
+ * SDK had a chance to invoke the agent's `onAction` handler. Callers can safely retry these
+ * via single-use token release. Any other error (including raw exceptions out of
+ * `chat.processAction`) MUST be treated as potentially post-dispatch and not replayed.
+ */
+export class AgentActionPreDispatchError extends Error {
+  readonly preDispatch = true as const;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.name = 'AgentActionPreDispatchError';
+    if (cause !== undefined) {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
+
+/**
+ * Extracts the recipient email address from an encoded email thread ID. The email adapter's
+ * ThreadResolver encodes thread IDs as `email:<encodedRecipient>:<rootMessageIdHash>`; we
+ * reverse that here so the token claims can carry the recipient as the `platformUserId` used
+ * for subscriber resolution on the click handler side.
+ */
+function extractRecipientFromThreadId(threadId: string): string {
+  const parts = threadId.split(':');
+  if (parts.length !== 3 || parts[0] !== 'email' || !parts[1]) {
+    throw new Error(`Cannot extract recipient from invalid email thread id: ${threadId}`);
+  }
+
+  return decodeURIComponent(parts[1]);
+}
+
 /**
  * ICredentials field mapping per platform adapter:
  *
@@ -90,8 +147,12 @@ const MAX_AGGREGATE_FILE_BYTES = 50 * 1024 * 1024;
 const MAX_INLINE_FILE_BASE64_CHARS = 7_000_000;
 const FILE_FETCH_TIMEOUT_MS = 10_000;
 const MAX_FILE_FETCH_REDIRECTS = 3;
-const SUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.SLACK, AgentPlatformEnum.TEAMS]);
-const UNSUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.EMAIL, AgentPlatformEnum.WHATSAPP]);
+const SUPPORTED_FILE_PLATFORMS = new Set<string>([
+  AgentPlatformEnum.SLACK,
+  AgentPlatformEnum.TEAMS,
+  AgentPlatformEnum.WHATSAPP,
+]);
+const UNSUPPORTED_FILE_PLATFORMS = new Set<string>([AgentPlatformEnum.EMAIL]);
 // EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS is a deliberate allowlist for providers that preserve custom MIME
 // alternatives used by Gmail reactions; Braze, Brevo, Mailgun, Mailjet, Mailtrap, Mandrill, Plunk, Postmark,
 // Resend, SparkPost, and similar providers are excluded until their SDK paths are verified.
@@ -134,13 +195,16 @@ type PinnedFileResponse = {
 export class ChatSdkService implements OnModuleDestroy {
   private readonly instances: LRUCache<string, CachedChat>;
   private readonly pendingCreations = new Map<string, Promise<Chat>>();
+  private inboundCallbacks: InboundCallbacks | null = null;
 
   constructor(
     private readonly logger: PinoLogger,
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly inboundHandler: AgentInboundHandler,
-    private readonly integrationRepository: IntegrationRepository
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly actionTokenService: AgentEmailActionTokenService,
+    private readonly calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
+    private readonly messageRepository: MessageRepository
   ) {
     this.logger.setContext(this.constructor.name);
     this.instances = new LRUCache<string, CachedChat>({
@@ -149,13 +213,22 @@ export class ChatSdkService implements OnModuleDestroy {
       dispose: (cached, key) => {
         cached.chat.shutdown().catch((err) => {
           this.logger.error(err, `Failed to shut down evicted Chat instance ${key}`);
+          captureAgentException(err, { component: 'chat-sdk', operation: 'shutdown-evicted', extra: { instanceKey: key } });
         });
       },
     });
   }
 
-  async handleWebhook(agentId: string, integrationIdentifier: string, req: ExpressRequest, res: ExpressResponse) {
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+  async handleWebhook(
+    agentId: string,
+    integrationIdentifier: string,
+    req: ExpressRequest,
+    res: ExpressResponse,
+    options: { source: AgentConfigResolveSource }
+  ) {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier, {
+      source: options.source,
+    });
     const { platform } = config;
     const instanceKey = `${agentId}:${integrationIdentifier}`;
 
@@ -167,7 +240,69 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const webRequest = toWebRequest(req);
     const webResponse = await handler(webRequest);
+
     await sendWebResponse(webResponse, res);
+  }
+
+  /**
+   * Dispatches a verified email-button click into the chat SDK so it flows through the same
+   * `chat.onAction` → `AgentInboundHandler.handleAction` → bridge `onAction` path that
+   * inbound platforms (Slack/Teams) already use. Called from the public email-action endpoint
+   * after token verification and single-use replay protection.
+   *
+   * The implementation is split into a *pre-dispatch* phase (config resolution, chat-instance
+   * lookup, adapter availability check) and a *dispatch* phase (`chat.processAction`). Errors
+   * raised by the pre-dispatch phase are wrapped in `AgentActionPreDispatchError` so the
+   * controller can safely release the single-use token and let the user retry. Errors raised
+   * by the dispatch phase propagate as-is — by then the chat SDK may have already invoked the
+   * agent's `onAction` handler with partial side effects, and re-releasing the token would
+   * permit a replay that duplicates non-idempotent downstream work.
+   */
+  async processEmailAction(claims: AgentEmailActionClaims): Promise<void> {
+    const { agentId, integrationIdentifier } = claims;
+
+    let chat: Chat;
+    let emailAdapter: ReturnType<Chat['getAdapter']>;
+    try {
+      const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+
+      if (config.platform !== AgentPlatformEnum.EMAIL) {
+        throw new BadRequestException(
+          `Agent ${agentId} integration ${integrationIdentifier} is not configured for the email platform`
+        );
+      }
+
+      const instanceKey = `${agentId}:${integrationIdentifier}`;
+      chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+      emailAdapter = chat.getAdapter(AgentPlatformEnum.EMAIL);
+      if (!emailAdapter) {
+        throw new BadRequestException(`Email adapter not available for agent ${agentId}`);
+      }
+    } catch (err) {
+      throw new AgentActionPreDispatchError('Failed to resolve agent context before dispatching email action', err);
+    }
+
+    // From here on, the chat SDK may have already invoked the user's `onAction` handler by
+    // the time an error is raised — do NOT retry these failures via token re-release.
+    await chat.processAction(
+      {
+        adapter: emailAdapter,
+        actionId: claims.actionId,
+        value: claims.value,
+        messageId: claims.messageId,
+        threadId: claims.threadId,
+        user: {
+          userId: claims.userIdentifier,
+          userName: claims.userIdentifier,
+          fullName: claims.userIdentifier,
+          isBot: false,
+          isMe: false,
+        },
+        raw: {},
+      },
+      undefined
+    );
   }
 
   async onModuleDestroy() {
@@ -176,6 +311,7 @@ export class ChatSdkService implements OnModuleDestroy {
         await cached.chat.shutdown();
       } catch (err) {
         this.logger.error(err, `Failed to shut down Chat instance ${key}`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'shutdown', extra: { instanceKey: key } });
       }
     });
 
@@ -183,30 +319,31 @@ export class ChatSdkService implements OnModuleDestroy {
     this.instances.clear();
   }
 
+  registerInboundCallbacks(callbacks: InboundCallbacks): void {
+    this.inboundCallbacks = callbacks;
+  }
+
   async postToConversation(
     agentId: string,
     integrationIdentifier: string,
     platform: string,
-    serializedThread: Record<string, unknown>,
+    platformThreadId: string,
     content: ReplyContentDto
   ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
 
-    const { ThreadImpl } = await esmImport('chat');
-    const adapter = chat.getAdapter(platform);
-    const thread = ThreadImpl.fromJSON(serializedThread, adapter);
+    // `chat.thread()` (chat@4.27+) infers the adapter from the threadId prefix and
+    // returns a Thread already wired to this Chat instance's state adapter, so we
+    // avoid rehydrating from a serialized blob and don't trip the "No Chat singleton
+    // registered" check that `ThreadImpl.fromJSON` hits for card/postable replies.
+    const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.prepareContentForDelivery(content, platform, agentId);
 
-    let postPromise: Promise<{ id: string; threadId: string }>;
-    if (deliveryContent.card) {
-      postPromise = thread.post(deliveryContent.card);
-    } else {
-      postPromise = thread.post({ markdown: deliveryContent.markdown ?? '', files: deliveryContent.files });
-    }
+    const postArg = this.buildAdapterPostableMessage(deliveryContent);
 
-    const sent = await postPromise.catch(toDeliveryError);
+    const sent = await thread.post(postArg).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
   }
@@ -216,7 +353,7 @@ export class ChatSdkService implements OnModuleDestroy {
     integrationIdentifier: string,
     platformUserId: string,
     content: ReplyContentDto
-  ): Promise<SentMessageInfo & { serializedThread: Record<string, unknown> }> {
+  ): Promise<SentMessageInfo> {
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -224,12 +361,7 @@ export class ChatSdkService implements OnModuleDestroy {
     const dmThread = await chat.openDM(platformUserId);
     const deliveryContent = await this.prepareContentForDelivery(content, config.platform, agentId);
 
-    const postArg = deliveryContent.card
-      ? (deliveryContent.card as unknown as AdapterPostableMessage)
-      : ({
-          markdown: deliveryContent.markdown ?? '',
-          files: deliveryContent.files,
-        } as unknown as AdapterPostableMessage);
+    const postArg = this.buildAdapterPostableMessage(deliveryContent);
 
     const sent = await dmThread.post(postArg).catch(toDeliveryError);
 
@@ -238,18 +370,7 @@ export class ChatSdkService implements OnModuleDestroy {
     // when the user replies, keeping inbound and outbound on the same conversation.
     const platformThreadId = sent.threadId.endsWith(':') ? `${sent.threadId}${sent.id}` : sent.threadId;
 
-    // DM threads opened via openDM() may not have a currentMessage, so toJSON()
-    // can fail. Build a minimal serialized thread that ThreadImpl.fromJSON() can
-    // reconstruct for later replies.
-    const serializedThread: Record<string, unknown> = {
-      id: platformThreadId,
-      channelId: dmThread.channelId,
-      isDM: true,
-      platform: config.platform,
-      currentMessage: { id: sent.id, threadId: sent.threadId },
-    };
-
-    return { messageId: sent.id, platformThreadId, serializedThread };
+    return { messageId: sent.id, platformThreadId };
   }
 
   async editInConversation(
@@ -271,6 +392,8 @@ export class ChatSdkService implements OnModuleDestroy {
 
     const deliveryContent = await this.prepareContentForDelivery(content, platform, agentId);
 
+    const editPayload = this.buildAdapterPostableMessage(deliveryContent);
+
     let editPromise: Promise<{ id: string; threadId: string }>;
     if (deliveryContent.card) {
       editPromise = adapter.editMessage(
@@ -279,10 +402,7 @@ export class ChatSdkService implements OnModuleDestroy {
         deliveryContent.card as unknown as AdapterPostableMessage
       );
     } else {
-      editPromise = adapter.editMessage(platformThreadId, platformMessageId, {
-        markdown: deliveryContent.markdown ?? '',
-        files: deliveryContent.files,
-      } as unknown as AdapterPostableMessage);
+      editPromise = adapter.editMessage(platformThreadId, platformMessageId, editPayload);
     }
 
     const edited = await editPromise.catch(toDeliveryError);
@@ -290,18 +410,52 @@ export class ChatSdkService implements OnModuleDestroy {
     return { messageId: edited.id, platformThreadId: edited.threadId };
   }
 
+  async postPlanObject(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    platformThreadId: string,
+    model: PlanModel
+  ): Promise<SentMessageInfo | null> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const adapter = chat.getAdapter(platform);
+    if (typeof adapter.postObject !== 'function') {
+      return null;
+    }
+
+    const sent = await adapter.postObject(platformThreadId, 'plan', model).catch(toDeliveryError);
+
+    return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  async editPlanObject(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    platformThreadId: string,
+    platformMessageId: string,
+    model: PlanModel
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const adapter = chat.getAdapter(platform);
+    if (typeof adapter.editObject !== 'function') {
+      return;
+    }
+
+    await adapter.editObject(platformThreadId, platformMessageId, 'plan', model).catch(toDeliveryError);
+  }
+
   private async prepareContentForDelivery(
     content: ReplyContentDto,
     platform: string = AgentPlatformEnum.SLACK,
     agentId?: string
   ): Promise<ChatSdkReplyContent> {
-    if (content.card && content.files?.length) {
-      throw new BadRequestException({
-        error: 'attachment_failed',
-        message: 'File attachments are only supported with string or markdown replies, not cards.',
-      });
-    }
-
     if (!content.files?.length) {
       return content as ChatSdkReplyContent;
     }
@@ -368,6 +522,25 @@ export class ChatSdkService implements OnModuleDestroy {
       ...content,
       files,
     };
+  }
+
+  private buildAdapterPostableMessage(deliveryContent: ChatSdkReplyContent): AdapterPostableMessage {
+    if (deliveryContent.card) {
+      const payload: { card: unknown; files?: ChatSdkFile[] } = {
+        card: deliveryContent.card,
+      };
+
+      if (deliveryContent.files?.length) {
+        payload.files = deliveryContent.files;
+      }
+
+      return payload as unknown as AdapterPostableMessage;
+    }
+
+    return {
+      markdown: deliveryContent.markdown ?? '',
+      files: deliveryContent.files,
+    } as unknown as AdapterPostableMessage;
   }
 
   private async prepareFileForDelivery(file: FileRef, index: number): Promise<MaterializedFile> {
@@ -526,7 +699,16 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   private async validateFileUrl(url: string): Promise<string | null> {
-    return validateUrlSsrf(url);
+    try {
+      assertSafeOutboundUrl(url);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        return err.message;
+      }
+      throw err;
+    }
+
+    return null;
   }
 
   private async requestPinnedFileUrl(url: string, file: FileRef, index: number): Promise<PinnedFileResponse> {
@@ -743,7 +925,7 @@ export class ChatSdkService implements OnModuleDestroy {
     config: ResolvedAgentConfig,
     adapterFingerprint: string
   ): Promise<Chat> {
-    const chat = await this.createChatInstance(instanceKey, platform, config);
+    const chat = await this.createChatInstance(instanceKey, agentId, platform, config);
     await chat.initialize();
     const cached: CachedChat = { chat, config, adapterFingerprint };
     this.registerEventHandlers(agentId, cached);
@@ -786,6 +968,16 @@ export class ChatSdkService implements OnModuleDestroy {
       outboundIntegrationId: c.outboundIntegrationId ?? null,
       useFromAddressOverride: c.useFromAddressOverride ?? null,
       fromAddressOverride: c.fromAddressOverride ?? null,
+      // Email-specific fields closed over by the sendEmail callback (demo path):
+      // a slug rename, routing-key rotation, shared-inbox toggle, or sender
+      // rebrand must rebuild the cached adapter otherwise the agent keeps
+      // replying from the stale From/Reply-To address until the LRU TTL
+      // expires.
+      emailSlugPrefix: c.emailSlugPrefix ?? null,
+      inboxRoutingKey: c.inboxRoutingKey ?? null,
+      sharedInboxDisabled: c.sharedInboxDisabled ?? null,
+      senderName: c.senderName ?? null,
+      agentName: config.agentName,
     });
   }
 
@@ -809,8 +1001,7 @@ export class ChatSdkService implements OnModuleDestroy {
     return async (params) => {
       if (!outboundIntegrationId) {
         throw new BadRequestException(
-          'Email agent integration requires an outbound email provider (outboundIntegrationId). ' +
-            'Configure one in the agent email setup.'
+          'Email agent integration is missing outboundIntegrationId. Reconfigure the agent email setup.'
         );
       }
 
@@ -837,6 +1028,10 @@ export class ChatSdkService implements OnModuleDestroy {
         throw new BadRequestException(
           `Outbound email integration ${outboundIntegrationId} (${integration.providerId}) is inactive`
         );
+      }
+
+      if (integration.providerId === EmailProviderIdEnum.Novu) {
+        return this.sendViaNovuDemoProvider(config, params, integration);
       }
 
       const hasUnsupportedAlternatives =
@@ -875,13 +1070,16 @@ export class ChatSdkService implements OnModuleDestroy {
       // outbound From is rewritten to the sending provider's configured sender (or a per-agent
       // override). When neither override nor outbound.from is set, we fall back to the agent
       // address for From and skip Reply-To — preserving the legacy behavior.
-      const agentInboundAddress = params.from;
+      // Prefer the shared-inbox address (cloud) so Reply-To always routes back to the agent
+      // even when the SDK has no DomainRoute-derived address handy.
+      const agentInboundAddress = this.resolveAgentInboundAddress(config, params.from);
       const overrideFrom = config.credentials.useFromAddressOverride
         ? config.credentials.fromAddressOverride?.trim() || undefined
         : undefined;
       const outboundFrom = (decrypted.from as string | undefined)?.trim() || undefined;
-      const effectiveFrom = overrideFrom || outboundFrom || agentInboundAddress;
+      const effectiveFrom = overrideFrom || agentInboundAddress || outboundFrom;
       const replyToHeader = effectiveFrom !== agentInboundAddress ? agentInboundAddress : undefined;
+      const senderName = resolveAgentEmailSenderName(config);
 
       const mailFactory = new MailFactory();
       const handler = mailFactory.getHandler({ ...integration, credentials: decrypted }, effectiveFrom);
@@ -894,7 +1092,7 @@ export class ChatSdkService implements OnModuleDestroy {
         alternatives: params.alternatives,
         from: effectiveFrom,
         ...(replyToHeader ? { replyTo: replyToHeader } : {}),
-        senderName: config.credentials.senderName || undefined,
+        senderName,
         headers: {
           ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
           ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
@@ -910,8 +1108,176 @@ export class ChatSdkService implements OnModuleDestroy {
     };
   }
 
+  /**
+   * Resolve the canonical inbound address used for Reply-To. Preference order:
+   *
+   *   1. The synthetic shared inbox `{slug}-{inboxRoutingKey}@<shared-domain>`
+   *      when the cloud feature is enabled and the shared inbox itself is not
+   *      disabled. System-managed and always works.
+   *   2. The fallback supplied by the chat-adapter-email SDK — already a
+   *      custom-domain agent route configured by the user (the SDK builds it
+   *      from `DomainRoute` rows), or whatever the platform passed on
+   *      self-hosted.
+   *
+   * Replies must always reach an inbox the worker will actually process, so
+   * we deliberately do not return the shared inbox here when
+   * `sharedInboxDisabled` is set — the worker would drop those messages and
+   * we fall through to the SDK's custom-domain address instead.
+   */
+  private resolveAgentInboundAddress(config: ResolvedAgentConfig, fallback: string): string {
+    const slug = config.credentials.emailSlugPrefix;
+    const inboxRoutingKey = config.credentials.inboxRoutingKey;
+    const sharedDisabled = Boolean(config.credentials.sharedInboxDisabled);
+    if (isAgentSharedInboxEnabled() && slug && inboxRoutingKey && !sharedDisabled) {
+      try {
+        return buildAgentSharedInbox(slug, inboxRoutingKey);
+      } catch (err) {
+        this.logger.warn({ err, agentId: config.agentId }, 'Falling back to params.from - shared inbox build failed');
+        captureAgentWarning(err, {
+          component: 'chat-sdk',
+          operation: 'resolve-agent-inbound-address',
+          agentId: config.agentId,
+        });
+      }
+    }
+
+    return fallback;
+  }
+
+  /**
+   * Outbound demo path: the agent is wired to the bundled Novu Email demo
+   * provider row. We override the integration's stored credentials with the
+   * cloud demo API key (`NOVU_EMAIL_INTEGRATION_API_KEY`) and force `From` to
+   * `{slug}-{inboxRoutingKey}@<shared-domain>` so replies route back to the
+   * same inbox. Quota-gated by the same per-environment 300/month cap as
+   * workflow notification emails.
+   *
+   * Refuses to send when the shared inbox prerequisites aren't met because
+   * the demo path can't recover a Reply-To without it — at that point the
+   * user must attach a real outbound email provider.
+   */
+  private async sendViaNovuDemoProvider(
+    config: ResolvedAgentConfig,
+    params: {
+      from: string;
+      to: string;
+      subject: string;
+      html: string;
+      text?: string;
+      alternatives?: Array<{ contentType: string; content: string | Buffer }>;
+      inReplyTo?: string;
+      references?: string;
+      messageId?: string;
+    },
+    integration: IntegrationEntity
+  ): Promise<{ messageId?: string }> {
+    if (!isAgentSharedInboxEnabled() || !config.credentials.emailSlugPrefix || !config.credentials.inboxRoutingKey) {
+      throw new BadRequestException(
+        'Email agent integration requires either a shared agent inbox or a custom outbound email provider. ' +
+          'Configure one in the agent email setup.'
+      );
+    }
+
+    if (config.credentials.sharedInboxDisabled) {
+      throw new BadRequestException(
+        'The Novu demo sender requires the shared inbox to be enabled. ' +
+          'Re-enable it or attach an outbound email provider.'
+      );
+    }
+
+    const limit = await this.calculateLimitNovuIntegration.execute({
+      channelType: ChannelTypeEnum.EMAIL,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    });
+    if (limit && limit.count >= limit.limit) {
+      throw new BadRequestException(
+        `Novu demo email quota exhausted for this environment (${limit.count}/${limit.limit} this month). Attach an outbound email provider (e.g. SendGrid) to remove this cap.`
+      );
+    }
+
+    if (!areNovuEmailCredentialsSet()) {
+      throw new BadRequestException(
+        'Novu demo email is not configured on this deployment. Attach an outbound email provider to send replies.'
+      );
+    }
+
+    const from = buildAgentSharedInbox(config.credentials.emailSlugPrefix, config.credentials.inboxRoutingKey);
+    const senderName = resolveAgentEmailSenderName(config);
+
+    // The Novu demo integration row's stored credentials are empty by design —
+    // the real API key lives in the deployment's env so a single Novu-managed
+    // SendGrid account fans out across every org's demo sender. We rebuild
+    // credentials on every send rather than mutating the row.
+    const demoIntegration: IntegrationEntity = {
+      ...integration,
+      credentials: {
+        apiKey: process.env.NOVU_EMAIL_INTEGRATION_API_KEY,
+        from,
+        senderName,
+        ipPoolName: 'Demo',
+      },
+    };
+
+    const mailFactory = new MailFactory();
+    const handler = mailFactory.getHandler(demoIntegration, from);
+
+    const mailOptions: IEmailOptions = {
+      to: [params.to],
+      subject: params.subject,
+      html: params.html,
+      text: params.text,
+      alternatives: params.alternatives,
+      from,
+      senderName,
+      headers: {
+        ...(params.messageId ? { 'Message-ID': wrapMsgId(params.messageId) } : {}),
+        ...(params.inReplyTo ? { 'In-Reply-To': wrapMsgId(params.inReplyTo) } : {}),
+        ...(params.references
+          ? { References: params.references.split(/\s+/).filter(Boolean).map(wrapMsgId).join(' ') }
+          : {}),
+      },
+    };
+
+    const result = await handler.send(mailOptions).catch(toDeliveryError);
+
+    const messageIdForReturn = result?.id || params.messageId || '';
+
+    try {
+      await this.messageRepository.create({
+        _environmentId: config.environmentId,
+        _organizationId: config.organizationId,
+        channel: ChannelTypeEnum.EMAIL,
+        providerId: EmailProviderIdEnum.Novu,
+        email: params.to,
+        subject: params.subject,
+        transactionId: messageIdForReturn || randomUUID(),
+        payload: {
+          agentId: config.agentId,
+          html: params.html,
+          text: params.text,
+        },
+        tags: ['agent-demo-reply'],
+      });
+    } catch (err) {
+      this.logger.warn(
+        { err, environmentId: config.environmentId, agentId: config.agentId },
+        'Failed to persist Novu demo email message for quota accounting'
+      );
+      captureAgentWarning(err, {
+        component: 'chat-sdk',
+        operation: 'persist-demo-email-quota',
+        agentId: config.agentId,
+        extra: { environmentId: config.environmentId },
+      });
+    }
+
+    return { messageId: messageIdForReturn };
+  }
+
   private async createChatInstance(
     instanceKey: string,
+    agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
   ): Promise<Chat> {
@@ -920,7 +1286,7 @@ export class ChatSdkService implements OnModuleDestroy {
       esmImport('@chat-adapter/state-ioredis'),
     ]);
 
-    const adapters = await this.buildAdapters(platform, config);
+    const adapters = await this.buildAdapters(agentId, platform, config);
     const client = this.cacheService.client;
     if (!client) {
       throw new Error('Cache in-memory provider client is not available for Conversational SDK state adapter');
@@ -942,12 +1308,23 @@ export class ChatSdkService implements OnModuleDestroy {
     return {
       debug: (msg: string, ctx?: Record<string, unknown>) => this.logger.debug(ctx ?? {}, msg),
       info: (msg: string, ctx?: Record<string, unknown>) => this.logger.info(ctx ?? {}, msg),
-      warn: (msg: string, ctx?: Record<string, unknown>) => this.logger.warn(ctx ?? {}, msg),
-      error: (msg: string, ctx?: Record<string, unknown>) => this.logger.error(ctx ?? {}, msg),
+      warn: (msg: string, ctx?: Record<string, unknown>) => {
+        this.logger.warn(ctx ?? {}, msg);
+        if (ctx?.err) {
+          captureAgentWarning(ctx.err, { component: 'chat-sdk', operation: 'chat-state-warn', extra: { message: msg } });
+        }
+      },
+      error: (msg: string, ctx?: Record<string, unknown>) => {
+        this.logger.error(ctx ?? {}, msg);
+        if (ctx?.err) {
+          captureAgentException(ctx.err, { component: 'chat-sdk', operation: 'chat-state-error', extra: { message: msg } });
+        }
+      },
     };
   }
 
   private async buildAdapters(
+    agentId: string,
     platform: AgentPlatformEnum,
     config: ResolvedAgentConfig
   ): Promise<Record<string, unknown>> {
@@ -1008,8 +1385,26 @@ export class ChatSdkService implements OnModuleDestroy {
           }),
         };
       }
+      case AgentPlatformEnum.TELEGRAM: {
+        if (!credentials.apiToken || !credentials.token) {
+          throw new BadRequestException(
+            'Telegram agent integration requires a Bot Token and a webhook secret token. ' +
+              'Run the "Configure webhook" step to provision the webhook secret token before this integration can receive messages.'
+          );
+        }
+
+        const { createTelegramAdapter } = await esmImport('@chat-adapter/telegram');
+
+        return {
+          telegram: createTelegramAdapter({
+            botToken: credentials.apiToken,
+            secretToken: credentials.token,
+            mode: 'webhook',
+          }),
+        };
+      }
       case AgentPlatformEnum.EMAIL: {
-        const { senderName, outboundIntegrationId } = credentials;
+        const { outboundIntegrationId } = credentials;
 
         if (!credentials.secretKey) {
           throw new BadRequestException('Email agent integration requires secretKey credentials');
@@ -1019,9 +1414,29 @@ export class ChatSdkService implements OnModuleDestroy {
 
         return {
           email: createNovuEmailAdapter({
-            senderName,
+            senderName: resolveAgentEmailSenderName(config),
             signingSecret: credentials.secretKey,
             sendEmail: this.buildSendEmailCallback(config, outboundIntegrationId),
+            actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
+              const userIdentifier = extractRecipientFromThreadId(threadId);
+              const { url } = await this.actionTokenService.signActionToken({
+                agentId,
+                agentIdentifier: config.agentIdentifier,
+                agentName: config.agentName,
+                integrationIdentifier: config.integrationIdentifier,
+                environmentId: config.environmentId,
+                organizationId: config.organizationId,
+                threadId,
+                messageId,
+                actionId,
+                value,
+                label,
+                style,
+                userIdentifier,
+              });
+
+              return url;
+            },
           }),
         };
       }
@@ -1031,20 +1446,30 @@ export class ChatSdkService implements OnModuleDestroy {
   }
 
   private registerEventHandlers(agentId: string, cached: CachedChat) {
+    if (!this.inboundCallbacks) {
+      this.logger.warn(`[agent:${agentId}] No inbound callbacks registered, skipping event handler setup`);
+
+      return;
+    }
+
+    const callbacks = this.inboundCallbacks;
+
     cached.chat.onNewMention(async (thread: Thread, message: Message) => {
       try {
         await thread.subscribe();
-        await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling new mention`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-new-mention', agentId });
       }
     });
 
     cached.chat.onSubscribedMessage(async (thread: Thread, message: Message) => {
       try {
-        await this.inboundHandler.handle(agentId, cached.config, thread, message, AgentEventEnum.ON_MESSAGE);
+        await callbacks.onMessage(agentId, cached.config, thread, message);
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling subscribed message`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-subscribed-message', agentId });
       }
     });
 
@@ -1056,12 +1481,12 @@ export class ChatSdkService implements OnModuleDestroy {
           return;
         }
 
-        await this.inboundHandler.handleAction(
+        await callbacks.onAction(
           agentId,
           cached.config,
           event.thread as Thread,
           {
-            actionId: event.actionId,
+            id: event.actionId,
             value: event.value,
             sourceMessageId: event.messageId,
           },
@@ -1069,12 +1494,18 @@ export class ChatSdkService implements OnModuleDestroy {
         );
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling action ${event.actionId}`);
+        captureAgentException(err, {
+          component: 'chat-sdk',
+          operation: 'on-action',
+          agentId,
+          extra: { actionId: event.actionId },
+        });
       }
     });
 
     cached.chat.onReaction(async (event: ReactionEvent) => {
       try {
-        await this.inboundHandler.handleReaction(agentId, cached.config, {
+        await callbacks.onReaction(agentId, cached.config, {
           emoji: event.emoji,
           added: event.added,
           messageId: event.messageId,
@@ -1084,6 +1515,7 @@ export class ChatSdkService implements OnModuleDestroy {
         });
       } catch (err) {
         this.logger.error(err, `[agent:${agentId}] Error handling reaction`);
+        captureAgentException(err, { component: 'chat-sdk', operation: 'on-reaction', agentId });
       }
     });
   }

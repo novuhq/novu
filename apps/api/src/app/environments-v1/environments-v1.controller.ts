@@ -18,6 +18,7 @@ import {
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import {
+  ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
@@ -106,7 +107,8 @@ export class EnvironmentsControllerV1 {
     @UserSession() user: UserSessionData,
     @Body() body: CreateEnvironmentRequestDto
   ): Promise<EnvironmentResponseDto> {
-    const canAccessApiKeys = await this.canUserAccessApiKeys(user);
+    const isApiKeyAuth = user.scheme === ApiAuthSchemeEnum.API_KEY;
+    const canAccessApiKeys = isApiKeyAuth ? false : await this.canUserAccessApiKeys(user);
 
     return await this.createEnvironmentUsecase.execute(
       CreateEnvironmentCommand.create({
@@ -132,13 +134,24 @@ export class EnvironmentsControllerV1 {
   @ExternalApiAccessible()
   @SkipPermissionsCheck()
   async listMyEnvironments(@UserSession() user: UserSessionData): Promise<EnvironmentResponseDto[]> {
-    const canAccessApiKeys = await this.canUserAccessApiKeys(user);
+    const isApiKeyAuth = user.scheme === ApiAuthSchemeEnum.API_KEY;
+    const canAccessApiKeys = isApiKeyAuth ? true : await this.canUserAccessApiKeys(user);
+
+    const isListEnvironmentsApiKeysEnabled = await this.featureFlagService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED,
+      defaultValue: false,
+    });
+
+    const shouldScopeApiKeysToCallerEnvironment = isApiKeyAuth && !isListEnvironmentsApiKeysEnabled;
 
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         returnApiKeys: canAccessApiKeys,
+        apiKeysEnvironmentId: shouldScopeApiKeysToCallerEnvironment ? user.environmentId : undefined,
         userId: user._id,
       })
     );

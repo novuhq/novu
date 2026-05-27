@@ -1,5 +1,13 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
-import { CompileTemplate, createHash, normalizeOutboundHttpUrl, validateUrlSsrf } from '@novu/application-generic';
+import {
+  AttachmentRehydrator,
+  assertSafeOutboundUrl,
+  CompileTemplate,
+  createHash,
+  normalizeOutboundHttpUrl,
+  SsrfBlockedError,
+  safeOutboundJsonRequest,
+} from '@novu/application-generic';
 import {
   JobEntity,
   JobRepository,
@@ -8,8 +16,7 @@ import {
   NotificationEntity,
   NotificationTemplateEntity,
 } from '@novu/dal';
-import { StepTypeEnum } from '@novu/shared';
-import axios from 'axios';
+import { InboundEmailAttachment, StepTypeEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 
 const LOG_CONTEXT = 'ReplyToStrategy';
@@ -19,7 +26,8 @@ export class ReplyToStrategy {
   constructor(
     private jobRepository: JobRepository,
     private messageRepository: MessageRepository,
-    private compileTemplate: CompileTemplate
+    private compileTemplate: CompileTemplate,
+    private attachmentRehydrator: AttachmentRehydrator
   ) {}
 
   async execute(command: InboundEmailParseCommand): Promise<void> {
@@ -56,12 +64,21 @@ export class ReplyToStrategy {
       this.throwError('Reply callback URL blocked (SSRF): Invalid URL format.');
     }
 
-    const ssrfError = await validateUrlSsrf(requestUrl);
-
-    if (ssrfError) {
-      this.throwError(`Reply callback URL blocked (SSRF): ${ssrfError}`);
+    try {
+      assertSafeOutboundUrl(requestUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        this.throwError(`Reply callback URL blocked (SSRF): ${err.message}`);
+      }
+      throw err;
     }
 
+    // HMAC is built only after the URL passes the synchronous policy check.
+    // safeOutboundJsonRequest below performs the connect-time DNS guard and
+    // re-runs the policy on every redirect target.
+    const rehydratedAttachments: InboundEmailAttachment[] = await this.attachmentRehydrator.rehydrate(
+      command.attachments
+    );
     const userPayload: IUserWebhookPayload = {
       hmac: createHash(environment?.apiKeys[0]?.key, subscriber.subscriberId) || '',
       transactionId,
@@ -70,10 +87,17 @@ export class ReplyToStrategy {
       template,
       notification,
       message,
-      mail: command,
+      mail: { ...command, attachments: rehydratedAttachments },
     };
 
-    await axios.post(requestUrl, userPayload);
+    try {
+      await safeOutboundJsonRequest({ url: requestUrl, method: 'POST', body: userPayload });
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        this.throwError(`Reply callback URL blocked (SSRF): ${err.message}`);
+      }
+      throw err;
+    }
   }
 
   private splitTo(address: string) {
@@ -128,7 +152,9 @@ export class ReplyToStrategy {
   }
 }
 
-class MailMetadata extends InboundEmailParseCommand {}
+type MailMetadata = Omit<InboundEmailParseCommand, 'attachments'> & {
+  attachments?: InboundEmailAttachment[];
+};
 
 export interface IUserWebhookPayload {
   transactionId: string;

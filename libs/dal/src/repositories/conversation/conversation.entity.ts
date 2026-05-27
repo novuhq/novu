@@ -26,10 +26,16 @@ export interface ConversationChannel {
   _integrationId: string;
   /** Unique thread identifier on the platform (e.g. Slack channel+ts, GitHub PR number) */
   platformThreadId: string;
-  /** Chat SDK SerializedThread — stored for reply delivery via ThreadImpl.fromJSON() */
-  serializedThread?: Record<string, unknown>;
   /** Platform message ID of the thread-starting message */
   firstPlatformMessageId?: string;
+}
+
+export interface ConversationTokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens: number;
+  cacheCreationTokens: number;
+  totalTokens: number;
 }
 
 export class ConversationEntity {
@@ -59,6 +65,20 @@ export class ConversationEntity {
 
   /** Truncated preview of the most recent message (max 200 chars) */
   lastMessagePreview?: string;
+
+  /** Provider-side session ID (e.g. Anthropic conversation_id) managed by thalamus */
+  externalSessionId?: string;
+
+  /**
+   * Anthropic vault id (`vlt_…`) that was attached to `externalSessionId` when the
+   * managed session was created. Thalamus only applies `vault_ids` at session
+   * creation, so the dispatch flow rebinds the session when the resolved vault
+   * changes between turns. Tracked here (not in `metadata`) so the value can't
+   * be overwritten by customer metadata signals from the bridge.
+   */
+  managedSessionVaultId?: string;
+
+  tokenUsage?: ConversationTokenUsage;
 
   _environmentId: EnvironmentId;
 

@@ -20,6 +20,7 @@ import type {
   Signal,
   TriggerRecipientsPayload,
 } from './agent.types';
+import { AgentEventEnum } from './agent.types';
 
 const MAX_INLINE_FILE_BYTES = 5 * 1024 * 1024;
 const MAX_INLINE_AGGREGATE_FILE_BYTES = 5 * 1024 * 1024;
@@ -192,12 +193,12 @@ async function serializeContent(content: MessageContent, files?: FileRef[]): Pro
   if (isJSX(content)) {
     const card = toCardElement(content);
     if (card) {
-      return { card };
+      return validFiles ? { card, files: validFiles } : { card };
     }
   }
 
   if (isCardElement(content)) {
-    return { card: content };
+    return validFiles ? { card: content, files: validFiles } : { card: content };
   }
 
   throw new Error('Invalid message content — expected string or CardElement');
@@ -247,7 +248,7 @@ class ReplyHandleImpl implements ReplyHandle {
 }
 
 export class AgentContextImpl {
-  readonly event: string;
+  readonly event: AgentEventEnum;
   readonly action: AgentAction | null;
   readonly message: AgentMessage | null;
   readonly reaction: AgentReaction | null;
@@ -276,7 +277,7 @@ export class AgentContextImpl {
   private readonly _poster: ReplyPoster;
 
   constructor(request: AgentBridgeRequest, secretKey: string) {
-    this.event = request.event;
+    this.event = request.event as AgentEventEnum;
     this.action = request.action ?? null;
     this.message = request.message;
     this.reaction = request.reaction;

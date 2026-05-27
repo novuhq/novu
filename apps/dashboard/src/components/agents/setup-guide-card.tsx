@@ -28,7 +28,7 @@ export function SetupGuideCard({ label, rightContent, children, className }: Set
         </div>
       </button>
       {isExpanded && (
-        <div className="bg-bg-white flex flex-col overflow-hidden rounded-md p-3 pr-6 shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
+        <div className="bg-bg-white flex flex-col overflow-hidden rounded-md p-3 pr-3 md:pr-6 shadow-[0px_0px_0px_1px_rgba(25,28,33,0.04),0px_1px_2px_0px_rgba(25,28,33,0.06),0px_0px_2px_0px_rgba(0,0,0,0.08)]">
           {children}
         </div>
       )}

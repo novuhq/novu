@@ -193,7 +193,7 @@ export class SlackOauthCallback {
   private async getDemoNovuSlackCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
     return await this.getNovuProviderCredentials.execute(
       GetNovuProviderCredentialsCommand.create({
-        channelType: integration.channel,
+        channelType: integration.channel ?? ChannelTypeEnum.CHAT,
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,

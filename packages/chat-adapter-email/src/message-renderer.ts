@@ -2,11 +2,21 @@ import type { Root } from 'chat';
 import type { CardNode } from './card-renderer.js';
 import { extractTextFromCard, renderCard } from './card-renderer.js';
 import { EmailFormatConverter } from './format-converter.js';
+import type { ActionUrlBuilder } from './types.js';
 
 interface RenderInput {
   text?: string;
   formatted?: Root;
   card?: CardNode;
+  /**
+   * When present, action buttons (`<Button id="…">`) inside `card` will have their
+   * `href` resolved by `buildActionUrl`. Omit for non-actionable messages.
+   */
+  actionContext?: {
+    threadId: string;
+    messageId: string;
+    buildActionUrl: ActionUrlBuilder;
+  };
 }
 
 interface RenderOutput {
@@ -18,7 +28,7 @@ const converter = new EmailFormatConverter();
 
 export async function renderMessage(input: RenderInput): Promise<RenderOutput> {
   if (input.card) {
-    const html = await renderCard(input.card);
+    const html = await renderCard(input.card, input.actionContext);
     const text = extractTextFromCard(input.card) || input.text || '';
 
     return { html, text };

@@ -17,12 +17,16 @@ import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { APP_IDS } from '@/utils/apps';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
+import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 import { ProviderDropdown } from './provider-dropdown';
 
 type AgentIntegrationsTabProps = {
@@ -219,16 +223,16 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const { currentEnvironment, readOnly, oppositeEnvironment } = useEnvironment();
   const has = useHasPermission();
   const track = useTelemetry();
-
+  const agentRoutes = useAgentRoutes();
+  const currentApp = useCurrentApp();
+  const isConnectApp = currentApp === APP_IDS.CONNECT;
   const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
 
-  const integrationsHubPath = `${buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+  const integrationsHubPath = `${buildRoute(agentRoutes.detailsTab, {
     environmentSlug: currentEnvironment?.slug ?? '',
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',
   })}${location.search}`;
-
-  const integrationsStorePath = ROUTES.INTEGRATIONS;
 
   const navigateToGuide = (nextIntegrationIdentifier: string) => {
     if (!currentEnvironment?.slug) {
@@ -236,7 +240,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL, {
+      `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         integrationIdentifier: encodeURIComponent(nextIntegrationIdentifier),
@@ -289,7 +293,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     }
 
     navigate(
-      `${buildRoute(ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL, {
+      `${buildRoute(agentRoutes.integrationDetail, {
         environmentSlug: currentEnvironment.slug,
         agentIdentifier: encodeURIComponent(agent.identifier),
         integrationIdentifier: encodeURIComponent(firstIntegrationIdentifier),
@@ -298,6 +302,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     );
   }, [
     agent.identifier,
+    agentRoutes.integrationDetail,
     currentEnvironment?.slug,
     linkedRows,
     listQuery.isSuccess,
@@ -331,11 +336,16 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       const name = removed?.integration.name ?? 'Integration';
 
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
-      track(TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD, {
-        agentIdentifier: agent.identifier,
-        agentIntegrationId,
-        integrationIdentifier: removed?.integration.identifier,
-      });
+      track(
+        isConnectApp
+          ? TelemetryEvent.CONNECT_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD
+          : TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD,
+        {
+          agentIdentifier: agent.identifier,
+          agentIntegrationId,
+          integrationIdentifier: removed?.integration.identifier,
+        }
+      );
       await queryClient.invalidateQueries({
         queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
       });
@@ -362,6 +372,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     integrationIdentifier != null
       ? links.find((link) => link.integration.identifier === integrationIdentifier)
       : undefined;
+
+  const integrationsStorePath = selectedIntegration
+    ? buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: selectedIntegration.integration._id })
+    : ROUTES.INTEGRATIONS;
+
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess
@@ -399,8 +414,8 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   );
 
   return (
-    <div className="flex min-w-0 w-full gap-6 px-6 pt-4">
-      <aside className="w-[300px] shrink-0">
+    <div className="flex min-w-0 w-full flex-col gap-4 px-4 pt-4 pb-6 md:flex-row md:gap-6 md:px-6 md:pb-0">
+      <aside className="w-full md:w-[300px] md:shrink-0">
         <div className="flex flex-col gap-2.5">
           {readOnly && (
             <InlineToast
@@ -410,7 +425,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
               onCtaClick={() => {
                 if (!oppositeEnvironment?.slug) return;
                 navigate(
-                  buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+                  buildRoute(agentRoutes.detailsTab, {
                     environmentSlug: oppositeEnvironment.slug,
                     agentIdentifier: encodeURIComponent(agent.identifier),
                     agentTab: 'integrations',
@@ -445,7 +460,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                       const int = link.integration;
                       const providerMeta = novuProviders.find((p) => p.id === int.providerId);
                       const isSelected = integrationIdentifier === int.identifier;
-                      const showActionNeeded = !link.connectedAt;
+                      const showActionNeeded = !isAgentIntegrationConnected(link);
 
                       const statusLabel = showActionNeeded ? 'Action needed' : 'Active';
 
@@ -532,7 +547,9 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
         </div>
       </aside>
 
-      <div className="min-w-0 flex-1">{mainPanel}</div>
+      <div className="min-w-0 flex-1 mt-10 md:mt-0 border-t border-stroke-weak md:border-t-0 pt-4 md:pt-0">
+        {mainPanel}
+      </div>
     </div>
   );
 }

@@ -5,12 +5,6 @@ apps/api/src/metadata.ts
 .idea/
 
 # Playground / demo apps — not production code
-playground/
-
-# CI/CD, build infrastructure, and Docker configs
-.github/
-scripts/
-docker/
 
 # Inactive apps — no longer under active development
 apps/webhook/
@@ -25,3 +19,6 @@ pnpm-lock.yaml
 
 # Generator templates — not production code
 libs/automation/
+
+# Cursor have a tendency to remove the minReleaseAge when he faces it
+pnpm-workspace.yaml

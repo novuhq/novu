@@ -35,6 +35,35 @@ describe('Set Integration As Primary - /integrations/:integrationId/set-primary 
     expect(body.message).to.equal(`Integration with id ${fakeIntegrationId} not found`);
   });
 
+  it('should not allow setting an integration in another organization as primary', async () => {
+    const otherSession = new UserSession();
+    await otherSession.initialize();
+
+    const otherOrgIntegration = await integrationRepository.create({
+      name: 'OtherOrgPrimary',
+      identifier: 'other-org-primary',
+      providerId: EmailProviderIdEnum.SendGrid,
+      channel: ChannelTypeEnum.EMAIL,
+      active: false,
+      primary: false,
+      priority: 0,
+      _organizationId: otherSession.organization._id,
+      _environmentId: otherSession.environment._id,
+    });
+
+    const { body } = await session.testAgent.post(`/v1/integrations/${otherOrgIntegration._id}/set-primary`).send({});
+
+    expect(body.statusCode).to.equal(404);
+    expect(body.message).to.equal(`Integration with id ${otherOrgIntegration._id} not found`);
+
+    const untouched = (await integrationRepository.findOne({
+      _id: otherOrgIntegration._id,
+      _environmentId: otherSession.environment._id,
+    })) as IntegrationEntity;
+    expect(untouched.primary).to.equal(false);
+    expect(untouched.active).to.equal(false);
+  });
+
   it('in-app channel does not support primary flag, then for integration it should throw bad request exception', async () => {
     await integrationRepository.deleteMany({
       _organizationId: session.organization._id,

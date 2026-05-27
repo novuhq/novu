@@ -70,6 +70,25 @@ export const envValidators = {
   STEP_RESOLVER_CF_DISPATCH_NAMESPACE: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
+  THALAMUS_CF_API_KEY: str({ default: undefined }),
+  ...(processEnv.THALAMUS_CF_URL
+    ? {
+        THALAMUS_CF_URL: url(),
+        THALAMUS_WEBHOOK_SECRET: str(),
+      }
+    : {
+        THALAMUS_CF_URL: url({ default: undefined }),
+        THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+      }),
+  /**
+   * Shared inbound domain for the agent default inbox feature, e.g. `agentconnect.sh`.
+   * When unset the feature is disabled and the worker falls through to the existing
+   * per-tenant Domain/DomainRoute lookup.
+   */
+  NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  NOVU_MANAGED_CLAUDE_API_KEY: str({ default: undefined }),
+  MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS: num({ default: 10 }),
+  MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION: num({ default: 100_000 }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {
@@ -107,6 +126,17 @@ export const envValidators = {
       NOVU_LLM_GATEWAY_ALLOWED_MODELS: str({ default: '' }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
+      ...(['production', 'dev'].includes(processEnv.NODE_ENV)
+        ? {
+            THALAMUS_CF_API_KEY: str(),
+            THALAMUS_CF_URL: url(),
+            THALAMUS_WEBHOOK_SECRET: str(),
+          }
+        : {
+            THALAMUS_CF_API_KEY: str({ default: undefined }),
+            THALAMUS_CF_URL: url({ default: undefined }),
+            THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+          }),
     }),
 
   // Feature Flags

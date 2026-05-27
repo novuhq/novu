@@ -58,8 +58,8 @@ export class SetIntegrationAsPrimary {
       throw new NotFoundException(`Integration with id ${command.integrationId} not found`);
     }
 
-    if (!CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel)) {
-      throw new BadRequestException(`Channel ${existingIntegration.channel} does not support primary`);
+    if (!existingIntegration.channel || !CHANNELS_WITH_PRIMARY.includes(existingIntegration.channel)) {
+      throw new BadRequestException(`Channel ${existingIntegration.channel ?? 'unknown'} does not support primary`);
     }
 
     const { _organizationId, _environmentId, channel, providerId } = existingIntegration;

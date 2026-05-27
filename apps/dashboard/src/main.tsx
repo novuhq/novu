@@ -2,7 +2,7 @@ import '@novu/maily-core/style.css';
 import { PermissionsEnum } from '@novu/shared';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import './index.css';
 
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
@@ -30,18 +30,26 @@ import {
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
+import {
+  ConnectApiKeysPage,
+  ConnectConversationsPage,
+  ConnectDashboardPage,
+  ConnectSettingsPage,
+} from '@/pages/connect';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { Landing1SignUpPage } from '@/pages/landing-1-signup';
 import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
+import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
+import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { AgentsUsecasePage } from './pages/agents-usecase-page';
@@ -64,6 +72,7 @@ import { ForgotPasswordPage } from './pages/forgot-password';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
+import { IntegrationStoreTelegramMobileSetupPage } from './pages/integration-store-telegram-mobile-setup-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
@@ -74,6 +83,7 @@ import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
+import { ConnectProtectedRoute } from './routes/connect-protected-route';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
 import { ROUTES } from './utils/routes';
@@ -95,6 +105,18 @@ const router = createBrowserRouter([
       {
         path: ROUTES.CLI_AUTH,
         element: <CliAuthPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for Telegram. Mounted outside
+        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
+        path: ROUTES.AGENT_TELEGRAM_MOBILE_SETUP,
+        element: <AgentTelegramMobileSetupPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for the Telegram integration
+        // store create flow. Creates a new integration server-side on submit.
+        path: ROUTES.INTEGRATION_TELEGRAM_MOBILE_SETUP,
+        element: <IntegrationStoreTelegramMobileSetupPage />,
       },
       {
         element: <AuthRoute />,
@@ -374,32 +396,37 @@ const router = createBrowserRouter([
                 ],
               },
               {
-                path: ROUTES.AGENTS,
-                element: <AgentsPage />,
-              },
-              {
-                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS_TAB,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
+                element: <ConnectSubscriberProvider />,
+                children: [
+                  {
+                    path: ROUTES.AGENTS,
+                    element: <AgentsPage />,
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
               {
                 path: ROUTES.DOMAINS,
@@ -595,6 +622,51 @@ const router = createBrowserRouter([
                     <Navigate to={ROUTES.WEBHOOKS_ENDPOINTS} replace />
                   </ProtectedRoute>
                 ),
+              },
+              {
+                path: ROUTES.CONNECT_HOME,
+                element: (
+                  <ConnectProtectedRoute>
+                    <ConnectSubscriberProvider>
+                      <Outlet />
+                    </ConnectSubscriberProvider>
+                  </ConnectProtectedRoute>
+                ),
+                children: [
+                  { index: true, element: <ConnectDashboardPage /> },
+                  { path: ROUTES.CONNECT_AGENTS, element: <AgentsPage /> },
+                  {
+                    path: ROUTES.CONNECT_AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.CONNECT_AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.CONNECT_AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  { path: ROUTES.CONNECT_CONVERSATIONS, element: <ConnectConversationsPage /> },
+                  { path: ROUTES.CONNECT_API_KEYS, element: <ConnectApiKeysPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_ACCOUNT, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_ORGANIZATION, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_TEAM, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_BILLING, element: <ConnectSettingsPage /> },
+                ],
               },
 
               {
