@@ -6,6 +6,7 @@ import { CONNECT_EVENTS, trackConnect } from '../analytics/events';
 import {
   type AgentIntegrationLink,
   type AgentRecord,
+  addAgentEmailIntegration,
   addAgentIntegration,
   configureTelegramAgentWebhook,
   createManagedAgent,
@@ -68,10 +69,15 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     await ui.showWelcome();
 
     // 1. Authenticate via the browser device-auth flow (reused from wizard).
+    //    `name: 'novu-connect'` lets the dashboard's /cli/auth page swap to
+    //    agent-flavoured copy ("Novu Connect is requesting access… to
+    //    provision your agent") instead of the wizard's default workflow
+    //    copy.
     ui.authStarted();
     const auth = await resolveAuth(toWizardAuthOptions(options), {
       onStatus: (m) => ui.authStatus(m),
       onDashboardUrl: (u) => ui.authDashboardUrl(u),
+      name: 'novu-connect',
     });
     track(CONNECT_EVENTS.AUTH_COMPLETED, { source: auth.source, region: options.region });
     ui.authCompleted(auth.environmentName ?? null);
@@ -153,6 +159,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         connectedIntegration = result.integration;
         channelConnected = result.connected;
         if (channelConnected) connectedChannel = 'telegram';
+        break;
+      }
+      case 'email': {
+        const result = await connectEmailForAgent(client, agent, ui, track);
+        connectedIntegration = result.integration;
+        channelConnected = result.connected;
+        if (channelConnected) connectedChannel = 'email';
         break;
       }
       default:
@@ -653,6 +666,93 @@ async function pollForTelegramConnected(
   }
 
   return false;
+}
+
+// ---- Email -----------------------------------------------------------------
+
+/**
+ * Wire Email to the given agent. Each agent gets its own per-agent NovuAgent
+ * email integration auto-provisioned by the server when we POST with
+ * `providerId: 'novu-email-agent'` — the response embeds a unique inbound
+ * address (e.g. `support-agent-xyz@agentconnect.sh`) we hand back to the
+ * user.
+ *
+ * Creative test path: build a `mailto:` URL with the inbound address +
+ * pre-filled subject/body and `open()` it. The user's default mail client
+ * pops up with a draft already addressed; they hit Send. The agent receives
+ * the email, replies through its configured outbound sender, and the user
+ * sees the agent come alive in their own inbox.
+ *
+ * `connectedAt` flips on the first inbound webhook message, same signal as
+ * Telegram, so we reuse `pollForTelegramConnected` directly.
+ */
+async function connectEmailForAgent(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  ui: ConnectUI,
+  track: (event: string, data?: Record<string, unknown>) => void
+): Promise<{ connected: boolean; integration: IntegrationRecord }> {
+  ui.addingEmailIntegration();
+
+  const link = await addAgentEmailIntegration(client, agent.identifier);
+  const inboundAddress = link.integration?.sharedInboundAddress;
+  if (!inboundAddress) {
+    throw new Error(
+      'The server did not return an inbound address for the email integration. ' +
+        'Make sure NOVU_AGENT_SHARED_INBOUND_DOMAIN is configured on the API.'
+    );
+  }
+
+  const integration: IntegrationRecord = {
+    _id: link.integration?._id ?? link.integrationId,
+    identifier: link.integrationIdentifier,
+    name: link.integration?.name ?? 'Novu Email',
+    providerId: link.integration?.providerId ?? 'novu-email-agent',
+    channel: 'email',
+    active: link.integration?.active !== false,
+  };
+
+  // Re-run case: agent already has email integration with first inbound seen.
+  if (link.connectedAt) {
+    ui.emailConnected();
+    track(CONNECT_EVENTS.SLACK_CONNECTED, {
+      agent: agent.identifier,
+      channel: 'email',
+      alreadyConnected: true,
+    });
+
+    return { connected: true, integration };
+  }
+
+  // Pre-populated draft for one-keystroke send. Subject and body keep things
+  // light and prompt the agent to introduce itself + describe capabilities.
+  const subject = `Hi ${agent.name}!`;
+  const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
+  const mailtoUrl = `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  ui.showEmailReady({ inboundAddress, mailtoUrl });
+
+  // Best-effort: open the user's default mail client with the draft pre-filled.
+  // Falls through silently if no mail handler is registered — user can still
+  // type the address manually from the CLI display.
+  void open(mailtoUrl).catch(() => undefined);
+
+  const connected = await pollForTelegramConnected(client, agent.identifier, integration.identifier);
+  if (!connected) {
+    throw new Error(
+      `We didn't see your email at ${inboundAddress} within ${Math.round(TELEGRAM_POLL_TIMEOUT_MS / 1000)}s. ` +
+        'Re-run `npx novu connect` once you have sent the test message.'
+    );
+  }
+
+  ui.emailConnected();
+  track(CONNECT_EVENTS.SLACK_CONNECTED, {
+    agent: agent.identifier,
+    channel: 'email',
+    alreadyConnected: false,
+  });
+
+  return { connected: true, integration };
 }
 
 /**

@@ -15,6 +15,13 @@ export interface ResolveAuthOptions {
    * `onStatus` so the TUI can park it on its own static line.
    */
   onDashboardUrl?: (url: string | null) => void;
+  /**
+   * CLI surface identifier forwarded to the dashboard `/cli/auth` page as
+   * the `name` query param. Lets the dashboard render copy tailored to the
+   * caller (e.g. agent-focused wording for `novu-connect`). Defaults to
+   * `novu-wizard` inside `browserDeviceAuth` when omitted.
+   */
+  name?: string;
 }
 
 export async function resolveAuth(
@@ -110,5 +117,6 @@ export async function resolveAuth(
     region: options.region,
     onStatus: resolveOptions.onStatus,
     onDashboardUrl: resolveOptions.onDashboardUrl,
+    name: resolveOptions.name,
   });
 }

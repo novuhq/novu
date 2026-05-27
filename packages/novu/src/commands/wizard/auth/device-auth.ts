@@ -26,6 +26,14 @@ export interface BrowserAuthInput {
    * once auth resolves to clear the line.
    */
   onDashboardUrl?: (url: string | null) => void;
+  /**
+   * Identifies which Novu CLI surface is initiating the auth flow. Forwarded
+   * to the dashboard's `/cli/auth` page as the `name` query param so the
+   * dashboard can show wording that matches the calling context (e.g.
+   * agent-flavoured copy when this is `novu-connect`). Defaults to
+   * `novu-wizard`.
+   */
+  name?: string;
 }
 
 interface CallbackPayload {
@@ -90,7 +98,7 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
         const target = new URL('/cli/auth', input.dashboardUrl);
         target.searchParams.set('cli_callback', callbackUrl);
         target.searchParams.set('state', state);
-        target.searchParams.set('name', 'novu-wizard');
+        target.searchParams.set('name', input.name ?? 'novu-wizard');
         const targetUrl = target.toString();
 
         if (useExternalStatus) {

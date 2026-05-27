@@ -25,6 +25,14 @@ export type Phase =
     }
   | { kind: 'running-slack-quick-setup' }
   | { kind: 'waiting-slack'; authorizeUrl: string; pollingStartedAt: number }
+  | { kind: 'adding-email' }
+  | {
+      kind: 'email-ready';
+      /** The unique per-agent inbound address (e.g. `agent-xyz@agentconnect.sh`). */
+      inboundAddress: string;
+      /** Pre-built mailto: URL with subject/body pre-filled; opening it launches the user's mail client. */
+      mailtoUrl: string;
+    }
   | { kind: 'adding-telegram' }
   | {
       kind: 'telegram-intro';

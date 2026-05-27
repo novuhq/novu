@@ -92,6 +92,17 @@ export function createLoggingUI(): ConnectUI {
       stop();
       console.log(`${chalk.yellow('!')} ${choice} is coming soon — set it up in the dashboard for now.`);
     },
+    addingEmailIntegration() {
+      start('Linking Email to your agent…');
+    },
+    showEmailReady({ inboundAddress, mailtoUrl }) {
+      stop();
+      console.log(`${chalk.cyan('→')} Your agent's inbound address: ${chalk.bold(inboundAddress)}`);
+      console.log(`${chalk.cyan('→')} Open in your mail client: ${chalk.underline(mailtoUrl)}`);
+    },
+    emailConnected() {
+      succeed('Email connected');
+    },
     addingTelegramIntegration() {
       start('Linking Telegram to your agent…');
     },

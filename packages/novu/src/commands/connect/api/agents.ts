@@ -95,6 +95,40 @@ export async function addAgentIntegration(
   return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 }
 
+export interface AgentEmailIntegrationDetail extends AgentIntegrationLink {
+  /** Embedded integration record returned by `POST /v1/agents/:id/integrations`. */
+  integration?: {
+    _id?: string;
+    identifier?: string;
+    name?: string;
+    providerId?: string;
+    channel?: string;
+    active?: boolean;
+    sharedInboundAddress?: string;
+  };
+}
+
+/**
+ * `POST /v1/agents/:id/integrations` with `providerId: 'novu-email-agent'`
+ * triggers the server's special-case branch (see add-agent-integration
+ * usecase) that auto-creates a per-agent Novu Email integration with a
+ * unique shared inbound address (e.g. `myagent-abc@agentconnect.sh`) and
+ * links it to the agent in one shot. Returns the agent integration link
+ * with the embedded integration record, including `sharedInboundAddress`.
+ */
+export async function addAgentEmailIntegration(
+  client: ConnectApiClient,
+  agentIdentifier: string
+): Promise<AgentEmailIntegrationDetail> {
+  const res = await client.axios.post<{ data?: AgentEmailIntegrationDetail } | AgentEmailIntegrationDetail>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
+    { providerId: 'novu-email-agent' }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as AgentEmailIntegrationDetail);
+}
+
 export async function listAgentIntegrations(
   client: ConnectApiClient,
   agentIdentifier: string

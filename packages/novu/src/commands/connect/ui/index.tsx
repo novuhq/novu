@@ -121,6 +121,15 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     channelComingSoon(_choice) {
       // The success screen will render the "skipped" state — no interim screen needed.
     },
+    addingEmailIntegration() {
+      store.phase.set({ kind: 'adding-email' });
+    },
+    showEmailReady({ inboundAddress, mailtoUrl }) {
+      store.phase.set({ kind: 'email-ready', inboundAddress, mailtoUrl });
+    },
+    emailConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
     addingTelegramIntegration() {
       store.phase.set({ kind: 'adding-telegram' });
     },

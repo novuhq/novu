@@ -69,8 +69,18 @@ function CliAuthContent() {
 
   const callbackUrl = searchParams.get('cli_callback');
   const cliState = searchParams.get('state');
+  const callerName = searchParams.get('name');
   const callbackOk = isLoopbackCallback(callbackUrl);
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
+
+  // Two callers today: `novu-wizard` (default) and `novu-connect` (agent
+  // provisioning). Each gets its own subtitle + scope copy so the dashboard
+  // explains what the user is actually authorizing.
+  const isConnect = callerName === 'novu-connect';
+  const callerDisplayName = isConnect ? 'Novu Connect' : 'Novu Wizard';
+  const callerSubtitle = isConnect
+    ? 'to provision your AI agent and connect it to the channels you pick.'
+    : 'in order to integrate Novu into your project.';
 
   const apiKey = apiKeysQuery.data?.data?.[0]?.key;
 
@@ -132,7 +142,7 @@ function CliAuthContent() {
 
   const reason = (() => {
     if (!callbackOk) return 'This page must be opened from the Novu CLI.';
-    if (!isLlmGatewayEnabled) return 'Novu Wizard is not enabled for your account yet.';
+    if (!isLlmGatewayEnabled) return `${callerDisplayName} is not enabled for your account yet.`;
     if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';
     if (isLoading) return null;
     if (!apiKey) return 'No API key is available in this environment.';
@@ -172,13 +182,12 @@ function CliAuthContent() {
             <h1 className="text-foreground-900 text-base font-semibold">Authorize Novu CLI</h1>
           </div>
           <p className="text-foreground-600 text-xs">
-            Novu Wizard is requesting access to your{' '}
-            <span className="font-medium">{currentEnvironment?.name ?? '...'}</span> environment in order to integrate
-            Novu into your project.
+            {callerDisplayName} is requesting access to your{' '}
+            <span className="font-medium">{currentEnvironment?.name ?? '...'}</span> environment {callerSubtitle}
           </p>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <ScopeList />
+          <ScopeList isConnect={isConnect} />
           {reason ? (
             <div className="text-foreground-600 flex items-start gap-2 rounded-md border border-dashed p-3 text-xs">
               <RiLockLine className="mt-[2px] size-4" />
@@ -236,12 +245,18 @@ function CliAuthContent() {
   );
 }
 
-function ScopeList() {
-  const scopes = [
-    'Read your Novu API key for the selected environment',
-    'Trigger workflows on your behalf during the integration',
-    'Create or update workflows via Novu MCP',
-  ];
+function ScopeList({ isConnect }: { isConnect: boolean }) {
+  const scopes = isConnect
+    ? [
+        'Read your Novu API key for the selected environment',
+        'Create and manage agents on your behalf',
+        'Connect channels (Slack, Telegram, and more) to your agent',
+      ]
+    : [
+        'Read your Novu API key for the selected environment',
+        'Trigger workflows on your behalf during the integration',
+        'Create or update workflows via Novu MCP',
+      ];
 
   return (
     <ul className="text-foreground-700 flex flex-col gap-2 text-xs">

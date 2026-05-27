@@ -35,6 +35,17 @@ export interface ConnectUI {
   /** Render a "coming soon" message for a channel that isn't wired up yet. */
   channelComingSoon(choice: ChannelChoice): void;
 
+  // Email path
+  addingEmailIntegration(): void;
+  /**
+   * Step where the user is asked to send the first test email. Renders the
+   * inbound address + opens their default mail client with a pre-populated
+   * draft (the pipeline calls `open(mailtoUrl)` itself; the UI shows the
+   * address and a friendly nudge while the pipeline polls for receipt).
+   */
+  showEmailReady(opts: { inboundAddress: string; mailtoUrl: string }): void;
+  emailConnected(): void;
+
   // Telegram path
   addingTelegramIntegration(): void;
   /**

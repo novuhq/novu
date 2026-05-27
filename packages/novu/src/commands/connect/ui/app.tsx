@@ -56,12 +56,25 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
     registerExit(exit);
   }, [exit, registerExit]);
 
+  // Global Ctrl+C handler. We render Ink with `exitOnCtrlC: false` so child
+  // input handlers (Select, TextInput, etc.) get a clean shot at keystrokes
+  // without Ink unmounting under them. The side-effect is Ctrl+C goes
+  // nowhere unless we wire it ourselves — this top-level handler runs
+  // regardless of which phase / focused widget is active. Exit code 130
+  // matches the conventional SIGINT exit.
+  useInput((input, key) => {
+    if (key.ctrl && input === 'c') {
+      process.exitCode = 130;
+      exit();
+    }
+  });
+
   React.useEffect(() => {
     if (phase.kind !== 'pick-channel') setHoveredChannel(null);
   }, [phase.kind]);
 
   const tintColor = computeOrbTint(phase, hoveredChannel);
-  const letter = computeOrbLetter(phase, hoveredChannel);
+  const label = computeOrbLabel(phase, hoveredChannel);
 
   // Layout pattern: the orb lives at the top of every screen, always
   // breathing/shimmering. Everything else slots beneath it, horizontally
@@ -70,7 +83,7 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
   // instead of a different header/spinner per phase.
   return (
     <Box flexDirection="column" paddingX={1} paddingY={1} gap={1} alignItems="center">
-      <PersistentOrb tintColor={tintColor} letter={letter} />
+      <PersistentOrb tintColor={tintColor} label={label} />
       <PhaseContent phase={phase} onChannelHover={setHoveredChannel} />
     </Box>
   );
@@ -99,6 +112,9 @@ function computeOrbTint(
     case 'telegram-link-token':
     case 'telegram-test':
       return CHANNEL_TINTS.telegram;
+    case 'adding-email':
+    case 'email-ready':
+      return CHANNEL_TINTS.email;
     case 'success':
       return phase.connectedChannel ? CHANNEL_TINTS[phase.connectedChannel] : DEFAULT_ORB_COLOR;
     default:
@@ -107,29 +123,32 @@ function computeOrbTint(
 }
 
 /**
- * Pick the letter glyph (S / T / E / W / M) shown inside the orb for the
- * current phase. Returns undefined when there's no channel context — the
- * orb stays plain on auth/generating/etc.
+ * Pick the channel label (SLACK / TELEGRAM / EMAIL / WHATSAPP / TEAMS)
+ * rendered inside the orb for the current phase. Returns undefined when
+ * there's no channel context — the orb stays plain on auth/generating/etc.
  */
-function computeOrbLetter(
+function computeOrbLabel(
   phase: ReturnType<ConnectStore['phase']['get']>,
   hoveredChannel: ChannelChoice | null
 ): string | undefined {
   switch (phase.kind) {
     case 'pick-channel':
-      return hoveredChannel ? CHANNEL_LETTERS[hoveredChannel] : undefined;
+      return hoveredChannel ? CHANNEL_LABELS[hoveredChannel] : undefined;
     case 'adding-slack':
     case 'paste-slack-token':
     case 'running-slack-quick-setup':
     case 'waiting-slack':
-      return CHANNEL_LETTERS.slack;
+      return CHANNEL_LABELS.slack;
     case 'adding-telegram':
     case 'telegram-intro':
     case 'telegram-link-token':
     case 'telegram-test':
-      return CHANNEL_LETTERS.telegram;
+      return CHANNEL_LABELS.telegram;
+    case 'adding-email':
+    case 'email-ready':
+      return CHANNEL_LABELS.email;
     case 'success':
-      return phase.connectedChannel ? CHANNEL_LETTERS[phase.connectedChannel] : undefined;
+      return phase.connectedChannel ? CHANNEL_LABELS[phase.connectedChannel] : undefined;
     default:
       return undefined;
   }
@@ -218,7 +237,7 @@ function PhaseContent({
       const options: Array<{ label: string; value: ChannelChoice }> = [
         { label: 'Slack (recommended)', value: 'slack' },
         { label: 'Telegram', value: 'telegram' },
-        { label: 'Email — coming soon', value: 'email' },
+        { label: 'Email', value: 'email' },
         { label: 'WhatsApp — coming soon', value: 'whatsapp' },
         { label: 'Microsoft Teams — coming soon', value: 'teams' },
         { label: 'Skip — set up later in dashboard', value: 'skip' },
@@ -286,6 +305,24 @@ function PhaseContent({
             <Text color="cyan">{phase.authorizeUrl}</Text>
           </Box>
           <Text dimColor>Waiting for Slack authorization…</Text>
+        </Box>
+      );
+
+    case 'adding-email':
+      return <Text color="cyan">Linking Email to your agent…</Text>;
+
+    case 'email-ready':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold color="cyan">
+            Your agent has an inbox
+          </Text>
+          <Text dimColor>Send any email to the address below — your agent will read it and reply to your inbox.</Text>
+          <Box flexDirection="column" paddingY={1}>
+            <Text bold>{phase.inboundAddress}</Text>
+          </Box>
+          <Text dimColor>We opened a pre-filled draft in your default mail client. Just hit Send.</Text>
+          <Text dimColor>Waiting for your email to arrive…</Text>
         </Box>
       );
 
@@ -362,10 +399,10 @@ const ENTRY_MS = 1200;
 
 function PersistentOrb({
   tintColor,
-  letter,
+  label,
 }: {
   tintColor: string;
-  letter: string | undefined;
+  label: string | undefined;
 }): React.ReactElement {
   const [frame, setFrame] = React.useState(0);
   const [elapsedMs, setElapsedMs] = React.useState(0);
@@ -385,7 +422,7 @@ function PersistentOrb({
   // and avoids the "snap to full size" feel of ease-in.
   const scale = 1 - Math.pow(1 - entryProgress, 3);
 
-  return <Orb phase={frame} scale={scale} tintColor={tintColor} letter={letter} />;
+  return <Orb phase={frame} scale={scale} tintColor={tintColor} label={label} />;
 }
 
 /**
@@ -756,12 +793,12 @@ function Orb({
   phase,
   scale,
   tintColor,
-  letter,
+  label,
 }: {
   phase: number;
   scale: number;
   tintColor: string;
-  letter: string | undefined;
+  label: string | undefined;
 }): React.ReactElement {
   const rows: React.ReactElement[] = [];
   for (let row = 0; row < TERM_H; row++) {
@@ -771,7 +808,7 @@ function Orb({
       const baseY = row * 4;
       let code = 0x2800;
       for (const dot of BRAILLE_BITS) {
-        if (samplePixel(baseX + dot.dx, baseY + dot.dy, phase, scale, letter)) {
+        if (samplePixel(baseX + dot.dx, baseY + dot.dy, phase, scale, label)) {
           code |= dot.bit;
         }
       }
@@ -787,35 +824,52 @@ function Orb({
   return <Box flexDirection="column">{rows}</Box>;
 }
 
-// 5×7 binary glyphs for the channel identifier letters. Scaled up by
-// LETTER_SCALE when rendered → larger, chunkier shapes that read better at
-// braille resolution. '1' = lit pixel, '0' = transparent (defers to the
-// sphere shading underneath).
-const LETTER_BASE_W = 5;
-const LETTER_BASE_H = 7;
-const LETTER_SCALE = 2;
-const LETTER_BITMAPS: Record<string, ReadonlyArray<string>> = {
+// 5×7 binary glyphs covering A C E G H I K L M P R S T W — every uppercase
+// letter we need for SLACK / TELEGRAM / EMAIL / WHATSAPP / TEAMS. '1' = lit
+// pixel, '0' = transparent (defers to the sphere shading underneath).
+const GLYPH_W = 5;
+const GLYPH_H = 7;
+const GLYPHS: Record<string, ReadonlyArray<string>> = {
+  A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+  C: ['01110', '10001', '10000', '10000', '10000', '10001', '01110'],
+  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
+  G: ['01110', '10001', '10000', '10111', '10001', '10001', '01110'],
+  H: ['10001', '10001', '10001', '11111', '10001', '10001', '10001'],
+  I: ['11111', '00100', '00100', '00100', '00100', '00100', '11111'],
+  K: ['10001', '10010', '10100', '11000', '10100', '10010', '10001'],
+  L: ['10000', '10000', '10000', '10000', '10000', '10000', '11111'],
+  M: ['10001', '11011', '10101', '10001', '10001', '10001', '10001'],
+  P: ['11110', '10001', '10001', '11110', '10000', '10000', '10000'],
+  R: ['11110', '10001', '10001', '11110', '10100', '10010', '10001'],
   S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
   T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
-  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
   W: ['10001', '10001', '10001', '10101', '10101', '11011', '10001'],
-  M: ['10001', '11011', '10101', '10001', '10001', '10001', '10001'],
 };
 
-function isLetterPixel(px: number, py: number, letter: string | undefined): boolean {
-  if (!letter) return false;
-  const bitmap = LETTER_BITMAPS[letter];
-  if (!bitmap) return false;
-  const w = LETTER_BASE_W * LETTER_SCALE;
-  const h = LETTER_BASE_H * LETTER_SCALE;
-  // Center the bitmap on the sphere's centre.
-  const left = PX_CX - Math.floor(w / 2);
-  const top = PX_CY - Math.floor(h / 2);
+/**
+ * Returns true if `(px, py)` is a lit pixel of the `label` text rendered
+ * centered in the sphere. Spacing tightens to 0 for words >5 letters so
+ * TELEGRAM/WHATSAPP fit inside the 44-pixel sphere diameter without
+ * clipping at the edges.
+ */
+function isLabelPixel(px: number, py: number, label: string | undefined): boolean {
+  if (!label) return false;
+  const spacing = label.length <= 5 ? 1 : 0;
+  const stride = GLYPH_W + spacing;
+  const totalW = label.length * GLYPH_W + (label.length - 1) * spacing;
+  const left = PX_CX - Math.floor(totalW / 2);
+  const top = PX_CY - Math.floor(GLYPH_H / 2);
   const lx = px - left;
   const ly = py - top;
-  if (lx < 0 || lx >= w || ly < 0 || ly >= h) return false;
+  if (lx < 0 || lx >= totalW || ly < 0 || ly >= GLYPH_H) return false;
+  const letterIdx = Math.floor(lx / stride);
+  if (letterIdx >= label.length) return false;
+  const innerX = lx - letterIdx * stride;
+  if (innerX >= GLYPH_W) return false; // in inter-letter gap
+  const bitmap = GLYPHS[label[letterIdx]];
+  if (!bitmap) return false;
 
-  return bitmap[Math.floor(ly / LETTER_SCALE)][Math.floor(lx / LETTER_SCALE)] === '1';
+  return bitmap[ly][innerX] === '1';
 }
 
 function samplePixel(
@@ -823,7 +877,7 @@ function samplePixel(
   py: number,
   phase: number,
   scale: number,
-  letter: string | undefined
+  label: string | undefined
 ): boolean {
   // Effective radius shrinks with `scale` during the entry animation. At
   // scale=0 the sphere has no radius — every "inside" check fails — and only
@@ -834,14 +888,6 @@ function samplePixel(
   const r2 = sx * sx + sy * sy;
 
   if (r2 < 1) {
-    // Letter overlay: an always-on pixel anywhere the glyph bitmap is set
-    // (AND we're inside the sphere). Gated on the entry animation being
-    // mostly complete so the letter doesn't pop in while the orb is still
-    // growing.
-    if (scale > 0.85 && isLetterPixel(px, py, letter)) {
-      return true;
-    }
-
     // Reconstruct z from the sphere equation (front hemisphere) → unit
     // normal at this pixel for shading.
     const sz = Math.sqrt(1 - r2);
@@ -862,16 +908,66 @@ function samplePixel(
 
     // A hair of ambient so the unlit side still occasionally lights up a
     // pixel through the dither — keeps the terminator alive.
-    const intensity = Math.min(1, lambert * 0.85 + spec + 0.04);
+    let intensity = Math.min(1, lambert * 0.85 + spec + 0.04);
+
+    // Label overlay: boost intensity to nearly-on at label pixels so the
+    // word reads as a dense cluster, but still pass through the Bayer
+    // threshold so the same dotted texture as the rest of the orb applies —
+    // the text blends INTO the sphere rather than being a solid override.
+    // Gated on the entry animation being mostly complete so the label
+    // doesn't pop in mid-grow.
+    if (scale > 0.85 && isLabelPixel(px, py, label)) {
+      intensity = 0.95;
+    }
 
     const threshold = BAYER_8[py & 7][px & 7] / 64;
 
     return intensity > threshold;
   }
 
-  // Outside the sphere — sparse, stable starfield. Phase-independent so
-  // stars don't twitch behind a steady sphere. Visible from frame 0 so the
-  // canvas isn't empty during the orb's entry animation.
+  // ---------------------------------------------------------------------
+  // Outside the sphere
+  // ---------------------------------------------------------------------
+
+  // Plasma wisps: subtle tendrils that occasionally extend just past the
+  // sphere edge and pull back, suggesting the orb is alive without
+  // breaking its circular silhouette.
+  //
+  // Calmed-down design:
+  // - Reach is short (`WISP_REACH = 0.22`) so wisps hug the surface.
+  // - Steep quadratic falloff so density drops sharply with distance.
+  // - Low spatial frequencies → smooth, large shapes (not jittery detail).
+  // - Slow temporal coefficients → gentle evolution.
+  // - Negative bias so most of the time the wisp field is quiet; only
+  //   the positive peaks of the superposed sines become visible.
+  // - `WISP_DELAY_FRAMES` keeps the field completely off until the
+  //   sphere has been fully visible for ~2 s — gives the user a clean
+  //   circle to read first, then wisps fade in over `WISP_FADE_FRAMES`.
+  if (scale > 0.95) {
+    const WISP_DELAY_FRAMES = 20; // ~2 s after mount
+    const WISP_FADE_FRAMES = 20; // ~2 s ramp-in
+    const activation = Math.max(0, Math.min(1, (phase - WISP_DELAY_FRAMES) / WISP_FADE_FRAMES));
+    if (activation > 0) {
+      const d = Math.sqrt(r2);
+      const WISP_REACH = 0.22;
+      if (d < 1 + WISP_REACH) {
+        const proximityLinear = Math.max(0, 1 - (d - 1) / WISP_REACH);
+        const proximity = proximityLinear * proximityLinear; // quadratic falloff
+        const noise =
+          Math.sin(sx * 3 + phase * 0.05) * 0.3 +
+          Math.sin(sy * 2.5 - phase * 0.035) * 0.3 +
+          Math.sin((sx + sy) * 2 + phase * 0.04) * 0.2 +
+          Math.sin((sx - sy) * 2.5 - phase * 0.03) * 0.2;
+        const intensity = Math.max(0, noise * 0.45 - 0.15) * proximity * activation;
+        const threshold = BAYER_8[py & 7][px & 7] / 64;
+        if (intensity > threshold) return true;
+      }
+    }
+  }
+
+  // Background starfield — sparse, stable, phase-independent so the
+  // distant stars don't twitch behind a steady sphere. Visible from
+  // frame 0 so the canvas isn't empty during entry.
   const starSeed = (px * 137 + py * 211) % 4001;
   if (starSeed === 0) return true;
   if (starSeed === 1117) return true;
