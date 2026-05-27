@@ -1,0 +1,136 @@
+import { render } from 'ink';
+// biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
+import React from 'react';
+import type { AgentSummary, ConnectCommandOptions } from '../types';
+import { App } from './app';
+import { type ConnectStore, createConnectStore } from './store';
+import type { ConnectUI, PickResult } from './ui';
+
+export interface MountConnectUIParams {
+  options: ConnectCommandOptions;
+}
+
+export interface MountConnectUIResult {
+  ui: ConnectUI;
+  done: Promise<number>;
+}
+
+export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIResult {
+  const store = createConnectStore();
+  let exitInk: (() => void) | undefined;
+  let resolveDone!: (code: number) => void;
+  const done = new Promise<number>((resolve) => {
+    resolveDone = resolve;
+  });
+
+  const instance = render(
+    <App
+      store={store}
+      registerExit={(fn) => {
+        exitInk = fn;
+      }}
+    />,
+    {
+      patchConsole: false,
+      exitOnCtrlC: false,
+      // No alternate-screen here: the connect flow is short and we want the
+      // final success message to remain visible in scrollback after exit.
+    }
+  );
+
+  void instance.waitUntilExit().then(() => {
+    resolveDone(Number(process.exitCode ?? 0));
+  });
+
+  const ui = createUiController(store, async () => {
+    exitInk?.();
+    await instance.waitUntilExit();
+
+    return Number(process.exitCode ?? 0);
+  });
+
+  return { ui, done };
+}
+
+function createUiController(store: ConnectStore, shutdown: () => Promise<number>): ConnectUI {
+  return {
+    authStarted() {
+      store.phase.set({ kind: 'auth', dashboardUrl: null, status: 'Authorizing via the Novu Dashboard…' });
+    },
+    authDashboardUrl(url) {
+      const current = store.phase.get();
+      if (current.kind === 'auth') {
+        store.phase.set({ ...current, dashboardUrl: url });
+      }
+    },
+    authStatus(message) {
+      const current = store.phase.get();
+      if (current.kind === 'auth') {
+        store.phase.set({ ...current, status: message });
+      }
+    },
+    authCompleted(_envName) {
+      // Transition handled by the next phase setter (listingAgents).
+    },
+    listingAgents() {
+      store.phase.set({ kind: 'listing-agents' });
+    },
+    loadingIntegrations() {
+      store.phase.set({ kind: 'loading-integrations' });
+    },
+    pickExistingOrCreate(agents) {
+      return new Promise<PickResult>((resolve) => {
+        store.phase.set({ kind: 'pick', agents, resolve });
+      });
+    },
+    promptForDescription(defaultPrompt) {
+      if (typeof defaultPrompt === 'string' && defaultPrompt.trim().length > 0) {
+        return Promise.resolve(defaultPrompt);
+      }
+
+      return new Promise<string>((resolve) => {
+        store.phase.set({ kind: 'describe', resolve });
+      });
+    },
+    generatingAgent() {
+      store.phase.set({ kind: 'generating' });
+    },
+    creatingAgent(name) {
+      store.phase.set({ kind: 'creating', name });
+    },
+    agentCreated(_agent: AgentSummary) {
+      // Visible after Slack completes via the final success screen.
+    },
+    addingSlackIntegration() {
+      store.phase.set({ kind: 'adding-slack' });
+    },
+    showSlackOAuthUrl(url) {
+      store.phase.set({ kind: 'waiting-slack', authorizeUrl: url, pollingStartedAt: Date.now() });
+    },
+    pollingForSlackConnection() {
+      // The waiting-slack phase already shows a spinner; no separate state needed.
+    },
+    slackConnected() {
+      // Transition handled by sendingWelcome / success.
+    },
+    slackSkipped() {
+      // No interim screen — the success screen reports skipped state.
+    },
+    sendingWelcome() {
+      store.phase.set({ kind: 'sending-welcome' });
+    },
+    success(result) {
+      store.phase.set({
+        kind: 'success',
+        agent: result.agent,
+        dashboardUrl: result.dashboardUrl,
+        environmentSlug: result.environmentSlug,
+        slackConnected: result.slackConnected,
+      });
+    },
+    failure(message) {
+      store.phase.set({ kind: 'error', message });
+    },
+    shutdown,
+  };
+}

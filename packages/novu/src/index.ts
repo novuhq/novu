@@ -3,6 +3,8 @@
 import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
+import { connectCommand } from './commands/connect';
+import { ConnectCommandOptions } from './commands/connect/types';
 import { IInitCommandOptions, init } from './commands/init';
 import { stepPublish } from './commands/step';
 import { sync } from './commands/sync';
@@ -116,6 +118,27 @@ program
       event: 'Run Novu Wizard Command',
     });
     await wizardCommand(options, anonymousId);
+  });
+
+program
+  .command('connect')
+  .description('Create a managed agent and connect it to Slack from the CLI (beta)')
+  .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key')
+  .option('-a, --api-url <url>', 'Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
+  .option('-d, --dashboard-url <url>', 'Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
+  .option('--region <region>', 'us | eu | local', 'us')
+  .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')
+  .option('--skip-slack', 'Create the agent and exit; do not run the Slack OAuth step', false)
+  .option('--ci', 'Force non-interactive logging mode (no Ink TUI)', false)
+  .action(async (options: ConnectCommandOptions) => {
+    analytics.track({
+      identity: {
+        anonymousId,
+      },
+      data: {},
+      event: 'Run Novu Connect Command',
+    });
+    await connectCommand(options, anonymousId);
   });
 
 program

@@ -221,6 +221,7 @@ export class AgentsController {
   }
 
   @Post('/generate')
+  @ExternalApiAccessible()
   @ApiResponse(GenerateManagedAgentResponseDto)
   @ApiOperation({
     summary: 'Generate an agent configuration from a free-form prompt',
@@ -259,6 +260,7 @@ export class AgentsController {
   }
 
   @Post('/')
+  @ExternalApiAccessible()
   @ApiResponse(AgentResponseDto, 201)
   @ApiOperation({
     summary: 'Create agent',
@@ -283,6 +285,7 @@ export class AgentsController {
   }
 
   @Get('/')
+  @ExternalApiAccessible()
   @ApiResponse(ListAgentsResponseDto)
   @ApiOperation({
     summary: 'List agents',
@@ -308,6 +311,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations')
+  @ExternalApiAccessible()
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Link integration to agent',
@@ -336,6 +340,7 @@ export class AgentsController {
   }
 
   @Get('/:identifier/integrations')
+  @ExternalApiAccessible()
   @ApiResponse(ListAgentIntegrationsResponseDto)
   @ApiOperation({
     summary: 'List agent integrations',
@@ -536,6 +541,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/welcome-message')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Send onboarding welcome message',

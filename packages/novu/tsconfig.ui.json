@@ -11,6 +11,11 @@
     "types": ["node", "react"],
     "lib": ["es2022", "dom"]
   },
-  "include": ["src/commands/wizard/ui/**/*", "src/commands/wizard/types.ts"],
+  "include": [
+    "src/commands/wizard/ui/**/*",
+    "src/commands/wizard/types.ts",
+    "src/commands/connect/ui/**/*",
+    "src/commands/connect/types.ts"
+  ],
   "exclude": ["node_modules"]
 }

@@ -82,6 +82,9 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
 
     if (require('@novu/ee-ai')?.AiModule) {
       modules.push(require('@novu/ee-ai')?.AiModule);
+    }
+
+    if (require('@novu/ee-ai')?.LlmGatewayModule) {
       modules.push(require('@novu/ee-ai')?.LlmGatewayModule);
     }
 
