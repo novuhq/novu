@@ -250,7 +250,7 @@ export class SendMessage {
       })
     );
 
-    if (hasStepConditionsToLog(filters.length, stepCondition.conditions)) {
+    if (hasStepConditionsToLog(filters.length, stepCondition.conditions) && !isDeferredStepType(command.job.type)) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
@@ -274,7 +274,7 @@ export class SendMessage {
     bridgeWasExecuted: boolean,
     isBridgeSkipped: boolean | undefined
   ) {
-    if (!bridgeWasExecuted || isBridgeSkipped) {
+    if (!bridgeWasExecuted || isBridgeSkipped || isDeferredStepType(command.job.type)) {
       return;
     }
 
@@ -672,4 +672,12 @@ function requiresBridgeExecution(stepType: StepTypeEnum | undefined): boolean {
   if (!stepType) return false;
 
   return ![StepTypeEnum.TRIGGER, StepTypeEnum.DIGEST, StepTypeEnum.DELAY, StepTypeEnum.HTTP_REQUEST].includes(stepType);
+}
+
+function isDeferredStepType(stepType: StepTypeEnum | undefined): boolean {
+  if (!stepType) {
+    return false;
+  }
+
+  return [StepTypeEnum.DELAY, StepTypeEnum.DIGEST, StepTypeEnum.THROTTLE].includes(stepType);
 }
