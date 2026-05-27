@@ -612,6 +612,8 @@ export function mapEventTypeToTitle(eventType: EventType): string {
       return 'Topic not found';
 
     // Step skipped events
+    case 'step_matched_conditions':
+      return 'Step matched step conditions';
     case 'step_skipped':
       return 'Step skipped';
     case 'step_skipped_outside_of_the_schedule':

@@ -203,6 +203,7 @@ export type EventType =
   | 'workflow_context_resolution_failed'
   | 'workflow_context_resolution_completed'
   | 'workflow_execution_failed'
+  | 'step_matched_conditions'
   | 'step_skipped'
   | 'step_skipped_outside_of_the_schedule'
   | 'step_extended_to_schedule'

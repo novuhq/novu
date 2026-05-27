@@ -149,6 +149,65 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
       expect(executionDetails.length).to.equal(1);
     });
 
+    it('should log matched step conditions when delay step filter passes', async () => {
+      template = await session.createTemplate({
+        steps: [
+          {
+            type: StepTypeEnum.DELAY,
+            content: '',
+            metadata: {
+              unit: DigestUnitEnum.SECONDS,
+              amount: 2,
+              type: DelayTypeEnum.REGULAR,
+            },
+            filters: [
+              {
+                isNegated: false,
+                type: 'GROUP',
+                value: FieldLogicalOperatorEnum.AND,
+                children: [
+                  {
+                    on: FilterPartTypeEnum.PAYLOAD,
+                    operator: FieldOperatorEnum.IS_DEFINED,
+                    field: 'exclude',
+                    value: '',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: StepTypeEnum.EMAIL,
+            name: 'Message Name',
+            subject: 'Test email subject',
+            content: [{ type: EmailBlockTypeEnum.TEXT, content: 'This is a sample text block' }],
+          },
+        ],
+      });
+
+      await novuClient.trigger({
+        workflowId: template.triggers[0].identifier,
+        to: [subscriber.subscriberId],
+        payload: {
+          exclude: true,
+        },
+      });
+
+      await session.waitForJobCompletion(template._id);
+
+      const matchedConditionsDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: template?._id,
+        channel: StepTypeEnum.DELAY,
+        detail: DetailEnum.STEP_MATCHED_CONDITIONS,
+      });
+
+      expect(matchedConditionsDetails.length).to.equal(1);
+      const raw = JSON.parse(matchedConditionsDetails[0]?.raw ?? '{}');
+      expect(raw.filter.passed).to.equal(true);
+      expect(raw.filter.conditions).to.be.an('array');
+    });
+
     it('should filter a delay that is the first step in the workflow', async () => {
       template = await session.createTemplate({
         steps: [
@@ -3911,6 +3970,18 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
         _subscriberId: subscriber._id,
       });
       expect(executedMessages.length).to.equal(1);
+
+      const matchedConditionsDetails = await executionDetailsRepository.find({
+        _environmentId: session.environment._id,
+        _notificationTemplateId: workflow._id,
+        channel: ChannelTypeEnum.IN_APP,
+        detail: DetailEnum.STEP_MATCHED_CONDITIONS,
+      });
+
+      expect(matchedConditionsDetails.length).to.equal(1);
+      const raw = JSON.parse(matchedConditionsDetails[0]?.raw ?? '{}');
+      expect(raw.filter.passed).to.equal(true);
+      expect(raw.filter.skip).to.exist;
     });
 
     it('should execute step when containsAny matches with var reference to another payload array', async () => {

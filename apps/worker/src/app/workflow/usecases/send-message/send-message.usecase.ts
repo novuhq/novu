@@ -1,6 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   AnalyticsService,
+  buildSkipConditionFilterRaw,
+  buildStepConditionsFilterRaw,
   ConditionsFilter,
   ConditionsFilterCommand,
   CreateExecutionDetails,
@@ -9,6 +11,8 @@ import {
   GetPreferences,
   GetSubscriberTemplatePreference,
   GetSubscriberTemplatePreferenceCommand,
+  hasSkipConditionRules,
+  hasStepConditionsToLog,
   ICompileContext,
   IConditionsFilterResponse,
   InMemoryLRUCacheService,
@@ -20,6 +24,7 @@ import {
 } from '@novu/application-generic';
 import {
   ContextRepository,
+  ControlValuesRepository,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   JobEntity,
@@ -30,6 +35,7 @@ import {
 } from '@novu/dal';
 import { ContextResolved, ExecuteOutput } from '@novu/framework/internal';
 import {
+  ControlValuesLevelEnum,
   DeliveryLifecycleDetail,
   DeliveryLifecycleStatusEnum,
   DigestTypeEnum,
@@ -70,6 +76,7 @@ export class SendMessage {
     private createExecutionDetails: CreateExecutionDetails,
     private getSubscriberTemplatePreferenceUsecase: GetSubscriberTemplatePreference,
     private notificationTemplateRepository: NotificationTemplateRepository,
+    private controlValuesRepository: ControlValuesRepository,
     private sendMessageDelay: SendMessageDelay,
     private throttle: Throttle,
     private executeCodeFirstCustomStep: ExecuteCodeFirstCustomStep,
@@ -116,6 +123,9 @@ export class SendMessage {
     }
 
     const { stepCondition, channelPreference } = await this.evaluateFilters(command, variables);
+
+    await this.logMatchedBridgeSkipCondition(command, requiresBridgeExecution(stepType), isBridgeSkipped);
+
     if (!command.payload?.$on_boarding_trigger) {
       this.sendProcessStepEvent(
         command,
@@ -226,9 +236,11 @@ export class SendMessage {
   }
 
   private async evaluateStepCondition(command: SendMessageCommand, variables: ICompileContext) {
+    const filters = command.job.step.filters || [];
+
     const stepCondition = await this.conditionsFilter.filter(
       ConditionsFilterCommand.create({
-        filters: command.job.step.filters || [],
+        filters,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         userId: command.userId,
@@ -238,26 +250,78 @@ export class SendMessage {
       })
     );
 
-    if (!stepCondition?.passed) {
+    if (hasStepConditionsToLog(filters.length, stepCondition.conditions)) {
       await this.createExecutionDetails.execute(
         CreateExecutionDetailsCommand.create({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
-          detail: DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
+          detail: stepCondition.passed ? DetailEnum.STEP_MATCHED_CONDITIONS : DetailEnum.SKIPPED_STEP_BY_CONDITIONS,
           source: ExecutionDetailsSourceEnum.INTERNAL,
-          status: ExecutionDetailsStatusEnum.FAILED,
+          status: stepCondition.passed
+            ? ExecutionDetailsStatusEnum.SUCCESS
+            : ExecutionDetailsStatusEnum.FAILED,
           isTest: false,
           isRetry: false,
-          raw: JSON.stringify({
-            filter: {
-              conditions: stepCondition?.conditions,
-              passed: stepCondition?.passed,
-            },
-          }),
+          raw: buildStepConditionsFilterRaw(stepCondition),
         })
       );
     }
 
     return stepCondition;
+  }
+
+  private async logMatchedBridgeSkipCondition(
+    command: SendMessageCommand,
+    bridgeWasExecuted: boolean,
+    isBridgeSkipped: boolean | undefined
+  ) {
+    if (!bridgeWasExecuted || isBridgeSkipped) {
+      return;
+    }
+
+    const skip = await this.getSkipControlValue(command);
+
+    if (!hasSkipConditionRules(skip)) {
+      return;
+    }
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.STEP_MATCHED_CONDITIONS,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+        raw: buildSkipConditionFilterRaw(skip, true),
+      })
+    );
+  }
+
+  private async getSkipControlValue(command: SendMessageCommand): Promise<unknown> {
+    const controlVariablesSkip = command.job.step.controlVariables?.skip;
+
+    if (hasSkipConditionRules(controlVariablesSkip)) {
+      return controlVariablesSkip;
+    }
+
+    const workflow =
+      command.workflow ??
+      (command._templateId
+        ? await this.notificationTemplateRepository.findById(command._templateId, command.environmentId)
+        : null);
+
+    if (!workflow) {
+      return undefined;
+    }
+
+    const controlsEntity = await this.controlValuesRepository.findOne({
+      _organizationId: command.organizationId,
+      _workflowId: workflow._id,
+      _stepId: command.step._id,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+
+    return controlsEntity?.controls?.skip;
   }
 
   private sendProcessStepEvent(

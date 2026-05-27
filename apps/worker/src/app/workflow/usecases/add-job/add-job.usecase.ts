@@ -1,11 +1,16 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import {
+  buildSkipConditionFilterRaw,
+  buildStepConditionsFilterRaw,
   ComputeJobWaitDurationService,
   ConditionsFilter,
   ConditionsFilterCommand,
   CreateExecutionDetails,
   CreateExecutionDetailsCommand,
   DetailEnum,
+  hasSkipConditionRules,
+  hasStepConditionsToLog,
+  IConditionsFilterResponse,
   DurationUtils,
   getDigestType,
   getNestedValue,
@@ -29,6 +34,7 @@ import {
   WorkflowRunStatusEnum,
 } from '@novu/application-generic';
 import {
+  ControlValuesRepository,
   JobEntity,
   JobRepository,
   JobStatusEnum,
@@ -40,6 +46,7 @@ import {
 import { DelayOutput, DigestOutput, ExecuteOutput } from '@novu/framework/internal';
 import {
   castUnitToDigestUnitEnum,
+  ControlValuesLevelEnum,
   DelayTypeEnum,
   DeliveryLifecycleStatusEnum,
   DigestCreationResultEnum,
@@ -100,6 +107,7 @@ export class AddJob {
     private subscriberRepository: SubscriberRepository,
     private redisThrottleService: RedisThrottleService,
     private notificationRepository: NotificationRepository,
+    private controlValuesRepository: ControlValuesRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -231,6 +239,8 @@ export class AddJob {
         stepStatus: JobStatusEnum.SKIPPED,
       };
     }
+
+    await this.logMatchedStepConditions(command, shouldRun, bridgeResponse);
 
     let digestResult: {
       digestAmount: number;
@@ -571,6 +581,69 @@ export class AddJob {
       workflowStatus: WorkflowRunStatusEnum.ERROR,
       deliveryLifecycleStatus: DeliveryLifecycleStatusEnum.ERRORED,
     };
+  }
+
+  private async logMatchedStepConditions(
+    command: AddJobCommand,
+    shouldRun: IConditionsFilterResponse,
+    bridgeResponse: ExecuteOutput | null
+  ) {
+    const filters = command.job.step.filters || [];
+
+    if (shouldRun.passed && hasStepConditionsToLog(filters.length, shouldRun.conditions)) {
+      await this.createExecutionDetails.execute(
+        CreateExecutionDetailsCommand.create({
+          ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+          detail: DetailEnum.STEP_MATCHED_CONDITIONS,
+          source: ExecutionDetailsSourceEnum.INTERNAL,
+          status: ExecutionDetailsStatusEnum.SUCCESS,
+          isTest: false,
+          isRetry: false,
+          raw: buildStepConditionsFilterRaw(shouldRun),
+        })
+      );
+
+      return;
+    }
+
+    if (!shouldRun.passed || bridgeResponse?.options?.skip) {
+      return;
+    }
+
+    const skip = await this.getSkipControlValue(command);
+
+    if (!hasSkipConditionRules(skip)) {
+      return;
+    }
+
+    await this.createExecutionDetails.execute(
+      CreateExecutionDetailsCommand.create({
+        ...CreateExecutionDetailsCommand.getDetailsFromJob(command.job),
+        detail: DetailEnum.STEP_MATCHED_CONDITIONS,
+        source: ExecutionDetailsSourceEnum.INTERNAL,
+        status: ExecutionDetailsStatusEnum.SUCCESS,
+        isTest: false,
+        isRetry: false,
+        raw: buildSkipConditionFilterRaw(skip, true),
+      })
+    );
+  }
+
+  private async getSkipControlValue(command: AddJobCommand): Promise<unknown> {
+    const controlVariablesSkip = command.job.step.controlVariables?.skip;
+
+    if (hasSkipConditionRules(controlVariablesSkip)) {
+      return controlVariablesSkip;
+    }
+
+    const controlsEntity = await this.controlValuesRepository.findOne({
+      _organizationId: command.organizationId,
+      _workflowId: command.job._templateId,
+      _stepId: command.job.step._id,
+      level: ControlValuesLevelEnum.STEP_CONTROLS,
+    });
+
+    return controlsEntity?.controls?.skip;
   }
 
   private async fetchBridgeData(
