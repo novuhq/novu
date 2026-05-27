@@ -27,9 +27,11 @@ export function createConnectApiClient(input: { apiUrl: string; secretKey: strin
       Authorization: `ApiKey ${input.secretKey}`,
       'Content-Type': 'application/json',
     },
-    // Short timeout so a misconfigured / non-running API surfaces a real error
-    // instead of letting the Ink spinner hang indefinitely.
-    timeout: 15_000,
+    // Generous timeout: the /agents/generate call runs an LLM and can take
+    // 20–40 s for complex prompts. 60 s keeps the hang detection (so a
+    // misconfigured / non-running API still surfaces an error instead of
+    // spinning forever) without false-positive-failing the slow LLM calls.
+    timeout: 60_000,
     // For local-dev hostnames (loopback / *.localhost) the developer almost
     // certainly has a self-signed cert that Node won't trust out of the box.
     // Skipping verification is safe because the hostname is, by definition,

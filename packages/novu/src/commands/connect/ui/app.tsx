@@ -2,8 +2,38 @@ import { Select, TextInput } from '@inkjs/ui';
 import { Box, Text, useApp, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import type { ChannelChoice } from '../types';
 import type { ConnectStore } from './store';
 import { useStore } from './use-store';
+
+/**
+ * Channel brand colours used to tint the orb when a channel is hovered or
+ * active. These are well-known brand-colour hexes; we deliberately do NOT
+ * render any brand logos — just colour + a single letter glyph as an
+ * integration identifier.
+ */
+const CHANNEL_TINTS: Record<ChannelChoice, string> = {
+  slack: '#ECB22E', // Slack yellow
+  telegram: '#26A5E4', // Telegram blue
+  email: '#34A853', // generic mail green
+  whatsapp: '#25D366', // WhatsApp green
+  teams: '#5059C9', // Teams indigo
+  skip: 'white',
+};
+const DEFAULT_ORB_COLOR = 'white';
+
+/**
+ * Single-letter identifier shown in the orb's center per channel. Plain
+ * letters, not logos — distinct enough to read at a glance, no IP exposure.
+ * `skip` returns undefined so the orb stays plain when the user opts out.
+ */
+const CHANNEL_LETTERS: Partial<Record<ChannelChoice, string>> = {
+  slack: 'S',
+  telegram: 'T',
+  email: 'E',
+  whatsapp: 'W',
+  teams: 'M', // M for "MS Teams" — disambiguates from any other "T"
+};
 
 export interface AppProps {
   store: ConnectStore;
@@ -17,9 +47,22 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
   const phase = useStore(store.phase);
   const { exit } = useApp();
 
+  // Tracks which channel the user is hovering in the picker, so the orb can
+  // tint to that brand colour before they commit. Reset to `null` when we
+  // leave the picker — the channel-specific phases below derive their tint
+  // directly from the phase kind.
+  const [hoveredChannel, setHoveredChannel] = React.useState<ChannelChoice | null>(null);
+
   React.useEffect(() => {
     registerExit(exit);
   }, [exit, registerExit]);
+
+  React.useEffect(() => {
+    if (phase.kind !== 'pick-channel') setHoveredChannel(null);
+  }, [phase.kind]);
+
+  const tintColor = computeOrbTint(phase, hoveredChannel);
+  const letter = computeOrbLetter(phase, hoveredChannel);
 
   // Layout pattern: the orb lives at the top of every screen, always
   // breathing/shimmering. Everything else slots beneath it, horizontally
@@ -28,13 +71,78 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
   // instead of a different header/spinner per phase.
   return (
     <Box flexDirection="column" paddingX={1} paddingY={1} gap={1} alignItems="center">
-      <PersistentOrb />
-      <PhaseContent phase={phase} />
+      <PersistentOrb tintColor={tintColor} letter={letter} />
+      <PhaseContent phase={phase} onChannelHover={setHoveredChannel} />
     </Box>
   );
 }
 
-function PhaseContent({ phase }: { phase: ReturnType<ConnectStore['phase']['get']> }): React.ReactElement {
+/**
+ * Derive the orb's colour from the current phase plus, for the picker only,
+ * the channel currently being hovered. Falls back to white whenever there's
+ * no channel context (auth, generating, etc.) so the orb stays neutral
+ * outside of channel selection.
+ */
+function computeOrbTint(
+  phase: ReturnType<ConnectStore['phase']['get']>,
+  hoveredChannel: ChannelChoice | null
+): string {
+  switch (phase.kind) {
+    case 'pick-channel':
+      return hoveredChannel ? CHANNEL_TINTS[hoveredChannel] : DEFAULT_ORB_COLOR;
+    case 'adding-slack':
+    case 'paste-slack-token':
+    case 'running-slack-quick-setup':
+    case 'waiting-slack':
+      return CHANNEL_TINTS.slack;
+    case 'adding-telegram':
+    case 'telegram-intro':
+    case 'telegram-link-token':
+    case 'telegram-test':
+      return CHANNEL_TINTS.telegram;
+    case 'success':
+      return phase.connectedChannel ? CHANNEL_TINTS[phase.connectedChannel] : DEFAULT_ORB_COLOR;
+    default:
+      return DEFAULT_ORB_COLOR;
+  }
+}
+
+/**
+ * Pick the letter glyph (S / T / E / W / M) shown inside the orb for the
+ * current phase. Returns undefined when there's no channel context — the
+ * orb stays plain on auth/generating/etc.
+ */
+function computeOrbLetter(
+  phase: ReturnType<ConnectStore['phase']['get']>,
+  hoveredChannel: ChannelChoice | null
+): string | undefined {
+  switch (phase.kind) {
+    case 'pick-channel':
+      return hoveredChannel ? CHANNEL_LETTERS[hoveredChannel] : undefined;
+    case 'adding-slack':
+    case 'paste-slack-token':
+    case 'running-slack-quick-setup':
+    case 'waiting-slack':
+      return CHANNEL_LETTERS.slack;
+    case 'adding-telegram':
+    case 'telegram-intro':
+    case 'telegram-link-token':
+    case 'telegram-test':
+      return CHANNEL_LETTERS.telegram;
+    case 'success':
+      return phase.connectedChannel ? CHANNEL_LETTERS[phase.connectedChannel] : undefined;
+    default:
+      return undefined;
+  }
+}
+
+function PhaseContent({
+  phase,
+  onChannelHover,
+}: {
+  phase: ReturnType<ConnectStore['phase']['get']>;
+  onChannelHover: (channel: ChannelChoice | null) => void;
+}): React.ReactElement {
   switch (phase.kind) {
     case 'welcome':
       return <WelcomeContent onContinue={phase.resolve} />;
@@ -108,7 +216,7 @@ function PhaseContent({ phase }: { phase: ReturnType<ConnectStore['phase']['get'
       return <Text color="cyan">{`Creating agent "${phase.name}"…`}</Text>;
 
     case 'pick-channel': {
-      const options = [
+      const options: Array<{ label: string; value: ChannelChoice }> = [
         { label: 'Slack (recommended)', value: 'slack' },
         { label: 'Telegram', value: 'telegram' },
         { label: 'Email — coming soon', value: 'email' },
@@ -120,9 +228,10 @@ function PhaseContent({ phase }: { phase: ReturnType<ConnectStore['phase']['get'
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>Pick a channel to connect this agent to</Text>
-          <Select
+          <ChannelSelect
             options={options}
-            onChange={(value) => phase.resolve(value as 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'skip')}
+            onChange={(value) => phase.resolve(value)}
+            onHighlight={onChannelHover}
           />
         </Box>
       );
@@ -252,7 +361,13 @@ function PhaseContent({ phase }: { phase: ReturnType<ConnectStore['phase']['get'
  */
 const ENTRY_MS = 1200;
 
-function PersistentOrb(): React.ReactElement {
+function PersistentOrb({
+  tintColor,
+  letter,
+}: {
+  tintColor: string;
+  letter: string | undefined;
+}): React.ReactElement {
   const [frame, setFrame] = React.useState(0);
   const [elapsedMs, setElapsedMs] = React.useState(0);
   const bornAtRef = React.useRef(Date.now());
@@ -271,7 +386,57 @@ function PersistentOrb(): React.ReactElement {
   // and avoids the "snap to full size" feel of ease-in.
   const scale = 1 - Math.pow(1 - entryProgress, 3);
 
-  return <Orb phase={frame} scale={scale} />;
+  return <Orb phase={frame} scale={scale} tintColor={tintColor} letter={letter} />;
+}
+
+/**
+ * Channel picker that emits `onHighlight` as the user arrows up/down so the
+ * orb can react in real time. `@inkjs/ui`'s built-in Select fires only on
+ * final commit, which is too late for our purposes.
+ */
+function ChannelSelect({
+  options,
+  onChange,
+  onHighlight,
+}: {
+  options: Array<{ label: string; value: ChannelChoice }>;
+  onChange: (value: ChannelChoice) => void;
+  onHighlight: (value: ChannelChoice | null) => void;
+}): React.ReactElement {
+  const [idx, setIdx] = React.useState(0);
+
+  // Seed the parent with the initial highlight so the orb doesn't sit on
+  // white for a frame before the user touches the arrow keys.
+  React.useEffect(() => {
+    onHighlight(options[0]?.value ?? null);
+    // We only want to fire on mount; subsequent highlights flow through useInput.
+    // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
+  }, []);
+
+  useInput((_input, key) => {
+    if (key.upArrow) {
+      const next = (idx - 1 + options.length) % options.length;
+      setIdx(next);
+      onHighlight(options[next].value);
+    } else if (key.downArrow) {
+      const next = (idx + 1) % options.length;
+      setIdx(next);
+      onHighlight(options[next].value);
+    } else if (key.return) {
+      onChange(options[idx].value);
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      {options.map((opt, i) => (
+        <Text key={opt.value} color={i === idx ? 'cyan' : undefined}>
+          {i === idx ? '› ' : '  '}
+          {opt.label}
+        </Text>
+      ))}
+    </Box>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -588,7 +753,17 @@ const BRAILLE_BITS: ReadonlyArray<{ dx: number; dy: number; bit: number }> = [
   { dx: 1, dy: 3, bit: 0x80 },
 ];
 
-function Orb({ phase, scale }: { phase: number; scale: number }): React.ReactElement {
+function Orb({
+  phase,
+  scale,
+  tintColor,
+  letter,
+}: {
+  phase: number;
+  scale: number;
+  tintColor: string;
+  letter: string | undefined;
+}): React.ReactElement {
   const rows: React.ReactElement[] = [];
   for (let row = 0; row < TERM_H; row++) {
     let line = '';
@@ -597,14 +772,14 @@ function Orb({ phase, scale }: { phase: number; scale: number }): React.ReactEle
       const baseY = row * 4;
       let code = 0x2800;
       for (const dot of BRAILLE_BITS) {
-        if (samplePixel(baseX + dot.dx, baseY + dot.dy, phase, scale)) {
+        if (samplePixel(baseX + dot.dx, baseY + dot.dy, phase, scale, letter)) {
           code |= dot.bit;
         }
       }
       line += String.fromCharCode(code);
     }
     rows.push(
-      <Text key={row} color="white">
+      <Text key={row} color={tintColor}>
         {line}
       </Text>
     );
@@ -613,7 +788,44 @@ function Orb({ phase, scale }: { phase: number; scale: number }): React.ReactEle
   return <Box flexDirection="column">{rows}</Box>;
 }
 
-function samplePixel(px: number, py: number, phase: number, scale: number): boolean {
+// 5×7 binary glyphs for the channel identifier letters. Scaled up by
+// LETTER_SCALE when rendered → larger, chunkier shapes that read better at
+// braille resolution. '1' = lit pixel, '0' = transparent (defers to the
+// sphere shading underneath).
+const LETTER_BASE_W = 5;
+const LETTER_BASE_H = 7;
+const LETTER_SCALE = 2;
+const LETTER_BITMAPS: Record<string, ReadonlyArray<string>> = {
+  S: ['01111', '10000', '10000', '01110', '00001', '00001', '11110'],
+  T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+  E: ['11111', '10000', '10000', '11110', '10000', '10000', '11111'],
+  W: ['10001', '10001', '10001', '10101', '10101', '11011', '10001'],
+  M: ['10001', '11011', '10101', '10001', '10001', '10001', '10001'],
+};
+
+function isLetterPixel(px: number, py: number, letter: string | undefined): boolean {
+  if (!letter) return false;
+  const bitmap = LETTER_BITMAPS[letter];
+  if (!bitmap) return false;
+  const w = LETTER_BASE_W * LETTER_SCALE;
+  const h = LETTER_BASE_H * LETTER_SCALE;
+  // Center the bitmap on the sphere's centre.
+  const left = PX_CX - Math.floor(w / 2);
+  const top = PX_CY - Math.floor(h / 2);
+  const lx = px - left;
+  const ly = py - top;
+  if (lx < 0 || lx >= w || ly < 0 || ly >= h) return false;
+
+  return bitmap[Math.floor(ly / LETTER_SCALE)][Math.floor(lx / LETTER_SCALE)] === '1';
+}
+
+function samplePixel(
+  px: number,
+  py: number,
+  phase: number,
+  scale: number,
+  letter: string | undefined
+): boolean {
   // Effective radius shrinks with `scale` during the entry animation. At
   // scale=0 the sphere has no radius — every "inside" check fails — and only
   // the starfield is visible. At scale=1 the sphere is full-size.
@@ -623,6 +835,14 @@ function samplePixel(px: number, py: number, phase: number, scale: number): bool
   const r2 = sx * sx + sy * sy;
 
   if (r2 < 1) {
+    // Letter overlay: an always-on pixel anywhere the glyph bitmap is set
+    // (AND we're inside the sphere). Gated on the entry animation being
+    // mostly complete so the letter doesn't pop in while the orb is still
+    // growing.
+    if (scale > 0.85 && isLetterPixel(px, py, letter)) {
+      return true;
+    }
+
     // Reconstruct z from the sphere equation (front hemisphere) → unit
     // normal at this pixel for shading.
     const sz = Math.sqrt(1 - r2);
