@@ -5,6 +5,7 @@ import {
   getOnboardingProvisioningStartedAt,
   getOnboardingProvisioningVariant,
   isOnboardingProvisioningActive,
+  purgeStaleOnboardingProvisioning,
   subscribeOnboardingProvisioningChange,
 } from '@/utils/connect/onboarding-session';
 
@@ -34,6 +35,8 @@ export function OnboardingProvisioningOverlay() {
   const [session, setSession] = useState<ProvisioningSession | null>(readSession);
 
   useEffect(() => {
+    purgeStaleOnboardingProvisioning();
+
     const sync = () => {
       setSession((prev) => {
         const next = readSession();

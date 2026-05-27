@@ -8,7 +8,7 @@ import { PageMeta } from '@/components/page-meta';
 import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import { beginConnectProvisioning, buildConnectProvisionOrgListPath } from '@/utils/connect';
+import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
   buildAbsoluteConnectUrl,
   buildPrimarySignUpUrl,
@@ -68,7 +68,6 @@ export const SignUpPage = () => {
     }
 
     hasRedirectedRef.current = true;
-    beginConnectProvisioning();
     window.location.assign(connectProvisionRedirect);
   }, [isLoaded, isSignedIn, isConnectSignUp, connectProvisionRedirect]);
 

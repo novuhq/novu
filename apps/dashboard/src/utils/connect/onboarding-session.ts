@@ -4,6 +4,7 @@ import {
   PLATFORM_STEP_COUNT,
   type OnboardingLoaderVariant,
 } from '@/components/onboarding/onboarding-loader';
+import { IS_HOSTNAME_SPLIT_ENABLED, IS_NOVU_CONNECT } from '@/config';
 
 export const ONBOARDING_PROVISIONING_KEY = 'novu.onboarding.provisioning';
 /** Legacy Connect-only flag — still read for in-flight sessions. */
@@ -87,12 +88,39 @@ export function beginPlatformProvisioning(): void {
   beginOnboardingProvisioning('platform');
 }
 
+function getExpectedVariantForCurrentHost(): OnboardingLoaderVariant {
+  return IS_NOVU_CONNECT ? 'connect' : 'platform';
+}
+
+// sessionStorage survives a cross-product handoff (e.g. Platform → Connect via the app rail
+// writes `variant: 'connect'` to Platform's sessionStorage right before `window.location.assign`)
+// but the destination origin can't see — let alone clear — the source's storage. When the user
+// later comes back to the source origin the flag is still there and replays the loader on top
+// of the wrong app. Ignore a stored variant that doesn't match this host so it can't leak across
+// origins. Single-host deploys accept either variant on the same origin.
+function isStoredVariantValidForCurrentHost(variant: OnboardingLoaderVariant): boolean {
+  if (!IS_HOSTNAME_SPLIT_ENABLED) return true;
+
+  return variant === getExpectedVariantForCurrentHost();
+}
+
 export function getOnboardingProvisioningVariant(): OnboardingLoaderVariant | null {
-  return readProvisioningPayload()?.variant ?? null;
+  const variant = readProvisioningPayload()?.variant ?? null;
+
+  if (!variant) return null;
+
+  if (!isStoredVariantValidForCurrentHost(variant)) return null;
+
+  return variant;
 }
 
 export function getOnboardingProvisioningStartedAt(): number | null {
-  return readProvisioningPayload()?.startedAt ?? null;
+  const payload = readProvisioningPayload();
+
+  if (!payload) return null;
+  if (!isStoredVariantValidForCurrentHost(payload.variant)) return null;
+
+  return payload.startedAt;
 }
 
 export function isOnboardingProvisioningActive(): boolean {
@@ -101,6 +129,23 @@ export function isOnboardingProvisioningActive(): boolean {
 
 export function isConnectProvisioningActive(): boolean {
   return getOnboardingProvisioningVariant() === 'connect';
+}
+
+/**
+ * Lazily reap a `variant` written by a cross-product handoff the user came back from
+ * (e.g. Platform → Connect via the app rail, then back to Platform). Without this the
+ * flag would survive in source-origin sessionStorage for the tab lifetime and trip
+ * `isOnboardingProvisioningActive` consumers elsewhere.
+ */
+export function purgeStaleOnboardingProvisioning(): void {
+  if (!IS_HOSTNAME_SPLIT_ENABLED) return;
+
+  const variant = readProvisioningPayload()?.variant;
+
+  if (!variant) return;
+  if (isStoredVariantValidForCurrentHost(variant)) return;
+
+  clearOnboardingProvisioning();
 }
 
 export function clearOnboardingProvisioning(): void {
