@@ -10,6 +10,7 @@ import {
   ConversationParticipant,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
+  PendingManagedAgentSetup,
 } from './conversation.entity';
 import { Conversation } from './conversation.schema';
 
@@ -216,6 +217,29 @@ export class ConversationRepository extends BaseRepositoryV2<
     await this.update(
       { _id: conversationId, _environmentId: environmentId },
       { $unset: { externalSessionId: '', managedSessionVaultId: '' } }
+    );
+  }
+
+  async setPendingManagedAgentSetup(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    value: PendingManagedAgentSetup
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { pendingManagedAgentSetup: value } }
+    );
+  }
+
+  async clearPendingManagedAgentSetup(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $unset: { pendingManagedAgentSetup: '' } }
     );
   }
 

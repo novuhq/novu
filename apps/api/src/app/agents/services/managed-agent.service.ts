@@ -6,13 +6,18 @@ import {
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
+  ConversationEntity,
   ConversationRepository,
+  SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
 import { type Message, MessageRole } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
+import type { Message as ChatMessage } from 'chat';
 import type { Request, Response } from 'express';
+import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import type { ResolvedAgentConfig } from './agent-config-resolver.service';
 import type { AgentExecutionParams } from './bridge-executor.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler';
@@ -90,6 +95,58 @@ export class ManagedAgentService implements OnModuleInit {
       newSessionId,
       vaultIds[0]
     );
+  }
+
+  /**
+   * Re-dispatch a user turn that was parked while managed-agent setup completed.
+   * Loads the persisted inbound activity and sends only what managed dispatch needs.
+   */
+  async replayParkedInboundTurn(params: {
+    conversation: ConversationEntity;
+    config: ResolvedAgentConfig;
+    subscriber: SubscriberEntity;
+    pendingPlatformMessageId: string;
+    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
+  }): Promise<void> {
+    const activity = await this.conversationActivityRepository.findOne(
+      {
+        _conversationId: params.conversation._id,
+        _environmentId: params.config.environmentId,
+        platformMessageId: params.pendingPlatformMessageId,
+      },
+      '*'
+    );
+
+    if (!activity) {
+      this.logger.warn(
+        { conversationId: params.conversation._id, pendingPlatformMessageId: params.pendingPlatformMessageId },
+        'Managed agent setup completed but parked message was not found'
+      );
+
+      return;
+    }
+
+    const platformThreadId = params.conversation.channels?.[0]?.platformThreadId ?? '';
+    const message = {
+      text: activity.content,
+      id: activity.platformMessageId ?? activity.identifier,
+    } as ChatMessage;
+
+    const context: AgentExecutionParams = {
+      event: AgentEventEnum.ON_MESSAGE,
+      config: params.config,
+      conversation: params.conversation,
+      subscriber: params.subscriber,
+      history: [],
+      message,
+      platformContext: {
+        threadId: platformThreadId,
+        channelId: '',
+        isDM: false,
+      },
+    };
+
+    await this.dispatch(context, params.agent);
   }
 
   /**

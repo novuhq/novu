@@ -600,6 +600,7 @@ export class GenerateMcpOAuthUrl {
       mcpId: command.mcpId,
       scope: McpConnectionScopeEnum.Subscriber,
       timestamp: Date.now(),
+      ...(command.conversationId ? { conversationId: command.conversationId } : {}),
     };
 
     const payload = JSON.stringify(stateData);

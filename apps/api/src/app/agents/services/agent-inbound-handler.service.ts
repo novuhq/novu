@@ -26,12 +26,19 @@ import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/hand
 import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { ManagedAgentSetup } from '../usecases/managed-agent-setup/managed-agent-setup/managed-agent-setup.usecase';
+import { ManagedAgentSetupInboundCommand } from '../usecases/managed-agent-setup/managed-agent-setup/managed-agent-setup-inbound.command';
 import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
-import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
+import {
+  type AgentExecutionParams,
+  BridgeExecutorService,
+  type BridgeReaction,
+  NoBridgeUrlError,
+} from './bridge-executor.service';
 import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
 import {
@@ -224,6 +231,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly managedAgentService: ManagedAgentService,
+    private readonly managedAgentSetup: ManagedAgentSetup,
     private readonly chatSdkService: ChatSdkService,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
@@ -422,6 +430,10 @@ export class AgentInboundHandler implements OnModuleInit {
 
     try {
       if (agent?.runtime === 'managed' && agent.managedRuntime) {
+        if (await this.isManagedAgentSetupRequired(executionContext, agent._id)) {
+          return;
+        }
+
         await this.managedAgentService.dispatch(executionContext, agent);
       } else {
         await this.bridgeExecutor.execute({
@@ -503,6 +515,32 @@ export class AgentInboundHandler implements OnModuleInit {
 
       throw err;
     }
+  }
+
+  /**
+   * When the subscriber still has required setup steps, park the turn and post the setup card.
+   * Returns true when dispatch must not proceed.
+   */
+  private async isManagedAgentSetupRequired(context: AgentExecutionParams, agentId: string): Promise<boolean> {
+    const { config, conversation, subscriber, message } = context;
+
+    if (!subscriber || !message?.id) {
+      return false;
+    }
+
+    return this.managedAgentSetup.handleInbound(
+      ManagedAgentSetupInboundCommand.create({
+        userId: 'system',
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        conversationId: conversation._id,
+        agentId,
+        subscriberId: subscriber.subscriberId,
+        agentIdentifier: config.agentIdentifier,
+        integrationIdentifier: config.integrationIdentifier,
+        platformMessageId: message.id,
+      })
+    );
   }
 
   /**

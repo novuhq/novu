@@ -979,6 +979,7 @@ export class AgentsController {
         agentIdentifier: identifier,
         mcpId,
         subscriberId: body.subscriberId,
+        conversationId: body.conversationId,
       })
     );
   }

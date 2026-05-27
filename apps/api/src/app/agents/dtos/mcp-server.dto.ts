@@ -109,6 +109,11 @@ export class GenerateMcpOAuthUrlRequestDto {
   @IsNotEmpty()
   @IsString()
   subscriberId: string;
+
+  @ApiPropertyOptional({ description: 'Conversation that initiated managed-agent setup (for auto-replay).' })
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
 }
 
 export class GenerateMcpOAuthUrlResponseDto {
