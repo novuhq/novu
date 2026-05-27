@@ -20,15 +20,13 @@ export function useTranslationDrawerLogic(
   );
 
   useEffect(() => {
-    if (initialLocale && translationGroup.locales.includes(initialLocale)) {
-      setSelectedLocale(initialLocale);
-
-      return;
-    }
-
     setSelectedLocale((current) => {
       if (current && translationGroup.locales.includes(current)) {
         return current;
+      }
+
+      if (initialLocale && translationGroup.locales.includes(initialLocale)) {
+        return initialLocale;
       }
 
       return translationGroup.locales[0] || null;
