@@ -59,17 +59,17 @@ const RootRouteInternal = () => {
                 <SnitcherProvider>
                   <AuthProvider>
                     <MfaEnforcementProvider>
-                    <RegionProvider>
-                      <IdentityProvider>
-                        <HelmetProvider>
-                          <TooltipProvider delayDuration={100}>
-                            <EscapeKeyManagerProvider>
-                              <Outlet />
-                            </EscapeKeyManagerProvider>
-                          </TooltipProvider>
-                        </HelmetProvider>
-                      </IdentityProvider>
-                    </RegionProvider>
+                      <RegionProvider>
+                        <IdentityProvider>
+                          <HelmetProvider>
+                            <TooltipProvider delayDuration={100}>
+                              <EscapeKeyManagerProvider>
+                                <Outlet />
+                              </EscapeKeyManagerProvider>
+                            </TooltipProvider>
+                          </HelmetProvider>
+                        </IdentityProvider>
+                      </RegionProvider>
                     </MfaEnforcementProvider>
                   </AuthProvider>
                 </SnitcherProvider>
