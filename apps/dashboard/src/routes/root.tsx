@@ -7,6 +7,7 @@ import { ToastIcon } from '@/components/primitives/sonner';
 import { showToast } from '@/components/primitives/sonner-helpers';
 import { TooltipProvider } from '@/components/primitives/tooltip';
 import { AuthProvider } from '@/context/auth/auth-provider';
+import { MfaEnforcementProvider } from '@/context/mfa-enforcement-provider';
 import { CustomerIoProvider } from '@/context/customer-io';
 import { EEAuthProvider as ClerkProvider } from '@/context/ee-auth-provider';
 import { EscapeKeyManagerProvider } from '@/context/escape-key-manager/escape-key-manager';
@@ -57,6 +58,7 @@ const RootRouteInternal = () => {
               <CustomerIoProvider>
                 <SnitcherProvider>
                   <AuthProvider>
+                    <MfaEnforcementProvider>
                     <RegionProvider>
                       <IdentityProvider>
                         <HelmetProvider>
@@ -68,6 +70,7 @@ const RootRouteInternal = () => {
                         </HelmetProvider>
                       </IdentityProvider>
                     </RegionProvider>
+                    </MfaEnforcementProvider>
                   </AuthProvider>
                 </SnitcherProvider>
               </CustomerIoProvider>

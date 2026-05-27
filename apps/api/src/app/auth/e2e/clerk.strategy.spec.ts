@@ -111,5 +111,29 @@ describe('ClerkStrategy', () => {
         expect(err.message).to.equal('Cannot find environment');
       }
     });
+
+    it('should throw UnauthorizedException when MFA is required but not enabled', async () => {
+      try {
+        await strategy.validate(mockRequest, {
+          ...mockPayload,
+          requireMfa: true,
+          isMfaEnabled: false,
+        });
+        expect.fail('Should have thrown an error');
+      } catch (err) {
+        expect(err).to.be.instanceOf(UnauthorizedException);
+        expect(err.message).to.equal('Multi-factor authentication is required for this organization');
+      }
+    });
+
+    it('should allow access when MFA is required and enabled', async () => {
+      const result = await strategy.validate(mockRequest, {
+        ...mockPayload,
+        requireMfa: true,
+        isMfaEnabled: true,
+      });
+
+      expect(result._id).to.equal('internal-user-123');
+    });
   });
 });

@@ -109,4 +109,6 @@ export type OrganizationPublicMetadata = {
   companySize?: string;
   industry?: IndustryEnum;
   productType?: OrganizationProductTypeEnum;
+  /** When true, all org members must enable MFA before using the dashboard or API. */
+  requireMfa?: boolean;
 };
