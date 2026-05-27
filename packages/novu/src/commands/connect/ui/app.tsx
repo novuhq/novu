@@ -22,11 +22,12 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
   }, [exit, registerExit]);
 
   // Layout pattern: the orb lives at the top of every screen, always
-  // breathing/shimmering. Everything else slots beneath it. This gives the
-  // CLI a single persistent visual identity instead of a different
-  // header/spinner per phase.
+  // breathing/shimmering. Everything else slots beneath it, horizontally
+  // centered so the welcome text / phase content / QR codes all line up
+  // visually with the orb's center. Single persistent visual identity
+  // instead of a different header/spinner per phase.
   return (
-    <Box flexDirection="column" paddingX={1} paddingY={1} gap={1}>
+    <Box flexDirection="column" paddingX={1} paddingY={1} gap={1} alignItems="center">
       <PersistentOrb />
       <PhaseContent phase={phase} />
     </Box>
@@ -328,9 +329,15 @@ function WelcomeContent({ onContinue }: { onContinue: () => void }): React.React
   // Reserve the same vertical space throughout — three lines with a blank
   // between each (matching `gap={1}` on the Box) — so the layout doesn't
   // jump when the cascade kicks off.
+  //
+  // `alignItems="center"` keeps every line centered WITHIN the Welcome Box.
+  // Without it, the headline left-aligns to whatever child is widest — so
+  // when the tagline (longest line) appears, the box widens and the
+  // headline visually slides left. With centering, each line individually
+  // centers and the headline stays in place.
   if (!startedRevealing) {
     return (
-      <Box flexDirection="column" gap={1}>
+      <Box flexDirection="column" gap={1} alignItems="center">
         <Text> </Text>
         <Text> </Text>
         <Text> </Text>
@@ -339,7 +346,7 @@ function WelcomeContent({ onContinue }: { onContinue: () => void }): React.React
   }
 
   return (
-    <Box flexDirection="column" gap={1}>
+    <Box flexDirection="column" gap={1} alignItems="center">
       <DitherText text="Welcome to Novu Connect" progress={progress} seed={1} bold />
       {revealComplete ? (
         <>
