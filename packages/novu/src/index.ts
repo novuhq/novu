@@ -123,14 +123,19 @@ program
 program
   .command('connect')
   .description('Create a managed agent and connect it to Slack from the CLI (beta)')
+  .argument('[prompt]', 'Agent description. When provided, skips the picker and creates a new agent from this prompt.')
   .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key')
   .option('-a, --api-url <url>', 'Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
   .option('-d, --dashboard-url <url>', 'Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
   .option('--region <region>', 'us | eu | local', 'us')
   .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')
   .option('--skip-slack', 'Create the agent and exit; do not run the Slack OAuth step', false)
+  .option(
+    '--slack-config-token <token>',
+    'Slack App Configuration Token (xoxe.xoxp-…) used to provision Slack OAuth credentials non-interactively'
+  )
   .option('--ci', 'Force non-interactive logging mode (no Ink TUI)', false)
-  .action(async (options: ConnectCommandOptions) => {
+  .action(async (positionalPrompt: string | undefined, options: ConnectCommandOptions) => {
     analytics.track({
       identity: {
         anonymousId,
@@ -138,7 +143,13 @@ program
       data: {},
       event: 'Run Novu Connect Command',
     });
-    await connectCommand(options, anonymousId);
+    // Positional `prompt` wins over `--prompt` (the positional form is the
+    // primary surface; the flag exists for parity with `--ci` workflows).
+    const resolved: ConnectCommandOptions = {
+      ...options,
+      prompt: positionalPrompt ?? options.prompt,
+    };
+    await connectCommand(resolved, anonymousId);
   });
 
 program

@@ -43,6 +43,13 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
   });
 
   const ui = createUiController(store, async () => {
+    // Hold the final frame (error or success) on screen long enough for the
+    // user to read it before Ink tears down. Without this, the App re-renders
+    // with the new phase and then unmounts in the same microtask — the user
+    // sees only the previous spinner and a blank line.
+    const finalPhase = store.phase.get().kind;
+    const holdMs = finalPhase === 'error' ? 1500 : finalPhase === 'success' ? 200 : 50;
+    await new Promise<void>((resolve) => setTimeout(resolve, holdMs));
     exitInk?.();
     await instance.waitUntilExit();
 
@@ -103,6 +110,14 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     },
     addingSlackIntegration() {
       store.phase.set({ kind: 'adding-slack' });
+    },
+    promptForSlackConfigToken({ retry }) {
+      return new Promise<string>((resolve, reject) => {
+        store.phase.set({ kind: 'paste-slack-token', retry, resolve, reject });
+      });
+    },
+    runningSlackQuickSetup() {
+      store.phase.set({ kind: 'running-slack-quick-setup' });
     },
     showSlackOAuthUrl(url) {
       store.phase.set({ kind: 'waiting-slack', authorizeUrl: url, pollingStartedAt: Date.now() });

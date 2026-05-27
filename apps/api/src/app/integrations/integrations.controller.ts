@@ -835,6 +835,7 @@ export class IntegrationsController {
   }
 
   @Post('/:integrationId/slack-quick-setup')
+  @ExternalApiAccessible()
   @ApiResponse(SlackQuickSetupResponseDto, 201)
   @ApiOperation({
     summary: 'Quick-setup a Slack integration',

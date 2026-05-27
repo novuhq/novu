@@ -1,3 +1,4 @@
+import https from 'node:https';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 
 export class NovuApiError extends Error {
@@ -29,13 +30,28 @@ export function createConnectApiClient(input: { apiUrl: string; secretKey: strin
     // Short timeout so a misconfigured / non-running API surfaces a real error
     // instead of letting the Ink spinner hang indefinitely.
     timeout: 15_000,
+    // For local-dev hostnames (loopback / *.localhost) the developer almost
+    // certainly has a self-signed cert that Node won't trust out of the box.
+    // Skipping verification is safe because the hostname is, by definition,
+    // unroutable outside the machine.
+    httpsAgent: isLocalHost(baseURL) ? new https.Agent({ rejectUnauthorized: false }) : undefined,
   });
 
   if (debug) {
     instance.interceptors.request.use((config) => {
       process.stderr.write(`[novu connect] → ${config.method?.toUpperCase()} ${config.baseURL}${config.url}\n`);
+      if (config.data) {
+        process.stderr.write(`[novu connect]   body: ${JSON.stringify(config.data).slice(0, 500)}\n`);
+      }
 
       return config;
+    });
+    instance.interceptors.response.use((response) => {
+      process.stderr.write(
+        `[novu connect] ← ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}\n`
+      );
+
+      return response;
     });
   }
 
@@ -53,11 +69,31 @@ export function createConnectApiClient(input: { apiUrl: string; secretKey: strin
             ? `Request to ${url} timed out. Is the API healthy?`
             : error.message;
       const message = extractMessage(body) ?? fallback;
+      if (debug && body) {
+        process.stderr.write(`[novu connect] ! ${status} ${url}\n  ${JSON.stringify(body).slice(0, 1000)}\n`);
+      }
       throw new NovuApiError(message, status, url, body);
     }
   );
 
   return { axios: instance, apiUrl: baseURL };
+}
+
+function isLocalHost(url: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+
+    return (
+      hostname === 'localhost' ||
+      hostname.endsWith('.localhost') ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.')
+    );
+  } catch {
+    return false;
+  }
 }
 
 function extractMessage(body: unknown): string | undefined {

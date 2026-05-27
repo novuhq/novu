@@ -11,6 +11,13 @@ export type Phase =
   | { kind: 'generating' }
   | { kind: 'creating'; name: string }
   | { kind: 'adding-slack' }
+  | {
+      kind: 'paste-slack-token';
+      retry: boolean;
+      resolve: (token: string) => void;
+      reject: (reason: Error) => void;
+    }
+  | { kind: 'running-slack-quick-setup' }
   | { kind: 'waiting-slack'; authorizeUrl: string; pollingStartedAt: number }
   | { kind: 'sending-welcome' }
   | {

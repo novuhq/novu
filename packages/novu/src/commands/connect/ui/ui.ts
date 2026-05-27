@@ -22,6 +22,14 @@ export interface ConnectUI {
 
   // Slack path
   addingSlackIntegration(): void;
+  /**
+   * Ask the user to paste a Slack App Configuration Token (xoxe.xoxp-…)
+   * because the chosen Slack integration has no OAuth client credentials
+   * configured yet. `retry` is true when this prompt is following an earlier
+   * failed quick-setup (so the UI can hint at the cause).
+   */
+  promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
+  runningSlackQuickSetup(): void;
   showSlackOAuthUrl(url: string): void;
   pollingForSlackConnection(): void;
   slackConnected(): void;

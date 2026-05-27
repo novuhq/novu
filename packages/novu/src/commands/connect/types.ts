@@ -7,6 +7,8 @@ export interface ConnectCommandOptions {
   prompt?: string;
   /** Create the agent only — skip the Slack OAuth step. */
   skipSlack?: boolean;
+  /** Pre-fill the Slack App Configuration Token, skipping the paste screen. */
+  slackConfigToken?: string;
   /** Force the non-interactive logging UI (no Ink TUI). Used in CI / piped-stdin shells. */
   ci?: boolean;
 }

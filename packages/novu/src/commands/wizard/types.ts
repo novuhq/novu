@@ -38,6 +38,16 @@ export interface ResolvedAuth {
   environmentSlug?: string | null;
   environmentName?: string | null;
   organizationId?: string | null;
+  /**
+   * The dashboard user who authorized the CLI. Only present when the browser
+   * device-auth flow was used (cli-flag / env paths have no user context).
+   */
+  user?: {
+    id: string;
+    email?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null;
   apiUrl: string;
   dashboardUrl: string;
   region: 'us' | 'eu' | 'local';

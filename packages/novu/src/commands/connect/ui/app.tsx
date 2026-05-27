@@ -104,6 +104,44 @@ function renderPhase(phase: ReturnType<ConnectStore['phase']['get']>): React.Rea
     case 'adding-slack':
       return <SpinnerLine label="Linking Slack to your agent…" />;
 
+    case 'paste-slack-token':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>Paste a Slack App Configuration Token</Text>
+          <Text dimColor>
+            Your Slack integration has no OAuth credentials yet. Novu can create the Slack app for you
+            from a manifest if you paste a short-lived configuration token.
+          </Text>
+          <Box flexDirection="column">
+            <Text dimColor>1. Visit </Text>
+            <Text color="cyan">https://api.slack.com/apps</Text>
+            <Text dimColor>2. Open “Your Apps” → “Manage” → “App Configuration Tokens”</Text>
+            <Text dimColor>3. Generate a token for your workspace (starts with xoxe.xoxp-)</Text>
+          </Box>
+          {phase.retry ? (
+            <Text color="yellow">Previous token was rejected by Slack. Generate a fresh one and try again.</Text>
+          ) : null}
+          <Box borderStyle="round" paddingX={1}>
+            <TextInput
+              placeholder="xoxe.xoxp-…"
+              onSubmit={(value) => {
+                const trimmed = value.trim();
+                if (!trimmed) {
+                  phase.reject(new Error('No Slack App Configuration Token provided.'));
+
+                  return;
+                }
+                phase.resolve(trimmed);
+              }}
+            />
+          </Box>
+          <Text dimColor>The token is sent to your Novu API once, used to create the Slack app, then discarded.</Text>
+        </Box>
+      );
+
+    case 'running-slack-quick-setup':
+      return <SpinnerLine label="Creating Slack app from manifest…" />;
+
     case 'waiting-slack':
       return (
         <Box flexDirection="column" gap={1}>

@@ -75,6 +75,18 @@ export function createLoggingUI(): ConnectUI {
     addingSlackIntegration() {
       start('Linking Slack to your agent…');
     },
+    promptForSlackConfigToken(_opts) {
+      stop();
+
+      return Promise.reject(
+        new Error(
+          'Slack integration has no OAuth credentials. Pass --slack-config-token "xoxe.xoxp-…" to run the Slack quick-setup unattended, or run interactively to paste it.'
+        )
+      );
+    },
+    runningSlackQuickSetup() {
+      start('Creating Slack app from manifest…');
+    },
     showSlackOAuthUrl(url) {
       stop();
       console.log(`${chalk.cyan('→')} Authorize Slack here: ${chalk.underline(url)}`);

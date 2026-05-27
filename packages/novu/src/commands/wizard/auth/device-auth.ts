@@ -35,6 +35,12 @@ interface CallbackPayload {
   environmentSlug?: string | null;
   environmentName?: string | null;
   organizationId?: string | null;
+  user?: {
+    id: string;
+    email?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  } | null;
 }
 
 export async function browserDeviceAuth(input: BrowserAuthInput): Promise<ResolvedAuth> {
@@ -114,6 +120,7 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
       environmentSlug: result.environmentSlug ?? null,
       environmentName: result.environmentName ?? null,
       organizationId: result.organizationId ?? null,
+      user: result.user ?? null,
       apiUrl: input.apiUrl,
       dashboardUrl: input.dashboardUrl,
       region: input.region,

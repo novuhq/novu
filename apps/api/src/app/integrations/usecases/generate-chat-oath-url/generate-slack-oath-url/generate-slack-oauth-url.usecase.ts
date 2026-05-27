@@ -229,11 +229,16 @@ export class GenerateSlackOauthUrl {
   }
 
   static buildRedirectUri(): string {
-    if (!process.env.API_ROOT_URL) {
-      throw new Error('API_ROOT_URL environment variable is required');
+    // Must match exactly the redirect URL baked into the Slack app manifest
+    // (see slack-quick-setup.usecase.ts). When AGENT_API_HOSTNAME is set
+    // (typically a tunnel URL for local dev), both sides resolve to the
+    // tunnel; otherwise both fall back to API_ROOT_URL.
+    const rootUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
+    if (!rootUrl) {
+      throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
     }
 
-    const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, ''); // Remove trailing slash
+    const baseUrl = rootUrl.replace(/\/$/, ''); // Remove trailing slash
 
     return `${baseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
   }

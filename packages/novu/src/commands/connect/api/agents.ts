@@ -13,9 +13,12 @@ export interface GeneratedAgentSpec {
   name: string;
   identifier: string;
   systemPrompt: string;
-  tools: Array<{ externalId: string; name: string; type: 'builtin' | 'custom'; description?: string }>;
-  mcpServers: Array<{ externalId: string; name: string; url: string }>;
-  skills: Array<{ type: 'anthropic' | 'custom'; skillId: string; version?: string | null }>;
+  /** Catalog IDs of Claude built-in tool types — already in the wire format expected by `POST /agents`. */
+  tools: string[];
+  /** MCP server catalog IDs — already in the wire format expected by `POST /agents`. */
+  mcpServers: string[];
+  /** Skills with only `skillId`; the `type` is implicitly 'anthropic' for generator output. */
+  skills: Array<{ skillId: string }>;
 }
 
 export interface CreateManagedAgentInput {
@@ -24,9 +27,9 @@ export interface CreateManagedAgentInput {
   integrationId: string;
   providerId: string;
   systemPrompt: string;
-  tools: GeneratedAgentSpec['tools'];
-  mcpServers: GeneratedAgentSpec['mcpServers'];
-  skills: GeneratedAgentSpec['skills'];
+  tools: string[];
+  mcpServers: string[];
+  skills: Array<{ skillId: string }>;
 }
 
 export interface AgentIntegrationLink {
@@ -65,9 +68,12 @@ export async function createManagedAgent(client: ConnectApiClient, input: Create
       providerId: input.providerId,
       integrationId: input.integrationId,
       systemPrompt: input.systemPrompt,
-      tools: input.tools.map((t) => t.externalId),
-      mcpServers: input.mcpServers.map((m) => m.externalId),
-      skills: input.skills,
+      tools: input.tools,
+      mcpServers: input.mcpServers,
+      // Generate-managed-agent returns `{ skillId }` only; the agent-create
+      // DTO expects each entry to also carry `type` (defaults to 'anthropic'
+      // for catalog-provided skills).
+      skills: input.skills.map((s) => ({ type: 'anthropic' as const, skillId: s.skillId })),
     },
   });
   const body = res.data;
