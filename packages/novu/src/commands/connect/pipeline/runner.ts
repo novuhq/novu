@@ -61,6 +61,12 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
   const track = onTrack ?? (() => undefined);
 
   try {
+    // 0. Welcome screen — explicit consent gate so we never auto-open the
+    //    user's browser. The Ink implementation also waits for the orb's
+    //    entry animation to finish before revealing the welcome text, so the
+    //    user lands on a fully-formed orb instead of mid-grow.
+    await ui.showWelcome();
+
     // 1. Authenticate via the browser device-auth flow (reused from wizard).
     ui.authStarted();
     const auth = await resolveAuth(toWizardAuthOptions(options), {

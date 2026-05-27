@@ -61,6 +61,11 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
 
 function createUiController(store: ConnectStore, shutdown: () => Promise<number>): ConnectUI {
   return {
+    showWelcome() {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'welcome', resolve });
+      });
+    },
     authStarted() {
       store.phase.set({ kind: 'auth', dashboardUrl: null, status: 'Authorizing via the Novu Dashboard…' });
     },

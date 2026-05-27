@@ -23,6 +23,15 @@ export function createLoggingUI(): ConnectUI {
   };
 
   return {
+    showWelcome() {
+      // Non-interactive: skip the welcome prompt; the run is unattended by
+      // definition (--ci or piped stdin) so there's nobody to press Enter.
+      stop();
+      console.log(chalk.bold('Welcome to Novu Connect.'));
+      console.log(chalk.gray('Authorizing automatically (non-interactive mode).'));
+
+      return Promise.resolve();
+    },
     authStarted() {
       start('Authorizing via the Novu Dashboard…');
     },

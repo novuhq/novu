@@ -3,6 +3,11 @@ import type { AgentSummary, ChannelChoice } from '../types';
 import type { PickResult } from './ui';
 
 export type Phase =
+  | {
+      kind: 'welcome';
+      /** Called when the user hits Enter to authorize. Pipeline awaits this before opening the browser. */
+      resolve: () => void;
+    }
   | { kind: 'auth'; dashboardUrl: string | null; status: string }
   | { kind: 'listing-agents' }
   | { kind: 'loading-integrations' }
@@ -56,7 +61,10 @@ export interface ConnectStore {
 }
 
 export function createConnectStore(): ConnectStore {
+  // Start on the welcome screen with a no-op resolver — the pipeline replaces
+  // it with the real resolver in `ui.showWelcome()` as the first thing it
+  // does. The no-op covers the microsecond window before that happens.
   return {
-    phase: atom<Phase>({ kind: 'auth', dashboardUrl: null, status: 'Authorizing via the Novu Dashboard…' }),
+    phase: atom<Phase>({ kind: 'welcome', resolve: () => undefined }),
   };
 }
