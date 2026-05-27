@@ -108,6 +108,14 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     agentCreated(_agent: AgentSummary) {
       // Visible after Slack completes via the final success screen.
     },
+    pickChannel() {
+      return new Promise((resolve) => {
+        store.phase.set({ kind: 'pick-channel', resolve });
+      });
+    },
+    channelComingSoon(_choice) {
+      // The success screen will render the "skipped" state — no interim screen needed.
+    },
     addingSlackIntegration() {
       store.phase.set({ kind: 'adding-slack' });
     },

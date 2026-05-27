@@ -4,7 +4,7 @@ import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
-import { ConnectCommandOptions } from './commands/connect/types';
+import { CHANNEL_CHOICES, type ChannelChoice, ConnectCommandOptions } from './commands/connect/types';
 import { IInitCommandOptions, init } from './commands/init';
 import { stepPublish } from './commands/step';
 import { sync } from './commands/sync';
@@ -129,7 +129,11 @@ program
   .option('-d, --dashboard-url <url>', 'Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
   .option('--region <region>', 'us | eu | local', 'us')
   .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')
-  .option('--skip-slack', 'Create the agent and exit; do not run the Slack OAuth step', false)
+  .option(
+    '--channel <name>',
+    `Channel to connect (skips the picker). One of: ${CHANNEL_CHOICES.join(', ')}. Only "slack" is implemented today.`
+  )
+  .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(
     '--slack-config-token <token>',
     'Slack App Configuration Token (xoxe.xoxp-…) used to provision Slack OAuth credentials non-interactively'
@@ -145,9 +149,14 @@ program
     });
     // Positional `prompt` wins over `--prompt` (the positional form is the
     // primary surface; the flag exists for parity with `--ci` workflows).
+    if (options.channel && !(CHANNEL_CHOICES as readonly string[]).includes(options.channel)) {
+      console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
+      process.exit(1);
+    }
     const resolved: ConnectCommandOptions = {
       ...options,
       prompt: positionalPrompt ?? options.prompt,
+      channel: options.channel as ChannelChoice | undefined,
     };
     await connectCommand(resolved, anonymousId);
   });

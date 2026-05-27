@@ -1,5 +1,5 @@
 import { atom, type WritableAtom } from 'nanostores';
-import type { AgentSummary } from '../types';
+import type { AgentSummary, ChannelChoice } from '../types';
 import type { PickResult } from './ui';
 
 export type Phase =
@@ -10,6 +10,7 @@ export type Phase =
   | { kind: 'describe'; resolve: (prompt: string) => void }
   | { kind: 'generating' }
   | { kind: 'creating'; name: string }
+  | { kind: 'pick-channel'; resolve: (choice: ChannelChoice) => void }
   | { kind: 'adding-slack' }
   | {
       kind: 'paste-slack-token';

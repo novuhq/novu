@@ -1,4 +1,4 @@
-import type { AgentSummary } from '../types';
+import type { AgentSummary, ChannelChoice } from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
@@ -19,6 +19,11 @@ export interface ConnectUI {
   generatingAgent(): void;
   creatingAgent(name: string): void;
   agentCreated(agent: AgentSummary): void;
+
+  // Channel selection
+  pickChannel(): Promise<ChannelChoice>;
+  /** Render a "coming soon" message for a channel that isn't wired up yet. */
+  channelComingSoon(choice: ChannelChoice): void;
 
   // Slack path
   addingSlackIntegration(): void;

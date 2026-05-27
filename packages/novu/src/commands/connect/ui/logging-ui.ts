@@ -72,6 +72,17 @@ export function createLoggingUI(): ConnectUI {
     agentCreated(agent: AgentSummary) {
       succeed(`Created agent "${agent.name}" (${agent.identifier})`);
     },
+    pickChannel() {
+      stop();
+      // Non-interactive default: Slack.
+      console.log(chalk.gray('Non-interactive mode: defaulting to Slack.'));
+
+      return Promise.resolve('slack');
+    },
+    channelComingSoon(choice) {
+      stop();
+      console.log(`${chalk.yellow('!')} ${choice} is coming soon — set it up in the dashboard for now.`);
+    },
     addingSlackIntegration() {
       start('Linking Slack to your agent…');
     },

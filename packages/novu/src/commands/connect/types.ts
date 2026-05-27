@@ -1,3 +1,7 @@
+export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'skip';
+
+export const CHANNEL_CHOICES: readonly ChannelChoice[] = ['slack', 'email', 'whatsapp', 'telegram', 'teams', 'skip'];
+
 export interface ConnectCommandOptions {
   secretKey?: string;
   apiUrl: string;
@@ -5,7 +9,12 @@ export interface ConnectCommandOptions {
   region: 'us' | 'eu' | 'local';
   /** Pre-fill the agent description, skipping the input screen. Enables non-interactive runs. */
   prompt?: string;
-  /** Create the agent only — skip the Slack OAuth step. */
+  /** Pre-select the channel to connect, skipping the picker. Currently only `slack` is implemented. */
+  channel?: ChannelChoice;
+  /**
+   * @deprecated Pass `--channel none` (or just skip the picker) instead. Kept so existing
+   * scripts don't break; treated as `channel === 'none'`.
+   */
   skipSlack?: boolean;
   /** Pre-fill the Slack App Configuration Token, skipping the paste screen. */
   slackConfigToken?: string;

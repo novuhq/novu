@@ -22,7 +22,7 @@ import {
   slackQuickSetup,
 } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
-import type { AgentSummary, ConnectCommandOptions } from '../types';
+import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 
 const SLACK_POLL_INTERVAL_MS = 2_000;
@@ -92,8 +92,16 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let slackConnected = false;
     let slackIntegration: IntegrationRecord | null = null;
 
-    if (options.skipSlack) {
+    // Resolve which channel to wire up. Slack is the only channel implemented
+    // today; other picks short-circuit with a friendly "coming soon" message.
+    // Resolution precedence: `--skip-slack` (legacy) → `--channel` flag →
+    // interactive picker → default `slack` in non-interactive mode.
+    const channel: ChannelChoice = options.skipSlack ? 'skip' : (options.channel ?? (await ui.pickChannel()));
+
+    if (channel === 'skip') {
       ui.slackSkipped();
+    } else if (channel !== 'slack') {
+      ui.channelComingSoon(channel);
     } else {
       // The Slack OAuth callback creates the SLACK_USER endpoint only when it
       // has a `subscriberId`. We need a real subscriber the API can attach
