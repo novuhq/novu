@@ -9,7 +9,7 @@ import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { buildAppHomeRoute, getCurrentAppId } from '@/utils/apps';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import { beginConnectProvisioning, buildConnectProvisionOrgListPath } from '@/utils/connect';
+import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
   buildAbsoluteConnectUrl,
   buildPrimarySignInUrl,
@@ -71,7 +71,6 @@ export const SignInPage = () => {
     hasRedirectedRef.current = true;
 
     if (isConnectSignIn) {
-      beginConnectProvisioning();
       window.location.assign(connectProvisionRedirect);
 
       return;
