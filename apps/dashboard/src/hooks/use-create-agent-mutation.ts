@@ -3,8 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
 import { AGENTS_LIST_QUERY_KEY, type AgentResponse, type CreateAgentBody, createAgent } from '@/api/agents';
 import { resolveClaudeManagedProviderId } from '@/components/agents/connectors/claude-managed-integrations';
-import { buildManagedIntegrationCredentials } from '@/components/agents/create-agent-fields';
 import type { CreateAgentForm } from '@/components/agents/create-agent-fields';
+import { buildManagedIntegrationCredentials } from '@/components/agents/create-agent-fields';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { QueryKeys } from '@/utils/query-keys';
 import { useCreateIntegration } from './use-create-integration';
@@ -42,6 +42,7 @@ export function useCreateAgentMutation() {
         name,
         identifier,
         instructions,
+        description,
         apiKey,
         externalAgentId,
         externalEnvironmentId,
@@ -63,7 +64,7 @@ export function useCreateAgentMutation() {
           const request: CreateAgentBody = {
             name,
             identifier,
-            description: instructions,
+            description,
           };
 
           try {
@@ -135,6 +136,7 @@ export function useCreateAgentMutation() {
             : {
                 name,
                 identifier,
+                description,
                 runtime: 'managed',
                 managedRuntime: {
                   integrationId,

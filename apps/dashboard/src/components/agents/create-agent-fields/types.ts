@@ -14,6 +14,7 @@ export type AgentTemplate = {
 export type CreateAgentForm = {
   name: string;
   identifier: string;
+  description: string;
   instructions: string;
   apiKey: string;
   runtime: RuntimeType;

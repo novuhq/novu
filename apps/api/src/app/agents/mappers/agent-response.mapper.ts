@@ -14,6 +14,7 @@ import {
 } from '@novu/shared';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
+import type { AgentMcpServerDto, AgentRuntimeConfigResponseDto, AgentToolDto } from '../dtos/agent-runtime-config.dto';
 
 /**
  * Minimal integration shape needed by the agent integration mapper to compute
@@ -56,7 +57,11 @@ function buildAgentConsoleUrl(
   return buildClaudePlatformAgentConsoleUrl(externalAgentId, externalWorkspaceId);
 }
 
-export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHydration): AgentResponseDto {
+export function toAgentResponse(
+  agent: AgentEntity,
+  hydration?: ManagedRuntimeHydration,
+  runtimeConfig?: AgentRuntimeConfigResponseDto
+): AgentResponseDto {
   const managedRuntime = agent.managedRuntime
     ? {
         providerId: agent.managedRuntime.providerId,
@@ -69,6 +74,9 @@ export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHy
           agent.managedRuntime.externalAgentId,
           hydration?.externalWorkspaceId
         ),
+        tools: runtimeConfig?.tools,
+        mcpServers: runtimeConfig?.mcpServers,
+        systemPrompt: runtimeConfig?.systemPrompt,
       }
     : undefined;
 

@@ -58,6 +58,11 @@ export class GenerateManagedAgentResponseDto {
   @IsNotEmpty()
   identifier: string;
 
+  @ApiProperty({ description: 'Agent description.' })
+  @IsString()
+  @IsNotEmpty()
+  description: string;
+
   @ApiProperty({ description: 'System prompt to send to Claude when invoking the agent.' })
   @IsString()
   @IsNotEmpty()

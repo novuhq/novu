@@ -26,6 +26,11 @@ export const managedAgentGenerationSchema = z.object({
     .max(60)
     .regex(/^[a-z0-9-]+$/, 'Identifier must be lowercase kebab-case')
     .describe('Stable kebab-case identifier derived from the name (e.g., "pr-security-reviewer").'),
+  description: z
+    .string()
+    .min(1)
+    .max(200)
+    .describe("Agent description. A short, human-readable summary of the agent's purpose and capabilities."),
   systemPrompt: z
     .string()
     .min(1)

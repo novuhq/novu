@@ -65,6 +65,9 @@ export type ManagedRuntimeResponse = {
   externalEnvironmentId?: string;
   externalWorkspaceId?: string;
   consoleUrl?: string;
+  tools?: AgentTool[];
+  mcpServers?: AgentMcpServer[];
+  systemPrompt?: string;
 };
 
 export type AgentResponse = {
@@ -282,6 +285,7 @@ export type GeneratedManagedAgentSkill = {
 export type GeneratedManagedAgent = {
   name: string;
   identifier: string;
+  description: string;
   systemPrompt: string;
   tools: string[];
   mcpServers: string[];

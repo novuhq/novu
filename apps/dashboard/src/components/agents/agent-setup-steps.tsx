@@ -59,6 +59,17 @@ const PROVIDER_GUIDE_RESERVED_STEPS = 3;
 // Self-hosted agents add three handler steps (scaffold + run + send) below the provider guide.
 const HANDLER_STEPS = 3;
 
+/**
+ * Channel-level integration snapshot the parent uses to drive the right-side illustration.
+ * `selectedProviderId` is the chat provider the user picked from the provider cards (or the
+ * agent's default integration); `connectedProviderIds` carries every provider whose link is
+ * actively connected, so the preview can flip the matching channel card to CONNECTED.
+ */
+export type AgentChannelState = {
+  selectedProviderId: string | undefined;
+  connectedProviderIds: ReadonlyArray<string>;
+};
+
 type AgentSetupStepsProps = {
   agent: AgentResponse;
   /**
@@ -73,6 +84,11 @@ type AgentSetupStepsProps = {
    * used to render the "View all instructions" recap above the channel step.
    */
   connectSummary?: ConnectSummary | null;
+  /**
+   * Onboarding flow only: notifies the parent whenever the picked provider or the set of
+   * actually-connected providers changes, so the illustration can highlight the right card.
+   */
+  onChannelStateChange?: (state: AgentChannelState) => void;
 };
 
 function ViewAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; onToggle: () => void }) {
@@ -162,7 +178,13 @@ function ConnectPhaseRecap({
   );
 }
 
-export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, connectSummary }: AgentSetupStepsProps) {
+export function AgentSetupSteps({
+  agent,
+  onSetupComplete,
+  hideAddProvider,
+  connectSummary,
+  onChannelStateChange,
+}: AgentSetupStepsProps) {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
   const queryClient = useQueryClient();
@@ -286,6 +308,21 @@ export function AgentSetupSteps({ agent, onSetupComplete, hideAddProvider, conne
     setupCompleteFiredRef.current = true;
     onSetupCompleteRef.current?.();
   }, [isManagedRuntime, hasConnectedIntegration]);
+
+  const connectedProviderIds = useMemo<ReadonlyArray<string>>(() => {
+    return agentIntegrationLinks
+      .filter((link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent)
+      .map((link) => link.integration.providerId);
+  }, [agentIntegrationLinks]);
+
+  const onChannelStateChangeRef = useRef(onChannelStateChange);
+  onChannelStateChangeRef.current = onChannelStateChange;
+  useEffect(() => {
+    onChannelStateChangeRef.current?.({
+      selectedProviderId,
+      connectedProviderIds,
+    });
+  }, [selectedProviderId, connectedProviderIds]);
 
   const handleBridgeConnected = useCallback(() => {
     if (!setupCompleteFiredRef.current) {

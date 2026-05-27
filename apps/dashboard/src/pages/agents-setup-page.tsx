@@ -1,18 +1,24 @@
 import { useOrganization, useUser } from '@clerk/react';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
-import { AgentSetupSteps } from '@/components/agents/agent-setup-steps';
+import { type AgentChannelState, AgentSetupSteps } from '@/components/agents/agent-setup-steps';
 import type { RuntimeType } from '@/components/agents/create-agent-fields';
 import {
   AgentFlowIllustration,
   type AgentFlowRuntime,
   type AgentFlowState,
+  type ManagedAgentPreview,
 } from '@/components/onboarding/agent-flow-illustration';
-import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
+import type { ManagedConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
+import {
+  type ConnectAgentPreview,
+  ConnectAgentStep,
+  type ConnectSummary,
+} from '@/components/onboarding/connect-agent/connect-agent-step';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
@@ -22,9 +28,9 @@ import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
-import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { getPostOnboardingRoute, resolveOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -61,6 +67,14 @@ function toIllustrationRuntime(runtime: RuntimeType): AgentFlowRuntime {
 
 function resolveCreatedAgentRuntime(agent: AgentResponse): AgentFlowRuntime {
   return agent.runtime === 'managed' ? 'claude' : 'scratch';
+}
+
+function toManagedConnectorKind(connectorId: string | undefined): ManagedConnectorKind {
+  return connectorId === 'claude-aws' ? 'aws' : 'anthropic';
+}
+
+function resolveCreatedAgentConnectorKind(agent: AgentResponse): ManagedConnectorKind {
+  return agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws ? 'aws' : 'anthropic';
 }
 
 function useAgentEnvLoading(organizationId?: string) {
@@ -197,6 +211,11 @@ export function AgentsSetupPage() {
   const [connectSummary, setConnectSummary] = useState<ConnectSummary | null>(null);
   const [setupComplete, setSetupComplete] = useState(false);
   const [selectedRuntime, setSelectedRuntime] = useState<AgentFlowRuntime>('scratch');
+  const [connectPreview, setConnectPreview] = useState<ConnectAgentPreview | null>(null);
+  const [channelState, setChannelState] = useState<AgentChannelState>({
+    selectedProviderId: undefined,
+    connectedProviderIds: [],
+  });
 
   const handleAgentCreated = useCallback((agent: AgentResponse, summary: ConnectSummary) => {
     setCreatedAgent(agent);
@@ -206,6 +225,24 @@ export function AgentsSetupPage() {
 
   const handleRuntimeChange = useCallback((runtime: RuntimeType) => {
     setSelectedRuntime(toIllustrationRuntime(runtime));
+  }, []);
+
+  const handlePreviewChange = useCallback((preview: ConnectAgentPreview) => {
+    setConnectPreview(preview);
+  }, []);
+
+  const handleChannelStateChange = useCallback((next: AgentChannelState) => {
+    setChannelState((prev) => {
+      if (
+        prev.selectedProviderId === next.selectedProviderId &&
+        prev.connectedProviderIds.length === next.connectedProviderIds.length &&
+        prev.connectedProviderIds.every((id, i) => id === next.connectedProviderIds[i])
+      ) {
+        return prev;
+      }
+
+      return next;
+    });
   }, []);
 
   const handleSkip = useCallback(() => {
@@ -258,7 +295,9 @@ export function AgentsSetupPage() {
 
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <PageMeta title={isConnectHost ? 'Build and distribute agents' : "Let's connect your agent to where you work"} />
+        <PageMeta
+          title={isConnectHost ? 'Build and distribute agents' : "Let's connect your agent to where you work"}
+        />
         <OnboardingLoader variant={isConnectHost ? 'connect' : 'platform'} />
       </div>
     );
@@ -298,6 +337,7 @@ export function AgentsSetupPage() {
               <ConnectAgentStep
                 onAgentCreated={handleAgentCreated}
                 onRuntimeChange={handleRuntimeChange}
+                onPreviewChange={handlePreviewChange}
                 isManagedEnabled={isManagedEnabled}
               />
             </div>
@@ -317,6 +357,7 @@ export function AgentsSetupPage() {
               onSetupComplete={() => setSetupComplete(true)}
               hideAddProvider
               connectSummary={connectSummary}
+              onChannelStateChange={handleChannelStateChange}
             />
 
             {setupComplete ? (
@@ -348,13 +389,86 @@ export function AgentsSetupPage() {
   );
   const illustrationState = getIllustrationState({ phase, setupComplete });
   const illustrationRuntime = createdAgent ? resolveCreatedAgentRuntime(createdAgent) : selectedRuntime;
+  const managedPreview = buildManagedPreview({ createdAgent, connectSummary, connectPreview, channelState });
 
   return (
     <OnboardingShell
       left={leftContent}
-      right={<AgentFlowIllustration state={illustrationState} runtime={illustrationRuntime} />}
+      right={
+        <AgentFlowIllustration
+          state={illustrationState}
+          runtime={illustrationRuntime}
+          managedPreview={managedPreview}
+        />
+      }
       maxLeftWidth="860px"
       alignLeft="top"
     />
   );
+}
+
+type BuildManagedPreviewInput = {
+  createdAgent: AgentResponse | null;
+  connectSummary: ConnectSummary | null;
+  connectPreview: ConnectAgentPreview | null;
+  channelState: AgentChannelState;
+};
+
+/**
+ * Combines the live connect-phase form snapshot with the post-creation agent record into a
+ * single managed-Claude preview. Returns `undefined` when the current connector isn't a
+ * managed Claude variant, in which case the scratch illustration takes over.
+ *
+ * Once the agent exists, `managedRuntime.mcpServers` / `tools` from the API response is the
+ * source of truth (live values projected from the managed-runtime provider). The connect-phase
+ * form snapshot is kept as a fallback so the preview still renders something sensible if the
+ * provider read failed during creation and the API omitted the runtime view.
+ */
+function buildManagedPreview({
+  createdAgent,
+  connectSummary,
+  connectPreview,
+  channelState,
+}: BuildManagedPreviewInput): ManagedAgentPreview | undefined {
+  if (createdAgent) {
+    if (createdAgent.runtime !== 'managed') {
+      return undefined;
+    }
+
+    const serverMcpIds = createdAgent.managedRuntime?.mcpServers?.map((m) => m.externalId);
+    const serverToolIds = createdAgent.managedRuntime?.tools?.map((t) => t.externalId);
+    const systemPrompt = createdAgent.managedRuntime?.systemPrompt;
+
+    return {
+      connector: resolveCreatedAgentConnectorKind(createdAgent),
+      isDemoCredential: createdAgent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic,
+      isPending: false,
+      agentCreated: true,
+      name: createdAgent.name,
+      description: createdAgent.description,
+      instructions: systemPrompt ?? connectSummary?.instructions,
+      mcpServers: serverMcpIds ?? connectSummary?.mcpServers ?? [],
+      tools: serverToolIds ?? connectSummary?.tools ?? [],
+      selectedProviderId: channelState.selectedProviderId,
+      connectedProviderIds: channelState.connectedProviderIds,
+    };
+  }
+
+  if (!connectPreview?.isClaudeSelected) {
+    return undefined;
+  }
+
+  return {
+    connector: toManagedConnectorKind(connectPreview.connectorId),
+    isDemoCredential: connectPreview.isDemoCredential,
+    isPending: connectPreview.isPending,
+    agentCreated: false,
+    name: connectPreview.name,
+    description: connectPreview.description,
+    instructions: connectPreview.instructions,
+    mcpServers: connectPreview.mcpServers,
+    tools: connectPreview.tools,
+    selectedProviderId: undefined,
+    connectedProviderIds: [],
+  };
 }
