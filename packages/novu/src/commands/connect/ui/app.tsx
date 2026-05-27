@@ -23,16 +23,15 @@ const CHANNEL_TINTS: Record<ChannelChoice, string> = {
 const DEFAULT_ORB_COLOR = 'white';
 
 /**
- * Single-letter identifier shown in the orb's center per channel. Plain
- * letters, not logos — distinct enough to read at a glance, no IP exposure.
- * `skip` returns undefined so the orb stays plain when the user opts out.
+ * Plain text channel names rendered inside the orb. Plain words, not logos.
+ * `skip` is undefined so the orb stays plain when the user opts out.
  */
-const CHANNEL_LETTERS: Partial<Record<ChannelChoice, string>> = {
-  slack: 'S',
-  telegram: 'T',
-  email: 'E',
-  whatsapp: 'W',
-  teams: 'M', // M for "MS Teams" — disambiguates from any other "T"
+const CHANNEL_LABELS: Partial<Record<ChannelChoice, string>> = {
+  slack: 'SLACK',
+  telegram: 'TELEGRAM',
+  email: 'EMAIL',
+  whatsapp: 'WHATSAPP',
+  teams: 'TEAMS',
 };
 
 export interface AppProps {
