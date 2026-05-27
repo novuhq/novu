@@ -287,39 +287,129 @@ const TAGLINES: ReadonlyArray<string> = [
 ];
 
 /**
- * First screen the user sees. The visible text is held back ~1.5s so the orb
- * has time to play out its entry animation (ENTRY_MS + small breathing
- * pause) before the welcome lands on a fully-formed sphere. Enter is also
- * gated on the text being visible — a fast key-mash during the orb grow-in
- * won't accidentally skip past it.
+ * First screen the user sees. The reveal is timed against the orb's entry
+ * animation so it doesn't compete: the orb plays for ENTRY_MS, then after a
+ * short hold the welcome text materializes through a dithered cascade
+ * (`· → ░ → ▒ → ▓ → real char` per position) matching the orb's own
+ * dithered aesthetic. Enter is ignored until the cascade completes — a
+ * fast key-mash during the reveal won't skip past it.
  */
-const WELCOME_REVEAL_MS = 1500;
+const WELCOME_REVEAL_START_MS = 1300;
+const WELCOME_REVEAL_DURATION_MS = 900;
+const WELCOME_REVEAL_TOTAL_MS = WELCOME_REVEAL_START_MS + WELCOME_REVEAL_DURATION_MS;
+const WELCOME_FRAME_MS = 55;
 
 function WelcomeContent({ onContinue }: { onContinue: () => void }): React.ReactElement {
-  const [revealed, setRevealed] = React.useState(false);
+  const [elapsed, setElapsed] = React.useState(0);
+  const bornAtRef = React.useRef(Date.now());
 
   React.useEffect(() => {
-    const t = setTimeout(() => setRevealed(true), WELCOME_REVEAL_MS);
+    const t = setInterval(() => {
+      const e = Date.now() - bornAtRef.current;
+      setElapsed(e);
+      if (e >= WELCOME_REVEAL_TOTAL_MS) clearInterval(t);
+    }, WELCOME_FRAME_MS);
 
-    return () => clearTimeout(t);
+    return () => clearInterval(t);
   }, []);
 
+  const revealComplete = elapsed >= WELCOME_REVEAL_TOTAL_MS;
+  // 0..1 progress through the dither cascade. Negative values (during the
+  // hold before the cascade starts) clamp to 0 so DitherText renders the
+  // pre-reveal noise state.
+  const progress = Math.min(1, Math.max(0, (elapsed - WELCOME_REVEAL_START_MS) / WELCOME_REVEAL_DURATION_MS));
+  const startedRevealing = elapsed >= WELCOME_REVEAL_START_MS;
+
   useInput((_input, key) => {
-    if (!revealed) return;
+    if (!revealComplete) return;
     if (key.return || _input === ' ') onContinue();
   });
 
-  if (!revealed) {
-    // Render an empty box so the layout doesn't jump when the text appears.
-    return <Box />;
+  // Reserve the same vertical space throughout — three lines with a blank
+  // between each (matching `gap={1}` on the Box) — so the layout doesn't
+  // jump when the cascade kicks off.
+  if (!startedRevealing) {
+    return (
+      <Box flexDirection="column" gap={1}>
+        <Text> </Text>
+        <Text> </Text>
+        <Text> </Text>
+      </Box>
+    );
   }
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Welcome to Novu Connect</Text>
-      <Text dimColor>Spin up a managed AI agent and connect it to your team — all from your terminal.</Text>
-      <Text color="cyan">Press Enter to sign in or create an account →</Text>
+      <DitherText text="Welcome to Novu Connect" progress={progress} seed={1} bold />
+      {revealComplete ? (
+        <>
+          <Text dimColor>Spin up a managed AI agent and connect it to your team — all from your terminal.</Text>
+          <Text color="cyan">Press Enter to sign in or create an account →</Text>
+        </>
+      ) : (
+        // Hold the layout open while the headline finishes dithering so the
+        // CTA doesn't shove up into view mid-cascade.
+        <>
+          <Text> </Text>
+          <Text> </Text>
+        </>
+      )}
     </Box>
+  );
+}
+
+/**
+ * Render `text` mid-materialization. Each non-space character gets a
+ * deterministic "reveal time" in [0, 1) via a small integer hash on its
+ * position + per-line `seed`. When `progress` crosses that threshold the
+ * character settles into its real glyph; before that it shows a dither
+ * glyph whose density tracks how far away from settling we still are. Same
+ * Bayer-style aesthetic the orb uses, but applied to text.
+ */
+function DitherText({
+  text,
+  progress,
+  seed,
+  bold,
+  dim,
+  color,
+}: {
+  text: string;
+  progress: number;
+  seed: number;
+  bold?: boolean;
+  dim?: boolean;
+  color?: string;
+}): React.ReactElement {
+  let rendered = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    // Preserve whitespace verbatim so words stay legible while the rest of
+    // the line is still resolving — looks much cleaner than dithering the
+    // gaps too.
+    if (ch === ' ') {
+      rendered += ' ';
+      continue;
+    }
+    // Knuth multiplicative hash → uniform-ish in [0,1). seed varies the
+    // hash space per line so the three lines don't reveal in lockstep.
+    const hash = (((i + 1) * (seed * 2654435761 + 1)) >>> 0) / 0xffffffff;
+    if (progress >= hash) {
+      rendered += ch;
+      continue;
+    }
+    const distance = hash - progress;
+    if (distance > 0.55) rendered += ' ';
+    else if (distance > 0.35) rendered += '·';
+    else if (distance > 0.2) rendered += '░';
+    else if (distance > 0.08) rendered += '▒';
+    else rendered += '▓';
+  }
+
+  return (
+    <Text bold={bold} dimColor={dim} color={color}>
+      {rendered}
+    </Text>
   );
 }
 
