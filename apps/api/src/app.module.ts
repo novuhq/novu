@@ -84,9 +84,11 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-ai')?.AiModule);
     }
 
-    if (require('@novu/ee-ai')?.LlmGatewayModule) {
-      modules.push(require('@novu/ee-ai')?.LlmGatewayModule);
-    }
+    // LLM Gateway controllers parked for this PR — keeping the code so we
+    // can re-enable later by uncommenting this block.
+    // if (require('@novu/ee-ai')?.LlmGatewayModule) {
+    //   modules.push(require('@novu/ee-ai')?.LlmGatewayModule);
+    // }
 
     if (require('@novu/ee-api')?.ConversationsModule) {
       modules.push({
