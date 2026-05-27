@@ -32,6 +32,12 @@ export type Phase =
       inboundAddress: string;
       /** Pre-built mailto: URL with subject/body pre-filled; opening it launches the user's mail client. */
       mailtoUrl: string;
+      /** Resolves when the user hits Enter — the pipeline then runs `open()`. */
+      resolve: () => void;
+    }
+  | {
+      kind: 'email-waiting';
+      inboundAddress: string;
     }
   | { kind: 'adding-telegram' }
   | {
