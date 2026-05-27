@@ -95,10 +95,17 @@ export function createLoggingUI(): ConnectUI {
     addingEmailIntegration() {
       start('Linking Email to your agent…');
     },
-    showEmailReady({ inboundAddress, mailtoUrl }) {
+    awaitEmailOpen({ inboundAddress, mailtoUrl }) {
       stop();
       console.log(`${chalk.cyan('→')} Your agent's inbound address: ${chalk.bold(inboundAddress)}`);
       console.log(`${chalk.cyan('→')} Open in your mail client: ${chalk.underline(mailtoUrl)}`);
+      // Non-interactive: nothing to await — the user will copy/paste the
+      // address themselves. Resolve immediately so the pipeline can move on
+      // to polling.
+      return Promise.resolve();
+    },
+    showEmailWaiting({ inboundAddress }) {
+      start(`Waiting for your email at ${inboundAddress}…`);
     },
     emailConnected() {
       succeed('Email connected');

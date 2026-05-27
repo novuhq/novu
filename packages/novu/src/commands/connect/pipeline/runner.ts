@@ -730,12 +730,12 @@ async function connectEmailForAgent(
   const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
   const mailtoUrl = `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  ui.showEmailReady({ inboundAddress, mailtoUrl });
-
-  // Best-effort: open the user's default mail client with the draft pre-filled.
-  // Falls through silently if no mail handler is registered — user can still
-  // type the address manually from the CLI display.
+  // Gate the mail-client open on an explicit Enter from the user. Auto-open
+  // is unreliable across terminals/sandboxes (some block silent shell-outs)
+  // and starting their mail app without consent is hostile UX.
+  await ui.awaitEmailOpen({ inboundAddress, mailtoUrl });
   void open(mailtoUrl).catch(() => undefined);
+  ui.showEmailWaiting({ inboundAddress });
 
   const connected = await pollForTelegramConnected(client, agent.identifier, integration.identifier);
   if (!connected) {

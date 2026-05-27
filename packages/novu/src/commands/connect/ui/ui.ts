@@ -38,12 +38,17 @@ export interface ConnectUI {
   // Email path
   addingEmailIntegration(): void;
   /**
-   * Step where the user is asked to send the first test email. Renders the
-   * inbound address + opens their default mail client with a pre-populated
-   * draft (the pipeline calls `open(mailtoUrl)` itself; the UI shows the
-   * address and a friendly nudge while the pipeline polls for receipt).
+   * Shows the inbound address + waits for the user to hit Enter. The
+   * pipeline runs `open(mailtoUrl)` only after this resolves, so the mail
+   * client never pops up without explicit user consent (some terminals /
+   * sandboxes block silent `open()` anyway).
    */
-  showEmailReady(opts: { inboundAddress: string; mailtoUrl: string }): void;
+  awaitEmailOpen(opts: { inboundAddress: string; mailtoUrl: string }): Promise<void>;
+  /**
+   * Transitions to the "we're polling for your email to arrive" view. Fired
+   * by the pipeline right after `open()` returns.
+   */
+  showEmailWaiting(opts: { inboundAddress: string }): void;
   emailConnected(): void;
 
   // Telegram path

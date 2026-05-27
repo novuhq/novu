@@ -313,15 +313,22 @@ function PhaseContent({
 
     case 'email-ready':
       return (
+        <EmailReadyContent
+          inboundAddress={phase.inboundAddress}
+          mailtoUrl={phase.mailtoUrl}
+          onContinue={phase.resolve}
+        />
+      );
+
+    case 'email-waiting':
+      return (
         <Box flexDirection="column" gap={1}>
           <Text bold color="cyan">
-            Your agent has an inbox
+            Send any message to your agent
           </Text>
-          <Text dimColor>Send any email to the address below — your agent will read it and reply to your inbox.</Text>
           <Box flexDirection="column" paddingY={1}>
             <Text bold>{phase.inboundAddress}</Text>
           </Box>
-          <Text dimColor>We opened a pre-filled draft in your default mail client. Just hit Send.</Text>
           <Text dimColor>Waiting for your email to arrive…</Text>
         </Box>
       );
@@ -645,6 +652,34 @@ function GeneratingContent(): React.ReactElement {
         <Text dimColor>· {elapsed}s</Text>
       </Box>
       <Text dimColor>{tagline}</Text>
+    </Box>
+  );
+}
+
+function EmailReadyContent({
+  inboundAddress,
+  mailtoUrl,
+  onContinue,
+}: {
+  inboundAddress: string;
+  mailtoUrl: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') onContinue();
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold color="cyan">
+        Your agent has an inbox
+      </Text>
+      <Text dimColor>Send any email to the address below — your agent will read it and reply to your inbox.</Text>
+      <Box flexDirection="column" paddingY={1}>
+        <Text bold>{inboundAddress}</Text>
+      </Box>
+      <Text dimColor>{`mailto link: ${mailtoUrl.slice(0, 80)}${mailtoUrl.length > 80 ? '…' : ''}`}</Text>
+      <Text color="cyan">Press Enter to open a pre-filled draft in your default mail client →</Text>
     </Box>
   );
 }
