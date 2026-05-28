@@ -340,7 +340,7 @@ jobs:
   build:
     needs: [prepare-matrix, run-clickhouse-migrations]
     timeout-minutes: 60
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     environment: ${{ fromJson(needs.prepare-matrix.outputs.env_matrix).environment[0] }}
     permissions:
       contents: read
@@ -374,9 +374,7 @@ jobs:
         run: pnpm ci
 
       - name: Set Up Docker Buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
-        with:
-          driver-opts: "image=moby/buildkit:v0.13.1"
+        uses: useblacksmith/setup-docker-builder@a592b831ebb20e68f7cf47329cf2c3c67b8a7655 # v1
 
       - name: Prepare Variables
         run: echo "BULL_MQ_PRO_NPM_TOKEN=${{ secrets.BULL_MQ_PRO_NPM_TOKEN }}" >> $GITHUB_ENV
