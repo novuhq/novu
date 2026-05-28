@@ -18,6 +18,7 @@ import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { cn } from '@/utils/ui';
 import { McpsSheet } from './mcps-sheet';
 
 type McpsSectionProps = {
@@ -158,18 +159,21 @@ export function McpsSection({ agent }: McpsSectionProps) {
               return (
                 <li
                   key={enablement.id}
-                  className="border-stroke-soft/60 flex items-center gap-2 p-3 not-last:border-b"
+                  className={cn(
+                    'border-stroke-soft/60 flex items-center gap-2 p-3 not-last:border-b transition-opacity',
+                    isRowPending && 'opacity-60'
+                  )}
+                  aria-busy={isRowPending || undefined}
                 >
                   {Icon ? <Icon className="size-5 shrink-0" aria-hidden /> : null}
                   <span className="text-text-sub text-label-sm min-w-0 flex-1 truncate font-medium">{displayName}</span>
-                  {isRowPending ? <span className="text-text-soft text-label-xs">Removing…</span> : null}
                   {canEdit ? (
                     <CompactButton
                       variant="ghost"
                       size="md"
                       icon={RiCloseLine}
                       onClick={() => handleRemove(enablement.mcpId)}
-                      disabled={isMutating}
+                      disabled={isRowPending}
                       aria-label={`Remove ${displayName}`}
                     >
                       <span className="sr-only">Remove {displayName}</span>

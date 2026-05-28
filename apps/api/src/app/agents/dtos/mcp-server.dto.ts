@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { McpConnectionAuthModeEnum, McpConnectionScopeEnum, McpConnectionStatusEnum } from '@novu/shared';
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ArrayMaxSize, ArrayUnique, IsArray, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class EnableAgentMcpServerRequestDto {
   @ApiProperty({ description: 'Catalog id from MCP_SERVERS (e.g. "slack").' })
@@ -45,6 +45,64 @@ export class AgentMcpServerEnablementResponseDto {
 export class ListAgentMcpServersResponseDto {
   @ApiProperty({ type: [AgentMcpServerEnablementResponseDto] })
   data: AgentMcpServerEnablementResponseDto[];
+}
+
+/**
+ * Hard cap on the desired-state payload to keep the bulk endpoint bounded
+ * (one Mongo round trip per row + one upstream sync). Well above the size of
+ * the catalog so it never bites a real caller, just rejects malformed input.
+ */
+const MCP_SET_MAX_IDS = 100;
+
+export class SetAgentMcpServersRequestDto {
+  @ApiProperty({
+    type: [String],
+    description:
+      'Desired set of enabled MCP catalog ids. Replaces the current enablement set: ' +
+      'ids not present are disabled, new ids are enabled, the rest are left untouched. ' +
+      'Each entry must match an id from MCP_SERVERS (e.g. "notion", "github", "linear").',
+    maxItems: MCP_SET_MAX_IDS,
+  })
+  @IsArray()
+  @ArrayMaxSize(MCP_SET_MAX_IDS)
+  @ArrayUnique()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  mcpIds: string[];
+}
+
+/**
+ * One entry per id whose mutation failed. The bulk endpoint applies the
+ * remaining changes before returning so partial successes are persisted —
+ * the caller refetches the list to see the final state and surfaces these
+ * failures to the user.
+ */
+export class SetAgentMcpServersFailureDto {
+  @ApiProperty({ description: 'Catalog id from MCP_SERVERS that failed to mutate.' })
+  mcpId: string;
+
+  @ApiProperty({ enum: ['enable', 'disable'], description: 'Direction of the mutation that failed.' })
+  operation: 'enable' | 'disable';
+
+  @ApiProperty({ description: 'Stable error code (e.g. "mcp_novu_app_disabled", "sync_error").' })
+  code: string;
+
+  @ApiProperty({ description: 'Human-readable failure reason.' })
+  message: string;
+}
+
+export class SetAgentMcpServersResponseDto {
+  @ApiProperty({
+    type: [AgentMcpServerEnablementResponseDto],
+    description: 'Full enabled set after the bulk update.',
+  })
+  data: AgentMcpServerEnablementResponseDto[];
+
+  @ApiProperty({
+    type: [SetAgentMcpServersFailureDto],
+    description: 'Per-id failures. Empty when the whole bulk update succeeded.',
+  })
+  failed: SetAgentMcpServersFailureDto[];
 }
 
 /**
