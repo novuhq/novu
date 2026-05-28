@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { CliDeviceSessionService } from './cli-device-session.service';
+import { CliDeviceSessionNotFoundError, CliDeviceSessionService } from './cli-device-session.service';
 
 describe('CliDeviceSessionService', () => {
   function makeService() {
@@ -9,7 +9,8 @@ describe('CliDeviceSessionService', () => {
       cacheEnabled: () => true,
       set: sinon.stub().resolves('OK'),
       get: sinon.stub().resolves(null),
-      eval: sinon.stub().resolves(''),
+      del: sinon.stub().resolves(1),
+      eval: sinon.stub().resolves(1),
     };
     const logger = {
       setContext: sinon.stub(),
@@ -37,22 +38,28 @@ describe('CliDeviceSessionService', () => {
 
   it('returns pending while the dashboard has not approved yet', async () => {
     const { service, cacheService } = makeService();
-    cacheService.eval.resolves('P');
+    cacheService.get.resolves(
+      JSON.stringify({
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+      })
+    );
 
     const result = await service.poll('device-code');
 
     expect(result.status).to.equal('pending');
+    expect(cacheService.del.called).to.be.false;
   });
 
   it('returns approved credentials once and consumes the session', async () => {
     const { service, cacheService } = makeService();
-    cacheService.eval.resolves(
-      `A${JSON.stringify({
+    cacheService.get.resolves(
+      JSON.stringify({
         status: 'approved',
         createdAt: new Date().toISOString(),
         apiKey: 'sk_test',
         environmentId: 'env_1',
-      })}`
+      })
     );
 
     const result = await service.poll('device-code');
@@ -62,14 +69,30 @@ describe('CliDeviceSessionService', () => {
       expect(result.apiKey).to.equal('sk_test');
       expect(result.environmentId).to.equal('env_1');
     }
+    expect(cacheService.del.calledOnce).to.be.true;
   });
 
   it('marks missing sessions as expired', async () => {
-    const { service, cacheService } = makeService();
-    cacheService.eval.resolves('');
+    const { service } = makeService();
 
     const result = await service.poll('missing');
 
     expect(result.status).to.equal('expired');
+  });
+
+  it('throws when approving a missing session', async () => {
+    const { service } = makeService();
+
+    try {
+      await service.approve({
+        deviceCode: 'missing',
+        approvedByUserId: 'user_1',
+        apiKey: 'sk_test',
+        environmentId: 'env_1',
+      });
+      expect.fail('Expected approve to throw');
+    } catch (error) {
+      expect(error).to.be.instanceOf(CliDeviceSessionNotFoundError);
+    }
   });
 });

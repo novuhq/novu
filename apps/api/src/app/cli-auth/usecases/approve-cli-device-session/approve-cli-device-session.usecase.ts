@@ -1,7 +1,10 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 
-import { CliDeviceSessionService } from '../../services/cli-device-session.service';
+import {
+  CliDeviceSessionNotFoundError,
+  CliDeviceSessionService,
+} from '../../services/cli-device-session.service';
 import { ApproveCliDeviceSessionCommand } from './approve-cli-device-session.command';
 
 @Injectable()
@@ -21,28 +24,28 @@ export class ApproveCliDeviceSession {
       throw new NotFoundException('Environment not found');
     }
 
-    if (
-      command.environmentOrganizationId &&
-      command.environmentOrganizationId !== command.organizationId
-    ) {
-      throw new ForbiddenException('Environment does not belong to your organization');
-    }
-
     try {
       await this.cliDeviceSessionService.approve({
         deviceCode: command.deviceCode,
         approvedByUserId: command.userId,
         apiKey: command.apiKey,
-        environmentId: command.environmentId,
-        environmentSlug: command.environmentSlug ?? null,
-        environmentName: command.environmentName ?? environment.name ?? null,
+        environmentId: environment._id,
+        environmentSlug: environment.identifier ?? null,
+        environmentName: environment.name ?? null,
         organizationId: environment._organizationId,
-        user: command.user ?? null,
+        user: {
+          id: command.userId,
+          email: command.userEmail ?? null,
+          firstName: command.userFirstName ?? null,
+          lastName: command.userLastName ?? null,
+        },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to approve CLI device session';
+      if (error instanceof CliDeviceSessionNotFoundError) {
+        throw new NotFoundException(error.message);
+      }
 
-      throw new NotFoundException(message);
+      throw error;
     }
 
     return { ok: true };

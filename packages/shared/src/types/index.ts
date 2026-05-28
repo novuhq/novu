@@ -7,6 +7,7 @@ export * from './builder';
 export * from './channel';
 export * from './channel-connection';
 export * from './channel-endpoint';
+export * from './cli-auth';
 export * from './context';
 export * from './controls';
 export * from './cron';

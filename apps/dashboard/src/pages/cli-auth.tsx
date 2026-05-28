@@ -10,7 +10,6 @@ import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
-import { useAuth } from '@/context/auth/hooks';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -52,7 +51,6 @@ export const CliAuthPage = () => {
 function CliAuthContent() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const apiKeysQuery = useFetchApiKeys();
   const has = useHasPermission();
@@ -91,25 +89,10 @@ function CliAuthContent() {
 
     setIsAuthorizing(true);
     try {
-      await approveCliDeviceSession(
-        deviceCode,
-        {
-          apiKey,
-          environmentId: currentEnvironment._id,
-          environmentSlug: currentEnvironment.slug ?? null,
-          environmentName: currentEnvironment.name,
-          organizationId: currentEnvironment._organizationId,
-          user: currentUser
-            ? {
-                id: currentUser._id,
-                email: currentUser.email ?? null,
-                firstName: currentUser.firstName ?? null,
-                lastName: currentUser.lastName ?? null,
-              }
-            : null,
-        },
-        currentEnvironment
-      );
+      await approveCliDeviceSession(deviceCode, {
+        apiKey,
+        environmentId: currentEnvironment._id,
+      });
 
       setDidAuthorize(true);
       showSuccessToast('Novu CLI authorized. You can return to your terminal.');
@@ -119,7 +102,7 @@ function CliAuthContent() {
     } finally {
       setIsAuthorizing(false);
     }
-  }, [deviceCodeOk, deviceCode, apiKey, currentEnvironment, currentUser]);
+  }, [deviceCodeOk, deviceCode, apiKey, currentEnvironment]);
 
   function handleCancel() {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? 'default' }));

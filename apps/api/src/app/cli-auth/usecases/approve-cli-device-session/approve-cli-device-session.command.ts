@@ -1,6 +1,5 @@
 import { BaseCommand } from '@novu/application-generic';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import type { CliDeviceSessionUser } from '../../services/cli-device-session.service';
 
 export class ApproveCliDeviceSessionCommand extends BaseCommand {
   @IsString()
@@ -25,16 +24,13 @@ export class ApproveCliDeviceSessionCommand extends BaseCommand {
 
   @IsOptional()
   @IsString()
-  readonly environmentSlug?: string | null;
+  readonly userEmail?: string | null;
 
   @IsOptional()
   @IsString()
-  readonly environmentName?: string | null;
+  readonly userFirstName?: string | null;
 
   @IsOptional()
   @IsString()
-  readonly environmentOrganizationId?: string | null;
-
-  @IsOptional()
-  readonly user?: CliDeviceSessionUser | null;
+  readonly userLastName?: string | null;
 }

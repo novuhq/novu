@@ -1,25 +1,27 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import type {
+  CliDeviceSessionPollResponse,
+  CliDeviceSessionUser,
+  CreateCliDeviceSessionResponse,
+} from '@novu/shared';
 
-/** Device session lifetime (seconds). Matches the CLI browser-auth timeout. */
-export const CLI_DEVICE_SESSION_TTL_SECONDS = 5 * 60;
-
-/** Recommended polling interval returned to the CLI (seconds). */
-export const CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS = 2;
+const CLI_DEVICE_SESSION_TTL_SECONDS = 5 * 60;
+const CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS = 2;
 
 const CACHE_KEY_PREFIX = 'cli-device-session:';
 
-export type CliDeviceSessionStatus = 'pending' | 'approved';
-
-export interface CliDeviceSessionUser {
-  id: string;
-  email?: string | null;
-  firstName?: string | null;
-  lastName?: string | null;
+export class CliDeviceSessionNotFoundError extends Error {
+  constructor(message = 'CLI device session not found or expired') {
+    super(message);
+    this.name = 'CliDeviceSessionNotFoundError';
+  }
 }
 
-export interface CliDeviceSessionRecord {
+type CliDeviceSessionStatus = 'pending' | 'approved';
+
+interface CliDeviceSessionRecord {
   status: CliDeviceSessionStatus;
   name?: string;
   createdAt: string;
@@ -33,42 +35,14 @@ export interface CliDeviceSessionRecord {
   approvedByUserId?: string;
 }
 
-export interface CreateCliDeviceSessionResult {
-  deviceCode: string;
-  expiresIn: number;
-  interval: number;
-}
-
-export type PollCliDeviceSessionResult =
-  | { status: 'pending'; expiresIn: number; interval: number }
-  | { status: 'expired' }
-  | {
-      status: 'approved';
-      apiKey: string;
-      environmentId: string;
-      environmentSlug?: string | null;
-      environmentName?: string | null;
-      organizationId?: string | null;
-      user?: CliDeviceSessionUser | null;
-    };
-
-/**
- * Atomically read and delete an approved session so credentials are returned
- * to the CLI exactly once.
- */
-const CONSUME_IF_APPROVED_SCRIPT = `
+/** Atomically approve only when the session is still pending. */
+const APPROVE_IF_PENDING_SCRIPT = `
 local v = redis.call('get', KEYS[1])
-if not v then return '' end
+if not v then return 0 end
 local ok, payload = pcall(cjson.decode, v)
-if not ok then
-  redis.call('del', KEYS[1])
-  return ''
-end
-if payload.status == 'approved' then
-  redis.call('del', KEYS[1])
-  return 'A' .. v
-end
-return 'P'
+if not ok or payload.status ~= 'pending' then return 0 end
+redis.call('setex', KEYS[1], ARGV[1], ARGV[2])
+return 1
 `;
 
 @Injectable()
@@ -80,7 +54,7 @@ export class CliDeviceSessionService {
     this.logger.setContext(this.constructor.name);
   }
 
-  async create(params: { name?: string }): Promise<CreateCliDeviceSessionResult> {
+  async create(params: { name?: string }): Promise<CreateCliDeviceSessionResponse> {
     const deviceCode = randomBytes(24).toString('base64url');
     const record: CliDeviceSessionRecord = {
       status: 'pending',
@@ -105,28 +79,26 @@ export class CliDeviceSessionService {
     };
   }
 
-  async poll(deviceCode: string): Promise<PollCliDeviceSessionResult> {
+  async poll(deviceCode: string): Promise<CliDeviceSessionPollResponse> {
     if (!deviceCode || !this.cacheService.cacheEnabled()) {
       return { status: 'expired' };
     }
 
-    let raw: string | null = null;
-    try {
-      raw = await this.cacheService.eval<string | null>(CONSUME_IF_APPROVED_SCRIPT, [this.cacheKey(deviceCode)], []);
-    } catch (err) {
-      this.logger.warn(`Failed to poll CLI device session: ${(err as Error).message}`);
-
-      return { status: 'expired' };
-    }
+    const key = this.cacheKey(deviceCode);
+    const raw = await this.cacheService.get(key);
 
     if (!raw) {
       return { status: 'expired' };
     }
 
-    const marker = raw.charAt(0);
-    const body = raw.slice(1);
+    const record = this.parseRecord(raw);
+    if (!record) {
+      await this.cacheService.del(key);
 
-    if (marker === 'P') {
+      return { status: 'expired' };
+    }
+
+    if (record.status === 'pending') {
       return {
         status: 'pending',
         expiresIn: CLI_DEVICE_SESSION_TTL_SECONDS,
@@ -134,14 +106,13 @@ export class CliDeviceSessionService {
       };
     }
 
-    if (marker !== 'A') {
+    if (record.status !== 'approved' || !record.apiKey || !record.environmentId) {
+      await this.cacheService.del(key);
+
       return { status: 'expired' };
     }
 
-    const record = this.parseRecord(body);
-    if (!record || record.status !== 'approved' || !record.apiKey || !record.environmentId) {
-      return { status: 'expired' };
-    }
+    await this.cacheService.del(key);
 
     return {
       status: 'approved',
@@ -165,7 +136,7 @@ export class CliDeviceSessionService {
     user?: CliDeviceSessionUser | null;
   }): Promise<void> {
     if (!params.deviceCode || !this.cacheService.cacheEnabled()) {
-      throw new Error('CLI device session not found or expired');
+      throw new CliDeviceSessionNotFoundError();
     }
 
     const key = this.cacheKey(params.deviceCode);
@@ -173,7 +144,7 @@ export class CliDeviceSessionService {
     const existing = existingRaw ? this.parseRecord(existingRaw) : null;
 
     if (!existing || existing.status !== 'pending') {
-      throw new Error('CLI device session not found or expired');
+      throw new CliDeviceSessionNotFoundError();
     }
 
     const record: CliDeviceSessionRecord = {
@@ -189,9 +160,15 @@ export class CliDeviceSessionService {
       user: params.user ?? null,
     };
 
-    await this.cacheService.set(key, JSON.stringify(record), {
-      ttl: CLI_DEVICE_SESSION_TTL_SECONDS,
-    });
+    const approved = await this.cacheService.eval<number>(
+      APPROVE_IF_PENDING_SCRIPT,
+      [key],
+      [CLI_DEVICE_SESSION_TTL_SECONDS, JSON.stringify(record)]
+    );
+
+    if (approved !== 1) {
+      throw new CliDeviceSessionNotFoundError();
+    }
   }
 
   private parseRecord(raw: string): CliDeviceSessionRecord | null {

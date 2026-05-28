@@ -11,12 +11,12 @@ vi.mock('ora', () => {
   };
 });
 
-vi.mock('../../shared/api-request', () => ({
+vi.mock('../../shared/novu-http', () => ({
   requestApiJson: vi.fn(),
 }));
 
 import open from 'open';
-import { requestApiJson } from '../../shared/api-request';
+import { requestApiJson } from '../../shared/novu-http';
 import { browserDeviceAuth } from './device-auth';
 
 const dashboardUrl = 'https://dashboard.novu.co';
@@ -63,7 +63,7 @@ describe('browserDeviceAuth', () => {
         return { deviceCode, expiresIn: 300, interval: 0.01 };
       }
 
-      const pollMatch = path.match(/^\/cli\/device-sessions\/([^/?]+)$/);
+      const pollMatch = path.match(/^\/cli\/device-sessions\/([^/?]+)\/poll$/);
       if (pollMatch) {
         const deviceCode = pollMatch[1];
         const session = store.get(deviceCode);

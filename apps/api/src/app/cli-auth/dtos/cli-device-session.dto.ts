@@ -1,9 +1,14 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import type {
+  ApproveCliDeviceSessionRequest,
+  CreateCliDeviceSessionResponse,
+} from '@novu/shared';
 
 export class CreateCliDeviceSessionRequestDto {
-  @ApiPropertyOptional({
+  @ApiProperty({
     type: String,
+    required: false,
     description: 'CLI surface identifier (e.g. novu-wizard, novu-connect) for dashboard copy.',
   })
   @IsOptional()
@@ -11,7 +16,7 @@ export class CreateCliDeviceSessionRequestDto {
   name?: string;
 }
 
-export class CreateCliDeviceSessionResponseDto {
+export class CreateCliDeviceSessionResponseDto implements CreateCliDeviceSessionResponse {
   @ApiProperty({ type: String, description: 'Opaque device code the CLI polls until authorization completes.' })
   deviceCode: string;
 
@@ -26,33 +31,28 @@ export class CliDeviceSessionPollResponseDto {
   @ApiProperty({ enum: ['pending', 'approved', 'expired'] })
   status: 'pending' | 'approved' | 'expired';
 
-  @ApiPropertyOptional({ type: Number })
+  @ApiProperty({ type: Number, required: false })
   expiresIn?: number;
 
-  @ApiPropertyOptional({ type: Number })
+  @ApiProperty({ type: Number, required: false })
   interval?: number;
 
-  @ApiPropertyOptional({ type: String })
+  @ApiProperty({ type: String, required: false })
   apiKey?: string;
 
-  @ApiPropertyOptional({ type: String })
+  @ApiProperty({ type: String, required: false })
   environmentId?: string;
 
-  @ApiPropertyOptional({ type: String, nullable: true })
+  @ApiProperty({ type: String, required: false, nullable: true })
   environmentSlug?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true })
+  @ApiProperty({ type: String, required: false, nullable: true })
   environmentName?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true })
+  @ApiProperty({ type: String, required: false, nullable: true })
   organizationId?: string | null;
 
-  @ApiPropertyOptional({
-    type: 'object',
-    nullable: true,
-    additionalProperties: true,
-    description: 'Novu user metadata forwarded to the CLI after authorization.',
-  })
+  @ApiProperty({ type: Object, required: false, nullable: true })
   user?: {
     id: string;
     email?: string | null;
@@ -61,7 +61,7 @@ export class CliDeviceSessionPollResponseDto {
   } | null;
 }
 
-export class ApproveCliDeviceSessionRequestDto {
+export class ApproveCliDeviceSessionRequestDto implements ApproveCliDeviceSessionRequest {
   @ApiProperty({ type: String, description: 'Novu API key for the selected environment.' })
   @IsString()
   @IsNotEmpty()
@@ -71,34 +71,6 @@ export class ApproveCliDeviceSessionRequestDto {
   @IsString()
   @IsNotEmpty()
   environmentId: string;
-
-  @ApiPropertyOptional({ type: String, nullable: true })
-  @IsOptional()
-  @IsString()
-  environmentSlug?: string | null;
-
-  @ApiPropertyOptional({ type: String, nullable: true })
-  @IsOptional()
-  @IsString()
-  environmentName?: string | null;
-
-  @ApiPropertyOptional({ type: String, nullable: true })
-  @IsOptional()
-  @IsString()
-  organizationId?: string | null;
-
-  @ApiPropertyOptional({
-    type: 'object',
-    nullable: true,
-    additionalProperties: true,
-  })
-  @IsOptional()
-  user?: {
-    id: string;
-    email?: string | null;
-    firstName?: string | null;
-    lastName?: string | null;
-  } | null;
 }
 
 export class ApproveCliDeviceSessionResponseDto {

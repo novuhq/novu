@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { EnvironmentRepository } from '@novu/dal';
 
 import { AuthModule } from '../auth/auth.module';
 import { SharedModule } from '../shared/shared.module';
@@ -10,6 +9,6 @@ import { USE_CASES } from './usecases';
 @Module({
   imports: [SharedModule, AuthModule],
   controllers: [CliAuthController],
-  providers: [...USE_CASES, CliDeviceSessionService, EnvironmentRepository],
+  providers: [...USE_CASES, CliDeviceSessionService],
 })
 export class CliAuthModule {}

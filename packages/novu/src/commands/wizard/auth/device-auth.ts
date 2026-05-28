@@ -1,11 +1,11 @@
 import open from 'open';
 import ora from 'ora';
-import { requestApiJson } from '../../shared/api-request';
+import type { CliDeviceSessionPollResponse, CreateCliDeviceSessionResponse } from '@novu/shared';
+import { requestApiJson } from '../../shared/novu-http';
 import type { CloudRegionEnum } from '../../dev/enums';
 import { ResolvedAuth } from '../types';
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
-const DEFAULT_POLL_INTERVAL_MS = 2_000;
 
 export interface BrowserAuthInput {
   apiUrl: string;
@@ -34,29 +34,6 @@ export interface BrowserAuthInput {
    * `novu-wizard`.
    */
   name?: string;
-}
-
-interface CreateDeviceSessionResponse {
-  deviceCode: string;
-  expiresIn: number;
-  interval: number;
-}
-
-interface PollDeviceSessionResponse {
-  status: 'pending' | 'approved' | 'expired';
-  expiresIn?: number;
-  interval?: number;
-  apiKey?: string;
-  environmentId?: string;
-  environmentSlug?: string | null;
-  environmentName?: string | null;
-  organizationId?: string | null;
-  user?: {
-    id: string;
-    email?: string | null;
-    firstName?: string | null;
-    lastName?: string | null;
-  } | null;
 }
 
 export async function browserDeviceAuth(input: BrowserAuthInput): Promise<ResolvedAuth> {
@@ -121,8 +98,8 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
   }
 }
 
-async function createDeviceSession(apiUrl: string, name?: string): Promise<CreateDeviceSessionResponse> {
-  const payload = await requestApiJson<CreateDeviceSessionResponse>(apiUrl, '/cli/device-sessions', {
+async function createDeviceSession(apiUrl: string, name?: string): Promise<CreateCliDeviceSessionResponse> {
+  const payload = await requestApiJson<CreateCliDeviceSessionResponse>(apiUrl, '/cli/device-sessions', {
     method: 'POST',
     body: { name },
   });
@@ -139,13 +116,14 @@ async function pollUntilApproved(params: {
   deviceCode: string;
   pollIntervalMs: number;
   timeoutMs: number;
-}): Promise<Required<Pick<PollDeviceSessionResponse, 'apiKey' | 'environmentId'>> & PollDeviceSessionResponse> {
+}): Promise<Extract<CliDeviceSessionPollResponse, { status: 'approved' }>> {
   const deadline = Date.now() + params.timeoutMs;
 
   while (Date.now() < deadline) {
-    const payload = await requestApiJson<PollDeviceSessionResponse>(
+    const payload = await requestApiJson<CliDeviceSessionPollResponse>(
       params.apiUrl,
-      `/cli/device-sessions/${params.deviceCode}`
+      `/cli/device-sessions/${params.deviceCode}/poll`,
+      { method: 'POST' }
     );
 
     if (payload.status === 'approved') {
@@ -153,16 +131,14 @@ async function pollUntilApproved(params: {
         throw new Error('Authorization payload is incomplete');
       }
 
-      return payload as Required<Pick<PollDeviceSessionResponse, 'apiKey' | 'environmentId'>> &
-        PollDeviceSessionResponse;
+      return payload;
     }
 
     if (payload.status === 'expired') {
       throw new Error('Authorization session expired. Please try again.');
     }
 
-    const waitMs = Math.max(params.pollIntervalMs, (payload.interval ?? DEFAULT_POLL_INTERVAL_MS / 1000) * 1000);
-    await sleep(waitMs);
+    await sleep(params.pollIntervalMs);
   }
 
   throw new Error('Authorization timed out. Please try again.');
