@@ -35,7 +35,6 @@ interface CliDeviceSessionRecord {
   approvedByUserId?: string;
 }
 
-/** Atomically approve only when the session is still pending. */
 const APPROVE_IF_PENDING_SCRIPT = `
 local v = redis.call('get', KEYS[1])
 if not v then return 0 end
@@ -45,7 +44,6 @@ redis.call('setex', KEYS[1], ARGV[1], ARGV[2])
 return 1
 `;
 
-/** Return pending without consuming; atomically delete approved sessions on read. */
 const POLL_DEVICE_SESSION_SCRIPT = `
 local v = redis.call('get', KEYS[1])
 if not v then return '' end
@@ -157,7 +155,7 @@ export class CliDeviceSessionService {
     const existingRaw = await this.cacheService.get(key);
     const existing = existingRaw ? this.parseRecord(existingRaw) : null;
 
-    if (!existing || existing.status !== 'pending') {
+    if (!existing) {
       throw new CliDeviceSessionNotFoundError();
     }
 

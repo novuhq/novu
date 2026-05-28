@@ -25,7 +25,12 @@ export class ApproveCliDeviceSession {
       throw new NotFoundException('Environment not found');
     }
 
-    await this.assertApiKeyBelongsToEnvironment(environment._id, command.apiKey);
+    const hashedApiKey = createHash('sha256').update(command.apiKey).digest('hex');
+    const keyEnvironment = await this.environmentRepository.findByApiKey({ hash: hashedApiKey });
+
+    if (!keyEnvironment || keyEnvironment._id !== environment._id) {
+      throw new BadRequestException('Invalid API key for the selected environment');
+    }
 
     try {
       await this.cliDeviceSessionService.approve({
@@ -52,14 +57,5 @@ export class ApproveCliDeviceSession {
     }
 
     return { ok: true };
-  }
-
-  private async assertApiKeyBelongsToEnvironment(environmentId: string, apiKey: string): Promise<void> {
-    const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
-    const keyEnvironment = await this.environmentRepository.findByApiKey({ hash: hashedApiKey });
-
-    if (!keyEnvironment || keyEnvironment._id !== environmentId) {
-      throw new BadRequestException('Invalid API key for the selected environment');
-    }
   }
 }

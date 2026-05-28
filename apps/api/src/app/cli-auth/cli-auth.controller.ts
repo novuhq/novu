@@ -18,9 +18,6 @@ import { CliDeviceSessionService } from './services/cli-device-session.service';
 import { ApproveCliDeviceSessionCommand } from './usecases/approve-cli-device-session/approve-cli-device-session.command';
 import { ApproveCliDeviceSession } from './usecases/approve-cli-device-session/approve-cli-device-session.usecase';
 
-/**
- * CLI browser authorization without localhost loopback callbacks.
- */
 @ThrottlerCategory(ApiRateLimitCategoryEnum.CONFIGURATION)
 @ApiCommonResponses()
 @Controller('/cli/device-sessions')

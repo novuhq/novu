@@ -69,41 +69,31 @@ export async function requestApiJson<T>(apiUrl: string, path: string, options: A
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   const url = `/v1${normalizedPath}`;
   const client = createNovuAxios({ apiUrl });
+  const fullUrl = `${client.defaults.baseURL}${url}`;
 
+  let response;
   try {
-    const response = await client.request({
+    response = await client.request({
       url,
       method: options.method ?? 'GET',
       data: options.body,
       validateStatus: () => true,
     });
-
-    if (response.status >= 400) {
-      throw new Error(formatApiError(response.status, response.data, `${client.defaults.baseURL}${url}`));
-    }
-
-    try {
-      return unwrapNovuApiData<T>(response.data);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unexpected Novu API response shape';
-
-      throw new Error(`Novu API returned an unexpected response at ${client.defaults.baseURL}${url}: ${message}`);
-    }
   } catch (error) {
-    if (error instanceof Error && isNovuApiErrorMessage(error.message)) {
-      throw error;
-    }
-
-    throw new Error(formatTransportError(error, `${client.defaults.baseURL}${url}`));
+    throw new Error(formatTransportError(error, fullUrl));
   }
-}
 
-function isNovuApiErrorMessage(message: string): boolean {
-  return (
-    message.startsWith('Failed to reach Novu API') ||
-    message.startsWith('Novu API endpoint not found') ||
-    message.startsWith('Novu API returned an unexpected response')
-  );
+  if (response.status >= 400) {
+    throw new Error(formatApiError(response.status, response.data, fullUrl));
+  }
+
+  try {
+    return unwrapNovuApiData<T>(response.data);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unexpected Novu API response shape';
+
+    throw new Error(`Novu API returned an unexpected response at ${fullUrl}: ${message}`);
+  }
 }
 
 function formatApiError(status: number, body: unknown, url: string): string {

@@ -104,7 +104,7 @@ async function createDeviceSession(apiUrl: string, name?: string): Promise<Creat
     body: { name },
   });
 
-  if (!payload?.deviceCode || !Number.isFinite(payload.interval) || payload.interval < 1) {
+  if (!payload?.deviceCode) {
     throw new Error('CLI authorization session response is incomplete');
   }
 
