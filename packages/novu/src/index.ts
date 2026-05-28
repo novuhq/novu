@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
-import { CHANNEL_CHOICES, type ChannelChoice } from './commands/connect/types';
+import { AGENT_RUNTIME_CHOICES, CHANNEL_CHOICES, type AgentRuntimeChoice, type ChannelChoice } from './commands/connect/types';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { CloudRegionEnum } from './commands/dev/enums';
 import { IInitCommandOptions, init } from './commands/init';
@@ -145,6 +145,18 @@ program
   )
   .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')
   .option(
+    '--runtime <runtime>',
+    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo in interactive mode.`
+  )
+  .option(
+    '--agent-integration-id <id>',
+    'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
+  )
+  .option('--anthropic-api-key <key>', 'Anthropic API key for --runtime claude non-interactive runs')
+  .option('--aws-claude-api-key <key>', 'AWS Claude API key for --runtime claude-aws non-interactive runs')
+  .option('--aws-claude-region <region>', 'AWS Claude commercial region for --runtime claude-aws')
+  .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
+  .option(
     '--channel <name>',
     `Channel to connect (skips the picker). One of: ${CHANNEL_CHOICES.join(', ')}. "slack" and "telegram" are implemented today.`
   )
@@ -168,6 +180,12 @@ program
       console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
       process.exit(1);
     }
+    if (options.runtime && !(AGENT_RUNTIME_CHOICES as readonly string[]).includes(options.runtime)) {
+      console.error(
+        `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_RUNTIME_CHOICES.join(', ')}.`
+      );
+      process.exit(1);
+    }
     let resolved: ReturnType<typeof resolveConnectCommandOptions>;
     try {
       resolved = resolveConnectCommandOptions({
@@ -175,6 +193,7 @@ program
         region: options.region as CloudRegionEnum,
         prompt: positionalPrompt ?? options.prompt,
         channel: options.channel as ChannelChoice | undefined,
+        runtime: options.runtime as AgentRuntimeChoice | undefined,
         apiUrl: options.apiUrl ?? NOVU_API_URL,
       });
     } catch (error) {

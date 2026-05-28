@@ -3,6 +3,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '../../config';
+import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { authClient } from './client';
 import {
   ForgotPassword as ForgotPasswordComponent,
@@ -19,7 +20,6 @@ import {
   UserProfile as UserProfileComponent,
   VerifyEmail as VerifyEmailComponent,
 } from './components';
-import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { Show } from './show';
 import { useCursorAgentAutoLogin } from './use-cursor-agent-auto-login';

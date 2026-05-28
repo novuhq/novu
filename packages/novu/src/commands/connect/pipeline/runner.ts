@@ -1,3 +1,4 @@
+import open from 'open';
 import { resolveAuth } from '../../wizard/auth/resolve-auth';
 import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { CONNECT_EVENTS } from '../analytics/events';
@@ -9,16 +10,18 @@ import {
   sendAgentWelcomeMessage,
 } from '../api/agents';
 import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../api/client';
-import { type IntegrationRecord, listIntegrations } from '../api/integrations';
+import { type IntegrationRecord, deleteIntegration } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
+import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
-
-const NOVU_ANTHROPIC_PROVIDER_ID = 'novu-anthropic';
-const AGENT_INTEGRATION_KIND = 'agent';
+import {
+  resolveAgentRuntimeIntegration,
+  resolveRuntimeFromOptions,
+} from './resolve-agent-runtime-integration';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
@@ -63,12 +66,12 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         flow = 'reused';
         track(CONNECT_EVENTS.AGENT_REUSED, { identifier: agent.identifier });
       } else {
-        agent = await createAgentFlow(client, ui, options);
+        agent = await createAgentFlow(client, ui, options, auth.environmentId);
         flow = 'created';
         track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier });
       }
     } else {
-      agent = await createAgentFlow(client, ui, options);
+      agent = await createAgentFlow(client, ui, options, auth.environmentId);
       flow = 'created';
       track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier });
     }
@@ -77,6 +80,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     let channelConnected = false;
     let connectedChannel: ChannelChoice | null = null;
+    let dashboardRedirectChannel: ChannelChoice | null = null;
     let connectedIntegration: IntegrationRecord | null = null;
 
     const channel: ChannelChoice = options.skipSlack ? 'skip' : (options.channel ?? (await ui.pickChannel()));
@@ -123,9 +127,22 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         if (channelConnected) connectedChannel = 'email';
         break;
       }
-      default:
-        ui.channelComingSoon(channel);
+      case 'whatsapp':
+      case 'teams': {
+        const agentDetailsUrl = buildConnectAgentDetailsUrl({
+          connectDashboardUrl: options.connectDashboardUrl,
+          environmentSlug: auth.environmentSlug,
+          agentIdentifier: agent.identifier,
+          tab: 'integrations',
+        });
+
+        await ui.awaitDashboardChannelOpen({ channel, agentDetailsUrl });
+        void open(agentDetailsUrl).catch(() => undefined);
+        dashboardRedirectChannel = channel;
         break;
+      }
+      default:
+        throw new Error(`${channelDisplayName(channel)} is not supported in the connect CLI yet.`);
     }
 
     if (channelConnected && connectedIntegration) {
@@ -141,8 +158,10 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     ui.success({
       agent,
       dashboardUrl: auth.dashboardUrl.replace(/\/$/, ''),
+      connectDashboardUrl: options.connectDashboardUrl.replace(/\/$/, ''),
       environmentSlug: auth.environmentSlug ?? null,
       connectedChannel,
+      dashboardRedirectChannel,
     });
 
     track(CONNECT_EVENTS.COMPLETED, { flow, channel: connectedChannel ?? channel });
@@ -163,42 +182,69 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 async function createAgentFlow(
   client: ConnectApiClient,
   ui: ConnectUI,
-  options: ConnectCommandOptions
+  options: ConnectCommandOptions,
+  environmentId: string
 ): Promise<AgentSummary> {
-  ui.loadingIntegrations();
-  const integrations = await listIntegrations(client);
-  const novuAnthropic = integrations.find(
-    (i) => i.providerId === NOVU_ANTHROPIC_PROVIDER_ID && i.kind === AGENT_INTEGRATION_KIND && i.active !== false
-  );
+  const runtime =
+    resolveRuntimeFromOptions(options) ??
+    (await ui.pickAgentRuntime({ preselected: options.runtime ?? 'demo' }));
 
-  if (!novuAnthropic) {
-    throw new Error(
-      "This environment doesn't have a Novu-managed Claude integration. " +
-        'Set one up in the dashboard, then re-run `npx novu connect`.'
-    );
-  }
+  ui.loadingIntegrations();
+  const resolved = await resolveAgentRuntimeIntegration(client, ui, options, runtime, environmentId);
 
   const prompt = await ui.promptForDescription(options.prompt);
-  if (prompt.trim().length < 8) {
-    throw new Error('Agent description must be at least 8 characters.');
-  }
-
-  ui.generatingAgent();
-  const generated = await generateAgent(client, prompt.trim());
+  let generated = await generateAndPreviewAgent(client, ui, prompt.trim());
 
   ui.creatingAgent(generated.name);
-  const created = await createManagedAgent(client, {
-    name: generated.name,
-    identifier: generated.identifier,
-    integrationId: novuAnthropic._id,
-    providerId: NOVU_ANTHROPIC_PROVIDER_ID,
-    systemPrompt: generated.systemPrompt,
-    tools: generated.tools,
-    mcpServers: generated.mcpServers,
-    skills: generated.skills,
-  });
 
-  return toSummary(created);
+  try {
+    const created = await createManagedAgent(client, {
+      name: generated.name,
+      identifier: generated.identifier,
+      integrationId: resolved.integrationId,
+      providerId: resolved.providerId,
+      systemPrompt: generated.systemPrompt,
+      tools: generated.tools,
+      mcpServers: generated.mcpServers,
+      skills: generated.skills,
+    });
+
+    return toSummary(created);
+  } catch (err) {
+    if (resolved.createdInThisFlow) {
+      try {
+        await deleteIntegration(client, resolved.integrationId);
+      } catch {
+        // Best-effort cleanup.
+      }
+    }
+
+    throw err;
+  }
+}
+
+async function generateAndPreviewAgent(
+  client: ConnectApiClient,
+  ui: ConnectUI,
+  initialPrompt: string
+): Promise<Awaited<ReturnType<typeof generateAgent>>> {
+  let prompt = initialPrompt;
+
+  while (true) {
+    if (prompt.trim().length < 8) {
+      throw new Error('Agent description must be at least 8 characters.');
+    }
+
+    ui.generatingAgent();
+    const generated = await generateAgent(client, prompt.trim());
+    const result = await ui.previewGeneratedAgent(generated);
+
+    if (result.action === 'confirm') {
+      return result.spec;
+    }
+
+    prompt = await ui.refineDescription(prompt.trim());
+  }
 }
 
 async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedAuth): Promise<string> {
