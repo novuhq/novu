@@ -5,6 +5,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { OnboardingProvisioningOverlay } from '@/components/auth/connect-provisioning-overlay';
 import { IS_NOVU_CONNECT } from '@/config';
 import { isPublicAuthPath } from '@/utils/auth-routes';
+import { readPendingCliAuth } from '@/utils/cli-auth-pending';
+import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import { isActiveConnectWorkspace, isConnectWorkspace } from '@/utils/connect';
 import { ROUTES } from '@/utils/routes';
 import { AuthContext } from './auth-context';
@@ -123,7 +125,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       void clerk.setActive({ organization: null });
     }
 
-    void navigate(ROUTES.SIGNUP_ORGANIZATION_LIST, { replace: true });
+    const pendingCliAuth = readPendingCliAuth();
+    const orgListPath =
+      pendingCliAuth && IS_NOVU_CONNECT
+        ? buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)
+        : ROUTES.SIGNUP_ORGANIZATION_LIST;
+
+    void navigate(orgListPath, { replace: true });
   }, [shouldHandleResolution, clerkOrganization, clerk, redirectTo, navigate]);
 
   const currentUser = useMemo(

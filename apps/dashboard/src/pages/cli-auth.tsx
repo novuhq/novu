@@ -15,6 +15,7 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
@@ -25,6 +26,15 @@ function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
 
 export const CliAuthPage = () => {
   const { isLoaded, isSignedIn } = useClerkAuth();
+  const [searchParams] = useSearchParams();
+  const deviceCode = searchParams.get('device_code');
+  const callerName = searchParams.get('name');
+
+  useEffect(() => {
+    if (isValidDeviceCode(deviceCode)) {
+      storePendingCliAuth(deviceCode, callerName);
+    }
+  }, [deviceCode, callerName]);
 
   if (!isLoaded) {
     return null;
@@ -94,6 +104,7 @@ function CliAuthContent() {
         environmentId: currentEnvironment._id,
       });
 
+      clearPendingCliAuth();
       setDidAuthorize(true);
       showSuccessToast('Novu CLI authorized. You can return to your terminal.');
     } catch (error) {
