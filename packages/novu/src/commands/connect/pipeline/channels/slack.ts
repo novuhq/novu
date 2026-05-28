@@ -1,0 +1,141 @@
+import open from 'open';
+import { CONNECT_EVENTS } from '../../analytics/events';
+import type { ConnectApiClient } from '../../api/client';
+import { NovuApiError } from '../../api/client';
+import {
+  countChannelConnectionsForIntegration,
+  createSlackIntegration,
+  generateConnectOauthUrl,
+  type IntegrationRecord,
+  slackQuickSetup,
+} from '../../api/integrations';
+import type { AgentSummary, ConnectCommandOptions } from '../../types';
+import type { ConnectUI } from '../../ui/ui';
+import {
+  ensureAgentIntegrationLinked,
+  resolveIntegrationForAgent,
+} from '../integration-helpers';
+import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil } from '../poll-until';
+
+const SLACK_PROVIDER_ID = 'slack';
+
+export async function connectSlackForAgent(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  ui: ConnectUI,
+  options: ConnectCommandOptions,
+  environmentId: string,
+  subscriberId: string,
+  track: (event: string, data?: Record<string, unknown>) => void
+): Promise<{ connected: boolean; integration: IntegrationRecord }> {
+  ui.addingSlackIntegration();
+
+  const slackIntegration = await resolveIntegrationForAgent(client, agent, environmentId, {
+    providerId: SLACK_PROVIDER_ID,
+    create: createSlackIntegration,
+  });
+
+  await ensureAgentIntegrationLinked(client, agent.identifier, slackIntegration.identifier);
+
+  const baselineConnections = await countChannelConnectionsForIntegration(client, slackIntegration.identifier);
+  if (baselineConnections > 0) {
+    ui.slackConnected();
+    track(CONNECT_EVENTS.SLACK_CONNECTED, { agent: agent.identifier, alreadyConnected: true });
+
+    return { connected: true, integration: slackIntegration };
+  }
+
+  const authorizeUrl = await getAuthorizeUrlWithQuickSetupFallback(
+    client,
+    agent,
+    slackIntegration,
+    ui,
+    options,
+    subscriberId
+  );
+  track(CONNECT_EVENTS.SLACK_OAUTH_OPENED, { agent: agent.identifier });
+  ui.showSlackOAuthUrl(authorizeUrl);
+
+  void open(authorizeUrl).catch(() => undefined);
+
+  ui.pollingForSlackConnection();
+  const connected = await pollUntil(
+    async () => {
+      const count = await countChannelConnectionsForIntegration(client, slackIntegration.identifier);
+
+      return count > baselineConnections ? 'done' : 'pending';
+    },
+    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+  );
+  if (!connected) {
+    throw new Error(
+      `Slack OAuth was not completed within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
+        'Re-run `npx novu connect` once you have authorized the Slack app.'
+    );
+  }
+
+  ui.slackConnected();
+  track(CONNECT_EVENTS.SLACK_CONNECTED, { agent: agent.identifier, alreadyConnected: false });
+
+  return { connected: true, integration: slackIntegration };
+}
+
+async function getAuthorizeUrlWithQuickSetupFallback(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  slackIntegration: IntegrationRecord,
+  ui: ConnectUI,
+  options: ConnectCommandOptions,
+  subscriberId: string
+): Promise<string> {
+  const buildUrl = () =>
+    generateConnectOauthUrl(client, {
+      integrationIdentifier: slackIntegration.identifier,
+      agentIdentifier: agent.identifier,
+      subscriberId,
+    });
+
+  try {
+    return await buildUrl();
+  } catch (err) {
+    if (!isMissingSlackCredentialsError(err)) throw err;
+
+    await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: false });
+
+    try {
+      return await buildUrl();
+    } catch (retryErr) {
+      if (!isMissingSlackCredentialsError(retryErr)) throw retryErr;
+
+      await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: true });
+
+      return await buildUrl();
+    }
+  }
+}
+
+async function runSlackQuickSetup(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  slackIntegration: IntegrationRecord,
+  ui: ConnectUI,
+  options: ConnectCommandOptions,
+  flags: { retry: boolean }
+): Promise<void> {
+  const configToken = options.slackConfigToken?.trim()
+    ? options.slackConfigToken.trim()
+    : await ui.promptForSlackConfigToken({ retry: flags.retry });
+
+  ui.runningSlackQuickSetup();
+  await slackQuickSetup(client, slackIntegration._id, {
+    configToken,
+    agentId: agent.id,
+  });
+}
+
+function isMissingSlackCredentialsError(err: unknown): boolean {
+  if (!(err instanceof NovuApiError)) return false;
+  if (err.status !== 404) return false;
+
+  return /missing credentials/i.test(err.message);
+}

@@ -146,13 +146,9 @@ function handleRequest(
   expectedState: string,
   done: (payload: CallbackPayload | null, error?: Error) => void
 ) {
-  const origin = req.headers.origin ?? '';
-  const allowOrigin = origin === dashboardOrigin ? dashboardOrigin : dashboardOrigin;
-
-  res.setHeader('Access-Control-Allow-Origin', allowOrigin);
+  res.setHeader('Access-Control-Allow-Origin', dashboardOrigin);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'content-type');
-  res.setHeader('Vary', 'Origin');
 
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;

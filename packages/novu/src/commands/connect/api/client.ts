@@ -32,11 +32,10 @@ export function createConnectApiClient(input: { apiUrl: string; secretKey: strin
     // misconfigured / non-running API still surfaces an error instead of
     // spinning forever) without false-positive-failing the slow LLM calls.
     timeout: 60_000,
-    // For local-dev hostnames (loopback / *.localhost) the developer almost
-    // certainly has a self-signed cert that Node won't trust out of the box.
-    // Skipping verification is safe because the hostname is, by definition,
-    // unroutable outside the machine.
-    httpsAgent: isLocalHost(baseURL) ? new https.Agent({ rejectUnauthorized: false }) : undefined,
+    // Loopback / *.localhost only: dev APIs often use self-signed TLS that Node
+    // rejects. RFC-1918 LAN IPs (10.x, 192.168.x) are reachable on the same
+    // network — do not disable verification for those.
+    httpsAgent: isLoopbackHost(baseURL) ? new https.Agent({ rejectUnauthorized: false }) : undefined,
   });
 
   if (debug) {
@@ -81,7 +80,7 @@ export function createConnectApiClient(input: { apiUrl: string; secretKey: strin
   return { axios: instance, apiUrl: baseURL };
 }
 
-function isLocalHost(url: string): boolean {
+function isLoopbackHost(url: string): boolean {
   try {
     const { hostname } = new URL(url);
 
@@ -89,9 +88,9 @@ function isLocalHost(url: string): boolean {
       hostname === 'localhost' ||
       hostname.endsWith('.localhost') ||
       hostname === '127.0.0.1' ||
+      hostname.startsWith('127.') ||
       hostname === '::1' ||
-      hostname.startsWith('192.168.') ||
-      hostname.startsWith('10.')
+      hostname === '[::1]'
     );
   } catch {
     return false;

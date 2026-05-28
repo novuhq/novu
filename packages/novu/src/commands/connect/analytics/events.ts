@@ -8,6 +8,8 @@ export const CONNECT_EVENTS = {
   AGENT_REUSED: 'Connect Agent Reused',
   SLACK_OAUTH_OPENED: 'Connect Slack Oauth Opened',
   SLACK_CONNECTED: 'Connect Slack Connected',
+  TELEGRAM_CONNECTED: 'Connect Telegram Connected',
+  EMAIL_CONNECTED: 'Connect Email Connected',
   WELCOME_SENT: 'Connect Welcome Sent',
   COMPLETED: 'Connect Completed',
   ERROR: 'Connect Error',

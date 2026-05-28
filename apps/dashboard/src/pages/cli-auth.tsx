@@ -142,7 +142,9 @@ function CliAuthContent() {
 
   const reason = (() => {
     if (!callbackOk) return 'This page must be opened from the Novu CLI.';
-    if (!isLlmGatewayEnabled) return `${callerDisplayName} is not enabled for your account yet.`;
+    if (!isConnect && !isLlmGatewayEnabled) {
+      return `${callerDisplayName} is not enabled for your account yet.`;
+    }
     if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';
     if (isLoading) return null;
     if (!apiKey) return 'No API key is available in this environment.';
