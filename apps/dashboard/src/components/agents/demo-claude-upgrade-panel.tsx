@@ -25,7 +25,6 @@ import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credenti
 import { AGENTS_DOCS_OVERVIEW_URL } from '@/utils/agent-docs';
 import { QueryKeys } from '@/utils/query-keys';
 import { isDemoIntegration } from '../integrations/components/utils/helpers';
-import { GenerationStatus, type GenerationStep } from '../onboarding/connect-agent/generation-status';
 import { getClaudeManagedAgentIntegrations } from './connectors/claude-managed-integrations';
 import { getConnectorById } from './connectors/connector-options';
 import { IntegrationDropdown, type IntegrationDropdownStatus } from './connectors/integration-dropdown';
@@ -38,9 +37,6 @@ type DemoClaudeUpgradePanelProps = {
 
 const ANTHROPIC_CONNECTOR = getConnectorById('claude');
 const DEFAULT_ANTHROPIC_INTEGRATION_NAME = 'Anthropic';
-// Matches the dialog footer button's height so the status sits inside the footer instead of
-// pushing it taller, mirroring the create-agent dialog pattern.
-const FOOTER_STATUS_HEIGHT = 56;
 
 function dropdownStatusFor(verify: VerifyStatus, hasUsableSelectedIntegration: boolean): IntegrationDropdownStatus {
   if (hasUsableSelectedIntegration) return 'valid';
@@ -265,28 +261,6 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
   const canMigrate = !isBusy && (hasUsableSelectedIntegration || isSetupCredentialsReady);
   const dropdownStatus = dropdownStatusFor(verifyStatus, hasUsableSelectedIntegration);
 
-  const generationSteps = useMemo<GenerationStep[]>(
-    () => [
-      { id: 'sleeves', text: 'Rolling up my sleeves' },
-      { id: 'coffee', text: 'Sipping a little bit of coffee' },
-      {
-        id: 'preparing',
-        text: (
-          <>
-            Preparing to move the agent:{' '}
-            <span className="text-text-strong rounded-sm bg-bg-weak px-1 font-mono text-[11px] leading-4">
-              {agent.identifier}
-            </span>
-          </>
-        ),
-      },
-      { id: 'migrating', text: 'Migrating the agent to your account' },
-      { id: 'configurations', text: 'Laying out the agent configurations' },
-      { id: 'finalizing', text: 'One moment while we set this up' },
-    ],
-    [agent.identifier]
-  );
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
@@ -373,11 +347,6 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
         </div>
 
         <div className="bg-bg-weak border-stroke-soft flex items-center gap-3 border-t px-4 py-3">
-          {isBusy ? (
-            <div className="-my-3 flex h-14 min-w-0 flex-1 items-center">
-              <GenerationStatus steps={generationSteps} containerHeight={FOOTER_STATUS_HEIGHT} className="w-full" />
-            </div>
-          ) : null}
           <Button
             variant="secondary"
             mode="gradient"
