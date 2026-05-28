@@ -27,6 +27,15 @@ export {
 
   export { useAuth, useOrganization, useUser };
 
+export function ClerkLoaded({ children }: { children: React.ReactNode }) {
+  // Self-hosted auth is decoded synchronously from the JWT, so there is no bootstrap delay.
+  return <>{children}</>;
+}
+
+export function ClerkLoading(_props: { children: React.ReactNode }) {
+  return null;
+}
+
 export const useClerk = () => {
   return {
     setActive: async () => {
