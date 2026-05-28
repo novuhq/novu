@@ -151,10 +151,10 @@ type ReadCliAuthReturnUrlOptions = {
   preferConnectHost?: boolean;
 };
 
-export function readCliAuthReturnUrl(
+export function parseCliAuthReturnFromSearchParams(
   searchParams?: URLSearchParams,
   options?: ReadCliAuthReturnUrlOptions
-): string | null {
+): PendingCliAuth | null {
   const redirectUrl = readClerkRedirectUrlParam(searchParams);
 
   if (!redirectUrl || !isCliAuthReturnUrl(redirectUrl)) {
@@ -170,13 +170,39 @@ export function readCliAuthReturnUrl(
   const returnHost =
     options?.preferConnectHost || isConnectHostnameUrl(redirectUrl) ? 'connect' : detectReturnHost();
 
-  storePendingCliAuth(parsed.deviceCode, parsed.name, returnHost);
-
-  return buildCliAuthUrl({
+  return {
     deviceCode: parsed.deviceCode,
     name: parsed.name,
     returnHost,
-  });
+  };
+}
+
+export function buildCliAuthReturnUrlFromSearchParams(
+  searchParams?: URLSearchParams,
+  options?: ReadCliAuthReturnUrlOptions
+): string | null {
+  const pending = parseCliAuthReturnFromSearchParams(searchParams, options);
+
+  if (!pending) {
+    return null;
+  }
+
+  return buildCliAuthUrl(pending);
+}
+
+export function readCliAuthReturnUrl(
+  searchParams?: URLSearchParams,
+  options?: ReadCliAuthReturnUrlOptions
+): string | null {
+  const pending = parseCliAuthReturnFromSearchParams(searchParams, options);
+
+  if (!pending) {
+    return null;
+  }
+
+  storePendingCliAuth(pending.deviceCode, pending.name, pending.returnHost);
+
+  return buildCliAuthUrl(pending);
 }
 
 export function appendRedirectUrlParam(url: string, redirectUrl: string): string {

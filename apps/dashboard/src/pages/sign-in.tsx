@@ -12,8 +12,10 @@ import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
   appendRedirectUrlParam,
-  readCliAuthReturnUrl,
+  buildCliAuthReturnUrlFromSearchParams,
+  parseCliAuthReturnFromSearchParams,
   resolvePendingCliAuthReturnUrl,
+  storePendingCliAuth,
 } from '@/utils/cli-auth-pending';
 import {
   buildAbsoluteConnectUrl,
@@ -47,10 +49,18 @@ export const SignInPage = () => {
 
   const cliAuthReturnUrl = useMemo(
     () =>
-      readCliAuthReturnUrl(searchParams, { preferConnectHost: isConnectSignIn }) ??
+      buildCliAuthReturnUrlFromSearchParams(searchParams, { preferConnectHost: isConnectSignIn }) ??
       resolvePendingCliAuthReturnUrl(),
     [searchParams, isConnectSignIn]
   );
+
+  useEffect(() => {
+    const pending = parseCliAuthReturnFromSearchParams(searchParams, { preferConnectHost: isConnectSignIn });
+
+    if (pending) {
+      storePendingCliAuth(pending.deviceCode, pending.name, pending.returnHost);
+    }
+  }, [searchParams, isConnectSignIn]);
 
   // Sign-in only runs on the primary; satellite visitors bounce back with the Connect flag.
   useEffect(() => {
