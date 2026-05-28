@@ -62,27 +62,15 @@ export function PreviewGeneratedContent({
     }
 
     if (key.upArrow) {
-      setUiState((current) => {
-        if (current.kind !== 'browse') {
-          return current;
-        }
-
-        return {
-          kind: 'browse',
-          focusIdx: (current.focusIdx - 1 + PREVIEW_FIELD_ROWS.length) % PREVIEW_FIELD_ROWS.length,
-        };
+      setUiState({
+        kind: 'browse',
+        focusIdx: (uiState.focusIdx - 1 + PREVIEW_FIELD_ROWS.length) % PREVIEW_FIELD_ROWS.length,
       });
       setValidationError(null);
     } else if (key.downArrow) {
-      setUiState((current) => {
-        if (current.kind !== 'browse') {
-          return current;
-        }
-
-        return {
-          kind: 'browse',
-          focusIdx: (current.focusIdx + 1) % PREVIEW_FIELD_ROWS.length,
-        };
+      setUiState({
+        kind: 'browse',
+        focusIdx: (uiState.focusIdx + 1) % PREVIEW_FIELD_ROWS.length,
       });
       setValidationError(null);
     } else if (key.return) {
@@ -125,19 +113,17 @@ export function PreviewGeneratedContent({
   }
 
   function finishTextEdit(value: string): void {
-    setDraft((current) => {
-      if (uiState.kind !== 'edit-text') {
-        return current;
-      }
+    if (uiState.kind !== 'edit-text') {
+      return;
+    }
 
-      const result = applyPreviewTextEdit(uiState.fieldId, current, value, identifierTouched);
+    const fieldId = uiState.fieldId;
+    const result = applyPreviewTextEdit(fieldId, draft, value, identifierTouched);
 
-      if (result.identifierTouched) {
-        setIdentifierTouched(true);
-      }
-
-      return result.draft;
-    });
+    setDraft(result.draft);
+    if (result.identifierTouched) {
+      setIdentifierTouched(true);
+    }
     setValidationError(null);
     setUiState({ kind: 'browse', focusIdx: PREVIEW_CREATE_ROW_INDEX });
   }

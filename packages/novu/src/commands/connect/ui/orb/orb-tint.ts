@@ -11,13 +11,7 @@ const CHANNEL_TINTS: Record<ChannelChoice, string> = {
 };
 const DEFAULT_ORB_COLOR = 'white';
 const PREVIEW_ORB_COLOR = '#c084fc';
-/** Orb morph duration when the generated agent preview lands. */
-const PREVIEW_MORPH_MS = 2000;
 
-/**
- * Plain text channel names rendered inside the orb. Plain words, not logos.
- * `skip` is undefined so the orb stays plain when the user opts out.
- */
 const CHANNEL_LABELS: Partial<Record<ChannelChoice, string>> = {
   slack: 'SLACK',
   telegram: 'TELEGRAM',
@@ -26,7 +20,7 @@ const CHANNEL_LABELS: Partial<Record<ChannelChoice, string>> = {
   teams: 'TEAMS',
 };
 
-export function lerpHexColor(from: string, to: string, amount: number): string {
+function lerpHexColor(from: string, to: string, amount: number): string {
   const clamped = Math.min(1, Math.max(0, amount));
   const fromRgb = parseHexColor(from);
   const toRgb = parseHexColor(to);
@@ -56,9 +50,7 @@ function toHexByte(value: number): string {
 
 /**
  * Derive the orb's colour from the current phase plus, for the picker only,
- * the channel currently being hovered. Falls back to white whenever there's
- * no channel context (auth, generating, etc.) so the orb stays neutral
- * outside of channel selection.
+ * the channel currently being hovered.
  */
 export function computeOrbTint(
   phase: ReturnType<ConnectStore['phase']['get']>,
@@ -102,9 +94,7 @@ export function computeOrbTint(
 }
 
 /**
- * Pick the channel label (SLACK / TELEGRAM / EMAIL / WHATSAPP / TEAMS)
- * rendered inside the orb for the current phase. Returns undefined when
- * there's no channel context — the orb stays plain on auth/generating/etc.
+ * Pick the channel label rendered inside the orb for the current phase.
  */
 export function computeOrbLabel(
   phase: ReturnType<ConnectStore['phase']['get']>,

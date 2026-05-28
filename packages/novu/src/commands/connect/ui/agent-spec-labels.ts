@@ -1,6 +1,7 @@
 import {
   CLAUDE_ANTHROPIC_SKILLS,
   CLAUDE_BUILTIN_TOOLS,
+  MANAGED_AGENT_IDENTIFIER_MAX_LENGTH,
   MCP_SERVERS,
   slugify,
 } from '@novu/shared';
@@ -53,7 +54,7 @@ export function buildSkillSelectOptions(): CatalogSelectOption[] {
 export function slugifyAgentIdentifier(name: string): string {
   const slug = slugify(name.trim());
 
-  return slug.slice(0, 60) || 'agent';
+  return slug.slice(0, MANAGED_AGENT_IDENTIFIER_MAX_LENGTH) || 'agent';
 }
 
 export function wrapPreviewLines(text: string, maxWidth: number, maxLines: number): { lines: string[]; truncated: boolean } {

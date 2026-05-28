@@ -352,10 +352,10 @@ export function PhaseContent({
       return <Text color="red">✗ {phase.message}</Text>;
 
     default:
-      // exhaustive check: TypeScript should narrow phase to `never` here.
       return <Text />;
   }
 }
+
 function RuntimeSelect({
   onChange,
 }: {
@@ -502,34 +502,6 @@ function truncateInline(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;
 
   return `${text.slice(0, maxLength - 1)}…`;
-}
-
-function lerpHexColor(from: string, to: string, amount: number): string {
-  const clamped = Math.min(1, Math.max(0, amount));
-  const fromRgb = parseHexColor(from);
-  const toRgb = parseHexColor(to);
-  const r = Math.round(fromRgb.r + (toRgb.r - fromRgb.r) * clamped);
-  const g = Math.round(fromRgb.g + (toRgb.g - fromRgb.g) * clamped);
-  const b = Math.round(fromRgb.b + (toRgb.b - fromRgb.b) * clamped);
-
-  return `#${toHexByte(r)}${toHexByte(g)}${toHexByte(b)}`;
-}
-
-function parseHexColor(hex: string): { r: number; g: number; b: number } {
-  const normalized = hex.replace('#', '');
-  if (normalized.length !== 6) {
-    return { r: 255, g: 255, b: 255 };
-  }
-
-  return {
-    r: Number.parseInt(normalized.slice(0, 2), 16),
-    g: Number.parseInt(normalized.slice(2, 4), 16),
-    b: Number.parseInt(normalized.slice(4, 6), 16),
-  };
-}
-
-function toHexByte(value: number): string {
-  return value.toString(16).padStart(2, '0');
 }
 
 function SlackOAuthReadyContent({
@@ -698,17 +670,28 @@ function SuccessView({
         <Text>
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
-        {channelLabel ? (
-          <Text color="cyan">Check {channelLabel} — your agent just messaged you.</Text>
-        ) : redirectChannelLabel ? (
-          <Text color="cyan">Finish {redirectChannelLabel} setup in Novu Connect — we opened it for you.</Text>
-        ) : (
-          <Text dimColor>No channel connected. Run `npx novu connect` again to wire one up.</Text>
-        )}
+        {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
         <Text>
           <Text bold>Dashboard:</Text> {agentUrl}
         </Text>
       </Box>
     </Box>
   );
+}
+
+function renderSuccessChannelMessage(
+  channelLabel: string | null,
+  redirectChannelLabel: string | null
+): React.ReactElement {
+  if (channelLabel) {
+    return <Text color="cyan">Check {channelLabel} — your agent just messaged you.</Text>;
+  }
+
+  if (redirectChannelLabel) {
+    return (
+      <Text color="cyan">Finish {redirectChannelLabel} setup in Novu Connect — we opened it for you.</Text>
+    );
+  }
+
+  return <Text dimColor>No channel connected. Run `npx novu connect` again to wire one up.</Text>;
 }

@@ -38,22 +38,10 @@ type PreviewFieldUpdateResult = {
   identifierTouched?: boolean;
 };
 
-export function isPreviewTextFieldId(id: PreviewFieldRow['id']): id is PreviewTextFieldId {
-  return id === 'name' || id === 'identifier' || id === 'systemPrompt';
-}
-
-export function isPreviewMultiFieldId(id: PreviewFieldRow['id']): id is PreviewMultiFieldId {
-  return id === 'tools' || id === 'mcpServers' || id === 'skills';
-}
-
-export function isPreviewEditableFieldId(id: PreviewFieldRow['id']): id is PreviewEditableFieldId {
-  return isPreviewTextFieldId(id) || isPreviewMultiFieldId(id);
-}
-
 export function getPreviewFieldLabel(fieldId: PreviewEditableFieldId): string {
   const row = PREVIEW_FIELD_ROWS.find((item) => item.id === fieldId);
 
-  return row?.label ?? 'Field';
+  return row!.label;
 }
 
 export function readPreviewFieldValue(
