@@ -2,9 +2,9 @@ import { McpConnectionStatusEnum } from '@novu/shared';
 
 import type { OAuthMcp } from './oauth-mcp.types';
 
-export type SetupCardRow = OAuthMcp & {
+export interface SetupCardRow extends OAuthMcp {
   authorizeUrl?: string;
-};
+}
 
 const SETUP_REQUIRED_TEXT =
   'Connect the tools below to continue. Your message will be handled automatically once setup is complete.';

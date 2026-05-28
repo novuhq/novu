@@ -271,20 +271,27 @@ export class CompleteManagedAgentSetup {
         logger: this.logger,
       });
 
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          userId: 'system',
-          organizationId: config.organizationId,
-          environmentId: config.environmentId,
-          conversationId: conversation._id,
-          agentIdentifier: config.agentIdentifier,
-          integrationIdentifier: config.integrationIdentifier,
-          edit: {
-            messageId: pending.setupMessageId,
-            content: { card: resolvedCard },
-          },
-        })
-      );
+      try {
+        await this.handleAgentReply.execute(
+          HandleAgentReplyCommand.create({
+            userId: 'system',
+            organizationId: config.organizationId,
+            environmentId: config.environmentId,
+            conversationId: conversation._id,
+            agentIdentifier: config.agentIdentifier,
+            integrationIdentifier: config.integrationIdentifier,
+            edit: {
+              messageId: pending.setupMessageId,
+              content: { card: resolvedCard },
+            },
+          })
+        );
+      } catch (err) {
+        this.logger.warn(
+          err,
+          `Failed to edit managed-agent setup card for conversation ${conversation._id}; continuing replay`
+        );
+      }
     }
 
     await this.conversationRepository.clearPendingManagedAgentSetup(
