@@ -44,15 +44,19 @@ export function DeleteAgentDialog({
             <span className="font-mono text-label-xs">({agentIdentifier})</span> and remove its integration links.
           </p>
           {isManagedRuntime && (
-            <label className="flex items-center gap-2 cursor-pointer">
+            <div className="flex items-center gap-2">
               <Checkbox
+                id="delete-from-provider"
                 checked={deleteFromProvider}
                 onCheckedChange={(checked) => setDeleteFromProvider(checked === true)}
               />
-              <Label className="cursor-pointer text-foreground-600 text-sm font-normal">
+              <Label
+                htmlFor="delete-from-provider"
+                className="cursor-pointer text-foreground-600 text-sm font-normal"
+              >
                 Also delete from provider
               </Label>
-            </label>
+            </div>
           )}
         </div>
       }
