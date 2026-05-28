@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiCheckLine, RiCommandLine, RiLockLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { approveCliDeviceSession } from '@/api/cli-auth';
 import { AuthLayout } from '@/components/auth-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
@@ -17,18 +18,10 @@ import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
-const CALLBACK_HOST_ALLOWLIST = new Set(['127.0.0.1', 'localhost']);
+function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
+  if (!deviceCode) return false;
 
-function isLoopbackCallback(callbackUrl: string | null): callbackUrl is string {
-  if (!callbackUrl) return false;
-  try {
-    const url = new URL(callbackUrl);
-    if (url.protocol !== 'http:') return false;
-
-    return CALLBACK_HOST_ALLOWLIST.has(url.hostname);
-  } catch {
-    return false;
-  }
+  return /^[A-Za-z0-9_-]{16,128}$/.test(deviceCode);
 }
 
 export const CliAuthPage = () => {
@@ -67,10 +60,9 @@ function CliAuthContent() {
   const [isAuthorizing, setIsAuthorizing] = useState(false);
   const [didAuthorize, setDidAuthorize] = useState(false);
 
-  const callbackUrl = searchParams.get('cli_callback');
-  const cliState = searchParams.get('state');
+  const deviceCode = searchParams.get('device_code');
   const callerName = searchParams.get('name');
-  const callbackOk = isLoopbackCallback(callbackUrl);
+  const deviceCodeOk = isValidDeviceCode(deviceCode);
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
 
   // Two callers today: `novu-wizard` (default) and `novu-connect` (agent
@@ -93,17 +85,15 @@ function CliAuthContent() {
   }, [developmentEnvironment, currentEnvironment?._id, switchEnvironment]);
 
   const handleAuthorize = useCallback(async () => {
-    if (!callbackOk || !apiKey || !currentEnvironment) {
+    if (!deviceCodeOk || !apiKey || !currentEnvironment || !deviceCode) {
       return;
     }
 
     setIsAuthorizing(true);
     try {
-      const response = await fetch(callbackUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          state: cliState,
+      await approveCliDeviceSession(
+        deviceCode,
+        {
           apiKey,
           environmentId: currentEnvironment._id,
           environmentSlug: currentEnvironment.slug ?? null,
@@ -117,22 +107,19 @@ function CliAuthContent() {
                 lastName: currentUser.lastName ?? null,
               }
             : null,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Callback responded with ${response.status}`);
-      }
+        },
+        currentEnvironment
+      );
 
       setDidAuthorize(true);
       showSuccessToast('Novu CLI authorized. You can return to your terminal.');
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to reach the CLI callback';
+      const message = error instanceof Error ? error.message : 'Unable to approve CLI authorization';
       showErrorToast(`Authorization failed: ${message}`);
     } finally {
       setIsAuthorizing(false);
     }
-  }, [callbackOk, callbackUrl, apiKey, currentEnvironment, cliState, currentUser]);
+  }, [deviceCodeOk, deviceCode, apiKey, currentEnvironment, currentUser]);
 
   function handleCancel() {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? 'default' }));
@@ -141,7 +128,7 @@ function CliAuthContent() {
   const isLoading = apiKeysQuery.isLoading || !currentEnvironment;
 
   const reason = (() => {
-    if (!callbackOk) return 'This page must be opened from the Novu CLI.';
+    if (!deviceCodeOk) return 'This page must be opened from the Novu CLI.';
     if (!isConnect && !isLlmGatewayEnabled) {
       return `${callerDisplayName} is not enabled for your account yet.`;
     }
