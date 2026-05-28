@@ -76,6 +76,19 @@ describe('Verify Managed Credentials API #novu-v2', () => {
       expect(mockProvider.validateCredentials.firstCall.args[0]).to.deep.equal({ apiKey: FAKE_API_KEY });
     });
 
+    it('accepts API key authentication for CLI connect flows', async () => {
+      const res = await session.testAgent
+        .post('/v1/agents/verify-credentials')
+        .set('authorization', `ApiKey ${session.apiKey}`)
+        .send({
+          providerId: AgentRuntimeProviderIdEnum.Anthropic,
+          apiKey: FAKE_API_KEY,
+        });
+
+      expect(res.status).to.equal(201);
+      expect(res.body.data?.valid ?? res.body.valid).to.equal(true);
+    });
+
     it('returns 401 when the provider rejects the API key', async () => {
       mockProvider.validateCredentials.rejects(
         new AgentRuntimeUnauthorizedError('Invalid API key', AgentRuntimeProviderIdEnum.Anthropic)

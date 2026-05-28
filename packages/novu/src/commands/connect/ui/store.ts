@@ -1,6 +1,6 @@
 import { atom, type WritableAtom } from 'nanostores';
-import type { AgentSummary, ChannelChoice } from '../types';
-import type { PickResult } from './ui';
+import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
+import type { PickAgentIntegrationResult, PickResult } from './ui';
 
 export type Phase =
   | {
@@ -12,6 +12,30 @@ export type Phase =
   | { kind: 'listing-agents' }
   | { kind: 'loading-integrations' }
   | { kind: 'pick'; agents: AgentSummary[]; resolve: (pick: PickResult) => void }
+  | {
+      kind: 'pick-runtime';
+      preselected?: AgentRuntimeChoice;
+      resolve: (runtime: AgentRuntimeChoice) => void;
+    }
+  | {
+      kind: 'pick-integration';
+      providerLabel: string;
+      integrations: Array<{ _id: string; name: string; identifier: string }>;
+      resolve: (pick: PickAgentIntegrationResult) => void;
+    }
+  | {
+      kind: 'prompt-secret';
+      title: string;
+      placeholder: string;
+      hint?: string;
+      secret?: boolean;
+      resolve: (value: string) => void;
+    }
+  | {
+      kind: 'pick-aws-region';
+      resolve: (region: string) => void;
+    }
+  | { kind: 'verifying-credentials' }
   | { kind: 'describe'; resolve: (prompt: string) => void }
   | { kind: 'generating' }
   | { kind: 'creating'; name: string }

@@ -1,8 +1,9 @@
 import { Select, TextInput } from '@inkjs/ui';
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useApp, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
-import type { ChannelChoice } from '../types';
+import type { AgentRuntimeChoice, ChannelChoice } from '../types';
 import type { ConnectStore } from './store';
 import { useStore } from './use-store';
 
@@ -41,6 +42,7 @@ export interface AppProps {
 }
 
 const NEW_AGENT_VALUE = '__new__';
+const NEW_INTEGRATION_VALUE = '__new_integration__';
 
 export function App({ store, registerExit }: AppProps): React.ReactElement {
   const phase = useStore(store.phase);
@@ -184,7 +186,75 @@ function PhaseContent({
       return <Text color="cyan">Checking for existing agents…</Text>;
 
     case 'loading-integrations':
-      return <Text color="cyan">Looking up managed integrations…</Text>;
+      return <Text color="cyan">Looking up agent runtime integrations…</Text>;
+
+    case 'pick-runtime':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>Where do you want the agent to run?</Text>
+          <Text dimColor>Choose the agent runtime. Novu connects it to Slack, email, and more.</Text>
+          <RuntimeSelect onChange={(value) => phase.resolve(value)} />
+        </Box>
+      );
+
+    case 'pick-integration': {
+      const options = [
+        ...phase.integrations.map((integration) => ({
+          label: `${integration.name} (${integration.identifier})`,
+          value: integration._id,
+        })),
+        { label: '+ Set up new credentials', value: NEW_INTEGRATION_VALUE },
+      ];
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>{`Select a ${phase.providerLabel} integration`}</Text>
+          <Text dimColor>Reuse saved credentials or add new ones for this run.</Text>
+          <Select
+            options={options}
+            onChange={(value) => {
+              if (value === NEW_INTEGRATION_VALUE) {
+                phase.resolve({ kind: 'new' });
+
+                return;
+              }
+
+              phase.resolve({ kind: 'existing', integrationId: value });
+            }}
+          />
+        </Box>
+      );
+    }
+
+    case 'prompt-secret':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>{phase.title}</Text>
+          {phase.hint ? <Text dimColor>{phase.hint}</Text> : null}
+          <Box borderStyle="round" paddingX={1}>
+            <TextInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
+          </Box>
+          <Text dimColor>Press Enter to submit.</Text>
+        </Box>
+      );
+
+    case 'pick-aws-region': {
+      const options = AWS_CLAUDE_COMMERCIAL_REGIONS.map((region) => ({
+        label: region,
+        value: region,
+      }));
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>AWS Claude region</Text>
+          <Text dimColor>Select the commercial region for your AWS Claude Platform workspace.</Text>
+          <Select options={options} onChange={(value) => phase.resolve(value)} />
+        </Box>
+      );
+    }
+
+    case 'verifying-credentials':
+      return <Text color="cyan">Verifying credentials…</Text>;
 
     case 'pick': {
       const options = [
@@ -449,6 +519,47 @@ function PersistentOrb({
  * orb can react in real time. `@inkjs/ui`'s built-in Select fires only on
  * final commit, which is too late for our purposes.
  */
+function RuntimeSelect({
+  onChange,
+}: {
+  onChange: (value: AgentRuntimeChoice) => void;
+}): React.ReactElement {
+  const options: Array<{ value: AgentRuntimeChoice; title: string; detail?: string }> = [
+    { value: 'demo', title: 'Novu Demo Agent', detail: '10 conversations per month' },
+    { value: 'claude', title: 'Claude Managed Agents - BYOK' },
+    { value: 'claude-aws', title: 'Claude Managed Agents on AWS' },
+  ];
+  const [idx, setIdx] = React.useState(0);
+
+  useInput((_input, key) => {
+    if (key.upArrow) {
+      setIdx((current) => (current - 1 + options.length) % options.length);
+    } else if (key.downArrow) {
+      setIdx((current) => (current + 1) % options.length);
+    } else if (key.return) {
+      onChange(options[idx].value);
+    }
+  });
+
+  return (
+    <Box flexDirection="column">
+      {options.map((opt, i) => {
+        const isSelected = i === idx;
+
+        return (
+          <Text key={opt.value}>
+            <Text color={isSelected ? 'cyan' : undefined}>
+              {isSelected ? '› ' : '  '}
+              {opt.title}
+            </Text>
+            {opt.detail ? <Text dimColor>{` · ${opt.detail}`}</Text> : null}
+          </Text>
+        );
+      })}
+    </Box>
+  );
+}
+
 function ChannelSelect({
   options,
   onChange,
@@ -520,6 +631,20 @@ const WELCOME_REVEAL_DURATION_MS = 900;
 const WELCOME_REVEAL_TOTAL_MS = WELCOME_REVEAL_START_MS + WELCOME_REVEAL_DURATION_MS;
 const WELCOME_FRAME_MS = 55;
 
+const WELCOME_AGENT_ROTATIONS: ReadonlyArray<string> = [
+  'a Claude Managed Agent',
+  'a Google Vertex AI Agent',
+  'an AI SDK Agent',
+  'a Claude Managed Agent on AWS',
+];
+
+const WELCOME_CHANNELS_LABEL = 'Slack, Telegram, MS Teams';
+
+/** Time each label stays fully readable before the next dither transition. */
+const WELCOME_SWAP_HOLD_MS = 5200;
+/** Dither-out + dither-in duration for each label change. */
+const WELCOME_SWAP_TRANSITION_MS = 600;
+
 function WelcomeContent({ onContinue }: { onContinue: () => void }): React.ReactElement {
   const [elapsed, setElapsed] = React.useState(0);
   const bornAtRef = React.useRef(Date.now());
@@ -561,6 +686,7 @@ function WelcomeContent({ onContinue }: { onContinue: () => void }): React.React
         <Text> </Text>
         <Text> </Text>
         <Text> </Text>
+        <Text> </Text>
       </Box>
     );
   }
@@ -570,7 +696,7 @@ function WelcomeContent({ onContinue }: { onContinue: () => void }): React.React
       <DitherText text="Welcome to Novu Connect" progress={progress} seed={1} bold />
       {revealComplete ? (
         <>
-          <Text dimColor>Spin up a managed AI agent and connect it to your team — all from your terminal.</Text>
+          <WelcomeAnimatedTagline />
           <Text color="cyan">Press Enter to sign in or create an account →</Text>
         </>
       ) : (
@@ -579,10 +705,127 @@ function WelcomeContent({ onContinue }: { onContinue: () => void }): React.React
         <>
           <Text> </Text>
           <Text> </Text>
+          <Text> </Text>
         </>
       )}
     </Box>
   );
+}
+
+function WelcomeAnimatedTagline(): React.ReactElement {
+  const agentSlotWidth = maxLabelLength(WELCOME_AGENT_ROTATIONS);
+
+  return (
+    <Box flexDirection="column" alignItems="flex-start">
+      <Box flexDirection="row">
+        <Text dimColor>Spin up </Text>
+        <Box width={agentSlotWidth}>
+          <DitherSwapText items={WELCOME_AGENT_ROTATIONS} seed={11} holdMs={WELCOME_SWAP_HOLD_MS} />
+        </Box>
+      </Box>
+      <Box flexDirection="row" flexWrap="wrap">
+        <Text dimColor>and connect it to </Text>
+        <Text bold color="white">
+          {WELCOME_CHANNELS_LABEL}
+        </Text>
+        <Text dimColor> and more — all from your terminal</Text>
+      </Box>
+    </Box>
+  );
+}
+
+/**
+ * Cycles through `items`, dithering the current label out before the next one
+ * materializes in. Slow hold + slow transition so the orb screen stays calm.
+ */
+function DitherSwapText({
+  items,
+  seed,
+  holdMs,
+  transitionMs = WELCOME_SWAP_TRANSITION_MS,
+  startOffsetMs = 0,
+}: {
+  items: ReadonlyArray<string>;
+  seed: number;
+  holdMs: number;
+  transitionMs?: number;
+  startOffsetMs?: number;
+}): React.ReactElement {
+  const [index, setIndex] = React.useState(0);
+  const [progress, setProgress] = React.useState(1);
+  const phaseRef = React.useRef<'hold' | 'out' | 'in'>('hold');
+  const indexRef = React.useRef(0);
+  const phaseStartedAtRef = React.useRef(Date.now() + startOffsetMs);
+  const startedRef = React.useRef(startOffsetMs <= 0);
+
+  React.useEffect(() => {
+    indexRef.current = index;
+  }, [index]);
+
+  React.useEffect(() => {
+    const tick = () => {
+      const now = Date.now();
+      if (!startedRef.current) {
+        if (now < phaseStartedAtRef.current) {
+          return;
+        }
+        startedRef.current = true;
+        phaseStartedAtRef.current = now;
+      }
+
+      const elapsed = now - phaseStartedAtRef.current;
+
+      if (phaseRef.current === 'hold') {
+        setProgress(1);
+        if (elapsed >= holdMs) {
+          phaseRef.current = 'out';
+          phaseStartedAtRef.current = now;
+        }
+
+        return;
+      }
+
+      if (phaseRef.current === 'out') {
+        const outProgress = Math.min(1, elapsed / transitionMs);
+        setProgress(1 - outProgress);
+        if (outProgress >= 1) {
+          const nextIndex = (indexRef.current + 1) % items.length;
+          indexRef.current = nextIndex;
+          setIndex(nextIndex);
+          phaseRef.current = 'in';
+          phaseStartedAtRef.current = now;
+          setProgress(0);
+        }
+
+        return;
+      }
+
+      const inProgress = Math.min(1, elapsed / transitionMs);
+      setProgress(inProgress);
+      if (inProgress >= 1) {
+        phaseRef.current = 'hold';
+        phaseStartedAtRef.current = now;
+        setProgress(1);
+      }
+    };
+
+    tick();
+    const timer = setInterval(tick, WELCOME_FRAME_MS);
+
+    return () => clearInterval(timer);
+  }, [holdMs, items.length, transitionMs, startOffsetMs]);
+
+  const padded = items[index];
+
+  return (
+    <Text bold color="white">
+      {renderDitherString(padded, progress, seed)}
+    </Text>
+  );
+}
+
+function maxLabelLength(items: ReadonlyArray<string>): number {
+  return items.reduce((longest, item) => Math.max(longest, item.length), 0);
 }
 
 /**
@@ -593,6 +836,30 @@ function WelcomeContent({ onContinue }: { onContinue: () => void }): React.React
  * glyph whose density tracks how far away from settling we still are. Same
  * Bayer-style aesthetic the orb uses, but applied to text.
  */
+function renderDitherString(text: string, progress: number, seed: number): string {
+  let rendered = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === ' ') {
+      rendered += ' ';
+      continue;
+    }
+    const hash = (((i + 1) * (seed * 2654435761 + 1)) >>> 0) / 0xffffffff;
+    if (progress >= hash) {
+      rendered += ch;
+      continue;
+    }
+    const distance = hash - progress;
+    if (distance > 0.55) rendered += ' ';
+    else if (distance > 0.35) rendered += '·';
+    else if (distance > 0.2) rendered += '░';
+    else if (distance > 0.08) rendered += '▒';
+    else rendered += '▓';
+  }
+
+  return rendered;
+}
+
 function DitherText({
   text,
   progress,
@@ -608,34 +875,9 @@ function DitherText({
   dim?: boolean;
   color?: string;
 }): React.ReactElement {
-  let rendered = '';
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    // Preserve whitespace verbatim so words stay legible while the rest of
-    // the line is still resolving — looks much cleaner than dithering the
-    // gaps too.
-    if (ch === ' ') {
-      rendered += ' ';
-      continue;
-    }
-    // Knuth multiplicative hash → uniform-ish in [0,1). seed varies the
-    // hash space per line so the three lines don't reveal in lockstep.
-    const hash = (((i + 1) * (seed * 2654435761 + 1)) >>> 0) / 0xffffffff;
-    if (progress >= hash) {
-      rendered += ch;
-      continue;
-    }
-    const distance = hash - progress;
-    if (distance > 0.55) rendered += ' ';
-    else if (distance > 0.35) rendered += '·';
-    else if (distance > 0.2) rendered += '░';
-    else if (distance > 0.08) rendered += '▒';
-    else rendered += '▓';
-  }
-
   return (
     <Text bold={bold} dimColor={dim} color={color}>
-      {rendered}
+      {renderDitherString(text, progress, seed)}
     </Text>
   );
 }

@@ -1,6 +1,10 @@
-import type { AgentSummary, ChannelChoice } from '../types';
+import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
+
+export type PickAgentIntegrationResult =
+  | { kind: 'existing'; integrationId: string }
+  | { kind: 'new' };
 
 export interface ConnectUI {
   // Welcome screen
@@ -23,6 +27,22 @@ export interface ConnectUI {
   listingAgents(): void;
   loadingIntegrations(): void;
   pickExistingOrCreate(agents: AgentSummary[]): Promise<PickResult>;
+
+  // Agent runtime / credentials (new-agent path)
+  pickAgentRuntime(opts: { preselected?: AgentRuntimeChoice }): Promise<AgentRuntimeChoice>;
+  pickAgentIntegration(opts: {
+    providerLabel: string;
+    integrations: Array<{ _id: string; name: string; identifier: string }>;
+  }): Promise<PickAgentIntegrationResult>;
+  promptForSecretInput(opts: {
+    title: string;
+    placeholder: string;
+    hint?: string;
+    secret?: boolean;
+  }): Promise<string>;
+  pickAwsClaudeRegion(): Promise<string>;
+  verifyingCredentials(): void;
+  credentialsVerified(): void;
 
   // Create-new path
   promptForDescription(defaultPrompt?: string): Promise<string>;

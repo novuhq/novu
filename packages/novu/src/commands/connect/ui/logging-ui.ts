@@ -50,7 +50,48 @@ export function createLoggingUI(): ConnectUI {
       start('Checking for existing agents…');
     },
     loadingIntegrations() {
-      start('Looking up managed integrations…');
+      start('Looking up agent runtime integrations…');
+    },
+    pickAgentRuntime({ preselected }) {
+      stop();
+      const runtime = preselected ?? 'demo';
+      console.log(chalk.gray(`Non-interactive mode: using "${runtime}" agent runtime.`));
+
+      return Promise.resolve(runtime);
+    },
+    pickAgentIntegration({ integrations }) {
+      stop();
+      if (integrations.length === 1) {
+        console.log(chalk.gray(`Non-interactive mode: reusing integration "${integrations[0].name}".`));
+
+        return Promise.resolve({ kind: 'existing', integrationId: integrations[0]._id });
+      }
+
+      return Promise.reject(
+        new Error(
+          'Non-interactive mode: pass --agent-integration-id or BYOK credential flags to create a new integration.'
+        )
+      );
+    },
+    promptForSecretInput({ title }) {
+      stop();
+
+      return Promise.reject(
+        new Error(`Non-interactive mode: credential input required for "${title}". Pass the matching --anthropic-api-key or AWS Claude flags.`)
+      );
+    },
+    pickAwsClaudeRegion() {
+      stop();
+
+      return Promise.reject(
+        new Error('Non-interactive mode: pass --aws-claude-region for AWS Claude managed agents.')
+      );
+    },
+    verifyingCredentials() {
+      start('Verifying credentials…');
+    },
+    credentialsVerified() {
+      succeed('Credentials verified');
     },
     pickExistingOrCreate(_agents) {
       stop();

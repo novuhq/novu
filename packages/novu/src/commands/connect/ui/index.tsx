@@ -95,6 +95,32 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'pick', agents, resolve });
       });
     },
+    pickAgentRuntime({ preselected }) {
+      return new Promise((resolve) => {
+        store.phase.set({ kind: 'pick-runtime', preselected, resolve });
+      });
+    },
+    pickAgentIntegration({ providerLabel, integrations }) {
+      return new Promise((resolve) => {
+        store.phase.set({ kind: 'pick-integration', providerLabel, integrations, resolve });
+      });
+    },
+    promptForSecretInput({ title, placeholder, hint, secret }) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({ kind: 'prompt-secret', title, placeholder, hint, secret, resolve });
+      });
+    },
+    pickAwsClaudeRegion() {
+      return new Promise<string>((resolve) => {
+        store.phase.set({ kind: 'pick-aws-region', resolve });
+      });
+    },
+    verifyingCredentials() {
+      store.phase.set({ kind: 'verifying-credentials' });
+    },
+    credentialsVerified() {
+      // Transition handled by the next phase setter.
+    },
     promptForDescription(defaultPrompt) {
       if (typeof defaultPrompt === 'string' && defaultPrompt.trim().length > 0) {
         return Promise.resolve(defaultPrompt);

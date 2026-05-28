@@ -194,6 +194,7 @@ export class AgentsController {
   }
 
   @Post('/verify-credentials')
+  @ExternalApiAccessible()
   @ApiResponse(VerifyManagedCredentialsResponseDto)
   @ApiOperation({
     summary: 'Verify managed-runtime credentials',
