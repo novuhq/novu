@@ -1,12 +1,11 @@
 import { McpConnectionStatusEnum } from '@novu/shared';
 
-type OAuthMcpStatus = McpConnectionStatusEnum | 'missing';
-
 export type OAuthMcp = {
   mcpId: string;
   name: string;
   agentMcpServerId: string;
-  status: OAuthMcpStatus;
+  /** Absent when no connection row exists yet for this enablement. */
+  status?: McpConnectionStatusEnum;
   errorMessage?: string;
 };
 

@@ -225,7 +225,7 @@ export class ManagedAgentSetup {
     for (const enablement of enablements) {
       const connection = connectionByEnablementId.get(enablement._id);
       const catalog = MCP_SERVERS.find((entry) => entry.id === enablement.mcpId);
-      const status = (connection?.status as OAuthMcp['status'] | undefined) ?? 'missing';
+      const status = connection?.status as McpConnectionStatusEnum | undefined;
       const isError =
         status === McpConnectionStatusEnum.Error ||
         status === McpConnectionStatusEnum.Expired ||
