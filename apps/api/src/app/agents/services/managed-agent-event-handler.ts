@@ -1,9 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import type { PendingToolApproval } from '@novu/application-generic';
-import { type IAgentRuntimeProvider, PinoLogger } from '@novu/application-generic';
+import { PinoLogger } from '@novu/application-generic';
 import { ConversationRepository } from '@novu/dal';
 import {
-  type ActionRequired,
   CredentialExpiredError,
   McpServerError,
   type SessionEventContext,
@@ -15,11 +13,10 @@ import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-a
 import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
-import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
+import { HandlePendingToolApprovalsCommand } from '../usecases/tool-approval/handle-pending-tool-approvals.command';
+import { HandlePendingToolApprovals } from '../usecases/tool-approval/handle-pending-tool-approvals.usecase';
+import { captureAgentException } from '../utils/capture-agent-sentry';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
-import { ManagedAgentProviderFactory } from './managed-agent-provider-factory';
-
-export const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
 
 interface BaseCommandFields {
   userId: string;
@@ -33,10 +30,10 @@ interface BaseCommandFields {
 @Injectable()
 export class ManagedAgentEventHandler {
   constructor(
-    private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly conversationRepository: ConversationRepository,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handlePlanProgress: HandlePlanProgress,
+    private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly logger: PinoLogger
   ) {
@@ -143,25 +140,16 @@ export class ManagedAgentEventHandler {
       onFinish: async (event: { response: ThalamusResponse }) => {
         try {
           if (event.response.finishReason === 'requires-action') {
-            const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
-            if (runtimeProvider) {
-              const delivered = await this.tryDeliverToolApprovalCard(
-                metadata,
+            await this.handlePendingToolApprovals.execute(
+              HandlePendingToolApprovalsCommand.create({
+                ...baseFields,
+                subscriberId: metadata.subscriberId,
+                platform: metadata.platform,
                 sessionId,
                 turnId,
-                runtimeProvider,
-                event.response
-              );
-
-              if (delivered) {
-                await this.handlePlanProgress.execute(
-                  HandlePlanProgressCommand.create({
-                    ...baseFields,
-                    toolProgress: { turnId, action: 'awaiting-approval' },
-                  })
-                );
-              }
-            }
+                response: event.response,
+              })
+            );
 
             return;
           }
@@ -247,217 +235,6 @@ export class ManagedAgentEventHandler {
       });
     }
   }
-
-  /**
-   * Deliver an approval card for the pending tools. Reads `actionsRequired`
-   * directly from the finish response (fast path). Falls back to querying
-   * the Anthropic session event log when the response lacks tool details
-   * (e.g. after a partial confirmation triggers a new observation).
-   */
-  private async tryDeliverToolApprovalCard(
-    metadata: Record<string, string>,
-    sessionId: string,
-    turnId: string,
-    runtimeProvider: IAgentRuntimeProvider,
-    response?: ThalamusResponse
-  ): Promise<boolean> {
-    let pendingTools: PendingToolApproval[] = response ? extractPendingToolApprovals(response) : [];
-
-    if (pendingTools.length === 0) {
-      try {
-        pendingTools = await runtimeProvider.getAllPendingToolApprovals(sessionId);
-      } catch (err) {
-        this.logger.warn(
-          { err: err instanceof Error ? err.message : String(err), sessionId },
-          'getAllPendingToolApprovals failed; cannot render Approve/Deny card'
-        );
-        captureAgentWarning(err, {
-          component: 'managed-agent-event-handler',
-          operation: 'get-all-pending-tool-approvals',
-          sessionId,
-        });
-
-        return false;
-      }
-    }
-
-    if (pendingTools.length === 0) {
-      this.logger.warn(
-        { sessionId, conversationId: metadata.conversationId },
-        'Session is parked on requires-action but no pending tool approvals were located'
-      );
-
-      return false;
-    }
-
-    try {
-      await this.handleAgentReply.execute(
-        HandleAgentReplyCommand.create({
-          userId: 'system',
-          organizationId: metadata.organizationId,
-          environmentId: metadata.environmentId,
-          conversationId: metadata.conversationId,
-          agentIdentifier: metadata.agentIdentifier ?? '',
-          integrationIdentifier: metadata.integrationIdentifier ?? '',
-          reply: { card: buildToolApprovalCard(pendingTools, turnId) },
-        })
-      );
-    } catch (err) {
-      this.logger.error(err, `Failed to deliver tool-approval card for session ${sessionId}`);
-      captureAgentException(err, {
-        component: 'managed-agent-event-handler',
-        operation: 'deliver-tool-approval-card',
-        sessionId,
-      });
-
-      return false;
-    }
-
-    return true;
-  }
-
-  private async tryGetRuntimeProvider(metadata: Record<string, string>): Promise<IAgentRuntimeProvider | null> {
-    if (!metadata.environmentId || !metadata.agentIdentifier) {
-      return null;
-    }
-
-    return this.providerFactory.tryGetByAgentIdentifier(metadata.agentIdentifier, metadata.environmentId);
-  }
-}
-
-export function parseToolApprovalActionId(
-  id: string | undefined
-): { approved: boolean; toolUseIds: string[]; turnId: string } | null {
-  if (!id) return null;
-  const parts = id.split(':');
-  if (parts.length !== 4 || parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
-
-  const verdict = parts[1];
-  const toolUseIdsPart = parts[2];
-  const turnId = parts[3];
-  if ((verdict !== 'approve' && verdict !== 'deny') || !toolUseIdsPart || !turnId) return null;
-
-  const toolUseIds = toolUseIdsPart.split(',').filter(Boolean);
-  if (toolUseIds.length === 0) return null;
-
-  return { approved: verdict === 'approve', toolUseIds, turnId };
-}
-
-function extractPendingToolApprovals(response: ThalamusResponse): PendingToolApproval[] {
-  const actions = response.actionsRequired;
-  if (!Array.isArray(actions) || actions.length === 0) {
-    return [];
-  }
-
-  return actions.map((action: ActionRequired) => ({
-    toolUseId: action.toolUseId,
-    toolName: action.toolName,
-    mcpServerName: action.type === 'mcp-approval' ? action.serverName : undefined,
-    input: action.input,
-  }));
-}
-
-export function isLinkButtonActionId(id: string | undefined): boolean {
-  return typeof id === 'string' && id.startsWith('link-');
-}
-
-function formatToolLabel(t: PendingToolApproval): string {
-  const name = t.mcpServerName ? `${t.toolName} from ${t.mcpServerName}` : t.toolName;
-  const input = t.input ? `: ${summariseInput(t.input)}` : '';
-
-  return `${name}${input}`;
-}
-
-function buildToolApprovalCard(pendingTools: PendingToolApproval[], turnId: string): Record<string, unknown> {
-  const tool = pendingTools[0];
-  const serverLabel = tool.mcpServerName ? ` from ${tool.mcpServerName}` : '';
-  const toolLabel = formatToolLabel(tool);
-
-  const inputSummary = tool.input ? summariseInput(tool.input) : '';
-  const description = inputSummary
-    ? `I'd like to call \`${tool.toolName}\`${serverLabel}:\n\`\`\`\n${inputSummary}\n\`\`\``
-    : `I'd like to call \`${tool.toolName}\`${serverLabel}.`;
-
-  const children: Record<string, unknown>[] = [{ type: 'text', content: description }];
-
-  children.push(
-    { type: 'divider' },
-    {
-      type: 'actions',
-      children: [
-        {
-          type: 'button',
-          id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}:${turnId}`,
-          label: 'Approve',
-          style: 'primary',
-          value: toolLabel,
-        },
-        {
-          type: 'button',
-          id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}:${turnId}`,
-          label: 'Deny',
-          style: 'danger',
-          value: toolLabel,
-        },
-      ],
-    }
-  );
-
-  if (pendingTools.length > 1) {
-    const allIds = pendingTools.map((t) => t.toolUseId).join(',');
-    const allLabels = pendingTools.map((t) => formatToolLabel(t)).join('\n');
-    children.push({
-      type: 'actions',
-      children: [
-        {
-          type: 'button',
-          id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${allIds}:${turnId}`,
-          label: `Approve All (${pendingTools.length})`,
-          style: 'primary',
-          value: allLabels,
-        },
-        {
-          type: 'button',
-          id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${allIds}:${turnId}`,
-          label: `Deny All (${pendingTools.length})`,
-          style: 'danger',
-          value: allLabels,
-        },
-      ],
-    });
-  }
-
-  return {
-    type: 'card',
-    title: 'Tool Approval',
-    children,
-  };
-}
-
-export function buildToolApprovalVerdictCard(
-  approved: boolean,
-  toolCount: number,
-  toolDescription?: string
-): Record<string, unknown> {
-  const emoji = approved ? '✅' : '🚫';
-  const verb = approved ? 'Approved' : 'Denied';
-  const suffix = toolCount > 1 ? ` all ${toolCount} tools` : '';
-  const subtitle = toolDescription || undefined;
-
-  return {
-    type: 'card',
-    title: 'Tool Approval',
-    subtitle,
-    children: [{ type: 'text', content: `${emoji}  ${verb}${suffix}` }],
-  };
-}
-
-function summariseInput(input: Record<string, unknown>): string {
-  const firstValue = Object.values(input)[0];
-  if (firstValue === undefined) return '';
-  const text = typeof firstValue === 'string' ? firstValue : JSON.stringify(firstValue);
-
-  return text.length > 80 ? `${text.slice(0, 77)}...` : text;
 }
 
 function buildErrorMessage(err: unknown): string {

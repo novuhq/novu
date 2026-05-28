@@ -795,7 +795,11 @@ function canReusePendingOAuthSession(existing: McpConnectionEntity | null): bool
   }
 
   if (existing.authMode === McpConnectionAuthModeEnum.Dcr) {
-    return Boolean(existing.oauthClient && oauthState.expectedIssuer && oauthState.resource);
+    return Boolean(
+      oauthState.expectedIssuer &&
+        oauthState.resource &&
+        pickReusableOAuthClient(existing.oauthClient, oauthState.expectedIssuer)
+    );
   }
 
   return false;

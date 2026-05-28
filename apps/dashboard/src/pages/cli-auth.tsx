@@ -1,14 +1,14 @@
-import { useAuth as useClerkAuth } from '@clerk/react';
+import { useAuth as useClerkAuth, useClerk, useUser } from '@clerk/react';
 import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiCheckLine, RiCommandLine, RiLockLine } from 'react-icons/ri';
+import { RiCheckLine, RiCommandLine, RiLockLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { approveCliDeviceSession } from '@/api/cli-auth';
 import { AuthLayout } from '@/components/auth-layout';
+import { ConnectBrandLogo } from '@/components/auth/connect-brand-logo';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
-import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -17,6 +17,7 @@ import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
 import { clearConnectProvisioning } from '@/utils/connect';
+import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
@@ -66,6 +67,8 @@ export const CliAuthPage = () => {
 function CliAuthContent() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const clerk = useClerk();
+  const { user } = useUser();
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
   const apiKeysQuery = useFetchApiKeys();
   const has = useHasPermission();
@@ -78,14 +81,9 @@ function CliAuthContent() {
   const deviceCodeOk = isValidDeviceCode(deviceCode);
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
 
-  // Two callers today: `novu-wizard` (default) and `novu-connect` (agent
-  // provisioning). Each gets its own subtitle + scope copy so the dashboard
-  // explains what the user is actually authorizing.
   const isConnect = callerName === 'novu-connect';
   const callerDisplayName = isConnect ? 'Novu Connect' : 'Novu Wizard';
-  const callerSubtitle = isConnect
-    ? 'to provision your AI agent and connect it to the channels you pick.'
-    : 'in order to integrate Novu into your project.';
+  const signedInEmail = user?.primaryEmailAddress?.emailAddress;
 
   const apiKey = apiKeysQuery.data?.data?.[0]?.key;
 
@@ -123,6 +121,18 @@ function CliAuthContent() {
   function handleCancel() {
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? 'default' }));
   }
+
+  const handleSignOut = useCallback(async () => {
+    const fallbackUrl = buildAfterSignOutUrl();
+
+    try {
+      await clerk.signOut({ redirectUrl: fallbackUrl });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Please try again.';
+      showErrorToast(`Unable to sign out. ${message}`, 'Sign out failed');
+      window.location.assign(fallbackUrl);
+    }
+  }, [clerk]);
 
   const isLoading = apiKeysQuery.isLoading || !currentEnvironment;
 
@@ -163,22 +173,22 @@ function CliAuthContent() {
 
   return (
     <div className="flex min-h-screen w-full items-center justify-center px-4 py-8">
-      <Card className="w-full max-w-md">
-        <CardHeader className="flex flex-col items-start gap-2">
-          <div className="flex items-center gap-2">
-            <RiCommandLine className="text-foreground-600 size-5" />
-            <h1 className="text-foreground-900 text-base font-semibold">Authorize Novu CLI</h1>
+      <div className="w-full max-w-[400px] rounded-lg border-[1.5px] border-black/[0.04] bg-gradient-to-b from-white/50 to-white/[0.15] px-6 py-8 shadow-sm backdrop-blur-sm">
+        <div className="mx-auto flex w-full max-w-[350px] flex-col items-center gap-6">
+          <CliAuthHeader isConnect={isConnect} callerDisplayName={callerDisplayName} />
+
+          <div className="flex w-full flex-col items-center gap-3">
+            <h1 className="text-label-sm text-text-strong text-center font-medium tracking-[-0.084px]">
+              {callerDisplayName} would like to access your
+              <br />
+              account and be able to:
+            </h1>
+            <ScopeList isConnect={isConnect} />
           </div>
-          <p className="text-foreground-600 text-xs">
-            {callerDisplayName} is requesting access to your{' '}
-            <span className="font-medium">{currentEnvironment?.name ?? '...'}</span> environment {callerSubtitle}
-          </p>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <ScopeList isConnect={isConnect} />
+
           {reason ? (
-            <div className="text-foreground-600 flex items-start gap-2 rounded-md border border-dashed p-3 text-xs">
-              <RiLockLine className="mt-[2px] size-4" />
+            <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
+              <RiLockLine className="mt-0.5 size-4 shrink-0" />
               <span>{reason}</span>
             </div>
           ) : null}
@@ -191,14 +201,14 @@ function CliAuthContent() {
                 animate={{ opacity: 1, y: 0, height: 'auto' }}
                 exit={{ opacity: 0, y: -4, height: 0 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="overflow-hidden"
+                className="w-full overflow-hidden"
               >
-                <div className="flex items-start gap-2 rounded-md border border-green-200 bg-green-50 p-3 text-xs text-green-700">
+                <div className="flex items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
                   <motion.span
                     initial={{ scale: 0.6, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.1, type: 'spring', stiffness: 400, damping: 18 }}
-                    className="mt-[2px] inline-flex"
+                    className="mt-0.5 inline-flex"
                   >
                     <RiCheckLine className="size-4" />
                   </motion.span>
@@ -212,48 +222,145 @@ function CliAuthContent() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4, height: 0, marginTop: 0 }}
                 transition={{ duration: 0.2, ease: 'easeOut' }}
-                className="flex items-center justify-end gap-2 overflow-hidden"
+                className="flex w-full max-w-[300px] flex-col items-center gap-3 overflow-hidden"
               >
-                <Button mode="outline" onClick={handleCancel} disabled={isAuthorizing}>
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleAuthorize}
-                  disabled={!!reason || isLoading || !apiKey || isAuthorizing}
-                  isLoading={isAuthorizing || isLoading}
-                >
-                  Authorize
-                </Button>
+                <div className="flex w-full gap-3">
+                  <Button
+                    variant="secondary"
+                    mode="outline"
+                    size="xs"
+                    className="flex-1"
+                    onClick={handleCancel}
+                    disabled={isAuthorizing}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    mode="gradient"
+                    size="xs"
+                    className="flex-1"
+                    trailingIcon={RiArrowRightSLine}
+                    onClick={handleAuthorize}
+                    disabled={!!reason || isLoading || !apiKey || isAuthorizing}
+                    isLoading={isAuthorizing || isLoading}
+                  >
+                    Authorize
+                  </Button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </CardContent>
-      </Card>
+
+          {signedInEmail ? (
+            <p className="text-label-xs text-text-sub text-center">
+              <span className="text-[#99a0ae]">Signed in as </span>
+              {signedInEmail}
+              <span className="mx-1 text-[#99a0ae]">·</span>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="text-text-strong hover:text-text-sub font-medium transition-colors"
+              >
+                Sign out
+              </button>
+            </p>
+          ) : null}
+        </div>
+      </div>
     </div>
   );
 }
 
+function CliAuthHeader({
+  isConnect,
+  callerDisplayName,
+}: {
+  isConnect: boolean;
+  callerDisplayName: string;
+}) {
+  if (isConnect) {
+    return <ConnectBrandLogo />;
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <RiCommandLine className="text-text-sub size-8" />
+      <span className="text-label-md text-text-strong font-medium">{callerDisplayName}</span>
+    </div>
+  );
+}
+
+type ScopePart = {
+  text: string;
+  bold?: boolean;
+};
+
+type ScopeItem = {
+  parts: ScopePart[];
+};
+
 function ScopeList({ isConnect }: { isConnect: boolean }) {
-  const scopes = isConnect
+  const scopes: ScopeItem[] = isConnect
     ? [
-        'Read your Novu API key for the selected environment',
-        'Create and manage agents on your behalf',
-        'Connect channels (Slack, Telegram, and more) to your agent',
+        {
+          parts: [{ text: 'Read', bold: true }, { text: ' your Novu API key for the selected environment' }],
+        },
+        {
+          parts: [
+            { text: 'Create', bold: true },
+            { text: ' and ' },
+            { text: 'manage', bold: true },
+            { text: ' agents on your behalf' },
+          ],
+        },
+        {
+          parts: [{ text: 'Connect', bold: true }, { text: ' channels to your agent' }],
+        },
       ]
     : [
-        'Read your Novu API key for the selected environment',
-        'Trigger workflows on your behalf during the integration',
-        'Create or update workflows via Novu MCP',
+        {
+          parts: [{ text: 'Read', bold: true }, { text: ' your Novu API key for the selected environment' }],
+        },
+        {
+          parts: [{ text: 'Trigger', bold: true }, { text: ' workflows on your behalf during the integration' }],
+        },
+        {
+          parts: [
+            { text: 'Create', bold: true },
+            { text: ' or ' },
+            { text: 'update', bold: true },
+            { text: ' workflows via Novu MCP' },
+          ],
+        },
       ];
 
   return (
-    <ul className="text-foreground-700 flex flex-col gap-2 text-xs">
+    <ul className="flex w-full flex-col px-3 py-2">
       {scopes.map((scope) => (
-        <li key={scope} className="flex items-start gap-2">
-          <RiCheckLine className="mt-[2px] size-4 text-emerald-600" />
-          <span>{scope}</span>
+        <li key={scope.parts.map((part) => part.text).join('')} className="flex min-h-6 items-center gap-2">
+          <RiCheckLine className="size-3 shrink-0 text-[#99a0ae]" />
+          <ScopeText parts={scope.parts} />
         </li>
       ))}
     </ul>
   );
+}
+
+function ScopeText({ parts }: { parts: ScopePart[] }) {
+  return (
+    <span className="text-label-xs text-text-sub font-medium">
+      {parts.map((part) => (
+        <ScopeTextPart key={part.text} part={part} />
+      ))}
+    </span>
+  );
+}
+
+function ScopeTextPart({ part }: { part: ScopePart }) {
+  if (part.bold) {
+    return <span className="font-semibold text-[#525866]">{part.text}</span>;
+  }
+
+  return <>{part.text}</>;
 }

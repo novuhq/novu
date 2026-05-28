@@ -1,7 +1,10 @@
 import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
+import type { GeneratedAgentSpec } from '../api/agents';
+import { channelDisplayName } from '../dashboard-urls';
+import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import type { AgentSummary } from '../types';
-import type { ConnectUI, PickResult } from './ui';
+import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
   let spinner: Ora | undefined;
@@ -50,7 +53,48 @@ export function createLoggingUI(): ConnectUI {
       start('Checking for existing agents…');
     },
     loadingIntegrations() {
-      start('Looking up managed integrations…');
+      start('Looking up agent runtime integrations…');
+    },
+    pickAgentRuntime({ preselected }) {
+      stop();
+      const runtime = preselected ?? 'demo';
+      console.log(chalk.gray(`Non-interactive mode: using "${runtime}" agent runtime.`));
+
+      return Promise.resolve(runtime);
+    },
+    pickAgentIntegration({ integrations }) {
+      stop();
+      if (integrations.length === 1) {
+        console.log(chalk.gray(`Non-interactive mode: reusing integration "${integrations[0].name}".`));
+
+        return Promise.resolve({ kind: 'existing', integrationId: integrations[0]._id });
+      }
+
+      return Promise.reject(
+        new Error(
+          'Non-interactive mode: pass --agent-integration-id or BYOK credential flags to create a new integration.'
+        )
+      );
+    },
+    promptForSecretInput({ title }) {
+      stop();
+
+      return Promise.reject(
+        new Error(`Non-interactive mode: credential input required for "${title}". Pass the matching --anthropic-api-key or AWS Claude flags.`)
+      );
+    },
+    pickAwsClaudeRegion() {
+      stop();
+
+      return Promise.reject(
+        new Error('Non-interactive mode: pass --aws-claude-region for AWS Claude managed agents.')
+      );
+    },
+    verifyingCredentials() {
+      start('Verifying credentials…');
+    },
+    credentialsVerified() {
+      succeed('Credentials verified');
     },
     pickExistingOrCreate(_agents) {
       stop();
@@ -72,8 +116,23 @@ export function createLoggingUI(): ConnectUI {
         )
       );
     },
+    refineDescription(previousPrompt) {
+      stop();
+
+      return Promise.reject(
+        new Error(
+          `Non-interactive mode cannot refine the agent description. Original prompt: "${previousPrompt.slice(0, 80)}${previousPrompt.length > 80 ? '…' : ''}"`
+        )
+      );
+    },
     generatingAgent() {
       start('Generating agent configuration…');
+    },
+    previewGeneratedAgent(spec: GeneratedAgentSpec) {
+      stop();
+      logGeneratedAgentPreview(spec);
+
+      return Promise.resolve<GeneratedAgentPreviewResult>({ action: 'confirm', spec });
     },
     creatingAgent(name) {
       start(`Creating agent "${name}"…`);
@@ -88,9 +147,13 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve('slack');
     },
-    channelComingSoon(choice) {
+    awaitDashboardChannelOpen({ channel, agentDetailsUrl }) {
       stop();
-      console.log(`${chalk.yellow('!')} ${choice} is coming soon — set it up in the dashboard for now.`);
+      console.log(
+        `${chalk.cyan('→')} ${channelDisplayName(channel)} continues in Novu Connect: ${chalk.underline(agentDetailsUrl)}`
+      );
+
+      return Promise.resolve();
     },
     addingEmailIntegration() {
       start('Linking Email to your agent…');
@@ -148,11 +211,16 @@ export function createLoggingUI(): ConnectUI {
     runningSlackQuickSetup() {
       start('Creating Slack app from manifest…');
     },
-    showSlackOAuthUrl(url) {
+    awaitSlackOAuthOpen({ authorizeUrl, appCreated }) {
       stop();
-      console.log(`${chalk.cyan('→')} Authorize Slack here: ${chalk.underline(url)}`);
+      if (appCreated) {
+        console.log(`${chalk.green('✓')} Slack app created successfully.`);
+      }
+      console.log(`${chalk.cyan('→')} Authorize Slack here: ${chalk.underline(authorizeUrl)}`);
+
+      return Promise.resolve();
     },
-    pollingForSlackConnection() {
+    showSlackWaiting(_opts) {
       start('Waiting for Slack authorization…');
     },
     slackConnected() {
@@ -167,19 +235,25 @@ export function createLoggingUI(): ConnectUI {
     success(result) {
       stop();
       const agentUrl = result.environmentSlug
-        ? `${result.dashboardUrl}/env/${result.environmentSlug}/agents/${encodeURIComponent(result.agent.identifier)}`
-        : `${result.dashboardUrl}/agents/${encodeURIComponent(result.agent.identifier)}`;
-      const channelLabel =
-        result.connectedChannel === 'slack'
-          ? 'Slack'
-          : result.connectedChannel === 'telegram'
-            ? 'Telegram'
-            : null;
+        ? `${result.connectDashboardUrl}/env/${result.environmentSlug}/connect/agents/${encodeURIComponent(result.agent.identifier)}`
+        : `${result.connectDashboardUrl}/connect/agents/${encodeURIComponent(result.agent.identifier)}`;
+      const channelLabel = (() => {
+        if (result.connectedChannel === 'slack') return 'Slack';
+        if (result.connectedChannel === 'telegram') return 'Telegram';
+        if (result.connectedChannel === 'email') return 'Email';
+
+        return null;
+      })();
+      const redirectChannelLabel = result.dashboardRedirectChannel
+        ? channelDisplayName(result.dashboardRedirectChannel)
+        : null;
       console.log('');
       console.log(`${chalk.green('✓')} Your agent is live.`);
       console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
       if (channelLabel) {
         console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
+      } else if (redirectChannelLabel) {
+        console.log(`  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`);
       } else {
         console.log(`  ${chalk.gray('No channel connected.')}`);
       }
@@ -195,4 +269,24 @@ export function createLoggingUI(): ConnectUI {
       return Promise.resolve(Number(process.exitCode ?? 0));
     },
   };
+}
+
+function logGeneratedAgentPreview(spec: GeneratedAgentSpec): void {
+  const labels = resolveGeneratedAgentSpecLabels(spec);
+  const promptPreview = spec.systemPrompt.replace(/\s+/g, ' ').trim().slice(0, 160);
+
+  console.log('');
+  console.log(chalk.bold('Generated agent preview'));
+  console.log(`  ${chalk.bold('Name:')} ${spec.name} ${chalk.gray(`(${spec.identifier})`)}`);
+  console.log(`  ${chalk.bold('System prompt:')} ${promptPreview}${spec.systemPrompt.length > 160 ? '…' : ''}`);
+  if (labels.tools.length > 0) {
+    console.log(`  ${chalk.bold('Tools:')} ${labels.tools.join(', ')}`);
+  }
+  if (labels.mcpServers.length > 0) {
+    console.log(`  ${chalk.bold('MCP:')} ${labels.mcpServers.join(', ')}`);
+  }
+  if (labels.skills.length > 0) {
+    console.log(`  ${chalk.bold('Skills:')} ${labels.skills.join(', ')}`);
+  }
+  console.log(chalk.gray('Non-interactive mode: continuing without confirmation.'));
 }

@@ -1,6 +1,15 @@
-import type { AgentSummary, ChannelChoice } from '../types';
+import type { GeneratedAgentSpec } from '../api/agents';
+import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
+
+export type GeneratedAgentPreviewResult =
+  | { action: 'confirm'; spec: GeneratedAgentSpec }
+  | { action: 'refine' };
+
+export type PickAgentIntegrationResult =
+  | { kind: 'existing'; integrationId: string }
+  | { kind: 'new' };
 
 export interface ConnectUI {
   // Welcome screen
@@ -24,16 +33,46 @@ export interface ConnectUI {
   loadingIntegrations(): void;
   pickExistingOrCreate(agents: AgentSummary[]): Promise<PickResult>;
 
+  // Agent runtime / credentials (new-agent path)
+  pickAgentRuntime(opts: { preselected?: AgentRuntimeChoice }): Promise<AgentRuntimeChoice>;
+  pickAgentIntegration(opts: {
+    providerLabel: string;
+    integrations: Array<{ _id: string; name: string; identifier: string }>;
+  }): Promise<PickAgentIntegrationResult>;
+  promptForSecretInput(opts: {
+    title: string;
+    placeholder: string;
+    hint?: string;
+    secret?: boolean;
+  }): Promise<string>;
+  pickAwsClaudeRegion(): Promise<string>;
+  verifyingCredentials(): void;
+  credentialsVerified(): void;
+
   // Create-new path
   promptForDescription(defaultPrompt?: string): Promise<string>;
+  /**
+   * Re-prompt for the agent description after the user chooses to refine a
+   * generated preview. Shows the previous prompt for context.
+   */
+  refineDescription(previousPrompt: string): Promise<string>;
   generatingAgent(): void;
+  /**
+   * Preview and optionally edit the AI-generated agent spec before provisioning.
+   * Resolves with the confirmed spec or a request to refine the source description.
+   */
+  previewGeneratedAgent(spec: GeneratedAgentSpec): Promise<GeneratedAgentPreviewResult>;
   creatingAgent(name: string): void;
   agentCreated(agent: AgentSummary): void;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;
-  /** Render a "coming soon" message for a channel that isn't wired up yet. */
-  channelComingSoon(choice: ChannelChoice): void;
+  /**
+   * Unsupported-in-CLI channels open the Connect dashboard agent page so the
+   * user can finish setup there. Resolves when the user hits Enter — the
+   * pipeline then runs `open(agentDetailsUrl)`.
+   */
+  awaitDashboardChannelOpen(opts: { channel: ChannelChoice; agentDetailsUrl: string }): Promise<void>;
 
   // Email path
   addingEmailIntegration(): void;
@@ -82,8 +121,17 @@ export interface ConnectUI {
    */
   promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
   runningSlackQuickSetup(): void;
-  showSlackOAuthUrl(url: string): void;
-  pollingForSlackConnection(): void;
+  /**
+   * Consent gate before opening Slack OAuth. When `appCreated` is true, confirms
+   * the manifest quick-setup succeeded before asking the user to install the app
+   * in their workspace. Resolves when the user hits Enter — the pipeline then
+   * runs `open()`.
+   */
+  awaitSlackOAuthOpen(opts: { authorizeUrl: string; appCreated: boolean }): Promise<void>;
+  /**
+   * Transitions to the polling view. Fired by the pipeline right after `open()`.
+   */
+  showSlackWaiting(opts: { authorizeUrl: string }): void;
   slackConnected(): void;
   slackSkipped(): void;
 
@@ -94,8 +142,10 @@ export interface ConnectUI {
   success(result: {
     agent: AgentSummary;
     dashboardUrl: string;
+    connectDashboardUrl: string;
     environmentSlug: string | null;
     connectedChannel: ChannelChoice | null;
+    dashboardRedirectChannel: ChannelChoice | null;
   }): void;
   failure(message: string): void;
 
