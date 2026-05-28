@@ -269,10 +269,11 @@ function PhaseContent({
             if you paste a short-lived configuration token.
           </Text>
           <Box flexDirection="column">
-            <Text dimColor>1. Visit </Text>
+            <Text dimColor>1. Open </Text>
             <Text color="cyan">https://api.slack.com/apps</Text>
-            <Text dimColor>2. Open “Your Apps” → “Manage” → “App Configuration Tokens”</Text>
-            <Text dimColor>3. Generate a token for your workspace (starts with xoxe.xoxp-)</Text>
+            <Text dimColor>2. Scroll to the bottom of the page</Text>
+            <Text dimColor>3. Generate an App Configuration Token</Text>
+            <Text dimColor>4. Copy the access token (starts with xoxe.xoxp-)</Text>
           </Box>
           {phase.retry ? (
             <Text color="yellow">Previous token was rejected by Slack. Generate a fresh one and try again.</Text>
