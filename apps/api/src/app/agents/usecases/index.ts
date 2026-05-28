@@ -25,6 +25,8 @@ import { ListAgentEmoji } from './list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrations } from './list-agent-integrations/list-agent-integrations.usecase';
 import { ListAgentMcpServers } from './list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgents } from './list-agents/list-agents.usecase';
+import { CompleteManagedAgentSetup } from './managed-agent-setup/complete-managed-agent-setup.usecase';
+import { HandleManagedAgentSetupInbound } from './managed-agent-setup/handle-managed-agent-setup-inbound.usecase';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { MigrateAgentRuntime } from './migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { ProvisionManagedAgent } from './provision-managed-agent/provision-managed-agent.usecase';
@@ -89,6 +91,8 @@ export const USE_CASES = [
   DisableAgentMcpServer,
   ListAgentMcpServers,
   GenerateMcpOAuthUrl,
+  HandleManagedAgentSetupInbound,
+  CompleteManagedAgentSetup,
   McpOAuthCallback,
   GetMcpConnectionStatus,
   GetMcpNovuAppCredentials,

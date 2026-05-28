@@ -84,6 +84,15 @@ const conversationSchema = new Schema<ConversationDBModel>(
     managedSessionVaultId: {
       type: Schema.Types.String,
     },
+    pendingManagedAgentSetup: {
+      type: new Schema(
+        {
+          pendingPlatformMessageId: { type: Schema.Types.String, required: true },
+          setupMessageId: { type: Schema.Types.String },
+        },
+        { _id: false }
+      ),
+    },
     tokenUsage: {
       type: new Schema(
         {

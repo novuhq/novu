@@ -41,6 +41,7 @@ function makeMcpConnectionRepo(overrides: Partial<Record<string, sinon.SinonStub
 function makeAgentMcpServerRepo(enablements: Array<{ _id: string; mcpId: string }> = []) {
   return {
     findByAgent: sinon.stub().resolves(enablements),
+    findOAuthEnablementsForAgent: sinon.stub().resolves(enablements),
   };
 }
 
@@ -91,7 +92,7 @@ describe('McpConnectionVaultService', () => {
 
     it('returns [] when no OAuth-capable MCPs are enabled and no vault exists', async () => {
       const repo = makeMcpConnectionRepo();
-      // No enablement at all → `listOAuthEnablements` returns [] → null.
+      // No OAuth enablement at all → `findOAuthEnablementsForAgent` returns [] → null.
       const service = makeService(repo, makeAgentMcpServerRepo([]));
       const runtimeProvider = makeRuntimeProvider();
 

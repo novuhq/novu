@@ -6,18 +6,27 @@ import {
   ConversationActivityRepository,
   ConversationActivitySenderTypeEnum,
   ConversationActivityTypeEnum,
+  ConversationEntity,
   ConversationRepository,
+  SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
 import { type Message, MessageRole } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import type { AgentExecutionParams } from './bridge-executor.service';
+import type { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory';
 import { McpConnectionVaultService } from './mcp-connection-vault.service';
+
+export interface ManagedAgentContext {
+  config: ResolvedAgentConfig;
+  conversation: ConversationEntity;
+  subscriber: SubscriberEntity | null;
+  userMessageText: string;
+}
 
 type WebhookSessionMetadata = {
   conversationId: string;
@@ -51,7 +60,7 @@ export class ManagedAgentService implements OnModuleInit {
     this.webhookHandler = this.initWebhookHandler();
   }
 
-  async dispatch(context: AgentExecutionParams, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
+  async dispatch(context: ManagedAgentContext, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
     await this.demoQuota.assertAllowed(context, agent);
 
     const { provider, runtimeProvider } = await this.providerFactory.getOrCreate(agent, context.config.environmentId);
@@ -66,7 +75,7 @@ export class ManagedAgentService implements OnModuleInit {
     const sessionId = await this.reconcileSessionIdForVaultBinding(context, vaultIds, existingSessionId);
 
     const messages = sessionId
-      ? [{ role: MessageRole.USER, content: context.message?.text ?? '' }]
+      ? [{ role: MessageRole.USER, content: context.userMessageText }]
       : await this.buildMessagesWithHistory(context);
 
     const { sessionId: newSessionId } = await provider.send({
@@ -89,6 +98,46 @@ export class ManagedAgentService implements OnModuleInit {
       String(context.conversation._id),
       newSessionId,
       vaultIds[0]
+    );
+  }
+
+  /**
+   * Re-dispatch a user turn that was parked while managed-agent setup completed.
+   * Loads the persisted inbound activity and forwards only its body to dispatch.
+   */
+  async replayParkedInboundTurn(params: {
+    conversation: ConversationEntity;
+    config: ResolvedAgentConfig;
+    subscriber: SubscriberEntity;
+    pendingPlatformMessageId: string;
+    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
+  }): Promise<void> {
+    const activity = await this.conversationActivityRepository.findOne(
+      {
+        _conversationId: params.conversation._id,
+        _environmentId: params.config.environmentId,
+        platformMessageId: params.pendingPlatformMessageId,
+      },
+      '*'
+    );
+
+    if (!activity) {
+      this.logger.warn(
+        { conversationId: params.conversation._id, pendingPlatformMessageId: params.pendingPlatformMessageId },
+        'Managed agent setup completed but parked message was not found'
+      );
+
+      return;
+    }
+
+    await this.dispatch(
+      {
+        config: params.config,
+        conversation: params.conversation,
+        subscriber: params.subscriber,
+        userMessageText: activity.content,
+      },
+      params.agent
     );
   }
 
@@ -197,7 +246,7 @@ export class ManagedAgentService implements OnModuleInit {
    * reset the session so the next `provider.send` opens a fresh one.
    */
   private async reconcileSessionIdForVaultBinding(
-    context: AgentExecutionParams,
+    context: ManagedAgentContext,
     vaultIds: string[],
     existingSessionId: string | undefined
   ): Promise<string | undefined> {
@@ -230,7 +279,7 @@ export class ManagedAgentService implements OnModuleInit {
     });
   }
 
-  private async buildMessagesWithHistory(context: AgentExecutionParams): Promise<Message[]> {
+  private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
     const history = await this.conversationActivityRepository.findByConversation(
       context.config.environmentId,
       String(context.conversation._id),

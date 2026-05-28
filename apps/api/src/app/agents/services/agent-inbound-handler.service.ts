@@ -26,6 +26,8 @@ import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/hand
 import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { HandleManagedAgentSetupInbound } from '../usecases/managed-agent-setup/handle-managed-agent-setup-inbound.usecase';
+import { ManagedAgentSetupInboundCommand } from '../usecases/managed-agent-setup/managed-agent-setup-inbound.command';
 import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
@@ -224,6 +226,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly managedAgentService: ManagedAgentService,
+    private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
     private readonly chatSdkService: ChatSdkService,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
@@ -377,6 +380,35 @@ export class AgentInboundHandler implements OnModuleInit {
         });
     }
 
+    const [subscriber, history] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      this.conversationService.getHistory(config.environmentId, conversation._id),
+    ]);
+
+    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+      '_id',
+      'runtime',
+      'managedRuntime',
+    ]);
+
+    const isManagedAgent = agent?.runtime === 'managed' && agent.managedRuntime;
+
+    if (isManagedAgent) {
+      const parked = await this.tryParkForManagedSetup({
+        config,
+        conversationId: conversation._id,
+        agentId: agent._id,
+        subscriber,
+        platformMessageId: message.id,
+      });
+
+      if (parked) {
+        return;
+      }
+    }
+
     if (config.acknowledgeOnReceived) {
       const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
 
@@ -397,35 +429,27 @@ export class AgentInboundHandler implements OnModuleInit {
       }
     }
 
-    const [subscriber, history] = await Promise.all([
-      subscriberId
-        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-        : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
-    ]);
-
-    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
-      '_id',
-      'runtime',
-      'managedRuntime',
-    ]);
-    const executionContext = {
-      event,
-      config,
-      conversation,
-      subscriber,
-      history,
-      message,
-      platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
-      storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-    };
-
     try {
-      if (agent?.runtime === 'managed' && agent.managedRuntime) {
-        await this.managedAgentService.dispatch(executionContext, agent);
+      if (isManagedAgent) {
+        await this.managedAgentService.dispatch(
+          {
+            config,
+            conversation,
+            subscriber,
+            userMessageText: message.text ?? '',
+          },
+          agent
+        );
       } else {
         await this.bridgeExecutor.execute({
-          ...executionContext,
+          event,
+          config,
+          conversation,
+          subscriber,
+          history,
+          message,
+          platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
+          storedAttachments: message.attachments?.length ? storedAttachments : undefined,
           onBridgeFailure: async () => {
             applyPlatformThreadIdToThread(thread, platformThreadId);
             const sent = await thread.post(BRIDGE_OFFLINE_REPLY_MARKDOWN);
@@ -503,6 +527,38 @@ export class AgentInboundHandler implements OnModuleInit {
 
       throw err;
     }
+  }
+
+  /**
+   * When the subscriber still has required managed-agent setup, park the turn
+   * and post the setup card. Returns true when dispatch must not proceed.
+   */
+  private async tryParkForManagedSetup(params: {
+    config: ResolvedAgentConfig;
+    conversationId: string;
+    agentId: string;
+    subscriber: { subscriberId: string } | null;
+    platformMessageId: string | undefined;
+  }): Promise<boolean> {
+    const { config, conversationId, agentId, subscriber, platformMessageId } = params;
+
+    if (!subscriber || !platformMessageId) {
+      return false;
+    }
+
+    return this.handleManagedAgentSetupInbound.execute(
+      ManagedAgentSetupInboundCommand.create({
+        userId: 'system',
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        conversationId,
+        agentId,
+        subscriberId: subscriber.subscriberId,
+        agentIdentifier: config.agentIdentifier,
+        integrationIdentifier: config.integrationIdentifier,
+        platformMessageId,
+      })
+    );
   }
 
   /**

@@ -8,7 +8,7 @@ import {
 import { type AgentEntity, ConversationRepository, type ConversationTokenUsage } from '@novu/dal';
 import type { Response as ThalamusResponse } from '@novu/thalamus';
 
-import type { AgentExecutionParams } from './bridge-executor.service';
+import type { ManagedAgentContext } from './managed-agent.service';
 
 @Injectable()
 export class DemoClaudeQuotaPolicy {
@@ -18,10 +18,7 @@ export class DemoClaudeQuotaPolicy {
     private readonly analyticsService: AnalyticsService
   ) {}
 
-  async assertAllowed(
-    context: AgentExecutionParams,
-    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>
-  ): Promise<void> {
+  async assertAllowed(context: ManagedAgentContext, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
     if (!agent.managedRuntime) {
       return;
     }

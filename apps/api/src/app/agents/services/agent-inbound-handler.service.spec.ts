@@ -40,6 +40,7 @@ describe('AgentInboundHandler', () => {
       startCodeConsume?: sinon.SinonStub;
       findTelegramEndpointByIdentity?: sinon.SinonStub;
       agentFindOne?: sinon.SinonStub;
+      managedAgentSetupHandleInbound?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
@@ -91,12 +92,22 @@ describe('AgentInboundHandler', () => {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findTelegramEndpointByIdentity ?? sinon.stub().resolves(null),
     };
+    const handleAgentReply = {
+      execute: sinon.stub().resolves({ messageId: 'setup-card-1', platformThreadId: 'thread1' }),
+    };
+    const handlePlanProgress = {
+      execute: sinon.stub().resolves(undefined),
+    };
+    const handleManagedAgentSetupInbound = {
+      execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
       conversationService as any,
       bridgeExecutor as any,
       managedAgentService as any,
+      handleManagedAgentSetupInbound as any,
       chatSdkService as any,
       agentRepository as any,
       subscriberRepository as any,
@@ -105,7 +116,9 @@ describe('AgentInboundHandler', () => {
       attachmentStorage as any,
       startCodeService as any,
       channelEndpointRepository as any,
-      linkTelegramChatToSubscriber as any
+      linkTelegramChatToSubscriber as any,
+      handleAgentReply as any,
+      handlePlanProgress as any
     );
 
     return {
