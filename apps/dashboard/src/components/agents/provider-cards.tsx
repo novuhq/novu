@@ -251,6 +251,11 @@ function ScrollEdgeButton({
   visible: boolean;
   onClick: () => void;
 }) {
+  // Avoid the aria-hidden focus warning by unmounting the button entirely when it would be
+  // visually hidden. A click on the button is the typical trigger for visibility flipping, so
+  // keeping the element around with `aria-hidden` traps focus on a hidden control.
+  if (!visible) return null;
+
   const isRight = direction === 'right';
   const Icon = isRight ? RiArrowRightSLine : RiArrowLeftSLine;
   const label = isRight ? 'Scroll right to see more channels' : 'Scroll left to see more channels';
@@ -259,16 +264,13 @@ function ScrollEdgeButton({
     <button
       type="button"
       aria-label={label}
-      aria-hidden={!visible}
-      tabIndex={visible ? 0 : -1}
       onClick={onClick}
       className={cn(
         'pointer-events-auto absolute top-1/2 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-full',
         'border border-stroke-soft bg-bg-white text-text-sub',
         'shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea]',
-        'transition-opacity duration-150 hover:text-text-strong',
-        isRight ? 'right-1' : 'left-1',
-        visible ? 'opacity-100' : 'pointer-events-none opacity-0'
+        'transition-colors hover:text-text-strong',
+        isRight ? 'right-1' : 'left-1'
       )}
     >
       <Icon className="size-4" aria-hidden />
