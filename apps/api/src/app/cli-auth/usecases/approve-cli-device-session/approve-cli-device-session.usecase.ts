@@ -1,6 +1,5 @@
 import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { decryptApiKey } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
 
 import {
@@ -56,11 +55,10 @@ export class ApproveCliDeviceSession {
   }
 
   private async assertApiKeyBelongsToEnvironment(environmentId: string, apiKey: string): Promise<void> {
-    const keys = await this.environmentRepository.getApiKeys(environmentId);
     const hashedApiKey = createHash('sha256').update(apiKey).digest('hex');
-    const isValid = keys.some((key) => key.hash === hashedApiKey || decryptApiKey(key.key as string) === apiKey);
+    const keyEnvironment = await this.environmentRepository.findByApiKey({ hash: hashedApiKey });
 
-    if (!isValid) {
+    if (!keyEnvironment || keyEnvironment._id !== environmentId) {
       throw new BadRequestException('Invalid API key for the selected environment');
     }
   }
