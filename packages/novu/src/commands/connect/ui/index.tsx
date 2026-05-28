@@ -144,8 +144,10 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'pick-channel', resolve });
       });
     },
-    channelComingSoon(_choice) {
-      // The success screen will render the "skipped" state — no interim screen needed.
+    awaitDashboardChannelOpen({ channel, agentDetailsUrl }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'dashboard-channel-ready', channel, agentDetailsUrl, resolve });
+      });
     },
     addingEmailIntegration() {
       store.phase.set({ kind: 'adding-email' });
@@ -211,8 +213,10 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         kind: 'success',
         agent: result.agent,
         dashboardUrl: result.dashboardUrl,
+        connectDashboardUrl: result.connectDashboardUrl,
         environmentSlug: result.environmentSlug,
         connectedChannel: result.connectedChannel,
+        dashboardRedirectChannel: result.dashboardRedirectChannel,
       });
     },
     failure(message) {

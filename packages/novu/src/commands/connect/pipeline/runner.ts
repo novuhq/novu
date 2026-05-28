@@ -1,3 +1,4 @@
+import open from 'open';
 import { resolveAuth } from '../../wizard/auth/resolve-auth';
 import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { CONNECT_EVENTS } from '../analytics/events';
@@ -11,6 +12,7 @@ import {
 import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../api/client';
 import { type IntegrationRecord, deleteIntegration } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
+import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
@@ -78,6 +80,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     let channelConnected = false;
     let connectedChannel: ChannelChoice | null = null;
+    let dashboardRedirectChannel: ChannelChoice | null = null;
     let connectedIntegration: IntegrationRecord | null = null;
 
     const channel: ChannelChoice = options.skipSlack ? 'skip' : (options.channel ?? (await ui.pickChannel()));
@@ -124,9 +127,22 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         if (channelConnected) connectedChannel = 'email';
         break;
       }
-      default:
-        ui.channelComingSoon(channel);
+      case 'whatsapp':
+      case 'teams': {
+        const agentDetailsUrl = buildConnectAgentDetailsUrl({
+          connectDashboardUrl: options.connectDashboardUrl,
+          environmentSlug: auth.environmentSlug,
+          agentIdentifier: agent.identifier,
+          tab: 'integrations',
+        });
+
+        await ui.awaitDashboardChannelOpen({ channel, agentDetailsUrl });
+        void open(agentDetailsUrl).catch(() => undefined);
+        dashboardRedirectChannel = channel;
         break;
+      }
+      default:
+        throw new Error(`${channelDisplayName(channel)} is not supported in the connect CLI yet.`);
     }
 
     if (channelConnected && connectedIntegration) {
@@ -142,8 +158,10 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     ui.success({
       agent,
       dashboardUrl: auth.dashboardUrl.replace(/\/$/, ''),
+      connectDashboardUrl: options.connectDashboardUrl.replace(/\/$/, ''),
       environmentSlug: auth.environmentSlug ?? null,
       connectedChannel,
+      dashboardRedirectChannel,
     });
 
     track(CONNECT_EVENTS.COMPLETED, { flow, channel: connectedChannel ?? channel });

@@ -40,6 +40,12 @@ export type Phase =
   | { kind: 'generating' }
   | { kind: 'creating'; name: string }
   | { kind: 'pick-channel'; resolve: (choice: ChannelChoice) => void }
+  | {
+      kind: 'dashboard-channel-ready';
+      channel: ChannelChoice;
+      agentDetailsUrl: string;
+      resolve: () => void;
+    }
   | { kind: 'adding-slack' }
   | {
       kind: 'paste-slack-token';
@@ -96,9 +102,12 @@ export type Phase =
       kind: 'success';
       agent: AgentSummary;
       dashboardUrl: string;
+      connectDashboardUrl: string;
       environmentSlug: string | null;
       /** Which channel ended up connected, if any. Drives the "check your bot" copy on the final screen. */
       connectedChannel: ChannelChoice | null;
+      /** Channel the user picked that continues in the Connect dashboard instead of the CLI. */
+      dashboardRedirectChannel: ChannelChoice | null;
     }
   | { kind: 'error'; message: string };
 

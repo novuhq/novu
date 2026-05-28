@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
+import { channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary } from '../types';
 import type { ConnectUI, PickResult } from './ui';
 
@@ -129,9 +130,13 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve('slack');
     },
-    channelComingSoon(choice) {
+    awaitDashboardChannelOpen({ channel, agentDetailsUrl }) {
       stop();
-      console.log(`${chalk.yellow('!')} ${choice} is coming soon — set it up in the dashboard for now.`);
+      console.log(
+        `${chalk.cyan('→')} ${channelDisplayName(channel)} continues in Novu Connect: ${chalk.underline(agentDetailsUrl)}`
+      );
+
+      return Promise.resolve();
     },
     addingEmailIntegration() {
       start('Linking Email to your agent…');
@@ -213,19 +218,25 @@ export function createLoggingUI(): ConnectUI {
     success(result) {
       stop();
       const agentUrl = result.environmentSlug
-        ? `${result.dashboardUrl}/env/${result.environmentSlug}/agents/${encodeURIComponent(result.agent.identifier)}`
-        : `${result.dashboardUrl}/agents/${encodeURIComponent(result.agent.identifier)}`;
-      const channelLabel =
-        result.connectedChannel === 'slack'
-          ? 'Slack'
-          : result.connectedChannel === 'telegram'
-            ? 'Telegram'
-            : null;
+        ? `${result.connectDashboardUrl}/env/${result.environmentSlug}/connect/agents/${encodeURIComponent(result.agent.identifier)}`
+        : `${result.connectDashboardUrl}/connect/agents/${encodeURIComponent(result.agent.identifier)}`;
+      const channelLabel = (() => {
+        if (result.connectedChannel === 'slack') return 'Slack';
+        if (result.connectedChannel === 'telegram') return 'Telegram';
+        if (result.connectedChannel === 'email') return 'Email';
+
+        return null;
+      })();
+      const redirectChannelLabel = result.dashboardRedirectChannel
+        ? channelDisplayName(result.dashboardRedirectChannel)
+        : null;
       console.log('');
       console.log(`${chalk.green('✓')} Your agent is live.`);
       console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
       if (channelLabel) {
         console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
+      } else if (redirectChannelLabel) {
+        console.log(`  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`);
       } else {
         console.log(`  ${chalk.gray('No channel connected.')}`);
       }

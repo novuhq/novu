@@ -3,6 +3,7 @@ import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useApp, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import type { AgentRuntimeChoice, ChannelChoice } from '../types';
 import type { ConnectStore } from './store';
 import { useStore } from './use-store';
@@ -118,8 +119,13 @@ function computeOrbTint(
     case 'adding-email':
     case 'email-ready':
       return CHANNEL_TINTS.email;
-    case 'success':
-      return phase.connectedChannel ? CHANNEL_TINTS[phase.connectedChannel] : DEFAULT_ORB_COLOR;
+    case 'dashboard-channel-ready':
+      return CHANNEL_TINTS[phase.channel];
+    case 'success': {
+      const activeChannel = phase.connectedChannel ?? phase.dashboardRedirectChannel;
+
+      return activeChannel ? CHANNEL_TINTS[activeChannel] : DEFAULT_ORB_COLOR;
+    }
     default:
       return DEFAULT_ORB_COLOR;
   }
@@ -151,8 +157,13 @@ function computeOrbLabel(
     case 'adding-email':
     case 'email-ready':
       return CHANNEL_LABELS.email;
-    case 'success':
-      return phase.connectedChannel ? CHANNEL_LABELS[phase.connectedChannel] : undefined;
+    case 'dashboard-channel-ready':
+      return CHANNEL_LABELS[phase.channel];
+    case 'success': {
+      const activeChannel = phase.connectedChannel ?? phase.dashboardRedirectChannel;
+
+      return activeChannel ? CHANNEL_LABELS[activeChannel] : undefined;
+    }
     default:
       return undefined;
   }
@@ -310,8 +321,8 @@ function PhaseContent({
         { label: 'Slack (recommended)', value: 'slack' },
         { label: 'Telegram', value: 'telegram' },
         { label: 'Email', value: 'email' },
-        { label: 'WhatsApp — coming soon', value: 'whatsapp' },
-        { label: 'Microsoft Teams — coming soon', value: 'teams' },
+        { label: 'WhatsApp', value: 'whatsapp' },
+        { label: 'Microsoft Teams', value: 'teams' },
         { label: 'Skip — set up later in dashboard', value: 'skip' },
       ];
 
@@ -461,6 +472,15 @@ function PhaseContent({
     case 'sending-welcome':
       return <Text color="cyan">Asking your agent to say hello…</Text>;
 
+    case 'dashboard-channel-ready':
+      return (
+        <DashboardChannelReadyContent
+          channel={phase.channel}
+          agentDetailsUrl={phase.agentDetailsUrl}
+          onContinue={phase.resolve}
+        />
+      );
+
     case 'success':
       return <SuccessView phase={phase} />;
 
@@ -593,14 +613,30 @@ function ChannelSelect({
     }
   });
 
+  const highlighted = options[idx]?.value ?? null;
+  const showDashboardHint = highlighted !== null && isDashboardOnlyChannel(highlighted);
+
   return (
-    <Box flexDirection="column">
-      {options.map((opt, i) => (
-        <Text key={opt.value} color={i === idx ? 'cyan' : undefined}>
-          {i === idx ? '› ' : '  '}
-          {opt.label}
-        </Text>
-      ))}
+    <Box flexDirection="column" gap={1}>
+      <Box flexDirection="column">
+        {options.map((opt, i) => {
+          const isSelected = i === idx;
+          const opensInDashboard = isDashboardOnlyChannel(opt.value);
+
+          return (
+            <Text key={opt.value}>
+              <Text color={isSelected ? 'cyan' : undefined}>
+                {isSelected ? '› ' : '  '}
+                {opt.label}
+              </Text>
+              {opensInDashboard ? <Text dimColor>{isSelected ? ' ↗' : '  ↗'}</Text> : null}
+            </Text>
+          );
+        })}
+      </Box>
+      {showDashboardHint ? (
+        <Text dimColor>Onboarding for this channel is currently only available in the Novu Connect UI.</Text>
+      ) : null}
     </Box>
   );
 }
@@ -1022,18 +1058,52 @@ function TelegramIntroContent({
   );
 }
 
+function DashboardChannelReadyContent({
+  channel,
+  agentDetailsUrl,
+  onContinue,
+}: {
+  channel: ChannelChoice;
+  agentDetailsUrl: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') onContinue();
+  });
+
+  const channelLabel = channelDisplayName(channel);
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Continue in Novu Connect</Text>
+      <Text dimColor>
+        {channelLabel} setup is not available in the CLI yet. Press Enter to open your agent in Novu Connect and finish
+        connecting there.
+      </Text>
+      <Text color="cyan">{agentDetailsUrl}</Text>
+      <Text dimColor>Press Enter to open Novu Connect →</Text>
+    </Box>
+  );
+}
+
 function SuccessView({
   phase,
 }: {
   phase: Extract<ReturnType<ConnectStore['phase']['get']>, { kind: 'success' }>;
 }): React.ReactElement {
-  const { agent, dashboardUrl, environmentSlug, connectedChannel } = phase;
+  const { agent, connectDashboardUrl, environmentSlug, connectedChannel, dashboardRedirectChannel } = phase;
   const agentUrl = environmentSlug
-    ? `${dashboardUrl}/env/${environmentSlug}/agents/${encodeURIComponent(agent.identifier)}`
-    : `${dashboardUrl}/agents/${encodeURIComponent(agent.identifier)}`;
+    ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
+    : `${connectDashboardUrl}/connect/agents/${encodeURIComponent(agent.identifier)}`;
 
-  const channelLabel =
-    connectedChannel === 'slack' ? 'Slack' : connectedChannel === 'telegram' ? 'Telegram' : null;
+  const channelLabel = (() => {
+    if (connectedChannel === 'slack') return 'Slack';
+    if (connectedChannel === 'telegram') return 'Telegram';
+    if (connectedChannel === 'email') return 'Email';
+
+    return null;
+  })();
+  const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -1044,6 +1114,8 @@ function SuccessView({
         </Text>
         {channelLabel ? (
           <Text color="cyan">Check {channelLabel} — your agent just messaged you.</Text>
+        ) : redirectChannelLabel ? (
+          <Text color="cyan">Finish {redirectChannelLabel} setup in Novu Connect — we opened it for you.</Text>
         ) : (
           <Text dimColor>No channel connected. Run `npx novu connect` again to wire one up.</Text>
         )}

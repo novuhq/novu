@@ -52,8 +52,12 @@ export interface ConnectUI {
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;
-  /** Render a "coming soon" message for a channel that isn't wired up yet. */
-  channelComingSoon(choice: ChannelChoice): void;
+  /**
+   * Unsupported-in-CLI channels open the Connect dashboard agent page so the
+   * user can finish setup there. Resolves when the user hits Enter — the
+   * pipeline then runs `open(agentDetailsUrl)`.
+   */
+  awaitDashboardChannelOpen(opts: { channel: ChannelChoice; agentDetailsUrl: string }): Promise<void>;
 
   // Email path
   addingEmailIntegration(): void;
@@ -123,8 +127,10 @@ export interface ConnectUI {
   success(result: {
     agent: AgentSummary;
     dashboardUrl: string;
+    connectDashboardUrl: string;
     environmentSlug: string | null;
     connectedChannel: ChannelChoice | null;
+    dashboardRedirectChannel: ChannelChoice | null;
   }): void;
   failure(message: string): void;
 
