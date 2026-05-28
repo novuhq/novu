@@ -13,11 +13,11 @@ import { ManagedAgentProviderFactory } from '../../services/managed-agent-provid
 import { captureAgentException, captureAgentWarning } from '../../utils/capture-agent-sentry';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';
+import { HandlePlanProgressCommand } from '../handle-plan-progress/handle-plan-progress.command';
+import { HandlePlanProgress } from '../handle-plan-progress/handle-plan-progress.usecase';
 import { buildToolApprovalCard, extractPendingToolApprovals } from './approval-card.builder';
 import { HandlePendingToolApprovalsCommand } from './handle-pending-tool-approvals.command';
 import { resolveTrustForPendingTool } from './tool-trust.helper';
-
-type DeliveryResult = 'card' | 'auto-confirmed' | 'none';
 
 @Injectable()
 export class HandlePendingToolApprovals {
@@ -30,19 +30,20 @@ export class HandlePendingToolApprovals {
     @Inject(forwardRef(() => ManagedAgentService))
     private readonly managedAgentService: ManagedAgentService,
     private readonly handleAgentReply: HandleAgentReply,
+    private readonly handlePlanProgress: HandlePlanProgress,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: HandlePendingToolApprovalsCommand): Promise<DeliveryResult> {
+  async execute(command: HandlePendingToolApprovalsCommand): Promise<void> {
     const runtimeProvider = await this.providerFactory.tryGetByAgentIdentifier(
       command.agentIdentifier,
       command.environmentId
     );
 
     if (!runtimeProvider) {
-      return 'none';
+      return;
     }
 
     // Which tools need approval?
@@ -65,7 +66,7 @@ export class HandlePendingToolApprovals {
           sessionId: command.sessionId,
         });
 
-        return 'none';
+        return;
       }
     }
 
@@ -75,7 +76,7 @@ export class HandlePendingToolApprovals {
         'Session is parked on requires-action but no pending tool approvals were located'
       );
 
-      return 'none';
+      return;
     }
 
     // Split by mcp_connection.toolTrust: auto-approve matches, card for the rest.
@@ -111,16 +112,18 @@ export class HandlePendingToolApprovals {
           sessionId: command.sessionId,
         });
 
-        return this.deliverCard(command, pendingTools);
+        await this.deliverCard(command, pendingTools);
+
+        return;
       }
     }
 
     if (needsPromptTools.length === 0) {
-      return 'auto-confirmed';
+      return;
     }
 
     // Untrusted (or mixed batch remainder): post Approve/Deny card to the thread.
-    return this.deliverCard(command, needsPromptTools);
+    await this.deliverCard(command, needsPromptTools);
   }
 
   private async partitionByTrust(
@@ -175,7 +178,7 @@ export class HandlePendingToolApprovals {
   private async deliverCard(
     command: HandlePendingToolApprovalsCommand,
     pendingTools: PendingToolApproval[]
-  ): Promise<DeliveryResult> {
+  ): Promise<void> {
     try {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
@@ -196,9 +199,19 @@ export class HandlePendingToolApprovals {
         sessionId: command.sessionId,
       });
 
-      return 'none';
+      return;
     }
 
-    return 'card';
+    await this.handlePlanProgress.execute(
+      HandlePlanProgressCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        conversationId: command.conversationId,
+        agentIdentifier: command.agentIdentifier,
+        integrationIdentifier: command.integrationIdentifier,
+        toolProgress: { turnId: command.turnId, action: 'awaiting-approval' },
+      })
+    );
   }
 }

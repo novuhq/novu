@@ -140,7 +140,7 @@ export class ManagedAgentEventHandler {
       onFinish: async (event: { response: ThalamusResponse }) => {
         try {
           if (event.response.finishReason === 'requires-action') {
-            const deliveryResult = await this.handlePendingToolApprovals.execute(
+            await this.handlePendingToolApprovals.execute(
               HandlePendingToolApprovalsCommand.create({
                 ...baseFields,
                 subscriberId: metadata.subscriberId,
@@ -150,15 +150,6 @@ export class ManagedAgentEventHandler {
                 response: event.response,
               })
             );
-
-            if (deliveryResult === 'card') {
-              await this.handlePlanProgress.execute(
-                HandlePlanProgressCommand.create({
-                  ...baseFields,
-                  toolProgress: { turnId, action: 'awaiting-approval' },
-                })
-              );
-            }
 
             return;
           }
