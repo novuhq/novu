@@ -138,8 +138,8 @@ export function useConnectSetupSteps(): UseConnectSetupStepsResult {
   );
 
   const isOnboardingCompletedInStorage = localStorage.getItem(CONNECT_ONBOARDING_COMPLETED) === 'true';
-  const hasResolvedAgents = agentsQuery.isSuccess;
-  const hasResolvedIntegrations = !onlyAgent || agentIntegrationsQuery.isSuccess;
+  const hasResolvedAgents = agentsQuery.isSuccess || agentsQuery.isError;
+  const hasResolvedIntegrations = !onlyAgent || agentIntegrationsQuery.isSuccess || agentIntegrationsQuery.isError;
   const hasResolvedConversations = !hasAgent || conversationsQuery.isSuccess || conversationsQuery.isError;
   const isSetupResolved = hasResolvedAgents && hasResolvedIntegrations && hasResolvedConversations;
   const isComplete = isOnboardingCompletedInStorage || agentSetupComplete || hasAnyConversation;
