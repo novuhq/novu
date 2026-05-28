@@ -5,7 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { OnboardingProvisioningOverlay } from '@/components/auth/connect-provisioning-overlay';
 import { IS_NOVU_CONNECT } from '@/config';
 import { isPublicAuthPath } from '@/utils/auth-routes';
-import { readPendingCliAuth } from '@/utils/cli-auth-pending';
+import { readPendingCliAuth, storePendingCliAuthFromPath } from '@/utils/cli-auth-pending';
 import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import { isActiveConnectWorkspace, isConnectWorkspace } from '@/utils/connect';
 import { ROUTES } from '@/utils/routes';
@@ -125,6 +125,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       void clerk.setActive({ organization: null });
     }
 
+    // CliAuthPage never mounts here — `shouldBlockChildren` hides it while we redirect to the
+    // org picker — so persist the device session before leaving `/cli/auth`.
+    storePendingCliAuthFromPath(pathname, location.search);
+
     const pendingCliAuth = readPendingCliAuth();
     const orgListPath =
       pendingCliAuth && IS_NOVU_CONNECT
@@ -132,7 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         : ROUTES.SIGNUP_ORGANIZATION_LIST;
 
     void navigate(orgListPath, { replace: true });
-  }, [shouldHandleResolution, clerkOrganization, clerk, redirectTo, navigate]);
+  }, [shouldHandleResolution, clerkOrganization, clerk, redirectTo, navigate, pathname, location.search]);
 
   const currentUser = useMemo(
     () => (clerkUser ? toUserEntity(clerkUser as unknown as UserResource) : undefined),

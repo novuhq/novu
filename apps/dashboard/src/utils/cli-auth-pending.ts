@@ -66,6 +66,22 @@ export function parseCliAuthFromUrl(url: string): Pick<PendingCliAuth, 'deviceCo
   }
 }
 
+export function storePendingCliAuthFromPath(pathname: string, search = ''): boolean {
+  if (!isCliAuthPath(pathname)) {
+    return false;
+  }
+
+  const parsed = parseCliAuthFromUrl(`${pathname}${search}`);
+
+  if (!parsed) {
+    return false;
+  }
+
+  storePendingCliAuth(parsed.deviceCode, parsed.name);
+
+  return true;
+}
+
 export function storePendingCliAuth(
   deviceCode: string,
   name: string | null,
