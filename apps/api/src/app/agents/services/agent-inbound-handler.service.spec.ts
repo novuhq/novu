@@ -98,8 +98,8 @@ describe('AgentInboundHandler', () => {
     const handlePlanProgress = {
       execute: sinon.stub().resolves(undefined),
     };
-    const managedAgentSetup = {
-      handleInbound: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
+    const handleManagedAgentSetupInbound = {
+      execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
     };
     const handler = new AgentInboundHandler(
       logger as any,
@@ -107,7 +107,7 @@ describe('AgentInboundHandler', () => {
       conversationService as any,
       bridgeExecutor as any,
       managedAgentService as any,
-      managedAgentSetup as any,
+      handleManagedAgentSetupInbound as any,
       chatSdkService as any,
       agentRepository as any,
       subscriberRepository as any,

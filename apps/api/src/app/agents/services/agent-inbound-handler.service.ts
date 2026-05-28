@@ -26,7 +26,7 @@ import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/hand
 import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
-import { ManagedAgentSetup } from '../usecases/managed-agent-setup/managed-agent-setup.usecase';
+import { HandleManagedAgentSetupInbound } from '../usecases/managed-agent-setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from '../usecases/managed-agent-setup/managed-agent-setup-inbound.command';
 import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
@@ -226,7 +226,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly managedAgentService: ManagedAgentService,
-    private readonly managedAgentSetup: ManagedAgentSetup,
+    private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
     private readonly chatSdkService: ChatSdkService,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
@@ -546,7 +546,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return false;
     }
 
-    return this.managedAgentSetup.handleInbound(
+    return this.handleManagedAgentSetupInbound.execute(
       ManagedAgentSetupInboundCommand.create({
         userId: 'system',
         environmentId: config.environmentId,
