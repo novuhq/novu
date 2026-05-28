@@ -2,7 +2,7 @@
 
 ## Cursor Cloud specific instructions
 
-`pnpm setup:agent` has already been run. Do not run it again. The environment is fully configured: dependencies installed, enterprise packages linked, project built, `.env` files in place, Docker services running, and a default user/org seeded.
+`pnpm setup:agent` has already been run. Do not run it again. The environment is fully configured: dependencies installed, enterprise packages linked, project built, `.env` files in place, Docker services running, and a default user/org seeded. The dashboard auto signs in the pre-seeded agent user when opened in the browser (no manual login unless auto sign-in fails).
 
 ## Build
 

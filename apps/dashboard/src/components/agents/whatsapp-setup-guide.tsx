@@ -1,4 +1,5 @@
 import { ChatProviderIdEnum } from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightUpLine, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
@@ -7,10 +8,15 @@ import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
+import { patchSubscriber } from '@/api/subscribers';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { API_HOSTNAME } from '@/config';
+import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureWhatsAppWebhook } from '@/hooks/use-configure-whatsapp-webhook';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useSendWhatsAppTestTemplate } from '@/hooks/use-send-whatsapp-test-template';
+import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus, hasWhatsAppUserCredentials } from './setup-guide-step-utils';
@@ -79,6 +85,7 @@ type TestStatus =
 function ConnectAndTestPanel({
   agent,
   integrationIdentifier,
+  connectSubscriberId,
   webhookUrl,
   verifyToken,
   isCredentialsSaved,
@@ -86,6 +93,7 @@ function ConnectAndTestPanel({
 }: {
   agent: AgentResponse;
   integrationIdentifier: string;
+  connectSubscriberId: string;
   webhookUrl: string;
   verifyToken: string;
   isCredentialsSaved: boolean;
@@ -96,15 +104,29 @@ function ConnectAndTestPanel({
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' });
   const [phone, setPhone] = useState('');
 
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
   const { mutateAsync: configureWebhook } = useConfigureWhatsAppWebhook();
   const { mutateAsync: sendTestTemplate } = useSendWhatsAppTestTemplate();
+
+  const { data: subscriber } = useFetchSubscriber({
+    subscriberId: connectSubscriberId,
+    options: { enabled: Boolean(connectSubscriberId) },
+  });
 
   useEffect(() => {
     setConnectStatus({ state: 'idle' });
     setManualMarkedConfigured(false);
     setTestStatus({ state: 'idle' });
-    setPhone('');
   }, [integrationIdentifier]);
+
+  useEffect(() => {
+    const savedPhone = subscriber?.phone?.trim();
+
+    if (savedPhone) {
+      setPhone(savedPhone);
+    }
+  }, [subscriber?.phone, integrationIdentifier]);
 
   useEffect(() => {
     if (!isCredentialsSaved) {
@@ -166,10 +188,23 @@ function ConnectAndTestPanel({
     setTestStatus({ state: 'sending' });
 
     try {
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+      const normalizedPhone = phone.trim();
+
+      await patchSubscriber({
+        environment,
+        subscriberId: connectSubscriberId,
+        subscriber: { phone: normalizedPhone },
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchSubscriber, environment._id, connectSubscriberId],
+      });
+
       const result = await sendTestTemplate({
         agentIdentifier: agent.identifier,
         integrationIdentifier,
-        to: phone.trim(),
+        subscriberId: connectSubscriberId,
       });
 
       if (result.success) {
@@ -189,7 +224,15 @@ function ConnectAndTestPanel({
         message: err instanceof Error ? err.message : 'Something went wrong sending the test message.',
       });
     }
-  }, [agent.identifier, integrationIdentifier, phone, sendTestTemplate]);
+  }, [
+    agent.identifier,
+    connectSubscriberId,
+    currentEnvironment,
+    integrationIdentifier,
+    phone,
+    queryClient,
+    sendTestTemplate,
+  ]);
 
   const connectAttemptFinished = connectStatus.state === 'connected' || connectStatus.state === 'manual_fallback';
   const showManualFallback = connectStatus.state === 'manual_fallback' && !manualMarkedConfigured;
@@ -348,6 +391,7 @@ export function WhatsAppSetupGuide({
   onStepsCompleted,
   embedded = false,
 }: WhatsAppSetupGuideProps) {
+  const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -510,14 +554,17 @@ export function WhatsAppSetupGuide({
             : 'Save your credentials above first. Then come back here to register the webhook with Meta in one click.'
         }
         rightContent={
-          <ConnectAndTestPanel
-            agent={agent}
-            integrationIdentifier={selectedIntegrationIdentifier}
-            webhookUrl={webhookUrl}
-            verifyToken={verifyToken}
-            isCredentialsSaved={isCredentialsSaved && Boolean(selectedIntegrationIdentifier)}
-            onConnected={handleConnected}
-          />
+          isConnectSubscriberReady ? (
+            <ConnectAndTestPanel
+              agent={agent}
+              integrationIdentifier={selectedIntegrationIdentifier}
+              connectSubscriberId={connectSubscriberId}
+              webhookUrl={webhookUrl}
+              verifyToken={verifyToken}
+              isCredentialsSaved={isCredentialsSaved && Boolean(selectedIntegrationIdentifier)}
+              onConnected={handleConnected}
+            />
+          ) : null
         }
         extraContent={
           isConnected ? (

@@ -1,10 +1,10 @@
-import Anthropic, { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
+import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
 import type { AgentMcpServerDto, AgentRuntimeConfigDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
 import {
   AGENT_RUNTIME_PROVIDERS,
   AgentRuntimeCapabilities,
   AgentRuntimeProviderIdEnum,
-  CLAUDE_BUILTIN_TOOLS,
+  isAnthropicAwsProvider,
 } from '@novu/shared';
 import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
@@ -22,6 +22,8 @@ import {
 import type {
   CreateAgentInput,
   CreateAgentResult,
+  CreateVaultInput,
+  CreateVaultResult,
   DeleteVaultCredentialInput,
   GetAgentResult,
   GetEnvironmentResult,
@@ -35,15 +37,37 @@ import type {
   UploadSkillResult,
   UpsertVaultCredentialInput,
   UpsertVaultCredentialResult,
+  ValidateCredentialsInput,
   VaultCredentialAuth,
 } from '../i-agent-runtime-provider';
+import { type ResolvedAwsAnthropicCredentials } from './anthropic-aws-credentials';
+import { AnthropicClientResolver } from './anthropic-client-resolver';
+import { type AnthropicCompatibleClient } from './anthropic-cloud-client';
+import {
+  buildMcpOAuthCreateAuth,
+  buildMcpOAuthUpdateAuth,
+  buildToolsPayload,
+  extractSkillNameFromBundle,
+  isDuplicateDisplayTitleError,
+  isTransient,
+  mapMcpServer,
+  mapSkill,
+  mapToolset,
+  parseRetryAfter,
+  sleep,
+  toSkillParam,
+  truncateWithEllipsis,
+} from './anthropic-runtime.helpers';
 
-const PROVIDER_ID = AgentRuntimeProviderIdEnum.Anthropic;
-const DEFAULT_MODEL = 'claude-sonnet-4-5';
+export type AnthropicProviderInit = {
+  providerId: AgentRuntimeProviderIdEnum;
+  apiKey?: string;
+  awsCredentials?: ResolvedAwsAnthropicCredentials;
+};
+
+const DEFAULT_MODEL = 'claude-sonnet-4-6';
 /** Single retry jitter window in ms */
 const RETRY_JITTER_MS = 500;
-/** Timeout for config calls in ms */
-const REQUEST_TIMEOUT_MS = 10_000;
 /** Anthropic enforces a 64-char cap on `display_title` for `beta.skills.create`. */
 const MAX_DISPLAY_TITLE_LENGTH = 64;
 
@@ -59,58 +83,80 @@ const MAX_DISPLAY_TITLE_LENGTH = 64;
 const MCP_INIT_ERROR_PATTERN = /^MCP server '([^']+)' initialize failed/;
 
 export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
-  readonly providerId = PROVIDER_ID;
+  readonly providerId: AgentRuntimeProviderIdEnum;
 
-  readonly capabilities: AgentRuntimeCapabilities = AGENT_RUNTIME_PROVIDERS.find(
-    (p) => p.providerId === PROVIDER_ID
-  ).capabilities;
+  readonly capabilities: AgentRuntimeCapabilities;
 
-  constructor(private readonly _apiKey: string) {
+  private readonly _apiKey?: string;
+  private readonly clientResolver: AnthropicClientResolver;
+
+  constructor(init: AnthropicProviderInit) {
     super();
+    this.providerId = init.providerId;
+    this.capabilities =
+      AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === init.providerId)?.capabilities ??
+      AGENT_RUNTIME_PROVIDERS.find((p) => p.providerId === AgentRuntimeProviderIdEnum.Anthropic)!.capabilities;
+
+    if (isAnthropicAwsProvider(init.providerId)) {
+      if (!init.awsCredentials) {
+        throw new Error('AWS Claude credentials require region, workspace ID, and API key');
+      }
+
+      this.clientResolver = new AnthropicClientResolver(init.providerId, undefined, init.awsCredentials);
+    } else {
+      if (!init.apiKey) {
+        throw new Error('Anthropic cloud provider requires an API key');
+      }
+
+      this._apiKey = init.apiKey;
+      this.clientResolver = new AnthropicClientResolver(init.providerId, init.apiKey);
+    }
   }
 
-  private buildClient(apiKey: string = this._apiKey): Anthropic {
-    return new Anthropic({ apiKey, timeout: REQUEST_TIMEOUT_MS, maxRetries: 0 });
+  private async getClient(input?: ValidateCredentialsInput) {
+    return this.clientResolver.getClient(input);
   }
 
   private normaliseError(err: unknown): never {
+    const providerId = this.providerId;
+
     if (err instanceof APIConnectionTimeoutError) {
-      throw new AgentRuntimeTimeoutError(err.message, PROVIDER_ID);
+      throw new AgentRuntimeTimeoutError(err.message, providerId);
     }
 
     if (err instanceof APIConnectionError) {
-      throw new AgentRuntimeNetworkError(err.message, PROVIDER_ID);
+      throw new AgentRuntimeNetworkError(err.message, providerId);
     }
 
     if (err instanceof APIError) {
       const requestId = err.requestID ?? err.headers?.get?.('request-id') ?? undefined;
 
       if (err.status === 401) {
-        throw new AgentRuntimeUnauthorizedError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeUnauthorizedError(err.message, providerId, requestId);
       }
       if (err.status === 403) {
-        throw new AgentRuntimeForbiddenError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeForbiddenError(err.message, providerId, requestId);
       }
       if (err.status === 404) {
-        throw new AgentRuntimeNotFoundError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeNotFoundError(err.message, providerId, requestId);
       }
       if (err.status === 429) {
         const retryAfterMs = parseRetryAfter(err.headers?.get?.('retry-after') ?? undefined);
 
-        throw new AgentRuntimeRateLimitedError(err.message, PROVIDER_ID, retryAfterMs, requestId);
+        throw new AgentRuntimeRateLimitedError(err.message, providerId, retryAfterMs, requestId);
       }
       if (err.status === 529) {
-        throw new AgentRuntimeOverloadedError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeOverloadedError(err.message, providerId, requestId);
       }
       if (err.status >= 500) {
-        throw new AgentRuntimeServiceUnavailableError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeServiceUnavailableError(err.message, providerId, requestId);
       }
       if (err.status === 400 || err.status === 422) {
-        throw new AgentRuntimeBadRequestError(err.message, PROVIDER_ID, requestId);
+        throw new AgentRuntimeBadRequestError(err.message, providerId, requestId);
       }
     }
 
-    throw new AgentRuntimeUnknownError(err instanceof Error ? err.message : 'Unknown error', PROVIDER_ID);
+    throw new AgentRuntimeUnknownError(err instanceof Error ? err.message : 'Unknown error', providerId);
   }
 
   /** Wraps an async call with a single retry (with jitter) for transient errors. */
@@ -127,8 +173,8 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
-  async validateCredentials(apiKey: string): Promise<void> {
-    const client = this.buildClient(apiKey);
+  async validateCredentials(input: ValidateCredentialsInput): Promise<void> {
+    const client = await this.getClient(input);
     try {
       // A cheap read-only call to verify the key
       await client.models.list({ limit: 1 });
@@ -138,7 +184,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async createAgent(input: CreateAgentInput): Promise<CreateAgentResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     // Not retried: agent creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable agent upstream.
@@ -163,7 +209,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async getAgent(externalAgentId: string): Promise<GetAgentResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     return this.withRetry(async () => {
       try {
@@ -177,7 +223,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async getEnvironment(externalEnvironmentId: string): Promise<GetEnvironmentResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     try {
       const env = await client.beta.environments.retrieve(externalEnvironmentId);
@@ -192,7 +238,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async deleteAgent(externalAgentId: string): Promise<void> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     await this.withRetry(async () => {
       try {
@@ -204,7 +250,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async getConfig(externalAgentId: string): Promise<AgentRuntimeConfigDto> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     return this.withRetry(async () => {
       try {
@@ -224,7 +270,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto> {
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     return this.withRetry(async () => {
       try {
@@ -279,13 +325,14 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 
   async provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult> {
-    const client = this.buildClient();
+    const client = await this.getClient();
+    const resourceStem = input.resourceName ?? input.integrationName;
 
     // Not retried: environment creation is not idempotent.
     const env: { id: string } = await (async () => {
       try {
         return await (client as any).beta.environments.create({
-          name: `nv-${input.integrationName}`,
+          name: `nv-${resourceStem}`,
           config: {
             type: 'cloud',
             networking: { type: 'unrestricted' },
@@ -296,34 +343,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       }
     })();
 
-    // Anthropic vaults are a separate top-level resource from environments,
-    // so we eager-provision one alongside each integration. Doing it here keeps
-    // every "find the vlt_… for this integration" lookup constant-time on the
-    // hot path (OAuth callback) — we just read `externalVaultId` off the
-    // already-decrypted credentials blob.
-    const vault: { id: string } = await (async () => {
-      try {
-        return await (client as any).beta.vaults.create({
-          display_name: `nv-${input.integrationName}-vault`,
-        });
-      } catch (err) {
-        // Best-effort rollback so we don't leak an orphan environment when
-        // the vault create fails. If the rollback itself fails the
-        // environment is archived later by ops; the original error is what
-        // surfaces.
-        try {
-          await (client as any).beta.environments.archive(env.id);
-        } catch {
-          // swallow — original error is more useful
-        }
-        this.normaliseError(err);
-      }
-    })();
-
     return {
       credentialsUpdate: {
         externalEnvironmentId: env.id,
-        externalVaultId: vault.id,
       },
       metadata: {},
     };
@@ -331,13 +353,18 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
   async deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void> {
     const externalEnvironmentId = credentialsUpdate.externalEnvironmentId as string | undefined;
-    const externalVaultId = credentialsUpdate.externalVaultId as string | undefined;
+    // `externalVaultId` on integration credentials is a legacy field from the
+    // pre-subscriber-scope rollout (integration-level eager vault). New
+    // provisioning paths don't set it, but historical integrations still
+    // carry it — archive it here so disconnects don't leak the upstream
+    // vault.
+    const legacyExternalVaultId = credentialsUpdate.externalVaultId as string | undefined;
 
-    if (!externalEnvironmentId && !externalVaultId) {
+    if (!externalEnvironmentId && !legacyExternalVaultId) {
       return;
     }
 
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     if (externalEnvironmentId) {
       await this.withRetry(async () => {
@@ -349,10 +376,10 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
       });
     }
 
-    if (externalVaultId) {
+    if (legacyExternalVaultId) {
       await this.withRetry(async () => {
         try {
-          await (client as any).beta.vaults.archive(externalVaultId);
+          await (client as any).beta.vaults.archive(legacyExternalVaultId);
         } catch (err) {
           this.normaliseError(err);
         }
@@ -360,29 +387,24 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
-  async getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null> {
-    const client = this.buildClient();
+  async getAllPendingToolApprovals(sessionId: string): Promise<PendingToolApproval[]> {
+    const client = await this.getClient();
 
     try {
-      // Walk the session event log oldest-first looking for an MCP or
-      // builtin tool_use event whose evaluated_permission is "ask" — that's
-      // what parks the session in `requires_action`. The provider contract
-      // asks for the SINGLE OLDEST PENDING ask, so we must scan ascending
-      // and pick the first match (a descending walk would surface the
-      // newest unresolved ask instead). The `user.tool_confirmation`
-      // sentinel still short-circuits — if we encounter a confirmation
-      // event before any later ask, that confirmation already resolved a
-      // prior pending request and there's nothing left to ask the user.
       const iterator = (client as any).beta.sessions.events.list(sessionId, {
         order: 'asc',
         types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
       });
 
+      const pendingById = new Map<string, PendingToolApproval>();
+
       for await (const event of iterator) {
         if (event?.type === 'user.tool_confirmation') {
-          // A confirmation event encountered during an ascending walk
-          // resolves the most-recent prior ask — continue scanning so a
-          // later still-open ask can be surfaced.
+          const confirmedToolUseId = event.tool_use_id as string | undefined;
+          if (confirmedToolUseId) {
+            pendingById.delete(confirmedToolUseId);
+          }
+
           continue;
         }
 
@@ -397,15 +419,15 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           continue;
         }
 
-        return {
+        pendingById.set(toolUseId, {
           toolUseId,
           toolName,
           mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
           input: (event.input as Record<string, unknown> | undefined) ?? undefined,
-        };
+        });
       }
 
-      return null;
+      return [...pendingById.values()];
     } catch (err) {
       this.normaliseError(err);
     }
@@ -431,65 +453,59 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     return { mcpServerName: match[1] };
   }
 
-  async upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
-    const client = this.buildClient();
+  async createVault(input: CreateVaultInput): Promise<CreateVaultResult> {
+    const client = await this.getClient();
 
-    // Eager provisioning is the happy path (see `provisionIntegration`).
-    // Legacy integrations that pre-date vault eager-creation, or any flow
-    // where the integration credentials lost their `externalVaultId`, fall
-    // through to in-flight lazy creation. We hand the new id back to the
-    // caller via `integrationCredentialsUpdate` so the OAuth callback can
-    // persist it on the integration in the same transaction.
-    let vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
-    let integrationCredentialsUpdate: Record<string, unknown> | undefined;
-    let lazyCreatedVault = false;
+    // Not retried: vault creation is not idempotent and a retry after a
+    // dropped response would mint a second vault and permanently orphan the
+    // first. Callers (`McpConnectionVaultService`) detect race-induced
+    // orphans separately via a `setIfMissing` claim + warn-log.
+    try {
+      const vault = await (client as any).beta.vaults.create({
+        display_name: input.displayName,
+      });
 
-    if (!vaultId) {
-      vaultId = await this.createVaultForIntegration(client, input.integrationCredentials);
-      integrationCredentialsUpdate = { externalVaultId: vaultId };
-      lazyCreatedVault = true;
+      return { externalVaultId: vault.id as string };
+    } catch (err) {
+      this.normaliseError(err);
     }
+  }
 
-    // Vault credentials are vault-scoped on Anthropic's side, so an
-    // `existingCredentialId` recorded against a previous (now-orphan) vault
-    // would 404 on update. When we just lazy-created a fresh vault, ignore
-    // the stale id and take the create branch so the caller's connection
-    // row gets re-pointed at the new credential.
-    const existingCredentialId = lazyCreatedVault ? undefined : input.existingCredentialId;
-
-    const vaultIdRef = vaultId;
+  async upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {
+    const client = await this.getClient();
+    const vaultId = input.externalVaultId;
+    const existingCredentialId = input.existingCredentialId;
 
     return this.withRetry(async () => {
       try {
         if (existingCredentialId) {
           const updated = await (client as any).beta.vaults.credentials.update(existingCredentialId, {
-            vault_id: vaultIdRef,
+            vault_id: vaultId,
             display_name: input.displayName,
             auth: buildMcpOAuthUpdateAuth(input.auth),
           });
 
-          return { vaultCredentialId: updated.id as string, integrationCredentialsUpdate };
+          return { vaultCredentialId: updated.id as string };
         }
 
         try {
-          const created = await (client as any).beta.vaults.credentials.create(vaultIdRef, {
+          const created = await (client as any).beta.vaults.credentials.create(vaultId, {
             display_name: input.displayName,
             auth: buildMcpOAuthCreateAuth(input.mcpServerUrl, input.auth),
           });
 
-          return { vaultCredentialId: created.id as string, integrationCredentialsUpdate };
+          return { vaultCredentialId: created.id as string };
         } catch (createErr) {
           // Anthropic enforces uniqueness on (vault_id, auth.mcp_server_url).
           // If a previous flow pushed a credential for this URL but Novu's
           // `mcp_connection.auth.vaultCredentialId` was never persisted (or
-          // got cleared — e.g. legacy BullMQ-era runs, manual cleanup, a
-          // dropped DB write after a successful vault push), the CREATE
-          // branch hits 409. Recover by listing the vault and rebinding to
-          // the orphan via UPDATE so the agent.mcp_servers projection can
-          // finally point at a usable credential.
+          // got cleared — e.g. manual cleanup, a dropped DB write after a
+          // successful vault push), the CREATE branch hits 409. Recover by
+          // listing the vault and rebinding to the orphan via UPDATE so the
+          // agent.mcp_servers projection can finally point at a usable credential.
           const recovered = await this.tryRecoverOrphanVaultCredential({
             client,
-            vaultId: vaultIdRef,
+            vaultId,
             mcpServerUrl: input.mcpServerUrl,
             displayName: input.displayName,
             auth: input.auth,
@@ -497,7 +513,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           });
 
           if (recovered) {
-            return { vaultCredentialId: recovered, integrationCredentialsUpdate };
+            return { vaultCredentialId: recovered };
           }
 
           throw createErr;
@@ -519,7 +535,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
    * because Anthropic's archive flow doesn't allow updating in place.
    */
   private async tryRecoverOrphanVaultCredential(args: {
-    client: Anthropic;
+    client: AnthropicCompatibleClient;
     vaultId: string;
     mcpServerUrl: string;
     displayName: string;
@@ -583,43 +599,14 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     }
   }
 
-  /**
-   * Create a vault on the fly for a legacy integration that wasn't provisioned
-   * with one. Not retried at this layer: if the create fails we let the caller
-   * see the underlying error so they can mark the connection as `error`.
-   */
-  private async createVaultForIntegration(
-    client: Anthropic,
-    integrationCredentials: Record<string, unknown>
-  ): Promise<string> {
-    const envHint = integrationCredentials.externalEnvironmentId as string | undefined;
-    const displayName = envHint ? `nv-${envHint}-vault` : `nv-vault-${Date.now()}`;
-
-    try {
-      const vault = await (client as any).beta.vaults.create({ display_name: displayName });
-
-      return vault.id as string;
-    } catch (err) {
-      this.normaliseError(err);
-    }
-  }
-
   async deleteVaultCredential(input: DeleteVaultCredentialInput): Promise<void> {
-    const vaultId = (input.integrationCredentials.externalVaultId as string | undefined) ?? undefined;
-
-    // No vault provisioned (legacy integration provisioned before tokenVault
-    // shipped) — nothing upstream to delete, callers proceed with local
-    // cleanup. We only hard-fail in `upsert` because writing a credential
-    // without a vault is genuinely broken.
-    if (!vaultId) {
-      return;
-    }
-
-    const client = this.buildClient();
+    const client = await this.getClient();
 
     await this.withRetry(async () => {
       try {
-        await (client as any).beta.vaults.credentials.delete(input.vaultCredentialId, { vault_id: vaultId });
+        await (client as any).beta.vaults.credentials.delete(input.vaultCredentialId, {
+          vault_id: input.externalVaultId,
+        });
       } catch (err) {
         this.normaliseError(err);
       }
@@ -636,11 +623,11 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     if (!directoryName) {
       throw new AgentRuntimeBadRequestError(
         'SKILL.md must declare a `name` in its YAML frontmatter — Anthropic requires the bundle folder name to match it.',
-        PROVIDER_ID
+        this.providerId
       );
     }
 
-    const client = this.buildClient();
+    const client = await this.getClient();
     const displayTitle = input.displayTitle
       ? truncateWithEllipsis(input.displayTitle, MAX_DISPLAY_TITLE_LENGTH)
       : undefined;
@@ -698,7 +685,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
    * stale `skillId` on partial failure.
    */
   private async appendSkillVersion(
-    client: Anthropic,
+    client: AnthropicCompatibleClient,
     skillId: string,
     files: UploadSkillFile[],
     directoryName: string
@@ -731,7 +718,10 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
    * apply `source === 'custom'` client-side so we never accidentally try to
    * version-append an Anthropic built-in (`pdf`, `xlsx`, `pptx`, `docx`).
    */
-  private async findExistingSkillIdByDisplayTitle(client: Anthropic, displayTitle: string): Promise<string | null> {
+  private async findExistingSkillIdByDisplayTitle(
+    client: AnthropicCompatibleClient,
+    displayTitle: string
+  ): Promise<string | null> {
     try {
       const iterator = (client as any).beta.skills.list({ limit: 100 }) as AsyncIterable<{
         id: string;
@@ -769,7 +759,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
    * FormData body straight through to fetch).
    */
   private async createSkillVersion(
-    client: Anthropic,
+    client: AnthropicCompatibleClient,
     skillId: string,
     files: UploadSkillFile[],
     directoryName: string
@@ -787,356 +777,31 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   }
 }
 
-export function createAnthropicProvider(apiKey: string): AnthropicAgentRuntimeProvider {
-  return new AnthropicAgentRuntimeProvider(apiKey);
-}
+export function createAnthropicProvider(
+  providerId: AgentRuntimeProviderIdEnum,
+  options: {
+    apiKey?: string;
+    awsCredentials?: ResolvedAwsAnthropicCredentials;
+    credentials?: Record<string, unknown>;
+  } = {}
+): AnthropicAgentRuntimeProvider {
+  const init: AnthropicProviderInit = { providerId };
 
-// ─── helpers ────────────────────────────────────────────────────────────────
-
-function parseRetryAfter(header: string | undefined | null): number {
-  if (!header) return 60_000;
-  const seconds = parseFloat(header);
-  if (!Number.isNaN(seconds)) return Math.round(seconds * 1000);
-
-  // RFC 9110 allows HTTP-date form
-  const dateMs = Date.parse(header);
-  if (!Number.isNaN(dateMs)) return Math.max(0, dateMs - Date.now());
-
-  return 60_000;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/**
- * Defensive truncation for upstream-bound string fields. If `value` is longer
- * than `max`, trims it and appends a single-character ellipsis `…` so the
- * caller can see the value was shortened. Returns `value` unchanged otherwise.
- */
-function truncateWithEllipsis(value: string, max: number): string {
-  if (value.length <= max) {
-    return value;
-  }
-
-  return `${value.slice(0, max - 1)}…`;
-}
-
-/**
- * Reads the `name` field out of the YAML frontmatter of the `SKILL.md` at the
- * root of an uploaded skill bundle. Anthropic enforces that the bundle's
- * top-level folder name equals this value, so we use it verbatim as the
- * directory prefix when packaging files for `beta.skills.create`.
- *
- * Returns `null` when SKILL.md is missing, has no frontmatter, or has no
- * `name` field — callers should surface that as a bad-request condition.
- */
-function extractSkillNameFromBundle(files: UploadSkillFile[]): string | null {
-  const skillMd = files.find((f) => f.path === 'SKILL.md');
-
-  if (!skillMd) {
-    return null;
-  }
-
-  const content = skillMd.content.toString('utf8').replace(/^\uFEFF/, '');
-  // Use `[ \t]*` (not `\s*`) so the pre-newline whitespace class does not overlap
-  // with `\r?\n`. Overlapping whitespace classes can trigger polynomial
-  // backtracking on adversarial input (flagged by CodeQL js/polynomial-redos).
-  const frontmatter = content.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---/);
-
-  if (!frontmatter) {
-    return null;
-  }
-
-  return parseSkillNameLine(frontmatter[1]);
-}
-
-/**
- * Walks frontmatter line-by-line and extracts the `name:` value via plain
- * string operations. The previous single-regex (`/^[ \t]*name[ \t]*:[ \t]*(.*)$/m`)
- * placed two `[ \t]*` quantifiers around a lazy/greedy capture; even though
- * `name` is a fixed anchor between them, CodeQL flagged the shape as
- * `js/polynomial-redos`. Per-line string ops sidestep the static analyser
- * without changing observable semantics.
- *
- * Trailing-whitespace trimming uses a manual backward scan rather than
- * `/[ \t]+$/`: CodeQL also flags `+`-quantified character classes anchored
- * at `$` because a backtracking engine can degrade to O(n²) when the
- * surrounding text isn't a match. Leading trims keep their `/^[ \t]+/`
- * form — `^`-anchored quantifiers are tried at exactly one position and
- * are unambiguously linear.
- */
-function parseSkillNameLine(frontmatter: string): string | null {
-  for (const rawLine of frontmatter.split('\n')) {
-    const line = rawLine.replace(/\r$/, '');
-    const trimmedStart = line.replace(/^[ \t]+/, '');
-
-    if (!trimmedStart.startsWith('name')) {
-      continue;
+  if (options.awsCredentials) {
+    init.awsCredentials = options.awsCredentials;
+  } else if (options.apiKey) {
+    init.apiKey = options.apiKey;
+  } else if (options.credentials) {
+    if (isAnthropicAwsProvider(providerId)) {
+      throw new Error('Use awsCredentials from resolveAgentRuntime() for anthropic-aws');
     }
 
-    const afterName = trimmedStart.slice(4).replace(/^[ \t]+/, '');
+    const legacyApiKey = typeof options.credentials.apiKey === 'string' ? options.credentials.apiKey.trim() : undefined;
 
-    if (!afterName.startsWith(':')) {
-      continue;
-    }
-
-    let value = trimTrailingSpacesAndTabs(afterName.slice(1).replace(/^[ \t]+/, ''));
-
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-      value = value.slice(1, -1).trim();
-    }
-
-    return value.length > 0 ? value : null;
-  }
-
-  return null;
-}
-
-/**
- * Linear-time trim of trailing ASCII space and tab characters. Used in
- * place of `String.prototype.replace(/[ \t]+$/, '')` to avoid CodeQL's
- * `js/polynomial-redos` warning on `+`-quantified, `$`-anchored character
- * classes.
- */
-function trimTrailingSpacesAndTabs(value: string): string {
-  let end = value.length;
-  while (end > 0 && isSpaceOrTab(value[end - 1])) {
-    end -= 1;
-  }
-
-  return end === value.length ? value : value.slice(0, end);
-}
-
-function isSpaceOrTab(char: string): boolean {
-  return char === ' ' || char === '\t';
-}
-
-function isTransient(err: unknown): boolean {
-  return (
-    err instanceof AgentRuntimeServiceUnavailableError ||
-    err instanceof AgentRuntimeTimeoutError ||
-    err instanceof AgentRuntimeNetworkError ||
-    err instanceof AgentRuntimeOverloadedError
-  );
-}
-
-/**
- * True when Anthropic rejects `beta.skills.create` because another custom
- * skill in the same environment already uses the requested `display_title`.
- *
- * Detection is by substring because the SDK only surfaces the upstream message
- * as a string — there is no structured error code. Both the top-level
- * `err.message` (which embeds the JSON body) and the parsed `err.error`
- * payload are checked so we tolerate either shape.
- */
-function isDuplicateDisplayTitleError(err: unknown): boolean {
-  if (!(err instanceof APIError) || err.status !== 400) {
-    return false;
-  }
-
-  const directMessage = err.message ?? '';
-  const errorBody = (err as unknown as { error?: unknown }).error;
-  const serializedBody = errorBody ? safeStringify(errorBody) : '';
-
-  return (
-    /reuse an existing display_title/i.test(directMessage) || /reuse an existing display_title/i.test(serializedBody)
-  );
-}
-
-function safeStringify(value: unknown): string {
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return '';
-  }
-}
-
-function mapSkill(raw: Record<string, unknown>): AgentSkillDto {
-  return {
-    type: raw.type as 'anthropic' | 'custom',
-    skillId: raw.skill_id as string,
-    version: (raw.version as string | null | undefined) ?? null,
-  };
-}
-
-function toSkillParam(skill: AgentSkillDto): Record<string, unknown> {
-  return {
-    type: skill.type,
-    skill_id: skill.skillId,
-    ...(skill.version != null ? { version: skill.version } : {}),
-  };
-}
-
-function mapMcpServer(raw: Record<string, unknown>): AgentMcpServerDto {
-  return {
-    externalId: (raw.name as string) ?? '',
-    name: raw.name as string,
-    url: raw.url as string,
-  };
-}
-
-/**
- * The agent response `tools` array contains toolset objects, not plain tool entries.
- * Flatten them into individual AgentToolDto entries for our internal representation.
- */
-function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
-  if (raw.type === 'agent_toolset_20260401') {
-    return ((raw.configs as any[]) ?? [])
-      .filter((c) => c.enabled !== false)
-      .map((c) => ({
-        externalId: c.name as string,
-        name: c.name as string,
-        type: 'builtin' as const,
-      }));
-  }
-
-  if (raw.type === 'mcp_toolset') {
-    return [
-      {
-        externalId: raw.mcp_server_name as string,
-        name: raw.mcp_server_name as string,
-        type: 'custom' as const,
-      },
-    ];
-  }
-
-  return [];
-}
-
-/**
- * Build the Anthropic `tools` payload array from builtin tool type strings
- * and optional MCP server entries.
- *
- * We always emit the full toolset with every known tool explicitly set to
- * enabled or disabled. Sending only the enabled subset causes the Anthropic
- * API to default all omitted tools to enabled, which means the agent ends up
- * with every tool regardless of what the user selected.
- */
-function buildToolsPayload(
-  toolTypes?: string[],
-  mcpServers?: Array<{ name: string; url: string }>
-): Record<string, unknown>[] {
-  const hasTools = Array.isArray(toolTypes) && toolTypes.length > 0;
-  const hasMcpServers = Array.isArray(mcpServers) && mcpServers.length > 0;
-
-  if (!hasTools && !hasMcpServers) {
-    return [];
-  }
-
-  const payload: Record<string, unknown>[] = [];
-
-  const enabledSet = new Set(toolTypes ?? []);
-  const allToolNames = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
-
-  payload.push({
-    type: 'agent_toolset_20260401',
-    configs: allToolNames.map((name) => ({ name, enabled: enabledSet.has(name) })),
-  });
-
-  if (mcpServers) {
-    for (const server of mcpServers) {
-      payload.push({ type: 'mcp_toolset', mcp_server_name: server.name });
+    if (legacyApiKey) {
+      init.apiKey = legacyApiKey;
     }
   }
 
-  return payload;
-}
-
-/**
- * Build the Anthropic `mcp_oauth` create payload. The `refresh` block is only
- * emitted when both a refresh token and the OAuth client metadata are present
- * — that's what enables Anthropic-side automated refresh; otherwise the vault
- * stores an access-only credential that Novu re-pushes on refresh.
- */
-function buildMcpOAuthCreateAuth(mcpServerUrl: string, auth: VaultCredentialAuth): Record<string, unknown> {
-  if (!auth.accessToken) {
-    // The interface marks accessToken optional (delete flow), but create
-    // semantically requires it. Surface as a programmer error.
-    throw new Error('Anthropic vault credential create requires an access token');
-  }
-
-  const payload: Record<string, unknown> = {
-    type: 'mcp_oauth',
-    access_token: auth.accessToken,
-    mcp_server_url: mcpServerUrl,
-    expires_at: auth.expiresAt ?? null,
-  };
-
-  if (auth.refreshToken && auth.oauthClient) {
-    payload.refresh = buildMcpOAuthRefreshParams(auth);
-  }
-
-  return payload;
-}
-
-function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): Record<string, unknown> {
-  const payload: Record<string, unknown> = {
-    type: 'mcp_oauth',
-  };
-
-  if (auth.accessToken !== undefined) payload.access_token = auth.accessToken;
-  if (auth.expiresAt !== undefined) payload.expires_at = auth.expiresAt;
-
-  // Anthropic's UPDATE schema (BetaManagedAgentsMCPOAuthRefreshUpdateParams)
-  // only permits `refresh_token`, `scope`, and `token_endpoint_auth` — the
-  // other refresh fields (`client_id`, `token_endpoint`, `resource`) are
-  // immutable after CREATE. Emitting them yields a 400:
-  //   "auth.refresh.client_id: Extra inputs are not permitted"
-  if (auth.refreshToken && auth.oauthClient) {
-    payload.refresh = buildMcpOAuthRefreshUpdateParams(auth);
-  }
-
-  return payload;
-}
-
-function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<string, unknown> {
-  // Caller guarantees both before invoking, but narrow defensively so we
-  // never emit a half-built refresh block.
-  if (!auth.refreshToken || !auth.oauthClient) {
-    throw new Error('buildMcpOAuthRefreshParams requires refreshToken and oauthClient');
-  }
-
-  const { oauthClient } = auth;
-  const tokenEndpointAuth = oauthClient.clientSecret
-    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
-    : { type: 'none' };
-
-  return {
-    client_id: oauthClient.clientId,
-    refresh_token: auth.refreshToken,
-    token_endpoint: oauthClient.tokenEndpoint,
-    token_endpoint_auth: tokenEndpointAuth,
-    resource: oauthClient.resource ?? null,
-    scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
-  };
-}
-
-/**
- * Build the UPDATE-shaped refresh payload. Anthropic treats `client_id`,
- * `token_endpoint`, and `resource` as immutable on a credential, so the
- * update endpoint only accepts `refresh_token`, `scope`, and a partial
- * `token_endpoint_auth` (basic / post update params). Emitting any of the
- * immutable fields trips a 400 "Extra inputs are not permitted".
- */
-function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Record<string, unknown> {
-  if (!auth.refreshToken || !auth.oauthClient) {
-    throw new Error('buildMcpOAuthRefreshUpdateParams requires refreshToken and oauthClient');
-  }
-
-  const { oauthClient } = auth;
-  const tokenEndpointAuth = oauthClient.clientSecret
-    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
-    : undefined;
-
-  const payload: Record<string, unknown> = {
-    refresh_token: auth.refreshToken,
-    scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
-  };
-
-  if (tokenEndpointAuth) {
-    payload.token_endpoint_auth = tokenEndpointAuth;
-  }
-
-  return payload;
+  return new AnthropicAgentRuntimeProvider(init);
 }

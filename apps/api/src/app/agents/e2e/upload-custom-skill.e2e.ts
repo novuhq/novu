@@ -3,17 +3,14 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { UploadSkillFile, UploadSkillInput } from '@novu/application-generic';
 import { AgentRuntimeBadRequestError, encryptCredentials } from '@novu/application-generic';
-// Stub at the source factory module rather than the barrel: TypeScript's `__exportStar` helper
-// installs a non-configurable getter on the package barrel, which `sinon.stub` cannot replace.
-// The barrel getter reads the property from this source module on every access, so stubbing
-// here transparently propagates to the use-case.
-import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
 import { IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { create as createTar } from 'tar';
+
+import { stubResolveAgentRuntime } from './helpers/stub-resolve-agent-runtime';
 
 const FAKE_API_KEY = 'sk-fake-anthropic-key-for-skill-e2e';
 const FAKE_EXTERNAL_ENV_ID = 'env_01XJ5FakeEnvSkill';
@@ -182,7 +179,7 @@ describe('POST /v1/agents/skills — upload custom skill #novu-v2', () => {
     await session.initialize();
 
     mockProvider = buildMockProvider();
-    sinon.stub(AgentRuntimeFactoryModule, 'getAgentRuntimeProvider').returns(mockProvider as never);
+    stubResolveAgentRuntime(mockProvider);
     fetchStub = null;
   });
 

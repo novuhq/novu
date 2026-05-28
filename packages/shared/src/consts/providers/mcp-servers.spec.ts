@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { McpConnectionAuthModeEnum } from '../../dto/agent/managed-runtime.dto';
-import { MCP_SERVERS, type McpOAuthCatalogEntry } from './mcp-servers';
+import { MCP_SERVERS, type McpOAuthCatalogEntry, type NovuAppOAuthCatalogEntry } from './mcp-servers';
 
 describe('MCP_SERVERS catalog', () => {
   describe('oauth field', () => {
@@ -42,6 +42,40 @@ describe('MCP_SERVERS catalog', () => {
       );
 
       expect(actualDcrIds).toEqual(expectedDcrIds);
+    });
+
+    it('covers every novu-app MCP', () => {
+      const expectedNovuAppIds = new Set(['github']);
+      const actualNovuAppIds = new Set(
+        MCP_SERVERS.filter((entry) => entry.oauth?.mode === McpConnectionAuthModeEnum.NovuApp).map((entry) => entry.id)
+      );
+
+      expect(actualNovuAppIds).toEqual(expectedNovuAppIds);
+    });
+
+    it('pins authorize/token endpoints + scopes on the GitHub novu-app entry', () => {
+      const github = MCP_SERVERS.find((entry) => entry.id === 'github');
+
+      expect(github).toBeDefined();
+      expect(github?.oauth?.mode).toBe(McpConnectionAuthModeEnum.NovuApp);
+      const oauth = github?.oauth as NovuAppOAuthCatalogEntry;
+      expect(oauth.issuer).toBe('https://github.com');
+      expect(oauth.authorizationEndpoint).toBe('https://github.com/login/oauth/authorize');
+      expect(oauth.tokenEndpoint).toBe('https://github.com/login/oauth/access_token');
+      expect(oauth.scopes).toEqual([
+        'repo',
+        'read:org',
+        'read:user',
+        'user:email',
+        'read:packages',
+        'write:packages',
+        'read:project',
+        'project',
+        'gist',
+        'notifications',
+        'workflow',
+        'codespace',
+      ]);
     });
   });
 

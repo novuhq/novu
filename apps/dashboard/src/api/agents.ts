@@ -113,8 +113,16 @@ type ManagedRuntimeDto = {
 };
 
 export type CreateAgentBody = {
-  name: string;
-  identifier: string;
+  /**
+   * Optional in the adopt-existing managed flow — the backend resolves it from the provider when
+   * `managedRuntime.externalAgentId` is set. Required otherwise.
+   */
+  name?: string;
+  /**
+   * Optional in the adopt-existing managed flow — auto-generated from the provider agent name
+   * when omitted. Required otherwise.
+   */
+  identifier?: string;
   description?: string;
   active?: boolean;
   runtime?: AgentRuntime;
@@ -198,6 +206,47 @@ export async function getAgent(
   return response.data;
 }
 
+export type AgentDemoQuota = {
+  conversations: { count: number; limit: number };
+  tokens?: { count: number; limit: number };
+  isExhausted: boolean;
+  reason?: 'conversations' | 'tokens';
+  isDemoAgent: boolean;
+};
+
+export function getAgentDemoQuotaQueryKey(environmentId: string | undefined, agentIdentifier: string) {
+  return ['agent-demo-quota', environmentId, agentIdentifier] as const;
+}
+
+export async function getAgentDemoQuota(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentDemoQuota> {
+  const response = await get<{ data: AgentDemoQuota } | AgentDemoQuota>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/demo-quota`,
+    { environment, signal }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
+export async function migrateAgentRuntime(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  body: { integrationId: string }
+): Promise<{ integrationId: string; externalAgentId: string }> {
+  const response = await post<
+    | { data: { integrationId: string; externalAgentId: string } }
+    | {
+        integrationId: string;
+        externalAgentId: string;
+      }
+  >(`/agents/${encodeURIComponent(agentIdentifier)}/migrate-runtime`, { environment, body });
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
   const response = await post<AgentApiEnvelope>('/agents', { environment, body });
 
@@ -208,6 +257,7 @@ export type VerifyManagedCredentialsBody = {
   providerId: AgentRuntimeProviderIdEnum;
   apiKey: string;
   externalWorkspaceId?: string;
+  region?: string;
 };
 
 export type VerifyManagedCredentialsResponse = { valid: true };
@@ -221,6 +271,44 @@ export async function verifyManagedCredentials(
     '/agents/verify-credentials',
     { environment, body, signal }
   );
+
+  return 'data' in response ? response.data : response;
+}
+
+export type GeneratedManagedAgentSkill = {
+  skillId: string;
+};
+
+export type GeneratedManagedAgent = {
+  name: string;
+  identifier: string;
+  systemPrompt: string;
+  tools: string[];
+  mcpServers: string[];
+  skills: GeneratedManagedAgentSkill[];
+};
+
+export async function generateManagedAgent({
+  environment,
+  prompt,
+  runtime,
+  signal,
+}: {
+  environment: IEnvironment;
+  prompt: string;
+  /**
+   * `managed` (default) returns the full Claude tools/MCPs/skills payload; `self-hosted`
+   * returns only name, identifier and systemPrompt and skips the catalog selection on the
+   * backend. Use `self-hosted` for the Custom Scaffold flow.
+   */
+  runtime?: AgentRuntime;
+  signal?: AbortSignal;
+}): Promise<GeneratedManagedAgent> {
+  const response = await post<{ data: GeneratedManagedAgent } | GeneratedManagedAgent>('/agents/generate', {
+    environment,
+    body: { prompt, ...(runtime ? { runtime } : {}) },
+    signal,
+  });
 
   return 'data' in response ? response.data : response;
 }
@@ -612,11 +700,11 @@ export async function sendWhatsAppTestTemplate(
   environment: IEnvironment,
   agentIdentifier: string,
   integrationIdentifier: string,
-  to: string
+  subscriberId: string
 ): Promise<SendWhatsAppTestTemplateResponse> {
   const response = await post<{ data: SendWhatsAppTestTemplateResponse }>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/whatsapp/test-template`,
-    { environment, body: { to } }
+    { environment, body: { subscriberId } }
   );
 
   return response.data;

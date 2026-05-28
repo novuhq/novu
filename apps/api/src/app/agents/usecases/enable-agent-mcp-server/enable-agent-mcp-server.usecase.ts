@@ -1,10 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { AnalyticsService } from '@novu/application-generic';
+import { AnalyticsService, FeatureFlagsService } from '@novu/application-generic';
 import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
 
 import { trackAgentMcpServerEnabled } from '../../agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../dtos/mcp-server.dto';
+import { assertMcpNovuAppFlagEnabled } from '../../services/assert-mcp-novu-app-flag-enabled';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';
@@ -29,7 +30,8 @@ export class EnableAgentMcpServer {
     private readonly agentRepository: AgentRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly syncAgentMcpServers: SyncAgentMcpServers,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly featureFlagsService: FeatureFlagsService
   ) {}
 
   async execute(command: EnableAgentMcpServerCommand): Promise<AgentMcpServerEnablementResponseDto> {
@@ -78,6 +80,19 @@ export class EnableAgentMcpServer {
 
     const defaultAuthMode: McpConnectionAuthModeEnum = catalogEntry.oauth.mode;
     const defaultScope = command.defaultScope ?? McpConnectionScopeEnum.Subscriber;
+
+    // novu-app rollout is feature-flagged per org so we can ramp safely
+    // (Cloud has env credentials wired, self-hosters may not). DCR is never
+    // gated by this flag — the catalog has already paid the per-MCP probe
+    // cost and the auth flow does not depend on Novu-managed credentials.
+    if (defaultAuthMode === McpConnectionAuthModeEnum.NovuApp) {
+      await assertMcpNovuAppFlagEnabled({
+        featureFlagsService: this.featureFlagsService,
+        mcpId: command.mcpId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
+    }
 
     const row = existing
       ? await this.reEnableExistingRow(existing, command, defaultScope, defaultAuthMode)

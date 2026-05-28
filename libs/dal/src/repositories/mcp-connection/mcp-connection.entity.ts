@@ -40,6 +40,14 @@ export interface McpConnectionAuth {
    * true`). Used to target the same credential on refresh / disable.
    */
   vaultCredentialId?: string;
+  /**
+   * Anthropic vault container (`vlt_…`) that owns this subscriber's MCP
+   * credentials for this agent. All subscriber-scoped rows for the same
+   * `(subscriber, agent)` share one vault id, propagated whenever a new MCP
+   * row is opened. v1 only writes subscriber-scope rows; agent-scope is
+   * reserved for a future shared-token flow.
+   */
+  externalVaultId?: string;
 }
 
 export interface McpConnectionOAuthState {
@@ -67,6 +75,21 @@ export interface McpConnectionOAuthState {
    * `callbackClaimedAt: { $exists: false }` filter and bail out.
    */
   callbackClaimedAt?: Date;
+  /**
+   * `novu-app` mode only: authorization-server `token_endpoint` copied from
+   * the catalog at authorize time so the callback can exchange the
+   * authorization code without re-consulting the catalog and without
+   * persisting a long-lived `oauthClient` row. Absent for DCR rows (the
+   * token endpoint lives on `oauthClient.tokenEndpoint`).
+   */
+  tokenEndpoint?: string;
+  /**
+   * `novu-app` mode only: authorization-server `authorization_endpoint`
+   * copied from the catalog at authorize time for parity with
+   * `tokenEndpoint`. Kept on the row so the callback can reconstruct an
+   * ephemeral `McpConnectionOAuthClient` for vault push.
+   */
+  authorizationEndpoint?: string;
 }
 
 /**
@@ -119,6 +142,10 @@ export interface McpConnectionLastError {
  *  - `environment` : `_environmentId` only (future).
  *  - `agent`       : `_agentMcpServerId` (future).
  *  - `subscriber`  : `_agentMcpServerId` + `_subscriberId` (v1).
+ *
+ * For `authMode === 'novu-app'` rows, `auth.expiresAt` is advisory only —
+ * the Anthropic agent runtime vault is the source of truth for the bearer
+ * token's lifetime and the refresh schedule.
  */
 export class McpConnectionEntity {
   _id: string;

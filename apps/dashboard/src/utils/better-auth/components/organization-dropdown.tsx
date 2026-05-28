@@ -1,6 +1,3 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -9,8 +6,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { IS_NOVU_CONNECT } from '@/config';
+import { isConnectWorkspace, isManualOrgCreationAllowed } from '@/utils/connect';
+import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '../index';
 
 const SCROLL_THRESHOLD = 100;
@@ -91,6 +95,7 @@ export function OrganizationDropdown() {
   const { organization: currentOrganization, isLoaded: isOrgLoaded } = useOrganization();
   const { orgId } = useAuth();
   const clerk = useClerk();
+  const navigate = useNavigate();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -151,7 +156,9 @@ export function OrganizationDropdown() {
     (membership: any) => {
       if (membership.organization.id === orgId) return false;
 
-      return true;
+      const metadata = membership.organization?.publicMetadata;
+
+      return IS_NOVU_CONNECT ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
     },
     [orgId]
   );
@@ -220,18 +227,20 @@ export function OrganizationDropdown() {
           )}
         </div>
 
-        <DropdownMenuItem
-          className={cn(
-            'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-stroke-100 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
-            isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
-          )}
-          onSelect={() => {
-            window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
-          }}
-        >
-          <RiAddCircleLine className="size-4 text-text-sub" />
-          <span className="text-text-sub">Create organization</span>
-        </DropdownMenuItem>
+        {isManualOrgCreationAllowed() && (
+          <DropdownMenuItem
+            className={cn(
+              'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-stroke-100 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
+              isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
+            )}
+            onSelect={() => {
+              navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
+            }}
+          >
+            <RiAddCircleLine className="size-4 text-text-sub" />
+            <span className="text-text-sub">Create organization</span>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

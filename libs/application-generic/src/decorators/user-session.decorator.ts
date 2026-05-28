@@ -2,7 +2,7 @@ import { createParamDecorator, InternalServerErrorException, Logger } from '@nes
 
 export const UserSession = createParamDecorator((data, ctx) => {
   let req;
-  if (ctx.getType() === 'graphql') {
+  if ((ctx.getType() as string) === 'graphql') {
     req = ctx.getArgs()[2].req;
   } else {
     req = ctx.switchToHttp().getRequest();

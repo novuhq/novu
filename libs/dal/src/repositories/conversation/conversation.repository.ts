@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery, Types } from 'mongoose';
+import { type ClientSession, FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
@@ -181,26 +181,89 @@ export class ConversationRepository extends BaseRepositoryV2<
    * Atomically set externalSessionId only if not already set.
    * Prevents race conditions when two concurrent first-messages
    * try to create sessions simultaneously.
+   *
+   * Optionally writes `managedSessionVaultId` in the same `$set` so the
+   * vault binding always agrees with the session it was opened against —
+   * a separate write could win the `externalSessionId` race but still
+   * overwrite the vault id of the live session, defeating the rebind
+   * check on the next turn.
    */
   async setExternalSessionIdIfMissing(
     environmentId: string,
     conversationId: string,
-    sessionId: string
+    sessionId: string,
+    managedSessionVaultId?: string
   ): Promise<boolean> {
+    const update: Record<string, string> = { externalSessionId: sessionId };
+
+    if (managedSessionVaultId) {
+      update.managedSessionVaultId = managedSessionVaultId;
+    }
+
     const result = await this.update(
       {
         _id: conversationId,
         _environmentId: environmentId,
         externalSessionId: { $exists: false },
       },
-      { $set: { externalSessionId: sessionId } }
+      { $set: update }
     );
 
     return result.matched > 0;
   }
 
   async clearExternalSessionId(environmentId: string, conversationId: string): Promise<void> {
-    await this.update({ _id: conversationId, _environmentId: environmentId }, { $unset: { externalSessionId: '' } });
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId },
+      { $unset: { externalSessionId: '', managedSessionVaultId: '' } }
+    );
+  }
+
+  async clearExternalSessionIdsForAgent(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    options?: { session?: ClientSession | null }
+  ): Promise<void> {
+    await this.update(
+      {
+        _agentId: agentId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+      },
+      { $unset: { externalSessionId: '' } },
+      options?.session ? { session: options.session } : {}
+    );
+  }
+
+  async incrementTokenUsage(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    delta: {
+      inputTokens?: number;
+      outputTokens?: number;
+      cacheReadTokens?: number;
+      cacheCreationTokens?: number;
+      totalTokens?: number;
+    }
+  ): Promise<void> {
+    const inc: Record<string, number> = {};
+
+    if (delta.inputTokens) inc['tokenUsage.inputTokens'] = delta.inputTokens;
+    if (delta.outputTokens) inc['tokenUsage.outputTokens'] = delta.outputTokens;
+    if (delta.cacheReadTokens) inc['tokenUsage.cacheReadTokens'] = delta.cacheReadTokens;
+    if (delta.cacheCreationTokens) inc['tokenUsage.cacheCreationTokens'] = delta.cacheCreationTokens;
+    if (delta.totalTokens) inc['tokenUsage.totalTokens'] = delta.totalTokens;
+
+    if (Object.keys(inc).length === 0) {
+      return;
+    }
+
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $inc: inc }
+    );
   }
 
   /**

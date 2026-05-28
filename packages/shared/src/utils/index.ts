@@ -5,6 +5,7 @@ export * from './data-filter';
 export * from './env';
 export * from './issues';
 export * from './locales';
+export * from './managed-integration-credentials';
 export * from './normalizeEmail';
 export { safeJsonStringify } from './safe-json-stringify';
 export { createMockObjectFromSchema } from './schema/create-mock-object-from-schema';

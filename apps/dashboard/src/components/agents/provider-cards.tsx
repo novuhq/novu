@@ -7,7 +7,7 @@ import {
   providers as novuProviders,
 } from '@novu/shared';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowRightSLine, RiCheckLine, RiLoader4Line, RiLockStarLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCheckboxCircleFill, RiLoader4Line, RiLockStarLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -19,6 +19,7 @@ import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
+import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 
 /**
  * Estimated time to complete the setup for each provider, displayed as a hint
@@ -178,21 +179,9 @@ function LockedBadge() {
   );
 }
 
-function ConnectPill({
-  loading,
-  selected,
-  comingSoon,
-  locked,
-}: {
-  loading: boolean;
-  selected: boolean;
-  comingSoon: boolean;
-  locked: boolean;
-}) {
+function ConnectPill({ loading, comingSoon, locked }: { loading: boolean; comingSoon: boolean; locked: boolean }) {
   let label: string;
-  if (selected) {
-    label = 'Selected';
-  } else if (comingSoon) {
+  if (comingSoon) {
     label = 'Coming soon';
   } else if (locked) {
     label = 'Upgrade';
@@ -215,8 +204,6 @@ function ConnectPill({
       <span className="px-1 text-label-xs font-medium leading-4">{label}</span>
       {loading ? (
         <RiLoader4Line className="size-4 shrink-0 animate-spin text-text-soft" aria-hidden />
-      ) : selected ? (
-        <RiCheckLine className="size-4 shrink-0 text-success-base" aria-hidden />
       ) : (
         <RiArrowRightSLine className="size-4 shrink-0 text-text-soft" aria-hidden />
       )}
@@ -224,15 +211,53 @@ function ConnectPill({
   );
 }
 
+function SelectedPill({ loading, connected }: { loading: boolean; connected: boolean }) {
+  const label = connected ? 'Connected' : 'Connecting...';
+
+  return (
+    <div className="bg-bg-weak flex w-full items-center justify-center gap-1 rounded-[4px] p-1">
+      <span className="px-1 text-label-xs text-text-soft font-medium leading-4">{label}</span>
+      {loading ? <RiLoader4Line className="text-text-soft size-4 shrink-0 animate-spin" aria-hidden /> : null}
+    </div>
+  );
+}
+
+function SelectedStatusBadge() {
+  return <RiCheckboxCircleFill className="text-success-base size-4 shrink-0" aria-hidden />;
+}
+
+function TopRightIndicator({
+  isLocked,
+  isSelected,
+  comingSoon,
+  setupTime,
+}: {
+  isLocked: boolean;
+  isSelected: boolean;
+  comingSoon: boolean;
+  setupTime: string;
+}) {
+  if (isLocked) return <LockedBadge />;
+  if (isSelected) return <SelectedStatusBadge />;
+
+  return (
+    <span className="text-text-soft shrink-0 whitespace-nowrap text-[10px] font-medium leading-[14px]">
+      {comingSoon ? 'Soon' : setupTime}
+    </span>
+  );
+}
+
 function ProviderCard({
   item,
   isSelected,
+  isConnected,
   isLoading,
   isAgentEmailAvailable,
   onClick,
 }: {
   item: ProviderCardItem;
   isSelected: boolean;
+  isConnected: boolean;
   isLoading: boolean;
   isAgentEmailAvailable: boolean;
   onClick: () => void;
@@ -263,20 +288,23 @@ function ProviderCard({
               className="size-6 shrink-0"
             />
           </div>
-          {isLocked ? (
-            <LockedBadge />
-          ) : (
-            <span className="shrink-0 text-[10px] font-medium leading-[14px] text-text-soft whitespace-nowrap">
-              {item.comingSoon ? 'Soon' : setupTime}
-            </span>
-          )}
+          <TopRightIndicator
+            isLocked={isLocked}
+            isSelected={isSelected}
+            comingSoon={item.comingSoon}
+            setupTime={setupTime}
+          />
         </div>
 
         <div className="flex w-full flex-col items-start">
-          <span className="text-label-xs font-medium leading-4 text-text-sub">{item.displayName}</span>
+          <span className="text-label-xs text-text-sub font-medium leading-4">{item.displayName}</span>
         </div>
 
-        <ConnectPill loading={isLoading} selected={isSelected} comingSoon={item.comingSoon} locked={isLocked} />
+        {isSelected ? (
+          <SelectedPill loading={isLoading} connected={isConnected} />
+        ) : (
+          <ConnectPill loading={isLoading} comingSoon={item.comingSoon} locked={isLocked} />
+        )}
       </div>
     </button>
   );
@@ -346,6 +374,18 @@ export function ProviderCards({
     [existingLinks]
   );
 
+  const connectedProviderIds = useMemo(() => {
+    const ids = new Set<string>();
+
+    for (const link of existingLinks ?? []) {
+      if (isAgentIntegrationConnected(link)) {
+        ids.add(link.integration.providerId);
+      }
+    }
+
+    return ids;
+  }, [existingLinks]);
+
   const { pendingItemKey, isBusy, linkProvider } = useLinkAgentIntegration({
     agentIdentifier,
     linkedIntegrationIds,
@@ -405,6 +445,7 @@ export function ProviderCards({
       >
         {items.map((item) => {
           const isSelected = item.providerId === selectedProviderId;
+          const isConnected = connectedProviderIds.has(item.providerId);
           const isLocked = item.requiresBusinessTier && !isAgentEmailAvailable;
           const isNovuAgent = item.providerId === EmailProviderIdEnum.NovuAgent;
 
@@ -417,6 +458,7 @@ export function ProviderCards({
                 key={item.providerId}
                 item={item}
                 isSelected={false}
+                isConnected={false}
                 isLoading={false}
                 isAgentEmailAvailable={isAgentEmailAvailable}
                 onClick={() => {}}
@@ -430,6 +472,7 @@ export function ProviderCards({
                 key={item.providerId}
                 item={item}
                 isSelected={isSelected}
+                isConnected={isConnected}
                 isLoading={isLoadingThis}
                 isAgentEmailAvailable={isAgentEmailAvailable}
                 onClick={handleUpgradeClick}
@@ -442,6 +485,7 @@ export function ProviderCards({
               key={item.providerId}
               item={item}
               isSelected={isSelected}
+              isConnected={isConnected}
               isLoading={isLoadingThis}
               isAgentEmailAvailable={isAgentEmailAvailable}
               onClick={() => {

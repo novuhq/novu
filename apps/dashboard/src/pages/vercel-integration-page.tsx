@@ -1,4 +1,4 @@
-import { useOrganization, useOrganizationList } from '@clerk/clerk-react';
+import { useOrganization, useOrganizationList } from '@clerk/react';
 import { useMemo } from 'react';
 
 import { DashboardLayout } from '@/components/dashboard-layout';

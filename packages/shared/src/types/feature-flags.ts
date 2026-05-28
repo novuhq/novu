@@ -86,6 +86,8 @@ export enum FeatureFlagsKeysEnum {
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
   /** Enable managed-runtime mode for Agents (e.g. Claude Platform). Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MANAGED_AGENT_RUNTIME_ENABLED` when self-hosted. */
   IS_MANAGED_AGENT_RUNTIME_ENABLED = 'IS_MANAGED_AGENT_RUNTIME_ENABLED',
+  /** Enable Novu-managed demo Claude provider auto-provisioned on dev environments. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_DEMO_MANAGED_CLAUDE_ENABLED` when self-hosted. */
+  IS_DEMO_MANAGED_CLAUDE_ENABLED = 'IS_DEMO_MANAGED_CLAUDE_ENABLED',
   /** Enable Microsoft Teams Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MSTEAMS_QUICK_SETUP_ENABLED` when self-hosted. */
   IS_MSTEAMS_QUICK_SETUP_ENABLED = 'IS_MSTEAMS_QUICK_SETUP_ENABLED',
   /** Enable Slack Quick Setup in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_SLACK_QUICK_SETUP_ENABLED` when self-hosted. */
@@ -96,6 +98,14 @@ export enum FeatureFlagsKeysEnum {
   IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED = 'IS_DOMAIN_CONNECT_INBOUND_EMAIL_ENABLED',
   /** Enable the new app-rail dashboard shell with the Connect app surface. */
   IS_CONNECT_DASHBOARD_ENABLED = 'IS_CONNECT_DASHBOARD_ENABLED',
+  /**
+   * Enable MCP connections that use Novu's pre-registered OAuth app
+   * (`auth mode = 'novu-app'`). Gates both `EnableAgentMcpServer` for any
+   * catalog entry whose `oauth.mode === 'novu-app'` and `GenerateMcpOAuthUrl`
+   * when it resolves to the novu-app branch. DCR connections are never gated
+   * by this flag.
+   */
+  IS_MCP_NOVU_APP_ENABLED = 'IS_MCP_NOVU_APP_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

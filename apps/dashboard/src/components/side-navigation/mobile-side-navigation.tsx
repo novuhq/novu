@@ -1,68 +1,102 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { BotMessageSquare } from 'lucide-react';
-import { ComponentType, SVGProps, useEffect, useState } from 'react';
-import { RiMenuLine } from 'react-icons/ri';
-import { Link, useLocation } from 'react-router-dom';
+import { ComponentType, useEffect, useState } from 'react';
+import { RiArrowRightUpLine, RiMenuLine } from 'react-icons/ri';
+import { useLocation } from 'react-router-dom';
+import { ConnectSwitchConfirmationModal } from '@/components/dashboard-shell/connect-switch-confirmation-modal';
+import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
+import { ConnectLogo } from '@/components/icons/connect-logo';
+import { LogoCircle } from '@/components/icons/logo-circle';
 import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
+import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useConnectSwitchConfirmation } from '@/hooks/use-connect-switch-confirmation';
 import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { APP_IDS, APP_LABELS, type AppId, buildAppHomeRoute } from '@/utils/apps';
-import { cn } from '@/utils/ui';
-import { PlatformIcon } from '../icons/platform';
+import { APP_IDS, type AppId, buildAppHomeRoute, buildOtherAppExternalUrl } from '@/utils/apps';
 import { ConnectSideNavigation } from './connect-side-navigation';
 import { LegacySideNavigation } from './side-navigation';
 
-type MobileAppSwitcherItem = {
+type MobileBrand = {
   id: AppId;
-  Icon: ComponentType<SVGProps<SVGSVGElement>>;
+  Icon: ComponentType<{ className?: string }>;
+  label: string;
 };
 
-const MOBILE_APP_SWITCHER_ITEMS: MobileAppSwitcherItem[] = [
-  { id: APP_IDS.NOVU, Icon: PlatformIcon },
-  { id: APP_IDS.CONNECT, Icon: BotMessageSquare },
-];
+const PLATFORM_BRAND: MobileBrand = {
+  id: APP_IDS.NOVU,
+  Icon: LogoCircle,
+  label: 'Novu Platform',
+};
+
+const CONNECT_BRAND: MobileBrand = {
+  id: APP_IDS.CONNECT,
+  Icon: ConnectLogo,
+  label: 'Novu Connect',
+};
 
 function MobileAppSwitcher() {
   const currentApp = useCurrentApp();
   const { currentEnvironment } = useEnvironment();
   const envSlug = currentEnvironment?.slug;
 
+  const isConnect = currentApp === APP_IDS.CONNECT;
+  const currentBrand = isConnect ? CONNECT_BRAND : PLATFORM_BRAND;
+  const otherBrand = isConnect ? PLATFORM_BRAND : CONNECT_BRAND;
+
+  const otherHref = IS_HOSTNAME_SPLIT_ENABLED
+    ? buildOtherAppExternalUrl(otherBrand.id, envSlug, { useOrgResolutionEntry: true })
+    : buildAppHomeRoute(otherBrand.id, envSlug);
+
+  const { Icon: CurrentIcon } = currentBrand;
+  const { Icon: OtherIcon } = otherBrand;
+  const {
+    isModalOpen,
+    setIsModalOpen,
+    handleSwitcherClick,
+    handleConfirm,
+    showConnectSwitchModal,
+  } = useConnectSwitchConfirmation({
+    targetAppId: otherBrand.id,
+    href: otherHref ?? '',
+    openInNewTab: false,
+  });
+
   return (
-    <nav aria-label="App switcher" className="border-b-stroke-soft flex items-center gap-2 border-b px-3 py-2">
-      {MOBILE_APP_SWITCHER_ITEMS.map(({ id, Icon }) => {
-        const to = buildAppHomeRoute(id, envSlug);
-        const label = APP_LABELS[id];
-        const isActive = currentApp === id;
+    <nav
+      aria-label="App switcher"
+      className="border-b-stroke-soft flex items-center justify-between gap-2 border-b px-3 py-2"
+    >
+      <span
+        aria-current="page"
+        className="bg-bg-weak border-stroke-weak flex items-center gap-2 rounded-md border px-2 py-1.5"
+      >
+        <CurrentIcon className="size-4" aria-hidden />
+        <span className="text-foreground-950 text-sm font-medium">{currentBrand.label}</span>
+      </span>
 
-        const content = (
-          <span
-            className={cn(
-              'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors',
-              'text-foreground-600 hover:bg-bg-weak',
-              isActive && 'bg-bg-white border-stroke-soft text-foreground-950 shadow-xs border'
-            )}
+      {otherHref ? (
+        <>
+          <CrossAppLink
+            href={otherHref}
+            openInNewTab={false}
+            onClick={handleSwitcherClick}
+            className="text-foreground-600 hover:bg-bg-weak hover:text-foreground-950 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm transition-colors"
+            aria-label={`Open ${otherBrand.label}`}
           >
-            <Icon className="size-4" aria-hidden />
-            <span>{label}</span>
-          </span>
-        );
-
-        if (!to) {
-          return (
-            <span key={id} className="opacity-50">
-              {content}
-            </span>
-          );
-        }
-
-        return (
-          <Link key={id} to={to} aria-label={label}>
-            {content}
-          </Link>
-        );
-      })}
+            <OtherIcon className="size-4" aria-hidden />
+            <span>{otherBrand.label}</span>
+            {IS_HOSTNAME_SPLIT_ENABLED && <RiArrowRightUpLine className="text-foreground-400 size-3.5" aria-hidden />}
+          </CrossAppLink>
+          {showConnectSwitchModal ? (
+            <ConnectSwitchConfirmationModal
+              open={isModalOpen}
+              onOpenChange={setIsModalOpen}
+              onConfirm={handleConfirm}
+            />
+          ) : null}
+        </>
+      ) : null}
     </nav>
   );
 }
@@ -70,7 +104,8 @@ function MobileAppSwitcher() {
 export function MobileSideNavigation() {
   const [isOpen, setIsOpen] = useState(false);
   const { pathname } = useLocation();
-  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
+  const isShellV2FlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
+  const isShellV2 = IS_HOSTNAME_SPLIT_ENABLED || isShellV2FlagEnabled;
   const appId = useCurrentApp();
 
   useEffect(() => {

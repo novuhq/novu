@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
+import { AutoCreateConnectOrganization } from '@/components/auth/auto-create-connect-organization';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
+import { isManualOrgCreationAllowed } from '@/utils/connect';
 import { authClient } from '../client';
 
 export function OrganizationList() {
+  if (!isManualOrgCreationAllowed()) {
+    return <AutoCreateConnectOrganization />;
+  }
+
   const [organizations, setOrganizations] = useState<any[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newOrgName, setNewOrgName] = useState('');

@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 
 export function ConnectWelcomeHeading({ completedOnboarding }: { completedOnboarding: boolean }) {
   const { user } = useUser();

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import {
+  CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
   UpdateSubscriber,
@@ -36,7 +37,11 @@ import { AgentInboundHandler } from './services/agent-inbound-handler.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
 import { BridgeExecutorService } from './services/bridge-executor.service';
 import { ChatSdkService } from './services/chat-sdk.service';
+import { DemoClaudeQuotaPolicy } from './services/demo-claude-quota-policy.service';
 import { ManagedAgentService } from './services/managed-agent.service';
+import { ManagedAgentEventHandler } from './services/managed-agent-event-handler';
+import { ManagedAgentProviderFactory } from './services/managed-agent-provider-factory';
+import { McpConnectionVaultService } from './services/mcp-connection-vault.service';
 import { McpOAuthDiscoveryService } from './services/mcp-oauth-discovery.service';
 import { TelegramMobileLinkTokenService } from './services/telegram-mobile-link-token.service';
 import { TelegramStartCodeService } from './services/telegram-start-code.service';
@@ -78,12 +83,17 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
+    ManagedAgentProviderFactory,
+    ManagedAgentEventHandler,
     ManagedAgentService,
+    McpConnectionVaultService,
+    DemoClaudeQuotaPolicy,
     ChatSdkService,
     McpOAuthDiscoveryService,
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
     CalculateLimitNovuIntegration,
+    CalculateDemoClaudeQuota,
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,
     UpdateSubscriberChannel,

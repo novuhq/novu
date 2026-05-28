@@ -11,6 +11,7 @@ import {
   Post,
   Put,
   Query,
+  Req,
   UseFilters,
   UseGuards,
   UseInterceptors,
@@ -24,6 +25,7 @@ import {
   ProductFeatureKeyEnum,
   UserSessionData,
 } from '@novu/shared';
+import type { Request } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards';
@@ -43,6 +45,8 @@ import {
   AgentRuntimeConfigResponseDto,
   CreateAgentRequestDto,
   EnableAgentMcpServerRequestDto,
+  GenerateManagedAgentRequestDto,
+  GenerateManagedAgentResponseDto,
   GenerateMcpOAuthUrlRequestDto,
   GenerateMcpOAuthUrlResponseDto,
   ListAgentIntegrationsQueryDto,
@@ -51,6 +55,7 @@ import {
   ListAgentsQueryDto,
   ListAgentsResponseDto,
   McpConnectionResponseDto,
+  MigrateAgentRuntimeRequestDto,
   PatchAgentRuntimeConfigRequestDto,
   UpdateAgentBridgeRequestDto,
   UpdateAgentInboxSharedRequestDto,
@@ -89,10 +94,14 @@ import { DisableAgentMcpServerCommand } from './usecases/disable-agent-mcp-serve
 import { DisableAgentMcpServer } from './usecases/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
 import { EnableAgentMcpServerCommand } from './usecases/enable-agent-mcp-server/enable-agent-mcp-server.command';
 import { EnableAgentMcpServer } from './usecases/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
+import { GenerateManagedAgentCommand } from './usecases/generate-managed-agent/generate-managed-agent.command';
+import { GenerateManagedAgent } from './usecases/generate-managed-agent/generate-managed-agent.usecase';
 import { GenerateMcpOAuthUrlCommand } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from './usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { GetAgentCommand } from './usecases/get-agent/get-agent.command';
 import { GetAgent } from './usecases/get-agent/get-agent.usecase';
+import { GetAgentDemoQuotaCommand } from './usecases/get-agent-demo-quota/get-agent-demo-quota.command';
+import { GetAgentDemoQuota } from './usecases/get-agent-demo-quota/get-agent-demo-quota.usecase';
 import { GetAgentRuntimeConfigCommand } from './usecases/get-agent-runtime-config/get-agent-runtime-config.command';
 import { GetAgentRuntimeConfig } from './usecases/get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { GetMcpConnectionStatusCommand } from './usecases/get-mcp-connection-status/get-mcp-connection-status.command';
@@ -108,6 +117,8 @@ import { ListAgentMcpServersCommand } from './usecases/list-agent-mcp-servers/li
 import { ListAgentMcpServers } from './usecases/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgentsCommand } from './usecases/list-agents/list-agents.command';
 import { ListAgents } from './usecases/list-agents/list-agents.usecase';
+import { MigrateAgentRuntimeCommand } from './usecases/migrate-agent-runtime/migrate-agent-runtime.command';
+import { MigrateAgentRuntime } from './usecases/migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { RemoveAgentIntegrationCommand } from './usecases/remove-agent-integration/remove-agent-integration.command';
 import { RemoveAgentIntegration } from './usecases/remove-agent-integration/remove-agent-integration.usecase';
 import { SendAgentTestEmailCommand } from './usecases/send-agent-test-email/send-agent-test-email.command';
@@ -164,7 +175,10 @@ export class AgentsController {
     private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
     private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared,
-    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials
+    private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials,
+    private readonly generateManagedAgentUsecase: GenerateManagedAgent,
+    private readonly getAgentDemoQuotaUsecase: GetAgentDemoQuota,
+    private readonly migrateAgentRuntimeUsecase: MigrateAgentRuntime
   ) {}
 
   @Get('/emoji')
@@ -201,8 +215,47 @@ export class AgentsController {
         providerId: body.providerId,
         apiKey: body.apiKey,
         externalWorkspaceId: body.externalWorkspaceId,
+        region: body.region,
       })
     );
+  }
+
+  @Post('/generate')
+  @ApiResponse(GenerateManagedAgentResponseDto)
+  @ApiOperation({
+    summary: 'Generate an agent configuration from a free-form prompt',
+    description:
+      'Translates a user-supplied description into an agent configuration (name, identifier, systemPrompt, tools, MCP servers, skills).',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  async generateManagedAgent(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateManagedAgentRequestDto,
+    @Req() request: Request
+  ): Promise<GenerateManagedAgentResponseDto> {
+    const abortController = new AbortController();
+    const handleSocketClose = (): void => {
+      if (request.destroyed) {
+        abortController.abort();
+      }
+    };
+    request.socket.on('close', handleSocketClose);
+
+    const command = GenerateManagedAgentCommand.create({
+      user,
+      prompt: body.prompt,
+      runtime: body.runtime,
+    });
+    // Attach signal outside `create(...)` — running an `AbortSignal` through
+    // `class-transformer`'s `plainToInstance` triggers `new AbortSignal()`, which is
+    // disallowed by the runtime (`ERR_ILLEGAL_CONSTRUCTOR`).
+    command.signal = abortController.signal;
+
+    try {
+      return await this.generateManagedAgentUsecase.execute(command);
+    } finally {
+      request.socket.off('close', handleSocketClose);
+    }
   }
 
   @Post('/')
@@ -421,7 +474,7 @@ export class AgentsController {
         organizationId: user.organizationId,
         agentIdentifier: identifier,
         integrationIdentifier,
-        to: body.to,
+        subscriberId: body.subscriberId,
       })
     );
   }
@@ -627,6 +680,46 @@ export class AgentsController {
         bridgeUrl: body.bridgeUrl,
         devBridgeUrl: body.devBridgeUrl,
         devBridgeActive: body.devBridgeActive,
+      })
+    );
+  }
+
+  @Get('/:identifier/demo-quota')
+  @ApiOperation({
+    summary: 'Get Novu managed Claude demo quota',
+    description:
+      'Returns monthly conversation and token usage limits for agents running on the Novu-managed Claude demo integration.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  getAgentDemoQuota(@UserSession() user: UserSessionData, @Param('identifier') identifier: string) {
+    return this.getAgentDemoQuotaUsecase.execute(
+      GetAgentDemoQuotaCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+      })
+    );
+  }
+
+  @Post('/:identifier/migrate-runtime')
+  @ApiOperation({
+    summary: 'Migrate managed agent off Novu demo Claude credentials',
+    description:
+      'Re-points a managed agent from the Novu demo Claude integration to a user-owned Anthropic integration, copying runtime config and clearing demo sessions.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  migrateAgentRuntime(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: MigrateAgentRuntimeRequestDto
+  ) {
+    return this.migrateAgentRuntimeUsecase.execute(
+      MigrateAgentRuntimeCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        identifier,
+        integrationId: body.integrationId,
       })
     );
   }

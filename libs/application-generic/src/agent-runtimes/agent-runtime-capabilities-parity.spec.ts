@@ -1,4 +1,5 @@
 import { AGENT_RUNTIME_PROVIDERS, AgentRuntimeProviderIdEnum } from '@novu/shared';
+import { createAnthropicProvider } from './anthropic/anthropic-agent-runtime.provider';
 import { getAgentRuntimeProvider, listRegisteredAgentRuntimeProviders } from './agent-runtime.factory';
 import { UnsupportedCapabilityError } from './errors';
 import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
@@ -9,19 +10,33 @@ import type { IAgentRuntimeProvider } from './i-agent-runtime-provider';
  * capability-bound contract (vault methods either work or throw the
  * documented `UnsupportedCapabilityError`).
  *
- * Adding a new managed runtime is a single registration in
- * `agent-runtime.factory.ts` + a catalog entry — this spec auto-covers it.
+ * Cloud providers register in `agent-runtime.factory.ts`; AWS uses
+ * `resolveAgentRuntime()` because credentials are multi-field.
  */
 
 function getProviderInstance(id: AgentRuntimeProviderIdEnum): IAgentRuntimeProvider {
+  if (id === AgentRuntimeProviderIdEnum.AnthropicAws) {
+    return createAnthropicProvider(id, {
+      awsCredentials: {
+        region: 'us-east-1',
+        workspaceId: 'wrkspc_test',
+        apiKey: 'test-aws-key',
+      },
+    });
+  }
+
   return getAgentRuntimeProvider(id, 'test-key');
 }
 
 describe('Agent runtime catalog ↔ registry parity', () => {
-  it('every catalog entry has a registered factory', () => {
+  it('every cloud catalog entry has a registered factory', () => {
     const registered = new Set(listRegisteredAgentRuntimeProviders());
 
     for (const entry of AGENT_RUNTIME_PROVIDERS) {
+      if (entry.providerId === AgentRuntimeProviderIdEnum.AnthropicAws) {
+        continue;
+      }
+
       expect(registered.has(entry.providerId as AgentRuntimeProviderIdEnum)).toBe(true);
     }
   });
@@ -79,12 +94,19 @@ describe('Agent runtime capabilities parity', () => {
 
       describe('vault credential methods', () => {
         if (catalogEntry.capabilities.tokenVault) {
+          it('overrides createVault (does not throw UnsupportedCapabilityError)', async () => {
+            const probe = () => instance.createVault({ displayName: 'probe-vault' });
+
+            await expect(probe()).rejects.not.toBeInstanceOf(UnsupportedCapabilityError);
+          });
+
           it('overrides upsertVaultCredential (does not throw UnsupportedCapabilityError)', async () => {
             // We only assert the method was overridden — the upstream API call
             // itself is exercised by provider-specific integration tests.
             const probe = () =>
               instance.upsertVaultCredential({
-                integrationCredentials: { externalVaultId: 'vlt_test' },
+                integrationCredentials: {},
+                externalVaultId: 'vlt_test',
                 mcpServerUrl: 'https://example.invalid',
                 displayName: 'probe',
                 auth: { accessToken: 'test-token' },
@@ -96,7 +118,8 @@ describe('Agent runtime capabilities parity', () => {
           it('overrides deleteVaultCredential (does not throw UnsupportedCapabilityError)', async () => {
             const probe = () =>
               instance.deleteVaultCredential({
-                integrationCredentials: { externalVaultId: 'vlt_test' },
+                integrationCredentials: {},
+                externalVaultId: 'vlt_test',
                 vaultCredentialId: 'probe',
               });
 
@@ -107,6 +130,7 @@ describe('Agent runtime capabilities parity', () => {
             const probe = () =>
               instance.upsertVaultCredential({
                 integrationCredentials: {},
+                externalVaultId: 'vlt_test',
                 mcpServerUrl: 'https://example.invalid',
                 displayName: 'probe',
                 auth: {},
@@ -119,6 +143,7 @@ describe('Agent runtime capabilities parity', () => {
             const probe = () =>
               instance.deleteVaultCredential({
                 integrationCredentials: {},
+                externalVaultId: 'vlt_test',
                 vaultCredentialId: 'probe',
               });
 

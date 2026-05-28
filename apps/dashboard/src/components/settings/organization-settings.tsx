@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
-import { OrganizationProfile } from '@clerk/clerk-react';
-import type { Appearance } from '@clerk/types';
+import { OrganizationProfile } from '@clerk/react';
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import { PermissionsEnum } from '@novu/shared';
 import { RiInformation2Line } from 'react-icons/ri';
 import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/components/primitives/tooltip';
@@ -9,9 +9,18 @@ import { useFetchOrganizationSettings } from '@/hooks/use-fetch-organization-set
 import { useUpdateOrganizationSettings } from '@/hooks/use-update-organization-settings';
 import { OrganizationSettings as BetterAuthOrganizationSettings } from '@/utils/better-auth/components/organization-settings';
 import { Protect } from '@/utils/protect';
+import { ROUTES } from '@/utils/routes';
 import { NovuBrandingSwitch } from './novu-branding-switch';
 
-export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Appearance }) {
+// After deleting (or leaving) an org, Clerk falls back to `<ClerkProvider signInUrl>` when this
+// prop is unset. On the Connect satellite that points to Platform's sign-in, which kicks the
+// user out of Connect entirely — they'd land on Platform's picker even when they still have
+// Connect work to do. Pinning it to the local `/auth/organization-list` keeps them on the
+// current product; `AuthProvider` then clears any cross-product org Clerk auto-activates and
+// the picker renders the right product's empty state.
+const AFTER_LEAVE_ORG_URL = ROUTES.SIGNUP_ORGANIZATION_LIST;
+
+export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: ClerkAppearanceTheme }) {
   const { data: organizationSettings, isLoading: isLoadingSettings } = useFetchOrganizationSettings();
   const updateOrganizationSettings = useUpdateOrganizationSettings();
 
@@ -81,7 +90,7 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: App
       <div>
         <h1 className="text-label-sm text-text-strong mb-3">Organization Settings</h1>
         {EE_AUTH_PROVIDER === 'clerk' ? (
-          <OrganizationProfile appearance={clerkAppearance}>
+          <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL}>
             <OrganizationProfile.Page label="members" />
           </OrganizationProfile>
         ) : (

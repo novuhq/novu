@@ -1,5 +1,5 @@
 import { AgentRuntimeUnauthorizedError } from '@novu/application-generic';
-import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
+import * as AnthropicProviderModule from '@novu/application-generic/build/main/agent-runtimes/anthropic/anthropic-agent-runtime.provider';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -56,7 +56,7 @@ describe('Verify Managed Credentials API #novu-v2', () => {
     await session.initialize();
 
     mockProvider = buildMockProvider();
-    sinon.stub(AgentRuntimeFactoryModule, 'getAgentRuntimeProvider').returns(mockProvider as never);
+    sinon.stub(AnthropicProviderModule, 'createAnthropicProvider').returns(mockProvider as never);
   });
 
   afterEach(() => {
@@ -73,7 +73,7 @@ describe('Verify Managed Credentials API #novu-v2', () => {
       expect(res.status).to.equal(201);
       expect(res.body.data?.valid ?? res.body.valid).to.equal(true);
       expect(mockProvider.validateCredentials.calledOnce, 'validateCredentials should be called once').to.be.true;
-      expect(mockProvider.validateCredentials.firstCall.args[0]).to.equal(FAKE_API_KEY);
+      expect(mockProvider.validateCredentials.firstCall.args[0]).to.deep.equal({ apiKey: FAKE_API_KEY });
     });
 
     it('returns 401 when the provider rejects the API key', async () => {
@@ -105,6 +105,24 @@ describe('Verify Managed Credentials API #novu-v2', () => {
         .send({ providerId: AgentRuntimeProviderIdEnum.Anthropic, apiKey: FAKE_API_KEY });
 
       expect(res.status).to.equal(401);
+    });
+
+    it('accepts anthropic-aws api key credentials when the provider validates', async () => {
+      const res = await session.testAgent.post('/v1/agents/verify-credentials').send({
+        providerId: AgentRuntimeProviderIdEnum.AnthropicAws,
+        region: 'us-east-1',
+        externalWorkspaceId: 'wrkspc_test',
+        apiKey: FAKE_API_KEY,
+      });
+
+      expect(res.status).to.equal(201);
+      expect(res.body.data?.valid ?? res.body.valid).to.equal(true);
+      expect(mockProvider.validateCredentials.calledOnce).to.be.true;
+      expect(mockProvider.validateCredentials.firstCall.args[0]).to.deep.equal({
+        apiKey: FAKE_API_KEY,
+        region: 'us-east-1',
+        externalWorkspaceId: 'wrkspc_test',
+      });
     });
   });
 });
