@@ -11,6 +11,7 @@ import { ConnectedProvidersSection } from './connected-providers-section';
 import { DemoClaudeUpgradePanel } from './demo-claude-upgrade-panel';
 import { DemoQuotaBanner } from './demo-quota-banner';
 import { McpsSection } from './mcps-section';
+import { SystemPromptSection } from './system-prompt-section';
 import { ToolsSection } from './tools-section';
 
 type AgentManagedOverviewProps = {
@@ -55,6 +56,7 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
       ) : null}
       {showSetupGuide ? <AgentSetupGuide agent={agent} /> : <ConnectedProvidersSection agent={agent} />}
       <McpsSection agent={agent} />
+      <SystemPromptSection agent={agent} />
       <ToolsSection agent={agent} />
       <RecentConversationsSection agent={agent} />
       {isDemoManagedClaudeEnabled ? (

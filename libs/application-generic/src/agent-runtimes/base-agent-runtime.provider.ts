@@ -9,7 +9,6 @@ import type {
   GetAgentResult,
   GetEnvironmentResult,
   IAgentRuntimeProvider,
-  ParsedMcpInitFailure,
   PendingToolApproval,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
@@ -28,10 +27,6 @@ import type {
  * non-abstract methods provide safe defaults for capability-bound features
  * so a provider that doesn't support `tokenVault` (etc.) gets a loud
  * runtime error if a caller forgets to gate on `capabilities.tokenVault`.
- *
- * `parseMcpInitFailure` returns `null` by default — providers that have a
- * recognisable MCP-init error shape override it. Returning `null` keeps the
- * lazy-OAuth code path inert until each provider opts in.
  */
 export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider {
   abstract readonly providerId: AgentRuntimeProviderIdEnum;
@@ -55,10 +50,6 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
   abstract provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult>;
 
   abstract deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
-
-  parseMcpInitFailure(_err: unknown): ParsedMcpInitFailure | null {
-    return null;
-  }
 
   getAllPendingToolApprovals(_sessionId: string): Promise<PendingToolApproval[]> {
     return Promise.resolve([]);

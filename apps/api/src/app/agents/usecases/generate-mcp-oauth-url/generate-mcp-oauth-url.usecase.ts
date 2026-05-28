@@ -94,62 +94,25 @@ export class GenerateMcpOAuthUrl {
     this.logger.setContext(GenerateMcpOAuthUrl.name);
   }
 
+  /**
+   * Build an authorize URL for a managed-agent setup card without rotating
+   * PKCE when a reusable `pending_oauth` session already exists for this
+   * subscriber + MCP. Each card only gets a fresh signed `state` (with its
+   * `conversationId`); the shared connection row stays stable across threads.
+   */
+  async executeForSetupCard(command: GenerateMcpOAuthUrlCommand): Promise<GenerateMcpOAuthUrlResponseDto> {
+    const context = await this.loadAuthorizeContext(command);
+
+    if (canReusePendingOAuthSession(context.existing)) {
+      return this.buildAuthorizeUrlForExistingPending(context, command);
+    }
+
+    return this.execute(command);
+  }
+
   async execute(command: GenerateMcpOAuthUrlCommand): Promise<GenerateMcpOAuthUrlResponseDto> {
-    const catalog = MCP_SERVERS.find((entry) => entry.id === command.mcpId);
-
-    if (!catalog) {
-      throw new BadRequestException(`Unknown MCP "${command.mcpId}".`);
-    }
-
-    if (!catalog.oauth) {
-      throw new BadRequestException(`MCP "${command.mcpId}" does not have OAuth connectivity configured.`);
-    }
-
-    const agent = await this.agentRepository.findOne(
-      {
-        identifier: command.agentIdentifier,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['_id']
-    );
-
-    if (!agent) {
-      throw new NotFoundException(`Agent "${command.agentIdentifier}" not found.`);
-    }
-
-    const enablement = await this.agentMcpServerRepository.findByAgentAndMcpId({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      agentId: agent._id,
-      mcpId: command.mcpId,
-    });
-
-    if (!enablement || !enablement.enabled) {
-      throw new UnprocessableEntityException(
-        `MCP "${command.mcpId}" is not enabled on agent "${command.agentIdentifier}".`
-      );
-    }
-
-    // Catalog + agent + enablement are confirmed; only now do we run the
-    // LD getFlag + env credential probe. This matches the order in
-    // `EnableAgentMcpServer.execute()` and stops an authenticated caller
-    // from enumerating "is novu-app wired for this org" via 403/422
-    // differentiation against random agent identifiers.
-    const oauthConfig = await this.resolveOAuthConfig(catalog, command);
-
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
-
-    if (!subscriber) {
-      throw new NotFoundException(`Subscriber "${command.subscriberId}" not found in this environment.`);
-    }
-
-    const existing = await this.mcpConnectionRepository.findSubscriberConnection({
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      agentMcpServerId: enablement._id,
-      subscriberId: subscriber._id,
-    });
+    const context = await this.loadAuthorizeContext(command);
+    const { catalog, oauthConfig, enablement, agent, subscriber, existing } = context;
 
     const pkceVerifier = generatePkceVerifier();
 
@@ -210,6 +173,135 @@ export class GenerateMcpOAuthUrl {
       clientId: oauthClient.clientId,
       scopes: resolved.scopes,
       resource: resolved.resource,
+      state,
+      pkceVerifier,
+    });
+
+    return { authorizeUrl };
+  }
+
+  private async loadAuthorizeContext(command: GenerateMcpOAuthUrlCommand): Promise<{
+    catalog: McpServer;
+    oauthConfig: ResolvedOAuthConfig;
+    enablement: AgentMcpServerEntity;
+    agent: { _id: string };
+    subscriber: { _id: string };
+    existing: McpConnectionEntity | null;
+  }> {
+    const catalog = MCP_SERVERS.find((entry) => entry.id === command.mcpId);
+
+    if (!catalog) {
+      throw new BadRequestException(`Unknown MCP "${command.mcpId}".`);
+    }
+
+    if (!catalog.oauth) {
+      throw new BadRequestException(`MCP "${command.mcpId}" does not have OAuth connectivity configured.`);
+    }
+
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: command.agentIdentifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    if (!agent) {
+      throw new NotFoundException(`Agent "${command.agentIdentifier}" not found.`);
+    }
+
+    const enablement = await this.agentMcpServerRepository.findByAgentAndMcpId({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentId: agent._id,
+      mcpId: command.mcpId,
+    });
+
+    if (!enablement || !enablement.enabled) {
+      throw new UnprocessableEntityException(
+        `MCP "${command.mcpId}" is not enabled on agent "${command.agentIdentifier}".`
+      );
+    }
+
+    const oauthConfig = await this.resolveOAuthConfig(catalog, command);
+
+    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
+
+    if (!subscriber) {
+      throw new NotFoundException(`Subscriber "${command.subscriberId}" not found in this environment.`);
+    }
+
+    const existing = await this.mcpConnectionRepository.findSubscriberConnection({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentMcpServerId: enablement._id,
+      subscriberId: subscriber._id,
+    });
+
+    return { catalog, oauthConfig, enablement, agent, subscriber, existing };
+  }
+
+  private async buildAuthorizeUrlForExistingPending(
+    context: {
+      catalog: McpServer;
+      oauthConfig: ResolvedOAuthConfig;
+      enablement: AgentMcpServerEntity;
+      agent: { _id: string };
+      subscriber: { _id: string };
+      existing: McpConnectionEntity | null;
+    },
+    command: GenerateMcpOAuthUrlCommand
+  ): Promise<GenerateMcpOAuthUrlResponseDto> {
+    const { catalog, oauthConfig, enablement, agent, subscriber, existing } = context;
+
+    if (!existing) {
+      throw new BadRequestException('Expected an existing MCP connection row for setup-card OAuth reuse.');
+    }
+
+    const pkceVerifier = existing.oauthState?.pkceVerifier;
+
+    if (!pkceVerifier) {
+      throw new BadRequestException('Pending OAuth session is missing PKCE verifier; restart the flow.');
+    }
+
+    const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
+
+    if (oauthConfig.mode === McpConnectionAuthModeEnum.NovuApp) {
+      const oauthState = existing.oauthState;
+      const authorizationEndpoint = oauthState?.authorizationEndpoint;
+      const expectedIssuer = oauthState?.expectedIssuer;
+      const resource = oauthState?.resource;
+
+      if (!authorizationEndpoint || !expectedIssuer || !resource) {
+        throw new BadRequestException('Pending OAuth session is incomplete; restart the flow.');
+      }
+
+      const resolved = await this.resolveServerEndpointsForNovuApp(catalog, oauthConfig);
+      const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
+        authorizationEndpoint,
+        expectedIssuer,
+        clientId: oauthConfig.credentials.clientId,
+        scopes: resolved.scopes,
+        resource,
+        state,
+        pkceVerifier,
+      });
+
+      return { authorizeUrl };
+    }
+
+    if (!existing.oauthClient || !existing.oauthState?.expectedIssuer || !existing.oauthState.resource) {
+      throw new BadRequestException('Pending OAuth session is incomplete; restart the flow.');
+    }
+
+    const oauthClient = decryptMcpConnectionOAuthClient(existing.oauthClient);
+    const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
+      authorizationEndpoint: oauthClient.authorizationEndpoint,
+      expectedIssuer: existing.oauthState.expectedIssuer,
+      clientId: oauthClient.clientId,
+      scopes: oauthClient.scopesGranted ?? [],
+      resource: existing.oauthState.resource,
       state,
       pkceVerifier,
     });
@@ -600,6 +692,7 @@ export class GenerateMcpOAuthUrl {
       mcpId: command.mcpId,
       scope: McpConnectionScopeEnum.Subscriber,
       timestamp: Date.now(),
+      ...(command.conversationId ? { conversationId: command.conversationId } : {}),
     };
 
     const payload = JSON.stringify(stateData);
@@ -680,6 +773,34 @@ export class GenerateMcpOAuthUrl {
  * after construction in-process. We accept both shapes — `new Date(value)`
  * happily takes either.
  */
+function canReusePendingOAuthSession(existing: McpConnectionEntity | null): boolean {
+  if (!existing) {
+    return false;
+  }
+
+  if (existing.status !== McpConnectionStatusEnum.PendingOAuth) {
+    return false;
+  }
+
+  const oauthState = existing.oauthState;
+
+  if (!oauthState?.pkceVerifier || oauthState.callbackClaimedAt) {
+    return false;
+  }
+
+  if (existing.authMode === McpConnectionAuthModeEnum.NovuApp) {
+    return Boolean(
+      oauthState.expectedIssuer && oauthState.resource && oauthState.tokenEndpoint && oauthState.authorizationEndpoint
+    );
+  }
+
+  if (existing.authMode === McpConnectionAuthModeEnum.Dcr) {
+    return Boolean(existing.oauthClient && oauthState.expectedIssuer && oauthState.resource);
+  }
+
+  return false;
+}
+
 function pickReusableOAuthClient(
   client: McpConnectionOAuthClient | undefined,
   asIssuer: string

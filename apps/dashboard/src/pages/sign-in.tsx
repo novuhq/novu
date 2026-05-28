@@ -11,10 +11,18 @@ import { buildAppHomeRoute, getCurrentAppId } from '@/utils/apps';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
+  appendRedirectUrlParam,
+  buildCliAuthReturnUrlFromSearchParams,
+  parseCliAuthReturnFromSearchParams,
+  resolvePendingCliAuthReturnUrl,
+  storePendingCliAuth,
+} from '@/utils/cli-auth-pending';
+import {
   buildAbsoluteConnectUrl,
   buildPrimarySignInUrl,
   CONNECT_PRODUCT_VALUE,
   PRODUCT_QUERY_PARAM,
+  readClerkRedirectUrlParam,
 } from '@/utils/product-auth-urls';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -39,12 +47,34 @@ export const SignInPage = () => {
     []
   );
 
+  const cliAuthReturnUrl = useMemo(
+    () =>
+      buildCliAuthReturnUrlFromSearchParams(searchParams, { preferConnectHost: isConnectSignIn }) ??
+      resolvePendingCliAuthReturnUrl(),
+    [searchParams, isConnectSignIn]
+  );
+
+  useEffect(() => {
+    const pending = parseCliAuthReturnFromSearchParams(searchParams, { preferConnectHost: isConnectSignIn });
+
+    if (pending) {
+      storePendingCliAuth(pending.deviceCode, pending.name, pending.returnHost);
+    }
+  }, [searchParams, isConnectSignIn]);
+
   // Sign-in only runs on the primary; satellite visitors bounce back with the Connect flag.
   useEffect(() => {
     if (IS_NOVU_CONNECT) {
-      window.location.replace(buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE }));
+      const redirectUrl = readClerkRedirectUrlParam(searchParams);
+      let primaryUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });
+
+      if (redirectUrl) {
+        primaryUrl = appendRedirectUrlParam(primaryUrl, redirectUrl);
+      }
+
+      window.location.replace(primaryUrl);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const utmParams = getUtmParams();
@@ -63,12 +93,19 @@ export const SignInPage = () => {
   // `?__clerk_synced=false` Connect URL) and always go to the clean provision entry point —
   // Clerk's satellite SDK syncs the session on arrival. Honoring the stale return URL is what
   // caused the Platform ↔ Connect redirect loop after the post-PR-11281 follow-ups.
+  // CLI auth is the exception: the device session must resume on `/cli/auth` after sign-in.
   useEffect(() => {
     if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || hasRedirectedRef.current) {
       return;
     }
 
     hasRedirectedRef.current = true;
+
+    if (cliAuthReturnUrl) {
+      window.location.assign(cliAuthReturnUrl);
+
+      return;
+    }
 
     if (isConnectSignIn) {
       window.location.assign(connectProvisionRedirect);
@@ -80,12 +117,20 @@ export const SignInPage = () => {
       buildAppHomeRoute(getCurrentAppId(), 'default') ?? buildRoute(ROUTES.WORKFLOWS, { environmentSlug: 'default' });
 
     void navigate(home, { replace: true });
-  }, [isLoaded, isSignedIn, isConnectSignIn, connectProvisionRedirect, navigate]);
+  }, [isLoaded, isSignedIn, isConnectSignIn, connectProvisionRedirect, cliAuthReturnUrl, navigate]);
 
-  // Preserve `?product=connect` across the Clerk sign-in ↔ sign-up link so branding survives.
-  const signUpUrlWithProduct = isConnectSignIn
-    ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
-    : ROUTES.SIGN_UP;
+  const signUpUrlWithProduct = useMemo(() => {
+    const redirectUrl = readClerkRedirectUrlParam(searchParams);
+    let url = isConnectSignIn
+      ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
+      : ROUTES.SIGN_UP;
+
+    if (redirectUrl) {
+      url = appendRedirectUrlParam(url, redirectUrl);
+    }
+
+    return url;
+  }, [searchParams, isConnectSignIn]);
 
   // Render nothing while redirecting:
   //   - On the satellite (`IS_NOVU_CONNECT`) the page is mid-replace to primary.
@@ -107,7 +152,7 @@ export const SignInPage = () => {
             path={ROUTES.SIGN_IN}
             signUpUrl={signUpUrlWithProduct}
             appearance={clerkSignupAppearance}
-            forceRedirectUrl={isConnectSignIn ? connectProvisionRedirect : undefined}
+            forceRedirectUrl={cliAuthReturnUrl ?? (isConnectSignIn ? connectProvisionRedirect : undefined)}
           />
           {!IS_SELF_HOSTED && !isConnectSignIn && <RegionPicker />}
         </div>
