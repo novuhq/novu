@@ -16,6 +16,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
+import { clearConnectProvisioning } from '@/utils/connect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
 function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
@@ -35,6 +36,10 @@ export const CliAuthPage = () => {
       storePendingCliAuth(deviceCode, callerName);
     }
   }, [deviceCode, callerName]);
+
+  useEffect(() => {
+    clearConnectProvisioning();
+  }, []);
 
   if (!isLoaded) {
     return null;
