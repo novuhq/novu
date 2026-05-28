@@ -266,11 +266,10 @@ function ScrollEdgeButton({
       aria-label={label}
       onClick={onClick}
       className={cn(
-        'pointer-events-auto absolute top-1/2 z-10 flex size-7 -translate-y-1/2 items-center justify-center rounded-full',
-        'border border-stroke-soft bg-bg-white text-text-sub',
-        'shadow-[0px_2px_6px_0px_rgba(14,18,27,0.16),0px_0px_0px_1px_#e1e4ea]',
-        'transition-colors hover:border-stroke-strong hover:text-text-strong',
-        isRight ? '-right-2' : '-left-2'
+        'cursor-pointer pointer-events-auto absolute bottom-1 top-px z-10 flex w-4 items-center justify-center rounded-[4px]',
+        'bg-bg-white bg-[linear-gradient(180deg,rgba(0,0,0,0)_30%,rgba(0,0,0,0.02)_100%)] text-text-sub',
+        'shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea] transition-colors hover:text-text-strong',
+        isRight ? '-right-1' : '-left-1'
       )}
     >
       <Icon className="size-4" aria-hidden />
