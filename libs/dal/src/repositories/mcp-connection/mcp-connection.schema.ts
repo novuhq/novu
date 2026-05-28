@@ -140,13 +140,13 @@ const toolTrustSchema = new Schema(
     serverDefault: {
       type: Schema.Types.String,
       required: false,
-      enum: ['always_allow'],
+      enum: ['always_ask', 'always_allow'],
     },
     tools: {
       type: Schema.Types.Map,
       of: {
         type: Schema.Types.String,
-        enum: ['always_allow'],
+        enum: ['always_ask', 'always_allow'],
       },
       required: false,
     },

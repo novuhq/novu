@@ -131,7 +131,9 @@ export interface McpConnectionLastError {
   at: Date;
 }
 
-export type McpToolTrustPolicy = 'always_allow';
+export type McpToolTrustPolicy = 'always_ask' | 'always_allow';
+
+export const DEFAULT_MCP_TOOL_TRUST_POLICY: McpToolTrustPolicy = 'always_ask';
 
 export type McpToolTrust = {
   /** Applies to all tools from this MCP server for this subscriber. */

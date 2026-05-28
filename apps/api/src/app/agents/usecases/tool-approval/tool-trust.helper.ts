@@ -1,22 +1,26 @@
-import type { AgentMcpServerEntity, McpConnectionEntity, McpToolTrust } from '@novu/dal';
+import {
+  type AgentMcpServerEntity,
+  DEFAULT_MCP_TOOL_TRUST_POLICY,
+  type McpConnectionEntity,
+  type McpToolTrust,
+  type McpToolTrustPolicy,
+} from '@novu/dal';
 import { MCP_SERVERS } from '@novu/shared';
 
 export type ToolTrustPersistScope = 'tool' | 'server';
 
+export function resolveToolTrustPolicy(trust: McpToolTrust | undefined, toolName: string): McpToolTrustPolicy {
+  const toolPolicy = trust?.tools?.[toolName];
+
+  if (toolPolicy) {
+    return toolPolicy;
+  }
+
+  return trust?.serverDefault ?? DEFAULT_MCP_TOOL_TRUST_POLICY;
+}
+
 export function isToolTrusted(trust: McpToolTrust | undefined, toolName: string): boolean {
-  if (!trust) {
-    return false;
-  }
-
-  if (trust.tools?.[toolName] === 'always_allow') {
-    return true;
-  }
-
-  if (trust.serverDefault === 'always_allow') {
-    return true;
-  }
-
-  return false;
+  return resolveToolTrustPolicy(trust, toolName) === 'always_allow';
 }
 
 export function mergeToolTrustPatch(params: {

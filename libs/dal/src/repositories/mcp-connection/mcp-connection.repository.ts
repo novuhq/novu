@@ -212,7 +212,7 @@ export class McpConnectionRepository extends BaseRepositoryV2<
   }): Promise<void> {
     const $set: Record<string, unknown> = {};
 
-    if (params.patch.serverDefault) {
+    if (params.patch.serverDefault !== undefined) {
       $set['toolTrust.serverDefault'] = params.patch.serverDefault;
     }
 
