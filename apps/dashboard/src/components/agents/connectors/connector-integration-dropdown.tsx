@@ -33,6 +33,13 @@ type ConnectorIntegrationDropdownProps = {
   status?: ConnectorIntegrationStatus;
   showStatusBadge?: boolean;
   disabled?: boolean;
+  /**
+   * When set, the dropdown skips the connectors view entirely and only shows the integrations
+   * list for the locked connector. The back-to-connectors row and connector switcher are hidden.
+   * Use this for flows where the connector is fixed (e.g. the demo agent onboarding which only
+   * supports Claude Managed Agent).
+   */
+  lockedConnectorId?: ConnectorId;
   onSelectConnector: (id: ConnectorId) => void;
   onSelectIntegration: (integration: IIntegration) => void;
   onRequestSetupCredentials: (option: ConnectorOption) => void;
@@ -83,12 +90,14 @@ export function ConnectorIntegrationDropdown({
   status = 'idle',
   showStatusBadge = false,
   disabled,
+  lockedConnectorId,
   onSelectConnector,
   onSelectIntegration,
   onRequestSetupCredentials,
 }: ConnectorIntegrationDropdownProps) {
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<'connectors' | 'integrations'>('integrations');
+  const isLocked = Boolean(lockedConnectorId);
 
   const selectedConnector = getConnectorById(selectedConnectorId);
 
@@ -111,8 +120,13 @@ export function ConnectorIntegrationDropdown({
     prevOpenRef.current = open;
 
     if (!open || wasOpen) return;
+    if (isLocked) {
+      setView('integrations');
+
+      return;
+    }
     setView(selectedConnector?.providerId ? 'integrations' : 'connectors');
-  }, [open, selectedConnector?.providerId]);
+  }, [open, selectedConnector?.providerId, isLocked]);
 
   const externalOptions = CONNECTOR_OPTIONS.filter((o) => o.group === 'external');
   const customOptions = CONNECTOR_OPTIONS.filter((o) => o.group === 'custom');
@@ -201,15 +215,17 @@ export function ConnectorIntegrationDropdown({
   const integrationsView = selectedConnector ? (
     <>
       <CommandGroup className="p-1">
-        <CommandItem
-          value="__back"
-          onSelect={() => setView('connectors')}
-          className="text-text-sub hover:bg-bg-weak data-[selected=true]:bg-bg-weak flex items-center gap-1 rounded-md px-1 py-1 text-label-xs cursor-pointer"
-        >
-          <RiArrowLeftSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
-          {selectedConnector.icon}
-          <span className="text-text-sub text-label-xs font-medium leading-4 flex-1">{selectedConnector.label}</span>
-        </CommandItem>
+        {!isLocked ? (
+          <CommandItem
+            value="__back"
+            onSelect={() => setView('connectors')}
+            className="text-text-sub hover:bg-bg-weak data-[selected=true]:bg-bg-weak flex items-center gap-1 rounded-md px-1 py-1 text-label-xs cursor-pointer"
+          >
+            <RiArrowLeftSLine className="text-text-soft size-3.5 shrink-0" aria-hidden />
+            {selectedConnector.icon}
+            <span className="text-text-sub text-label-xs font-medium leading-4 flex-1">{selectedConnector.label}</span>
+          </CommandItem>
+        ) : null}
 
         <CommandItem
           value={`__setup-${selectedConnector.id}`}
@@ -217,7 +233,10 @@ export function ConnectorIntegrationDropdown({
             onRequestSetupCredentials(selectedConnector);
             setOpen(false);
           }}
-          className="flex items-center gap-1.5 rounded-md p-1 cursor-pointer mt-0.5"
+          className={cn(
+            'flex items-center gap-1.5 rounded-md p-1 cursor-pointer',
+            isLocked ? '' : 'mt-0.5'
+          )}
         >
           {selectedConnector.icon}
           <span className="text-text-sub text-label-xs min-w-0 flex-1 truncate font-medium leading-4">
