@@ -3,7 +3,7 @@ import { FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { McpConnectionDBModel, McpConnectionEntity } from './mcp-connection.entity';
+import { McpConnectionDBModel, McpConnectionEntity, McpToolTrust } from './mcp-connection.entity';
 import { McpConnection } from './mcp-connection.schema';
 
 export class McpConnectionRepository extends BaseRepositoryV2<
@@ -202,5 +202,37 @@ export class McpConnectionRepository extends BaseRepositoryV2<
     );
 
     return result.modified > 0;
+  }
+
+  async mergeToolTrust(params: {
+    connectionId: string;
+    environmentId: string;
+    organizationId: string;
+    patch: Partial<McpToolTrust>;
+  }): Promise<void> {
+    const $set: Record<string, unknown> = {};
+
+    if (params.patch.serverDefault) {
+      $set['toolTrust.serverDefault'] = params.patch.serverDefault;
+    }
+
+    if (params.patch.tools) {
+      for (const [toolName, policy] of Object.entries(params.patch.tools)) {
+        $set[`toolTrust.tools.${toolName}`] = policy;
+      }
+    }
+
+    if (Object.keys($set).length === 0) {
+      return;
+    }
+
+    await this.update(
+      {
+        _id: params.connectionId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      { $set }
+    );
   }
 }

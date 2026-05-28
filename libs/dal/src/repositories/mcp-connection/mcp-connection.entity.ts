@@ -131,6 +131,15 @@ export interface McpConnectionLastError {
   at: Date;
 }
 
+export type McpToolTrustPolicy = 'always_allow';
+
+export type McpToolTrust = {
+  /** Applies to all tools from this MCP server for this subscriber. */
+  serverDefault?: McpToolTrustPolicy;
+  /** Per-tool overrides keyed by MCP tool name (e.g. "list_issues"). */
+  tools?: Record<string, McpToolTrustPolicy>;
+};
+
 /**
  * OAuth state for a (scope, mcp, owner) tuple.
  *
@@ -185,6 +194,9 @@ export class McpConnectionEntity {
   oauthClient?: McpConnectionOAuthClient;
 
   lastError?: McpConnectionLastError;
+
+  /** Subscriber-scoped auto-approve prefs for MCP tool calls. */
+  toolTrust?: McpToolTrust;
 
   connectedAt?: string;
 

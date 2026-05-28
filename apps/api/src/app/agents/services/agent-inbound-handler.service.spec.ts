@@ -64,7 +64,9 @@ describe('AgentInboundHandler', () => {
     };
     const managedAgentService = {
       dispatch: sinon.stub().resolves(undefined),
-      confirmToolApproval: sinon.stub().resolves(undefined),
+    };
+    const confirmToolApproval = {
+      execute: sinon.stub().resolves(undefined),
     };
     const chatSdkService = {
       registerInboundCallbacks: sinon.stub(),
@@ -92,12 +94,6 @@ describe('AgentInboundHandler', () => {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findTelegramEndpointByIdentity ?? sinon.stub().resolves(null),
     };
-    const handleAgentReply = {
-      execute: sinon.stub().resolves({ messageId: 'setup-card-1', platformThreadId: 'thread1' }),
-    };
-    const handlePlanProgress = {
-      execute: sinon.stub().resolves(undefined),
-    };
     const handleManagedAgentSetupInbound = {
       execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
     };
@@ -107,6 +103,7 @@ describe('AgentInboundHandler', () => {
       conversationService as any,
       bridgeExecutor as any,
       managedAgentService as any,
+      confirmToolApproval as any,
       handleManagedAgentSetupInbound as any,
       chatSdkService as any,
       agentRepository as any,
@@ -116,9 +113,7 @@ describe('AgentInboundHandler', () => {
       attachmentStorage as any,
       startCodeService as any,
       channelEndpointRepository as any,
-      linkTelegramChatToSubscriber as any,
-      handleAgentReply as any,
-      handlePlanProgress as any
+      linkTelegramChatToSubscriber as any
     );
 
     return {
