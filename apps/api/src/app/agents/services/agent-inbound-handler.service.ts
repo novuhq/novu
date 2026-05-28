@@ -33,12 +33,7 @@ import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachmen
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
-import {
-  type AgentExecutionParams,
-  BridgeExecutorService,
-  type BridgeReaction,
-  NoBridgeUrlError,
-} from './bridge-executor.service';
+import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
 import {
@@ -397,21 +392,19 @@ export class AgentInboundHandler implements OnModuleInit {
       'runtime',
       'managedRuntime',
     ]);
-    const executionContext = {
-      event,
-      config,
-      conversation,
-      subscriber,
-      history,
-      message,
-      platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
-      storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-    };
 
     const isManagedAgent = agent?.runtime === 'managed' && agent.managedRuntime;
 
     if (isManagedAgent) {
-      if (await this.isManagedAgentSetupRequired(executionContext, agent._id)) {
+      const parked = await this.tryParkForManagedSetup({
+        config,
+        conversationId: conversation._id,
+        agentId: agent._id,
+        subscriber,
+        platformMessageId: message.id,
+      });
+
+      if (parked) {
         return;
       }
     }
@@ -438,10 +431,25 @@ export class AgentInboundHandler implements OnModuleInit {
 
     try {
       if (isManagedAgent) {
-        await this.managedAgentService.dispatch(executionContext, agent);
+        await this.managedAgentService.dispatch(
+          {
+            config,
+            conversation,
+            subscriber,
+            userMessageText: message.text ?? '',
+          },
+          agent
+        );
       } else {
         await this.bridgeExecutor.execute({
-          ...executionContext,
+          event,
+          config,
+          conversation,
+          subscriber,
+          history,
+          message,
+          platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
+          storedAttachments: message.attachments?.length ? storedAttachments : undefined,
           onBridgeFailure: async () => {
             applyPlatformThreadIdToThread(thread, platformThreadId);
             const sent = await thread.post(BRIDGE_OFFLINE_REPLY_MARKDOWN);
@@ -522,13 +530,19 @@ export class AgentInboundHandler implements OnModuleInit {
   }
 
   /**
-   * When the subscriber still has required setup steps, park the turn and post the setup card.
-   * Returns true when dispatch must not proceed.
+   * When the subscriber still has required managed-agent setup, park the turn
+   * and post the setup card. Returns true when dispatch must not proceed.
    */
-  private async isManagedAgentSetupRequired(context: AgentExecutionParams, agentId: string): Promise<boolean> {
-    const { config, conversation, subscriber, message } = context;
+  private async tryParkForManagedSetup(params: {
+    config: ResolvedAgentConfig;
+    conversationId: string;
+    agentId: string;
+    subscriber: { subscriberId: string } | null;
+    platformMessageId: string | undefined;
+  }): Promise<boolean> {
+    const { config, conversationId, agentId, subscriber, platformMessageId } = params;
 
-    if (!subscriber || !message?.id) {
+    if (!subscriber || !platformMessageId) {
       return false;
     }
 
@@ -537,12 +551,12 @@ export class AgentInboundHandler implements OnModuleInit {
         userId: 'system',
         environmentId: config.environmentId,
         organizationId: config.organizationId,
-        conversationId: conversation._id,
+        conversationId,
         agentId,
         subscriberId: subscriber.subscriberId,
         agentIdentifier: config.agentIdentifier,
         integrationIdentifier: config.integrationIdentifier,
-        platformMessageId: message.id,
+        platformMessageId,
       })
     );
   }
