@@ -391,7 +391,7 @@ function PhaseContent({
       ];
 
       return (
-        <Box flexDirection="column" gap={1} width={CHANNEL_PICKER_WIDTH}>
+        <Box flexDirection="column" gap={1} alignItems="flex-start">
           <Text bold wrap="wrap">
             Pick a channel to connect this agent to
           </Text>
@@ -693,19 +693,18 @@ function ChannelSelect({
   const showDashboardHint = highlighted !== null && isDashboardOnlyChannel(highlighted);
 
   return (
-    <Box flexDirection="column" gap={1} width={CHANNEL_PICKER_WIDTH}>
-      <Box flexDirection="column">
+    <Box flexDirection="column" gap={1} alignItems="flex-start">
+      <Box flexDirection="column" alignItems="flex-start">
         {options.map((opt, i) => {
           const isSelected = i === idx;
           const opensInDashboard = isDashboardOnlyChannel(opt.value);
+          const prefix = isSelected ? '› ' : '  ';
 
           return (
-            <Text key={opt.value}>
-              <Text color={isSelected ? 'cyan' : undefined}>
-                {isSelected ? '› ' : '  '}
-                {opt.label}
-              </Text>
-              {opensInDashboard ? <Text dimColor>{isSelected ? ' ↗' : '  ↗'}</Text> : null}
+            <Text key={opt.value} color={isSelected ? 'cyan' : undefined}>
+              {prefix}
+              {opt.label}
+              {opensInDashboard ? <Text dimColor> ↗</Text> : null}
             </Text>
           );
         })}
