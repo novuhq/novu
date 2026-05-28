@@ -1,3 +1,5 @@
+import type { McpTokenEndpointAuthMethod } from '@novu/shared';
+
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -122,6 +124,17 @@ export interface McpConnectionOAuthClient {
   registrationEndpoint?: string;
   /** Scopes requested at registration time. */
   scopesGranted?: string[];
+  /**
+   * `token_endpoint_auth_method` negotiated with the upstream AS at DCR time
+   * (RFC 8414 §2 / RFC 7591 §2). Replayed verbatim at token-exchange and
+   * refresh time so Novu authenticates exactly the way the AS expects.
+   * Absent on legacy rows registered before negotiation existed — callers
+   * default to `'client_secret_basic'` per RFC 8414, which is what most
+   * ASes assume when nothing is registered.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
+  /** Redirect URI registered with the upstream AS at DCR time (RFC 7591). */
+  redirectUri?: string;
   registeredAt: Date;
 }
 

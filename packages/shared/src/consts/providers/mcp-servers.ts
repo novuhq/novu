@@ -147,6 +147,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.atlassian.com/v1/mcp/authv2',
     category: 'productivity',
     popular: true,
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'github',
@@ -206,7 +207,6 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.asana.com/v2/mcp',
     category: 'productivity',
     popular: true,
-    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'amplitude',
@@ -242,7 +242,6 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.intercom.com/mcp',
     category: 'communication',
     popular: true,
-    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'datadog',
@@ -309,9 +308,10 @@ export const MCP_SERVERS: McpServer[] = [
     id: 'brex',
     name: 'Brex',
     description: 'Manage corporate cards, expenses, and budgets in Brex.',
-    url: 'https://mcp.brex.com/sse',
+    url: 'https://api.brex.com/mcp',
     category: 'financial-services',
     popular: false,
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'canva',

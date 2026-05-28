@@ -691,7 +691,21 @@ function summariseInput(input: Record<string, unknown>): string {
   return text.length > 80 ? `${text.slice(0, 77)}...` : text;
 }
 
-function buildErrorMessage(err: unknown): string {
+function extractErrorMessage(err: unknown): string | undefined {
+  if (err instanceof Error) {
+    return err.message;
+  }
+
+  if (typeof err === 'object' && err !== null && 'message' in err) {
+    const message = (err as { message?: unknown }).message;
+
+    return typeof message === 'string' ? message : undefined;
+  }
+
+  return undefined;
+}
+
+export function buildErrorMessage(err: unknown): string {
   if (err instanceof CredentialExpiredError) {
     return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
   }
@@ -699,19 +713,22 @@ function buildErrorMessage(err: unknown): string {
     return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
   }
 
-  if (err instanceof Error) {
-    const mcpInitMatch = err.message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
+  const message = extractErrorMessage(err);
+  if (message) {
+    const mcpInitMatch = message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
     if (mcpInitMatch) {
-      const serverName = mcpInitMatch[1];
-
-      return (
-        `I couldn't connect to the **${serverName}** MCP server — no credential is stored for it. ` +
-        `Connect ${serverName} from this agent's integration settings (or remove it from the agent's MCP list) and try again.`
-      );
+      return buildMcpInitFailureMessage(mcpInitMatch[1]);
     }
   }
 
   return 'The agent is temporarily unavailable. Please try again later.';
+}
+
+export function buildMcpInitFailureMessage(serverName: string): string {
+  return (
+    `I couldn't connect to the **${serverName}** MCP server — no credential is stored for it. ` +
+    `Connect ${serverName} from this agent's integration settings (or remove it from the agent's MCP list) and try again.`
+  );
 }
 
 const PLATFORM_DISPLAY_NAMES: Record<AgentPlatformEnum, string> = {

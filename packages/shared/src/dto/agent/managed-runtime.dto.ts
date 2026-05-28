@@ -86,6 +86,47 @@ export enum McpConnectionAuthModeEnum {
   UserApp = 'user-app',
 }
 
+/**
+ * Set of `token_endpoint_auth_method` values Novu can speak when posting to a
+ * registered MCP OAuth client's token endpoint (RFC 8414 §2 / RFC 7591).
+ * Lives here so the DCR negotiator (api-service), the persisted entity
+ * (`libs/dal`), and the runtime providers (`libs/application-generic`) all
+ * share the same source of truth — adding a new method (e.g.
+ * `private_key_jwt`) becomes a single edit that fans out via the type
+ * system.
+ */
+export type McpTokenEndpointAuthMethod = 'client_secret_basic' | 'client_secret_post' | 'none';
+
+/**
+ * Concrete list backing `McpTokenEndpointAuthMethod`. Kept in lock-step with
+ * the union via `satisfies` so the Mongoose `enum` array, registration code,
+ * and exhaustive switches all derive from one place.
+ */
+export const MCP_TOKEN_ENDPOINT_AUTH_METHODS = [
+  'client_secret_basic',
+  'client_secret_post',
+  'none',
+] as const satisfies readonly McpTokenEndpointAuthMethod[];
+
+/**
+ * Default `token_endpoint_auth_method` used when a persisted MCP OAuth client
+ * row pre-dates negotiation (no value stored) or when an AS metadata document
+ * omits `token_endpoint_auth_methods_supported`. RFC 8414 §2 defines this
+ * default as `client_secret_basic`.
+ */
+export const DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD: McpTokenEndpointAuthMethod = 'client_secret_basic';
+
+/**
+ * Resolve a persisted `token_endpoint_auth_method` against the RFC 8414 §2
+ * default. Use everywhere a legacy row (no value stored) needs to be coerced
+ * into a usable method — keeps the fallback literal in exactly one place.
+ */
+export function resolvePersistedMcpTokenEndpointAuthMethod(
+  value: McpTokenEndpointAuthMethod | undefined
+): McpTokenEndpointAuthMethod {
+  return value ?? DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD;
+}
+
 export enum McpConnectionStatusEnum {
   PendingOAuth = 'pending_oauth',
   Connected = 'connected',
