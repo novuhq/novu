@@ -2,31 +2,33 @@ import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
   AgentEntity,
+  AgentMcpServerRepository,
   AgentRepository,
   ConversationEntity,
   ConversationRepository,
   IntegrationRepository,
+  McpConnectionRepository,
   PendingManagedAgentSetup,
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
+import { MCP_SERVERS, McpConnectionStatusEnum } from '@novu/shared';
 
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../../../services/agent-config-resolver.service';
 import { ManagedAgentService } from '../../../services/managed-agent.service';
 import { GenerateMcpOAuthUrl } from '../../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../../handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../handle-agent-reply/handle-agent-reply.usecase';
-import { ListPendingOAuthMcpsCommand } from '../list-pending-oauth-mcps/list-pending-oauth-mcps.command';
-import { ListPendingOAuthMcps } from '../list-pending-oauth-mcps/list-pending-oauth-mcps.usecase';
 import { ManagedAgentSetupCompleteCommand } from './managed-agent-setup-complete.command';
 import { ManagedAgentSetupInboundCommand } from './managed-agent-setup-inbound.command';
-import { buildSetupCardForPendingMcps } from './setup-card.builder';
-import { buildSetupCard } from './setup-card.helpers';
+import { isOAuthMcpPending, type OAuthMcp } from './oauth-mcp.types';
+import { buildSetupCardForMcps } from './setup-card.builder';
 
 @Injectable()
 export class ManagedAgentSetup {
   constructor(
-    private readonly listPendingOAuthMcps: ListPendingOAuthMcps,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
@@ -58,19 +60,16 @@ export class ManagedAgentSetup {
       return false;
     }
 
-    const listCommand = ListPendingOAuthMcpsCommand.create({
-      userId: command.userId,
+    const mcps = await this.listOAuthMcps({
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       agentId: command.agentId,
       subscriberId: command.subscriberId,
     });
-
-    const pendingMcps = await this.listPendingOAuthMcps.execute(listCommand);
-    const setupRequired = pendingMcps.length > 0;
+    const setupRequired = mcps.some(isOAuthMcpPending);
 
     if (!setupRequired && conversation.pendingManagedAgentSetup) {
-      await this.resolveStaleSetupCard(command, conversation);
+      await this.resolveStaleSetupCard(command, conversation, mcps);
     }
 
     if (!setupRequired) {
@@ -86,7 +85,7 @@ export class ManagedAgentSetup {
       return false;
     }
 
-    await this.parkInboundForSetup(command, conversation, listCommand);
+    await this.parkInboundForSetup(command, conversation, mcps);
 
     return true;
   }
@@ -158,19 +157,20 @@ export class ManagedAgentSetup {
       return;
     }
 
-    const listCommand = ListPendingOAuthMcpsCommand.create({
-      userId: 'system',
+    const mcps = await this.listOAuthMcps({
       environmentId: stateData.environmentId,
       organizationId: stateData.organizationId,
       agentId: agent._id,
       subscriberId: subscriber.subscriberId,
     });
 
-    const pendingMcps = await this.listPendingOAuthMcps.execute(listCommand);
-    const setupRequired = pendingMcps.length > 0;
-
-    if (setupRequired) {
-      await this.refreshSetupCardForConversation(conversation, config, subscriber);
+    if (mcps.some(isOAuthMcpPending)) {
+      await this.refreshSetupCardsForPendingConversations({
+        agentId: agent._id,
+        config,
+        subscriber,
+        mcps,
+      });
 
       return;
     }
@@ -181,12 +181,12 @@ export class ManagedAgentSetup {
       return;
     }
 
-    await this.completeSetupAndReplay({
-      conversation,
-      pending,
+    await this.completeSetupAndReplayForAllPendingConversations({
+      agentId: agent._id,
       agent,
       config,
       subscriber,
+      mcps,
     });
   }
 
@@ -201,10 +201,63 @@ export class ManagedAgentSetup {
     };
   }
 
+  private async listOAuthMcps(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    subscriberId: string;
+  }): Promise<OAuthMcp[]> {
+    const subscriber = await this.subscriberRepository.findBySubscriberId(params.environmentId, params.subscriberId);
+
+    if (!subscriber) {
+      return [];
+    }
+
+    const enablements = await this.agentMcpServerRepository.findOAuthEnablementsForAgent({
+      organizationId: params.organizationId,
+      environmentId: params.environmentId,
+      agentId: params.agentId,
+    });
+
+    if (enablements.length === 0) {
+      return [];
+    }
+
+    const connections = await this.mcpConnectionRepository.findSubscriberConnectionsForAgent({
+      organizationId: params.organizationId,
+      environmentId: params.environmentId,
+      subscriberId: subscriber._id,
+      agentMcpServerIds: enablements.map((row) => row._id),
+    });
+
+    const connectionByEnablementId = new Map(connections.map((row) => [row._agentMcpServerId, row]));
+    const rows: OAuthMcp[] = [];
+
+    for (const enablement of enablements) {
+      const connection = connectionByEnablementId.get(enablement._id);
+      const catalog = MCP_SERVERS.find((entry) => entry.id === enablement.mcpId);
+      const status = (connection?.status as OAuthMcp['status'] | undefined) ?? 'missing';
+      const isError =
+        status === McpConnectionStatusEnum.Error ||
+        status === McpConnectionStatusEnum.Expired ||
+        status === McpConnectionStatusEnum.Revoked;
+
+      rows.push({
+        mcpId: enablement.mcpId,
+        name: catalog?.name ?? enablement.mcpId,
+        agentMcpServerId: enablement._id,
+        status,
+        ...(isError ? { errorMessage: connection?.lastError?.message ?? 'Connection failed' } : {}),
+      });
+    }
+
+    return rows;
+  }
+
   private async parkInboundForSetup(
     command: ManagedAgentSetupInboundCommand,
     conversation: ConversationEntity,
-    listCommand: ListPendingOAuthMcpsCommand
+    mcps: OAuthMcp[]
   ): Promise<void> {
     const existing = conversation.pendingManagedAgentSetup;
     const pendingState: PendingManagedAgentSetup = {
@@ -219,16 +272,12 @@ export class ManagedAgentSetup {
       pendingState
     );
 
-    const pendingMcps = await this.listPendingOAuthMcps.execute(listCommand);
-    const card = await buildSetupCardForPendingMcps({
-      pendingMcps,
+    const card = await this.buildSetupCard(mcps, {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       agentIdentifier: command.agentIdentifier,
       subscriberId: command.subscriberId,
       conversationId: command.conversationId,
-      generateMcpOAuthUrl: this.generateMcpOAuthUrl,
-      logger: this.logger,
     });
 
     const baseCommand = this.buildReplyBaseCommand(command);
@@ -274,9 +323,48 @@ export class ManagedAgentSetup {
     );
   }
 
+  private async completeSetupAndReplayForAllPendingConversations(params: {
+    agentId: string;
+    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
+    config: ResolvedAgentConfig;
+    subscriber: SubscriberEntity;
+    mcps: OAuthMcp[];
+  }): Promise<void> {
+    const { agentId, agent, config, subscriber, mcps } = params;
+
+    if (!subscriber.subscriberId) {
+      return;
+    }
+
+    const conversations = await this.conversationRepository.findWithPendingManagedAgentSetup(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      subscriber.subscriberId
+    );
+
+    for (const conversation of conversations) {
+      const pending = conversation.pendingManagedAgentSetup;
+
+      if (!pending) {
+        continue;
+      }
+
+      await this.completeSetupAndReplay({
+        conversation,
+        pending,
+        agent,
+        config,
+        subscriber,
+        mcps,
+      });
+    }
+  }
+
   private async resolveStaleSetupCard(
     command: ManagedAgentSetupInboundCommand,
-    conversation: ConversationEntity
+    conversation: ConversationEntity,
+    mcps: OAuthMcp[]
   ): Promise<void> {
     const setupMessageId = conversation.pendingManagedAgentSetup?.setupMessageId;
 
@@ -284,7 +372,14 @@ export class ManagedAgentSetup {
       return;
     }
 
-    const card = buildSetupCard({ connectActions: [], resolved: true });
+    const card = await this.buildSetupCard(mcps, {
+      resolved: true,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentIdentifier: command.agentIdentifier,
+      subscriberId: command.subscriberId,
+      conversationId: command.conversationId,
+    });
 
     try {
       await this.handleAgentReply.execute(
@@ -310,10 +405,35 @@ export class ManagedAgentSetup {
     );
   }
 
+  private async refreshSetupCardsForPendingConversations(params: {
+    agentId: string;
+    config: ResolvedAgentConfig;
+    subscriber: SubscriberEntity;
+    mcps: OAuthMcp[];
+  }): Promise<void> {
+    const { agentId, config, subscriber, mcps } = params;
+
+    if (!subscriber.subscriberId) {
+      return;
+    }
+
+    const conversations = await this.conversationRepository.findWithPendingManagedAgentSetup(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      subscriber.subscriberId
+    );
+
+    for (const conversation of conversations) {
+      await this.refreshSetupCardForConversation(conversation, config, subscriber, mcps);
+    }
+  }
+
   private async refreshSetupCardForConversation(
     conversation: ConversationEntity,
     config: ResolvedAgentConfig,
-    subscriber: SubscriberEntity
+    subscriber: SubscriberEntity,
+    mcps: OAuthMcp[]
   ): Promise<void> {
     const setupMessageId = conversation.pendingManagedAgentSetup?.setupMessageId;
 
@@ -321,24 +441,12 @@ export class ManagedAgentSetup {
       return;
     }
 
-    const listCommand = ListPendingOAuthMcpsCommand.create({
-      userId: 'system',
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-      agentId: conversation._agentId,
-      subscriberId: subscriber.subscriberId,
-    });
-    const pendingMcps = await this.listPendingOAuthMcps.execute(listCommand);
-
-    const card = await buildSetupCardForPendingMcps({
-      pendingMcps,
+    const card = await this.buildSetupCard(mcps, {
       environmentId: config.environmentId,
       organizationId: config.organizationId,
       agentIdentifier: config.agentIdentifier,
       subscriberId: subscriber.subscriberId,
       conversationId: conversation._id,
-      generateMcpOAuthUrl: this.generateMcpOAuthUrl,
-      logger: this.logger,
     });
 
     await this.handleAgentReply.execute(
@@ -363,11 +471,19 @@ export class ManagedAgentSetup {
     agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
     config: ResolvedAgentConfig;
     subscriber: SubscriberEntity;
+    mcps: OAuthMcp[];
   }): Promise<void> {
-    const { conversation, pending, agent, config, subscriber } = params;
+    const { conversation, pending, agent, config, subscriber, mcps } = params;
 
     if (pending.setupMessageId) {
-      const resolvedCard = buildSetupCard({ connectActions: [], resolved: true });
+      const resolvedCard = await this.buildSetupCard(mcps, {
+        resolved: true,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        agentIdentifier: config.agentIdentifier,
+        subscriberId: subscriber.subscriberId,
+        conversationId: conversation._id,
+      });
 
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
@@ -399,6 +515,30 @@ export class ManagedAgentSetup {
       subscriber,
       pendingPlatformMessageId: pending.pendingPlatformMessageId,
       agent,
+    });
+  }
+
+  private async buildSetupCard(
+    mcps: OAuthMcp[],
+    params: {
+      resolved?: boolean;
+      environmentId: string;
+      organizationId: string;
+      agentIdentifier: string;
+      subscriberId: string;
+      conversationId: string;
+    }
+  ): Promise<Record<string, unknown>> {
+    return buildSetupCardForMcps({
+      mcps,
+      resolved: params.resolved,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      subscriberId: params.subscriberId,
+      conversationId: params.conversationId,
+      generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+      logger: this.logger,
     });
   }
 }

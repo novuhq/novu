@@ -243,6 +243,25 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  async findWithPendingManagedAgentSetup(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    participantId: string,
+    participantType = ConversationParticipantTypeEnum.SUBSCRIBER
+  ): Promise<ConversationEntity[]> {
+    return this.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _agentId: agentId,
+        participants: { $elemMatch: { id: participantId, type: participantType } },
+        pendingManagedAgentSetup: { $exists: true },
+      },
+      '*'
+    );
+  }
+
   async clearExternalSessionIdsForAgent(
     environmentId: string,
     organizationId: string,

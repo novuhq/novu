@@ -1,57 +1,14 @@
 import { PinoLogger } from '@novu/application-generic';
+import { McpConnectionStatusEnum } from '@novu/shared';
 
 import { GenerateMcpOAuthUrlCommand } from '../../generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
-import type { PendingOAuthMcp } from '../list-pending-oauth-mcps/list-pending-oauth-mcps.usecase';
-import { buildSetupCard } from './setup-card.helpers';
+import type { OAuthMcp } from './oauth-mcp.types';
+import { buildSetupCard, type SetupCardRow } from './setup-card.helpers';
 
-export async function buildConnectActionsForPendingMcps(params: {
-  pendingMcps: PendingOAuthMcp[];
-  environmentId: string;
-  organizationId: string;
-  agentIdentifier: string;
-  subscriberId: string;
-  conversationId: string;
-  generateMcpOAuthUrl: GenerateMcpOAuthUrl;
-  logger: PinoLogger;
-}): Promise<{ name: string; authorizeUrl: string }[]> {
-  const actions: { name: string; authorizeUrl: string }[] = [];
-
-  for (const pendingMcp of params.pendingMcps) {
-    try {
-      const result = await params.generateMcpOAuthUrl.execute(
-        GenerateMcpOAuthUrlCommand.create({
-          userId: 'system',
-          environmentId: params.environmentId,
-          organizationId: params.organizationId,
-          agentIdentifier: params.agentIdentifier,
-          mcpId: pendingMcp.mcpId,
-          subscriberId: params.subscriberId,
-          conversationId: params.conversationId,
-        })
-      );
-
-      actions.push({
-        name: pendingMcp.name,
-        authorizeUrl: result.authorizeUrl,
-      });
-    } catch (err) {
-      params.logger.warn(
-        {
-          err: err instanceof Error ? err.message : String(err),
-          mcpId: pendingMcp.mcpId,
-          conversationId: params.conversationId,
-        },
-        'GenerateMcpOAuthUrl failed while building managed-agent setup card'
-      );
-    }
-  }
-
-  return actions;
-}
-
-export async function buildSetupCardForPendingMcps(params: {
-  pendingMcps: PendingOAuthMcp[];
+export async function buildSetupCardForMcps(params: {
+  mcps: OAuthMcp[];
+  resolved?: boolean;
   environmentId: string;
   organizationId: string;
   agentIdentifier: string;
@@ -60,7 +17,42 @@ export async function buildSetupCardForPendingMcps(params: {
   generateMcpOAuthUrl: GenerateMcpOAuthUrl;
   logger: PinoLogger;
 }): Promise<Record<string, unknown>> {
-  const connectActions = await buildConnectActionsForPendingMcps(params);
+  const rows: SetupCardRow[] = [];
 
-  return buildSetupCard({ connectActions });
+  for (const mcp of params.mcps) {
+    if (params.resolved || mcp.status === McpConnectionStatusEnum.Connected) {
+      rows.push(mcp);
+
+      continue;
+    }
+
+    try {
+      const result = await params.generateMcpOAuthUrl.executeForSetupCard(
+        GenerateMcpOAuthUrlCommand.create({
+          userId: 'system',
+          environmentId: params.environmentId,
+          organizationId: params.organizationId,
+          agentIdentifier: params.agentIdentifier,
+          mcpId: mcp.mcpId,
+          subscriberId: params.subscriberId,
+          conversationId: params.conversationId,
+        })
+      );
+
+      rows.push({ ...mcp, authorizeUrl: result.authorizeUrl });
+    } catch (err) {
+      params.logger.warn(
+        {
+          err: err instanceof Error ? err.message : String(err),
+          mcpId: mcp.mcpId,
+          conversationId: params.conversationId,
+        },
+        'GenerateMcpOAuthUrl failed while building managed-agent setup card'
+      );
+
+      rows.push(mcp);
+    }
+  }
+
+  return buildSetupCard({ mcps: rows, resolved: params.resolved });
 }

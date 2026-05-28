@@ -1,41 +1,80 @@
-import type { StoredAttachment } from '../../../services/agent-attachment-storage.service';
+import { McpConnectionStatusEnum } from '@novu/shared';
 
-export function buildSetupCard(params: {
-  connectActions: { name: string; authorizeUrl: string }[];
-  resolved?: boolean;
-}): Record<string, unknown> {
+import type { StoredAttachment } from '../../../services/agent-attachment-storage.service';
+import type { OAuthMcp } from './oauth-mcp.types';
+
+export type SetupCardRow = OAuthMcp & {
+  authorizeUrl?: string;
+};
+
+const SETUP_REQUIRED_TEXT =
+  'Connect the tools below to continue. Your message will be handled automatically once setup is complete.';
+
+const SETUP_COMPLETE_TEXT = 'All tools connected. Working on your message…';
+
+function isErrorStatus(status: OAuthMcp['status']): boolean {
+  return (
+    status === McpConnectionStatusEnum.Error ||
+    status === McpConnectionStatusEnum.Expired ||
+    status === McpConnectionStatusEnum.Revoked
+  );
+}
+
+function buildConnectedRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
+  return [{ type: 'text', content: `**${mcp.name}**  ✅` }];
+}
+
+function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
+  const blocks: Record<string, unknown>[] = [{ type: 'text', content: `**${mcp.name}**` }];
+
+  if (isErrorStatus(mcp.status) && mcp.errorMessage) {
+    blocks.push({ type: 'text', content: mcp.errorMessage, style: 'muted' });
+  }
+
+  if (mcp.authorizeUrl) {
+    blocks.push({
+      type: 'actions',
+      children: [
+        {
+          type: 'link-button',
+          label: isErrorStatus(mcp.status) ? 'Retry' : 'Connect',
+          url: mcp.authorizeUrl,
+          style: 'primary',
+        },
+      ],
+    });
+  }
+
+  return blocks;
+}
+
+function buildMcpRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
+  if (mcp.status === McpConnectionStatusEnum.Connected) {
+    return buildConnectedRowBlocks(mcp);
+  }
+
+  return buildPendingRowBlocks(mcp);
+}
+
+export function buildSetupCard(params: { mcps: SetupCardRow[]; resolved?: boolean }): Record<string, unknown> {
+  const title = params.resolved ? 'Setup complete' : 'Connect your tools';
+
   if (params.resolved) {
     return {
       type: 'card',
-      children: [
-        {
-          type: 'text',
-          content: 'All set — your integrations are connected. Working on your request…',
-        },
-      ],
+      title,
+      children: [{ type: 'text', content: SETUP_COMPLETE_TEXT }],
     };
   }
 
-  const children: Record<string, unknown>[] = [
-    {
-      type: 'text',
-      content:
-        'Connect the integrations below to use this agent. Once they are connected, I will handle your message — no need to retype it.',
-    },
-    { type: 'divider' },
-    {
-      type: 'actions',
-      children: params.connectActions.map((action) => ({
-        type: 'link-button',
-        label: `Connect ${action.name}`,
-        url: action.authorizeUrl,
-        style: 'primary',
-      })),
-    },
+  const children = [
+    { type: 'text', content: SETUP_REQUIRED_TEXT },
+    ...params.mcps.flatMap((mcp) => buildMcpRowBlocks(mcp)),
   ];
 
   return {
     type: 'card',
+    title,
     children,
   };
 }

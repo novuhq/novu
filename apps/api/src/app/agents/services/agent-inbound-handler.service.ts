@@ -385,26 +385,6 @@ export class AgentInboundHandler implements OnModuleInit {
         });
     }
 
-    if (config.acknowledgeOnReceived) {
-      const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
-
-      if (supportsTyping) {
-        await thread.startTyping('Thinking...');
-      } else if (isFirstMessage && message.id) {
-        thread
-          .createSentMessageFromMessage(message)
-          .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
-          .catch((err) => {
-            this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
-            captureAgentWarning(err, {
-              component: 'agent-inbound-handler',
-              operation: 'add-ack-reaction',
-              agentId,
-            });
-          });
-      }
-    }
-
     const [subscriber, history] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
@@ -428,12 +408,36 @@ export class AgentInboundHandler implements OnModuleInit {
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
     };
 
-    try {
-      if (agent?.runtime === 'managed' && agent.managedRuntime) {
-        if (await this.isManagedAgentSetupRequired(executionContext, agent._id)) {
-          return;
-        }
+    const isManagedAgent = agent?.runtime === 'managed' && agent.managedRuntime;
 
+    if (isManagedAgent) {
+      if (await this.isManagedAgentSetupRequired(executionContext, agent._id)) {
+        return;
+      }
+    }
+
+    if (config.acknowledgeOnReceived) {
+      const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
+
+      if (supportsTyping) {
+        await thread.startTyping('Thinking...');
+      } else if (isFirstMessage && message.id) {
+        thread
+          .createSentMessageFromMessage(message)
+          .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
+          .catch((err) => {
+            this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
+            captureAgentWarning(err, {
+              component: 'agent-inbound-handler',
+              operation: 'add-ack-reaction',
+              agentId,
+            });
+          });
+      }
+    }
+
+    try {
+      if (isManagedAgent) {
         await this.managedAgentService.dispatch(executionContext, agent);
       } else {
         await this.bridgeExecutor.execute({
