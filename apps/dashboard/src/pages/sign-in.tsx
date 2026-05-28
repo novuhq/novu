@@ -89,11 +89,10 @@ export const SignInPage = () => {
   // Already-signed-in user landing on `/auth/sign-in` — bounce to the right home before the
   // <SignIn/> form mounts and starts its own redirect (which would race this effect).
   //
-  // For Connect flows we deliberately drop any inbound `redirect_url` and always go to the
-  // clean provision entry point. The Connect host shares Clerk session cookies with primary
-  // via the registrable domain, so it loads signed-in directly — no handshake params to
-  // forward. Honoring a stale return URL is what caused the Platform ↔ Connect redirect loop
-  // after the post-PR-11281 follow-ups, so we keep it stripped.
+  // For Connect flows we always go to the clean provision entry point. The Connect host shares
+  // Clerk session cookies with primary via the registrable domain, so it loads signed-in from a
+  // plain navigation. Inbound `redirect_url` is dropped so a stale return URL can't strand the
+  // user.
   // CLI auth is the exception: the device session must resume on `/cli/auth` after sign-in.
   useEffect(() => {
     if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || hasRedirectedRef.current) {

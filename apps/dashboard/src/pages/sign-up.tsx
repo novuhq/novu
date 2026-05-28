@@ -69,10 +69,9 @@ export const SignUpPage = () => {
   }, []);
 
   // Already-signed-in user landing on `/auth/sign-up` with Connect intent — hand off to Connect
-  // immediately. We deliberately drop any inbound `redirect_url` and always go to the clean
-  // provision entry point. The Connect host shares Clerk session cookies with primary via the
-  // registrable domain, so it loads signed-in directly — no handshake params to forward.
-  // Honoring a stale return URL is what caused the redirect loop in earlier iterations.
+  // immediately. The Connect host shares Clerk session cookies with primary via the registrable
+  // domain, so it loads signed-in from a plain navigation. Inbound `redirect_url` is dropped and
+  // we always go to the clean provision entry point so a stale return URL can't strand the user.
   // CLI auth resumes through pending session storage after org provisioning completes.
   useEffect(() => {
     if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || hasRedirectedRef.current) {

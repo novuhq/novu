@@ -28,7 +28,7 @@ export function HostnameGuard({ children }: HostnameGuardProps) {
     const url = `${window.location.protocol}//${NOVU_CONNECT_HOSTNAME}${location.pathname}${location.search}${location.hash}`;
 
     // Plain cross-origin replace — Clerk session cookies are scoped to the shared registrable
-    // domain, so the destination page reads the existing session natively (no handshake needed).
+    // domain, so the destination page reads the existing session natively.
     window.location.replace(url);
   }, [shouldRedirectCrossOrigin, location.pathname, location.search, location.hash]);
 

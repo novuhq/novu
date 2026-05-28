@@ -72,15 +72,10 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     }
   };
 
-  // Sign-in/up forms only render on the primary; the Connect host bounces visitors back to it.
-  // We deliberately do NOT use Clerk's satellite-domain mode (`isSatellite` / `satelliteAutoSync`).
-  // Satellite mode runs a cross-domain handshake whose `__client_uat_<HASH>` cookies get scoped
-  // to the shared registrable domain — when primary and satellite live under the same root, the
-  // satellite Frontend API's response clobbers the primary's session cookie and produces a
-  // sign-in ↔ Connect redirect loop. Instead, we rely on Clerk's recommended "same root domain"
-  // setup: primary writes session cookies on `Domain=<root>` and the Connect host reads them
-  // natively. Cross-product CORS is granted by adding the Connect host under "Allowed subdomains"
-  // in the Clerk instance config.
+  // Sign-in/up only renders on the primary; the Connect host bounces visitors there. Primary
+  // writes Clerk session cookies on `Domain=<registrable-root>` so both hosts read the same
+  // session natively — the Connect host just needs to be listed under "Allowed subdomains" in
+  // the Clerk instance config.
   const isCrossProductHost = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
 
   const signInUrl = isCrossProductHost

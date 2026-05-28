@@ -12,9 +12,8 @@ type CrossAppLinkProps = {
 };
 
 // Hands off to the browser for cross-origin hrefs. Primary and Connect share Clerk session
-// cookies via the registrable domain, so the destination page picks up the session natively —
-// no SDK handshake involved. Avoid `clerk.redirectWithAuth` here (it short-circuits the cookie
-// scope and produced a `__clerk_synced=false` redirect loop in earlier satellite-mode setups).
+// cookies via the registrable domain, so the destination page picks up the session natively
+// from a plain navigation.
 export function CrossAppLink({ href, openInNewTab, className, onClick, children, ...rest }: CrossAppLinkProps) {
   const isHrefSafe = isSafeNavigationHref(href);
   const isCrossOrigin = isHrefSafe && IS_HOSTNAME_SPLIT_ENABLED && isAbsoluteUrl(href);
