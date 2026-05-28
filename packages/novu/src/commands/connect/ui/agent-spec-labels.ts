@@ -10,9 +10,6 @@ const TOOL_LABELS = new Map(CLAUDE_BUILTIN_TOOLS.map((tool) => [tool.type, tool.
 const MCP_LABELS = new Map(MCP_SERVERS.map((server) => [server.id, server.name]));
 const SKILL_LABELS = new Map(CLAUDE_ANTHROPIC_SKILLS.map((skill) => [skill.skillId, skill.name]));
 
-export const MAX_PREVIEW_MCP_SERVERS = 5;
-export const MAX_PREVIEW_SKILLS = 4;
-
 export type CatalogSelectOption = {
   label: string;
   value: string;
@@ -57,50 +54,6 @@ export function slugifyAgentIdentifier(name: string): string {
   const slug = slugify(name.trim());
 
   return slug.slice(0, 60) || 'agent';
-}
-
-export function validateEditedAgentSpec(spec: GeneratedAgentSpec): string | null {
-  const name = spec.name.trim();
-  const identifier = spec.identifier.trim();
-  const systemPrompt = spec.systemPrompt.trim();
-
-  if (!name) {
-    return 'Agent name is required.';
-  }
-
-  if (name.length > 60) {
-    return 'Agent name must be 60 characters or fewer.';
-  }
-
-  if (!identifier) {
-    return 'Agent identifier is required.';
-  }
-
-  if (!/^[a-z0-9-]+$/.test(identifier)) {
-    return 'Identifier must be lowercase letters, numbers, and dashes only.';
-  }
-
-  if (identifier.length > 60) {
-    return 'Identifier must be 60 characters or fewer.';
-  }
-
-  if (!systemPrompt) {
-    return 'System prompt is required.';
-  }
-
-  if (systemPrompt.length > 4000) {
-    return 'System prompt must be 4000 characters or fewer.';
-  }
-
-  if (spec.mcpServers.length > MAX_PREVIEW_MCP_SERVERS) {
-    return `Select at most ${MAX_PREVIEW_MCP_SERVERS} MCP servers.`;
-  }
-
-  if (spec.skills.length > MAX_PREVIEW_SKILLS) {
-    return `Select at most ${MAX_PREVIEW_SKILLS} skills.`;
-  }
-
-  return null;
 }
 
 export function wrapPreviewLines(text: string, maxWidth: number, maxLines: number): { lines: string[]; truncated: boolean } {

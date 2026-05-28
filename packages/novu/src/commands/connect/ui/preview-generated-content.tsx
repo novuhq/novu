@@ -1,54 +1,32 @@
 import { MultiSelect, TextInput } from '@inkjs/ui';
+import { validateManagedAgentSpec, MAX_GENERATED_MCP_SERVERS, MAX_GENERATED_SKILLS } from '@novu/shared';
 import { Box, Text, useInput, useStdout } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
+import { wrapPreviewLines } from './agent-spec-labels';
 import {
-  buildMcpSelectOptions,
-  buildSkillSelectOptions,
-  buildToolSelectOptions,
-  formatCapabilitySummary,
-  MAX_PREVIEW_MCP_SERVERS,
-  MAX_PREVIEW_SKILLS,
-  resolveGeneratedAgentSpecLabels,
-  slugifyAgentIdentifier,
-  validateEditedAgentSpec,
-  wrapPreviewLines,
-} from './agent-spec-labels';
+  applyPreviewMultiEdit,
+  applyPreviewTextEdit,
+  getPreviewFieldLabel,
+  PREVIEW_CREATE_ROW_INDEX,
+  PREVIEW_FIELD_LABEL_WIDTH,
+  PREVIEW_FIELD_ROWS,
+  readPreviewFieldValue,
+  readPreviewMultiDefaultValue,
+  readPreviewMultiOptions,
+  readPreviewTextDefaultValue,
+  readPreviewTextPlaceholder,
+  type PreviewFieldRow,
+  type PreviewMultiFieldId,
+  type PreviewTextFieldId,
+} from './preview-field-config';
 import type { GeneratedAgentPreviewResult } from './ui';
 
-type PreviewTextFieldId = 'name' | 'identifier' | 'systemPrompt';
-type PreviewMultiFieldId = 'tools' | 'mcpServers' | 'skills';
-
-type PreviewRow =
-  | { id: PreviewTextFieldId; kind: 'text'; label: string }
-  | { id: PreviewMultiFieldId; kind: 'multi'; label: string }
-  | { id: 'create' | 'regenerate'; kind: 'action'; label: string; hint?: string };
-
-type PreviewMode = 'browse' | 'edit-text' | 'edit-multi';
-
-const PREVIEW_ROWS: PreviewRow[] = [
-  { id: 'name', kind: 'text', label: 'Name' },
-  { id: 'identifier', kind: 'text', label: 'Identifier' },
-  { id: 'systemPrompt', kind: 'text', label: 'System prompt' },
-  { id: 'tools', kind: 'multi', label: 'Tools' },
-  { id: 'mcpServers', kind: 'multi', label: 'MCP' },
-  { id: 'skills', kind: 'multi', label: 'Skills' },
-  { id: 'create', kind: 'action', label: 'Create this agent', hint: '→' },
-  { id: 'regenerate', kind: 'action', label: 'Regenerate from description', hint: '↺' },
-];
-
-const CREATE_ROW_INDEX = PREVIEW_ROWS.findIndex((row) => row.id === 'create');
-
-const FIELD_LABEL_WIDTH = 15;
-
-function isPreviewTextFieldId(id: PreviewRow['id']): id is PreviewTextFieldId {
-  return id === 'name' || id === 'identifier' || id === 'systemPrompt';
-}
-
-function isPreviewMultiFieldId(id: PreviewRow['id']): id is PreviewMultiFieldId {
-  return id === 'tools' || id === 'mcpServers' || id === 'skills';
-}
+type PreviewUiState =
+  | { kind: 'browse'; focusIdx: number }
+  | { kind: 'edit-text'; fieldId: PreviewTextFieldId }
+  | { kind: 'edit-multi'; fieldId: PreviewMultiFieldId };
 
 export function PreviewGeneratedContent({
   spec,
@@ -63,40 +41,56 @@ export function PreviewGeneratedContent({
   const contentWidth = Math.max(48, Math.min(72, stdout.columns - 6));
   const [draft, setDraft] = React.useState<GeneratedAgentSpec>(() => cloneSpec(spec));
   const [identifierTouched, setIdentifierTouched] = React.useState(false);
-  const [focusIdx, setFocusIdx] = React.useState(CREATE_ROW_INDEX);
-  const [mode, setMode] = React.useState<PreviewMode>('browse');
-  const [editRowId, setEditRowId] = React.useState<PreviewRow['id'] | null>(null);
+  const [uiState, setUiState] = React.useState<PreviewUiState>({
+    kind: 'browse',
+    focusIdx: PREVIEW_CREATE_ROW_INDEX,
+  });
   const [validationError, setValidationError] = React.useState<string | null>(null);
 
-  const labels = React.useMemo(() => resolveGeneratedAgentSpecLabels(draft), [draft]);
-  const focusedRow = PREVIEW_ROWS[focusIdx];
+  const focusedRow = uiState.kind === 'browse' ? PREVIEW_FIELD_ROWS[uiState.focusIdx] : null;
 
   React.useEffect(() => {
     setDraft(cloneSpec(spec));
     setIdentifierTouched(false);
-    setFocusIdx(CREATE_ROW_INDEX);
-    setMode('browse');
-    setEditRowId(null);
+    setUiState({ kind: 'browse', focusIdx: PREVIEW_CREATE_ROW_INDEX });
     setValidationError(null);
   }, [spec]);
 
   useInput((_input, key) => {
-    if (!morphComplete || mode !== 'browse') {
+    if (!morphComplete || uiState.kind !== 'browse' || !focusedRow) {
       return;
     }
 
     if (key.upArrow) {
-      setFocusIdx((current) => (current - 1 + PREVIEW_ROWS.length) % PREVIEW_ROWS.length);
+      setUiState((current) => {
+        if (current.kind !== 'browse') {
+          return current;
+        }
+
+        return {
+          kind: 'browse',
+          focusIdx: (current.focusIdx - 1 + PREVIEW_FIELD_ROWS.length) % PREVIEW_FIELD_ROWS.length,
+        };
+      });
       setValidationError(null);
     } else if (key.downArrow) {
-      setFocusIdx((current) => (current + 1) % PREVIEW_ROWS.length);
+      setUiState((current) => {
+        if (current.kind !== 'browse') {
+          return current;
+        }
+
+        return {
+          kind: 'browse',
+          focusIdx: (current.focusIdx + 1) % PREVIEW_FIELD_ROWS.length,
+        };
+      });
       setValidationError(null);
-    } else if (key.return || _input === ' ') {
+    } else if (key.return) {
       handleBrowseActivate(focusedRow);
     }
   });
 
-  function handleBrowseActivate(row: PreviewRow): void {
+  function handleBrowseActivate(row: PreviewFieldRow): void {
     if (row.kind === 'action') {
       if (row.id === 'create') {
         confirmDraft();
@@ -110,13 +104,16 @@ export function PreviewGeneratedContent({
     }
 
     setValidationError(null);
-    setEditRowId(row.id);
-    setMode(row.kind === 'text' ? 'edit-text' : 'edit-multi');
+    setUiState(
+      row.kind === 'text'
+        ? { kind: 'edit-text', fieldId: row.id }
+        : { kind: 'edit-multi', fieldId: row.id }
+    );
   }
 
   function confirmDraft(): void {
     const normalized = normalizeDraft(draft);
-    const error = validateEditedAgentSpec(normalized);
+    const error = validateManagedAgentSpec(normalized);
 
     if (error) {
       setValidationError(error);
@@ -127,72 +124,51 @@ export function PreviewGeneratedContent({
     onResolve({ action: 'confirm', spec: normalized });
   }
 
-  function updateDraft(next: GeneratedAgentSpec): void {
-    setDraft(next);
-    setValidationError(null);
-  }
-
   function finishTextEdit(value: string): void {
-    const trimmed = value.trim();
+    setDraft((current) => {
+      if (uiState.kind !== 'edit-text') {
+        return current;
+      }
 
-    if (editRowId === 'name') {
-      updateDraft({
-        ...draft,
-        name: trimmed,
-        identifier: identifierTouched ? draft.identifier : slugifyAgentIdentifier(trimmed),
-      });
-    } else if (editRowId === 'identifier') {
-      setIdentifierTouched(true);
-      updateDraft({
-        ...draft,
-        identifier: slugifyAgentIdentifier(trimmed),
-      });
-    } else if (editRowId === 'systemPrompt') {
-      updateDraft({
-        ...draft,
-        systemPrompt: value.trimEnd(),
-      });
-    }
+      const result = applyPreviewTextEdit(uiState.fieldId, current, value, identifierTouched);
 
-    setMode('browse');
-    setEditRowId(null);
-    setFocusIdx(CREATE_ROW_INDEX);
+      if (result.identifierTouched) {
+        setIdentifierTouched(true);
+      }
+
+      return result.draft;
+    });
+    setValidationError(null);
+    setUiState({ kind: 'browse', focusIdx: PREVIEW_CREATE_ROW_INDEX });
   }
 
   function finishMultiEdit(values: string[]): void {
-    if (editRowId === 'tools') {
-      updateDraft({ ...draft, tools: values });
-    } else if (editRowId === 'mcpServers') {
-      if (values.length > MAX_PREVIEW_MCP_SERVERS) {
-        setValidationError(`Select at most ${MAX_PREVIEW_MCP_SERVERS} MCP servers.`);
-
-        return;
-      }
-
-      updateDraft({ ...draft, mcpServers: values });
-    } else if (editRowId === 'skills') {
-      if (values.length > MAX_PREVIEW_SKILLS) {
-        setValidationError(`Select at most ${MAX_PREVIEW_SKILLS} skills.`);
-
-        return;
-      }
-
-      updateDraft({
-        ...draft,
-        skills: values.map((skillId) => ({ skillId })),
-      });
+    if (uiState.kind !== 'edit-multi') {
+      return;
     }
 
-    setMode('browse');
-    setEditRowId(null);
-    setFocusIdx(CREATE_ROW_INDEX);
+    const fieldId = uiState.fieldId;
+
+    if (fieldId === 'mcpServers' && values.length > MAX_GENERATED_MCP_SERVERS) {
+      setValidationError(`Select at most ${MAX_GENERATED_MCP_SERVERS} MCP servers.`);
+
+      return;
+    }
+
+    if (fieldId === 'skills' && values.length > MAX_GENERATED_SKILLS) {
+      setValidationError(`Select at most ${MAX_GENERATED_SKILLS} skills.`);
+
+      return;
+    }
+
+    setDraft((current) => applyPreviewMultiEdit(fieldId, current, values));
+    setValidationError(null);
+    setUiState({ kind: 'browse', focusIdx: PREVIEW_CREATE_ROW_INDEX });
   }
 
   function cancelEdit(): void {
-    setMode('browse');
-    setEditRowId(null);
+    setUiState({ kind: 'browse', focusIdx: PREVIEW_CREATE_ROW_INDEX });
     setValidationError(null);
-    setFocusIdx(CREATE_ROW_INDEX);
   }
 
   if (!morphComplete) {
@@ -203,10 +179,10 @@ export function PreviewGeneratedContent({
     );
   }
 
-  if (mode === 'edit-text' && editRowId && isPreviewTextFieldId(editRowId)) {
+  if (uiState.kind === 'edit-text') {
     return (
       <PreviewTextEditor
-        rowId={editRowId}
+        fieldId={uiState.fieldId}
         draft={draft}
         contentWidth={contentWidth}
         onSubmit={finishTextEdit}
@@ -215,10 +191,10 @@ export function PreviewGeneratedContent({
     );
   }
 
-  if (mode === 'edit-multi' && editRowId && isPreviewMultiFieldId(editRowId)) {
+  if (uiState.kind === 'edit-multi') {
     return (
       <PreviewMultiEditor
-        rowId={editRowId}
+        fieldId={uiState.fieldId}
         draft={draft}
         contentWidth={contentWidth}
         onSubmit={finishMultiEdit}
@@ -228,7 +204,7 @@ export function PreviewGeneratedContent({
     );
   }
 
-  const promptPreview = wrapPreviewLines(draft.systemPrompt, contentWidth - FIELD_LABEL_WIDTH - 2, 3);
+  const promptPreview = wrapPreviewLines(draft.systemPrompt, contentWidth - PREVIEW_FIELD_LABEL_WIDTH - 2, 3);
 
   return (
     <Box flexDirection="column" gap={1} width={contentWidth} alignItems="flex-start">
@@ -238,12 +214,12 @@ export function PreviewGeneratedContent({
       <Text dimColor>↑ adjust fields · Enter to create</Text>
 
       <Box flexDirection="column" alignItems="flex-start">
-        {PREVIEW_ROWS.map((row, index) => {
-          const isFocused = index === focusIdx;
+        {PREVIEW_FIELD_ROWS.map((row, index) => {
+          const isFocused = index === uiState.focusIdx;
           const isPrimaryAction = row.id === 'create';
 
           if (row.kind === 'action') {
-            const showActionDivider = index === CREATE_ROW_INDEX;
+            const showActionDivider = index === PREVIEW_CREATE_ROW_INDEX;
 
             return (
               <Box key={row.id} flexDirection="column" alignItems="flex-start" marginTop={showActionDivider ? 1 : 0}>
@@ -287,15 +263,7 @@ export function PreviewGeneratedContent({
             );
           }
 
-          const value = (() => {
-            if (row.id === 'name') return draft.name;
-            if (row.id === 'identifier') return draft.identifier;
-            if (row.id === 'tools') return formatCapabilitySummary(labels.tools);
-            if (row.id === 'mcpServers') return formatCapabilitySummary(labels.mcpServers);
-            if (row.id === 'skills') return formatCapabilitySummary(labels.skills);
-
-            return row.label;
-          })();
+          const value = readPreviewFieldValue(row.id, draft);
 
           return (
             <PreviewFieldRow key={row.id} label={row.label} value={value} focused={isFocused} />
@@ -329,38 +297,28 @@ function PreviewFieldRow({
   return (
     <Text wrap="truncate">
       <Text color={focused ? 'cyan' : undefined}>{focused ? '› ' : '  '}</Text>
-      <Text color={focused ? 'cyan' : undefined}>{`${label.padEnd(FIELD_LABEL_WIDTH)}`}</Text>
+      <Text color={focused ? 'cyan' : undefined}>{`${label.padEnd(PREVIEW_FIELD_LABEL_WIDTH)}`}</Text>
       <Text dimColor={!focused}>{value}</Text>
     </Text>
   );
 }
 
 function PreviewTextEditor({
-  rowId,
+  fieldId,
   draft,
   contentWidth,
   onSubmit,
   onCancel,
 }: {
-  rowId: PreviewTextFieldId;
+  fieldId: PreviewTextFieldId;
   draft: GeneratedAgentSpec;
   contentWidth: number;
   onSubmit: (value: string) => void;
   onCancel: () => void;
 }): React.ReactElement {
-  const title = PREVIEW_ROWS.find((row) => row.id === rowId)?.label ?? 'Field';
-  const defaultValue = (() => {
-    if (rowId === 'name') return draft.name;
-    if (rowId === 'identifier') return draft.identifier;
-
-    return draft.systemPrompt;
-  })();
-  const placeholder = (() => {
-    if (rowId === 'name') return 'Customer Support Agent';
-    if (rowId === 'identifier') return 'customer-support-agent';
-
-    return 'You are a helpful agent that…';
-  })();
+  const title = getPreviewFieldLabel(fieldId);
+  const defaultValue = readPreviewTextDefaultValue(fieldId, draft);
+  const placeholder = readPreviewTextPlaceholder(fieldId);
 
   useInput((_input, key) => {
     if (key.escape) {
@@ -375,42 +333,32 @@ function PreviewTextEditor({
       <Box borderStyle="round" borderColor="#c084fc" paddingX={1} width={contentWidth - 2}>
         <TextInput defaultValue={defaultValue} placeholder={placeholder} onSubmit={onSubmit} />
       </Box>
-      {rowId === 'identifier' ? <Text dimColor>Lowercase kebab-case · synced from name until you edit it.</Text> : null}
+      {fieldId === 'identifier' ? <Text dimColor>Lowercase kebab-case · synced from name until you edit it.</Text> : null}
     </Box>
   );
 }
 
 function PreviewMultiEditor({
-  rowId,
+  fieldId,
   draft,
   contentWidth,
   onSubmit,
   onCancel,
   validationError,
 }: {
-  rowId: PreviewMultiFieldId;
+  fieldId: PreviewMultiFieldId;
   draft: GeneratedAgentSpec;
   contentWidth: number;
   onSubmit: (values: string[]) => void;
   onCancel: () => void;
   validationError: string | null;
 }): React.ReactElement {
-  const title = PREVIEW_ROWS.find((row) => row.id === rowId)?.label ?? 'Selection';
-  const options = (() => {
-    if (rowId === 'tools') return buildToolSelectOptions();
-    if (rowId === 'mcpServers') return buildMcpSelectOptions();
-
-    return buildSkillSelectOptions();
-  })();
-  const defaultValue = (() => {
-    if (rowId === 'tools') return draft.tools;
-    if (rowId === 'mcpServers') return draft.mcpServers;
-
-    return draft.skills.map((skill) => skill.skillId);
-  })();
+  const title = getPreviewFieldLabel(fieldId);
+  const options = readPreviewMultiOptions(fieldId);
+  const defaultValue = readPreviewMultiDefaultValue(fieldId, draft);
   const limitHint = (() => {
-    if (rowId === 'mcpServers') return `Select up to ${MAX_PREVIEW_MCP_SERVERS}.`;
-    if (rowId === 'skills') return `Select up to ${MAX_PREVIEW_SKILLS}.`;
+    if (fieldId === 'mcpServers') return `Select up to ${MAX_GENERATED_MCP_SERVERS}.`;
+    if (fieldId === 'skills') return `Select up to ${MAX_GENERATED_SKILLS}.`;
 
     return 'Toggle with space · Enter when done.';
   })();
