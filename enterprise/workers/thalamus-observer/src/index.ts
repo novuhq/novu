@@ -222,6 +222,7 @@ export class SessionObserver extends Agent<Env, State> {
 
     const acc = parser.createAccumulator();
     let sequence = this.getNextSequence(params.sessionId);
+    let pauseWebhookSent = false;
 
     for await (const sseEvent of eventStream) {
       if (signal.aborted) break;
@@ -244,35 +245,69 @@ export class SessionObserver extends Agent<Env, State> {
 
       if (acc.done) {
         if (acc.finishReason === 'requires-action') {
-          const content = this.reconstructContent(params.sessionId);
-          const intermediateFinish: StreamPart = {
-            type: 'finish',
-            response: { ...acc.toResponse(params.sessionId), content },
-          };
-          this.persistEvent(params.sessionId, sequence++, intermediateFinish);
-          this.triggerDelivery(params);
-          acc.done = false;
-          acc.finishReason = 'stop';
-          acc.actionsRequired = [];
-        } else {
-          break;
+          sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
+          pauseWebhookSent = true;
         }
+
+        // One requires-action webhook per observe run. User approval starts a fresh
+        // observe via startObserving(); continuing this SSE caused duplicate pause
+        // webhooks when Anthropic emitted multiple session.status_idle events.
+        break;
       }
     }
 
-    if (acc.done) {
-      const content = this.reconstructContent(params.sessionId);
-      const finish: StreamPart = {
-        type: 'finish',
-        response: { ...acc.toResponse(params.sessionId), content },
-      };
-      this.persistEvent(params.sessionId, sequence++, finish);
-      this.triggerDelivery(params);
+    // acc.done stays true after the break above — do not persist a second finish.
+    if (acc.done && !pauseWebhookSent) {
+      sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
+      this.finalizeObservation(params, signal, 'terminal-complete');
+    } else if (pauseWebhookSent) {
+      this.finalizeObservation(params, signal, 'pause-complete');
+    } else {
+      this.finalizeObservation(params, signal, 'stream-error');
+    }
+  }
+
+  private emitFinishWebhook(
+    params: ObservationParams,
+    sessionId: string,
+    sequence: number,
+    acc: EdgeAccumulator
+  ): number {
+    const content = this.reconstructContent(sessionId);
+    const finish: StreamPart = {
+      type: 'finish',
+      response: { ...acc.toResponse(sessionId), content },
+    };
+    this.persistEvent(sessionId, sequence, finish);
+    this.triggerDelivery(params);
+
+    return sequence + 1;
+  }
+
+  private finalizeObservation(
+    params: ObservationParams,
+    signal: AbortSignal,
+    endState: 'terminal-complete' | 'pause-complete' | 'stream-error'
+  ): void {
+    if (endState === 'terminal-complete') {
       this.updateObservation({
         ...this.state.observation!,
         status: 'completed',
       });
-    } else if (!signal.aborted) {
+
+      return;
+    }
+
+    if (endState === 'pause-complete') {
+      this.updateObservation({
+        ...(this.state.observation ?? params),
+        status: 'completed',
+      });
+
+      return;
+    }
+
+    if (!signal.aborted) {
       this.updateObservation({
         ...(this.state.observation ?? params),
         status: 'error',
@@ -407,9 +442,10 @@ export class SessionObserver extends Agent<Env, State> {
             return;
           }
           if (event.type === 'finish') {
-            const isIntermediate =
+            const isPauseWebhook =
               (event as { response?: { finishReason?: string } }).response?.finishReason === 'requires-action';
-            if (isIntermediate) {
+            if (isPauseWebhook) {
+              // Pause is not terminal — the next user approval starts a new observe run.
               this.markDelivered(row.id);
 
               continue;
