@@ -25,7 +25,7 @@ import { ListAgentEmoji } from './list-agent-emoji/list-agent-emoji.usecase';
 import { ListAgentIntegrations } from './list-agent-integrations/list-agent-integrations.usecase';
 import { ListAgentMcpServers } from './list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { ListAgents } from './list-agents/list-agents.usecase';
-import { ManagedAgentSetup } from './managed-agent-setup/managed-agent-setup/managed-agent-setup.usecase';
+import { ManagedAgentSetup } from './managed-agent-setup/managed-agent-setup.usecase';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { MigrateAgentRuntime } from './migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { ProvisionManagedAgent } from './provision-managed-agent/provision-managed-agent.usecase';

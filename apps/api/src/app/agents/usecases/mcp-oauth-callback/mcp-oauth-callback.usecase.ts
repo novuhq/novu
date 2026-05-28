@@ -35,8 +35,8 @@ import {
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
 import { GetMcpNovuAppCredentials } from '../get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
-import { ManagedAgentSetup } from '../managed-agent-setup/managed-agent-setup/managed-agent-setup.usecase';
-import { ManagedAgentSetupCompleteCommand } from '../managed-agent-setup/managed-agent-setup/managed-agent-setup-complete.command';
+import { ManagedAgentSetup } from '../managed-agent-setup/managed-agent-setup.usecase';
+import { ManagedAgentSetupCompleteCommand } from '../managed-agent-setup/managed-agent-setup-complete.command';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oauth-callback.command';

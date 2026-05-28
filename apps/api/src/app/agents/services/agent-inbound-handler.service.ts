@@ -26,8 +26,8 @@ import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/hand
 import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
-import { ManagedAgentSetup } from '../usecases/managed-agent-setup/managed-agent-setup/managed-agent-setup.usecase';
-import { ManagedAgentSetupInboundCommand } from '../usecases/managed-agent-setup/managed-agent-setup/managed-agent-setup-inbound.command';
+import { ManagedAgentSetup } from '../usecases/managed-agent-setup/managed-agent-setup.usecase';
+import { ManagedAgentSetupInboundCommand } from '../usecases/managed-agent-setup/managed-agent-setup-inbound.command';
 import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';

@@ -14,11 +14,11 @@ import {
 } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionStatusEnum } from '@novu/shared';
 
-import { AgentConfigResolver, type ResolvedAgentConfig } from '../../../services/agent-config-resolver.service';
-import { ManagedAgentService } from '../../../services/managed-agent.service';
-import { GenerateMcpOAuthUrl } from '../../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
-import { HandleAgentReplyCommand } from '../../handle-agent-reply/handle-agent-reply.command';
-import { HandleAgentReply } from '../../handle-agent-reply/handle-agent-reply.usecase';
+import { AgentConfigResolver, type ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
+import { ManagedAgentService } from '../../services/managed-agent.service';
+import { GenerateMcpOAuthUrl } from '../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
+import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';
 import { ManagedAgentSetupCompleteCommand } from './managed-agent-setup-complete.command';
 import { ManagedAgentSetupInboundCommand } from './managed-agent-setup-inbound.command';
 import { isOAuthMcpPending, type OAuthMcp } from './oauth-mcp.types';

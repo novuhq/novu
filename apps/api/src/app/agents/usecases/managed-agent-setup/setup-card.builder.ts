@@ -1,8 +1,8 @@
 import { PinoLogger } from '@novu/application-generic';
 import { McpConnectionStatusEnum } from '@novu/shared';
 
-import { GenerateMcpOAuthUrlCommand } from '../../generate-mcp-oauth-url/generate-mcp-oauth-url.command';
-import { GenerateMcpOAuthUrl } from '../../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
+import { GenerateMcpOAuthUrlCommand } from '../generate-mcp-oauth-url/generate-mcp-oauth-url.command';
+import { GenerateMcpOAuthUrl } from '../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import type { OAuthMcp } from './oauth-mcp.types';
 import { buildSetupCard, type SetupCardRow } from './setup-card.helpers';
 
