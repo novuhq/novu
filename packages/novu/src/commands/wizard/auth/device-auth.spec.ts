@@ -60,7 +60,7 @@ describe('browserDeviceAuth', () => {
         const deviceCode = 'test-device-code';
         store.set(deviceCode, { status: 'pending' });
 
-        return { deviceCode, expiresIn: 300, interval: 0.01 };
+        return { deviceCode, expiresIn: 300, interval: 2 };
       }
 
       const pollMatch = path.match(/^\/cli\/device-sessions\/([^/?]+)\/poll$/);
@@ -88,7 +88,7 @@ describe('browserDeviceAuth', () => {
           };
         }
 
-        return { status: 'pending', expiresIn: 300, interval: 0.01 };
+        return { status: 'pending', expiresIn: 300, interval: 2 };
       }
 
       throw new Error(`Unexpected path: ${path}`);

@@ -45,6 +45,26 @@ redis.call('setex', KEYS[1], ARGV[1], ARGV[2])
 return 1
 `;
 
+/** Return pending without consuming; atomically delete approved sessions on read. */
+const POLL_DEVICE_SESSION_SCRIPT = `
+local v = redis.call('get', KEYS[1])
+if not v then return '' end
+local ok, payload = pcall(cjson.decode, v)
+if not ok then
+  redis.call('del', KEYS[1])
+  return 'CORRUPT'
+end
+if payload.status == 'pending' then
+  return 'PENDING'
+end
+if payload.status == 'approved' and payload.apiKey and payload.environmentId then
+  redis.call('del', KEYS[1])
+  return v
+end
+redis.call('del', KEYS[1])
+return 'CORRUPT'
+`;
+
 @Injectable()
 export class CliDeviceSessionService {
   constructor(
@@ -85,20 +105,13 @@ export class CliDeviceSessionService {
     }
 
     const key = this.cacheKey(deviceCode);
-    const raw = await this.cacheService.get(key);
+    const pollResult = await this.cacheService.eval<string>(POLL_DEVICE_SESSION_SCRIPT, [key], []);
 
-    if (!raw) {
+    if (!pollResult) {
       return { status: 'expired' };
     }
 
-    const record = this.parseRecord(raw);
-    if (!record) {
-      await this.cacheService.del(key);
-
-      return { status: 'expired' };
-    }
-
-    if (record.status === 'pending') {
+    if (pollResult === 'PENDING') {
       return {
         status: 'pending',
         expiresIn: CLI_DEVICE_SESSION_TTL_SECONDS,
@@ -106,13 +119,14 @@ export class CliDeviceSessionService {
       };
     }
 
-    if (record.status !== 'approved' || !record.apiKey || !record.environmentId) {
-      await this.cacheService.del(key);
-
+    if (pollResult === 'CORRUPT') {
       return { status: 'expired' };
     }
 
-    await this.cacheService.del(key);
+    const record = this.parseRecord(pollResult);
+    if (!record || record.status !== 'approved' || !record.apiKey || !record.environmentId) {
+      return { status: 'expired' };
+    }
 
     return {
       status: 'approved',

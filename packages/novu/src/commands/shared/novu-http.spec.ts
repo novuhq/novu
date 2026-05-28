@@ -8,6 +8,10 @@ describe('isLoopbackHost', () => {
     expect(isLoopbackHost('http://127.0.0.1:3000')).toBe(true);
     expect(isLoopbackHost('https://api.novu.co')).toBe(false);
   });
+
+  it('does not treat non-loopback 127.* hostnames as loopback', () => {
+    expect(isLoopbackHost('https://127.attacker.com')).toBe(false);
+  });
 });
 
 describe('unwrapNovuApiData', () => {

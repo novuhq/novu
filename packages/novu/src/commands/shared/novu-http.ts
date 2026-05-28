@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import https from 'node:https';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 
@@ -5,14 +6,19 @@ export function isLoopbackHost(url: string): boolean {
   try {
     const { hostname } = new URL(url);
 
-    return (
-      hostname === 'localhost' ||
-      hostname.endsWith('.localhost') ||
-      hostname === '127.0.0.1' ||
-      hostname.startsWith('127.') ||
-      hostname === '::1' ||
-      hostname === '[::1]'
-    );
+    if (hostname === 'localhost' || hostname.endsWith('.localhost')) {
+      return true;
+    }
+
+    if (hostname === '::1' || hostname === '[::1]') {
+      return true;
+    }
+
+    if (isIP(hostname) === 4) {
+      return hostname.startsWith('127.');
+    }
+
+    return false;
   } catch {
     return false;
   }
@@ -76,14 +82,28 @@ export async function requestApiJson<T>(apiUrl: string, path: string, options: A
       throw new Error(formatApiError(response.status, response.data, `${client.defaults.baseURL}${url}`));
     }
 
-    return unwrapNovuApiData<T>(response.data);
+    try {
+      return unwrapNovuApiData<T>(response.data);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unexpected Novu API response shape';
+
+      throw new Error(`Novu API returned an unexpected response at ${client.defaults.baseURL}${url}: ${message}`);
+    }
   } catch (error) {
-    if (error instanceof Error && (error.message.startsWith('Failed to') || error.message.startsWith('Novu API'))) {
+    if (error instanceof Error && isNovuApiErrorMessage(error.message)) {
       throw error;
     }
 
     throw new Error(formatTransportError(error, `${client.defaults.baseURL}${url}`));
   }
+}
+
+function isNovuApiErrorMessage(message: string): boolean {
+  return (
+    message.startsWith('Failed to reach Novu API') ||
+    message.startsWith('Novu API endpoint not found') ||
+    message.startsWith('Novu API returned an unexpected response')
+  );
 }
 
 function formatApiError(status: number, body: unknown, url: string): string {

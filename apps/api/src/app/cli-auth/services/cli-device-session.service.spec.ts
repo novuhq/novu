@@ -10,7 +10,7 @@ describe('CliDeviceSessionService', () => {
       set: sinon.stub().resolves('OK'),
       get: sinon.stub().resolves(null),
       del: sinon.stub().resolves(1),
-      eval: sinon.stub().resolves(1),
+      eval: sinon.stub().resolves(''),
     };
     const logger = {
       setContext: sinon.stub(),
@@ -38,12 +38,7 @@ describe('CliDeviceSessionService', () => {
 
   it('returns pending while the dashboard has not approved yet', async () => {
     const { service, cacheService } = makeService();
-    cacheService.get.resolves(
-      JSON.stringify({
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      })
-    );
+    cacheService.eval.resolves('PENDING');
 
     const result = await service.poll('device-code');
 
@@ -53,7 +48,7 @@ describe('CliDeviceSessionService', () => {
 
   it('returns approved credentials once and consumes the session', async () => {
     const { service, cacheService } = makeService();
-    cacheService.get.resolves(
+    cacheService.eval.resolves(
       JSON.stringify({
         status: 'approved',
         createdAt: new Date().toISOString(),
@@ -69,7 +64,6 @@ describe('CliDeviceSessionService', () => {
       expect(result.apiKey).to.equal('sk_test');
       expect(result.environmentId).to.equal('env_1');
     }
-    expect(cacheService.del.calledOnce).to.be.true;
   });
 
   it('marks missing sessions as expired', async () => {

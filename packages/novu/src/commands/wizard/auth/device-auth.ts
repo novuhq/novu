@@ -72,7 +72,7 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
       }
     });
 
-    const pollIntervalMs = Math.max(10, session.interval * 1000);
+    const pollIntervalMs = resolvePollIntervalMs(session.interval);
     const approved = await pollUntilApproved({
       apiUrl: input.apiUrl,
       deviceCode: session.deviceCode,
@@ -104,11 +104,19 @@ async function createDeviceSession(apiUrl: string, name?: string): Promise<Creat
     body: { name },
   });
 
-  if (!payload?.deviceCode) {
+  if (!payload?.deviceCode || !Number.isFinite(payload.interval) || payload.interval < 1) {
     throw new Error('CLI authorization session response is incomplete');
   }
 
   return payload;
+}
+
+function resolvePollIntervalMs(interval: number): number {
+  if (!Number.isFinite(interval) || interval < 1) {
+    throw new Error('CLI authorization session response is incomplete');
+  }
+
+  return interval * 1000;
 }
 
 async function pollUntilApproved(params: {
@@ -122,7 +130,7 @@ async function pollUntilApproved(params: {
   while (Date.now() < deadline) {
     const payload = await requestApiJson<CliDeviceSessionPollResponse>(
       params.apiUrl,
-      `/cli/device-sessions/${params.deviceCode}/poll`,
+      `/cli/device-sessions/${encodeURIComponent(params.deviceCode)}/poll`,
       { method: 'POST' }
     );
 
