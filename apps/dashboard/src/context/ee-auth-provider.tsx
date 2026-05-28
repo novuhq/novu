@@ -73,9 +73,8 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   };
 
   // Sign-in/up only renders on the primary; the Connect host bounces visitors there. Primary
-  // writes Clerk session cookies on `Domain=<registrable-root>` so both hosts read the same
-  // session natively — the Connect host just needs to be listed under "Allowed subdomains" in
-  // the Clerk instance config.
+  // writes Clerk session cookies on `Domain=<registrable-root>`, so both hosts read the same
+  // session natively from a plain navigation — no Clerk-side configuration needed.
   const isCrossProductHost = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
 
   const signInUrl = isCrossProductHost
