@@ -237,14 +237,21 @@ export class CompleteManagedAgentSetup {
         continue;
       }
 
-      await this.completeAndReplay({
-        conversation,
-        pending,
-        agent,
-        config,
-        subscriber,
-        mcps,
-      });
+      try {
+        await this.completeAndReplay({
+          conversation,
+          pending,
+          agent,
+          config,
+          subscriber,
+          mcps,
+        });
+      } catch (err) {
+        this.logger.warn(
+          err,
+          `Failed to complete managed-agent setup replay for conversation ${conversation._id}; continuing batch`
+        );
+      }
     }
   }
 
