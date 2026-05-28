@@ -388,14 +388,20 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const isManagedAgent = agent?.runtime === 'managed' && agent.managedRuntime;
 
-    if (isManagedAgent) {
-      const parked = await this.tryParkForManagedSetup({
-        config,
-        conversationId: conversation._id,
-        agentId: agent._id,
-        subscriber,
-        platformMessageId: message.id,
-      });
+    if (isManagedAgent && subscriber && message.id) {
+      const parked = await this.handleManagedAgentSetupInbound.execute(
+        ManagedAgentSetupInboundCommand.create({
+          userId: 'system',
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+          conversationId: conversation._id,
+          agentId: agent._id,
+          subscriberId: subscriber.subscriberId,
+          agentIdentifier: config.agentIdentifier,
+          integrationIdentifier: config.integrationIdentifier,
+          platformMessageId: message.id,
+        })
+      );
 
       if (parked) {
         return;
@@ -520,38 +526,6 @@ export class AgentInboundHandler implements OnModuleInit {
 
       throw err;
     }
-  }
-
-  /**
-   * When the subscriber still has required managed-agent setup, park the turn
-   * and post the setup card. Returns true when dispatch must not proceed.
-   */
-  private async tryParkForManagedSetup(params: {
-    config: ResolvedAgentConfig;
-    conversationId: string;
-    agentId: string;
-    subscriber: { subscriberId: string } | null;
-    platformMessageId: string | undefined;
-  }): Promise<boolean> {
-    const { config, conversationId, agentId, subscriber, platformMessageId } = params;
-
-    if (!subscriber || !platformMessageId) {
-      return false;
-    }
-
-    return this.handleManagedAgentSetupInbound.execute(
-      ManagedAgentSetupInboundCommand.create({
-        userId: 'system',
-        environmentId: config.environmentId,
-        organizationId: config.organizationId,
-        conversationId,
-        agentId,
-        subscriberId: subscriber.subscriberId,
-        agentIdentifier: config.agentIdentifier,
-        integrationIdentifier: config.integrationIdentifier,
-        platformMessageId,
-      })
-    );
   }
 
   /**
