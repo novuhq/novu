@@ -20,14 +20,13 @@ import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
-import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
-import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
-import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/handle-plan-progress.command';
-import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { HandleManagedAgentSetupInbound } from '../usecases/managed-agent-setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from '../usecases/managed-agent-setup/managed-agent-setup-inbound.command';
+import { isLinkButtonActionId, parseToolApprovalActionId } from '../usecases/tool-approval/approval-card.builder';
+import { ConfirmToolApprovalCommand } from '../usecases/tool-approval/confirm-tool-approval.command';
+import { ConfirmToolApproval } from '../usecases/tool-approval/confirm-tool-approval.usecase';
 import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
@@ -36,11 +35,6 @@ import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
-import {
-  buildToolApprovalVerdictCard,
-  isLinkButtonActionId,
-  parseToolApprovalActionId,
-} from './managed-agent-event-handler';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
 /**
@@ -226,6 +220,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly conversationService: AgentConversationService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly managedAgentService: ManagedAgentService,
+    private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
     private readonly chatSdkService: ChatSdkService,
     private readonly agentRepository: AgentRepository,
@@ -235,9 +230,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly attachmentStorage: AgentAttachmentStorage,
     private readonly startCodeService: TelegramStartCodeService,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
-    private readonly handleAgentReply: HandleAgentReply,
-    private readonly handlePlanProgress: HandlePlanProgress
+    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -395,14 +388,22 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const isManagedAgent = agent?.runtime === 'managed' && agent.managedRuntime;
 
-    if (isManagedAgent) {
-      const parked = await this.tryParkForManagedSetup({
-        config,
-        conversationId: conversation._id,
-        agentId: agent._id,
-        subscriber,
-        platformMessageId: message.id,
-      });
+    // Subscriber still owes MCP OAuth: hold this message, show the setup card, skip dispatch.
+    // After OAuth completes, CompleteManagedAgentSetup replays the held message.
+    if (isManagedAgent && subscriber && message.id) {
+      const parked = await this.handleManagedAgentSetupInbound.execute(
+        ManagedAgentSetupInboundCommand.create({
+          userId: 'system',
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+          conversationId: conversation._id,
+          agentId: agent._id,
+          subscriberId: subscriber.subscriberId,
+          agentIdentifier: config.agentIdentifier,
+          integrationIdentifier: config.integrationIdentifier,
+          platformMessageId: message.id,
+        })
+      );
 
       if (parked) {
         return;
@@ -527,38 +528,6 @@ export class AgentInboundHandler implements OnModuleInit {
 
       throw err;
     }
-  }
-
-  /**
-   * When the subscriber still has required managed-agent setup, park the turn
-   * and post the setup card. Returns true when dispatch must not proceed.
-   */
-  private async tryParkForManagedSetup(params: {
-    config: ResolvedAgentConfig;
-    conversationId: string;
-    agentId: string;
-    subscriber: { subscriberId: string } | null;
-    platformMessageId: string | undefined;
-  }): Promise<boolean> {
-    const { config, conversationId, agentId, subscriber, platformMessageId } = params;
-
-    if (!subscriber || !platformMessageId) {
-      return false;
-    }
-
-    return this.handleManagedAgentSetupInbound.execute(
-      ManagedAgentSetupInboundCommand.create({
-        userId: 'system',
-        environmentId: config.environmentId,
-        organizationId: config.organizationId,
-        conversationId,
-        agentId,
-        subscriberId: subscriber.subscriberId,
-        agentIdentifier: config.agentIdentifier,
-        integrationIdentifier: config.integrationIdentifier,
-        platformMessageId,
-      })
-    );
   }
 
   /**
@@ -821,69 +790,27 @@ export class AgentInboundHandler implements OnModuleInit {
       actionId: action.id,
     });
 
-    // MCP tool-approval routing: `ManagedAgentService` owns the Cloudflare
-    // durable session (post-#11156) and renders Approve/Deny cards with
-    // action ids of the form `mcp-approval:<verdict>:<toolUseId>`. Intercept
-    // those clicks here so they call `confirmToolApproval` to resume the
-    // parked Anthropic session — they must NOT fall through to the bridge
-    // (the user-defined `onAction` shouldn't see provider-internal tool-use ids).
+    // MCP Approve/Deny buttons (ids starting with mcp-approval:*) are handled here.
+    // Return early so these clicks are not forwarded to bridgeExecutor below.
     const toolApproval = parseToolApprovalActionId(action.id);
 
     if (toolApproval) {
-      await this.managedAgentService.confirmToolApproval({
-        conversationId: conversation._id,
-        environmentId: config.environmentId,
-        organizationId: config.organizationId,
-        agentIdentifier: config.agentIdentifier,
-        integrationIdentifier: config.integrationIdentifier,
-        subscriberId: subscriberId ?? undefined,
-        platform: config.platform,
-        toolUseIds: toolApproval.toolUseIds,
-        approved: toolApproval.approved,
-        turnId: toolApproval.turnId,
-      });
-
-      if (action.sourceMessageId) {
-        const verdictCard = buildToolApprovalVerdictCard(
-          toolApproval.approved,
-          toolApproval.toolUseIds.length,
-          action.value
-        );
-        this.handleAgentReply
-          .execute(
-            HandleAgentReplyCommand.create({
-              userId: 'system',
-              environmentId: config.environmentId,
-              organizationId: config.organizationId,
-              conversationId: conversation._id,
-              agentIdentifier: config.agentIdentifier,
-              integrationIdentifier: config.integrationIdentifier,
-              edit: { messageId: action.sourceMessageId, content: { card: verdictCard } },
-            })
-          )
-          .catch((err) => {
-            this.logger.warn(err, `[agent:${agentId}] Failed to update tool approval card with verdict`);
-          });
-      }
-
-      this.handlePlanProgress
-        .execute(
-          HandlePlanProgressCommand.create({
-            userId: 'system',
-            environmentId: config.environmentId,
-            organizationId: config.organizationId,
-            conversationId: conversation._id,
-            agentIdentifier: config.agentIdentifier,
-            integrationIdentifier: config.integrationIdentifier,
-            toolProgress: {
-              turnId: toolApproval.turnId,
-              action: toolApproval.approved ? 'approved' : 'denied',
-            },
-          })
-        )
-        .catch((err) => {
-          this.logger.warn(err, `[agent:${agentId}] Failed to update plan card after tool approval verdict`);
-        });
+      await this.confirmToolApproval.execute(
+        ConfirmToolApprovalCommand.create({
+          userId: 'system',
+          environmentId: config.environmentId,
+          organizationId: config.organizationId,
+          conversationId: conversation._id,
+          agentIdentifier: config.agentIdentifier,
+          integrationIdentifier: config.integrationIdentifier,
+          agentId,
+          subscriberId: subscriberId ?? undefined,
+          platform: config.platform,
+          parsed: toolApproval,
+          sourceMessageId: action.sourceMessageId,
+          actionValue: action.value,
+        })
+      );
 
       return;
     }

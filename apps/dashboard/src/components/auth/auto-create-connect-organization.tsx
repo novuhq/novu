@@ -64,6 +64,9 @@ function navigateToPostConnectOrgResolution(navigate: NavigateFunction, fallback
   const pendingCliAuthReturnUrl = resolvePendingCliAuthReturnUrl();
 
   if (pendingCliAuthReturnUrl) {
+    // Leave the connect onboarding overlay behind — `/cli/auth` is outside that flow and the
+    // full-screen loader would otherwise stay mounted from sessionStorage after auto-provision.
+    clearConnectProvisioning();
     window.location.assign(pendingCliAuthReturnUrl);
 
     return;

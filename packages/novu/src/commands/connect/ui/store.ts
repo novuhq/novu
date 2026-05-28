@@ -1,6 +1,7 @@
 import { atom, type WritableAtom } from 'nanostores';
-import type { AgentSummary, ChannelChoice } from '../types';
-import type { PickResult } from './ui';
+import type { GeneratedAgentSpec } from '../api/agents';
+import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
+import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResult } from './ui';
 
 export type Phase =
   | {
@@ -12,10 +13,45 @@ export type Phase =
   | { kind: 'listing-agents' }
   | { kind: 'loading-integrations' }
   | { kind: 'pick'; agents: AgentSummary[]; resolve: (pick: PickResult) => void }
-  | { kind: 'describe'; resolve: (prompt: string) => void }
+  | {
+      kind: 'pick-runtime';
+      preselected?: AgentRuntimeChoice;
+      resolve: (runtime: AgentRuntimeChoice) => void;
+    }
+  | {
+      kind: 'pick-integration';
+      providerLabel: string;
+      integrations: Array<{ _id: string; name: string; identifier: string }>;
+      resolve: (pick: PickAgentIntegrationResult) => void;
+    }
+  | {
+      kind: 'prompt-secret';
+      title: string;
+      placeholder: string;
+      hint?: string;
+      secret?: boolean;
+      resolve: (value: string) => void;
+    }
+  | {
+      kind: 'pick-aws-region';
+      resolve: (region: string) => void;
+    }
+  | { kind: 'verifying-credentials' }
+  | { kind: 'describe'; previousPrompt?: string; resolve: (prompt: string) => void }
   | { kind: 'generating' }
+  | {
+      kind: 'preview-generated';
+      spec: GeneratedAgentSpec;
+      resolve: (result: GeneratedAgentPreviewResult) => void;
+    }
   | { kind: 'creating'; name: string }
   | { kind: 'pick-channel'; resolve: (choice: ChannelChoice) => void }
+  | {
+      kind: 'dashboard-channel-ready';
+      channel: ChannelChoice;
+      agentDetailsUrl: string;
+      resolve: () => void;
+    }
   | { kind: 'adding-slack' }
   | {
       kind: 'paste-slack-token';
@@ -24,6 +60,14 @@ export type Phase =
       reject: (reason: Error) => void;
     }
   | { kind: 'running-slack-quick-setup' }
+  | {
+      kind: 'slack-oauth-ready';
+      authorizeUrl: string;
+      /** True when Novu just created the Slack app via manifest quick-setup. */
+      appCreated: boolean;
+      /** Resolves when the user hits Enter — the pipeline then runs `open()`. */
+      resolve: () => void;
+    }
   | { kind: 'waiting-slack'; authorizeUrl: string; pollingStartedAt: number }
   | { kind: 'adding-email' }
   | {
@@ -64,9 +108,12 @@ export type Phase =
       kind: 'success';
       agent: AgentSummary;
       dashboardUrl: string;
+      connectDashboardUrl: string;
       environmentSlug: string | null;
       /** Which channel ended up connected, if any. Drives the "check your bot" copy on the final screen. */
       connectedChannel: ChannelChoice | null;
+      /** Channel the user picked that continues in the Connect dashboard instead of the CLI. */
+      dashboardRedirectChannel: ChannelChoice | null;
     }
   | { kind: 'error'; message: string };
 

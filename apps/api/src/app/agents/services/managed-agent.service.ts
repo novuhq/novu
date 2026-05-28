@@ -146,7 +146,7 @@ export class ManagedAgentService implements OnModuleInit {
    * user's verdict back through the provider as `toolResults` entries.
    * Accepts one or more tool IDs (per-tool approval or batch Approve All).
    */
-  async confirmToolApproval(params: {
+  async resumeWithToolResults(params: {
     conversationId: string;
     environmentId: string;
     organizationId: string;

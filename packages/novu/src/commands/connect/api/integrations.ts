@@ -1,3 +1,4 @@
+import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import type { ConnectApiClient } from './client';
 
 export interface IntegrationRecord {
@@ -15,6 +16,51 @@ export async function listIntegrations(client: ConnectApiClient): Promise<Integr
   const body = res.data;
 
   return Array.isArray(body) ? body : (body.data ?? []);
+}
+
+export interface VerifyManagedCredentialsInput {
+  providerId: AgentRuntimeProviderIdEnum;
+  apiKey: string;
+  region?: string;
+  externalWorkspaceId?: string;
+}
+
+export async function verifyManagedCredentials(
+  client: ConnectApiClient,
+  input: VerifyManagedCredentialsInput
+): Promise<void> {
+  await client.axios.post('/v1/agents/verify-credentials', {
+    providerId: input.providerId,
+    apiKey: input.apiKey,
+    ...(input.region ? { region: input.region } : {}),
+    ...(input.externalWorkspaceId ? { externalWorkspaceId: input.externalWorkspaceId } : {}),
+  });
+}
+
+export async function createAgentRuntimeIntegration(
+  client: ConnectApiClient,
+  input: {
+    environmentId: string;
+    providerId: AgentRuntimeProviderIdEnum;
+    name: string;
+    credentials: Record<string, string>;
+  }
+): Promise<IntegrationRecord> {
+  const res = await client.axios.post<{ data?: IntegrationRecord } | IntegrationRecord>('/v1/integrations', {
+    providerId: input.providerId,
+    kind: 'agent',
+    name: input.name,
+    active: true,
+    credentials: input.credentials,
+    _environmentId: input.environmentId,
+  });
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as IntegrationRecord);
+}
+
+export async function deleteIntegration(client: ConnectApiClient, integrationId: string): Promise<void> {
+  await client.axios.delete(`/v1/integrations/${encodeURIComponent(integrationId)}`);
 }
 
 export async function createSlackIntegration(

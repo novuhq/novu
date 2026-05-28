@@ -104,12 +104,12 @@ function StepRow({
   );
 }
 
-export function SetThingsUpSection({ isLoading }: { isLoading?: boolean }) {
+export function SetThingsUpSection() {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
-  const { steps: hookSteps, isComplete } = useConnectSetupSteps();
+  const { steps: hookSteps, shouldShowOnboarding, isLoading } = useConnectSetupSteps();
 
-  if (isComplete) {
+  if (!shouldShowOnboarding) {
     return null;
   }
 
