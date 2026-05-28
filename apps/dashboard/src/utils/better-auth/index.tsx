@@ -311,12 +311,20 @@ export function useClerk() {
   const context = useContext(AuthContext);
 
   return {
+    // Mirrors `@clerk/react`'s `clerk.loaded` flag so route guards that wait on it can render.
+    loaded: context?.isLoaded ?? false,
     setActive: async ({ organization }: { organization?: string }) => {
       if (organization) {
         await authClient.organization.setActive({
           organizationId: organization,
         });
         window.location.reload();
+      }
+    },
+    signOut: async (options?: { redirectUrl?: string }) => {
+      await context?.signOut();
+      if (options?.redirectUrl) {
+        window.location.assign(options.redirectUrl);
       }
     },
     session: {

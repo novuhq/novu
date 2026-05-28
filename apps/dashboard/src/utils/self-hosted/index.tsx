@@ -38,6 +38,8 @@ export function ClerkLoading(_props: { children: React.ReactNode }) {
 
 export const useClerk = () => {
   return {
+    // Self-hosted auth is synchronous via JWT, so the Clerk-equivalent loaded flag is always true.
+    loaded: true,
     setActive: async () => {
       console.warn('Clerk.setActive is not available in self-hosted mode');
     },
