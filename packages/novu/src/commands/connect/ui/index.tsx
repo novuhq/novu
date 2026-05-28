@@ -163,11 +163,13 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     runningSlackQuickSetup() {
       store.phase.set({ kind: 'running-slack-quick-setup' });
     },
-    showSlackOAuthUrl(url) {
-      store.phase.set({ kind: 'waiting-slack', authorizeUrl: url, pollingStartedAt: Date.now() });
+    awaitSlackOAuthOpen({ authorizeUrl, appCreated }) {
+      return new Promise<void>((resolve) => {
+        store.phase.set({ kind: 'slack-oauth-ready', authorizeUrl, appCreated, resolve });
+      });
     },
-    pollingForSlackConnection() {
-      // The waiting-slack phase already shows a spinner; no separate state needed.
+    showSlackWaiting({ authorizeUrl }) {
+      store.phase.set({ kind: 'waiting-slack', authorizeUrl, pollingStartedAt: Date.now() });
     },
     slackConnected() {
       // Transition handled by sendingWelcome / success.

@@ -24,6 +24,14 @@ export type Phase =
       reject: (reason: Error) => void;
     }
   | { kind: 'running-slack-quick-setup' }
+  | {
+      kind: 'slack-oauth-ready';
+      authorizeUrl: string;
+      /** True when Novu just created the Slack app via manifest quick-setup. */
+      appCreated: boolean;
+      /** Resolves when the user hits Enter — the pipeline then runs `open()`. */
+      resolve: () => void;
+    }
   | { kind: 'waiting-slack'; authorizeUrl: string; pollingStartedAt: number }
   | { kind: 'adding-email' }
   | {

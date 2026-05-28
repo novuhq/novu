@@ -82,8 +82,17 @@ export interface ConnectUI {
    */
   promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
   runningSlackQuickSetup(): void;
-  showSlackOAuthUrl(url: string): void;
-  pollingForSlackConnection(): void;
+  /**
+   * Consent gate before opening Slack OAuth. When `appCreated` is true, confirms
+   * the manifest quick-setup succeeded before asking the user to install the app
+   * in their workspace. Resolves when the user hits Enter — the pipeline then
+   * runs `open()`.
+   */
+  awaitSlackOAuthOpen(opts: { authorizeUrl: string; appCreated: boolean }): Promise<void>;
+  /**
+   * Transitions to the polling view. Fired by the pipeline right after `open()`.
+   */
+  showSlackWaiting(opts: { authorizeUrl: string }): void;
   slackConnected(): void;
   slackSkipped(): void;
 

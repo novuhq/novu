@@ -148,11 +148,16 @@ export function createLoggingUI(): ConnectUI {
     runningSlackQuickSetup() {
       start('Creating Slack app from manifest…');
     },
-    showSlackOAuthUrl(url) {
+    awaitSlackOAuthOpen({ authorizeUrl, appCreated }) {
       stop();
-      console.log(`${chalk.cyan('→')} Authorize Slack here: ${chalk.underline(url)}`);
+      if (appCreated) {
+        console.log(`${chalk.green('✓')} Slack app created successfully.`);
+      }
+      console.log(`${chalk.cyan('→')} Authorize Slack here: ${chalk.underline(authorizeUrl)}`);
+
+      return Promise.resolve();
     },
-    pollingForSlackConnection() {
+    showSlackWaiting(_opts) {
       start('Waiting for Slack authorization…');
     },
     slackConnected() {

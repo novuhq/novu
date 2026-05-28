@@ -105,6 +105,7 @@ function computeOrbTint(
     case 'adding-slack':
     case 'paste-slack-token':
     case 'running-slack-quick-setup':
+    case 'slack-oauth-ready':
     case 'waiting-slack':
       return CHANNEL_TINTS.slack;
     case 'adding-telegram':
@@ -137,6 +138,7 @@ function computeOrbLabel(
     case 'adding-slack':
     case 'paste-slack-token':
     case 'running-slack-quick-setup':
+    case 'slack-oauth-ready':
     case 'waiting-slack':
       return CHANNEL_LABELS.slack;
     case 'adding-telegram':
@@ -295,6 +297,15 @@ function PhaseContent({
 
     case 'running-slack-quick-setup':
       return <Text color="cyan">Creating Slack app from manifest…</Text>;
+
+    case 'slack-oauth-ready':
+      return (
+        <SlackOAuthReadyContent
+          appCreated={phase.appCreated}
+          authorizeUrl={phase.authorizeUrl}
+          onContinue={phase.resolve}
+        />
+      );
 
     case 'waiting-slack':
       return (
@@ -652,6 +663,45 @@ function GeneratingContent(): React.ReactElement {
         <Text dimColor>· {elapsed}s</Text>
       </Box>
       <Text dimColor>{tagline}</Text>
+    </Box>
+  );
+}
+
+function SlackOAuthReadyContent({
+  appCreated,
+  authorizeUrl,
+  onContinue,
+}: {
+  appCreated: boolean;
+  authorizeUrl: string;
+  onContinue: () => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return || _input === ' ') onContinue();
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      {appCreated ? (
+        <>
+          <Text bold color="green">
+            Slack app created successfully
+          </Text>
+          <Text dimColor>
+            Novu created a Slack app for your agent. Next, add it to your workspace so your team can talk to the agent
+            in Slack.
+          </Text>
+        </>
+      ) : (
+        <>
+          <Text bold color="cyan">
+            Connect Slack to your agent
+          </Text>
+          <Text dimColor>Authorize Novu to install the Slack app in your workspace.</Text>
+        </>
+      )}
+      <Text dimColor>{`OAuth link: ${authorizeUrl.slice(0, 80)}${authorizeUrl.length > 80 ? '…' : ''}`}</Text>
+      <Text color="cyan">Press Enter to open Slack and add the app to your workspace →</Text>
     </Box>
   );
 }
