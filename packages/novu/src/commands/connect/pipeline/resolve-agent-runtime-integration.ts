@@ -2,7 +2,6 @@ import {
   AgentRuntimeProviderIdEnum,
   buildManagedIntegrationCredentials,
   hasCompleteManagedCredentials,
-  IntegrationKindEnum,
   type ManagedCredentialFields,
 } from '@novu/shared';
 import {
@@ -15,7 +14,7 @@ import type { ConnectApiClient } from '../api/client';
 import type { AgentRuntimeChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 
-const AGENT_INTEGRATION_KIND = IntegrationKindEnum.AGENT;
+const AGENT_INTEGRATION_KIND = 'agent' as const;
 
 export type ResolvedRuntimeIntegration = {
   integrationId: string;
