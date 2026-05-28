@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightUpLine, RiCheckLine, RiCloseLine, RiPencilLine } from 'react-icons/ri';
 import {
   type AgentResponse,
@@ -39,8 +39,10 @@ export function SystemPromptSection({ agent }: SystemPromptSectionProps) {
       patchAgentRuntimeConfig(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, {
         systemPrompt,
       }),
-    onSuccess: (config) => {
-      queryClient.setQueryData(getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier), config);
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: getAgentRuntimeConfigQueryKey(currentEnvironment?._id, agent.identifier),
+      });
       setIsEditing(false);
     },
     onError: (err: Error) => {
@@ -93,6 +95,50 @@ export function SystemPromptSection({ agent }: SystemPromptSectionProps) {
     updatePrompt.mutate(draft);
   };
 
+  let body: React.ReactNode = (
+    <div className="relative max-h-[96px] overflow-hidden">
+      {systemPrompt ? (
+        <p className="text-text-sub text-label-xs leading-4 font-medium whitespace-pre-wrap break-words">
+          {systemPrompt}
+        </p>
+      ) : (
+        <p className="text-text-soft text-label-xs italic">No system prompt set.</p>
+      )}
+      {systemPrompt ? (
+        <div className="bg-linear-to-b from-transparent via-bg-white/40 to-bg-white pointer-events-none absolute inset-x-0 bottom-0 h-14" />
+      ) : null}
+    </div>
+  );
+
+  if (configQuery.isLoading) {
+    body = (
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-4 w-4/6" />
+      </div>
+    );
+  }
+
+  if (configQuery.isError) {
+    body = <div className="text-text-soft text-label-xs">Could not load system prompt. Try again later.</div>;
+  }
+
+  if (isEditing) {
+    body = (
+      <textarea
+        ref={textareaRef}
+        value={draft}
+        onChange={(event) => setDraft(event.target.value)}
+        disabled={isMutating}
+        rows={6}
+        className="text-text-sub text-label-xs placeholder:text-text-soft w-full resize-y bg-transparent font-medium leading-4 whitespace-pre-wrap outline-hidden disabled:opacity-50"
+        placeholder="Describe what this agent should do…"
+        aria-label="System prompt instructions"
+      />
+    );
+  }
+
   return (
     <div className="bg-bg-weak flex flex-col rounded-[10px] p-1">
       <div className="flex items-center justify-between gap-1 px-2 pt-1 pb-1.5">
@@ -127,38 +173,7 @@ export function SystemPromptSection({ agent }: SystemPromptSectionProps) {
               />
             ) : null}
           </div>
-          {configQuery.isLoading ? (
-            <div className="flex flex-col gap-1.5">
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-5/6" />
-              <Skeleton className="h-4 w-4/6" />
-            </div>
-          ) : configQuery.isError ? (
-            <div className="text-text-soft text-label-xs">Could not load system prompt. Try again later.</div>
-          ) : isEditing ? (
-            <textarea
-              ref={textareaRef}
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              disabled={isMutating}
-              rows={6}
-              className="text-text-sub text-label-xs placeholder:text-text-soft w-full resize-y bg-transparent font-medium leading-4 whitespace-pre-wrap outline-hidden disabled:opacity-50"
-              placeholder="Describe what this agent should do…"
-            />
-          ) : (
-            <div className="relative max-h-[96px] overflow-hidden">
-              {systemPrompt ? (
-                <p className="text-text-sub text-label-xs leading-4 font-medium whitespace-pre-wrap break-words">
-                  {systemPrompt}
-                </p>
-              ) : (
-                <p className="text-text-soft text-label-xs italic">No system prompt set.</p>
-              )}
-              {systemPrompt ? (
-                <div className="bg-linear-to-b from-transparent via-bg-white/40 to-bg-white pointer-events-none absolute inset-x-0 bottom-0 h-14" />
-              ) : null}
-            </div>
-          )}
+          {body}
         </div>
       </div>
     </div>
