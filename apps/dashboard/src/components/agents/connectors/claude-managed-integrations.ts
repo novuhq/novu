@@ -13,7 +13,11 @@ function compareClaudeManagedIntegrations(left: IIntegration, right: IIntegratio
     return -1;
   }
 
-  return 0;
+  // MongoDB ObjectId's first 4 bytes (8 hex chars) encode the creation timestamp,
+  // so a lexicographic descending compare on `_id` yields newest-first ordering.
+  // This ensures the most recently added credential is what `getPreferredClaudeManagedIntegration`
+  // returns and what the connector dropdown surfaces at the top.
+  return right._id.localeCompare(left._id);
 }
 
 const CLAUDE_MANAGED_PROVIDER_IDS: ReadonlySet<string> = new Set([
