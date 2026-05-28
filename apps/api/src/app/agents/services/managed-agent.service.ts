@@ -94,7 +94,8 @@ export class ManagedAgentService implements OnModuleInit {
 
   /**
    * Resume a session that was parked in `requires-action` by sending the
-   * user's verdict back through the provider as a `toolResults` entry.
+   * user's verdict back through the provider as `toolResults` entries.
+   * Accepts one or more tool IDs (per-tool approval or batch Approve All).
    */
   async confirmToolApproval(params: {
     conversationId: string;
@@ -104,8 +105,9 @@ export class ManagedAgentService implements OnModuleInit {
     integrationIdentifier: string;
     subscriberId?: string;
     platform?: AgentPlatformEnum;
-    toolUseId: string;
+    toolUseIds: string[];
     approved: boolean;
+    turnId: string;
   }): Promise<void> {
     const conversation = await this.conversationRepository.findOne(
       { _id: params.conversationId, _environmentId: params.environmentId, _organizationId: params.organizationId },
@@ -114,7 +116,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (!conversation?.externalSessionId) {
       this.logger.warn(
-        { conversationId: params.conversationId, toolUseId: params.toolUseId },
+        { conversationId: params.conversationId, toolUseIds: params.toolUseIds },
         'Ignoring tool-approval click — conversation has no externalSessionId (stale card or already resolved)'
       );
 
@@ -128,7 +130,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     if (!agent?.managedRuntime) {
       this.logger.warn(
-        { conversationId: params.conversationId, toolUseId: params.toolUseId },
+        { conversationId: params.conversationId, toolUseIds: params.toolUseIds },
         'Ignoring tool-approval click — agent has no managedRuntime'
       );
 
@@ -148,20 +150,23 @@ export class ManagedAgentService implements OnModuleInit {
     );
     const sessionId = conversation.externalSessionId;
 
+    const webhookMetadata = this.buildWebhookMetadata({
+      conversationId: params.conversationId,
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentIdentifier: params.agentIdentifier,
+      integrationIdentifier: params.integrationIdentifier,
+      subscriberId: params.subscriberId,
+      platform: params.platform,
+    });
+
     await provider.send({
       messages: [],
       sessionId,
       vaultIds,
-      toolResults: [{ toolUseId: params.toolUseId, approved: params.approved, content: [] }],
-      webhookMetadata: this.buildWebhookMetadata({
-        conversationId: params.conversationId,
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentIdentifier: params.agentIdentifier,
-        integrationIdentifier: params.integrationIdentifier,
-        subscriberId: params.subscriberId,
-        platform: params.platform,
-      }),
+      turnId: params.turnId,
+      toolResults: params.toolUseIds.map((toolUseId) => ({ toolUseId, approved: params.approved, content: [] })),
+      webhookMetadata,
     });
   }
 
@@ -221,7 +226,7 @@ export class ManagedAgentService implements OnModuleInit {
 
     return createWebhookHandler({
       secret,
-      onSessionEvents: (sessionId, runId, metadata) => this.eventHandler.createHandlers(sessionId, runId, metadata),
+      onSessionEvents: (context) => this.eventHandler.createHandlers(context),
     });
   }
 
@@ -239,8 +244,6 @@ export class ManagedAgentService implements OnModuleInit {
         role: entry.senderType === ConversationActivitySenderTypeEnum.AGENT ? MessageRole.ASSISTANT : MessageRole.USER,
         content: entry.content,
       }));
-
-    messages.push({ role: MessageRole.USER, content: context.message?.text ?? '' });
 
     return messages;
   }

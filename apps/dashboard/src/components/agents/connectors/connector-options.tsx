@@ -104,7 +104,7 @@ export const CONNECTOR_OPTIONS: ConnectorOption[] = [
   },
   {
     id: 'custom-scaffold',
-    label: 'Custom scaffold [AI SDK, LangChain]',
+    label: 'Custom code (AI SDK, langchain, etc...)',
     group: 'custom',
     icon: CUSTOM_CODE_AVATAR,
     comingSoon: false,

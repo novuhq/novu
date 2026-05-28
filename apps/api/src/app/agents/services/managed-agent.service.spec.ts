@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import { buildAnonymousUserMcpMessage } from './managed-agent.service';
+import { buildAnonymousUserMcpMessage } from './managed-agent-event-handler';
 
 describe('buildAnonymousUserMcpMessage', () => {
   it('mentions the MCP server name and Slack when the platform is Slack', () => {

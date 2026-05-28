@@ -447,7 +447,7 @@ export class GenerateMcpOAuthUrl {
         token_endpoint_auth_method: 'client_secret_post',
         scope: scopes.length > 0 ? scopes.join(' ') : undefined,
         client_uri: frontBase,
-        logo_uri: frontBase ? `${frontBase}/static/novu-logo.png` : undefined,
+        logo_uri: frontBase ? `${frontBase}/images/novu.svg` : undefined,
         software_id: oauthConfig.softwareId ?? DEFAULT_SOFTWARE_ID,
         software_version: SOFTWARE_VERSION,
       });

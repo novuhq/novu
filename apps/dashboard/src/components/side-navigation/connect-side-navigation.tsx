@@ -1,4 +1,4 @@
-import { RiDashboardLine, RiDiscussLine, RiKey2Line, RiRobot2Line, RiSettings4Line } from 'react-icons/ri';
+import { RiDashboardLine, RiDiscussLine, RiRobot2Line, RiSettings4Line } from 'react-icons/ri';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -38,10 +38,6 @@ export const ConnectSideNavigation = () => {
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Application">
-              <NavigationLink to={buildEnvRoute(ROUTES.CONNECT_API_KEYS)}>
-                <RiKey2Line className="size-4" />
-                <span>API Keys</span>
-              </NavigationLink>
               <NavigationLink to={buildEnvRoute(ROUTES.CONNECT_SETTINGS)}>
                 <RiSettings4Line className="size-4" />
                 <span>Settings</span>

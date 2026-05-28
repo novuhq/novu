@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
+import { IS_NOVU_CONNECT } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { Command, CommandCategory, CommandExecutionContext, CommandGroup } from '../command-types';
 import { useActionCommands } from '../commands/action-commands';
+import { useConnectNavigationCommands } from '../commands/connect-navigation-commands';
 import { useEnvironmentCommands } from '../commands/environment-commands';
 import { useHelpCommands } from '../commands/help-commands';
 import { useNavigationCommands } from '../commands/navigation-commands';
@@ -26,7 +28,8 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
   };
 
   const actionCommands = useActionCommands(context);
-  const navigationCommands = useNavigationCommands(context);
+  const platformNavigationCommands = useNavigationCommands(context);
+  const connectNavigationCommands = useConnectNavigationCommands(context);
   const workflowCommands = useWorkflowCommands(context);
   const workflowEditorCommands = useWorkflowEditorCommands(context);
   const subscriberCommands = useSubscriberCommands(context);
@@ -35,16 +38,18 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
   const helpCommands = useHelpCommands(context);
 
   const commandGroups = useMemo(() => {
-    const allCommands: Command[] = [
-      ...actionCommands,
-      ...workflowCommands,
-      ...workflowEditorCommands,
-      ...navigationCommands,
-      ...subscriberCommands,
-      ...environmentCommands,
-      ...settingsCommands,
-      ...helpCommands,
-    ];
+    const allCommands: Command[] = IS_NOVU_CONNECT
+      ? [...connectNavigationCommands, ...helpCommands]
+      : [
+          ...actionCommands,
+          ...workflowCommands,
+          ...workflowEditorCommands,
+          ...platformNavigationCommands,
+          ...subscriberCommands,
+          ...environmentCommands,
+          ...settingsCommands,
+          ...helpCommands,
+        ];
 
     const visibleCommands = allCommands.filter((command) => (command.isVisible ? command.isVisible() : true));
 
@@ -99,7 +104,8 @@ export function useCommandRegistry(searchQuery = ''): CommandGroup[] {
     return groups;
   }, [
     actionCommands,
-    navigationCommands,
+    platformNavigationCommands,
+    connectNavigationCommands,
     workflowCommands,
     workflowEditorCommands,
     subscriberCommands,

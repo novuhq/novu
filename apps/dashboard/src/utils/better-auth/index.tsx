@@ -1,7 +1,6 @@
-import { FeatureFlagsKeysEnum, MemberRoleEnum, PermissionsEnum } from '@novu/shared';
+import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { ROUTES } from '@/utils/routes';
 import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '../../config';
 import { authClient } from './client';
@@ -411,13 +410,11 @@ export function OrganizationList(props?: {
   afterSelectOrganizationUrl?: string;
   afterCreateOrganizationUrl?: string;
 }) {
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const defaultCreateUrl = isAgentsEnabled ? ROUTES.USECASE_SELECT : ROUTES.INBOX_USECASE;
-
+  // Platform skips the usecase picker and starts directly with notifications/inbox.
   return (
     <OrganizationCreateComponent
       afterSelectOrganizationUrl={props?.afterSelectOrganizationUrl || ROUTES.ENV}
-      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || defaultCreateUrl}
+      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || ROUTES.INBOX_USECASE}
     />
   );
 }

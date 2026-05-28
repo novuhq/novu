@@ -60,8 +60,8 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
     return null;
   }
 
-  getPendingToolApproval(_sessionId: string): Promise<PendingToolApproval | null> {
-    return Promise.resolve(null);
+  getAllPendingToolApprovals(_sessionId: string): Promise<PendingToolApproval[]> {
+    return Promise.resolve([]);
   }
 
   createVault(_input: CreateVaultInput): Promise<CreateVaultResult> {

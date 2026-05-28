@@ -2,10 +2,11 @@ import { IsNotEmpty, IsObject, IsString } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export interface ToolProgressPayload {
-  runId: string;
-  action: 'tool-use' | 'complete' | 'fail' | 'awaiting-approval';
+  turnId: string;
+  action: 'tool-use' | 'complete' | 'fail' | 'awaiting-approval' | 'approved' | 'denied';
   toolUseId?: string;
   toolName?: string;
+  mcpServerName?: string;
   status?: 'running' | 'complete' | 'error';
   toolInput?: Record<string, unknown>;
 }

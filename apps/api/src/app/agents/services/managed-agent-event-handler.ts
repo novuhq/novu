@@ -4,25 +4,26 @@ import { type IAgentRuntimeProvider, PinoLogger } from '@novu/application-generi
 import { ConversationParticipantTypeEnum, ConversationRepository } from '@novu/dal';
 import { MCP_SERVERS } from '@novu/shared';
 import {
+  type ActionRequired,
   CredentialExpiredError,
   McpServerError,
+  type SessionEventContext,
   SessionExpiredError,
+  type StreamCallbacks,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { GenerateMcpOAuthUrlCommand } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../usecases/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory';
 
 export const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
-
-const PARKED_SESSION_ERROR_PATTERN = /waiting on responses to events/i;
 
 interface BaseCommandFields {
   userId: string;
@@ -47,7 +48,9 @@ export class ManagedAgentEventHandler {
     this.logger.setContext(this.constructor.name);
   }
 
-  createHandlers(sessionId: string, runId: string, metadata: Record<string, string>) {
+  createHandlers(context: SessionEventContext): StreamCallbacks {
+    const { sessionId, turnId, metadata } = context;
+
     if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
       this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
 
@@ -55,18 +58,22 @@ export class ManagedAgentEventHandler {
     }
 
     const baseFields = this.buildBaseFields(metadata);
-
     return {
-      onToolUseStart: async (event: { toolUseId: string; toolName: string }) => {
+      onToolUseStart: async (event: {
+        toolUseId: string;
+        toolName: string;
+        source?: { type: string; serverName?: string };
+      }) => {
         try {
           await this.handlePlanProgress.execute(
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                runId,
+                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
+                mcpServerName: event.source?.type === 'mcp' ? event.source.serverName : undefined,
                 status: 'running',
               },
             })
@@ -81,7 +88,12 @@ export class ManagedAgentEventHandler {
         }
       },
 
-      onToolUseDone: async (event: { toolUseId: string; toolName: string; input?: Record<string, unknown> }) => {
+      onToolUseDone: async (event: {
+        toolUseId: string;
+        toolName: string;
+        input?: Record<string, unknown>;
+        source?: { type: string; serverName?: string };
+      }) => {
         try {
           if (!event.input || Object.keys(event.input).length === 0) {
             return;
@@ -90,10 +102,11 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                runId,
+                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
+                mcpServerName: event.source?.type === 'mcp' ? event.source.serverName : undefined,
                 status: 'running',
                 toolInput: event.input,
               },
@@ -115,7 +128,7 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                runId,
+                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 status: event.isError === true ? 'error' : 'complete',
@@ -140,21 +153,22 @@ export class ManagedAgentEventHandler {
               const delivered = await this.tryDeliverToolApprovalCard(
                 metadata,
                 sessionId,
+                turnId,
                 runtimeProvider,
-                extractPendingToolApproval(event.response)
+                event.response
               );
 
               if (delivered) {
                 await this.handlePlanProgress.execute(
                   HandlePlanProgressCommand.create({
                     ...baseFields,
-                    toolProgress: { runId, action: 'awaiting-approval' },
+                    toolProgress: { turnId, action: 'awaiting-approval' },
                   })
                 );
-
-                return;
               }
             }
+
+            return;
           }
 
           await this.handleAgentReply.execute(
@@ -167,7 +181,7 @@ export class ManagedAgentEventHandler {
             event.response.usage
           );
           await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { runId, action: 'complete' } })
+            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { turnId, action: 'complete' } })
           );
         } catch (err) {
           this.logger.error(err, `onFinish failed: session=${sessionId}`);
@@ -182,7 +196,7 @@ export class ManagedAgentEventHandler {
 
       onError: async (event: { error: Error }) => {
         try {
-          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, runId);
+          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, turnId);
         } catch (err) {
           this.logger.error(err, `onError handler failed: session=${sessionId}`);
           captureAgentException(err, {
@@ -211,7 +225,7 @@ export class ManagedAgentEventHandler {
     sessionId: string,
     error: Error,
     baseCommand: BaseCommandFields,
-    runId: string
+    turnId: string
   ): Promise<void> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
@@ -221,21 +235,6 @@ export class ManagedAgentEventHandler {
     }
 
     const runtimeProvider = await this.tryGetRuntimeProvider(metadata);
-
-    if (runtimeProvider && typeof error.message === 'string' && PARKED_SESSION_ERROR_PATTERN.test(error.message)) {
-      const delivered = await this.tryDeliverToolApprovalCard(metadata, sessionId, runtimeProvider);
-
-      if (delivered) {
-        await this.handlePlanProgress.execute(
-          HandlePlanProgressCommand.create({
-            ...baseCommand,
-            toolProgress: { runId, action: 'awaiting-approval' },
-          })
-        );
-
-        return;
-      }
-    }
 
     if (runtimeProvider) {
       const initFailure = runtimeProvider.parseMcpInitFailure(error);
@@ -256,7 +255,7 @@ export class ManagedAgentEventHandler {
         HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
       );
       await this.handlePlanProgress.execute(
-        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { runId, action: 'fail' } })
+        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { turnId, action: 'fail' } })
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
@@ -411,28 +410,31 @@ export class ManagedAgentEventHandler {
   }
 
   /**
-   * Surface an Approve/Deny card for the single oldest pending tool-use
-   * approval on the session. Returns `true` when the card was successfully delivered.
+   * Deliver an approval card for the pending tools. Reads `actionsRequired`
+   * directly from the finish response (fast path). Falls back to querying
+   * the Anthropic session event log when the response lacks tool details
+   * (e.g. after a partial confirmation triggers a new observation).
    */
   private async tryDeliverToolApprovalCard(
     metadata: Record<string, string>,
     sessionId: string,
+    turnId: string,
     runtimeProvider: IAgentRuntimeProvider,
-    knownPending?: PendingToolApproval | null
+    response?: ThalamusResponse
   ): Promise<boolean> {
-    let pending: PendingToolApproval | null = knownPending ?? null;
+    let pendingTools: PendingToolApproval[] = response ? extractPendingToolApprovals(response) : [];
 
-    if (!pending) {
+    if (pendingTools.length === 0) {
       try {
-        pending = await runtimeProvider.getPendingToolApproval(sessionId);
+        pendingTools = await runtimeProvider.getAllPendingToolApprovals(sessionId);
       } catch (err) {
         this.logger.warn(
           { err: err instanceof Error ? err.message : String(err), sessionId },
-          'getPendingToolApproval failed; cannot render Approve/Deny card'
+          'getAllPendingToolApprovals failed; cannot render Approve/Deny card'
         );
         captureAgentWarning(err, {
           component: 'managed-agent-event-handler',
-          operation: 'get-pending-tool-approval',
+          operation: 'get-all-pending-tool-approvals',
           sessionId,
         });
 
@@ -440,10 +442,10 @@ export class ManagedAgentEventHandler {
       }
     }
 
-    if (!pending) {
+    if (pendingTools.length === 0) {
       this.logger.warn(
         { sessionId, conversationId: metadata.conversationId },
-        'Session is parked on requires-action but no pending tool approval was located'
+        'Session is parked on requires-action but no pending tool approvals were located'
       );
 
       return false;
@@ -458,7 +460,7 @@ export class ManagedAgentEventHandler {
           conversationId: metadata.conversationId,
           agentIdentifier: metadata.agentIdentifier ?? '',
           integrationIdentifier: metadata.integrationIdentifier ?? '',
-          reply: { card: buildToolApprovalCard(pending) },
+          reply: { card: buildToolApprovalCard(pendingTools, turnId) },
         })
       );
     } catch (err) {
@@ -523,48 +525,40 @@ export class ManagedAgentEventHandler {
   }
 }
 
-export function parseToolApprovalActionId(id: string | undefined): { approved: boolean; toolUseId: string } | null {
+export function parseToolApprovalActionId(
+  id: string | undefined
+): { approved: boolean; toolUseIds: string[]; turnId: string } | null {
   if (!id) return null;
   const parts = id.split(':');
-  if (parts.length !== 3 || parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
+  if (parts.length !== 4 || parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
 
   const verdict = parts[1];
-  const toolUseId = parts[2];
-  if ((verdict !== 'approve' && verdict !== 'deny') || !toolUseId) return null;
+  const toolUseIdsPart = parts[2];
+  const turnId = parts[3];
+  if ((verdict !== 'approve' && verdict !== 'deny') || !toolUseIdsPart || !turnId) return null;
 
-  return { approved: verdict === 'approve', toolUseId };
+  const toolUseIds = toolUseIdsPart.split(',').filter(Boolean);
+  if (toolUseIds.length === 0) return null;
+
+  return { approved: verdict === 'approve', toolUseIds, turnId };
+}
+
+function extractPendingToolApprovals(response: ThalamusResponse): PendingToolApproval[] {
+  const actions = response.actionsRequired;
+  if (!Array.isArray(actions) || actions.length === 0) {
+    return [];
+  }
+
+  return actions.map((action: ActionRequired) => ({
+    toolUseId: action.toolUseId,
+    toolName: action.toolName,
+    mcpServerName: action.type === 'mcp-approval' ? action.serverName : undefined,
+    input: action.input,
+  }));
 }
 
 export function isLinkButtonActionId(id: string | undefined): boolean {
   return typeof id === 'string' && id.startsWith('link-');
-}
-
-function extractPendingToolApproval(response: ThalamusResponse): PendingToolApproval | null {
-  const actionsRequired = response.actionsRequired;
-  if (!Array.isArray(actionsRequired) || actionsRequired.length === 0) {
-    return null;
-  }
-
-  for (const action of actionsRequired) {
-    if (action.type === 'mcp-approval') {
-      return {
-        toolUseId: action.toolUseId,
-        toolName: action.toolName,
-        mcpServerName: action.serverName,
-        input: action.input,
-      };
-    }
-
-    if (action.type === 'tool-confirmation') {
-      return {
-        toolUseId: action.toolUseId,
-        toolName: action.toolName,
-        input: action.input,
-      };
-    }
-  }
-
-  return null;
 }
 
 function resolveMcpIdByName(mcpServerName: string): string | undefined {
@@ -598,38 +592,103 @@ function buildConnectCard(mcpServerName: string, authorizeUrl: string): Record<s
   };
 }
 
-function buildToolApprovalCard(pending: PendingToolApproval): Record<string, unknown> {
-  const serverLabel = pending.mcpServerName ? ` from ${pending.mcpServerName}` : '';
-  const inputPreview = formatToolInputPreview(pending.input);
+function formatToolLabel(t: PendingToolApproval): string {
+  const name = t.mcpServerName ? `${t.toolName} from ${t.mcpServerName}` : t.toolName;
+  const input = t.input ? `: ${summariseInput(t.input)}` : '';
+
+  return `${name}${input}`;
+}
+
+function buildToolApprovalCard(pendingTools: PendingToolApproval[], turnId: string): Record<string, unknown> {
+  const tool = pendingTools[0];
+  const serverLabel = tool.mcpServerName ? ` from ${tool.mcpServerName}` : '';
+  const toolLabel = formatToolLabel(tool);
+
+  const inputSummary = tool.input ? summariseInput(tool.input) : '';
+  const description = inputSummary
+    ? `I'd like to call \`${tool.toolName}\`${serverLabel}:\n\`\`\`\n${inputSummary}\n\`\`\``
+    : `I'd like to call \`${tool.toolName}\`${serverLabel}.`;
+
+  const children: Record<string, unknown>[] = [{ type: 'text', content: description }];
+
+  children.push(
+    { type: 'divider' },
+    {
+      type: 'actions',
+      children: [
+        {
+          type: 'button',
+          id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}:${turnId}`,
+          label: 'Approve',
+          style: 'primary',
+          value: toolLabel,
+        },
+        {
+          type: 'button',
+          id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}:${turnId}`,
+          label: 'Deny',
+          style: 'danger',
+          value: toolLabel,
+        },
+      ],
+    }
+  );
+
+  if (pendingTools.length > 1) {
+    const allIds = pendingTools.map((t) => t.toolUseId).join(',');
+    const allLabels = pendingTools.map((t) => formatToolLabel(t)).join('\n');
+    children.push({
+      type: 'actions',
+      children: [
+        {
+          type: 'button',
+          id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${allIds}:${turnId}`,
+          label: `Approve All (${pendingTools.length})`,
+          style: 'primary',
+          value: allLabels,
+        },
+        {
+          type: 'button',
+          id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${allIds}:${turnId}`,
+          label: `Deny All (${pendingTools.length})`,
+          style: 'danger',
+          value: allLabels,
+        },
+      ],
+    });
+  }
 
   return {
     type: 'card',
-    children: [
-      {
-        type: 'text',
-        content: `I'd like to call \`${pending.toolName}\`${serverLabel} to answer this. Approve to let me run it, or deny to skip.`,
-      },
-      ...(inputPreview ? [{ type: 'text', content: inputPreview }] : []),
-      { type: 'divider' },
-      {
-        type: 'actions',
-        children: [
-          {
-            type: 'button',
-            id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${pending.toolUseId}`,
-            label: 'Approve',
-            style: 'primary',
-          },
-          {
-            type: 'button',
-            id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${pending.toolUseId}`,
-            label: 'Deny',
-            style: 'danger',
-          },
-        ],
-      },
-    ],
+    title: 'Tool Approval',
+    children,
   };
+}
+
+export function buildToolApprovalVerdictCard(
+  approved: boolean,
+  toolCount: number,
+  toolDescription?: string
+): Record<string, unknown> {
+  const emoji = approved ? '✅' : '🚫';
+  const verb = approved ? 'Approved' : 'Denied';
+  const suffix = toolCount > 1 ? ` all ${toolCount} tools` : '';
+  const subtitle = toolDescription || undefined;
+
+  return {
+    type: 'card',
+    title: 'Tool Approval',
+    subtitle,
+    children: [{ type: 'text', content: `${emoji}  ${verb}${suffix}` }],
+  };
+}
+
+function summariseInput(input: Record<string, unknown>): string {
+  const firstValue = Object.values(input)[0];
+  if (firstValue === undefined) return '';
+  const text = typeof firstValue === 'string' ? firstValue : JSON.stringify(firstValue);
+
+  return text.length > 80 ? `${text.slice(0, 77)}...` : text;
 }
 
 function buildErrorMessage(err: unknown): string {
@@ -667,26 +726,4 @@ export function buildAnonymousUserMcpMessage(platform: AgentPlatformEnum | undef
   const platformLabel = platform ? PLATFORM_DISPLAY_NAMES[platform] : 'chat';
 
   return `I can't connect to **${mcpServerName}** because your ${platformLabel} account isn't linked to a Novu subscriber`;
-}
-
-function formatToolInputPreview(input: Record<string, unknown> | undefined): string | null {
-  if (!input || typeof input !== 'object') {
-    return null;
-  }
-
-  const keys = Object.keys(input);
-  if (keys.length === 0) {
-    return null;
-  }
-
-  let serialised: string;
-  try {
-    serialised = JSON.stringify(input, null, 2);
-  } catch {
-    return null;
-  }
-
-  const capped = serialised.length > 600 ? `${serialised.slice(0, 597)}...` : serialised;
-
-  return `\`\`\`json\n${capped}\n\`\`\``;
 }

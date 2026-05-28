@@ -1,4 +1,4 @@
-import type { StreamPart, Response as ThalamusResponse, Usage } from '@novu/thalamus';
+import type { ActionRequired, StreamPart, Response as ThalamusResponse, Usage } from '@novu/thalamus';
 import { mapAnthropicEvent } from '@novu/thalamus/anthropic/parser';
 import { mapOpenAIEvent } from '@novu/thalamus/openai/parser';
 import { Agent, type Connection, type ConnectionContext, type FiberRecoveryContext } from 'agents';
@@ -12,7 +12,7 @@ class EdgeAccumulator {
   done = false;
   finishReason: ThalamusResponse['finishReason'] = 'stop';
   usage: Usage | undefined;
-  actionsRequired: never[] = [];
+  actionsRequired: ActionRequired[] = [];
   sessionId: string | undefined;
   conversationId: string | undefined;
   /** Required by `mapAnthropicEvent` for `agent.mcp_tool_use` / `agent.mcp_tool_result`. */
@@ -30,6 +30,7 @@ class EdgeAccumulator {
       sessionId: sessionId ?? this.conversationId ?? this.sessionId,
       finishReason: this.finishReason,
       usage: this.usage,
+      actionsRequired: this.actionsRequired.length > 0 ? this.actionsRequired : undefined,
     };
   }
 }
@@ -62,6 +63,8 @@ export interface Env {
 export interface ObservationParams {
   sessionId: string;
   runId: string;
+  /** Stable turn identifier — groups multiple send() calls within one user interaction. */
+  turnId: string;
   streamUrl: string;
   headers: Record<string, string>;
   lastEventId?: string;
@@ -237,7 +240,24 @@ export class SessionObserver extends Agent<Env, State> {
 
       this.triggerDelivery(params);
 
-      if (hasError || acc.done) break;
+      if (hasError) break;
+
+      if (acc.done) {
+        if (acc.finishReason === 'requires-action') {
+          const content = this.reconstructContent(params.sessionId);
+          const intermediateFinish: StreamPart = {
+            type: 'finish',
+            response: { ...acc.toResponse(params.sessionId), content },
+          };
+          this.persistEvent(params.sessionId, sequence++, intermediateFinish);
+          this.triggerDelivery(params);
+          acc.done = false;
+          acc.finishReason = 'stop';
+          acc.actionsRequired = [];
+        } else {
+          break;
+        }
+      }
     }
 
     if (acc.done) {
@@ -380,7 +400,20 @@ export class SessionObserver extends Agent<Env, State> {
       switch (outcome) {
         case 'delivered':
         case 'skipped':
-          if (event.type === 'finish' || event.type === 'error') {
+          if (event.type === 'error') {
+            this.cleanupEvents(sessionId);
+            this.setState({ observation: null });
+
+            return;
+          }
+          if (event.type === 'finish') {
+            const isIntermediate =
+              (event as { response?: { finishReason?: string } }).response?.finishReason === 'requires-action';
+            if (isIntermediate) {
+              this.markDelivered(row.id);
+
+              continue;
+            }
             this.cleanupEvents(sessionId);
             this.setState({ observation: null });
 
@@ -403,7 +436,7 @@ export class SessionObserver extends Agent<Env, State> {
   }
 
   private async deliverOne(row: EventRow, event: StreamPart, params: ObservationParams): Promise<DeliveryOutcome> {
-    const { sessionId, runId, provider, webhook } = params;
+    const { sessionId, runId, turnId, provider, webhook } = params;
 
     if (row.attempts >= MAX_ATTEMPTS) return 'exhausted';
 
@@ -412,6 +445,7 @@ export class SessionObserver extends Agent<Env, State> {
     const body = JSON.stringify({
       sessionId,
       runId,
+      turnId,
       sequence: row.sequence,
       timestamp: row.created_at,
       provider,
@@ -534,6 +568,7 @@ function validateObservationParams(body: unknown): body is ObservationParams {
   const obj = body as Record<string, unknown>;
   if (typeof obj.sessionId !== 'string' || obj.sessionId.length === 0) return false;
   if (typeof obj.runId !== 'string' || obj.runId.length === 0) return false;
+  if (typeof obj.turnId !== 'string' || obj.turnId.length === 0) return false;
   if (typeof obj.streamUrl !== 'string') return false;
   try {
     new URL(obj.streamUrl);

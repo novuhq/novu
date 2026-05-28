@@ -1,9 +1,27 @@
+import { buttonVariants } from '@/components/primitives/button';
+import {
+  CLERK_PUBLISHABLE_KEY,
+  EE_AUTH_PROVIDER,
+  getHostnameWithoutPort,
+  IS_ENTERPRISE,
+  IS_HOSTNAME_SPLIT_ENABLED,
+  IS_NOVU_CONNECT,
+  IS_SELF_HOSTED,
+  NOVU_CONNECT_HOSTNAME,
+} from '@/config';
+import { isAbsoluteUrl } from '@/utils/apps';
+import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
+import {
+  buildClerkAllowedRedirectOrigins,
+  buildPrimarySignInUrl,
+  buildPrimarySignUpUrl,
+  CONNECT_PRODUCT_VALUE,
+  PRODUCT_QUERY_PARAM,
+} from '@/utils/product-auth-urls';
+import { ROUTES } from '@/utils/routes';
 import { ClerkProvider as _ClerkProvider } from '@clerk/react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { buttonVariants } from '@/components/primitives/button';
-import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
-import { ROUTES } from '@/utils/routes';
 
 type EEAuthProviderProps = PropsWithChildren;
 
@@ -11,10 +29,7 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   const navigate = useNavigate();
   const { children } = props;
 
-  // Check community self-hosted first to match build-time alias precedence in vite.config.ts
   if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
-    // For community self-hosted, use the self-hosted ClerkProvider
-    // (which is aliased via Vite at build time to ./src/utils/self-hosted/index.tsx)
     // @ts-expect-error - Self-hosted ClerkProvider has simpler props
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }
@@ -24,14 +39,76 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }
 
+  // Escape React Router for absolute URLs (cross-origin handoff) and re-attach `?product=` so
+  // Clerk's internal sub-route pushes don't strip the Connect-branding flag mid-flow.
+  const navigateClerk = (to: string, replace = false) => {
+    if (isAbsoluteUrl(to)) {
+      if (replace) {
+        window.location.replace(to);
+      } else {
+        window.location.assign(to);
+      }
+
+      return;
+    }
+
+    let target = to;
+
+    if (typeof window !== 'undefined' && target.startsWith('/auth/')) {
+      const currentProduct = new URLSearchParams(window.location.search).get(PRODUCT_QUERY_PARAM);
+
+      if (currentProduct) {
+        const url = new URL(target, window.location.origin);
+
+        if (!url.searchParams.has(PRODUCT_QUERY_PARAM)) {
+          url.searchParams.set(PRODUCT_QUERY_PARAM, currentProduct);
+          target = `${url.pathname}${url.search}${url.hash}`;
+        }
+      }
+    }
+
+    if (replace) {
+      navigate(target, { replace: true });
+    } else {
+      navigate(target);
+    }
+  };
+
+  // Sign-in flows are only allowed on the primary; satellite must point `signInUrl`/`signUpUrl`
+  // back to it. Primary lists the Connect origin in `allowedRedirectOrigins` for post-auth bounce.
+  const isSatellite = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
+
+  const satelliteSignInUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });
+  const satelliteSignUpUrl = buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE });
+
+  const signInUrl = isSatellite ? satelliteSignInUrl : ROUTES.SIGN_IN;
+  const signUpUrl = isSatellite ? satelliteSignUpUrl : ROUTES.SIGN_UP;
+
+  const satelliteProps = isSatellite
+    ? {
+        isSatellite: true as const,
+        domain: getHostnameWithoutPort(NOVU_CONNECT_HOSTNAME),
+        // Clerk v6 / Core 3 flipped the satellite default from auto-sync ON to OFF (#7597), so
+        // Connect now treats every first page load as anonymous unless cookies are already
+        // present — primary's sign-in then bounces back to a still-anonymous satellite and we
+        // loop. We rely on the Core 2 behavior (auto-handshake with primary on first load) so
+        // an already-signed-in user on Platform is recognized on Connect without re-auth.
+        // See https://clerk.com/docs/guides/development/upgrading/upgrade-guides/core-3
+        satelliteAutoSync: true,
+      }
+    : {};
+
+  const allowedRedirectOrigins = buildClerkAllowedRedirectOrigins();
+
   return (
     <_ClerkProvider
-      routerPush={(to) => navigate(to)}
-      routerReplace={(to) => navigate(to, { replace: true })}
+      {...satelliteProps}
+      routerPush={(to) => navigateClerk(to)}
+      routerReplace={(to) => navigateClerk(to, true)}
       publishableKey={CLERK_PUBLISHABLE_KEY}
-      signInUrl={ROUTES.SIGN_IN}
-      signUpUrl={ROUTES.SIGN_UP}
-      afterSignOutUrl={ROUTES.SIGN_IN}
+      signInUrl={signInUrl}
+      signUpUrl={signUpUrl}
+      afterSignOutUrl={buildAfterSignOutUrl()}
       appearance={{
         userButton: {
           elements: {
@@ -93,7 +170,7 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
           form_identifier_exists: 'Already taken, please choose another',
         },
       }}
-      allowedRedirectOrigins={['http://localhost:*', window.location.origin]}
+      allowedRedirectOrigins={allowedRedirectOrigins}
     >
       {children}
     </_ClerkProvider>

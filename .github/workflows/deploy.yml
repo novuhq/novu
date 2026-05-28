@@ -587,7 +587,7 @@ jobs:
         if: |
           github.event.inputs.environment == 'staging' ||
           github.event.inputs.environment == 'staging-sg'
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_STAGING }}
           name: ${{ steps.release_meta.outputs.name }}
@@ -595,7 +595,7 @@ jobs:
 
       - name: Sync production release to Linear
         if: contains(github.event.inputs.environment, 'production')
-        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b  # pinned v0 ref
+        uses: linear/linear-release-action@0353b5fa8c00326913966f00557d68f8f30b8b6b # pinned v0 ref
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_PROD }}
           name: ${{ steps.release_meta.outputs.name }}

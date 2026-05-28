@@ -18,11 +18,15 @@ import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
-import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentEventEnum } from '../dtos/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
+import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
+import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/handle-plan-progress.command';
+import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
+import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
@@ -30,7 +34,11 @@ import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
 import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
-import { isLinkButtonActionId, parseToolApprovalActionId } from './managed-agent-event-handler';
+import {
+  buildToolApprovalVerdictCard,
+  isLinkButtonActionId,
+  parseToolApprovalActionId,
+} from './managed-agent-event-handler';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
 /**
@@ -224,7 +232,9 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly attachmentStorage: AgentAttachmentStorage,
     private readonly startCodeService: TelegramStartCodeService,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber
+    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
+    private readonly handleAgentReply: HandleAgentReply,
+    private readonly handlePlanProgress: HandlePlanProgress
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -772,9 +782,52 @@ export class AgentInboundHandler implements OnModuleInit {
         integrationIdentifier: config.integrationIdentifier,
         subscriberId: subscriberId ?? undefined,
         platform: config.platform,
-        toolUseId: toolApproval.toolUseId,
+        toolUseIds: toolApproval.toolUseIds,
         approved: toolApproval.approved,
+        turnId: toolApproval.turnId,
       });
+
+      if (action.sourceMessageId) {
+        const verdictCard = buildToolApprovalVerdictCard(
+          toolApproval.approved,
+          toolApproval.toolUseIds.length,
+          action.value
+        );
+        this.handleAgentReply
+          .execute(
+            HandleAgentReplyCommand.create({
+              userId: 'system',
+              environmentId: config.environmentId,
+              organizationId: config.organizationId,
+              conversationId: conversation._id,
+              agentIdentifier: config.agentIdentifier,
+              integrationIdentifier: config.integrationIdentifier,
+              edit: { messageId: action.sourceMessageId, content: { card: verdictCard } },
+            })
+          )
+          .catch((err) => {
+            this.logger.warn(err, `[agent:${agentId}] Failed to update tool approval card with verdict`);
+          });
+      }
+
+      this.handlePlanProgress
+        .execute(
+          HandlePlanProgressCommand.create({
+            userId: 'system',
+            environmentId: config.environmentId,
+            organizationId: config.organizationId,
+            conversationId: conversation._id,
+            agentIdentifier: config.agentIdentifier,
+            integrationIdentifier: config.integrationIdentifier,
+            toolProgress: {
+              turnId: toolApproval.turnId,
+              action: toolApproval.approved ? 'approved' : 'denied',
+            },
+          })
+        )
+        .catch((err) => {
+          this.logger.warn(err, `[agent:${agentId}] Failed to update plan card after tool approval verdict`);
+        });
 
       return;
     }

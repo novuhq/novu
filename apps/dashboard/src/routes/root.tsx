@@ -1,3 +1,4 @@
+import { ClerkLoaded } from '@clerk/react';
 import { ErrorBoundary, withProfiler } from '@sentry/react';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
@@ -50,25 +51,28 @@ const RootRouteInternal = () => {
     <ErrorBoundary fallback={({ error, eventId }) => <RootRouteErrorFallback error={error} eventId={eventId} />}>
       <QueryClientProvider client={queryClient}>
         <ClerkProvider>
-          <SegmentProvider>
-            <CustomerIoProvider>
-              <SnitcherProvider>
-                <AuthProvider>
-                  <RegionProvider>
-                    <IdentityProvider>
-                      <HelmetProvider>
-                        <TooltipProvider delayDuration={100}>
-                          <EscapeKeyManagerProvider>
-                            <Outlet />
-                          </EscapeKeyManagerProvider>
-                        </TooltipProvider>
-                      </HelmetProvider>
-                    </IdentityProvider>
-                  </RegionProvider>
-                </AuthProvider>
-              </SnitcherProvider>
-            </CustomerIoProvider>
-          </SegmentProvider>
+          {/* Hold rendering until Clerk bootstraps to avoid a flash during satellite handshake. */}
+          <ClerkLoaded>
+            <SegmentProvider>
+              <CustomerIoProvider>
+                <SnitcherProvider>
+                  <AuthProvider>
+                    <RegionProvider>
+                      <IdentityProvider>
+                        <HelmetProvider>
+                          <TooltipProvider delayDuration={100}>
+                            <EscapeKeyManagerProvider>
+                              <Outlet />
+                            </EscapeKeyManagerProvider>
+                          </TooltipProvider>
+                        </HelmetProvider>
+                      </IdentityProvider>
+                    </RegionProvider>
+                  </AuthProvider>
+                </SnitcherProvider>
+              </CustomerIoProvider>
+            </SegmentProvider>
+          </ClerkLoaded>
         </ClerkProvider>
       </QueryClientProvider>
     </ErrorBoundary>
