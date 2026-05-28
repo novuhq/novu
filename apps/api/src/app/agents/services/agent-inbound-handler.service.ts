@@ -388,6 +388,8 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const isManagedAgent = agent?.runtime === 'managed' && agent.managedRuntime;
 
+    // Subscriber still owes MCP OAuth: hold this message, show the setup card, skip dispatch.
+    // After OAuth completes, CompleteManagedAgentSetup replays the held message.
     if (isManagedAgent && subscriber && message.id) {
       const parked = await this.handleManagedAgentSetupInbound.execute(
         ManagedAgentSetupInboundCommand.create({

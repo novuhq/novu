@@ -38,39 +38,6 @@ export function mergeToolTrustPatch(params: {
   return { tools: { [params.toolName]: 'always_allow' } };
 }
 
-export function extractToolNameFromApprovalValue(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const trimmed = value.trim();
-  const fromIndex = trimmed.indexOf(' from ');
-
-  if (fromIndex === -1) {
-    const colonIndex = trimmed.indexOf(':');
-
-    return colonIndex === -1 ? trimmed : trimmed.slice(0, colonIndex).trim();
-  }
-
-  return trimmed.slice(0, fromIndex).trim();
-}
-
-export function extractMcpServerNameFromApprovalValue(value: string | undefined): string | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  const fromIndex = value.indexOf(' from ');
-  if (fromIndex === -1) {
-    return undefined;
-  }
-
-  const rest = value.slice(fromIndex + ' from '.length);
-  const colonIndex = rest.indexOf(':');
-
-  return colonIndex === -1 ? rest.trim() : rest.slice(0, colonIndex).trim();
-}
-
 function matchesMcpServerName(enablement: AgentMcpServerEntity, mcpServerName: string): boolean {
   if (enablement.externalProjection?.mcpServerName === mcpServerName) {
     return true;

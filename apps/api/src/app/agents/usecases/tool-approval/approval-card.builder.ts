@@ -3,17 +3,23 @@ import type { ActionRequired, Response as ThalamusResponse } from '@novu/thalamu
 
 export const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
 
+// Slack button clicks include action.id (parsed below) and action.value (label text only).
+// Id: mcp-approval:{approve|deny|approve-tool|approve-server}:{toolUseIds}:{turnId}
+// "Always allow" buttons append :{toolName}:{mcpServerName} (URI-encoded) for trust storage.
 export type ParsedToolApprovalAction = {
   approved: boolean;
   toolUseIds: string[];
   turnId: string;
   persistScope?: 'tool' | 'server';
+  toolName?: string;
+  mcpServerName?: string;
 };
 
 export function parseToolApprovalActionId(id: string | undefined): ParsedToolApprovalAction | null {
   if (!id) return null;
   const parts = id.split(':');
-  if (parts.length !== 4 || parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
+  if (parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
+  if (parts.length !== 4 && parts.length !== 6) return null;
 
   const verdict = parts[1];
   const toolUseIdsPart = parts[2];
@@ -40,7 +46,23 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
     parsed.persistScope = 'server';
   }
 
+  if (parts.length === 6) {
+    parsed.toolName = decodeURIComponent(parts[4]) || undefined;
+    parsed.mcpServerName = decodeURIComponent(parts[5]) || undefined;
+  }
+
   return parsed;
+}
+
+function buildPersistTrustActionId(
+  verdict: 'approve-tool' | 'approve-server',
+  tool: PendingToolApproval,
+  turnId: string
+): string {
+  const toolName = encodeURIComponent(tool.toolName);
+  const mcpServerName = encodeURIComponent(tool.mcpServerName ?? '');
+
+  return `${TOOL_APPROVAL_ACTION_PREFIX}:${verdict}:${tool.toolUseId}:${turnId}:${toolName}:${mcpServerName}`;
 }
 
 export function isLinkButtonActionId(id: string | undefined): boolean {
@@ -112,14 +134,14 @@ export function buildToolApprovalCard(pendingTools: PendingToolApproval[], turnI
         children: [
           {
             type: 'button',
-            id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve-tool:${tool.toolUseId}:${turnId}`,
+            id: buildPersistTrustActionId('approve-tool', tool, turnId),
             label: `Approve & always allow ${tool.toolName}`,
             style: 'default',
             value: toolLabel,
           },
           {
             type: 'button',
-            id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve-server:${tool.toolUseId}:${turnId}`,
+            id: buildPersistTrustActionId('approve-server', tool, turnId),
             label: `Approve & always allow all ${mcpDisplayName} tools`,
             style: 'default',
             value: toolLabel,

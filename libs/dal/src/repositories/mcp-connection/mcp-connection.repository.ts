@@ -218,6 +218,7 @@ export class McpConnectionRepository extends BaseRepositoryV2<
 
     if (params.patch.tools) {
       for (const [toolName, policy] of Object.entries(params.patch.tools)) {
+        assertSafeMcpToolTrustKeySegment(toolName);
         $set[`toolTrust.tools.${toolName}`] = policy;
       }
     }
@@ -234,5 +235,12 @@ export class McpConnectionRepository extends BaseRepositoryV2<
       },
       { $set }
     );
+  }
+}
+
+function assertSafeMcpToolTrustKeySegment(name: string): void {
+  // Stored as toolTrust.tools.{name}; `.` and `$` would corrupt the Mongo update path.
+  if (name.includes('.') || name.includes('$') || name.includes('\0')) {
+    throw new Error(`Invalid MCP tool name for trust persistence: ${name}`);
   }
 }

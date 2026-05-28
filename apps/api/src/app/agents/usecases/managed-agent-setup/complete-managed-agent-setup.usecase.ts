@@ -124,6 +124,7 @@ export class CompleteManagedAgentSetup {
     );
 
     if (mcps.some(isOAuthMcpPending)) {
+      // Some MCPs still need OAuth — refresh the setup card in each waiting Slack thread.
       await this.refreshSetupCardsForPendingConversations({
         agentId: agent._id,
         config,
@@ -138,6 +139,7 @@ export class CompleteManagedAgentSetup {
       return;
     }
 
+    // All MCPs connected — show "setup complete" and re-run every held user message.
     await this.completeAndReplayForAllPendingConversations({
       agentId: agent._id,
       agent,

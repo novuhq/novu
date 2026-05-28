@@ -9,12 +9,7 @@ import { HandlePlanProgressCommand } from '../handle-plan-progress/handle-plan-p
 import { HandlePlanProgress } from '../handle-plan-progress/handle-plan-progress.usecase';
 import { buildToolApprovalVerdictCard } from './approval-card.builder';
 import { ConfirmToolApprovalCommand } from './confirm-tool-approval.command';
-import {
-  extractMcpServerNameFromApprovalValue,
-  extractToolNameFromApprovalValue,
-  mergeToolTrustPatch,
-  resolveTrustForPendingTool,
-} from './tool-trust.helper';
+import { mergeToolTrustPatch, resolveTrustForPendingTool } from './tool-trust.helper';
 
 @Injectable()
 export class ConfirmToolApproval {
@@ -34,15 +29,17 @@ export class ConfirmToolApproval {
     const { parsed } = command;
     let persistTrust: { connectionId: string; toolName: string; scope: 'tool' | 'server' } | undefined;
 
+    // "Approve & always allow …": save always_allow on the MCP connection (from action.id),
+    // then tell the runtime to continue the paused agent turn.
     if (parsed.approved && parsed.persistScope && command.subscriberId) {
       const subscriber = await this.subscriberRepository.findBySubscriberId(
         command.environmentId,
         command.subscriberId
       );
-      const toolName = extractToolNameFromApprovalValue(command.actionValue);
-      const mcpServerName = extractMcpServerNameFromApprovalValue(command.actionValue);
+      const toolName = parsed.toolName;
+      const mcpServerName = parsed.mcpServerName;
 
-      if (subscriber && toolName) {
+      if (subscriber && mcpServerName && toolName) {
         const resolution = await resolveTrustForPendingTool({
           findOAuthEnablementsForAgent: (params) => this.agentMcpServerRepository.findOAuthEnablementsForAgent(params),
           findSubscriberConnection: (params) => this.mcpConnectionRepository.findSubscriberConnection(params),
