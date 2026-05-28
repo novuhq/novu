@@ -5,7 +5,7 @@ import type { GeneratedAgentSpec } from '../api/agents';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { type ConnectStore, createConnectStore } from './store';
-import type { ConnectUI, GeneratedAgentPreviewAction, PickResult } from './ui';
+import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export interface MountConnectUIParams {
   options: ConnectCommandOptions;
@@ -140,7 +140,7 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       store.phase.set({ kind: 'generating' });
     },
     previewGeneratedAgent(spec: GeneratedAgentSpec) {
-      return new Promise<GeneratedAgentPreviewAction>((resolve) => {
+      return new Promise<GeneratedAgentPreviewResult>((resolve) => {
         store.phase.set({ kind: 'preview-generated', spec, resolve });
       });
     },

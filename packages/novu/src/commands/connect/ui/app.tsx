@@ -1,12 +1,11 @@
 import { Select, TextInput } from '@inkjs/ui';
 import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
-import { Box, Text, useApp, useInput, useStdout } from 'ink';
+import { Box, Text, useApp, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
-import type { GeneratedAgentSpec } from '../api/agents';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import type { AgentRuntimeChoice, ChannelChoice } from '../types';
-import { resolveGeneratedAgentSpecLabels, wrapPreviewLines } from './agent-spec-labels';
+import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore } from './store';
 import { useStore } from './use-store';
 
@@ -374,7 +373,7 @@ function PhaseContent({
 
     case 'preview-generated':
       return (
-        <PreviewGeneratedContent spec={phase.spec} onAction={phase.resolve} morphComplete={previewMorphComplete} />
+        <PreviewGeneratedContent spec={phase.spec} onResolve={phase.resolve} morphComplete={previewMorphComplete} />
       );
 
     case 'creating':
@@ -1028,127 +1027,6 @@ function GeneratingContent(): React.ReactElement {
       <Text dimColor>{tagline}</Text>
     </Box>
   );
-}
-
-type PreviewMenuAction = 'confirm' | 'refine';
-
-function PreviewGeneratedContent({
-  spec,
-  onAction,
-  morphComplete,
-}: {
-  spec: GeneratedAgentSpec;
-  onAction: (action: PreviewMenuAction) => void;
-  morphComplete: boolean;
-}): React.ReactElement {
-  const { stdout } = useStdout();
-  const [menuIdx, setMenuIdx] = React.useState(0);
-  const labels = React.useMemo(() => resolveGeneratedAgentSpecLabels(spec), [spec]);
-  const contentWidth = Math.max(48, Math.min(72, stdout.columns - 6));
-  const promptWrap = React.useMemo(
-    () => wrapPreviewLines(spec.systemPrompt, contentWidth - 4, 5),
-    [contentWidth, spec.systemPrompt]
-  );
-
-  const menuOptions: Array<{ action: PreviewMenuAction; label: string; hint?: string }> = [
-    { action: 'confirm', label: 'Create this agent', hint: '→' },
-    { action: 'refine', label: 'Refine my description', hint: '↺' },
-  ];
-
-  useInput((_input, key) => {
-    if (!morphComplete) return;
-
-    if (key.upArrow) {
-      setMenuIdx((current) => (current - 1 + menuOptions.length) % menuOptions.length);
-    } else if (key.downArrow) {
-      setMenuIdx((current) => (current + 1) % menuOptions.length);
-    } else if (key.return || _input === ' ') {
-      onAction(menuOptions[menuIdx].action);
-    }
-  });
-
-  const toolLine = formatCapabilityLine(labels.tools);
-  const mcpLine = formatCapabilityLine(labels.mcpServers);
-  const skillLine = formatCapabilityLine(labels.skills);
-
-  if (!morphComplete) {
-    return (
-      <Box flexDirection="column" alignItems="center">
-        <Text dimColor>Shaping your agent…</Text>
-      </Box>
-    );
-  }
-
-  return (
-    <Box flexDirection="column" gap={1} width={contentWidth} alignItems="flex-start">
-      <Text bold color="#e9d5ff">
-        Your agent, shaped
-      </Text>
-      <Box flexDirection="column" gap={0}>
-        <Text bold>{spec.name}</Text>
-        <Text dimColor>{spec.identifier}</Text>
-      </Box>
-
-      <Box flexDirection="column" gap={0}>
-        <Text dimColor>System prompt</Text>
-        <Box borderStyle="round" borderColor="#6b7280" paddingX={1} flexDirection="column">
-          {promptWrap.lines.map((line, index) => (
-            <Text key={`${index}-${line}`} dimColor>
-              {line}
-            </Text>
-          ))}
-          {promptWrap.truncated ? <Text dimColor>… editable in the dashboard after creation</Text> : null}
-        </Box>
-      </Box>
-
-      <Box flexDirection="column" gap={0}>
-        {toolLine ? (
-          <Text>
-            <Text color="#c084fc">Tools</Text>
-            <Text dimColor>{` · ${toolLine}`}</Text>
-          </Text>
-        ) : null}
-        {mcpLine ? (
-          <Text>
-            <Text color="#c084fc">MCP</Text>
-            <Text dimColor>{` · ${mcpLine}`}</Text>
-          </Text>
-        ) : null}
-        {skillLine ? (
-          <Text>
-            <Text color="#c084fc">Skills</Text>
-            <Text dimColor>{` · ${skillLine}`}</Text>
-          </Text>
-        ) : null}
-        {!toolLine && !mcpLine && !skillLine ? (
-          <Text dimColor>No extra tools wired — web search is enabled by default.</Text>
-        ) : null}
-      </Box>
-
-      <Box flexDirection="column" marginTop={1}>
-        {menuOptions.map((opt, i) => {
-          const isSelected = i === menuIdx;
-
-          return (
-            <Text key={opt.action}>
-              <Text color={isSelected ? 'cyan' : undefined}>
-                {isSelected ? '› ' : '  '}
-                {opt.label}
-              </Text>
-              {isSelected && opt.hint ? <Text dimColor>{` ${opt.hint}`}</Text> : null}
-            </Text>
-          );
-        })}
-        <Text dimColor>↑↓ choose · Enter confirm</Text>
-      </Box>
-    </Box>
-  );
-}
-
-function formatCapabilityLine(items: string[]): string | null {
-  if (items.length === 0) return null;
-
-  return items.join(', ');
 }
 
 function truncateInline(text: string, maxLength: number): string {

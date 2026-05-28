@@ -237,10 +237,10 @@ async function generateAndPreviewAgent(
 
     ui.generatingAgent();
     const generated = await generateAgent(client, prompt.trim());
-    const action = await ui.previewGeneratedAgent(generated);
+    const result = await ui.previewGeneratedAgent(generated);
 
-    if (action === 'confirm') {
-      return generated;
+    if (result.action === 'confirm') {
+      return result.spec;
     }
 
     prompt = await ui.refineDescription(prompt.trim());

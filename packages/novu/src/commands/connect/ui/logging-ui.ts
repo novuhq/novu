@@ -4,7 +4,7 @@ import type { GeneratedAgentSpec } from '../api/agents';
 import { channelDisplayName } from '../dashboard-urls';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import type { AgentSummary } from '../types';
-import type { ConnectUI, GeneratedAgentPreviewAction, PickResult } from './ui';
+import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
   let spinner: Ora | undefined;
@@ -132,7 +132,7 @@ export function createLoggingUI(): ConnectUI {
       stop();
       logGeneratedAgentPreview(spec);
 
-      return Promise.resolve<GeneratedAgentPreviewAction>('confirm');
+      return Promise.resolve<GeneratedAgentPreviewResult>({ action: 'confirm', spec });
     },
     creatingAgent(name) {
       start(`Creating agent "${name}"…`);
