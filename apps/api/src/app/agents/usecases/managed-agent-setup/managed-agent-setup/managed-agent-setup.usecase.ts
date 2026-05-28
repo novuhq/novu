@@ -190,17 +190,6 @@ export class ManagedAgentSetup {
     });
   }
 
-  private buildReplyBaseCommand(command: ManagedAgentSetupInboundCommand) {
-    return {
-      userId: 'system',
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      conversationId: command.conversationId,
-      agentIdentifier: command.agentIdentifier,
-      integrationIdentifier: command.integrationIdentifier,
-    };
-  }
-
   private async listOAuthMcps(params: {
     environmentId: string;
     organizationId: string;
@@ -272,20 +261,30 @@ export class ManagedAgentSetup {
       pendingState
     );
 
-    const card = await this.buildSetupCard(mcps, {
+    const card = await buildSetupCardForMcps({
+      mcps,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       agentIdentifier: command.agentIdentifier,
       subscriberId: command.subscriberId,
       conversationId: command.conversationId,
+      generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+      logger: this.logger,
     });
 
-    const baseCommand = this.buildReplyBaseCommand(command);
+    const replyCommandBase = {
+      userId: 'system',
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      conversationId: command.conversationId,
+      agentIdentifier: command.agentIdentifier,
+      integrationIdentifier: command.integrationIdentifier,
+    };
 
     if (pendingState.setupMessageId) {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
-          ...baseCommand,
+          ...replyCommandBase,
           edit: {
             messageId: pendingState.setupMessageId,
             content: { card },
@@ -298,7 +297,7 @@ export class ManagedAgentSetup {
 
     const sent = await this.handleAgentReply.execute(
       HandleAgentReplyCommand.create({
-        ...baseCommand,
+        ...replyCommandBase,
         reply: { card },
       })
     );
@@ -372,19 +371,27 @@ export class ManagedAgentSetup {
       return;
     }
 
-    const card = await this.buildSetupCard(mcps, {
+    const card = await buildSetupCardForMcps({
+      mcps,
       resolved: true,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       agentIdentifier: command.agentIdentifier,
       subscriberId: command.subscriberId,
       conversationId: command.conversationId,
+      generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+      logger: this.logger,
     });
 
     try {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
-          ...this.buildReplyBaseCommand(command),
+          userId: 'system',
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          conversationId: command.conversationId,
+          agentIdentifier: command.agentIdentifier,
+          integrationIdentifier: command.integrationIdentifier,
           edit: {
             messageId: setupMessageId,
             content: { card },
@@ -441,12 +448,15 @@ export class ManagedAgentSetup {
       return;
     }
 
-    const card = await this.buildSetupCard(mcps, {
+    const card = await buildSetupCardForMcps({
+      mcps,
       environmentId: config.environmentId,
       organizationId: config.organizationId,
       agentIdentifier: config.agentIdentifier,
       subscriberId: subscriber.subscriberId,
       conversationId: conversation._id,
+      generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+      logger: this.logger,
     });
 
     await this.handleAgentReply.execute(
@@ -476,13 +486,16 @@ export class ManagedAgentSetup {
     const { conversation, pending, agent, config, subscriber, mcps } = params;
 
     if (pending.setupMessageId) {
-      const resolvedCard = await this.buildSetupCard(mcps, {
+      const resolvedCard = await buildSetupCardForMcps({
+        mcps,
         resolved: true,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
         agentIdentifier: config.agentIdentifier,
         subscriberId: subscriber.subscriberId,
         conversationId: conversation._id,
+        generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+        logger: this.logger,
       });
 
       await this.handleAgentReply.execute(
@@ -515,30 +528,6 @@ export class ManagedAgentSetup {
       subscriber,
       pendingPlatformMessageId: pending.pendingPlatformMessageId,
       agent,
-    });
-  }
-
-  private async buildSetupCard(
-    mcps: OAuthMcp[],
-    params: {
-      resolved?: boolean;
-      environmentId: string;
-      organizationId: string;
-      agentIdentifier: string;
-      subscriberId: string;
-      conversationId: string;
-    }
-  ): Promise<Record<string, unknown>> {
-    return buildSetupCardForMcps({
-      mcps,
-      resolved: params.resolved,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-      agentIdentifier: params.agentIdentifier,
-      subscriberId: params.subscriberId,
-      conversationId: params.conversationId,
-      generateMcpOAuthUrl: this.generateMcpOAuthUrl,
-      logger: this.logger,
     });
   }
 }

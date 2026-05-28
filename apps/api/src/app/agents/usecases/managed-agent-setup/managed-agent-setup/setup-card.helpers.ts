@@ -1,6 +1,5 @@
 import { McpConnectionStatusEnum } from '@novu/shared';
 
-import type { StoredAttachment } from '../../../services/agent-attachment-storage.service';
 import type { OAuthMcp } from './oauth-mcp.types';
 
 export type SetupCardRow = OAuthMcp & {
@@ -77,44 +76,4 @@ export function buildSetupCard(params: { mcps: SetupCardRow[]; resolved?: boolea
     title,
     children,
   };
-}
-
-export function mapStoredAttachmentsFromRichContent(
-  richContent?: Record<string, unknown>
-): StoredAttachment[] | undefined {
-  const rawAttachments = richContent?.attachments;
-
-  if (!Array.isArray(rawAttachments)) {
-    return undefined;
-  }
-
-  const storedAttachments = rawAttachments.flatMap((item) => {
-    if (!item || typeof item !== 'object') {
-      return [];
-    }
-
-    const attachment = item as Record<string, unknown>;
-    const storageKey = attachment.storageKey;
-
-    if (typeof storageKey !== 'string' || storageKey.length === 0) {
-      return [];
-    }
-
-    return [
-      {
-        type: typeof attachment.type === 'string' ? attachment.type : 'file',
-        name: typeof attachment.name === 'string' ? attachment.name : undefined,
-        mimeType: typeof attachment.mimeType === 'string' ? attachment.mimeType : undefined,
-        size: typeof attachment.size === 'number' ? attachment.size : undefined,
-        storageKey,
-        url: typeof attachment.url === 'string' ? attachment.url : undefined,
-      },
-    ];
-  });
-
-  if (!storedAttachments.length) {
-    return undefined;
-  }
-
-  return storedAttachments;
 }
