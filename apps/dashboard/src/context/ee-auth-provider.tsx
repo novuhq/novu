@@ -2,12 +2,10 @@ import { buttonVariants } from '@/components/primitives/button';
 import {
   CLERK_PUBLISHABLE_KEY,
   EE_AUTH_PROVIDER,
-  getHostnameWithoutPort,
   IS_ENTERPRISE,
   IS_HOSTNAME_SPLIT_ENABLED,
   IS_NOVU_CONNECT,
   IS_SELF_HOSTED,
-  NOVU_CONNECT_HOSTNAME,
 } from '@/config';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
@@ -74,35 +72,28 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     }
   };
 
-  // Sign-in flows are only allowed on the primary; satellite must point `signInUrl`/`signUpUrl`
-  // back to it. Primary lists the Connect origin in `allowedRedirectOrigins` for post-auth bounce.
-  const isSatellite = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
+  // Sign-in/up forms only render on the primary; the Connect host bounces visitors back to it.
+  // We deliberately do NOT use Clerk's satellite-domain mode (`isSatellite` / `satelliteAutoSync`).
+  // Satellite mode runs a cross-domain handshake whose `__client_uat_<HASH>` cookies get scoped
+  // to the shared registrable domain — when primary and satellite live under the same root, the
+  // satellite Frontend API's response clobbers the primary's session cookie and produces a
+  // sign-in ↔ Connect redirect loop. Instead, we rely on Clerk's recommended "same root domain"
+  // setup: primary writes session cookies on `Domain=<root>` and the Connect host reads them
+  // natively. Cross-product CORS is granted by adding the Connect host under "Allowed subdomains"
+  // in the Clerk instance config.
+  const isCrossProductHost = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
 
-  const satelliteSignInUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });
-  const satelliteSignUpUrl = buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE });
-
-  const signInUrl = isSatellite ? satelliteSignInUrl : ROUTES.SIGN_IN;
-  const signUpUrl = isSatellite ? satelliteSignUpUrl : ROUTES.SIGN_UP;
-
-  const satelliteProps = isSatellite
-    ? {
-        isSatellite: true as const,
-        domain: getHostnameWithoutPort(NOVU_CONNECT_HOSTNAME),
-        // Clerk v6 / Core 3 flipped the satellite default from auto-sync ON to OFF (#7597), so
-        // Connect now treats every first page load as anonymous unless cookies are already
-        // present — primary's sign-in then bounces back to a still-anonymous satellite and we
-        // loop. We rely on the Core 2 behavior (auto-handshake with primary on first load) so
-        // an already-signed-in user on Platform is recognized on Connect without re-auth.
-        // See https://clerk.com/docs/guides/development/upgrading/upgrade-guides/core-3
-        satelliteAutoSync: true,
-      }
-    : {};
+  const signInUrl = isCrossProductHost
+    ? buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE })
+    : ROUTES.SIGN_IN;
+  const signUpUrl = isCrossProductHost
+    ? buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE })
+    : ROUTES.SIGN_UP;
 
   const allowedRedirectOrigins = buildClerkAllowedRedirectOrigins();
 
   return (
     <_ClerkProvider
-      {...satelliteProps}
       routerPush={(to) => navigateClerk(to)}
       routerReplace={(to) => navigateClerk(to, true)}
       publishableKey={CLERK_PUBLISHABLE_KEY}

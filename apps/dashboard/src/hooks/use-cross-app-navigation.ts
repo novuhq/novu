@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 import { isSafeNavigationHref } from '@/utils/apps';
 
-// Plain cross-origin navigation. The Connect satellite Clerk SDK handles session sync via its
-// built-in handshake on the destination page — wrapping with `clerk.redirectWithAuth` here caused
-// a `__clerk_synced=false` redirect loop with Platform.
+// Plain cross-origin navigation. Primary and Connect share session cookies via the registrable
+// domain, so the destination page reads the existing Clerk session natively — no SDK handshake
+// involved. Avoid `clerk.redirectWithAuth` here (it short-circuits the cookie scope and produced
+// a `__clerk_synced=false` redirect loop in earlier satellite-mode iterations).
 export function useCrossAppNavigation() {
   return useCallback((href: string, openInNewTab = false) => {
     // Whitelist http(s) / relative hrefs so callers can't smuggle `javascript:` / `data:` URLs in.

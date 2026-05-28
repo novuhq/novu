@@ -11,10 +11,10 @@ type CrossAppLinkProps = {
   children: ReactNode;
 };
 
-// Hands off to the browser for cross-origin hrefs; Clerk's satellite domain SDK picks up the
-// session sync via its built-in handshake when the satellite page loads. Avoid `clerk.redirectWithAuth`
-// here — it short-circuits the satellite SDK's handshake and produced a `__clerk_synced=false`
-// redirect loop between Platform and Connect.
+// Hands off to the browser for cross-origin hrefs. Primary and Connect share Clerk session
+// cookies via the registrable domain, so the destination page picks up the session natively —
+// no SDK handshake involved. Avoid `clerk.redirectWithAuth` here (it short-circuits the cookie
+// scope and produced a `__clerk_synced=false` redirect loop in earlier satellite-mode setups).
 export function CrossAppLink({ href, openInNewTab, className, onClick, children, ...rest }: CrossAppLinkProps) {
   const isHrefSafe = isSafeNavigationHref(href);
   const isCrossOrigin = isHrefSafe && IS_HOSTNAME_SPLIT_ENABLED && isAbsoluteUrl(href);
