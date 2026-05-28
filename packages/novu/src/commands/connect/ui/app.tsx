@@ -1,10 +1,12 @@
 import { Select, TextInput } from '@inkjs/ui';
 import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
-import { Box, Text, useApp, useInput } from 'ink';
+import { Box, Text, useApp, useInput, useStdout } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import type { GeneratedAgentSpec } from '../api/agents';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import type { AgentRuntimeChoice, ChannelChoice } from '../types';
+import { resolveGeneratedAgentSpecLabels, wrapPreviewLines } from './agent-spec-labels';
 import type { ConnectStore } from './store';
 import { useStore } from './use-store';
 
@@ -23,6 +25,9 @@ const CHANNEL_TINTS: Record<ChannelChoice, string> = {
   skip: 'white',
 };
 const DEFAULT_ORB_COLOR = 'white';
+const PREVIEW_ORB_COLOR = '#c084fc';
+/** Orb morph duration when the generated agent preview lands. */
+const PREVIEW_MORPH_MS = 2000;
 
 /**
  * Plain text channel names rendered inside the orb. Plain words, not logos.
@@ -54,10 +59,42 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
   // leave the picker — the channel-specific phases below derive their tint
   // directly from the phase kind.
   const [hoveredChannel, setHoveredChannel] = React.useState<ChannelChoice | null>(null);
+  const [previewMorphProgress, setPreviewMorphProgress] = React.useState<number | null>(null);
+  const previousPhaseKindRef = React.useRef(phase.kind);
 
   React.useEffect(() => {
     registerExit(exit);
   }, [exit, registerExit]);
+
+  React.useEffect(() => {
+    if (phase.kind !== 'preview-generated') {
+      setPreviewMorphProgress(null);
+      previousPhaseKindRef.current = phase.kind;
+
+      return;
+    }
+
+    const enteringPreview = previousPhaseKindRef.current !== 'preview-generated';
+    previousPhaseKindRef.current = phase.kind;
+
+    if (!enteringPreview) {
+      return;
+    }
+
+    const morphStartedAt = Date.now();
+    setPreviewMorphProgress(0);
+
+    const timer = setInterval(() => {
+      const progress = Math.min(1, (Date.now() - morphStartedAt) / PREVIEW_MORPH_MS);
+      setPreviewMorphProgress(progress);
+
+      if (progress >= 1) {
+        clearInterval(timer);
+      }
+    }, ORB_FRAME_MS);
+
+    return () => clearInterval(timer);
+  }, [phase.kind]);
 
   // Global Ctrl+C handler. We render Ink with `exitOnCtrlC: false` so child
   // input handlers (Select, TextInput, etc.) get a clean shot at keystrokes
@@ -76,8 +113,9 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
     if (phase.kind !== 'pick-channel') setHoveredChannel(null);
   }, [phase.kind]);
 
-  const tintColor = computeOrbTint(phase, hoveredChannel);
+  const tintColor = computeOrbTint(phase, hoveredChannel, previewMorphProgress);
   const label = computeOrbLabel(phase, hoveredChannel);
+  const previewMorphComplete = previewMorphProgress === null ? false : previewMorphProgress >= 1;
 
   // Layout pattern: the orb lives at the top of every screen, always
   // breathing/shimmering. Everything else slots beneath it, horizontally
@@ -86,8 +124,16 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
   // instead of a different header/spinner per phase.
   return (
     <Box flexDirection="column" paddingX={1} paddingY={1} gap={1} alignItems="center">
-      <PersistentOrb tintColor={tintColor} label={label} />
-      <PhaseContent phase={phase} onChannelHover={setHoveredChannel} />
+      <PersistentOrb
+        tintColor={tintColor}
+        label={label}
+        previewMorphProgress={phase.kind === 'preview-generated' ? previewMorphProgress : null}
+      />
+      <PhaseContent
+        phase={phase}
+        onChannelHover={setHoveredChannel}
+        previewMorphComplete={previewMorphComplete}
+      />
     </Box>
   );
 }
@@ -100,7 +146,8 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
  */
 function computeOrbTint(
   phase: ReturnType<ConnectStore['phase']['get']>,
-  hoveredChannel: ChannelChoice | null
+  hoveredChannel: ChannelChoice | null,
+  previewMorphProgress: number | null
 ): string {
   switch (phase.kind) {
     case 'pick-channel':
@@ -125,6 +172,13 @@ function computeOrbTint(
       const activeChannel = phase.connectedChannel ?? phase.dashboardRedirectChannel;
 
       return activeChannel ? CHANNEL_TINTS[activeChannel] : DEFAULT_ORB_COLOR;
+    }
+    case 'generating':
+      return DEFAULT_ORB_COLOR;
+    case 'preview-generated': {
+      const morph = previewMorphProgress ?? 0;
+
+      return lerpHexColor(DEFAULT_ORB_COLOR, PREVIEW_ORB_COLOR, morph);
     }
     default:
       return DEFAULT_ORB_COLOR;
@@ -172,9 +226,11 @@ function computeOrbLabel(
 function PhaseContent({
   phase,
   onChannelHover,
+  previewMorphComplete,
 }: {
   phase: ReturnType<ConnectStore['phase']['get']>;
   onChannelHover: (channel: ChannelChoice | null) => void;
+  previewMorphComplete: boolean;
 }): React.ReactElement {
   switch (phase.kind) {
     case 'welcome':
@@ -298,7 +354,10 @@ function PhaseContent({
     case 'describe':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text bold>Describe your agent</Text>
+          <Text bold>{phase.previousPrompt ? 'Refine your description' : 'Describe your agent'}</Text>
+          {phase.previousPrompt ? (
+            <Text dimColor>{`Previous: "${truncateInline(phase.previousPrompt, 72)}"`}</Text>
+          ) : null}
           <Text dimColor>e.g. a customer-support agent that books demos and escalates billing questions.</Text>
           <Box borderStyle="round" paddingX={1}>
             <TextInput
@@ -312,6 +371,11 @@ function PhaseContent({
 
     case 'generating':
       return <GeneratingContent />;
+
+    case 'preview-generated':
+      return (
+        <PreviewGeneratedContent spec={phase.spec} onAction={phase.resolve} morphComplete={previewMorphComplete} />
+      );
 
     case 'creating':
       return <Text color="cyan">{`Creating agent "${phase.name}"…`}</Text>;
@@ -327,8 +391,10 @@ function PhaseContent({
       ];
 
       return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold>Pick a channel to connect this agent to</Text>
+        <Box flexDirection="column" gap={1} width={CHANNEL_PICKER_WIDTH}>
+          <Text bold wrap="wrap">
+            Pick a channel to connect this agent to
+          </Text>
           <ChannelSelect
             options={options}
             onChange={(value) => phase.resolve(value)}
@@ -509,9 +575,11 @@ const ENTRY_MS = 1200;
 function PersistentOrb({
   tintColor,
   label,
+  previewMorphProgress,
 }: {
   tintColor: string;
   label: string | undefined;
+  previewMorphProgress: number | null;
 }): React.ReactElement {
   const [frame, setFrame] = React.useState(0);
   const [elapsedMs, setElapsedMs] = React.useState(0);
@@ -530,8 +598,11 @@ function PersistentOrb({
   // Ease-out cubic — fast start, gentle landing. Plays nicer than linear
   // and avoids the "snap to full size" feel of ease-in.
   const scale = 1 - Math.pow(1 - entryProgress, 3);
+  const morphProgress = previewMorphProgress ?? 1;
 
-  return <Orb phase={frame} scale={scale} tintColor={tintColor} label={label} />;
+  return (
+    <Orb phase={frame} scale={scale} tintColor={tintColor} label={label} morphProgress={morphProgress} />
+  );
 }
 
 /**
@@ -580,6 +651,11 @@ function RuntimeSelect({
   );
 }
 
+const DASHBOARD_CHANNEL_HINT =
+  'Onboarding for this channel is currently only available in the Novu Connect UI.';
+/** Keeps the picker + hint from widening the centered layout when the hint appears. */
+const CHANNEL_PICKER_WIDTH = 48;
+
 function ChannelSelect({
   options,
   onChange,
@@ -617,7 +693,7 @@ function ChannelSelect({
   const showDashboardHint = highlighted !== null && isDashboardOnlyChannel(highlighted);
 
   return (
-    <Box flexDirection="column" gap={1}>
+    <Box flexDirection="column" gap={1} width={CHANNEL_PICKER_WIDTH}>
       <Box flexDirection="column">
         {options.map((opt, i) => {
           const isSelected = i === idx;
@@ -634,9 +710,18 @@ function ChannelSelect({
           );
         })}
       </Box>
-      {showDashboardHint ? (
-        <Text dimColor>Onboarding for this channel is currently only available in the Novu Connect UI.</Text>
-      ) : null}
+      <Box flexDirection="column" width={CHANNEL_PICKER_WIDTH}>
+        {showDashboardHint ? (
+          <Text dimColor wrap="wrap">
+            {DASHBOARD_CHANNEL_HINT}
+          </Text>
+        ) : (
+          <>
+            <Text> </Text>
+            <Text> </Text>
+          </>
+        )}
+      </Box>
     </Box>
   );
 }
@@ -946,6 +1031,161 @@ function GeneratingContent(): React.ReactElement {
   );
 }
 
+type PreviewMenuAction = 'confirm' | 'refine';
+
+function PreviewGeneratedContent({
+  spec,
+  onAction,
+  morphComplete,
+}: {
+  spec: GeneratedAgentSpec;
+  onAction: (action: PreviewMenuAction) => void;
+  morphComplete: boolean;
+}): React.ReactElement {
+  const { stdout } = useStdout();
+  const [menuIdx, setMenuIdx] = React.useState(0);
+  const labels = React.useMemo(() => resolveGeneratedAgentSpecLabels(spec), [spec]);
+  const contentWidth = Math.max(48, Math.min(72, stdout.columns - 6));
+  const promptWrap = React.useMemo(
+    () => wrapPreviewLines(spec.systemPrompt, contentWidth - 4, 5),
+    [contentWidth, spec.systemPrompt]
+  );
+
+  const menuOptions: Array<{ action: PreviewMenuAction; label: string; hint?: string }> = [
+    { action: 'confirm', label: 'Create this agent', hint: '→' },
+    { action: 'refine', label: 'Refine my description', hint: '↺' },
+  ];
+
+  useInput((_input, key) => {
+    if (!morphComplete) return;
+
+    if (key.upArrow) {
+      setMenuIdx((current) => (current - 1 + menuOptions.length) % menuOptions.length);
+    } else if (key.downArrow) {
+      setMenuIdx((current) => (current + 1) % menuOptions.length);
+    } else if (key.return || _input === ' ') {
+      onAction(menuOptions[menuIdx].action);
+    }
+  });
+
+  const toolLine = formatCapabilityLine(labels.tools);
+  const mcpLine = formatCapabilityLine(labels.mcpServers);
+  const skillLine = formatCapabilityLine(labels.skills);
+
+  if (!morphComplete) {
+    return (
+      <Box flexDirection="column" alignItems="center">
+        <Text dimColor>Shaping your agent…</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box flexDirection="column" gap={1} width={contentWidth} alignItems="flex-start">
+      <Text bold color="#e9d5ff">
+        Your agent, shaped
+      </Text>
+      <Box flexDirection="column" gap={0}>
+        <Text bold>{spec.name}</Text>
+        <Text dimColor>{spec.identifier}</Text>
+      </Box>
+
+      <Box flexDirection="column" gap={0}>
+        <Text dimColor>System prompt</Text>
+        <Box borderStyle="round" borderColor="#6b7280" paddingX={1} flexDirection="column">
+          {promptWrap.lines.map((line, index) => (
+            <Text key={`${index}-${line}`} dimColor>
+              {line}
+            </Text>
+          ))}
+          {promptWrap.truncated ? <Text dimColor>… editable in the dashboard after creation</Text> : null}
+        </Box>
+      </Box>
+
+      <Box flexDirection="column" gap={0}>
+        {toolLine ? (
+          <Text>
+            <Text color="#c084fc">Tools</Text>
+            <Text dimColor>{` · ${toolLine}`}</Text>
+          </Text>
+        ) : null}
+        {mcpLine ? (
+          <Text>
+            <Text color="#c084fc">MCP</Text>
+            <Text dimColor>{` · ${mcpLine}`}</Text>
+          </Text>
+        ) : null}
+        {skillLine ? (
+          <Text>
+            <Text color="#c084fc">Skills</Text>
+            <Text dimColor>{` · ${skillLine}`}</Text>
+          </Text>
+        ) : null}
+        {!toolLine && !mcpLine && !skillLine ? (
+          <Text dimColor>No extra tools wired — web search is enabled by default.</Text>
+        ) : null}
+      </Box>
+
+      <Box flexDirection="column" marginTop={1}>
+        {menuOptions.map((opt, i) => {
+          const isSelected = i === menuIdx;
+
+          return (
+            <Text key={opt.action}>
+              <Text color={isSelected ? 'cyan' : undefined}>
+                {isSelected ? '› ' : '  '}
+                {opt.label}
+              </Text>
+              {isSelected && opt.hint ? <Text dimColor>{` ${opt.hint}`}</Text> : null}
+            </Text>
+          );
+        })}
+        <Text dimColor>↑↓ choose · Enter confirm</Text>
+      </Box>
+    </Box>
+  );
+}
+
+function formatCapabilityLine(items: string[]): string | null {
+  if (items.length === 0) return null;
+
+  return items.join(', ');
+}
+
+function truncateInline(text: string, maxLength: number): string {
+  if (text.length <= maxLength) return text;
+
+  return `${text.slice(0, maxLength - 1)}…`;
+}
+
+function lerpHexColor(from: string, to: string, amount: number): string {
+  const clamped = Math.min(1, Math.max(0, amount));
+  const fromRgb = parseHexColor(from);
+  const toRgb = parseHexColor(to);
+  const r = Math.round(fromRgb.r + (toRgb.r - fromRgb.r) * clamped);
+  const g = Math.round(fromRgb.g + (toRgb.g - fromRgb.g) * clamped);
+  const b = Math.round(fromRgb.b + (toRgb.b - fromRgb.b) * clamped);
+
+  return `#${toHexByte(r)}${toHexByte(g)}${toHexByte(b)}`;
+}
+
+function parseHexColor(hex: string): { r: number; g: number; b: number } {
+  const normalized = hex.replace('#', '');
+  if (normalized.length !== 6) {
+    return { r: 255, g: 255, b: 255 };
+  }
+
+  return {
+    r: Number.parseInt(normalized.slice(0, 2), 16),
+    g: Number.parseInt(normalized.slice(2, 4), 16),
+    b: Number.parseInt(normalized.slice(4, 6), 16),
+  };
+}
+
+function toHexByte(value: number): string {
+  return value.toString(16).padStart(2, '0');
+}
+
 function SlackOAuthReadyContent({
   appCreated,
   authorizeUrl,
@@ -1194,11 +1434,13 @@ function Orb({
   scale,
   tintColor,
   label,
+  morphProgress = 1,
 }: {
   phase: number;
   scale: number;
   tintColor: string;
   label: string | undefined;
+  morphProgress?: number;
 }): React.ReactElement {
   const rows: React.ReactElement[] = [];
   for (let row = 0; row < TERM_H; row++) {
@@ -1208,7 +1450,7 @@ function Orb({
       const baseY = row * 4;
       let code = 0x2800;
       for (const dot of BRAILLE_BITS) {
-        if (samplePixel(baseX + dot.dx, baseY + dot.dy, phase, scale, label)) {
+        if (samplePixel(baseX + dot.dx, baseY + dot.dy, phase, scale, label, morphProgress)) {
           code |= dot.bit;
         }
       }
@@ -1277,14 +1519,24 @@ function samplePixel(
   py: number,
   phase: number,
   scale: number,
-  label: string | undefined
+  label: string | undefined,
+  morphProgress = 1
 ): boolean {
+  const morphActive = morphProgress < 1;
+  const morphRipple = morphActive ? 1 - morphProgress : 0;
+  const morphScaleBoost = morphActive ? 0.16 * Math.sin(morphProgress * Math.PI) : 0;
   // Effective radius shrinks with `scale` during the entry animation. At
   // scale=0 the sphere has no radius — every "inside" check fails — and only
   // the starfield is visible. At scale=1 the sphere is full-size.
-  const effectiveR = Math.max(0.001, ORB_RADIUS * scale);
-  const sx = (px - PX_CX) / effectiveR;
-  const sy = (py - PX_CY) / effectiveR;
+  const effectiveR = Math.max(0.001, ORB_RADIUS * scale * (1 + morphScaleBoost));
+  let sx = (px - PX_CX) / effectiveR;
+  let sy = (py - PX_CY) / effectiveR;
+
+  if (morphRipple > 0) {
+    sx += morphRipple * 0.08 * Math.sin(py * 0.22 + phase * 0.3);
+    sy += morphRipple * 0.08 * Math.cos(px * 0.22 - phase * 0.25);
+  }
+
   const r2 = sx * sx + sy * sy;
 
   if (r2 < 1) {
@@ -1304,7 +1556,7 @@ function samplePixel(
 
     // Tight specular — small bright cluster of dots tracking the light
     // direction, sells the "smooth glass sphere" feel.
-    const spec = Math.pow(lambert, 12) * 0.35;
+    const spec = Math.pow(lambert, 12) * (0.35 + morphRipple * 0.3);
 
     // A hair of ambient so the unlit side still occasionally lights up a
     // pixel through the dither — keeps the terminator alive.
@@ -1346,10 +1598,11 @@ function samplePixel(
   if (scale > 0.95) {
     const WISP_DELAY_FRAMES = 20; // ~2 s after mount
     const WISP_FADE_FRAMES = 20; // ~2 s ramp-in
-    const activation = Math.max(0, Math.min(1, (phase - WISP_DELAY_FRAMES) / WISP_FADE_FRAMES));
+    const ambientActivation = Math.max(0, Math.min(1, (phase - WISP_DELAY_FRAMES) / WISP_FADE_FRAMES));
+    const activation = Math.max(morphRipple * 0.9, ambientActivation);
     if (activation > 0) {
       const d = Math.sqrt(r2);
-      const WISP_REACH = 0.22;
+      const WISP_REACH = 0.22 + morphRipple * 0.2;
       if (d < 1 + WISP_REACH) {
         const proximityLinear = Math.max(0, 1 - (d - 1) / WISP_REACH);
         const proximity = proximityLinear * proximityLinear; // quadratic falloff

@@ -1,6 +1,7 @@
 import { atom, type WritableAtom } from 'nanostores';
+import type { GeneratedAgentSpec } from '../api/agents';
 import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
-import type { PickAgentIntegrationResult, PickResult } from './ui';
+import type { GeneratedAgentPreviewAction, PickAgentIntegrationResult, PickResult } from './ui';
 
 export type Phase =
   | {
@@ -36,8 +37,13 @@ export type Phase =
       resolve: (region: string) => void;
     }
   | { kind: 'verifying-credentials' }
-  | { kind: 'describe'; resolve: (prompt: string) => void }
+  | { kind: 'describe'; previousPrompt?: string; resolve: (prompt: string) => void }
   | { kind: 'generating' }
+  | {
+      kind: 'preview-generated';
+      spec: GeneratedAgentSpec;
+      resolve: (action: GeneratedAgentPreviewAction) => void;
+    }
   | { kind: 'creating'; name: string }
   | { kind: 'pick-channel'; resolve: (choice: ChannelChoice) => void }
   | {

@@ -1,6 +1,9 @@
+import type { GeneratedAgentSpec } from '../api/agents';
 import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
+
+export type GeneratedAgentPreviewAction = 'confirm' | 'refine';
 
 export type PickAgentIntegrationResult =
   | { kind: 'existing'; integrationId: string }
@@ -46,7 +49,17 @@ export interface ConnectUI {
 
   // Create-new path
   promptForDescription(defaultPrompt?: string): Promise<string>;
+  /**
+   * Re-prompt for the agent description after the user chooses to refine a
+   * generated preview. Shows the previous prompt for context.
+   */
+  refineDescription(previousPrompt: string): Promise<string>;
   generatingAgent(): void;
+  /**
+   * Preview the AI-generated agent spec before provisioning. Resolves when the
+   * user confirms or asks to refine their description.
+   */
+  previewGeneratedAgent(spec: GeneratedAgentSpec): Promise<GeneratedAgentPreviewAction>;
   creatingAgent(name: string): void;
   agentCreated(agent: AgentSummary): void;
 

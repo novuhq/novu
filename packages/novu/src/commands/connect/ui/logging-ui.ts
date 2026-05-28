@@ -1,8 +1,10 @@
 import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
+import type { GeneratedAgentSpec } from '../api/agents';
 import { channelDisplayName } from '../dashboard-urls';
+import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import type { AgentSummary } from '../types';
-import type { ConnectUI, PickResult } from './ui';
+import type { ConnectUI, GeneratedAgentPreviewAction, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
   let spinner: Ora | undefined;
@@ -114,8 +116,23 @@ export function createLoggingUI(): ConnectUI {
         )
       );
     },
+    refineDescription(previousPrompt) {
+      stop();
+
+      return Promise.reject(
+        new Error(
+          `Non-interactive mode cannot refine the agent description. Original prompt: "${previousPrompt.slice(0, 80)}${previousPrompt.length > 80 ? '…' : ''}"`
+        )
+      );
+    },
     generatingAgent() {
       start('Generating agent configuration…');
+    },
+    previewGeneratedAgent(spec: GeneratedAgentSpec) {
+      stop();
+      logGeneratedAgentPreview(spec);
+
+      return Promise.resolve<GeneratedAgentPreviewAction>('confirm');
     },
     creatingAgent(name) {
       start(`Creating agent "${name}"…`);
@@ -252,4 +269,24 @@ export function createLoggingUI(): ConnectUI {
       return Promise.resolve(Number(process.exitCode ?? 0));
     },
   };
+}
+
+function logGeneratedAgentPreview(spec: GeneratedAgentSpec): void {
+  const labels = resolveGeneratedAgentSpecLabels(spec);
+  const promptPreview = spec.systemPrompt.replace(/\s+/g, ' ').trim().slice(0, 160);
+
+  console.log('');
+  console.log(chalk.bold('Generated agent preview'));
+  console.log(`  ${chalk.bold('Name:')} ${spec.name} ${chalk.gray(`(${spec.identifier})`)}`);
+  console.log(`  ${chalk.bold('System prompt:')} ${promptPreview}${spec.systemPrompt.length > 160 ? '…' : ''}`);
+  if (labels.tools.length > 0) {
+    console.log(`  ${chalk.bold('Tools:')} ${labels.tools.join(', ')}`);
+  }
+  if (labels.mcpServers.length > 0) {
+    console.log(`  ${chalk.bold('MCP:')} ${labels.mcpServers.join(', ')}`);
+  }
+  if (labels.skills.length > 0) {
+    console.log(`  ${chalk.bold('Skills:')} ${labels.skills.join(', ')}`);
+  }
+  console.log(chalk.gray('Non-interactive mode: continuing without confirmation.'));
 }

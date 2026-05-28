@@ -193,12 +193,7 @@ async function createAgentFlow(
   const resolved = await resolveAgentRuntimeIntegration(client, ui, options, runtime, environmentId);
 
   const prompt = await ui.promptForDescription(options.prompt);
-  if (prompt.trim().length < 8) {
-    throw new Error('Agent description must be at least 8 characters.');
-  }
-
-  ui.generatingAgent();
-  const generated = await generateAgent(client, prompt.trim());
+  let generated = await generateAndPreviewAgent(client, ui, prompt.trim());
 
   ui.creatingAgent(generated.name);
 
@@ -225,6 +220,30 @@ async function createAgentFlow(
     }
 
     throw err;
+  }
+}
+
+async function generateAndPreviewAgent(
+  client: ConnectApiClient,
+  ui: ConnectUI,
+  initialPrompt: string
+): Promise<Awaited<ReturnType<typeof generateAgent>>> {
+  let prompt = initialPrompt;
+
+  while (true) {
+    if (prompt.trim().length < 8) {
+      throw new Error('Agent description must be at least 8 characters.');
+    }
+
+    ui.generatingAgent();
+    const generated = await generateAgent(client, prompt.trim());
+    const action = await ui.previewGeneratedAgent(generated);
+
+    if (action === 'confirm') {
+      return generated;
+    }
+
+    prompt = await ui.refineDescription(prompt.trim());
   }
 }
 

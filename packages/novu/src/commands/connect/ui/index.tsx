@@ -1,10 +1,11 @@
 import { render } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import type { GeneratedAgentSpec } from '../api/agents';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { type ConnectStore, createConnectStore } from './store';
-import type { ConnectUI, PickResult } from './ui';
+import type { ConnectUI, GeneratedAgentPreviewAction, PickResult } from './ui';
 
 export interface MountConnectUIParams {
   options: ConnectCommandOptions;
@@ -130,8 +131,18 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'describe', resolve });
       });
     },
+    refineDescription(previousPrompt) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({ kind: 'describe', previousPrompt, resolve });
+      });
+    },
     generatingAgent() {
       store.phase.set({ kind: 'generating' });
+    },
+    previewGeneratedAgent(spec: GeneratedAgentSpec) {
+      return new Promise<GeneratedAgentPreviewAction>((resolve) => {
+        store.phase.set({ kind: 'preview-generated', spec, resolve });
+      });
     },
     creatingAgent(name) {
       store.phase.set({ kind: 'creating', name });
