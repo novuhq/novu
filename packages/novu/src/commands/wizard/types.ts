@@ -1,9 +1,11 @@
+import type { CloudRegionEnum } from '../dev/enums';
+
 export interface WizardCommandOptions {
   secretKey?: string;
-  apiUrl: string;
-  dashboardUrl: string;
+  apiUrl?: string;
+  dashboardUrl?: string;
   mcpUrl?: string;
-  region: 'us' | 'eu' | 'local';
+  region: CloudRegionEnum;
   model?: string;
   /**
    * Skip the Bootstrap 5s countdown and auto-pick the first detected MCP
@@ -50,7 +52,7 @@ export interface ResolvedAuth {
   } | null;
   apiUrl: string;
   dashboardUrl: string;
-  region: 'us' | 'eu' | 'local';
+  region: CloudRegionEnum;
   source: 'cli-flag' | 'env' | 'browser';
 }
 

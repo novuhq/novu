@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CloudRegionEnum } from '../../dev/enums';
 
 vi.mock('open', () => ({ default: vi.fn(async () => undefined) }));
 
@@ -57,7 +58,7 @@ describe('browserDeviceAuth', () => {
   });
 
   it('resolves when the dashboard posts a valid payload', async () => {
-    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: 'us' });
+    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: CloudRegionEnum.US });
 
     await waitFor(() => (open as unknown as { mock: { calls: unknown[] } }).mock.calls.length > 0);
     const callbackUrl = getCallbackUrl();
@@ -80,7 +81,7 @@ describe('browserDeviceAuth', () => {
   });
 
   it('rejects payloads with mismatched state', async () => {
-    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: 'us' });
+    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: CloudRegionEnum.US });
 
     await waitFor(() => (open as unknown as { mock: { calls: unknown[] } }).mock.calls.length > 0);
     const callbackUrl = getCallbackUrl();
@@ -96,7 +97,7 @@ describe('browserDeviceAuth', () => {
   });
 
   it('responds to CORS preflight', async () => {
-    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: 'us' });
+    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: CloudRegionEnum.US });
 
     await waitFor(() => (open as unknown as { mock: { calls: unknown[] } }).mock.calls.length > 0);
     const callbackUrl = getCallbackUrl();

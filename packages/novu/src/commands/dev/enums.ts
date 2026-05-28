@@ -2,6 +2,7 @@ export enum CloudRegionEnum {
   US = 'us',
   EU = 'eu',
   STAGING = 'staging',
+  LOCAL = 'local',
 }
 
 export enum DashboardUrlEnum {
@@ -15,3 +16,12 @@ export enum ApiUrlEnum {
   EU = 'https://eu.api.novu.co',
   STAGING = 'https://api.novu-staging.co',
 }
+
+/** Browser-auth surface for `novu connect` (distinct from the main dashboard). */
+export enum ConnectDashboardUrlEnum {
+  PROD = 'https://connect.novu.co',
+  STAGING = 'https://devconnect.novu.co',
+}
+
+export const LOCAL_API_URL = 'https://api.novu.localhost';
+export const LOCAL_DASHBOARD_URL = 'https://dashboard.novu.localhost';

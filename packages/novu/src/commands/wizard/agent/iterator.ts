@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { CloudRegionEnum } from '../../dev/enums';
 import type { InstallPackagesResult } from '../pipeline/steps/install-packages';
 import type { InstalledSkill } from '../skills/install-skills';
 import type { ProjectContext, ResolvedAuth, WizardCommandOptions } from '../types';
@@ -146,11 +147,14 @@ const DEFAULT_MCP_URL_EU = 'https://mcp.novu.co/?region=eu';
 export function resolveMcpUrl(override: string | undefined, region: ResolvedAuth['region']): string {
   const trimmed = override?.trim();
 
-  return region === 'local'
-    ? `${trimmed ?? 'http://localhost:8787'}/?region=local`
-    : region === 'eu'
-      ? DEFAULT_MCP_URL_EU
-      : DEFAULT_MCP_URL_US;
+  if (region === CloudRegionEnum.LOCAL) {
+    return `${trimmed ?? 'http://localhost:8787'}/?region=local`;
+  }
+  if (region === CloudRegionEnum.EU) {
+    return DEFAULT_MCP_URL_EU;
+  }
+
+  return DEFAULT_MCP_URL_US;
 }
 
 export function buildSDKUserMessage(content: string): SDKUserMessage {

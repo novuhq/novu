@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { CloudRegionEnum } from '../../../dev/enums';
 import type { WizardUI } from '../../ui/wizard-ui';
 import { createPromptQueue, runAgentStep } from './run-agent';
 import type { ValidationResult } from './validate';
@@ -257,7 +258,7 @@ function fakeOptions() {
   return {
     apiUrl: 'https://api.novu.co',
     dashboardUrl: 'https://dashboard.novu.co',
-    region: 'us' as const,
+    region: CloudRegionEnum.US,
   };
 }
 
@@ -267,7 +268,7 @@ function fakeAuth() {
     environmentId: 'env_test',
     apiUrl: 'https://api.novu.co',
     dashboardUrl: 'https://dashboard.novu.co',
-    region: 'us' as const,
+    region: CloudRegionEnum.US,
     source: 'env' as const,
   };
 }

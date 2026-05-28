@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import { ApiUrlEnum, CloudRegionEnum, DashboardUrlEnum } from '../../dev/enums';
+import { resolveRegionUrls } from '../../dev/resolve-region-urls';
 import { ResolvedAuth, WizardCommandOptions } from '../types';
 import { browserDeviceAuth } from './device-auth';
 
@@ -22,6 +22,11 @@ export interface ResolveAuthOptions {
    * `novu-wizard` inside `browserDeviceAuth` when omitted.
    */
   name?: string;
+  /**
+   * Base URL for the browser `/cli/auth` flow. Defaults to the region's main
+   * dashboard; `novu connect` passes the Connect-specific dashboard instead.
+   */
+  authDashboardUrl?: string;
 }
 
 export async function resolveAuth(
@@ -37,18 +42,12 @@ export async function resolveAuth(
     fallback();
   };
   const cliFlagSecret = options.secretKey?.trim();
-  const apiUrl = options.apiUrl
-    ? options.apiUrl.replace(/\/$/, '')
-    : options.region === CloudRegionEnum.US
-      ? ApiUrlEnum.US
-      : ApiUrlEnum.EU;
-  const dashboardUrl = options.dashboardUrl
-    ? options.dashboardUrl
-    : options.region === CloudRegionEnum.US
-      ? DashboardUrlEnum.US
-      : options.region === CloudRegionEnum.EU
-        ? DashboardUrlEnum.EU
-        : DashboardUrlEnum.STAGING;
+  const urls = resolveRegionUrls(options.region, {
+    apiUrl: options.apiUrl,
+    dashboardUrl: options.dashboardUrl,
+  });
+  const { apiUrl, dashboardUrl } = urls;
+  const authDashboardUrl = resolveOptions.authDashboardUrl ?? urls.dashboardUrl;
 
   if (cliFlagSecret) {
     status('Using Novu secret key from --secret-key flag.', () =>
@@ -113,7 +112,7 @@ export async function resolveAuth(
 
   return browserDeviceAuth({
     apiUrl,
-    dashboardUrl,
+    dashboardUrl: authDashboardUrl,
     region: options.region,
     onStatus: resolveOptions.onStatus,
     onDashboardUrl: resolveOptions.onDashboardUrl,

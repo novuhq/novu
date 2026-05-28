@@ -3,6 +3,7 @@ import getPort from 'get-port';
 import http, { IncomingMessage, ServerResponse } from 'http';
 import open from 'open';
 import ora from 'ora';
+import type { CloudRegionEnum } from '../../dev/enums';
 import { ResolvedAuth } from '../types';
 
 const DEFAULT_TIMEOUT_MS = 5 * 60 * 1000;
@@ -11,7 +12,7 @@ export interface BrowserAuthInput {
   apiUrl: string;
   dashboardUrl: string;
   mcpUrl?: string;
-  region: 'us' | 'eu' | 'local';
+  region: CloudRegionEnum;
   timeoutMs?: number;
   /**
    * When provided, status updates are forwarded here instead of being printed

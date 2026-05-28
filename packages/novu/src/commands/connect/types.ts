@@ -1,12 +1,16 @@
+import type { CloudRegionEnum } from '../dev/enums';
+
 export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'skip';
 
 export const CHANNEL_CHOICES: readonly ChannelChoice[] = ['slack', 'email', 'whatsapp', 'telegram', 'teams', 'skip'];
 
 export interface ConnectCommandOptions {
   secretKey?: string;
+  region: CloudRegionEnum;
   apiUrl: string;
   dashboardUrl: string;
-  region: 'us' | 'eu' | 'local';
+  /** Browser-auth UI for `novu connect` (e.g. connect.novu.co); distinct from `dashboardUrl`. */
+  connectDashboardUrl: string;
   /** Pre-fill the agent description, skipping the input screen. Enables non-interactive runs. */
   prompt?: string;
   /** Pre-select the channel to connect, skipping the picker. Currently only `slack` is implemented. */

@@ -42,6 +42,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       onStatus: (m) => ui.authStatus(m),
       onDashboardUrl: (u) => ui.authDashboardUrl(u),
       name: 'novu-connect',
+      authDashboardUrl: options.connectDashboardUrl,
     });
     track(CONNECT_EVENTS.AUTH_COMPLETED, { source: auth.source, region: options.region });
     ui.authCompleted(auth.environmentName ?? null);

@@ -4,7 +4,10 @@ import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
-import { CHANNEL_CHOICES, type ChannelChoice, ConnectCommandOptions } from './commands/connect/types';
+import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
+import { CHANNEL_CHOICES, type ChannelChoice } from './commands/connect/types';
+import type { ConnectCommandInput } from './commands/connect/resolve-options';
+import { CloudRegionEnum } from './commands/dev/enums';
 import { IInitCommandOptions, init } from './commands/init';
 import { stepPublish } from './commands/step';
 import { sync } from './commands/sync';
@@ -106,7 +109,7 @@ program
 //   .option('-a, --api-url <url>', 'Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
 //   .option('-d, --dashboard-url <url>', 'Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
 //   .option('--mcp-url <url>', 'Override the Novu MCP server URL (default: https://mcp.novu.co/)')
-//   .option('--region <region>', 'us | eu | local', 'us')
+//   .option('--region <region>', `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`, CloudRegionEnum.US)
 //   .option('--model <model>', 'Override default model')
 //   .option('--goal <goal>', 'Default wizard goal: full | inbox | workflows (default: full)', 'full')
 //   .option('--yes', 'Skip the bootstrap countdown and auto-pick the first detected MCP editor', false)
@@ -129,9 +132,17 @@ program
   .description('Create a managed agent and connect it to Slack from the CLI (beta)')
   .argument('[prompt]', 'Agent description. When provided, skips the picker and creates a new agent from this prompt.')
   .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key')
-  .option('-a, --api-url <url>', 'Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
-  .option('-d, --dashboard-url <url>', 'Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
-  .option('--region <region>', 'us | eu | local', 'us')
+  .option('-a, --api-url <url>', 'Override the Novu API URL (default follows --region)')
+  .option('-d, --dashboard-url <url>', 'Override the Novu Dashboard URL (default follows --region)')
+  .option(
+    '--connect-dashboard-url <url>',
+    'Override the Connect browser-auth URL (default follows --region, e.g. connect.novu.co)'
+  )
+  .option(
+    '--region <region>',
+    `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`,
+    CloudRegionEnum.US
+  )
   .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')
   .option(
     '--channel <name>',
@@ -143,7 +154,7 @@ program
     'Slack App Configuration Token (xoxe.xoxp-…) used to provision Slack OAuth credentials non-interactively'
   )
   .option('--ci', 'Force non-interactive logging mode (no Ink TUI)', false)
-  .action(async (positionalPrompt: string | undefined, options: ConnectCommandOptions) => {
+  .action(async (positionalPrompt: string | undefined, options: ConnectCommandInput) => {
     analytics.track({
       identity: {
         anonymousId,
@@ -157,11 +168,20 @@ program
       console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
       process.exit(1);
     }
-    const resolved: ConnectCommandOptions = {
-      ...options,
-      prompt: positionalPrompt ?? options.prompt,
-      channel: options.channel as ChannelChoice | undefined,
-    };
+    let resolved: ReturnType<typeof resolveConnectCommandOptions>;
+    try {
+      resolved = resolveConnectCommandOptions({
+        ...options,
+        region: options.region as CloudRegionEnum,
+        prompt: positionalPrompt ?? options.prompt,
+        channel: options.channel as ChannelChoice | undefined,
+        apiUrl: options.apiUrl ?? NOVU_API_URL,
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error(message);
+      process.exit(1);
+    }
     await connectCommand(resolved, anonymousId);
   });
 

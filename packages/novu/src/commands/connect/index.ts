@@ -39,6 +39,7 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
   trackConnect(analytics, anonymousId, CONNECT_EVENTS.STARTED, {
     region: options.region,
     apiUrl: options.apiUrl,
+    connectDashboardUrl: options.connectDashboardUrl,
     ci: !!options.ci,
     hasPrompt: !!options.prompt,
     skipSlack: !!options.skipSlack,

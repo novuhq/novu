@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { CloudRegionEnum } from '../../../dev/enums';
 import type { McpInstaller } from '../../mcp/installer';
 import type { SkillHost } from '../../skills/install-skills';
 import type { ResolvedAuth, WizardCommandOptions } from '../../types';
@@ -187,7 +188,7 @@ function createHarness(opts: { detected: string[] }): Harness {
 function fakeAuth(): ResolvedAuth {
   return {
     secretKey: 'sk_test',
-    region: 'us',
+    region: CloudRegionEnum.US,
     source: 'env',
     environmentId: 'env_id',
     environmentName: 'Development',

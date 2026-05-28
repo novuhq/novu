@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CloudRegionEnum } from '../../dev/enums';
 import type { DetectedTopology, InstallTarget } from '../context/detect-install-targets';
 import type { AgentRunResult, AgentRunTimings, ProjectContext, ResolvedAuth } from '../types';
 import type { TrailEntry } from '../ui/store';
@@ -61,7 +62,7 @@ function fakeAuth(): ResolvedAuth {
     environmentName: 'Development',
     apiUrl: 'https://api.novu.co',
     dashboardUrl: 'https://dashboard.novu.co',
-    region: 'us',
+    region: CloudRegionEnum.US,
     source: 'env',
   };
 }
