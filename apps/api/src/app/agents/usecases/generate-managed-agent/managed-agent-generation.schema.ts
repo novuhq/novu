@@ -1,4 +1,13 @@
-import { CLAUDE_ANTHROPIC_SKILLS, CLAUDE_BUILTIN_TOOLS, MCP_SERVERS } from '@novu/shared';
+import {
+  CLAUDE_ANTHROPIC_SKILLS,
+  CLAUDE_BUILTIN_TOOLS,
+  MANAGED_AGENT_IDENTIFIER_MAX_LENGTH,
+  MANAGED_AGENT_NAME_MAX_LENGTH,
+  MANAGED_AGENT_SYSTEM_PROMPT_MAX_LENGTH,
+  MAX_GENERATED_MCP_SERVERS,
+  MAX_GENERATED_SKILLS,
+  MCP_SERVERS,
+} from '@novu/shared';
 import { z } from 'zod';
 
 /**
@@ -10,26 +19,24 @@ const TOOL_TYPES = CLAUDE_BUILTIN_TOOLS.map((tool) => tool.type) as [string, ...
 const MCP_SERVER_IDS = MCP_SERVERS.map((server) => server.id) as [string, ...string[]];
 const SKILL_IDS = CLAUDE_ANTHROPIC_SKILLS.map((skill) => skill.skillId) as [string, ...string[]];
 
-/** Anthropic caps `mcp_servers` length; pick a conservative limit. */
-export const MAX_GENERATED_MCP_SERVERS = 5;
-export const MAX_GENERATED_SKILLS = 4;
+export { MAX_GENERATED_MCP_SERVERS, MAX_GENERATED_SKILLS };
 
 export const managedAgentGenerationSchema = z.object({
   name: z
     .string()
     .min(1)
-    .max(60)
+    .max(MANAGED_AGENT_NAME_MAX_LENGTH)
     .describe('Human readable agent name. Title case, 2–4 words (e.g., "PR Security Reviewer").'),
   identifier: z
     .string()
     .min(1)
-    .max(60)
+    .max(MANAGED_AGENT_IDENTIFIER_MAX_LENGTH)
     .regex(/^[a-z0-9-]+$/, 'Identifier must be lowercase kebab-case')
     .describe('Stable kebab-case identifier derived from the name (e.g., "pr-security-reviewer").'),
   systemPrompt: z
     .string()
     .min(1)
-    .max(4000)
+    .max(MANAGED_AGENT_SYSTEM_PROMPT_MAX_LENGTH)
     .describe(
       'The full system prompt sent to Claude. Speak in second person to the agent ("You are…"). Describe role, scope, tone, and the workflow it should follow. Reference the available tools/MCPs/skills naturally without hard-coding them.'
     ),

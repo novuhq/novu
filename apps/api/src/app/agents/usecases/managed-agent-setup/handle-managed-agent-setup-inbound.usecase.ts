@@ -174,6 +174,12 @@ export class HandleManagedAgentSetupInbound {
     const setupMessageId = conversation.pendingManagedAgentSetup?.setupMessageId;
 
     if (!setupMessageId) {
+      await this.conversationRepository.clearPendingManagedAgentSetup(
+        command.environmentId,
+        command.organizationId,
+        command.conversationId
+      );
+
       return;
     }
 

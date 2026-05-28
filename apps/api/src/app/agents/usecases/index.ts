@@ -37,6 +37,8 @@ import { SendWhatsAppTestTemplate } from './send-whatsapp-test-template/send-wha
 import { SetAgentMcpServers } from './set-agent-mcp-servers/set-agent-mcp-servers.usecase';
 import { SyncAgentMcpServers } from './sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { SyncAgentToEnvironment } from './sync-agent-to-environment/sync-agent-to-environment.usecase';
+import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.usecase';
+import { HandlePendingToolApprovals } from './tool-approval/handle-pending-tool-approvals.usecase';
 import { UpdateAgent } from './update-agent/update-agent.usecase';
 import { UpdateAgentInboxShared } from './update-agent-inbox-shared/update-agent-inbox-shared.usecase';
 import { UpdateAgentIntegration } from './update-agent-integration/update-agent-integration.usecase';
@@ -99,4 +101,6 @@ export const USE_CASES = [
   GetMcpConnectionStatus,
   GetMcpNovuAppCredentials,
   VerifyManagedCredentials,
+  HandlePendingToolApprovals,
+  ConfirmToolApproval,
 ];
