@@ -3,6 +3,7 @@ import React, { useCallback, useContext, useEffect, useMemo, useState } from 're
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '../../config';
+import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { authClient } from './client';
 import {
   ForgotPassword as ForgotPasswordComponent,
@@ -19,7 +20,6 @@ import {
   UserProfile as UserProfileComponent,
   VerifyEmail as VerifyEmailComponent,
 } from './components';
-import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { ROLE_PERMISSIONS } from './role-permissions';
 import { Show } from './show';
 import { useCursorAgentAutoLogin } from './use-cursor-agent-auto-login';
@@ -311,20 +311,12 @@ export function useClerk() {
   const context = useContext(AuthContext);
 
   return {
-    // Mirrors `@clerk/react`'s `clerk.loaded` flag so route guards that wait on it can render.
-    loaded: context?.isLoaded ?? false,
     setActive: async ({ organization }: { organization?: string }) => {
       if (organization) {
         await authClient.organization.setActive({
           organizationId: organization,
         });
         window.location.reload();
-      }
-    },
-    signOut: async (options?: { redirectUrl?: string }) => {
-      await context?.signOut();
-      if (options?.redirectUrl) {
-        window.location.assign(options.redirectUrl);
       }
     },
     session: {
@@ -338,23 +330,6 @@ export function SignedIn({ children }: { children: React.ReactNode }) {
 
   if (!isLoaded) return null;
   if (!user) return null;
-
-  return <>{children}</>;
-}
-
-export function ClerkLoaded({ children }: { children: React.ReactNode }) {
-  // Mirrors @clerk/react's <ClerkLoaded>: hold rendering until the auth session has bootstrapped.
-  const { isLoaded } = useAuth();
-
-  if (!isLoaded) return null;
-
-  return <>{children}</>;
-}
-
-export function ClerkLoading({ children }: { children: React.ReactNode }) {
-  const { isLoaded } = useAuth();
-
-  if (isLoaded) return null;
 
   return <>{children}</>;
 }

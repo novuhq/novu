@@ -12,34 +12,30 @@ import {
   UserProfile,
 } from './components';
 import { getJwtToken, isJwtValid } from './jwt-manager';
-import { OrganizationSwitcher } from './organization-switcher';
 import { OrganizationContextProvider, useOrganization } from './organization.resource';
-import { UserButton } from './user-button';
+import { OrganizationSwitcher } from './organization-switcher';
 import { UserContextProvider, useUser } from './user.resource';
+import { UserButton } from './user-button';
 
 export {
-  AuthContextProvider, OrganizationContextProvider, OrganizationList,
-  OrganizationProfile, OrganizationSwitcher, RedirectToSignIn,
+  AuthContextProvider,
+  OrganizationContextProvider,
+  OrganizationList,
+  OrganizationProfile,
+  OrganizationSwitcher,
+  RedirectToSignIn,
   SignedIn,
-  SignedOut, SignIn,
-  SignUp, UserButton, UserProfile
+  SignedOut,
+  SignIn,
+  SignUp,
+  UserButton,
+  UserProfile,
 };
 
-  export { useAuth, useOrganization, useUser };
-
-export function ClerkLoaded({ children }: { children: React.ReactNode }) {
-  // Self-hosted auth is decoded synchronously from the JWT, so there is no bootstrap delay.
-  return <>{children}</>;
-}
-
-export function ClerkLoading(_props: { children: React.ReactNode }) {
-  return null;
-}
+export { useAuth, useOrganization, useUser };
 
 export const useClerk = () => {
   return {
-    // Self-hosted auth is synchronous via JWT, so the Clerk-equivalent loaded flag is always true.
-    loaded: true,
     setActive: async () => {
       console.warn('Clerk.setActive is not available in self-hosted mode');
     },
