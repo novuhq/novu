@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { AgentConfigResolver } from '../../channels/agent-config-resolver.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
-import { AgentConfigResolver } from '../../services/agent-config-resolver.service';
 import type { Channel, ChannelMessage, ChannelReceipt, ChannelTarget } from '../ports/channel.port';
 
 export class EmailChannel implements Channel {

@@ -9,10 +9,13 @@ import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
 import sinon from 'sinon';
+import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
+import {
+  AgentInboundHandler,
+  InboundReactionEvent,
+} from '../conversation-runtime/ingress/agent-inbound-handler.service';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
-import { AgentConfigResolver } from '../services/agent-config-resolver.service';
-import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
-import { AgentExecutionParams, BridgeExecutorService } from '../services/bridge-executor.service';
+import { AgentExecutionParams, BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import {

@@ -7,7 +7,7 @@ import shortid from 'shortid';
 import {
   InvalidTelegramMobileTokenError,
   TelegramMobileLinkTokenService,
-} from '../../../agents/services/telegram-mobile-link-token.service';
+} from '../../../agents/channels/telegram-linking/telegram-mobile-link-token.service';
 import { CreateIntegrationCommand } from '../create-integration/create-integration.command';
 import { CreateIntegration } from '../create-integration/create-integration.usecase';
 import { ConsumeIntegrationStoreTelegramMobileLinkCommand } from './consume-integration-store-telegram-mobile-link.command';

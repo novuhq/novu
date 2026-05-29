@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { TelegramMobileLinkTokenService } from '../../../agents/services/telegram-mobile-link-token.service';
+import { TelegramMobileLinkTokenService } from '../../../agents/channels/telegram-linking/telegram-mobile-link-token.service';
 import { IssueIntegrationStoreTelegramMobileLinkCommand } from './issue-integration-store-telegram-mobile-link.command';
 
 export interface IssueIntegrationStoreTelegramMobileLinkResult {

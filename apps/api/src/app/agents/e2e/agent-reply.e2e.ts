@@ -3,7 +3,7 @@ import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
-import { AgentExecutionParams, BridgeExecutorService } from '../services/bridge-executor.service';
+import { AgentExecutionParams, BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import {
   AgentTestContext,
   activityRepository,

@@ -28,7 +28,7 @@ import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
-import { BridgeExecutorService } from '../services/bridge-executor.service';
+import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import {
   AgentTestContext,
   activityRepository,

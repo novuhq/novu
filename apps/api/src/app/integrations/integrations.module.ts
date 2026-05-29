@@ -8,7 +8,7 @@ import {
   MsTeamsTokenService,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
-import { TelegramMobileLinkTokenService } from '../agents/services/telegram-mobile-link-token.service';
+import { TelegramMobileLinkTokenService } from '../agents/channels/telegram-linking/telegram-mobile-link-token.service';
 import { AuthModule } from '../auth/auth.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';

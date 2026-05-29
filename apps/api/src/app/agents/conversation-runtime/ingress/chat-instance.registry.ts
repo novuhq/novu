@@ -2,13 +2,13 @@ import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { Chat, Message, ReactionEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
-import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
-import { AgentEmailActionTokenService } from '../../services/agent-email-action-token.service';
-import type { InboundReactionEvent } from '../../services/agent-inbound-handler.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
+import type { InboundReactionEvent } from './agent-inbound-handler.service';
 
 export interface InboundCallbacks {
   onMessage: (agentId: string, config: ResolvedAgentConfig, thread: Thread, message: Message) => Promise<void>;

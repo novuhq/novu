@@ -1,0 +1,12 @@
+export { ChatChannelFactory } from './channels/chat.channel';
+export { EmailChannelFactory } from './channels/email.channel';
+export { AgentAttachmentStorage } from './conversation/agent-attachment-storage.service';
+export { AgentConversationService } from './conversation/agent-conversation.service';
+export { AgentSubscriberResolver } from './conversation/agent-subscriber-resolver.service';
+export { FileMaterializer } from './egress/file-materializer.service';
+export { OutboundGateway } from './egress/outbound.gateway';
+export { AgentInboundHandler } from './ingress/agent-inbound-handler.service';
+export { AgentsWebhookController } from './ingress/agents-webhook.controller';
+export { ChatInstanceRegistry } from './ingress/chat-instance.registry';
+export { InboundDispatcher } from './ingress/inbound.dispatcher';
+export { BridgeExecutorService } from './runtime/bridge-executor.service';

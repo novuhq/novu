@@ -2,10 +2,10 @@ import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/co
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import type { AdapterPostableMessage, EmojiValue, PlanModel, Thread } from 'chat';
-import { AgentConfigResolver } from '../../services/agent-config-resolver.service';
-import { AgentConversationService } from '../../services/agent-conversation.service';
+import { AgentConfigResolver } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { esmImport } from '../../shared/util/esm-import';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';

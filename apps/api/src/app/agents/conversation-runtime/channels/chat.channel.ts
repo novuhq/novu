@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import type { AdapterPostableMessage, EmojiValue } from 'chat';
-import { AgentConfigResolver } from '../../services/agent-config-resolver.service';
+import { AgentConfigResolver } from '../../channels/agent-config-resolver.service';
 import { esmImport } from '../../shared/util/esm-import';
 import type { ChatSdkReplyContent } from '../egress/file-materializer.service';
 import { FileMaterializer } from '../egress/file-materializer.service';

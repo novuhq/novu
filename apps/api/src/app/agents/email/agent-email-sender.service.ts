@@ -11,7 +11,7 @@ import {
 } from '@novu/application-generic';
 import { IntegrationEntity, IntegrationRepository, MessageRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/shared';
-import type { ResolvedAgentConfig } from '../services/agent-config-resolver.service';
+import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { captureAgentWarning } from '../shared/errors/capture-agent-sentry';
 
 const EMAIL_ALTERNATIVES_SUPPORTED_PROVIDERS = new Set<string>([
