@@ -1,4 +1,5 @@
-import type { EncryptedSecret, SigningSecretStatusEnum, SigningSecretTypeEnum } from '@novu/shared';
+import type { EncryptedSecret } from '@novu/shared';
+import { SigningSecretStatusEnum, SigningSecretTypeEnum } from '@novu/shared';
 
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
