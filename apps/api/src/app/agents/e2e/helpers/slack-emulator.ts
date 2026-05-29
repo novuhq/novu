@@ -25,7 +25,7 @@
  */
 
 import getPort from 'get-port';
-import { esmImport } from '../../utils/esm-import';
+import { esmImport } from '../../shared/util/esm-import';
 
 interface EmulatorInstance {
   url: string;

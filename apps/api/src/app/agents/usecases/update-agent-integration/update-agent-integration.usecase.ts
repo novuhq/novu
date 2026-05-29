@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import type { AgentIntegrationResponseDto } from '../../dtos';
-import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
+import type { AgentIntegrationResponseDto } from '../../shared/dtos';
+import { toAgentIntegrationResponse } from '../../shared/mappers/agent-response.mapper';
 import { UpdateAgentIntegrationCommand } from './update-agent-integration.command';
 
 @Injectable()

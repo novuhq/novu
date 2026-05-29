@@ -3,7 +3,10 @@ import { PinoLogger } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository } from '@novu/dal';
 import { MCP_SERVERS } from '@novu/shared';
 
-import { type SetAgentMcpServersFailureDto, type SetAgentMcpServersResponseDto } from '../../dtos/mcp-server.dto';
+import {
+  type SetAgentMcpServersFailureDto,
+  type SetAgentMcpServersResponseDto,
+} from '../../shared/dtos/mcp-server.dto';
 import { DisableAgentMcpServerCommand } from '../disable-agent-mcp-server/disable-agent-mcp-server.command';
 import { DisableAgentMcpServer } from '../disable-agent-mcp-server/disable-agent-mcp-server.usecase';
 import { EnableAgentMcpServerCommand } from '../enable-agent-mcp-server/enable-agent-mcp-server.command';

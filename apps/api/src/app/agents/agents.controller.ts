@@ -36,6 +36,7 @@ import {
   ApiResponse,
 } from '../shared/framework/response.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
+import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
 import {
   AddAgentIntegrationRequestDto,
   AgentIntegrationResponseDto,
@@ -66,20 +67,19 @@ import {
   UploadCustomSkillResponseDto,
   VerifyManagedCredentialsRequestDto,
   VerifyManagedCredentialsResponseDto,
-} from './dtos';
-import { ConfigureTelegramWebhookResponseDto } from './dtos/configure-telegram-webhook-response.dto';
-import { ConfigureWhatsAppWebhookResponseDto } from './dtos/configure-whatsapp-webhook-response.dto';
-import { IssueTelegramMobileLinkRequestDto } from './dtos/issue-telegram-mobile-link-request.dto';
-import { IssueTelegramMobileLinkResponseDto } from './dtos/issue-telegram-mobile-link-response.dto';
-import { IssueTelegramSubscriberLinkRequestDto } from './dtos/issue-telegram-subscriber-link-request.dto';
-import { IssueTelegramSubscriberLinkResponseDto } from './dtos/issue-telegram-subscriber-link-response.dto';
-import { SendAgentTestEmailRequestDto } from './dtos/send-agent-test-email-request.dto';
-import { SendAgentWelcomeMessageRequestDto } from './dtos/send-agent-welcome-message-request.dto';
+} from './shared/dtos';
+import { ConfigureTelegramWebhookResponseDto } from './shared/dtos/configure-telegram-webhook-response.dto';
+import { ConfigureWhatsAppWebhookResponseDto } from './shared/dtos/configure-whatsapp-webhook-response.dto';
+import { IssueTelegramMobileLinkRequestDto } from './shared/dtos/issue-telegram-mobile-link-request.dto';
+import { IssueTelegramMobileLinkResponseDto } from './shared/dtos/issue-telegram-mobile-link-response.dto';
+import { IssueTelegramSubscriberLinkRequestDto } from './shared/dtos/issue-telegram-subscriber-link-request.dto';
+import { IssueTelegramSubscriberLinkResponseDto } from './shared/dtos/issue-telegram-subscriber-link-response.dto';
+import { SendAgentTestEmailRequestDto } from './shared/dtos/send-agent-test-email-request.dto';
+import { SendAgentWelcomeMessageRequestDto } from './shared/dtos/send-agent-welcome-message-request.dto';
 import {
   SendWhatsAppTestTemplateRequestDto,
   SendWhatsAppTestTemplateResponseDto,
-} from './dtos/send-whatsapp-test-template.dto';
-import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
+} from './shared/dtos/send-whatsapp-test-template.dto';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
 import { ConfigureTelegramAgentWebhookCommand } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';

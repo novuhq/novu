@@ -11,15 +11,15 @@ import {
 import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
 import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../events/usecases/parse-event-request';
-import { trackAgentReplyProcessed } from '../../agent-analytics';
-import { AgentEventEnum } from '../../dtos/agent-event.enum';
-import type { EditPayloadDto, ReplyContentDto } from '../../dtos/agent-reply-payload.dto';
-import { isValidMetadataSignalKey } from '../../dtos/agent-reply-payload.dto';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import type { MetadataOp } from '../../services/agent-conversation.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
+import { trackAgentReplyProcessed } from '../../shared/analytics/agent-analytics';
+import type { EditPayloadDto, ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
+import { isValidMetadataSignalKey } from '../../shared/dtos/agent-reply-payload.dto';
+import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()

@@ -2,9 +2,9 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InstrumentUsecase } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
-import type { AgentIntegrationSummaryDto } from '../../dtos/agent-integration-summary.dto';
-import { ListAgentsResponseDto } from '../../dtos/list-agents-response.dto';
-import { toAgentIntegrationSummary, toAgentResponse } from '../../mappers/agent-response.mapper';
+import type { AgentIntegrationSummaryDto } from '../../shared/dtos/agent-integration-summary.dto';
+import { ListAgentsResponseDto } from '../../shared/dtos/list-agents-response.dto';
+import { toAgentIntegrationSummary, toAgentResponse } from '../../shared/mappers/agent-response.mapper';
 import { ListAgentsCommand } from './list-agents.command';
 
 @Injectable()

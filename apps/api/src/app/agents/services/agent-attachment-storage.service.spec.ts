@@ -2,7 +2,7 @@ import type { StorageService } from '@novu/application-generic';
 import { expect } from 'chai';
 import type { Attachment } from 'chat';
 import sinon from 'sinon';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentAttachmentStorage, READ_URL_TTL_SECONDS } from './agent-attachment-storage.service';
 
 describe('AgentAttachmentStorage', () => {

@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
-import type { AgentResponseDto } from '../../dtos';
-import { type ManagedRuntimeHydration, toAgentResponse } from '../../mappers/agent-response.mapper';
+import type { AgentResponseDto } from '../../shared/dtos';
+import { type ManagedRuntimeHydration, toAgentResponse } from '../../shared/mappers/agent-response.mapper';
 import { GetAgentCommand } from './get-agent.command';
 
 @Injectable()

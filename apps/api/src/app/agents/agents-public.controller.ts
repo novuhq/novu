@@ -7,8 +7,8 @@ import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.de
 import {
   ConsumeTelegramMobileLinkRequestDto,
   ConsumeTelegramMobileLinkResponseDto,
-} from './dtos/consume-telegram-mobile-link.dto';
-import { TelegramMobileLinkStatusResponseDto } from './dtos/telegram-mobile-link-status-response.dto';
+} from './shared/dtos/consume-telegram-mobile-link.dto';
+import { TelegramMobileLinkStatusResponseDto } from './shared/dtos/telegram-mobile-link-status-response.dto';
 import { ConsumeTelegramMobileLinkCommand } from './usecases/consume-telegram-mobile-link/consume-telegram-mobile-link.command';
 import { ConsumeTelegramMobileLink } from './usecases/consume-telegram-mobile-link/consume-telegram-mobile-link.usecase';
 import { GetTelegramMobileLinkStatusCommand } from './usecases/get-telegram-mobile-link-status/get-telegram-mobile-link-status.command';

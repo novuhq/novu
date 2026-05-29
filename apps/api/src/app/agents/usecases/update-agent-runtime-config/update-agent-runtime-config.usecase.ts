@@ -2,7 +2,10 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
-import type { AgentRuntimeCapabilitiesDto, AgentRuntimeConfigResponseDto } from '../../dtos/agent-runtime-config.dto';
+import type {
+  AgentRuntimeCapabilitiesDto,
+  AgentRuntimeConfigResponseDto,
+} from '../../shared/dtos/agent-runtime-config.dto';
 import { projectMcpRowsToCatalog } from '../../utils/project-mcp-servers';
 import { UpdateAgentRuntimeConfigCommand } from './update-agent-runtime-config.command';
 

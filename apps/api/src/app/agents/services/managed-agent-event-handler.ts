@@ -9,13 +9,13 @@ import {
   type StreamCallbacks,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
+import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 import { HandleAgentReplyCommand } from '../usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../usecases/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../usecases/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../usecases/handle-plan-progress/handle-plan-progress.usecase';
 import { HandlePendingToolApprovalsCommand } from '../usecases/tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from '../usecases/tool-approval/handle-pending-tool-approvals.usecase';
-import { captureAgentException } from '../utils/capture-agent-sentry';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 
 interface BaseCommandFields {

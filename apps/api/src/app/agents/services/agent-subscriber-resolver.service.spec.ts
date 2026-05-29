@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 
 describe('AgentSubscriberResolver', () => {

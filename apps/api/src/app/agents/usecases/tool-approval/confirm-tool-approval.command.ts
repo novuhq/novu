@@ -1,7 +1,7 @@
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { AgentPlatformEnum } from '../../dtos/agent-platform.enum';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import type { ParsedToolApprovalAction } from './approval-card.builder';
 
 export class ConfirmToolApprovalCommand extends EnvironmentWithUserCommand {

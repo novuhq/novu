@@ -16,7 +16,7 @@ import {
   MAX_GITHUB_REPO_SKILLS_PER_REQUEST,
   MAX_INLINE_SKILL_CONTENT_LENGTH,
   type UploadCustomSkillSourceType,
-} from '../../dtos/upload-custom-skill.dto';
+} from '../../shared/dtos/upload-custom-skill.dto';
 
 export class GithubUrlSkillSourceCommand {
   @IsIn(['github-url'])

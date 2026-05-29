@@ -1,5 +1,5 @@
 import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { AgentPlatformEnum } from '../enums/agent-platform.enum';
 
 const PROVIDER_TO_PLATFORM: Partial<Record<string, AgentPlatformEnum>> = {
   [ChatProviderIdEnum.Slack]: AgentPlatformEnum.SLACK,

@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  HttpException,
-  HttpStatus,
-  Param,
-  Post,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpException, HttpStatus, Param, Post, Req, Res } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { PinoLogger } from '@novu/application-generic';
 import type { Signal } from '@novu/framework';
@@ -18,11 +7,11 @@ import { Request, Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
-import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
-import { AgentInactiveException } from './exceptions/agent-inactive.exception';
 import type { AgentConfigResolveSource } from './services/agent-config-resolver.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { ManagedAgentService } from './services/managed-agent.service';
+import { AgentReplyPayloadDto } from './shared/dtos/agent-reply-payload.dto';
+import { AgentInactiveException } from './shared/errors/agent-inactive.exception';
 import { HandleAgentReplyCommand } from './usecases/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
 

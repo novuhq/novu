@@ -3,8 +3,8 @@ import { InstrumentUsecase, isAgentSharedInboxEnabled } from '@novu/application-
 import { AgentIntegrationRepository, AgentRepository, DomainRouteRepository, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, DomainRouteTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 
-import type { AgentIntegrationResponseDto } from '../../dtos';
-import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
+import type { AgentIntegrationResponseDto } from '../../shared/dtos';
+import { toAgentIntegrationResponse } from '../../shared/mappers/agent-response.mapper';
 import { UpdateAgentInboxSharedCommand } from './update-agent-inbox-shared.command';
 
 /**

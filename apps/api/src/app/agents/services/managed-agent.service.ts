@@ -14,7 +14,7 @@ import {
 import { type Message, MessageRole } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import type { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler';

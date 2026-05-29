@@ -29,7 +29,6 @@ import {
   type McpServer,
   type NovuAppOAuthCatalogEntry,
 } from '@novu/shared';
-import { GenerateMcpOAuthUrlResponseDto } from '../../dtos/mcp-server.dto';
 import { assertMcpNovuAppFlagEnabled } from '../../services/assert-mcp-novu-app-flag-enabled';
 import {
   AuthorizationServerMetadata,
@@ -37,6 +36,7 @@ import {
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
 } from '../../services/mcp-oauth-discovery.service';
+import { GenerateMcpOAuthUrlResponseDto } from '../../shared/dtos/mcp-server.dto';
 import {
   GetMcpNovuAppCredentials,
   type NovuAppCredentials,

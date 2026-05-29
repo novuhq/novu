@@ -22,11 +22,11 @@ import { ChannelTypeEnum, EmailProviderIdEnum, type IEmailOptions } from '@novu/
 import type { AdapterPostableMessage, Chat, EmojiValue, Message, PlanModel, ReactionEvent, Thread } from 'chat';
 import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { LRUCache } from 'lru-cache';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import type { FileRef, ReplyContentDto } from '../dtos/agent-reply-payload.dto';
-import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
-import { esmImport } from '../utils/esm-import';
-import { sendWebResponse, toWebRequest } from '../utils/express-to-web-request';
+import type { FileRef, ReplyContentDto } from '../shared/dtos/agent-reply-payload.dto';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { captureAgentException, captureAgentWarning } from '../shared/errors/capture-agent-sentry';
+import { esmImport } from '../shared/util/esm-import';
+import { sendWebResponse, toWebRequest } from '../shared/util/express-to-web-request';
 import { AgentConfigResolver, AgentConfigResolveSource, ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentEmailActionClaims, AgentEmailActionTokenService } from './agent-email-action-token.service';
 import type { InboundReactionEvent } from './agent-inbound-handler.service';

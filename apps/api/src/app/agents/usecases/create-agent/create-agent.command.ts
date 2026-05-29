@@ -12,7 +12,7 @@ import {
 } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
-import { ManagedRuntimeDto } from '../../dtos/agent-runtime-config.dto';
+import { ManagedRuntimeDto } from '../../shared/dtos/agent-runtime-config.dto';
 
 export class CreateAgentCommand extends EnvironmentWithUserCommand {
   @ValidateIf((o) => !o.managedRuntime?.externalAgentId)

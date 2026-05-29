@@ -23,7 +23,7 @@ import type {
 import { AgentEventEnum } from '@novu/framework';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import type { Message } from 'chat';
-import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
+import { captureAgentException, captureAgentWarning } from '../shared/errors/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 

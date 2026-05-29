@@ -8,9 +8,9 @@ import {
 } from '@novu/application-generic';
 import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
-import { trackAgentCreated } from '../../agent-analytics';
-import type { AgentResponseDto } from '../../dtos';
-import { toAgentResponse } from '../../mappers/agent-response.mapper';
+import { trackAgentCreated } from '../../shared/analytics/agent-analytics';
+import type { AgentResponseDto } from '../../shared/dtos';
+import { toAgentResponse } from '../../shared/mappers/agent-response.mapper';
 import { FindOrCreateNovuEmail } from '../find-or-create-novu-email/find-or-create-novu-email.usecase';
 import { ProvisionManagedAgentCommand } from '../provision-managed-agent/provision-managed-agent.command';
 import { ProvisionManagedAgent } from '../provision-managed-agent/provision-managed-agent.usecase';

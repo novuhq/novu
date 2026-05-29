@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository, McpConnectionRepository } from '@novu/dal';
 
-import { trackAgentMcpServerDisabled } from '../../agent-analytics';
+import { trackAgentMcpServerDisabled } from '../../shared/analytics/agent-analytics';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { DisableAgentMcpServerCommand } from './disable-agent-mcp-server.command';

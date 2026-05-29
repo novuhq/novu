@@ -26,9 +26,9 @@ import {
   getFeatureForTierAsBoolean,
 } from '@novu/shared';
 
-import { trackAgentIntegrationConnected } from '../../agent-analytics';
-import type { AgentIntegrationResponseDto } from '../../dtos';
-import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
+import { trackAgentIntegrationConnected } from '../../shared/analytics/agent-analytics';
+import type { AgentIntegrationResponseDto } from '../../shared/dtos';
+import { toAgentIntegrationResponse } from '../../shared/mappers/agent-response.mapper';
 import { FindOrCreateNovuEmail } from '../find-or-create-novu-email/find-or-create-novu-email.usecase';
 import { AddAgentIntegrationCommand } from './add-agent-integration.command';
 

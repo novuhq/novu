@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { AgentEventEnum } from '../shared/enums/agent-event.enum';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 import { NoBridgeUrlError } from './bridge-executor.service';
 

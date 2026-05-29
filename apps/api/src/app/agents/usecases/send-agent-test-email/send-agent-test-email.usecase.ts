@@ -10,7 +10,7 @@ import {
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { ChannelTypeEnum, EmailProviderIdEnum, IEmailOptions } from '@novu/shared';
 
-import { trackAgentTestEmailSent } from '../../agent-analytics';
+import { trackAgentTestEmailSent } from '../../shared/analytics/agent-analytics';
 import { SendAgentTestEmailCommand } from './send-agent-test-email.command';
 
 function escapeHtml(text: string): string {

@@ -2,10 +2,9 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { AnalyticsService, FeatureFlagsService } from '@novu/application-generic';
 import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
-
-import { trackAgentMcpServerEnabled } from '../../agent-analytics';
-import { AgentMcpServerEnablementResponseDto } from '../../dtos/mcp-server.dto';
 import { assertMcpNovuAppFlagEnabled } from '../../services/assert-mcp-novu-app-flag-enabled';
+import { trackAgentMcpServerEnabled } from '../../shared/analytics/agent-analytics';
+import { AgentMcpServerEnablementResponseDto } from '../../shared/dtos/mcp-server.dto';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';

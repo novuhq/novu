@@ -7,10 +7,10 @@ import {
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { AgentPlatformEnum } from '../../dtos/agent-platform.enum';
 import { ManagedAgentService } from '../../services/managed-agent.service';
 import { ManagedAgentProviderFactory } from '../../services/managed-agent-provider-factory';
-import { captureAgentException, captureAgentWarning } from '../../utils/capture-agent-sentry';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../handle-plan-progress/handle-plan-progress.command';

@@ -3,7 +3,7 @@ import { AnalyticsService, resolveAgentRuntime } from '@novu/application-generic
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 
-import { trackAgentDeleted } from '../../agent-analytics';
+import { trackAgentDeleted } from '../../shared/analytics/agent-analytics';
 import { CleanupNovuEmail } from '../cleanup-novu-email/cleanup-novu-email.usecase';
 import { DeleteAgentCommand } from './delete-agent.command';
 

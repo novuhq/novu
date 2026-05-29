@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, StorageService } from '@novu/application-generic';
 import type { Attachment } from 'chat';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import { captureAgentWarning } from '../utils/capture-agent-sentry';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { captureAgentWarning } from '../shared/errors/capture-agent-sentry';
 
 export interface StoredAttachment {
   type: string;

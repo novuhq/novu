@@ -6,12 +6,11 @@ import {
   ConversationParticipantTypeEnum,
   IntegrationRepository,
 } from '@novu/dal';
-
-import { AgentPlatformEnum } from '../../dtos/agent-platform.enum';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
-import { PLATFORM_ENDPOINT_CONFIG } from '../../utils/platform-endpoint-config';
-import { resolveAgentPlatform } from '../../utils/provider-to-platform';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
+import { resolveAgentPlatform } from '../../shared/util/provider-to-platform';
 import { SendAgentWelcomeMessageCommand } from './send-agent-welcome-message.command';
 
 function getWelcomeText(platform: AgentPlatformEnum): string {

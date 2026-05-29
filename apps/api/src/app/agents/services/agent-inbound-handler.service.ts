@@ -17,9 +17,14 @@ import {
 import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
-import { trackAgentInboundAction, trackAgentInboundMessage, trackAgentInboundReaction } from '../agent-analytics';
-import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../dtos/agent-platform.enum';
+import {
+  trackAgentInboundAction,
+  trackAgentInboundMessage,
+  trackAgentInboundReaction,
+} from '../shared/analytics/agent-analytics';
+import { AgentEventEnum } from '../shared/enums/agent-event.enum';
+import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../shared/enums/agent-platform.enum';
+import { captureAgentException, captureAgentWarning } from '../shared/errors/capture-agent-sentry';
 import { LinkTelegramChatToSubscriberCommand } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../usecases/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { HandleManagedAgentSetupInbound } from '../usecases/managed-agent-setup/handle-managed-agent-setup-inbound.usecase';
@@ -27,7 +32,6 @@ import { ManagedAgentSetupInboundCommand } from '../usecases/managed-agent-setup
 import { isLinkButtonActionId, parseToolApprovalActionId } from '../usecases/tool-approval/approval-card.builder';
 import { ConfirmToolApprovalCommand } from '../usecases/tool-approval/confirm-tool-approval.command';
 import { ConfirmToolApproval } from '../usecases/tool-approval/confirm-tool-approval.usecase';
-import { captureAgentException, captureAgentWarning } from '../utils/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from './agent-attachment-storage.service';
 import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';

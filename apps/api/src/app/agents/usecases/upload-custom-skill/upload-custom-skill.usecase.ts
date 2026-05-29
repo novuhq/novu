@@ -7,7 +7,7 @@ import {
 } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 
-import type { UploadCustomSkillSourceType } from '../../dtos/upload-custom-skill.dto';
+import type { UploadCustomSkillSourceType } from '../../shared/dtos/upload-custom-skill.dto';
 import {
   assertRepoSlug,
   buildRepoSkillDisplayTitle,

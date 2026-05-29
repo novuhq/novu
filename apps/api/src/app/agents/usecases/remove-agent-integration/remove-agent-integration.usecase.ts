@@ -3,7 +3,7 @@ import { AnalyticsService } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentTypeEnum } from '@novu/shared';
 
-import { trackAgentIntegrationRemoved } from '../../agent-analytics';
+import { trackAgentIntegrationRemoved } from '../../shared/analytics/agent-analytics';
 import { CleanupNovuEmail } from '../cleanup-novu-email/cleanup-novu-email.usecase';
 import { RemoveAgentIntegrationCommand } from './remove-agent-integration.command';
 

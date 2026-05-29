@@ -5,7 +5,7 @@ import {
   ValidatorConstraint,
   type ValidatorConstraintInterface,
 } from 'class-validator';
-import { esmImport } from '../utils/esm-import';
+import { esmImport } from '../util/esm-import';
 
 let cachedNames: Set<string> | null = null;
 

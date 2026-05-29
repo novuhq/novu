@@ -34,8 +34,8 @@ import {
 import { ClientSession } from 'mongoose';
 import shortid from 'shortid';
 
-import type { AgentIntegrationResponseDto } from '../../dtos';
-import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
+import type { AgentIntegrationResponseDto } from '../../shared/dtos';
+import { toAgentIntegrationResponse } from '../../shared/mappers/agent-response.mapper';
 
 /**
  * Max collision-retry attempts when minting the per-agent inbox routing key.

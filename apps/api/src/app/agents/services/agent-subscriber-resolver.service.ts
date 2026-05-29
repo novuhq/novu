@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { ChannelEndpointRepository, SubscriberRepository } from '@novu/dal';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { PLATFORM_ENDPOINT_CONFIG } from '../shared/util/platform-endpoint-config';
 import { isValidEmailForLookup, normalizeEmailForLookup } from '../utils/email-normalization';
 import { getPhoneLookupCandidates } from '../utils/phone-normalization';
-import { PLATFORM_ENDPOINT_CONFIG } from '../utils/platform-endpoint-config';
 
 export interface ResolveSubscriberParams {
   environmentId: string;

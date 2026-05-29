@@ -10,8 +10,8 @@ import {
   ConsumedActionToken,
   PeekedActionToken,
 } from './services/agent-email-action-token.service';
-import { captureAgentException, captureAgentWarning } from './utils/capture-agent-sentry';
 import { AgentActionPreDispatchError, ChatSdkService } from './services/chat-sdk.service';
+import { captureAgentException, captureAgentWarning } from './shared/errors/capture-agent-sentry';
 
 const EXECUTE_PATH = '/v1/agents/email/actions/execute';
 

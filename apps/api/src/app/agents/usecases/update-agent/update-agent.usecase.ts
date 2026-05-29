@@ -3,8 +3,8 @@ import { assertSafeOutboundUrl, resolvePublicAddresses, SsrfBlockedError } from 
 import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { EmailProviderIdEnum, EnvironmentTypeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
-import type { AgentResponseDto } from '../../dtos';
-import { toAgentResponse } from '../../mappers/agent-response.mapper';
+import type { AgentResponseDto } from '../../shared/dtos';
+import { toAgentResponse } from '../../shared/mappers/agent-response.mapper';
 import { UpdateAgentCommand } from './update-agent.command';
 
 @Injectable()

@@ -3,8 +3,8 @@ import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
 
-import { ListAgentIntegrationsResponseDto } from '../../dtos/list-agent-integrations-response.dto';
-import { toAgentIntegrationResponse } from '../../mappers/agent-response.mapper';
+import { ListAgentIntegrationsResponseDto } from '../../shared/dtos/list-agent-integrations-response.dto';
+import { toAgentIntegrationResponse } from '../../shared/mappers/agent-response.mapper';
 import { ListAgentIntegrationsCommand } from './list-agent-integrations.command';
 
 @Injectable()

@@ -13,7 +13,7 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import type { Response } from 'express';
-import { captureAgentException } from '../utils/capture-agent-sentry';
+import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 
 function httpStatusFromError(err: AgentRuntimeError): number {
   if (err instanceof AgentRuntimeUnauthorizedError) return HttpStatus.UNAUTHORIZED;

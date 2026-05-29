@@ -14,11 +14,11 @@ import {
 } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
-import { trackAgentIntegrationFirstWebhook } from '../agent-analytics';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import { AgentInactiveException } from '../exceptions/agent-inactive.exception';
-import { esmImport } from '../utils/esm-import';
-import { resolveAgentPlatform } from '../utils/provider-to-platform';
+import { trackAgentIntegrationFirstWebhook } from '../shared/analytics/agent-analytics';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
+import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
+import { esmImport } from '../shared/util/esm-import';
+import { resolveAgentPlatform } from '../shared/util/provider-to-platform';
 
 let cachedEmojiNames: Set<string> | null = null;
 

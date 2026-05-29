@@ -12,11 +12,10 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-
-import { PLATFORMS_WITH_TYPING_INDICATOR } from '../../dtos/agent-platform.enum';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
 import { ManagedAgentService } from '../../services/managed-agent.service';
+import { PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { GenerateMcpOAuthUrl } from '../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';
