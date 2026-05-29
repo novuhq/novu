@@ -30,6 +30,8 @@ import { AgentsPublicController } from './agents-public.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
+import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
+import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
 import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
@@ -39,7 +41,6 @@ import { AgentEmailActionTokenService } from './services/agent-email-action-toke
 import { AgentInboundHandler } from './services/agent-inbound-handler.service';
 import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
 import { BridgeExecutorService } from './services/bridge-executor.service';
-import { ChatSdkService } from './services/chat-sdk.service';
 import { DemoClaudeQuotaPolicy } from './services/demo-claude-quota-policy.service';
 import { ManagedAgentService } from './services/managed-agent.service';
 import { ManagedAgentEventHandler } from './services/managed-agent-event-handler';
@@ -91,7 +92,8 @@ import { USE_CASES } from './usecases';
     ManagedAgentService,
     McpConnectionVaultService,
     DemoClaudeQuotaPolicy,
-    ChatSdkService,
+    ChatInstanceRegistry,
+    InboundDispatcher,
     FileMaterializer,
     AgentEmailSender,
     OutboundGateway,
@@ -104,6 +106,6 @@ import { USE_CASES } from './usecases';
     UpdateSubscriber,
     UpdateSubscriberChannel,
   ],
-  exports: [...USE_CASES, ChatSdkService],
+  exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway],
 })
 export class AgentsModule {}

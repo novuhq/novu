@@ -69,7 +69,7 @@ describe('AgentInboundHandler', () => {
     const confirmToolApproval = {
       execute: sinon.stub().resolves(undefined),
     };
-    const chatSdkService = {
+    const inboundDispatcher = {
       registerInboundCallbacks: sinon.stub(),
     };
     const agentRepository = {
@@ -106,8 +106,8 @@ describe('AgentInboundHandler', () => {
       managedAgentService as any,
       confirmToolApproval as any,
       handleManagedAgentSetupInbound as any,
-      chatSdkService as any,
-      new OutboundGateway(chatSdkService as any, conversationService as any),
+      inboundDispatcher as any,
+      new OutboundGateway({} as any, conversationService as any, {} as any, {} as any),
       agentRepository as any,
       subscriberRepository as any,
       environmentRepository as any,

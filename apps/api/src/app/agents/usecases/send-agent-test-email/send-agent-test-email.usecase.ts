@@ -168,7 +168,7 @@ export class SendAgentTestEmail {
     // The Novu demo email integration is provisioned alongside each org but
     // ships with empty stored credentials — the real SendGrid API key lives in
     // the deployment's `NOVU_EMAIL_INTEGRATION_API_KEY` env var. Mirror the
-    // runtime resolution in chat-sdk.service.ts so test emails go through the
+    // runtime resolution in chat-instance.registry.ts so test emails go through the
     // same demo plumbing as actual agent replies.
     if (configured.providerId === EmailProviderIdEnum.Novu) {
       return {

@@ -7,8 +7,8 @@ import { Request, Response } from 'express';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ExternalApiAccessible } from '../auth/framework/external-api.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
+import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
 import type { AgentConfigResolveSource } from './services/agent-config-resolver.service';
-import { ChatSdkService } from './services/chat-sdk.service';
 import { ManagedAgentService } from './services/managed-agent.service';
 import { AgentReplyPayloadDto } from './shared/dtos/agent-reply-payload.dto';
 import { AgentInactiveException } from './shared/errors/agent-inactive.exception';
@@ -19,7 +19,7 @@ import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-rep
 @ApiExcludeController()
 export class AgentsWebhookController {
   constructor(
-    private chatSdkService: ChatSdkService,
+    private inboundDispatcher: InboundDispatcher,
     private handleAgentReplyUsecase: HandleAgentReply,
     private managedAgentService: ManagedAgentService,
     private readonly logger: PinoLogger
@@ -87,7 +87,7 @@ export class AgentsWebhookController {
     source: AgentConfigResolveSource
   ) {
     try {
-      await this.chatSdkService.handleWebhook(agentId, integrationIdentifier, req, res, { source });
+      await this.inboundDispatcher.handleWebhook(agentId, integrationIdentifier, req, res, { source });
     } catch (err) {
       if (err instanceof AgentInactiveException) {
         // Return 200 to avoid retries by the delivery provider

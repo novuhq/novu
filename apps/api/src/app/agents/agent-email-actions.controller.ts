@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpStatus, Post, Query, Res } from '@nestjs/com
 import { ApiExcludeController } from '@nestjs/swagger';
 import { PinoLogger } from '@novu/application-generic';
 import { Response } from 'express';
+import { AgentActionPreDispatchError, InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
 import {
   AgentEmailActionCacheUnavailableError,
   AgentEmailActionClaims,
@@ -10,7 +11,6 @@ import {
   ConsumedActionToken,
   PeekedActionToken,
 } from './services/agent-email-action-token.service';
-import { AgentActionPreDispatchError, ChatSdkService } from './services/chat-sdk.service';
 import { captureAgentException, captureAgentWarning } from './shared/errors/capture-agent-sentry';
 
 const EXECUTE_PATH = '/v1/agents/email/actions/execute';
@@ -41,7 +41,7 @@ const EXECUTE_PATH = '/v1/agents/email/actions/execute';
 export class AgentEmailActionsController {
   constructor(
     private readonly tokenService: AgentEmailActionTokenService,
-    private readonly chatSdkService: ChatSdkService,
+    private readonly inboundDispatcher: InboundDispatcher,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -137,7 +137,7 @@ export class AgentEmailActionsController {
     const { claims } = consumed;
 
     try {
-      await this.chatSdkService.processEmailAction(claims);
+      await this.inboundDispatcher.processEmailAction(claims);
     } catch (err) {
       this.logger.error(err, `Failed to process agent email action ${claims.actionId} for agent ${claims.agentId}`);
       captureAgentException(err, {

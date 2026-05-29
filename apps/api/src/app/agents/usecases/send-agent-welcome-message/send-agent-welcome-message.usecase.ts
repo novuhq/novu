@@ -8,7 +8,6 @@ import {
 } from '@novu/dal';
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { AgentConversationService } from '../../services/agent-conversation.service';
-import { ChatSdkService } from '../../services/chat-sdk.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../shared/util/platform-endpoint-config';
 import { resolveAgentPlatform } from '../../shared/util/provider-to-platform';
@@ -35,7 +34,6 @@ export class SendAgentWelcomeMessage {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly chatSdkService: ChatSdkService,
     private readonly conversationService: AgentConversationService,
     private readonly analyticsService: AnalyticsService,
     private readonly outboundGateway: OutboundGateway,
@@ -107,7 +105,7 @@ export class SendAgentWelcomeMessage {
 
     try {
       const welcomeText = getWelcomeText(platform);
-      const sent = await this.chatSdkService.sendDirectMessage(
+      const sent = await this.outboundGateway.sendDirectMessage(
         agent._id,
         command.integrationIdentifier,
         platformUserId,

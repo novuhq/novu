@@ -16,7 +16,6 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-c
 import type { MetadataOp } from '../../services/agent-conversation.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { BridgeExecutorService } from '../../services/bridge-executor.service';
-import { ChatSdkService } from '../../services/chat-sdk.service';
 import { trackAgentReplyProcessed } from '../../shared/analytics/agent-analytics';
 import type { EditPayloadDto, ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../shared/dtos/agent-reply-payload.dto';
@@ -28,7 +27,6 @@ export class HandleAgentReply {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly chatSdkService: ChatSdkService,
     private readonly bridgeExecutor: BridgeExecutorService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly conversationService: AgentConversationService,
@@ -101,7 +99,7 @@ export class HandleAgentReply {
     if (command.addReactions?.length) {
       await Promise.allSettled(
         command.addReactions.map((r) =>
-          this.chatSdkService.reactToMessage(
+          this.outboundGateway.reactToMessage(
             conversation._agentId,
             command.integrationIdentifier,
             channel.platform,
@@ -229,7 +227,7 @@ export class HandleAgentReply {
     plan: NonNullable<HandleAgentReplyCommand['plan']>
   ): Promise<SentMessageInfo | null> {
     if (plan.messageId) {
-      await this.chatSdkService.editPlanObject(
+      await this.outboundGateway.editPlanObject(
         conversation._agentId,
         command.integrationIdentifier,
         channel.platform,
@@ -241,7 +239,7 @@ export class HandleAgentReply {
       return { messageId: plan.messageId, platformThreadId: channel.platformThreadId };
     }
 
-    return this.chatSdkService.postPlanObject(
+    return this.outboundGateway.postPlanObject(
       conversation._agentId,
       command.integrationIdentifier,
       channel.platform,
@@ -416,7 +414,7 @@ export class HandleAgentReply {
     const firstMessageId = channel.firstPlatformMessageId;
     if (!firstMessageId || !config.acknowledgeOnReceived) return;
 
-    await this.chatSdkService.removeReaction(
+    await this.outboundGateway.removeReaction(
       conversation._agentId,
       config.integrationIdentifier,
       channel.platform,
@@ -434,7 +432,7 @@ export class HandleAgentReply {
     const firstMessageId = channel.firstPlatformMessageId;
     if (!firstMessageId || !config.reactionOnResolved) return;
 
-    await this.chatSdkService.reactToMessage(
+    await this.outboundGateway.reactToMessage(
       conversation._agentId,
       config.integrationIdentifier,
       channel.platform,

@@ -18,6 +18,7 @@ import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
+import { InboundDispatcher } from '../conversation-runtime/ingress/inbound.dispatcher';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -38,7 +39,6 @@ import { ResolvedAgentConfig } from './agent-config-resolver.service';
 import { AgentConversationService, getInboundActivityPreview } from './agent-conversation.service';
 import { AgentSubscriberResolver } from './agent-subscriber-resolver.service';
 import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from './bridge-executor.service';
-import { ChatSdkService } from './chat-sdk.service';
 import { ManagedAgentService } from './managed-agent.service';
 import { TelegramStartCodeService } from './telegram-start-code.service';
 
@@ -227,7 +227,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly managedAgentService: ManagedAgentService,
     private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
-    private readonly chatSdkService: ChatSdkService,
+    private readonly inboundDispatcher: InboundDispatcher,
     private readonly outboundGateway: OutboundGateway,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
@@ -242,7 +242,7 @@ export class AgentInboundHandler implements OnModuleInit {
   }
 
   onModuleInit() {
-    this.chatSdkService.registerInboundCallbacks({
+    this.inboundDispatcher.registerInboundCallbacks({
       onMessage: (agentId, config, thread, message) =>
         this.handle(agentId, config, thread, message, AgentEventEnum.ON_MESSAGE),
       onAction: (agentId, config, thread, action, userId) => this.handleAction(agentId, config, thread, action, userId),

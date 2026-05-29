@@ -12,8 +12,8 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
+import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
-import { ChatSdkService } from '../../services/chat-sdk.service';
 import { ManagedAgentService } from '../../services/managed-agent.service';
 import { PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { GenerateMcpOAuthUrl } from '../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
@@ -41,7 +41,7 @@ export class CompleteManagedAgentSetup {
     private readonly managedAgentService: ManagedAgentService,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
     private readonly handleAgentReply: HandleAgentReply,
-    private readonly chatSdkService: ChatSdkService,
+    private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -341,7 +341,7 @@ export class CompleteManagedAgentSetup {
     }
 
     try {
-      await this.chatSdkService.startTypingInConversation(agent._id, config.integrationIdentifier, platformThreadId);
+      await this.outboundGateway.startTypingInConversation(agent._id, config.integrationIdentifier, platformThreadId);
     } catch (err) {
       this.logger.warn(
         err,
