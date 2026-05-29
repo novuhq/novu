@@ -28,6 +28,7 @@ import { AgentsController } from './agents.controller';
 import { AgentsMcpOAuthController } from './agents-mcp-oauth.controller';
 import { AgentsPublicController } from './agents-public.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
+import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
 import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
 import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
 import { AgentConfigResolver } from './services/agent-config-resolver.service';
@@ -89,6 +90,7 @@ import { USE_CASES } from './usecases';
     McpConnectionVaultService,
     DemoClaudeQuotaPolicy,
     ChatSdkService,
+    OutboundGateway,
     McpOAuthDiscoveryService,
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
