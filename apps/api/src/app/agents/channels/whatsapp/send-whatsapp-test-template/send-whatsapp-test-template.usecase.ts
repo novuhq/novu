@@ -9,7 +9,7 @@ import {
   type MetaErrorSummary,
   sendWhatsAppTemplate,
 } from '../../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
-import { normalizePhoneForMeta } from '../../../email/util/phone-normalization';
+import { normalizePhoneForMeta } from '../../../shared/util/phone-normalization';
 import { SendWhatsAppTestTemplateCommand } from './send-whatsapp-test-template.command';
 
 const TEMPLATE_NAME = 'hello_world';
