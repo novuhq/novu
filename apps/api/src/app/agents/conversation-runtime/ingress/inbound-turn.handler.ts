@@ -24,7 +24,6 @@ import {
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
-import { isLinkButtonActionId } from '../../shared/util/link-button-action';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
 import { AgentSubscriberResolver } from '../conversation/agent-subscriber-resolver.service';
@@ -46,6 +45,13 @@ function extractTelegramStartToken(text: string | undefined): string | null {
   if (!text) return null;
   const match = TELEGRAM_START_COMMAND.exec(text.trim());
   return match ? match[1] : null;
+}
+
+// Link buttons render with a `link-` prefixed action id. They open a URL client-side;
+// the SDK still emits an inbound action for the click, but there is nothing to do
+// server-side, so it is swallowed. Runtime-agnostic.
+function isLinkButtonActionId(id: string | undefined): boolean {
+  return typeof id === 'string' && id.startsWith('link-');
 }
 
 function extractTelegramChatId(thread: Thread): string | null {
@@ -256,7 +262,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      subscriberId,
       history,
       message,
       event,
@@ -637,7 +642,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      subscriberId,
       history,
       message: null,
       event: AgentEventEnum.ON_REACTION,
@@ -714,7 +718,6 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
-      subscriberId,
       history,
       message: null,
       event: AgentEventEnum.ON_ACTION,

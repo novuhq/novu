@@ -100,7 +100,7 @@ export class ManagedRuntime implements AgentRuntime {
         agentIdentifier: turn.config.agentIdentifier,
         integrationIdentifier: turn.config.integrationIdentifier,
         agentId: turn.agentId,
-        subscriberId: turn.subscriberId ?? undefined,
+        subscriberId: turn.subscriber?.subscriberId ?? undefined,
         platform: turn.config.platform,
         parsed: toolApproval,
         sourceMessageId: turn.action?.sourceMessageId,
