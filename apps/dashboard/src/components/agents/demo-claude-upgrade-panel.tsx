@@ -17,6 +17,7 @@ import {
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
@@ -49,7 +50,7 @@ function dropdownStatusFor(verify: VerifyStatus, hasUsableSelectedIntegration: b
 export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaudeUpgradePanelProps) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
-  const { integrations } = useFetchIntegrations();
+  const { integrations, isLoading: isLoadingIntegrations, isFetched: areIntegrationsFetched } = useFetchIntegrations();
   const { mutateAsync: createIntegration } = useCreateIntegration();
   const verifyMutation = useVerifyManagedCredentials();
   const verifiedCredentialsRef = useRef<string | null>(null);
@@ -94,9 +95,12 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
 
   // When the dialog opens, pick the latest real Anthropic integration if one exists. Otherwise
   // fall back to the inline setup form so the user has somewhere to act immediately — there is
-  // nothing to "pick" yet.
+  // nothing to "pick" yet. Wait for the integrations query to resolve first; an empty list while
+  // still loading must not be treated as "no credentials" or we'd skip auto-selecting an existing
+  // integration once it arrives.
   useEffect(() => {
     if (!open) return;
+    if (!areIntegrationsFetched) return;
     if (selectedIntegrationId) return;
     if (credentialsPanelVisible) return;
 
@@ -110,7 +114,7 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
 
     setCredentialsPanelVisible(true);
     setCredentialsExpanded(true);
-  }, [open, selectedIntegrationId, credentialsPanelVisible, realAnthropicIntegrations]);
+  }, [open, areIntegrationsFetched, selectedIntegrationId, credentialsPanelVisible, realAnthropicIntegrations]);
 
   // Bump the default integration name when the integration list changes so a new credential gets
   // a unique "Anthropic N" name out of the box.
@@ -299,7 +303,9 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
         <div className="bg-background flex max-h-[70vh] flex-col gap-5 overflow-y-auto p-4 min-h-[200px]">
           <div className="flex flex-col gap-2">
             <span className="text-text-strong text-label-xs font-medium">Anthropic integration</span>
-            {ANTHROPIC_CONNECTOR ? (
+            {isLoadingIntegrations ? <Skeleton className="h-8 w-full rounded-md" /> : null}
+
+            {!isLoadingIntegrations && ANTHROPIC_CONNECTOR ? (
               <IntegrationDropdown
                 connector={ANTHROPIC_CONNECTOR}
                 selectedIntegrationId={selectedIntegrationId}
