@@ -6,6 +6,7 @@ import {
   ConversationParticipantTypeEnum,
   IntegrationRepository,
 } from '@novu/dal';
+import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { AgentConversationService } from '../../services/agent-conversation.service';
 import { ChatSdkService } from '../../services/chat-sdk.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -37,6 +38,7 @@ export class SendAgentWelcomeMessage {
     private readonly chatSdkService: ChatSdkService,
     private readonly conversationService: AgentConversationService,
     private readonly analyticsService: AnalyticsService,
+    private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -185,23 +187,22 @@ export class SendAgentWelcomeMessage {
 
     try {
       const text = "Setup complete — I'm listening! Drop me a message to see me in action.";
-      const sent = await this.chatSdkService.postToConversation(
-        agent._id,
-        command.integrationIdentifier,
-        channel.platform,
-        channel.platformThreadId,
-        { markdown: text }
+      await this.outboundGateway.deliver(
+        {
+          agentId: agent._id,
+          integrationIdentifier: command.integrationIdentifier,
+          platform: channel.platform,
+          platformThreadId: channel.platformThreadId,
+        },
+        { markdown: text },
+        {
+          conversationId: conversation._id,
+          channel,
+          agentIdentifier: command.agentIdentifier,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+        }
       );
-
-      await this.conversationService.persistAgentMessage({
-        conversationId: conversation._id,
-        channel,
-        platformMessageId: sent.messageId,
-        agentIdentifier: command.agentIdentifier,
-        content: text,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      });
 
       this.analyticsService.track(`Agent Bridge Connected Message Sent - [Agents]`, command.userId, {
         _organization: command.organizationId,

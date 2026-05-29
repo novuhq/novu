@@ -11,6 +11,7 @@ import {
 import type { SentMessageInfo, TriggerSignal } from '@novu/framework';
 import { AddressingTypeEnum, type TriggerRecipientsPayload, TriggerRequestCategoryEnum } from '@novu/shared';
 import { ParseEventRequest, ParseEventRequestMulticastCommand } from '../../../events/usecases/parse-event-request';
+import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
 import type { MetadataOp } from '../../services/agent-conversation.service';
 import { AgentConversationService } from '../../services/agent-conversation.service';
@@ -33,7 +34,8 @@ export class HandleAgentReply {
     private readonly conversationService: AgentConversationService,
     private readonly logger: PinoLogger,
     private readonly parseEventRequest: ParseEventRequest,
-    private readonly analyticsService: AnalyticsService
+    private readonly analyticsService: AnalyticsService,
+    private readonly outboundGateway: OutboundGateway
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -174,30 +176,23 @@ export class HandleAgentReply {
     content: ReplyContentDto,
     agentName?: string
   ): Promise<SentMessageInfo> {
-    const textFallback = this.extractTextFallback(content);
-
-    const sent = await this.chatSdkService.postToConversation(
-      conversation._agentId,
-      command.integrationIdentifier,
-      channel.platform,
-      channel.platformThreadId,
-      content
+    return this.outboundGateway.deliver(
+      {
+        agentId: conversation._agentId,
+        integrationIdentifier: command.integrationIdentifier,
+        platform: channel.platform,
+        platformThreadId: channel.platformThreadId,
+      },
+      content,
+      {
+        conversationId: conversation._id,
+        channel,
+        agentIdentifier: command.agentIdentifier,
+        agentName,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      }
     );
-
-    await this.conversationService.persistAgentMessage({
-      conversationId: conversation._id,
-      channel,
-      platformThreadId: sent.platformThreadId || undefined,
-      platformMessageId: sent.messageId,
-      agentIdentifier: command.agentIdentifier,
-      agentName,
-      content: textFallback,
-      richContent: content.card || content.files?.length ? (content as Record<string, unknown>) : undefined,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-    });
-
-    return sent;
   }
 
   private async deliverEdit(
@@ -207,32 +202,24 @@ export class HandleAgentReply {
     edit: EditPayloadDto,
     agentName?: string
   ): Promise<SentMessageInfo> {
-    const textFallback = this.extractTextFallback(edit.content);
-
-    const sent = await this.chatSdkService.editInConversation(
-      conversation._agentId,
-      command.integrationIdentifier,
-      channel.platform,
-      channel.platformThreadId,
+    return this.outboundGateway.edit(
+      {
+        agentId: conversation._agentId,
+        integrationIdentifier: command.integrationIdentifier,
+        platform: channel.platform,
+        platformThreadId: channel.platformThreadId,
+      },
       edit.messageId,
-      edit.content
+      edit.content,
+      {
+        conversationId: conversation._id,
+        channel,
+        agentIdentifier: command.agentIdentifier,
+        agentName,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      }
     );
-
-    await this.conversationService.persistAgentEdit({
-      conversationId: conversation._id,
-      channel,
-      platformThreadId: sent.platformThreadId || undefined,
-      platformMessageId: sent.messageId,
-      agentIdentifier: command.agentIdentifier,
-      agentName,
-      content: textFallback,
-      richContent:
-        edit.content.card || edit.content.files?.length ? (edit.content as Record<string, unknown>) : undefined,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-    });
-
-    return sent;
   }
 
   private async deliverPlan(
@@ -261,17 +248,6 @@ export class HandleAgentReply {
       channel.platformThreadId,
       plan.model
     );
-  }
-
-  private extractTextFallback(content: ReplyContentDto): string {
-    if (content.markdown) return content.markdown;
-    if (content.card) {
-      const title = (content.card as { title?: string }).title;
-
-      return title ?? '[Card]';
-    }
-
-    return '';
   }
 
   private async executeSignals(

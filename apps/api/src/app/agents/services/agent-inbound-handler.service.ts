@@ -17,6 +17,7 @@ import {
 import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
+import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
@@ -227,6 +228,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
     private readonly chatSdkService: ChatSdkService,
+    private readonly outboundGateway: OutboundGateway,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly environmentRepository: EnvironmentRepository,
@@ -457,12 +459,12 @@ export class AgentInboundHandler implements OnModuleInit {
           storedAttachments: message.attachments?.length ? storedAttachments : undefined,
           onBridgeFailure: async () => {
             applyPlatformThreadIdToThread(thread, platformThreadId);
-            const sent = await thread.post(BRIDGE_OFFLINE_REPLY_MARKDOWN);
+            const sent = await this.outboundGateway.replyOnThread(thread, { markdown: BRIDGE_OFFLINE_REPLY_MARKDOWN });
             const channel = this.conversationService.getPrimaryChannel(conversation);
             await this.conversationService.persistAgentMessage({
               conversationId: conversation._id,
               channel,
-              platformMessageId: (sent as { id?: string })?.id ?? '',
+              platformMessageId: sent?.messageId ?? '',
               agentIdentifier: config.agentIdentifier,
               content: BRIDGE_OFFLINE_REPLY_MARKDOWN,
               environmentId: config.environmentId,
@@ -474,12 +476,12 @@ export class AgentInboundHandler implements OnModuleInit {
     } catch (err) {
       if (err instanceof DemoQuotaExhaustedError) {
         applyPlatformThreadIdToThread(thread, platformThreadId);
-        const sent = await thread.post(DEMO_QUOTA_EXHAUSTED_REPLY);
+        const sent = await this.outboundGateway.replyOnThread(thread, { markdown: DEMO_QUOTA_EXHAUSTED_REPLY });
         const channel = this.conversationService.getPrimaryChannel(conversation);
         await this.conversationService.persistAgentMessage({
           conversationId: conversation._id,
           channel,
-          platformMessageId: (sent as { id?: string })?.id ?? '',
+          platformMessageId: sent?.messageId ?? '',
           agentIdentifier: config.agentIdentifier,
           content: DEMO_QUOTA_EXHAUSTED_REPLY,
           environmentId: config.environmentId,
@@ -514,12 +516,12 @@ export class AgentInboundHandler implements OnModuleInit {
         }
 
         const reply = buildNoBridgeReply(dashboardUrl);
-        const sent = await thread.post(reply);
+        const sent = await this.outboundGateway.replyOnThread(thread, { card: reply });
         const channel = this.conversationService.getPrimaryChannel(conversation);
         await this.conversationService.persistAgentMessage({
           conversationId: conversation._id,
           channel,
-          platformMessageId: (sent as { id?: string })?.id ?? '',
+          platformMessageId: sent?.messageId ?? '',
           agentIdentifier: config.agentIdentifier,
           content: ONBOARDING_NO_BRIDGE_TEXT,
           richContent: { card: reply },
@@ -620,7 +622,7 @@ export class AgentInboundHandler implements OnModuleInit {
 
   private async safePostInboundReply(thread: Thread, text: string, agentId: string, message: Message): Promise<void> {
     try {
-      await thread.post(text);
+      await this.outboundGateway.replyOnThread(thread, { markdown: text });
     } catch (err) {
       this.logger.warn(
         err,

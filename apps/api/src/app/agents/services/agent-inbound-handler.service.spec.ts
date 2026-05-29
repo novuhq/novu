@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
@@ -106,6 +107,7 @@ describe('AgentInboundHandler', () => {
       confirmToolApproval as any,
       handleManagedAgentSetupInbound as any,
       chatSdkService as any,
+      new OutboundGateway(chatSdkService as any, conversationService as any),
       agentRepository as any,
       subscriberRepository as any,
       environmentRepository as any,
@@ -329,6 +331,7 @@ describe('AgentInboundHandler', () => {
         { execute: sinon.stub().resolves(undefined) } as any,
         handleManagedAgentSetupInbound as any,
         { registerInboundCallbacks: sinon.stub() } as any,
+        { replyOnThread: sinon.stub().resolves(null) } as any,
         agentRepository as any,
         subscriberRepository as any,
         { findOne: sinon.stub().resolves(null) } as any,
