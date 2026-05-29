@@ -98,6 +98,9 @@ export function PhaseContent({
         <Box flexDirection="column" gap={1}>
           <Text bold>{phase.title}</Text>
           {phase.hint ? <Text dimColor>{phase.hint}</Text> : null}
+          {phase.verificationError ? (
+            <Text color="yellow">Credentials were rejected: {phase.verificationError}</Text>
+          ) : null}
           <Box borderStyle="round" paddingX={1}>
             <TextInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
           </Box>

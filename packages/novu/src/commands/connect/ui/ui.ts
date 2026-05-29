@@ -44,6 +44,8 @@ export interface ConnectUI {
     placeholder: string;
     hint?: string;
     secret?: boolean;
+    /** Shown when re-prompting after credential verification failed. */
+    verificationError?: string;
   }): Promise<string>;
   pickAwsClaudeRegion(): Promise<string>;
   verifyingCredentials(): void;
