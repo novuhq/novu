@@ -7,7 +7,7 @@ import { OutboundGateway } from '../egress/outbound.gateway';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
-import { AgentInboundHandler } from './agent-inbound-handler.service';
+import { AgentInboundHandler } from './inbound-turn.handler';
 
 describe('AgentInboundHandler', () => {
   const config = {

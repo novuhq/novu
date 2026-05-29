@@ -5,6 +5,7 @@ import {
   ChannelEndpointRepository,
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
+  ConversationEntity,
   ConversationParticipantTypeEnum,
   SubscriberRepository,
 } from '@novu/dal';
@@ -221,38 +222,90 @@ export class AgentInboundHandler implements OnModuleInit {
     message: Message,
     event: AgentEventEnum
   ): Promise<void> {
-    if (config.platform === AgentPlatformEnum.TELEGRAM) {
-      const startToken = extractTelegramStartToken(message.text);
-      if (startToken) {
-        const consumed = await this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
-        if (consumed) {
-          return;
-        }
-      }
+    if (await this.consumeTelegramStartLink(agentId, config, thread, message)) {
+      return;
     }
 
-    const subscriberId = await this.subscriberResolver
-      .resolve({
-        environmentId: config.environmentId,
-        organizationId: config.organizationId,
-        platform: config.platform,
-        platformUserId: message.author.userId,
-        integrationIdentifier: config.integrationIdentifier,
-      })
-      .catch((err) => {
-        this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed, continuing without subscriber`);
-        captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
+    const subscriberId = await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+    const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
+    const conversation = await this.openConversation(agentId, config, message, subscriberId, platformThreadId);
 
-        return null;
-      });
+    const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
+    const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
 
+    await this.recordInboundMessage(agentId, config, conversation, message, {
+      subscriberId,
+      platformThreadId,
+      storedAttachments,
+      event,
+      isFirstMessage,
+    });
+
+    const [subscriber, history, agent] = await Promise.all([
+      subscriberId
+        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
+        : Promise.resolve(null),
+      this.conversationService.getHistory(config.environmentId, conversation._id),
+      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+        '_id',
+        'runtime',
+        'managedRuntime',
+      ]),
+    ]);
+
+    await this.acknowledgeReceipt(agentId, config, thread, message, isFirstMessage);
+
+    const runtime = this.runtimeResolver.resolve(agent);
+    const turn: ConversationTurn = {
+      agentId,
+      agent: agent ?? { _id: agentId },
+      config,
+      conversation,
+      subscriber,
+      history,
+      message,
+      event,
+      platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
+      thread,
+      platformThreadId,
+      storedAttachments: message.attachments?.length ? storedAttachments : undefined,
+    };
+
+    await runtime.dispatchTurn(turn);
+  }
+
+  /** Telegram `/start <code>` is control input; when present it is always consumed here. */
+  private async consumeTelegramStartLink(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message
+  ): Promise<boolean> {
+    if (config.platform !== AgentPlatformEnum.TELEGRAM) {
+      return false;
+    }
+
+    const startToken = extractTelegramStartToken(message.text);
+    if (!startToken) {
+      return false;
+    }
+
+    return this.handleTelegramSubscriberLink(agentId, config, thread, message, startToken);
+  }
+
+  private async openConversation(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    message: Message,
+    subscriberId: string | null,
+    platformThreadId: string
+  ): Promise<ConversationEntity> {
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
       ? ConversationParticipantTypeEnum.SUBSCRIBER
       : ConversationParticipantTypeEnum.PLATFORM_USER;
-    const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
 
-    const conversation = await this.conversationService.createOrGetConversation({
+    return this.conversationService.createOrGetConversation({
       environmentId: config.environmentId,
       organizationId: config.organizationId,
       agentId,
@@ -264,23 +317,44 @@ export class AgentInboundHandler implements OnModuleInit {
       platformUserId: message.author.userId,
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
     });
+  }
 
+  private async storeInboundAttachments(
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity,
+    message: Message
+  ): Promise<StoredAttachment[] | undefined> {
+    if (!message.attachments?.length) {
+      return undefined;
+    }
+
+    return this.attachmentStorage.storeInbound(message.attachments, {
+      organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      conversationId: String(conversation._id),
+      platformMessageId: message.id ?? `unknown-${Date.now()}`,
+      platform: config.platform,
+    });
+  }
+
+  /** Persist the inbound activity, emit analytics, and capture the first platform message id. */
+  private async recordInboundMessage(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity,
+    message: Message,
+    context: {
+      subscriberId: string | null;
+      platformThreadId: string;
+      storedAttachments?: StoredAttachment[];
+      event: AgentEventEnum;
+      isFirstMessage: boolean;
+    }
+  ): Promise<void> {
+    const { subscriberId, platformThreadId, storedAttachments, event, isFirstMessage } = context;
     const senderType = subscriberId
       ? ConversationActivitySenderTypeEnum.SUBSCRIBER
       : ConversationActivitySenderTypeEnum.PLATFORM_USER;
-
-    let storedAttachments: StoredAttachment[] | undefined;
-
-    if (message.attachments?.length) {
-      storedAttachments = await this.attachmentStorage.storeInbound(message.attachments, {
-        organizationId: config.organizationId,
-        environmentId: config.environmentId,
-        conversationId: String(conversation._id),
-        platformMessageId: message.id ?? `unknown-${Date.now()}`,
-        platform: config.platform,
-      });
-    }
-
     const richContent = storedAttachments?.length
       ? {
           attachments: storedAttachments.map(({ type, name, mimeType, size, storageKey }) => ({
@@ -293,16 +367,13 @@ export class AgentInboundHandler implements OnModuleInit {
         }
       : undefined;
 
-    const primaryChannel = this.conversationService.getPrimaryChannel(conversation);
-    const isFirstMessage = !primaryChannel.firstPlatformMessageId;
-
     await this.conversationService.persistInboundMessage({
       conversationId: conversation._id,
       platform: config.platform,
       integrationId: config.integrationId,
       platformThreadId,
       senderType,
-      senderId: participantId,
+      senderId: subscriberId ?? `${config.platform}:${message.author.userId}`,
       senderName: message.author.fullName,
       content: message.text,
       richContent,
@@ -342,59 +413,61 @@ export class AgentInboundHandler implements OnModuleInit {
           });
         });
     }
+  }
 
-    const [subscriber, history] = await Promise.all([
-      subscriberId
-        ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
-        : Promise.resolve(null),
-      this.conversationService.getHistory(config.environmentId, conversation._id),
-    ]);
-
-    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
-      '_id',
-      'runtime',
-      'managedRuntime',
-    ]);
-
-    const isManagedAgent = Boolean(agent?.runtime === 'managed' && agent.managedRuntime);
-
-    if (config.acknowledgeOnReceived) {
-      const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
-
-      if (supportsTyping) {
-        await thread.startTyping('Thinking...');
-      } else if (isFirstMessage && message.id) {
-        thread
-          .createSentMessageFromMessage(message)
-          .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
-          .catch((err) => {
-            this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
-            captureAgentWarning(err, {
-              component: 'agent-inbound-handler',
-              operation: 'add-ack-reaction',
-              agentId,
-            });
-          });
-      }
+  /** Optimistic receipt signal (typing indicator, or a reaction fallback on the first message). */
+  private async acknowledgeReceipt(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message,
+    isFirstMessage: boolean
+  ): Promise<void> {
+    if (!config.acknowledgeOnReceived) {
+      return;
     }
 
-    const runtime = this.runtimeResolver.resolve(agent);
-    const turn: ConversationTurn = {
-      agentId,
-      agent: agent ?? { _id: agentId },
-      config,
-      conversation,
-      subscriber,
-      history,
-      message,
-      event,
-      platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
-      thread,
-      platformThreadId,
-      storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-    };
+    if (PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform)) {
+      await thread.startTyping('Thinking...');
 
-    await runtime.dispatchTurn(turn);
+      return;
+    }
+
+    if (isFirstMessage && message.id) {
+      thread
+        .createSentMessageFromMessage(message)
+        .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
+        .catch((err) => {
+          this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
+          captureAgentWarning(err, {
+            component: 'agent-inbound-handler',
+            operation: 'add-ack-reaction',
+            agentId,
+          });
+        });
+    }
+  }
+
+  private async resolveSubscriberId(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    platformUserId: string,
+    operation: string
+  ): Promise<string | null> {
+    return this.subscriberResolver
+      .resolve({
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+        platform: config.platform,
+        platformUserId,
+        integrationIdentifier: config.integrationIdentifier,
+      })
+      .catch((err) => {
+        this.logger.warn(err, `[agent:${agentId}] Subscriber resolution failed (${operation}), continuing without it`);
+        captureAgentWarning(err, { component: 'agent-inbound-handler', operation, agentId });
+
+        return null;
+      });
   }
 
   /**
@@ -530,27 +603,7 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformUserId = event.user?.userId;
 
     const subscriberId = platformUserId
-      ? await this.subscriberResolver
-          .resolve({
-            environmentId: config.environmentId,
-            organizationId: config.organizationId,
-            platform: config.platform,
-            platformUserId,
-            integrationIdentifier: config.integrationIdentifier,
-          })
-          .catch((err) => {
-            this.logger.warn(
-              err,
-              `[agent:${agentId}] Subscriber resolution failed for reaction, continuing without subscriber`
-            );
-            captureAgentWarning(err, {
-              component: 'agent-inbound-handler',
-              operation: 'resolve-subscriber-reaction',
-              agentId,
-            });
-
-            return null;
-          })
+      ? await this.resolveSubscriberId(agentId, config, platformUserId, 'resolve-subscriber-reaction')
       : null;
 
     const [subscriber, history] = await Promise.all([
@@ -613,27 +666,7 @@ export class AgentInboundHandler implements OnModuleInit {
     action: AgentAction,
     userId: string
   ): Promise<void> {
-    const subscriberId = await this.subscriberResolver
-      .resolve({
-        environmentId: config.environmentId,
-        organizationId: config.organizationId,
-        platform: config.platform,
-        platformUserId: userId,
-        integrationIdentifier: config.integrationIdentifier,
-      })
-      .catch((err) => {
-        this.logger.warn(
-          err,
-          `[agent:${agentId}] Subscriber resolution failed for action, continuing without subscriber`
-        );
-        captureAgentWarning(err, {
-          component: 'agent-inbound-handler',
-          operation: 'resolve-subscriber-action',
-          agentId,
-        });
-
-        return null;
-      });
+    const subscriberId = await this.resolveSubscriberId(agentId, config, userId, 'resolve-subscriber-action');
 
     const participantId = subscriberId ?? `${config.platform}:${userId}`;
     const participantType = subscriberId

@@ -11,7 +11,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
 import { TelegramStartCodeService } from '../channels/telegram-linking/telegram-start-code.service';
-import { AgentInboundHandler } from '../conversation-runtime/ingress/agent-inbound-handler.service';
+import { AgentInboundHandler } from '../conversation-runtime/ingress/inbound-turn.handler';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 

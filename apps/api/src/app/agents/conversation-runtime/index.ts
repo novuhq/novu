@@ -1,14 +1,13 @@
-export { ChatChannelFactory } from './channels/chat.channel';
-export { EmailChannelFactory } from './channels/email.channel';
 export { AgentAttachmentStorage } from './conversation/agent-attachment-storage.service';
 export { AgentConversationService } from './conversation/agent-conversation.service';
 export { AgentSubscriberResolver } from './conversation/agent-subscriber-resolver.service';
 export { FileMaterializer } from './egress/file-materializer.service';
 export { OutboundGateway } from './egress/outbound.gateway';
-export { AgentInboundHandler } from './ingress/agent-inbound-handler.service';
-export { AgentsWebhookController } from './ingress/agents-webhook.controller';
+export { AgentInboundController } from './ingress/agent-inbound.controller';
 export { ChatInstanceRegistry } from './ingress/chat-instance.registry';
 export { InboundDispatcher } from './ingress/inbound.dispatcher';
+export { AgentInboundHandler } from './ingress/inbound-turn.handler';
+export { AgentReplyController } from './reply/agent-reply.controller';
 export type { AgentRuntime } from './runtime/agent-runtime.port';
 export { BridgeRuntime } from './runtime/bridge.runtime';
 export { BridgeExecutorService } from './runtime/bridge-executor.service';

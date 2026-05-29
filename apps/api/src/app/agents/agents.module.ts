@@ -28,17 +28,16 @@ import { AgentIntegrationsController } from './channels/integrations/agent-integ
 import { AgentsPublicController } from './channels/telegram-linking/agents-public.controller';
 import { TelegramMobileLinkTokenService } from './channels/telegram-linking/telegram-mobile-link-token.service';
 import { TelegramStartCodeService } from './channels/telegram-linking/telegram-start-code.service';
-import { ChatChannelFactory } from './conversation-runtime/channels/chat.channel';
-import { EmailChannelFactory } from './conversation-runtime/channels/email.channel';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
-import { AgentInboundHandler } from './conversation-runtime/ingress/agent-inbound-handler.service';
-import { AgentsWebhookController } from './conversation-runtime/ingress/agents-webhook.controller';
+import { AgentInboundController } from './conversation-runtime/ingress/agent-inbound.controller';
 import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
+import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
+import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
 import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
@@ -50,6 +49,7 @@ import { ManagedRuntime } from './managed-runtime/managed.runtime';
 import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
+import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
 import { AgentRuntimeController } from './management/agent-runtime.controller';
 import { AgentsController } from './management/agents.controller';
 import { McpConnectionVaultService } from './mcp/connections/mcp-connection-vault.service';
@@ -73,7 +73,9 @@ import { USE_CASES } from './usecases';
     AgentIntegrationsController,
     AgentRuntimeController,
     AgentsPublicController,
-    AgentsWebhookController,
+    AgentInboundController,
+    AgentReplyController,
+    ManagedRuntimeController,
     AgentEmailActionsController,
     AgentsMcpOAuthController,
   ],
@@ -109,8 +111,6 @@ import { USE_CASES } from './usecases';
     FileMaterializer,
     AgentEmailSender,
     OutboundGateway,
-    ChatChannelFactory,
-    EmailChannelFactory,
     McpOAuthDiscoveryService,
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
