@@ -1,7 +1,6 @@
 import { DirectionEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useMemo } from 'react';
 import {
   type AgentResponse,
   getAgentIntegrationsQueryKey,
@@ -10,7 +9,6 @@ import {
   listAgents,
 } from '@/api/agents';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { isOnboardingSource, stripOnboardingSource } from '@/utils/onboarding-redirect';
 
 export type ConnectSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
 
@@ -35,7 +33,7 @@ export type UseConnectSetupStepsResult = {
   isComplete: boolean;
   /** True while the agent/channel queries backing the checklist are still resolving. */
   isLoading: boolean;
-  /** True only when the user navigated in straight from the onboarding flow (`?fromOnboarding`). */
+  /** True while setup is incomplete (and resolved) — keeps the "Set things up" section visible. */
   shouldShowOnboarding: boolean;
   /** Drives welcome copy — mirrors `shouldShowOnboarding`. */
   showOnboardingMessaging: boolean;
@@ -45,21 +43,6 @@ const AGENTS_PEEK_PARAMS = { after: undefined, before: undefined, limit: 2, iden
 
 export function useConnectSetupSteps(): UseConnectSetupStepsResult {
   const { currentEnvironment } = useEnvironment();
-  const [searchParams, setSearchParams] = useSearchParams();
-  // "Where you're coming from": the onboarding flow lands here with `?fromOnboarding=1` after its
-  // full document reload (router state can't survive that hop). Capture it once on mount, then strip
-  // it from the URL so a later refresh carries no param and the section doesn't re-trigger. Invited
-  // members and direct visitors never carry the param, while onboarding stays reachable by URL.
-  const cameFromOnboardingRef = useRef(isOnboardingSource(searchParams));
-  const cameFromOnboarding = cameFromOnboardingRef.current;
-
-  useEffect(() => {
-    if (!isOnboardingSource(searchParams)) {
-      return;
-    }
-
-    setSearchParams(stripOnboardingSource(searchParams), { replace: true });
-  }, [searchParams, setSearchParams]);
 
   const agentsQuery = useQuery({
     queryKey: getAgentsListQueryKey(currentEnvironment?._id, AGENTS_PEEK_PARAMS),
@@ -137,11 +120,13 @@ export function useConnectSetupSteps(): UseConnectSetupStepsResult {
 
   const hasResolvedAgents = agentsQuery.isSuccess || agentsQuery.isError;
   const hasResolvedIntegrations = !onlyAgent || agentIntegrationsQuery.isSuccess || agentIntegrationsQuery.isError;
-  const isLoading = !(hasResolvedAgents && hasResolvedIntegrations);
+  const isResolved = hasResolvedAgents && hasResolvedIntegrations;
   const isComplete = agentSetupComplete;
-  // Show first-run onboarding purely based on where the user came from, not derived setup state.
-  const shouldShowOnboarding = cameFromOnboarding;
-  const showOnboardingMessaging = cameFromOnboarding;
+  const isLoading = !isResolved;
+  // Keep the "Set things up" section visible until setup is complete. Gate on resolved state so the
+  // checklist doesn't flash before the agent/channel queries settle.
+  const shouldShowOnboarding = isResolved && !isComplete;
+  const showOnboardingMessaging = isResolved && !isComplete;
 
   return {
     steps,
