@@ -28,6 +28,21 @@ export interface OutboundPersistContext {
 
 export type OutboundMessage = ReplyContentDto;
 
+/**
+ * Persist context for a fallback reply posted on the live inbound thread.
+ * Content is passed explicitly (not derived from the message) because fallbacks
+ * persist human-readable text even when the posted payload is a card.
+ */
+export interface ThreadReplyPersistContext {
+  conversationId: string;
+  channel: ConversationChannel;
+  agentIdentifier: string;
+  content: string;
+  richContent?: Record<string, unknown>;
+  environmentId: string;
+  organizationId: string;
+}
+
 function getErrorResponseBody(err: unknown): unknown {
   if (!err || typeof err !== 'object') {
     return undefined;
@@ -119,14 +134,13 @@ export class OutboundGateway {
   async replyOnThread(
     thread: Thread,
     msg: OutboundMessage,
-    opts?: { failSoft?: boolean }
+    opts?: { failSoft?: boolean; persist?: ThreadReplyPersistContext }
   ): Promise<SentMessageInfo | null> {
+    let sent: { id: string; threadId: string };
     try {
-      const sent = await (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(
+      sent = await (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(
         this.toThreadPostArg(msg)
       );
-
-      return { messageId: sent.id, platformThreadId: sent.threadId };
     } catch (err) {
       if (opts?.failSoft) {
         return null;
@@ -134,6 +148,21 @@ export class OutboundGateway {
 
       throw err;
     }
+
+    if (opts?.persist) {
+      await this.conversation.persistAgentMessage({
+        conversationId: opts.persist.conversationId,
+        channel: opts.persist.channel,
+        platformMessageId: sent.id,
+        agentIdentifier: opts.persist.agentIdentifier,
+        content: opts.persist.content,
+        richContent: opts.persist.richContent,
+        environmentId: opts.persist.environmentId,
+        organizationId: opts.persist.organizationId,
+      });
+    }
+
+    return { messageId: sent.id, platformThreadId: sent.threadId };
   }
 
   async postToConversation(

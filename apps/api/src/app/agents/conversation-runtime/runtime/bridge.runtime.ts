@@ -23,7 +23,7 @@ The agent is unavailable right now. Please try again later.`;
 const ONBOARDING_NO_BRIDGE_TEXT =
   "I'm live but running on defaults. Connect your agent in the dashboard to customize how I respond.";
 
-function buildNoBridgeReply(dashboardUrl?: string): CardElement {
+function buildNoBridgeReply(dashboardUrl?: string): Record<string, unknown> {
   const children: CardChild[] = [{ type: 'text', content: ONBOARDING_NO_BRIDGE_TEXT }];
 
   if (dashboardUrl) {
@@ -36,7 +36,9 @@ function buildNoBridgeReply(dashboardUrl?: string): CardElement {
     );
   }
 
-  return { type: 'card', children };
+  const card: CardElement = { type: 'card', children };
+
+  return card as unknown as Record<string, unknown>;
 }
 
 @Injectable()
@@ -97,17 +99,20 @@ export class BridgeRuntime implements AgentRuntime {
       reaction: turn.reaction,
       onBridgeFailure: async () => {
         applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
-        const sent = await this.outboundGateway.replyOnThread(turn.thread, { markdown: BRIDGE_OFFLINE_REPLY_MARKDOWN });
-        const channel = this.conversationService.getPrimaryChannel(turn.conversation);
-        await this.conversationService.persistAgentMessage({
-          conversationId: turn.conversation._id,
-          channel,
-          platformMessageId: sent?.messageId ?? '',
-          agentIdentifier: turn.config.agentIdentifier,
-          content: BRIDGE_OFFLINE_REPLY_MARKDOWN,
-          environmentId: turn.config.environmentId,
-          organizationId: turn.config.organizationId,
-        });
+        await this.outboundGateway.replyOnThread(
+          turn.thread,
+          { markdown: BRIDGE_OFFLINE_REPLY_MARKDOWN },
+          {
+            persist: {
+              conversationId: turn.conversation._id,
+              channel: this.conversationService.getPrimaryChannel(turn.conversation),
+              agentIdentifier: turn.config.agentIdentifier,
+              content: BRIDGE_OFFLINE_REPLY_MARKDOWN,
+              environmentId: turn.config.environmentId,
+              organizationId: turn.config.organizationId,
+            },
+          }
+        );
       },
     };
   }
@@ -137,17 +142,20 @@ export class BridgeRuntime implements AgentRuntime {
     }
 
     const reply = buildNoBridgeReply(dashboardUrl);
-    const sent = await this.outboundGateway.replyOnThread(turn.thread, { card: reply });
-    const channel = this.conversationService.getPrimaryChannel(turn.conversation);
-    await this.conversationService.persistAgentMessage({
-      conversationId: turn.conversation._id,
-      channel,
-      platformMessageId: sent?.messageId ?? '',
-      agentIdentifier: turn.config.agentIdentifier,
-      content: ONBOARDING_NO_BRIDGE_TEXT,
-      richContent: { card: reply },
-      environmentId: turn.config.environmentId,
-      organizationId: turn.config.organizationId,
-    });
+    await this.outboundGateway.replyOnThread(
+      turn.thread,
+      { card: reply },
+      {
+        persist: {
+          conversationId: turn.conversation._id,
+          channel: this.conversationService.getPrimaryChannel(turn.conversation),
+          agentIdentifier: turn.config.agentIdentifier,
+          content: ONBOARDING_NO_BRIDGE_TEXT,
+          richContent: { card: reply },
+          environmentId: turn.config.environmentId,
+          organizationId: turn.config.organizationId,
+        },
+      }
+    );
   }
 }

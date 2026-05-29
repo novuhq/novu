@@ -75,16 +75,19 @@ export class ManagedRuntime implements AgentRuntime {
 
   private async replyDemoQuotaExhausted(turn: ConversationTurn): Promise<void> {
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
-    const sent = await this.outboundGateway.replyOnThread(turn.thread, { markdown: DEMO_QUOTA_EXHAUSTED_REPLY });
-    const channel = this.conversationService.getPrimaryChannel(turn.conversation);
-    await this.conversationService.persistAgentMessage({
-      conversationId: turn.conversation._id,
-      channel,
-      platformMessageId: sent?.messageId ?? '',
-      agentIdentifier: turn.config.agentIdentifier,
-      content: DEMO_QUOTA_EXHAUSTED_REPLY,
-      environmentId: turn.config.environmentId,
-      organizationId: turn.config.organizationId,
-    });
+    await this.outboundGateway.replyOnThread(
+      turn.thread,
+      { markdown: DEMO_QUOTA_EXHAUSTED_REPLY },
+      {
+        persist: {
+          conversationId: turn.conversation._id,
+          channel: this.conversationService.getPrimaryChannel(turn.conversation),
+          agentIdentifier: turn.config.agentIdentifier,
+          content: DEMO_QUOTA_EXHAUSTED_REPLY,
+          environmentId: turn.config.environmentId,
+          organizationId: turn.config.organizationId,
+        },
+      }
+    );
   }
 }
