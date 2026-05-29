@@ -8,7 +8,7 @@ import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { esmImport } from '../../shared/util/esm-import';
-import type { InboundReactionEvent } from './agent-inbound-handler.service';
+import type { InboundReactionEvent } from './inbound-turn.handler';
 
 export interface InboundCallbacks {
   onMessage: (agentId: string, config: ResolvedAgentConfig, thread: Thread, message: Message) => Promise<void>;

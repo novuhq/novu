@@ -103,6 +103,7 @@ describe('AgentInboundHandler', () => {
     const managedRuntime = new ManagedRuntime(
       managedAgentService as any,
       handleManagedAgentSetupInbound as any,
+      confirmToolApproval as any,
       outboundGateway as any,
       conversationService as any,
       logger as any
@@ -133,7 +134,6 @@ describe('AgentInboundHandler', () => {
       subscriberResolver as any,
       conversationService as any,
       runtimeResolver as any,
-      confirmToolApproval as any,
       inboundDispatcher as any,
       outboundGateway as any,
       agentRepository as any,

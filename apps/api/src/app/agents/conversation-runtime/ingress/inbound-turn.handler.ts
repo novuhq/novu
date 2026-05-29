@@ -17,12 +17,6 @@ import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-lin
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { TelegramStartCodeService } from '../../channels/telegram-linking/telegram-start-code.service';
 import {
-  isLinkButtonActionId,
-  parseToolApprovalActionId,
-} from '../../managed-runtime/tool-approval/approval-card.builder';
-import { ConfirmToolApprovalCommand } from '../../managed-runtime/tool-approval/confirm-tool-approval.command';
-import { ConfirmToolApproval } from '../../managed-runtime/tool-approval/confirm-tool-approval.usecase';
-import {
   trackAgentInboundAction,
   trackAgentInboundMessage,
   trackAgentInboundReaction,
@@ -30,6 +24,7 @@ import {
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { isLinkButtonActionId } from '../../shared/util/link-button-action';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
 import { AgentSubscriberResolver } from '../conversation/agent-subscriber-resolver.service';
@@ -192,7 +187,6 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
     private readonly runtimeResolver: RuntimeResolver,
-    private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly inboundDispatcher: InboundDispatcher,
     private readonly outboundGateway: OutboundGateway,
     private readonly agentRepository: AgentRepository,
@@ -262,6 +256,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      subscriberId,
       history,
       message,
       event,
@@ -642,6 +637,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      subscriberId,
       history,
       message: null,
       event: AgentEventEnum.ON_REACTION,
@@ -691,45 +687,14 @@ export class AgentInboundHandler implements OnModuleInit {
       actionId: action.id,
     });
 
-    // MCP Approve/Deny buttons (ids starting with mcp-approval:*) are handled here.
-    // Return early so these clicks are not forwarded to bridgeExecutor below.
-    const toolApproval = parseToolApprovalActionId(action.id);
-
-    if (toolApproval) {
-      await this.confirmToolApproval.execute(
-        ConfirmToolApprovalCommand.create({
-          userId: 'system',
-          environmentId: config.environmentId,
-          organizationId: config.organizationId,
-          conversationId: conversation._id,
-          agentIdentifier: config.agentIdentifier,
-          integrationIdentifier: config.integrationIdentifier,
-          agentId,
-          subscriberId: subscriberId ?? undefined,
-          platform: config.platform,
-          parsed: toolApproval,
-          sourceMessageId: action.sourceMessageId,
-          actionValue: action.value,
-        })
-      );
-
-      return;
-    }
-
-    // Managed agents do not use the self-hosted bridge and never configure bridgeUrl.
-    // Card interactions today are limited to Novu-internal flows only:
-    //   • mcp-approval:* — Approve/Deny tool-use (handled above)
-    //   • link-*         — link-button opens url in the browser; chat SDK still
-    //                      emits onAction but no server-side handler is needed
-    // Generic button clicks (custom ids, user-defined cards) are not supported
-    // on managed runtime yet — there is no bridge onAction and no managed-runtime
-    // action router to resume the provider session.
-    // TODO: route general managed-agent button clicks through ManagedAgentService
-    // (e.g. resume parked session / dispatch to runtime) instead of no-oping here.
+    // Link buttons open a URL client-side; the SDK still emits an action for the
+    // click but there is nothing to handle server-side. Swallow it for every runtime.
     if (isLinkButtonActionId(action.id)) {
       return;
     }
 
+    // Everything else (incl. mcp-approval:* for managed) routes through the runtime,
+    // which owns its own action semantics.
     const [subscriber, history, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
@@ -749,6 +714,7 @@ export class AgentInboundHandler implements OnModuleInit {
       config,
       conversation,
       subscriber,
+      subscriberId,
       history,
       message: null,
       event: AgentEventEnum.ON_ACTION,

@@ -9,12 +9,16 @@ import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { ManagedAgentService } from './managed-agent.service';
 import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
+import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
+import { ConfirmToolApprovalCommand } from './tool-approval/confirm-tool-approval.command';
+import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.usecase';
 
 @Injectable()
 export class ManagedRuntime implements AgentRuntime {
   constructor(
     private readonly managedAgentService: ManagedAgentService,
     private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
+    private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
     private readonly logger: PinoLogger
@@ -23,8 +27,13 @@ export class ManagedRuntime implements AgentRuntime {
   }
 
   async dispatch(turn: ConversationTurn): Promise<void> {
-    // Managed agents only act on inbound messages. Card actions (tool-approval,
-    // link buttons) are resolved in ingress, and reactions are bridge-only today.
+    if (turn.event === AgentEventEnum.ON_ACTION) {
+      await this.handleAction(turn);
+
+      return;
+    }
+
+    // Managed agents otherwise only act on inbound messages (reactions are bridge-only today).
     if (turn.event !== AgentEventEnum.ON_MESSAGE) {
       return;
     }
@@ -68,6 +77,36 @@ export class ManagedRuntime implements AgentRuntime {
 
       throw err;
     }
+  }
+
+  /**
+   * Card clicks on a managed agent are Novu-internal only: MCP Approve/Deny
+   * (mcp-approval:*) is confirmed here; any other id is a no-op (managed agents
+   * have no bridge onAction to forward to, and link buttons are handled in ingress).
+   */
+  private async handleAction(turn: ConversationTurn): Promise<void> {
+    const toolApproval = parseToolApprovalActionId(turn.action?.id);
+
+    if (!toolApproval) {
+      return;
+    }
+
+    await this.confirmToolApproval.execute(
+      ConfirmToolApprovalCommand.create({
+        userId: 'system',
+        environmentId: turn.config.environmentId,
+        organizationId: turn.config.organizationId,
+        conversationId: turn.conversation._id,
+        agentIdentifier: turn.config.agentIdentifier,
+        integrationIdentifier: turn.config.integrationIdentifier,
+        agentId: turn.agentId,
+        subscriberId: turn.subscriberId ?? undefined,
+        platform: turn.config.platform,
+        parsed: toolApproval,
+        sourceMessageId: turn.action?.sourceMessageId,
+        actionValue: turn.action?.value,
+      })
+    );
   }
 
   private async replyDemoQuotaExhausted(turn: ConversationTurn): Promise<void> {

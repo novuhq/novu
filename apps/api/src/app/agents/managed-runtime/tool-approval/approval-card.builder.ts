@@ -65,10 +65,6 @@ function buildPersistTrustActionId(
   return `${TOOL_APPROVAL_ACTION_PREFIX}:${verdict}:${tool.toolUseId}:${turnId}:${toolName}:${mcpServerName}`;
 }
 
-export function isLinkButtonActionId(id: string | undefined): boolean {
-  return typeof id === 'string' && id.startsWith('link-');
-}
-
 export function extractPendingToolApprovals(response: ThalamusResponse): PendingToolApproval[] {
   const actions = response.actionsRequired;
   if (!Array.isArray(actions) || actions.length === 0) {

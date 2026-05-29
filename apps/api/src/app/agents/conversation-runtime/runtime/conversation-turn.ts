@@ -12,6 +12,7 @@ export interface ConversationTurn {
   config: ResolvedAgentConfig;
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
+  subscriberId: string | null;
   history: ConversationActivityEntity[];
   message: Message | null;
   event: AgentEventEnum;
