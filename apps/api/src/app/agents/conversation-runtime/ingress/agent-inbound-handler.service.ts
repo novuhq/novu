@@ -1,29 +1,20 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import {
-  AnalyticsService,
-  DEMO_QUOTA_EXHAUSTED_REPLY,
-  DemoQuotaExhaustedError,
-  PinoLogger,
-} from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ChannelEndpointRepository,
   ConversationActivityEntity,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
-  EnvironmentRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
-import type { CardChild, CardElement, EmojiValue, Message, Thread } from 'chat';
+import type { EmojiValue, Message, Thread } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
 import { TelegramStartCodeService } from '../../channels/telegram-linking/telegram-start-code.service';
-import { ManagedAgentService } from '../../managed-runtime/managed-agent.service';
-import { HandleManagedAgentSetupInbound } from '../../managed-runtime/setup/handle-managed-agent-setup-inbound.usecase';
-import { ManagedAgentSetupInboundCommand } from '../../managed-runtime/setup/managed-agent-setup-inbound.command';
 import {
   isLinkButtonActionId,
   parseToolApprovalActionId,
@@ -42,7 +33,9 @@ import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/a
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
 import { AgentSubscriberResolver } from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
-import { BridgeExecutorService, type BridgeReaction, NoBridgeUrlError } from '../runtime/bridge-executor.service';
+import type { BridgeReaction } from '../runtime/bridge-executor.service';
+import type { ConversationTurn } from '../runtime/conversation-turn';
+import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
 
 /**
@@ -80,29 +73,6 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
   "This connection link wasn't issued for this bot. Open the link from your Novu dashboard again (or request a new one) and make sure you're messaging the same bot you configured.";
 
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
-
-const ONBOARDING_NO_BRIDGE_TEXT =
-  "I'm live but running on defaults. Connect your agent in the dashboard to customize how I respond.";
-
-function buildNoBridgeReply(dashboardUrl?: string): CardElement {
-  const children: CardChild[] = [{ type: 'text', content: ONBOARDING_NO_BRIDGE_TEXT }];
-
-  if (dashboardUrl) {
-    children.push(
-      { type: 'divider' },
-      {
-        type: 'actions',
-        children: [{ type: 'link-button', label: 'Continue setup', url: dashboardUrl, style: 'primary' }],
-      }
-    );
-  }
-
-  return { type: 'card', children };
-}
-
-const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
-
-The agent is unavailable right now. Please try again later.`;
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object') {
@@ -149,12 +119,6 @@ function getInboundPlatformThreadId(platform: AgentPlatformEnum, thread: Thread,
   }
 
   return `${thread.id}${threadRoot}`;
-}
-
-function applyPlatformThreadIdToThread(thread: Thread, platformThreadId: string) {
-  // Chat SDK currently gives top-level Slack DMs an empty-root thread id (`slack:D...:`).
-  // Patch the in-memory handle before posting fallback replies so Slack receives a real thread root.
-  (thread as unknown as { id: string }).id = platformThreadId;
 }
 
 function mapStoredAttachmentsFromRichContent(richContent?: Record<string, unknown>): StoredAttachment[] {
@@ -226,15 +190,12 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly logger: PinoLogger,
     private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly conversationService: AgentConversationService,
-    private readonly bridgeExecutor: BridgeExecutorService,
-    private readonly managedAgentService: ManagedAgentService,
+    private readonly runtimeResolver: RuntimeResolver,
     private readonly confirmToolApproval: ConfirmToolApproval,
-    private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
     private readonly inboundDispatcher: InboundDispatcher,
     private readonly outboundGateway: OutboundGateway,
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly environmentRepository: EnvironmentRepository,
     private readonly analyticsService: AnalyticsService,
     private readonly attachmentStorage: AgentAttachmentStorage,
     private readonly startCodeService: TelegramStartCodeService,
@@ -395,7 +356,7 @@ export class AgentInboundHandler implements OnModuleInit {
       'managedRuntime',
     ]);
 
-    const isManagedAgent = agent?.runtime === 'managed' && agent.managedRuntime;
+    const isManagedAgent = Boolean(agent?.runtime === 'managed' && agent.managedRuntime);
 
     if (config.acknowledgeOnReceived) {
       const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
@@ -417,126 +378,23 @@ export class AgentInboundHandler implements OnModuleInit {
       }
     }
 
-    // Subscriber still owes MCP OAuth: hold this message, show the setup card, skip dispatch.
-    // After OAuth completes, CompleteManagedAgentSetup replays the held message.
-    if (isManagedAgent && subscriber && message.id) {
-      const parked = await this.handleManagedAgentSetupInbound.execute(
-        ManagedAgentSetupInboundCommand.create({
-          userId: 'system',
-          environmentId: config.environmentId,
-          organizationId: config.organizationId,
-          conversationId: conversation._id,
-          agentId: agent._id,
-          subscriberId: subscriber.subscriberId,
-          agentIdentifier: config.agentIdentifier,
-          integrationIdentifier: config.integrationIdentifier,
-          platformMessageId: message.id,
-        })
-      );
+    const runtime = this.runtimeResolver.resolve(agent);
+    const turn: ConversationTurn = {
+      agentId,
+      agent: agent ?? { _id: agentId },
+      config,
+      conversation,
+      subscriber,
+      history,
+      message,
+      event,
+      platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
+      thread,
+      platformThreadId,
+      storedAttachments: message.attachments?.length ? storedAttachments : undefined,
+    };
 
-      if (parked) {
-        return;
-      }
-    }
-
-    try {
-      if (isManagedAgent) {
-        await this.managedAgentService.dispatch(
-          {
-            config,
-            conversation,
-            subscriber,
-            userMessageText: message.text ?? '',
-          },
-          agent
-        );
-      } else {
-        await this.bridgeExecutor.execute({
-          event,
-          config,
-          conversation,
-          subscriber,
-          history,
-          message,
-          platformContext: { threadId: platformThreadId, channelId: thread.channelId, isDM: thread.isDM },
-          storedAttachments: message.attachments?.length ? storedAttachments : undefined,
-          onBridgeFailure: async () => {
-            applyPlatformThreadIdToThread(thread, platformThreadId);
-            const sent = await this.outboundGateway.replyOnThread(thread, { markdown: BRIDGE_OFFLINE_REPLY_MARKDOWN });
-            const channel = this.conversationService.getPrimaryChannel(conversation);
-            await this.conversationService.persistAgentMessage({
-              conversationId: conversation._id,
-              channel,
-              platformMessageId: sent?.messageId ?? '',
-              agentIdentifier: config.agentIdentifier,
-              content: BRIDGE_OFFLINE_REPLY_MARKDOWN,
-              environmentId: config.environmentId,
-              organizationId: config.organizationId,
-            });
-          },
-        });
-      }
-    } catch (err) {
-      if (err instanceof DemoQuotaExhaustedError) {
-        applyPlatformThreadIdToThread(thread, platformThreadId);
-        const sent = await this.outboundGateway.replyOnThread(thread, { markdown: DEMO_QUOTA_EXHAUSTED_REPLY });
-        const channel = this.conversationService.getPrimaryChannel(conversation);
-        await this.conversationService.persistAgentMessage({
-          conversationId: conversation._id,
-          channel,
-          platformMessageId: sent?.messageId ?? '',
-          agentIdentifier: config.agentIdentifier,
-          content: DEMO_QUOTA_EXHAUSTED_REPLY,
-          environmentId: config.environmentId,
-          organizationId: config.organizationId,
-        });
-
-        return;
-      }
-
-      if (err instanceof NoBridgeUrlError) {
-        applyPlatformThreadIdToThread(thread, platformThreadId);
-
-        let dashboardUrl: string | undefined;
-        const dashboardBase = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
-        if (dashboardBase) {
-          try {
-            const environment = await this.environmentRepository.findOne({ _id: config.environmentId });
-            if (environment?.identifier) {
-              dashboardUrl = `${dashboardBase}/env/${environment.identifier}/agents/${config.agentIdentifier}/overview`;
-            }
-          } catch (lookupErr) {
-            this.logger.warn(
-              lookupErr,
-              `[agent:${config.agentIdentifier}] Failed to resolve dashboard URL for no-bridge reply`
-            );
-            captureAgentWarning(lookupErr, {
-              component: 'agent-inbound-handler',
-              operation: 'resolve-dashboard-url',
-              agentIdentifier: config.agentIdentifier,
-            });
-          }
-        }
-
-        const reply = buildNoBridgeReply(dashboardUrl);
-        const sent = await this.outboundGateway.replyOnThread(thread, { card: reply });
-        const channel = this.conversationService.getPrimaryChannel(conversation);
-        await this.conversationService.persistAgentMessage({
-          conversationId: conversation._id,
-          channel,
-          platformMessageId: sent?.messageId ?? '',
-          agentIdentifier: config.agentIdentifier,
-          content: ONBOARDING_NO_BRIDGE_TEXT,
-          richContent: { card: reply },
-          environmentId: config.environmentId,
-          organizationId: config.organizationId,
-        });
-
-        return;
-      }
-
-      throw err;
-    }
+    await runtime.dispatchTurn(turn);
   }
 
   /**
@@ -725,20 +583,27 @@ export class AgentInboundHandler implements OnModuleInit {
         : undefined,
     };
 
-    await this.bridgeExecutor.execute({
-      event: AgentEventEnum.ON_REACTION,
+    const runtime = this.runtimeResolver.resolve(null);
+    const turn: ConversationTurn = {
+      agentId,
+      agent: { _id: agentId },
       config,
       conversation,
       subscriber,
       history,
       message: null,
+      event: AgentEventEnum.ON_REACTION,
       platformContext: {
         threadId,
         channelId: event.thread?.channelId ?? '',
         isDM: event.thread?.isDM ?? false,
       },
+      thread: event.thread ?? ({ id: threadId, channelId: '', isDM: false } as Thread),
+      platformThreadId: threadId,
       reaction: reactionPayload,
-    });
+    };
+
+    await runtime.handleReaction(turn, reactionPayload);
   }
 
   async handleAction(
@@ -838,36 +703,38 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const agent = await this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
-      '_id',
-      'runtime',
-      'managedRuntime',
-    ]);
-
-    if (agent?.runtime === 'managed' && agent.managedRuntime) {
-      return;
-    }
-
-    const [subscriber, history] = await Promise.all([
+    const [subscriber, history, agent] = await Promise.all([
       subscriberId
         ? this.subscriberRepository.findBySubscriberId(config.environmentId, subscriberId)
         : Promise.resolve(null),
       this.conversationService.getHistory(config.environmentId, conversation._id),
+      this.agentRepository.findOne({ _id: agentId, _environmentId: config.environmentId }, [
+        '_id',
+        'runtime',
+        'managedRuntime',
+      ]),
     ]);
 
-    await this.bridgeExecutor.execute({
-      event: AgentEventEnum.ON_ACTION,
+    const runtime = this.runtimeResolver.resolve(agent);
+    const turn: ConversationTurn = {
+      agentId,
+      agent: agent ?? { _id: agentId },
       config,
       conversation,
       subscriber,
       history,
       message: null,
+      event: AgentEventEnum.ON_ACTION,
       platformContext: {
         threadId: thread.id,
         channelId: thread.channelId,
         isDM: thread.isDM,
       },
+      thread,
+      platformThreadId: thread.id,
       action,
-    });
+    };
+
+    await runtime.handleAction(turn, action);
   }
 }

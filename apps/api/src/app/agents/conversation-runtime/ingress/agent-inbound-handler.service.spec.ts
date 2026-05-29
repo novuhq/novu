@@ -1,9 +1,12 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { OutboundGateway } from '../egress/outbound.gateway';
+import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
+import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { AgentInboundHandler } from './agent-inbound-handler.service';
 
 describe('AgentInboundHandler', () => {
@@ -42,11 +45,13 @@ describe('AgentInboundHandler', () => {
       findTelegramEndpointByIdentity?: sinon.SinonStub;
       agentFindOne?: sinon.SinonStub;
       managedAgentSetupHandleInbound?: sinon.SinonStub;
+      subscriberFindById?: sinon.SinonStub;
+      subscriberResolve?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
     const subscriberResolver = {
-      resolve: sinon.stub().resolves(null),
+      resolve: overrides.subscriberResolve ?? sinon.stub().resolves(null),
     };
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),
@@ -61,10 +66,13 @@ describe('AgentInboundHandler', () => {
       execute: overrides.bridgeError ? sinon.stub().rejects(overrides.bridgeError) : sinon.stub().resolves(undefined),
     };
     const subscriberRepository = {
-      findBySubscriberId: sinon.stub(),
+      findBySubscriberId: overrides.subscriberFindById ?? sinon.stub(),
     };
     const managedAgentService = {
       dispatch: sinon.stub().resolves(undefined),
+    };
+    const handleManagedAgentSetupInbound = {
+      execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
     };
     const confirmToolApproval = {
       execute: sinon.stub().resolves(undefined),
@@ -77,6 +85,31 @@ describe('AgentInboundHandler', () => {
     };
     const environmentRepository = {
       findOne: sinon.stub().resolves(null),
+    };
+    const outboundGateway = {
+      replyOnThread: sinon.stub().callsFake(async (thread: { post: sinon.SinonStub }, msg: { markdown?: string }) => {
+        const result = await thread.post(msg.markdown ?? msg);
+
+        return { messageId: result.id, platformThreadId: result.threadId };
+      }),
+    };
+    const bridgeRuntime = new BridgeRuntime(
+      bridgeExecutor as any,
+      outboundGateway as any,
+      conversationService as any,
+      environmentRepository as any,
+      logger as any
+    );
+    const managedRuntime = new ManagedRuntime(
+      managedAgentService as any,
+      handleManagedAgentSetupInbound as any,
+      outboundGateway as any,
+      conversationService as any,
+      logger as any
+    );
+    const runtimeResolver = {
+      resolve: (agent: { runtime?: string; managedRuntime?: unknown } | null) =>
+        agent?.runtime === 'managed' && agent.managedRuntime ? managedRuntime : bridgeRuntime,
     };
     const analyticsService = {
       track: sinon.stub(),
@@ -95,22 +128,16 @@ describe('AgentInboundHandler', () => {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findTelegramEndpointByIdentity ?? sinon.stub().resolves(null),
     };
-    const handleManagedAgentSetupInbound = {
-      execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
-    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
       conversationService as any,
-      bridgeExecutor as any,
-      managedAgentService as any,
+      runtimeResolver as any,
       confirmToolApproval as any,
-      handleManagedAgentSetupInbound as any,
       inboundDispatcher as any,
-      new OutboundGateway({} as any, conversationService as any, {} as any, {} as any),
+      outboundGateway as any,
       agentRepository as any,
       subscriberRepository as any,
-      environmentRepository as any,
       analyticsService as any,
       attachmentStorage as any,
       startCodeService as any,
@@ -131,6 +158,7 @@ describe('AgentInboundHandler', () => {
       managedAgentService,
       agentRepository,
       subscriberRepository,
+      outboundGateway,
     };
   }
 
@@ -310,37 +338,16 @@ describe('AgentInboundHandler', () => {
         findByPlatformThread: sinon.stub().resolves(conversation),
         getHistory: sinon.stub().resolves([]),
       };
-      const managedAgentService = { dispatch: sinon.stub().resolves(undefined) };
-      const handleManagedAgentSetupInbound = { execute: setupInbound };
-      const subscriberRepository = {
-        findBySubscriberId: sinon.stub().resolves({ subscriberId: 'sub-1' }),
-      };
-      const agentRepository = {
-        findOne: sinon.stub().resolves({
+      const { handler, handleManagedAgentSetupInbound, managedAgentService } = makeHandler({
+        managedAgentSetupHandleInbound: setupInbound,
+        subscriberResolve: sinon.stub().resolves('sub-1'),
+        subscriberFindById: sinon.stub().resolves({ subscriberId: 'sub-1' }),
+        agentFindOne: sinon.stub().resolves({
           _id: 'agent1',
           runtime: 'managed',
           managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
         }),
-      };
-      const handler = new AgentInboundHandler(
-        logger as any,
-        subscriberResolver as any,
-        conversationService as any,
-        { execute: sinon.stub().resolves(undefined) } as any,
-        managedAgentService as any,
-        { execute: sinon.stub().resolves(undefined) } as any,
-        handleManagedAgentSetupInbound as any,
-        { registerInboundCallbacks: sinon.stub() } as any,
-        { replyOnThread: sinon.stub().resolves(null) } as any,
-        agentRepository as any,
-        subscriberRepository as any,
-        { findOne: sinon.stub().resolves(null) } as any,
-        { track: sinon.stub() } as any,
-        { storeInbound: sinon.stub().resolves([]) } as any,
-        { consumeIfMatches: sinon.stub().resolves({ status: 'missing' }) } as any,
-        { findByPlatformIdentity: sinon.stub().resolves(null) } as any,
-        { execute: sinon.stub().resolves({ created: true }) } as any
-      );
+      });
 
       const thread = makeSlackDmThread();
       const message = makeSlackDmMessage();

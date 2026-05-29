@@ -1,0 +1,153 @@
+import { Injectable } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
+import { EnvironmentRepository } from '@novu/dal';
+import type { AgentAction } from '@novu/framework';
+import type { CardChild, CardElement } from 'chat';
+import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
+import { OutboundGateway } from '../egress/outbound.gateway';
+import type { AgentRuntime } from './agent-runtime.port';
+import {
+  type AgentExecutionParams,
+  BridgeExecutorService,
+  type BridgeReaction,
+  NoBridgeUrlError,
+} from './bridge-executor.service';
+import type { ConversationTurn } from './conversation-turn';
+import { applyPlatformThreadIdToThread } from './platform-thread.util';
+
+const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
+
+The agent is unavailable right now. Please try again later.`;
+
+const ONBOARDING_NO_BRIDGE_TEXT =
+  "I'm live but running on defaults. Connect your agent in the dashboard to customize how I respond.";
+
+function buildNoBridgeReply(dashboardUrl?: string): CardElement {
+  const children: CardChild[] = [{ type: 'text', content: ONBOARDING_NO_BRIDGE_TEXT }];
+
+  if (dashboardUrl) {
+    children.push(
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [{ type: 'link-button', label: 'Continue setup', url: dashboardUrl, style: 'primary' }],
+      }
+    );
+  }
+
+  return { type: 'card', children };
+}
+
+@Injectable()
+export class BridgeRuntime implements AgentRuntime {
+  constructor(
+    private readonly bridgeExecutor: BridgeExecutorService,
+    private readonly outboundGateway: OutboundGateway,
+    private readonly conversationService: AgentConversationService,
+    private readonly environmentRepository: EnvironmentRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  async dispatchTurn(turn: ConversationTurn): Promise<void> {
+    try {
+      await this.bridgeExecutor.execute(this.toExecutionParams(turn));
+    } catch (err) {
+      if (err instanceof NoBridgeUrlError) {
+        await this.replyNoBridgeConfigured(turn);
+
+        return;
+      }
+
+      throw err;
+    }
+  }
+
+  async handleAction(turn: ConversationTurn, action: AgentAction): Promise<void> {
+    await this.bridgeExecutor.execute({
+      ...this.toExecutionParams(turn),
+      event: turn.event,
+      message: null,
+      action,
+    });
+  }
+
+  async handleReaction(turn: ConversationTurn, reaction: BridgeReaction): Promise<void> {
+    await this.bridgeExecutor.execute({
+      ...this.toExecutionParams(turn),
+      event: turn.event,
+      message: null,
+      reaction,
+    });
+  }
+
+  private toExecutionParams(turn: ConversationTurn): AgentExecutionParams {
+    return {
+      event: turn.event,
+      config: turn.config,
+      conversation: turn.conversation,
+      subscriber: turn.subscriber,
+      history: turn.history,
+      message: turn.message,
+      platformContext: turn.platformContext,
+      storedAttachments: turn.storedAttachments,
+      action: turn.action,
+      reaction: turn.reaction,
+      onBridgeFailure: async () => {
+        applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
+        const sent = await this.outboundGateway.replyOnThread(turn.thread, { markdown: BRIDGE_OFFLINE_REPLY_MARKDOWN });
+        const channel = this.conversationService.getPrimaryChannel(turn.conversation);
+        await this.conversationService.persistAgentMessage({
+          conversationId: turn.conversation._id,
+          channel,
+          platformMessageId: sent?.messageId ?? '',
+          agentIdentifier: turn.config.agentIdentifier,
+          content: BRIDGE_OFFLINE_REPLY_MARKDOWN,
+          environmentId: turn.config.environmentId,
+          organizationId: turn.config.organizationId,
+        });
+      },
+    };
+  }
+
+  private async replyNoBridgeConfigured(turn: ConversationTurn): Promise<void> {
+    applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
+
+    let dashboardUrl: string | undefined;
+    const dashboardBase = process.env.DASHBOARD_URL || process.env.FRONT_BASE_URL;
+    if (dashboardBase) {
+      try {
+        const environment = await this.environmentRepository.findOne({ _id: turn.config.environmentId });
+        if (environment?.identifier) {
+          dashboardUrl = `${dashboardBase}/env/${environment.identifier}/agents/${turn.config.agentIdentifier}/overview`;
+        }
+      } catch (lookupErr) {
+        this.logger.warn(
+          lookupErr,
+          `[agent:${turn.config.agentIdentifier}] Failed to resolve dashboard URL for no-bridge reply`
+        );
+        captureAgentWarning(lookupErr, {
+          component: 'bridge-runtime',
+          operation: 'resolve-dashboard-url',
+          agentIdentifier: turn.config.agentIdentifier,
+        });
+      }
+    }
+
+    const reply = buildNoBridgeReply(dashboardUrl);
+    const sent = await this.outboundGateway.replyOnThread(turn.thread, { card: reply });
+    const channel = this.conversationService.getPrimaryChannel(turn.conversation);
+    await this.conversationService.persistAgentMessage({
+      conversationId: turn.conversation._id,
+      channel,
+      platformMessageId: sent?.messageId ?? '',
+      agentIdentifier: turn.config.agentIdentifier,
+      content: ONBOARDING_NO_BRIDGE_TEXT,
+      richContent: { card: reply },
+      environmentId: turn.config.environmentId,
+      organizationId: turn.config.organizationId,
+    });
+  }
+}

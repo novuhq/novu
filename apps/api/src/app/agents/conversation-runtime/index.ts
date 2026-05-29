@@ -9,4 +9,8 @@ export { AgentInboundHandler } from './ingress/agent-inbound-handler.service';
 export { AgentsWebhookController } from './ingress/agents-webhook.controller';
 export { ChatInstanceRegistry } from './ingress/chat-instance.registry';
 export { InboundDispatcher } from './ingress/inbound.dispatcher';
+export type { AgentRuntime } from './runtime/agent-runtime.port';
+export { BridgeRuntime } from './runtime/bridge.runtime';
 export { BridgeExecutorService } from './runtime/bridge-executor.service';
+export type { ConversationTurn } from './runtime/conversation-turn';
+export { RuntimeResolver } from './runtime/runtime-resolver.service';

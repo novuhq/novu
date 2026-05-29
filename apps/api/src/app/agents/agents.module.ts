@@ -39,11 +39,14 @@ import { AgentInboundHandler } from './conversation-runtime/ingress/agent-inboun
 import { AgentsWebhookController } from './conversation-runtime/ingress/agents-webhook.controller';
 import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
+import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
+import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
+import { ManagedRuntime } from './managed-runtime/managed.runtime';
 import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
@@ -93,6 +96,9 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
+    BridgeRuntime,
+    ManagedRuntime,
+    RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
     ManagedAgentService,
