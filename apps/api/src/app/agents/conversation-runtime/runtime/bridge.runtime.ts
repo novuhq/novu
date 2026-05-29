@@ -70,7 +70,11 @@ export class BridgeRuntime implements AgentRuntime {
       subscriber: turn.subscriber,
       history: turn.history,
       message: turn.message,
-      platformContext: turn.platformContext,
+      platformContext: {
+        threadId: turn.platformThreadId,
+        channelId: turn.thread.channelId,
+        isDM: turn.thread.isDM,
+      },
       storedAttachments: turn.storedAttachments,
       action: turn.action,
       reaction: turn.reaction,

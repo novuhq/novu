@@ -15,7 +15,6 @@ export interface ConversationTurn {
   history: ConversationActivityEntity[];
   message: Message | null;
   event: AgentEventEnum;
-  platformContext: { threadId: string; channelId: string; isDM: boolean };
   thread: Thread;
   platformThreadId: string;
   storedAttachments?: StoredAttachment[];
