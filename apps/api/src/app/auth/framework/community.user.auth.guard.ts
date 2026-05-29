@@ -45,4 +45,14 @@ export class CommunityUserAuthGuard extends AuthGuard([PassportStrategyEnum.JWT,
         throw new UnauthorizedException(`Invalid authentication scheme: "${authScheme}"`);
     }
   }
+
+  handleRequest<TUser>(err: Error | null, user: TUser, info: Error | null, context: ExecutionContext): TUser {
+    const request = context.switchToHttp().getRequest();
+
+    if (user && typeof user === 'object' && 'scheme' in user) {
+      request.authScheme = (user as { scheme: ApiAuthSchemeEnum }).scheme;
+    }
+
+    return super.handleRequest(err, user, info, context);
+  }
 }

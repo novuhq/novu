@@ -2,7 +2,16 @@ import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@ne
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { FeatureFlagsService } from '@novu/application-generic';
-import { CommunityMemberRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
+import {
+  ApiKeyCredentialRepository,
+  CommunityMemberRepository,
+  CommunityOrganizationRepository,
+  CommunityUserRepository,
+  EnvironmentRepository,
+  ServiceAccountRepository,
+  SigningSecretRepository,
+} from '@novu/dal';
+import { SigningSecretResolverService } from '@novu/application-generic';
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
 import passport from 'passport';
 import { EnvironmentsModuleV1 } from '../environments-v1/environments-v1.module';
@@ -12,6 +21,9 @@ import { AuthController } from './auth.controller';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { AuthService } from './services/auth.service';
 import { CommunityAuthService } from './services/community.auth.service';
+import { ApiKeyV2EnvironmentGuard } from './guards/api-key-v2-environment.guard';
+import { ApiKeyV2SessionEnricherGuard } from './guards/api-key-v2-session-enricher.guard';
+import { ApiKeyV2AuthService } from './services/api-key-v2-auth.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { GitHubStrategy } from './services/passport/github.strategy';
 import { JwtStrategy } from './services/passport/jwt.strategy';
@@ -37,7 +49,19 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     }),
   ];
 
-  const baseProviders = [...AUTH_STRATEGIES, AuthService, RootEnvironmentGuard];
+  const baseProviders = [
+    ...AUTH_STRATEGIES,
+    AuthService,
+    ApiKeyV2AuthService,
+    ApiKeyV2EnvironmentGuard,
+    ApiKeyV2SessionEnricherGuard,
+    ApiKeyCredentialRepository,
+    ServiceAccountRepository,
+    EnvironmentRepository,
+    SigningSecretRepository,
+    SigningSecretResolverService,
+    RootEnvironmentGuard,
+  ];
 
   // Wherever is the string token used, override it with the provider
   const injectableProviders = [
@@ -65,6 +89,12 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     providers: [...baseProviders, ...injectableProviders, ...USE_CASES],
     exports: [
       RootEnvironmentGuard,
+      ApiKeyV2AuthService,
+      ApiKeyV2EnvironmentGuard,
+    ApiKeyV2SessionEnricherGuard,
+      ApiKeyCredentialRepository,
+      ServiceAccountRepository,
+      SigningSecretRepository,
       AuthService,
       FeatureFlagsService,
       'AUTH_SERVICE',

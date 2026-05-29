@@ -1,4 +1,5 @@
 export * from './agent-shared-inbox';
+export * from './api-key-v2';
 export * from './base62';
 export * from './bridge';
 export * from './build-slug';
@@ -17,6 +18,7 @@ export * from './filter-processing-details';
 export * from './generate-id';
 export * from './generate-payload-example';
 export * from './hmac';
+export * from './hmac-validation';
 export * from './html';
 export * from './inbound-email-references';
 export * from './issues';

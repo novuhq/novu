@@ -1,5 +1,6 @@
 import { PermissionsEnum } from '@novu/shared';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { RiEyeLine, RiEyeOffLine, RiLoopRightFill } from 'react-icons/ri';
 import { PageMeta } from '@/components/page-meta';
@@ -22,6 +23,7 @@ import { RegenerateApiKeysDialog } from '../components/regenerate-api-keys-dialo
 import { IS_SELF_HOSTED } from '../config';
 import { useFetchApiKeys, useRegenerateApiKeys } from '../hooks/use-fetch-api-keys';
 import { useHasPermission } from '../hooks/use-has-permission';
+import { ROUTES } from '../utils/routes';
 
 // Convert https:// to wss:// for WebSocket URLs
 const getWebSocketUrl = (url: string) => {
@@ -77,6 +79,18 @@ export function ApiKeysPage() {
       <PageMeta title={`API Keys for ${currentEnvironment?.name} environment`} />
       <DashboardLayout headerStartItems={<h1 className="text-foreground-950">API Keys</h1>}>
         <Container className="flex w-full max-w-[800px] flex-col gap-6">
+          <Card className="border-dashed">
+            <CardContent className="p-4 text-sm text-foreground-600">
+              Need multiple keys, rotation, or separate signing secrets?{' '}
+              <Link
+                to={ROUTES.SERVICE_ACCOUNTS.replace(':environmentSlug', currentEnvironment.slug)}
+                className="font-medium underline"
+              >
+                Migrate to API Keys v2
+              </Link>{' '}
+              — your legacy key keeps working until you revoke it.
+            </CardContent>
+          </Card>
           <Form {...form}>
             <Card className="w-full overflow-hidden shadow-none">
               <CardHeader>

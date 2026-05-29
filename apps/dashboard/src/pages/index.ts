@@ -2,6 +2,7 @@ export * from './access-denied-page';
 export * from './activity-feed';
 export * from './analytics';
 export * from './api-keys';
+export * from './service-accounts';
 export * from './create-layout';
 export * from './create-workflow';
 export * from './error-page';

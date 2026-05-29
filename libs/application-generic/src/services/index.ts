@@ -1,6 +1,7 @@
 export * from './analytic-logs';
 export { AnalyticsService } from './analytics.service';
 export * from './auth';
+export * from './signing-secret';
 export {
   BullMqConnectionOptions,
   BullMqService,

@@ -1,5 +1,6 @@
 export * from './dal.service';
 export * from './repositories/agent';
+export * from './repositories/api-key-credential';
 export * from './repositories/agent-integration';
 export * from './repositories/agent-mcp-server';
 export * from './repositories/ai-chat';
@@ -34,6 +35,8 @@ export * from './repositories/organization';
 export * from './repositories/preferences';
 export * from './repositories/projection.types';
 export * from './repositories/schema-default.options';
+export * from './repositories/service-account';
+export * from './repositories/signing-secret';
 export * from './repositories/snapshot';
 export * from './repositories/subscriber';
 export * from './repositories/tenant';

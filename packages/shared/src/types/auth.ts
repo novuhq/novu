@@ -6,6 +6,49 @@ export enum SignUpOriginEnum {
   VERCEL = 'vercel',
 }
 
+export enum PrincipalTypeEnum {
+  USER = 'user',
+  SERVICE_ACCOUNT = 'service_account',
+}
+
+export enum ServiceAccountScopeEnum {
+  ENVIRONMENT = 'environment',
+  ORGANIZATION = 'organization',
+}
+
+export enum ApiKeyTierEnum {
+  ENVIRONMENT = 'sk',
+  ORGANIZATION = 'sa',
+}
+
+export enum SigningSecretTypeEnum {
+  SUBSCRIBER = 'subscriber',
+  BRIDGE = 'bridge',
+}
+
+export enum SigningSecretStatusEnum {
+  ACTIVE = 'active',
+  REVOKED = 'revoked',
+}
+
+export type ApiKeyV2IdentityCacheData = {
+  organizationId: string;
+  serviceAccountId: string;
+  serviceAccountName: string;
+  serviceAccountScope: ServiceAccountScopeEnum;
+  pinnedEnvironmentId?: string;
+  permissions: PermissionsEnum[];
+  apiKeyId: string;
+};
+
+export enum ApiKeyVerifyStatusEnum {
+  VALID = 'VALID',
+  NOT_FOUND = 'NOT_FOUND',
+  EXPIRED = 'EXPIRED',
+  DISABLED = 'DISABLED',
+  INSUFFICIENT_PERMISSIONS = 'INSUFFICIENT_PERMISSIONS',
+}
+
 export type UserSessionData = {
   _id: string;
   firstName?: string;
@@ -15,13 +58,24 @@ export type UserSessionData = {
   organizationId: string;
   roles: MemberRoleEnum[];
   permissions: PermissionsEnum[];
-  scheme: ApiAuthSchemeEnum.BEARER | ApiAuthSchemeEnum.API_KEY | ApiAuthSchemeEnum.KEYLESS;
+  scheme:
+    | ApiAuthSchemeEnum.BEARER
+    | ApiAuthSchemeEnum.API_KEY
+    | ApiAuthSchemeEnum.API_KEY_V2
+    | ApiAuthSchemeEnum.KEYLESS;
   environmentId: string;
+  principalType?: PrincipalTypeEnum;
+  serviceAccountId?: string;
+  serviceAccountName?: string;
+  serviceAccountScope?: ServiceAccountScopeEnum;
+  pinnedEnvironmentId?: string;
+  apiKeyId?: string;
 };
 
 export enum ApiAuthSchemeEnum {
   BEARER = 'Bearer',
   API_KEY = 'ApiKey',
+  API_KEY_V2 = 'ApiKeyV2',
   KEYLESS = 'Keyless',
 }
 

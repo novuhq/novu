@@ -1,15 +1,12 @@
-import { createContextHash, createHash, decryptApiKey } from '@novu/application-generic';
+import { createContextHash, createHash, decryptApiKey, isContextHmacValidWithSecrets, isHmacValidWithSecrets } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
 
 export function isHmacValid(secretKey: string, subscriberId: string, hmacHash: string | undefined) {
-  if (!hmacHash) {
-    return false;
-  }
+  return isHmacValidWithSecrets([secretKey], subscriberId, hmacHash);
+}
 
-  const key = decryptApiKey(secretKey);
-  const computedHmacHash = createHash(key, subscriberId);
-
-  return computedHmacHash === hmacHash;
+export function isHmacValidWithSecretKeys(secretKeys: string[], subscriberId: string, hmacHash: string | undefined) {
+  return isHmacValidWithSecrets(secretKeys, subscriberId, hmacHash);
 }
 
 export function isContextHmacValid(
@@ -17,12 +14,29 @@ export function isContextHmacValid(
   context: ContextPayload,
   contextHash: string | undefined
 ): boolean {
-  if (!contextHash) {
-    return false;
-  }
+  return isContextHmacValidWithSecrets([secretKey], context, contextHash);
+}
 
-  const key = decryptApiKey(secretKey);
-  const computedContextHash = createContextHash(key, context);
+export function isContextHmacValidWithSecretKeys(
+  secretKeys: string[],
+  context: ContextPayload,
+  contextHash: string | undefined
+): boolean {
+  return isContextHmacValidWithSecrets(secretKeys, context, contextHash);
+}
 
-  return computedContextHash === contextHash;
+export function decryptSecretKeyForHmac(secretKey: string): string {
+  return decryptApiKey(secretKey);
+}
+
+export function createHmacHash(secretKey: string, valueToHash: string): string | null {
+  const key = decryptSecretKeyForHmac(secretKey);
+
+  return createHash(key, valueToHash);
+}
+
+export function createContextHmacHash(secretKey: string, context: ContextPayload): string | null {
+  const key = decryptSecretKeyForHmac(secretKey);
+
+  return createContextHash(key, context);
 }

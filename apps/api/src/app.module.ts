@@ -13,6 +13,8 @@ import { ActivityModule } from './app/activity/activity.module';
 import { AgentsModule } from './app/agents/agents.module';
 import { AnalyticsModule } from './app/analytics/analytics.module';
 import { AuthModule } from './app/auth/auth.module';
+import { ApiKeyV2EnvironmentGuard } from './app/auth/guards/api-key-v2-environment.guard';
+import { ApiKeyV2SessionEnricherGuard } from './app/auth/guards/api-key-v2-session-enricher.guard';
 import { BlueprintModule } from './app/blueprint/blueprint.module';
 import { BridgeModule } from './app/bridge/bridge.module';
 import { ChangeModule } from './app/change/change.module';
@@ -49,6 +51,7 @@ import { AnalyticsLogsGuard } from './app/shared/framework/analytics-logs.guard'
 import { AnalyticsLogsInterceptor } from './app/shared/framework/analytics-logs.interceptor';
 import { IdempotencyInterceptor } from './app/shared/framework/idempotency.interceptor';
 import { ProductFeatureInterceptor } from './app/shared/interceptors/product-feature.interceptor';
+import { ServiceAccountsModule } from './app/service-accounts/service-accounts.module';
 import { SharedModule } from './app/shared/shared.module';
 import { StepResolversModule } from './app/step-resolvers/step-resolvers.module';
 import { StorageModule } from './app/storage/storage.module';
@@ -133,6 +136,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   OrganizationModule,
   ActivityModule,
   AgentsModule,
+  ServiceAccountsModule,
   DomainsModule.forRoot(),
   UserModule,
   IntegrationModule,
@@ -176,6 +180,14 @@ if (!isClerkEnabled()) {
 const modules = baseModules.concat(enterpriseModules);
 
 const providers: Provider[] = [
+  {
+    provide: APP_GUARD,
+    useClass: ApiKeyV2SessionEnricherGuard,
+  },
+  {
+    provide: APP_GUARD,
+    useClass: ApiKeyV2EnvironmentGuard,
+  },
   {
     provide: APP_GUARD,
     useClass: AnalyticsLogsGuard,

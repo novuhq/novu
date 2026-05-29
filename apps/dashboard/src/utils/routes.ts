@@ -41,6 +41,7 @@ export const ROUTES = {
   INTEGRATIONS_CONNECT_PROVIDER: '/integrations/connect/:providerId',
   INTEGRATIONS_UPDATE: '/integrations/:integrationId/update',
   API_KEYS: '/env/:environmentSlug/api-keys',
+  SERVICE_ACCOUNTS: '/env/:environmentSlug/service-accounts',
   ENVIRONMENTS: '/env/:environmentSlug/environments',
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
   ACTIVITY_WORKFLOW_RUNS: '/env/:environmentSlug/activity/workflow-runs',

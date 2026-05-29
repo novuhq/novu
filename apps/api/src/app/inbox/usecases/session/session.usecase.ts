@@ -20,6 +20,7 @@ import {
   SelectIntegrationCommand,
   shortId,
   UpsertControlValuesCommand,
+  SigningSecretResolverService,
   UpsertControlValuesUseCase,
 } from '@novu/application-generic';
 import {
@@ -63,7 +64,7 @@ import { CreateNovuIntegrations } from '../../../integrations/usecases/create-no
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
-import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
+import { isHmacValidWithSecretKeys } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
 import {
@@ -110,7 +111,8 @@ export class Session {
     private logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService,
     private getSubscriberSchedule: GetSubscriberSchedule,
-    private updatePreferencesUsecase: UpdatePreferences
+    private updatePreferencesUsecase: UpdatePreferences,
+    private signingSecretResolverService: SigningSecretResolverService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -142,15 +144,20 @@ export class Session {
     }
 
     if (inAppIntegration.credentials.hmac) {
+      const subscriberSecretKeys = await this.signingSecretResolverService.getActiveSubscriberSecrets(
+        environment._id,
+        environment._organizationId
+      );
+
       validateHmacEncryption({
-        apiKey: environment.apiKeys[0].key,
+        secretKeys: subscriberSecretKeys,
         subscriberId: subscriber.subscriberId,
         subscriberHash: command.requestData.subscriberHash,
       });
 
       if (command.requestData.context) {
         validateContextHmacEncryption({
-          apiKey: environment.apiKeys[0].key,
+          secretKeys: subscriberSecretKeys,
           context: command.requestData.context,
           contextHash: command.requestData.contextHash,
         });
@@ -176,8 +183,11 @@ export class Session {
         locale: subscriber.locale,
         data: subscriber.data as CustomDataType,
         timezone: subscriber.timezone,
-        allowUpdate: isHmacValid(
-          environment.apiKeys[0].key,
+        allowUpdate: isHmacValidWithSecretKeys(
+          await this.signingSecretResolverService.getActiveSubscriberSecrets(
+            environment._id,
+            environment._organizationId
+          ),
           subscriber.subscriberId,
           command.requestData.subscriberHash
         ),

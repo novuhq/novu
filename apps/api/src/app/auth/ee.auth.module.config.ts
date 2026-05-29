@@ -8,6 +8,8 @@ import {
 } from '@novu/application-generic';
 import { RootEnvironmentGuard } from './framework/root-environment-guard.service';
 import { AuthService } from './services/auth.service';
+import { ApiKeyV2EnvironmentGuard } from './guards/api-key-v2-environment.guard';
+import { ApiKeyV2AuthService } from './services/api-key-v2-auth.service';
 import { ApiKeyStrategy } from './services/passport/apikey.strategy';
 import { JwtSubscriberStrategy } from './services/passport/subscriber-jwt.strategy';
 
@@ -26,6 +28,8 @@ export function getEEModuleConfig(): ModuleMetadata {
       ...eeAuthModule.providers,
       // reused services
       ApiKeyStrategy,
+      ApiKeyV2AuthService,
+      ApiKeyV2EnvironmentGuard,
       JwtSubscriberStrategy,
       AuthService,
       cacheService,
@@ -33,7 +37,14 @@ export function getEEModuleConfig(): ModuleMetadata {
       InMemoryLRUCacheService,
       RootEnvironmentGuard,
     ],
-    exports: [...eeAuthModule.exports, RootEnvironmentGuard, AuthService, FeatureFlagsService],
+    exports: [
+      ...eeAuthModule.exports,
+      RootEnvironmentGuard,
+      ApiKeyV2AuthService,
+      ApiKeyV2EnvironmentGuard,
+      AuthService,
+      FeatureFlagsService,
+    ],
   };
 }
 

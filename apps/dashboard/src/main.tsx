@@ -13,6 +13,7 @@ import {
   ActivityFeed,
   AnalyticsPage,
   ApiKeysPage,
+  ServiceAccountsPage,
   CreateLayoutPage,
   CreateWorkflowPage,
   ErrorPage,
@@ -442,6 +443,14 @@ const router = createBrowserRouter([
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
                     <ApiKeysPage />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.SERVICE_ACCOUNTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
+                    <ServiceAccountsPage />
                   </ProtectedRoute>
                 ),
               },
