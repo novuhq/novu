@@ -71,6 +71,8 @@ export function ApiKeysPage() {
     return null;
   }
 
+  const environmentSlug = currentEnvironment.slug ?? currentEnvironment._id;
+
   // Use dynamic region from region selector
   const region = getRegionConfig(selectedRegion)?.name || selectedRegion.toUpperCase();
 
@@ -83,7 +85,7 @@ export function ApiKeysPage() {
             <CardContent className="p-4 text-sm text-foreground-600">
               Need multiple keys, rotation, or separate signing secrets?{' '}
               <Link
-                to={ROUTES.SERVICE_ACCOUNTS.replace(':environmentSlug', currentEnvironment.slug)}
+                to={ROUTES.SERVICE_ACCOUNTS.replace(':environmentSlug', environmentSlug)}
                 className="font-medium underline"
               >
                 Migrate to API Keys v2

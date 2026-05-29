@@ -1,6 +1,10 @@
-import type { PermissionsEnum, ServiceAccountScopeEnum, SigningSecretTypeEnum } from '@novu/shared';
+import type {
+  IEnvironment,
+  PermissionsEnum,
+  ServiceAccountScopeEnum,
+  SigningSecretTypeEnum,
+} from '@novu/shared';
 import { del, get, post } from './api.client';
-import type { IEnvironment } from './environments';
 
 export type ServiceAccount = {
   _id: string;

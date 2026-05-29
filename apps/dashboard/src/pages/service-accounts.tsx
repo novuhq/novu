@@ -51,6 +51,9 @@ export function ServiceAccountsPage() {
     return null;
   }
 
+  const environment = currentEnvironment;
+  const environmentSlug = environment.slug ?? environment._id;
+
   async function handleEnableV2() {
     try {
       await enableV2Mutation.mutateAsync();
@@ -69,7 +72,7 @@ export function ServiceAccountsPage() {
       const account = await createServiceAccountMutation.mutateAsync({
         name: newAccountName.trim(),
         scope: ServiceAccountScopeEnum.ENVIRONMENT,
-        environmentId: currentEnvironment._id,
+        environmentId: environment._id,
       });
       setNewAccountName('');
       setSelectedServiceAccountId(account._id);
@@ -99,7 +102,7 @@ export function ServiceAccountsPage() {
               <p className="text-sm text-foreground-600">
                 Migrate to API Keys v2 for multiple rotatable keys and decoupled signing secrets. Your legacy key keeps
                 working until you revoke it.{' '}
-                <Link to={ROUTES.API_KEYS.replace(':environmentSlug', currentEnvironment.slug)} className="underline">
+                <Link to={ROUTES.API_KEYS.replace(':environmentSlug', environmentSlug)} className="underline">
                   View legacy API keys
                 </Link>
               </p>
@@ -148,7 +151,8 @@ export function ServiceAccountsPage() {
                   </button>
                   {canWrite && (
                     <Button
-                      variant="ghost"
+                      variant="secondary"
+                      mode="ghost"
                       size="sm"
                       onClick={() => deleteServiceAccountMutation.mutate(account._id)}
                     >
@@ -189,7 +193,8 @@ export function ServiceAccountsPage() {
                     </div>
                     {canWrite && !key.revokedAt && (
                       <Button
-                        variant="ghost"
+                        variant="secondary"
+                        mode="ghost"
                         size="sm"
                         onClick={() => revokeApiKeyMutation.mutate(key._id)}
                       >
