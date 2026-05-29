@@ -13,7 +13,6 @@ import {
   Query,
   Req,
   UseFilters,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
@@ -81,7 +80,6 @@ import {
   SendWhatsAppTestTemplateResponseDto,
 } from './dtos/send-whatsapp-test-template.dto';
 import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
-import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
 import { ConfigureTelegramAgentWebhookCommand } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
@@ -148,7 +146,6 @@ import { VerifyManagedCredentials } from './usecases/verify-managed-credentials/
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(AgentConversationEnabledGuard)
 @ApiExcludeController()
 @RequireAuthentication()
 export class AgentsController {
