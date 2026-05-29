@@ -24,6 +24,8 @@ import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.m
 import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentEmailActionsController } from './agent-email-actions.controller';
+import { AgentIntegrationsController } from './agent-integrations.controller';
+import { AgentRuntimeController } from './agent-runtime.controller';
 import { AgentsController } from './agents.controller';
 import { AgentsMcpOAuthController } from './agents-mcp-oauth.controller';
 import { AgentsPublicController } from './agents-public.controller';
@@ -65,6 +67,8 @@ import { USE_CASES } from './usecases';
   ],
   controllers: [
     AgentsController,
+    AgentIntegrationsController,
+    AgentRuntimeController,
     AgentsPublicController,
     AgentsWebhookController,
     AgentEmailActionsController,
