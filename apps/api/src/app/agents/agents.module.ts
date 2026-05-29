@@ -28,6 +28,8 @@ import { AgentsController } from './agents.controller';
 import { AgentsMcpOAuthController } from './agents-mcp-oauth.controller';
 import { AgentsPublicController } from './agents-public.controller';
 import { AgentsWebhookController } from './agents-webhook.controller';
+import { ChatChannelFactory } from './conversation-runtime/channels/chat.channel';
+import { EmailChannelFactory } from './conversation-runtime/channels/email.channel';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
 import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
@@ -97,6 +99,8 @@ import { USE_CASES } from './usecases';
     FileMaterializer,
     AgentEmailSender,
     OutboundGateway,
+    ChatChannelFactory,
+    EmailChannelFactory,
     McpOAuthDiscoveryService,
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
