@@ -4,6 +4,8 @@ import { MailFactory } from '@novu/application-generic';
 import { ChannelTypeEnum, EmailProviderIdEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { FileMaterializer } from '../conversation-runtime/egress/file-materializer.service';
+import { AgentEmailSender } from '../email/agent-email-sender.service';
 import { ChatSdkService } from './chat-sdk.service';
 
 function makePinnedResponse({
@@ -20,32 +22,23 @@ function makePinnedResponse({
   return { status, statusText, headers, data };
 }
 
+function makeFileMaterializer(loggerOverride?: unknown): FileMaterializer {
+  const logger = loggerOverride ?? {
+    warn: sinon.stub(),
+    error: sinon.stub(),
+    debug: sinon.stub(),
+    info: sinon.stub(),
+    setContext: sinon.stub(),
+  };
+
+  return new FileMaterializer(logger as any);
+}
+
 describe('ChatSdkService', () => {
-  function makeService() {
-    const logger = {
-      warn: sinon.stub(),
-      error: sinon.stub(),
-      debug: sinon.stub(),
-      info: sinon.stub(),
-      setContext: sinon.stub(),
-    };
-
-    return new ChatSdkService(
-      logger as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      {} as any,
-      { create: sinon.stub().resolves({ _id: 'm' }) } as any
-    );
-  }
-
   describe('prepareContentForDelivery', () => {
     it('should materialize files for card replies on supported platforms', async () => {
-      const service = makeService();
-      const result = await (service as any).prepareContentForDelivery(
+      const fm = makeFileMaterializer();
+      const result = await fm.prepareContentForDelivery(
         {
           card: { type: 'card', title: 'Report', children: [] },
           files: [
@@ -60,13 +53,13 @@ describe('ChatSdkService', () => {
       );
 
       expect(result.card).to.exist;
-      expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
-      expect(result.files[0].filename).to.equal('sample.jpg');
+      expect(Buffer.isBuffer(result.files![0].data)).to.equal(true);
+      expect(result.files![0].filename).to.equal('sample.jpg');
     });
 
     it('should convert base64 file data to a Buffer before passing content to the chat SDK', async () => {
-      const service = makeService();
-      const result = await (service as any).prepareContentForDelivery(
+      const fm = makeFileMaterializer();
+      const result = await fm.prepareContentForDelivery(
         {
           markdown: 'Here is the file',
           files: [
@@ -80,17 +73,17 @@ describe('ChatSdkService', () => {
         'slack'
       );
 
-      expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
-      expect(result.files[0].data.toString()).to.equal('hello');
-      expect(result.files[0].filename).to.equal('sample.txt');
-      expect(result.files[0].mimeType).to.equal('text/plain');
+      expect(Buffer.isBuffer(result.files![0].data)).to.equal(true);
+      expect(result.files![0].data!.toString()).to.equal('hello');
+      expect(result.files![0].filename).to.equal('sample.txt');
+      expect(result.files![0].mimeType).to.equal('text/plain');
     });
 
     it('should reject non-string file data with a meaningful error', async () => {
-      const service = makeService();
+      const fm = makeFileMaterializer();
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here is the file',
             files: [
@@ -99,7 +92,7 @@ describe('ChatSdkService', () => {
                 data: { type: 'Buffer', data: [104, 101, 108, 108, 111] },
               },
             ],
-          },
+          } as any,
           'slack'
         );
         throw new Error('Expected prepareContentForDelivery to throw');
@@ -109,10 +102,10 @@ describe('ChatSdkService', () => {
     });
 
     it('should reject invalid base64 file data with a meaningful error', async () => {
-      const service = makeService();
+      const fm = makeFileMaterializer();
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here is the file',
             files: [
@@ -131,10 +124,10 @@ describe('ChatSdkService', () => {
     });
 
     it('should reject inline file data over 5 MB', async () => {
-      const service = makeService();
+      const fm = makeFileMaterializer();
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here is the file',
             files: [
@@ -153,9 +146,9 @@ describe('ChatSdkService', () => {
     });
 
     it('should fetch url file data to a Buffer and use response content-type as fallback mimeType', async () => {
-      const service = makeService();
-      sinon.stub(service as any, 'validateFileUrl').resolves(null);
-      const requestStub = sinon.stub(service as any, 'requestPinnedFileUrl').resolves(
+      const fm = makeFileMaterializer();
+      sinon.stub(fm as any, 'validateFileUrl').resolves(null);
+      const requestStub = sinon.stub(fm as any, 'requestPinnedFileUrl').resolves(
         makePinnedResponse({
           headers: {
             'content-type': 'text/plain',
@@ -164,7 +157,7 @@ describe('ChatSdkService', () => {
         })
       );
 
-      const result = await (service as any).prepareContentForDelivery(
+      const result = await fm.prepareContentForDelivery(
         {
           markdown: 'Here is the file',
           files: [
@@ -178,21 +171,21 @@ describe('ChatSdkService', () => {
       );
 
       expect(requestStub.calledOnceWith('https://example.com/sample.txt')).to.equal(true);
-      expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
-      expect(result.files[0].data.toString()).to.equal('hello');
-      expect(result.files[0].mimeType).to.equal('text/plain');
-      expect(result.files[0].url).to.equal(undefined);
+      expect(Buffer.isBuffer(result.files![0].data)).to.equal(true);
+      expect(result.files![0].data!.toString()).to.equal('hello');
+      expect(result.files![0].mimeType).to.equal('text/plain');
+      expect((result.files![0] as any).url).to.equal(undefined);
     });
 
     it('should validate redirected file urls before following them', async () => {
-      const service = makeService();
+      const fm = makeFileMaterializer();
       const validateStub = sinon
-        .stub(service as any, 'validateFileUrl')
+        .stub(fm as any, 'validateFileUrl')
         .onFirstCall()
         .resolves(null)
         .onSecondCall()
         .resolves('Requests to "localhost" are not allowed.');
-      const requestStub = sinon.stub(service as any, 'requestPinnedFileUrl').resolves(
+      const requestStub = sinon.stub(fm as any, 'requestPinnedFileUrl').resolves(
         makePinnedResponse({
           status: 302,
           headers: {
@@ -202,7 +195,7 @@ describe('ChatSdkService', () => {
       );
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here is the file',
             files: [{ filename: 'sample.txt', url: 'https://example.com/sample.txt' }],
@@ -218,11 +211,11 @@ describe('ChatSdkService', () => {
     });
 
     it('should reject SSRF-blocked file urls', async () => {
-      const service = makeService();
-      sinon.stub(service as any, 'validateFileUrl').resolves('Requests to "localhost" are not allowed.');
+      const fm = makeFileMaterializer();
+      sinon.stub(fm as any, 'validateFileUrl').resolves('Requests to "localhost" are not allowed.');
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here is the file',
             files: [{ filename: 'sample.txt', url: 'http://localhost/sample.txt' }],
@@ -236,14 +229,14 @@ describe('ChatSdkService', () => {
     });
 
     it('should reject non-2xx file url responses', async () => {
-      const service = makeService();
-      sinon.stub(service as any, 'validateFileUrl').resolves(null);
+      const fm = makeFileMaterializer();
+      sinon.stub(fm as any, 'validateFileUrl').resolves(null);
       sinon
-        .stub(service as any, 'requestPinnedFileUrl')
+        .stub(fm as any, 'requestPinnedFileUrl')
         .resolves(makePinnedResponse({ status: 404, statusText: 'Not Found' }));
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here is the file',
             files: [{ filename: 'missing.txt', url: 'https://example.com/missing.txt' }],
@@ -257,9 +250,9 @@ describe('ChatSdkService', () => {
     });
 
     it('should reject file urls with content-length over the per-file limit', async () => {
-      const service = makeService();
-      sinon.stub(service as any, 'validateFileUrl').resolves(null);
-      sinon.stub(service as any, 'requestPinnedFileUrl').resolves(
+      const fm = makeFileMaterializer();
+      sinon.stub(fm as any, 'validateFileUrl').resolves(null);
+      sinon.stub(fm as any, 'requestPinnedFileUrl').resolves(
         makePinnedResponse({
           headers: {
             'content-length': String(26 * 1024 * 1024),
@@ -268,7 +261,7 @@ describe('ChatSdkService', () => {
       );
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here is the file',
             files: [{ filename: 'large.bin', url: 'https://example.com/large.bin' }],
@@ -282,14 +275,14 @@ describe('ChatSdkService', () => {
     });
 
     it('should reject streamed file url bodies over the per-file limit', async () => {
-      const service = makeService();
-      sinon.stub(service as any, 'validateFileUrl').resolves(null);
+      const fm = makeFileMaterializer();
+      sinon.stub(fm as any, 'validateFileUrl').resolves(null);
       sinon
-        .stub(service as any, 'requestPinnedFileUrl')
+        .stub(fm as any, 'requestPinnedFileUrl')
         .rejects(new Error('Invalid file "large.bin": file size exceeds 25 MB.'));
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here is the file',
             files: [{ filename: 'large.bin', url: 'https://example.com/large.bin' }],
@@ -303,10 +296,10 @@ describe('ChatSdkService', () => {
     });
 
     it('should reject more than 15 files per message', async () => {
-      const service = makeService();
+      const fm = makeFileMaterializer();
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here are the files',
             files: Array.from({ length: 16 }, (_, index) => ({
@@ -323,8 +316,8 @@ describe('ChatSdkService', () => {
     });
 
     it('should reject aggregate attachment size over 50 MB', async () => {
-      const service = makeService();
-      sinon.stub(service as any, 'prepareFileForDelivery').callsFake(async (_file: unknown, index: number) => ({
+      const fm = makeFileMaterializer();
+      sinon.stub(fm as any, 'prepareFileForDelivery').callsFake(async (_file: unknown, index: number) => ({
         filename: `${index}.bin`,
         data: Buffer.from('hello'),
         size: 5 * 1024 * 1024,
@@ -332,7 +325,7 @@ describe('ChatSdkService', () => {
       }));
 
       try {
-        await (service as any).prepareContentForDelivery(
+        await fm.prepareContentForDelivery(
           {
             markdown: 'Here are the files',
             files: Array.from({ length: 11 }, (_, index) => ({
@@ -356,18 +349,9 @@ describe('ChatSdkService', () => {
         info: sinon.stub(),
         setContext: sinon.stub(),
       };
-      const service = new ChatSdkService(
-        logger as any,
-        {} as any,
-        {} as any,
-        {} as any,
-        {} as any,
-        {} as any,
-        {} as any,
-        { create: sinon.stub().resolves({ _id: 'm' }) } as any
-      );
+      const fm = makeFileMaterializer(logger);
 
-      const result = await (service as any).prepareContentForDelivery(
+      const result = await fm.prepareContentForDelivery(
         {
           markdown: 'Here is the file',
           files: [{ filename: 'sample.txt', data: Buffer.from('hello').toString('base64') }],
@@ -386,8 +370,8 @@ describe('ChatSdkService', () => {
     });
 
     it('should convert base64 file data to a Buffer for whatsapp', async () => {
-      const service = makeService();
-      const result = await (service as any).prepareContentForDelivery(
+      const fm = makeFileMaterializer();
+      const result = await fm.prepareContentForDelivery(
         {
           markdown: 'Here is the file',
           files: [
@@ -401,10 +385,10 @@ describe('ChatSdkService', () => {
         'whatsapp'
       );
 
-      expect(Buffer.isBuffer(result.files[0].data)).to.equal(true);
-      expect(result.files[0].data.toString()).to.equal('hello');
-      expect(result.files[0].filename).to.equal('sample.txt');
-      expect(result.files[0].mimeType).to.equal('text/plain');
+      expect(Buffer.isBuffer(result.files![0].data)).to.equal(true);
+      expect(result.files![0].data!.toString()).to.equal('hello');
+      expect(result.files![0].filename).to.equal('sample.txt');
+      expect(result.files![0].mimeType).to.equal('text/plain');
     });
   });
 
@@ -428,13 +412,10 @@ describe('ChatSdkService', () => {
           active: true,
         }),
       };
-      const service = new ChatSdkService(
+      const service = new AgentEmailSender(
         logger as any,
         {} as any,
-        {} as any,
-        {} as any,
         integrationRepository as any,
-        {} as any,
         {} as any,
         { create: sinon.stub().resolves({ _id: 'm' }) } as any
       );
@@ -498,13 +479,10 @@ describe('ChatSdkService', () => {
           active: true,
         }),
       };
-      const service = new ChatSdkService(
+      const service = new AgentEmailSender(
         logger as any,
         {} as any,
-        {} as any,
-        {} as any,
         integrationRepository as any,
-        {} as any,
         {} as any,
         { create: sinon.stub().resolves({ _id: 'm' }) } as any
       );
@@ -595,11 +573,8 @@ describe('ChatSdkService', () => {
         create: deps.messageCreate ?? sinon.stub().resolves({ _id: 'msg-1' }),
       };
 
-      return new ChatSdkService(
+      return new AgentEmailSender(
         logger as any,
-        {} as any,
-        {} as any,
-        {} as any,
         {} as any,
         {} as any,
         calculateLimitNovuIntegration as any,
