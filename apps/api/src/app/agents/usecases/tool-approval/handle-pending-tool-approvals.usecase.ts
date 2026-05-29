@@ -1,5 +1,5 @@
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
-import type { PendingToolApproval } from '@novu/application-generic';
+import type { IAgentRuntimeProvider, PendingToolApproval } from '@novu/application-generic';
 import { PinoLogger } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
@@ -46,29 +46,7 @@ export class HandlePendingToolApprovals {
       return;
     }
 
-    // Which tools need approval?
-    // 1. extractPendingToolApprovals — read response.actionsRequired from this webhook (fast, no API call).
-    // 2. getAllPendingToolApprovals — fallback when the webhook says requires-action but omits tool details
-    //    (e.g. user already approved some tools in the same session and others are still waiting).
-    let pendingTools = extractPendingToolApprovals(command.response);
-
-    if (pendingTools.length === 0) {
-      try {
-        pendingTools = await runtimeProvider.getAllPendingToolApprovals(command.sessionId);
-      } catch (err) {
-        this.logger.warn(
-          { err: err instanceof Error ? err.message : String(err), sessionId: command.sessionId },
-          'getAllPendingToolApprovals failed; cannot render Approve/Deny card'
-        );
-        captureAgentWarning(err, {
-          component: 'handle-pending-tool-approvals',
-          operation: 'get-all-pending-tool-approvals',
-          sessionId: command.sessionId,
-        });
-
-        return;
-      }
-    }
+    const pendingTools = await this.fetchPendingTools(command, runtimeProvider);
 
     if (pendingTools.length === 0) {
       this.logger.warn(
@@ -79,51 +57,128 @@ export class HandlePendingToolApprovals {
       return;
     }
 
-    // Split by mcp_connection.toolTrust: auto-approve matches, card for the rest.
     const { trustedTools, needsPromptTools } = await this.partitionByTrust(command, pendingTools);
 
-    // Trusted: tell Anthropic yes without posting anything to the chat thread.
     if (trustedTools.length > 0) {
       try {
-        await this.managedAgentService.resumeWithToolResults({
-          conversationId: command.conversationId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          agentIdentifier: command.agentIdentifier,
-          integrationIdentifier: command.integrationIdentifier,
-          subscriberId: command.subscriberId,
-          platform: command.platform as AgentPlatformEnum | undefined,
-          toolUseIds: trustedTools.map((tool) => tool.toolUseId),
-          approved: true,
-          turnId: command.turnId,
-        });
-      } catch (err) {
-        this.logger.warn(
-          {
-            err: err instanceof Error ? err.message : String(err),
-            sessionId: command.sessionId,
-            toolUseIds: trustedTools.map((t) => t.toolUseId),
-          },
-          'Auto-confirm for trusted MCP tools failed; falling back to approval card'
-        );
-        captureAgentWarning(err, {
-          component: 'handle-pending-tool-approvals',
-          operation: 'auto-confirm-trusted-tools',
-          sessionId: command.sessionId,
-        });
-
-        await this.deliverCard(command, pendingTools);
+        await this.autoConfirmTrustedTools(command, trustedTools);
+      } catch {
+        await this.deliverAutoConfirmFailure(command);
 
         return;
       }
-    }
 
-    if (needsPromptTools.length === 0) {
+      // Resume succeeded — the follow-up requires-action webhook will post the next card.
       return;
     }
 
-    // Untrusted (or mixed batch remainder): post Approve/Deny card to the thread.
-    await this.deliverCard(command, needsPromptTools);
+    const nextTool = needsPromptTools[0];
+
+    if (!nextTool) {
+      return;
+    }
+
+    // No trusted tools in this batch — prompt for the first one only (sequential approval).
+    await this.deliverApprovalCard(command, nextTool);
+  }
+
+  private async fetchPendingTools(
+    command: HandlePendingToolApprovalsCommand,
+    runtimeProvider: IAgentRuntimeProvider
+  ): Promise<PendingToolApproval[]> {
+    const fromResponse = extractPendingToolApprovals(command.response);
+
+    if (fromResponse.length > 0) {
+      return fromResponse;
+    }
+
+    try {
+      return await runtimeProvider.getAllPendingToolApprovals(command.sessionId);
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), sessionId: command.sessionId },
+        'getAllPendingToolApprovals failed; cannot render Approve/Deny card'
+      );
+      captureAgentWarning(err, {
+        component: 'handle-pending-tool-approvals',
+        operation: 'get-all-pending-tool-approvals',
+        sessionId: command.sessionId,
+      });
+
+      return [];
+    }
+  }
+
+  private async autoConfirmTrustedTools(
+    command: HandlePendingToolApprovalsCommand,
+    trustedTools: PendingToolApproval[]
+  ): Promise<void> {
+    try {
+      await this.managedAgentService.resumeWithToolResults({
+        conversationId: command.conversationId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentIdentifier: command.agentIdentifier,
+        integrationIdentifier: command.integrationIdentifier,
+        subscriberId: command.subscriberId,
+        platform: command.platform as AgentPlatformEnum | undefined,
+        toolUseIds: trustedTools.map((tool) => tool.toolUseId),
+        approved: true,
+        turnId: command.turnId,
+      });
+    } catch (err) {
+      this.logger.warn(
+        {
+          err: err instanceof Error ? err.message : String(err),
+          sessionId: command.sessionId,
+          toolUseIds: trustedTools.map((t) => t.toolUseId),
+        },
+        'Auto-confirm for trusted MCP tools failed'
+      );
+      captureAgentWarning(err, {
+        component: 'handle-pending-tool-approvals',
+        operation: 'auto-confirm-trusted-tools',
+        sessionId: command.sessionId,
+      });
+
+      throw err;
+    }
+  }
+
+  private async deliverAutoConfirmFailure(command: HandlePendingToolApprovalsCommand): Promise<void> {
+    const message = 'The agent is temporarily unavailable. Please try again later.';
+
+    try {
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          conversationId: command.conversationId,
+          agentIdentifier: command.agentIdentifier,
+          integrationIdentifier: command.integrationIdentifier,
+          reply: { markdown: message },
+        })
+      );
+      await this.handlePlanProgress.execute(
+        HandlePlanProgressCommand.create({
+          userId: command.userId,
+          organizationId: command.organizationId,
+          environmentId: command.environmentId,
+          conversationId: command.conversationId,
+          agentIdentifier: command.agentIdentifier,
+          integrationIdentifier: command.integrationIdentifier,
+          toolProgress: { turnId: command.turnId, action: 'fail' },
+        })
+      );
+    } catch (deliveryErr) {
+      this.logger.error(deliveryErr, `Failed to deliver auto-confirm error for session ${command.sessionId}`);
+      captureAgentException(deliveryErr, {
+        component: 'handle-pending-tool-approvals',
+        operation: 'deliver-auto-confirm-failure',
+        sessionId: command.sessionId,
+      });
+    }
   }
 
   private async partitionByTrust(
@@ -175,9 +230,9 @@ export class HandlePendingToolApprovals {
     return { trustedTools, needsPromptTools };
   }
 
-  private async deliverCard(
+  private async deliverApprovalCard(
     command: HandlePendingToolApprovalsCommand,
-    pendingTools: PendingToolApproval[]
+    tool: PendingToolApproval
   ): Promise<void> {
     try {
       await this.handleAgentReply.execute(
@@ -188,7 +243,7 @@ export class HandlePendingToolApprovals {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          reply: { card: buildToolApprovalCard(pendingTools, command.turnId) },
+          reply: { card: buildToolApprovalCard(tool, command.turnId) },
         })
       );
     } catch (err) {

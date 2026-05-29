@@ -174,7 +174,11 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.AGENTS_SETUP,
-            element: <AgentsSetupPage />,
+            element: (
+              <ConnectSubscriberProvider>
+                <AgentsSetupPage />
+              </ConnectSubscriberProvider>
+            ),
           },
           {
             path: ROUTES.INBOX_USECASE,

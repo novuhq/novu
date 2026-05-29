@@ -174,7 +174,7 @@ export function AutoCreateConnectOrganization() {
       } catch (error) {
         // The cached membership was tombstoned (e.g. deleted in another tab). Treat as manual create
         // so we never leave the session pointing at an id Clerk has already removed — otherwise the
-        // satellite handshake redirects to Platform's sign-in URL.
+        // Connect host's auth guard would bounce the user to Platform's sign-in URL.
         if (isMissingOrganizationError(error)) {
           return { type: 'manual' };
         }

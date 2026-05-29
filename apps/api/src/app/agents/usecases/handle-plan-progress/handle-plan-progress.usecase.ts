@@ -81,7 +81,7 @@ export class HandlePlanProgress {
     const toolName = toolProgress.toolName || existing?.toolName || 'Tool';
     const mcpServerName = toolProgress.mcpServerName || existing?.mcpServerName;
     const status: PlanTaskStatus = toolProgress.status === 'running' ? 'in_progress' : toolProgress.status;
-    const details = formatToolInputSummary(toolProgress.toolInput) || existing?.details;
+    const details = toolProgress.details || formatToolInputSummary(toolProgress.toolInput) || existing?.details;
 
     tasks.set(toolProgress.toolUseId, { toolUseId: toolProgress.toolUseId, toolName, mcpServerName, status, details });
 
@@ -136,13 +136,8 @@ export class HandlePlanProgress {
       return;
     }
 
-    const finalStatus: PlanTaskStatus = toolProgress.action === 'fail' ? 'error' : 'complete';
     const title = toolProgress.action === 'fail' ? 'Something went wrong' : 'Finished thinking';
-
     const tasks = this.collectTasks(existingActivities);
-    for (const task of tasks.values()) {
-      task.status = finalStatus;
-    }
 
     await this.postOrEditPlan(command, planMessageId, this.toModel(title, tasks, true));
   }

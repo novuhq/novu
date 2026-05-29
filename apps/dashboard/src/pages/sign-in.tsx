@@ -40,8 +40,8 @@ export const SignInPage = () => {
     [searchParams]
   );
 
-  // Clean Connect provisioning entry point. Always the same URL — Clerk's satellite domain SDK
-  // performs the session-sync handshake natively when the destination page loads.
+  // Clean Connect provisioning entry point. Always the same URL — primary's session cookies
+  // live on the shared registrable domain, so the Connect host loads signed-in immediately.
   const connectProvisionRedirect = useMemo(
     () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
     []
@@ -62,7 +62,7 @@ export const SignInPage = () => {
     }
   }, [searchParams, isConnectSignIn]);
 
-  // Sign-in only runs on the primary; satellite visitors bounce back with the Connect flag.
+  // Sign-in only runs on the primary; Connect-host visitors bounce back with the Connect flag.
   useEffect(() => {
     if (IS_NOVU_CONNECT) {
       const redirectUrl = readClerkRedirectUrlParam(searchParams);
@@ -89,10 +89,10 @@ export const SignInPage = () => {
   // Already-signed-in user landing on `/auth/sign-in` — bounce to the right home before the
   // <SignIn/> form mounts and starts its own redirect (which would race this effect).
   //
-  // For Connect flows we deliberately drop any inbound `redirect_url` (e.g. a stale
-  // `?__clerk_synced=false` Connect URL) and always go to the clean provision entry point —
-  // Clerk's satellite SDK syncs the session on arrival. Honoring the stale return URL is what
-  // caused the Platform ↔ Connect redirect loop after the post-PR-11281 follow-ups.
+  // For Connect flows we always go to the clean provision entry point. The Connect host shares
+  // Clerk session cookies with primary via the registrable domain, so it loads signed-in from a
+  // plain navigation. Inbound `redirect_url` is dropped so a stale return URL can't strand the
+  // user.
   // CLI auth is the exception: the device session must resume on `/cli/auth` after sign-in.
   useEffect(() => {
     if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || hasRedirectedRef.current) {
@@ -133,7 +133,7 @@ export const SignInPage = () => {
   }, [searchParams, isConnectSignIn]);
 
   // Render nothing while redirecting:
-  //   - On the satellite (`IS_NOVU_CONNECT`) the page is mid-replace to primary.
+  //   - On the Connect host (`IS_NOVU_CONNECT`) the page is mid-replace to primary.
   //   - On the primary when the user is already signed in the effect above is handling the bounce;
   //     mounting <SignIn> here would also try to navigate via `forceRedirectUrl`, creating a race.
   if (IS_NOVU_CONNECT || (isLoaded && isSignedIn)) {

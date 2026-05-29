@@ -56,8 +56,10 @@ export function PhaseContent({
     case 'pick-runtime':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text bold>Where do you want the agent to run?</Text>
-          <Text dimColor>Choose the agent runtime. Novu connects it to Slack, email, and more.</Text>
+          <Box flexDirection="column">
+            <Text bold>Where do you want the agent to run?</Text>
+            <Text dimColor>Choose the agent runtime. Novu connects it to Slack, email, and more.</Text>
+          </Box>
           <RuntimeSelect onChange={(value) => phase.resolve(value)} />
         </Box>
       );
@@ -362,9 +364,9 @@ function RuntimeSelect({
   onChange: (value: AgentRuntimeChoice) => void;
 }): React.ReactElement {
   const options: Array<{ value: AgentRuntimeChoice; title: string; detail?: string }> = [
-    { value: 'demo', title: 'Novu Demo Agent', detail: '10 conversations per month' },
-    { value: 'claude', title: 'Claude Managed Agents - BYOK' },
-    { value: 'claude-aws', title: 'Claude Managed Agents on AWS' },
+    { value: 'demo', title: 'Demo Credentials', detail: '10 conversations per month' },
+    { value: 'claude', title: 'Claude Managed Agents' },
+    { value: 'claude-aws', title: 'AWS Claude Managed Agents' },
   ];
   const [idx, setIdx] = React.useState(0);
 

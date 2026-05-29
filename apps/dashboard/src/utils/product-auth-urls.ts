@@ -73,7 +73,7 @@ function buildAppOrigin(hostname: string): string {
   return `${window.location.protocol}//${normalizeAppHost(hostname)}`;
 }
 
-/** Primary ClerkProvider allowlist — satellite origins must be listed for redirectWithAuth. */
+/** Primary ClerkProvider allowlist — Connect host origin must be listed so post-auth navigation back from primary is honored. */
 export function buildClerkAllowedRedirectOrigins(): Array<string | RegExp> {
   const origins: Array<string | RegExp> = ['http://localhost:*'];
 
@@ -149,61 +149,4 @@ export function readClerkAuthParamFromLocation(param: string, searchParams?: URL
 /** Clerk may put redirect_url in the query string or inside hash routing (#/?redirect_url=). */
 export function readClerkRedirectUrlParam(searchParams?: URLSearchParams): string | null {
   return readClerkAuthParamFromLocation('redirect_url', searchParams);
-}
-
-/** Strip handshake params that can accumulate across redirect loops. */
-function sanitizeConnectSatelliteReturnUrl(url: string): string {
-  try {
-    const parsed = new URL(url);
-    parsed.searchParams.delete('__clerk_netlify_cache_bust');
-    parsed.searchParams.delete('__clerk_synced');
-    parsed.searchParams.delete('__clerk_sync');
-    parsed.searchParams.delete('__clerk_handshake');
-
-    return parsed.toString();
-  } catch {
-    return url;
-  }
-}
-
-/** Clerk's satellite handshake return URL — must be honored so Connect receives the synced session. */
-export function readConnectSatelliteReturnUrl(searchParams?: URLSearchParams): string | null {
-  const redirectUrl = readClerkRedirectUrlParam(searchParams);
-
-  if (!redirectUrl || !isConnectHostnameUrl(redirectUrl)) {
-    return null;
-  }
-
-  return sanitizeConnectSatelliteReturnUrl(redirectUrl);
-}
-
-function isConnectPrimaryAuthPath(url: string): boolean {
-  try {
-    const pathname = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://local').pathname;
-
-    return pathname === ROUTES.SIGN_IN || pathname === ROUTES.SIGN_UP;
-  } catch {
-    return false;
-  }
-}
-
-/** Return URL to send back to Connect after primary auth — skip sign-in/sign-up pages that re-bounce. */
-export function resolveConnectSatelliteReturnUrl(searchParams: URLSearchParams): string | null {
-  const fromQuery = readConnectSatelliteReturnUrl(searchParams);
-
-  if (fromQuery && !isConnectPrimaryAuthPath(fromQuery)) {
-    return fromQuery;
-  }
-
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  const currentLocation = window.location.href;
-
-  if (isConnectHostnameUrl(currentLocation) && !isConnectPrimaryAuthPath(currentLocation)) {
-    return sanitizeConnectSatelliteReturnUrl(currentLocation);
-  }
-
-  return null;
 }

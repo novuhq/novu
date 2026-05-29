@@ -16,7 +16,7 @@ describe('resolveRegionUrls', () => {
 
     expect(urls.apiUrl).toBe('https://api.novu-staging.co');
     expect(urls.dashboardUrl).toBe('https://dashboard.novu-staging.co');
-    expect(urls.connectDashboardUrl).toBe('https://devconnect.novu.co');
+    expect(urls.connectDashboardUrl).toBe('https://connect.novu-staging.co');
   });
 
   it('maps local region to local dev URLs with connect dashboard matching dashboard', () => {

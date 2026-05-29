@@ -323,8 +323,14 @@ export async function updateAgent(
   return response.data;
 }
 
-export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
-  return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
+export function deleteAgent(
+  environment: IEnvironment,
+  identifier: string,
+  options?: { deleteFromProvider?: boolean }
+): Promise<void> {
+  const params = options?.deleteFromProvider ? '?deleteFromProvider=true' : '';
+
+  return del(`/agents/${encodeURIComponent(identifier)}${params}`, { environment });
 }
 
 /** Picked integration fields on an agent–integration link (matches API `integration`). */
