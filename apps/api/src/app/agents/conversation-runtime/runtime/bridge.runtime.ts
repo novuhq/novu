@@ -1,18 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
-import type { AgentAction } from '@novu/framework';
 import type { CardChild, CardElement } from 'chat';
 import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from './agent-runtime.port';
-import {
-  type AgentExecutionParams,
-  BridgeExecutorService,
-  type BridgeReaction,
-  NoBridgeUrlError,
-} from './bridge-executor.service';
+import { type AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
 import type { ConversationTurn } from './conversation-turn';
 import { applyPlatformThreadIdToThread } from './platform-thread.util';
 
@@ -53,7 +47,8 @@ export class BridgeRuntime implements AgentRuntime {
     this.logger.setContext(this.constructor.name);
   }
 
-  async dispatchTurn(turn: ConversationTurn): Promise<void> {
+  /** Bridge handles every turn shape the same way: forward it to the customer bridge. */
+  async dispatch(turn: ConversationTurn): Promise<void> {
     try {
       await this.bridgeExecutor.execute(this.toExecutionParams(turn));
     } catch (err) {
@@ -65,24 +60,6 @@ export class BridgeRuntime implements AgentRuntime {
 
       throw err;
     }
-  }
-
-  async handleAction(turn: ConversationTurn, action: AgentAction): Promise<void> {
-    await this.bridgeExecutor.execute({
-      ...this.toExecutionParams(turn),
-      event: turn.event,
-      message: null,
-      action,
-    });
-  }
-
-  async handleReaction(turn: ConversationTurn, reaction: BridgeReaction): Promise<void> {
-    await this.bridgeExecutor.execute({
-      ...this.toExecutionParams(turn),
-      event: turn.event,
-      message: null,
-      reaction,
-    });
   }
 
   private toExecutionParams(turn: ConversationTurn): AgentExecutionParams {

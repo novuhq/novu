@@ -271,7 +271,7 @@ export class AgentInboundHandler implements OnModuleInit {
       storedAttachments: message.attachments?.length ? storedAttachments : undefined,
     };
 
-    await runtime.dispatchTurn(turn);
+    await runtime.dispatch(turn);
   }
 
   /** Telegram `/start <code>` is control input; when present it is always consumed here. */
@@ -656,7 +656,7 @@ export class AgentInboundHandler implements OnModuleInit {
       reaction: reactionPayload,
     };
 
-    await runtime.handleReaction(turn, reactionPayload);
+    await runtime.dispatch(turn);
   }
 
   async handleAction(
@@ -768,6 +768,6 @@ export class AgentInboundHandler implements OnModuleInit {
       action,
     };
 
-    await runtime.handleAction(turn, action);
+    await runtime.dispatch(turn);
   }
 }

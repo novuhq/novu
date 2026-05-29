@@ -1,12 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DEMO_QUOTA_EXHAUSTED_REPLY, DemoQuotaExhaustedError, PinoLogger } from '@novu/application-generic';
-import type { AgentAction } from '@novu/framework';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime.port';
-import type { BridgeReaction } from '../conversation-runtime/runtime/bridge-executor.service';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
+import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { ManagedAgentService } from './managed-agent.service';
 import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
@@ -23,7 +22,13 @@ export class ManagedRuntime implements AgentRuntime {
     this.logger.setContext(this.constructor.name);
   }
 
-  async dispatchTurn(turn: ConversationTurn): Promise<void> {
+  async dispatch(turn: ConversationTurn): Promise<void> {
+    // Managed agents only act on inbound messages. Card actions (tool-approval,
+    // link buttons) are resolved in ingress, and reactions are bridge-only today.
+    if (turn.event !== AgentEventEnum.ON_MESSAGE) {
+      return;
+    }
+
     if (turn.subscriber && turn.message?.id) {
       const parked = await this.handleManagedAgentSetupInbound.execute(
         ManagedAgentSetupInboundCommand.create({
@@ -63,14 +68,6 @@ export class ManagedRuntime implements AgentRuntime {
 
       throw err;
     }
-  }
-
-  async handleAction(_turn: ConversationTurn, _action: AgentAction): Promise<void> {
-    // Managed agents do not forward card actions to a bridge; ingress handles tool-approval and link buttons.
-  }
-
-  async handleReaction(_turn: ConversationTurn, _reaction: BridgeReaction): Promise<void> {
-    // Reactions are bridge-only today.
   }
 
   private async replyDemoQuotaExhausted(turn: ConversationTurn): Promise<void> {
