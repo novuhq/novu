@@ -362,9 +362,9 @@ function RuntimeSelect({
   onChange: (value: AgentRuntimeChoice) => void;
 }): React.ReactElement {
   const options: Array<{ value: AgentRuntimeChoice; title: string; detail?: string }> = [
-    { value: 'demo', title: 'Novu Demo Agent', detail: '10 conversations per month' },
-    { value: 'claude', title: 'Claude Managed Agents - BYOK' },
-    { value: 'claude-aws', title: 'Claude Managed Agents on AWS' },
+    { value: 'demo', title: 'Demo Credentials', detail: '10 conversations per month' },
+    { value: 'claude', title: 'Claude Managed Agents' },
+    { value: 'claude-aws', title: 'AWS Claude Managed Agents' },
   ];
   const [idx, setIdx] = React.useState(0);
 
