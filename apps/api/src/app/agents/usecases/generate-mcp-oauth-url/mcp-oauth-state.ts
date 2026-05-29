@@ -18,6 +18,8 @@ export interface McpOAuthState {
   mcpId: string;
   scope: McpConnectionScopeEnum;
   timestamp: number;
+  /** Conversation that initiated setup — used to replay the parked inbound turn. */
+  conversationId?: string;
 }
 
 export function buildMcpOAuthRedirectUri(): string {

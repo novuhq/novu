@@ -6,7 +6,7 @@ import type {
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
-import { del, get, getApiBaseUrl, NovuApiError, patch, post } from '@/api/api.client';
+import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
@@ -323,8 +323,14 @@ export async function updateAgent(
   return response.data;
 }
 
-export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
-  return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
+export function deleteAgent(
+  environment: IEnvironment,
+  identifier: string,
+  options?: { deleteFromProvider?: boolean }
+): Promise<void> {
+  const params = options?.deleteFromProvider ? '?deleteFromProvider=true' : '';
+
+  return del(`/agents/${encodeURIComponent(identifier)}${params}`, { environment });
 }
 
 /** Picked integration fields on an agent–integration link (matches API `integration`). */
@@ -547,6 +553,34 @@ export function disableAgentMcpServer(
 ): Promise<void> {
   return del(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}`, {
     environment,
+  });
+}
+
+export type SetAgentMcpServersFailure = {
+  mcpId: string;
+  operation: 'enable' | 'disable';
+  code: string;
+  message: string;
+};
+
+export type SetAgentMcpServersResponse = {
+  data: AgentMcpServerEnablement[];
+  failed: SetAgentMcpServersFailure[];
+};
+
+/**
+ * Bulk "set desired state" — replaces the agent's enabled MCP set with
+ * `mcpIds`. Returns the final enabled list plus a per-id `failed[]` array
+ * for any rows the server could not mutate (the rest still take effect).
+ */
+export async function setAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpIds: string[]
+): Promise<SetAgentMcpServersResponse> {
+  return put<SetAgentMcpServersResponse>(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`, {
+    environment,
+    body: { mcpIds },
   });
 }
 

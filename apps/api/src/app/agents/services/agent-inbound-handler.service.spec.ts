@@ -40,6 +40,7 @@ describe('AgentInboundHandler', () => {
       startCodeConsume?: sinon.SinonStub;
       findTelegramEndpointByIdentity?: sinon.SinonStub;
       agentFindOne?: sinon.SinonStub;
+      managedAgentSetupHandleInbound?: sinon.SinonStub;
     } = {}
   ) {
     const logger = makeLogger();
@@ -63,7 +64,9 @@ describe('AgentInboundHandler', () => {
     };
     const managedAgentService = {
       dispatch: sinon.stub().resolves(undefined),
-      confirmToolApproval: sinon.stub().resolves(undefined),
+    };
+    const confirmToolApproval = {
+      execute: sinon.stub().resolves(undefined),
     };
     const chatSdkService = {
       registerInboundCallbacks: sinon.stub(),
@@ -91,12 +94,17 @@ describe('AgentInboundHandler', () => {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findTelegramEndpointByIdentity ?? sinon.stub().resolves(null),
     };
+    const handleManagedAgentSetupInbound = {
+      execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
       conversationService as any,
       bridgeExecutor as any,
       managedAgentService as any,
+      confirmToolApproval as any,
+      handleManagedAgentSetupInbound as any,
       chatSdkService as any,
       agentRepository as any,
       subscriberRepository as any,

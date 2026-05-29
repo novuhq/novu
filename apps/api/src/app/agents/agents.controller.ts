@@ -13,7 +13,6 @@ import {
   Query,
   Req,
   UseFilters,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiExcludeController, ApiExcludeEndpoint, ApiOperation } from '@nestjs/swagger';
@@ -57,6 +56,8 @@ import {
   McpConnectionResponseDto,
   MigrateAgentRuntimeRequestDto,
   PatchAgentRuntimeConfigRequestDto,
+  SetAgentMcpServersRequestDto,
+  SetAgentMcpServersResponseDto,
   UpdateAgentBridgeRequestDto,
   UpdateAgentInboxSharedRequestDto,
   UpdateAgentIntegrationRequestDto,
@@ -79,7 +80,6 @@ import {
   SendWhatsAppTestTemplateResponseDto,
 } from './dtos/send-whatsapp-test-template.dto';
 import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
-import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import { AddAgentIntegrationCommand } from './usecases/add-agent-integration/add-agent-integration.command';
 import { AddAgentIntegration } from './usecases/add-agent-integration/add-agent-integration.usecase';
 import { ConfigureTelegramAgentWebhookCommand } from './usecases/configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
@@ -127,6 +127,8 @@ import { SendAgentWelcomeMessageCommand } from './usecases/send-agent-welcome-me
 import { SendAgentWelcomeMessage } from './usecases/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { SendWhatsAppTestTemplateCommand } from './usecases/send-whatsapp-test-template/send-whatsapp-test-template.command';
 import { SendWhatsAppTestTemplate } from './usecases/send-whatsapp-test-template/send-whatsapp-test-template.usecase';
+import { SetAgentMcpServersCommand } from './usecases/set-agent-mcp-servers/set-agent-mcp-servers.command';
+import { SetAgentMcpServers } from './usecases/set-agent-mcp-servers/set-agent-mcp-servers.usecase';
 import { UpdateAgentCommand } from './usecases/update-agent/update-agent.command';
 import { UpdateAgent } from './usecases/update-agent/update-agent.usecase';
 import { UpdateAgentInboxSharedCommand } from './usecases/update-agent-inbox-shared/update-agent-inbox-shared.command';
@@ -144,7 +146,6 @@ import { VerifyManagedCredentials } from './usecases/verify-managed-credentials/
 @ApiCommonResponses()
 @Controller('/agents')
 @UseInterceptors(ClassSerializerInterceptor)
-@UseGuards(AgentConversationEnabledGuard)
 @ApiExcludeController()
 @RequireAuthentication()
 export class AgentsController {
@@ -168,6 +169,7 @@ export class AgentsController {
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
     private readonly enableAgentMcpServerUsecase: EnableAgentMcpServer,
     private readonly disableAgentMcpServerUsecase: DisableAgentMcpServer,
+    private readonly setAgentMcpServersUsecase: SetAgentMcpServers,
     private readonly listAgentMcpServersUsecase: ListAgentMcpServers,
     private readonly generateMcpOAuthUrlUsecase: GenerateMcpOAuthUrl,
     private readonly getMcpConnectionStatusUsecase: GetMcpConnectionStatus,
@@ -194,6 +196,7 @@ export class AgentsController {
   }
 
   @Post('/verify-credentials')
+  @ExternalApiAccessible()
   @ApiResponse(VerifyManagedCredentialsResponseDto)
   @ApiOperation({
     summary: 'Verify managed-runtime credentials',
@@ -221,6 +224,7 @@ export class AgentsController {
   }
 
   @Post('/generate')
+  @ExternalApiAccessible()
   @ApiResponse(GenerateManagedAgentResponseDto)
   @ApiOperation({
     summary: 'Generate an agent configuration from a free-form prompt',
@@ -259,6 +263,7 @@ export class AgentsController {
   }
 
   @Post('/')
+  @ExternalApiAccessible()
   @ApiResponse(AgentResponseDto, 201)
   @ApiOperation({
     summary: 'Create agent',
@@ -283,6 +288,7 @@ export class AgentsController {
   }
 
   @Get('/')
+  @ExternalApiAccessible()
   @ApiResponse(ListAgentsResponseDto)
   @ApiOperation({
     summary: 'List agents',
@@ -308,6 +314,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations')
+  @ExternalApiAccessible()
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Link integration to agent',
@@ -336,6 +343,7 @@ export class AgentsController {
   }
 
   @Get('/:identifier/integrations')
+  @ExternalApiAccessible()
   @ApiResponse(ListAgentIntegrationsResponseDto)
   @ApiOperation({
     summary: 'List agent integrations',
@@ -536,6 +544,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/welcome-message')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Send onboarding welcome message',
@@ -563,6 +572,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations/:integrationId/telegram/configure')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(ConfigureTelegramWebhookResponseDto, 200)
   @ApiOperation({
@@ -592,6 +602,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations/:integrationId/telegram/mobile-link')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueTelegramMobileLinkResponseDto, 200)
   @ApiOperation({
@@ -623,6 +634,7 @@ export class AgentsController {
   }
 
   @Post('/:identifier/integrations/:integrationId/telegram/subscriber-link')
+  @ExternalApiAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueTelegramSubscriberLinkResponseDto, 200)
   @ApiOperation({
@@ -928,6 +940,37 @@ export class AgentsController {
     );
   }
 
+  @Put('/:identifier/mcp-servers')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(SetAgentMcpServersResponseDto, 200)
+  @ApiOperation({
+    summary: 'Replace the agent\u2019s enabled MCP server set',
+    description:
+      'Idempotent bulk update: ids in the request not currently enabled are enabled, currently-enabled ids ' +
+      'missing from the request are disabled, the rest are untouched. Catalog validation fails the whole ' +
+      'request up-front (no partial writes for malformed input). Per-row business / provider errors are ' +
+      'collected into `failed[]` so a single bad row never strands the other edits; the dashboard surfaces ' +
+      'these failures and refetches the list to render the truth.',
+  })
+  @ApiNotFoundResponse({ description: 'The agent or runtime integration was not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  setAgentMcpServers(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Body() body: SetAgentMcpServersRequestDto
+  ): Promise<SetAgentMcpServersResponseDto> {
+    return this.setAgentMcpServersUsecase.execute(
+      SetAgentMcpServersCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpIds: body.mcpIds,
+      })
+    );
+  }
+
   @Delete('/:identifier/mcp-servers/:mcpId')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
@@ -979,6 +1022,7 @@ export class AgentsController {
         agentIdentifier: identifier,
         mcpId,
         subscriberId: body.subscriberId,
+        conversationId: body.conversationId,
       })
     );
   }

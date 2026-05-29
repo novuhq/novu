@@ -34,7 +34,12 @@ export type ConnectSetupStep = {
 export type UseConnectSetupStepsResult = {
   steps: ConnectSetupStep[];
   isComplete: boolean;
+  /** True while prerequisite queries are still resolving onboarding state. */
   isLoading: boolean;
+  /** True only when onboarding is incomplete and setup state has been resolved. */
+  shouldShowOnboarding: boolean;
+  /** Drives welcome copy — avoids onboarding messaging flash for returning users while loading. */
+  showOnboardingMessaging: boolean;
 };
 
 const AGENTS_PEEK_PARAMS = { after: undefined, before: undefined, limit: 2, identifier: '' };
@@ -132,14 +137,21 @@ export function useConnectSetupSteps(): UseConnectSetupStepsResult {
     [addAgentCompleted, onlyAgent?.identifier, sendMessageCompleted, setupChannelCompleted, setupChannelCtaAvailable]
   );
 
-  // Only block on agents loading — conversations / integrations errors should never hide the section.
-  // The persisted `CONNECT_ONBOARDING_COMPLETED` flag is written from `agent-details.tsx` once the
-  // user finishes setting up an agent there; here we only read it to keep the section hidden.
-  const isLoading = agentsQuery.isLoading;
+  const isOnboardingCompletedInStorage = localStorage.getItem(CONNECT_ONBOARDING_COMPLETED) === 'true';
+  const hasResolvedAgents = agentsQuery.isSuccess || agentsQuery.isError;
+  const hasResolvedIntegrations = !onlyAgent || agentIntegrationsQuery.isSuccess || agentIntegrationsQuery.isError;
+  const hasResolvedConversations = !hasAgent || conversationsQuery.isSuccess || conversationsQuery.isError;
+  const isSetupResolved = hasResolvedAgents && hasResolvedIntegrations && hasResolvedConversations;
+  const isComplete = isOnboardingCompletedInStorage || agentSetupComplete || hasAnyConversation;
+  const isLoading = !isOnboardingCompletedInStorage && !isSetupResolved;
+  const shouldShowOnboarding = isSetupResolved && !isComplete;
+  const showOnboardingMessaging = isSetupResolved ? !isComplete : !isOnboardingCompletedInStorage;
 
   return {
     steps,
-    isComplete: localStorage.getItem(CONNECT_ONBOARDING_COMPLETED) === 'true' || agentSetupComplete,
-    isLoading: isLoading || !agentsQuery.data,
+    isComplete,
+    isLoading,
+    shouldShowOnboarding,
+    showOnboardingMessaging,
   };
 }

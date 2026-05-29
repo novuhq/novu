@@ -1,11 +1,10 @@
-import { ForbiddenException, Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { AnalyticsService, FeatureFlagsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import {
   CLAUDE_ANTHROPIC_SKILLS,
   CLAUDE_BUILTIN_TOOLS,
   CLAUDE_DEFAULT_TOOL_TYPES,
-  FeatureFlagsKeysEnum,
   MCP_SERVERS,
 } from '@novu/shared';
 
@@ -177,7 +176,6 @@ function ensureDefaultTools(tools: string[]): string[] {
 export class GenerateManagedAgent {
   constructor(
     private readonly moduleRef: ModuleRef,
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {}
@@ -187,22 +185,6 @@ export class GenerateManagedAgent {
     const { user, prompt } = command;
     const runtime = command.runtime ?? 'managed';
     const { organizationId, environmentId, _id: userId } = user;
-
-    // Self-hosted scaffolding does not provision anything on Anthropic Managed Agents — it just
-    // emits name/identifier/systemPrompt for the caller's own runtime. There is therefore no
-    // reason to gate it on IS_MANAGED_AGENT_RUNTIME_ENABLED. Managed generation still requires
-    // the flag because the resulting agent will be provisioned on Anthropic.
-    if (runtime === 'managed') {
-      const isEnabled = await this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED,
-        defaultValue: false,
-        organization: { _id: organizationId },
-      });
-
-      if (!isEnabled) {
-        throw new ForbiddenException('Managed agent generation is not enabled for this organization');
-      }
-    }
 
     const eeAi = this.loadEeAi();
     const llmService = this.moduleRef.get(eeAi.LlmService, { strict: false });

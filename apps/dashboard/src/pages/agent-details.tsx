@@ -132,9 +132,9 @@ export function AgentDetailsPage() {
   useSetConnectBreadcrumbLeaf(connectBreadcrumbLeaf);
 
   const deleteMutation = useMutation({
-    mutationFn: (identifier: string) =>
-      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
-    onSuccess: async (_, identifier) => {
+    mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
+      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, { deleteFromProvider }),
+    onSuccess: async (_, { identifier }) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
       track(
@@ -386,14 +386,15 @@ export function AgentDetailsPage() {
                   setAgentToDelete(null);
                 }
               }}
-              onConfirm={() => {
+              onConfirm={({ deleteFromProvider }) => {
                 if (agentToDelete) {
-                  deleteMutation.mutate(agentToDelete.identifier);
+                  deleteMutation.mutate({ identifier: agentToDelete.identifier, deleteFromProvider });
                 }
               }}
               agentName={agentToDelete?.name ?? ''}
               agentIdentifier={agentToDelete?.identifier ?? ''}
               isDeleting={deleteMutation.isPending}
+              isManagedRuntime={agentToDelete?.runtime === 'managed'}
             />
 
             <AgentSetupModal

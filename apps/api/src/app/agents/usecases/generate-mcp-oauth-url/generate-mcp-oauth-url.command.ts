@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
@@ -15,4 +15,9 @@ export class GenerateMcpOAuthUrlCommand extends EnvironmentWithUserCommand {
   @IsString()
   @IsNotEmpty()
   subscriberId: string;
+
+  /** Conversation that initiated setup — round-trips through signed OAuth state. */
+  @IsOptional()
+  @IsString()
+  conversationId?: string;
 }

@@ -16,6 +16,7 @@ export const ROUTES = {
   INBOX_EMBED_SUCCESS: '/onboarding/inbox/success',
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
+  CLI_AUTH: '/cli/auth',
   ENV: '/env',
   SETTINGS: '/settings',
   SETTINGS_ACCOUNT: '/settings/account',

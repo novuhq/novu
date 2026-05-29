@@ -9,7 +9,6 @@ import {
   Post,
   Req,
   Res,
-  UseGuards,
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { PinoLogger } from '@novu/application-generic';
@@ -21,7 +20,6 @@ import { ExternalApiAccessible } from '../auth/framework/external-api.decorator'
 import { UserSession } from '../shared/framework/user.decorator';
 import { AgentReplyPayloadDto } from './dtos/agent-reply-payload.dto';
 import { AgentInactiveException } from './exceptions/agent-inactive.exception';
-import { AgentConversationEnabledGuard } from './guards/agent-conversation-enabled.guard';
 import type { AgentConfigResolveSource } from './services/agent-config-resolver.service';
 import { ChatSdkService } from './services/chat-sdk.service';
 import { ManagedAgentService } from './services/managed-agent.service';
@@ -29,7 +27,6 @@ import { HandleAgentReplyCommand } from './usecases/handle-agent-reply/handle-ag
 import { HandleAgentReply } from './usecases/handle-agent-reply/handle-agent-reply.usecase';
 
 @Controller('/agents')
-@UseGuards(AgentConversationEnabledGuard)
 @ApiExcludeController()
 export class AgentsWebhookController {
   constructor(

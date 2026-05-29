@@ -36,7 +36,8 @@ export const LEGACY_DASHBOARD_URL =
 
 export const DASHBOARD_URL = window._env_?.VITE_DASHBOARD_URL || import.meta.env.VITE_DASHBOARD_URL;
 
-// Connect satellite hostname. Empty when Connect is not deployed (self-hosted/dev).
+// Connect host. Must share registrable domain with `NOVU_PLATFORM_HOSTNAME` so Clerk session
+// cookies (Domain=<root>) are visible on both. Empty when Connect is not deployed (self-hosted/dev).
 export const NOVU_CONNECT_HOSTNAME =
   window._env_?.VITE_NOVU_CONNECT_HOSTNAME || import.meta.env.VITE_NOVU_CONNECT_HOSTNAME || '';
 
@@ -56,7 +57,7 @@ function getHostnameWithoutPort(host: string): string {
 export { getHostnameWithoutPort };
 
 // Fail fast when the hostname split is half-configured. Without `NOVU_PLATFORM_HOSTNAME`,
-// satellite → primary handoffs (Clerk sign-in, cross-product redirects) silently break.
+// Connect → Platform handoffs (Clerk sign-in, cross-product redirects) silently break.
 if (NOVU_CONNECT_HOSTNAME && !NOVU_PLATFORM_HOSTNAME) {
   throw new Error(
     'NOVU_PLATFORM_HOSTNAME is required when NOVU_CONNECT_HOSTNAME is set. ' +

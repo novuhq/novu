@@ -35,6 +35,8 @@ import {
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
 import { GetMcpNovuAppCredentials } from '../get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
+import { CompleteManagedAgentSetup } from '../managed-agent-setup/complete-managed-agent-setup.usecase';
+import { ManagedAgentSetupCompleteCommand } from '../managed-agent-setup/managed-agent-setup-complete.command';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oauth-callback.command';
@@ -80,6 +82,7 @@ export class McpOAuthCallback {
     private readonly discoveryService: McpOAuthDiscoveryService,
     private readonly syncAgentMcpServers: SyncAgentMcpServers,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
+    private readonly completeManagedAgentSetup: CompleteManagedAgentSetup,
     private readonly getNovuAppCredentials: GetMcpNovuAppCredentials,
     private readonly logger: PinoLogger
   ) {
@@ -295,8 +298,8 @@ export class McpOAuthCallback {
   }
 
   /**
-   * After the encrypted token blob has been persisted to mongo, fan out the
-   * three side effects that complete the lazy-OAuth flow:
+   * After the encrypted token blob has been persisted to mongo, fan out
+   * post-connect side effects for the managed-agent MCP OAuth flow:
    *
    *   1. Push the credential to the runtime provider's vault when the
    *      provider exposes one (`capabilities.tokenVault === true`). Persists
@@ -383,6 +386,16 @@ export class McpOAuthCallback {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err), agentId: stateData.agentId },
         'SyncAgentMcpServers after OAuth callback failed (non-fatal)'
+      );
+    }
+
+    try {
+      // update the agent setup/onboarding card to show the connected MCP
+      await this.completeManagedAgentSetup.execute(ManagedAgentSetupCompleteCommand.create({ stateData }));
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), conversationId: stateData.conversationId },
+        'Managed agent setup completion after OAuth callback failed (non-fatal)'
       );
     }
   }

@@ -24,8 +24,8 @@ export class McpConnectionVaultService {
    * Subscriber-scoped only in v1: anonymous platform turns (no subscriber)
    * receive `[]` because no write path creates `scope: 'agent'` rows today.
    * When OAuth MCPs are enabled but no vault exists yet, one is created so
-   * Anthropic can attempt MCP init (triggering the lazy Connect card on
-   * failure).
+   * credentials can be bound via `vault_ids` after the subscriber completes
+   * in-thread OAuth (dispatch is gated until then).
    */
   async resolveVaultIds(params: {
     agentId: string;
@@ -162,7 +162,11 @@ export class McpConnectionVaultService {
       return null;
     }
 
-    const oauthEnablements = await this.listOAuthEnablements(params);
+    const oauthEnablements = await this.agentMcpServerRepository.findOAuthEnablementsForAgent({
+      organizationId: params.organizationId,
+      environmentId: params.environmentId,
+      agentId: params.agentId,
+    });
 
     if (oauthEnablements.length === 0) {
       return null;
@@ -180,7 +184,7 @@ export class McpConnectionVaultService {
 
   /**
    * Create and persist a subscriber vault before OAuth so sessions can opt in
-   * via `vault_ids` and MCP init failures surface the Connect card.
+   * via `vault_ids` when credentials are pushed after the in-thread Connect flow.
    *
    * Race-safe across concurrent first-time dispatches:
    *   1. Re-check siblings inside the function (covers races that resolved
@@ -340,21 +344,6 @@ export class McpConnectionVaultService {
 
       return externalVaultId;
     }
-  }
-
-  private async listOAuthEnablements(params: {
-    agentId: string;
-    environmentId: string;
-    organizationId: string;
-  }): Promise<AgentMcpServerEntity[]> {
-    const enablements = await this.agentMcpServerRepository.findByAgent({
-      organizationId: params.organizationId,
-      environmentId: params.environmentId,
-      agentId: params.agentId,
-      enabledOnly: true,
-    });
-
-    return enablements.filter((row) => MCP_SERVERS.some((entry) => entry.id === row.mcpId && entry.oauth));
   }
 
   private async listAgentMcpServerIds(

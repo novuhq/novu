@@ -8,6 +8,7 @@ export interface ToolProgressPayload {
   toolName?: string;
   mcpServerName?: string;
   status?: 'running' | 'complete' | 'error';
+  details?: string;
   toolInput?: Record<string, unknown>;
 }
 
