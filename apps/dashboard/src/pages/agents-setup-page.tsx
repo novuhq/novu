@@ -25,19 +25,28 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
-import { getPostOnboardingRoute, resolveOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
+import {
+  getPostOnboardingRoute,
+  resolveOnboardingAppId,
+  withAppId,
+  withOnboardingSource,
+} from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 function goToPostOnboardingRoute(target: string, navigate: (path: string) => void) {
-  // Absolute URLs need a full page nav so the browser actually crosses origins.
-  if (isAbsoluteUrl(target)) {
-    window.location.assign(target);
+  const targetWithSource = withOnboardingSource(target);
+
+  // Absolute URLs need a full document load — that's what re-boots Clerk so it resyncs the freshly
+  // created org. A client navigation would skip the reload and strand the next org-create at the
+  // provisioning loader. The onboarding signal rides along as a query param, which survives it.
+  if (isAbsoluteUrl(targetWithSource)) {
+    window.location.assign(targetWithSource);
 
     return;
   }
 
-  navigate(target);
+  navigate(targetWithSource);
 }
 
 type LoadingPhase = 'initializing' | 'loading' | 'ready' | 'error';
