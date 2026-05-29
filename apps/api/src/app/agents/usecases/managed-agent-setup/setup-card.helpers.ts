@@ -9,7 +9,12 @@ export interface SetupCardRow extends OAuthMcp {
 const SETUP_REQUIRED_TEXT =
   'Connect the tools below to continue. Your message will be handled automatically once setup is complete.';
 
-const SETUP_COMPLETE_TEXT = 'All tools connected. Working on your message…';
+const SETUP_COMPLETE_TEXT_CELEBRATION = "You're all set!";
+
+const SETUP_COMPLETE_TEXT_WITH_PROCESSING_HINT = 'All tools connected. Your message will run automatically.';
+
+export const SETUP_GATE_NUDGE_MARKDOWN =
+  'Please finish connecting your tools using the card above. Your latest message will run automatically once setup is complete.';
 
 function isErrorStatus(status: OAuthMcp['status']): boolean {
   return (
@@ -55,14 +60,21 @@ function buildMcpRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
   return buildPendingRowBlocks(mcp);
 }
 
-export function buildSetupCard(params: { mcps: SetupCardRow[]; resolved?: boolean }): Record<string, unknown> {
+export function buildSetupCard(params: {
+  mcps: SetupCardRow[];
+  resolved?: boolean;
+  showProcessingHint?: boolean;
+}): Record<string, unknown> {
   const title = params.resolved ? 'Setup complete' : 'Connect your tools';
 
   if (params.resolved) {
+    const showProcessingHint = params.showProcessingHint !== false;
+    const body = showProcessingHint ? SETUP_COMPLETE_TEXT_WITH_PROCESSING_HINT : SETUP_COMPLETE_TEXT_CELEBRATION;
+
     return {
       type: 'card',
       title,
-      children: [{ type: 'text', content: SETUP_COMPLETE_TEXT }],
+      children: [{ type: 'text', content: body }],
     };
   }
 

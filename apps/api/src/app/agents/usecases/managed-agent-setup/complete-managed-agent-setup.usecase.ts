@@ -13,7 +13,9 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 
+import { PLATFORMS_WITH_TYPING_INDICATOR } from '../../dtos/agent-platform.enum';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../../services/agent-config-resolver.service';
+import { ChatSdkService } from '../../services/chat-sdk.service';
 import { ManagedAgentService } from '../../services/managed-agent.service';
 import { GenerateMcpOAuthUrl } from '../generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
@@ -40,6 +42,7 @@ export class CompleteManagedAgentSetup {
     private readonly managedAgentService: ManagedAgentService,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
     private readonly handleAgentReply: HandleAgentReply,
+    private readonly chatSdkService: ChatSdkService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -267,10 +270,15 @@ export class CompleteManagedAgentSetup {
   }): Promise<void> {
     const { conversation, pending, agent, config, subscriber, mcps } = params;
 
+    const platformThreadId = conversation.channels?.[0]?.platformThreadId;
+    const willShowTypingBeforeReplay =
+      config.acknowledgeOnReceived && PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform) && !!platformThreadId;
+
     if (pending.setupMessageId) {
       const resolvedCard = await buildSetupCardForMcps({
         mcps,
         resolved: true,
+        showProcessingHint: !willShowTypingBeforeReplay,
         environmentId: config.environmentId,
         organizationId: config.organizationId,
         agentIdentifier: config.agentIdentifier,
@@ -311,6 +319,8 @@ export class CompleteManagedAgentSetup {
 
     delete conversation.pendingManagedAgentSetup;
 
+    await this.showTypingBeforeSetupReplay(conversation, agent, config);
+
     await this.managedAgentService.replayParkedInboundTurn({
       conversation,
       config,
@@ -318,5 +328,26 @@ export class CompleteManagedAgentSetup {
       pendingPlatformMessageId: pending.pendingPlatformMessageId,
       agent,
     });
+  }
+
+  private async showTypingBeforeSetupReplay(
+    conversation: ConversationEntity,
+    agent: Pick<AgentEntity, '_id'>,
+    config: ResolvedAgentConfig
+  ): Promise<void> {
+    const platformThreadId = conversation.channels?.[0]?.platformThreadId;
+
+    if (!config.acknowledgeOnReceived || !PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform) || !platformThreadId) {
+      return;
+    }
+
+    try {
+      await this.chatSdkService.startTypingInConversation(agent._id, config.integrationIdentifier, platformThreadId);
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `Failed to show typing before managed-agent setup replay for conversation ${conversation._id}`
+      );
+    }
   }
 }

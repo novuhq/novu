@@ -16,6 +16,7 @@ import { listOAuthMcps } from './list-oauth-mcps.helper';
 import { ManagedAgentSetupInboundCommand } from './managed-agent-setup-inbound.command';
 import { isOAuthMcpPending, type OAuthMcp } from './oauth-mcp.types';
 import { buildSetupCardForMcps } from './setup-card.builder';
+import { SETUP_GATE_NUDGE_MARKDOWN } from './setup-card.helpers';
 
 /**
  * Inbound gate for managed agents: park the user turn and post/edit a setup
@@ -126,6 +127,9 @@ export class HandleManagedAgentSetupInbound {
     };
 
     if (pendingState.setupMessageId) {
+      // If a setup card was already posted previously, edit the existing card
+      // to update its contents (for example, to refresh the list of available MCPs
+      // or to provide refreshed OAuth URLs).
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
           ...replyCommandBase,
@@ -133,6 +137,14 @@ export class HandleManagedAgentSetupInbound {
             messageId: pendingState.setupMessageId,
             content: { card },
           },
+        })
+      );
+
+      // Post a nudge message to the user to complete the setup.
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          ...replyCommandBase,
+          reply: { markdown: SETUP_GATE_NUDGE_MARKDOWN },
         })
       );
 
@@ -186,6 +198,7 @@ export class HandleManagedAgentSetupInbound {
     const card = await buildSetupCardForMcps({
       mcps,
       resolved: true,
+      showProcessingHint: false,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       agentIdentifier: command.agentIdentifier,

@@ -213,7 +213,11 @@ export class ChatSdkService implements OnModuleDestroy {
       dispose: (cached, key) => {
         cached.chat.shutdown().catch((err) => {
           this.logger.error(err, `Failed to shut down evicted Chat instance ${key}`);
-          captureAgentException(err, { component: 'chat-sdk', operation: 'shutdown-evicted', extra: { instanceKey: key } });
+          captureAgentException(err, {
+            component: 'chat-sdk',
+            operation: 'shutdown-evicted',
+            extra: { instanceKey: key },
+          });
         });
       },
     });
@@ -346,6 +350,24 @@ export class ChatSdkService implements OnModuleDestroy {
     const sent = await thread.post(postArg).catch(toDeliveryError);
 
     return { messageId: sent.id, platformThreadId: sent.threadId };
+  }
+
+  async startTypingInConversation(
+    agentId: string,
+    integrationIdentifier: string,
+    platformThreadId: string,
+    status = 'Thinking...'
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.getOrCreate(instanceKey, agentId, config.platform, config);
+    const thread = chat.thread(platformThreadId);
+
+    if (typeof thread.startTyping !== 'function') {
+      return;
+    }
+
+    await thread.startTyping(status).catch(toDeliveryError);
   }
 
   async sendDirectMessage(
@@ -1311,13 +1333,21 @@ export class ChatSdkService implements OnModuleDestroy {
       warn: (msg: string, ctx?: Record<string, unknown>) => {
         this.logger.warn(ctx ?? {}, msg);
         if (ctx?.err) {
-          captureAgentWarning(ctx.err, { component: 'chat-sdk', operation: 'chat-state-warn', extra: { message: msg } });
+          captureAgentWarning(ctx.err, {
+            component: 'chat-sdk',
+            operation: 'chat-state-warn',
+            extra: { message: msg },
+          });
         }
       },
       error: (msg: string, ctx?: Record<string, unknown>) => {
         this.logger.error(ctx ?? {}, msg);
         if (ctx?.err) {
-          captureAgentException(ctx.err, { component: 'chat-sdk', operation: 'chat-state-error', extra: { message: msg } });
+          captureAgentException(ctx.err, {
+            component: 'chat-sdk',
+            operation: 'chat-state-error',
+            extra: { message: msg },
+          });
         }
       },
     };

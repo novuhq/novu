@@ -388,6 +388,26 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const isManagedAgent = agent?.runtime === 'managed' && agent.managedRuntime;
 
+    if (config.acknowledgeOnReceived) {
+      const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
+
+      if (supportsTyping) {
+        await thread.startTyping('Thinking...');
+      } else if (isFirstMessage && message.id) {
+        thread
+          .createSentMessageFromMessage(message)
+          .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
+          .catch((err) => {
+            this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
+            captureAgentWarning(err, {
+              component: 'agent-inbound-handler',
+              operation: 'add-ack-reaction',
+              agentId,
+            });
+          });
+      }
+    }
+
     // Subscriber still owes MCP OAuth: hold this message, show the setup card, skip dispatch.
     // After OAuth completes, CompleteManagedAgentSetup replays the held message.
     if (isManagedAgent && subscriber && message.id) {
@@ -407,26 +427,6 @@ export class AgentInboundHandler implements OnModuleInit {
 
       if (parked) {
         return;
-      }
-    }
-
-    if (config.acknowledgeOnReceived) {
-      const supportsTyping = PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform);
-
-      if (supportsTyping) {
-        await thread.startTyping('Thinking...');
-      } else if (isFirstMessage && message.id) {
-        thread
-          .createSentMessageFromMessage(message)
-          .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
-          .catch((err) => {
-            this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
-            captureAgentWarning(err, {
-              component: 'agent-inbound-handler',
-              operation: 'add-ack-reaction',
-              agentId,
-            });
-          });
       }
     }
 

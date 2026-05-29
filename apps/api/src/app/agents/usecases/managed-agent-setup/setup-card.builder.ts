@@ -9,6 +9,7 @@ import { buildSetupCard, type SetupCardRow } from './setup-card.helpers';
 export async function buildSetupCardForMcps(params: {
   mcps: OAuthMcp[];
   resolved?: boolean;
+  showProcessingHint?: boolean;
   environmentId: string;
   organizationId: string;
   agentIdentifier: string;
@@ -54,5 +55,9 @@ export async function buildSetupCardForMcps(params: {
     }
   }
 
-  return buildSetupCard({ mcps: rows, resolved: params.resolved });
+  return buildSetupCard({
+    mcps: rows,
+    resolved: params.resolved,
+    showProcessingHint: params.showProcessingHint,
+  });
 }
