@@ -8,7 +8,7 @@ import {
 } from '@novu/application-generic';
 import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
-import { FindOrCreateNovuEmail } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.usecase';
+import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentCreated } from '../../../shared/analytics/agent-analytics';
 import type { AgentResponseDto } from '../../../shared/dtos';
 import { toAgentResponse } from '../../../shared/mappers/agent-response.mapper';
@@ -25,7 +25,7 @@ export class CreateAgent {
     private readonly agentRepository: AgentRepository,
     private readonly analyticsService: AnalyticsService,
     private readonly provisionManagedAgentUsecase: ProvisionManagedAgent,
-    private readonly findOrCreateNovuEmail: FindOrCreateNovuEmail,
+    private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly logger: PinoLogger
@@ -190,7 +190,7 @@ export class CreateAgent {
   /**
    * Auto-provision the agent's default NovuAgent email integration so the
    * dashboard EMAIL INBOX card has something to render the moment the agent
-   * is created. Reuses `FindOrCreateNovuEmail` (idempotent).
+   * is created. Reuses `NovuEmailProvisioningService` (idempotent).
    *
    * Gates:
    *   - cloud only (NOVU_ENTERPRISE + non self-hosted + shared inbound domain configured)

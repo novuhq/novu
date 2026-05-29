@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AnalyticsService, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
-import { CleanupNovuEmail } from '../../../email/novu-email/cleanup-novu-email/cleanup-novu-email.usecase';
+import { NovuEmailCleanupService } from '../../../email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { trackAgentDeleted } from '../../../shared/analytics/agent-analytics';
 import { DeleteAgentCommand } from './delete-agent.command';
 
@@ -12,7 +12,7 @@ export class DeleteAgent {
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly cleanupNovuEmail: CleanupNovuEmail,
+    private readonly cleanupNovuEmail: NovuEmailCleanupService,
     private readonly analyticsService: AnalyticsService
   ) {}
 

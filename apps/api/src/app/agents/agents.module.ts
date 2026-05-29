@@ -44,6 +44,8 @@ import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver
 import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
 import { AgentEmailActionsController } from './email/agent-email-actions.controller';
 import { AgentEmailSender } from './email/agent-email-sender.service';
+import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
+import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
 import { ManagedAgentService } from './managed-runtime/managed-agent.service';
@@ -52,6 +54,7 @@ import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-pro
 import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
 import { AgentRuntimeController } from './management/agent-runtime.controller';
 import { AgentsController } from './management/agents.controller';
+import { McpNovuAppCredentialsService } from './mcp/connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
 import { McpConnectionVaultService } from './mcp/connections/mcp-connection-vault.service';
 import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controller';
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
@@ -105,6 +108,9 @@ import { USE_CASES } from './usecases';
     ManagedAgentEventHandler,
     ManagedAgentService,
     McpConnectionVaultService,
+    NovuEmailCleanupService,
+    NovuEmailProvisioningService,
+    McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
     ChatInstanceRegistry,
     InboundDispatcher,

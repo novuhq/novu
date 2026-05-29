@@ -58,7 +58,7 @@ function sanitizeSlug(input: string): string {
 }
 
 @Injectable()
-export class FindOrCreateNovuEmail {
+export class NovuEmailProvisioningService {
   constructor(
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,

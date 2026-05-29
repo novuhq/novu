@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import type { EmojiFormats } from 'chat';
-import { esmImport } from '../../../shared/util/esm-import';
+import { esmImport } from '../../util/esm-import';
 
 export interface AgentEmojiEntry {
   name: string;

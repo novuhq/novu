@@ -4,10 +4,10 @@ import { AgentIntegrationRepository, DomainRouteRepository, IntegrationRepositor
 import { EmailProviderIdEnum } from '@novu/shared';
 import { ClientSession } from 'mongoose';
 
-const LOG_CONTEXT = 'CleanupNovuEmail';
+const LOG_CONTEXT = 'NovuEmailCleanupService';
 
 @Injectable()
-export class CleanupNovuEmail {
+export class NovuEmailCleanupService {
   constructor(
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,

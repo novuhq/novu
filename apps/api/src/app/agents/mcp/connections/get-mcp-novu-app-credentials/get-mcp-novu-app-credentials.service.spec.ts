@@ -1,17 +1,17 @@
 import { expect } from 'chai';
 
 import { McpOAuthDiscoveryError } from '../../oauth/mcp-oauth-discovery.service';
-import { GetMcpNovuAppCredentials } from './get-mcp-novu-app-credentials.usecase';
+import { McpNovuAppCredentialsService } from './get-mcp-novu-app-credentials.service';
 
-describe('GetMcpNovuAppCredentials', () => {
-  let usecase: GetMcpNovuAppCredentials;
+describe('McpNovuAppCredentialsService', () => {
+  let usecase: McpNovuAppCredentialsService;
   let previousClientId: string | undefined;
   let previousClientSecret: string | undefined;
 
   beforeEach(() => {
     previousClientId = process.env.NOVU_GITHUB_MCP_APP_CLIENT_ID;
     previousClientSecret = process.env.NOVU_GITHUB_MCP_APP_CLIENT_SECRET;
-    usecase = new GetMcpNovuAppCredentials();
+    usecase = new McpNovuAppCredentialsService();
   });
 
   afterEach(() => {

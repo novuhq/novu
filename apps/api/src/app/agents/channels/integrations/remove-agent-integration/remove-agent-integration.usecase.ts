@@ -2,7 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { AnalyticsService } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, EnvironmentRepository } from '@novu/dal';
 import { EnvironmentTypeEnum } from '@novu/shared';
-import { CleanupNovuEmail } from '../../../email/novu-email/cleanup-novu-email/cleanup-novu-email.usecase';
+import { NovuEmailCleanupService } from '../../../email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { trackAgentIntegrationRemoved } from '../../../shared/analytics/agent-analytics';
 import { RemoveAgentIntegrationCommand } from './remove-agent-integration.command';
 
@@ -12,7 +12,7 @@ export class RemoveAgentIntegration {
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly cleanupNovuEmail: CleanupNovuEmail,
+    private readonly cleanupNovuEmail: NovuEmailCleanupService,
     private readonly analyticsService: AnalyticsService
   ) {}
 

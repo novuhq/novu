@@ -25,7 +25,7 @@ import {
   FeatureNameEnum,
   getFeatureForTierAsBoolean,
 } from '@novu/shared';
-import { FindOrCreateNovuEmail } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.usecase';
+import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentIntegrationConnected } from '../../../shared/analytics/agent-analytics';
 import type { AgentIntegrationResponseDto } from '../../../shared/dtos';
 import { toAgentIntegrationResponse } from '../../../shared/mappers/agent-response.mapper';
@@ -39,7 +39,7 @@ export class AddAgentIntegration {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly environmentRepository: EnvironmentRepository,
-    private readonly findOrCreateNovuEmail: FindOrCreateNovuEmail,
+    private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
     private readonly analyticsService: AnalyticsService
   ) {}
 

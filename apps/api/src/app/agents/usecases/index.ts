@@ -1,4 +1,3 @@
-import { ListAgentEmoji } from '../channels/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { AddAgentIntegration } from '../channels/integrations/add-agent-integration/add-agent-integration.usecase';
 import { ListAgentIntegrations } from '../channels/integrations/list-agent-integrations/list-agent-integrations.usecase';
 import { RemoveAgentIntegration } from '../channels/integrations/remove-agent-integration/remove-agent-integration.usecase';
@@ -14,8 +13,6 @@ import { SendWhatsAppTestTemplate } from '../channels/whatsapp/send-whatsapp-tes
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { SendAgentWelcomeMessage } from '../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
-import { CleanupNovuEmail } from '../email/novu-email/cleanup-novu-email/cleanup-novu-email.usecase';
-import { FindOrCreateNovuEmail } from '../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.usecase';
 import { SendAgentTestEmail } from '../email/send-agent-test-email/send-agent-test-email.usecase';
 import { CompleteManagedAgentSetup } from '../managed-runtime/setup/complete-managed-agent-setup.usecase';
 import { HandleManagedAgentSetupInbound } from '../managed-runtime/setup/handle-managed-agent-setup-inbound.usecase';
@@ -37,7 +34,6 @@ import { UpdateAgentRuntimeConfig } from '../management/usecases/update-agent-ru
 import { UploadCustomSkill } from '../management/usecases/upload-custom-skill/upload-custom-skill.usecase';
 import { VerifyManagedCredentials } from '../management/usecases/verify-managed-credentials/verify-managed-credentials.usecase';
 import { GetMcpConnectionStatus } from '../mcp/connections/get-mcp-connection-status/get-mcp-connection-status.usecase';
-import { GetMcpNovuAppCredentials } from '../mcp/connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
 import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
 import { DisableAgentMcpServer } from '../mcp/servers/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
@@ -45,6 +41,7 @@ import { EnableAgentMcpServer } from '../mcp/servers/enable-agent-mcp-server/ena
 import { ListAgentMcpServers } from '../mcp/servers/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { SetAgentMcpServers } from '../mcp/servers/set-agent-mcp-servers/set-agent-mcp-servers.usecase';
 import { SyncAgentMcpServers } from '../mcp/servers/sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
+import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 
 export {
   ConfigureTelegramAgentWebhook,
@@ -69,9 +66,7 @@ export const USE_CASES = [
   UploadCustomSkill,
   DeleteAgent,
   AddAgentIntegration,
-  CleanupNovuEmail,
   ConfigureWhatsAppWebhook,
-  FindOrCreateNovuEmail,
   GenerateManagedAgent,
   IssueTelegramMobileLink,
   IssueTelegramSubscriberLink,
@@ -99,7 +94,6 @@ export const USE_CASES = [
   CompleteManagedAgentSetup,
   McpOAuthCallback,
   GetMcpConnectionStatus,
-  GetMcpNovuAppCredentials,
   VerifyManagedCredentials,
   HandlePendingToolApprovals,
   ConfirmToolApproval,

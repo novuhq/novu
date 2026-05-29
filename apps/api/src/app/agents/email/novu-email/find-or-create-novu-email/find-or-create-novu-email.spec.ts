@@ -4,7 +4,7 @@ import { ApiServiceLevelEnum, ChannelTypeEnum, EmailProviderIdEnum, NOVU_PROVIDE
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 
-import { FindOrCreateNovuEmail } from './find-or-create-novu-email.usecase';
+import { NovuEmailProvisioningService } from './find-or-create-novu-email.service';
 
 const ENV_ID = 'env-id';
 const ORG_ID = 'org-id';
@@ -24,7 +24,7 @@ function makeAgent(overrides: Partial<AgentEntity> = {}): AgentEntity {
   } as AgentEntity;
 }
 
-describe('FindOrCreateNovuEmail usecase', () => {
+describe('NovuEmailProvisioningService', () => {
   let integrationRepo: {
     find: sinon.SinonStub;
     findOne: sinon.SinonStub;
@@ -48,7 +48,7 @@ describe('FindOrCreateNovuEmail usecase', () => {
   let savedSharedDomain: string | undefined;
 
   function buildUsecase() {
-    return new FindOrCreateNovuEmail(
+    return new NovuEmailProvisioningService(
       integrationRepo as any,
       agentIntegrationRepo as any,
       organizationRepo as any,

@@ -27,7 +27,6 @@ import {
   ApiResponse,
 } from '../../shared/framework/response.decorator';
 import { UserSession } from '../../shared/framework/user.decorator';
-import { type AgentEmojiEntry, ListAgentEmoji } from '../channels/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { AgentRuntimeExceptionFilter } from '../shared/agent-runtime-exception.filter';
 import {
   AgentResponseDto,
@@ -37,6 +36,7 @@ import {
   UpdateAgentBridgeRequestDto,
   UpdateAgentRequestDto,
 } from '../shared/dtos';
+import { type AgentEmojiEntry, ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { CreateAgentCommand } from './usecases/create-agent/create-agent.command';
 import { CreateAgent } from './usecases/create-agent/create-agent.usecase';
 import { DeleteAgentCommand } from './usecases/delete-agent/delete-agent.command';

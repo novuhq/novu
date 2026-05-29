@@ -32,9 +32,9 @@ import {
 import { GenerateMcpOAuthUrlResponseDto } from '../../../shared/dtos/mcp-server.dto';
 import { assertMcpNovuAppFlagEnabled } from '../../assert-mcp-novu-app-flag-enabled';
 import {
-  GetMcpNovuAppCredentials,
+  McpNovuAppCredentialsService,
   type NovuAppCredentials,
-} from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
+} from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
 import {
   AuthorizationServerMetadata,
   DiscoveredProtectedResource,
@@ -66,7 +66,7 @@ const SOFTWARE_VERSION = process.env.NOVU_API_VERSION || 'dev';
  *   failure), AS metadata discovery is skipped entirely, and the catalog
  *   pins the authorize/token endpoints + scope list. The pre-registered
  *   `client_id`/`client_secret` come from server env vars (resolved per
- *   request through `GetMcpNovuAppCredentials`). No `oauthClient` row is
+ *   request through `McpNovuAppCredentialsService`). No `oauthClient` row is
  *   persisted; instead the AS endpoints land on `oauthState` so the
  *   callback can do the token exchange without re-consulting the catalog.
  *   Gated by `IS_MCP_NOVU_APP_ENABLED`.
@@ -87,7 +87,7 @@ export class GenerateMcpOAuthUrl {
     private readonly environmentRepository: EnvironmentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly discoveryService: McpOAuthDiscoveryService,
-    private readonly getNovuAppCredentials: GetMcpNovuAppCredentials,
+    private readonly getNovuAppCredentials: McpNovuAppCredentialsService,
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {

@@ -27,7 +27,7 @@ import {
 } from '@novu/shared';
 import { CompleteManagedAgentSetup } from '../../../managed-runtime/setup/complete-managed-agent-setup.usecase';
 import { ManagedAgentSetupCompleteCommand } from '../../../managed-runtime/setup/managed-agent-setup-complete.command';
-import { GetMcpNovuAppCredentials } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.usecase';
+import { McpNovuAppCredentialsService } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
 import { McpConnectionVaultService } from '../../connections/mcp-connection-vault.service';
 import { SyncAgentMcpServersCommand } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
@@ -82,7 +82,7 @@ export class McpOAuthCallback {
     private readonly syncAgentMcpServers: SyncAgentMcpServers,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
     private readonly completeManagedAgentSetup: CompleteManagedAgentSetup,
-    private readonly getNovuAppCredentials: GetMcpNovuAppCredentials,
+    private readonly getNovuAppCredentials: McpNovuAppCredentialsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(McpOAuthCallback.name);

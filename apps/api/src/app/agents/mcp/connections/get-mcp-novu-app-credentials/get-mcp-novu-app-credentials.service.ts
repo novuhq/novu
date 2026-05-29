@@ -36,7 +36,7 @@ const CRED_ENV_MAP: Record<string, { clientIdEnv: string; clientSecretEnv: strin
  * `mcp_connection.lastError.code` instead of leaking a 500.
  */
 @Injectable()
-export class GetMcpNovuAppCredentials {
+export class McpNovuAppCredentialsService {
   execute(mcpId: string): NovuAppCredentials {
     const mapping = CRED_ENV_MAP[mcpId];
 
