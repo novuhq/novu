@@ -598,3 +598,46 @@ jobs:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY_CLOUD_PROD }}
           name: ${{ steps.release_meta.outputs.name }}
           version: ${{ github.sha }}
+
+  testerarmy_staging_regression:
+    name: TesterArmy Staging Regression
+    needs: [deploy, prepare-matrix]
+    runs-on: ubuntu-latest
+    if: |
+      always() &&
+      needs.deploy.result == 'success' &&
+      (
+        github.event.inputs.environment == 'staging' ||
+        github.event.inputs.environment == 'staging-sg'
+      )
+    steps:
+      - name: Trigger TesterArmy staging regression tests
+        env:
+          TESTERARMY_STAGING_WEBHOOK_URL: ${{ secrets.TESTERARMY_STAGING_WEBHOOK_URL }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$TESTERARMY_STAGING_WEBHOOK_URL" ]; then
+            echo "TESTERARMY_STAGING_WEBHOOK_URL is not configured, skipping regression trigger."
+            exit 0
+          fi
+
+          payload=$(jq -n \
+            --arg commitSha "$COMMIT_SHA" \
+            --arg targetUrl "https://dashboard.novu-staging.co" \
+            --arg environment "staging" \
+            '{commitSha: $commitSha, targetUrl: $targetUrl, environment: $environment}')
+
+          response=$(curl -sS -w "\n%{http_code}" -X POST "$TESTERARMY_STAGING_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$payload")
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "TesterArmy response (HTTP ${http_code}): ${body}"
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "Failed to trigger TesterArmy staging regression tests."
+            exit 1
+          fi
