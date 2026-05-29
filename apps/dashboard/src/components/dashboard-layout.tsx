@@ -4,6 +4,7 @@ import { DashboardShell } from '@/components/dashboard-shell/dashboard-shell';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
+import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type DashboardLayoutProps = {
@@ -41,9 +42,11 @@ const LegacyDashboardLayout = ({
 };
 
 export const DashboardLayout = (props: DashboardLayoutProps) => {
-  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_DISPATCH_DASHBOARD_ENABLED, false);
+  const isShellV2FlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
 
-  if (isShellV2) {
+  // The v2 shell (AppRail + cross-product switching) only makes sense on hostname-split
+  // deployments, and the LD flag gates the rollout per environment.
+  if (IS_HOSTNAME_SPLIT_ENABLED && isShellV2FlagEnabled) {
     return <DashboardShell {...props} />;
   }
 

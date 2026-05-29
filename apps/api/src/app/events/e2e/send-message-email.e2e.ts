@@ -2,17 +2,45 @@ import { CompileEmailTemplate } from '@novu/application-generic';
 import type { IEmailOptions } from '@novu/shared';
 import { expect } from 'chai';
 
+function hasEmailOverrideRecipients(emailOverrides?: Record<string, unknown>): boolean {
+  if (!emailOverrides) {
+    return false;
+  }
+
+  const to = emailOverrides.to;
+  const cc = emailOverrides.cc;
+  const bcc = emailOverrides.bcc;
+
+  return (
+    (Array.isArray(to) && to.length > 0) ||
+    (Array.isArray(cc) && cc.length > 0) ||
+    (Array.isArray(bcc) && bcc.length > 0)
+  );
+}
+
 export const createMailData = (options: IEmailOptions, overrides: Record<string, any>): IEmailOptions => {
   const filterDuplicate = (prev: string[], current: string) => (prev.includes(current) ? prev : [...prev, current]);
+  const replaceToRecipient = overrides?.replaceToRecipient === true;
+  const from = overrides?.from || options.from;
 
-  let to = Array.isArray(options.to) ? options.to : [options.to];
-  to = [...to, ...(overrides?.to || [])];
-  to = to.reduce(filterDuplicate, []);
+  let to: string[];
+
+  if (replaceToRecipient) {
+    to = Array.isArray(overrides?.to) ? [...overrides.to] : [];
+  } else {
+    const baseTo = Array.isArray(options.to) ? options.to : [options.to];
+    to = [...baseTo, ...(overrides?.to || [])];
+    to = to.reduce(filterDuplicate, []);
+  }
+
+  if (replaceToRecipient && to.length === 0 && from) {
+    to = [from];
+  }
 
   return {
     ...options,
     to,
-    from: overrides?.from || options.from,
+    from,
     text: overrides?.text,
     cc: overrides?.cc || [],
     bcc: overrides?.bcc || [],
@@ -59,6 +87,70 @@ describe('Trigger event - Send message email - /v1/events/trigger (POST) #novu-v
     expect(result.cc).to.deep.equal([]);
     expect(result.bcc).to.deep.equal([]);
     expect(result.to).to.deep.equal(['override-to@novu.co']);
+  });
+
+  it('should replace subscriber to with override when replaceToRecipient is true', () => {
+    const defaultMailData = {
+      to: ['subscriber@novu.co'],
+      subject: 'subject',
+      html: '<html></html>',
+      from: 'no-reply@novu.co',
+      attachments: [],
+      id: 'id',
+    };
+
+    const result = createMailData(defaultMailData, {
+      replaceToRecipient: true,
+      to: ['override-only@novu.co'],
+    });
+
+    expect(result.to).to.deep.equal(['override-only@novu.co']);
+  });
+
+  it('should use from as to when replaceToRecipient is true with empty to and bcc only', () => {
+    const defaultMailData = {
+      to: ['subscriber@novu.co'],
+      subject: 'subject',
+      html: '<html></html>',
+      from: 'no-reply@novu.co',
+      attachments: [],
+      id: 'id',
+    };
+
+    const result = createMailData(defaultMailData, {
+      replaceToRecipient: true,
+      to: [],
+      bcc: ['bcc-only@novu.co'],
+    });
+
+    expect(result.to).to.deep.equal(['no-reply@novu.co']);
+    expect(result.bcc).to.deep.equal(['bcc-only@novu.co']);
+  });
+
+  it('should append subscriber to when replaceToRecipient is false', () => {
+    const defaultMailData = {
+      to: ['subscriber@novu.co'],
+      subject: 'subject',
+      html: '<html></html>',
+      from: 'no-reply@novu.co',
+      attachments: [],
+      id: 'id',
+    };
+
+    const result = createMailData(defaultMailData, {
+      replaceToRecipient: false,
+      to: ['extra@novu.co'],
+    });
+
+    expect(result.to).to.deep.equal(['subscriber@novu.co', 'extra@novu.co']);
+  });
+
+  it('should require at least one of to, cc, or bcc when replaceToRecipient is true', () => {
+    expect(hasEmailOverrideRecipients({ replaceToRecipient: true })).to.equal(false);
+    expect(hasEmailOverrideRecipients({ replaceToRecipient: true, to: [] })).to.equal(false);
+    expect(hasEmailOverrideRecipients({ replaceToRecipient: true, bcc: ['bcc@novu.co'] })).to.equal(true);
+    expect(hasEmailOverrideRecipients({ replaceToRecipient: true, cc: ['cc@novu.co'] })).to.equal(true);
+    expect(hasEmailOverrideRecipients({ replaceToRecipient: true, to: ['to@novu.co'] })).to.equal(true);
   });
 
   it('should add a preheader to html string after <body>', async () => {

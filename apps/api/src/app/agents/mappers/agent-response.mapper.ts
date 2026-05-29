@@ -5,7 +5,13 @@ import {
   isValidAgentEmailSlugPrefix,
 } from '@novu/application-generic';
 import type { AgentEntity, AgentIntegrationEntity, IntegrationEntity } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, EmailProviderIdEnum, slugify } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  buildClaudePlatformAgentConsoleUrl,
+  EmailProviderIdEnum,
+  isClaudePlatformConsoleProvider,
+  slugify,
+} from '@novu/shared';
 
 import type { AgentIntegrationResponseDto, AgentIntegrationSummaryDto, AgentResponseDto } from '../dtos';
 
@@ -37,22 +43,17 @@ export type ManagedRuntimeHydration = {
   externalWorkspaceId?: string;
 };
 
-/** Default Claude workspace id — every Anthropic org has an auto-created Default Workspace addressed as `default`. */
-const DEFAULT_CLAUDE_WORKSPACE_ID = 'default';
-
 /** Builds a deep link to the agent in the provider console, or `undefined` for unknown providers. */
 function buildAgentConsoleUrl(
   providerId: string,
   externalAgentId: string,
   externalWorkspaceId: string | undefined
 ): string | undefined {
-  if (providerId === AgentRuntimeProviderIdEnum.Anthropic) {
-    const workspaceId = encodeURIComponent(externalWorkspaceId?.trim() || DEFAULT_CLAUDE_WORKSPACE_ID);
-
-    return `https://platform.claude.com/workspaces/${workspaceId}/agents/${encodeURIComponent(externalAgentId)}`;
+  if (!isClaudePlatformConsoleProvider(providerId) || providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+    return undefined;
   }
 
-  return undefined;
+  return buildClaudePlatformAgentConsoleUrl(externalAgentId, externalWorkspaceId);
 }
 
 export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHydration): AgentResponseDto {
@@ -82,7 +83,6 @@ export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHy
     devBridgeUrl: agent.devBridgeUrl,
     devBridgeActive: agent.devBridgeActive,
     runtime: agent.runtime,
-    creationSource: agent.creationSource,
     managedRuntime,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,
@@ -138,7 +138,6 @@ function resolveSharedInboxAddress(
   }
 }
 
-
 function deriveFallbackSlug(agent: SharedInboxAgentContext): string | undefined {
   const candidate = slugify(agent.identifier ?? agent.name ?? '')
     .slice(0, 32)
@@ -167,6 +166,10 @@ export function toAgentIntegrationResponse(
   agent: SharedInboxAgentContext
 ): AgentIntegrationResponseDto {
   const sharedInboundAddress = resolveSharedInboxAddress(agent, integration);
+  const defaultSenderName =
+    integration.providerId === EmailProviderIdEnum.NovuAgent
+      ? integration.credentials?.senderName || agent.name
+      : undefined;
 
   return {
     _id: link._id,
@@ -179,6 +182,7 @@ export function toAgentIntegrationResponse(
       channel: integration.channel,
       active: integration.active,
       sharedInboundAddress,
+      defaultSenderName,
       sharedInboxDisabled:
         integration.providerId === EmailProviderIdEnum.NovuAgent
           ? Boolean(integration.credentials?.sharedInboxDisabled)

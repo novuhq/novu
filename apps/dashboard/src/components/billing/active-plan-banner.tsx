@@ -1,5 +1,5 @@
 import { getCalApi } from '@calcom/embed-react';
-import { useOrganization } from '@clerk/clerk-react';
+import { useOrganization } from '@clerk/react';
 import {
   ApiServiceLevelEnum,
   FeatureNameEnum,

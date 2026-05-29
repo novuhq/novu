@@ -1,18 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { useMemo, useState } from 'react';
-import {
-  RiAlertLine,
-  RiCheckLine,
-  RiErrorWarningLine,
-  RiSendPlaneLine,
-  RiTimeLine,
-} from 'react-icons/ri';
+import { RiAlertLine, RiCheckLine, RiErrorWarningLine, RiSendPlaneLine, RiTimeLine } from 'react-icons/ri';
 import { useParams } from 'react-router-dom';
 import {
   getTelegramMobileSetupStatus,
-  submitTelegramMobileCredentials,
   type SubmitTelegramMobileCredentialsResult,
+  submitTelegramMobileCredentials,
   type TelegramMobileLinkStatus,
   TelegramMobileSubmitError,
 } from '@/api/agents';
@@ -40,9 +34,7 @@ export function AgentTelegramMobileSetupPage() {
     <PageShell>
       {!token && <InactiveLinkCard reason="invalid" />}
       {token && statusQuery.isLoading && <LoadingCard />}
-      {token && statusQuery.data && !statusQuery.data.valid && (
-        <InactiveLinkCard reason={statusQuery.data.reason} />
-      )}
+      {token && statusQuery.data && !statusQuery.data.valid && <InactiveLinkCard reason={statusQuery.data.reason} />}
       {token && statusQuery.isError && <InactiveLinkCard reason="invalid" />}
       {token && statusQuery.data?.valid && <SetupForm token={token} agentName={statusQuery.data.agentName} />}
     </PageShell>
@@ -70,7 +62,10 @@ function LoadingCard() {
   return (
     <Card>
       <div className="flex flex-col items-center gap-3 py-6">
-        <div className="border-stroke-soft border-t-text-strong size-7 animate-spin rounded-full border-2" aria-label="Loading" />
+        <div
+          className="border-stroke-soft border-t-text-strong size-7 animate-spin rounded-full border-2"
+          aria-label="Loading"
+        />
         <p className="text-text-soft text-paragraph-xs">Checking your setup link…</p>
       </div>
     </Card>
@@ -99,7 +94,13 @@ function SetupForm({ token, agentName }: SetupFormProps) {
   });
 
   if (submitMutation.data?.success) {
-    return <SuccessCard botUsername={submitMutation.data.botUsername} agentName={agentName} />;
+    return (
+      <SuccessCard
+        botUsername={submitMutation.data.botUsername}
+        agentName={agentName}
+        deepLinkUrl={submitMutation.data.deepLinkUrl}
+      />
+    );
   }
 
   if (submitMutation.error instanceof TelegramMobileSubmitError) {
@@ -119,8 +120,8 @@ function SetupForm({ token, agentName }: SetupFormProps) {
           Finish setup for <span className="text-text-strong font-semibold">{agentName}</span>
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
-          Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and connect the
-          webhook automatically — nothing else to fill in.
+          Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and connect the webhook
+          automatically — nothing else to fill in.
         </p>
       </div>
 
@@ -133,12 +134,11 @@ function SetupForm({ token, agentName }: SetupFormProps) {
           simple
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder={'Done! Congratulations on your new bot…\n\nUse this token to access the HTTP API:\n1234567890:AAFdT8_…\n\nYou will find it at t.me/YourBot_bot.'}
+          placeholder={
+            'Done! Congratulations on your new bot…\n\nUse this token to access the HTTP API:\n1234567890:AAFdT8_…\n\nYou will find it at t.me/YourBot_bot.'
+          }
           rows={7}
-          className={cn(
-            'font-mono text-xs',
-            parsedToken && 'border-success-base ring-success-base/40 ring-1'
-          )}
+          className={cn('font-mono text-xs', parsedToken && 'border-success-base ring-success-base/40 ring-1')}
           autoFocus
           spellCheck={false}
           autoCapitalize="off"
@@ -193,14 +193,30 @@ function ParseStatus({ draft, parsedToken, parsedUsername }: ParseStatusProps) {
     <div className="text-success-base text-label-xs flex items-start gap-1.5 leading-4">
       <RiCheckLine className="mt-0.5 size-3.5 shrink-0" />
       <span>
-        Token detected{parsedUsername ? <> for <span className="font-semibold">@{parsedUsername}</span></> : null}.
+        Token detected
+        {parsedUsername ? (
+          <>
+            {' '}
+            for <span className="font-semibold">@{parsedUsername}</span>
+          </>
+        ) : null}
+        .
       </span>
     </div>
   );
 }
 
-function SuccessCard({ botUsername, agentName }: { botUsername: string; agentName: string }) {
-  const telegramUrl = `https://t.me/${botUsername}`;
+function SuccessCard({
+  botUsername,
+  agentName,
+  deepLinkUrl,
+}: {
+  botUsername: string;
+  agentName: string;
+  deepLinkUrl?: string;
+}) {
+  const telegramUrl = deepLinkUrl ?? `https://t.me/${botUsername}`;
+  const hasStartLink = Boolean(deepLinkUrl);
 
   return (
     <Card>
@@ -211,7 +227,9 @@ function SuccessCard({ botUsername, agentName }: { botUsername: string; agentNam
         <h1 className="text-text-strong text-paragraph-md font-semibold">@{botUsername} is connected</h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
           Your Telegram bot is now wired up to <span className="text-text-strong font-medium">{agentName}</span>.
-          Open it in Telegram to send your first message — your agent will reply.
+          {hasStartLink
+            ? ' Open the link below in Telegram to link this chat and send your first test message.'
+            : ' Open it in Telegram to send your first message — your agent will reply.'}
         </p>
       </div>
 
@@ -222,7 +240,7 @@ function SuccessCard({ botUsername, agentName }: { botUsername: string; agentNam
         className="bg-text-strong text-static-white hover:bg-text-strong/90 mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-10 px-3.5 text-label-sm transition"
       >
         <RiSendPlaneLine className="size-4" />
-        Open @{botUsername}
+        {hasStartLink ? `Connect & test @${botUsername}` : `Open @${botUsername}`}
       </a>
 
       <p className="text-text-soft text-label-xs mt-3 text-center">You can safely close this tab.</p>

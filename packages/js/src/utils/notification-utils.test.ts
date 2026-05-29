@@ -1,4 +1,9 @@
-import { areTagsEqual, checkNotificationTagFilter, normalizeTagGroups } from './notification-utils';
+import {
+  areTagsEqual,
+  checkNotificationDataFilter,
+  checkNotificationTagFilter,
+  normalizeTagGroups,
+} from './notification-utils';
 
 describe('normalizeTagGroups', () => {
   it('wraps flat tags as one OR-group', () => {
@@ -45,6 +50,47 @@ describe('checkNotificationTagFilter', () => {
         and: [{ or: ['a', 'b'] }, { or: ['c', 'd'] }],
       })
     ).toBe(false);
+  });
+});
+
+describe('checkNotificationDataFilter', () => {
+  it('matches scalar exact equality', () => {
+    expect(checkNotificationDataFilter({ status: 'open' }, { status: 'open' })).toBe(true);
+    expect(checkNotificationDataFilter({ status: 'closed' }, { status: 'open' })).toBe(false);
+  });
+
+  it('matches OR via flat filter array (notification has scalar)', () => {
+    expect(checkNotificationDataFilter({ status: 'draft' }, { status: ['open', 'draft'] })).toBe(true);
+    expect(checkNotificationDataFilter({ status: 'closed' }, { status: ['open', 'draft'] })).toBe(false);
+  });
+
+  it('matches OR via { or }', () => {
+    expect(checkNotificationDataFilter({ status: 'open' }, { status: { or: ['open', 'draft'] } })).toBe(true);
+  });
+
+  it('matches AND of OR-groups (CNF)', () => {
+    const filter = { project: { and: [{ or: ['a', 'b'] }, { or: ['b', 'c'] }] } };
+    expect(checkNotificationDataFilter({ project: 'b' }, filter)).toBe(true);
+    expect(checkNotificationDataFilter({ project: 'a' }, filter)).toBe(false);
+  });
+
+  it('matches across multiple keys with AND semantics', () => {
+    expect(
+      checkNotificationDataFilter({ status: 'draft', project: 'abc' }, { status: ['open', 'draft'], project: 'abc' })
+    ).toBe(true);
+
+    expect(
+      checkNotificationDataFilter({ status: 'closed', project: 'abc' }, { status: ['open', 'draft'], project: 'abc' })
+    ).toBe(false);
+  });
+
+  it('matches nested paths', () => {
+    expect(checkNotificationDataFilter({ project: { id: 'a' } }, { project: { id: ['a', 'b'] } })).toBe(true);
+  });
+
+  it('matches when the notification value itself is an array overlapping the filter', () => {
+    expect(checkNotificationDataFilter({ tags: ['a', 'b'] }, { tags: ['b', 'c'] })).toBe(true);
+    expect(checkNotificationDataFilter({ tags: ['a', 'b'] }, { tags: ['c', 'd'] })).toBe(false);
   });
 });
 

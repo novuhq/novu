@@ -1,3 +1,4 @@
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { CredentialsKeyEnum } from '../../../types';
 import { IConfigCredential } from '../provider.interface';
 
@@ -1469,7 +1470,8 @@ export const telegramConfig: IConfigCredential[] = [
   {
     key: CredentialsKeyEnum.ApiToken,
     displayName: 'Bot Token',
-    description: 'Create a bot in Telegram by chatting with BotFather, then paste the HTTP API token it gives you here.',
+    description:
+      'Create a bot in Telegram by chatting with BotFather, then paste the HTTP API token it gives you here.',
     type: 'string',
     required: true,
     links: [{ text: 'BotFather', url: 'https://t.me/botfather' }],
@@ -1491,6 +1493,38 @@ export const anthropicAgentConfig: IConfigCredential[] = [
     key: CredentialsKeyEnum.ExternalEnvironmentId,
     displayName: 'Anthropic Environment ID',
     description: 'The Anthropic environment ID auto-provisioned for this integration. Read-only.',
+    type: 'string',
+    required: false,
+  },
+];
+
+export const anthropicAwsAgentConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.Region,
+    displayName: 'AWS Region',
+    description: 'The AWS region where your Claude Platform workspace is provisioned.',
+    type: 'dropdown',
+    required: true,
+    dropdown: AWS_CLAUDE_COMMERCIAL_REGIONS.map((region) => ({ name: region, value: region })),
+  },
+  {
+    key: CredentialsKeyEnum.ApiKey,
+    displayName: 'AWS API Key',
+    description: 'API key generated in the AWS Console under Claude Platform on AWS.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ExternalWorkspaceId,
+    displayName: 'Workspace ID',
+    description: 'Claude Platform on AWS workspace ID (`wrkspc_…`). Required for agent runtime dispatch.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.ExternalEnvironmentId,
+    displayName: 'Environment ID',
+    description: 'The environment ID auto-provisioned for this integration. Read-only.',
     type: 'string',
     required: false,
   },

@@ -50,7 +50,7 @@ runs:
 
     - name: 🛟 Install dependencies
       shell: bash
-      run: pnpm install --frozen-lockfile
+      run: pnpm ci
 
     - name: Install wait-on plugin
       shell: bash

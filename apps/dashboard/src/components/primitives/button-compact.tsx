@@ -57,6 +57,10 @@ export const compactButtonVariants = tv({
       modifiable: {},
     },
     size: {
+      sm: {
+        root: 'size-4',
+        icon: 'size-4',
+      },
       lg: {
         root: 'size-6',
         icon: 'size-5',

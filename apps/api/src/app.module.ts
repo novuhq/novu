@@ -18,6 +18,7 @@ import { BridgeModule } from './app/bridge/bridge.module';
 import { ChangeModule } from './app/change/change.module';
 import { ChannelConnectionsModule } from './app/channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from './app/channel-endpoints/channel-endpoints.module';
+import { CliAuthModule } from './app/cli-auth/cli-auth.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { ContextsModule } from './app/contexts/contexts.module';
 import { DomainsModule } from './app/domains/domains.module';
@@ -84,8 +85,17 @@ const enterpriseImports = (): Array<Type | DynamicModule | Promise<DynamicModule
       modules.push(require('@novu/ee-ai')?.AiModule);
     }
 
+    // LLM Gateway controllers parked for this PR — keeping the code so we
+    // can re-enable later by uncommenting this block.
+    // if (require('@novu/ee-ai')?.LlmGatewayModule) {
+    //   modules.push(require('@novu/ee-ai')?.LlmGatewayModule);
+    // }
+
     if (require('@novu/ee-api')?.ConversationsModule) {
-      modules.push(require('@novu/ee-api')?.ConversationsModule);
+      modules.push({
+        module: class ConversationsModuleHost {},
+        imports: [SharedModule, require('@novu/ee-api').ConversationsModule],
+      });
     }
 
     modules.push(SupportModule);
@@ -152,6 +162,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   NovuModule,
   ChannelConnectionsModule,
   ChannelEndpointsModule,
+  CliAuthModule,
   StepResolversModule,
 ];
 

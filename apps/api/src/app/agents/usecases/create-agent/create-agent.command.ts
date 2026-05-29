@@ -1,5 +1,4 @@
 import type { AgentRuntime } from '@novu/shared';
-import { AgentCreationSourceEnum } from '@novu/shared';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
@@ -43,8 +42,4 @@ export class CreateAgentCommand extends EnvironmentWithUserCommand {
   @ValidateNested()
   @Type(() => ManagedRuntimeDto)
   managedRuntime?: ManagedRuntimeDto;
-
-  @IsOptional()
-  @IsEnum(AgentCreationSourceEnum)
-  creationSource?: AgentCreationSourceEnum;
 }

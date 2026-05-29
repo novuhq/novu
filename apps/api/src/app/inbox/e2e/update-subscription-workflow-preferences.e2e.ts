@@ -181,7 +181,7 @@ describe('Update subscription workflow preferences - /inbox/subscriptions/:subsc
     expect(update2.body.data.enabled).to.equal(false);
   });
 
-  it('should reject attempts to plant preferences on another subscriber\'s subscription (IDOR)', async () => {
+  it("should reject attempts to plant preferences on another subscriber's subscription (IDOR)", async () => {
     const topicKey = `topic-${Date.now()}`;
     const victimSubscriptionIdentifier = `victim-subscription-${Date.now()}`;
     const workflow = await session.createTemplate({

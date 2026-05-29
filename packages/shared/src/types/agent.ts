@@ -14,6 +14,7 @@ export interface NovuEmailAttachment {
    * size cap and its bytes were not included in the payload.
    */
   truncated?: boolean;
+  /** Presigned GET URL to download the attachment from S3. */
   url?: string;
 }
 

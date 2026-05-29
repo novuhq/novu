@@ -225,7 +225,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   const track = useTelemetry();
   const agentRoutes = useAgentRoutes();
   const currentApp = useCurrentApp();
-  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
+  const isConnectApp = currentApp === APP_IDS.CONNECT;
   const canRemoveAgentIntegration = !readOnly && has({ permission: PermissionsEnum.AGENT_WRITE });
 
   const integrationsHubPath = `${buildRoute(agentRoutes.detailsTab, {
@@ -233,8 +233,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     agentIdentifier: encodeURIComponent(agent.identifier),
     agentTab: 'integrations',
   })}${location.search}`;
-
-  const integrationsStorePath = ROUTES.INTEGRATIONS;
 
   const navigateToGuide = (nextIntegrationIdentifier: string) => {
     if (!currentEnvironment?.slug) {
@@ -339,8 +337,8 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
 
       showSuccessToast('Integration removed', `${name} was unlinked from this agent.`);
       track(
-        isDispatchApp
-          ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD
+        isConnectApp
+          ? TelemetryEvent.CONNECT_AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD
           : TelemetryEvent.AGENT_INTEGRATION_REMOVED_FROM_DASHBOARD,
         {
           agentIdentifier: agent.identifier,
@@ -374,6 +372,11 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     integrationIdentifier != null
       ? links.find((link) => link.integration.identifier === integrationIdentifier)
       : undefined;
+
+  const integrationsStorePath = selectedIntegration
+    ? buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: selectedIntegration.integration._id })
+    : ROUTES.INTEGRATIONS;
+
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess

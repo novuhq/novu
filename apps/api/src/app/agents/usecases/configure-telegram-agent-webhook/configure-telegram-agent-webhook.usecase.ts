@@ -121,7 +121,10 @@ export class ConfigureTelegramAgentWebhook {
   }
 
   private buildWebhookUrl(agentId: string, integrationIdentifier: string): string {
-    const base = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
+    const base = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(
+      /\/$/,
+      ''
+    );
 
     return `${base}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
   }
@@ -147,9 +150,7 @@ export class ConfigureTelegramAgentWebhook {
         });
 
         if (!data.ok || !data.result?.username) {
-          throw new BadGatewayException(
-            `Telegram getMe failed: ${data.description ?? 'username not returned'}`
-          );
+          throw new BadGatewayException(`Telegram getMe failed: ${data.description ?? 'username not returned'}`);
         }
 
         return data.result.username;

@@ -4,39 +4,41 @@ import {
   ChannelTypeEnum,
   EmailProviderIdEnum,
   EmailWebhookPayload,
-  NovuEmailAttachment,
+  InboundEmailAttachment,
   WebhookEventEnum,
   WebhookObjectTypeEnum,
 } from '@novu/shared';
-import { IFrom, IHeaders, ITo } from '../../dtos/inbound-parse-job.dto';
+import { IFrom, IHeaders, IInboundParseAttachment, ITo } from '../../dtos/inbound-parse-job.dto';
 import { decryptSecret } from '../../encryption/encrypt-provider';
 import { PinoLogger } from '../../logging';
 import { HttpClientService } from '../../services/http-client/http-client.service';
 import { buildNovuSignatureHeader } from '../../utils/hmac';
 import { normalizeReferences } from '../../utils/inbound-email-references';
 import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
+import { AttachmentRehydrator } from './attachment-rehydrator';
 
-export type RoutableDomain = Pick<
-  DomainEntity,
-  '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
->;
+export interface RoutableDomain
+  extends Pick<
+    DomainEntity,
+    '_id' | 'name' | 'status' | 'mxRecordConfigured' | '_environmentId' | '_organizationId' | 'data'
+  > {}
 
-export type InboundDomainRouteMailInput = {
+export interface InboundDomainRouteMailInput {
   from: IFrom[];
   to: ITo[];
   subject: string;
   html: string;
   text: string;
   headers: IHeaders;
-  attachments?: unknown[];
+  attachments?: IInboundParseAttachment[];
   messageId: string;
   inReplyTo?: string;
   references?: string | string[];
   date: Date;
   cc?: unknown[];
-};
+}
 
-export type DomainRouteWebhookPayload = {
+export interface DomainRouteWebhookPayload {
   domain: {
     id: string;
     name: string;
@@ -53,17 +55,15 @@ export type DomainRouteWebhookPayload = {
     html: string;
     text: string;
     headers: InboundDomainRouteMailInput['headers'];
-    attachments?: InboundDomainRouteMailInput['attachments'];
+    /** Rehydrated attachments — include both new `url`/`size` and the deprecated legacy `content` field. */
+    attachments?: InboundEmailAttachment[];
     messageId: string;
     inReplyTo?: string;
     references?: string | string[];
     date: Date;
     cc?: unknown[];
   };
-};
-
-/** Maximum bytes accepted per attachment — shared by coerceToBuffer and mapAttachmentsForWebhook. */
-const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024; // 5 MB
+}
 
 @Injectable()
 export class InboundDomainRouteDelivery {
@@ -72,6 +72,7 @@ export class InboundDomainRouteDelivery {
     private readonly httpClientService: HttpClientService,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly attachmentRehydrator: AttachmentRehydrator,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -80,7 +81,8 @@ export class InboundDomainRouteDelivery {
   buildDomainRouteWebhookPayload(
     domain: RoutableDomain,
     route: DomainRouteEntity,
-    mail: InboundDomainRouteMailInput
+    mail: InboundDomainRouteMailInput,
+    rehydratedAttachments: InboundEmailAttachment[]
   ): DomainRouteWebhookPayload {
     return {
       domain: {
@@ -99,7 +101,7 @@ export class InboundDomainRouteDelivery {
         html: mail.html,
         text: mail.text,
         headers: mail.headers,
-        attachments: mail.attachments,
+        attachments: rehydratedAttachments,
         messageId: mail.messageId,
         inReplyTo: mail.inReplyTo,
         references: mail.references,
@@ -117,7 +119,13 @@ export class InboundDomainRouteDelivery {
     mail: InboundDomainRouteMailInput;
   }): Promise<{ latencyMs: number; skipped: boolean }> {
     const started = Date.now();
-    const payload = this.buildDomainRouteWebhookPayload(params.domain, params.route, params.mail);
+    const rehydratedAttachments = await this.attachmentRehydrator.rehydrate(params.mail.attachments);
+    const payload = this.buildDomainRouteWebhookPayload(
+      params.domain,
+      params.route,
+      params.mail,
+      rehydratedAttachments
+    );
     const result = await this.sendWebhookMessage.execute({
       environmentId: params.environmentId,
       organizationId: params.organizationId,
@@ -185,7 +193,6 @@ export class InboundDomainRouteDelivery {
   private buildAgentEmailWebhookPayload(mail: InboundDomainRouteMailInput): EmailWebhookPayload {
     const from = mail.from[0];
     const refs = normalizeReferences(mail.references);
-    const attachments = this.mapAttachmentsForWebhook(mail.attachments);
 
     return {
       messageId: mail.messageId,
@@ -199,137 +206,18 @@ export class InboundDomainRouteDelivery {
       subject: mail.subject,
       text: mail.text || undefined,
       html: mail.html || undefined,
-      attachments,
+      attachments: mail.attachments?.map((att) => ({
+        filename: att.filename,
+        contentType: att.contentType,
+        size: att.size,
+        url: att.url,
+      })),
       date: (() => {
         const d = new Date(mail.date as unknown as string);
 
         return Number.isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
       })(),
     };
-  }
-
-  /**
-   * Handles both a real Buffer and the `{ type: 'Buffer', data: number[] }` shape
-   * BullMQ produces after JSON round-tripping. The cap is checked before Buffer.from()
-   * to avoid the transient heap spike (a number[] of N elements occupies ~8×N bytes
-   * before compaction).
-   */
-  private coerceToBuffer(value: unknown): Buffer | null {
-    if (Buffer.isBuffer(value)) {
-      if (value.length > MAX_ATTACHMENT_BYTES) {
-        this.logger.warn({ size: value.length, cap: MAX_ATTACHMENT_BYTES }, 'Attachment exceeds cap; skipping');
-
-        return null;
-      }
-
-      return value;
-    }
-
-    if (
-      value !== null &&
-      typeof value === 'object' &&
-      (value as { type?: unknown }).type === 'Buffer' &&
-      Array.isArray((value as { data?: unknown }).data)
-    ) {
-      const data = (value as { data: unknown[] }).data;
-
-      if (data.length > MAX_ATTACHMENT_BYTES) {
-        this.logger.warn(
-          { elementCount: data.length, cap: MAX_ATTACHMENT_BYTES },
-          'Serialized attachment exceeds cap before Buffer allocation; skipping'
-        );
-
-        return null;
-      }
-
-      return Buffer.from(data as number[]);
-    }
-
-    return null;
-  }
-
-  /**
-   * Maps raw mailparser attachments to NovuEmailAttachment. Bytes are base64-encoded
-   * up to per-attachment and aggregate caps (5 MB each); oversized attachments are
-   * included as metadata-only with `truncated: true`.
-   */
-  private mapAttachmentsForWebhook(rawAttachments: unknown[] | undefined): NovuEmailAttachment[] | undefined {
-    if (!rawAttachments?.length) {
-      return undefined;
-    }
-
-    const PER_ATTACHMENT_CAP = MAX_ATTACHMENT_BYTES;
-    const AGGREGATE_CAP = MAX_ATTACHMENT_BYTES;
-
-    let aggregateBytes = 0;
-    let inlinedCount = 0;
-    let truncatedCount = 0;
-
-    const result = rawAttachments.map((a) => {
-      const att = a as {
-        fileName?: string;
-        filename?: string;
-        generatedFileName?: string;
-        contentType?: string;
-        length?: number;
-        content?: unknown;
-        url?: string;
-      };
-
-      const filename = att.fileName ?? att.generatedFileName ?? att.filename ?? 'attachment';
-      const contentType = att.contentType ?? 'application/octet-stream';
-      const buffer = this.coerceToBuffer(att.content);
-
-      if (!buffer) {
-        truncatedCount += 1;
-
-        return {
-          filename,
-          contentType,
-          ...(typeof att.length === 'number' ? { size: att.length } : {}),
-          truncated: true as const,
-        };
-      }
-
-      const size = buffer.length;
-
-      if (size > PER_ATTACHMENT_CAP) {
-        truncatedCount += 1;
-        this.logger.warn(
-          { filename, size, cap: PER_ATTACHMENT_CAP },
-          'Inbound attachment exceeds per-attachment cap; omitting bytes from webhook payload'
-        );
-
-        return { filename, contentType, size, truncated: true as const };
-      }
-
-      if (aggregateBytes + size > AGGREGATE_CAP) {
-        truncatedCount += 1;
-        this.logger.warn(
-          { filename, size, aggregateBytes, cap: AGGREGATE_CAP },
-          'Inbound attachment would exceed aggregate cap; omitting bytes from webhook payload'
-        );
-
-        return { filename, contentType, size, truncated: true as const };
-      }
-
-      aggregateBytes += size;
-      inlinedCount += 1;
-
-      return {
-        filename,
-        contentType,
-        size,
-        contentBase64: buffer.toString('base64'),
-      };
-    });
-
-    this.logger.info(
-      { count: rawAttachments.length, inlinedCount, truncatedCount, aggregateBytes },
-      'Mapped inbound attachments for agent webhook'
-    );
-
-    return result;
   }
 
   private async resolveIntegration(

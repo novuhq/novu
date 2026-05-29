@@ -1,12 +1,12 @@
 import type {
-  AgentCreationSourceEnum,
+  AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
-import { del, get, getApiBaseUrl, NovuApiError, patch, post } from '@/api/api.client';
+import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
@@ -18,6 +18,8 @@ const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
 const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
 
 const AGENT_RUNTIME_CONFIG_QUERY_KEY = 'fetchAgentRuntimeConfig' as const;
+
+const AGENT_MCP_SERVERS_QUERY_KEY = 'fetchAgentMcpServers' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
@@ -36,6 +38,10 @@ export function getAgentsListQueryKey(
 
 export function getAgentRuntimeConfigQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
   return [AGENT_RUNTIME_CONFIG_QUERY_KEY, environmentId, agentIdentifier] as const;
+}
+
+export function getAgentMcpServersQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
+  return [AGENT_MCP_SERVERS_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
 
 export type AgentIntegrationSummary = {
@@ -107,13 +113,20 @@ type ManagedRuntimeDto = {
 };
 
 export type CreateAgentBody = {
-  name: string;
-  identifier: string;
+  /**
+   * Optional in the adopt-existing managed flow — the backend resolves it from the provider when
+   * `managedRuntime.externalAgentId` is set. Required otherwise.
+   */
+  name?: string;
+  /**
+   * Optional in the adopt-existing managed flow — auto-generated from the provider agent name
+   * when omitted. Required otherwise.
+   */
+  identifier?: string;
   description?: string;
   active?: boolean;
   runtime?: AgentRuntime;
   managedRuntime?: ManagedRuntimeDto;
-  creationSource?: AgentCreationSourceEnum;
 };
 
 export type UpdateAgentBody = {
@@ -193,10 +206,111 @@ export async function getAgent(
   return response.data;
 }
 
+export type AgentDemoQuota = {
+  conversations: { count: number; limit: number };
+  tokens?: { count: number; limit: number };
+  isExhausted: boolean;
+  reason?: 'conversations' | 'tokens';
+  isDemoAgent: boolean;
+};
+
+export function getAgentDemoQuotaQueryKey(environmentId: string | undefined, agentIdentifier: string) {
+  return ['agent-demo-quota', environmentId, agentIdentifier] as const;
+}
+
+export async function getAgentDemoQuota(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentDemoQuota> {
+  const response = await get<{ data: AgentDemoQuota } | AgentDemoQuota>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/demo-quota`,
+    { environment, signal }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
+export async function migrateAgentRuntime(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  body: { integrationId: string }
+): Promise<{ integrationId: string; externalAgentId: string }> {
+  const response = await post<
+    | { data: { integrationId: string; externalAgentId: string } }
+    | {
+        integrationId: string;
+        externalAgentId: string;
+      }
+  >(`/agents/${encodeURIComponent(agentIdentifier)}/migrate-runtime`, { environment, body });
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
   const response = await post<AgentApiEnvelope>('/agents', { environment, body });
 
   return response.data;
+}
+
+export type VerifyManagedCredentialsBody = {
+  providerId: AgentRuntimeProviderIdEnum;
+  apiKey: string;
+  externalWorkspaceId?: string;
+  region?: string;
+};
+
+export type VerifyManagedCredentialsResponse = { valid: true };
+
+export async function verifyManagedCredentials(
+  environment: IEnvironment,
+  body: VerifyManagedCredentialsBody,
+  signal?: AbortSignal
+): Promise<VerifyManagedCredentialsResponse> {
+  const response = await post<{ data: VerifyManagedCredentialsResponse } | VerifyManagedCredentialsResponse>(
+    '/agents/verify-credentials',
+    { environment, body, signal }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
+export type GeneratedManagedAgentSkill = {
+  skillId: string;
+};
+
+export type GeneratedManagedAgent = {
+  name: string;
+  identifier: string;
+  systemPrompt: string;
+  tools: string[];
+  mcpServers: string[];
+  skills: GeneratedManagedAgentSkill[];
+};
+
+export async function generateManagedAgent({
+  environment,
+  prompt,
+  runtime,
+  signal,
+}: {
+  environment: IEnvironment;
+  prompt: string;
+  /**
+   * `managed` (default) returns the full Claude tools/MCPs/skills payload; `self-hosted`
+   * returns only name, identifier and systemPrompt and skips the catalog selection on the
+   * backend. Use `self-hosted` for the Custom Scaffold flow.
+   */
+  runtime?: AgentRuntime;
+  signal?: AbortSignal;
+}): Promise<GeneratedManagedAgent> {
+  const response = await post<{ data: GeneratedManagedAgent } | GeneratedManagedAgent>('/agents/generate', {
+    environment,
+    body: { prompt, ...(runtime ? { runtime } : {}) },
+    signal,
+  });
+
+  return 'data' in response ? response.data : response;
 }
 
 export async function updateAgent(
@@ -209,8 +323,14 @@ export async function updateAgent(
   return response.data;
 }
 
-export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
-  return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
+export function deleteAgent(
+  environment: IEnvironment,
+  identifier: string,
+  options?: { deleteFromProvider?: boolean }
+): Promise<void> {
+  const params = options?.deleteFromProvider ? '?deleteFromProvider=true' : '';
+
+  return del(`/agents/${encodeURIComponent(identifier)}${params}`, { environment });
 }
 
 /** Picked integration fields on an agent–integration link (matches API `integration`). */
@@ -227,6 +347,11 @@ export type AgentIntegrationEmbedded = {
    * to render the shared inbox row in the inbox list.
    */
   sharedInboundAddress?: string;
+  /**
+   * Default email From display name for NovuAgent integrations.
+   * Mirrors `credentials.senderName`, falling back to the agent name when unset.
+   */
+  defaultSenderName?: string;
   /**
    * Cloud only. When `true`, the worker drops inbound mail addressed to this
    * agent on the shared `agentconnect.sh` domain. Custom-domain routes still
@@ -361,7 +486,6 @@ export type AgentRuntimeConfig = {
 export type PatchAgentRuntimeConfigBody = {
   model?: string;
   systemPrompt?: string;
-  mcpServers?: AgentMcpServer[];
   tools?: AgentTool[];
   skills?: AgentSkillInputDto[];
 };
@@ -392,6 +516,72 @@ export async function patchAgentRuntimeConfig(
   );
 
   return response.data;
+}
+
+export type AgentMcpServerEnablement = AgentMcpServerEnablementDto;
+
+export async function listAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentMcpServerEnablement[]> {
+  const response = await get<{ data: AgentMcpServerEnablement[] }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
+    { environment, signal }
+  );
+
+  return response.data;
+}
+
+export async function enableAgentMcpServer(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<AgentMcpServerEnablement> {
+  const response = await post<{ data: AgentMcpServerEnablement }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
+    { environment, body: { mcpId } }
+  );
+
+  return response.data;
+}
+
+export function disableAgentMcpServer(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<void> {
+  return del(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}`, {
+    environment,
+  });
+}
+
+export type SetAgentMcpServersFailure = {
+  mcpId: string;
+  operation: 'enable' | 'disable';
+  code: string;
+  message: string;
+};
+
+export type SetAgentMcpServersResponse = {
+  data: AgentMcpServerEnablement[];
+  failed: SetAgentMcpServersFailure[];
+};
+
+/**
+ * Bulk "set desired state" — replaces the agent's enabled MCP set with
+ * `mcpIds`. Returns the final enabled list plus a per-id `failed[]` array
+ * for any rows the server could not mutate (the rest still take effect).
+ */
+export async function setAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpIds: string[]
+): Promise<SetAgentMcpServersResponse> {
+  return put<SetAgentMcpServersResponse>(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`, {
+    environment,
+    body: { mcpIds },
+  });
 }
 
 type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
@@ -538,11 +728,11 @@ export async function sendWhatsAppTestTemplate(
   environment: IEnvironment,
   agentIdentifier: string,
   integrationIdentifier: string,
-  to: string
+  subscriberId: string
 ): Promise<SendWhatsAppTestTemplateResponse> {
   const response = await post<{ data: SendWhatsAppTestTemplateResponse }>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/whatsapp/test-template`,
-    { environment, body: { to } }
+    { environment, body: { subscriberId } }
   );
 
   return response.data;
@@ -581,11 +771,40 @@ type TelegramMobileLinkEnvelope = { data: TelegramMobileLink };
 export async function requestTelegramMobileLink(
   environment: IEnvironment,
   agentIdentifier: string,
-  integrationId: string
+  integrationId: string,
+  subscriberId?: string
 ): Promise<TelegramMobileLink> {
   const response = await post<TelegramMobileLinkEnvelope>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/mobile-link`,
-    { environment }
+    { environment, body: subscriberId ? { subscriberId } : undefined }
+  );
+
+  return response.data;
+}
+
+export type TelegramSubscriberLink = {
+  deepLinkUrl: string;
+  botUsername: string;
+  /** ISO timestamp when the link expires. */
+  expiresAt: string;
+};
+
+type TelegramSubscriberLinkEnvelope = { data: TelegramSubscriberLink };
+
+/**
+ * Issues a `t.me/<bot>?start=<code>` deep-link that, when opened by a subscriber,
+ * automatically links the originating Telegram chat to the supplied subscriberId
+ * by creating a `telegram_chat` channel endpoint on the bot inbound webhook.
+ */
+export async function requestTelegramSubscriberLink(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  integrationId: string,
+  subscriberId: string
+): Promise<TelegramSubscriberLink> {
+  const response = await post<TelegramSubscriberLinkEnvelope>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`,
+    { environment, body: { subscriberId } }
   );
 
   return response.data;
@@ -603,7 +822,7 @@ export async function getTelegramMobileSetupStatus(
   token: string,
   signal?: AbortSignal
 ): Promise<TelegramMobileLinkStatus> {
-  const url = `${getApiBaseUrl()}/v1/agents/telegram/mobile-configure/status?token=${encodeURIComponent(token)}`;
+  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure/status?token=${encodeURIComponent(token)}`;
   const response = await fetch(url, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
@@ -623,6 +842,8 @@ export type SubmitTelegramMobileCredentialsResult = {
   success: true;
   botUsername: string;
   webhookUrl: string;
+  /** Present when the mobile link was issued with a subscriberId. */
+  deepLinkUrl?: string;
 };
 
 export type SubmitTelegramMobileCredentialsError = {
@@ -644,7 +865,7 @@ export async function submitTelegramMobileCredentials(
   token: string,
   botToken: string
 ): Promise<SubmitTelegramMobileCredentialsResult> {
-  const url = `${getApiBaseUrl()}/v1/agents/telegram/mobile-configure`;
+  const url = `${getApiBaseUrl()}/v1/agents/public/telegram/mobile-configure`;
   const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -707,11 +928,7 @@ function extractErrorCode(data: unknown): SubmitTelegramMobileCredentialsError['
       ? (message as { code?: unknown }).code
       : (data as { code?: unknown }).code;
 
-  if (
-    candidate === 'token_invalid' ||
-    candidate === 'token_expired' ||
-    candidate === 'token_already_used'
-  ) {
+  if (candidate === 'token_invalid' || candidate === 'token_expired' || candidate === 'token_already_used') {
     return candidate;
   }
 

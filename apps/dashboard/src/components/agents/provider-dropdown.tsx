@@ -7,7 +7,6 @@ import {
   providers as novuProviders,
   PROVIDER_ID_TO_CHANNEL_MAP,
 } from '@novu/shared';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import {
   RiAddLine,
@@ -20,9 +19,6 @@ import {
   RiSearchLine,
 } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { addAgentIntegration, getAgentDetailQueryKey, getAgentIntegrationsQueryKey } from '@/api/agents';
-import { NovuApiError } from '@/api/api.client';
-import { createIntegration } from '@/api/integrations';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import {
   Command,
@@ -33,18 +29,12 @@ import {
   CommandList,
 } from '@/components/primitives/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/primitives/popover';
-import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
-import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS } from '@/utils/apps';
-import { QueryKeys } from '@/utils/query-keys';
+import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
 import { ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { openInNewTab } from '@/utils/url';
 
@@ -56,9 +46,7 @@ function findLinkedNovuAgentIntegration(
     return undefined;
   }
 
-  return integrations.find(
-    (i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds.has(i._id)
-  );
+  return integrations.find((i) => i.providerId === EmailProviderIdEnum.NovuAgent && linkedIntegrationIds.has(i._id));
 }
 
 /** One row per provider type in the collapsed list. */
@@ -149,14 +137,6 @@ function getInstanceItemKey(item: DropdownItem, index: number): string {
   return `${item.providerId}-new-${index}`;
 }
 
-function isAlreadyLinkedToAgentConflict(err: unknown): boolean {
-  if (!(err instanceof NovuApiError) || err.status !== 409) {
-    return false;
-  }
-
-  return err.message.includes('already linked');
-}
-
 export function ProviderDropdown({
   selectedIntegrationId,
   fallbackProviderId,
@@ -168,16 +148,24 @@ export function ProviderDropdown({
   renderTrigger,
 }: ProviderDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [pendingItemKey, setPendingItemKey] = useState<string | null>(null);
   const [expandedProviderId, setExpandedProviderId] = useState<string | null>(null);
   const { integrations } = useFetchIntegrations();
-  const { currentEnvironment } = useEnvironment();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const isAgentEmailAvailable = useIsAgentEmailAvailable();
-  const track = useTelemetry();
-  const currentApp = useCurrentApp();
-  const isDispatchApp = currentApp === APP_IDS.DISPATCH;
+
+  const closeDropdown = () => {
+    setOpen(false);
+    setExpandedProviderId(null);
+  };
+
+  const { pendingItemKey, isBusy, linkProvider } = useLinkAgentIntegration({
+    agentIdentifier,
+    linkedIntegrationIds,
+    onLinked: (providerId, integration) => {
+      onSelect(providerId, integration);
+      closeDropdown();
+    },
+  });
 
   const { supported: allSupported, comingSoon } = useMemo(
     () => buildDropdownItems(CONVERSATIONAL_PROVIDERS, integrations),
@@ -250,42 +238,6 @@ export function ProviderDropdown({
     if (!next) setExpandedProviderId(null);
   }
 
-  const isBusy = pendingItemKey !== null;
-
-  const addAgentIntegrationMutation = useMutation({
-    mutationFn: async (body: { integrationIdentifier?: string; providerId?: string }) => {
-      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-
-      return addAgentIntegration(environment, agentIdentifier, body);
-    },
-  });
-
-  const createIntegrationMutation = useMutation({
-    mutationFn: async (vars: { providerId: string; name: string }) => {
-      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
-      const channel = PROVIDER_ID_TO_CHANNEL_MAP[vars.providerId];
-
-      if (channel == null) {
-        throw new Error(`Unknown channel for provider ${vars.providerId}`);
-      }
-
-      const response = await createIntegration(
-        {
-          providerId: vars.providerId,
-          channel,
-          credentials: {},
-          configurations: {},
-          name: vars.name,
-          active: true,
-          _environmentId: environment._id,
-        },
-        environment
-      );
-
-      return response.data;
-    },
-  });
-
   async function handleSelect(item: DropdownItem, index: number) {
     if (item.comingSoon || isBusy) {
       return;
@@ -295,119 +247,19 @@ export function ProviderDropdown({
       return;
     }
 
-    const environment = currentEnvironment;
-
-    if (!environment?._id) {
-      showErrorToast('No environment selected.', 'Cannot link provider');
-
-      return;
-    }
-
-    const environmentId = environment._id;
-
     const itemKey = getInstanceItemKey(item, index);
-    setPendingItemKey(itemKey);
+    const channel = PROVIDER_ID_TO_CHANNEL_MAP[item.providerId];
+    const newIntegrationName = channel === ChannelTypeEnum.CHAT ? (agentName ?? agentIdentifier) : item.displayName;
 
-    async function invalidateAgentLinkQueries() {
-      await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchIntegrations, environmentId] });
-      await queryClient.invalidateQueries({
-        queryKey: getAgentIntegrationsQueryKey(environmentId, agentIdentifier),
-      });
-      await queryClient.invalidateQueries({
-        queryKey: getAgentDetailQueryKey(environmentId, agentIdentifier),
-      });
-    }
-
-    function closeDropdown() {
-      setOpen(false);
-      setExpandedProviderId(null);
-    }
-
-    try {
-      if (item.providerId === EmailProviderIdEnum.NovuAgent) {
-        const link = await addAgentIntegrationMutation.mutateAsync({ providerId: item.providerId });
-        showSuccessToast('Integration linked', `${link.integration.name ?? 'Novu Email'} was added to this agent.`);
-        track(
-          isDispatchApp
-            ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
-            : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
-          {
-            agentIdentifier,
-            providerId: item.providerId,
-            integrationIdentifier: link.integration.identifier,
-            mode: 'novu_email',
-          }
-        );
-        onSelect(item.providerId, link.integration as unknown as IIntegration);
-        closeDropdown();
-      } else if (item.integration) {
-        const alreadyLinked = linkedIntegrationIds?.has(item.integration._id);
-
-        if (!alreadyLinked) {
-          try {
-            await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: item.integration.identifier });
-            showSuccessToast('Integration linked', `${item.integration.name} was added to this agent.`);
-            track(
-              isDispatchApp
-                ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
-                : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
-              {
-                agentIdentifier,
-                providerId: item.providerId,
-                integrationIdentifier: item.integration.identifier,
-                mode: 'existing_integration',
-              }
-            );
-          } catch (linkErr) {
-            if (!isAlreadyLinkedToAgentConflict(linkErr)) {
-              throw linkErr;
-            }
-          }
-        }
-
-        onSelect(item.providerId, item.integration);
-        closeDropdown();
-      } else {
-        const channel = PROVIDER_ID_TO_CHANNEL_MAP[item.providerId];
-        const uniqueName = channel === ChannelTypeEnum.CHAT ? (agentName ?? agentIdentifier) : item.displayName;
-
-        const created = await createIntegrationMutation.mutateAsync({
-          providerId: item.providerId,
-          name: uniqueName,
-        });
-        await addAgentIntegrationMutation.mutateAsync({ integrationIdentifier: created.identifier });
-        showSuccessToast('Integration linked', `${created.name} was added to this agent.`);
-        track(
-          isDispatchApp
-            ? TelemetryEvent.DISPATCH_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
-            : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
-          {
-            agentIdentifier,
-            providerId: item.providerId,
-            integrationIdentifier: created.identifier,
-            mode: 'new_integration_then_link',
-          }
-        );
-        onSelect(item.providerId, created);
-        closeDropdown();
-      }
-
-      await invalidateAgentLinkQueries();
-    } catch (err) {
-      if (item.integration && isAlreadyLinkedToAgentConflict(err)) {
-        onSelect(item.providerId, item.integration);
-        closeDropdown();
-        await invalidateAgentLinkQueries();
-
-        return;
-      }
-
-      const message = err instanceof NovuApiError ? err.message : 'Could not link integration.';
-
-      showErrorToast(message, 'Link failed');
-    } finally {
-      setPendingItemKey(null);
-    }
+    await linkProvider(
+      {
+        providerId: item.providerId,
+        displayName: item.displayName,
+        integration: item.integration,
+        newIntegrationName,
+      },
+      itemKey
+    );
   }
 
   const defaultTrigger = (

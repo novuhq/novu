@@ -1,151 +1,75 @@
-import { FeatureFlagsKeysEnum, SLUG_IDENTIFIER_REGEX, slugIdentifierFormatMessage, slugify } from '@novu/shared';
-import type { FormEvent, ReactNode } from 'react';
-import { useEffect, useId, useState } from 'react';
 import {
-  RiArrowRightSLine,
-  RiArrowRightUpLine,
-  RiCloseLine,
-  RiEyeLine,
-  RiEyeOffLine,
-  RiFileCodeLine,
-  RiInformation2Line,
-} from 'react-icons/ri';
+  AgentRuntimeProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  type IIntegration,
+  IntegrationKindEnum,
+  slugify,
+} from '@novu/shared';
+import { useQueryClient } from '@tanstack/react-query';
+import type { FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine } from 'react-icons/ri';
+import type { GeneratedManagedAgent } from '@/api/agents';
+import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
-import { Input } from '@/components/primitives/input';
 import {
   SegmentedControl,
   SegmentedControlList,
   SegmentedControlTrigger,
 } from '@/components/primitives/segmented-control';
-import { Textarea } from '@/components/primitives/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
+import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { useEnvironment } from '@/context/environment/hooks';
+import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
+import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
+import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
+import { AGENTS_DOCS_OVERVIEW_URL } from '@/utils/agent-docs';
+import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
-import { BotIcon } from '../icons/bot';
-import { ClaudeIcon } from '../icons/claude';
-import { GoogleIcon } from '../icons/google';
-import { Tag } from '../primitives/tag';
+import { AgentSuggestionPills } from '../onboarding/connect-agent/agent-suggestion-pills';
+import { GenerationStatus, type GenerationStep } from '../onboarding/connect-agent/generation-status';
+import { PromptInput } from '../onboarding/connect-agent/prompt-input';
+import {
+  getClaudeManagedAgentIntegrations,
+  getPreferredClaudeManagedIntegration,
+  isDemoManagedClaudeIntegrationSelected,
+} from './connectors/claude-managed-integrations';
+import {
+  ConnectorIntegrationDropdown,
+  type ConnectorIntegrationStatus,
+} from './connectors/connector-integration-dropdown';
+import {
+  type ConnectorId,
+  type ConnectorOption,
+  getConnectorById,
+  getConnectorIdForProviderId,
+} from './connectors/connector-options';
+import {
+  AGENT_TEMPLATES,
+  type AgentTemplate,
+  buildManagedIntegrationCredentials,
+  buildVerifyCredentialsPayload,
+  buildVerifyFingerprint,
+  ConfigureCredentialsSection,
+  type CreateAgentForm,
+  type CreateAgentFormErrors,
+  ExistingAgentFields,
+  hasCompleteManagedCredentials,
+  hasFormErrors,
+  type ManagedAgentRuntimeOverrides,
+  ScratchAgentFields,
+  type VerifyStatus,
+  validateCreateAgentForm,
+  validateManagedCredentialFields,
+} from './create-agent-fields';
 
-const DOCS_AGENTS_LEARN_MORE_HREF = 'https://docs.novu.co';
-const ANTHROPIC_API_KEY_HREF = 'https://console.anthropic.com/settings/keys';
-const CLAUDE_AGENT_ID_HREF = 'https://docs.claude.com/en/api/agents-list';
-const CLAUDE_ENVIRONMENT_ID_HREF = 'https://docs.claude.com/en/api/agents-list';
-const CLAUDE_WORKSPACE_HREF = 'https://console.anthropic.com/settings/workspaces';
-const DEFAULT_CLAUDE_WORKSPACE_ID = 'default';
+const DOCS_AGENTS_LEARN_MORE_HREF = AGENTS_DOCS_OVERVIEW_URL;
 
-type RuntimeType = 'scratch' | 'claude' | 'vertex';
-
-type AgentTemplate = {
-  label: string;
-  name: string;
-  instructions: string;
-};
-
-const AGENT_TEMPLATES: AgentTemplate[] = [
-  {
-    label: 'Customer Support',
-    name: 'Customer Support Agent',
-    instructions:
-      'You are a helpful customer support assistant. Answer questions clearly and concisely, and escalate complex issues when needed.',
-  },
-  {
-    label: 'DevOps Buddy',
-    name: 'DevOps Buddy',
-    instructions:
-      'You are a DevOps assistant. Help with CI/CD pipelines, infrastructure troubleshooting, and deployment best practices.',
-  },
-  {
-    label: 'Code Reviewer',
-    name: 'Code Reviewer',
-    instructions:
-      'You are a senior code reviewer. Provide constructive feedback on code quality, security, and maintainability.',
-  },
-  {
-    label: 'Docs Helper',
-    name: 'Docs Helper',
-    instructions:
-      'You are a documentation assistant. Help users find information, clarify concepts, and cite sources accurately.',
-  },
-];
-
-type CreateAgentMode = 'create' | 'existing';
-
-type FormErrors = {
-  name?: string;
-  identifier?: string;
-  apiKey?: string;
-  externalAgentId?: string;
-  externalEnvironmentId?: string;
-};
-
-function RequiredFieldLabel({ htmlFor, children }: { htmlFor: string; children: ReactNode }) {
-  return (
-    <label htmlFor={htmlFor} className="text-text-strong flex items-center gap-px text-label-xs font-medium">
-      <span>{children}</span>
-      <span className="text-primary-base text-label-sm leading-5 tracking-tight" aria-hidden>
-        *
-      </span>
-    </label>
-  );
-}
-
-type RuntimeCardProps = {
-  selected: boolean;
-  onClick: () => void;
-  disabled?: boolean;
-  icon: ReactNode;
-  title: string;
-  description: string;
-};
-
-function RuntimeCard({ selected, onClick, disabled, icon, title, description }: RuntimeCardProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'flex flex-1 cursor-pointer flex-col gap-2 rounded-lg border p-2 text-left transition-all',
-        'shadow-[0px_1px_2px_0px_rgba(10,13,20,0.03)]',
-        selected
-          ? 'border-stroke-soft shadow-[0px_1px_4px_-2px_rgba(24,39,75,0.02),0px_4px_4px_0px_rgba(24,39,75,0.06),0px_0px_2px_0px_#e0e0e0,0px_0px_0px_0px_#f2f4f7,0px_1px_2px_0px_rgba(16,24,40,0.05)]'
-          : 'border-stroke-weak bg-bg-white hover:border-stroke-soft',
-        disabled && 'cursor-not-allowed opacity-50'
-      )}
-    >
-      <div
-        className={cn(
-          'flex size-9 items-center justify-center rounded-lg border bg-bg-weak',
-          selected ? 'border-stroke-soft' : 'border-stroke-weak '
-        )}
-      >
-        {icon}
-      </div>
-      <div className="flex flex-col gap-1">
-        <span className="text-text-sub text-label-xs font-medium">{title}</span>
-        <span className="text-text-soft text-label-xs font-normal leading-4">{description}</span>
-      </div>
-    </button>
-  );
-}
-
-export type CreateAgentForm = {
-  name: string;
-  identifier: string;
-  instructions: string;
-  apiKey: string;
-  runtime: RuntimeType;
-  isExistingMode: boolean;
-  externalAgentId?: string;
-  externalEnvironmentId?: string;
-  /**
-   * Optional Anthropic workspace id. Empty/omitted means "use the default workspace".
-   * Custom workspaces are identified by a `wrkspc_…` id.
-   */
-  externalWorkspaceId?: string;
-};
+export type { CreateAgentForm } from './create-agent-fields';
 
 type CreateAgentDialogProps = {
   open: boolean;
@@ -156,6 +80,55 @@ type CreateAgentDialogProps = {
   initialInstructions?: string;
 };
 
+const DEFAULT_CONNECTOR_ID: ConnectorId = 'claude';
+
+/**
+ * Mirrors the onboarding step's `AgentGenerationMode` so the dialog reuses the same prompt /
+ * manual / existing affordances. Keeping the shape identical also keeps the suggestion-pill
+ * handler trivial: it always switches to `'prompt'` and pre-fills the textarea.
+ */
+type AgentGenerationMode = 'prompt' | 'manual' | 'existing';
+
+const GENERATION_STEPS: ReadonlyArray<GenerationStep> = [
+  { id: 'spinning', text: 'Spinning up a fresh agent' },
+  { id: 'coffee', text: 'Sipping a little bit of coffee' },
+  { id: 'system-prompt', text: 'Crafting the system prompt' },
+  { id: 'tools', text: 'Picking the right tools' },
+  { id: 'mcp', text: 'Wiring up MCP servers' },
+  { id: 'skills', text: 'Selecting starter skills' },
+  { id: 'agent', text: 'Generating your agent' },
+];
+
+const MIN_PROMPT_LENGTH = 8;
+
+// Matches the dialog footer button's `h-14` (56px) so the animated status sits inside the footer
+// instead of stretching it taller while the agent is being generated.
+const FOOTER_STATUS_HEIGHT = 56;
+
+const PROMPT_HEADER: Record<
+  Exclude<AgentGenerationMode, 'existing'>,
+  { label: string; toggleLabel: string; toggleTo: Exclude<AgentGenerationMode, 'existing'>; toggleIcon?: 'sparkles' }
+> = {
+  prompt: {
+    label: 'Generate from prompt',
+    toggleLabel: 'Create manually',
+    toggleTo: 'manual',
+  },
+  manual: {
+    label: 'Create manually',
+    toggleLabel: 'Generate from prompt',
+    toggleTo: 'prompt',
+    toggleIcon: 'sparkles',
+  },
+};
+
+function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): ConnectorIntegrationStatus {
+  if (hasIntegration || verify === 'valid') return 'valid';
+  if (verify === 'invalid') return 'missing';
+
+  return 'idle';
+}
+
 export function CreateAgentDialog({
   open,
   onOpenChange,
@@ -164,35 +137,178 @@ export function CreateAgentDialog({
   initialName,
   initialInstructions,
 }: CreateAgentDialogProps) {
-  const formId = useId();
-  const nameId = `${formId}-name`;
-  const identifierId = `${formId}-identifier`;
-  const instructionsId = `${formId}-instructions`;
-  const apiKeyId = `${formId}-api-key`;
-  const workspaceIdInputId = `${formId}-workspace-id`;
   const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
+  const { integrations } = useFetchIntegrations();
+  const verifyMutation = useVerifyManagedCredentials();
+  const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
-  const [runtime, setRuntime] = useState<RuntimeType>('scratch');
-  const [mode, setMode] = useState<CreateAgentMode>('create');
+  const [connectorId, setConnectorId] = useState<ConnectorId>(DEFAULT_CONNECTOR_ID);
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
+  const [credentialsPanelVisible, setCredentialsPanelVisible] = useState(false);
+  const [credentialsPanelExpanded, setCredentialsPanelExpanded] = useState(true);
+  // If the caller pre-populated a name or instructions, default to manual mode so the form is
+  // already filled out. Otherwise show the prompt textarea by default.
+  const [generationMode, setGenerationMode] = useState<AgentGenerationMode>(() =>
+    initialName || initialInstructions ? 'manual' : 'prompt'
+  );
+  const [prompt, setPrompt] = useState('');
+  const [promptError, setPromptError] = useState<string | undefined>(undefined);
+  const promptTextareaRef = useRef<HTMLTextAreaElement | null>(null);
+  // Keeps the dialog in a busy state for the whole submit lifecycle — across the LLM call (prompt
+  // mode), the create-agent mutation, and the brief gap before the parent flips `open` to false.
+  // Without it the status animation and the submit button briefly snap back to their idle styles
+  // while Radix is still running the dialog's close animation, which reads as a "blink".
+  const [isSubmitInFlight, setIsSubmitInFlight] = useState(false);
   const [name, setName] = useState(initialName ?? '');
   const [identifier, setIdentifier] = useState(initialName ? slugify(initialName) : '');
   const [instructions, setInstructions] = useState(initialInstructions ?? '');
-  const [apiKey, setApiKey] = useState('');
-  const [externalWorkspaceId, setExternalWorkspaceId] = useState('');
+  const {
+    apiKey,
+    externalWorkspaceId,
+    region,
+    verifyStatus,
+    verifyMessage,
+    lastVerifiedKeyRef,
+    setApiKey,
+    setExternalWorkspaceId,
+    setRegion,
+    setVerifyStatus,
+    setVerifyMessage,
+    resetCredentials,
+  } = useManagedClaudeCredentialsFlow();
+  const [integrationName, setIntegrationName] = useState('');
   const [externalAgentId, setExternalAgentId] = useState('');
   const [externalEnvironmentId, setExternalEnvironmentId] = useState('');
-  const [errors, setErrors] = useState<FormErrors>({});
+  const [errors, setErrors] = useState<CreateAgentFormErrors>({});
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
-  const [templateOffset, setTemplateOffset] = useState(0);
-  const [showSecret, setShowSecret] = useState(false);
+  // Brief confirmation badge that flashes in the dropdown trigger right after a successful save.
+  const [showSavedBadge, setShowSavedBadge] = useState(false);
+  const savedBadgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Holds the integration id from "Save integration" until it appears in the fetched list, so the
+  // auto-select effect does not overwrite it or reopen the credentials section during refetch.
+  const pinnedIntegrationIdRef = useRef<string | null>(null);
+  // On dialog open, prefer the first managed integration across provider types (e.g. AWS Claude
+  // when Anthropic has none). Cleared once the user picks a connector or a provider match is found.
+  const preferAnyManagedIntegrationRef = useRef(true);
 
-  const toggleSecretVisibility = () => {
-    setShowSecret(!showSecret);
-  };
+  const {
+    generate: generateManagedAgent,
+    isPending: isGenerating,
+    cancel: cancelGeneration,
+  } = useGenerateManagedAgent();
 
-  const visibleTemplates = AGENT_TEMPLATES.slice(templateOffset, templateOffset + 4);
+  const selectedConnector = getConnectorById(connectorId);
+  const isManagedClaudeConnector = selectedConnector?.runtime === 'claude';
+  const runtime = selectedConnector?.runtime ?? 'scratch';
+  // The "Generate from prompt" surface is reserved for managed Claude (when the managed-runtime
+  // flag is on). The Custom Scaffold flow always renders the manual ScratchAgentFields form, so
+  // teams writing their own runtime see exactly the inputs they need to fill in.
+  const useAiGeneration = isManagedClaudeConnector && isManagedEnabled;
+  const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+  const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
+  const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
+  const showManagedOptions = isManagedEnabled;
 
-  // Seed the form fields from initial props when the dialog opens.
+  // Hide managed connectors when the feature flag is off — the dropdown still lists them visually,
+  // but selecting a managed connector should be impossible. We achieve this by short-circuiting to
+  // 'custom-scaffold' when managed is disabled.
+  useEffect(() => {
+    if (!open) return;
+    if (showManagedOptions) return;
+    if (selectedConnector?.runtime !== 'claude') return;
+
+    setConnectorId('custom-scaffold');
+  }, [open, showManagedOptions, selectedConnector?.runtime]);
+
+  const matchingAnthropicIntegrations = useMemo(() => {
+    if (!selectedConnector?.providerId) return [];
+
+    return getClaudeManagedAgentIntegrations(integrations, selectedConnector.providerId);
+  }, [integrations, selectedConnector?.providerId]);
+
+  // Auto-select the first existing integration of the chosen provider on open / when the connector
+  // changes / when integrations finish loading. If none exist, open the inline credentials section.
+  // Skipped when the user is setting up new credentials (panel visible, no integration selected), so we
+  // don't overwrite their choice with an existing integration.
+  useEffect(() => {
+    if (!open) return;
+    if (isSubmitting) return;
+
+    const pinnedId = pinnedIntegrationIdRef.current;
+    if (pinnedId) {
+      const pinnedExists = matchingAnthropicIntegrations.some((i) => i._id === pinnedId);
+      if (pinnedExists) {
+        pinnedIntegrationIdRef.current = null;
+      } else if (selectedIntegrationId !== pinnedId) {
+        setSelectedIntegrationId(pinnedId);
+      }
+
+      return;
+    }
+
+    if (credentialsPanelVisible && !selectedIntegrationId) return;
+    if (!selectedConnector?.providerId) {
+      setSelectedIntegrationId(undefined);
+
+      return;
+    }
+
+    if (selectedIntegrationId) {
+      const stillExists = matchingAnthropicIntegrations.some((i) => i._id === selectedIntegrationId);
+      if (stillExists) return;
+    }
+
+    if (matchingAnthropicIntegrations.length > 0) {
+      preferAnyManagedIntegrationRef.current = false;
+      setSelectedIntegrationId(matchingAnthropicIntegrations[0]._id);
+
+      return;
+    }
+
+    if (preferAnyManagedIntegrationRef.current) {
+      const preferred = getPreferredClaudeManagedIntegration(integrations);
+      if (preferred) {
+        const connectorForPreferred = getConnectorIdForProviderId(preferred.providerId);
+        if (connectorForPreferred) {
+          setConnectorId(connectorForPreferred);
+        }
+        preferAnyManagedIntegrationRef.current = false;
+        setSelectedIntegrationId(preferred._id);
+
+        return;
+      }
+    }
+
+    preferAnyManagedIntegrationRef.current = false;
+    setSelectedIntegrationId(undefined);
+    setCredentialsPanelVisible(true);
+    setCredentialsPanelExpanded(true);
+  }, [
+    open,
+    isSubmitting,
+    selectedConnector?.providerId,
+    matchingAnthropicIntegrations,
+    selectedIntegrationId,
+    credentialsPanelVisible,
+    integrations,
+  ]);
+
+  // Default integration name = "<Provider> <next-index>"
+  useEffect(() => {
+    if (!credentialsPanelVisible || !selectedConnector?.providerLabel) return;
+    if (integrationName.trim()) return;
+
+    const nextIndex = matchingAnthropicIntegrations.length + 1;
+    setIntegrationName(`${selectedConnector.providerLabel} ${nextIndex}`);
+  }, [
+    credentialsPanelVisible,
+    selectedConnector?.providerLabel,
+    matchingAnthropicIntegrations.length,
+    integrationName,
+  ]);
+
   useEffect(() => {
     if (!open) return;
 
@@ -201,109 +317,357 @@ export function CreateAgentDialog({
     setInstructions(initialInstructions ?? '');
     setIsIdentifierTouched(false);
     setErrors({});
+    setGenerationMode(initialName || initialInstructions ? 'manual' : 'prompt');
+    setPrompt('');
+    setPromptError(undefined);
   }, [open, initialName, initialInstructions]);
 
-  const reset = () => {
-    setRuntime('scratch');
-    setMode('create');
+  const reset = useCallback(() => {
+    setConnectorId(DEFAULT_CONNECTOR_ID);
+    setSelectedIntegrationId(undefined);
+    setCredentialsPanelVisible(false);
+    setCredentialsPanelExpanded(true);
+    setGenerationMode('prompt');
+    setPrompt('');
+    setPromptError(undefined);
+    setIsSubmitInFlight(false);
     setName('');
     setIdentifier('');
     setInstructions('');
-    setApiKey('');
-    setExternalWorkspaceId('');
+    resetCredentials();
+    setIntegrationName('');
     setExternalAgentId('');
     setExternalEnvironmentId('');
     setErrors({});
     setIsIdentifierTouched(false);
-    setTemplateOffset(0);
-  };
+    setShowSavedBadge(false);
+    pinnedIntegrationIdRef.current = null;
+    preferAnyManagedIntegrationRef.current = true;
+    if (savedBadgeTimerRef.current) {
+      clearTimeout(savedBadgeTimerRef.current);
+      savedBadgeTimerRef.current = null;
+    }
+  }, [resetCredentials]);
+
+  const prevOpenRef = useRef(open);
+
+  // Reset form state only after the dialog has closed — not while it is still visible (e.g. during
+  // the exit animation or between successful submit and the parent setting `open` to false).
+  useEffect(() => {
+    if (prevOpenRef.current && !open) {
+      reset();
+    }
+
+    prevOpenRef.current = open;
+  }, [open, reset]);
+
+  useEffect(() => {
+    return () => {
+      if (savedBadgeTimerRef.current) clearTimeout(savedBadgeTimerRef.current);
+    };
+  }, []);
 
   const handleOpenChange = (next: boolean) => {
-    if (!next) reset();
     onOpenChange(next);
   };
 
-  const handleTemplateSelect = (template: AgentTemplate) => {
-    setName(template.name);
-    if (!isIdentifierTouched) {
-      setIdentifier(slugify(template.name));
-      setErrors((prev) => ({ ...prev, identifier: undefined }));
+  // Clicking a suggestion when the AI surface is available lands the user in prompt mode with the
+  // textarea pre-filled. Mirrors `handleSelectSuggestion` in `connect-agent-step.tsx`.
+  const handleSelectAiSuggestion = useCallback((suggestion: AgentTemplate) => {
+    setGenerationMode('prompt');
+    setPrompt(suggestion.instructions);
+    setPromptError(undefined);
+    requestAnimationFrame(() => {
+      const el = promptTextareaRef.current;
+      if (!el) return;
+      el.focus();
+      const end = el.value.length;
+      el.setSelectionRange(end, end);
+    });
+  }, []);
+
+  const handleSelectConnector = (id: ConnectorId) => {
+    preferAnyManagedIntegrationRef.current = false;
+    setConnectorId(id);
+
+    const next = getConnectorById(id);
+    // Switching to a non-managed connector clears the credentials view.
+    if (!next?.providerId) {
+      setSelectedIntegrationId(undefined);
+      setCredentialsPanelVisible(false);
+      resetCredentials();
     }
-    setInstructions(template.instructions);
-    setErrors((prev) => ({ ...prev, name: undefined }));
+    // Switching away from Claude collapses the "existing" mode back to the default surface,
+    // since only the managed Claude flow supports adopting a remote agent.
+    if (next?.runtime !== 'claude' && generationMode === 'existing') {
+      setGenerationMode('prompt');
+      setExternalAgentId('');
+      setExternalEnvironmentId('');
+    }
+  };
+
+  // Demo Novu-managed Claude credentials cannot adopt an existing provider agent.
+  useEffect(() => {
+    if (!open) return;
+    if (!isDemoProviderSelected) return;
+    if (generationMode !== 'existing') return;
+
+    setGenerationMode('prompt');
+    setExternalAgentId('');
+    setExternalEnvironmentId('');
+  }, [open, isDemoProviderSelected, generationMode]);
+
+  const handleGenerationModeChange = useCallback((next: AgentGenerationMode) => {
+    setGenerationMode(next);
+    if (next === 'prompt' || next === 'manual') {
+      setExternalAgentId('');
+      setExternalEnvironmentId('');
+    }
+    if (next === 'manual') {
+      setPromptError(undefined);
+    }
+  }, []);
+
+  const handlePromptChange = useCallback((next: string) => {
+    setPrompt(next);
+    setPromptError(undefined);
+  }, []);
+
+  const handleCancelGeneration = useCallback(() => {
+    cancelGeneration();
+  }, [cancelGeneration]);
+
+  const handleSelectIntegration = (integration: { _id: string }) => {
+    setSelectedIntegrationId(integration._id);
+    setCredentialsPanelVisible(false);
+    resetCredentials();
+    setErrors((prev) => ({
+      ...prev,
+      apiKey: undefined,
+      integrationName: undefined,
+      region: undefined,
+      externalWorkspaceId: undefined,
+    }));
+  };
+
+  const handleRequestSetupCredentials = (option: ConnectorOption) => {
+    setSelectedIntegrationId(undefined);
+    setCredentialsPanelVisible(true);
+    setCredentialsPanelExpanded(true);
+
+    if (option.providerLabel && !integrationName.trim()) {
+      const nextIndex = getClaudeManagedAgentIntegrations(integrations, option.providerId).length + 1;
+      setIntegrationName(`${option.providerLabel} ${nextIndex}`);
+    }
+  };
+
+  const handleVerify = () => {
+    if (!selectedConnector?.providerId) return;
+    if (verifyMutation.isPending) return;
+
+    const fields = { apiKey, region, externalWorkspaceId };
+    const verifyKey = buildVerifyFingerprint(selectedConnector.providerId, fields);
+
+    if (lastVerifiedKeyRef.current === verifyKey && verifyStatus === 'valid') return;
+
+    lastVerifiedKeyRef.current = verifyKey;
+    setVerifyStatus('verifying');
+    setVerifyMessage(undefined);
+
+    verifyMutation.mutate(buildVerifyCredentialsPayload(selectedConnector.providerId, fields), {
+      onSuccess: () => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('valid');
+        setVerifyMessage(undefined);
+        setErrors((prev) => ({ ...prev, apiKey: undefined }));
+      },
+      onError: (err) => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('invalid');
+        setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
+      },
+    });
+  };
+
+  const handleApiKeyChange = (next: string) => {
+    setApiKey(next);
+    setErrors((prev) => ({ ...prev, apiKey: undefined }));
+  };
+
+  const handleSaveIntegration = async () => {
+    if (!selectedConnector?.providerId) return;
+
+    const trimmedName = integrationName.trim();
+    const fields = { apiKey, region, externalWorkspaceId };
+
+    if (!trimmedName) return;
+    if (!hasCompleteManagedCredentials(selectedConnector.providerId, fields)) return;
+
+    try {
+      const { data: integration } = await createIntegration({
+        active: true,
+        kind: IntegrationKindEnum.AGENT,
+        providerId: selectedConnector.providerId,
+        credentials: buildManagedIntegrationCredentials(selectedConnector.providerId, fields),
+        name: trimmedName,
+      });
+
+      const environmentId = currentEnvironment?._id;
+      if (environmentId) {
+        queryClient.setQueryData<IIntegration[]>([QueryKeys.fetchIntegrations, environmentId], (existing) => {
+          const list = existing ?? [];
+          if (list.some((item) => item._id === integration._id)) return list;
+
+          return [...list, integration];
+        });
+      }
+
+      pinnedIntegrationIdRef.current = integration._id;
+      setCredentialsPanelVisible(true);
+      setCredentialsPanelExpanded(false);
+      setSelectedIntegrationId(integration._id);
+      resetCredentials();
+      setShowSavedBadge(true);
+      if (savedBadgeTimerRef.current) clearTimeout(savedBadgeTimerRef.current);
+      savedBadgeTimerRef.current = setTimeout(() => setShowSavedBadge(false), 2500);
+      showSuccessToast(`${trimmedName} is ready to use.`, 'Integration saved');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Could not save integration.';
+      showErrorToast(message, 'Save failed');
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    const nextErrors: FormErrors = {};
-    const isExistingMode = runtime === 'claude' && mode === 'existing';
+    const isExistingMode = runtime === 'claude' && !isDemoProviderSelected && generationMode === 'existing';
+    const isPromptGenerationMode = useAiGeneration && generationMode === 'prompt';
 
-    if (!isExistingMode) {
-      const trimmedName = name.trim();
-      const trimmedIdentifier = identifier.trim();
+    let generated: GeneratedManagedAgent | null = null;
+    let effectiveName = name;
+    let effectiveIdentifier = identifier;
+    let effectiveInstructions = instructions;
+    let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
 
-      if (!trimmedName) nextErrors.name = 'Name is required.';
+    if (isPromptGenerationMode) {
+      const trimmedPrompt = prompt.trim();
+      if (trimmedPrompt.length < MIN_PROMPT_LENGTH) {
+        setPromptError(`Add at least ${MIN_PROMPT_LENGTH} characters describing your agent.`);
 
-      if (!trimmedIdentifier) {
-        nextErrors.identifier = 'Identifier is required.';
-      } else if (!SLUG_IDENTIFIER_REGEX.test(trimmedIdentifier)) {
-        nextErrors.identifier = slugIdentifierFormatMessage('identifier');
+        return;
       }
+
+      if (isManagedClaudeConnector && !selectedIntegrationId && selectedConnector?.providerId) {
+        const credentialErrors = validateManagedCredentialFields({
+          providerId: selectedConnector.providerId,
+          apiKey,
+          region,
+          externalWorkspaceId,
+        });
+
+        if (credentialErrors.apiKey || credentialErrors.region || credentialErrors.externalWorkspaceId) {
+          setErrors((prev) => ({ ...prev, ...credentialErrors }));
+
+          return;
+        }
+      }
+
+      setIsSubmitInFlight(true);
+
+      try {
+        generated = await generateManagedAgent({
+          prompt: trimmedPrompt,
+          runtime: isManagedClaudeConnector ? 'managed' : 'self-hosted',
+        });
+      } catch (err) {
+        setIsSubmitInFlight(false);
+
+        if (err instanceof GenerationCancelledError) {
+          return;
+        }
+        const message = err instanceof Error ? err.message : 'Could not generate agent.';
+        showErrorToast(message, 'Generation failed');
+
+        return;
+      }
+
+      effectiveName = generated.name;
+      effectiveIdentifier = generated.identifier;
+      effectiveInstructions = generated.systemPrompt;
+      managedOverrides = {
+        systemPrompt: generated.systemPrompt,
+        tools: generated.tools,
+        mcpServers: generated.mcpServers,
+        skills: generated.skills,
+      };
     }
 
-    if (runtime === 'claude' && !apiKey.trim()) {
-      nextErrors.apiKey = 'Anthropic API key is required.';
-    }
+    const nextErrors = validateCreateAgentForm({
+      name: effectiveName,
+      identifier: effectiveIdentifier,
+      instructions: effectiveInstructions,
+      apiKey,
+      runtime,
+      isExistingMode,
+      providerId: selectedConnector?.providerId,
+      externalAgentId,
+      externalEnvironmentId,
+      externalWorkspaceId,
+      region,
+      integrationId: selectedIntegrationId,
+      integrationName,
+    });
 
-    if (isExistingMode && !externalAgentId.trim()) {
-      nextErrors.externalAgentId = 'Claude Agent ID is required.';
-    }
-
-    if (Object.keys(nextErrors).length > 0) {
+    if (hasFormErrors(nextErrors)) {
       setErrors(nextErrors);
+      setIsSubmitInFlight(false);
 
       return;
     }
 
     setErrors({});
 
-    const trimmedInstructions = instructions.trim();
-    const trimmedName = name.trim();
-    const trimmedIdentifier = identifier.trim();
-    const trimmedApiKey = apiKey.trim();
-    const trimmedExternalAgentId = externalAgentId.trim();
-    const trimmedExternalEnvironmentId = externalEnvironmentId.trim();
-    const trimmedExternalWorkspaceId = externalWorkspaceId.trim();
+    // Idempotent in prompt mode (already set before the LLM call); the important case is manual
+    // mode, where we cover the create-agent mutation here so the busy state stays continuous
+    // until the parent flips `open` to false.
+    setIsSubmitInFlight(true);
 
     try {
       await onSubmit({
-        name: trimmedName,
-        identifier: trimmedIdentifier,
-        instructions: trimmedInstructions,
-        apiKey: trimmedApiKey,
+        name: effectiveName.trim(),
+        identifier: effectiveIdentifier.trim(),
+        instructions: effectiveInstructions.trim(),
+        apiKey: apiKey.trim(),
         runtime,
         isExistingMode,
-        externalAgentId: trimmedExternalAgentId,
-        externalEnvironmentId: trimmedExternalEnvironmentId,
-        externalWorkspaceId: trimmedExternalWorkspaceId || undefined,
+        providerId: selectedConnector?.providerId,
+        externalAgentId: externalAgentId.trim(),
+        externalEnvironmentId: externalEnvironmentId.trim(),
+        externalWorkspaceId: externalWorkspaceId.trim() || undefined,
+        region: region.trim() || undefined,
+        integrationId: selectedIntegrationId,
+        integrationName: integrationName.trim() || undefined,
+        managedOverrides,
       });
-      handleOpenChange(false);
+      // Parent closes the dialog in onSuccess — do not reset here while the modal is still open.
+      // The flag is cleared in `reset()` once the dialog finishes closing.
     } catch {
       // Caller surfaces a toast; keep the dialog open so the user can retry.
+      setIsSubmitInFlight(false);
     }
   };
 
-  const isClaudeSelected = runtime === 'claude';
-  const showManagedOptions = isManagedEnabled;
+  const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
+  const showCredentialsSection = isManagedClaudeConnector && credentialsPanelVisible;
+  const isSubmitBusy = isSubmitting || isGenerating || isSubmitInFlight;
+  const promptHeader = generationMode === 'existing' ? null : PROMPT_HEADER[generationMode];
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="border-stroke-soft max-w-[600px] gap-0 overflow-hidden rounded-12 border p-0 shadow-xl sm:rounded-12 min-w-[400px]"
+        className="border-stroke-soft w-[600px] max-w-[600px] gap-0 overflow-hidden rounded-12 border p-0 shadow-xl sm:rounded-12"
         hideCloseButton
       >
-        {/* Header */}
         <div className="bg-bg-weak flex flex-col gap-3 p-4">
           <div className="flex items-start gap-2">
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
@@ -335,384 +699,215 @@ export function CreateAgentDialog({
 
         <form onSubmit={handleSubmit}>
           <div className="bg-background flex max-h-[70vh] flex-col gap-5 overflow-y-auto p-4">
-            {/* Runtime selection cards */}
-            <div className="flex flex-col gap-2.5">
-              <label className="text-text-strong text-label-xs font-medium">Where do you want your agent?</label>
-              <div className="flex gap-2.5">
-                <RuntimeCard
-                  selected={runtime === 'scratch'}
-                  onClick={() => setRuntime('scratch')}
-                  icon={<RiFileCodeLine className="text-text-sub size-5" />}
-                  title="Custom Code"
-                  description="Built with LangChain, AI SDK, or your own scaffold"
-                />
+            <div className="flex flex-col gap-2">
+              <span className="text-text-strong text-label-xs font-medium">Where do you want your agent?</span>
+              <ConnectorIntegrationDropdown
+                selectedConnectorId={connectorId}
+                selectedIntegrationId={selectedIntegrationId}
+                integrations={integrations}
+                status={dropdownStatus}
+                showStatusBadge={showSavedBadge}
+                onSelectConnector={handleSelectConnector}
+                onSelectIntegration={handleSelectIntegration}
+                onRequestSetupCredentials={handleRequestSetupCredentials}
+              />
 
-                {showManagedOptions && (
-                  <RuntimeCard
-                    selected={runtime === 'claude'}
-                    onClick={() => setRuntime('claude')}
-                    icon={<ClaudeIcon className="size-5" />}
-                    title="Claude Managed Agent"
-                    description="Agent managed by Claude Managed Agents"
-                  />
-                )}
-
-                <RuntimeCard
-                  selected={runtime === 'vertex'}
-                  onClick={() => {}}
-                  disabled
-                  icon={<GoogleIcon className="size-5" />}
-                  title="Google Vertex AI Agent"
-                  description="Agent is managed in Google Vertex AI Agent"
+              {showCredentialsSection && selectedConnector?.providerId ? (
+                <ConfigureCredentialsSection
+                  providerId={selectedConnector.providerId as AgentRuntimeProviderIdEnum}
+                  providerLabel={selectedConnector.providerLabel ?? 'Provider'}
+                  integrationName={integrationName}
+                  apiKey={apiKey}
+                  externalWorkspaceId={externalWorkspaceId}
+                  region={region}
+                  errors={errors}
+                  disabled={isSubmitting}
+                  status={verifyStatus}
+                  statusMessage={verifyMessage}
+                  isSaving={isSavingIntegration}
+                  expanded={credentialsPanelExpanded}
+                  onExpandedChange={setCredentialsPanelExpanded}
+                  onIntegrationNameChange={(next) => {
+                    setIntegrationName(next);
+                    setErrors((prev) => ({ ...prev, integrationName: undefined }));
+                  }}
+                  onApiKeyChange={handleApiKeyChange}
+                  onExternalWorkspaceIdChange={(next) => {
+                    setExternalWorkspaceId(next);
+                    setErrors((prev) => ({ ...prev, externalWorkspaceId: undefined }));
+                  }}
+                  onRegionChange={(next) => {
+                    setRegion(next);
+                    setErrors((prev) => ({ ...prev, region: undefined }));
+                  }}
+                  onVerify={handleVerify}
+                  onSave={handleSaveIntegration}
                 />
-              </div>
+              ) : null}
             </div>
 
-            {/* Claude-only configuration: API key + separator + segmented control */}
-            {isClaudeSelected && (
-              <div className="flex flex-col gap-5">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-px">
-                    <label htmlFor={apiKeyId} className="text-text-sub text-label-xs font-medium">
-                      Anthropic API key
-                    </label>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
-                          <RiInformation2Line className="size-3.5" aria-hidden />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        Your Anthropic API key is encrypted and stored securely. It is used to provision the agent on
-                        Claude Platform.
-                      </TooltipContent>
-                    </Tooltip>
-                    <div className="ml-auto">
-                      <a
-                        href={ANTHROPIC_API_KEY_HREF}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium"
-                      >
-                        Get API Key
-                        <RiArrowRightUpLine className="size-3.5" aria-hidden />
-                      </a>
-                    </div>
-                  </div>
-                  <Input
-                    id={apiKeyId}
-                    size="xs"
-                    type={showSecret ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => {
-                      setApiKey(e.target.value);
-                      setErrors((prev) => ({ ...prev, apiKey: undefined }));
-                    }}
-                    placeholder="Paste the Anthropic API key here..."
-                    hasError={Boolean(errors.apiKey)}
-                    aria-invalid={errors.apiKey ? true : undefined}
-                    aria-describedby={errors.apiKey ? `${apiKeyId}-error` : undefined}
-                    className="font-mono"
-                    inlineTrailingNode={
-                      <button
-                        type="button"
-                        onClick={toggleSecretVisibility}
-                        aria-label={showSecret ? 'Hide API key' : 'Show API key'}
-                        aria-pressed={showSecret}
-                      >
-                        {showSecret ? (
-                          <RiEyeOffLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
-                        ) : (
-                          <RiEyeLine className="text-text-sub group-has-[disabled]:text-text-disabled" />
-                        )}
-                      </button>
-                    }
-                  />
-                  {errors.apiKey ? (
-                    <p id={`${apiKeyId}-error`} className="text-error-base text-label-xs" role="alert">
-                      {errors.apiKey}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-px">
-                    <label htmlFor={workspaceIdInputId} className="text-text-sub text-label-xs font-medium">
-                      Workspace ID
-                    </label>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
-                          <RiInformation2Line className="size-3.5" aria-hidden />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        The Anthropic workspace your API key is scoped to. Leave empty for the Default Workspace. For
-                        custom workspaces, paste the `wrkspc_…` id from the Claude Console (Settings → Workspaces). Used
-                        for the in-product &quot;Open in Claude&quot; deep link.
-                      </TooltipContent>
-                    </Tooltip>
-                    <div className="ml-auto">
-                      <a
-                        href={CLAUDE_WORKSPACE_HREF}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium"
-                      >
-                        Find Workspace ID
-                        <RiArrowRightUpLine className="size-3.5" aria-hidden />
-                      </a>
-                    </div>
-                  </div>
-                  <Input
-                    id={workspaceIdInputId}
-                    size="xs"
-                    value={externalWorkspaceId}
-                    onChange={(e) => setExternalWorkspaceId(e.target.value)}
-                    placeholder={DEFAULT_CLAUDE_WORKSPACE_ID}
-                    className="font-mono"
-                  />
-                </div>
-
-                <div className="border-stroke-weak border-t" />
-
-                <SegmentedControl value={mode} onValueChange={(v) => setMode(v as CreateAgentMode)}>
-                  <SegmentedControlList className="rounded-[5px] bg-bg-muted p-px">
-                    <SegmentedControlTrigger value="create" className="text-label-xs">
-                      Create new agent
-                    </SegmentedControlTrigger>
-                    <SegmentedControlTrigger value="existing" className="text-label-xs">
-                      Setup from existing agent
-                    </SegmentedControlTrigger>
-                  </SegmentedControlList>
-                </SegmentedControl>
-              </div>
+            {showScopeTabs && (
+              <SegmentedControl
+                value={scope}
+                onValueChange={(v) => handleGenerationModeChange(v === 'existing' ? 'existing' : 'prompt')}
+              >
+                <SegmentedControlList className="rounded-[5px] bg-bg-muted p-px">
+                  <SegmentedControlTrigger value="create" className="text-label-xs" disabled={isSubmitBusy}>
+                    Create new agent
+                  </SegmentedControlTrigger>
+                  <SegmentedControlTrigger value="existing" className="text-label-xs" disabled={isSubmitBusy}>
+                    Connect existing agent
+                  </SegmentedControlTrigger>
+                </SegmentedControlList>
+              </SegmentedControl>
             )}
 
-            {/* Tab content: existing-fields ⇄ create-mode-content (mutually exclusive) */}
-            {isClaudeSelected && mode === 'existing' ? (
-              <div className="flex flex-col gap-5">
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-px">
-                    <label htmlFor={`${formId}-external-id`} className="text-text-strong text-label-xs font-medium">
-                      Claude Agent ID
-                    </label>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
-                          <RiInformation2Line className="size-3.5" aria-hidden />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        The unique identifier of the agent on the Claude Platform (e.g. agent_xxx).
-                      </TooltipContent>
-                    </Tooltip>
-                    <div className="ml-auto">
-                      <a
-                        href={CLAUDE_AGENT_ID_HREF}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium"
-                      >
-                        Get Agent ID
-                        <RiArrowRightUpLine className="size-3.5" aria-hidden />
-                      </a>
-                    </div>
-                  </div>
-                  <Input
-                    id={`${formId}-external-id`}
-                    size="xs"
-                    value={externalAgentId}
-                    onChange={(e) => {
-                      setExternalAgentId(e.target.value);
-                      setErrors((prev) => ({ ...prev, externalAgentId: undefined }));
-                    }}
-                    placeholder="e.g. agent_xx"
-                    className="font-mono"
-                    hasError={Boolean(errors.externalAgentId)}
-                    aria-invalid={errors.externalAgentId ? true : undefined}
-                    aria-describedby={errors.externalAgentId ? `${formId}-external-id-error` : undefined}
-                  />
-                  {errors.externalAgentId ? (
-                    <p id={`${formId}-external-id-error`} className="text-error-base text-label-xs" role="alert">
-                      {errors.externalAgentId}
-                    </p>
-                  ) : null}
-                </div>
-
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-px">
-                    <label htmlFor={`${formId}-external-env-id`} className="text-text-strong text-label-xs font-medium">
-                      Claude Environment ID
-                    </label>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
-                          <RiInformation2Line className="size-3.5" aria-hidden />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent>The Claude environment that hosts this agent (e.g. env_xxx).</TooltipContent>
-                    </Tooltip>
-                    <div className="ml-auto">
-                      <a
-                        href={CLAUDE_ENVIRONMENT_ID_HREF}
-                        target="_blank"
-                        rel="noreferrer noopener"
-                        className="text-text-sub hover:text-text-strong inline-flex items-center gap-0.5 text-label-xs font-medium"
-                      >
-                        Get Environment ID
-                        <RiArrowRightUpLine className="size-3.5" aria-hidden />
-                      </a>
-                    </div>
-                  </div>
-                  <Input
-                    id={`${formId}-external-env-id`}
-                    size="xs"
-                    value={externalEnvironmentId}
-                    onChange={(e) => {
-                      setExternalEnvironmentId(e.target.value);
-                      setErrors((prev) => ({ ...prev, externalEnvironmentId: undefined }));
-                    }}
-                    placeholder="e.g. env_xx"
-                    className="font-mono"
-                    hasError={Boolean(errors.externalEnvironmentId)}
-                    aria-invalid={errors.externalEnvironmentId ? true : undefined}
-                    aria-describedby={errors.externalEnvironmentId ? `${formId}-external-env-id-error` : undefined}
-                  />
-                  {errors.externalEnvironmentId ? (
-                    <p id={`${formId}-external-env-id-error`} className="text-error-base text-label-xs" role="alert">
-                      {errors.externalEnvironmentId}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-5">
+            {generationMode === 'existing' ? (
+              <ExistingAgentFields
+                externalAgentId={externalAgentId}
+                externalEnvironmentId={externalEnvironmentId}
+                errors={errors}
+                disabled={isSubmitBusy}
+                onExternalAgentIdChange={(next) => {
+                  setExternalAgentId(next);
+                  setErrors((prev) => ({ ...prev, externalAgentId: undefined }));
+                }}
+                onExternalEnvironmentIdChange={(next) => {
+                  setExternalEnvironmentId(next);
+                  setErrors((prev) => ({ ...prev, externalEnvironmentId: undefined }));
+                }}
+              />
+            ) : useAiGeneration ? (
+              <div className="flex flex-col gap-2">
                 <div className="flex flex-col gap-2.5">
-                  <label className="text-text-sub text-label-xs font-medium">Start from a template</label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {visibleTemplates.map((template) => (
-                      <button
-                        key={template.label}
-                        type="button"
-                        onClick={() => handleTemplateSelect(template)}
-                        className="cursor-pointer rounded-full"
-                      >
-                        <Tag className="h-7 rounded-full" variant="stroke">
-                          <BotIcon className="text-feature size-4 shrink-0" />
-                          {template.label}
-                        </Tag>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <RequiredFieldLabel htmlFor={nameId}>Agent name</RequiredFieldLabel>
-                    <Input
-                      id={nameId}
-                      size="xs"
-                      value={name}
-                      onChange={(e) => {
-                        const nextName = e.target.value;
-                        setName(nextName);
-                        setErrors((prev) => ({ ...prev, name: undefined }));
-                        if (!isIdentifierTouched) {
-                          setIdentifier(slugify(nextName));
-                          setErrors((prev) => ({ ...prev, identifier: undefined }));
-                        }
-                      }}
-                      placeholder="e.g. Wine Sommelier Agent"
-                      hasError={Boolean(errors.name)}
-                      aria-invalid={errors.name ? true : undefined}
-                      aria-describedby={errors.name ? `${nameId}-error` : undefined}
-                    />
-                    {errors.name ? (
-                      <p id={`${nameId}-error`} className="text-error-base text-label-xs" role="alert">
-                        {errors.name}
-                      </p>
-                    ) : null}
-                  </div>
-
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <div className="flex items-center gap-px">
-                      <RequiredFieldLabel htmlFor={identifierId}>Agent Identifier</RequiredFieldLabel>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="text-text-soft ml-0.5 inline-flex cursor-default items-center">
-                            <RiInformation2Line className="size-3.5" aria-hidden />
-                          </span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Used in code and APIs. Must be unique. Letters, numbers, hyphens, underscores, and dots only.
-                        </TooltipContent>
-                      </Tooltip>
+                  {promptHeader && (
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-text-strong text-label-xs font-medium leading-4">{promptHeader.label}</span>
+                      {!isSubmitBusy && (
+                        <button
+                          type="button"
+                          onClick={() => handleGenerationModeChange(promptHeader.toggleTo)}
+                          className={cn(
+                            'text-text-sub hover:text-text-strong text-label-xs inline-flex items-center gap-0.5 font-medium leading-4',
+                            'disabled:cursor-not-allowed disabled:opacity-50'
+                          )}
+                        >
+                          {promptHeader.toggleIcon === 'sparkles' && (
+                            <BroomSparkle className="text-feature size-3.5 shrink-0" aria-hidden />
+                          )}
+                          <span>{promptHeader.toggleLabel}</span>
+                          <RiArrowRightSLine className="size-3.5 shrink-0" aria-hidden />
+                        </button>
+                      )}
                     </div>
-                    <Input
-                      id={identifierId}
-                      size="xs"
-                      className="font-mono"
-                      value={identifier}
-                      onChange={(e) => {
-                        setIdentifier(e.target.value);
-                        setIsIdentifierTouched(true);
+                  )}
+
+                  {generationMode === 'prompt' && (
+                    // Generation status and Cancel live in the dialog footer so the body height
+                    // stays stable while the agent is being created from a prompt.
+                    <PromptInput
+                      value={prompt}
+                      onChange={handlePromptChange}
+                      disabled={isSubmitting}
+                      errorMessage={promptError}
+                      textareaRef={promptTextareaRef}
+                      isGenerating={isSubmitBusy}
+                    />
+                  )}
+
+                  {generationMode === 'manual' && (
+                    <ScratchAgentFields
+                      name={name}
+                      identifier={identifier}
+                      instructions={instructions}
+                      errors={errors}
+                      isIdentifierTouched={isIdentifierTouched}
+                      isClaudeSelected={isManagedClaudeConnector}
+                      disabled={isSubmitBusy}
+                      onNameChange={(next) => {
+                        setName(next);
+                        setErrors((prev) => ({ ...prev, name: undefined }));
+                      }}
+                      onIdentifierChange={(next) => {
+                        setIdentifier(next);
                         setErrors((prev) => ({ ...prev, identifier: undefined }));
                       }}
-                      placeholder="e.g. wine-sommelier-agent"
-                      hasError={Boolean(errors.identifier)}
-                      aria-invalid={errors.identifier ? true : undefined}
-                      aria-describedby={
-                        errors.identifier ? `${identifierId}-hint ${identifierId}-error` : `${identifierId}-hint`
-                      }
+                      onIdentifierTouched={() => setIsIdentifierTouched(true)}
+                      onInstructionsChange={setInstructions}
                     />
-                    {errors.identifier ? (
-                      <p id={`${identifierId}-error`} className="text-error-base text-label-xs" role="alert">
-                        {errors.identifier}
-                      </p>
-                    ) : null}
-                  </div>
+                  )}
                 </div>
 
-                <div className="flex flex-col gap-1">
-                  <div className="flex items-center gap-1">
-                    <label htmlFor={instructionsId} className="text-text-strong text-label-xs font-medium">
-                      Instructions
-                    </label>
-                    {isClaudeSelected && (
-                      <span className="text-text-soft text-paragraph-xs ml-auto">
-                        (Sent to Claude as the system prompt)
-                      </span>
-                    )}
-                  </div>
-                  <Textarea
-                    id={instructionsId}
-                    placeholder={
-                      isClaudeSelected
-                        ? 'You are a helpful assistant for the team. Always reply concisely\nand cite sources when you can...'
-                        : 'What does this agent do...'
-                    }
-                    value={instructions}
-                    onChange={(e) => setInstructions(e.target.value)}
-                    className="min-h-24 resize-none text-sm"
+                {generationMode === 'prompt' && (
+                  <AgentSuggestionPills
+                    suggestions={AGENT_TEMPLATES}
+                    onSelect={handleSelectAiSuggestion}
+                    disabled={isSubmitBusy}
                   />
-                </div>
+                )}
               </div>
+            ) : (
+              <ScratchAgentFields
+                name={name}
+                identifier={identifier}
+                instructions={instructions}
+                errors={errors}
+                isIdentifierTouched={isIdentifierTouched}
+                isClaudeSelected={isManagedClaudeConnector}
+                disabled={isSubmitBusy}
+                onNameChange={(next) => {
+                  setName(next);
+                  setErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+                onIdentifierChange={(next) => {
+                  setIdentifier(next);
+                  setErrors((prev) => ({ ...prev, identifier: undefined }));
+                }}
+                onIdentifierTouched={() => setIsIdentifierTouched(true)}
+                onInstructionsChange={setInstructions}
+              />
             )}
           </div>
 
-          {/* Footer */}
-          <div className="bg-bg-weak border-stroke-soft flex items-center justify-end border-t px-4 py-3">
-            <Button
-              variant="secondary"
-              mode="gradient"
-              size="xs"
-              type="submit"
-              isLoading={isSubmitting}
-              trailingIcon={RiArrowRightSLine}
-            >
-              Setup agent
-            </Button>
+          <div className="bg-bg-weak border-stroke-soft flex items-center gap-3 border-t px-4 py-3">
+            {isSubmitBusy && generationMode === 'prompt' ? (
+              <>
+                <div className="flex h-14 -mt-3 -mb-3 min-w-0 flex-1 items-center">
+                  <GenerationStatus
+                    steps={GENERATION_STEPS}
+                    containerHeight={FOOTER_STATUS_HEIGHT}
+                    className="w-full"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  mode="outline"
+                  size="xs"
+                  className="shrink-0 gap-1"
+                  onClick={handleCancelGeneration}
+                  // Cancel is only meaningful while the LLM call is in flight; once it
+                  // returns we are mid-provisioning at Anthropic and there is nothing to
+                  // abort, so keep the button visible (avoids a layout shift) but disable it.
+                  disabled={!isGenerating}
+                  trailingIcon={RiCloseLine}
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="secondary"
+                mode="gradient"
+                size="xs"
+                type="submit"
+                className="ml-auto"
+                isLoading={isSubmitBusy}
+                trailingIcon={RiArrowRightSLine}
+              >
+                Setup agent
+              </Button>
+            )}
           </div>
         </form>
       </DialogContent>

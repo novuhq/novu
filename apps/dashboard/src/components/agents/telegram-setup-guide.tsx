@@ -3,11 +3,17 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiKey2Line, RiRobot2Line, RiSendPlaneLine } from 'react-icons/ri';
 import QRCode from 'react-qr-code';
-import type { AgentResponse } from '@/api/agents';
-import { configureTelegramAgentWebhook, getAgentIntegrationsQueryKey } from '@/api/agents';
+import type { AgentResponse, TelegramSubscriberLink } from '@/api/agents';
+import {
+  configureTelegramAgentWebhook,
+  getAgentIntegrationsQueryKey,
+  requestTelegramSubscriberLink,
+} from '@/api/agents';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { useAuth } from '@/context/auth/hooks';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { buildConnectSubscriberId } from '@/utils/connect-subscriber-id';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
@@ -45,7 +51,6 @@ export type TelegramSetupGuideProps = {
   embedded?: boolean;
 };
 
-
 export function TelegramSetupGuide({
   agent,
   integrationId,
@@ -58,9 +63,19 @@ export function TelegramSetupGuide({
   const [isConnected, setIsConnected] = useState(false);
   const [configuredWebhookUrl, setConfiguredWebhookUrl] = useState<string | null>(null);
   const [botUsername, setBotUsername] = useState<string | null>(null);
+  const [subscriberLink, setSubscriberLink] = useState<TelegramSubscriberLink | null>(null);
 
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
+  const { currentUser, isUserLoaded } = useAuth();
+
+  const testSubscriberId = useMemo(() => {
+    if (!isUserLoaded || !currentUser?._id) {
+      return null;
+    }
+
+    return buildConnectSubscriberId(currentUser._id);
+  }, [currentUser?._id, isUserLoaded]);
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
   useEffect(() => {
@@ -68,6 +83,7 @@ export function TelegramSetupGuide({
     setCredentialsSavedLocally(false);
     setConfiguredWebhookUrl(null);
     setBotUsername(null);
+    setSubscriberLink(null);
   }, [integrationId]);
 
   const handleConnected = useCallback(() => {
@@ -87,6 +103,10 @@ export function TelegramSetupGuide({
 
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
+  // Set only after a successful setWebhook call; also used to detect webhook configured
+  // outside this session (e.g. mobile flow) so step 3 can still issue a subscriber link.
+  const hasWebhookSecret =
+    typeof selectedIntegration?.credentials?.token === 'string' && selectedIntegration.credentials.token.length > 0;
 
   // Poll for credentials only while the sidebar is open AND the user hasn't saved a token yet.
   // Stops the moment the drawer closes or credentials appear.
@@ -116,7 +136,7 @@ export function TelegramSetupGuide({
     }
   }, [hasCredentials, isCredentialsSidebarOpen]);
 
-  const { mutate: configureTelegram, isPending: isConfiguring, error: configureError } = useMutation({
+  const { mutate: configureTelegram, error: configureError } = useMutation({
     mutationFn: () =>
       configureTelegramAgentWebhook(
         requireEnvironment(currentEnvironment, 'No environment selected'),
@@ -137,15 +157,62 @@ export function TelegramSetupGuide({
     },
   });
 
-  const isWebhookConfigured = Boolean(configuredWebhookUrl);
+  const isWebhookConfigured = Boolean(configuredWebhookUrl) || hasWebhookSecret;
 
-  // When credentials already exist (e.g. user revisiting the guide), auto-configure the webhook
-  // so botUsername is populated and the QR code is available for step 3.
+  const displayBotUsername = botUsername ?? subscriberLink?.botUsername ?? null;
+
+  const {
+    mutate: issueSubscriberLink,
+    isPending: isIssuingSubscriberLink,
+    error: subscriberLinkError,
+  } = useMutation({
+    mutationFn: () => {
+      if (!testSubscriberId) {
+        throw new Error('Sign-in is required to issue a Telegram connection link.');
+      }
+
+      return requestTelegramSubscriberLink(
+        requireEnvironment(currentEnvironment, 'No environment selected'),
+        agent.identifier,
+        integrationId,
+        testSubscriberId
+      );
+    },
+    onSuccess: (result) => {
+      setBotUsername(result.botUsername);
+      setSubscriberLink(result);
+    },
+    onError: (err: unknown) => {
+      const message =
+        err instanceof Error
+          ? err.message
+          : 'Failed to issue a Telegram connection link. Check that the bot token is valid and try again.';
+      showErrorToast(message);
+    },
+  });
+
+  // Once the webhook is registered, auto-issue a subscriber-link for the
+  // current dashboard user so step 3 ("Send a test message") opens a deep link
+  // that automatically links this Telegram chat to a test subscriber. Also
+  // resolves botUsername when configureTelegram did not run in this session.
   useEffect(() => {
-    if (hasCredentials && !isWebhookConfigured && !isConfiguring) {
-      configureTelegram();
+    if (
+      isWebhookConfigured &&
+      testSubscriberId &&
+      !subscriberLink &&
+      !isIssuingSubscriberLink &&
+      !subscriberLinkError
+    ) {
+      issueSubscriberLink();
     }
-  }, [hasCredentials, integrationId, isWebhookConfigured, isConfiguring, configureTelegram]);
+  }, [
+    isWebhookConfigured,
+    testSubscriberId,
+    subscriberLink,
+    isIssuingSubscriberLink,
+    subscriberLinkError,
+    issueSubscriberLink,
+  ]);
 
   const base = stepOffset;
 
@@ -162,9 +229,7 @@ export function TelegramSetupGuide({
   const configureErrorMessage = useMemo(() => {
     if (!configureError) return null;
 
-    return configureError instanceof Error
-      ? configureError.message
-      : 'Failed to configure webhook. Please try again.';
+    return configureError instanceof Error ? configureError.message : 'Failed to configure webhook. Please try again.';
   }, [configureError]);
 
   const stepsColumn = (
@@ -186,15 +251,14 @@ export function TelegramSetupGuide({
             </a>
             {' on Telegram and run '}
             <code className="text-text-sub rounded bg-neutral-alpha-100 px-1 font-mono text-[11px]">/newbot</code>
-            {'. Follow the prompts to choose a name and username, then copy the entire confirmation message BotFather sends.'}
+            {
+              '. Follow the prompts to choose a name and username, then copy the entire confirmation message BotFather sends.'
+            }
           </span>
         }
         rightContent={
           <div className="flex flex-col items-start gap-0">
-            <SetupButton
-              href="https://t.me/botfather"
-              leadingIcon={<RiRobot2Line className="size-3.5" />}
-            >
+            <SetupButton href="https://t.me/botfather" leadingIcon={<RiRobot2Line className="size-3.5" />}>
               Open BotFather
             </SetupButton>
             {step1Status === 'current' && <TelegramQrInline url="https://t.me/botfather" />}
@@ -237,20 +301,25 @@ export function TelegramSetupGuide({
         title="Send a test message"
         description={
           <span>
-            {'Open Telegram and send a direct message to your bot. If everything is configured correctly, your agent will respond. You can search for your bot by its username.'}
+            {subscriberLink
+              ? 'Open the connection link below in Telegram. The bot will link this chat to a test subscriber and confirm your agent can reach you here.'
+              : 'Open Telegram and send a direct message to your bot. If everything is configured correctly, your agent will respond. You can search for your bot by its username.'}
           </span>
         }
         rightContent={
-          botUsername ? (
+          displayBotUsername ? (
             <div className="flex flex-col items-start gap-0">
               <SetupButton
-                href={`https://t.me/${botUsername}`}
+                href={subscriberLink?.deepLinkUrl ?? `https://t.me/${displayBotUsername}`}
                 leadingIcon={<RiSendPlaneLine className="size-3.5" />}
               >
-                Open @{botUsername}
+                {subscriberLink ? `Connect & test @${displayBotUsername}` : `Open @${displayBotUsername}`}
               </SetupButton>
               {step3Status === 'current' && (
-                <TelegramQrInline url={`https://t.me/${botUsername}`} username={botUsername} />
+                <TelegramQrInline
+                  url={subscriberLink?.deepLinkUrl ?? `https://t.me/${displayBotUsername}`}
+                  username={displayBotUsername}
+                />
               )}
             </div>
           ) : null
@@ -292,6 +361,7 @@ export function TelegramSetupGuide({
           }}
           agentOnboarding
           agentIdentifier={agent.identifier}
+          testSubscriberId={testSubscriberId}
           submitLabel="Save & Connect"
         />
       </div>
@@ -312,6 +382,7 @@ export function TelegramSetupGuide({
         }}
         agentOnboarding
         agentIdentifier={agent.identifier}
+        testSubscriberId={testSubscriberId}
         submitLabel="Save & Connect"
       />
     </>

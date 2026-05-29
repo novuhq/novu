@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { FeatureFlagsService } from '@novu/application-generic';
 import { CommunityMemberRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
 import passport from 'passport';
@@ -65,6 +66,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     exports: [
       RootEnvironmentGuard,
       AuthService,
+      FeatureFlagsService,
       'AUTH_SERVICE',
       'USER_REPOSITORY',
       'MEMBER_REPOSITORY',

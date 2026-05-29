@@ -52,6 +52,8 @@ type IntegrationConfigurationProps = {
   agentOnboarding?: boolean;
   /** Agent identifier — only set during the agent-onboarding flow. */
   agentIdentifier?: string;
+  /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
+  testSubscriberId?: string | null;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
 };
 
@@ -74,6 +76,7 @@ export function IntegrationSettings({
   isReadOnly,
   agentOnboarding,
   agentIdentifier,
+  testSubscriberId,
   onFormStateChange,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
@@ -131,7 +134,14 @@ export function IntegrationSettings({
   const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
   const isWhatsAppOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.WhatsAppBusiness;
   const isTelegramProvider = provider.id === ChatProviderIdEnum.Telegram;
-  const showTelegramPaste = isTelegramProvider && !isReadOnly;
+  // The BotFather paste helper is an onboarding affordance — once the integration
+  // already has a saved bot token, the textarea and mobile QR card are noise
+  // (and the "Auto-filled from the BotFather message above…" hint becomes
+  // misleading), so hide all of it and fall back to the regular API token field.
+  const telegramApiToken = integration?.credentials?.[CredentialsKeyEnum.ApiToken];
+  const hasExistingTelegramToken =
+    isTelegramProvider && typeof telegramApiToken === 'string' && telegramApiToken.trim().length > 0;
+  const showTelegramPaste = isTelegramProvider && !isReadOnly && !hasExistingTelegramToken;
   // Picks the QR variant: agent flow when we already have agent + integration,
   // integration-store flow in the create flow where neither exists yet, none
   // otherwise (e.g. plain edit of a non-agent Telegram integration).
@@ -139,13 +149,13 @@ export function IntegrationSettings({
     if (!showTelegramPaste) return undefined;
 
     if (isAgentOnboarding && agentIdentifier && integration?._id) {
-      return { kind: 'agent', agentIdentifier, integrationId: integration._id };
+      return { kind: 'agent', agentIdentifier, integrationId: integration._id, testSubscriberId };
     }
 
     if (mode === 'create') return { kind: 'integration-store' };
 
     return undefined;
-  }, [showTelegramPaste, isAgentOnboarding, agentIdentifier, integration?._id, mode]);
+  }, [showTelegramPaste, isAgentOnboarding, agentIdentifier, integration?._id, mode, testSubscriberId]);
   const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
     control,
     setValue,
@@ -302,7 +312,10 @@ export function IntegrationSettings({
                             key={`${credential.key}-${integration?._id || 'no-id'}`}
                             credential={
                               showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
-                                ? { ...credential, description: 'Auto-filled from the BotFather message above, or enter it manually.' }
+                                ? {
+                                    ...credential,
+                                    description: 'Auto-filled from the BotFather message above, or enter it manually.',
+                                  }
                                 : credential
                             }
                             control={control}

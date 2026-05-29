@@ -89,6 +89,13 @@ export interface ICredentials {
   /** Claude Managed Agents: ID of the Anthropic environment tied to this integration. */
   externalEnvironmentId?: string;
   /**
+   * Claude Managed Agents: ID of the Anthropic vault (`vlt_…`) tied to this integration.
+   *
+   * Provisioned eagerly alongside the environment so OAuth-completed MCP credentials
+   * can be pushed to Anthropic's per-vault credentials API without any additional lookup.
+   */
+  externalVaultId?: string;
+  /**
    * Claude Managed Agents: id of the Anthropic workspace used in console deep links.
    *
    * Defaults to `"default"` (every org's auto-created Default Workspace, which has no real id).

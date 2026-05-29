@@ -4,13 +4,13 @@ import { IsNotEmpty, IsString, Matches } from 'class-validator';
 export class SendWhatsAppTestTemplateRequestDto {
   @ApiProperty({
     type: String,
-    description: 'E.164 phone number (with or without leading +) to receive the hello_world WhatsApp template',
-    example: '+14155551234',
+    description:
+      'Novu subscriber ID whose phone field receives the hello_world WhatsApp template. The dashboard patches subscriber.phone before calling this endpoint.',
+    example: 'connect:user-123',
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^\+?[1-9]\d{6,14}$/, { message: 'to must be a valid E.164 phone number' })
-  to: string;
+  subscriberId: string;
 }
 
 export class SendWhatsAppTestTemplateErrorDto {

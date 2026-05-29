@@ -36,6 +36,13 @@ export class AgentIntegrationResponseIntegrationDto {
 
   @ApiPropertyOptional({
     description:
+      'Default email From display name for this agent (NovuAgent integrations only). ' +
+      'Falls back to the agent name when not explicitly stored on the integration credentials.',
+  })
+  defaultSenderName?: string;
+
+  @ApiPropertyOptional({
+    description:
       'When true, the worker drops inbound mail addressed to this agent on the shared `agentconnect.sh` domain. ' +
       'Custom-domain routes still deliver. Only meaningful on cloud-enabled NovuAgent integrations.',
   })

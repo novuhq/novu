@@ -165,10 +165,9 @@ type IntegrationStoreTelegramMobileLinkEnvelope = { data: IntegrationStoreTelegr
 export async function requestIntegrationStoreTelegramMobileLink(
   environment: IEnvironment
 ): Promise<IntegrationStoreTelegramMobileLink> {
-  const response = await post<IntegrationStoreTelegramMobileLinkEnvelope>(
-    `/integrations/telegram/mobile-link`,
-    { environment }
-  );
+  const response = await post<IntegrationStoreTelegramMobileLinkEnvelope>(`/integrations/telegram/mobile-link`, {
+    environment,
+  });
 
   return response.data;
 }

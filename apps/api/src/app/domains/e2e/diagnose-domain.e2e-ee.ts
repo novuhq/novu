@@ -4,10 +4,7 @@ import { DomainRouteDtoType } from '@novu/api/models/components';
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import {
-  expectSdkExceptionGeneric,
-  initNovuClassSdkInternalAuth,
-} from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
+import { expectSdkExceptionGeneric, initNovuClassSdkInternalAuth } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 
 const NS_UNRESOLVABLE_CODE = 'ns_unresolvable';
 

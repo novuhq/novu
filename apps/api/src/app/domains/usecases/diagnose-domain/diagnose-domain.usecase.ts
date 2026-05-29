@@ -1,20 +1,16 @@
 import { promises as dnsPromises, type MxRecord } from 'node:dns';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { DomainRepository } from '@novu/dal';
-import {
-  DomainDiagnosticCheckStatusEnum,
-  DomainDiagnosticCodeEnum,
-  DomainDiagnosticSeverityEnum,
-} from '@novu/shared';
+import { DomainDiagnosticCheckStatusEnum, DomainDiagnosticCodeEnum, DomainDiagnosticSeverityEnum } from '@novu/shared';
 
 import { DiagnoseDomainResponseDto } from '../../dtos/diagnose-domain-response.dto';
-import { getMailServerDomain } from '../../utils/dns-records';
 import {
   checkMailServerIpsOnDnsbl,
   isPrivateOrLoopbackIpv4,
   resolveHostnameToIpv4,
   withDnsTimeout,
 } from '../../utils/dns-diagnostics';
+import { getMailServerDomain } from '../../utils/dns-records';
 import { resolveDomainName } from '../domain-route.utils';
 import { DiagnoseDomainCommand } from './diagnose-domain.command';
 
