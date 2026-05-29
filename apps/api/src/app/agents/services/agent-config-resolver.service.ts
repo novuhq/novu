@@ -3,7 +3,6 @@ import {
   AnalyticsService,
   decryptChannelConnectionAuth,
   decryptCredentials,
-  FeatureFlagsService,
   PinoLogger,
 } from '@novu/application-generic';
 import {
@@ -13,7 +12,7 @@ import {
   ICredentialsEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
+import { EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
 import { trackAgentIntegrationFirstWebhook } from '../agent-analytics';
 import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
@@ -86,7 +85,6 @@ async function resolveReaction(
 @Injectable()
 export class AgentConfigResolver {
   constructor(
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
@@ -112,16 +110,6 @@ export class AgentConfigResolver {
     }
 
     const { _environmentId: environmentId, _organizationId: organizationId } = agent;
-
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED,
-      defaultValue: false,
-      environment: { _id: environmentId },
-      organization: { _id: organizationId },
-    });
-    if (!isEnabled) {
-      throw new NotFoundException();
-    }
 
     const integration = await this.integrationRepository.findOne({
       _environmentId: environmentId,
