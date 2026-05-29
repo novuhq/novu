@@ -11,7 +11,6 @@ import {
 import { getConversationsList } from '@/api/conversations';
 import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { CONNECT_ONBOARDING_COMPLETED } from '@/utils/constants';
 
 export type ConnectSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
 
@@ -137,15 +136,18 @@ export function useConnectSetupSteps(): UseConnectSetupStepsResult {
     [addAgentCompleted, onlyAgent?.identifier, sendMessageCompleted, setupChannelCompleted, setupChannelCtaAvailable]
   );
 
-  const isOnboardingCompletedInStorage = localStorage.getItem(CONNECT_ONBOARDING_COMPLETED) === 'true';
+  // First-time onboarding is driven by the Clerk org-create redirect (see
+  // `auto-create-connect-organization.tsx` → `AGENTS_SETUP`), so this section relies purely on
+  // derived setup state. Onboarding stays reachable by URL for anyone who wants to revisit it.
   const hasResolvedAgents = agentsQuery.isSuccess || agentsQuery.isError;
   const hasResolvedIntegrations = !onlyAgent || agentIntegrationsQuery.isSuccess || agentIntegrationsQuery.isError;
   const hasResolvedConversations = !hasAgent || conversationsQuery.isSuccess || conversationsQuery.isError;
   const isSetupResolved = hasResolvedAgents && hasResolvedIntegrations && hasResolvedConversations;
-  const isComplete = isOnboardingCompletedInStorage || agentSetupComplete || hasAnyConversation;
-  const isLoading = !isOnboardingCompletedInStorage && !isSetupResolved;
+  const isComplete = agentSetupComplete || hasAnyConversation;
+  const isLoading = !isSetupResolved;
   const shouldShowOnboarding = isSetupResolved && !isComplete;
-  const showOnboardingMessaging = isSetupResolved ? !isComplete : !isOnboardingCompletedInStorage;
+  // Default to the neutral "completed" copy while loading to avoid flashing first-run messaging.
+  const showOnboardingMessaging = isSetupResolved && !isComplete;
 
   return {
     steps,
