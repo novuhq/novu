@@ -190,7 +190,14 @@ async function collectAndVerifyManagedCredentials(
     verificationError = undefined;
 
     if (!hasCompleteManagedCredentials(providerId, fields)) {
-      throw new Error('Complete credentials are required for the selected agent runtime.');
+      if (options.ci) {
+        throw new Error('Complete credentials are required for the selected agent runtime.');
+      }
+
+      verificationError = 'Enter all required credential fields before continuing.';
+      forcePrompt = true;
+
+      continue;
     }
 
     ui.verifyingCredentials();
@@ -260,6 +267,7 @@ async function resolveManagedCredentialFields(
           placeholder: 'wrkspc_…',
           hint: 'Workspace ID from the AWS Claude Platform console.',
           secret: false,
+          verificationError,
         });
 
   return {

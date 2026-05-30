@@ -80,6 +80,66 @@ describe('resolveAgentRuntimeIntegration credential retry', () => {
     expect(result.integrationId).toBe('integration-1');
   });
 
+  it('re-prompts when submitted credentials are incomplete in interactive mode', async () => {
+    const promptForSecretInput = vi
+      .fn()
+      .mockResolvedValueOnce('')
+      .mockResolvedValueOnce('good-key');
+    const ui = createUi({ promptForSecretInput });
+
+    await resolveAgentRuntimeIntegration(createClient(), ui, createOptions(), 'claude', 'env-1');
+
+    expect(promptForSecretInput).toHaveBeenCalledTimes(2);
+    expect(promptForSecretInput.mock.calls[1][0]).toMatchObject({
+      verificationError: expect.stringContaining('Enter all required credential fields'),
+    });
+    expect(verifyManagedCredentials).toHaveBeenCalledTimes(1);
+    expect(verifyManagedCredentials.mock.calls[0][1]).toMatchObject({ apiKey: 'good-key' });
+  });
+
+  it('re-prompts all AWS Claude credential fields after verification fails', async () => {
+    const promptForSecretInput = vi
+      .fn()
+      .mockResolvedValueOnce('bad-key')
+      .mockResolvedValueOnce('wrkspc_test')
+      .mockResolvedValueOnce('good-key')
+      .mockResolvedValueOnce('wrkspc_test');
+    const pickAwsClaudeRegion = vi.fn().mockResolvedValue('us-east-1');
+    const ui = createUi({ promptForSecretInput, pickAwsClaudeRegion });
+    createAgentRuntimeIntegration.mockResolvedValue({
+      _id: 'integration-aws-1',
+      identifier: 'connect-aws-claude',
+      name: 'Novu Connect AWS Claude',
+      providerId: AgentRuntimeProviderIdEnum.AnthropicAws,
+    });
+    verifyManagedCredentials
+      .mockRejectedValueOnce(
+        new NovuApiError('Invalid workspace', 401, 'POST http://localhost/v1/agents/verify-credentials', null)
+      )
+      .mockResolvedValueOnce(undefined);
+
+    const result = await resolveAgentRuntimeIntegration(
+      createClient(),
+      ui,
+      createOptions(),
+      'claude-aws',
+      'env-1'
+    );
+
+    expect(pickAwsClaudeRegion).toHaveBeenCalledTimes(2);
+    expect(promptForSecretInput).toHaveBeenCalledTimes(4);
+    expect(promptForSecretInput.mock.calls[2][0]).toMatchObject({
+      title: 'AWS Claude API key',
+      verificationError: expect.stringContaining('Invalid workspace'),
+    });
+    expect(promptForSecretInput.mock.calls[3][0]).toMatchObject({
+      title: 'AWS Claude workspace ID',
+      verificationError: expect.stringContaining('Invalid workspace'),
+    });
+    expect(verifyManagedCredentials).toHaveBeenCalledTimes(2);
+    expect(result.integrationId).toBe('integration-aws-1');
+  });
+
   it('does not retry credential verification in CI mode', async () => {
     const ui = createUi();
     verifyManagedCredentials.mockRejectedValue(
