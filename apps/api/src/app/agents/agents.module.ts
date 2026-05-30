@@ -23,28 +23,42 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
-import { AgentEmailActionsController } from './agent-email-actions.controller';
-import { AgentsController } from './agents.controller';
-import { AgentsMcpOAuthController } from './agents-mcp-oauth.controller';
-import { AgentsPublicController } from './agents-public.controller';
-import { AgentsWebhookController } from './agents-webhook.controller';
-import { AgentRuntimeExceptionFilter } from './filters/agent-runtime-exception.filter';
-import { AgentAttachmentStorage } from './services/agent-attachment-storage.service';
-import { AgentConfigResolver } from './services/agent-config-resolver.service';
-import { AgentConversationService } from './services/agent-conversation.service';
-import { AgentEmailActionTokenService } from './services/agent-email-action-token.service';
-import { AgentInboundHandler } from './services/agent-inbound-handler.service';
-import { AgentSubscriberResolver } from './services/agent-subscriber-resolver.service';
-import { BridgeExecutorService } from './services/bridge-executor.service';
-import { ChatSdkService } from './services/chat-sdk.service';
-import { DemoClaudeQuotaPolicy } from './services/demo-claude-quota-policy.service';
-import { ManagedAgentService } from './services/managed-agent.service';
-import { ManagedAgentEventHandler } from './services/managed-agent-event-handler';
-import { ManagedAgentProviderFactory } from './services/managed-agent-provider-factory';
-import { McpConnectionVaultService } from './services/mcp-connection-vault.service';
-import { McpOAuthDiscoveryService } from './services/mcp-oauth-discovery.service';
-import { TelegramMobileLinkTokenService } from './services/telegram-mobile-link-token.service';
-import { TelegramStartCodeService } from './services/telegram-start-code.service';
+import { AgentConfigResolver } from './channels/agent-config-resolver.service';
+import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
+import { AgentsPublicController } from './channels/telegram-linking/agents-public.controller';
+import { TelegramMobileLinkTokenService } from './channels/telegram-linking/telegram-mobile-link-token.service';
+import { TelegramStartCodeService } from './channels/telegram-linking/telegram-start-code.service';
+import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
+import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
+import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
+import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
+import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
+import { AgentInboundController } from './conversation-runtime/ingress/agent-inbound.controller';
+import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
+import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
+import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
+import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
+import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
+import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
+import { RuntimeResolver } from './conversation-runtime/runtime/runtime-resolver.service';
+import { AgentEmailActionTokenService } from './email/agent-email-action-token.service';
+import { AgentEmailActionsController } from './email/agent-email-actions.controller';
+import { AgentEmailSender } from './email/agent-email-sender.service';
+import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
+import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
+import { ManagedRuntime } from './managed-runtime/managed.runtime';
+import { ManagedAgentService } from './managed-runtime/managed-agent.service';
+import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
+import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
+import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
+import { AgentRuntimeController } from './management/agent-runtime.controller';
+import { AgentsController } from './management/agents.controller';
+import { McpNovuAppCredentialsService } from './mcp/connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
+import { McpConnectionVaultService } from './mcp/connections/mcp-connection-vault.service';
+import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controller';
+import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
+import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
 import { USE_CASES } from './usecases';
 
 @Module({
@@ -59,8 +73,12 @@ import { USE_CASES } from './usecases';
   ],
   controllers: [
     AgentsController,
+    AgentIntegrationsController,
+    AgentRuntimeController,
     AgentsPublicController,
-    AgentsWebhookController,
+    AgentInboundController,
+    AgentReplyController,
+    ManagedRuntimeController,
     AgentEmailActionsController,
     AgentsMcpOAuthController,
   ],
@@ -83,12 +101,22 @@ import { USE_CASES } from './usecases';
     AgentEmailActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
+    BridgeRuntime,
+    ManagedRuntime,
+    RuntimeResolver,
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
     ManagedAgentService,
     McpConnectionVaultService,
+    NovuEmailCleanupService,
+    NovuEmailProvisioningService,
+    McpNovuAppCredentialsService,
     DemoClaudeQuotaPolicy,
-    ChatSdkService,
+    ChatInstanceRegistry,
+    InboundDispatcher,
+    FileMaterializer,
+    AgentEmailSender,
+    OutboundGateway,
     McpOAuthDiscoveryService,
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
@@ -98,6 +126,6 @@ import { USE_CASES } from './usecases';
     UpdateSubscriber,
     UpdateSubscriberChannel,
   ],
-  exports: [...USE_CASES, ChatSdkService],
+  exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway],
 })
 export class AgentsModule {}

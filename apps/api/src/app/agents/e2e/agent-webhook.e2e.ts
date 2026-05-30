@@ -9,12 +9,12 @@ import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
 import sinon from 'sinon';
-import { AgentEventEnum } from '../dtos/agent-event.enum';
-import { AgentPlatformEnum } from '../dtos/agent-platform.enum';
-import { AgentConfigResolver } from '../services/agent-config-resolver.service';
-import { AgentInboundHandler, InboundReactionEvent } from '../services/agent-inbound-handler.service';
-import { AgentExecutionParams, BridgeExecutorService } from '../services/bridge-executor.service';
-import { ChatSdkService } from '../services/chat-sdk.service';
+import { AgentConfigResolver } from '../channels/agent-config-resolver.service';
+import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
+import { AgentInboundHandler, InboundReactionEvent } from '../conversation-runtime/ingress/inbound-turn.handler';
+import { AgentExecutionParams, BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
+import { AgentEventEnum } from '../shared/enums/agent-event.enum';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import {
   AgentTestContext,
   activityRepository,
@@ -59,9 +59,9 @@ async function pollFor<T>(
 }
 
 async function clearChatSdkInstances(): Promise<void> {
-  const chatSdkService = testServer.getService(ChatSdkService);
+  const registry = testServer.getService(ChatInstanceRegistry);
 
-  await chatSdkService.onModuleDestroy();
+  await registry.onModuleDestroy();
 }
 
 function mockEmoji(name: string): EmojiValue {
