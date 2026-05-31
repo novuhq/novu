@@ -15,6 +15,19 @@
 
 export type ConnectionResultStatus = 'success' | 'error';
 
+/**
+ * CSP header value that matches what {@link renderConnectionResultPage} emits:
+ * the page ships an inline `<style>` block and (optionally) an inline `<script>`
+ * with a `postMessage` shim, plus an `onclick` handler on the close-tab link.
+ *
+ * `script-src` covers both `<script>` and inline event handlers (CSP3 falls
+ * `script-src-attr` back to `script-src`). Same goes for `style-src` and
+ * `style-src-attr`. We keep `default-src 'self'` so nothing else (network,
+ * images, fonts, frames) is silently allowed.
+ */
+export const CONNECTION_RESULT_CSP =
+  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
+
 export interface ConnectionResultPageOptions {
   status: ConnectionResultStatus;
   /** `<title>` text. */

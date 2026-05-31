@@ -4,7 +4,7 @@ import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { Response } from 'express';
 
 import { ThrottlerCategory } from '../../../rate-limiting/guards';
-import { renderConnectionResultPage } from '../../../shared/html/connection-result-page';
+import { CONNECTION_RESULT_CSP, renderConnectionResultPage } from '../../../shared/html/connection-result-page';
 import { McpOAuthCallbackCommand } from './mcp-oauth-callback/mcp-oauth-callback.command';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
 
@@ -77,7 +77,7 @@ export class AgentsMcpOAuthController {
         });
 
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+    res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
     res.send(page);
   }
 }
