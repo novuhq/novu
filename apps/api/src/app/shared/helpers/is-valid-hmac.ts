@@ -2,7 +2,7 @@ import { createContextHash, createHash, decryptApiKey } from '@novu/application-
 import { ContextPayload } from '@novu/shared';
 import { timingSafeEqual } from 'node:crypto';
 
-function areHexDigestsEqual(expected: string, provided: string): boolean {
+export function areHexDigestsEqual(expected: string, provided: string): boolean {
   if (expected.length !== provided.length) {
     return false;
   }
