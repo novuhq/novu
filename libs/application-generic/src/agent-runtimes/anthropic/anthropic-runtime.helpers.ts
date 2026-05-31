@@ -1,6 +1,6 @@
 import { APIError } from '@anthropic-ai/sdk';
-import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
-import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
+import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto, McpTokenEndpointAuthMethod } from '@novu/shared';
+import { CLAUDE_BUILTIN_TOOLS, resolvePersistedMcpTokenEndpointAuthMethod } from '@novu/shared';
 import {
   AgentRuntimeNetworkError,
   AgentRuntimeOverloadedError,
@@ -316,6 +316,41 @@ export function buildMcpOAuthUpdateAuth(auth: VaultCredentialAuth): Record<strin
   return payload;
 }
 
+/**
+ * Build Anthropic's `token_endpoint_auth` block from the negotiated DCR
+ * method. Mirrors `selectTokenEndpointAuthMethod` in the API service — the
+ * default for legacy credentials (no method persisted) is
+ * `client_secret_basic` per RFC 8414 §2. The exhaustive switch makes any
+ * future addition to `McpTokenEndpointAuthMethod` a typecheck failure here
+ * before it can silently downgrade a confidential client at refresh time.
+ */
+function buildAnthropicTokenEndpointAuth(
+  oauthClient: NonNullable<VaultCredentialAuth['oauthClient']>
+): Record<string, unknown> {
+  const method: McpTokenEndpointAuthMethod = resolvePersistedMcpTokenEndpointAuthMethod(
+    oauthClient.tokenEndpointAuthMethod
+  );
+
+  switch (method) {
+    case 'none':
+      return { type: 'none' };
+    case 'client_secret_basic':
+    case 'client_secret_post':
+      if (!oauthClient.clientSecret) {
+        throw new Error(
+          `MCP OAuth client registered with \`${method}\` is missing a client secret — refusing to downgrade to public-client semantics.`
+        );
+      }
+
+      return { type: method, client_secret: oauthClient.clientSecret };
+    default: {
+      const _exhaustive: never = method;
+
+      throw new Error(`Unknown token_endpoint_auth_method: ${_exhaustive as string}`);
+    }
+  }
+}
+
 export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<string, unknown> {
   // Caller guarantees both before invoking, but narrow defensively so we
   // never emit a half-built refresh block.
@@ -324,9 +359,7 @@ export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<st
   }
 
   const { oauthClient } = auth;
-  const tokenEndpointAuth = oauthClient.clientSecret
-    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
-    : { type: 'none' };
+  const tokenEndpointAuth = buildAnthropicTokenEndpointAuth(oauthClient);
 
   return {
     client_id: oauthClient.clientId,
@@ -344,6 +377,10 @@ export function buildMcpOAuthRefreshParams(auth: VaultCredentialAuth): Record<st
  * update endpoint only accepts `refresh_token`, `scope`, and a partial
  * `token_endpoint_auth` (basic / post update params). Emitting any of the
  * immutable fields trips a 400 "Extra inputs are not permitted".
+ *
+ * The `token_endpoint_auth` is only emitted when a client secret exists —
+ * the update schema rejects `{ type: 'none' }` on a credential that was
+ * created with one of the secret-bearing methods.
  */
 export function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Record<string, unknown> {
   if (!auth.refreshToken || !auth.oauthClient) {
@@ -351,16 +388,18 @@ export function buildMcpOAuthRefreshUpdateParams(auth: VaultCredentialAuth): Rec
   }
 
   const { oauthClient } = auth;
-  const tokenEndpointAuth = oauthClient.clientSecret
-    ? { type: 'client_secret_post', client_secret: oauthClient.clientSecret }
-    : undefined;
+  // The update schema rejects `{ type: 'none' }` on a credential that was
+  // created with one of the secret-bearing methods, so we only emit
+  // `token_endpoint_auth` when we have a secret-bearing block to send.
+  const tokenEndpointAuth = oauthClient.clientSecret ? buildAnthropicTokenEndpointAuth(oauthClient) : undefined;
+  const hasSecretBearingAuth = tokenEndpointAuth && tokenEndpointAuth.type !== 'none';
 
   const payload: Record<string, unknown> = {
     refresh_token: auth.refreshToken,
     scope: auth.scopes && auth.scopes.length > 0 ? auth.scopes.join(' ') : null,
   };
 
-  if (tokenEndpointAuth) {
+  if (hasSecretBearingAuth) {
     payload.token_endpoint_auth = tokenEndpointAuth;
   }
 

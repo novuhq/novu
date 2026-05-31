@@ -61,9 +61,11 @@ export class AgentEntity {
 
   _organizationId: OrganizationId;
 
+  createdBy?: string;
+
   createdAt: string;
 
   updatedAt: string;
 }
 
-export type AgentDBModel = ChangePropsValueType<AgentEntity, '_environmentId' | '_organizationId'>;
+export type AgentDBModel = ChangePropsValueType<AgentEntity, '_environmentId' | '_organizationId' | 'createdBy'>;

@@ -30,6 +30,7 @@ export type Phase =
       placeholder: string;
       hint?: string;
       secret?: boolean;
+      verificationError?: string;
       resolve: (value: string) => void;
     }
   | {

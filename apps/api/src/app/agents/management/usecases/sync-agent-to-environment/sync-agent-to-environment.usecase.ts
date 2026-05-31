@@ -55,6 +55,7 @@ export class SyncAgentToEnvironment {
         description: sourceAgent.description,
         behavior: sourceAgent.behavior,
         active: false,
+        createdBy: sourceAgent.createdBy,
         _environmentId: targetEnvironmentId,
         _organizationId: organizationId,
       });

@@ -23,11 +23,18 @@ export interface McpOAuthState {
 }
 
 export function buildMcpOAuthRedirectUri(): string {
-  if (!process.env.API_ROOT_URL) {
-    throw new Error('API_ROOT_URL environment variable is required');
+  // Upstream MCP providers must reach the callback over the public internet,
+  // so `api.novu.localhost` and other LAN-only hostnames are unreachable.
+  // `AGENT_API_HOSTNAME` (e.g. an ngrok URL) takes precedence over the
+  // standard `API_ROOT_URL` so a tunnelled API can be addressed without
+  // rewriting the regular root URL. Matches the convention used by the
+  // Slack / Telegram / WhatsApp webhook configurators.
+  const rootUrl = process.env.AGENT_API_HOSTNAME?.trim() || process.env.API_ROOT_URL?.trim();
+  if (!rootUrl) {
+    throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
   }
 
-  const baseUrl = process.env.API_ROOT_URL.replace(/\/$/, '');
+  const baseUrl = rootUrl.replace(/\/$/, '');
 
   return `${baseUrl}${MCP_OAUTH_CALLBACK_PATH}`;
 }

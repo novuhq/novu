@@ -24,6 +24,8 @@ import {
   McpConnectionAuthModeEnum,
   McpConnectionStatusEnum,
   type McpOAuthCatalogEntry,
+  type McpTokenEndpointAuthMethod,
+  resolvePersistedMcpTokenEndpointAuthMethod,
 } from '@novu/shared';
 import { CompleteManagedAgentSetup } from '../../../managed-runtime/setup/complete-managed-agent-setup.usecase';
 import { ManagedAgentSetupCompleteCommand } from '../../../managed-runtime/setup/managed-agent-setup-complete.command';
@@ -353,6 +355,7 @@ export class McpOAuthCallback {
             clientSecret: oauthClient.clientSecret,
             tokenEndpoint: oauthClient.tokenEndpoint,
             resource: connection.oauthState?.resource,
+            tokenEndpointAuthMethod: oauthClient.tokenEndpointAuthMethod,
           },
         },
         existingCredentialId: connection.auth?.vaultCredentialId,
@@ -511,6 +514,15 @@ export class McpOAuthCallback {
       authorizationEndpoint,
       tokenEndpoint,
       scopesGranted,
+      // novu-app rows never go through DCR negotiation, so they intentionally
+      // carry no persisted `tokenEndpointAuthMethod`:
+      // `resolvePersistedMcpTokenEndpointAuthMethod(undefined)` resolves to the
+      // RFC 8414 §2 default of `client_secret_basic` (credentials in an HTTP
+      // Basic header, never replayed in the body). This is the deliberate,
+      // documented default for novu-app — see the `client_secret_basic` e2e
+      // assertion in `agent-mcp-servers.e2e.ts`. GitHub (the only current
+      // novu-app provider) accepts it; a future provider that strictly
+      // requires `client_secret_post` would set the method explicitly here.
       registeredAt: new Date(claimed.createdAt),
     };
   }
@@ -621,20 +633,24 @@ export class McpOAuthCallback {
     }
 
     const params = new URLSearchParams({
-      client_id: oauthClient.clientId,
       code,
       code_verifier: pkceVerifier,
       grant_type: 'authorization_code',
       redirect_uri: buildMcpOAuthRedirectUri(),
     });
 
-    if (oauthClient.clientSecret) {
-      params.set('client_secret', oauthClient.clientSecret);
-    }
-
     if (resource) {
       params.set('resource', resource);
     }
+
+    // `tokenEndpointAuthMethod` is the value negotiated against the AS's
+    // `token_endpoint_auth_methods_supported` list at DCR time (RFC 8414).
+    // Legacy rows registered before negotiation existed have no value
+    // persisted — `resolvePersistedMcpTokenEndpointAuthMethod` defaults to
+    // `client_secret_basic` per RFC 8414 §2 so existing connections keep
+    // working without a backfill migration.
+    const authMethod = resolvePersistedMcpTokenEndpointAuthMethod(oauthClient.tokenEndpointAuthMethod);
+    const tokenHeaders = buildTokenExchangeAuth({ authMethod, oauthClient, params });
 
     try {
       // The token endpoint URL comes from AS metadata that was discovered at
@@ -648,10 +664,7 @@ export class McpOAuthCallback {
       const response = await safeOutboundJsonRequest<unknown>({
         url: oauthClient.tokenEndpoint,
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          accept: 'application/json',
-        },
+        headers: tokenHeaders,
         body: params.toString(),
         timeoutMs: 10_000,
       });
@@ -797,6 +810,73 @@ export class McpOAuthCallback {
     }
 
     return payload;
+  }
+}
+
+/**
+ * Build the token-exchange request's `Authorization` headers and mutate the
+ * URL-encoded body in place to carry the negotiated `token_endpoint_auth_method`.
+ *
+ * The exhaustive switch on `McpTokenEndpointAuthMethod` forces the type
+ * checker to flag any new method (e.g. `private_key_jwt`) added to the union
+ * — otherwise a fall-through would silently downgrade a confidential client
+ * to public-client semantics.
+ *
+ * A secret-bearing method (`client_secret_basic` or `client_secret_post`)
+ * without a `clientSecret` is an invariant violation (DCR negotiation
+ * guarantees a secret when either method is selected) and surfaces as a 500,
+ * not a silent fallback to public-client semantics.
+ */
+export function buildTokenExchangeAuth(args: {
+  authMethod: McpTokenEndpointAuthMethod;
+  oauthClient: McpConnectionOAuthClient;
+  params: URLSearchParams;
+}): Record<string, string> {
+  const { authMethod, oauthClient, params } = args;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    accept: 'application/json',
+  };
+
+  switch (authMethod) {
+    case 'client_secret_basic': {
+      if (!oauthClient.clientSecret) {
+        throw new Error(
+          'MCP OAuth client registered with `client_secret_basic` is missing a client secret — refusing to downgrade to public-client semantics.'
+        );
+      }
+      // RFC 6749 §2.3.1 / RFC 7617 — credentials carried in an HTTP Basic
+      // header instead of the form body. The client id and secret must be
+      // form-urlencoded BEFORE base64-ing per RFC 6749 (otherwise secrets
+      // containing `:` or `+` produce a malformed credential).
+      const basic = `${encodeURIComponent(oauthClient.clientId)}:${encodeURIComponent(oauthClient.clientSecret)}`;
+      headers.Authorization = `Basic ${Buffer.from(basic, 'utf8').toString('base64')}`;
+
+      return headers;
+    }
+    case 'client_secret_post': {
+      // `client_id` always travels in the body when not in the Authorization
+      // header so the AS can correlate the request to the registration.
+      params.set('client_id', oauthClient.clientId);
+      if (!oauthClient.clientSecret) {
+        throw new Error(
+          'MCP OAuth client registered with `client_secret_post` is missing a client secret — refusing to downgrade to public-client semantics.'
+        );
+      }
+      params.set('client_secret', oauthClient.clientSecret);
+
+      return headers;
+    }
+    case 'none': {
+      params.set('client_id', oauthClient.clientId);
+
+      return headers;
+    }
+    default: {
+      const _exhaustive: never = authMethod;
+
+      throw new Error(`Unknown token_endpoint_auth_method: ${_exhaustive as string}`);
+    }
   }
 }
 

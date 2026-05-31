@@ -106,9 +106,17 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'pick-integration', providerLabel, integrations, resolve });
       });
     },
-    promptForSecretInput({ title, placeholder, hint, secret }) {
+    promptForSecretInput({ title, placeholder, hint, secret, verificationError }) {
       return new Promise<string>((resolve) => {
-        store.phase.set({ kind: 'prompt-secret', title, placeholder, hint, secret, resolve });
+        store.phase.set({
+          kind: 'prompt-secret',
+          title,
+          placeholder,
+          hint,
+          secret,
+          verificationError,
+          resolve,
+        });
       });
     },
     pickAwsClaudeRegion() {

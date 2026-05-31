@@ -6,6 +6,7 @@ import {
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
   parseWwwAuthenticateHeader,
+  selectTokenEndpointAuthMethod,
 } from './mcp-oauth-discovery.service';
 
 type SafeJsonResponse<T> = {
@@ -83,6 +84,42 @@ describe('McpOAuthDiscoveryService', () => {
       );
       expect(result.resourceMetadataUrl).to.equal('https://mcp.example.com/.well-known/oauth-protected-resource');
       expect(result.challengeScopes).to.deep.equal(['read']);
+    });
+  });
+
+  describe('selectTokenEndpointAuthMethod', () => {
+    it('prefers client_secret_basic when the AS advertises both basic and post', () => {
+      expect(selectTokenEndpointAuthMethod(['client_secret_post', 'client_secret_basic'], true)).to.equal(
+        'client_secret_basic'
+      );
+    });
+
+    it('falls back to client_secret_post when basic is not advertised', () => {
+      expect(selectTokenEndpointAuthMethod(['client_secret_post'], true)).to.equal('client_secret_post');
+    });
+
+    it('returns the Airtable-style intersection (basic + none) as client_secret_basic for a confidential client', () => {
+      expect(selectTokenEndpointAuthMethod(['client_secret_basic', 'none'], true)).to.equal('client_secret_basic');
+    });
+
+    it('selects none only when the client is not confidential', () => {
+      expect(selectTokenEndpointAuthMethod(['none'], false)).to.equal('none');
+      // Confidential client with only `none` advertised cannot represent its
+      // secret in band — fall back to the RFC default so DCR surfaces a
+      // typed error from the upstream instead of silently dropping the
+      // secret.
+      expect(selectTokenEndpointAuthMethod(['none'], true)).to.equal('client_secret_basic');
+    });
+
+    it('defaults to client_secret_basic when the AS omits the field (RFC 8414 §2 default)', () => {
+      expect(selectTokenEndpointAuthMethod(undefined, true)).to.equal('client_secret_basic');
+      expect(selectTokenEndpointAuthMethod([], true)).to.equal('client_secret_basic');
+    });
+
+    it('falls back to client_secret_basic when none of the advertised methods are supported', () => {
+      expect(selectTokenEndpointAuthMethod(['private_key_jwt', 'tls_client_auth'], true)).to.equal(
+        'client_secret_basic'
+      );
     });
   });
 
@@ -194,6 +231,26 @@ describe('McpOAuthDiscoveryService', () => {
       expect(safeJsonStub.callCount).to.equal(1);
     });
 
+    it('parses token_endpoint_auth_methods_supported when advertised', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          ...AS_BODY_BASE,
+          issuer: 'https://auth.example.com',
+          token_endpoint_auth_methods_supported: ['client_secret_basic', 'none'],
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://auth.example.com');
+      expect(md.tokenEndpointAuthMethodsSupported).to.deep.equal(['client_secret_basic', 'none']);
+    });
+
+    it('leaves tokenEndpointAuthMethodsSupported undefined when the AS omits the field', async () => {
+      safeJsonStub.resolves(jsonResponse(200, { ...AS_BODY_BASE, issuer: 'https://auth.example.com' }));
+
+      const md = await service.discoverAuthorizationServer('https://auth.example.com');
+      expect(md.tokenEndpointAuthMethodsSupported).to.equal(undefined);
+    });
+
     it('rejects metadata when issuer does not match the discovery URL', async () => {
       safeJsonStub.resolves(jsonResponse(200, { ...AS_BODY_BASE, issuer: 'https://attacker.example' }));
 
@@ -239,6 +296,39 @@ describe('McpOAuthDiscoveryService', () => {
       } catch (err) {
         expect(err).to.be.instanceOf(McpOAuthDiscoveryError);
         expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_no_pkce_s256');
+      }
+    });
+
+    it('accepts the Auth0-tenant pattern where the document advertises only the origin as issuer', async () => {
+      // Atlassian Rovo and other Auth0-backed upstreams serve per-tenant AS
+      // metadata under `/.well-known/oauth-authorization-server/<tenant>`
+      // but the document declares only the base origin as its `issuer`.
+      // We accept this narrow relaxation (same origin, no path swap).
+      safeJsonStub.resolves(jsonResponse(200, { ...AS_BODY_BASE, issuer: 'https://auth.example.com' }));
+
+      const tenantIssuer = 'https://auth.example.com/tenant-abc';
+      const md = await service.discoverAuthorizationServer(tenantIssuer);
+
+      expect(md.issuer).to.equal('https://auth.example.com');
+
+      // Both the tenant-pathed URL AND the document's canonical issuer must
+      // hit the cache, so callback-time discovery (which re-keys on the
+      // canonical issuer) doesn't burn an outbound timeout.
+      await service.discoverAuthorizationServer(tenantIssuer);
+      await service.discoverAuthorizationServer('https://auth.example.com');
+      expect(safeJsonStub.callCount).to.equal(1);
+    });
+
+    it('rejects metadata when the advertised issuer adds a different path on the same origin', async () => {
+      // Path swap on the same origin would let one tenant impersonate another.
+      safeJsonStub.resolves(jsonResponse(200, { ...AS_BODY_BASE, issuer: 'https://auth.example.com/other-tenant' }));
+
+      try {
+        await service.discoverAuthorizationServer('https://auth.example.com/tenant-abc');
+        throw new Error('expected discoverAuthorizationServer to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(McpOAuthDiscoveryError);
+        expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_no_as_metadata');
       }
     });
 
@@ -343,6 +433,30 @@ describe('McpOAuthDiscoveryService', () => {
       service.clearCache({ mcpUrl: 'https://mcp.example.com/mcp' });
       await service.discoverProtectedResource('https://mcp.example.com/mcp');
 
+      expect(safeJsonStub.callCount).to.equal(2);
+    });
+
+    it('evicts the canonical issuer entry when clearing a tenant-pathed issuer', async () => {
+      // Auth0-tenant pattern: discovery dual-keys the metadata under both the
+      // tenant-pathed URL and the document's canonical origin issuer. Clearing
+      // by the tenant-pathed key must also drop the canonical entry, otherwise
+      // a later canonical-keyed lookup hits the stale cache.
+      const asBody = {
+        authorization_endpoint: 'https://auth.example.com/authorize',
+        token_endpoint: 'https://auth.example.com/token',
+        registration_endpoint: 'https://auth.example.com/register',
+        code_challenge_methods_supported: ['S256'],
+        authorization_response_iss_parameter_supported: true,
+      };
+      safeJsonStub.resolves(jsonResponse(200, { ...asBody, issuer: 'https://auth.example.com' }));
+
+      const tenantIssuer = 'https://auth.example.com/tenant-abc';
+      await service.discoverAuthorizationServer(tenantIssuer);
+      expect(safeJsonStub.callCount).to.equal(1);
+
+      service.clearCache({ issuer: tenantIssuer });
+
+      await service.discoverAuthorizationServer('https://auth.example.com');
       expect(safeJsonStub.callCount).to.equal(2);
     });
   });

@@ -1,3 +1,4 @@
+import { MCP_TOKEN_ENDPOINT_AUTH_METHODS } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -125,6 +126,15 @@ const oauthClientSchema = new Schema(
     },
     scopesGranted: {
       type: [Schema.Types.String],
+      required: false,
+    },
+    tokenEndpointAuthMethod: {
+      type: Schema.Types.String,
+      required: false,
+      enum: MCP_TOKEN_ENDPOINT_AUTH_METHODS,
+    },
+    redirectUri: {
+      type: Schema.Types.String,
       required: false,
     },
     registeredAt: {
