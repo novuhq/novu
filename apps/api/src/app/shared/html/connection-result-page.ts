@@ -152,7 +152,7 @@ const SUCCESS_ICON = `<div class="check">
 
 const ERROR_ICON = `<div class="info-icon" aria-hidden="true">!</div>`;
 
-const CLOSE_HINT = `<p class="close-hint">You can close this tab manually.</p>`;
+const CLOSE_HINT = `<p class="close-hint">You can close this tab.</p>`;
 
 export function renderConnectionResultPage(options: ConnectionResultPageOptions): string {
   const { status, title, heading, message, footerNote } = options;

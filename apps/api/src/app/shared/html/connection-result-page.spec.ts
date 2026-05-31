@@ -67,7 +67,7 @@ describe('connection-result-page', () => {
         message: 'Your workspace is connected and ready to use.',
       });
 
-      expect(html).to.include('You can close this tab manually.');
+      expect(html).to.include('You can close this tab.');
       expect(html).to.include('class="close-hint"');
       expect(html).to.not.include('Close this tab</a>');
       expect(html).to.not.include('onclick=');
