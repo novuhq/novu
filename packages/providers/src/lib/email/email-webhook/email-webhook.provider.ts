@@ -1,4 +1,11 @@
+import crypto from 'node:crypto';
 import { EmailProviderIdEnum } from '@novu/shared';
+import { safeOutboundJsonRequest } from '@novu/shared/utils/safe-outbound-http';
+import {
+  assertSafeOutboundUrl,
+  normalizeOutboundHttpUrl,
+  SsrfBlockedError,
+} from '@novu/shared/utils/ssrf-url-validation';
 import {
   ChannelTypeEnum,
   CheckIntegrationResponseEnum,
@@ -7,9 +14,7 @@ import {
   IEmailProvider,
   ISendMessageSuccessResponse,
 } from '@novu/stateless';
-import axios from 'axios';
-import crypto from 'crypto';
-import { setTimeout } from 'timers/promises';
+import { setTimeout } from 'node:timers/promises';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
@@ -44,21 +49,47 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const transformedData = this.transform(bridgeProviderData, options);
+    const webhookUrl = normalizeOutboundHttpUrl(this.config.webhookUrl);
+
+    if (!webhookUrl) {
+      throw new Error('Email webhook URL blocked: Invalid URL format.');
+    }
+
+    try {
+      assertSafeOutboundUrl(webhookUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        throw new Error(`Email webhook URL blocked: ${err.message}`);
+      }
+      throw err;
+    }
+
     const bodyData = this.createBody(transformedData.body);
     const hmacValue = this.computeHmac(bodyData);
     let sent = false;
 
     for (let retries = 0; !sent && retries < this.config.retryCount; retries += 1) {
       try {
-        await axios.create().post(this.config.webhookUrl, bodyData, {
+        await safeOutboundJsonRequest({
+          url: webhookUrl,
+          method: 'POST',
           headers: {
             'content-type': 'application/json',
             'X-Novu-Signature': hmacValue,
             ...transformedData.headers,
           },
+          body: bodyData,
+        }).catch((err: unknown) => {
+          if (err instanceof SsrfBlockedError) {
+            throw new Error(`Email webhook URL blocked: ${err.message}`);
+          }
+          throw err;
         });
         sent = true;
       } catch (error) {
+        if (error instanceof Error && error.message.startsWith('Email webhook URL blocked')) {
+          throw error;
+        }
         await setTimeout(this.config.retryDelay);
       }
     }
