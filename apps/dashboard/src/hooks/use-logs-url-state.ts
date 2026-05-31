@@ -12,6 +12,7 @@ export interface LogsFilters {
   transactionId: string;
   urlPattern: string;
   createdGte: string; // Timestamp string for creation time filter, defaults to calculated timestamp based on max available range
+  source: string; // Request origin filter ('http' | 'inbound_email'); empty means all sources
 }
 
 export interface LogsUrlState {
@@ -110,6 +111,7 @@ export function useLogsUrlState(): LogsUrlState {
       transactionId: searchParams.get('transactionId') || '',
       urlPattern: searchParams.get('urlPattern') || '',
       createdGte: searchParams.get('createdGte') || maxAvailableLogsDateRange, // Default to max available for user's tier
+      source: searchParams.get('source') || '',
     }),
     [searchParams, maxAvailableLogsDateRange]
   );
@@ -122,6 +124,7 @@ export function useLogsUrlState(): LogsUrlState {
         prev.delete('transactionId');
         prev.delete('urlPattern');
         prev.delete('createdGte');
+        prev.delete('source');
 
         // Set new filter params
         if (newFilters.status.length > 0) {
@@ -142,6 +145,10 @@ export function useLogsUrlState(): LogsUrlState {
           prev.set('urlPattern', newFilters.urlPattern);
         }
 
+        if (newFilters.source?.trim()) {
+          prev.set('source', newFilters.source);
+        }
+
         // Reset to first page when filters change
         prev.delete('page');
 
@@ -157,6 +164,7 @@ export function useLogsUrlState(): LogsUrlState {
       prev.delete('transactionId');
       prev.delete('urlPattern');
       prev.delete('createdGte'); // Remove from URL so it uses default date range
+      prev.delete('source');
       prev.delete('page');
       return prev;
     });
@@ -167,7 +175,8 @@ export function useLogsUrlState(): LogsUrlState {
       filters.status.length > 0 ||
       filters.transactionId.trim() !== '' ||
       filters.createdGte !== maxAvailableLogsDateRange ||
-      filters.urlPattern.trim() !== ''
+      filters.urlPattern.trim() !== '' ||
+      filters.source.trim() !== ''
     );
   }, [filters, maxAvailableLogsDateRange]);
 
