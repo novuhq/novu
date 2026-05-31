@@ -18,4 +18,4 @@ export function AuthContextProvider({ children }: any) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = createContextHook(AuthContext);
+export const useAuthContext = createContextHook(AuthContext);
