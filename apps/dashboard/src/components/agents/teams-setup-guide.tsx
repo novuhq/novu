@@ -13,12 +13,12 @@ import {
   type HealthCheckStatus,
   type MsTeamsHealthCheckResult,
 } from '@/api/integrations';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CodeBlock } from '@/components/primitives/code-block';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl, getAgentApiHostname } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -57,26 +57,14 @@ type IntegrationProvisioningState = {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function getApiBaseUrl(): string {
-  return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-}
-
-function getApiHostname(): string {
-  try {
-    return new URL(getApiBaseUrl()).hostname;
-  } catch {
-    return 'api.novu.co';
-  }
-}
-
 function buildOAuthCallbackUrl(): string {
-  return `${getApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
+  return `${getAgentApiBaseUrl()}/v1/integrations/chat/oauth/callback`;
 }
 
 function buildManifest(appId: string, agentName: string): Record<string, unknown> {
   const id = appId || 'YOUR_APP_ID';
   const name = agentName || 'Novu Agent';
-  const hostname = getApiHostname();
+  const hostname = getAgentApiHostname();
 
   return {
     $schema: 'https://developer.microsoft.com/json-schemas/teams/v1.16/MicrosoftTeams.schema.json',
@@ -824,7 +812,7 @@ export function TeamsSetupGuide({
   const manualHealth = useManualHealthPoll(integrationId, hasCredentials && activeSetupMode === 'manual');
 
   // Build the webhook URL used in the manual Bot deployment instructions.
-  const webhookUrl = `${getApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
+  const webhookUrl = `${getAgentApiBaseUrl()}/v1/agents/${agent._id}/webhook/${integrationIdentifier}`;
 
   // Steps: App Reg + Redirect URI (base+0), Graph perms (base+1),
   //        Credentials (base+2), Deploy to Azure (base+3), Download pkg (base+4), Upload (base+5), Connect (base+6)
