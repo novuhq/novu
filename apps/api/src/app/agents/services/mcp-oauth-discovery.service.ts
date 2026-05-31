@@ -345,7 +345,15 @@ export class McpOAuthDiscoveryService {
       this.prmCache.delete(opts.mcpUrl);
     }
     if (opts.issuer) {
+      // `discoverAuthorizationServer` dual-keys the metadata under both the
+      // discovery URL and the document's canonical `issuer` (Auth0-tenant
+      // pattern). Evicting only the requested key would leave the canonical
+      // entry stale, so drop both when they diverge.
+      const entry = this.asMetadataCache.get(opts.issuer);
       this.asMetadataCache.delete(opts.issuer);
+      if (entry && entry.document.issuer !== opts.issuer) {
+        this.asMetadataCache.delete(entry.document.issuer);
+      }
     }
   }
 
