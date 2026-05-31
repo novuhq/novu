@@ -502,6 +502,14 @@ export class McpOAuthCallback {
       authorizationEndpoint,
       tokenEndpoint,
       scopesGranted,
+      // novu-app rows never go through DCR negotiation, so they carry no
+      // persisted `tokenEndpointAuthMethod`. Pin it explicitly to
+      // `client_secret_post` (client_id + client_secret in the body) to
+      // preserve the historical behavior — otherwise
+      // `resolvePersistedMcpTokenEndpointAuthMethod(undefined)` would silently
+      // fall back to `client_secret_basic` and a future novu-app provider that
+      // strictly requires `client_secret_post` would break without warning.
+      tokenEndpointAuthMethod: 'client_secret_post',
       registeredAt: new Date(claimed.createdAt),
     };
   }
