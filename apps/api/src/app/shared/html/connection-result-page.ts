@@ -187,9 +187,12 @@ const CLOSE_LINK = `<a class="secondary" href="javascript:void(0)" onclick="try{
   <div class="cancel-hint">You can close this tab manually.</div>`;
 
 function buildPostMessageScript(payload: Record<string, unknown>): string {
-  // JSON.stringify keeps the payload safe to embed in a script context here
-  // because it only ever contains server-controlled primitive values.
-  return `try{if(window.opener){window.opener.postMessage(${JSON.stringify(payload)},'*');}}catch(e){}`;
+  // Replace < with \u003c so the HTML parser cannot close the script block early.
+  // JSON.stringify alone does not escape </, which would let </script> in any
+  // string value (e.g. OAuth error_description) break out of the <script> tag.
+  const json = JSON.stringify(payload).replace(/</g, '\\u003c');
+
+  return `try{if(window.opener){window.opener.postMessage(${json},'*');}}catch(e){}`;
 }
 
 export function renderConnectionResultPage(options: ConnectionResultPageOptions): string {

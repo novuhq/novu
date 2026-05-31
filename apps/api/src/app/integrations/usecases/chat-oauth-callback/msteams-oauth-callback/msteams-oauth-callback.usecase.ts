@@ -307,43 +307,21 @@ export class MsTeamsOauthCallback {
   }
 
   private buildErrorHtml(message: string): string {
-    const escaped = message
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-
     const isPermissionError =
       message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') || message.includes('AppCatalog.Read.All');
-    const cachingNote = isPermissionError
-      ? `
-  <div class="cache-note">
-    <strong>Azure permission changes may take time to propagate.</strong>
-    If you have already granted the required permissions, Azure AD can take up to <strong>60 minutes</strong> to apply the changes. Wait a few minutes and then try to <strong>Link Teams Identity</strong> again.
-  </div>`
-      : '';
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>MS Teams Setup Error</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 2rem; color: #1a1a1a; }
-    .error-box { background: #fff3f3; border: 1px solid #f5c6c6; border-radius: 8px; padding: 1.5rem; max-width: 560px; }
-    h2 { margin: 0 0 0.75rem; color: #c0392b; font-size: 1.1rem; }
-    p { margin: 0; line-height: 1.5; }
-    .cache-note { margin-top: 1rem; padding: 0.75rem 1rem; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; font-size: 0.9rem; line-height: 1.5; color: #7a5c00; }
-  </style>
-</head>
-<body>
-  <div class="error-box">
-    <h2>MS Teams Bot Installation Failed</h2>
-    <p>${escaped}</p>${cachingNote}
-  </div>
-</body>
-</html>`;
+    const permissionFooter =
+      'Azure permission changes may take time to propagate. If you have already granted the required permissions, Azure AD can take up to 60 minutes to apply the changes. Wait a few minutes and try Link Teams Identity again.';
+
+    return renderConnectionResultPage({
+      status: 'error',
+      title: 'MS Teams setup error',
+      heading: 'MS Teams bot installation failed',
+      message,
+      footerNote: isPermissionError
+        ? `${permissionFooter} You can now return to where you started.`
+        : 'You can now return to where you started.',
+    });
   }
 
   private async exchangeCodeForAadObjectId(code: string, credentials: ICredentialsEntity): Promise<string> {
