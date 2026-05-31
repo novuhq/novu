@@ -73,6 +73,16 @@ describe('pickReusableOAuthClient', () => {
     ).to.equal(undefined);
   });
 
+  it('returns undefined when clientSecretExpiresAt is unparseable (corrupted timestamp)', () => {
+    expect(
+      pickReusableOAuthClient(
+        makeClient({ clientSecretExpiresAt: 'not-a-date' as unknown as Date }),
+        ISSUER,
+        REDIRECT_URI
+      )
+    ).to.equal(undefined);
+  });
+
   it('reuses a client whose secret expires in the future', () => {
     const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const result = pickReusableOAuthClient(makeClient({ clientSecretExpiresAt: tomorrow }), ISSUER, REDIRECT_URI);

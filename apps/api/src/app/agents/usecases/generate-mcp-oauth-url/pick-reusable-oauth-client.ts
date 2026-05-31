@@ -31,7 +31,9 @@ export function pickReusableOAuthClient(
   if (!client.redirectUri || client.redirectUri !== redirectUri) return undefined;
   if (client.clientSecretExpiresAt) {
     const expiresMs = new Date(client.clientSecretExpiresAt as unknown as string | Date).getTime();
-    if (Number.isFinite(expiresMs) && expiresMs <= Date.now()) {
+    // A corrupted/unparseable timestamp is treated as non-reusable so we never
+    // replay a bad client config — re-register instead of trusting it.
+    if (!Number.isFinite(expiresMs) || expiresMs <= Date.now()) {
       return undefined;
     }
   }
