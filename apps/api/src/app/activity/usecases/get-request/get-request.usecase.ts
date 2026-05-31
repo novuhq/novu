@@ -92,6 +92,7 @@ export class GetRequest {
         authType: request.data.auth_type,
         durationMs: request.data.duration_ms,
         transactionId: request.data.transaction_id,
+        source: request.data.source,
       },
       traces: mappedTraces,
     };

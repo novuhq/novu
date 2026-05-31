@@ -75,6 +75,13 @@ export class RequestLogResponseDto {
   @ApiProperty({ description: 'Request duration in milliseconds' })
   @IsNumber()
   durationMs: number;
+
+  @ApiProperty({
+    description: "Origin of the request: 'http' for API triggers or 'inbound_email' for inbound mail",
+    enum: ['http', 'inbound_email'],
+  })
+  @IsString()
+  source: string;
 }
 
 export class GetRequestsResponseDto {

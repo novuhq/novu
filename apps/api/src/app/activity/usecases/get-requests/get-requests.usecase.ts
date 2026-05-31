@@ -33,6 +33,10 @@ export class GetRequests {
       queryBuilder.whereLike('transaction_id', `%${command.transactionId}%`);
     }
 
+    if (command.source) {
+      queryBuilder.whereEquals('source', command.source);
+    }
+
     if (command.createdGte) {
       queryBuilder.whereGreaterThanOrEqual('created_at', LogRepository.formatDateTime64(new Date(command.createdGte)));
     }
@@ -71,6 +75,7 @@ export class GetRequests {
         userId: request.user_id,
         organizationId: request.organization_id,
         environmentId: request.environment_id,
+        source: request.source,
       };
     });
 
