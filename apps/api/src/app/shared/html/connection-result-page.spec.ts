@@ -6,12 +6,15 @@ import {
 
 describe('connection-result-page', () => {
   describe('CONNECTION_RESULT_CSP', () => {
+    // Anchor the directive name to a `^`/`;` boundary so neither assertion can
+    // pass via `script-src-attr` / `style-src-elem` if the bare directive ever
+    // regresses.
     it('allows inline styles so the embedded <style> block is not blocked', () => {
-      expect(CONNECTION_RESULT_CSP).to.match(/style-src[^;]*'unsafe-inline'/);
+      expect(CONNECTION_RESULT_CSP).to.match(/(?:^|;\s*)style-src\s+[^;]*'unsafe-inline'/);
     });
 
     it('allows inline scripts so the close-tab onclick handler is not blocked', () => {
-      expect(CONNECTION_RESULT_CSP).to.match(/script-src[^;]*'unsafe-inline'/);
+      expect(CONNECTION_RESULT_CSP).to.match(/(?:^|;\s*)script-src\s+[^;]*'unsafe-inline'/);
     });
 
     it("keeps default-src locked down to 'self'", () => {
