@@ -15,7 +15,8 @@ const TOKEN_FORMAT = /^[A-Za-z0-9_-]{32}$/;
 
 /**
  * Atomically GETDEL the session payload and set the used-marker with matching TTL.
- * Returns '' (missing), 'U' (already used), 'I' (corrupt payload), or 'M' + JSON body.
+ * Returns '' (missing), 'U' (already used), 'I' (corrupt payload), 'K' (kind mismatch;
+ * entry restored), or 'M' + JSON body.
  */
 const CLAIM_ATOMIC_SCRIPT = `
 local raw = redis.call('GETDEL', KEYS[1])
@@ -26,14 +27,27 @@ if not raw then
   return ''
 end
 local ok, parsed = pcall(cjson.decode, raw)
-if not ok or not parsed.expiresAt then
+if not ok or not parsed.expiresAt or not parsed.payload or not parsed.payload.kind then
   return 'I'
+end
+if parsed.payload.kind ~= ARGV[2] then
+  local now = tonumber(ARGV[1])
+  local ttl = parsed.expiresAt - now
+  if ttl < 1 then ttl = 1 end
+  redis.call('SET', KEYS[1], raw, 'EX', ttl)
+  return 'K'
 end
 local now = tonumber(ARGV[1])
 local ttl = parsed.expiresAt - now
 if ttl < 1 then ttl = 1 end
 redis.call('SET', KEYS[2], '1', 'EX', ttl)
 return 'M' .. raw
+`;
+
+/** Atomically restore the session payload and clear the used-marker. */
+const RELEASE_ATOMIC_SCRIPT = `
+redis.call('SET', KEYS[1], ARGV[1], 'EX', tonumber(ARGV[2]))
+redis.call('DEL', KEYS[2])
 `;
 
 export type TelegramMobileLinkKind = 'agent' | 'integration-store';
@@ -186,7 +200,7 @@ export class TelegramMobileLinkTokenService {
       raw = await this.cacheService.eval<string>(
         CLAIM_ATOMIC_SCRIPT,
         [this.storageKey(token), this.usedKey(token)],
-        [Math.floor(Date.now() / 1000)]
+        [Math.floor(Date.now() / 1000), expectedKind]
       );
     } catch (err) {
       throw new TelegramMobileLinkCacheUnavailableError('claim', err);
@@ -196,8 +210,12 @@ export class TelegramMobileLinkTokenService {
       throw new InvalidTelegramMobileTokenError('used');
     }
 
-    if (!raw || raw === 'I') {
-      throw new InvalidTelegramMobileTokenError(raw === 'I' ? 'invalid' : 'expired');
+    if (raw === 'K' || raw === 'I') {
+      throw new InvalidTelegramMobileTokenError('invalid');
+    }
+
+    if (!raw) {
+      throw new InvalidTelegramMobileTokenError('expired');
     }
 
     if (raw.charAt(0) !== 'M') {
@@ -231,8 +249,10 @@ export class TelegramMobileLinkTokenService {
     };
 
     try {
-      await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: remaining });
-      await this.cacheService.del(this.usedKey(token));
+      await this.cacheService.eval(RELEASE_ATOMIC_SCRIPT, [this.storageKey(token), this.usedKey(token)], [
+        JSON.stringify(entry),
+        remaining,
+      ]);
     } catch (err) {
       this.logger.warn(
         { err, token, storageKey: this.storageKey(token), usedKey: this.usedKey(token) },

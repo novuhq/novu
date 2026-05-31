@@ -18,6 +18,7 @@ describe('TelegramMobileLinkTokenService', () => {
     const storageKey = keys[0];
     const usedKey = keys[1];
     const now = Number(args[0]);
+    const expectedKind = args[1] as string | undefined;
     const raw = cacheStore.get(storageKey) ?? null;
 
     if (!raw) {
@@ -30,15 +31,23 @@ describe('TelegramMobileLinkTokenService', () => {
 
     cacheStore.delete(storageKey);
 
-    let parsed: { expiresAt?: number };
+    let parsed: { expiresAt?: number; payload?: { kind?: string } };
     try {
-      parsed = JSON.parse(raw) as { expiresAt?: number };
+      parsed = JSON.parse(raw) as { expiresAt?: number; payload?: { kind?: string } };
     } catch {
       return 'I';
     }
 
-    if (!parsed.expiresAt) {
+    if (!parsed.expiresAt || !parsed.payload?.kind) {
       return 'I';
+    }
+
+    if (expectedKind && parsed.payload.kind !== expectedKind) {
+      const ttl = Math.max(1, parsed.expiresAt - now);
+      cacheStore.set(storageKey, raw);
+      keyTtls.set(storageKey, ttl);
+
+      return 'K';
     }
 
     const ttl = Math.max(1, parsed.expiresAt - now);
@@ -46,6 +55,23 @@ describe('TelegramMobileLinkTokenService', () => {
     keyTtls.set(usedKey, ttl);
 
     return `M${raw}`;
+  }
+
+  function runReleaseScript(
+    cacheStore: Map<string, string>,
+    keyTtls: Map<string, number>,
+    keys: string[],
+    args: (string | number | Buffer)[]
+  ) {
+    const storageKey = keys[0];
+    const usedKey = keys[1];
+    const value = String(args[0]);
+    const ttl = Number(args[1]);
+
+    cacheStore.set(storageKey, value);
+    keyTtls.set(storageKey, ttl);
+    cacheStore.delete(usedKey);
+    keyTtls.delete(usedKey);
   }
 
   function makeService() {
@@ -69,7 +95,13 @@ describe('TelegramMobileLinkTokenService', () => {
         cacheStore.delete(key);
         keyTtls.delete(key);
       }),
-      eval: sinon.stub().callsFake(async (_script: string, keys: string[], args: (string | number | Buffer)[]) => {
+      eval: sinon.stub().callsFake(async (script: string, keys: string[], args: (string | number | Buffer)[]) => {
+        if (script.includes("redis.call('DEL', KEYS[2])")) {
+          runReleaseScript(cacheStore, keyTtls, keys, args);
+
+          return null;
+        }
+
         return runClaimScript(cacheStore, keyTtls, keys, args);
       }),
     };
@@ -148,7 +180,8 @@ describe('TelegramMobileLinkTokenService', () => {
     const usedTtl = keyTtls.get(usedKey);
     expect(usedTtl).to.be.a('number');
     const remaining = claimed.expiresAt - Math.floor(Date.now() / 1000);
-    expect(usedTtl!).to.equal(Math.max(1, remaining));
+    const expectedTtl = Math.max(1, remaining);
+    expect(usedTtl!).to.be.within(expectedTtl, expectedTtl + 1);
 
     try {
       await service.claim(token, 'agent');
@@ -166,8 +199,8 @@ describe('TelegramMobileLinkTokenService', () => {
     }
   });
 
-  it('release restores a claimed token for retry', async () => {
-    const { service } = makeService();
+  it('release restores a claimed token for retry via atomic script', async () => {
+    const { service, cacheService } = makeService();
     const { token } = await service.issue({
       environmentId: 'env-1',
       organizationId: 'org-1',
@@ -178,6 +211,7 @@ describe('TelegramMobileLinkTokenService', () => {
     const claimed = await service.claim(token, 'agent');
     await service.release(token, claimed);
 
+    expect(cacheService.eval.callCount).to.be.at.least(2);
     const payload = await service.verify(token);
     expect(payload.iid).to.equal('int-1');
   });
@@ -200,7 +234,7 @@ describe('TelegramMobileLinkTokenService', () => {
     expect(cacheService.set.callCount).to.equal(setCallsBefore);
   });
 
-  it('rejects tokens with unexpected kind', async () => {
+  it('rejects tokens with unexpected kind on peek', async () => {
     const { service } = makeService();
     const { token } = await service.issueForIntegrationStore({
       environmentId: 'env-1',
@@ -213,6 +247,24 @@ describe('TelegramMobileLinkTokenService', () => {
     } catch (err) {
       expect((err as InvalidTelegramMobileTokenError).reason).to.equal('invalid');
     }
+  });
+
+  it('claim with wrong kind does not burn the token', async () => {
+    const { service } = makeService();
+    const { token } = await service.issueForIntegrationStore({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+    });
+
+    try {
+      await service.claim(token, 'agent');
+      expect.fail('expected agent claim to reject integration-store token');
+    } catch (err) {
+      expect((err as InvalidTelegramMobileTokenError).reason).to.equal('invalid');
+    }
+
+    const payload = await service.verifyIntegrationStore(token);
+    expect(payload.kind).to.equal('integration-store');
   });
 
   it('surfaces cache failures from isTokenUsed', async () => {
