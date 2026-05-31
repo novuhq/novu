@@ -27,7 +27,7 @@ export function buildMcpOAuthRedirectUri(): string {
   // standard `API_ROOT_URL` so a tunnelled API can be addressed without
   // rewriting the regular root URL. Matches the convention used by the
   // Slack / Telegram / WhatsApp webhook configurators.
-  const rootUrl = process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL;
+  const rootUrl = process.env.AGENT_API_HOSTNAME?.trim() || process.env.API_ROOT_URL?.trim();
   if (!rootUrl) {
     throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
   }

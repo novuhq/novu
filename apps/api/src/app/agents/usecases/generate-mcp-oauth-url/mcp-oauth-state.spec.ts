@@ -25,6 +25,13 @@ describe('buildMcpOAuthRedirectUri', () => {
     expect(buildMcpOAuthRedirectUri()).to.equal(`https://tunnel.ngrok.app${MCP_OAUTH_CALLBACK_PATH}`);
   });
 
+  it('falls back to API_ROOT_URL when AGENT_API_HOSTNAME is empty/whitespace', () => {
+    process.env.API_ROOT_URL = 'https://api.example.com';
+    process.env.AGENT_API_HOSTNAME = '   ';
+
+    expect(buildMcpOAuthRedirectUri()).to.equal(`https://api.example.com${MCP_OAUTH_CALLBACK_PATH}`);
+  });
+
   it('strips a single trailing slash from the resolved root URL', () => {
     process.env.API_ROOT_URL = 'https://api.example.com/';
     delete process.env.AGENT_API_HOSTNAME;
