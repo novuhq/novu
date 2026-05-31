@@ -87,14 +87,10 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     const channel: ChannelChoice = options.skipSlack ? 'skip' : (options.channel ?? (await ui.pickChannel()));
 
-    if (options.channel) {
-      track(CONNECT_EVENTS.CHANNEL_SELECTED, { channel: options.channel, ...sessionProps });
-    } else if (!options.skipSlack) {
-      track(CONNECT_EVENTS.CHANNEL_SELECTED, { channel, ...sessionProps });
-    }
-
     if (channel === 'skip') {
       track(CONNECT_EVENTS.CHANNEL_SKIPPED, sessionProps);
+    } else {
+      track(CONNECT_EVENTS.CHANNEL_SELECTED, { channel, ...sessionProps });
     }
 
     switch (channel) {

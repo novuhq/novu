@@ -761,6 +761,8 @@ export class GenerateMcpOAuthUrl {
       mcpId: command.mcpId,
       scope: McpConnectionScopeEnum.Subscriber,
       timestamp: Date.now(),
+      userId: command.userId,
+      source: command.userId === 'system' ? 'setup_card' : 'api',
       ...(command.conversationId ? { conversationId: command.conversationId } : {}),
     };
 

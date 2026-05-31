@@ -286,6 +286,7 @@ export function trackAgentMcpOAuthCreated(
 export function trackAgentMcpOAuthCompleted(
   analytics: AnalyticsService,
   params: {
+    userId: string;
     organizationId: string;
     environmentId: string;
     agentId: string;
@@ -297,7 +298,7 @@ export function trackAgentMcpOAuthCompleted(
     conversationId?: string;
   }
 ): void {
-  analytics.track(`Agent MCP OAuth Completed - ${AGENT_SEGMENT_CATEGORY}`, params.organizationId, {
+  analytics.track(`Agent MCP OAuth Completed - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
     _organization: params.organizationId,
     environmentId: params.environmentId,
     agentId: params.agentId,
@@ -313,6 +314,7 @@ export function trackAgentMcpOAuthCompleted(
 export function trackAgentMcpOAuthFailed(
   analytics: AnalyticsService,
   params: {
+    userId: string;
     organizationId: string;
     environmentId: string;
     agentId: string;
@@ -324,7 +326,7 @@ export function trackAgentMcpOAuthFailed(
     conversationId?: string;
   }
 ): void {
-  analytics.track(`Agent MCP OAuth Failed - ${AGENT_SEGMENT_CATEGORY}`, params.organizationId, {
+  analytics.track(`Agent MCP OAuth Failed - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
     _organization: params.organizationId,
     environmentId: params.environmentId,
     agentId: params.agentId,

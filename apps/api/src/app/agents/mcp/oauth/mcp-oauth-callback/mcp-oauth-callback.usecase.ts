@@ -311,6 +311,7 @@ export class McpOAuthCallback {
 
   private trackOAuthCompleted(stateData: McpOAuthState, connectionId: string, authMode: McpConnectionAuthModeEnum): void {
     trackAgentMcpOAuthCompleted(this.analyticsService, {
+      userId: resolveMcpOAuthAnalyticsUserId(stateData),
       organizationId: stateData.organizationId,
       environmentId: stateData.environmentId,
       agentId: stateData.agentId,
@@ -329,6 +330,7 @@ export class McpOAuthCallback {
     authMode?: McpConnectionAuthModeEnum
   ): void {
     trackAgentMcpOAuthFailed(this.analyticsService, {
+      userId: resolveMcpOAuthAnalyticsUserId(stateData),
       organizationId: stateData.organizationId,
       environmentId: stateData.environmentId,
       agentId: stateData.agentId,
@@ -1055,5 +1057,13 @@ function parseTokenResponseBody(body: unknown): TokenResponse | null {
 }
 
 function resolveMcpOAuthAnalyticsSource(stateData: McpOAuthState): 'api' | 'setup_card' {
+  if (stateData.source) {
+    return stateData.source;
+  }
+
   return stateData.conversationId ? 'setup_card' : 'api';
+}
+
+function resolveMcpOAuthAnalyticsUserId(stateData: McpOAuthState): string {
+  return stateData.userId ?? stateData.organizationId;
 }

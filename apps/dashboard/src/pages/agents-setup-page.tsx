@@ -13,6 +13,7 @@ import {
   type AgentFlowState,
 } from '@/components/onboarding/agent-flow-illustration';
 import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
+import { getConnectorById } from '@/components/onboarding/connect-agent/connector-options';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
@@ -214,7 +215,9 @@ export function AgentsSetupPage() {
     return {
       usecase: 'agents' as const,
       setupComplete,
-      runtime: connectSummary?.connectorId,
+      runtime: connectSummary
+        ? (getConnectorById(connectSummary.connectorId)?.runtime ?? 'scratch')
+        : undefined,
       connectorId: connectSummary?.connectorId,
       providerId: connectedProviderId,
       source: 'web' as const,

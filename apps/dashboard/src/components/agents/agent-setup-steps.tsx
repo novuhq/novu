@@ -505,7 +505,7 @@ export function AgentSetupSteps({
               stepOffset={providerGuideStepOffset}
               embedded={false}
               onStepsCompleted={handleProviderStepsCompleted}
-              onWelcomeSent={isOnboarding ? () => trackWelcomeSent(selectedProviderId ?? '') : undefined}
+              onWelcomeSent={isOnboarding && selectedProviderId ? () => trackWelcomeSent(selectedProviderId) : undefined}
             />
           </motion.div>
         ) : null}

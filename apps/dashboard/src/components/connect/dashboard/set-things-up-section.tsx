@@ -11,6 +11,32 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { useConnectSetupSteps, type ConnectSetupStepId } from './use-connect-setup-steps';
 
+const CONNECT_SETUP_COMPLETED_STEPS_KEY = 'novu_connect_setup_completed_steps';
+
+function readPersistedCompletedSteps(): Set<ConnectSetupStepId> {
+  try {
+    const raw = sessionStorage.getItem(CONNECT_SETUP_COMPLETED_STEPS_KEY);
+
+    if (!raw) {
+      return new Set();
+    }
+
+    return new Set(JSON.parse(raw) as ConnectSetupStepId[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function persistCompletedStep(stepId: ConnectSetupStepId, completedSteps: Set<ConnectSetupStepId>): void {
+  completedSteps.add(stepId);
+
+  try {
+    sessionStorage.setItem(CONNECT_SETUP_COMPLETED_STEPS_KEY, JSON.stringify([...completedSteps]));
+  } catch {
+    // sessionStorage unavailable
+  }
+}
+
 type DisplayStep = {
   id: string;
   title: string;
@@ -112,7 +138,7 @@ export function SetThingsUpSection() {
   const telemetry = useTelemetry();
   const { currentEnvironment } = useEnvironment();
   const { steps: hookSteps, shouldShowOnboarding, isLoading } = useConnectSetupSteps();
-  const completedStepsRef = useRef<Set<ConnectSetupStepId>>(new Set());
+  const completedStepsRef = useRef<Set<ConnectSetupStepId>>(readPersistedCompletedSteps());
 
   useEffect(() => {
     if (isLoading) return;
@@ -122,7 +148,7 @@ export function SetThingsUpSection() {
         continue;
       }
 
-      completedStepsRef.current.add(step.id);
+      persistCompletedStep(step.id, completedStepsRef.current);
       telemetry(TelemetryEvent.CONNECT_SETUP_STEP_COMPLETED, { stepId: step.id });
     }
   }, [hookSteps, isLoading, telemetry]);
