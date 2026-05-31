@@ -67,3 +67,14 @@ export const getEEAuthProvider = (): EEAuthProvider => {
 export const isClerkEnabled = () => isEEAuthEnabled() && getEEAuthProvider() === 'clerk';
 
 export const isBetterAuthEnabled = () => isEEAuthEnabled() && getEEAuthProvider() === 'better-auth';
+
+/**
+ * Outbound SSRF pinning applies only on Novu Cloud Enterprise builds.
+ * Self-hosted and community deployments may intentionally target internal URLs.
+ */
+export const isOutboundSsrfProtectionEnabled = (): boolean => {
+  const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
+  const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+
+  return isEnterprise && !isSelfHosted;
+};
