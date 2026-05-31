@@ -95,7 +95,16 @@ export class SlackQuickSetup {
   }
 
   private buildManifest(botName: string, integrationIdentifier: string, agentId: string): object {
-    const apiBaseUrl = (process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(/\/$/, '');
+    // Slack must reach both the OAuth callback and the agent webhook over the
+    // public internet — so `api.novu.localhost` and any LAN-only hostname are
+    // unreachable. `AGENT_API_HOSTNAME` (e.g. an ngrok URL) takes precedence
+    // over the standard `API_ROOT_URL` so a tunnelled API can be addressed
+    // without rewriting the regular root URL. Matches the convention already
+    // used by the Telegram and WhatsApp webhook configurators.
+    const apiBaseUrl = (process.env.AGENT_API_HOSTNAME ?? process.env.API_ROOT_URL ?? 'https://api.novu.co').replace(
+      /\/$/,
+      ''
+    );
     const oauthCallbackUrl = `${apiBaseUrl}${CHAT_OAUTH_CALLBACK_PATH}`;
     const displayName = this.sanitizeBotDisplayName(botName);
 

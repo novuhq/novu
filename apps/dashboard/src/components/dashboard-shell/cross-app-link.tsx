@@ -11,11 +11,12 @@ type CrossAppLinkProps = {
   children: ReactNode;
 };
 
-// Hands off to the browser for cross-origin hrefs; Clerk satellite sync picks up the session.
+// Hands off to the browser for cross-origin hrefs. Primary and Connect share Clerk session
+// cookies via the registrable domain, so the destination page picks up the session natively
+// from a plain navigation.
 export function CrossAppLink({ href, openInNewTab, className, onClick, children, ...rest }: CrossAppLinkProps) {
   const isHrefSafe = isSafeNavigationHref(href);
   const isCrossOrigin = isHrefSafe && IS_HOSTNAME_SPLIT_ENABLED && isAbsoluteUrl(href);
-  // Anchor href degrades to `#` for non-http(s) targets so a click can never execute `javascript:` etc.
   const safeAnchorHref = isHrefSafe ? href : '#';
 
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {

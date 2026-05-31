@@ -11,32 +11,36 @@ const CONNECT_IMAGE_ROOT = '/images/connect';
 
 export const CONNECT_LOCKUP_DISPLAY_HEIGHT = 40;
 
+// Outer keys = treatment, inner keys = the surface the asset is intended for.
+// Files are named by what they ARE (ink color / surface tuning), not where they're used:
+//   - monochrome ink → `-black` / `-white`
+//   - colored ink    → `-color-on-light` / `-color-on-dark`
+// The two `-color-on-light` files are still PNG until the matching SVGs land.
 const LOGOMARK_FILES = {
   color: {
-    light: 'logomark-light.png',
-    dark: 'logomark-dark.png',
+    light: 'logomark-color-on-light.png',
+    dark: 'logomark-color-on-dark.svg',
   },
   monochrome: {
-    light: 'logomark-monochrome-light.png',
-    dark: 'logomark-monochrome-dark.png',
+    light: 'logomark-black.svg',
+    dark: 'logomark-white.svg',
   },
 } as const;
 
-// `light` keys hold the dark wordmark (for light surfaces) and vice versa.
-const LOGO_WITH_TEXT_FILES = {
+const LOGOTYPE_FILES = {
   color: {
-    light: 'logo-with-text-light.png',
-    dark: 'logo-with-text-dark.png',
+    light: 'logotype-color-on-light.png',
+    dark: 'logotype-color-on-dark.svg',
   },
   monochrome: {
-    light: 'logo-with-text-monochrome-light.png',
-    dark: 'logo-with-text-monochrome-dark.png',
+    light: 'logotype-black.svg',
+    dark: 'logotype-white.svg',
   },
 } as const;
 
-const LOGOMARK_INTRINSIC_SIZE = 1280;
-const LOGO_WITH_TEXT_INTRINSIC_WIDTH = 2501;
-const LOGO_WITH_TEXT_INTRINSIC_HEIGHT = 960;
+const LOGOMARK_INTRINSIC_SIZE = 848;
+const LOGOTYPE_INTRINSIC_WIDTH = 1138;
+const LOGOTYPE_INTRINSIC_HEIGHT = 442;
 
 function buildAsset(filename: string, intrinsicWidth: number, intrinsicHeight: number): ConnectRasterAsset {
   return {
@@ -57,13 +61,9 @@ export function resolveConnectLogoWithTextAsset(
   surface: ConnectLogoSurface,
   treatment: ConnectLogoTreatment = 'color'
 ): ConnectRasterAsset {
-  return buildAsset(
-    LOGO_WITH_TEXT_FILES[treatment][surface],
-    LOGO_WITH_TEXT_INTRINSIC_WIDTH,
-    LOGO_WITH_TEXT_INTRINSIC_HEIGHT
-  );
+  return buildAsset(LOGOTYPE_FILES[treatment][surface], LOGOTYPE_INTRINSIC_WIDTH, LOGOTYPE_INTRINSIC_HEIGHT);
 }
 
 export function connectLockupDisplayWidth(displayHeight: number): number {
-  return Math.round(displayHeight * (LOGO_WITH_TEXT_INTRINSIC_WIDTH / LOGO_WITH_TEXT_INTRINSIC_HEIGHT));
+  return Math.round(displayHeight * (LOGOTYPE_INTRINSIC_WIDTH / LOGOTYPE_INTRINSIC_HEIGHT));
 }

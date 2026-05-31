@@ -1,4 +1,4 @@
-import type { StreamPart, Response as ThalamusResponse, Usage } from '@novu/thalamus';
+import type { ActionRequired, StreamPart, Response as ThalamusResponse, Usage } from '@novu/thalamus';
 import { mapAnthropicEvent } from '@novu/thalamus/anthropic/parser';
 import { mapOpenAIEvent } from '@novu/thalamus/openai/parser';
 import { Agent, type Connection, type ConnectionContext, type FiberRecoveryContext } from 'agents';
@@ -12,7 +12,7 @@ class EdgeAccumulator {
   done = false;
   finishReason: ThalamusResponse['finishReason'] = 'stop';
   usage: Usage | undefined;
-  actionsRequired: never[] = [];
+  actionsRequired: ActionRequired[] = [];
   sessionId: string | undefined;
   conversationId: string | undefined;
   /** Required by `mapAnthropicEvent` for `agent.mcp_tool_use` / `agent.mcp_tool_result`. */
@@ -30,6 +30,7 @@ class EdgeAccumulator {
       sessionId: sessionId ?? this.conversationId ?? this.sessionId,
       finishReason: this.finishReason,
       usage: this.usage,
+      actionsRequired: this.actionsRequired.length > 0 ? this.actionsRequired : undefined,
     };
   }
 }
@@ -62,6 +63,8 @@ export interface Env {
 export interface ObservationParams {
   sessionId: string;
   runId: string;
+  /** Stable turn identifier — groups multiple send() calls within one user interaction. */
+  turnId: string;
   streamUrl: string;
   headers: Record<string, string>;
   lastEventId?: string;
@@ -219,6 +222,7 @@ export class SessionObserver extends Agent<Env, State> {
 
     const acc = parser.createAccumulator();
     let sequence = this.getNextSequence(params.sessionId);
+    let pauseWebhookSent = false;
 
     for await (const sseEvent of eventStream) {
       if (signal.aborted) break;
@@ -237,22 +241,73 @@ export class SessionObserver extends Agent<Env, State> {
 
       this.triggerDelivery(params);
 
-      if (hasError || acc.done) break;
+      if (hasError) break;
+
+      if (acc.done) {
+        if (acc.finishReason === 'requires-action') {
+          sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
+          pauseWebhookSent = true;
+        }
+
+        // One requires-action webhook per observe run. User approval starts a fresh
+        // observe via startObserving(); continuing this SSE caused duplicate pause
+        // webhooks when Anthropic emitted multiple session.status_idle events.
+        break;
+      }
     }
 
-    if (acc.done) {
-      const content = this.reconstructContent(params.sessionId);
-      const finish: StreamPart = {
-        type: 'finish',
-        response: { ...acc.toResponse(params.sessionId), content },
-      };
-      this.persistEvent(params.sessionId, sequence++, finish);
-      this.triggerDelivery(params);
+    // acc.done stays true after the break above — do not persist a second finish.
+    if (acc.done && !pauseWebhookSent) {
+      sequence = this.emitFinishWebhook(params, params.sessionId, sequence, acc);
+      this.finalizeObservation(params, signal, 'terminal-complete');
+    } else if (pauseWebhookSent) {
+      this.finalizeObservation(params, signal, 'pause-complete');
+    } else {
+      this.finalizeObservation(params, signal, 'stream-error');
+    }
+  }
+
+  private emitFinishWebhook(
+    params: ObservationParams,
+    sessionId: string,
+    sequence: number,
+    acc: EdgeAccumulator
+  ): number {
+    const content = this.reconstructContent(sessionId);
+    const finish: StreamPart = {
+      type: 'finish',
+      response: { ...acc.toResponse(sessionId), content },
+    };
+    this.persistEvent(sessionId, sequence, finish);
+    this.triggerDelivery(params);
+
+    return sequence + 1;
+  }
+
+  private finalizeObservation(
+    params: ObservationParams,
+    signal: AbortSignal,
+    endState: 'terminal-complete' | 'pause-complete' | 'stream-error'
+  ): void {
+    if (endState === 'terminal-complete') {
       this.updateObservation({
         ...this.state.observation!,
         status: 'completed',
       });
-    } else if (!signal.aborted) {
+
+      return;
+    }
+
+    if (endState === 'pause-complete') {
+      this.updateObservation({
+        ...(this.state.observation ?? params),
+        status: 'completed',
+      });
+
+      return;
+    }
+
+    if (!signal.aborted) {
       this.updateObservation({
         ...(this.state.observation ?? params),
         status: 'error',
@@ -380,7 +435,21 @@ export class SessionObserver extends Agent<Env, State> {
       switch (outcome) {
         case 'delivered':
         case 'skipped':
-          if (event.type === 'finish' || event.type === 'error') {
+          if (event.type === 'error') {
+            this.cleanupEvents(sessionId);
+            this.setState({ observation: null });
+
+            return;
+          }
+          if (event.type === 'finish') {
+            const isPauseWebhook =
+              (event as { response?: { finishReason?: string } }).response?.finishReason === 'requires-action';
+            if (isPauseWebhook) {
+              // Pause is not terminal — the next user approval starts a new observe run.
+              this.markDelivered(row.id);
+
+              continue;
+            }
             this.cleanupEvents(sessionId);
             this.setState({ observation: null });
 
@@ -403,7 +472,7 @@ export class SessionObserver extends Agent<Env, State> {
   }
 
   private async deliverOne(row: EventRow, event: StreamPart, params: ObservationParams): Promise<DeliveryOutcome> {
-    const { sessionId, runId, provider, webhook } = params;
+    const { sessionId, runId, turnId, provider, webhook } = params;
 
     if (row.attempts >= MAX_ATTEMPTS) return 'exhausted';
 
@@ -412,6 +481,7 @@ export class SessionObserver extends Agent<Env, State> {
     const body = JSON.stringify({
       sessionId,
       runId,
+      turnId,
       sequence: row.sequence,
       timestamp: row.created_at,
       provider,
@@ -534,6 +604,7 @@ function validateObservationParams(body: unknown): body is ObservationParams {
   const obj = body as Record<string, unknown>;
   if (typeof obj.sessionId !== 'string' || obj.sessionId.length === 0) return false;
   if (typeof obj.runId !== 'string' || obj.runId.length === 0) return false;
+  if (typeof obj.turnId !== 'string' || obj.turnId.length === 0) return false;
   if (typeof obj.streamUrl !== 'string') return false;
   try {
     new URL(obj.streamUrl);

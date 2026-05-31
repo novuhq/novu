@@ -1,3 +1,6 @@
+import { SignIn as SignInForm, useAuth } from '@clerk/react';
+import { useEffect, useMemo, useRef } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthSideBanner } from '@/components/auth/auth-side-banner';
 import { ConnectAuthSideBanner } from '@/components/auth/connect-auth-side-banner';
 import { RegionPicker } from '@/components/auth/region-picker';
@@ -6,45 +9,71 @@ import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { buildAppHomeRoute, getCurrentAppId } from '@/utils/apps';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import { beginConnectProvisioning, buildConnectProvisionOrgListPath, isActiveConnectWorkspace } from '@/utils/connect';
-import { markInvitationAcceptIfPresent } from '@/utils/invitation-accept-signal';
+import { buildConnectProvisionOrgListPath } from '@/utils/connect';
+import {
+  appendRedirectUrlParam,
+  buildCliAuthReturnUrlFromSearchParams,
+  parseCliAuthReturnFromSearchParams,
+  resolvePendingCliAuthReturnUrl,
+  storePendingCliAuth,
+} from '@/utils/cli-auth-pending';
 import {
   buildAbsoluteConnectUrl,
   buildPrimarySignInUrl,
   CONNECT_PRODUCT_VALUE,
   PRODUCT_QUERY_PARAM,
+  readClerkRedirectUrlParam,
 } from '@/utils/product-auth-urls';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { getReferrer, getUtmParams } from '@/utils/tracking';
-import { SignIn as SignInForm, useAuth, useOrganization, useUser } from '@clerk/react';
-import { useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export const SignInPage = () => {
   const segment = useSegment();
   const { isSignedIn, isLoaded } = useAuth();
-  const { user, isLoaded: isUserLoaded } = useUser();
-  const { organization, isLoaded: isOrganizationLoaded } = useOrganization();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const hasRedirectedRef = useRef(false);
 
   const isConnectSignIn = useMemo(
     () => searchParams.get(PRODUCT_QUERY_PARAM) === CONNECT_PRODUCT_VALUE || IS_NOVU_CONNECT,
     [searchParams]
   );
 
-  // Sign-in only runs on the primary; satellite visitors bounce back with the Connect flag.
+  // Clean Connect provisioning entry point. Always the same URL — primary's session cookies
+  // live on the shared registrable domain, so the Connect host loads signed-in immediately.
+  const connectProvisionRedirect = useMemo(
+    () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
+    []
+  );
+
+  const cliAuthReturnUrl = useMemo(
+    () =>
+      buildCliAuthReturnUrlFromSearchParams(searchParams, { preferConnectHost: isConnectSignIn }) ??
+      resolvePendingCliAuthReturnUrl(),
+    [searchParams, isConnectSignIn]
+  );
+
+  useEffect(() => {
+    const pending = parseCliAuthReturnFromSearchParams(searchParams, { preferConnectHost: isConnectSignIn });
+
+    if (pending) {
+      storePendingCliAuth(pending.deviceCode, pending.name, pending.returnHost);
+    }
+  }, [searchParams, isConnectSignIn]);
+
+  // Sign-in only runs on the primary; Connect-host visitors bounce back with the Connect flag.
   useEffect(() => {
     if (IS_NOVU_CONNECT) {
-      window.location.replace(buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE }));
-    }
-  }, []);
+      const redirectUrl = readClerkRedirectUrlParam(searchParams);
+      let primaryUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });
 
-  // Capture invite-link entry (`__clerk_ticket` in the URL) BEFORE Clerk consumes the ticket
-  // during sign-in. The picker reads this signal later to decide whether to hop across products.
-  useEffect(() => {
-    markInvitationAcceptIfPresent(searchParams);
+      if (redirectUrl) {
+        primaryUrl = appendRedirectUrlParam(primaryUrl, redirectUrl);
+      }
+
+      window.location.replace(primaryUrl);
+    }
   }, [searchParams]);
 
   useEffect(() => {
@@ -57,29 +86,29 @@ export const SignInPage = () => {
     });
   }, []);
 
+  // Already-signed-in user landing on `/auth/sign-in` — bounce to the right home before the
+  // <SignIn/> form mounts and starts its own redirect (which would race this effect).
+  //
+  // For Connect flows we always go to the clean provision entry point. The Connect host shares
+  // Clerk session cookies with primary via the registrable domain, so it loads signed-in from a
+  // plain navigation. Inbound `redirect_url` is dropped so a stale return URL can't strand the
+  // user.
+  // CLI auth is the exception: the device session must resume on `/cli/auth` after sign-in.
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    if (IS_NOVU_CONNECT) return; // satellite is mid-redirect to primary; let it finish.
+    if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || hasRedirectedRef.current) {
+      return;
+    }
+
+    hasRedirectedRef.current = true;
+
+    if (cliAuthReturnUrl) {
+      window.location.assign(cliAuthReturnUrl);
+
+      return;
+    }
 
     if (isConnectSignIn) {
-      if (!isUserLoaded || !isOrganizationLoaded) return;
-
-      if (
-        organization &&
-        isActiveConnectWorkspace(organization.publicMetadata, {
-          userId: user?.id,
-          organizationId: organization.id,
-        })
-      ) {
-        window.location.assign(buildAbsoluteConnectUrl(ROUTES.ENV));
-
-        return;
-      }
-
-      beginConnectProvisioning();
-      window.location.assign(
-        buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST))
-      );
+      window.location.assign(connectProvisionRedirect);
 
       return;
     }
@@ -87,21 +116,27 @@ export const SignInPage = () => {
     const home =
       buildAppHomeRoute(getCurrentAppId(), 'default') ?? buildRoute(ROUTES.WORKFLOWS, { environmentSlug: 'default' });
 
-    navigate(home, { replace: true });
-  }, [isLoaded, isSignedIn, isUserLoaded, isOrganizationLoaded, organization, user?.id, isConnectSignIn, navigate]);
+    void navigate(home, { replace: true });
+  }, [isLoaded, isSignedIn, isConnectSignIn, connectProvisionRedirect, cliAuthReturnUrl, navigate]);
 
-  const connectProvisionRedirect = useMemo(
-    () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
-    []
-  );
+  const signUpUrlWithProduct = useMemo(() => {
+    const redirectUrl = readClerkRedirectUrlParam(searchParams);
+    let url = isConnectSignIn
+      ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
+      : ROUTES.SIGN_UP;
 
-  // Preserve `?product=connect` across the Clerk sign-in ↔ sign-up link so branding survives.
-  const signUpUrlWithProduct = isConnectSignIn
-    ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
-    : ROUTES.SIGN_UP;
+    if (redirectUrl) {
+      url = appendRedirectUrlParam(url, redirectUrl);
+    }
 
-  // Render nothing while the satellite redirects to the primary so we don't flash the form.
-  if (IS_NOVU_CONNECT) {
+    return url;
+  }, [searchParams, isConnectSignIn]);
+
+  // Render nothing while redirecting:
+  //   - On the Connect host (`IS_NOVU_CONNECT`) the page is mid-replace to primary.
+  //   - On the primary when the user is already signed in the effect above is handling the bounce;
+  //     mounting <SignIn> here would also try to navigate via `forceRedirectUrl`, creating a race.
+  if (IS_NOVU_CONNECT || (isLoaded && isSignedIn)) {
     return null;
   }
 
@@ -117,7 +152,7 @@ export const SignInPage = () => {
             path={ROUTES.SIGN_IN}
             signUpUrl={signUpUrlWithProduct}
             appearance={clerkSignupAppearance}
-            forceRedirectUrl={isConnectSignIn ? connectProvisionRedirect : undefined}
+            forceRedirectUrl={cliAuthReturnUrl ?? (isConnectSignIn ? connectProvisionRedirect : undefined)}
           />
           {!IS_SELF_HOSTED && !isConnectSignIn && <RegionPicker />}
         </div>

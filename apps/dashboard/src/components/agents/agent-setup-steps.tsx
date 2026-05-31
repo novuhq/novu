@@ -113,6 +113,7 @@ function ConnectPhaseRecap({
       <ConnectAgentForm
         connectorId={summary.connectorId}
         isClaudeSelected={display.isClaudeSelected}
+        isScratchRuntime={display.isScratchRuntime}
         apiKey={summary.apiKey}
         externalWorkspaceId={summary.externalWorkspaceId}
         region={summary.region ?? ''}

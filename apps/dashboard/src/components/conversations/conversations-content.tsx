@@ -2,6 +2,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { ConversationFilters } from '@/components/conversations/conversations-filters';
 import { ConversationsTable } from '@/components/conversations/conversations-table';
@@ -19,11 +20,14 @@ import { ConversationDetail } from './conversation-detail';
 type ConversationsContentProps = {
   className?: string;
   contentHeight?: string;
+  /** When set, row clicks navigate here with `conversationItemId` instead of opening the inline detail panel. */
+  redirectConversationSelectionTo?: string;
 };
 
 export function ConversationsContent({
   className,
   contentHeight = 'h-[calc(100vh-140px)]',
+  redirectConversationSelectionTo,
 }: ConversationsContentProps) {
   if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
     return (
@@ -37,17 +41,51 @@ export function ConversationsContent({
     );
   }
 
-  return <EnterpriseConversationsContent className={className} contentHeight={contentHeight} />;
+  return (
+    <EnterpriseConversationsContent
+      className={className}
+      contentHeight={contentHeight}
+      redirectConversationSelectionTo={redirectConversationSelectionTo}
+    />
+  );
 }
 
 function EnterpriseConversationsContent({
   className,
   contentHeight = 'h-[calc(100vh-140px)]',
+  redirectConversationSelectionTo,
 }: ConversationsContentProps) {
+  const navigate = useNavigate();
   const { conversationItemId, filters, filterValues, handleConversationSelect, handleFiltersChange } =
     useConversationUrlState();
+  const redirectsOnSelect = Boolean(redirectConversationSelectionTo);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
-  const onListStateChange = useCallback((hasConversations: boolean) => setShowDetailPanel(hasConversations), []);
+  const onListStateChange = useCallback(
+    (hasConversations: boolean) => {
+      if (!redirectsOnSelect) {
+        setShowDetailPanel(hasConversations);
+      }
+    },
+    [redirectsOnSelect]
+  );
+
+  const handleConversationSelectWithRedirect = useCallback(
+    (newConversationItemId: string) => {
+      if (!redirectConversationSelectionTo || !newConversationItemId) {
+        return;
+      }
+
+      const params = new URLSearchParams();
+      params.set('conversationItemId', newConversationItemId);
+      navigate(`${redirectConversationSelectionTo}?${params.toString()}`);
+    },
+    [navigate, redirectConversationSelectionTo]
+  );
+
+  const onConversationSelect = redirectsOnSelect
+    ? handleConversationSelectWithRedirect
+    : handleConversationSelect;
+  const selectedConversationId = redirectsOnSelect ? null : conversationItemId;
 
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
@@ -111,8 +149,8 @@ function EnterpriseConversationsContent({
             id="conversations-table-panel"
           >
             <ConversationsTable
-              selectedConversationId={conversationItemId}
-              onConversationSelect={handleConversationSelect}
+              selectedConversationId={selectedConversationId}
+              onConversationSelect={onConversationSelect}
               filters={filters}
               hasActiveFilters={hasActiveFilters}
               onClearFilters={handleClearFilters}

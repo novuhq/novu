@@ -8,10 +8,7 @@ import {
   listAgentIntegrations,
   listAgents,
 } from '@/api/agents';
-import { getConversationsList } from '@/api/conversations';
-import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { CONNECT_ONBOARDING_COMPLETED } from '@/utils/constants';
 
 export type ConnectSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
 
@@ -34,7 +31,12 @@ export type ConnectSetupStep = {
 export type UseConnectSetupStepsResult = {
   steps: ConnectSetupStep[];
   isComplete: boolean;
+  /** True while the agent/channel queries backing the checklist are still resolving. */
   isLoading: boolean;
+  /** True while setup is incomplete (and resolved) — keeps the "Set things up" section visible. */
+  shouldShowOnboarding: boolean;
+  /** Drives welcome copy — mirrors `shouldShowOnboarding`. */
+  showOnboardingMessaging: boolean;
 };
 
 const AGENTS_PEEK_PARAMS = { after: undefined, before: undefined, limit: 2, identifier: '' };
@@ -76,24 +78,8 @@ export function useConnectSetupSteps(): UseConnectSetupStepsResult {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
-  const conversationsQuery = useQuery({
-    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, 'connect-setup-steps'],
-    queryFn: ({ signal }) =>
-      getConversationsList({
-        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
-        limit: 1,
-        signal,
-      }),
-    enabled: !!currentEnvironment,
-    retry: false,
-  });
-
-  const hasAnyConversation =
-    (conversationsQuery.data?.totalCount ?? 0) > 0 || (conversationsQuery.data?.data?.length ?? 0) > 0;
-
   const addAgentCompleted = hasAgent;
   const setupChannelCompleted = hasAgent && hasConnectedChannelOnOnlyAgent;
-  const sendMessageCompleted = hasAnyConversation;
   const setupChannelCtaAvailable = agents.length === 1 && !hasConnectedChannelOnOnlyAgent;
   const agentSetupComplete = addAgentCompleted && setupChannelCompleted;
 
@@ -125,21 +111,28 @@ export function useConnectSetupSteps(): UseConnectSetupStepsResult {
         id: 'send-first-message',
         title: 'Send your first message',
         description: 'Start a conversation with one of your subscribers.',
-        status: sendMessageCompleted ? 'completed' : 'pending',
+        status: 'pending',
         ctaAvailable: false,
       },
     ],
-    [addAgentCompleted, onlyAgent?.identifier, sendMessageCompleted, setupChannelCompleted, setupChannelCtaAvailable]
+    [addAgentCompleted, onlyAgent?.identifier, setupChannelCompleted, setupChannelCtaAvailable]
   );
 
-  // Only block on agents loading — conversations / integrations errors should never hide the section.
-  // The persisted `CONNECT_ONBOARDING_COMPLETED` flag is written from `agent-details.tsx` once the
-  // user finishes setting up an agent there; here we only read it to keep the section hidden.
-  const isLoading = agentsQuery.isLoading;
+  const hasResolvedAgents = agentsQuery.isSuccess || agentsQuery.isError;
+  const hasResolvedIntegrations = !onlyAgent || agentIntegrationsQuery.isSuccess || agentIntegrationsQuery.isError;
+  const isResolved = hasResolvedAgents && hasResolvedIntegrations;
+  const isComplete = agentSetupComplete;
+  const isLoading = !isResolved;
+  // Keep the "Set things up" section visible until setup is complete. Gate on resolved state so the
+  // checklist doesn't flash before the agent/channel queries settle.
+  const shouldShowOnboarding = isResolved && !isComplete;
+  const showOnboardingMessaging = isResolved && !isComplete;
 
   return {
     steps,
-    isComplete: localStorage.getItem(CONNECT_ONBOARDING_COMPLETED) === 'true' || agentSetupComplete,
-    isLoading: isLoading || !agentsQuery.data,
+    isComplete,
+    isLoading,
+    shouldShowOnboarding,
+    showOnboardingMessaging,
   };
 }

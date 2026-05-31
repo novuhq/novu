@@ -1,7 +1,7 @@
 import { MCP_SERVERS, type McpServer } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
-import { RiAddLine, RiArrowRightUpLine } from 'react-icons/ri';
+import { RiAddLine, RiArrowRightUpLine, RiCloseLine } from 'react-icons/ri';
 import {
   type AgentMcpServerEnablement,
   type AgentResponse,
@@ -14,10 +14,11 @@ import {
 import { NovuApiError } from '@/api/api.client';
 import { getMcpIcon } from '@/components/icons/mcp';
 import { Button } from '@/components/primitives/button';
+import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { Switch } from '@/components/primitives/switch';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { cn } from '@/utils/ui';
 import { McpsSheet } from './mcps-sheet';
 
 type McpsSectionProps = {
@@ -87,19 +88,30 @@ export function McpsSection({ agent }: McpsSectionProps) {
     enabled: Boolean(currentEnvironment && agent.identifier && agent.runtime === 'managed'),
   });
 
+  // Track the row being removed so we can disable just that row's button while
+  // the mutation is in flight, instead of disabling every row.
+  const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
+
   const disableMcp = useMutation({
     mutationFn: (mcpId: string) =>
       disableAgentMcpServer(requireEnvironment(currentEnvironment, 'No environment selected'), agent.identifier, mcpId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
         queryKey: getAgentMcpServersQueryKey(currentEnvironment?._id, agent.identifier),
       });
+      setPendingRemovalId(null);
     },
     onError: (err: Error) => {
+      setPendingRemovalId(null);
       const message = err instanceof NovuApiError ? err.message : 'Could not disable MCP server.';
       showErrorToast(message, 'Update failed');
     },
   });
+
+  const handleRemove = (mcpId: string) => {
+    setPendingRemovalId(mcpId);
+    disableMcp.mutate(mcpId);
+  };
 
   const enabledServers = useMemo<AgentMcpServerEnablement[]>(() => mcpServersQuery.data ?? [], [mcpServersQuery.data]);
 
@@ -126,9 +138,9 @@ export function McpsSection({ agent }: McpsSectionProps) {
           <div className="flex flex-col gap-2 p-3">
             {[0, 1].map((key) => (
               <div key={key} className="flex items-center gap-2">
-                <Skeleton className="h-5 w-9 rounded-full" />
                 <Skeleton className="size-5 rounded-md" />
-                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-24 flex-1" />
+                <Skeleton className="size-5 rounded-md" />
               </div>
             ))}
           </div>
@@ -142,17 +154,31 @@ export function McpsSection({ agent }: McpsSectionProps) {
               const catalog = MCP_CATALOG_BY_ID.get(enablement.mcpId);
               const displayName = catalog?.name ?? enablement.mcpId;
               const Icon = getMcpIcon(catalog?.id ?? enablement.mcpId);
+              const isRowPending = pendingRemovalId === enablement.mcpId;
 
               return (
-                <li key={enablement.id} className="flex items-center gap-3 p-3 not-last:border-b border-stroke-soft/60">
-                  <Switch
-                    checked
-                    disabled={!canEdit || isMutating}
-                    onCheckedChange={() => disableMcp.mutate(enablement.mcpId)}
-                    aria-label={`Disconnect ${displayName}`}
-                  />
-                  {Icon ? <Icon className="size-5 shrink-0 -mr-2" aria-hidden /> : null}
+                <li
+                  key={enablement.id}
+                  className={cn(
+                    'border-stroke-soft/60 flex items-center gap-2 p-3 not-last:border-b transition-opacity',
+                    isRowPending && 'opacity-60'
+                  )}
+                  aria-busy={isRowPending || undefined}
+                >
+                  {Icon ? <Icon className="size-5 shrink-0" aria-hidden /> : null}
                   <span className="text-text-sub text-label-sm min-w-0 flex-1 truncate font-medium">{displayName}</span>
+                  {canEdit ? (
+                    <CompactButton
+                      variant="ghost"
+                      size="md"
+                      icon={RiCloseLine}
+                      onClick={() => handleRemove(enablement.mcpId)}
+                      disabled={isRowPending}
+                      aria-label={`Remove ${displayName}`}
+                    >
+                      <span className="sr-only">Remove {displayName}</span>
+                    </CompactButton>
+                  ) : null}
                 </li>
               );
             })}

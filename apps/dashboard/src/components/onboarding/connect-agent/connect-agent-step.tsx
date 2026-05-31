@@ -34,9 +34,9 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
-import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
+import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
 import { QueryKeys } from '@/utils/query-keys';
@@ -159,18 +159,20 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const runtime = useMemo(() => resolveRuntime(connectorId), [connectorId]);
   const isClaudeSelected = runtime === 'claude';
   const isScratchRuntime = runtime === 'scratch';
-  // The AI "Generate from prompt" surface is available for both managed Claude (when the
-  // managed-runtime flag is on) and for the self-hosted Custom Scaffold flow unconditionally.
-  // Custom Scaffold generation only produces name/identifier/systemPrompt — it does not touch
-  // any Anthropic-managed infrastructure — so it has no reason to depend on that flag.
-  const useAiGeneration = isClaudeSelected ? isManagedEnabled : isScratchRuntime;
+  // The AI "Generate from prompt" surface is reserved for managed Claude (when the
+  // managed-runtime flag is on). The Custom Scaffold flow always renders the manual
+  // ScratchAgentFields form so teams writing their own runtime see exactly the inputs they
+  // need to fill in.
+  const useAiGeneration = isClaudeSelected && isManagedEnabled;
   const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
   const isExistingMode =
     isClaudeSelected &&
     !isDemoProviderSelected &&
     (useAiGeneration ? generationMode === 'existing' : templateSelection.kind === 'existing');
   const isScratchMode =
-    (useAiGeneration && generationMode === 'manual') || (!useAiGeneration && templateSelection.kind === 'scratch');
+    isScratchRuntime ||
+    (useAiGeneration && generationMode === 'manual') ||
+    (!useAiGeneration && templateSelection.kind === 'scratch');
   const showExistingOption = isClaudeSelected && !isDemoProviderSelected;
   const existingOptionIcon = isClaudeSelected ? (
     <div className="bg-primary-base/10 text-primary-base flex size-4 items-center justify-center rounded-full">
@@ -280,16 +282,19 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     };
   }, []);
 
-  const handleConnectorChange = useCallback((id: ConnectorId) => {
-    setConnectorId(id);
+  const handleConnectorChange = useCallback(
+    (id: ConnectorId) => {
+      setConnectorId(id);
 
-    const next = getConnectorById(id);
-    if (!next?.providerId) {
-      setSelectedIntegrationId(undefined);
-      setCredentialsPanelVisible(false);
-      resetCredentials();
-    }
-  }, [resetCredentials]);
+      const next = getConnectorById(id);
+      if (!next?.providerId) {
+        setSelectedIntegrationId(undefined);
+        setCredentialsPanelVisible(false);
+        resetCredentials();
+      }
+    },
+    [resetCredentials]
+  );
 
   const handlePromptChange = useCallback((next: string) => {
     setPrompt(next);
@@ -413,35 +418,32 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   );
 
   const handleVerify = useCallback(() => {
-      if (!selectedConnector?.providerId) return;
-      if (verifyMutation.isPending) return;
+    if (!selectedConnector?.providerId) return;
+    if (verifyMutation.isPending) return;
 
-      const fields = { apiKey, region, externalWorkspaceId };
-      const verifyKey = buildVerifyFingerprint(selectedConnector.providerId, fields);
+    const fields = { apiKey, region, externalWorkspaceId };
+    const verifyKey = buildVerifyFingerprint(selectedConnector.providerId, fields);
 
-      if (lastVerifiedKeyRef.current === verifyKey && verifyStatus === 'valid') return;
+    if (lastVerifiedKeyRef.current === verifyKey && verifyStatus === 'valid') return;
 
-      lastVerifiedKeyRef.current = verifyKey;
-      setVerifyStatus('verifying');
-      setVerifyMessage(undefined);
+    lastVerifiedKeyRef.current = verifyKey;
+    setVerifyStatus('verifying');
+    setVerifyMessage(undefined);
 
-      verifyMutation.mutate(buildVerifyCredentialsPayload(selectedConnector.providerId, fields), {
-          onSuccess: () => {
-            if (lastVerifiedKeyRef.current !== verifyKey) return;
-            setVerifyStatus('valid');
-            setVerifyMessage(undefined);
-            setErrors((prev) => ({ ...prev, apiKey: undefined }));
-          },
-          onError: (err) => {
-            if (lastVerifiedKeyRef.current !== verifyKey) return;
-            setVerifyStatus('invalid');
-            setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
-          },
-        }
-      );
-    },
-    [selectedConnector?.providerId, apiKey, externalWorkspaceId, region, verifyMutation, verifyStatus]
-  );
+    verifyMutation.mutate(buildVerifyCredentialsPayload(selectedConnector.providerId, fields), {
+      onSuccess: () => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('valid');
+        setVerifyMessage(undefined);
+        setErrors((prev) => ({ ...prev, apiKey: undefined }));
+      },
+      onError: (err) => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('invalid');
+        setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
+      },
+    });
+  }, [selectedConnector?.providerId, apiKey, externalWorkspaceId, region, verifyMutation, verifyStatus]);
 
   const handleSaveIntegration = useCallback(async () => {
     if (!selectedConnector?.providerId) return;
@@ -678,6 +680,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       <ConnectAgentForm
         connectorId={connectorId}
         isClaudeSelected={isClaudeSelected}
+        isScratchRuntime={isScratchRuntime}
         apiKey={apiKey}
         externalWorkspaceId={externalWorkspaceId}
         region={region}
@@ -712,7 +715,6 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
                 // we are mid-provisioning at Anthropic and there is nothing to abort, so keep
                 // the button visible (avoids a layout shift) but disable it.
                 isCancelDisabled: !isGenerating,
-                isScratchRuntime,
               }
             : undefined
         }
@@ -758,10 +760,10 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         }}
         onVerify={handleVerify}
         onSaveIntegration={handleSaveIntegration}
-        submitSlot={useAiGeneration ? submitButton : undefined}
+        submitSlot={useAiGeneration || isScratchRuntime ? submitButton : undefined}
       />
 
-      {!useAiGeneration && <div className="flex flex-col gap-2 pl-6">{submitButton}</div>}
+      {!useAiGeneration && !isScratchRuntime && <div className="flex flex-col gap-2 pl-6">{submitButton}</div>}
     </form>
   );
 }

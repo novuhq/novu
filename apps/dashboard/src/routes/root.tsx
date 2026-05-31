@@ -51,7 +51,7 @@ const RootRouteInternal = () => {
     <ErrorBoundary fallback={({ error, eventId }) => <RootRouteErrorFallback error={error} eventId={eventId} />}>
       <QueryClientProvider client={queryClient}>
         <ClerkProvider>
-          {/* Hold rendering until Clerk bootstraps to avoid a flash during satellite handshake. */}
+          {/* Hold rendering until Clerk bootstraps so route guards see a settled auth state. */}
           <ClerkLoaded>
             <SegmentProvider>
               <CustomerIoProvider>

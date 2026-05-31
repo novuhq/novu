@@ -1,16 +1,16 @@
+import { ReactNode, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { IS_HOSTNAME_SPLIT_ENABLED, IS_NOVU_CONNECT, NOVU_CONNECT_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
 import { LEGACY_CONNECT_PATH_REGEX } from '@/utils/apps';
 import { buildRoute, ROUTES } from '@/utils/routes';
-import { ReactNode, useEffect } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
 
 type HostnameGuardProps = {
   children: ReactNode;
 };
 
 // Connect host: collapses non-Connect `/env/:slug/*` paths to Connect home.
-// Platform host: cross-origin redirects stale `/env/:slug/connect/*` bookmarks to the satellite.
+// Platform host: cross-origin redirects stale `/env/:slug/connect/*` bookmarks to the Connect host.
 export function HostnameGuard({ children }: HostnameGuardProps) {
   const location = useLocation();
   const { currentEnvironment } = useEnvironment();
@@ -21,10 +21,15 @@ export function HostnameGuard({ children }: HostnameGuardProps) {
   const shouldRedirectCrossOrigin = IS_HOSTNAME_SPLIT_ENABLED && !IS_NOVU_CONNECT && isConnectPath;
 
   useEffect(() => {
-    if (shouldRedirectCrossOrigin && typeof window !== 'undefined') {
-      const url = `${window.location.protocol}//${NOVU_CONNECT_HOSTNAME}${location.pathname}${location.search}${location.hash}`;
-      window.location.replace(url);
+    if (!shouldRedirectCrossOrigin || typeof window === 'undefined') {
+      return;
     }
+
+    const url = `${window.location.protocol}//${NOVU_CONNECT_HOSTNAME}${location.pathname}${location.search}${location.hash}`;
+
+    // Plain cross-origin replace — Clerk session cookies are scoped to the shared registrable
+    // domain, so the destination page reads the existing session natively.
+    window.location.replace(url);
   }, [shouldRedirectCrossOrigin, location.pathname, location.search, location.hash]);
 
   if (!IS_HOSTNAME_SPLIT_ENABLED) {

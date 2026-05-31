@@ -1,7 +1,7 @@
 /**
  * Agent ↔ Slack outbound contract test.
  *
- * Today's Slack agent e2e tests stub `ChatSdkService.postToConversation` /
+ * Today's Slack agent e2e tests stub `OutboundGateway.postToConversation` /
  * `editInConversation` / `reactToMessage` and never let the real
  * `@chat-adapter/slack` adapter make a HTTP call. This file flips that:
  *
@@ -27,8 +27,8 @@ import { Actions, Button, Card, CardText } from '@novu/framework/express';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { BridgeExecutorService } from '../services/bridge-executor.service';
-import { ChatSdkService } from '../services/chat-sdk.service';
+import { ChatInstanceRegistry } from '../conversation-runtime/ingress/chat-instance.registry';
+import { BridgeExecutorService } from '../conversation-runtime/runtime/bridge-executor.service';
 import {
   AgentTestContext,
   activityRepository,
@@ -201,10 +201,10 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     // against the freshly-reset emulator. The instance key is
     // `${agentId}:${integrationIdentifier}` and each test creates a fresh agent
     // + integration, but clearing here is a belt-and-braces guarantee.
-    const chatSdkService = testServer.getService(ChatSdkService) as unknown as {
+    const registry = testServer.getService(ChatInstanceRegistry) as unknown as {
       instances: { clear: () => void };
     };
-    chatSdkService.instances.clear();
+    registry.instances.clear();
 
     sinon.restore();
   });

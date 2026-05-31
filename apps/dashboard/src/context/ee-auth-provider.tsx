@@ -6,12 +6,11 @@ import {
   IS_HOSTNAME_SPLIT_ENABLED,
   IS_NOVU_CONNECT,
   IS_SELF_HOSTED,
-  NOVU_CONNECT_HOSTNAME,
-  NOVU_PLATFORM_HOSTNAME,
 } from '@/config';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import {
+  buildClerkAllowedRedirectOrigins,
   buildPrimarySignInUrl,
   buildPrimarySignUpUrl,
   CONNECT_PRODUCT_VALUE,
@@ -73,37 +72,22 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     }
   };
 
-  // Sign-in flows are only allowed on the primary; satellite must point `signInUrl`/`signUpUrl`
-  // back to it. Primary lists the Connect origin in `allowedRedirectOrigins` for post-auth bounce.
-  const isSatellite = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
+  // Sign-in/up only renders on the primary; the Connect host bounces visitors there. Primary
+  // writes Clerk session cookies on `Domain=<registrable-root>`, so both hosts read the same
+  // session natively from a plain navigation — no Clerk-side configuration needed.
+  const isCrossProductHost = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
 
-  const satelliteSignInUrl = buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE });
-  const satelliteSignUpUrl = buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE });
+  const signInUrl = isCrossProductHost
+    ? buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE })
+    : ROUTES.SIGN_IN;
+  const signUpUrl = isCrossProductHost
+    ? buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE })
+    : ROUTES.SIGN_UP;
 
-  const signInUrl = isSatellite ? satelliteSignInUrl : ROUTES.SIGN_IN;
-  const signUpUrl = isSatellite ? satelliteSignUpUrl : ROUTES.SIGN_UP;
-
-  const satelliteProps = isSatellite
-    ? {
-        isSatellite: true as const,
-        domain: NOVU_CONNECT_HOSTNAME,
-      }
-    : {};
-
-  const allowedRedirectOrigins: Array<string | RegExp> = [
-    'http://localhost:*',
-    ...(typeof window !== 'undefined' ? [window.location.origin] : []),
-    ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_PLATFORM_HOSTNAME && typeof window !== 'undefined'
-      ? [`${window.location.protocol}//${NOVU_PLATFORM_HOSTNAME}`]
-      : []),
-    ...(IS_HOSTNAME_SPLIT_ENABLED && NOVU_CONNECT_HOSTNAME && typeof window !== 'undefined'
-      ? [`${window.location.protocol}//${NOVU_CONNECT_HOSTNAME}`]
-      : []),
-  ];
+  const allowedRedirectOrigins = buildClerkAllowedRedirectOrigins();
 
   return (
     <_ClerkProvider
-      {...satelliteProps}
       routerPush={(to) => navigateClerk(to)}
       routerReplace={(to) => navigateClerk(to, true)}
       publishableKey={CLERK_PUBLISHABLE_KEY}

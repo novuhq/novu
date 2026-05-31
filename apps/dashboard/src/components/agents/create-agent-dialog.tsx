@@ -6,7 +6,6 @@ import {
   slugify,
 } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { AnimatePresence, motion } from 'motion/react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine } from 'react-icons/ri';
@@ -56,10 +55,10 @@ import {
   buildVerifyCredentialsPayload,
   buildVerifyFingerprint,
   ConfigureCredentialsSection,
-  hasCompleteManagedCredentials,
   type CreateAgentForm,
   type CreateAgentFormErrors,
   ExistingAgentFields,
+  hasCompleteManagedCredentials,
   hasFormErrors,
   type ManagedAgentRuntimeOverrides,
   ScratchAgentFields,
@@ -101,6 +100,10 @@ const GENERATION_STEPS: ReadonlyArray<GenerationStep> = [
 ];
 
 const MIN_PROMPT_LENGTH = 8;
+
+// Matches the dialog footer button's `h-14` (56px) so the animated status sits inside the footer
+// instead of stretching it taller while the agent is being generated.
+const FOOTER_STATUS_HEIGHT = 56;
 
 const PROMPT_HEADER: Record<
   Exclude<AgentGenerationMode, 'existing'>,
@@ -199,12 +202,10 @@ export function CreateAgentDialog({
   const selectedConnector = getConnectorById(connectorId);
   const isManagedClaudeConnector = selectedConnector?.runtime === 'claude';
   const runtime = selectedConnector?.runtime ?? 'scratch';
-  const isScratchRuntime = runtime === 'scratch';
-  // The "Generate from prompt" surface is available for both managed Claude (when the
-  // managed-runtime flag is on) and for the self-hosted Custom Scaffold flow unconditionally —
-  // Custom Scaffold generation only produces name/identifier/systemPrompt and never touches any
-  // Anthropic-managed infrastructure, so it has no reason to depend on the managed flag.
-  const useAiGeneration = isManagedClaudeConnector ? isManagedEnabled : isScratchRuntime;
+  // The "Generate from prompt" surface is reserved for managed Claude (when the managed-runtime
+  // flag is on). The Custom Scaffold flow always renders the manual ScratchAgentFields form, so
+  // teams writing their own runtime see exactly the inputs they need to fill in.
+  const useAiGeneration = isManagedClaudeConnector && isManagedEnabled;
   const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
   const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
@@ -385,20 +386,6 @@ export function CreateAgentDialog({
     });
   }, []);
 
-  // Legacy fallback (AI generation unavailable): pre-fill the manual form fields directly.
-  const handleSelectTemplate = useCallback(
-    (template: AgentTemplate) => {
-      setName(template.name);
-      if (!isIdentifierTouched) {
-        setIdentifier(slugify(template.name));
-        setErrors((prev) => ({ ...prev, identifier: undefined }));
-      }
-      setInstructions(template.instructions);
-      setErrors((prev) => ({ ...prev, name: undefined }));
-    },
-    [isIdentifierTouched]
-  );
-
   const handleSelectConnector = (id: ConnectorId) => {
     preferAnyManagedIntegrationRef.current = false;
     setConnectorId(id);
@@ -488,19 +475,18 @@ export function CreateAgentDialog({
     setVerifyMessage(undefined);
 
     verifyMutation.mutate(buildVerifyCredentialsPayload(selectedConnector.providerId, fields), {
-        onSuccess: () => {
-          if (lastVerifiedKeyRef.current !== verifyKey) return;
-          setVerifyStatus('valid');
-          setVerifyMessage(undefined);
-          setErrors((prev) => ({ ...prev, apiKey: undefined }));
-        },
-        onError: (err) => {
-          if (lastVerifiedKeyRef.current !== verifyKey) return;
-          setVerifyStatus('invalid');
-          setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
-        },
-      }
-    );
+      onSuccess: () => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('valid');
+        setVerifyMessage(undefined);
+        setErrors((prev) => ({ ...prev, apiKey: undefined }));
+      },
+      onError: (err) => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('invalid');
+        setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
+      },
+    });
   };
 
   const handleApiKeyChange = (next: string) => {
@@ -817,11 +803,8 @@ export function CreateAgentDialog({
                   )}
 
                   {generationMode === 'prompt' && (
-                    // We intentionally don't forward `generationSteps`/`onCancelGeneration` to
-                    // `PromptInput` here so the textarea stays compact. The Cancel button and the
-                    // animation are rendered as siblings below the suggestion pills instead, which
-                    // keeps the pills anchored directly under the textarea and stops them from
-                    // shifting whenever a generation kicks off.
+                    // Generation status and Cancel live in the dialog footer so the body height
+                    // stays stable while the agent is being created from a prompt.
                     <PromptInput
                       value={prompt}
                       onChange={handlePromptChange}
@@ -862,76 +845,69 @@ export function CreateAgentDialog({
                     disabled={isSubmitBusy}
                   />
                 )}
-
-                <AnimatePresence initial={false}>
-                  {isSubmitBusy && generationMode === 'prompt' && (
-                    <motion.div
-                      key="prompt-generation-status"
-                      initial={{ height: 0, opacity: 0, y: -4 }}
-                      animate={{ height: 'auto', opacity: 1, y: 0 }}
-                      exit={{ height: 0, opacity: 0, y: -4 }}
-                      transition={{ duration: 0.2, ease: 'easeInOut' }}
-                      className="overflow-hidden"
-                    >
-                      <div className="flex flex-col gap-3">
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          mode="outline"
-                          size="2xs"
-                          className="w-fit gap-1"
-                          onClick={handleCancelGeneration}
-                          // Cancel is only meaningful while the LLM call is in flight; once it
-                          // returns we are mid-provisioning at Anthropic and there is nothing to
-                          // abort, so keep the button visible (avoids a layout shift) but disable it.
-                          disabled={!isGenerating}
-                          trailingIcon={RiCloseLine}
-                        >
-                          Cancel
-                        </Button>
-                        <GenerationStatus steps={GENERATION_STEPS} />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
               </div>
             ) : (
-              <div className="flex flex-col gap-2">
-                <AgentSuggestionPills suggestions={AGENT_TEMPLATES} onSelect={handleSelectTemplate} />
-
-                <ScratchAgentFields
-                  name={name}
-                  identifier={identifier}
-                  instructions={instructions}
-                  errors={errors}
-                  isIdentifierTouched={isIdentifierTouched}
-                  isClaudeSelected={isManagedClaudeConnector}
-                  onNameChange={(next) => {
-                    setName(next);
-                    setErrors((prev) => ({ ...prev, name: undefined }));
-                  }}
-                  onIdentifierChange={(next) => {
-                    setIdentifier(next);
-                    setErrors((prev) => ({ ...prev, identifier: undefined }));
-                  }}
-                  onIdentifierTouched={() => setIsIdentifierTouched(true)}
-                  onInstructionsChange={setInstructions}
-                />
-              </div>
+              <ScratchAgentFields
+                name={name}
+                identifier={identifier}
+                instructions={instructions}
+                errors={errors}
+                isIdentifierTouched={isIdentifierTouched}
+                isClaudeSelected={isManagedClaudeConnector}
+                disabled={isSubmitBusy}
+                onNameChange={(next) => {
+                  setName(next);
+                  setErrors((prev) => ({ ...prev, name: undefined }));
+                }}
+                onIdentifierChange={(next) => {
+                  setIdentifier(next);
+                  setErrors((prev) => ({ ...prev, identifier: undefined }));
+                }}
+                onIdentifierTouched={() => setIsIdentifierTouched(true)}
+                onInstructionsChange={setInstructions}
+              />
             )}
           </div>
 
-          <div className="bg-bg-weak border-stroke-soft flex items-center justify-end border-t px-4 py-3">
-            <Button
-              variant="secondary"
-              mode="gradient"
-              size="xs"
-              type="submit"
-              isLoading={isSubmitBusy}
-              trailingIcon={RiArrowRightSLine}
-            >
-              Setup agent
-            </Button>
+          <div className="bg-bg-weak border-stroke-soft flex items-center gap-3 border-t px-4 py-3">
+            {isSubmitBusy && generationMode === 'prompt' ? (
+              <>
+                <div className="flex h-14 -mt-3 -mb-3 min-w-0 flex-1 items-center">
+                  <GenerationStatus
+                    steps={GENERATION_STEPS}
+                    containerHeight={FOOTER_STATUS_HEIGHT}
+                    className="w-full"
+                  />
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  mode="outline"
+                  size="xs"
+                  className="shrink-0 gap-1"
+                  onClick={handleCancelGeneration}
+                  // Cancel is only meaningful while the LLM call is in flight; once it
+                  // returns we are mid-provisioning at Anthropic and there is nothing to
+                  // abort, so keep the button visible (avoids a layout shift) but disable it.
+                  disabled={!isGenerating}
+                  trailingIcon={RiCloseLine}
+                >
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="secondary"
+                mode="gradient"
+                size="xs"
+                type="submit"
+                className="ml-auto"
+                isLoading={isSubmitBusy}
+                trailingIcon={RiArrowRightSLine}
+              >
+                Setup agent
+              </Button>
+            )}
           </div>
         </form>
       </DialogContent>

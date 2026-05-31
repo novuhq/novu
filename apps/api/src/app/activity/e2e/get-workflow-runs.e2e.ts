@@ -50,6 +50,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
     transactionId?: string;
     status?: WorkflowRunStatusEnum;
     channels?: StepTypeEnum[];
+    workflow?: NotificationTemplateEntity;
   }) {
     const {
       count,
@@ -58,6 +59,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       transactionId,
       status = WorkflowRunStatusEnum.COMPLETED,
       channels = [StepTypeEnum.EMAIL],
+      workflow = template,
     } = options;
 
     const promises: Promise<void>[] = [];
@@ -68,7 +70,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       // Create a mock NotificationEntity
       const mockNotification: NotificationEntity = {
         _id: NotificationRepository.createObjectId(),
-        _templateId: template._id,
+        _templateId: workflow._id,
         _environmentId: session.environment._id,
         _organizationId: session.organization._id,
         _subscriberId: subscriber._id,
@@ -83,7 +85,7 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
       };
 
       promises.push(
-        workflowRunRepository.create(mockNotification, template, {
+        workflowRunRepository.create(mockNotification, workflow, {
           status,
           userId: session.user._id,
           externalSubscriberId: subscriberId[0],
@@ -583,20 +585,19 @@ describe('Workflow Runs Filtering & Pagination - GET /v1/activity/workflow-runs 
   });
 
   it('should support combining multiple filters', async () => {
-    await novuClient.trigger({
-      workflowId: inAppWorkflow.triggers[0].identifier,
-      to: subscriber.subscriberId,
-      payload: { firstName: 'John' },
+    await createMultipleWorkflowRunsByDb({
+      count: 1,
+      subscriberId: [subscriber.subscriberId],
+      workflow: inAppWorkflow,
+      status: WorkflowRunStatusEnum.COMPLETED,
+      channels: [StepTypeEnum.IN_APP],
     });
-
-    await session.waitForWorkflowQueueCompletion();
-    await session.waitForSubscriberQueueCompletion();
 
     const { body } = await session.testAgent
       .get('/v1/activity/workflow-runs')
       .query({
         workflowIds: [inAppWorkflow._id],
-        subscriberIds: subscriber.subscriberId,
+        subscriberIds: [subscriber.subscriberId],
         statuses: [WorkflowRunStatusDtoEnum.COMPLETED],
         limit: 10,
       })

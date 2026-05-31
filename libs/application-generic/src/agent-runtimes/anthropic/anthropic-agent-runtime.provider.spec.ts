@@ -574,6 +574,6 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
       (t) => t.type === 'mcp_toolset'
     );
     expect(mcpToolset?.mcp_server_name).to.equal('Slack');
-    expect(mcpToolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_allow' });
+    expect(mcpToolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_ask' });
   });
 });

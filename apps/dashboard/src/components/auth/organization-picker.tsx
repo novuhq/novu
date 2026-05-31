@@ -2,6 +2,7 @@ import { useOrganizationList, useUser } from '@clerk/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
@@ -11,21 +12,25 @@ import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { IS_NOVU_CONNECT } from '@/config';
 import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS, type AppId } from '@/utils/apps';
-import { isConnectWorkspace, writeConnectAutoCreateSessionGuard } from '@/utils/connect';
-import { buildOtherProductOrgListUrl } from '@/utils/cross-product-redirect';
+import { APP_IDS, type AppId, isAbsoluteUrl } from '@/utils/apps';
 import {
-  clearInvitationAcceptPending,
-  isInvitationAcceptPending,
-} from '@/utils/invitation-accept-signal';
+  beginOnboardingProvisioning,
+  clearOnboardingProvisioning,
+  isConnectWorkspace,
+  writeConnectAutoCreateSessionGuard,
+} from '@/utils/connect';
 import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
 const SLUG_MAX_LENGTH = 50;
 const SLUG_RETRY_LIMIT = 3;
-// ~6 rows tall (each row ≈ 56px). Past that the list scrolls and the Create CTA stays pinned.
-const ORG_LIST_MAX_HEIGHT = 'max-h-[336px]';
+// Row ≈ 56px (size-8 avatar + py-3). Cap visible rows at 6, past that the list scrolls.
+const ORG_LIST_VISIBLE_ROWS = 6;
+// Fixed height — Radix ScrollArea's Viewport uses h-full, which needs a definite parent
+// height to scroll. `max-h` alone leaves the Viewport auto-sized so content gets clipped
+// without a scrollbar appearing. Applied only when scrolling is actually needed.
+const ORG_LIST_SCROLL_HEIGHT = 'h-[336px]';
 // Clerk defaults to 10 per page — we override because the picker filters by `productType` and
 // needs the full list before it can decide whether to auto-switch to the create view. Bumping
 // to 100 (well under Clerk's 500 cap) puts virtually every real-world user on a single round trip.
@@ -87,19 +92,6 @@ function isMatchingMembership(membership: OrganizationMembershipLike, filter: Pr
   const metadata = membership.organization.publicMetadata;
 
   return filter === 'connect' ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
-}
-
-/**
- * True when the user has at least one membership belonging to the OTHER product host.
- * Used exclusively in the invite-accept path — see the routing effect below.
- */
-function hasCrossProductMembership(
-  memberships: OrganizationMembershipLike[],
-  currentFilter: ProductFilter
-): boolean {
-  const otherFilter: ProductFilter = currentFilter === 'connect' ? 'platform' : 'connect';
-
-  return memberships.some((membership) => isMatchingMembership(membership, otherFilter));
 }
 
 function isSlugTakenError(error: unknown): boolean {
@@ -207,6 +199,7 @@ function OrganizationListView({
   isLoadingMore,
 }: OrganizationListViewProps) {
   const productLabel = productFilter === 'connect' ? 'Novu Connect' : 'Novu Cloud';
+  const shouldScroll = memberships.length > ORG_LIST_VISIBLE_ROWS || isLoadingMore;
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -216,7 +209,7 @@ function OrganizationListView({
       </div>
 
       <div className="flex min-h-0 flex-col">
-        <ScrollArea className={cn('w-full', ORG_LIST_MAX_HEIGHT)}>
+        <ScrollArea className={cn('w-full', shouldScroll && ORG_LIST_SCROLL_HEIGHT)}>
           {/* `pr-2` reserves room for the overlay scrollbar so the row chevron doesn't get clipped. */}
           <div className="flex flex-col pr-2">
             <AnimatePresence initial={false} mode="popLayout">
@@ -315,9 +308,7 @@ function CreateOrganizationView({
     <form onSubmit={handleSubmit} className="flex w-full flex-col gap-5">
       <div className="flex flex-col gap-1">
         <h1 className="text-label-md text-text-strong font-medium">Create Organization</h1>
-        <p className="text-label-sm text-text-sub">
-          Set up your {productLabel} workspace.
-        </p>
+        <p className="text-label-sm text-text-sub">Set up your {productLabel} workspace.</p>
       </div>
 
       {shouldShowRegionSelector ? (
@@ -390,6 +381,7 @@ export function OrganizationPicker({
 }: OrganizationPickerProps) {
   const track = useTelemetry();
   const { user } = useUser();
+  const navigate = useNavigate();
 
   const productFilter = useMemo(getProductFilter, []);
   const productAppId = useMemo(() => getProductAppId(productFilter), [productFilter]);
@@ -450,8 +442,7 @@ export function OrganizationPicker({
   //     cross-product redirect decisions on the complete list (a matching org might sit on
   //     page 2; the cross-product check needs all pages drained to be accurate).
   const isFirstPageReady = isLoaded && hasRevalidated;
-  const isFullListLoaded =
-    isFirstPageReady && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
+  const isFullListLoaded = isFirstPageReady && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
 
   const allMemberships = useMemo<OrganizationMembershipLike[]>(
     () => (userMemberships?.data ?? []) as OrganizationMembershipLike[],
@@ -470,40 +461,20 @@ export function OrganizationPicker({
   const hasTrackedRef = useRef(false);
   const hasInitializedViewRef = useRef(false);
 
-  // Initial routing decision once the full membership list is in.
-  //
-  // The cross-product redirect is gated on `isInvitationAcceptPending()` — a session-scoped
-  // marker set on `/auth/sign-in` and `/auth/sign-up` when the URL carries `__clerk_ticket`.
-  // That way an invite-accept landing on the wrong host bounces to the right product, but a
-  // user who just deleted their last Connect workspace stays put on Connect (which then falls
-  // through to the create form / `AutoCreateConnectOrganization`, matching the prior behavior).
+  // Initial routing decision once the full membership list is in. If there are zero matching
+  // workspaces (post-delete, post-leave, or a fresh sign-up that didn't auto-provision), drop
+  // into the create form. No cross-product bouncing: invited memberships often arrive without
+  // `publicMetadata.productType` set yet, so any host-hop decision based on that metadata is
+  // unreliable — better to let the user create / pick on the host they're currently on.
   useEffect(() => {
     if (!isFullListLoaded || hasInitializedViewRef.current) return;
 
     hasInitializedViewRef.current = true;
 
-    if (filteredMemberships.length > 0) {
-      // User has at least one matching workspace — clear any stale invite flag so it can't
-      // leak into a later navigation, then let them pick from the list.
-      clearInvitationAcceptPending();
-
-      return;
+    if (filteredMemberships.length === 0) {
+      setView('create');
     }
-
-    if (isInvitationAcceptPending() && hasCrossProductMembership(allMemberships, productFilter)) {
-      const otherProductUrl = buildOtherProductOrgListUrl(productFilter);
-
-      if (otherProductUrl) {
-        clearInvitationAcceptPending();
-        window.location.assign(otherProductUrl);
-
-        return;
-      }
-    }
-
-    clearInvitationAcceptPending();
-    setView('create');
-  }, [isFullListLoaded, filteredMemberships.length, allMemberships, productFilter]);
+  }, [isFullListLoaded, filteredMemberships.length]);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {
@@ -529,7 +500,10 @@ export function OrganizationPicker({
     async ({ name, slug }: { name: string; slug: string }) => {
       if (!createOrganization || !setActive) return;
 
+      const provisioningVariant = productFilter === 'connect' ? 'connect' : 'platform';
+
       setIsCreating(true);
+      beginOnboardingProvisioning(provisioningVariant);
 
       let createdOrg: Awaited<ReturnType<typeof createOrganization>> | null = null;
       let lastError: unknown = null;
@@ -550,6 +524,7 @@ export function OrganizationPicker({
       }
 
       if (!createdOrg) {
+        clearOnboardingProvisioning();
         const message = readClerkErrorMessage(lastError, 'Failed to create organization.');
         showErrorToast(message, 'Create organization failed');
         setIsCreating(false);
@@ -565,6 +540,7 @@ export function OrganizationPicker({
       try {
         await setActive({ organization: createdOrg.id });
       } catch (error) {
+        clearOnboardingProvisioning();
         const message = readClerkErrorMessage(error, 'Failed to activate the new organization.');
         showErrorToast(message, 'Activation failed');
         setIsCreating(false);
@@ -581,9 +557,15 @@ export function OrganizationPicker({
       });
       hasTrackedRef.current = true;
 
-      window.location.assign(afterCreateOrganizationUrl);
+      if (isAbsoluteUrl(afterCreateOrganizationUrl)) {
+        window.location.assign(afterCreateOrganizationUrl);
+
+        return;
+      }
+
+      void navigate(afterCreateOrganizationUrl);
     },
-    [createOrganization, setActive, afterCreateOrganizationUrl, productAppId, productFilter, track, user?.id]
+    [createOrganization, setActive, afterCreateOrganizationUrl, productAppId, productFilter, track, user?.id, navigate]
   );
 
   const handleCancel = useCallback(() => {

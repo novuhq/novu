@@ -1,7 +1,7 @@
 import { useOrganization, useOrganizationList, useUser } from '@clerk/react';
 import { FeatureFlagsKeysEnum, OrganizationProductTypeEnum, tryReadOrganizationProductType } from '@novu/shared';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, type NavigateFunction } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
@@ -17,6 +17,7 @@ import {
   resolveConnectOrgListAction,
   writeConnectAutoCreateSessionGuard,
 } from '@/utils/connect';
+import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
 import { getPostOrgCreateRoute } from '@/utils/onboarding-redirect';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -57,6 +58,21 @@ function isSlugTakenError(error: unknown): boolean {
       entry?.meta?.paramName === 'slug' &&
       (entry.code === 'form_identifier_exists' || entry.code === 'form_param_value_invalid')
   );
+}
+
+function navigateToPostConnectOrgResolution(navigate: NavigateFunction, fallbackPath: string) {
+  const pendingCliAuthReturnUrl = resolvePendingCliAuthReturnUrl();
+
+  if (pendingCliAuthReturnUrl) {
+    // Leave the connect onboarding overlay behind — `/cli/auth` is outside that flow and the
+    // full-screen loader would otherwise stay mounted from sessionStorage after auto-provision.
+    clearConnectProvisioning();
+    window.location.assign(pendingCliAuthReturnUrl);
+
+    return;
+  }
+
+  void navigate(fallbackPath, { replace: true });
 }
 
 export function AutoCreateConnectOrganization() {
@@ -158,7 +174,7 @@ export function AutoCreateConnectOrganization() {
       } catch (error) {
         // The cached membership was tombstoned (e.g. deleted in another tab). Treat as manual create
         // so we never leave the session pointing at an id Clerk has already removed — otherwise the
-        // satellite handshake redirects to Platform's sign-in URL.
+        // Connect host's auth guard would bounce the user to Platform's sign-in URL.
         if (isMissingOrganizationError(error)) {
           return { type: 'manual' };
         }
@@ -245,13 +261,13 @@ export function AutoCreateConnectOrganization() {
       });
 
       if (resolution.type === 'created') {
-        navigate(getPostOrgCreateRoute(APP_IDS.CONNECT, isAgentsEnabled), { replace: true });
+        navigateToPostConnectOrgResolution(navigate, getPostOrgCreateRoute(APP_IDS.CONNECT, isAgentsEnabled));
 
         return;
       }
 
       clearConnectProvisioning();
-      navigate(ROUTES.ENV, { replace: true });
+      navigateToPostConnectOrgResolution(navigate, ROUTES.ENV);
     } catch (error) {
       clearConnectProvisioning();
       setStatus('error');
@@ -266,7 +282,7 @@ export function AutoCreateConnectOrganization() {
     if (isCurrentOrgConnect) {
       hasStartedRef.current = true;
       clearConnectProvisioning();
-      navigate(ROUTES.ENV, { replace: true });
+      navigateToPostConnectOrgResolution(navigate, ROUTES.ENV);
 
       return;
     }
