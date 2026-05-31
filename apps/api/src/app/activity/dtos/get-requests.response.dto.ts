@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { RequestLogSource, RequestLogSourceEnum } from '@novu/application-generic';
 import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
@@ -78,10 +79,10 @@ export class RequestLogResponseDto {
 
   @ApiProperty({
     description: "Origin of the request: 'http' for API triggers or 'inbound_email' for inbound mail",
-    enum: ['http', 'inbound_email'],
+    enum: Object.values(RequestLogSourceEnum),
   })
   @IsString()
-  source: string;
+  source: RequestLogSource;
 }
 
 export class GetRequestsResponseDto {

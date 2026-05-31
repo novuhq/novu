@@ -24,7 +24,7 @@ export type RequestLog = {
   environmentId: string;
   authType: string;
   durationMs: number;
-  source: string;
+  source: RequestLogSourceType;
 };
 
 export type ApiTrace = {
