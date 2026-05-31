@@ -56,26 +56,23 @@ export class AgentsMcpOAuthController {
     );
 
     // Render a self-contained "flow complete" page instead of redirecting to the
-    // dashboard. The user reached this tab from a third-party OAuth provider, so
-    // we tell them the flow is finished, the tab can be closed, and they can
-    // return to wherever they started. A best-effort postMessage lets any
-    // same-origin opener (e.g. a popup-based flow) auto-detect the outcome.
+    // dashboard. The shared renderer already shows a "Close this tab" action, so
+    // the message stays short and avoids repeating it. A best-effort postMessage
+    // lets any same-origin opener (e.g. a popup-based flow) auto-detect the outcome.
     const isConnected = result.status === 'connected';
     const page = isConnected
       ? renderConnectionResultPage({
           status: 'success',
           title: 'Connection complete',
           heading: "You're all set",
-          message: 'Your MCP server is connected. You can safely close this tab and return to where you started.',
-          footerNote: 'You can now return to where you started.',
+          message: 'Your MCP server is connected and ready to use.',
           postMessagePayload: { type: 'novu-mcp-oauth-result', status: 'connected' },
         })
       : renderConnectionResultPage({
           status: 'error',
           title: 'Connection failed',
-          heading: 'Connection failed',
-          message: "We couldn't complete the connection. You can close this tab and try again from where you started.",
-          footerNote: 'You can now return to where you started.',
+          heading: "We couldn't connect",
+          message: 'Something went wrong while connecting your MCP server. Please go back and try again.',
           postMessagePayload: { type: 'novu-mcp-oauth-result', status: 'error', reason: result.message },
         });
 

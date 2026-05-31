@@ -114,8 +114,7 @@ export class MsTeamsOauthCallback {
         status: 'success',
         title: 'Connection complete',
         heading: "You're all set",
-        message: 'Microsoft Teams is connected. You can safely close this tab and return to where you started.',
-        footerNote: 'You can now return to where you started.',
+        message: 'Microsoft Teams is connected and ready to use.',
       }),
     };
   }
@@ -316,17 +315,14 @@ export class MsTeamsOauthCallback {
     const isPermissionError =
       message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') || message.includes('AppCatalog.Read.All');
 
-    const permissionFooter =
-      'Azure permission changes may take time to propagate. If you have already granted the required permissions, Azure AD can take up to 60 minutes to apply the changes. Wait a few minutes and try Link Teams Identity again.';
-
     return renderConnectionResultPage({
       status: 'error',
-      title: 'MS Teams setup error',
-      heading: 'MS Teams bot installation failed',
+      title: 'Setup error',
+      heading: "We couldn't set up Microsoft Teams",
       message,
       footerNote: isPermissionError
-        ? `${permissionFooter} You can now return to where you started.`
-        : 'You can now return to where you started.',
+        ? 'Azure permission changes can take up to 60 minutes to take effect. If you just granted the required permissions, wait a few minutes and try again.'
+        : undefined,
     });
   }
 

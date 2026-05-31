@@ -107,8 +107,7 @@ export class SlackOauthCallback {
         status: 'success',
         title: 'Connection complete',
         heading: "You're all set",
-        message: 'Your Slack workspace is connected. You can safely close this tab and return to where you started.',
-        footerNote: 'You can now return to where you started.',
+        message: 'Your Slack workspace is connected and ready to use.',
       }),
     };
   }
