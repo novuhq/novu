@@ -55,9 +55,10 @@ export function inboundTransactionIdFromMessageId(messageId: string | undefined)
 }
 
 /**
- * Metadata-only snapshot of an inbound email for the `request_body` column.
- * Deliberately excludes the raw `html`/`text` bodies to keep PII out of the
- * analytics store (the inbound-mail service keeps PII out of APM for the same reason).
+ * Metadata snapshot of an inbound email for the `request_body` column.
+ * Excludes raw `html`/`text` bodies (same boundary as inbound-mail APM). Includes
+ * routing fields (`from`, `to`, `subject`) so tenant-scoped Requests debugging works;
+ * retention follows the `requests` table TTL policy.
  */
 export function buildInboundRequestMetadata(command: InboundEmailParseCommand): string {
   const metadata = {
