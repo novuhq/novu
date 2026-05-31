@@ -10,7 +10,7 @@ import {
   ITo,
 } from '@novu/application-generic';
 import { Type } from 'class-transformer';
-import { IsArray, IsDefined, IsNumber, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsArray, IsDefined, IsNumber, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 
 /*
  * Concrete DTO is required for @ValidateNested({ each: true }) to actually run.
@@ -46,6 +46,7 @@ export class InboundParseAttachmentCommand implements IInboundParseAttachment {
   storagePath?: string;
 
   @IsOptional()
+  @IsObject()
   content?: { type: 'Buffer'; data: number[] };
 }
 
