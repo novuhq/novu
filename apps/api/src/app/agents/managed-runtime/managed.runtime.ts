@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DEMO_QUOTA_EXHAUSTED_REPLY, DemoQuotaExhaustedError, PinoLogger } from '@novu/application-generic';
+import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../shared/util/agent-inbound-replies';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime.port';
@@ -35,6 +36,12 @@ export class ManagedRuntime implements AgentRuntime {
 
     // Managed agents otherwise only act on inbound messages (reactions are bridge-only today).
     if (turn.event !== AgentEventEnum.ON_MESSAGE) {
+      return;
+    }
+
+    if (!turn.subscriber) {
+      await this.replyUnresolvedSubscriberAccess(turn);
+
       return;
     }
 
@@ -120,6 +127,24 @@ export class ManagedRuntime implements AgentRuntime {
           channel: this.conversationService.getPrimaryChannel(turn.conversation),
           agentIdentifier: turn.config.agentIdentifier,
           content: DEMO_QUOTA_EXHAUSTED_REPLY,
+          environmentId: turn.config.environmentId,
+          organizationId: turn.config.organizationId,
+        },
+      }
+    );
+  }
+
+  private async replyUnresolvedSubscriberAccess(turn: ConversationTurn): Promise<void> {
+    applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
+    await this.outboundGateway.replyOnThread(
+      turn.thread,
+      { markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY },
+      {
+        persist: {
+          conversationId: turn.conversation._id,
+          channel: this.conversationService.getPrimaryChannel(turn.conversation),
+          agentIdentifier: turn.config.agentIdentifier,
+          content: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
           environmentId: turn.config.environmentId,
           organizationId: turn.config.organizationId,
         },
