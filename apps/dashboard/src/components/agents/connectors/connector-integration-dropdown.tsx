@@ -88,7 +88,7 @@ export function ConnectorIntegrationDropdown({
   onRequestSetupCredentials,
 }: ConnectorIntegrationDropdownProps) {
   const [open, setOpen] = useState(false);
-  const [view, setView] = useState<'connectors' | 'integrations'>('integrations');
+  const [view, setView] = useState<'connectors' | 'integrations'>('connectors');
 
   const selectedConnector = getConnectorById(selectedConnectorId);
 
@@ -111,8 +111,8 @@ export function ConnectorIntegrationDropdown({
     prevOpenRef.current = open;
 
     if (!open || wasOpen) return;
-    setView(selectedConnector?.providerId ? 'integrations' : 'connectors');
-  }, [open, selectedConnector?.providerId]);
+    setView('connectors');
+  }, [open]);
 
   const externalOptions = CONNECTOR_OPTIONS.filter((o) => o.group === 'external');
   const customOptions = CONNECTOR_OPTIONS.filter((o) => o.group === 'custom');

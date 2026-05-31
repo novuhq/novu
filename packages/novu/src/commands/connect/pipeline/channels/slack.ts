@@ -11,10 +11,7 @@ import {
 } from '../../api/integrations';
 import type { AgentSummary, ConnectCommandOptions } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
-import {
-  ensureAgentIntegrationLinked,
-  resolveIntegrationForAgent,
-} from '../integration-helpers';
+import { ensureAgentIntegrationLinked, resolveIntegrationForAgent } from '../integration-helpers';
 import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil } from '../poll-until';
 
 const SLACK_PROVIDER_ID = 'slack';
@@ -45,7 +42,7 @@ export async function connectSlackForAgent(
     return { connected: true, integration: slackIntegration };
   }
 
-  const authorizeUrl = await getAuthorizeUrlWithQuickSetupFallback(
+  const { authorizeUrl, appCreated } = await getAuthorizeUrlWithQuickSetupFallback(
     client,
     agent,
     slackIntegration,
@@ -53,12 +50,11 @@ export async function connectSlackForAgent(
     options,
     subscriberId
   );
-  track(CONNECT_EVENTS.SLACK_OAUTH_OPENED, { agent: agent.identifier });
-  ui.showSlackOAuthUrl(authorizeUrl);
 
+  await ui.awaitSlackOAuthOpen({ authorizeUrl, appCreated });
+  track(CONNECT_EVENTS.SLACK_OAUTH_OPENED, { agent: agent.identifier, appCreated });
   void open(authorizeUrl).catch(() => undefined);
-
-  ui.pollingForSlackConnection();
+  ui.showSlackWaiting({ authorizeUrl });
   const connected = await pollUntil(
     async () => {
       const count = await countChannelConnectionsForIntegration(client, slackIntegration.identifier);
@@ -87,7 +83,7 @@ async function getAuthorizeUrlWithQuickSetupFallback(
   ui: ConnectUI,
   options: ConnectCommandOptions,
   subscriberId: string
-): Promise<string> {
+): Promise<{ authorizeUrl: string; appCreated: boolean }> {
   const buildUrl = () =>
     generateConnectOauthUrl(client, {
       integrationIdentifier: slackIntegration.identifier,
@@ -96,20 +92,26 @@ async function getAuthorizeUrlWithQuickSetupFallback(
     });
 
   try {
-    return await buildUrl();
+    const authorizeUrl = await buildUrl();
+
+    return { authorizeUrl, appCreated: false };
   } catch (err) {
     if (!isMissingSlackCredentialsError(err)) throw err;
 
     await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: false });
 
     try {
-      return await buildUrl();
+      const authorizeUrl = await buildUrl();
+
+      return { authorizeUrl, appCreated: true };
     } catch (retryErr) {
       if (!isMissingSlackCredentialsError(retryErr)) throw retryErr;
 
       await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: true });
 
-      return await buildUrl();
+      const authorizeUrl = await buildUrl();
+
+      return { authorizeUrl, appCreated: true };
     }
   }
 }

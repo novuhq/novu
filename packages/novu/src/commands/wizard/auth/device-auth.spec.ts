@@ -11,68 +11,109 @@ vi.mock('ora', () => {
   };
 });
 
-vi.mock('get-port', () => ({ default: vi.fn(async () => 0) }));
+vi.mock('../../shared/novu-http', () => ({
+  requestApiJson: vi.fn(),
+}));
 
-import getPort from 'get-port';
 import open from 'open';
+import { requestApiJson } from '../../shared/novu-http';
 import { browserDeviceAuth } from './device-auth';
 
 const dashboardUrl = 'https://dashboard.novu.co';
+const apiUrl = 'https://api.novu.co';
 
-async function postCallback(callbackUrl: string, body: Record<string, unknown>, origin = dashboardUrl) {
-  return fetch(callbackUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Origin: origin },
-    body: JSON.stringify(body),
-  });
-}
+type DeviceSessionStore = {
+  status: 'pending' | 'approved';
+  apiKey?: string;
+  environmentId?: string;
+  environmentSlug?: string | null;
+  environmentName?: string | null;
+  organizationId?: string | null;
+};
 
-function getCallbackUrl(): string {
+function getDeviceCodeFromOpenUrl(): string {
   const opener = open as unknown as { mock: { calls: [string][] } };
   const url = opener.mock.calls[0]?.[0];
   if (!url) throw new Error('open() was not invoked');
   const parsed = new URL(url);
-  const callback = parsed.searchParams.get('cli_callback');
-  if (!callback) throw new Error('cli_callback missing');
+  const deviceCode = parsed.searchParams.get('device_code');
+  if (!deviceCode) throw new Error('device_code missing');
 
-  return callback;
-}
-
-function getState(): string {
-  const opener = open as unknown as { mock: { calls: [string][] } };
-  const url = new URL(opener.mock.calls[0][0]);
-  const state = url.searchParams.get('state');
-  if (!state) throw new Error('state missing');
-
-  return state;
+  return deviceCode;
 }
 
 describe('browserDeviceAuth', () => {
-  beforeEach(async () => {
-    (getPort as unknown as { mockResolvedValue: (n: number) => void }).mockResolvedValue(0);
+  let store: Map<string, DeviceSessionStore>;
+  let pollCounts: Map<string, number>;
+  const requestApiJsonMock = requestApiJson as unknown as ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    store = new Map();
+    pollCounts = new Map();
+    requestApiJsonMock.mockReset();
+    requestApiJsonMock.mockImplementation(async (baseApiUrl: string, path: string) => {
+      if (baseApiUrl !== apiUrl) {
+        throw new Error(`Unexpected apiUrl: ${baseApiUrl}`);
+      }
+
+      if (path === '/cli/device-sessions') {
+        const deviceCode = 'test-device-code';
+        store.set(deviceCode, { status: 'pending' });
+
+        return { deviceCode, expiresIn: 300, interval: 2 };
+      }
+
+      const pollMatch = path.match(/^\/cli\/device-sessions\/([^/?]+)\/poll$/);
+      if (pollMatch) {
+        const deviceCode = pollMatch[1];
+        const session = store.get(deviceCode);
+
+        if (!session) {
+          return { status: 'expired' };
+        }
+
+        const pollCount = (pollCounts.get(deviceCode) ?? 0) + 1;
+        pollCounts.set(deviceCode, pollCount);
+
+        if (session.status === 'approved' && pollCount >= 2) {
+          store.delete(deviceCode);
+
+          return {
+            status: 'approved',
+            apiKey: session.apiKey,
+            environmentId: session.environmentId,
+            environmentSlug: session.environmentSlug,
+            environmentName: session.environmentName,
+            organizationId: session.organizationId,
+          };
+        }
+
+        return { status: 'pending', expiresIn: 300, interval: 2 };
+      }
+
+      throw new Error(`Unexpected path: ${path}`);
+    });
     (open as unknown as { mockClear: () => void }).mockClear();
   });
 
   afterEach(() => {
-    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
-  it('resolves when the dashboard posts a valid payload', async () => {
-    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: CloudRegionEnum.US });
+  it('resolves when the dashboard approves the device session', async () => {
+    const promise = browserDeviceAuth({ apiUrl, dashboardUrl, region: CloudRegionEnum.US });
 
     await waitFor(() => (open as unknown as { mock: { calls: unknown[] } }).mock.calls.length > 0);
-    const callbackUrl = getCallbackUrl();
-    const state = getState();
+    const deviceCode = getDeviceCodeFromOpenUrl();
 
-    const response = await postCallback(callbackUrl, {
-      state,
+    store.set(deviceCode, {
+      status: 'approved',
       apiKey: 'sk_test_123',
       environmentId: 'env_1',
       environmentSlug: 'development',
       environmentName: 'Development',
       organizationId: 'org_1',
     });
-    expect(response.status).toBe(200);
 
     const result = await promise;
     expect(result.secretKey).toBe('sk_test_123');
@@ -80,42 +121,32 @@ describe('browserDeviceAuth', () => {
     expect(result.source).toBe('browser');
   });
 
-  it('rejects payloads with mismatched state', async () => {
-    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: CloudRegionEnum.US });
+  it('opens the dashboard with device_code and name query params', async () => {
+    const promise = browserDeviceAuth({
+      apiUrl,
+      dashboardUrl,
+      region: CloudRegionEnum.US,
+      name: 'novu-connect',
+    });
 
     await waitFor(() => (open as unknown as { mock: { calls: unknown[] } }).mock.calls.length > 0);
-    const callbackUrl = getCallbackUrl();
+    const deviceCode = getDeviceCodeFromOpenUrl();
+    store.set(deviceCode, { status: 'approved', apiKey: 'sk', environmentId: 'env' });
 
-    const response = await postCallback(callbackUrl, {
-      state: 'wrong-state',
-      apiKey: 'sk_test_123',
-      environmentId: 'env_1',
-    });
-    expect(response.status).toBe(400);
+    await promise;
 
-    await expect(promise).rejects.toThrow(/Invalid pairing code/);
+    const openedUrl = new URL((open as unknown as { mock: { calls: [string][] } }).mock.calls[0][0]);
+    expect(openedUrl.pathname).toBe('/cli/auth');
+    expect(openedUrl.searchParams.get('device_code')).toBe(deviceCode);
+    expect(openedUrl.searchParams.get('name')).toBe('novu-connect');
   });
 
-  it('responds to CORS preflight', async () => {
-    const promise = browserDeviceAuth({ apiUrl: 'https://api.novu.co', dashboardUrl, region: CloudRegionEnum.US });
+  it('rejects when the device session expires before approval', async () => {
+    const promise = browserDeviceAuth({ apiUrl, dashboardUrl, region: CloudRegionEnum.US, timeoutMs: 50 });
 
     await waitFor(() => (open as unknown as { mock: { calls: unknown[] } }).mock.calls.length > 0);
-    const callbackUrl = getCallbackUrl();
-    const state = getState();
 
-    const preflight = await fetch(callbackUrl, {
-      method: 'OPTIONS',
-      headers: {
-        Origin: dashboardUrl,
-        'Access-Control-Request-Method': 'POST',
-        'Access-Control-Request-Headers': 'content-type',
-      },
-    });
-    expect(preflight.status).toBe(204);
-    expect(preflight.headers.get('access-control-allow-origin')).toBe(dashboardUrl);
-
-    await postCallback(callbackUrl, { state, apiKey: 'sk', environmentId: 'env' });
-    await promise;
+    await expect(promise).rejects.toThrow(/Authorization timed out/);
   });
 });
 

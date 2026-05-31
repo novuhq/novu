@@ -1,11 +1,11 @@
 import { motion } from 'motion/react';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { RiCheckboxCircleFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/ri';
 import { cn } from '@/utils/ui';
 
 export type GenerationStep = {
   id: string;
-  text: string;
+  text: ReactNode;
 };
 
 type GenerationStatusProps = {

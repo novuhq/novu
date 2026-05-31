@@ -20,7 +20,7 @@ export enum ApiUrlEnum {
 /** Browser-auth surface for `novu connect` (distinct from the main dashboard). */
 export enum ConnectDashboardUrlEnum {
   PROD = 'https://connect.novu.co',
-  STAGING = 'https://devconnect.novu.co',
+  STAGING = 'https://connect.novu-staging.co',
 }
 
 export const LOCAL_API_URL = 'https://api.novu.localhost';

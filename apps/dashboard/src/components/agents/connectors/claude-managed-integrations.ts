@@ -1,6 +1,25 @@
 import { AgentRuntimeProviderIdEnum, type IIntegration, IntegrationKindEnum } from '@novu/shared';
 import { isDemoIntegration } from '@/components/integrations/components/utils/helpers';
 
+function compareClaudeManagedIntegrations(left: IIntegration, right: IIntegration): number {
+  const leftIsDemo = isDemoIntegration(left.providerId);
+  const rightIsDemo = isDemoIntegration(right.providerId);
+
+  if (leftIsDemo && !rightIsDemo) {
+    return 1;
+  }
+
+  if (!leftIsDemo && rightIsDemo) {
+    return -1;
+  }
+
+  // MongoDB ObjectId's first 4 bytes (8 hex chars) encode the creation timestamp,
+  // so a lexicographic descending compare on `_id` yields newest-first ordering.
+  // This ensures the most recently added credential is what `getPreferredClaudeManagedIntegration`
+  // returns and what the connector dropdown surfaces at the top.
+  return right._id.localeCompare(left._id);
+}
+
 const CLAUDE_MANAGED_PROVIDER_IDS: ReadonlySet<string> = new Set([
   AgentRuntimeProviderIdEnum.NovuAnthropic,
   AgentRuntimeProviderIdEnum.Anthropic,
@@ -41,17 +60,9 @@ export function getClaudeManagedAgentIntegrations(
   integrations: IIntegration[] | undefined,
   providerId?: AgentRuntimeProviderIdEnum
 ): IIntegration[] {
-  return (integrations ?? []).filter((integration) => isClaudeManagedAgentIntegration(integration, providerId)).sort((left, right) => {
-    if (left.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
-      return -1;
-    }
-
-    if (right.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
-      return 1;
-    }
-
-    return 0;
-  });
+  return (integrations ?? [])
+    .filter((integration) => isClaudeManagedAgentIntegration(integration, providerId))
+    .sort(compareClaudeManagedIntegrations);
 }
 
 export function getPreferredClaudeManagedIntegration(

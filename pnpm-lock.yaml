@@ -103,7 +103,7 @@ overrides:
   ip@<1.1.9: ^1.1.9
   socks@>=2.0.0 <2.7.2: ^2.8.7
   cookie@<0.7.0: ^0.7.0
-  tmp@<=0.2.3: ^0.2.4
+  tmp@<0.2.6: 0.2.6
   socket.io-parser@>=4.0.0 <4.2.6: ^4.2.6
   cross-spawn@<6.0.6: ^6.0.6
   path-to-regexp@>=0.2.0 <1.9.0: ^1.9.0
@@ -148,6 +148,7 @@ overrides:
   samlify@<2.13.0: ^2.13.0
   better-auth: 1.5.6
   js-cookie@<3.0.7: ^3.0.7
+  liquidjs@<10.26.0: ^10.27.0
   '@codemirror/state': 6.6.0
   '@codemirror/autocomplete': 6.18.3
 
@@ -2421,8 +2422,8 @@ importers:
         specifier: ^7.0.3
         version: 7.0.3
       liquidjs:
-        specifier: ^10.25.7
-        version: 10.25.7
+        specifier: ^10.27.0
+        version: 10.27.0
       mocha:
         specifier: ^8.1.1
         version: 8.4.0
@@ -21335,11 +21336,6 @@ packages:
     resolution: {integrity: sha512-EechC3DdFic/TdOPgj/RB3FicqE6932LTHCUm0Y2fsD9KGlLB+RwJl2q1IYBIvEsKzDOgn0D4gll+YxG5RsrKg==}
     hasBin: true
 
-  liquidjs@10.25.7:
-    resolution: {integrity: sha512-rPCjJLiD4eDhQjvv964AeXFC+HbeYBbZrd7Z82Q6hqv1lX7G+5w4SJcKLn9CAAAwHI4aS3dTdo083UB79K3pDA==}
-    engines: {node: '>=16'}
-    hasBin: true
-
   liquidjs@10.27.0:
     resolution: {integrity: sha512-tw/OA59K7aIBlMKIrKlumr37fiZUheShVHXY8cVctWisgY1p9mc5hreOvlreoS0wTiwlWk14Ya7305c2a/Cg5w==}
     engines: {node: '>=16'}
@@ -26273,8 +26269,8 @@ packages:
     resolution: {integrity: sha512-ELrFxuqsDdHUwoh0XxDbxuLD3Wnz49Z57IFvTtvWy1hJdcMZjXLIuonjilCiWHlT2GbE4Wlv1wKVTzDFnXH1aw==}
     hasBin: true
 
-  tmp@0.2.5:
-    resolution: {integrity: sha512-voyz6MApa1rQGUxT3E+BK7/ROe8itEx7vD8/HEvt4xwXucvQ5G5oeEiHkmHZJuBO21RpOf+YYm9MOivj709jow==}
+  tmp@0.2.6:
+    resolution: {integrity: sha512-5sJPdPjfI5Kx+qbrDesxkglRBxW//g7hCsqspEjwkewGvBMGIKMOTKzLt1hFVJzyadba3lDUN20O9qhvbQUSTA==}
     engines: {node: '>=14.14'}
 
   tmpl@1.0.5:
@@ -35441,7 +35437,7 @@ snapshots:
       minimatch: 9.0.9
       nx: 20.1.2(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15))
       semver: 7.6.3
-      tmp: 0.2.5
+      tmp: 0.2.6
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
@@ -35453,7 +35449,7 @@ snapshots:
       minimatch: 9.0.9
       nx: 21.3.11(@swc-node/register@1.10.10(@swc/core@1.7.26(@swc/helpers@0.5.15))(@swc/types@0.1.12)(typescript@5.6.2))(@swc/core@1.7.26(@swc/helpers@0.5.15))
       semver: 7.7.4
-      tmp: 0.2.5
+      tmp: 0.2.6
       tslib: 2.8.1
       yargs-parser: 21.1.1
 
@@ -48165,7 +48161,7 @@ snapshots:
     dependencies:
       chardet: 0.7.0
       iconv-lite: 0.4.24
-      tmp: 0.2.5
+      tmp: 0.2.6
 
   extract-css@3.0.2:
     dependencies:
@@ -51854,10 +51850,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  liquidjs@10.25.7:
-    dependencies:
-      commander: 10.0.1
-
   liquidjs@10.27.0:
     dependencies:
       commander: 10.0.1
@@ -53724,7 +53716,7 @@ snapshots:
       semver: 7.6.3
       string-width: 4.2.3
       tar-stream: 2.2.0
-      tmp: 0.2.5
+      tmp: 0.2.6
       tsconfig-paths: 4.2.0
       tslib: 2.8.1
       yargs: 17.7.2
@@ -53775,7 +53767,7 @@ snapshots:
       semver: 7.6.3
       string-width: 4.2.3
       tar-stream: 2.2.0
-      tmp: 0.2.5
+      tmp: 0.2.6
       tree-kill: 1.2.2
       tsconfig-paths: 4.2.0
       tslib: 2.8.1
@@ -57881,7 +57873,7 @@ snapshots:
     dependencies:
       tldts-core: 7.0.30
 
-  tmp@0.2.5: {}
+  tmp@0.2.6: {}
 
   tmpl@1.0.5: {}
 
