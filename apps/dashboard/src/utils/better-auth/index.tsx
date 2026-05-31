@@ -325,6 +325,22 @@ export function useClerk() {
   };
 }
 
+export function ClerkLoaded({ children }: { children: React.ReactNode }) {
+  const { isLoaded } = useAuth();
+
+  if (!isLoaded) return null;
+
+  return <>{children}</>;
+}
+
+export function ClerkLoading({ children }: { children: React.ReactNode }) {
+  const { isLoaded } = useAuth();
+
+  if (isLoaded) return null;
+
+  return <>{children}</>;
+}
+
 export function SignedIn({ children }: { children: React.ReactNode }) {
   const { user, isLoaded } = useUser();
 

@@ -10,6 +10,8 @@
     "strict": true,
     "types": ["node", "mocha"],
     "skipLibCheck": true,
+    "declaration": false,
+    "declarationMap": false,
     "typeRoots": ["./node_modules/@types", "../../node_modules/@types"]
   },
   "include": ["src/**/*.ts"],
