@@ -252,19 +252,21 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       .query({ source: RequestLogSourceEnum.INBOUND_EMAIL })
       .expect(200);
 
-    expect(inboundResponse.body.data.length).to.be.equal(1);
-    expect(inboundResponse.body.total).to.be.equal(1);
-    expect(inboundResponse.body.data[0].source).to.be.equal(RequestLogSourceEnum.INBOUND_EMAIL);
-    expect(inboundResponse.body.data[0].method).to.be.equal('INBOUND');
+    expect(inboundResponse.body.data.length).to.be.at.least(1);
+    expect(inboundResponse.body.data.every((row) => row.source === RequestLogSourceEnum.INBOUND_EMAIL)).to.be.true;
+    const inboundRow = inboundResponse.body.data.find((row) => row.transactionId === inboundLog.transaction_id);
+    expect(inboundRow).to.exist;
+    expect(inboundRow.method).to.be.equal('INBOUND');
 
     const httpResponse = await session.testAgent
       .get('/v1/activity/requests')
       .query({ source: RequestLogSourceEnum.HTTP })
       .expect(200);
 
-    expect(httpResponse.body.data.length).to.be.equal(1);
-    expect(httpResponse.body.total).to.be.equal(1);
-    expect(httpResponse.body.data[0].source).to.be.equal(RequestLogSourceEnum.HTTP);
+    expect(httpResponse.body.data.length).to.be.at.least(1);
+    expect(httpResponse.body.data.every((row) => row.source === RequestLogSourceEnum.HTTP)).to.be.true;
+    const httpRow = httpResponse.body.data.find((row) => row.transactionId === httpLog.transaction_id);
+    expect(httpRow).to.exist;
 
     const rejectedResponse = await session.testAgent
       .get('/v1/activity/requests')

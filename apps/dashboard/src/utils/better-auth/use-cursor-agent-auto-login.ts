@@ -49,7 +49,12 @@ export function useCursorAgentAutoLogin({
 
         localStorage.setItem('better-auth-session-token', data.token);
 
-        const { data: organizations } = await authClient.organization.list();
+        const { data: organizations, error: listError } = await authClient.organization.list();
+
+        if (listError) {
+          throw new Error(listError.message || 'Failed to list organizations');
+        }
+
         const firstOrg = organizations?.[0];
 
         if (firstOrg?.id) {
