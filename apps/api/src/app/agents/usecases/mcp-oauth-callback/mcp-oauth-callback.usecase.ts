@@ -801,9 +801,10 @@ export class McpOAuthCallback {
  * — otherwise a fall-through would silently downgrade a confidential client
  * to public-client semantics.
  *
- * `client_secret_basic` without a `clientSecret` is an invariant violation
- * (DCR negotiation guarantees a secret when this method is selected) and
- * surfaces as a 500, not a silent fallback to body-form.
+ * A secret-bearing method (`client_secret_basic` or `client_secret_post`)
+ * without a `clientSecret` is an invariant violation (DCR negotiation
+ * guarantees a secret when either method is selected) and surfaces as a 500,
+ * not a silent fallback to public-client semantics.
  */
 export function buildTokenExchangeAuth(args: {
   authMethod: McpTokenEndpointAuthMethod;
@@ -836,9 +837,12 @@ export function buildTokenExchangeAuth(args: {
       // `client_id` always travels in the body when not in the Authorization
       // header so the AS can correlate the request to the registration.
       params.set('client_id', oauthClient.clientId);
-      if (oauthClient.clientSecret) {
-        params.set('client_secret', oauthClient.clientSecret);
+      if (!oauthClient.clientSecret) {
+        throw new Error(
+          'MCP OAuth client registered with `client_secret_post` is missing a client secret — refusing to downgrade to public-client semantics.'
+        );
       }
+      params.set('client_secret', oauthClient.clientSecret);
 
       return headers;
     }

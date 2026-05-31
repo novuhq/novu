@@ -163,6 +163,16 @@ describe('buildTokenExchangeAuth', () => {
     expect(params.get('client_secret')).to.equal('s3cret');
   });
 
+  it('throws when client_secret_post is selected but no clientSecret is available (invariant violation)', () => {
+    expect(() =>
+      buildTokenExchangeAuth({
+        authMethod: 'client_secret_post',
+        oauthClient: makeOAuthClient({ clientSecret: undefined }),
+        params: new URLSearchParams(),
+      })
+    ).to.throw(/refusing to downgrade/i);
+  });
+
   it('puts only client_id in the body for the `none` (public-client) method', () => {
     const params = new URLSearchParams({ grant_type: 'authorization_code' });
     const headers = buildTokenExchangeAuth({
