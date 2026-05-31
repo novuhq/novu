@@ -24,29 +24,35 @@ describe('MCP_SERVERS catalog', () => {
       expect(slack?.oauth?.mode).toBe(McpConnectionAuthModeEnum.ProviderManaged);
     });
 
-    it('covers every provider-managed MCP', () => {
-      const expectedProviderManagedIds = new Set([
-        'adobe-experience-manager',
-        'asana',
-        'aws-marketplace',
-        'box',
-        'dropbox',
-        'figma',
-        'google-drive',
-        'hubspot',
-        'intercom',
-        'pagerduty',
-        'plaid',
-        'slack',
-        'square',
-      ]);
-      const actualProviderManagedIds = new Set(
-        MCP_SERVERS.filter((entry) => entry.oauth?.mode === McpConnectionAuthModeEnum.ProviderManaged).map(
-          (entry) => entry.id
-        )
+    it('covers every provider-managed MCP with a mode-only oauth entry', () => {
+      const providerManaged = MCP_SERVERS.filter(
+        (entry) => entry.oauth?.mode === McpConnectionAuthModeEnum.ProviderManaged
       );
 
-      expect(actualProviderManagedIds).toEqual(expectedProviderManagedIds);
+      expect(providerManaged.length).toBeGreaterThanOrEqual(215);
+
+      for (const entry of providerManaged) {
+        expect(entry.oauth).toEqual({ mode: McpConnectionAuthModeEnum.ProviderManaged });
+      }
+    });
+
+    it('includes Claude vault delta MCPs as provider-managed', () => {
+      const deltaIds = ['gmail', 'google-calendar', 'microsoft-365', 'monday-com', 'miro', 'vercel', 'zapier'];
+
+      for (const id of deltaIds) {
+        const entry = MCP_SERVERS.find((server) => server.id === id);
+
+        expect(entry).toBeDefined();
+        expect(entry?.oauth?.mode).toBe(McpConnectionAuthModeEnum.ProviderManaged);
+      }
+    });
+
+    it('uses unique catalog ids and urls', () => {
+      const ids = MCP_SERVERS.map((entry) => entry.id);
+      const urls = MCP_SERVERS.map((entry) => entry.url);
+
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(new Set(urls).size).toBe(urls.length);
     });
 
     it('covers every DCR-verified MCP', () => {
