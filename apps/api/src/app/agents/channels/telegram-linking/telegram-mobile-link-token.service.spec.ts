@@ -138,7 +138,7 @@ describe('TelegramMobileLinkTokenService', () => {
 
     expect(cacheService.set.calledOnce).to.equal(true);
     const setArgs = cacheService.set.firstCall.args;
-    expect(setArgs[0]).to.equal(`telegram_mobile_link:${token}`);
+    expect(setArgs[0]).to.equal(`telegram_mobile_link:{${token}}`);
     const parsed = JSON.parse(setArgs[1] as string);
     expect(parsed.payload.kind).to.equal('agent');
     expect(parsed.payload.env).to.equal('env-1');
@@ -175,7 +175,7 @@ describe('TelegramMobileLinkTokenService', () => {
     const claimed = await service.claim(token, 'agent');
     expect(claimed.payload.kind).to.equal('agent');
 
-    const usedKey = `telegram_mobile_link_used:${token}`;
+    const usedKey = `telegram_mobile_link_used:{${token}}`;
     expect(cacheStore.get(usedKey)).to.equal('1');
     const usedTtl = keyTtls.get(usedKey);
     expect(usedTtl).to.be.a('number');
