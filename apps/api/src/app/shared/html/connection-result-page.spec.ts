@@ -6,15 +6,12 @@ import {
 
 describe('connection-result-page', () => {
   describe('CONNECTION_RESULT_CSP', () => {
-    // Anchor the directive name to a `^`/`;` boundary so neither assertion can
-    // pass via `script-src-attr` / `style-src-elem` if the bare directive ever
-    // regresses.
     it('allows inline styles so the embedded <style> block is not blocked', () => {
       expect(CONNECTION_RESULT_CSP).to.match(/(?:^|;\s*)style-src\s+[^;]*'unsafe-inline'/);
     });
 
-    it('allows inline scripts so the close-tab onclick handler is not blocked', () => {
-      expect(CONNECTION_RESULT_CSP).to.match(/(?:^|;\s*)script-src\s+[^;]*'unsafe-inline'/);
+    it("does not allow inline scripts — the page is style-only", () => {
+      expect(CONNECTION_RESULT_CSP).to.not.match(/(?:^|;\s*)script-src\s+[^;]*'unsafe-inline'/);
     });
 
     it("keeps default-src locked down to 'self'", () => {
@@ -62,7 +59,22 @@ describe('connection-result-page', () => {
       expect(html).to.include('&quot;footer&quot; &amp; &lt;note&gt;');
     });
 
-    it('does not emit a window.opener.postMessage shim', () => {
+    it('shows a static close-tab hint instead of an interactive button', () => {
+      const html = renderConnectionResultPage({
+        status: 'success',
+        title: 'Connection complete',
+        heading: "You're all set",
+        message: 'Your workspace is connected and ready to use.',
+      });
+
+      expect(html).to.include('You can close this tab manually.');
+      expect(html).to.include('class="close-hint"');
+      expect(html).to.not.include('Close this tab</a>');
+      expect(html).to.not.include('onclick=');
+      expect(html).to.not.include('javascript:void');
+    });
+
+    it('does not emit scripts or postMessage shims', () => {
       const html = renderConnectionResultPage({
         status: 'success',
         title: 't',

@@ -17,13 +17,10 @@ export type ConnectionResultStatus = 'success' | 'error';
 
 /**
  * CSP header value that matches what {@link renderConnectionResultPage} emits:
- * the page ships an inline `<style>` block and an `onclick` handler on the
- * close-tab link. `script-src 'unsafe-inline'` covers the event handler via
- * the CSP3 `script-src-attr` fallback; `style-src 'unsafe-inline'` covers the
- * inline stylesheet. `default-src 'self'` keeps everything else locked down.
+ * the page ships an inline `<style>` block only. `style-src 'unsafe-inline'`
+ * covers the stylesheet; `default-src 'self'` keeps everything else locked down.
  */
-export const CONNECTION_RESULT_CSP =
-  "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
+export const CONNECTION_RESULT_CSP = "default-src 'self'; style-src 'self' 'unsafe-inline'";
 
 export interface ConnectionResultPageOptions {
   status: ConnectionResultStatus;
@@ -73,24 +70,7 @@ const PAGE_STYLES = `
   }
   h1.message-heading { margin: 0 0 8px; font-size: 20px; font-weight: 600; color: #18181b; }
   p.intro { margin: 0 0 8px; color: #52525b; font-size: 14px; line-height: 1.5; }
-  a.secondary,
-  button.secondary {
-    appearance: none;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    color: #71717a;
-    font-size: 13px;
-    font-weight: 500;
-    margin-top: 14px;
-    padding: 4px 8px;
-    text-decoration: none;
-    display: inline-block;
-    border-radius: 6px;
-    transition: color 120ms ease, background 120ms ease;
-    font-family: inherit;
-  }
-  a.secondary:hover, button.secondary:hover { color: #18181b; background: #f4f4f5; }
+  p.close-hint { margin: 14px 0 0; font-size: 13px; color: #71717a; }
   .footer {
     margin-top: 24px;
     padding-top: 16px;
@@ -133,12 +113,6 @@ const PAGE_STYLES = `
     align-items: center;
     justify-content: center;
   }
-  .cancel-hint {
-    display: none;
-    margin-top: 12px;
-    font-size: 12px;
-    color: #71717a;
-  }
   @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes pop { 0% { transform: scale(0.6); opacity: 0; } 60% { transform: scale(1.06); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
   @keyframes stroke { to { stroke-dashoffset: 0; } }
@@ -148,13 +122,11 @@ const PAGE_STYLES = `
     .card { background: #18181b; border-color: #27272a; box-shadow: 0 1px 2px rgba(0,0,0,0.4), 0 8px 24px rgba(0,0,0,0.4); }
     h1.message-heading { color: #fafafa; }
     p.intro { color: #a1a1aa; }
-    a.secondary, button.secondary { color: #a1a1aa; }
-    a.secondary:hover, button.secondary:hover { color: #fafafa; background: #27272a; }
+    p.close-hint { color: #a1a1aa; }
     .footer { color: #71717a; border-top-color: #27272a; }
     .check { background: #052e16; }
     .check svg path { stroke: #34d399; }
     .info-icon { background: #450a0a; color: #fca5a5; }
-    .cancel-hint { color: #a1a1aa; }
   }
 `;
 
@@ -180,14 +152,7 @@ const SUCCESS_ICON = `<div class="check">
 
 const ERROR_ICON = `<div class="info-icon" aria-hidden="true">!</div>`;
 
-/**
- * Inline close-tab link. `window.close()` only works on tabs opened by script, so
- * we attempt it and, if the tab is still here a moment later, reveal a manual hint.
- * The handler is inlined so it works even when the markup is injected without
- * executing `<script>` blocks.
- */
-const CLOSE_LINK = `<a class="secondary" href="javascript:void(0)" onclick="try{window.close();}catch(e){}var h=this.nextElementSibling;setTimeout(function(){if(!document.hidden&&h){h.style.display='block';}},150);return false;">Close this tab</a>
-  <div class="cancel-hint">You can close this tab manually.</div>`;
+const CLOSE_HINT = `<p class="close-hint">You can close this tab manually.</p>`;
 
 export function renderConnectionResultPage(options: ConnectionResultPageOptions): string {
   const { status, title, heading, message, footerNote } = options;
@@ -199,7 +164,7 @@ export function renderConnectionResultPage(options: ConnectionResultPageOptions)
   ${icon}
   <h1 class="message-heading">${escapeHtml(heading)}</h1>
   <p class="intro">${escapeHtml(message)}</p>
-  ${CLOSE_LINK}
+  ${CLOSE_HINT}
   ${footer}
 </div>`;
 
