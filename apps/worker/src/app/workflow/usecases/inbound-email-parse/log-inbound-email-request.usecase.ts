@@ -50,30 +50,37 @@ export class LogInboundEmailRequest {
       return;
     }
 
-    const requestId = `${this.requestLogRepository.identifierPrefix}${generateObjectId()}`;
-    const context = {
-      organizationId: outcome.organizationId,
-      environmentId: outcome.environmentId,
-    };
-    const isFailure = outcome.status >= 400;
-
     try {
-      await this.requestLogRepository.create(this.buildRequestLog(requestId, command, outcome, durationMs), context);
+      const requestId = `${this.requestLogRepository.identifierPrefix}${generateObjectId()}`;
+      const context = {
+        organizationId: outcome.organizationId,
+        environmentId: outcome.environmentId,
+      };
+      const isFailure = outcome.status >= 400;
+
+      try {
+        await this.requestLogRepository.create(this.buildRequestLog(requestId, command, outcome, durationMs), context);
+      } catch (error) {
+        this.logger.warn(
+          { err: error, transactionId: outcome.transactionId, strategy: outcome.strategy },
+          'Failed to write inbound-email request log'
+        );
+
+        return;
+      }
+
+      try {
+        await this.traceLogRepository.createRequest(this.buildTraces(requestId, outcome, isFailure));
+      } catch (error) {
+        this.logger.warn(
+          { err: error, requestId, transactionId: outcome.transactionId },
+          'Failed to write inbound-email request traces'
+        );
+      }
     } catch (error) {
       this.logger.warn(
         { err: error, transactionId: outcome.transactionId, strategy: outcome.strategy },
-        'Failed to write inbound-email request log'
-      );
-
-      return;
-    }
-
-    try {
-      await this.traceLogRepository.createRequest(this.buildTraces(requestId, outcome, isFailure));
-    } catch (error) {
-      this.logger.warn(
-        { err: error, requestId, transactionId: outcome.transactionId },
-        'Failed to write inbound-email request traces'
+        'Unexpected error while writing inbound-email request log'
       );
     }
   }
