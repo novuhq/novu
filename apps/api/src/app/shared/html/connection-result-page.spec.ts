@@ -45,6 +45,20 @@ describe('connection-result-page', () => {
       expect(html).to.include('&quot;oops&quot; &amp; &lt;bad&gt;');
     });
 
+    it('escapes user-controlled copy in title and footerNote', () => {
+      const html = renderConnectionResultPage({
+        status: 'success',
+        title: '<script>alert(1)</script>',
+        heading: 'h',
+        message: 'm',
+        footerNote: '"footer" & <note>',
+      });
+
+      expect(html).to.not.include('<script>alert(1)</script>');
+      expect(html).to.include('&lt;script&gt;alert(1)&lt;/script&gt;');
+      expect(html).to.include('&quot;footer&quot; &amp; &lt;note&gt;');
+    });
+
     it('does not emit a window.opener.postMessage shim', () => {
       const html = renderConnectionResultPage({
         status: 'success',
