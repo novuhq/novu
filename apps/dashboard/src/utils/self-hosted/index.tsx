@@ -40,8 +40,10 @@ export {
 export { useAuth, useOrganization, useUser };
 
 export const useClerk = () => {
+  const { isLoaded } = useAuth();
+
   return {
-    loaded: true,
+    loaded: isLoaded,
     setActive: async () => {
       console.warn('Clerk.setActive is not available in self-hosted mode');
     },

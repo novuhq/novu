@@ -4,9 +4,15 @@ import { getJwtToken, isJwtValid } from './jwt-manager';
 import { useOrganization } from './organization.resource';
 import { useUser } from './user.resource';
 
+function denyPermissionCheck(
+  _params: { permission: PermissionsEnum } | { role: MemberRoleEnum }
+): boolean {
+  return false;
+}
+
 export function useAuth() {
-  const { currentUser, has } = useAuthContext();
-  const { user, isLoaded: isUserLoaded } = useUser();
+  const { currentUser } = useAuthContext();
+  const { isLoaded: isUserLoaded } = useUser();
   const { organization, isLoaded: isOrgLoaded } = useOrganization() as {
     organization?: { _id?: string; externalOrgId?: string };
     isLoaded: boolean;
@@ -14,13 +20,13 @@ export function useAuth() {
 
   const hasToken = isJwtValid(getJwtToken());
   const isLoaded = isUserLoaded && (hasToken ? isOrgLoaded : true);
-  const isSignedIn = !!currentUser || !!user;
+  const isSignedIn = !!currentUser;
 
   return {
     isLoaded,
     isSignedIn,
-    userId: currentUser?.externalId ?? user?.externalId,
+    userId: currentUser?.externalId,
     orgId: organization?.externalOrgId ?? organization?._id,
-    has: has as (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean,
+    has: denyPermissionCheck,
   };
 }
