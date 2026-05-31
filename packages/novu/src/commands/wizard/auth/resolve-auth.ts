@@ -27,6 +27,12 @@ export interface ResolveAuthOptions {
    * dashboard; `novu connect` passes the Connect-specific dashboard instead.
    */
   authDashboardUrl?: string;
+  /**
+   * Correlates CLI onboarding events with dashboard CLI auth telemetry.
+   */
+  onboardingSessionId?: string;
+  onAuthStarted?: () => void;
+  onAuthFailed?: (message: string) => void;
 }
 
 export async function resolveAuth(
@@ -117,5 +123,8 @@ export async function resolveAuth(
     onStatus: resolveOptions.onStatus,
     onDashboardUrl: resolveOptions.onDashboardUrl,
     name: resolveOptions.name,
+    onboardingSessionId: resolveOptions.onboardingSessionId,
+    onAuthStarted: resolveOptions.onAuthStarted,
+    onAuthFailed: resolveOptions.onAuthFailed,
   });
 }

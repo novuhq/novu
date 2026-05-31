@@ -43,6 +43,7 @@ export type SlackSetupGuideProps = {
   onStepsCompleted?: () => void;
   /** Integrations tab: same content without Overview chrome */
   embedded?: boolean;
+  onWelcomeSent?: () => void;
 };
 
 function escapeYamlDoubleQuoted(value: string): string {
@@ -254,6 +255,7 @@ export function SlackSetupGuide({
   stepOffset = 1,
   onStepsCompleted,
   embedded = false,
+  onWelcomeSent,
 }: SlackSetupGuideProps) {
   const { currentUser, isUserLoaded } = useAuth();
   const { subscriberId: connectSubscriberId, isReady: isConnectSubscriberReady } = useConnectSubscriber();
@@ -297,6 +299,7 @@ export function SlackSetupGuide({
     if (currentEnvironment && selectedIntegrationIdentifier) {
       sendAgentWelcomeMessage(currentEnvironment, agent.identifier, selectedIntegrationIdentifier)
         .then((res) => {
+          onWelcomeSent?.();
           if (res.conversationId) {
             setSearchParams((prev) => {
               prev.set('onboardingConversationId', res.conversationId as string);
@@ -315,6 +318,7 @@ export function SlackSetupGuide({
     agent.identifier,
     selectedIntegrationIdentifier,
     setSearchParams,
+    onWelcomeSent,
   ]);
   const hasCredentials = hasIntegrationCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;

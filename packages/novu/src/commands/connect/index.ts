@@ -43,6 +43,7 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
     ci: !!options.ci,
     hasPrompt: !!options.prompt,
     skipSlack: !!options.skipSlack,
+    onboardingSessionId: anonymousId,
   });
 
   try {
@@ -51,7 +52,9 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
       const result = await runConnectPipeline({
         options,
         ui,
-        onTrack: (event, data) => trackConnect(analytics, anonymousId, event, data ?? {}),
+        onboardingSessionId: anonymousId,
+        onTrack: (event, data) =>
+          trackConnect(analytics, anonymousId, event, { ...(data ?? {}), onboardingSessionId: anonymousId }),
       });
       if (result.exitCode !== 0) process.exitCode = result.exitCode;
     } else {
@@ -60,14 +63,16 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
       const result = await runConnectPipeline({
         options,
         ui: mounted.ui,
-        onTrack: (event, data) => trackConnect(analytics, anonymousId, event, data ?? {}),
+        onboardingSessionId: anonymousId,
+        onTrack: (event, data) =>
+          trackConnect(analytics, anonymousId, event, { ...(data ?? {}), onboardingSessionId: anonymousId }),
       });
       const exitCode = (await mounted.done) || result.exitCode;
       if (exitCode !== 0) process.exitCode = exitCode;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    trackConnect(analytics, anonymousId, CONNECT_EVENTS.ERROR, { message });
+    trackConnect(analytics, anonymousId, CONNECT_EVENTS.ERROR, { message, onboardingSessionId: anonymousId });
     console.error(chalk.red(`Connect failed: ${message}`));
     process.exitCode = 1;
   } finally {

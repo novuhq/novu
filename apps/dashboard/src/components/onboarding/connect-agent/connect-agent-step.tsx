@@ -641,10 +641,25 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         managedOverrides,
       },
       {
-        onSuccess: (agent) => onAgentCreated(agent, summary),
+        onSuccess: (agent) => {
+          telemetry(TelemetryEvent.ONBOARDING_CONNECT_AGENT_CREATED, {
+            runtime,
+            connectorId,
+            mode: useAiGeneration ? generationMode : 'template',
+            templateKind: templateSelection.kind,
+            agentIdentifier: agent.identifier,
+            isExistingMode,
+          });
+          onAgentCreated(agent, summary);
+        },
         onError: (err) => {
           setIsPromptSubmitInFlight(false);
           const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+          telemetry(TelemetryEvent.ONBOARDING_CONNECT_AGENT_CREATE_FAILED, {
+            runtime,
+            connectorId,
+            message,
+          });
           showErrorToast(message, 'Create failed');
         },
       }

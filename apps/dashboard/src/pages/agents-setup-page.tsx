@@ -199,6 +199,7 @@ export function AgentsSetupPage() {
 
   useEffect(() => {
     telemetry(TelemetryEvent.AGENTS_SETUP_PAGE_VIEWED);
+    telemetry(TelemetryEvent.ONBOARDING_PHASE_VIEWED, { phase: 'connect' });
   }, [telemetry]);
 
   const [phase, setPhase] = useState<SetupPhase>('connect');
@@ -207,18 +208,39 @@ export function AgentsSetupPage() {
   const [setupComplete, setSetupComplete] = useState(false);
   const [selectedRuntime, setSelectedRuntime] = useState<AgentFlowRuntime>('scratch');
 
-  const handleAgentCreated = useCallback((agent: AgentResponse, summary: ConnectSummary) => {
-    setCreatedAgent(agent);
-    setConnectSummary(summary);
-    setPhase('details');
-  }, []);
+  const [connectedProviderId, setConnectedProviderId] = useState<string | undefined>(undefined);
+
+  const buildOnboardingCompletionProps = useCallback(() => {
+    return {
+      usecase: 'agents' as const,
+      setupComplete,
+      runtime: connectSummary?.connectorId,
+      connectorId: connectSummary?.connectorId,
+      providerId: connectedProviderId,
+      source: 'web' as const,
+    };
+  }, [connectSummary?.connectorId, connectedProviderId, setupComplete]);
+
+  const handleAgentCreated = useCallback(
+    (agent: AgentResponse, summary: ConnectSummary) => {
+      setCreatedAgent(agent);
+      setConnectSummary(summary);
+      setPhase('details');
+      telemetry(TelemetryEvent.ONBOARDING_PHASE_VIEWED, { phase: 'details', agentIdentifier: agent.identifier });
+    },
+    [telemetry]
+  );
 
   const handleRuntimeChange = useCallback((runtime: RuntimeType) => {
     setSelectedRuntime(toIllustrationRuntime(runtime));
   }, []);
 
   const handleSkip = useCallback(() => {
-    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, { usecase: 'agents', skippedFrom: 'agents-setup' });
+    const completionProps = buildOnboardingCompletionProps();
+    telemetry(TelemetryEvent.SKIP_ONBOARDING_CLICKED, {
+      ...completionProps,
+      skippedFrom: 'agents-setup',
+    });
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'skip' });
 
     if (currentEnvironment?.slug) {
@@ -228,16 +250,16 @@ export function AgentsSetupPage() {
     }
 
     void navigate(withAppId(ROUTES.WORKFLOWS, appId));
-  }, [appId, currentEnvironment?.slug, navigate, telemetry]);
+  }, [appId, buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleNavigateToOverview = useCallback(() => {
-    telemetry(TelemetryEvent.ONBOARDING_COMPLETED, { usecase: 'agents' });
+    telemetry(TelemetryEvent.ONBOARDING_COMPLETED, buildOnboardingCompletionProps());
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'complete' });
 
     if (currentEnvironment?.slug) {
       goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
     }
-  }, [appId, currentEnvironment?.slug, navigate, telemetry]);
+  }, [appId, buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleSetupAnotherChannel = useCallback(() => {
     if (!currentEnvironment?.slug || !createdAgent) return;
@@ -326,6 +348,7 @@ export function AgentsSetupPage() {
             <AgentSetupSteps
               agent={createdAgent}
               onSetupComplete={() => setSetupComplete(true)}
+              onChannelConnected={(providerId) => setConnectedProviderId(providerId)}
               hideAddProvider
               connectSummary={connectSummary}
             />
