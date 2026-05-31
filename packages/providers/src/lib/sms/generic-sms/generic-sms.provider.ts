@@ -63,14 +63,22 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       const tokenResponse = await this.safeJsonRequest(domainUrl, {
         method: 'POST',
         headers: requestHeaders,
+        blockedPrefix: 'Generic SMS auth URL blocked',
       });
+
+      this.assertSuccessStatus(tokenResponse.statusCode, 'Generic SMS auth request failed');
 
       const tokenBody = tokenResponse.body as { data?: Record<string, string> };
       const token = tokenBody?.data?.[authTokenKey];
 
+      if (!token) {
+        throw new Error('Generic SMS auth request failed: authentication token missing from response.');
+      }
+
       requestHeaders = {
-        [authTokenKey]: token,
+        ...this.headers,
         ...data.headers,
+        [authTokenKey]: token,
       };
     }
 
@@ -80,12 +88,15 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       method: 'POST',
       headers: requestHeaders,
       body: data.body,
+      blockedPrefix: 'Generic SMS URL blocked',
     });
 
-    const responseData = response.body;
+    this.assertSuccessStatus(response.statusCode, 'Generic SMS request failed');
+
+    const responseData = this.asResponseRecord(response.body);
 
     return {
-      id: this.getResponseValue(this.config.idPath || 'id', responseData),
+      id: this.getResponseValue(this.config.idPath || 'id', responseData) ?? '',
       date: this.getResponseValue(this.config.datePath || 'date', responseData) || new Date().toISOString(),
     };
   }
@@ -109,7 +120,23 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
     return url;
   }
 
-  private safeJsonRequest(url: string, options: { method: 'POST'; headers: Record<string, string>; body?: unknown }) {
+  private assertSuccessStatus(statusCode: number, message: string): void {
+    if (statusCode < 200 || statusCode >= 300) {
+      throw new Error(`${message} with status ${statusCode}`);
+    }
+  }
+
+  private safeJsonRequest(
+    url: string,
+    options: {
+      method: 'POST';
+      headers: Record<string, string>;
+      body?: Record<string, unknown>;
+      blockedPrefix?: string;
+    }
+  ) {
+    const blockedPrefix = options.blockedPrefix ?? 'Generic SMS URL blocked';
+
     return safeOutboundJsonRequest({
       url,
       method: options.method,
@@ -117,15 +144,38 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
       body: options.body,
     }).catch((err: unknown) => {
       if (err instanceof SsrfBlockedError) {
-        throw new Error(`Generic SMS URL blocked: ${err.message}`);
+        throw new Error(`${blockedPrefix}: ${err.message}`);
       }
       throw err;
     });
   }
 
-  private getResponseValue(path: string, data: Record<string, unknown>) {
-    const pathArray = path.split('.');
+  private asResponseRecord(body: unknown): Record<string, unknown> {
+    if (body && typeof body === 'object' && !Array.isArray(body)) {
+      return body as Record<string, unknown>;
+    }
 
-    return pathArray.reduce<unknown>((acc, curr) => (acc as Record<string, unknown>)[curr], data);
+    return {};
+  }
+
+  private getResponseValue(path: string, data: Record<string, unknown>): string | undefined {
+    let current: unknown = data;
+
+    for (const segment of path.split('.')) {
+      if (current === null || current === undefined || typeof current !== 'object') {
+        return undefined;
+      }
+      current = (current as Record<string, unknown>)[segment];
+    }
+
+    if (typeof current === 'string') {
+      return current;
+    }
+
+    if (current === undefined || current === null) {
+      return undefined;
+    }
+
+    return String(current);
   }
 }

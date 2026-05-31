@@ -70,7 +70,7 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
 
     for (let retries = 0; !sent && retries < this.config.retryCount; retries += 1) {
       try {
-        await safeOutboundJsonRequest({
+        const response = await safeOutboundJsonRequest({
           url: webhookUrl,
           method: 'POST',
           headers: {
@@ -85,6 +85,11 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
           }
           throw err;
         });
+
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          throw new Error(`webhook send failed with status ${response.statusCode}`);
+        }
+
         sent = true;
       } catch (error) {
         if (error instanceof Error && error.message.startsWith('Email webhook URL blocked')) {
