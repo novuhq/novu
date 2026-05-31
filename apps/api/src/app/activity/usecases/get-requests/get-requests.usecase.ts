@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { LogRepository, QueryBuilder, RequestLog, RequestLogRepository } from '@novu/application-generic';
+import {
+  LogRepository,
+  QueryBuilder,
+  RequestLog,
+  RequestLogRepository,
+  RequestLogSource,
+} from '@novu/application-generic';
 import { GetRequestsResponseDto, RequestLogResponseDto } from '../../dtos/get-requests.response.dto';
 import { requestLogSelectColumns } from '../../shared/select.const';
 import { GetRequestsCommand } from './get-requests.command';
@@ -75,7 +81,7 @@ export class GetRequests {
         userId: request.user_id,
         organizationId: request.organization_id,
         environmentId: request.environment_id,
-        source: request.source,
+        source: request.source as RequestLogSource,
       };
     });
 
