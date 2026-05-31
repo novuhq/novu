@@ -32,10 +32,14 @@ export const PLATFORM_ENDPOINT_CONFIG: Partial<Record<AgentPlatformEnum, Platfor
  * lookup-only semantics: WhatsApp by phone, Email by address, Telegram via
  * `/start` deep-link.
  */
-export const AUTO_PROVISION_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set([
+export const AUTO_PROVISION_PLATFORM_ENTRIES = [
   AgentPlatformEnum.SLACK,
   AgentPlatformEnum.TEAMS,
-]);
+] as const satisfies readonly AgentPlatformEnum[];
+
+export type AutoProvisionPlatform = (typeof AUTO_PROVISION_PLATFORM_ENTRIES)[number];
+
+export const AUTO_PROVISION_PLATFORMS: ReadonlySet<AgentPlatformEnum> = new Set(AUTO_PROVISION_PLATFORM_ENTRIES);
 
 export function isAutoProvisionPlatform(platform: AgentPlatformEnum): boolean {
   return AUTO_PROVISION_PLATFORMS.has(platform);

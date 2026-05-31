@@ -24,7 +24,7 @@ import {
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
-import { isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
+import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
 import {
@@ -88,7 +88,6 @@ const NOVU_PRICING_URL = 'https://novu.co/pricing';
  * Adding a future auto-provision platform without a label here fails the
  * type check at the map literal — exactly where you want the reminder.
  */
-type AutoProvisionPlatform = AgentPlatformEnum.SLACK | AgentPlatformEnum.TEAMS;
 const CAPACITY_PLATFORM_LABELS: Record<AutoProvisionPlatform, string> = {
   [AgentPlatformEnum.SLACK]: 'Slack workspace',
   [AgentPlatformEnum.TEAMS]: 'Teams workspace',

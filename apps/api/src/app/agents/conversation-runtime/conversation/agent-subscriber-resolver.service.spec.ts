@@ -38,6 +38,7 @@ describe('AgentSubscriberResolver', () => {
       featureFlagGet?: sinon.SinonStub;
       createOrUpdateSubscriberExecute?: sinon.SinonStub;
       createChannelEndpointExecute?: sinon.SinonStub;
+      subscriberDelete?: sinon.SinonStub;
       trackAnalytics?: sinon.SinonStub;
     } = {}
   ) {
@@ -48,6 +49,7 @@ describe('AgentSubscriberResolver', () => {
       findByPhone: overrides.findByPhone ?? sinon.stub().resolves([]),
       findByEmail: overrides.findByEmail ?? sinon.stub().resolves([]),
       count: overrides.subscriberCount ?? sinon.stub().resolves(0),
+      delete: overrides.subscriberDelete ?? sinon.stub().resolves(undefined),
     };
     const organizationRepository = {
       findById: overrides.organizationFindById ?? sinon.stub().resolves({ productType: undefined }),
@@ -442,7 +444,7 @@ describe('AgentSubscriberResolver', () => {
       findByPlatformIdentity.onFirstCall().resolves(null);
       findByPlatformIdentity.onSecondCall().resolves(winner);
 
-      const { resolver, createChannelEndpoint } = makeResolver({
+      const { resolver, createChannelEndpoint, logger } = makeResolver({
         findByPlatformIdentity,
         createChannelEndpointExecute: sinon.stub().rejects(DUPLICATE_KEY_ERROR),
       });
@@ -459,13 +461,18 @@ describe('AgentSubscriberResolver', () => {
       // orphan rows behind to log or clean up.
       expect(result).to.equal('sub-winner');
       expect(createChannelEndpoint.execute.calledOnce).to.equal(true);
-      expect(findByPlatformIdentity.calledTwice).to.equal(true);
+      expect(findByPlatformIdentity.callCount).to.equal(2);
+
+      const debugMessages = logger.debug.getCalls().map((call) => String(call.args[0]));
+      expect(debugMessages.some((message) => message.includes('race loser'))).to.equal(true);
     });
 
-    it('re-throws non-duplicate errors from createChannelEndpoint', async () => {
+    it('re-throws non-duplicate errors from createChannelEndpoint and rolls back the subscriber', async () => {
       const otherError = new Error('integration not found');
-      const { resolver } = makeResolver({
+      const subscriberDelete = sinon.stub().resolves(undefined);
+      const { resolver, subscriberRepository } = makeResolver({
         createChannelEndpointExecute: sinon.stub().rejects(otherError),
+        subscriberDelete,
       });
 
       try {
@@ -478,6 +485,12 @@ describe('AgentSubscriberResolver', () => {
       } catch (err) {
         expect(err).to.equal(otherError);
       }
+
+      expect(subscriberRepository.delete.calledOnce).to.equal(true);
+      expect(subscriberRepository.delete.firstCall.args[0].subscriberId).to.match(/^sub_/);
+      expect(subscriberRepository.delete.firstCall.args[0][`data.${AGENT_PROVISION_DATA_KEYS.source}`]).to.equal(
+        AGENT_PLATFORM_PROVISION_SOURCE
+      );
     });
 
     it('re-throws the original duplicate-key error when no winner row is visible after the race', async () => {

@@ -391,6 +391,8 @@ export class AgentSubscriberResolver {
       );
     } catch (err) {
       if (!isDuplicateKeyError(err)) {
+        await this.rollbackAutoProvisionedSubscriber(params.environmentId, subscriberId, err);
+
         throw err;
       }
 
@@ -409,6 +411,10 @@ export class AgentSubscriberResolver {
         throw err;
       }
 
+      this.logger.debug(
+        `Auto-provision race loser converged on existing ChannelEndpoint for ${params.platform}:${params.platformUserId} (subscriberId=${winner.subscriberId})`
+      );
+
       return winner.subscriberId;
     }
 
@@ -426,6 +432,36 @@ export class AgentSubscriberResolver {
     );
 
     return subscriberId;
+  }
+
+  /**
+   * Drops the Subscriber upserted above when ChannelEndpoint creation fails for
+   * a reason other than E11000, so the Connect-org cap counter is not left
+   * counting a row with no platform link.
+   */
+  private async rollbackAutoProvisionedSubscriber(
+    environmentId: string,
+    subscriberId: string,
+    cause: unknown
+  ): Promise<void> {
+    try {
+      await this.subscriberRepository.delete({
+        _environmentId: environmentId,
+        subscriberId,
+        [`data.${AGENT_PROVISION_DATA_KEYS.source}`]: AGENT_PLATFORM_PROVISION_SOURCE,
+      });
+    } catch (deleteErr) {
+      this.logger.warn(
+        deleteErr,
+        `Failed to roll back auto-provisioned subscriber ${subscriberId} after ChannelEndpoint error`
+      );
+
+      return;
+    }
+
+    this.logger.debug(
+      `Rolled back auto-provisioned subscriber ${subscriberId} after ChannelEndpoint failure: ${cause instanceof Error ? cause.message : String(cause)}`
+    );
   }
 }
 
