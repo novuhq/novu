@@ -1,7 +1,7 @@
-import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
+import { AgentRuntimeProviderIdEnum, type IIntegration, IntegrationKindEnum } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState } from 'react';
-import { RiArrowRightSLine, RiCloseLine } from 'react-icons/ri';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine } from 'react-icons/ri';
 import {
   type AgentResponse,
   getAgentDemoQuotaQueryKey,
@@ -17,11 +17,18 @@ import {
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogTitle } from '@/components/primitives/dialog';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
+import { AGENTS_DOCS_OVERVIEW_URL } from '@/utils/agent-docs';
 import { QueryKeys } from '@/utils/query-keys';
+import { isDemoIntegration } from '../integrations/components/utils/helpers';
+import { getClaudeManagedAgentIntegrations } from './connectors/claude-managed-integrations';
+import { getConnectorById } from './connectors/connector-options';
+import { IntegrationDropdown, type IntegrationDropdownStatus } from './connectors/integration-dropdown';
 
 type DemoClaudeUpgradePanelProps = {
   agent: AgentResponse;
@@ -29,15 +36,27 @@ type DemoClaudeUpgradePanelProps = {
   onOpenChange: (open: boolean) => void;
 };
 
+const ANTHROPIC_CONNECTOR = getConnectorById('claude');
 const DEFAULT_ANTHROPIC_INTEGRATION_NAME = 'Anthropic';
+
+function dropdownStatusFor(verify: VerifyStatus, hasUsableSelectedIntegration: boolean): IntegrationDropdownStatus {
+  if (hasUsableSelectedIntegration) return 'valid';
+  if (verify === 'valid') return 'valid';
+  if (verify === 'invalid') return 'missing';
+
+  return 'idle';
+}
 
 export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaudeUpgradePanelProps) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
+  const { integrations, isLoading: isLoadingIntegrations, isFetched: areIntegrationsFetched } = useFetchIntegrations();
   const { mutateAsync: createIntegration } = useCreateIntegration();
   const verifyMutation = useVerifyManagedCredentials();
   const verifiedCredentialsRef = useRef<string | null>(null);
 
+  const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
+  const [credentialsPanelVisible, setCredentialsPanelVisible] = useState(false);
   const [integrationName, setIntegrationName] = useState(DEFAULT_ANTHROPIC_INTEGRATION_NAME);
   const [apiKey, setApiKey] = useState('');
   const [externalWorkspaceId, setExternalWorkspaceId] = useState('');
@@ -46,7 +65,24 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
   const [verifyMessage, setVerifyMessage] = useState<string | undefined>();
   const [credentialsExpanded, setCredentialsExpanded] = useState(true);
 
+  const realAnthropicIntegrations = useMemo(
+    () =>
+      getClaudeManagedAgentIntegrations(integrations, AgentRuntimeProviderIdEnum.Anthropic).filter(
+        (integration) => !isDemoIntegration(integration.providerId)
+      ),
+    [integrations]
+  );
+
+  const selectedIntegration = useMemo(
+    () => realAnthropicIntegrations.find((integration) => integration._id === selectedIntegrationId),
+    [realAnthropicIntegrations, selectedIntegrationId]
+  );
+
+  const hasUsableSelectedIntegration = Boolean(selectedIntegration);
+
   const resetForm = () => {
+    setSelectedIntegrationId(undefined);
+    setCredentialsPanelVisible(false);
     setIntegrationName(DEFAULT_ANTHROPIC_INTEGRATION_NAME);
     setApiKey('');
     setExternalWorkspaceId('');
@@ -57,11 +93,38 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
     verifiedCredentialsRef.current = null;
   };
 
+  // When the dialog opens, pick the latest real Anthropic integration if one exists. Otherwise
+  // fall back to the inline setup form so the user has somewhere to act immediately — there is
+  // nothing to "pick" yet. Wait for the integrations query to resolve first; an empty list while
+  // still loading must not be treated as "no credentials" or we'd skip auto-selecting an existing
+  // integration once it arrives.
   useEffect(() => {
-    if (open) {
-      setIntegrationName(DEFAULT_ANTHROPIC_INTEGRATION_NAME);
+    if (!open) return;
+    if (!areIntegrationsFetched) return;
+    if (selectedIntegrationId) return;
+    if (credentialsPanelVisible) return;
+
+    // `realAnthropicIntegrations` is sorted newest-first by Mongo `_id`, so [0] is the latest.
+    const latest = realAnthropicIntegrations[0];
+    if (latest) {
+      setSelectedIntegrationId(latest._id);
+
+      return;
     }
-  }, [open]);
+
+    setCredentialsPanelVisible(true);
+    setCredentialsExpanded(true);
+  }, [open, areIntegrationsFetched, selectedIntegrationId, credentialsPanelVisible, realAnthropicIntegrations]);
+
+  // Bump the default integration name when the integration list changes so a new credential gets
+  // a unique "Anthropic N" name out of the box.
+  useEffect(() => {
+    if (!credentialsPanelVisible) return;
+    if (integrationName && integrationName !== DEFAULT_ANTHROPIC_INTEGRATION_NAME) return;
+
+    const nextIndex = realAnthropicIntegrations.length + 1;
+    setIntegrationName(`${DEFAULT_ANTHROPIC_INTEGRATION_NAME} ${nextIndex}`);
+  }, [credentialsPanelVisible, realAnthropicIntegrations, integrationName]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     onOpenChange(nextOpen);
@@ -119,9 +182,34 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
     setErrors((prev) => ({ ...prev, apiKey: undefined }));
   };
 
+  const handleSelectIntegration = (integration: IIntegration) => {
+    setSelectedIntegrationId(integration._id);
+    setCredentialsPanelVisible(false);
+    setApiKey('');
+    setExternalWorkspaceId('');
+    setVerifyStatus('idle');
+    setVerifyMessage(undefined);
+    verifiedCredentialsRef.current = null;
+    setErrors({});
+  };
+
+  const handleRequestSetupCredentials = () => {
+    setSelectedIntegrationId(undefined);
+    setCredentialsPanelVisible(true);
+    setCredentialsExpanded(true);
+    setIntegrationName(`${DEFAULT_ANTHROPIC_INTEGRATION_NAME} ${realAnthropicIntegrations.length + 1}`);
+  };
+
   const upgradeMutation = useMutation({
     mutationFn: async () => {
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+
+      // Path A — reuse an already-configured Anthropic integration.
+      if (hasUsableSelectedIntegration && selectedIntegration) {
+        return migrateAgentRuntime(environment, agent.identifier, { integrationId: selectedIntegration._id });
+      }
+
+      // Path B — create a new Anthropic integration from the inline credentials form.
       const trimmedApiKey = apiKey.trim();
       const trimmedName = integrationName.trim();
       const trimmedWorkspaceId = externalWorkspaceId.trim();
@@ -172,7 +260,10 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
   });
 
   const isBusy = upgradeMutation.isPending || verifyMutation.isPending;
-  const canMigrate = integrationName.trim().length > 0 && apiKey.trim().length > 0 && !isBusy;
+  const isSetupCredentialsReady =
+    credentialsPanelVisible && integrationName.trim().length > 0 && apiKey.trim().length > 0;
+  const canMigrate = !isBusy && (hasUsableSelectedIntegration || isSetupCredentialsReady);
+  const dropdownStatus = dropdownStatusFor(verifyStatus, hasUsableSelectedIntegration);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -184,11 +275,19 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
           <div className="flex items-start gap-2">
             <div className="flex min-w-0 flex-1 flex-col gap-0.5">
               <DialogTitle className="text-text-strong text-[16px] font-medium leading-6 tracking-[-0.176px]">
-                Use your own Anthropic key
+                Migrate agent to your Anthropic account
               </DialogTitle>
               <DialogDescription className="text-text-soft text-label-xs leading-4">
-                Connect your Anthropic account to remove demo limits. Existing demo conversations stay read-only; new
-                traffic runs on your credentials.
+                Novu will replace this agent and create a new agent in your account and route future messages to it.{' '}
+                <a
+                  href={AGENTS_DOCS_OVERVIEW_URL}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-text-soft hover:text-text-sub inline-flex items-center gap-0.5 underline-offset-2 hover:underline"
+                >
+                  Learn more
+                  <RiArrowRightUpLine className="size-3.5 shrink-0" aria-hidden />
+                </a>
               </DialogDescription>
             </div>
             <DialogClose asChild>
@@ -201,50 +300,70 @@ export function DemoClaudeUpgradePanel({ agent, open, onOpenChange }: DemoClaude
 
         <div className="border-stroke-soft border-y" />
 
-        <div className="bg-background flex max-h-[70vh] flex-col gap-5 overflow-y-auto p-4">
+        <div className="bg-background flex max-h-[70vh] flex-col gap-5 overflow-y-auto p-4 min-h-[200px]">
           <div className="flex flex-col gap-2">
-            <span className="text-text-strong text-label-xs font-medium">Anthropic credentials</span>
-            <ConfigureCredentialsSection
-              providerId={AgentRuntimeProviderIdEnum.Anthropic}
-              providerLabel="Anthropic"
-              integrationName={integrationName}
-              apiKey={apiKey}
-              externalWorkspaceId={externalWorkspaceId}
-              errors={errors}
-              disabled={isBusy}
-              status={verifyStatus}
-              statusMessage={verifyMessage}
-              expanded={credentialsExpanded}
-              showSaveButton={false}
-              onExpandedChange={setCredentialsExpanded}
-              onIntegrationNameChange={(next) => {
-                setIntegrationName(next);
-                setErrors((prev) => ({ ...prev, integrationName: undefined }));
-              }}
-              onApiKeyChange={handleApiKeyChange}
-              onExternalWorkspaceIdChange={(next) => {
-                setExternalWorkspaceId(next);
-                setVerifyStatus('idle');
-                setVerifyMessage(undefined);
-                verifiedCredentialsRef.current = null;
-              }}
-              onVerify={handleVerify}
-              onSave={() => undefined}
-            />
+            <span className="text-text-strong text-label-xs font-medium">Anthropic integration</span>
+            {isLoadingIntegrations ? <Skeleton className="h-8 w-full rounded-md" /> : null}
+
+            {!isLoadingIntegrations && ANTHROPIC_CONNECTOR ? (
+              <IntegrationDropdown
+                connector={ANTHROPIC_CONNECTOR}
+                selectedIntegrationId={selectedIntegrationId}
+                integrations={integrations}
+                status={dropdownStatus}
+                showStatusBadge={hasUsableSelectedIntegration}
+                disabled={isBusy}
+                setupLabel="Setup Anthropic credentials"
+                excludeDemo
+                onSelectIntegration={handleSelectIntegration}
+                onRequestSetupCredentials={handleRequestSetupCredentials}
+              />
+            ) : null}
+
+            {credentialsPanelVisible ? (
+              <ConfigureCredentialsSection
+                providerId={AgentRuntimeProviderIdEnum.Anthropic}
+                providerLabel="Anthropic"
+                integrationName={integrationName}
+                apiKey={apiKey}
+                externalWorkspaceId={externalWorkspaceId}
+                errors={errors}
+                disabled={isBusy}
+                status={verifyStatus}
+                statusMessage={verifyMessage}
+                expanded={credentialsExpanded}
+                showSaveButton={false}
+                onExpandedChange={setCredentialsExpanded}
+                onIntegrationNameChange={(next) => {
+                  setIntegrationName(next);
+                  setErrors((prev) => ({ ...prev, integrationName: undefined }));
+                }}
+                onApiKeyChange={handleApiKeyChange}
+                onExternalWorkspaceIdChange={(next) => {
+                  setExternalWorkspaceId(next);
+                  setVerifyStatus('idle');
+                  setVerifyMessage(undefined);
+                  verifiedCredentialsRef.current = null;
+                }}
+                onVerify={handleVerify}
+                onSave={() => undefined}
+              />
+            ) : null}
           </div>
         </div>
 
-        <div className="bg-bg-weak border-stroke-soft flex items-center justify-end border-t px-4 py-3">
+        <div className="bg-bg-weak border-stroke-soft flex items-center gap-3 border-t px-4 py-3">
           <Button
             variant="secondary"
             mode="gradient"
             size="xs"
+            className={isBusy ? 'shrink-0' : 'ml-auto'}
             disabled={!canMigrate}
             isLoading={isBusy}
             trailingIcon={RiArrowRightSLine}
             onClick={() => upgradeMutation.mutate()}
           >
-            Connect and migrate
+            Setup agent
           </Button>
         </div>
       </DialogContent>

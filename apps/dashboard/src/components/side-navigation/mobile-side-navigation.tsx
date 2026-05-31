@@ -50,17 +50,12 @@ function MobileAppSwitcher() {
 
   const { Icon: CurrentIcon } = currentBrand;
   const { Icon: OtherIcon } = otherBrand;
-  const {
-    isModalOpen,
-    setIsModalOpen,
-    handleSwitcherClick,
-    handleConfirm,
-    showConnectSwitchModal,
-  } = useConnectSwitchConfirmation({
-    targetAppId: otherBrand.id,
-    href: otherHref ?? '',
-    openInNewTab: false,
-  });
+  const { isModalOpen, setIsModalOpen, handleSwitcherClick, handleConfirm, showConnectSwitchModal } =
+    useConnectSwitchConfirmation({
+      targetAppId: otherBrand.id,
+      href: otherHref ?? '',
+      openInNewTab: false,
+    });
 
   return (
     <nav
@@ -105,7 +100,7 @@ export function MobileSideNavigation() {
   const [isOpen, setIsOpen] = useState(false);
   const { pathname } = useLocation();
   const isShellV2FlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
-  const isShellV2 = IS_HOSTNAME_SPLIT_ENABLED || isShellV2FlagEnabled;
+  const isShellV2 = IS_HOSTNAME_SPLIT_ENABLED && isShellV2FlagEnabled;
   const appId = useCurrentApp();
 
   useEffect(() => {

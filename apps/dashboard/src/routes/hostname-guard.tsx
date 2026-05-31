@@ -10,7 +10,7 @@ type HostnameGuardProps = {
 };
 
 // Connect host: collapses non-Connect `/env/:slug/*` paths to Connect home.
-// Platform host: cross-origin redirects stale `/env/:slug/connect/*` bookmarks to the satellite.
+// Platform host: cross-origin redirects stale `/env/:slug/connect/*` bookmarks to the Connect host.
 export function HostnameGuard({ children }: HostnameGuardProps) {
   const location = useLocation();
   const { currentEnvironment } = useEnvironment();
@@ -27,7 +27,8 @@ export function HostnameGuard({ children }: HostnameGuardProps) {
 
     const url = `${window.location.protocol}//${NOVU_CONNECT_HOSTNAME}${location.pathname}${location.search}${location.hash}`;
 
-    // Plain cross-origin replace — Clerk's satellite SDK runs its handshake on the destination page.
+    // Plain cross-origin replace — Clerk session cookies are scoped to the shared registrable
+    // domain, so the destination page reads the existing session natively.
     window.location.replace(url);
   }, [shouldRedirectCrossOrigin, location.pathname, location.search, location.hash]);
 
