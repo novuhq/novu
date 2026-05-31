@@ -1,7 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class IssueTelegramMobileLinkResponseDto {
-  @ApiProperty({ type: String, description: 'Signed, single-use JWT identifying this Telegram mobile-setup session' })
+  @ApiProperty({
+    type: String,
+    description: 'Opaque, single-use token identifying this Telegram mobile-setup session',
+  })
   token: string;
 
   @ApiProperty({

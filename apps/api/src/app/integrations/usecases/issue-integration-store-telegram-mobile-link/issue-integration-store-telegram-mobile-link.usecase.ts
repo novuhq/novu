@@ -14,7 +14,7 @@ export interface IssueIntegrationStoreTelegramMobileLinkResult {
 const MOBILE_PATH = '/integrations/telegram/connect';
 
 /**
- * Issues a signed, single-use, short-lived JWT that lets an unauthenticated
+ * Issues an opaque, single-use, short-lived token (stored in Redis) that lets an unauthenticated
  * mobile visitor create a Telegram integration in the issuing environment.
  *
  * Unlike the agent-scoped issuer ({@link IssueTelegramMobileLink}), this flow

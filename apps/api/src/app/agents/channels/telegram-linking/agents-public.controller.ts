@@ -21,8 +21,8 @@ import {
  * Public, unauthenticated agent endpoints (no session). Add provider-specific
  * route groups under this controller — today only Telegram mobile configure.
  *
- * Telegram: authorization is a signed, single-use, short-lived JWT in the
- * request; the dashboard issues it via authed
+ * Telegram: authorization is an opaque, single-use, short-lived token stored in
+ * Redis; the dashboard issues it via authed
  * `POST /agents/:id/integrations/:iid/telegram/mobile-link`.
  *
  * Base path `/v1/agents/public` keeps these routes separate from authed
@@ -44,7 +44,7 @@ export class AgentsPublicController {
   @ApiOperation({
     summary: 'Check the status of a Telegram mobile setup link',
     description:
-      'Returns whether a signed Telegram mobile-setup token is still usable. Designed to be called from the ' +
+      'Returns whether a Telegram mobile-setup token is still usable. Designed to be called from the ' +
       'mobile landing page before showing the credentials form.',
   })
   async getStatus(@Query('token') token: string): Promise<GetTelegramMobileLinkStatusResult> {
@@ -59,7 +59,7 @@ export class AgentsPublicController {
   @ApiOperation({
     summary: 'Consume a Telegram mobile setup link',
     description:
-      'Validates the signed token, persists the supplied Bot Token onto the linked Telegram integration, ' +
+      'Validates the setup token, persists the supplied Bot Token onto the linked Telegram integration, ' +
       'and registers the webhook with Telegram. The token becomes invalid after a successful call.',
   })
   async consume(@Body() body: ConsumeTelegramMobileLinkRequestDto): Promise<ConsumeTelegramMobileLinkResponseDto> {

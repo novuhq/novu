@@ -160,7 +160,7 @@ export interface TelegramConfigureResult {
 }
 
 export interface TelegramMobileLinkResult {
-  /** Signed JWT identifying this mobile-setup session. */
+  /** Opaque setup token identifying this mobile-setup session. */
   token: string;
   /** Absolute URL the user opens on their phone to paste the BotFather token. */
   url: string;
@@ -213,10 +213,10 @@ export interface TelegramMobileLinkStatus {
 }
 
 /**
- * Public endpoint — needs no auth header (the signed JWT in the query string
+ * Public endpoint — needs no auth header (the opaque setup token in the query string
  * authenticates the request). We're polling this to detect when the user
  * has finished pasting their BotFather token on the mobile setup page; the
- * server marks the token's jti as consumed and subsequent status checks
+ * server consumes the token and subsequent status checks
  * return `{ valid: false, reason: 'used' }`.
  *
  * Why this and not `GET /v1/integrations`: ApiKey-authed callers never get

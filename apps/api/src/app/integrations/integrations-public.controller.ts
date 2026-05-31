@@ -21,8 +21,8 @@ import {
  * Public, unauthenticated endpoints for the integration-store Telegram mobile
  * setup landing page.
  *
- * Authorization is carried entirely by a signed, single-use, short-lived JWT
- * embedded in the request body / query — the dashboard issues these tokens
+ * Authorization is carried entirely by an opaque, single-use, short-lived token
+ * stored in Redis and embedded in the request body / query — the dashboard issues these tokens
  * through the authed `POST /v1/integrations/telegram/mobile-link` endpoint.
  *
  * Unlike {@link AgentsPublicController}, this flow has no agent or

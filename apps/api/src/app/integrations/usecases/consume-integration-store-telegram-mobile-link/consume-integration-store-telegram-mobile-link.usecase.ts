@@ -5,6 +5,7 @@ import Axios from 'axios';
 import shortid from 'shortid';
 
 import {
+  IntegrationStoreTelegramMobileLinkPayload,
   InvalidTelegramMobileTokenError,
   TelegramMobileLinkTokenService,
 } from '../../../agents/channels/telegram-linking/telegram-mobile-link-token.service';
@@ -37,7 +38,7 @@ export interface ConsumeIntegrationStoreTelegramMobileLinkResult {
 /**
  * Consumes a single-use Telegram mobile-setup token issued from the
  * Integration Store create flow. The visitor is unauthenticated; trust comes
- * from the JWT signature + JTI cache. On success, creates a brand-new
+ * from the opaque Redis-backed setup token. On success, creates a brand-new
  * Telegram integration in the issuing environment using the BotFather token
  * supplied from the mobile device.
  *
@@ -57,17 +58,8 @@ export class ConsumeIntegrationStoreTelegramMobileLink {
   async execute(
     command: ConsumeIntegrationStoreTelegramMobileLinkCommand
   ): Promise<ConsumeIntegrationStoreTelegramMobileLinkResult> {
-    const payload = this.verifyToken(command.token);
-
-    // Single-use enforcement happens BEFORE we touch Telegram so retried submits
-    // don't ping the bot API repeatedly.
-    const claimed = await this.tokenService.claimJti(payload.jti);
-    if (!claimed) {
-      throw new ConflictException({
-        code: 'token_already_used',
-        message: 'This setup link has already been used. Generate a new one from your dashboard.',
-      });
-    }
+    const claimed = await this.claimToken(command.token);
+    const payload = claimed.payload as IntegrationStoreTelegramMobileLinkPayload;
 
     try {
       const botUsername = await this.callGetMe(command.botToken);
@@ -97,27 +89,29 @@ export class ConsumeIntegrationStoreTelegramMobileLink {
       };
     } catch (err) {
       try {
-        await this.tokenService.releaseJti(payload.jti);
+        await this.tokenService.release(command.token, claimed);
       } catch (releaseErr) {
-        this.logger.error(
-          { err: releaseErr, jti: payload.jti },
-          'Failed to release JTI during Telegram integration-store consume rollback'
-        );
+        this.logger.error({ err: releaseErr }, 'Failed to release token during Telegram integration-store rollback');
       }
 
-      this.logger.warn(
-        `Telegram integration-store mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`
-      );
+      this.logger.warn(`Telegram integration-store mobile setup consume failed: ${(err as Error).message}`);
 
       throw err;
     }
   }
 
-  private verifyToken(token: string) {
+  private async claimToken(token: string) {
     try {
-      return this.tokenService.verifyIntegrationStore(token);
+      return await this.tokenService.claim(token, 'integration-store');
     } catch (err) {
       if (err instanceof InvalidTelegramMobileTokenError) {
+        if (err.reason === 'used') {
+          throw new ConflictException({
+            code: 'token_already_used',
+            message: 'This setup link has already been used. Generate a new one from your dashboard.',
+          });
+        }
+
         throw new UnauthorizedException({
           code: err.reason === 'expired' ? 'token_expired' : 'token_invalid',
           message:

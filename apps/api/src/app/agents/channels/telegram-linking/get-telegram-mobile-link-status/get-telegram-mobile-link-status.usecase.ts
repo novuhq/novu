@@ -18,18 +18,14 @@ export class GetTelegramMobileLinkStatus {
   ) {}
 
   async execute(command: GetTelegramMobileLinkStatusCommand): Promise<GetTelegramMobileLinkStatusResult> {
-    let payload: ReturnType<TelegramMobileLinkTokenService['verify']>;
+    let payload: Awaited<ReturnType<TelegramMobileLinkTokenService['verify']>>;
     try {
-      payload = this.tokenService.verify(command.token);
+      payload = await this.tokenService.verify(command.token);
     } catch (err) {
       if (err instanceof InvalidTelegramMobileTokenError) {
         return { valid: false, reason: err.reason };
       }
       return { valid: false, reason: 'invalid' };
-    }
-
-    if (await this.tokenService.isJtiUsed(payload.jti)) {
-      return { valid: false, reason: 'used' };
     }
 
     const integration = await this.integrationRepository.findOne(

@@ -1,5 +1,4 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
 import {
   CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
@@ -67,9 +66,6 @@ import { USE_CASES } from './usecases';
     AuthModule,
     EventsModule,
     ChannelEndpointsModule,
-    JwtModule.register({
-      secret: process.env.JWT_SECRET,
-    }),
   ],
   controllers: [
     AgentsController,

@@ -1,21 +1,22 @@
-import { randomUUID } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
 /** Lifetime of an issued mobile setup token (seconds). */
 export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
 
-/** Cache TTL for the used-jti blocklist. Slightly larger than the JWT TTL to outlive clock skew. */
-const USED_JTI_TTL_SECONDS = TELEGRAM_MOBILE_LINK_TTL_SECONDS + 60;
+const CACHE_KEY_PREFIX = 'telegram_mobile_link:';
+const USED_KEY_PREFIX = 'telegram_mobile_link_used:';
 
-const JWT_AUDIENCE = 'telegram-mobile-setup';
-const JWT_AUDIENCE_INTEGRATION_STORE = 'telegram-integration-mobile-setup';
-const JWT_ISSUER = 'novu';
+/** 192 bits of entropy → 32 URL-safe base64url characters (compact QR payloads). */
+const TOKEN_BYTES = 24;
 
-const USED_JTI_KEY_PREFIX = 'telegram_mobile_jti:';
+const TOKEN_FORMAT = /^[A-Za-z0-9_-]{32}$/;
+
+export type TelegramMobileLinkKind = 'agent' | 'integration-store';
 
 export interface TelegramMobileLinkTokenPayload {
+  kind: 'agent';
   /** Environment id. */
   env: string;
   /** Organization id. */
@@ -26,14 +27,6 @@ export interface TelegramMobileLinkTokenPayload {
   iid: string;
   /** Subscriber to link via `/start` deep link after mobile setup (optional). */
   sid?: string;
-  /** Unique token id used for single-use enforcement. */
-  jti: string;
-  /** Issued-at (seconds since epoch). */
-  iat?: number;
-  /** Expiry (seconds since epoch). */
-  exp?: number;
-  aud?: string;
-  iss?: string;
 }
 
 /**
@@ -42,13 +35,17 @@ export interface TelegramMobileLinkTokenPayload {
  * known at issue time.
  */
 export interface IntegrationStoreTelegramMobileLinkPayload {
+  kind: 'integration-store';
   env: string;
   org: string;
-  jti: string;
-  iat?: number;
-  exp?: number;
-  aud?: string;
-  iss?: string;
+}
+
+type StoredPayload = TelegramMobileLinkTokenPayload | IntegrationStoreTelegramMobileLinkPayload;
+
+interface StoredEntry {
+  payload: StoredPayload;
+  /** Epoch seconds when this entry naturally expires. */
+  expiresAt: number;
 }
 
 export interface IssuedTelegramMobileLink {
@@ -57,16 +54,30 @@ export interface IssuedTelegramMobileLink {
   expiresAt: string;
 }
 
+export interface ClaimedTelegramMobileLink {
+  payload: StoredPayload;
+  expiresAt: number;
+}
+
 export class InvalidTelegramMobileTokenError extends Error {
   constructor(public readonly reason: 'invalid' | 'expired' | 'used') {
     super(`Telegram mobile token is ${reason}`);
   }
 }
 
+export class TelegramMobileLinkCacheUnavailableError extends Error {
+  constructor(operation: string, cause?: unknown) {
+    super(`Telegram mobile link cache unavailable during ${operation}`);
+    this.name = 'TelegramMobileLinkCacheUnavailableError';
+    if (cause !== undefined) {
+      (this as { cause?: unknown }).cause = cause;
+    }
+  }
+}
+
 @Injectable()
 export class TelegramMobileLinkTokenService {
   constructor(
-    private readonly jwtService: JwtService,
     private readonly cacheService: CacheService,
     private readonly logger: PinoLogger
   ) {
@@ -80,150 +91,224 @@ export class TelegramMobileLinkTokenService {
     integrationId: string;
     subscriberId?: string;
   }): Promise<IssuedTelegramMobileLink> {
-    const jti = randomUUID();
-
     const payload: TelegramMobileLinkTokenPayload = {
+      kind: 'agent',
       env: params.environmentId,
       org: params.organizationId,
       aid: params.agentIdentifier,
       iid: params.integrationId,
-      jti,
       ...(params.subscriberId ? { sid: params.subscriberId } : {}),
     };
 
-    const token = this.jwtService.sign(payload, {
-      expiresIn: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
-      audience: JWT_AUDIENCE,
-      issuer: JWT_ISSUER,
-    });
-
-    const expiresAt = new Date(Date.now() + TELEGRAM_MOBILE_LINK_TTL_SECONDS * 1000).toISOString();
-
-    return { token, expiresAt };
-  }
-
-  /**
-   * Verifies the JWT signature, audience, issuer and expiry.
-   * Returns the decoded payload, or throws {@link InvalidTelegramMobileTokenError}.
-   */
-  verify(token: string): TelegramMobileLinkTokenPayload {
-    if (!token || typeof token !== 'string') {
-      throw new InvalidTelegramMobileTokenError('invalid');
-    }
-
-    try {
-      const payload = this.jwtService.verify<TelegramMobileLinkTokenPayload>(token, {
-        audience: JWT_AUDIENCE,
-        issuer: JWT_ISSUER,
-      });
-
-      if (!payload?.env || !payload?.org || !payload?.aid || !payload?.iid || !payload?.jti) {
-        throw new InvalidTelegramMobileTokenError('invalid');
-      }
-
-      return payload;
-    } catch (err) {
-      if (err instanceof InvalidTelegramMobileTokenError) throw err;
-      const isExpired =
-        typeof err === 'object' &&
-        err !== null &&
-        'name' in err &&
-        (err as { name?: string }).name === 'TokenExpiredError';
-      throw new InvalidTelegramMobileTokenError(isExpired ? 'expired' : 'invalid');
-    }
+    return this.mint(payload);
   }
 
   async issueForIntegrationStore(params: {
     environmentId: string;
     organizationId: string;
   }): Promise<IssuedTelegramMobileLink> {
-    const jti = randomUUID();
-
     const payload: IntegrationStoreTelegramMobileLinkPayload = {
+      kind: 'integration-store',
       env: params.environmentId,
       org: params.organizationId,
-      jti,
     };
 
-    const token = this.jwtService.sign(payload, {
-      expiresIn: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
-      audience: JWT_AUDIENCE_INTEGRATION_STORE,
-      issuer: JWT_ISSUER,
-    });
-
-    const expiresAt = new Date(Date.now() + TELEGRAM_MOBILE_LINK_TTL_SECONDS * 1000).toISOString();
-
-    return { token, expiresAt };
-  }
-
-  verifyIntegrationStore(token: string): IntegrationStoreTelegramMobileLinkPayload {
-    if (!token || typeof token !== 'string') {
-      throw new InvalidTelegramMobileTokenError('invalid');
-    }
-
-    try {
-      const payload = this.jwtService.verify<IntegrationStoreTelegramMobileLinkPayload>(token, {
-        audience: JWT_AUDIENCE_INTEGRATION_STORE,
-        issuer: JWT_ISSUER,
-      });
-
-      if (!payload?.env || !payload?.org || !payload?.jti) {
-        throw new InvalidTelegramMobileTokenError('invalid');
-      }
-
-      return payload;
-    } catch (err) {
-      if (err instanceof InvalidTelegramMobileTokenError) throw err;
-      const isExpired =
-        typeof err === 'object' &&
-        err !== null &&
-        'name' in err &&
-        (err as { name?: string }).name === 'TokenExpiredError';
-      throw new InvalidTelegramMobileTokenError(isExpired ? 'expired' : 'invalid');
-    }
+    return this.mint(payload);
   }
 
   /**
-   * Atomically claim a `jti` as used.
-   * Returns `true` if this caller is the first to claim, `false` if already used.
-   * Falls back to allow-by-default if the cache layer is unavailable so that the
-   * primary auth check (the signed JWT) still gates access.
+   * Reads the stored payload without consuming the token (safe for status/prefetch).
    */
-  async claimJti(jti: string): Promise<boolean> {
-    if (!this.cacheService.cacheEnabled()) {
-      this.logger.warn('Cache unavailable for telegram mobile jti tracking');
-
-      return true;
-    }
-
-    const result = await this.cacheService.setIfNotExist(this.jtiKey(jti), '1', {
-      ttl: USED_JTI_TTL_SECONDS,
-    });
-
-    return result !== null;
+  async verify(token: string): Promise<TelegramMobileLinkTokenPayload> {
+    return this.peek(token, 'agent') as Promise<TelegramMobileLinkTokenPayload>;
   }
 
-  /** Check (without claiming) whether a jti has already been used. */
-  async isJtiUsed(jti: string): Promise<boolean> {
-    if (!this.cacheService.cacheEnabled()) return false;
+  async verifyIntegrationStore(token: string): Promise<IntegrationStoreTelegramMobileLinkPayload> {
+    return this.peek(token, 'integration-store') as Promise<IntegrationStoreTelegramMobileLinkPayload>;
+  }
 
-    const value = await this.cacheService.get(this.jtiKey(jti));
+  /** Returns whether a token was already consumed (used marker present). */
+  async isTokenUsed(token: string): Promise<boolean> {
+    if (!this.isTokenFormatValid(token) || !this.cacheService.cacheEnabled()) {
+      return false;
+    }
+
+    const value = await this.cacheService.get(this.usedKey(token));
 
     return value != null;
   }
 
-  /** Release a previously-claimed jti — used to roll back when post-claim work fails. */
-  async releaseJti(jti: string): Promise<void> {
-    if (!this.cacheService.cacheEnabled()) return;
+  /**
+   * Atomically claims a token for single-use consumption (GETDEL).
+   * Returns the stored entry, or throws {@link InvalidTelegramMobileTokenError}.
+   */
+  async claim(token: string, expectedKind: TelegramMobileLinkKind): Promise<ClaimedTelegramMobileLink> {
+    this.assertCacheAvailable('claim');
+
+    if (!this.isTokenFormatValid(token)) {
+      throw new InvalidTelegramMobileTokenError('invalid');
+    }
+
+    if (await this.isTokenUsed(token)) {
+      throw new InvalidTelegramMobileTokenError('used');
+    }
+
+    const client = this.cacheService.client;
+    if (!client) {
+      throw new TelegramMobileLinkCacheUnavailableError('claim');
+    }
+
+    let raw: string | null;
+    try {
+      raw = await client.getdel(this.storageKey(token));
+    } catch (err) {
+      throw new TelegramMobileLinkCacheUnavailableError('claim', err);
+    }
+
+    if (!raw) {
+      if (await this.isTokenUsed(token)) {
+        throw new InvalidTelegramMobileTokenError('used');
+      }
+
+      throw new InvalidTelegramMobileTokenError('expired');
+    }
+
+    const entry = this.parseEntry(raw);
+    if (!entry || entry.payload.kind !== expectedKind) {
+      throw new InvalidTelegramMobileTokenError('invalid');
+    }
+
+    const remaining = entry.expiresAt - Math.floor(Date.now() / 1000);
+    const usedTtl = Math.max(1, remaining);
 
     try {
-      await this.cacheService.del(this.jtiKey(jti));
+      await this.cacheService.set(this.usedKey(token), '1', { ttl: usedTtl });
     } catch (err) {
-      this.logger.warn(`Failed to release telegram mobile jti ${jti}: ${(err as Error).message}`);
+      throw new TelegramMobileLinkCacheUnavailableError('claim', err);
+    }
+
+    return entry;
+  }
+
+  /**
+   * Re-stores a token after a failed consume so the visitor can retry the same link.
+   */
+  async release(token: string, claimed: ClaimedTelegramMobileLink): Promise<void> {
+    if (!this.isTokenFormatValid(token) || !this.cacheService.cacheEnabled()) {
+      return;
+    }
+
+    const remaining = claimed.expiresAt - Math.floor(Date.now() / 1000);
+    if (remaining <= 0) {
+      return;
+    }
+
+    const entry: StoredEntry = {
+      payload: claimed.payload,
+      expiresAt: claimed.expiresAt,
+    };
+
+    try {
+      await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: remaining });
+      await this.cacheService.del(this.usedKey(token));
+    } catch (err) {
+      this.logger.warn(`Failed to release telegram mobile link token: ${(err as Error).message}`);
     }
   }
 
-  private jtiKey(jti: string): string {
-    return `${USED_JTI_KEY_PREFIX}${jti}`;
+  private async mint(payload: StoredPayload): Promise<IssuedTelegramMobileLink> {
+    this.assertCacheAvailable('issue');
+
+    const token = randomBytes(TOKEN_BYTES).toString('base64url');
+    const mintedAt = Math.floor(Date.now() / 1000);
+    const expiresAtEpoch = mintedAt + TELEGRAM_MOBILE_LINK_TTL_SECONDS;
+    const entry: StoredEntry = { payload, expiresAt: expiresAtEpoch };
+
+    await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), {
+      ttl: TELEGRAM_MOBILE_LINK_TTL_SECONDS,
+    });
+
+    const expiresAt = new Date(expiresAtEpoch * 1000).toISOString();
+
+    return { token, expiresAt };
+  }
+
+  private async peek(token: string, expectedKind: TelegramMobileLinkKind): Promise<StoredPayload> {
+    if (!this.isTokenFormatValid(token)) {
+      throw new InvalidTelegramMobileTokenError('invalid');
+    }
+
+    if (!this.cacheService.cacheEnabled()) {
+      throw new TelegramMobileLinkCacheUnavailableError('peek');
+    }
+
+    if (await this.isTokenUsed(token)) {
+      throw new InvalidTelegramMobileTokenError('used');
+    }
+
+    let raw: string | null | undefined;
+    try {
+      raw = await this.cacheService.get(this.storageKey(token));
+    } catch (err) {
+      throw new TelegramMobileLinkCacheUnavailableError('peek', err);
+    }
+
+    if (!raw) {
+      throw new InvalidTelegramMobileTokenError('expired');
+    }
+
+    const entry = this.parseEntry(raw);
+    if (!entry || entry.payload.kind !== expectedKind) {
+      throw new InvalidTelegramMobileTokenError('invalid');
+    }
+
+    if (entry.payload.kind === 'agent') {
+      const agentPayload = entry.payload;
+      if (!agentPayload.env || !agentPayload.org || !agentPayload.aid || !agentPayload.iid) {
+        throw new InvalidTelegramMobileTokenError('invalid');
+      }
+    } else if (!entry.payload.env || !entry.payload.org) {
+      throw new InvalidTelegramMobileTokenError('invalid');
+    }
+
+    return entry.payload;
+  }
+
+  private parseEntry(raw: string): ClaimedTelegramMobileLink | null {
+    try {
+      const parsed = JSON.parse(raw) as Partial<StoredEntry>;
+      if (!parsed?.payload || typeof parsed.expiresAt !== 'number') {
+        return null;
+      }
+
+      const payload = parsed.payload;
+      if (payload.kind !== 'agent' && payload.kind !== 'integration-store') {
+        return null;
+      }
+
+      return { payload, expiresAt: parsed.expiresAt };
+    } catch {
+      return null;
+    }
+  }
+
+  private isTokenFormatValid(token: string): boolean {
+    return typeof token === 'string' && TOKEN_FORMAT.test(token);
+  }
+
+  private assertCacheAvailable(operation: string): void {
+    if (!this.cacheService.cacheEnabled()) {
+      this.logger.warn(`Cache unavailable for telegram mobile link ${operation}`);
+
+      throw new TelegramMobileLinkCacheUnavailableError(operation);
+    }
+  }
+
+  private storageKey(token: string): string {
+    return `${CACHE_KEY_PREFIX}${token}`;
+  }
+
+  private usedKey(token: string): string {
+    return `${USED_KEY_PREFIX}${token}`;
   }
 }

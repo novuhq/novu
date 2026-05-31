@@ -12,7 +12,11 @@ import { ConfigureTelegramAgentWebhookCommand } from '../../telegram/configure-t
 import { ConfigureTelegramAgentWebhook } from '../../telegram/configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
 import { IssueTelegramSubscriberLinkCommand } from '../issue-telegram-subscriber-link/issue-telegram-subscriber-link.command';
 import { IssueTelegramSubscriberLink } from '../issue-telegram-subscriber-link/issue-telegram-subscriber-link.usecase';
-import { InvalidTelegramMobileTokenError, TelegramMobileLinkTokenService } from '../telegram-mobile-link-token.service';
+import {
+  InvalidTelegramMobileTokenError,
+  TelegramMobileLinkTokenPayload,
+  TelegramMobileLinkTokenService,
+} from '../telegram-mobile-link-token.service';
 import { ConsumeTelegramMobileLinkCommand } from './consume-telegram-mobile-link.command';
 
 export interface ConsumeTelegramMobileLinkResult {
@@ -35,16 +39,8 @@ export class ConsumeTelegramMobileLink {
   }
 
   async execute(command: ConsumeTelegramMobileLinkCommand): Promise<ConsumeTelegramMobileLinkResult> {
-    const payload = this.verifyToken(command.token);
-
-    const claimed = await this.tokenService.claimJti(payload.jti);
-
-    if (!claimed) {
-      throw new ConflictException({
-        code: 'token_already_used',
-        message: 'This setup link has already been used. Generate a new one from your dashboard.',
-      });
-    }
+    const claimed = await this.claimToken(command.token);
+    const payload = claimed.payload as TelegramMobileLinkTokenPayload;
 
     try {
       const integration = await this.integrationRepository.findOne(
@@ -112,17 +108,24 @@ export class ConsumeTelegramMobileLink {
         deepLinkUrl,
       };
     } catch (err) {
-      await this.tokenService.releaseJti(payload.jti);
-      this.logger.warn(`Telegram mobile setup consume failed for jti=${payload.jti}: ${(err as Error).message}`);
+      await this.tokenService.release(command.token, claimed);
+      this.logger.warn(`Telegram mobile setup consume failed: ${(err as Error).message}`);
       throw err;
     }
   }
 
-  private verifyToken(token: string) {
+  private async claimToken(token: string) {
     try {
-      return this.tokenService.verify(token);
+      return await this.tokenService.claim(token, 'agent');
     } catch (err) {
       if (err instanceof InvalidTelegramMobileTokenError) {
+        if (err.reason === 'used') {
+          throw new ConflictException({
+            code: 'token_already_used',
+            message: 'This setup link has already been used. Generate a new one from your dashboard.',
+          });
+        }
+
         throw new UnauthorizedException({
           code: err.reason === 'expired' ? 'token_expired' : 'token_invalid',
           message:
