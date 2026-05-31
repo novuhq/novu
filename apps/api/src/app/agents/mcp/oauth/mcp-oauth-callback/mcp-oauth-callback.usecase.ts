@@ -514,14 +514,15 @@ export class McpOAuthCallback {
       authorizationEndpoint,
       tokenEndpoint,
       scopesGranted,
-      // novu-app rows never go through DCR negotiation, so they carry no
-      // persisted `tokenEndpointAuthMethod`. Pin it explicitly to
-      // `client_secret_post` (client_id + client_secret in the body) to
-      // preserve the historical behavior — otherwise
-      // `resolvePersistedMcpTokenEndpointAuthMethod(undefined)` would silently
-      // fall back to `client_secret_basic` and a future novu-app provider that
-      // strictly requires `client_secret_post` would break without warning.
-      tokenEndpointAuthMethod: 'client_secret_post',
+      // novu-app rows never go through DCR negotiation, so they intentionally
+      // carry no persisted `tokenEndpointAuthMethod`:
+      // `resolvePersistedMcpTokenEndpointAuthMethod(undefined)` resolves to the
+      // RFC 8414 §2 default of `client_secret_basic` (credentials in an HTTP
+      // Basic header, never replayed in the body). This is the deliberate,
+      // documented default for novu-app — see the `client_secret_basic` e2e
+      // assertion in `agent-mcp-servers.e2e.ts`. GitHub (the only current
+      // novu-app provider) accepts it; a future provider that strictly
+      // requires `client_secret_post` would set the method explicitly here.
       registeredAt: new Date(claimed.createdAt),
     };
   }
