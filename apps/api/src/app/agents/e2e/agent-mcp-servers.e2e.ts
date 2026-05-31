@@ -1019,7 +1019,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       // The callback always renders a self-contained "flow complete" HTML page
       // (no dashboard redirect); the assertion that matters is the row state.
       expect(cb.status, `unexpected callback status (body=${JSON.stringify(cb.body)})`).to.equal(200);
-      expect(cb.text, 'callback should render the success page').to.include("You're all set");
+      expect(cb.text, 'callback should render the success page').to.include('Connection complete');
 
       const conn = await findGithubConnection(agentId);
       expect(conn, 'mcp_connection row should exist').to.exist;
