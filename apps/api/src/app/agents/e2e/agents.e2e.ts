@@ -31,6 +31,7 @@ describe('Agents API - /agents #novu-v2', () => {
     expect(createRes.body.data.identifier).to.equal(identifier);
     expect(createRes.body.data.description).to.equal('e2e description');
     expect(createRes.body.data._id).to.be.a('string');
+    expect(createRes.body.data.createdBy).to.equal(session.user._id);
 
     const listRes = await session.testAgent.get('/v1/agents');
 

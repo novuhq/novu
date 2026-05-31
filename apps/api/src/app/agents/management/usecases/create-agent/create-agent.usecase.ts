@@ -82,6 +82,7 @@ export class CreateAgent {
               identifier: tempIdentifier,
               description: command.description,
               active: command.active ?? true,
+              createdBy: command.userId,
               _environmentId: command.environmentId,
               _organizationId: command.organizationId,
             },
@@ -159,6 +160,7 @@ export class CreateAgent {
           identifier: identifier ?? '',
           description: command.description,
           active: command.active ?? true,
+          createdBy: command.userId,
           _environmentId: command.environmentId,
           _organizationId: command.organizationId,
         });
