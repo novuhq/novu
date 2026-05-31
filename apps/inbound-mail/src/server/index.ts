@@ -274,7 +274,7 @@ class Mailin extends events.EventEmitter {
               .then((finalizedMessage) =>
                 nr.startSegment('inbound-mail/upload-attachments', true, async () => {
                   if (Array.isArray(finalizedMessage.attachments) && finalizedMessage.attachments.length > 0) {
-                    const { mode, uploaded, failedCount } = await uploadAttachmentsToS3(
+                    const { mode, uploaded, failedCount, retriableFailedCount } = await uploadAttachmentsToS3(
                       finalizedMessage.messageId,
                       finalizedMessage.attachments
                     );
@@ -307,13 +307,19 @@ class Mailin extends events.EventEmitter {
                        * (messageId, index, filename), retries idempotently overwrite
                        * the same S3 key on success.
                        *
-                       * The 451 retry path is intentionally skipped in inline mode:
-                       * inline-mode failures are size-cap drops, and a sender retry
-                       * would re-deliver the exact same oversized attachment.
+                       * Gate on retriableFailedCount (transient S3 upload errors), NOT
+                       * the total failedCount: structural drops (no content, unsupported
+                       * shape, inline size-cap) would re-fail on every redelivery, so
+                       * retrying them would create an infinite 451 loop. Inline-mode
+                       * processing reports retriableFailedCount=0, so it is skipped too.
                        */
-                      if (mode === 's3' && process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true') {
+                      if (
+                        mode === 's3' &&
+                        retriableFailedCount > 0 &&
+                        process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true'
+                      ) {
                         const error: Error & { responseCode?: number } = new Error(
-                          `Attachment upload failed: ${failedCount} attachment(s) could not be stored`
+                          `Attachment upload failed: ${retriableFailedCount} attachment(s) could not be stored`
                         );
                         error.responseCode = 451;
                         throw error;

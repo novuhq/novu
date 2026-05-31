@@ -62,8 +62,26 @@ export type AttachmentSource = AttachmentProcessingMode;
 export interface AttachmentProcessingResult {
   mode: AttachmentProcessingMode;
   uploaded: ProcessedAttachment[];
+  /** Total attachments not delivered (transient upload errors + structural drops) — used for instrumentation. */
   failedCount: number;
+  /**
+   * Subset of `failedCount` that are *transient* S3 upload errors and therefore
+   * retriable. Only this count may drive the SMTP 451 retry: structural drops
+   * (no content / unsupported shape / oversized) would re-fail on every retry,
+   * so they are intentionally excluded to avoid an infinite redelivery loop.
+   */
+  retriableFailedCount: number;
 }
+
+/*
+ * Outcome of attempting to process a single attachment in S3 mode. Distinguishes
+ * a transient S3 upload error (`upload-error`, retriable) from a structural drop
+ * (`dropped`, non-retriable) so the SMTP retry decision can be made correctly.
+ */
+type AttachmentAttempt =
+  | { kind: 'ok'; attachment: ProcessedAttachment }
+  | { kind: 'dropped' }
+  | { kind: 'upload-error' };
 
 interface SerializedBuffer {
   type: 'Buffer';
@@ -326,7 +344,7 @@ export async function uploadAttachmentsToS3(
   attachments: Array<Record<string, unknown>>
 ): Promise<AttachmentProcessingResult> {
   if (!attachments || attachments.length === 0) {
-    return { mode: 's3', uploaded: [], failedCount: 0 };
+    return { mode: 's3', uploaded: [], failedCount: 0, retriableFailedCount: 0 };
   }
 
   const bucket = process.env.S3_BUCKET_NAME;
@@ -365,7 +383,8 @@ export async function uploadAttachmentsToS3(
       'Inbound attachment processing complete'
     );
 
-    return { mode: 'inline', uploaded, failedCount };
+    // Inline mode never attempts S3, so there are no retriable upload errors.
+    return { mode: 'inline', uploaded, failedCount, retriableFailedCount: 0 };
   }
 
   const s3 = buildS3Client();
@@ -380,30 +399,36 @@ export async function uploadAttachmentsToS3(
   const failOnUploadError = process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true';
 
   const results = await Promise.all(
-    attachments.map(async (attachment, index) => {
+    attachments.map(async (attachment, index): Promise<AttachmentAttempt> => {
       try {
         const uploaded = await uploadSingle(s3, bucket, messageId, index, attachment as AttachmentInput);
 
         if (uploaded) {
-          return uploaded;
+          return { kind: 'ok', attachment: uploaded };
         }
 
-        return null;
+        /*
+         * uploadSingle returned null WITHOUT throwing: the attachment has no
+         * usable content (missing or unsupported shape). This is a structural,
+         * NON-retriable failure — a sender retry would re-deliver the same
+         * broken attachment forever — so it must never feed the 451 path.
+         */
+        return { kind: 'dropped' };
       } catch (err) {
         /*
-         * In strict mode an S3 upload failure is a hard failure: do not fall
-         * back to inline. Returning null keeps it counted in failedCount so the
-         * 451 retry path in index.ts can fire. buildStorageKey is deterministic
-         * by (messageId, index, filename), so the sender's retry idempotently
-         * overwrites the same S3 key once the transient error clears.
+         * In strict mode a thrown S3 error is transient (network, throttling,
+         * credential expiry) and therefore retriable: do not fall back to inline,
+         * surface it so the 451 retry path in index.ts can fire. buildStorageKey
+         * is deterministic by (messageId, index, filename), so the sender's retry
+         * idempotently overwrites the same S3 key once the transient error clears.
          */
         if (failOnUploadError) {
           logger.error(
             { err, context: LOG_CONTEXT, messageId, filename: attachment.filename },
-            'S3 upload failed and INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true — counting as failure (no inline fallback) so the sender retries delivery'
+            'S3 upload failed and INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true — counting as retriable failure (no inline fallback) so the sender retries delivery'
           );
 
-          return null;
+          return { kind: 'upload-error' };
         }
 
         logger.warn(
@@ -420,7 +445,7 @@ export async function uploadAttachmentsToS3(
         const inlineResult = processInline(attachment as AttachmentInput);
 
         if (inlineResult) {
-          return inlineResult;
+          return { kind: 'ok', attachment: inlineResult };
         }
 
         logger.error(
@@ -428,21 +453,25 @@ export async function uploadAttachmentsToS3(
           'S3 upload failed and inline fallback could not embed attachment'
         );
 
-        return null;
+        return { kind: 'dropped' };
       }
     })
   );
 
-  const uploaded = results.filter((r): r is ProcessedAttachment => r !== null);
+  const uploaded = results
+    .filter((r): r is { kind: 'ok'; attachment: ProcessedAttachment } => r.kind === 'ok')
+    .map((r) => r.attachment);
+  const retriableFailedCount = results.filter((r) => r.kind === 'upload-error').length;
   const failedCount = results.length - uploaded.length;
   const hasS3Uploads = uploaded.some((attachment) => 'storagePath' in attachment && Boolean(attachment.storagePath));
   /*
    * Report `s3` whenever S3 was the configured target AND the operator opted
    * into strict durability — even if every upload failed and nothing remains
-   * inline. This keeps the `mode === 's3'` gate in index.ts true so the 451
-   * retry fires. In non-strict mode the discriminator still reflects the actual
+   * inline. In non-strict mode the discriminator still reflects the actual
    * payload shape (`inline` once everything has fallen back) so downstream
-   * rehydration stays correct.
+   * rehydration stays correct. The 451 retry decision keys off
+   * retriableFailedCount (transient errors only), not mode, so structural drops
+   * cannot trigger an infinite redelivery loop.
    */
   const mode: AttachmentProcessingMode = hasS3Uploads || failOnUploadError ? 's3' : 'inline';
   const s3Count = uploaded.filter((attachment) => attachmentSourceOf(attachment) === 's3').length;
@@ -456,6 +485,7 @@ export async function uploadAttachmentsToS3(
       total: attachments.length,
       succeeded: uploaded.length,
       failedCount,
+      retriableFailedCount,
       s3Count,
       inlineCount,
       attachmentSources: uploaded.map((attachment) => ({
@@ -466,5 +496,5 @@ export async function uploadAttachmentsToS3(
     'Inbound attachment processing complete'
   );
 
-  return { mode, uploaded, failedCount };
+  return { mode, uploaded, failedCount, retriableFailedCount };
 }

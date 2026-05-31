@@ -131,6 +131,23 @@ describe('uploadAttachmentsToS3', () => {
     expect(result.mode).to.equal('s3');
     expect(result.uploaded).to.have.length(0);
     expect(result.failedCount).to.equal(1);
+    // Transient S3 throw is retriable, so it may drive the 451.
+    expect(result.retriableFailedCount).to.equal(1);
+  });
+
+  it('does NOT mark a no-content attachment as retriable in strict mode (avoids 451 loop)', async () => {
+    env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR = 'true';
+
+    // uploadSingle returns null without throwing — a structural failure that a sender retry can never fix.
+    const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [
+      { filename: 'empty.txt', contentType: 'text/plain' },
+    ]);
+
+    expect(result.uploaded).to.have.length(0);
+    expect(result.failedCount).to.equal(1);
+    // Critical: structural drop is NOT retriable, so index.ts will not emit a 451 (no infinite redelivery).
+    expect(result.retriableFailedCount).to.equal(0);
+    sinon.assert.notCalled(s3SendStub);
   });
 
   it('still keeps successful S3 uploads while counting strict-mode failures', async () => {
@@ -148,6 +165,7 @@ describe('uploadAttachmentsToS3', () => {
     expect(result.uploaded).to.have.length(1);
     expect((result.uploaded[0] as UploadedAttachment).filename).to.equal('ok.pdf');
     expect(result.failedCount).to.equal(1);
+    expect(result.retriableFailedCount).to.equal(1);
   });
 
   it('uploads successful attachments and inline-falls back for failing ones', async () => {
