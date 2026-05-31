@@ -306,6 +306,15 @@ export async function uploadAttachmentsToS3(
 
   const s3 = buildS3Client();
 
+  /*
+   * Strict durability opt-in. Operators that set this specifically want S3
+   * persistence guarantees (compliance, large-file needs), so a transient S3
+   * failure must NOT be silently downgraded to an inline embed — it has to
+   * surface as a real failure so the SMTP layer can emit a 451 and the sending
+   * MTA retries delivery once S3 recovers.
+   */
+  const failOnUploadError = process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true';
+
   const results = await Promise.all(
     attachments.map(async (attachment, index) => {
       try {
@@ -317,6 +326,22 @@ export async function uploadAttachmentsToS3(
 
         return null;
       } catch (err) {
+        /*
+         * In strict mode an S3 upload failure is a hard failure: do not fall
+         * back to inline. Returning null keeps it counted in failedCount so the
+         * 451 retry path in index.ts can fire. buildStorageKey is deterministic
+         * by (messageId, index, filename), so the sender's retry idempotently
+         * overwrites the same S3 key once the transient error clears.
+         */
+        if (failOnUploadError) {
+          logger.error(
+            { err, context: LOG_CONTEXT, messageId, filename: attachment.filename },
+            'S3 upload failed and INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true — counting as failure (no inline fallback) so the sender retries delivery'
+          );
+
+          return null;
+        }
+
         logger.warn(
           {
             err,
@@ -347,7 +372,15 @@ export async function uploadAttachmentsToS3(
   const uploaded = results.filter((r): r is ProcessedAttachment => r !== null);
   const failedCount = results.length - uploaded.length;
   const hasS3Uploads = uploaded.some((attachment) => 'storagePath' in attachment && Boolean(attachment.storagePath));
-  const mode: AttachmentProcessingMode = hasS3Uploads ? 's3' : 'inline';
+  /*
+   * Report `s3` whenever S3 was the configured target AND the operator opted
+   * into strict durability — even if every upload failed and nothing remains
+   * inline. This keeps the `mode === 's3'` gate in index.ts true so the 451
+   * retry fires. In non-strict mode the discriminator still reflects the actual
+   * payload shape (`inline` once everything has fallen back) so downstream
+   * rehydration stays correct.
+   */
+  const mode: AttachmentProcessingMode = hasS3Uploads || failOnUploadError ? 's3' : 'inline';
   const s3Count = uploaded.filter((attachment) => attachmentSourceOf(attachment) === 's3').length;
   const inlineCount = uploaded.length - s3Count;
 

@@ -36,6 +36,7 @@ describe('uploadAttachmentsToS3', () => {
     sandbox.restore();
     delete env.S3_BUCKET_NAME;
     delete env.S3_REGION;
+    delete env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR;
   });
 
   it('returns empty result for no attachments', async () => {
@@ -112,6 +113,41 @@ describe('uploadAttachmentsToS3', () => {
     expect(result.uploaded).to.have.length(1);
     expect(result.failedCount).to.equal(0);
     expect((result.uploaded[0] as { filename: string }).filename).to.equal('fail.jpg');
+  });
+
+  it('counts S3 failure (no inline fallback) and keeps mode=s3 when INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true', async () => {
+    env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR = 'true';
+    s3SendStub.rejects(new Error('S3 connection refused'));
+
+    const attachment = {
+      filename: 'fail.jpg',
+      contentType: 'image/jpeg',
+      content: Buffer.from('fake image data'),
+    };
+
+    const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [attachment]);
+
+    // No inline fallback in strict mode — the failure must surface so index.ts can emit a 451.
+    expect(result.mode).to.equal('s3');
+    expect(result.uploaded).to.have.length(0);
+    expect(result.failedCount).to.equal(1);
+  });
+
+  it('still keeps successful S3 uploads while counting strict-mode failures', async () => {
+    env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR = 'true';
+    s3SendStub.onFirstCall().resolves({}).onSecondCall().rejects(new Error('network timeout'));
+
+    const attachments = [
+      { filename: 'ok.pdf', contentType: 'application/pdf', content: Buffer.from('good') },
+      { filename: 'bad.jpg', contentType: 'image/jpeg', content: Buffer.from('bad') },
+    ];
+
+    const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, attachments);
+
+    expect(result.mode).to.equal('s3');
+    expect(result.uploaded).to.have.length(1);
+    expect((result.uploaded[0] as UploadedAttachment).filename).to.equal('ok.pdf');
+    expect(result.failedCount).to.equal(1);
   });
 
   it('uploads successful attachments and inline-falls back for failing ones', async () => {
