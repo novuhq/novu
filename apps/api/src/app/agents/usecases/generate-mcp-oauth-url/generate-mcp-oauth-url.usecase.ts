@@ -474,6 +474,17 @@ export class GenerateMcpOAuthUrl {
         software_version: SOFTWARE_VERSION,
       });
 
+      // A secret-bearing method that comes back without a `client_secret`
+      // would persist a confidential client we can never authenticate,
+      // surfacing later as an opaque `invalid_client` at token exchange.
+      // Fail fast so the error points at registration instead.
+      if (tokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
+        throw new McpOAuthDiscoveryError(
+          'mcp_registration_failed',
+          `Dynamic Client Registration returned no client_secret for "${tokenEndpointAuthMethod}".`
+        );
+      }
+
       return { ...registration, tokenEndpointAuthMethod };
     } catch (err) {
       throw mapDiscoveryError(err, `MCP authorization server "${asMetadata.issuer}"`);
