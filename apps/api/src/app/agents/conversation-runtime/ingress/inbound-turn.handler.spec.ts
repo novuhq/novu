@@ -1,6 +1,6 @@
-import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';

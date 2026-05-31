@@ -45,7 +45,7 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    if (turn.subscriber && turn.message?.id) {
+    if (turn.message?.id) {
       const parked = await this.handleManagedAgentSetupInbound.execute(
         ManagedAgentSetupInboundCommand.create({
           userId: 'system',
