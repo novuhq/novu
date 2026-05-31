@@ -36,11 +36,18 @@ export class InboundEmailParse {
       }
     } catch (error) {
       if (error instanceof InboundParseProcessingError && error.outcome) {
-        await this.logInboundEmailRequest.execute({
-          command,
-          outcome: error.outcome,
-          durationMs: Date.now() - start,
-        });
+        try {
+          await this.logInboundEmailRequest.execute({
+            command,
+            outcome: error.outcome,
+            durationMs: Date.now() - start,
+          });
+        } catch (logError) {
+          this.logger.warn(
+            { err: logError, transactionId: error.outcome.transactionId },
+            'Failed to write inbound-email failure request log'
+          );
+        }
       }
 
       throw error;
