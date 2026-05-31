@@ -9,6 +9,7 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
+import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
@@ -26,7 +27,6 @@ const MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
 
 @Injectable()
 export class MsTeamsOauthCallback {
-  private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
   private readonly MS_TEAMS_TOKEN_URL = 'https://login.microsoftonline.com';
 
   constructor(
@@ -110,7 +110,13 @@ export class MsTeamsOauthCallback {
 
     return {
       type: ResponseTypeEnum.HTML,
-      result: this.SCRIPT_CLOSE_TAB,
+      result: renderConnectionResultPage({
+        status: 'success',
+        title: 'Connection complete',
+        heading: "You're all set",
+        message: 'Microsoft Teams is connected. You can safely close this tab and return to where you started.',
+        footerNote: 'You can now return to where you started.',
+      }),
     };
   }
 

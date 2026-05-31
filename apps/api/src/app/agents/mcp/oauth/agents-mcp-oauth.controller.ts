@@ -4,11 +4,9 @@ import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { Response } from 'express';
 
 import { ThrottlerCategory } from '../../../rate-limiting/guards';
+import { renderConnectionResultPage } from '../../../shared/html/connection-result-page';
 import { McpOAuthCallbackCommand } from './mcp-oauth-callback/mcp-oauth-callback.command';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
-
-const SUCCESS_FALLBACK_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Connection complete</title></head><body><p>Connection complete. You can close this window.</p><script>window.close();</script></body></html>`;
-const ERROR_FALLBACK_HTML = `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Connection failed</title></head><body><p>Connection failed. You can close this window and try again.</p><script>window.close();</script></body></html>`;
 
 /**
  * Public-facing controller for the Novu-managed MCP OAuth callback.
@@ -57,30 +55,32 @@ export class AgentsMcpOAuthController {
       })
     );
 
-    const redirect = buildPostCallbackRedirect(result.status, result.message);
+    // Render a self-contained "flow complete" page instead of redirecting to the
+    // dashboard. The user reached this tab from a third-party OAuth provider, so
+    // we tell them the flow is finished, the tab can be closed, and they can
+    // return to wherever they started. A best-effort postMessage lets any
+    // same-origin opener (e.g. a popup-based flow) auto-detect the outcome.
+    const isConnected = result.status === 'connected';
+    const page = isConnected
+      ? renderConnectionResultPage({
+          status: 'success',
+          title: 'Connection complete',
+          heading: "You're all set",
+          message: 'Your MCP server is connected. You can safely close this tab and return to where you started.',
+          footerNote: 'You can now return to where you started.',
+          postMessagePayload: { type: 'novu-mcp-oauth-result', status: 'connected' },
+        })
+      : renderConnectionResultPage({
+          status: 'error',
+          title: 'Connection failed',
+          heading: 'Connection failed',
+          message: "We couldn't complete the connection. You can close this tab and try again from where you started.",
+          footerNote: 'You can now return to where you started.',
+          postMessagePayload: { type: 'novu-mcp-oauth-result', status: 'error', reason: result.message },
+        });
 
-    if (redirect) {
-      res.redirect(redirect);
-
-      return;
-    }
-
-    // No dashboard redirect URL configured — fall back to a tab-close page
-    // that signals success/failure visually.
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
-    res.send(result.status === 'connected' ? SUCCESS_FALLBACK_HTML : ERROR_FALLBACK_HTML);
+    res.send(page);
   }
-}
-
-function buildPostCallbackRedirect(status: 'connected' | 'error', message?: string): string | undefined {
-  const base = process.env.DASHBOARD_URL?.replace(/\/$/, '');
-  if (!base) return undefined;
-
-  const params = new URLSearchParams({ status });
-  if (status === 'error' && message) {
-    params.set('reason', message);
-  }
-
-  return `${base}/agents/mcp/oauth/result?${params.toString()}`;
 }

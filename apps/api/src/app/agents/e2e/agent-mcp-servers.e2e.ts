@@ -1016,9 +1016,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&code=fake-auth-code`
       );
-      // 200 HTML fallback (no DASHBOARD_URL) OR 302 redirect — both are
-      // success-side responses; the assertion that matters is the row state.
-      expect([200, 302], `unexpected callback status (body=${JSON.stringify(cb.body)})`).to.include(cb.status);
+      // The callback always renders a self-contained "flow complete" HTML page
+      // (no dashboard redirect); the assertion that matters is the row state.
+      expect(cb.status, `unexpected callback status (body=${JSON.stringify(cb.body)})`).to.equal(200);
+      expect(cb.text, 'callback should render the success page').to.include("You're all set");
 
       const conn = await findGithubConnection(agentId);
       expect(conn, 'mcp_connection row should exist').to.exist;
@@ -1099,7 +1100,8 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&error=access_denied&error_description=${encodeURIComponent('The user cancelled the consent')}`
       );
-      expect([200, 302]).to.include(cb.status);
+      expect(cb.status).to.equal(200);
+      expect(cb.text, 'callback should render the error page').to.include('Connection failed');
 
       const conn = await findGithubConnection(agentId);
       expect(conn!.status).to.equal(McpConnectionStatusEnum.Error);
@@ -1153,7 +1155,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&code=fake-auth-code`
       );
-      expect([200, 302]).to.include(cb.status);
+      expect(cb.status).to.equal(200);
 
       const tokenCall = safeJsonStub
         .getCalls()

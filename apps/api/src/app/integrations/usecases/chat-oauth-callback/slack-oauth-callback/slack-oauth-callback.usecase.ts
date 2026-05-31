@@ -13,6 +13,7 @@ import {
 } from '@novu/dal';
 import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
 import axios from 'axios';
+import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
@@ -28,7 +29,6 @@ import { SlackOauthCallbackCommand } from './slack-oauth-callback.command';
 @Injectable()
 export class SlackOauthCallback {
   private readonly SLACK_ACCESS_URL = 'https://slack.com/api/oauth.v2.access';
-  private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
 
   constructor(
     private integrationRepository: IntegrationRepository,
@@ -103,7 +103,13 @@ export class SlackOauthCallback {
 
     return {
       type: ResponseTypeEnum.HTML,
-      result: this.SCRIPT_CLOSE_TAB,
+      result: renderConnectionResultPage({
+        status: 'success',
+        title: 'Connection complete',
+        heading: "You're all set",
+        message: 'Your Slack workspace is connected. You can safely close this tab and return to where you started.',
+        footerNote: 'You can now return to where you started.',
+      }),
     };
   }
 
