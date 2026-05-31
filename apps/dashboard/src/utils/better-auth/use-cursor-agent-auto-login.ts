@@ -48,6 +48,20 @@ export function useCursorAgentAutoLogin({
         }
 
         localStorage.setItem('better-auth-session-token', data.token);
+
+        const { data: organizations } = await authClient.organization.list();
+        const firstOrg = organizations?.[0];
+
+        if (firstOrg?.id) {
+          const { error: activeError } = await authClient.organization.setActive({
+            organizationId: firstOrg.id,
+          });
+
+          if (activeError) {
+            throw new Error(activeError.message || 'Failed to set active organization');
+          }
+        }
+
         await refreshSession();
         setStatus('idle');
       } catch (err) {
