@@ -1,6 +1,7 @@
 import { createHash as nodeCreateHash, randomBytes } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
+  AnalyticsService,
   createHash,
   decryptMcpConnectionOAuthClient,
   encodeOAuthState,
@@ -29,6 +30,7 @@ import {
   type McpServer,
   type NovuAppOAuthCatalogEntry,
 } from '@novu/shared';
+import { trackAgentMcpOAuthCreated } from '../../../shared/analytics/agent-analytics';
 import { GenerateMcpOAuthUrlResponseDto } from '../../../shared/dtos/mcp-server.dto';
 import { assertMcpNovuAppFlagEnabled } from '../../assert-mcp-novu-app-flag-enabled';
 import {
@@ -92,6 +94,7 @@ export class GenerateMcpOAuthUrl {
     private readonly discoveryService: McpOAuthDiscoveryService,
     private readonly getNovuAppCredentials: McpNovuAppCredentialsService,
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(GenerateMcpOAuthUrl.name);
@@ -107,7 +110,7 @@ export class GenerateMcpOAuthUrl {
     const context = await this.loadAuthorizeContext(command);
 
     if (canReusePendingOAuthSession(context.existing)) {
-      return this.buildAuthorizeUrlForExistingPending(context, command);
+      return this.buildAuthorizeUrlForExistingPending(context, command, { reusedPendingSession: true });
     }
 
     return this.execute(command);
@@ -153,7 +156,7 @@ export class GenerateMcpOAuthUrl {
         pkceVerifier,
       });
 
-      return { authorizeUrl };
+      return this.buildOAuthUrlResponse(command, context, authorizeUrl);
     }
 
     // DCR mode — existing behaviour.
@@ -185,6 +188,33 @@ export class GenerateMcpOAuthUrl {
       resource: resolved.resource,
       state,
       pkceVerifier,
+    });
+
+    return this.buildOAuthUrlResponse(command, context, authorizeUrl);
+  }
+
+  private buildOAuthUrlResponse(
+    command: GenerateMcpOAuthUrlCommand,
+    context: {
+      oauthConfig: ResolvedOAuthConfig;
+      agent: { _id: string };
+    },
+    authorizeUrl: string,
+    options?: { reusedPendingSession?: boolean }
+  ): GenerateMcpOAuthUrlResponseDto {
+    trackAgentMcpOAuthCreated(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentId: context.agent._id,
+      agentIdentifier: command.agentIdentifier,
+      mcpId: command.mcpId,
+      authMode: context.oauthConfig.mode,
+      scope: McpConnectionScopeEnum.Subscriber,
+      subscriberId: command.subscriberId,
+      source: command.userId === 'system' ? 'setup_card' : 'api',
+      conversationId: command.conversationId,
+      reusedPendingSession: options?.reusedPendingSession,
     });
 
     return { authorizeUrl };
@@ -261,7 +291,8 @@ export class GenerateMcpOAuthUrl {
       subscriber: { _id: string };
       existing: McpConnectionEntity | null;
     },
-    command: GenerateMcpOAuthUrlCommand
+    command: GenerateMcpOAuthUrlCommand,
+    options?: { reusedPendingSession?: boolean }
   ): Promise<GenerateMcpOAuthUrlResponseDto> {
     const { catalog, oauthConfig, enablement, agent, subscriber, existing } = context;
 
@@ -301,7 +332,7 @@ export class GenerateMcpOAuthUrl {
         pkceVerifier,
       });
 
-      return { authorizeUrl };
+      return this.buildOAuthUrlResponse(command, context, authorizeUrl, options);
     }
 
     if (!existing.oauthClient || !existing.oauthState?.expectedIssuer || !existing.oauthState.resource) {
@@ -318,7 +349,7 @@ export class GenerateMcpOAuthUrl {
       pkceVerifier,
     });
 
-    return { authorizeUrl };
+    return this.buildOAuthUrlResponse(command, context, authorizeUrl, options);
   }
 
   /**
