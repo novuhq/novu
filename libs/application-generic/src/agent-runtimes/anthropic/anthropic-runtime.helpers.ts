@@ -337,7 +337,9 @@ function buildAnthropicTokenEndpointAuth(
     case 'client_secret_basic':
     case 'client_secret_post':
       if (!oauthClient.clientSecret) {
-        return { type: 'none' };
+        throw new Error(
+          `MCP OAuth client registered with \`${method}\` is missing a client secret — refusing to downgrade to public-client semantics.`
+        );
       }
 
       return { type: method, client_secret: oauthClient.clientSecret };
