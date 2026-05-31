@@ -27,6 +27,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
 import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { LogInboundEmailRequest } from '../usecases/inbound-email-parse/log-inbound-email-request.usecase';
 import { DomainRouteStrategy } from '../usecases/inbound-email-parse/strategies/domain-route.strategy';
 import { IUserWebhookPayload, ReplyToStrategy } from '../usecases/inbound-email-parse/strategies/reply-to.strategy';
 
@@ -43,12 +44,14 @@ describe('Should handle the new arrived mail', () => {
 
   let sandbox;
   let attachmentRehydrator: sinon.SinonStubbedInstance<AttachmentRehydrator>;
+  let logInboundEmailRequest: sinon.SinonStubbedInstance<LogInboundEmailRequest>;
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
 
     compileTemplate = sandbox.createStubInstance(CompileTemplate);
     attachmentRehydrator = sandbox.createStubInstance(AttachmentRehydrator);
+    logInboundEmailRequest = sandbox.createStubInstance(LogInboundEmailRequest);
     // Default: return empty array (no attachments to rehydrate)
     attachmentRehydrator.rehydrate.resolves([]);
 
@@ -57,6 +60,7 @@ describe('Should handle the new arrived mail', () => {
         InboundEmailParse,
         ReplyToStrategy,
         DomainRouteStrategy,
+        { provide: LogInboundEmailRequest, useValue: logInboundEmailRequest },
         { provide: JobRepository, useValue: sandbox.createStubInstance(JobRepository) },
         { provide: MessageRepository, useValue: sandbox.createStubInstance(MessageRepository) },
         { provide: DomainRepository, useValue: sandbox.createStubInstance(DomainRepository) },
@@ -113,6 +117,13 @@ describe('Should handle the new arrived mail', () => {
     expect(payload.hmac).to.ok;
     expect(payload.notification).to.ok;
     expect(payload.templateIdentifier).to.ok;
+
+    // Successful reply-to delivery should emit a request log with a 200 outcome.
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.strategy).to.equal('reply-to');
+    expect(logArg.outcome.status).to.equal(200);
+    expect(logArg.outcome.organizationId).to.equal('657ec2402c5ac81fb1e0efb6');
   });
 
   it('should include rehydrated attachments in the reply-to webhook payload', async () => {
@@ -247,6 +258,12 @@ describe('Should handle the new arrived mail', () => {
     } catch (e) {
       expect(e.message).to.equal('Domain is not in environment white list');
     }
+
+    // Post-resolution failures still emit a request log, with a 422 outcome.
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.status).to.equal(422);
+    expect(logArg.outcome.strategy).to.equal('reply-to');
   });
 
   it('should not send webhook request when missing replay callback url', async () => {

@@ -270,7 +270,7 @@ describe('Activity - /activity/requests (GET) #novu-v2', () => {
       .get('/v1/activity/requests')
       .query({ source: 'not-a-valid-source' });
 
-    expect(rejectedResponse.status).to.be.equal(400);
+    expect(rejectedResponse.status).to.be.equal(422);
   });
 });
 
