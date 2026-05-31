@@ -8,6 +8,11 @@ export const TELEGRAM_MOBILE_LINK_TTL_SECONDS = 5 * 60;
 const CACHE_KEY_PREFIX = 'telegram_mobile_link:';
 const USED_KEY_PREFIX = 'telegram_mobile_link_used:';
 
+/** Wrap token in `{…}` so storage + used-marker keys share a Redis Cluster hash slot. */
+function clusterSlotTag(token: string): string {
+  return `{${token}}`;
+}
+
 /** 192 bits of entropy → 32 URL-safe base64url characters (compact QR payloads). */
 const TOKEN_BYTES = 24;
 
@@ -351,10 +356,10 @@ export class TelegramMobileLinkTokenService {
   }
 
   private storageKey(token: string): string {
-    return `${CACHE_KEY_PREFIX}${token}`;
+    return `${CACHE_KEY_PREFIX}${clusterSlotTag(token)}`;
   }
 
   private usedKey(token: string): string {
-    return `${USED_KEY_PREFIX}${token}`;
+    return `${USED_KEY_PREFIX}${clusterSlotTag(token)}`;
   }
 }
