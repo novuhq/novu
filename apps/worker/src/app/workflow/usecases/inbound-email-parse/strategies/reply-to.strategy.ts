@@ -113,7 +113,11 @@ export class ReplyToStrategy {
       if (err instanceof SsrfBlockedError) {
         this.fail(resolved, 422, `Reply callback URL blocked (SSRF): ${err.message}`);
       }
-      this.fail(resolved, 502, `Reply callback delivery failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      this.fail(
+        resolved,
+        502,
+        `Reply callback delivery failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
     }
 
     return { ...resolved, strategy: 'reply-to', status: 200 };

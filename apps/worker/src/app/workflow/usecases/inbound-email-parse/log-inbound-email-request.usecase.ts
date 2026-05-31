@@ -42,9 +42,7 @@ export class LogInboundEmailRequest {
   }
 
   private isEnabled(): boolean {
-    return (
-      process.env.IS_ANALYTICS_LOGS_ENABLED === 'true' && process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED === 'true'
-    );
+    return process.env.IS_ANALYTICS_LOGS_ENABLED === 'true' && process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED === 'true';
   }
 
   async execute({ command, outcome, durationMs }: LogInboundEmailRequestCommand): Promise<void> {
