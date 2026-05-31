@@ -98,6 +98,30 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
     expect(att.url).to.be.undefined;
   });
 
+  it('skips contentBase64 for oversized inline attachments (defensive size guard)', () => {
+    const oversized = 5 * 1024 * 1024 + 1;
+    const mail: InboundDomainRouteMailInput = {
+      ...baseMail,
+      attachments: [
+        {
+          filename: 'huge.bin',
+          contentType: 'application/octet-stream',
+          size: oversized,
+          content: { type: 'Buffer', data: new Array(oversized).fill(0) },
+        },
+      ],
+    };
+
+    const payload = usecase.previewAgentMailPayload(mail);
+
+    expect(payload.attachments).to.have.length(1);
+    const att = payload.attachments![0];
+    expect(att.filename).to.equal('huge.bin');
+    expect(att.size).to.equal(oversized);
+    expect(att.contentBase64).to.be.undefined;
+    expect(att.url).to.be.undefined;
+  });
+
   it('returns undefined attachments when none present', () => {
     const payload = usecase.previewAgentMailPayload({ ...baseMail, attachments: undefined });
 

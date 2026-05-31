@@ -17,6 +17,16 @@ import { normalizeReferences } from '../../utils/inbound-email-references';
 import { SendWebhookMessage } from '../../webhooks/usecases/send-webhook-message/send-webhook-message.usecase';
 import { AttachmentRehydrator } from './attachment-rehydrator';
 
+/*
+ * Defensive per-attachment limit for inline (S3-not-configured) content before
+ * base64-encoding it into the agent webhook payload. The inbound-mail producer
+ * already enforces a 5 MB inline cap, but this consumer must not assume an
+ * upstream guarantee: an oversized inline payload arriving here would trigger
+ * significant memory pressure during base64 construction. Mirror the producer
+ * cap and skip the binary (forward metadata only) when it is exceeded.
+ */
+const MAX_INLINE_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+
 export interface RoutableDomain
   extends Pick<
     DomainEntity,
@@ -215,6 +225,24 @@ export class InboundDomainRouteDelivery {
          * packages/chat-adapter-email/src/message-parser.ts).
          */
         if (!att.url && att.content && Array.isArray(att.content.data)) {
+          if (att.content.data.length > MAX_INLINE_ATTACHMENT_BYTES || att.size > MAX_INLINE_ATTACHMENT_BYTES) {
+            this.logger.warn(
+              {
+                filename: att.filename,
+                declaredSize: att.size,
+                actualByteLength: att.content.data.length,
+                cap: MAX_INLINE_ATTACHMENT_BYTES,
+              },
+              'Inline attachment exceeds max supported size; forwarding metadata only (configure S3 to support larger files)'
+            );
+
+            return {
+              filename: att.filename,
+              contentType: att.contentType,
+              size: att.size,
+            };
+          }
+
           return {
             filename: att.filename,
             contentType: att.contentType,
