@@ -306,6 +306,12 @@ export class MsTeamsOauthCallback {
     }
   }
 
+  /**
+   * Bot-install failures during link_user OAuth. Uses the shared connection-result
+   * page (same card as MCP/Slack success paths) instead of bespoke HTML so terminal
+   * pages stay visually consistent. Permission-related errors keep the Azure
+   * propagation hint in `footerNote`.
+   */
   private buildErrorHtml(message: string): string {
     const isPermissionError =
       message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') || message.includes('AppCatalog.Read.All');

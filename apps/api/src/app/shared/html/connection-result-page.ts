@@ -186,10 +186,16 @@ const ERROR_ICON = `<div class="info-icon" aria-hidden="true">!</div>`;
 const CLOSE_LINK = `<a class="secondary" href="javascript:void(0)" onclick="try{window.close();}catch(e){}var h=this.nextElementSibling;setTimeout(function(){if(!document.hidden&&h){h.style.display='block';}},150);return false;">Close this tab</a>
   <div class="cancel-hint">You can close this tab manually.</div>`;
 
+/**
+ * Embeds a postMessage call for same-origin openers (e.g. MCP OAuth popup).
+ *
+ * Security: `JSON.stringify` is not enough inside `<script>` — the HTML parser
+ * still recognizes `</script>` inside string literals and closes the block early.
+ * MCP error payloads include `reason` from OAuth `error_description`, which is
+ * provider-controlled. We replace `<` with `\u003c` in the serialized JSON so
+ * the tokenizer never sees a breakout sequence; JS decodes it identically at runtime.
+ */
 function buildPostMessageScript(payload: Record<string, unknown>): string {
-  // Replace < with \u003c so the HTML parser cannot close the script block early.
-  // JSON.stringify alone does not escape </, which would let </script> in any
-  // string value (e.g. OAuth error_description) break out of the <script> tag.
   const json = JSON.stringify(payload).replace(/</g, '\\u003c');
 
   return `try{if(window.opener){window.opener.postMessage(${json},'*');}}catch(e){}`;
