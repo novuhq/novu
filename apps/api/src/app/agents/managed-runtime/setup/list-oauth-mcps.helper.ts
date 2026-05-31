@@ -61,6 +61,7 @@ export async function listOAuthMcps(
       mcpId: enablement.mcpId,
       name: catalog?.name ?? enablement.mcpId,
       agentMcpServerId: enablement._id,
+      defaultAuthMode: enablement.defaultAuthMode,
       status,
       ...(isError ? { errorMessage: connection?.lastError?.message ?? 'Connection failed' } : {}),
     });

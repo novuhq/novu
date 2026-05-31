@@ -110,6 +110,15 @@ export enum FeatureFlagsKeysEnum {
    * by this flag.
    */
   IS_MCP_NOVU_APP_ENABLED = 'IS_MCP_NOVU_APP_ENABLED',
+  /**
+   * Enable MCP connections where OAuth is fully delegated to the managed
+   * agent runtime provider (`auth mode = 'provider-managed'`). Gates the
+   * "Add from Claude" flow in the dashboard and the
+   * `POST .../mcp-servers/:mcpId/provider-vault` endpoint. When off,
+   * provider-managed catalog rows still appear in the picker but the Add
+   * button is disabled.
+   */
+  IS_MCP_PROVIDER_MANAGED_ENABLED = 'IS_MCP_PROVIDER_MANAGED_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

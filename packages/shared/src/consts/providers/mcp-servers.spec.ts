@@ -11,11 +11,42 @@ describe('MCP_SERVERS catalog', () => {
       expect(sentry?.oauth?.mode).toBe(McpConnectionAuthModeEnum.Dcr);
     });
 
-    it('leaves unsupported entries without an oauth field', () => {
+    it('marks every catalog entry with an oauth mode (no "coming soon" rows)', () => {
+      const missing = MCP_SERVERS.filter((entry) => !entry.oauth).map((entry) => entry.id);
+
+      expect(missing).toEqual([]);
+    });
+
+    it('marks Slack as provider-managed (Claude owns the connector)', () => {
       const slack = MCP_SERVERS.find((entry) => entry.id === 'slack');
 
       expect(slack).toBeDefined();
-      expect(slack?.oauth).toBeUndefined();
+      expect(slack?.oauth?.mode).toBe(McpConnectionAuthModeEnum.ProviderManaged);
+    });
+
+    it('covers every provider-managed MCP', () => {
+      const expectedProviderManagedIds = new Set([
+        'adobe-experience-manager',
+        'asana',
+        'aws-marketplace',
+        'box',
+        'dropbox',
+        'figma',
+        'google-drive',
+        'hubspot',
+        'intercom',
+        'pagerduty',
+        'plaid',
+        'slack',
+        'square',
+      ]);
+      const actualProviderManagedIds = new Set(
+        MCP_SERVERS.filter((entry) => entry.oauth?.mode === McpConnectionAuthModeEnum.ProviderManaged).map(
+          (entry) => entry.id
+        )
+      );
+
+      expect(actualProviderManagedIds).toEqual(expectedProviderManagedIds);
     });
 
     it('covers every DCR-verified MCP', () => {
@@ -95,6 +126,8 @@ describe('MCP_SERVERS catalog', () => {
             return entry.issuer;
           case McpConnectionAuthModeEnum.UserApp:
             return entry.issuer;
+          case McpConnectionAuthModeEnum.ProviderManaged:
+            return entry.mode;
           default: {
             const _exhaustive: never = entry;
 
@@ -104,6 +137,7 @@ describe('MCP_SERVERS catalog', () => {
       }
 
       expect(assertExhaustive({ mode: McpConnectionAuthModeEnum.Dcr })).toBe('web');
+      expect(assertExhaustive({ mode: McpConnectionAuthModeEnum.ProviderManaged })).toBe('provider-managed');
     });
   });
 });

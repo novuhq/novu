@@ -80,17 +80,28 @@ export enum McpConnectionScopeEnum {
  * OAuth mechanism the connection was established with. Mirrors the catalog
  * `mode` for the MCP — each MCP supports exactly one mechanism.
  *
- * - `dcr`      — Dynamic Client Registration (RFC 7591). A fresh OAuth client
- *                is registered per subscriber against the upstream AS.
- * - `novu-app` — Novu's single pre-registered OAuth application is used.
- *                `client_id` / `client_secret` come from server env vars.
- * - `user-app` — The Novu customer's own pre-registered OAuth application is
- *                used. Credentials come from a per-org credential table.
+ * - `dcr`              — Dynamic Client Registration (RFC 7591). A fresh OAuth
+ *                        client is registered per subscriber against the
+ *                        upstream AS.
+ * - `novu-app`         — Novu's single pre-registered OAuth application is
+ *                        used. `client_id` / `client_secret` come from server
+ *                        env vars.
+ * - `user-app`         — The Novu customer's own pre-registered OAuth
+ *                        application is used. Credentials come from a per-org
+ *                        credential table.
+ * - `provider-managed` — OAuth is fully delegated to the managed agent runtime
+ *                        provider (e.g. Claude). Novu never runs the OAuth
+ *                        dance, never exchanges codes, and never stores
+ *                        access/refresh tokens for these MCPs — it only
+ *                        ensures the provider vault exists and redirects the
+ *                        user into the provider's vault UI so they can
+ *                        complete connector auth there.
  */
 export enum McpConnectionAuthModeEnum {
   Dcr = 'dcr',
   NovuApp = 'novu-app',
   UserApp = 'user-app',
+  ProviderManaged = 'provider-managed',
 }
 
 /**

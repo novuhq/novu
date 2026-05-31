@@ -4,6 +4,8 @@ import type { OAuthMcp } from './oauth-mcp.types';
 
 export interface SetupCardRow extends OAuthMcp {
   authorizeUrl?: string;
+  /** Provider-managed MCPs render as connected without Novu OAuth. */
+  treatAsConnected?: boolean;
 }
 
 const SETUP_REQUIRED_TEXT =
@@ -53,7 +55,7 @@ function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
 }
 
 function buildMcpRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  if (mcp.status === McpConnectionStatusEnum.Connected) {
+  if (mcp.treatAsConnected || mcp.status === McpConnectionStatusEnum.Connected) {
     return buildConnectedRowBlocks(mcp);
   }
 

@@ -30,10 +30,7 @@ import {
 } from '@novu/shared';
 import { CompleteManagedAgentSetup } from '../../../managed-runtime/setup/complete-managed-agent-setup.usecase';
 import { ManagedAgentSetupCompleteCommand } from '../../../managed-runtime/setup/managed-agent-setup-complete.command';
-import {
-  trackAgentMcpOAuthCompleted,
-  trackAgentMcpOAuthFailed,
-} from '../../../shared/analytics/agent-analytics';
+import { trackAgentMcpOAuthCompleted, trackAgentMcpOAuthFailed } from '../../../shared/analytics/agent-analytics';
 import { McpNovuAppCredentialsService } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
 import { McpConnectionVaultService } from '../../connections/mcp-connection-vault.service';
 import { SyncAgentMcpServersCommand } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.command';
@@ -140,6 +137,15 @@ export class McpOAuthCallback {
         break;
       case McpConnectionAuthModeEnum.UserApp:
         throw new BadRequestException(`MCP "${stateData.mcpId}" auth mode "${oauthConfig.mode}" is not yet supported.`);
+      case McpConnectionAuthModeEnum.ProviderManaged:
+        // Provider-managed MCPs never produce a Novu OAuth callback because
+        // Novu doesn't build the authorize URL for them. Reaching this
+        // branch implies a signed-state replay from a different mode or a
+        // catalog mode flip mid-flight; reject explicitly so the row stays
+        // intact for the provider-vault flow.
+        throw new BadRequestException(
+          `MCP "${stateData.mcpId}" is provider-managed and does not use the Novu OAuth callback.`
+        );
       default: {
         const _exhaustive: never = oauthConfig;
 
@@ -309,7 +315,11 @@ export class McpOAuthCallback {
     return { status: 'connected' };
   }
 
-  private trackOAuthCompleted(stateData: McpOAuthState, connectionId: string, authMode: McpConnectionAuthModeEnum): void {
+  private trackOAuthCompleted(
+    stateData: McpOAuthState,
+    connectionId: string,
+    authMode: McpConnectionAuthModeEnum
+  ): void {
     trackAgentMcpOAuthCompleted(this.analyticsService, {
       userId: resolveMcpOAuthAnalyticsUserId(stateData),
       organizationId: stateData.organizationId,
@@ -324,11 +334,7 @@ export class McpOAuthCallback {
     });
   }
 
-  private trackOAuthFailed(
-    stateData: McpOAuthState,
-    errorCode: string,
-    authMode?: McpConnectionAuthModeEnum
-  ): void {
+  private trackOAuthFailed(stateData: McpOAuthState, errorCode: string, authMode?: McpConnectionAuthModeEnum): void {
     trackAgentMcpOAuthFailed(this.analyticsService, {
       userId: resolveMcpOAuthAnalyticsUserId(stateData),
       organizationId: stateData.organizationId,

@@ -28,3 +28,15 @@ export function buildClaudePlatformAgentConsoleUrl(externalAgentId: string, exte
 
   return `https://platform.claude.com/workspaces/${workspaceId}/agents/${encodeURIComponent(externalAgentId)}`;
 }
+
+/**
+ * Build the Claude platform deep-link to a specific subscriber vault. Used by
+ * the `provider-managed` MCP flow: after Novu ensures the upstream vault
+ * container exists, the dashboard redirects the user here so they can finish
+ * the connector OAuth inside Claude.
+ */
+export function buildClaudePlatformVaultUrl(externalVaultId: string, externalWorkspaceId?: string): string {
+  const workspaceId = encodeURIComponent(externalWorkspaceId?.trim() || DEFAULT_CLAUDE_WORKSPACE_ID);
+
+  return `https://platform.claude.com/workspaces/${workspaceId}/vaults/${encodeURIComponent(externalVaultId)}`;
+}

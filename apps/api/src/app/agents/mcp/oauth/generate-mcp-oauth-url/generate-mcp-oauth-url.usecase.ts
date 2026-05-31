@@ -397,6 +397,15 @@ export class GenerateMcpOAuthUrl {
       }
       case McpConnectionAuthModeEnum.UserApp:
         throw new BadRequestException(`MCP "${command.mcpId}" auth mode "${entry.mode}" is not yet supported.`);
+      case McpConnectionAuthModeEnum.ProviderManaged:
+        // Provider-managed MCPs delegate OAuth to the runtime provider — Novu
+        // never builds an authorize URL or exchanges codes for them. Callers
+        // must use `POST /agents/:identifier/mcp-servers/:mcpId/provider-vault`
+        // which ensures the provider vault and returns the deep link to the
+        // provider's vault UI instead.
+        throw new BadRequestException(
+          `MCP "${command.mcpId}" is provider-managed; use the provider-vault endpoint instead of Novu OAuth.`
+        );
       default: {
         const _exhaustive: never = entry;
 

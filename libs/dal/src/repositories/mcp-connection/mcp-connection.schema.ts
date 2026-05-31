@@ -241,7 +241,7 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     authMode: {
       type: Schema.Types.String,
       required: true,
-      enum: ['dcr', 'novu-app', 'user-app'],
+      enum: ['dcr', 'novu-app', 'user-app', 'provider-managed'],
     },
     status: {
       type: Schema.Types.String,
