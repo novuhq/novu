@@ -34,7 +34,7 @@ export class GetIntegrationStoreTelegramMobileLinkStatus {
         return { valid: false, reason: err.reason };
       }
 
-      return { valid: false, reason: 'invalid' };
+      throw err;
     }
 
     return { valid: true, providerName: 'telegram' };

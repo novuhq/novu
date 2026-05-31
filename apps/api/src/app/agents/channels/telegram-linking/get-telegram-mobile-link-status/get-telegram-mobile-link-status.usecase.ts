@@ -25,7 +25,8 @@ export class GetTelegramMobileLinkStatus {
       if (err instanceof InvalidTelegramMobileTokenError) {
         return { valid: false, reason: err.reason };
       }
-      return { valid: false, reason: 'invalid' };
+
+      throw err;
     }
 
     const integration = await this.integrationRepository.findOne(

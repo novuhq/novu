@@ -4,33 +4,73 @@ import sinon from 'sinon';
 import {
   InvalidTelegramMobileTokenError,
   TELEGRAM_MOBILE_LINK_TTL_SECONDS,
+  TelegramMobileLinkCacheUnavailableError,
   TelegramMobileLinkTokenService,
 } from './telegram-mobile-link-token.service';
 
 describe('TelegramMobileLinkTokenService', () => {
+  function runClaimScript(
+    cacheStore: Map<string, string>,
+    keyTtls: Map<string, number>,
+    keys: string[],
+    args: (string | number | Buffer)[]
+  ) {
+    const storageKey = keys[0];
+    const usedKey = keys[1];
+    const now = Number(args[0]);
+    const raw = cacheStore.get(storageKey) ?? null;
+
+    if (!raw) {
+      if (cacheStore.has(usedKey)) {
+        return 'U';
+      }
+
+      return '';
+    }
+
+    cacheStore.delete(storageKey);
+
+    let parsed: { expiresAt?: number };
+    try {
+      parsed = JSON.parse(raw) as { expiresAt?: number };
+    } catch {
+      return 'I';
+    }
+
+    if (!parsed.expiresAt) {
+      return 'I';
+    }
+
+    const ttl = Math.max(1, parsed.expiresAt - now);
+    cacheStore.set(usedKey, '1');
+    keyTtls.set(usedKey, ttl);
+
+    return `M${raw}`;
+  }
+
   function makeService() {
     const cacheStore = new Map<string, string>();
-    const client = {
-      getdel: sinon.stub().callsFake(async (key: string) => {
-        const value = cacheStore.get(key) ?? null;
-        if (value != null) {
-          cacheStore.delete(key);
-        }
-
-        return value;
-      }),
-    };
+    const keyTtls = new Map<string, number>();
     const cacheService = {
       cacheEnabled: () => true,
-      client,
-      set: sinon.stub().callsFake(async (key: string, value: string) => {
+      client: {},
+      set: sinon.stub().callsFake(async (key: string, value: string, options?: { ttl?: number }) => {
         cacheStore.set(key, value);
+        if (options?.ttl != null) {
+          keyTtls.set(key, options.ttl);
+        } else {
+          keyTtls.delete(key);
+        }
 
         return 'OK';
       }),
       get: sinon.stub().callsFake(async (key: string) => cacheStore.get(key) ?? null),
       del: sinon.stub().callsFake(async (key: string) => {
         cacheStore.delete(key);
+        keyTtls.delete(key);
+      }),
+      eval: sinon.stub().callsFake(async (_script: string, keys: string[], args: (string | number | Buffer)[]) => {
+        return runClaimScript(cacheStore, keyTtls, keys, args);
       }),
     };
     const logger = {
@@ -43,7 +83,7 @@ describe('TelegramMobileLinkTokenService', () => {
 
     const service = new TelegramMobileLinkTokenService(cacheService as any, logger as any);
 
-    return { service, cacheService, cacheStore, client };
+    return { service, cacheService, cacheStore, keyTtls };
   }
 
   it('issues a 32-char opaque token and stores the payload in Redis', async () => {
@@ -91,8 +131,8 @@ describe('TelegramMobileLinkTokenService', () => {
     expect(payloadAgain.aid).to.equal('agent-1');
   });
 
-  it('claim is single-use and marks the token as used', async () => {
-    const { service } = makeService();
+  it('claim is single-use and marks the token as used with remaining TTL', async () => {
+    const { service, cacheStore, keyTtls } = makeService();
     const { token } = await service.issue({
       environmentId: 'env-1',
       organizationId: 'org-1',
@@ -102,6 +142,13 @@ describe('TelegramMobileLinkTokenService', () => {
 
     const claimed = await service.claim(token, 'agent');
     expect(claimed.payload.kind).to.equal('agent');
+
+    const usedKey = `telegram_mobile_link_used:${token}`;
+    expect(cacheStore.get(usedKey)).to.equal('1');
+    const usedTtl = keyTtls.get(usedKey);
+    expect(usedTtl).to.be.a('number');
+    const remaining = claimed.expiresAt - Math.floor(Date.now() / 1000);
+    expect(usedTtl!).to.equal(Math.max(1, remaining));
 
     try {
       await service.claim(token, 'agent');
@@ -135,6 +182,24 @@ describe('TelegramMobileLinkTokenService', () => {
     expect(payload.iid).to.equal('int-1');
   });
 
+  it('release is a no-op when the natural expiry has passed', async () => {
+    const { service, cacheService } = makeService();
+    const { token } = await service.issue({
+      environmentId: 'env-1',
+      organizationId: 'org-1',
+      agentIdentifier: 'agent-1',
+      integrationId: 'int-1',
+    });
+
+    const claimed = await service.claim(token, 'agent');
+    const expiredClaim = { ...claimed, expiresAt: Math.floor(Date.now() / 1000) - 1 };
+    const setCallsBefore = cacheService.set.callCount;
+
+    await service.release(token, expiredClaim);
+
+    expect(cacheService.set.callCount).to.equal(setCallsBefore);
+  });
+
   it('rejects tokens with unexpected kind', async () => {
     const { service } = makeService();
     const { token } = await service.issueForIntegrationStore({
@@ -147,6 +212,18 @@ describe('TelegramMobileLinkTokenService', () => {
       expect.fail('expected agent verify to reject integration-store token');
     } catch (err) {
       expect((err as InvalidTelegramMobileTokenError).reason).to.equal('invalid');
+    }
+  });
+
+  it('surfaces cache failures from isTokenUsed', async () => {
+    const { service, cacheService } = makeService();
+    cacheService.get.rejects(new Error('redis down'));
+
+    try {
+      await service.isTokenUsed('abcdefghijklmnopqrstuvwxyz123456');
+      expect.fail('expected cache failure');
+    } catch (err) {
+      expect(err).to.be.instanceOf(TelegramMobileLinkCacheUnavailableError);
     }
   });
 });

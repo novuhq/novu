@@ -13,6 +13,29 @@ const TOKEN_BYTES = 24;
 
 const TOKEN_FORMAT = /^[A-Za-z0-9_-]{32}$/;
 
+/**
+ * Atomically GETDEL the session payload and set the used-marker with matching TTL.
+ * Returns '' (missing), 'U' (already used), 'I' (corrupt payload), or 'M' + JSON body.
+ */
+const CLAIM_ATOMIC_SCRIPT = `
+local raw = redis.call('GETDEL', KEYS[1])
+if not raw then
+  if redis.call('GET', KEYS[2]) then
+    return 'U'
+  end
+  return ''
+end
+local ok, parsed = pcall(cjson.decode, raw)
+if not ok or not parsed.expiresAt then
+  return 'I'
+end
+local now = tonumber(ARGV[1])
+local ttl = parsed.expiresAt - now
+if ttl < 1 then ttl = 1 end
+redis.call('SET', KEYS[2], '1', 'EX', ttl)
+return 'M' .. raw
+`;
+
 export type TelegramMobileLinkKind = 'agent' | 'integration-store';
 
 export interface TelegramMobileLinkTokenPayload {
@@ -133,13 +156,18 @@ export class TelegramMobileLinkTokenService {
       return false;
     }
 
-    const value = await this.cacheService.get(this.usedKey(token));
+    let value: string | null | undefined;
+    try {
+      value = await this.cacheService.get(this.usedKey(token));
+    } catch (err) {
+      throw new TelegramMobileLinkCacheUnavailableError('isTokenUsed', err);
+    }
 
     return value != null;
   }
 
   /**
-   * Atomically claims a token for single-use consumption (GETDEL).
+   * Atomically claims a token for single-use consumption (GETDEL + used marker).
    * Returns the stored entry, or throws {@link InvalidTelegramMobileTokenError}.
    */
   async claim(token: string, expectedKind: TelegramMobileLinkKind): Promise<ClaimedTelegramMobileLink> {
@@ -153,38 +181,32 @@ export class TelegramMobileLinkTokenService {
       throw new InvalidTelegramMobileTokenError('used');
     }
 
-    const client = this.cacheService.client;
-    if (!client) {
-      throw new TelegramMobileLinkCacheUnavailableError('claim');
-    }
-
-    let raw: string | null;
+    let raw: string;
     try {
-      raw = await client.getdel(this.storageKey(token));
+      raw = await this.cacheService.eval<string>(
+        CLAIM_ATOMIC_SCRIPT,
+        [this.storageKey(token), this.usedKey(token)],
+        [Math.floor(Date.now() / 1000)]
+      );
     } catch (err) {
       throw new TelegramMobileLinkCacheUnavailableError('claim', err);
     }
 
-    if (!raw) {
-      if (await this.isTokenUsed(token)) {
-        throw new InvalidTelegramMobileTokenError('used');
-      }
-
-      throw new InvalidTelegramMobileTokenError('expired');
+    if (raw === 'U') {
+      throw new InvalidTelegramMobileTokenError('used');
     }
 
-    const entry = this.parseEntry(raw);
-    if (!entry || entry.payload.kind !== expectedKind) {
+    if (!raw || raw === 'I') {
+      throw new InvalidTelegramMobileTokenError(raw === 'I' ? 'invalid' : 'expired');
+    }
+
+    if (raw.charAt(0) !== 'M') {
       throw new InvalidTelegramMobileTokenError('invalid');
     }
 
-    const remaining = entry.expiresAt - Math.floor(Date.now() / 1000);
-    const usedTtl = Math.max(1, remaining);
-
-    try {
-      await this.cacheService.set(this.usedKey(token), '1', { ttl: usedTtl });
-    } catch (err) {
-      throw new TelegramMobileLinkCacheUnavailableError('claim', err);
+    const entry = this.parseEntry(raw.slice(1));
+    if (!entry || entry.payload.kind !== expectedKind) {
+      throw new InvalidTelegramMobileTokenError('invalid');
     }
 
     return entry;
@@ -212,7 +234,11 @@ export class TelegramMobileLinkTokenService {
       await this.cacheService.set(this.storageKey(token), JSON.stringify(entry), { ttl: remaining });
       await this.cacheService.del(this.usedKey(token));
     } catch (err) {
-      this.logger.warn(`Failed to release telegram mobile link token: ${(err as Error).message}`);
+      this.logger.warn(
+        { err, token, storageKey: this.storageKey(token), usedKey: this.usedKey(token) },
+        'Failed to release telegram mobile link token'
+      );
+      throw new TelegramMobileLinkCacheUnavailableError('release', err);
     }
   }
 

@@ -108,7 +108,11 @@ export class ConsumeTelegramMobileLink {
         deepLinkUrl,
       };
     } catch (err) {
-      await this.tokenService.release(command.token, claimed);
+      try {
+        await this.tokenService.release(command.token, claimed);
+      } catch (releaseErr) {
+        this.logger.error(`Telegram mobile setup token rollback failed: ${(releaseErr as Error).message}`);
+      }
       this.logger.warn(`Telegram mobile setup consume failed: ${(err as Error).message}`);
       throw err;
     }

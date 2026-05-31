@@ -45,7 +45,7 @@ export class IntegrationsPublicController {
   @ApiOperation({
     summary: 'Check the status of a Telegram integration-store mobile setup link',
     description:
-      'Returns whether a signed Telegram mobile-setup token is still usable. Designed to be called from the ' +
+      'Returns whether an opaque Telegram mobile-setup token is still usable. Designed to be called from the ' +
       'mobile landing page before showing the credentials form.',
   })
   async getStatus(@Query('token') token: string): Promise<GetIntegrationStoreTelegramMobileLinkStatusResult> {
@@ -60,7 +60,7 @@ export class IntegrationsPublicController {
   @ApiOperation({
     summary: 'Consume a Telegram integration-store mobile setup link',
     description:
-      'Validates the signed token, calls Telegram getMe to verify the supplied BotFather token, and creates a ' +
+      'Validates the setup token, calls Telegram getMe to verify the supplied BotFather token, and creates a ' +
       'new Telegram integration in the issuing environment with the bot token stored on its credentials. ' +
       'The token becomes invalid after a successful call.',
   })
