@@ -5,13 +5,13 @@ import {
   type ManagedCredentialFields,
 } from '@novu/shared';
 import type { ConnectApiClient } from '../api/client';
+import { NovuApiError } from '../api/client';
 import {
   createAgentRuntimeIntegration,
   type IntegrationRecord,
   listIntegrations,
   verifyManagedCredentials,
 } from '../api/integrations';
-import { NovuApiError } from '../api/client';
 import type { AgentRuntimeChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 
@@ -253,9 +253,7 @@ async function resolveManagedCredentialFields(
           verificationError,
         });
   const region =
-    !forcePrompt && options.awsClaudeRegion?.trim()
-      ? options.awsClaudeRegion.trim()
-      : await ui.pickAwsClaudeRegion();
+    !forcePrompt && options.awsClaudeRegion?.trim() ? options.awsClaudeRegion.trim() : await ui.pickAwsClaudeRegion();
   const externalWorkspaceId =
     !forcePrompt && options.awsClaudeWorkspaceId?.trim()
       ? options.awsClaudeWorkspaceId.trim()
