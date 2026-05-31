@@ -15,6 +15,7 @@ const ssrfUrlValidationModule = require('@novu/application-generic/build/main/ut
 
 import {
   AgentIntegrationRepository,
+  AgentRepository,
   DomainRepository,
   DomainRouteRepository,
   IntegrationRepository,
@@ -60,6 +61,7 @@ describe('Should handle the new arrived mail', () => {
         { provide: MessageRepository, useValue: sandbox.createStubInstance(MessageRepository) },
         { provide: DomainRepository, useValue: sandbox.createStubInstance(DomainRepository) },
         { provide: DomainRouteRepository, useValue: sandbox.createStubInstance(DomainRouteRepository) },
+        { provide: AgentRepository, useValue: sandbox.createStubInstance(AgentRepository) },
         { provide: InboundDomainRouteDelivery, useValue: sandbox.createStubInstance(InboundDomainRouteDelivery) },
         { provide: SendWebhookMessage, useValue: sandbox.createStubInstance(SendWebhookMessage) },
         { provide: CompileTemplate, useValue: compileTemplate },
@@ -170,6 +172,56 @@ describe('Should handle the new arrived mail', () => {
     expect(att.contentBytes).to.equal(1024);
     // No raw Buffer-shaped content.data numeric arrays sitting directly in the queue fixture
     expect((slimAttachment as any).content).to.be.undefined;
+  });
+
+  it('should pass inline-mode attachments through to the reply-to webhook without S3 metadata', async () => {
+    const inlineAttachment = {
+      filename: 'inline.txt',
+      contentType: 'text/plain',
+      size: 5,
+      content: { type: 'Buffer' as const, data: [104, 101, 108, 108, 111] },
+      contentBytes: 5,
+    };
+    // Rehydrator is a no-op in inline mode (see AttachmentRehydrator.rehydrateSingle)
+    attachmentRehydrator.rehydrate.resolves([inlineAttachment]);
+
+    const mail = getMailData();
+    const safeRequestStub = sandbox.stub(ssrfUrlValidationModule, 'safeOutboundJsonRequest').resolves({
+      statusCode: 200,
+      statusMessage: 'OK',
+      headers: {},
+      body: {},
+    } as any);
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
+    compileTemplate.execute.resolves(USER_PARSE_WEBHOOK.replace('{{compiledVariable}}', 'test-env'));
+
+    // Inject an inline-shape attachment into the queue payload (no url / no storagePath).
+    const inlineQueueAttachment = {
+      filename: 'inline.txt',
+      contentType: 'text/plain',
+      size: 5,
+      content: { type: 'Buffer', data: [104, 101, 108, 108, 111] },
+    };
+    (mail as any).attachments = [inlineQueueAttachment];
+
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+
+    sinon.assert.calledOnce(safeRequestStub);
+    const callArgs = safeRequestStub.getCall(0).args[0] as { body: IUserWebhookPayload };
+    const mailPayload = callArgs.body.mail;
+
+    sinon.assert.calledOnce(attachmentRehydrator.rehydrate);
+    const rehydrateArg = attachmentRehydrator.rehydrate.firstCall.args[0]!;
+    expect(rehydrateArg).to.have.length(1);
+    expect(rehydrateArg[0]).to.deep.include({ filename: 'inline.txt', size: 5 });
+
+    expect(mailPayload.attachments).to.have.length(1);
+    const att = mailPayload.attachments![0];
+    expect(att.filename).to.equal('inline.txt');
+    expect(att.size).to.equal(5);
+    expect(att.content).to.deep.equal({ type: 'Buffer', data: [104, 101, 108, 108, 111] });
+    expect(att.url).to.be.undefined;
+    expect(att.storagePath).to.be.undefined;
   });
 
   it('should not send webhook request with missing transactionId', async () => {

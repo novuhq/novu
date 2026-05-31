@@ -816,7 +816,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Issue a short-lived Telegram mobile setup link for the integration store',
     description:
-      'Returns a signed, single-use, short-lived JWT plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
+      'Returns an opaque, single-use, short-lived setup token plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
   })
   @ApiExcludeEndpoint()
   @RequireAuthentication()
