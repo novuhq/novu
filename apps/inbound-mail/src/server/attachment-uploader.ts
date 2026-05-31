@@ -17,6 +17,17 @@ const MAX_PRESIGNED_URL_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days — S3 maximum
  */
 const INLINE_PER_ATTACHMENT_CAP_BYTES = 5 * 1024 * 1024;
 
+/*
+ * Aggregate budget for the *serialized* inline payload of a single job. BullMQ
+ * JSON-encodes the job before pushing it to Redis, expanding each binary byte
+ * into its decimal text form (`255,`), so the real Redis footprint is ~2-4x the
+ * raw byte length and several sub-cap attachments can compound. This cap bounds
+ * the cumulative serialized size so a batch of inline attachments can't blow up
+ * Redis even when each one is individually under INLINE_PER_ATTACHMENT_CAP_BYTES.
+ * Sized to comfortably fit one max-size (5 MB raw ≈ 20 MB serialized) attachment.
+ */
+const INLINE_TOTAL_SERIALIZED_CAP_BYTES = 24 * 1024 * 1024;
+
 /**
  * S3-mode attachment shape returned to the SMTP server: only slim metadata is
  * carried in the queue payload; consumers download the file via the presigned URL.
@@ -119,6 +130,29 @@ function attachmentSourceOf(attachment: ProcessedAttachment): AttachmentSource {
   return 'inline';
 }
 
+/*
+ * Estimate the JSON-serialized size of an inline attachment's `data: number[]`
+ * array WITHOUT allocating the encoded string. BullMQ serializes the job to
+ * JSON before storing it in Redis, expanding every binary byte into its decimal
+ * text form plus a separator (e.g. 255 -> "255,"), so content.byteLength badly
+ * understates the real Redis footprint. We sum the decimal digit count of each
+ * byte plus the inter-element commas — the array dominates the serialized size.
+ */
+function estimateSerializedContentBytes(content: Buffer): number {
+  let total = 0;
+
+  for (let i = 0; i < content.length; i += 1) {
+    const byte = content[i];
+    total += byte < 10 ? 1 : byte < 100 ? 2 : 3;
+  }
+
+  if (content.length > 1) {
+    total += content.length - 1;
+  }
+
+  return total;
+}
+
 function coerceAttachmentContent(content: AttachmentInput['content']): Buffer | null {
   if (!content) {
     return null;
@@ -204,7 +238,7 @@ async function uploadSingle(
  * protect Redis from oversized blobs — operators that need larger files must
  * configure S3 storage instead.
  */
-function processInline(attachment: AttachmentInput): InlineAttachment | null {
+function processInline(attachment: AttachmentInput, budget?: { remaining: number }): InlineAttachment | null {
   const filename = attachment.filename || 'attachment';
   const contentType = attachment.contentType || 'application/octet-stream';
 
@@ -228,12 +262,41 @@ function processInline(attachment: AttachmentInput): InlineAttachment | null {
     return null;
   }
 
+  /*
+   * Enforce the aggregate serialized-payload budget. The estimate reflects the
+   * JSON-encoded array size BullMQ actually pushes to Redis (not the raw bytes),
+   * and the running budget guards against many sub-cap attachments compounding
+   * into an oversized job. Dropping here is non-retriable — like the per-
+   * attachment cap, operators that need more must configure S3.
+   */
+  const serializedBytes = estimateSerializedContentBytes(content);
+
+  if (budget && serializedBytes > budget.remaining) {
+    logger.warn(
+      {
+        context: LOG_CONTEXT,
+        filename,
+        serializedBytes,
+        remaining: budget.remaining,
+        cap: INLINE_TOTAL_SERIALIZED_CAP_BYTES,
+      },
+      'Inline fallback aggregate serialized payload budget exhausted; dropping attachment (configure S3 to support larger payloads)'
+    );
+
+    return null;
+  }
+
+  if (budget) {
+    budget.remaining -= serializedBytes;
+  }
+
   logger.info(
     {
       context: LOG_CONTEXT,
       filename,
       attachmentSource: 'inline' satisfies AttachmentSource,
       size: content.byteLength,
+      serializedBytes,
     },
     'Attachment embedded inline in queue payload'
   );
@@ -276,9 +339,10 @@ export async function uploadAttachmentsToS3(
 
     let failedCount = 0;
     const uploaded: ProcessedAttachment[] = [];
+    const budget = { remaining: INLINE_TOTAL_SERIALIZED_CAP_BYTES };
 
     for (const attachment of attachments) {
-      const result = processInline(attachment as AttachmentInput);
+      const result = processInline(attachment as AttachmentInput, budget);
 
       if (result) {
         uploaded.push(result);

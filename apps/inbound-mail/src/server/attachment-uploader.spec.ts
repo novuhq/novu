@@ -230,6 +230,26 @@ describe('uploadAttachmentsToS3', () => {
     expect((result.uploaded[0] as { filename: string }).filename).to.equal('small.txt');
   });
 
+  it('enforces an aggregate serialized-payload budget across inline attachments', async () => {
+    delete env.S3_BUCKET_NAME;
+
+    /*
+     * Each 4 MB buffer of 0xFF bytes serializes to ~16 MB ("255," per byte), so
+     * the first fits within the 24 MB aggregate budget but the second blows it,
+     * proving sub-cap attachments can no longer compound into an oversized job.
+     */
+    const fourMb = 4 * 1024 * 1024;
+    const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [
+      { filename: 'a.bin', contentType: 'application/octet-stream', content: Buffer.alloc(fourMb, 0xff) },
+      { filename: 'b.bin', contentType: 'application/octet-stream', content: Buffer.alloc(fourMb, 0xff) },
+    ]);
+
+    expect(result.mode).to.equal('inline');
+    expect(result.uploaded).to.have.length(1);
+    expect((result.uploaded[0] as { filename: string }).filename).to.equal('a.bin');
+    expect(result.failedCount).to.equal(1);
+  });
+
   it('drops attachment with no content in inline fallback without throwing', async () => {
     delete env.S3_BUCKET_NAME;
 
