@@ -15,6 +15,19 @@ import {
 } from '@novu/dal';
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
+import {
+  InboundParseOutcome,
+  InboundParseProcessingError,
+  InboundParseStrategy,
+  inboundTransactionIdFromMessageId,
+} from '../inbound-parse-outcome';
+
+type ResolvedDomainRouteContext = {
+  organizationId: string;
+  environmentId: string;
+  transactionId: string;
+  strategy: InboundParseStrategy;
+};
 
 @Injectable()
 export class DomainRouteStrategy {
@@ -30,7 +43,7 @@ export class DomainRouteStrategy {
     this.logger.setContext(this.constructor.name);
   }
 
-  async execute(command: InboundEmailParseCommand): Promise<void> {
+  async execute(command: InboundEmailParseCommand): Promise<InboundParseOutcome | undefined> {
     const toAddress = command.to[0].address;
 
     this.logger.info({ toAddress }, 'Processing domain-route email');
@@ -44,9 +57,7 @@ export class DomainRouteStrategy {
     }
 
     if (isAgentSharedInboxEnabled() && domainName === getSharedAgentDomain()) {
-      await this.deliverSharedAgentInbox(command, toAddress, localPart);
-
-      return;
+      return this.deliverSharedAgentInbox(command, toAddress, localPart);
     }
 
     const domain = await this.domainRepository.findByName(domainName);
@@ -55,12 +66,24 @@ export class DomainRouteStrategy {
       this.throwError(`No domain found for address ${toAddress}`);
     }
 
+    // Tenant context is resolved from the verified domain; failures from this
+    // point on carry it so the centralized emit point can write a request log row.
+    const baseResolved = {
+      organizationId: domain._organizationId,
+      environmentId: domain._environmentId,
+      transactionId: inboundTransactionIdFromMessageId(command.messageId),
+    };
+
     if (domain.status !== DomainStatusEnum.VERIFIED) {
-      this.throwError(`Domain ${domain.name} is not verified`);
+      this.fail({ ...baseResolved, strategy: 'domain-route' }, 422, `Domain ${domain.name} is not verified`);
     }
 
     if (!domain.mxRecordConfigured) {
-      this.throwError(`Domain ${domain.name} does not have MX records configured`);
+      this.fail(
+        { ...baseResolved, strategy: 'domain-route' },
+        422,
+        `Domain ${domain.name} does not have MX records configured`
+      );
     }
 
     const routes = await this.domainRouteRepository.findByDomainAndAddresses({
@@ -74,35 +97,61 @@ export class DomainRouteStrategy {
     if (!route) {
       this.logger.info({ toAddress, domain: domain.name }, 'No route matched the inbound email');
 
-      return;
+      return { ...baseResolved, strategy: 'domain-route', status: 422, message: 'No matching inbound route' };
     }
 
     const mail = this.commandToMail(command);
 
     if (route.type === DomainRouteTypeEnum.WEBHOOK) {
-      await this.inboundDomainRouteDelivery.deliverToWebhook({
-        environmentId: domain._environmentId,
-        organizationId: domain._organizationId,
-        domain,
-        route,
-        mail,
-      });
+      const resolved: ResolvedDomainRouteContext = { ...baseResolved, strategy: 'domain-route' };
+
+      try {
+        await this.inboundDomainRouteDelivery.deliverToWebhook({
+          environmentId: domain._environmentId,
+          organizationId: domain._organizationId,
+          domain,
+          route,
+          mail,
+        });
+      } catch (err) {
+        this.failDelivery(resolved, err);
+      }
 
       this.logger.info({ toAddress, domain: domain.name }, 'Fired email.received webhook event');
 
-      return;
+      return { ...resolved, status: 200 };
     }
 
     if (route.type === DomainRouteTypeEnum.AGENT) {
-      await this.inboundDomainRouteDelivery.deliverToAgent({
-        domain,
-        route,
-        mail,
-        toAddress,
-      });
+      const resolved: ResolvedDomainRouteContext = { ...baseResolved, strategy: 'agent' };
+
+      try {
+        await this.inboundDomainRouteDelivery.deliverToAgent({
+          domain,
+          route,
+          mail,
+          toAddress,
+        });
+      } catch (err) {
+        this.failDelivery(resolved, err);
+      }
 
       this.logger.info({ toAddress, domain: domain.name }, 'Fired email.received agent event');
+
+      return { ...resolved, status: 200 };
     }
+
+    return undefined;
+  }
+
+  private fail(resolved: ResolvedDomainRouteContext, status: number, message: string): never {
+    this.logger.error({ err: message }, 'Error processing domain-route email');
+    throw new InboundParseProcessingError(message, { ...resolved, status, message });
+  }
+
+  private failDelivery(resolved: ResolvedDomainRouteContext, err: unknown): never {
+    const message = `Inbound delivery failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
+    throw new InboundParseProcessingError(message, { ...resolved, status: 502, message });
   }
 
   /**
@@ -123,11 +172,11 @@ export class DomainRouteStrategy {
     command: InboundEmailParseCommand,
     toAddress: string,
     localPart: string | undefined
-  ): Promise<void> {
+  ): Promise<InboundParseOutcome | undefined> {
     if (!localPart) {
       this.logger.info({ toAddress }, 'Shared agent domain: missing local part - dropping');
 
-      return;
+      return undefined;
     }
 
     const parsed = parseAgentSharedInboxLocalPart(localPart);
@@ -137,7 +186,7 @@ export class DomainRouteStrategy {
         'Shared agent domain: local part did not match {slug}-{inboxRoutingKey} - dropping'
       );
 
-      return;
+      return undefined;
     }
 
     const integration = await this.integrationRepository.findAgentInboundByInboxRoutingKey(parsed.inboxRoutingKey);
@@ -147,7 +196,7 @@ export class DomainRouteStrategy {
         'Shared agent domain: no integration found for routing key - dropping'
       );
 
-      return;
+      return undefined;
     }
 
     if (integration.active === false) {
@@ -156,7 +205,7 @@ export class DomainRouteStrategy {
         'Shared agent domain: integration is inactive - dropping'
       );
 
-      return;
+      return undefined;
     }
 
     if (integration.credentials?.sharedInboxDisabled) {
@@ -165,7 +214,7 @@ export class DomainRouteStrategy {
         'Shared agent domain: shared inbox disabled for this agent - dropping'
       );
 
-      return;
+      return undefined;
     }
 
     const link = await this.agentIntegrationRepository.findOne(
@@ -182,7 +231,7 @@ export class DomainRouteStrategy {
         'Shared agent domain: no agent link found for integration - dropping'
       );
 
-      return;
+      return undefined;
     }
 
     const agent = await this.agentRepository.findByIdForWebhook(link._agentId);
@@ -192,14 +241,21 @@ export class DomainRouteStrategy {
         'Shared agent domain: no agent found for link - dropping'
       );
 
-      return;
+      return undefined;
     }
 
     if (agent.active === false) {
       this.logger.info({ toAddress, agentId: agent._id }, 'Shared agent domain: agent is inactive - dropping');
 
-      return;
+      return undefined;
     }
+
+    const resolved: ResolvedDomainRouteContext = {
+      organizationId: agent._organizationId,
+      environmentId: agent._environmentId,
+      transactionId: inboundTransactionIdFromMessageId(command.messageId),
+      strategy: 'agent',
+    };
 
     const syntheticDomain = {
       _id: agent._id,
@@ -232,6 +288,8 @@ export class DomainRouteStrategy {
         toAddress,
       });
       this.logger.info({ toAddress, agentId: agent._id }, 'Forwarded shared-domain inbound email to agent webhook');
+
+      return { ...resolved, status: 200 };
     } catch (err) {
       // BadRequestException is thrown by InboundDomainRouteDelivery for non-retriable
       // routing failures (no integration linked, integration inactive, missing secret,
@@ -244,10 +302,10 @@ export class DomainRouteStrategy {
           'Shared agent domain: deliverToAgent rejected - dropping (integration inactive or misconfigured)'
         );
 
-        return;
+        return { ...resolved, status: 422, message: 'Shared agent delivery rejected' };
       }
 
-      throw err;
+      this.failDelivery(resolved, err);
     }
   }
 

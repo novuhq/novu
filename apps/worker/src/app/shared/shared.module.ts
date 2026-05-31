@@ -27,6 +27,7 @@ import {
   MetricsModule,
   ProcessTenant,
   QueuesModule,
+  RequestLogRepository,
   SafeOutboundHttpService,
   StepRunRepository,
   StorageHelperService,
@@ -102,6 +103,7 @@ const ANALYTICS_PROVIDERS = [
   TraceLogRepository,
   StepRunRepository,
   WorkflowRunRepository,
+  RequestLogRepository,
 
   // Services
   clickHouseService,
