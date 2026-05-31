@@ -1,12 +1,10 @@
 import { CONNECT_EVENTS } from '../../analytics/events';
 import {
-  configureTelegramAgentWebhook,
   getTelegramMobileLinkStatus,
   issueTelegramMobileLink,
   issueTelegramSubscriberLink,
 } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
-import { NovuApiError } from '../../api/client';
 import { createTelegramIntegration, type IntegrationRecord } from '../../api/integrations';
 import type { AgentSummary } from '../../types';
 import { renderQR } from '../../ui/qr';
@@ -71,16 +69,6 @@ export async function connectTelegramForAgent(
       `The bot token wasn't saved within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
         'Re-run `npx novu connect` to get a fresh setup link.'
     );
-  }
-
-  try {
-    await configureTelegramAgentWebhook(client, agent.identifier, integration._id);
-  } catch (err) {
-    if (err instanceof NovuApiError && (err.status === 400 || err.status === 409)) {
-      // Already configured by the consume endpoint — fine.
-    } else {
-      throw err;
-    }
   }
 
   const subscriberLink = await issueTelegramSubscriberLink(client, agent.identifier, integration._id, subscriberId);

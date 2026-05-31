@@ -35,7 +35,14 @@ export interface ConnectUI {
     providerLabel: string;
     integrations: Array<{ _id: string; name: string; identifier: string }>;
   }): Promise<PickAgentIntegrationResult>;
-  promptForSecretInput(opts: { title: string; placeholder: string; hint?: string; secret?: boolean }): Promise<string>;
+  promptForSecretInput(opts: {
+    title: string;
+    placeholder: string;
+    hint?: string;
+    secret?: boolean;
+    /** Shown when re-prompting after credential verification failed. */
+    verificationError?: string;
+  }): Promise<string>;
   pickAwsClaudeRegion(): Promise<string>;
   verifyingCredentials(): void;
   credentialsVerified(): void;

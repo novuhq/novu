@@ -240,7 +240,7 @@ function SuccessCard({
         className="bg-text-strong text-static-white hover:bg-text-strong/90 mt-5 flex h-10 w-full items-center justify-center gap-2 rounded-10 px-3.5 text-label-sm transition"
       >
         <RiSendPlaneLine className="size-4" />
-        {hasStartLink ? `Connect & test @${botUsername}` : `Open @${botUsername}`}
+        {hasStartLink ? 'Connect & test' : `Open @${botUsername}`}
       </a>
 
       <p className="text-text-soft text-label-xs mt-3 text-center">You can safely close this tab.</p>

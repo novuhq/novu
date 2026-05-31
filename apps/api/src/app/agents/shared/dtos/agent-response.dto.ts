@@ -81,6 +81,9 @@ export class AgentResponseDto {
   @ApiProperty()
   _organizationId: string;
 
+  @ApiPropertyOptional({ description: 'Mongo user id of the user who created the agent' })
+  createdBy?: string;
+
   @ApiProperty()
   createdAt: string;
 

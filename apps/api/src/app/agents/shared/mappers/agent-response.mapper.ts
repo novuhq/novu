@@ -86,6 +86,7 @@ export function toAgentResponse(agent: AgentEntity, hydration?: ManagedRuntimeHy
     managedRuntime,
     _environmentId: agent._environmentId,
     _organizationId: agent._organizationId,
+    createdBy: agent.createdBy,
     createdAt: agent.createdAt,
     updatedAt: agent.updatedAt,
   };

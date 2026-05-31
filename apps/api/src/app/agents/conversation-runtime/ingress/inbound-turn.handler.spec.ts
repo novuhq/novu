@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
+import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -358,6 +359,28 @@ describe('AgentInboundHandler', () => {
       expect(thread.startTyping.calledOnceWith('Thinking...')).to.equal(true);
       expect(setupInbound.calledOnce).to.equal(true);
       expect(managedAgentService.dispatch.called).to.equal(false);
+    });
+
+    it('should reply with no-access message for managed agents when subscriber is unresolved', async () => {
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({
+          _id: 'agent1',
+          runtime: 'managed',
+          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
+        }),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle('agent1', config as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
     });
   });
 

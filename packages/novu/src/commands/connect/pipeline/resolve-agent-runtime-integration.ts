@@ -11,6 +11,7 @@ import {
   listIntegrations,
   verifyManagedCredentials,
 } from '../api/integrations';
+import { NovuApiError } from '../api/client';
 import type { AgentRuntimeChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 
@@ -78,19 +79,7 @@ export async function resolveAgentRuntimeIntegration(
     }
   }
 
-  const fields = await resolveManagedCredentialFields(ui, options, runtime);
-  if (!hasCompleteManagedCredentials(providerId, fields)) {
-    throw new Error('Complete credentials are required for the selected agent runtime.');
-  }
-
-  ui.verifyingCredentials();
-  await verifyManagedCredentials(client, {
-    providerId,
-    apiKey: fields.apiKey.trim(),
-    region: fields.region?.trim(),
-    externalWorkspaceId: fields.externalWorkspaceId?.trim(),
-  });
-  ui.credentialsVerified();
+  const fields = await collectAndVerifyManagedCredentials(client, ui, options, runtime, providerId);
 
   const integrationName = runtime === 'claude-aws' ? 'Novu Connect AWS Claude' : 'Novu Connect Anthropic';
 
@@ -180,43 +169,130 @@ function hasByokCredentialFlags(options: ConnectCommandOptions, runtime: AgentRu
   return false;
 }
 
+async function collectAndVerifyManagedCredentials(
+  client: ConnectApiClient,
+  ui: ConnectUI,
+  options: ConnectCommandOptions,
+  runtime: AgentRuntimeChoice,
+  providerId: AgentRuntimeProviderIdEnum
+): Promise<ManagedCredentialFields> {
+  let verificationError: string | undefined;
+  let forcePrompt = false;
+
+  while (true) {
+    const fields = await resolveManagedCredentialFields(ui, options, runtime, {
+      forcePrompt,
+      verificationError,
+    });
+    verificationError = undefined;
+
+    if (!hasCompleteManagedCredentials(providerId, fields)) {
+      if (options.ci) {
+        throw new Error('Complete credentials are required for the selected agent runtime.');
+      }
+
+      verificationError = 'Enter all required credential fields before continuing.';
+      forcePrompt = true;
+
+      continue;
+    }
+
+    ui.verifyingCredentials();
+    try {
+      await verifyManagedCredentials(client, {
+        providerId,
+        apiKey: fields.apiKey.trim(),
+        region: fields.region?.trim(),
+        externalWorkspaceId: fields.externalWorkspaceId?.trim(),
+      });
+      ui.credentialsVerified();
+
+      return fields;
+    } catch (err) {
+      if (options.ci) {
+        throw err;
+      }
+
+      verificationError = describeCredentialError(err);
+      clearCredentialFlags(options, runtime);
+      forcePrompt = true;
+    }
+  }
+}
+
 async function resolveManagedCredentialFields(
   ui: ConnectUI,
   options: ConnectCommandOptions,
-  runtime: AgentRuntimeChoice
+  runtime: AgentRuntimeChoice,
+  opts?: { forcePrompt?: boolean; verificationError?: string }
 ): Promise<ManagedCredentialFields> {
+  const forcePrompt = opts?.forcePrompt ?? false;
+  const verificationError = opts?.verificationError;
+
   if (runtime === 'claude') {
     const apiKey =
-      options.anthropicApiKey?.trim() ??
-      (await ui.promptForSecretInput({
-        title: 'Anthropic API key',
-        placeholder: 'sk-ant-…',
-        hint: 'Used to create a Claude managed agent integration in your Novu environment.',
-      }));
+      !forcePrompt && options.anthropicApiKey?.trim()
+        ? options.anthropicApiKey.trim()
+        : await ui.promptForSecretInput({
+            title: 'Anthropic API key',
+            placeholder: 'sk-ant-…',
+            hint: 'Used to create a Claude managed agent integration in your Novu environment.',
+            verificationError,
+          });
 
     return { apiKey: apiKey.trim() };
   }
 
   const apiKey =
-    options.awsClaudeApiKey?.trim() ??
-    (await ui.promptForSecretInput({
-      title: 'AWS Claude API key',
-      placeholder: 'sk-ant-…',
-      hint: 'API key for your AWS Claude Platform workspace.',
-    }));
-  const region = options.awsClaudeRegion?.trim() ?? (await ui.pickAwsClaudeRegion());
+    !forcePrompt && options.awsClaudeApiKey?.trim()
+      ? options.awsClaudeApiKey.trim()
+      : await ui.promptForSecretInput({
+          title: 'AWS Claude API key',
+          placeholder: 'sk-ant-…',
+          hint: 'API key for your AWS Claude Platform workspace.',
+          verificationError,
+        });
+  const region =
+    !forcePrompt && options.awsClaudeRegion?.trim()
+      ? options.awsClaudeRegion.trim()
+      : await ui.pickAwsClaudeRegion();
   const externalWorkspaceId =
-    options.awsClaudeWorkspaceId?.trim() ??
-    (await ui.promptForSecretInput({
-      title: 'AWS Claude workspace ID',
-      placeholder: 'wrkspc_…',
-      hint: 'Workspace ID from the AWS Claude Platform console.',
-      secret: false,
-    }));
+    !forcePrompt && options.awsClaudeWorkspaceId?.trim()
+      ? options.awsClaudeWorkspaceId.trim()
+      : await ui.promptForSecretInput({
+          title: 'AWS Claude workspace ID',
+          placeholder: 'wrkspc_…',
+          hint: 'Workspace ID from the AWS Claude Platform console.',
+          secret: false,
+          verificationError,
+        });
 
   return {
     apiKey: apiKey.trim(),
     region: region.trim(),
     externalWorkspaceId: externalWorkspaceId.trim(),
   };
+}
+
+function clearCredentialFlags(options: ConnectCommandOptions, runtime: AgentRuntimeChoice): void {
+  if (runtime === 'claude') {
+    options.anthropicApiKey = undefined;
+
+    return;
+  }
+
+  if (runtime === 'claude-aws') {
+    options.awsClaudeApiKey = undefined;
+    options.awsClaudeRegion = undefined;
+    options.awsClaudeWorkspaceId = undefined;
+  }
+}
+
+function describeCredentialError(err: unknown): string {
+  if (err instanceof NovuApiError) {
+    return `${err.message} (${err.status} ${err.url})`;
+  }
+  if (err instanceof Error) return err.message;
+
+  return String(err);
 }

@@ -274,12 +274,18 @@ class Mailin extends events.EventEmitter {
               .then((finalizedMessage) =>
                 nr.startSegment('inbound-mail/upload-attachments', true, async () => {
                   if (Array.isArray(finalizedMessage.attachments) && finalizedMessage.attachments.length > 0) {
-                    const { uploaded, failedCount } = await uploadAttachmentsToS3(
+                    const { mode, uploaded, failedCount, retriableFailedCount } = await uploadAttachmentsToS3(
                       finalizedMessage.messageId,
                       finalizedMessage.attachments
                     );
 
                     finalizedMessage.attachments = uploaded;
+
+                    try {
+                      nr.addCustomAttributes({ 'mail.attachmentMode': mode });
+                    } catch {
+                      // instrumentation must never break the pipeline
+                    }
 
                     if (failedCount > 0) {
                       try {
@@ -289,20 +295,31 @@ class Mailin extends events.EventEmitter {
                       }
 
                       logger.warn(
-                        { context: LOG_CONTEXT, connectionId: connection.id, failedCount },
-                        `${connection.id} ${failedCount} attachment(s) failed to upload to S3 and were dropped`
+                        { context: LOG_CONTEXT, connectionId: connection.id, failedCount, mode },
+                        `${connection.id} ${failedCount} attachment(s) failed in ${mode} mode and were dropped`
                       );
 
                       /*
-                       * When INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true, signal a transient
-                       * SMTP failure (4xx) so the sending MTA retries delivery rather than
-                       * silently dropping attachments. Because buildStorageKey is deterministic
-                       * by (messageId, index, filename), retries idempotently overwrite the same S3
-                       * key on success.
+                       * When INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true and we were
+                       * uploading to S3, signal a transient SMTP failure (4xx) so the
+                       * sending MTA retries delivery rather than silently dropping
+                       * attachments. Because buildStorageKey is deterministic by
+                       * (messageId, index, filename), retries idempotently overwrite
+                       * the same S3 key on success.
+                       *
+                       * Gate on retriableFailedCount (transient S3 upload errors), NOT
+                       * the total failedCount: structural drops (no content, unsupported
+                       * shape, inline size-cap) would re-fail on every redelivery, so
+                       * retrying them would create an infinite 451 loop. Inline-mode
+                       * processing reports retriableFailedCount=0, so it is skipped too.
                        */
-                      if (process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true') {
+                      if (
+                        mode === 's3' &&
+                        retriableFailedCount > 0 &&
+                        process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true'
+                      ) {
                         const error: Error & { responseCode?: number } = new Error(
-                          `Attachment upload failed: ${failedCount} attachment(s) could not be stored`
+                          `Attachment upload failed: ${retriableFailedCount} attachment(s) could not be stored`
                         );
                         error.responseCode = 451;
                         throw error;

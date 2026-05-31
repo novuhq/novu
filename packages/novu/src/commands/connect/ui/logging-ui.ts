@@ -76,8 +76,11 @@ export function createLoggingUI(): ConnectUI {
         )
       );
     },
-    promptForSecretInput({ title }) {
+    promptForSecretInput({ title, verificationError }) {
       stop();
+      if (verificationError) {
+        console.error(chalk.yellow(`Credentials were rejected: ${verificationError}`));
+      }
 
       return Promise.reject(
         new Error(

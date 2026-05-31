@@ -49,6 +49,10 @@ const agentSchema = new Schema<AgentDBModel>(
       type: Schema.Types.ObjectId,
       ref: 'Environment',
     },
+    createdBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   schemaOptions
 );
