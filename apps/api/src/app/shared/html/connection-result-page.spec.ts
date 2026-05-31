@@ -10,7 +10,7 @@ describe('connection-result-page', () => {
       expect(CONNECTION_RESULT_CSP).to.match(/style-src[^;]*'unsafe-inline'/);
     });
 
-    it('allows inline scripts so the postMessage shim and onclick handler are not blocked', () => {
+    it('allows inline scripts so the close-tab onclick handler is not blocked', () => {
       expect(CONNECTION_RESULT_CSP).to.match(/script-src[^;]*'unsafe-inline'/);
     });
 
@@ -45,36 +45,17 @@ describe('connection-result-page', () => {
       expect(html).to.include('&quot;oops&quot; &amp; &lt;bad&gt;');
     });
 
-    it('embeds a postMessage shim only when a payload is provided', () => {
-      const withPayload = renderConnectionResultPage({
-        status: 'success',
-        title: 't',
-        heading: 'h',
-        message: 'm',
-        postMessagePayload: { type: 'novu-mcp-oauth-result', status: 'connected' },
-      });
-      const withoutPayload = renderConnectionResultPage({
-        status: 'success',
-        title: 't',
-        heading: 'h',
-        message: 'm',
-      });
-
-      expect(withPayload).to.include('window.opener.postMessage(');
-      expect(withoutPayload).to.not.include('window.opener.postMessage(');
-    });
-
-    it('escapes </script> breakout sequences inside the postMessage JSON payload', () => {
+    it('does not emit a window.opener.postMessage shim', () => {
       const html = renderConnectionResultPage({
-        status: 'error',
+        status: 'success',
         title: 't',
         heading: 'h',
         message: 'm',
-        postMessagePayload: { reason: '</script><script>alert(1)</script>' },
       });
 
-      expect(html).to.not.include('</script><script>alert(1)</script>');
-      expect(html).to.include('\\u003c/script>');
+      expect(html).to.not.include('window.opener');
+      expect(html).to.not.include('postMessage(');
+      expect(html).to.not.include('<script>');
     });
   });
 });

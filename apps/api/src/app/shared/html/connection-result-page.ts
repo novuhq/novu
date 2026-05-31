@@ -17,13 +17,10 @@ export type ConnectionResultStatus = 'success' | 'error';
 
 /**
  * CSP header value that matches what {@link renderConnectionResultPage} emits:
- * the page ships an inline `<style>` block and (optionally) an inline `<script>`
- * with a `postMessage` shim, plus an `onclick` handler on the close-tab link.
- *
- * `script-src` covers both `<script>` and inline event handlers (CSP3 falls
- * `script-src-attr` back to `script-src`). Same goes for `style-src` and
- * `style-src-attr`. We keep `default-src 'self'` so nothing else (network,
- * images, fonts, frames) is silently allowed.
+ * the page ships an inline `<style>` block and an `onclick` handler on the
+ * close-tab link. `script-src 'unsafe-inline'` covers the event handler via
+ * the CSP3 `script-src-attr` fallback; `style-src 'unsafe-inline'` covers the
+ * inline stylesheet. `default-src 'self'` keeps everything else locked down.
  */
 export const CONNECTION_RESULT_CSP =
   "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'";
@@ -38,13 +35,6 @@ export interface ConnectionResultPageOptions {
   message: string;
   /** Optional small footer note (e.g. "You can now return to where you started."). */
   footerNote?: string;
-  /**
-   * When provided, a best-effort `window.opener?.postMessage(payload, '*')` is
-   * emitted so a same-origin opener can auto-detect the outcome. Cross-origin
-   * openers that pin `event.origin` will ignore it — it is a convenience, never
-   * relied upon (the canonical flows use polling / popup-close detection).
-   */
-  postMessagePayload?: Record<string, unknown>;
 }
 
 export function escapeHtml(value: string): string {
@@ -168,7 +158,7 @@ const PAGE_STYLES = `
   }
 `;
 
-function pageShell(title: string, body: string, inlineScript?: string): string {
+function pageShell(title: string, body: string): string {
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -180,7 +170,7 @@ function pageShell(title: string, body: string, inlineScript?: string): string {
 <title>${escapeHtml(title)}</title>
 <style>${PAGE_STYLES}</style>
 </head>
-<body>${body}${inlineScript ? `<script>${inlineScript}</script>` : ''}</body>
+<body>${body}</body>
 </html>`;
 }
 
@@ -199,23 +189,8 @@ const ERROR_ICON = `<div class="info-icon" aria-hidden="true">!</div>`;
 const CLOSE_LINK = `<a class="secondary" href="javascript:void(0)" onclick="try{window.close();}catch(e){}var h=this.nextElementSibling;setTimeout(function(){if(!document.hidden&&h){h.style.display='block';}},150);return false;">Close this tab</a>
   <div class="cancel-hint">You can close this tab manually.</div>`;
 
-/**
- * Embeds a postMessage call for same-origin openers (e.g. MCP OAuth popup).
- *
- * Security: `JSON.stringify` is not enough inside `<script>` — the HTML parser
- * still recognizes `</script>` inside string literals and closes the block early.
- * MCP error payloads include `reason` from OAuth `error_description`, which is
- * provider-controlled. We replace `<` with `\u003c` in the serialized JSON so
- * the tokenizer never sees a breakout sequence; JS decodes it identically at runtime.
- */
-function buildPostMessageScript(payload: Record<string, unknown>): string {
-  const json = JSON.stringify(payload).replace(/</g, '\\u003c');
-
-  return `try{if(window.opener){window.opener.postMessage(${json},'*');}}catch(e){}`;
-}
-
 export function renderConnectionResultPage(options: ConnectionResultPageOptions): string {
-  const { status, title, heading, message, footerNote, postMessagePayload } = options;
+  const { status, title, heading, message, footerNote } = options;
   const icon = status === 'success' ? SUCCESS_ICON : ERROR_ICON;
   const footer = footerNote ? `<div class="footer">${escapeHtml(footerNote)}</div>` : '';
 
@@ -228,7 +203,5 @@ export function renderConnectionResultPage(options: ConnectionResultPageOptions)
   ${footer}
 </div>`;
 
-  const inlineScript = postMessagePayload ? buildPostMessageScript(postMessagePayload) : undefined;
-
-  return pageShell(title, body, inlineScript);
+  return pageShell(title, body);
 }
