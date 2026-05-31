@@ -45,6 +45,9 @@ export type ProcessedAttachment = UploadedAttachment | InlineAttachment;
 
 export type AttachmentProcessingMode = 's3' | 'inline';
 
+/** Where the attachment binary lives after processing — S3 object vs inline in the queue payload. */
+export type AttachmentSource = AttachmentProcessingMode;
+
 export interface AttachmentProcessingResult {
   mode: AttachmentProcessingMode;
   uploaded: ProcessedAttachment[];
@@ -108,6 +111,14 @@ type AttachmentInput = { filename?: string; contentType?: string; content?: Buff
  * null when content is missing or has an unsupported shape so callers can
  * skip the attachment without throwing.
  */
+function attachmentSourceOf(attachment: ProcessedAttachment): AttachmentSource {
+  if ('storagePath' in attachment && attachment.storagePath) {
+    return 's3';
+  }
+
+  return 'inline';
+}
+
 function coerceAttachmentContent(content: AttachmentInput['content']): Buffer | null {
   if (!content) {
     return null;
@@ -165,6 +176,18 @@ async function uploadSingle(
     expiresIn: ttlSeconds,
   });
 
+  logger.info(
+    {
+      context: LOG_CONTEXT,
+      messageId,
+      filename,
+      attachmentSource: 's3' satisfies AttachmentSource,
+      storagePath,
+      size: content.byteLength,
+    },
+    'Attachment stored in S3'
+  );
+
   return {
     filename,
     contentType,
@@ -204,6 +227,16 @@ function processInline(attachment: AttachmentInput): InlineAttachment | null {
 
     return null;
   }
+
+  logger.info(
+    {
+      context: LOG_CONTEXT,
+      filename,
+      attachmentSource: 'inline' satisfies AttachmentSource,
+      size: content.byteLength,
+    },
+    'Attachment embedded inline in queue payload'
+  );
 
   return {
     filename,
@@ -254,21 +287,56 @@ export async function uploadAttachmentsToS3(
       }
     }
 
+    logger.info(
+      {
+        context: LOG_CONTEXT,
+        messageId,
+        mode: 'inline',
+        total: attachments.length,
+        succeeded: uploaded.length,
+        failedCount,
+        s3Count: 0,
+        inlineCount: uploaded.length,
+      },
+      'Inbound attachment processing complete'
+    );
+
     return { mode: 'inline', uploaded, failedCount };
   }
 
   const s3 = buildS3Client();
-  let failedCount = 0;
 
   const results = await Promise.all(
     attachments.map(async (attachment, index) => {
       try {
-        return await uploadSingle(s3, bucket, messageId, index, attachment as AttachmentInput);
+        const uploaded = await uploadSingle(s3, bucket, messageId, index, attachment as AttachmentInput);
+
+        if (uploaded) {
+          return uploaded;
+        }
+
+        return null;
       } catch (err) {
-        failedCount += 1;
+        logger.warn(
+          {
+            err,
+            context: LOG_CONTEXT,
+            messageId,
+            filename: attachment.filename,
+            attachmentSource: 'inline' satisfies AttachmentSource,
+          },
+          'S3 upload failed — falling back to inline embed in queue payload'
+        );
+
+        const inlineResult = processInline(attachment as AttachmentInput);
+
+        if (inlineResult) {
+          return inlineResult;
+        }
+
         logger.error(
           { err, context: LOG_CONTEXT, messageId, filename: attachment.filename },
-          'Failed to upload attachment to S3'
+          'S3 upload failed and inline fallback could not embed attachment'
         );
 
         return null;
@@ -276,7 +344,30 @@ export async function uploadAttachmentsToS3(
     })
   );
 
-  const uploaded = results.filter((r): r is UploadedAttachment => r !== null);
+  const uploaded = results.filter((r): r is ProcessedAttachment => r !== null);
+  const failedCount = results.length - uploaded.length;
+  const hasS3Uploads = uploaded.some((attachment) => 'storagePath' in attachment && Boolean(attachment.storagePath));
+  const mode: AttachmentProcessingMode = hasS3Uploads ? 's3' : 'inline';
+  const s3Count = uploaded.filter((attachment) => attachmentSourceOf(attachment) === 's3').length;
+  const inlineCount = uploaded.length - s3Count;
 
-  return { mode: 's3', uploaded, failedCount };
+  logger.info(
+    {
+      context: LOG_CONTEXT,
+      messageId,
+      mode,
+      total: attachments.length,
+      succeeded: uploaded.length,
+      failedCount,
+      s3Count,
+      inlineCount,
+      attachmentSources: uploaded.map((attachment) => ({
+        filename: attachment.filename,
+        attachmentSource: attachmentSourceOf(attachment),
+      })),
+    },
+    'Inbound attachment processing complete'
+  );
+
+  return { mode, uploaded, failedCount };
 }

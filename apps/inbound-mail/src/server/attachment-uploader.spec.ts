@@ -97,7 +97,7 @@ describe('uploadAttachmentsToS3', () => {
     sinon.assert.calledOnce(s3SendStub);
   });
 
-  it('drops an attachment on S3 upload failure and increments failedCount', async () => {
+  it('falls back to inline embed when S3 upload fails', async () => {
     s3SendStub.rejects(new Error('S3 connection refused'));
 
     const attachment = {
@@ -108,11 +108,13 @@ describe('uploadAttachmentsToS3', () => {
 
     const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [attachment]);
 
-    expect(result.uploaded).to.have.length(0);
-    expect(result.failedCount).to.equal(1);
+    expect(result.mode).to.equal('inline');
+    expect(result.uploaded).to.have.length(1);
+    expect(result.failedCount).to.equal(0);
+    expect((result.uploaded[0] as { filename: string }).filename).to.equal('fail.jpg');
   });
 
-  it('uploads successful attachments and counts individually failing ones', async () => {
+  it('uploads successful attachments and inline-falls back for failing ones', async () => {
     s3SendStub.onFirstCall().resolves({}).onSecondCall().rejects(new Error('network timeout'));
 
     const attachments = [
@@ -122,9 +124,11 @@ describe('uploadAttachmentsToS3', () => {
 
     const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, attachments);
 
-    expect(result.uploaded).to.have.length(1);
+    expect(result.mode).to.equal('s3');
+    expect(result.uploaded).to.have.length(2);
     expect(result.uploaded[0].filename).to.equal('ok.pdf');
-    expect(result.failedCount).to.equal(1);
+    expect(result.uploaded[1].filename).to.equal('bad.jpg');
+    expect(result.failedCount).to.equal(0);
   });
 
   it('drops attachment with no content', async () => {
@@ -133,7 +137,7 @@ describe('uploadAttachmentsToS3', () => {
     const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [attachment]);
 
     expect(result.uploaded).to.have.length(0);
-    expect(result.failedCount).to.equal(0);
+    expect(result.failedCount).to.equal(1);
     sinon.assert.notCalled(s3SendStub);
   });
 
@@ -257,7 +261,7 @@ describe('uploadAttachmentsToS3', () => {
     const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [attachment]);
 
     expect(result.uploaded).to.have.length(0);
-    expect(result.failedCount).to.equal(0);
+    expect(result.failedCount).to.equal(1);
     sinon.assert.notCalled(s3SendStub);
   });
 });

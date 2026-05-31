@@ -43,6 +43,12 @@ export class AttachmentRehydrator {
      * and return the legacy shape consumers expect.
      */
     if (!attachment.storagePath) {
+      Logger.log(
+        { filename: attachment.filename, attachmentSource: 'inline' },
+        'Attachment source is inline queue payload — skipping S3 rehydration',
+        LOG_CONTEXT
+      );
+
       return {
         filename: attachment.filename,
         contentType: attachment.contentType,
@@ -55,6 +61,12 @@ export class AttachmentRehydrator {
     }
 
     try {
+      Logger.log(
+        { filename: attachment.filename, storagePath: attachment.storagePath, attachmentSource: 's3' },
+        'Attachment source is S3 — rehydrating from storage',
+        LOG_CONTEXT
+      );
+
       const fileBuffer = await this.storageService.getFile(attachment.storagePath);
 
       return {
