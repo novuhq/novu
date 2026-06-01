@@ -1,13 +1,19 @@
 import type { PendingToolApproval } from '@novu/application-generic';
+import { getMcpIconUrl, MCP_ICON_DEFAULT_ID, resolveMcpCatalogIdByName } from '@novu/shared';
 import type { ActionRequired, Response as ThalamusResponse } from '@novu/thalamus';
-import type { ActionsBlock, Block, ContextBlock } from '@slack/types';
+import type { ActionsBlock, Block } from '@slack/types';
 import type { SlackNativeDelivery } from '../../conversation-runtime/egress/slack-native-delivery';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 
 export const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
 
-const SLACK_TOOL_APPROVAL_PLACEHOLDER_ICON = 'https://dashboard.novu.co/images/report-emails/providers/light/novu.png';
+function resolveSlackMcpIconUrl(mcpServerName?: string): string {
+  const mcpId = resolveMcpCatalogIdByName(mcpServerName) ?? MCP_ICON_DEFAULT_ID;
+  const baseUrl = process.env.FRONT_BASE_URL || 'https://dashboard.novu.co';
+
+  return getMcpIconUrl(mcpId, baseUrl);
+}
 
 type SlackCardBlock = Block & {
   type: 'card';
@@ -274,7 +280,7 @@ function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string)
     type: 'card',
     icon: {
       type: 'image',
-      image_url: SLACK_TOOL_APPROVAL_PLACEHOLDER_ICON,
+      image_url: resolveSlackMcpIconUrl(tool.mcpServerName),
       alt_text: tool.mcpServerName ?? 'Tool approval',
     },
     title: { type: 'mrkdwn', text: 'Tool approval required', verbatim: false },

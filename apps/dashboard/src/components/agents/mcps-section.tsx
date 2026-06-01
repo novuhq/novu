@@ -12,7 +12,7 @@ import {
   listAgentMcpServers,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { getMcpIcon } from '@/components/icons/mcp';
+import { McpIcon } from '@/components/agents/mcp-icon';
 import { Button } from '@/components/primitives/button';
 import { CompactButton } from '@/components/primitives/button-compact';
 import { Skeleton } from '@/components/primitives/skeleton';
@@ -153,7 +153,6 @@ export function McpsSection({ agent }: McpsSectionProps) {
             {enabledServers.map((enablement) => {
               const catalog = MCP_CATALOG_BY_ID.get(enablement.mcpId);
               const displayName = catalog?.name ?? enablement.mcpId;
-              const Icon = getMcpIcon(catalog?.id ?? enablement.mcpId);
               const isRowPending = pendingRemovalId === enablement.mcpId;
 
               return (
@@ -165,7 +164,7 @@ export function McpsSection({ agent }: McpsSectionProps) {
                   )}
                   aria-busy={isRowPending || undefined}
                 >
-                  {Icon ? <Icon className="size-5 shrink-0" aria-hidden /> : null}
+                  <McpIcon mcpId={catalog?.id ?? enablement.mcpId} />
                   <span className="text-text-sub text-label-sm min-w-0 flex-1 truncate font-medium">{displayName}</span>
                   {canEdit ? (
                     <CompactButton

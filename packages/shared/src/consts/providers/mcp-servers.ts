@@ -409,3 +409,33 @@ export const MCP_SERVERS: McpServer[] = [
 ];
 
 export const POPULAR_MCP_SERVERS = MCP_SERVERS.filter((s) => s.popular);
+
+export const MCP_ICON_DEFAULT_ID = 'default' as const;
+
+export const MCP_ICON_BASE_PATH = '/agents/mcp';
+
+export function getMcpIconPath(mcpId: string): string {
+  return `${MCP_ICON_BASE_PATH}/${mcpId}.png`;
+}
+
+export function getMcpIconUrl(mcpId: string, baseUrl: string): string {
+  const normalizedBase = baseUrl.replace(/\/$/, '');
+
+  return `${normalizedBase}${getMcpIconPath(mcpId)}`;
+}
+
+export function resolveMcpCatalogIdByName(name: string | undefined): string | undefined {
+  if (!name) {
+    return undefined;
+  }
+
+  const byName = MCP_SERVERS.find((entry) => entry.name === name);
+
+  if (byName) {
+    return byName.id;
+  }
+
+  const byId = MCP_SERVERS.find((entry) => entry.id === name);
+
+  return byId?.id;
+}

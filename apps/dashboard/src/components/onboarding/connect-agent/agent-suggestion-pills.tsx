@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { type AgentTemplate } from '@/components/agents/create-agent-fields';
-import { getMcpIcon } from '@/components/icons/mcp';
+import { McpIcon } from '@/components/agents/mcp-icon';
 import { OrbIcon } from '@/components/icons/orb';
 import { cn } from '@/utils/ui';
 
@@ -55,19 +55,14 @@ function SuggestionPill({ suggestion, disabled, onSelect }: SuggestionPillProps)
       </span>
       {(visibleIcons.length > 0 || overflowCount > 0) && (
         <span className="inline-flex items-center gap-0.5">
-          {visibleIcons.map((id) => {
-            const Icon = getMcpIcon(id);
-            if (!Icon) return null;
-
-            return (
-              <span
-                key={id}
-                className="border-stroke-soft-100 inline-flex size-[18px] items-center justify-center rounded-[4px] border bg-[#fbfbfb]"
-              >
-                <Icon className="size-[14px]" />
-              </span>
-            );
-          })}
+          {visibleIcons.map((id) => (
+            <span
+              key={id}
+              className="border-stroke-soft-100 inline-flex size-[18px] items-center justify-center rounded-[4px] border bg-[#fbfbfb]"
+            >
+              <McpIcon mcpId={id} className="size-[14px]" />
+            </span>
+          ))}
           {overflowCount > 0 && (
             <span className="border-stroke-soft-100 text-text-soft inline-flex size-[18px] items-center justify-center rounded-[4px] border bg-[#fbfbfb] text-[10px] font-medium leading-[14px]">
               +{overflowCount}
