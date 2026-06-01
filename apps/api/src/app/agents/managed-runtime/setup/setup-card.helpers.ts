@@ -1,65 +1,272 @@
-import { McpConnectionStatusEnum } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
 
-import type { OAuthMcp } from './oauth-mcp.types';
+import { isProviderManagedOAuthMcp, type OAuthMcp } from './oauth-mcp.types';
 
 export interface SetupCardRow extends OAuthMcp {
   authorizeUrl?: string;
+  authorizeUrlWithAutoApprove?: string;
   /** Provider-managed MCPs render as connected without Novu OAuth. */
   treatAsConnected?: boolean;
 }
 
-const SETUP_REQUIRED_TEXT =
-  'Connect the tools below to continue. Your message will be handled automatically once setup is complete.';
+export const SETUP_CONNECT_BUTTON_LABEL = 'Connect';
 
-const SETUP_COMPLETE_TEXT_CELEBRATION = "You're all set!";
+export const SETUP_CONNECT_AUTO_APPROVE_BUTTON_LABEL = 'Connect & auto-approve';
 
-const SETUP_COMPLETE_TEXT_WITH_PROCESSING_HINT = 'All tools connected. Your message will run automatically.';
+export const SETUP_RETRY_BUTTON_LABEL = 'Retry';
+
+export const SETUP_RETRY_AUTO_APPROVE_BUTTON_LABEL = 'Retry & auto-approve';
+
+export function resolveSetupConnectButtonLabels(mcp: SetupCardRow): {
+  connect: string;
+  connectWithAutoApprove: string;
+} {
+  if (isSetupMcpRowError(mcp)) {
+    return {
+      connect: SETUP_RETRY_BUTTON_LABEL,
+      connectWithAutoApprove: SETUP_RETRY_AUTO_APPROVE_BUTTON_LABEL,
+    };
+  }
+
+  return {
+    connect: SETUP_CONNECT_BUTTON_LABEL,
+    connectWithAutoApprove: SETUP_CONNECT_AUTO_APPROVE_BUTTON_LABEL,
+  };
+}
+
+export const SETUP_INTRO_TEXT =
+  'Connect the remaining tools below. Your message runs automatically when setup is complete.';
+
+/** @deprecated Use SETUP_INTRO_TEXT — kept for callers outside the setup card builders. */
+export const SETUP_REQUIRED_TEXT = SETUP_INTRO_TEXT;
+
+export const SETUP_COMPLETE_TEXT_CELEBRATION = "You're all set!";
+
+export const SETUP_COMPLETE_TEXT_WITH_PROCESSING_HINT = 'All tools connected. Your message will run automatically.';
 
 export const SETUP_GATE_NUDGE_MARKDOWN =
   'Please finish connecting your tools using the card above. Your latest message will run automatically once setup is complete.';
 
-function isErrorStatus(status: OAuthMcp['status']): boolean {
+export const SETUP_AUTO_APPROVE_HINT = 'Auto-approve skips approval prompts for all tools from this integration.';
+
+export const PROVIDER_MANAGED_FOOTER_HINT = 'Some tools are already connected via your workspace — no OAuth needed.';
+
+export function isSetupMcpRowConnected(mcp: SetupCardRow): boolean {
+  return mcp.treatAsConnected === true || mcp.status === McpConnectionStatusEnum.Connected;
+}
+
+export function isSetupMcpRowPending(mcp: SetupCardRow): boolean {
+  return !isSetupMcpRowConnected(mcp);
+}
+
+export function isSetupMcpRowError(mcp: SetupCardRow): boolean {
   return (
-    status === McpConnectionStatusEnum.Error ||
-    status === McpConnectionStatusEnum.Expired ||
-    status === McpConnectionStatusEnum.Revoked
+    mcp.status === McpConnectionStatusEnum.Error ||
+    mcp.status === McpConnectionStatusEnum.Expired ||
+    mcp.status === McpConnectionStatusEnum.Revoked
   );
 }
 
-function buildConnectedRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  return [{ type: 'text', content: `**${mcp.name}**  ✅` }];
+export function countConnectedSetupCardRows(mcps: SetupCardRow[]): number {
+  return mcps.filter(isSetupMcpRowConnected).length;
 }
 
-function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  const blocks: Record<string, unknown>[] = [{ type: 'text', content: `**${mcp.name}**` }];
+export function hasProviderManagedConnectedSetupRows(mcps: SetupCardRow[]): boolean {
+  return mcps.some((mcp) => isSetupMcpRowConnected(mcp) && (mcp.treatAsConnected || isProviderManagedOAuthMcp(mcp)));
+}
 
-  if (isErrorStatus(mcp.status) && mcp.errorMessage) {
-    blocks.push({ type: 'text', content: mcp.errorMessage, style: 'muted' });
+/** Pending rows only, errors first, then alphabetical. */
+export function sortPendingSetupCardRows(mcps: SetupCardRow[]): SetupCardRow[] {
+  return mcps.filter(isSetupMcpRowPending).sort((left, right) => {
+    const leftError = isSetupMcpRowError(left) ? 0 : 1;
+    const rightError = isSetupMcpRowError(right) ? 0 : 1;
+
+    if (leftError !== rightError) {
+      return leftError - rightError;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+}
+
+export function resolveMcpDescription(mcpId: string): string {
+  return MCP_SERVERS.find((entry) => entry.id === mcpId)?.description ?? '';
+}
+
+function resolveMcpPermissionHint(mcpId: string): string | undefined {
+  const oauth = MCP_SERVERS.find((entry) => entry.id === mcpId)?.oauth;
+
+  if (
+    !oauth ||
+    oauth.mode === McpConnectionAuthModeEnum.ProviderManaged ||
+    oauth.mode === McpConnectionAuthModeEnum.Dcr
+  ) {
+    return undefined;
   }
 
-  if (mcp.authorizeUrl) {
-    blocks.push({
+  if (!('scopes' in oauth) || oauth.scopes.length === 0) {
+    return undefined;
+  }
+
+  const preview = oauth.scopes.slice(0, 4).join(', ');
+  const suffix = oauth.scopes.length > 4 ? ', …' : '';
+
+  return `Permissions requested: ${preview}${suffix}`;
+}
+
+export function resolveMcpStatusHint(mcp: SetupCardRow): string | undefined {
+  if (mcp.status === McpConnectionStatusEnum.Expired) {
+    return 'Connection expired — reconnect to continue.';
+  }
+
+  if (mcp.status === McpConnectionStatusEnum.Revoked) {
+    return 'Access revoked — reconnect to continue.';
+  }
+
+  if (mcp.status === McpConnectionStatusEnum.Error) {
+    return mcp.errorMessage ?? 'Connection failed — try again.';
+  }
+
+  return undefined;
+}
+
+export function resolveProviderManagedRowHint(mcp: SetupCardRow): string | undefined {
+  if (!mcp.treatAsConnected && !isProviderManagedOAuthMcp(mcp)) {
+    return undefined;
+  }
+
+  return 'Connected via your workspace — no OAuth needed.';
+}
+
+export function buildMcpCardBodyMarkdown(mcp: SetupCardRow): string {
+  const lines: string[] = [];
+
+  const description = resolveMcpDescription(mcp.mcpId);
+  if (description) {
+    lines.push(description);
+  }
+
+  const providerManagedHint = resolveProviderManagedRowHint(mcp);
+  if (providerManagedHint) {
+    lines.push(`_${providerManagedHint}_`);
+  }
+
+  const statusHint = resolveMcpStatusHint(mcp);
+  if (statusHint) {
+    lines.push(`_${statusHint}_`);
+  }
+
+  const permissionHint = resolveMcpPermissionHint(mcp.mcpId);
+  if (permissionHint) {
+    lines.push(`_${permissionHint}_`);
+  }
+
+  if (!mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
+    lines.push('_Connect unavailable — try again from the dashboard._');
+  }
+
+  return lines.join('\n');
+}
+
+/** Short subtitle for Slack native cards — status hints only (description lives in card body). */
+export function buildMcpCardSubtitleMarkdown(mcp: SetupCardRow): string | undefined {
+  const parts: string[] = [];
+
+  const statusHint = resolveMcpStatusHint(mcp);
+  if (statusHint) {
+    parts.push(statusHint);
+  }
+
+  if (!mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
+    parts.push('Connect unavailable — try again from the dashboard.');
+  }
+
+  if (parts.length === 0) {
+    return undefined;
+  }
+
+  return parts.join(' · ');
+}
+
+export function buildMcpRowMarkdown(mcp: SetupCardRow): string {
+  const lines = [`*${mcp.name}*`, ...buildMcpCardBodyMarkdown(mcp).split('\n').filter(Boolean)];
+
+  return lines.join('\n');
+}
+
+function appendHintLine(lines: string[], hint: string | undefined): void {
+  if (hint) {
+    lines.push(hint);
+  }
+}
+
+export function buildMcpRowPlainText(mcp: SetupCardRow): string {
+  const lines = [`**${mcp.name}**`];
+
+  const body = buildMcpCardBodyMarkdown(mcp)
+    .split('\n')
+    .map((line) => line.replace(/^_(.+)_$/, '$1'));
+
+  lines.push(...body.filter(Boolean));
+
+  return lines.join('\n');
+}
+
+export function buildSetupMcpPortableCard(mcp: SetupCardRow): Record<string, unknown> {
+  const children: Record<string, unknown>[] = [{ type: 'text', content: buildMcpRowPlainText(mcp) }];
+
+  if (mcp.authorizeUrlWithAutoApprove && isSetupMcpRowPending(mcp)) {
+    children.push({ type: 'text', content: SETUP_AUTO_APPROVE_HINT });
+  }
+
+  if (mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
+    const labels = resolveSetupConnectButtonLabels(mcp);
+    const actionButtons: Array<{ type: string; label: string; url: string }> = [];
+
+    if (mcp.authorizeUrlWithAutoApprove) {
+      actionButtons.push({
+        type: 'link-button',
+        label: labels.connectWithAutoApprove,
+        url: mcp.authorizeUrlWithAutoApprove,
+      });
+    }
+
+    actionButtons.push({
+      type: 'link-button',
+      label: labels.connect,
+      url: mcp.authorizeUrl,
+    });
+
+    children.push({
       type: 'actions',
-      children: [
-        {
-          type: 'link-button',
-          label: isErrorStatus(mcp.status) ? 'Retry' : 'Connect',
-          url: mcp.authorizeUrl,
-          style: 'primary',
-        },
-      ],
+      children: actionButtons,
     });
   }
 
-  return blocks;
+  return {
+    type: 'card',
+    title: mcp.name,
+    children,
+  };
 }
 
-function buildMcpRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  if (mcp.treatAsConnected || mcp.status === McpConnectionStatusEnum.Connected) {
-    return buildConnectedRowBlocks(mcp);
-  }
+function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
+  return [buildSetupMcpPortableCard(mcp)];
+}
 
-  return buildPendingRowBlocks(mcp);
+export function buildPendingPortableRowBlocks(mcps: SetupCardRow[]): Record<string, unknown>[] {
+  const pendingRows = sortPendingSetupCardRows(mcps);
+  const blocks: Record<string, unknown>[] = [];
+
+  pendingRows.forEach((mcp, index) => {
+    if (index > 0) {
+      blocks.push({ type: 'divider' });
+    }
+
+    blocks.push(...buildPendingRowBlocks(mcp));
+  });
+
+  return blocks;
 }
 
 export function buildSetupCard(params: {
@@ -80,10 +287,7 @@ export function buildSetupCard(params: {
     };
   }
 
-  const children = [
-    { type: 'text', content: SETUP_REQUIRED_TEXT },
-    ...params.mcps.flatMap((mcp) => buildMcpRowBlocks(mcp)),
-  ];
+  const children = [{ type: 'text', content: SETUP_INTRO_TEXT }, ...buildPendingPortableRowBlocks(params.mcps)];
 
   return {
     type: 'card',

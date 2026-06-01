@@ -24,6 +24,8 @@ export interface McpOAuthState {
   userId?: string;
   /** Where the OAuth URL was generated — round-trips for consistent callback attribution. */
   source?: 'api' | 'setup_card';
+  /** When set, persist server-wide tool auto-approve on the connection after OAuth succeeds. */
+  trustToolsOnConnect?: boolean;
 }
 
 export function buildMcpOAuthRedirectUri(): string {

@@ -84,3 +84,24 @@ export async function editSlackNativeBlocks(params: {
 
   return { messageId: result.ts, platformThreadId: params.platformThreadId };
 }
+
+export async function deleteSlackNativeMessage(params: {
+  botToken: string;
+  platformThreadId: string;
+  platformMessageId: string;
+}): Promise<void> {
+  const { channel } = decodeSlackPlatformThreadId(params.platformThreadId);
+  const client = createSlackWebClient(params.botToken);
+
+  const result = await client.chat.delete({
+    channel,
+    ts: params.platformMessageId,
+  });
+
+  if (!result.ok) {
+    throw new BadGatewayException({
+      error: 'delivery_failed',
+      message: result.error ?? 'Slack chat.delete failed',
+    });
+  }
+}

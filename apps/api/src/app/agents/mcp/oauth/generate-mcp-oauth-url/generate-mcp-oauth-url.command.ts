@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
 
@@ -20,4 +20,9 @@ export class GenerateMcpOAuthUrlCommand extends EnvironmentWithUserCommand {
   @IsOptional()
   @IsString()
   conversationId?: string;
+
+  /** Setup card: auto-approve all tools from this MCP after OAuth succeeds. */
+  @IsOptional()
+  @IsBoolean()
+  trustToolsOnConnect?: boolean;
 }

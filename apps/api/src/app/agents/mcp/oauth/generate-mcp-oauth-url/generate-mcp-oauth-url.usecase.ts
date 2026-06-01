@@ -773,6 +773,7 @@ export class GenerateMcpOAuthUrl {
       userId: command.userId,
       source: command.userId === 'system' ? 'setup_card' : 'api',
       ...(command.conversationId ? { conversationId: command.conversationId } : {}),
+      ...(command.trustToolsOnConnect ? { trustToolsOnConnect: true } : {}),
     };
 
     const payload = JSON.stringify(stateData);

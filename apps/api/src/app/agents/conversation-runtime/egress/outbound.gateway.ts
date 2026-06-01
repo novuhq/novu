@@ -12,6 +12,7 @@ import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
 import {
+  deleteSlackNativeMessage,
   editSlackNativeBlocks,
   getSlackApiErrorCode,
   postSlackNativeBlocks,
@@ -324,6 +325,37 @@ export class OutboundGateway {
     const edited = await editPromise.catch(toDeliveryError);
 
     return { messageId: edited.id, platformThreadId: edited.threadId };
+  }
+
+  async deleteInConversation(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    platformThreadId: string,
+    platformMessageId: string
+  ): Promise<void> {
+    if (platform === AgentPlatformEnum.SLACK) {
+      const botToken = await this.resolveSlackBotToken(agentId, integrationIdentifier);
+
+      await deleteSlackNativeMessage({
+        botToken,
+        platformThreadId,
+        platformMessageId,
+      });
+
+      return;
+    }
+
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const adapter = chat.getAdapter(platform);
+    if (typeof adapter.deleteMessage !== 'function') {
+      return;
+    }
+
+    await adapter.deleteMessage(platformThreadId, platformMessageId).catch(toDeliveryError);
   }
 
   async postPlanObject(
