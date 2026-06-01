@@ -118,7 +118,7 @@ export class GenerateMcpOAuthUrl {
       context = await this.loadAuthorizeContext(command);
     }
 
-    const reuseOpts = { reusedPendingSession: !sessionRotated };
+    const reuseOpts = { reusedPendingSession: !sessionRotated, skipAnalytics: sessionRotated };
     const authorizeUrl = (await this.buildAuthorizeUrlForExistingPending(context, command, reuseOpts)).authorizeUrl;
 
     let authorizeUrlWithAutoApprove: string | undefined;
@@ -128,7 +128,7 @@ export class GenerateMcpOAuthUrl {
         await this.buildAuthorizeUrlForExistingPending(
           context,
           GenerateMcpOAuthUrlCommand.create({ ...command, trustToolsOnConnect: true }),
-          reuseOpts
+          { ...reuseOpts, skipAnalytics: true }
         )
       ).authorizeUrl;
     } catch (err) {
@@ -229,22 +229,24 @@ export class GenerateMcpOAuthUrl {
       agent: { _id: string };
     },
     authorizeUrl: string,
-    options?: { reusedPendingSession?: boolean }
+    options?: { reusedPendingSession?: boolean; skipAnalytics?: boolean }
   ): GenerateMcpOAuthUrlResponseDto {
-    trackAgentMcpOAuthCreated(this.analyticsService, {
-      userId: command.userId,
-      organizationId: command.organizationId,
-      environmentId: command.environmentId,
-      agentId: context.agent._id,
-      agentIdentifier: command.agentIdentifier,
-      mcpId: command.mcpId,
-      authMode: context.oauthConfig.mode,
-      scope: McpConnectionScopeEnum.Subscriber,
-      subscriberId: command.subscriberId,
-      source: command.userId === 'system' ? 'setup_card' : 'api',
-      conversationId: command.conversationId,
-      reusedPendingSession: options?.reusedPendingSession,
-    });
+    if (!options?.skipAnalytics) {
+      trackAgentMcpOAuthCreated(this.analyticsService, {
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        agentId: context.agent._id,
+        agentIdentifier: command.agentIdentifier,
+        mcpId: command.mcpId,
+        authMode: context.oauthConfig.mode,
+        scope: McpConnectionScopeEnum.Subscriber,
+        subscriberId: command.subscriberId,
+        source: command.userId === 'system' ? 'setup_card' : 'api',
+        conversationId: command.conversationId,
+        reusedPendingSession: options?.reusedPendingSession,
+      });
+    }
 
     return { authorizeUrl };
   }
@@ -321,7 +323,7 @@ export class GenerateMcpOAuthUrl {
       existing: McpConnectionEntity | null;
     },
     command: GenerateMcpOAuthUrlCommand,
-    options?: { reusedPendingSession?: boolean }
+    options?: { reusedPendingSession?: boolean; skipAnalytics?: boolean }
   ): Promise<GenerateMcpOAuthUrlResponseDto> {
     const { catalog, oauthConfig, enablement, agent, subscriber, existing } = context;
 
