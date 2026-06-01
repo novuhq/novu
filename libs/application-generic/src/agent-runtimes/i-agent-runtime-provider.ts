@@ -18,6 +18,11 @@ export type CreateAgentInput = {
   mcpServers?: Array<{ name: string; url: string }>;
   /** Skills to attach to the agent at creation time. Maximum 20. */
   skills?: AgentSkillDto[];
+  /**
+   * When true, builtin and MCP toolsets are provisioned with `always_allow`
+   * permission policies instead of the default `always_ask`.
+   */
+  useAlwaysAllowToolPermissions?: boolean;
 };
 
 export type CreateAgentResult = {
@@ -40,6 +45,11 @@ export type UpdateAgentRuntimeConfigInput = {
   mcpServers?: AgentMcpServerDto[];
   tools?: AgentToolDto[];
   skills?: AgentSkillDto[];
+  /**
+   * When true, rebuilt toolset payloads use `always_allow` permission policies
+   * instead of the default `always_ask`.
+   */
+  useAlwaysAllowToolPermissions?: boolean;
 };
 
 export type ProvisionIntegrationInput = {

@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
+import { FeatureFlagsService, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { MCP_SERVERS } from '@novu/shared';
 
 import { projectMcpRowsToCatalog } from '../../project-mcp-servers';
+import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../resolve-managed-agent-always-allow-tool-permissions';
 import { SyncAgentMcpServersCommand } from './sync-agent-mcp-servers.command';
 
 /**
@@ -27,6 +28,7 @@ export class SyncAgentMcpServers {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -86,9 +88,17 @@ export class SyncAgentMcpServers {
     });
 
     const runtimeProvider = resolved.provider;
+    const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
+      featureFlagsService: this.featureFlagsService,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
 
     try {
-      await runtimeProvider.updateConfig(externalAgentId, { mcpServers: projection });
+      await runtimeProvider.updateConfig(externalAgentId, {
+        mcpServers: projection,
+        useAlwaysAllowToolPermissions,
+      });
     } catch (err) {
       const code = err instanceof Error ? err.name || 'sync_error' : 'sync_error';
       const message = err instanceof Error ? err.message : 'Unknown provider error';

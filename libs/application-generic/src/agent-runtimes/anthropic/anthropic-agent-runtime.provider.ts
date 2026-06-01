@@ -46,6 +46,7 @@ import {
   buildMcpOAuthCreateAuth,
   buildMcpOAuthUpdateAuth,
   buildToolsPayload,
+  resolveManagedAgentPermissionConfig,
   extractApiErrorMessage,
   extractSkillNameFromBundle,
   isDuplicateDisplayTitleError,
@@ -179,7 +180,8 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // Not retried: agent creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable agent upstream.
     try {
-      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
+      const permissionConfig = resolveManagedAgentPermissionConfig(input.useAlwaysAllowToolPermissions);
+      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, permissionConfig);
 
       const agent = await (client as any).beta.agents.create({
         name: input.name,
@@ -291,7 +293,8 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
             patch.mcpServers !== undefined
               ? patch.mcpServers.map((s) => ({ name: s.name, url: s.url }))
               : currentMcpServers.map((s) => ({ name: s.name, url: s.url }));
-          const toolsPayload = buildToolsPayload(toolTypes, mcpServers);
+          const permissionConfig = resolveManagedAgentPermissionConfig(patch.useAlwaysAllowToolPermissions);
+          const toolsPayload = buildToolsPayload(toolTypes, mcpServers, permissionConfig);
 
           if (toolsPayload.length > 0) updatePayload.tools = toolsPayload;
         }
