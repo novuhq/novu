@@ -31,6 +31,9 @@ if (process.env.NODE_ENV === 'development') {
 }
 const anonymousIdLocalState = config.getValue('anonymousId');
 const anonymousId = anonymousIdLocalState || uuidv4();
+if (!anonymousIdLocalState) {
+  config.setValue('anonymousId', anonymousId);
+}
 const program = new Command();
 
 program.name('novu').description(`A CLI tool to interact with Novu Cloud`);

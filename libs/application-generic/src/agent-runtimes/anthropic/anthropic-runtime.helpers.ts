@@ -39,6 +39,24 @@ export function truncateWithEllipsis(value: string, max: number): string {
 }
 
 /**
+ * Anthropic's SDK formats `APIError.message` as `"<status> <raw-json-body>"`
+ * (e.g. `400 {"type":"error","error":{"message":"…"}}`), which is unreadable
+ * when surfaced to end users. The SDK also exposes the parsed response body on
+ * `error.error`, so we prefer the upstream `error.message` field and fall back
+ * to the raw message only when the structured body is missing.
+ */
+export function extractApiErrorMessage(err: APIError): string {
+  const body = err.error as { error?: { message?: unknown } } | undefined;
+  const providerMessage = body?.error?.message;
+
+  if (typeof providerMessage === 'string' && providerMessage.trim().length > 0) {
+    return providerMessage.trim();
+  }
+
+  return err.message;
+}
+
+/**
  * Reads the `name` field out of the YAML frontmatter of the `SKILL.md` at the
  * root of an uploaded skill bundle. Anthropic enforces that the bundle's
  * top-level folder name equals this value, so we use it verbatim as the

@@ -3,6 +3,7 @@ import * as mixpanel from 'mixpanel-browser';
 import { useCallback } from 'react';
 import { measure } from '@/api/telemetry';
 import { IS_SELF_HOSTED, MIXPANEL_KEY } from '@/config';
+import { readPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 export const useTelemetry = () => {
@@ -15,6 +16,7 @@ export const useTelemetry = () => {
       if (IS_SELF_HOSTED) return;
 
       const mixpanelEnabled = !!MIXPANEL_KEY;
+      const onboardingSessionId = readPersistedCliOnboardingSessionId();
 
       if (mixpanelEnabled) {
         // @ts-expect-error missing from types
@@ -22,7 +24,13 @@ export const useTelemetry = () => {
 
         data = {
           ...(data || {}),
+          ...(onboardingSessionId ? { onboardingSessionId } : {}),
           ...sessionReplayProperties,
+        };
+      } else if (onboardingSessionId) {
+        data = {
+          ...(data || {}),
+          onboardingSessionId,
         };
       }
 

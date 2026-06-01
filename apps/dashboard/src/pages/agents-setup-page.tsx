@@ -32,6 +32,7 @@ import {
   withAppId,
   withOnboardingSource,
 } from '@/utils/onboarding-redirect';
+import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -243,6 +244,7 @@ export function AgentsSetupPage() {
       skippedFrom: 'agents-setup',
     });
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'skip' });
+    clearPersistedCliOnboardingSessionId();
 
     if (currentEnvironment?.slug) {
       goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
@@ -256,6 +258,7 @@ export function AgentsSetupPage() {
   const handleNavigateToOverview = useCallback(() => {
     telemetry(TelemetryEvent.ONBOARDING_COMPLETED, buildOnboardingCompletionProps());
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'complete' });
+    clearPersistedCliOnboardingSessionId();
 
     if (currentEnvironment?.slug) {
       goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);

@@ -8,11 +8,24 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 
 export const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
 
+function resolveDashboardBaseUrl(): string {
+  for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
+    const trimmed = candidate?.trim();
+
+    if (!trimmed || trimmed.startsWith('^')) {
+      continue;
+    }
+
+    return trimmed.replace(/\/$/, '');
+  }
+
+  return 'https://dashboard.novu.co';
+}
+
 function resolveSlackMcpIconUrl(mcpServerName?: string): string {
   const mcpId = resolveMcpCatalogIdByName(mcpServerName) ?? MCP_ICON_DEFAULT_ID;
-  const baseUrl = process.env.FRONT_BASE_URL || 'https://dashboard.novu.co';
 
-  return getMcpIconUrl(mcpId, baseUrl);
+  return getMcpIconUrl(mcpId, resolveDashboardBaseUrl());
 }
 
 type SlackCardBlock = Block & {
