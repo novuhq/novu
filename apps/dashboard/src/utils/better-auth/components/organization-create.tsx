@@ -1,6 +1,8 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
+import { isAbsoluteUrl } from '@/utils/apps';
 import { Avatar, AvatarFallback } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
@@ -146,6 +148,20 @@ function OrganizationListContent({
   const [isSelecting, setIsSelecting] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const autoSelectTriggeredRef = useRef(false);
+  const navigate = useNavigate();
+
+  const redirectAfterSelect = useCallback(
+    (targetUrl: string) => {
+      if (isAbsoluteUrl(targetUrl)) {
+        window.location.assign(targetUrl);
+
+        return;
+      }
+
+      void navigate(targetUrl);
+    },
+    [navigate]
+  );
 
   useEffect(() => {
     const loadOrganizations = async () => {
@@ -159,11 +175,12 @@ function OrganizationListContent({
           setIsSelecting(true);
           try {
             await authClient.organization.setActive({ organizationId: orgs[0].id });
-            window.location.href = afterSelectOrganizationUrl || ROUTES.ENV;
+            redirectAfterSelect(afterSelectOrganizationUrl || ROUTES.ENV);
 
             return;
           } catch (e: any) {
             console.error('Failed to auto-select organization:', e);
+            autoSelectTriggeredRef.current = false;
             setIsSelecting(false);
           }
         }
@@ -175,7 +192,7 @@ function OrganizationListContent({
     };
 
     void loadOrganizations();
-  }, [afterSelectOrganizationUrl]);
+  }, [afterSelectOrganizationUrl, redirectAfterSelect]);
 
   const handleSelectOrganization = async (organizationId: string) => {
     setIsSelecting(true);
@@ -183,7 +200,7 @@ function OrganizationListContent({
       await authClient.organization.setActive({
         organizationId,
       });
-      window.location.href = afterSelectOrganizationUrl || ROUTES.ENV;
+      redirectAfterSelect(afterSelectOrganizationUrl || ROUTES.ENV);
     } catch (e: any) {
       console.error('Failed to set active organization:', e);
       setIsSelecting(false);
@@ -194,7 +211,7 @@ function OrganizationListContent({
     window.location.href = afterCreateOrganizationUrl || ROUTES.INBOX_USECASE;
   };
 
-  if (isLoading || (organizations.length === 1 && autoSelectTriggeredRef.current)) {
+  if (isLoading || (organizations.length === 1 && autoSelectTriggeredRef.current && isSelecting)) {
     return (
       <div className="flex items-center justify-center py-12">
         <RiLoader4Line className="size-6 animate-spin text-foreground-600" />
