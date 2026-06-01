@@ -70,7 +70,7 @@ export class CompleteProviderManagedRedirect {
         _environmentId: payload.environmentId,
         _organizationId: payload.organizationId,
       },
-      '*'
+      ['_id']
     );
 
     if (!connection) {
