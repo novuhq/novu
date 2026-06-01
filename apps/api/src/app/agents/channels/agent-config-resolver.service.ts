@@ -6,10 +6,12 @@ import {
   PinoLogger,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationEntity,
   AgentIntegrationRepository,
   AgentRepository,
   ChannelConnectionRepository,
   ICredentialsEntity,
+  IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
@@ -63,6 +65,10 @@ export interface ResolvedAgentConfig {
 }
 
 const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
+
+function isDuplicateKeyError(err: unknown): boolean {
+  return Boolean(err && typeof err === 'object' && 'code' in err && (err as { code: unknown }).code === 11000);
+}
 
 async function resolveReaction(
   value: string | null | undefined,
@@ -128,7 +134,7 @@ export class AgentConfigResolver {
       throw new UnprocessableEntityException(`Email channel is disabled for agent ${agentId}`);
     }
 
-    const agentIntegration = await this.agentIntegrationRepository.findOne(
+    let agentIntegration = await this.agentIntegrationRepository.findOne(
       {
         _environmentId: environmentId,
         _organizationId: organizationId,
@@ -138,7 +144,21 @@ export class AgentConfigResolver {
       '*'
     );
     if (!agentIntegration) {
-      throw new UnprocessableEntityException(`Agent ${agentId} is not linked to integration ${integrationIdentifier}`);
+      agentIntegration = await this.tryHealMissingAgentIntegrationLink({
+        agentId,
+        agentIdentifier: agent.identifier,
+        integration,
+        integrationIdentifier,
+        environmentId,
+        organizationId,
+        source: options.source,
+      });
+
+      if (!agentIntegration) {
+        throw new UnprocessableEntityException(
+          `Agent ${agentId} is not linked to integration ${integrationIdentifier}`
+        );
+      }
     }
 
     const platform = resolveAgentPlatform(integration.providerId);
@@ -166,14 +186,32 @@ export class AgentConfigResolver {
     }
 
     let connectionAccessToken: string | undefined;
-    const connection = await this.channelConnectionRepository.findOne({
-      _environmentId: environmentId,
-      _organizationId: organizationId,
-      integrationIdentifier,
-    });
-    if (connection) {
-      const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
-      connectionAccessToken = decryptedAuth?.accessToken;
+    if (platform === AgentPlatformEnum.SLACK) {
+      connectionAccessToken = await this.resolveSlackBotToken(environmentId, organizationId, integrationIdentifier);
+
+      if (options.source === 'webhook_message') {
+        if (!credentials.signingSecret) {
+          throw new UnprocessableEntityException(
+            'Slack signing secret is missing. Complete Slack app setup (quick setup or paste credentials) for this integration.'
+          );
+        }
+
+        if (!connectionAccessToken) {
+          throw new UnprocessableEntityException(
+            'Slack workspace is not installed. Open the agent Slack setup guide and click Install to connect your workspace via OAuth.'
+          );
+        }
+      }
+    } else {
+      const connection = await this.channelConnectionRepository.findOne({
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        integrationIdentifier,
+      });
+      if (connection) {
+        const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
+        connectionAccessToken = decryptedAuth?.accessToken;
+      }
     }
 
     // `connectedAt` is set the first time the platform actually delivers a
@@ -223,5 +261,130 @@ export class AgentConfigResolver {
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,
     };
+  }
+
+  /**
+   * Workspace bot tokens live on channel connections (created by Slack OAuth). Pick the
+   * first connection for this integration that has an access token.
+   */
+  private async resolveSlackBotToken(
+    environmentId: string,
+    organizationId: string,
+    integrationIdentifier: string
+  ): Promise<string | undefined> {
+    const connections = await this.channelConnectionRepository.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        integrationIdentifier,
+      },
+      'auth'
+    );
+
+    for (const connection of connections) {
+      const decryptedAuth = decryptChannelConnectionAuth(connection.auth);
+      if (decryptedAuth?.accessToken) {
+        return decryptedAuth.accessToken;
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Slack/Telegram setup can persist credentials and register a webhook URL before the
+   * dashboard link step completes, leaving an orphaned integration. On the first real
+   * inbound webhook, attach the integration to the agent when it is not linked anywhere
+   * else in this environment.
+   */
+  private async tryHealMissingAgentIntegrationLink(params: {
+    agentId: string;
+    agentIdentifier: string;
+    integration: IntegrationEntity;
+    integrationIdentifier: string;
+    environmentId: string;
+    organizationId: string;
+    source?: AgentConfigResolveSource;
+  }): Promise<AgentIntegrationEntity | null> {
+    if (params.source !== 'webhook_message') {
+      return null;
+    }
+
+    const existingForIntegration = await this.agentIntegrationRepository.findOne(
+      {
+        _integrationId: params.integration._id,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      ['_id', '_agentId']
+    );
+
+    if (existingForIntegration) {
+      this.logger.warn(
+        {
+          agentId: params.agentId,
+          integrationIdentifier: params.integrationIdentifier,
+          linkedAgentId: existingForIntegration._agentId,
+        },
+        'Inbound webhook targets an integration already linked to a different agent'
+      );
+
+      return null;
+    }
+
+    let link: AgentIntegrationEntity;
+
+    try {
+      link = await this.agentIntegrationRepository.create({
+        _agentId: params.agentId,
+        _integrationId: params.integration._id,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      });
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      const winner = await this.agentIntegrationRepository.findOne(
+        {
+          _integrationId: params.integration._id,
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+        },
+        '*'
+      );
+
+      if (!winner) {
+        throw err;
+      }
+
+      if (winner._agentId !== params.agentId) {
+        this.logger.warn(
+          {
+            agentId: params.agentId,
+            integrationIdentifier: params.integrationIdentifier,
+            linkedAgentId: winner._agentId,
+          },
+          'Inbound webhook targets an integration already linked to a different agent'
+        );
+
+        return null;
+      }
+
+      link = winner;
+    }
+
+    this.logger.info(
+      {
+        agentId: params.agentId,
+        agentIdentifier: params.agentIdentifier,
+        integrationIdentifier: params.integrationIdentifier,
+        integrationId: params.integration._id,
+      },
+      'Auto-linked orphaned integration to agent on first inbound webhook'
+    );
+
+    return link;
   }
 }

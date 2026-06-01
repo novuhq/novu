@@ -259,6 +259,7 @@ export function McpsSection({ agent }: McpsSectionProps) {
                       onClick={() => handleRemove(enablement.mcpId)}
                       disabled={isRowPending}
                       aria-label={`Remove ${displayName}`}
+                      className="-mr-1"
                     >
                       <span className="sr-only">Remove {displayName}</span>
                     </CompactButton>

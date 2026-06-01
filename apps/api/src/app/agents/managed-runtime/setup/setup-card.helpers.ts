@@ -4,8 +4,12 @@ import type { OAuthMcp } from './oauth-mcp.types';
 
 export interface SetupCardRow extends OAuthMcp {
   authorizeUrl?: string;
-  /** Provider-managed MCPs render as connected without Novu OAuth. */
-  treatAsConnected?: boolean;
+  /**
+   * Override for the link-button label. Defaults to "Connect" / "Retry"
+   * (on error) when omitted. Provider-managed MCPs use "Connect from provider"
+   * to signal that auth completes inside the runtime provider's vault UI.
+   */
+  connectButtonLabel?: string;
 }
 
 const SETUP_REQUIRED_TEXT =
@@ -38,12 +42,14 @@ function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
   }
 
   if (mcp.authorizeUrl) {
+    const defaultLabel = isErrorStatus(mcp.status) ? 'Retry' : 'Connect';
+
     blocks.push({
       type: 'actions',
       children: [
         {
           type: 'link-button',
-          label: isErrorStatus(mcp.status) ? 'Retry' : 'Connect',
+          label: mcp.connectButtonLabel ?? defaultLabel,
           url: mcp.authorizeUrl,
           style: 'primary',
         },
@@ -55,7 +61,11 @@ function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
 }
 
 function buildMcpRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  if (mcp.treatAsConnected || mcp.status === McpConnectionStatusEnum.Connected) {
+  // When an authorize URL is present on a connected row, the connection needs
+  // to be re-authorized (e.g. Thalamus reported MCP initialize failed even
+  // though Novu's DB row says connected). Render the pending row so the user
+  // sees the Connect button instead of a stale checkmark.
+  if (mcp.status === McpConnectionStatusEnum.Connected && !mcp.authorizeUrl) {
     return buildConnectedRowBlocks(mcp);
   }
 

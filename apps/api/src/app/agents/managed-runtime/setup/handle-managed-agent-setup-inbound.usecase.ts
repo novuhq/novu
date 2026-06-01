@@ -10,6 +10,7 @@ import {
 } from '@novu/dal';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { EnsureProviderManagedVault } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { listOAuthMcps } from './list-oauth-mcps.helper';
 import { ManagedAgentSetupInboundCommand } from './managed-agent-setup-inbound.command';
@@ -30,6 +31,7 @@ export class HandleManagedAgentSetupInbound {
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly logger: PinoLogger
   ) {
@@ -113,6 +115,7 @@ export class HandleManagedAgentSetupInbound {
       subscriberId: command.subscriberId,
       conversationId: command.conversationId,
       generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+      ensureProviderManagedVault: this.ensureProviderManagedVault,
       logger: this.logger,
     });
 
@@ -204,6 +207,7 @@ export class HandleManagedAgentSetupInbound {
       subscriberId: command.subscriberId,
       conversationId: command.conversationId,
       generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+      ensureProviderManagedVault: this.ensureProviderManagedVault,
       logger: this.logger,
     });
 

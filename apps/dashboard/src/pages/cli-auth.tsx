@@ -12,11 +12,16 @@ import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useSegment } from '@/context/segment';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
+import {
+  persistCliOnboardingSessionId,
+  readActiveCliOnboardingSessionId,
+} from '@/utils/cli-onboarding-identity';
 import { clearConnectProvisioning } from '@/utils/connect';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { readOnboardingSessionId } from '@/utils/onboarding-session-id';
@@ -32,14 +37,23 @@ function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
 export const CliAuthPage = () => {
   const { isLoaded, isSignedIn } = useClerkAuth();
   const [searchParams] = useSearchParams();
+  const segment = useSegment();
   const deviceCode = searchParams.get('device_code');
   const callerName = searchParams.get('name');
+  const onboardingSessionId = readOnboardingSessionId(searchParams);
 
   useEffect(() => {
     if (isValidDeviceCode(deviceCode)) {
       storePendingCliAuth(deviceCode, callerName);
     }
   }, [deviceCode, callerName]);
+
+  useEffect(() => {
+    if (!onboardingSessionId) return;
+
+    persistCliOnboardingSessionId(onboardingSessionId);
+    segment.setAnonymousId(onboardingSessionId);
+  }, [onboardingSessionId, segment]);
 
   useEffect(() => {
     clearConnectProvisioning();
@@ -82,7 +96,7 @@ function CliAuthContent() {
 
   const deviceCode = searchParams.get('device_code');
   const callerName = searchParams.get('name');
-  const onboardingSessionId = readOnboardingSessionId(searchParams);
+  const onboardingSessionId = readActiveCliOnboardingSessionId(readOnboardingSessionId(searchParams));
   const deviceCodeOk = isValidDeviceCode(deviceCode);
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
 

@@ -23,9 +23,11 @@ export function isProviderManagedOAuthMcp(mcp: OAuthMcp): boolean {
 }
 
 export function isOAuthMcpPending(mcp: OAuthMcp): boolean {
-  if (isProviderManagedOAuthMcp(mcp)) {
-    return false;
-  }
-
   return mcp.status !== McpConnectionStatusEnum.Connected;
+}
+
+export function findOAuthMcpByServerName(mcps: OAuthMcp[], serverName: string): OAuthMcp | undefined {
+  const normalized = serverName.trim().toLowerCase();
+
+  return mcps.find((mcp) => mcp.name.toLowerCase() === normalized || mcp.mcpId.toLowerCase() === normalized);
 }
