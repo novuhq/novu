@@ -35,6 +35,7 @@ describe('Agents API - /agents #novu-v2', () => {
     // tools/mcpServers from). The field must be absent — see managedRuntime
     // tests in managed-agent.e2e.ts for the populated-view contract.
     expect(createRes.body.data.managedRuntime).to.equal(undefined);
+    expect(createRes.body.data.createdBy).to.equal(session.user._id);
 
     const listRes = await session.testAgent.get('/v1/agents');
 

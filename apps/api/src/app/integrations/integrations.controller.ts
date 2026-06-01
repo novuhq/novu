@@ -50,6 +50,7 @@ import {
 } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
 import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
@@ -777,7 +778,7 @@ export class IntegrationsController {
 
     if (result.type === ResponseTypeEnum.HTML) {
       res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+      res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
       res.send(result.result);
 
       return;
@@ -816,7 +817,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Issue a short-lived Telegram mobile setup link for the integration store',
     description:
-      'Returns a signed, single-use, short-lived JWT plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
+      'Returns an opaque, single-use, short-lived setup token plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
   })
   @ApiExcludeEndpoint()
   @RequireAuthentication()
@@ -835,6 +836,7 @@ export class IntegrationsController {
   }
 
   @Post('/:integrationId/slack-quick-setup')
+  @ExternalApiAccessible()
   @ApiResponse(SlackQuickSetupResponseDto, 201)
   @ApiOperation({
     summary: 'Quick-setup a Slack integration',

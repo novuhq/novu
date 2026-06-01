@@ -5,6 +5,7 @@ import type {
   AgentRuntimeProviderIdEnum,
   AgentSkillDto,
   AgentToolDto,
+  McpTokenEndpointAuthMethod,
 } from '@novu/shared';
 
 export type CreateAgentInput = {
@@ -70,6 +71,14 @@ export interface VaultCredentialAuthOAuthClient {
   tokenEndpoint: string;
   /** RFC 8707 resource indicator replayed verbatim on refresh. */
   resource?: string;
+  /**
+   * `token_endpoint_auth_method` negotiated at DCR time (RFC 8414 §2). Drives
+   * how the runtime provider's vault authenticates refresh requests to the
+   * upstream token endpoint. Absent on legacy credentials registered before
+   * negotiation existed — callers default to `'client_secret_basic'` per
+   * RFC 8414.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
 }
 
 /**
@@ -128,11 +137,6 @@ export interface DeleteVaultCredentialInput {
   /** Scoped Anthropic vault container (`vlt_…`) that owns this credential. */
   externalVaultId: string;
   vaultCredentialId: string;
-}
-
-export interface ParsedMcpInitFailure {
-  /** Catalog-side display name surfaced by the runtime (e.g. "Sentry"). */
-  mcpServerName: string;
 }
 
 /**
@@ -242,19 +246,6 @@ export interface IAgentRuntimeProvider {
    * Best-effort — callers should still proceed with local cleanup on error.
    */
   deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
-
-  /**
-   * Inspect an error surfaced by a streaming turn (or any provider-side call
-   * that goes through MCP server initialisation) and decide whether it is
-   * the "MCP X failed to initialize" shape that means the upstream credential
-   * vault is missing/expired and the caller should prompt the user to
-   * (re-)authorise the MCP.
-   *
-   * Returns `null` for anything else so the caller can fall through to its
-   * generic retry/fallback path. Each provider owns its own error shape;
-   * the abstraction never assumes a specific error class.
-   */
-  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null;
 
   /**
    * Inspect a session that ended in `requires-action` (or was rejected for

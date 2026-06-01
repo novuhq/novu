@@ -44,9 +44,9 @@ const LegacyDashboardLayout = ({
 export const DashboardLayout = (props: DashboardLayoutProps) => {
   const isShellV2FlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
 
-  // Hostname split forces the v2 shell because the AppRail is part of its UX; the flag still
-  // gates legacy single-origin deployments.
-  if (IS_HOSTNAME_SPLIT_ENABLED || isShellV2FlagEnabled) {
+  // The v2 shell (AppRail + cross-product switching) only makes sense on hostname-split
+  // deployments, and the LD flag gates the rollout per environment.
+  if (IS_HOSTNAME_SPLIT_ENABLED && isShellV2FlagEnabled) {
     return <DashboardShell {...props} />;
   }
 

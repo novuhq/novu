@@ -1,3 +1,5 @@
+import type { McpTokenEndpointAuthMethod } from '@novu/shared';
+
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -13,16 +15,25 @@ export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
  * OAuth mechanism the connection was established with. Mirrors the catalog
  * `mode` for the MCP — each MCP supports exactly one mechanism.
  *
- * - `dcr`      — Dynamic Client Registration (RFC 7591). A fresh OAuth client
- *                is registered per subscriber against the upstream AS.
- *                Encrypted access/refresh tokens live in the `auth` blob and
- *                the registered client lives in `oauthClient`.
- * - `novu-app` — Novu's single pre-registered OAuth application is used.
- *                `client_id` / `client_secret` come from server env vars.
- * - `user-app` — The Novu customer's own pre-registered OAuth application is
- *                used. Credentials come from a per-org credential table.
+ * - `dcr`              — Dynamic Client Registration (RFC 7591). A fresh
+ *                        OAuth client is registered per subscriber against
+ *                        the upstream AS. Encrypted access/refresh tokens
+ *                        live in the `auth` blob and the registered client
+ *                        lives in `oauthClient`.
+ * - `novu-app`         — Novu's single pre-registered OAuth application is
+ *                        used. `client_id` / `client_secret` come from
+ *                        server env vars.
+ * - `user-app`         — The Novu customer's own pre-registered OAuth
+ *                        application is used. Credentials come from a
+ *                        per-org credential table.
+ * - `provider-managed` — OAuth is owned by the managed agent runtime
+ *                        provider (e.g. Claude). Rows of this mode carry
+ *                        `auth.externalVaultId` only; `auth.accessToken`,
+ *                        `auth.refreshToken`, `oauthState`, and
+ *                        `oauthClient` are intentionally absent because Novu
+ *                        never speaks OAuth for these MCPs.
  */
-export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app';
+export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app' | 'provider-managed';
 
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
 
@@ -122,6 +133,17 @@ export interface McpConnectionOAuthClient {
   registrationEndpoint?: string;
   /** Scopes requested at registration time. */
   scopesGranted?: string[];
+  /**
+   * `token_endpoint_auth_method` negotiated with the upstream AS at DCR time
+   * (RFC 8414 §2 / RFC 7591 §2). Replayed verbatim at token-exchange and
+   * refresh time so Novu authenticates exactly the way the AS expects.
+   * Absent on legacy rows registered before negotiation existed — callers
+   * default to `'client_secret_basic'` per RFC 8414, which is what most
+   * ASes assume when nothing is registered.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
+  /** Redirect URI registered with the upstream AS at DCR time (RFC 7591). */
+  redirectUri?: string;
   registeredAt: Date;
 }
 
@@ -130,6 +152,17 @@ export interface McpConnectionLastError {
   message: string;
   at: Date;
 }
+
+export type McpToolTrustPolicy = 'always_ask' | 'always_allow';
+
+export const DEFAULT_MCP_TOOL_TRUST_POLICY: McpToolTrustPolicy = 'always_ask';
+
+export type McpToolTrust = {
+  /** Applies to all tools from this MCP server for this subscriber. */
+  serverDefault?: McpToolTrustPolicy;
+  /** Per-tool overrides keyed by MCP tool name (e.g. "list_issues"). */
+  tools?: Record<string, McpToolTrustPolicy>;
+};
 
 /**
  * OAuth state for a (scope, mcp, owner) tuple.
@@ -185,6 +218,9 @@ export class McpConnectionEntity {
   oauthClient?: McpConnectionOAuthClient;
 
   lastError?: McpConnectionLastError;
+
+  /** Subscriber-scoped auto-approve prefs for MCP tool calls. */
+  toolTrust?: McpToolTrust;
 
   connectedAt?: string;
 

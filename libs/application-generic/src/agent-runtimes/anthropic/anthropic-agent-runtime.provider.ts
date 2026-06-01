@@ -27,7 +27,6 @@ import type {
   DeleteVaultCredentialInput,
   GetAgentResult,
   GetEnvironmentResult,
-  ParsedMcpInitFailure,
   PendingToolApproval,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
@@ -47,6 +46,7 @@ import {
   buildMcpOAuthCreateAuth,
   buildMcpOAuthUpdateAuth,
   buildToolsPayload,
+  extractApiErrorMessage,
   extractSkillNameFromBundle,
   isDuplicateDisplayTitleError,
   isTransient,
@@ -70,17 +70,6 @@ const DEFAULT_MODEL = 'claude-sonnet-4-6';
 const RETRY_JITTER_MS = 500;
 /** Anthropic enforces a 64-char cap on `display_title` for `beta.skills.create`. */
 const MAX_DISPLAY_TITLE_LENGTH = 64;
-
-/**
- * Anthropic surfaces missing MCP credentials, URL mismatches, and "not yet
- * registered" cases as stream errors with the message shape
- * `MCP server '<displayName>' initialize failed: ...`. Thalamus's
- * `mapSessionError` wraps these in a generic retryable `ThalamusError`, so
- * the worker needs a stable parser to lift the server name out — we keep
- * the regex here (the only Anthropic-specific knowledge required) so the
- * worker stays runtime-agnostic.
- */
-const MCP_INIT_ERROR_PATTERN = /^MCP server '([^']+)' initialize failed/;
 
 export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
@@ -130,29 +119,30 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
     if (err instanceof APIError) {
       const requestId = err.requestID ?? err.headers?.get?.('request-id') ?? undefined;
+      const message = extractApiErrorMessage(err);
 
       if (err.status === 401) {
-        throw new AgentRuntimeUnauthorizedError(err.message, providerId, requestId);
+        throw new AgentRuntimeUnauthorizedError(message, providerId, requestId);
       }
       if (err.status === 403) {
-        throw new AgentRuntimeForbiddenError(err.message, providerId, requestId);
+        throw new AgentRuntimeForbiddenError(message, providerId, requestId);
       }
       if (err.status === 404) {
-        throw new AgentRuntimeNotFoundError(err.message, providerId, requestId);
+        throw new AgentRuntimeNotFoundError(message, providerId, requestId);
       }
       if (err.status === 429) {
         const retryAfterMs = parseRetryAfter(err.headers?.get?.('retry-after') ?? undefined);
 
-        throw new AgentRuntimeRateLimitedError(err.message, providerId, retryAfterMs, requestId);
+        throw new AgentRuntimeRateLimitedError(message, providerId, retryAfterMs, requestId);
       }
       if (err.status === 529) {
-        throw new AgentRuntimeOverloadedError(err.message, providerId, requestId);
+        throw new AgentRuntimeOverloadedError(message, providerId, requestId);
       }
       if (err.status >= 500) {
-        throw new AgentRuntimeServiceUnavailableError(err.message, providerId, requestId);
+        throw new AgentRuntimeServiceUnavailableError(message, providerId, requestId);
       }
       if (err.status === 400 || err.status === 422) {
-        throw new AgentRuntimeBadRequestError(err.message, providerId, requestId);
+        throw new AgentRuntimeBadRequestError(message, providerId, requestId);
       }
     }
 
@@ -431,26 +421,6 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     } catch (err) {
       this.normaliseError(err);
     }
-  }
-
-  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null {
-    // Inspect the error message only — we deliberately avoid coupling this
-    // module to `@novu/thalamus`'s ThalamusError class so the abstraction
-    // stays light. Anything in the codebase that surfaces this exact wire
-    // text was originally produced by Anthropic's streaming MCP-init path.
-    const message = (err as { message?: unknown } | null)?.message;
-
-    if (typeof message !== 'string') {
-      return null;
-    }
-
-    const match = message.match(MCP_INIT_ERROR_PATTERN);
-
-    if (!match) {
-      return null;
-    }
-
-    return { mcpServerName: match[1] };
   }
 
   async createVault(input: CreateVaultInput): Promise<CreateVaultResult> {

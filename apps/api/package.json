@@ -76,6 +76,8 @@
     "@novu/thalamus": "0.1.0-alpha.11",
     "@novu/testing": "workspace:*",
     "@sendgrid/mail": "^8.1.6",
+    "@slack/types": "2.20.1",
+    "@slack/web-api": "7.15.0",
     "@sentry/browser": "^8.33.1",
     "@sentry/hub": "^7.114.0",
     "@sentry/nestjs": "^8.49.0",

@@ -4,11 +4,11 @@ import {
   ClaudeBuiltinTool,
   CONVERSATIONAL_PROVIDERS,
   EmailProviderIdEnum,
+  getMcpIconPath,
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo } from 'react';
 import { AwsIcon } from '@/components/icons/aws';
-import { getMcpIcon } from '@/components/icons/mcp';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { ConnectLogomark } from '../icons/connect-logomark';
 import { AnthropicAsteriskIcon } from './agent-flow-illustration-shared';
@@ -411,7 +411,7 @@ type McpTagProps = {
 };
 
 function McpTag({ id }: McpTagProps) {
-  const Icon = getMcpIcon(id);
+  const Icon = getMcpIconPath(id);
   const label = formatMcpLabel(id);
 
   return (

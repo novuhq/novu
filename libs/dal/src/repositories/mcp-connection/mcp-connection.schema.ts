@@ -1,3 +1,4 @@
+import { MCP_TOKEN_ENDPOINT_AUTH_METHODS } from '@novu/shared';
 import mongoose, { Schema } from 'mongoose';
 
 import { schemaOptions } from '../schema-default.options';
@@ -127,9 +128,37 @@ const oauthClientSchema = new Schema(
       type: [Schema.Types.String],
       required: false,
     },
+    tokenEndpointAuthMethod: {
+      type: Schema.Types.String,
+      required: false,
+      enum: MCP_TOKEN_ENDPOINT_AUTH_METHODS,
+    },
+    redirectUri: {
+      type: Schema.Types.String,
+      required: false,
+    },
     registeredAt: {
       type: Schema.Types.Date,
       required: true,
+    },
+  },
+  { _id: false }
+);
+
+const toolTrustSchema = new Schema(
+  {
+    serverDefault: {
+      type: Schema.Types.String,
+      required: false,
+      enum: ['always_ask', 'always_allow'],
+    },
+    tools: {
+      type: Schema.Types.Map,
+      of: {
+        type: Schema.Types.String,
+        enum: ['always_ask', 'always_allow'],
+      },
+      required: false,
     },
   },
   { _id: false }
@@ -212,7 +241,7 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     authMode: {
       type: Schema.Types.String,
       required: true,
-      enum: ['dcr', 'novu-app', 'user-app'],
+      enum: ['dcr', 'novu-app', 'user-app', 'provider-managed'],
     },
     status: {
       type: Schema.Types.String,
@@ -233,6 +262,10 @@ const mcpConnectionSchema = new Schema<McpConnectionDBModel>(
     },
     lastError: {
       type: lastErrorSchema,
+      required: false,
+    },
+    toolTrust: {
+      type: toolTrustSchema,
       required: false,
     },
     connectedAt: {

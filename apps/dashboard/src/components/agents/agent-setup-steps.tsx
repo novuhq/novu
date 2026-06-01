@@ -18,7 +18,9 @@ import {
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { EmailInboundAddressStep } from './email-inbound-address-step';
 import { EmailSetupGuide } from './email-setup-guide';
@@ -78,6 +80,8 @@ type AgentSetupStepsProps = {
    * - other runtimes: when the user's bridge endpoint becomes reachable
    */
   onSetupComplete?: () => void;
+  /** Called when a non-email-auto-provisioned channel becomes connected during onboarding. */
+  onChannelConnected?: (providerId: string) => void;
   hideAddProvider?: boolean;
   /**
    * Onboarding flow only: the connector + template the user picked in the connect phase,
@@ -183,6 +187,7 @@ export function AgentSetupSteps({
   onSetupComplete,
   hideAddProvider,
   connectSummary,
+  onChannelConnected,
   onChannelStateChange,
 }: AgentSetupStepsProps) {
   const { currentEnvironment } = useEnvironment();
@@ -192,6 +197,7 @@ export function AgentSetupSteps({
   const location = useLocation();
   const agentRoutes = useAgentRoutes();
   const [searchParams, setSearchParams] = useSearchParams();
+  const telemetry = useTelemetry();
   // Tracks the last conversationId for which a bridge-connected message was sent,
   // scoping dedup per conversation rather than globally for the component lifetime.
   const lastSentConversationIdRef = useRef<string | null>(null);
@@ -299,6 +305,64 @@ export function AgentSetupSteps({
   const onSetupCompleteRef = useRef(onSetupComplete);
   onSetupCompleteRef.current = onSetupComplete;
   const setupCompleteFiredRef = useRef(false);
+  const channelConnectedTrackedRef = useRef(false);
+  const integrationGuideTrackedRef = useRef<string | null>(null);
+
+  const trackWelcomeSent = useCallback(
+    (providerId: string) => {
+      if (!isOnboarding) return;
+
+      telemetry(TelemetryEvent.ONBOARDING_WELCOME_SENT, {
+        agentIdentifier: agent.identifier,
+        providerId,
+      });
+    },
+    [agent.identifier, isOnboarding, telemetry]
+  );
+
+  useEffect(() => {
+    if (!isOnboarding || !hasConnectedIntegration || channelConnectedTrackedRef.current) return;
+
+    const connectedLink = agentIntegrationsQuery.data?.data?.find(
+      (link) => Boolean(link.connectedAt) && link.integration.providerId !== EmailProviderIdEnum.NovuAgent
+    );
+    if (!connectedLink) return;
+
+    channelConnectedTrackedRef.current = true;
+    onChannelConnected?.(connectedLink.integration.providerId);
+    telemetry(TelemetryEvent.ONBOARDING_CHANNEL_CONNECTED, {
+      agentIdentifier: agent.identifier,
+      providerId: connectedLink.integration.providerId,
+      integrationIdentifier: connectedLink.integration.identifier,
+    });
+  }, [
+    agent.identifier,
+    agentIntegrationsQuery.data?.data,
+    hasConnectedIntegration,
+    isOnboarding,
+    onChannelConnected,
+    telemetry,
+  ]);
+
+  useEffect(() => {
+    if (!isOnboarding || !selectedProviderId || !effectiveIntegrationId) return;
+    if (integrationGuideTrackedRef.current === effectiveIntegrationId) return;
+
+    integrationGuideTrackedRef.current = effectiveIntegrationId;
+    telemetry(TelemetryEvent.CONNECT_AGENT_INTEGRATION_GUIDE_VIEWED, {
+      agentIdentifier: agent.identifier,
+      providerId: selectedProviderId,
+      integrationIdentifier: selectedIntegration?.identifier,
+      isOnboarding: true,
+    });
+  }, [
+    agent.identifier,
+    effectiveIntegrationId,
+    isOnboarding,
+    selectedIntegration?.identifier,
+    selectedProviderId,
+    telemetry,
+  ]);
 
   useEffect(() => {
     if (!isManagedRuntime) return;
@@ -343,6 +407,10 @@ export function AgentSetupSteps({
     lastSentConversationIdRef.current = conversationId;
     sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier, conversationId)
       .then(() => {
+        if (selectedProviderId) {
+          trackWelcomeSent(selectedProviderId);
+        }
+
         setSearchParams((prev) => {
           prev.delete('onboardingConversationId');
 
@@ -354,7 +422,15 @@ export function AgentSetupSteps({
           lastSentConversationIdRef.current = null;
         }
       });
-  }, [onSetupComplete, currentEnvironment, integrationIdentifier, agent.identifier, setSearchParams]);
+  }, [
+    onSetupComplete,
+    currentEnvironment,
+    integrationIdentifier,
+    agent.identifier,
+    selectedProviderId,
+    setSearchParams,
+    trackWelcomeSent,
+  ]);
 
   const handleProviderStepsCompleted = useCallback(() => {
     queryClient.invalidateQueries({
@@ -430,7 +506,14 @@ export function AgentSetupSteps({
             agentName={agent.name}
             selectedIntegrationId={validatedSelectedId ?? defaultFromAgent?.integrationId}
             existingLinks={agentIntegrationLinks}
-            onSelect={(_providerId, integration) => {
+            onSelect={(providerId, integration) => {
+              if (isOnboarding) {
+                telemetry(TelemetryEvent.ONBOARDING_CHANNEL_SELECTED, {
+                  agentIdentifier: agent.identifier,
+                  providerId,
+                });
+              }
+
               if (integration?._id) {
                 setSelectedIntegrationId(integration._id);
                 sessionStorage.setItem(SESSION_KEY(agent.identifier), integration._id);
@@ -462,6 +545,9 @@ export function AgentSetupSteps({
               stepOffset={providerGuideStepOffset}
               embedded={false}
               onStepsCompleted={handleProviderStepsCompleted}
+              onWelcomeSent={
+                isOnboarding && selectedProviderId ? () => trackWelcomeSent(selectedProviderId) : undefined
+              }
             />
           </motion.div>
         ) : null}

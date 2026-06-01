@@ -36,6 +36,7 @@ function resolveCliTag(): string {
   const pkg = resolveCliPackageJson();
   if (!pkg?.version) return 'latest';
 
+  if (pkg.version.includes('-beta')) return 'beta';
   if (pkg.version.includes('-rc')) return 'rc';
   if (pkg.version.includes('-alpha')) return 'rc';
 
