@@ -70,7 +70,7 @@ export async function buildSetupCardForMcps(params: {
           'EnsureProviderManagedVault failed while building managed-agent setup card'
         );
 
-        rows.push(mcp);
+        throw err;
       }
 
       continue;
