@@ -138,12 +138,14 @@ jobs:
           echo "REGISTRY_OWNER=novuhq" >> $GITHUB_ENV
           echo "This is the service name: $SERVICE_NAME and release version: $LATEST_VERSION"
 
-          # Only build multi-arch (amd64 + arm64) for stable/latest releases (tag pushes).
-          # All other releases (nightly, manual dispatch) build amd64 only to save CI time.
-          if [ "${{ github.event_name }}" == "push" ]; then
-            echo "DOCKER_PLATFORMS=linux/amd64,linux/arm64" >> $GITHUB_ENV
-          else
+          # Build multi-arch (amd64 + arm64) for any release that publishes :latest,
+          # i.e. every non-nightly build (tag pushes and non-nightly manual dispatches).
+          # Building amd64 only here would clobber the multi-arch :latest manifest.
+          # Nightly builds publish :nightly only, so they stay amd64 to save CI time.
+          if [ "$IS_NIGHTLY" == "true" ]; then
             echo "DOCKER_PLATFORMS=linux/amd64" >> $GITHUB_ENV
+          else
+            echo "DOCKER_PLATFORMS=linux/amd64,linux/arm64" >> $GITHUB_ENV
           fi
 
       - name: Install pnpm
