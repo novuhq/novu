@@ -1,8 +1,7 @@
-import { Badge } from '@/components/primitives/badge';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { TimeDisplayHoverCard } from '@/components/time-display-hover-card';
 import { formatDateSimple } from '@/utils/format-date';
-import { RequestLog, RequestLogSource } from '../../types/logs';
+import { RequestLog } from '../../types/logs';
 import { HttpStatusBadge } from './http-status-badge';
 import { MethodBadge } from './method-badge';
 
@@ -22,11 +21,6 @@ export function LogsTableRow({ log, onClick, isSelected }: LogsTableRowProps) {
         <div className="flex items-center gap-2">
           <HttpStatusBadge statusCode={log.statusCode} />
           <MethodBadge method={log.method} />
-          {log.source === RequestLogSource.INBOUND_EMAIL && (
-            <Badge color="blue" size="sm" variant="lighter">
-              Inbound email
-            </Badge>
-          )}
           <span className="text-text-sub font-code text-label-xs">{log.path}</span>
         </div>
       </TableCell>
