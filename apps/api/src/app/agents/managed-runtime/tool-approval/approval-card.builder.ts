@@ -143,16 +143,16 @@ export function buildToolApprovalCard(tool: PendingToolApproval, turnId: string)
       children: [
         {
           type: 'button',
-          id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}:${turnId}`,
-          label: 'Approve once',
-          style: 'primary',
+          id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}:${turnId}`,
+          label: 'Deny',
+          style: 'default',
           value: toolLabel,
         },
         {
           type: 'button',
-          id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}:${turnId}`,
-          label: 'Deny',
-          style: 'danger',
+          id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}:${turnId}`,
+          label: 'Approve once',
+          style: 'primary',
           value: toolLabel,
         },
       ],
@@ -187,77 +187,7 @@ export function buildToolApprovalCard(tool: PendingToolApproval, turnId: string)
   };
 }
 
-export function resolveVerdictToolDescription(
-  actionValue?: string,
-  parsed?: ParsedToolApprovalAction
-): string | undefined {
-  if (actionValue) {
-    return actionValue;
-  }
-
-  if (!parsed?.toolName) {
-    return undefined;
-  }
-
-  if (parsed.mcpServerName) {
-    return `${parsed.mcpServerName} -> ${parsed.toolName}`;
-  }
-
-  return parsed.toolName;
-}
-
-export function buildToolApprovalVerdictCard(approved: boolean, toolDescription?: string): Record<string, unknown> {
-  const verdict = approved ? 'Approved' : 'Denied';
-  const context = formatVerdictToolContext(toolDescription);
-  const title = context ? `${verdict} · ${context}` : verdict;
-
-  return {
-    type: 'card',
-    title,
-  };
-}
-
 const SLACK_CARD_BODY_MAX = 200;
-
-function formatVerdictToolContext(toolDescription?: string): string {
-  if (!toolDescription) {
-    return '';
-  }
-
-  const arrowMatch = toolDescription.match(/^(.+?) -> (.+)$/);
-
-  if (arrowMatch) {
-    const server = arrowMatch[1];
-    const rest = arrowMatch[2];
-    const toolName = rest.split(':')[0]?.trim() ?? rest;
-
-    return `${server} · ${toolName}`;
-  }
-
-  const toolName = toolDescription.split(':')[0]?.trim() ?? toolDescription;
-
-  return toolName;
-}
-
-function formatVerdictToolContextSlack(toolDescription?: string): string {
-  if (!toolDescription) {
-    return '';
-  }
-
-  const arrowMatch = toolDescription.match(/^(.+?) -> (.+)$/);
-
-  if (arrowMatch) {
-    const server = arrowMatch[1];
-    const rest = arrowMatch[2];
-    const toolName = rest.split(':')[0]?.trim() ?? rest;
-
-    return `${server} · ${toolName}`;
-  }
-
-  const toolName = toolDescription.split(':')[0]?.trim() ?? toolDescription;
-
-  return toolName;
-}
 
 function formatToolSubtitle(tool: PendingToolApproval): string {
   if (tool.mcpServerName) {
@@ -294,7 +224,7 @@ function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string)
     icon: {
       type: 'image',
       image_url: resolveSlackMcpIconUrl(tool.mcpServerName),
-      alt_text: tool.mcpServerName ?? 'Tool approval',
+      alt_text: tool.mcpServerName ?? 'Tool',
     },
     title: { type: 'mrkdwn', text: 'Tool approval required', verbatim: false },
     subtitle: { type: 'mrkdwn', text: formatToolSubtitle(tool), verbatim: false },
@@ -302,7 +232,6 @@ function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string)
     actions: [
       {
         type: 'button',
-        style: 'danger',
         action_id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}:${turnId}`,
         value: toolLabel,
         text: { type: 'plain_text', text: 'Deny', emoji: false },
@@ -349,22 +278,6 @@ function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string)
   };
 }
 
-function buildToolApprovalVerdictSlackBlocks(approved: boolean, toolDescription?: string): SlackNativeDelivery {
-  const verdict = approved ? 'Approved' : 'Denied';
-  const context = formatVerdictToolContextSlack(toolDescription);
-  const titleText = context ? `*${verdict}* · ${context}` : `*${verdict}*`;
-
-  const cardBlock: SlackCardBlock = {
-    type: 'card',
-    title: { type: 'mrkdwn', text: titleText, verbatim: false },
-  };
-
-  return {
-    blocks: [cardBlock],
-    text: approved ? 'Approved' : 'Denied',
-  };
-}
-
 export function getToolApprovalCard(params: {
   platform?: string;
   tool: PendingToolApproval;
@@ -378,24 +291,6 @@ export function getToolApprovalCard(params: {
     return {
       content,
       slackNative: buildToolApprovalSlackBlocks(params.tool, params.turnId),
-    };
-  }
-
-  return { content };
-}
-
-export function getToolApprovalVerdictCard(params: {
-  platform?: string;
-  approved: boolean;
-  toolDescription?: string;
-}): ManagedCardDelivery {
-  const card = buildToolApprovalVerdictCard(params.approved, params.toolDescription);
-  const content: ReplyContentDto = { card };
-
-  if (params.platform === AgentPlatformEnum.SLACK) {
-    return {
-      content,
-      slackNative: buildToolApprovalVerdictSlackBlocks(params.approved, params.toolDescription),
     };
   }
 

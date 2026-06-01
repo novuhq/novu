@@ -35,5 +35,9 @@ export class ConfirmToolApprovalCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsOptional()
+  platformThreadId?: string;
+
+  @IsString()
+  @IsOptional()
   actionValue?: string;
 }

@@ -26,13 +26,13 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
+import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import {
   getPostOnboardingRoute,
   resolveOnboardingAppId,
   withAppId,
   withOnboardingSource,
 } from '@/utils/onboarding-redirect';
-import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 

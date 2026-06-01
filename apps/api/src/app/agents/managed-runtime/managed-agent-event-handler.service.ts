@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationRepository } from '@novu/dal';
+import {
+  AgentMcpServerRepository,
+  ConversationRepository,
+  McpConnectionRepository,
+  SubscriberRepository,
+} from '@novu/dal';
 import {
   CredentialExpiredError,
   McpServerError,
@@ -13,8 +18,13 @@ import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-ag
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
+import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
+import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { captureAgentException } from '../shared/errors/capture-agent-sentry';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
+import { listOAuthMcps } from './setup/list-oauth-mcps.helper';
+import { findOAuthMcpByServerName } from './setup/oauth-mcp.types';
+import { buildSetupCardForMcps } from './setup/setup-card.builder';
 import { HandlePendingToolApprovalsCommand } from './tool-approval/handle-pending-tool-approvals.command';
 import { HandlePendingToolApprovals } from './tool-approval/handle-pending-tool-approvals.usecase';
 
@@ -31,6 +41,11 @@ interface BaseCommandFields {
 export class ManagedAgentEventHandler {
   constructor(
     private readonly conversationRepository: ConversationRepository,
+    private readonly subscriberRepository: SubscriberRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly mcpConnectionRepository: McpConnectionRepository,
+    private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
@@ -217,6 +232,34 @@ export class ManagedAgentEventHandler {
       return;
     }
 
+    const failedMcpServerName = parseMcpInitFailureServerName(error);
+
+    const postedReconnectSetupCard =
+      failedMcpServerName && metadata.subscriberId
+        ? await this.tryPostMcpReconnectSetupCard({
+            ...baseCommand,
+            subscriberId: metadata.subscriberId,
+            serverName: failedMcpServerName,
+          })
+        : false;
+
+    if (postedReconnectSetupCard) {
+      try {
+        await this.handlePlanProgress.execute(
+          HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { turnId, action: 'fail' } })
+        );
+      } catch (err) {
+        this.logger.error(err, `Failed to mark plan progress failed for session ${sessionId}`);
+        captureAgentException(err, {
+          component: 'managed-agent-event-handler',
+          operation: 'deliver-error-plan-progress',
+          sessionId,
+        });
+      }
+
+      return;
+    }
+
     const message = buildErrorMessage(error);
 
     try {
@@ -233,6 +276,90 @@ export class ManagedAgentEventHandler {
         operation: 'deliver-error-message',
         sessionId,
       });
+    }
+  }
+
+  private async tryPostMcpReconnectSetupCard(params: {
+    userId: string;
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    agentIdentifier: string;
+    integrationIdentifier: string;
+    subscriberId: string;
+    serverName: string;
+  }): Promise<boolean> {
+    const conversation = await this.conversationRepository.findOne(
+      {
+        _id: params.conversationId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      },
+      ['_agentId']
+    );
+
+    if (!conversation?._agentId) {
+      return false;
+    }
+
+    const mcps = await listOAuthMcps(
+      {
+        subscriberRepository: this.subscriberRepository,
+        agentMcpServerRepository: this.agentMcpServerRepository,
+        mcpConnectionRepository: this.mcpConnectionRepository,
+      },
+      {
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        agentId: conversation._agentId,
+        subscriberId: params.subscriberId,
+      }
+    );
+    const mcp = findOAuthMcpByServerName(mcps, params.serverName);
+
+    if (!mcp) {
+      this.logger.warn(
+        {
+          conversationId: params.conversationId,
+          serverName: params.serverName,
+        },
+        'MCP init failure did not match an OAuth MCP on the agent'
+      );
+
+      return false;
+    }
+
+    try {
+      const card = await buildSetupCardForMcps({
+        mcps,
+        forceReconnectAgentMcpServerIds: new Set([mcp.agentMcpServerId]),
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        agentIdentifier: params.agentIdentifier,
+        subscriberId: params.subscriberId,
+        conversationId: params.conversationId,
+        generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+        ensureProviderManagedVault: this.ensureProviderManagedVault,
+        logger: this.logger,
+      });
+
+      await this.handleAgentReply.execute(
+        HandleAgentReplyCommand.create({
+          userId: params.userId,
+          organizationId: params.organizationId,
+          environmentId: params.environmentId,
+          conversationId: params.conversationId,
+          agentIdentifier: params.agentIdentifier,
+          integrationIdentifier: params.integrationIdentifier,
+          reply: { card },
+        })
+      );
+
+      return true;
+    } catch (err) {
+      this.logger.warn(err, `Failed to post MCP reconnect setup card for conversation ${params.conversationId}`);
+
+      return false;
     }
   }
 }
@@ -253,6 +380,18 @@ function extractErrorMessage(err: unknown): string | undefined {
   return undefined;
 }
 
+export function parseMcpInitFailureServerName(err: unknown): string | undefined {
+  const message = extractErrorMessage(err);
+
+  if (!message) {
+    return undefined;
+  }
+
+  const mcpInitMatch = message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
+
+  return mcpInitMatch?.[1];
+}
+
 export function buildErrorMessage(err: unknown): string {
   if (err instanceof CredentialExpiredError) {
     return `Agent error: Credentials for "${err.serverName}" have expired. Please update them in your integration settings.`;
@@ -261,12 +400,10 @@ export function buildErrorMessage(err: unknown): string {
     return `Agent error: MCP server "${err.serverName}" is unavailable (${err.statusCode ?? 'unknown status'}).`;
   }
 
-  const message = extractErrorMessage(err);
-  if (message) {
-    const mcpInitMatch = message.match(/MCP server ['"]([^'"]+)['"] initialize failed/i);
-    if (mcpInitMatch) {
-      return buildMcpInitFailureMessage(mcpInitMatch[1]);
-    }
+  const failedMcpServerName = parseMcpInitFailureServerName(err);
+
+  if (failedMcpServerName) {
+    return buildMcpInitFailureMessage(failedMcpServerName);
   }
 
   return 'The agent is temporarily unavailable. Please try again later.';
@@ -275,6 +412,6 @@ export function buildErrorMessage(err: unknown): string {
 export function buildMcpInitFailureMessage(serverName: string): string {
   return (
     `I couldn't connect to the **${serverName}** MCP server yet. ` +
-    `If this thread shows a setup card, use Connect to authorize ${serverName}, then send your message again.`
+    `Use Connect to authorize ${serverName}, then send your message again.`
   );
 }

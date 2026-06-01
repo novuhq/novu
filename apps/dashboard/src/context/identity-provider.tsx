@@ -3,9 +3,7 @@ import { useLDClient } from 'launchdarkly-react-client-sdk';
 import { useEffect, useRef } from 'react';
 import { identifyTelemetry } from '@/api/telemetry';
 import { getRegionConfig, useRegion } from '@/context/region';
-import {
-  readPersistedCliOnboardingSessionId,
-} from '@/utils/cli-onboarding-identity';
+import { readPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { useAuth } from './auth/hooks';
 import { useCustomerIo } from './customer-io/hooks';
 import { useSegment } from './segment/hooks';

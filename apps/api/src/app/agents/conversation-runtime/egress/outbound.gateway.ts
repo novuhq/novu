@@ -326,6 +326,25 @@ export class OutboundGateway {
     return { messageId: edited.id, platformThreadId: edited.threadId };
   }
 
+  async deleteInConversation(
+    agentId: string,
+    integrationIdentifier: string,
+    platform: string,
+    platformThreadId: string,
+    platformMessageId: string
+  ): Promise<void> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    const adapter = chat.getAdapter(platform);
+    if (typeof adapter.deleteMessage !== 'function') {
+      return;
+    }
+
+    await adapter.deleteMessage(platformThreadId, platformMessageId).catch(toDeliveryError);
+  }
+
   async postPlanObject(
     agentId: string,
     integrationIdentifier: string,
