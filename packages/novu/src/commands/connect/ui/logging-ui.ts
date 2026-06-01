@@ -2,8 +2,8 @@ import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { channelDisplayName } from '../dashboard-urls';
-import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import type { AgentSummary } from '../types';
+import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
@@ -76,19 +76,22 @@ export function createLoggingUI(): ConnectUI {
         )
       );
     },
-    promptForSecretInput({ title }) {
+    promptForSecretInput({ title, verificationError }) {
       stop();
+      if (verificationError) {
+        console.error(chalk.yellow(`Credentials were rejected: ${verificationError}`));
+      }
 
       return Promise.reject(
-        new Error(`Non-interactive mode: credential input required for "${title}". Pass the matching --anthropic-api-key or AWS Claude flags.`)
+        new Error(
+          `Non-interactive mode: credential input required for "${title}". Pass the matching --anthropic-api-key or AWS Claude flags.`
+        )
       );
     },
     pickAwsClaudeRegion() {
       stop();
 
-      return Promise.reject(
-        new Error('Non-interactive mode: pass --aws-claude-region for AWS Claude managed agents.')
-      );
+      return Promise.reject(new Error('Non-interactive mode: pass --aws-claude-region for AWS Claude managed agents.'));
     },
     verifyingCredentials() {
       start('Verifying credentials…');
@@ -253,7 +256,9 @@ export function createLoggingUI(): ConnectUI {
       if (channelLabel) {
         console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
       } else if (redirectChannelLabel) {
-        console.log(`  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`);
+        console.log(
+          `  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`
+        );
       } else {
         console.log(`  ${chalk.gray('No channel connected.')}`);
       }

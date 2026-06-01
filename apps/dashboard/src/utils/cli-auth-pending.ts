@@ -183,8 +183,7 @@ export function parseCliAuthReturnFromSearchParams(
     return null;
   }
 
-  const returnHost =
-    options?.preferConnectHost || isConnectHostnameUrl(redirectUrl) ? 'connect' : detectReturnHost();
+  const returnHost = options?.preferConnectHost || isConnectHostnameUrl(redirectUrl) ? 'connect' : detectReturnHost();
 
   return {
     deviceCode: parsed.deviceCode,

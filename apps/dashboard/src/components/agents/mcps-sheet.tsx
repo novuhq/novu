@@ -1,10 +1,12 @@
-import { MCP_SERVERS, McpConnectionAuthModeEnum, type McpServer } from '@novu/shared';
+import { FeatureFlagsKeysEnum, MCP_SERVERS, McpConnectionAuthModeEnum, type McpServer } from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiAddLine, RiCloseLine, RiSearchLine } from 'react-icons/ri';
+import { RiAddLine, RiArrowRightUpLine, RiCloseLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
 import {
   type AgentMcpServerEnablement,
   type AgentResponse,
+  disableAgentMcpServer,
+  ensureProviderManagedVault,
   getAgentMcpServersQueryKey,
   type SetAgentMcpServersFailure,
   setAgentMcpServers,
@@ -29,6 +31,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { ExternalLink } from '@/components/shared/external-link';
 import { UnsavedChangesAlertDialog } from '@/components/unsaved-changes-alert-dialog';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 type McpsSheetProps = {
   agent: AgentResponse;
@@ -39,52 +42,77 @@ type McpsSheetProps = {
 };
 
 /**
- * Gate the picker on auth modes the backend can actually complete, not just on
- * `oauth` presence. Keep this set in lock-step with the modes wired in
- * `generate-mcp-oauth-url.usecase.ts` / `mcp-oauth-callback.usecase.ts`.
+ * Auth modes the dashboard can drive via the staged Save flow. Keep this set
+ * in lock-step with the modes wired in `generate-mcp-oauth-url.usecase.ts` /
+ * `mcp-oauth-callback.usecase.ts`.
  *
  * `novu-app` is included here but enable / authorize calls are additionally
  * gated server-side by `IS_MCP_NOVU_APP_ENABLED`, so an org without the flag
  * will see a 403 with `error: 'mcp_novu_app_disabled'` on Save (surfaced
  * via the existing `showErrorToast`). `user-app` is still typed-only.
+ *
+ * `provider-managed` is intentionally NOT in this set — those entries go
+ * through a dedicated per-row "Add from Claude" action that talks to a
+ * different backend endpoint, so they must never end up in the staged save.
  */
-const SUPPORTED_AUTH_MODES = new Set<McpConnectionAuthModeEnum>([
+const STAGED_AUTH_MODES = new Set<McpConnectionAuthModeEnum>([
   McpConnectionAuthModeEnum.Dcr,
   McpConnectionAuthModeEnum.NovuApp,
 ]);
 
 /**
- * Special-case catalog entries whose connection is managed entirely inside
- * Claude (not OAuth via Novu). These get a "Managed in Claude" badge instead
- * of "Coming soon", and the Add button stays disabled.
+ * Visual + interaction kind for a catalog row in the picker.
+ *
+ * - `oauth`             → Novu OAuth (dcr / novu-app). Staged Add + bulk Save.
+ * - `provider-managed`  → "Add from Claude". Immediate per-row API call that
+ *                         opens the provider vault UI in a new tab; bypasses
+ *                         the staged Save flow entirely.
+ * - `unsupported`       → Catalog entry whose mode is type-defined but not
+ *                         wired in the dashboard yet (e.g. `user-app`) OR
+ *                         provider-managed entries when the per-org
+ *                         `IS_MCP_PROVIDER_MANAGED_ENABLED` flag is off, so
+ *                         the row falls back to the "Coming soon" UX instead
+ *                         of clicking through to a server-side 403.
  */
-const MANAGED_IN_CLAUDE_IDS = new Set<string>(['slack']);
+type McpBadgeKind = 'oauth' | 'provider-managed' | 'unsupported';
 
-type McpBadgeKind = 'oauth' | 'managed-in-claude' | 'coming-soon';
+type McpBadgeKindOptions = {
+  /**
+   * Mirrors the server-side `IS_MCP_PROVIDER_MANAGED_ENABLED` gate. When the
+   * flag is off, every `provider-managed` catalog row is downgraded to
+   * `unsupported` so the picker shows a disabled "Coming soon" Add button
+   * instead of an "Add from Claude" button that would 403 on click.
+   */
+  providerManagedEnabled: boolean;
+};
 
-function getMcpBadgeKind(entry: McpServer): McpBadgeKind {
-  if (entry.oauth && SUPPORTED_AUTH_MODES.has(entry.oauth.mode)) {
+function getMcpBadgeKind(entry: McpServer, options: McpBadgeKindOptions): McpBadgeKind {
+  if (!entry.oauth) {
+    return 'unsupported';
+  }
+
+  if (entry.oauth.mode === McpConnectionAuthModeEnum.ProviderManaged) {
+    return options.providerManagedEnabled ? 'provider-managed' : 'unsupported';
+  }
+
+  if (STAGED_AUTH_MODES.has(entry.oauth.mode)) {
     return 'oauth';
   }
 
-  if (MANAGED_IN_CLAUDE_IDS.has(entry.id)) {
-    return 'managed-in-claude';
-  }
-
-  return 'coming-soon';
+  return 'unsupported';
 }
 
-function isMcpSupported(entry: McpServer): boolean {
-  return getMcpBadgeKind(entry) === 'oauth';
+function isMcpStagedSavable(entry: McpServer, options: McpBadgeKindOptions): boolean {
+  return getMcpBadgeKind(entry, options) === 'oauth';
 }
 
 function getBadgeLabel(kind: McpBadgeKind): string {
   switch (kind) {
     case 'oauth':
       return 'OAuth';
-    case 'managed-in-claude':
-      return 'Managed in Claude';
-    case 'coming-soon':
+    case 'provider-managed':
+      return 'Add from Claude';
+    case 'unsupported':
       return 'Coming soon';
     default: {
       const _exhaustive: never = kind;
@@ -95,23 +123,34 @@ function getBadgeLabel(kind: McpBadgeKind): string {
 }
 
 /**
- * Sort supported entries first, preserving the catalog's intrinsic ordering
- * (popular-first) within each group so the toggle-able rows surface at the
- * top of every search result.
+ * Sort actionable entries first, preserving the catalog's intrinsic ordering
+ * (popular-first) within each group so the rows users can actually act on
+ * surface at the top of every search result. OAuth + provider-managed both
+ * count as actionable; only `unsupported` rows sink.
  */
-function sortSupportedFirst(entries: McpServer[]): McpServer[] {
-  const supported: McpServer[] = [];
+function sortSupportedFirst(entries: McpServer[], options: McpBadgeKindOptions): McpServer[] {
+  const actionable: McpServer[] = [];
   const unsupported: McpServer[] = [];
 
   for (const entry of entries) {
-    if (isMcpSupported(entry)) {
-      supported.push(entry);
-    } else {
+    if (getMcpBadgeKind(entry, options) === 'unsupported') {
       unsupported.push(entry);
+    } else {
+      actionable.push(entry);
     }
   }
 
-  return [...supported, ...unsupported];
+  return [...actionable, ...unsupported];
+}
+
+/**
+ * Bulk save sends the staged enablement set. Provider-managed rows are kept
+ * in `stagedIds` by the immediate add/remove mutations, so the ref alone is
+ * the source of truth and a stale `enabledServers` snapshot cannot re-add
+ * a row the user just removed.
+ */
+function buildSaveMcpIds(stagedIds: Set<string>): string[] {
+  return [...stagedIds];
 }
 
 function formatPartialFailureMessage(failures: SetAgentMcpServersFailure[]): string {
@@ -128,6 +167,12 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
   const { currentEnvironment, readOnly } = useEnvironment();
   const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
+  // Mirror the server-side IS_MCP_PROVIDER_MANAGED_ENABLED gate on the
+  // dashboard. When off, every provider-managed catalog row downgrades to
+  // the "Coming soon" UX so the immediate per-row "Add from Claude" action
+  // never gets a chance to fire and 403.
+  const providerManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MCP_PROVIDER_MANAGED_ENABLED);
+  const badgeKindOptions = useMemo<McpBadgeKindOptions>(() => ({ providerManagedEnabled }), [providerManagedEnabled]);
   // Staged enablement set. Mirrors `enabledServers` whenever the sheet opens
   // and is then driven entirely by the in-sheet Add / Remove actions until
   // the user clicks "Save changes" (which commits the diff against the
@@ -187,8 +232,8 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
       }
     }
 
-    return { enabledList: enabled, availableList: sortSupportedFirst(available) };
-  }, [filteredMcps, stagedIds]);
+    return { enabledList: enabled, availableList: sortSupportedFirst(available, badgeKindOptions) };
+  }, [filteredMcps, stagedIds, badgeKindOptions]);
 
   const invalidateMcpsQuery = () =>
     queryClient.invalidateQueries({
@@ -199,7 +244,7 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
     mutationFn: () => {
       const env = requireEnvironment(currentEnvironment, 'No environment selected');
 
-      return setAgentMcpServers(env, agent.identifier, [...stagedIds]);
+      return setAgentMcpServers(env, agent.identifier, buildSaveMcpIds(stagedIds));
     },
     onSuccess: async (response) => {
       await invalidateMcpsQuery();
@@ -228,8 +273,81 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
   const canEdit = !readOnly;
   const isSaving = saveMutation.isPending;
 
-  const handleAdd = (entry: McpServer) => {
-    if (!isMcpSupported(entry)) return;
+  // Tracks which provider-managed row is currently in-flight so we can scope
+  // the inline loading spinner to that single Add button instead of disabling
+  // every actionable row.
+  const [pendingProviderManagedId, setPendingProviderManagedId] = useState<string | null>(null);
+
+  // Provider-managed rows bypass the staged Save flow, so removal also hits
+  // the disable endpoint immediately instead of waiting for Save.
+  const [pendingProviderManagedRemovalId, setPendingProviderManagedRemovalId] = useState<string | null>(null);
+
+  const disableProviderManagedMutation = useMutation({
+    mutationFn: (entry: McpServer) => {
+      const env = requireEnvironment(currentEnvironment, 'No environment selected');
+
+      return disableAgentMcpServer(env, agent.identifier, entry.id);
+    },
+    onSuccess: async (_, entry) => {
+      setStagedIds((prev) => {
+        if (!prev.has(entry.id)) return prev;
+
+        const next = new Set(prev);
+        next.delete(entry.id);
+
+        return next;
+      });
+      await invalidateMcpsQuery();
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not remove MCP server.';
+      showErrorToast(message, 'Remove failed');
+    },
+    onSettled: () => {
+      setPendingProviderManagedRemovalId(null);
+    },
+  });
+
+  const providerManagedMutation = useMutation({
+    mutationFn: (entry: McpServer) => {
+      const env = requireEnvironment(currentEnvironment, 'No environment selected');
+
+      return ensureProviderManagedVault(env, agent.identifier, entry.id);
+    },
+    onSuccess: async (response, entry) => {
+      // Keep the sheet's staged set aligned with server truth so the row moves
+      // into "Enabled MCPs" immediately and Save never drops it.
+      setStagedIds((prev) => {
+        if (prev.has(entry.id)) return prev;
+
+        const next = new Set(prev);
+        next.add(entry.id);
+
+        return next;
+      });
+
+      // Refresh the enablement list so the section shows the new "Added from
+      // Claude" row even before the user finishes connector OAuth upstream.
+      await invalidateMcpsQuery();
+
+      // Pop the vault UI in a new tab so the user can finish connector
+      // OAuth in Claude. Same-tab navigation would tear down the dashboard
+      // mid-edit (and abandon the open sheet) — `_blank` is the explicit
+      // choice from the plan.
+      window.open(response.vaultUrl, '_blank', 'noopener,noreferrer');
+    },
+    onError: async (err: Error) => {
+      await invalidateMcpsQuery();
+      const message = err instanceof NovuApiError ? err.message : 'Could not connect via Claude.';
+      showErrorToast(message, 'Add from Claude failed');
+    },
+    onSettled: () => {
+      setPendingProviderManagedId(null);
+    },
+  });
+
+  const handleStagedAdd = (entry: McpServer) => {
+    if (!isMcpStagedSavable(entry, badgeKindOptions)) return;
 
     setStagedIds((prev) => {
       if (prev.has(entry.id)) return prev;
@@ -241,7 +359,22 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
     });
   };
 
+  const handleProviderManagedAdd = (entry: McpServer) => {
+    if (getMcpBadgeKind(entry, badgeKindOptions) !== 'provider-managed') return;
+    if (pendingProviderManagedId) return;
+    setPendingProviderManagedId(entry.id);
+    providerManagedMutation.mutate(entry);
+  };
+
   const handleRemove = (entry: McpServer) => {
+    if (getMcpBadgeKind(entry, badgeKindOptions) === 'provider-managed') {
+      if (pendingProviderManagedRemovalId) return;
+      setPendingProviderManagedRemovalId(entry.id);
+      disableProviderManagedMutation.mutate(entry);
+
+      return;
+    }
+
     setStagedIds((prev) => {
       if (!prev.has(entry.id)) return prev;
 
@@ -341,7 +474,11 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
                         entry={entry}
                         action="remove"
                         disabled={!canEdit || isSaving}
-                        onAdd={handleAdd}
+                        badgeKindOptions={badgeKindOptions}
+                        pendingProviderManagedId={pendingProviderManagedId}
+                        pendingProviderManagedRemovalId={pendingProviderManagedRemovalId}
+                        onStagedAdd={handleStagedAdd}
+                        onProviderManagedAdd={handleProviderManagedAdd}
                         onRemove={handleRemove}
                       />
                     ))}
@@ -356,7 +493,11 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
                         entry={entry}
                         action="add"
                         disabled={!canEdit || isSaving}
-                        onAdd={handleAdd}
+                        badgeKindOptions={badgeKindOptions}
+                        pendingProviderManagedId={pendingProviderManagedId}
+                        pendingProviderManagedRemovalId={pendingProviderManagedRemovalId}
+                        onStagedAdd={handleStagedAdd}
+                        onProviderManagedAdd={handleProviderManagedAdd}
                         onRemove={handleRemove}
                       />
                     ))}
@@ -418,13 +559,36 @@ type McpRowProps = {
   entry: McpServer;
   action: 'add' | 'remove';
   disabled: boolean;
-  onAdd: (entry: McpServer) => void;
+  badgeKindOptions: McpBadgeKindOptions;
+  /** The id of the provider-managed row whose "Add from Claude" call is in flight, if any. */
+  pendingProviderManagedId: string | null;
+  /** The id of the provider-managed row whose disable call is in flight, if any. */
+  pendingProviderManagedRemovalId: string | null;
+  /** Staged add for OAuth (dcr / novu-app) rows — applied on Save. */
+  onStagedAdd: (entry: McpServer) => void;
+  /** Immediate add for `provider-managed` rows — opens the provider vault UI. */
+  onProviderManagedAdd: (entry: McpServer) => void;
   onRemove: (entry: McpServer) => void;
 };
 
-function McpRow({ entry, action, disabled, onAdd, onRemove }: McpRowProps) {
-  const badgeKind = getMcpBadgeKind(entry);
-  const supported = badgeKind === 'oauth';
+function McpRow({
+  entry,
+  action,
+  disabled,
+  badgeKindOptions,
+  pendingProviderManagedId,
+  pendingProviderManagedRemovalId,
+  onStagedAdd,
+  onProviderManagedAdd,
+  onRemove,
+}: McpRowProps) {
+  const badgeKind = getMcpBadgeKind(entry, badgeKindOptions);
+  const isStagedSavable = badgeKind === 'oauth';
+  const isProviderManaged = badgeKind === 'provider-managed';
+  const isActionable = isStagedSavable || isProviderManaged;
+  const isRowPending = isProviderManaged && pendingProviderManagedId === entry.id;
+  const isRowRemovalPending = isProviderManaged && pendingProviderManagedRemovalId === entry.id;
+  const isOtherProviderManagedPending = isProviderManaged && Boolean(pendingProviderManagedId) && !isRowPending;
 
   const row = (
     <div className="flex items-center gap-3 py-1">
@@ -432,7 +596,7 @@ function McpRow({ entry, action, disabled, onAdd, onRemove }: McpRowProps) {
         <McpIcon mcpId={entry.id} />
         <span
           className={
-            supported
+            isActionable
               ? 'text-text-sub text-label-sm min-w-0 truncate font-medium'
               : 'text-text-soft text-label-sm min-w-0 truncate font-medium'
           }
@@ -444,37 +608,43 @@ function McpRow({ entry, action, disabled, onAdd, onRemove }: McpRowProps) {
         </Badge>
       </div>
 
-      {action === 'remove' ? (
-        <CompactButton
-          variant="ghost"
-          size="md"
-          icon={RiCloseLine}
-          onClick={() => onRemove(entry)}
-          disabled={disabled}
-          aria-label={`Remove ${entry.name}`}
-          className="-mr-1"
-        >
-          <span className="sr-only">Remove {entry.name}</span>
-        </CompactButton>
-      ) : (
+      {action === 'remove'
+        ? renderRemoveControl({
+            entry,
+            disabled: disabled || isRowRemovalPending,
+            onRemove,
+          })
+        : null}
+
+      {action === 'add' && isProviderManaged ? (
+        <ProviderManagedActionButton
+          label="Add from Claude"
+          pending={isRowPending}
+          disabled={disabled || isOtherProviderManagedPending}
+          onClick={() => onProviderManagedAdd(entry)}
+          ariaLabel={`Add ${entry.name} from Claude`}
+        />
+      ) : null}
+
+      {action === 'add' && !isProviderManaged ? (
         <Button
           type="button"
           variant="secondary"
           mode="ghost"
           size="xs"
           trailingIcon={RiAddLine}
-          onClick={() => onAdd(entry)}
-          disabled={disabled || !supported}
+          onClick={() => onStagedAdd(entry)}
+          disabled={disabled || !isStagedSavable}
           aria-label={`Add ${entry.name}`}
           className="h-5 shrink-0 gap-1 px-2 -mr-2 disabled:bg-transparent"
         >
           Add
         </Button>
-      )}
+      ) : null}
     </div>
   );
 
-  if (supported) {
+  if (isActionable) {
     return row;
   }
 
@@ -483,11 +653,72 @@ function McpRow({ entry, action, disabled, onAdd, onRemove }: McpRowProps) {
       <TooltipTrigger asChild>
         <div>{row}</div>
       </TooltipTrigger>
-      <TooltipContent side="left">
-        {badgeKind === 'managed-in-claude'
-          ? 'This integration is managed inside Claude — connect it from your Claude console.'
-          : 'Coming soon — OAuth wiring not yet available.'}
-      </TooltipContent>
+      <TooltipContent side="left">Coming soon — connection not yet available.</TooltipContent>
     </Tooltip>
+  );
+}
+
+/**
+ * Ghost action for provider-managed rows. Avoids `Button` `isLoading` overlay
+ * (spinner on top of label) by swapping label ↔ spinner with a fixed min-width.
+ */
+function ProviderManagedActionButton({
+  label,
+  pending,
+  disabled,
+  onClick,
+  ariaLabel,
+}: {
+  label: string;
+  pending: boolean;
+  disabled: boolean;
+  onClick: () => void;
+  ariaLabel: string;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="secondary"
+      mode="ghost"
+      size="xs"
+      onClick={onClick}
+      disabled={disabled || pending}
+      aria-label={ariaLabel}
+      aria-busy={pending || undefined}
+      className="h-5 min-w-[7.75rem] shrink-0 justify-center gap-1 px-2 -mr-2 disabled:bg-transparent"
+    >
+      {pending ? (
+        <RiLoader4Line className="text-text-sub size-4 shrink-0 animate-spin" aria-hidden />
+      ) : (
+        <>
+          <span>{label}</span>
+          <RiArrowRightUpLine className="size-4 shrink-0" aria-hidden />
+        </>
+      )}
+    </Button>
+  );
+}
+
+function renderRemoveControl({
+  entry,
+  disabled,
+  onRemove,
+}: {
+  entry: McpServer;
+  disabled: boolean;
+  onRemove: (entry: McpServer) => void;
+}): React.ReactNode {
+  return (
+    <CompactButton
+      variant="ghost"
+      size="md"
+      icon={RiCloseLine}
+      onClick={() => onRemove(entry)}
+      disabled={disabled}
+      aria-label={`Remove ${entry.name}`}
+      className="-mr-1"
+    >
+      <span className="sr-only">Remove {entry.name}</span>
+    </CompactButton>
   );
 }

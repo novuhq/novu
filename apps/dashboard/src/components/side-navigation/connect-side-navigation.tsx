@@ -1,4 +1,5 @@
 import { RiDashboardLine, RiDiscussLine, RiRobot2Line, RiSettings4Line } from 'react-icons/ri';
+import { BetaBadge } from '@/components/primitives/beta-badge';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { buildRoute, ROUTES } from '@/utils/routes';
@@ -28,7 +29,9 @@ export const ConnectSideNavigation = () => {
             <NavigationGroup label="Manage">
               <NavigationLink to={buildEnvRoute(ROUTES.CONNECT_AGENTS)}>
                 <RiRobot2Line className="size-4" />
-                <span>Agents</span>
+                <span>
+                  Agents <BetaBadge variant="nav" />
+                </span>
               </NavigationLink>
             </NavigationGroup>
             <NavigationGroup label="Monitor">

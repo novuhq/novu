@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, SsrfBlockedError, safeOutboundJsonRequest, safeOutboundRequest } from '@novu/application-generic';
+import { DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD, type McpTokenEndpointAuthMethod } from '@novu/shared';
 import { LRUCache } from 'lru-cache';
 
 /**
@@ -100,9 +101,37 @@ export interface AuthorizationServerMetadata {
   registrationEndpoint?: string;
   codeChallengeMethodsSupported: string[];
   scopesSupported?: string[];
+  /**
+   * RFC 8414 `token_endpoint_auth_methods_supported`. When omitted the spec
+   * default is `['client_secret_basic']` — Novu represents that by leaving
+   * the field `undefined` so callers can distinguish "AS said nothing" from
+   * "AS advertised an explicit empty list". `selectTokenEndpointAuthMethod`
+   * handles the defaulting.
+   */
+  tokenEndpointAuthMethodsSupported?: string[];
   /** RFC 9207 `authorization_response_iss_parameter_supported`. */
   authorizationResponseIssParameterSupported: boolean;
 }
+
+/**
+ * Re-export of the canonical `token_endpoint_auth_method` union, kept here so
+ * existing API-service imports continue to resolve. The source of truth lives
+ * in `@novu/shared` because the DAL entity and the runtime providers also
+ * need it.
+ */
+export type { McpTokenEndpointAuthMethod as SupportedTokenEndpointAuthMethod } from '@novu/shared';
+
+/**
+ * Priority order Novu uses when an AS advertises multiple methods. Mirrors
+ * the RFC 8414 default (`client_secret_basic`) — `client_secret_post` only
+ * wins when `basic` is unavailable, and `none` is reserved for public
+ * clients with no secret to present.
+ */
+const TOKEN_ENDPOINT_AUTH_METHOD_PRIORITY: readonly McpTokenEndpointAuthMethod[] = [
+  'client_secret_basic',
+  'client_secret_post',
+  'none',
+];
 
 export interface DynamicClientRegistrationRequest {
   redirect_uris: string[];
@@ -215,11 +244,16 @@ export class McpOAuthDiscoveryService {
       );
     }
 
-    this.asMetadataCache.set(
-      issuer,
-      { document: parsed, cachedAt: Date.now() },
-      { ttl: this.parseCacheTtl(documentRaw.cacheControl) }
-    );
+    const ttl = this.parseCacheTtl(documentRaw.cacheControl);
+    this.asMetadataCache.set(issuer, { document: parsed, cachedAt: Date.now() }, { ttl });
+    // When the document's canonical `issuer` differs from the URL we used
+    // to discover it (Auth0-tenant pattern — see `parseAuthorizationServerMetadata`),
+    // also cache by the canonical value so callback-time discovery (which
+    // re-keys on `expectedIssuer = parsed.issuer`) hits the same entry
+    // instead of issuing a fresh request against the origin-only URL.
+    if (parsed.issuer !== issuer) {
+      this.asMetadataCache.set(parsed.issuer, { document: parsed, cachedAt: Date.now() }, { ttl });
+    }
 
     return parsed;
   }
@@ -311,7 +345,15 @@ export class McpOAuthDiscoveryService {
       this.prmCache.delete(opts.mcpUrl);
     }
     if (opts.issuer) {
+      // `discoverAuthorizationServer` dual-keys the metadata under both the
+      // discovery URL and the document's canonical `issuer` (Auth0-tenant
+      // pattern). Evicting only the requested key would leave the canonical
+      // entry stale, so drop both when they diverge.
+      const entry = this.asMetadataCache.get(opts.issuer);
       this.asMetadataCache.delete(opts.issuer);
+      if (entry && entry.document.issuer !== opts.issuer) {
+        this.asMetadataCache.delete(entry.document.issuer);
+      }
     }
   }
 
@@ -446,9 +488,12 @@ export class McpOAuthDiscoveryService {
 
   private parseAuthorizationServerMetadata(issuer: string, body: Record<string, unknown>): AuthorizationServerMetadata {
     const docIssuer = pickStringField(body, 'issuer');
-    if (!docIssuer || docIssuer !== issuer) {
-      // Per RFC 8414 §3.3: the `issuer` value in the document MUST equal the
-      // identifier used to construct the well-known URL.
+    if (!docIssuer || !isAcceptableIssuerMatch(issuer, docIssuer)) {
+      // Per RFC 8414 §3.3 the `issuer` value in the document MUST equal the
+      // identifier used to construct the well-known URL. We additionally
+      // accept the narrow "tenant-suffix" relaxation handled by
+      // `isAcceptableIssuerMatch` — see that helper for the rationale and
+      // the security envelope (same origin, no path swap).
       throw new McpOAuthDiscoveryError(
         'mcp_no_as_metadata',
         `Authorization server metadata issuer mismatch (expected "${issuer}", got "${docIssuer ?? 'absent'}").`
@@ -471,6 +516,8 @@ export class McpOAuthDiscoveryService {
       registrationEndpoint: pickStringField(body, 'registration_endpoint') ?? undefined,
       codeChallengeMethodsSupported: pickStringArrayField(body, 'code_challenge_methods_supported') ?? [],
       scopesSupported: pickStringArrayField(body, 'scopes_supported') ?? undefined,
+      tokenEndpointAuthMethodsSupported:
+        pickStringArrayField(body, 'token_endpoint_auth_methods_supported') ?? undefined,
       authorizationResponseIssParameterSupported: Boolean(body.authorization_response_iss_parameter_supported),
     };
   }
@@ -518,6 +565,57 @@ function dedupe(list: string[]): string[] {
   return Array.from(new Set(list));
 }
 
+/**
+ * Strict-by-default issuer comparison with a narrow relaxation for the
+ * Auth0-tenant pattern.
+ *
+ * RFC 8414 §3.3 requires `requested === advertised`, and that remains the
+ * baseline. We additionally accept the case where:
+ *
+ *   - `requested` is a tenant-pathed URL like
+ *     `https://auth.atlassian.com/<tenant>` (used to build the well-known
+ *     discovery URL), and
+ *   - `advertised` is the same origin with no path
+ *     (`https://auth.atlassian.com`).
+ *
+ * This is the documented Auth0 behavior backing several upstreams (e.g.
+ * Atlassian Rovo): per-tenant AS metadata is served under
+ * `/.well-known/oauth-authorization-server/<tenant>` but the document
+ * declares only the base origin as its `issuer`. Without this relaxation
+ * the entire DCR flow is unreachable for those upstreams.
+ *
+ * Security envelope — we never accept:
+ *
+ *   - cross-origin mismatches (different scheme/host/port), which would
+ *     let a hostile metadata document substitute its own AS;
+ *   - advertised issuers with a non-empty path different from the
+ *     requested one (a path swap could redirect us to a different
+ *     tenant on the same host).
+ */
+function isAcceptableIssuerMatch(requested: string, advertised: string): boolean {
+  if (requested === advertised) {
+    return true;
+  }
+
+  let requestedUrl: URL;
+  let advertisedUrl: URL;
+  try {
+    requestedUrl = new URL(requested);
+    advertisedUrl = new URL(advertised);
+  } catch {
+    return false;
+  }
+
+  if (requestedUrl.origin !== advertisedUrl.origin) {
+    return false;
+  }
+
+  const advertisedPath = advertisedUrl.pathname.replace(/\/+$/, '');
+  const requestedPath = requestedUrl.pathname.replace(/\/+$/, '');
+
+  return advertisedPath === '' && requestedPath !== '';
+}
+
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -551,6 +649,43 @@ function serializeError(err: unknown): { name: string; message: string } | strin
   }
 
   return String(err);
+}
+
+/**
+ * Negotiate the `token_endpoint_auth_method` to register with via DCR (and
+ * to replay verbatim at token-exchange / refresh time).
+ *
+ * Inputs:
+ *  - `advertised` — the AS's `token_endpoint_auth_methods_supported` list, or
+ *    `undefined` when the document omits the field. RFC 8414 §2 defines the
+ *    default as `client_secret_basic`, so an absent list is treated as if it
+ *    contained only `client_secret_basic`.
+ *  - `prefersConfidential` — whether Novu will hold a `client_secret` for
+ *    this registration. When `false` we accept the `none` method (public
+ *    client), otherwise we refuse it because a confidential client posting
+ *    `none` would have nowhere to send its secret.
+ *
+ * Returns the first method from `TOKEN_ENDPOINT_AUTH_METHOD_PRIORITY` that
+ * intersects the advertised list. When no overlap exists we fall back to
+ * `client_secret_basic` (the RFC default) — most ASes that reject a method
+ * will surface that as `invalid_client_metadata` at register time and the
+ * caller can map that into a `mcp_registration_failed` error.
+ */
+export function selectTokenEndpointAuthMethod(
+  advertised: string[] | undefined,
+  prefersConfidential: boolean
+): McpTokenEndpointAuthMethod {
+  const supported = advertised && advertised.length > 0 ? advertised : [DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD];
+  const supportedSet = new Set(supported);
+
+  for (const method of TOKEN_ENDPOINT_AUTH_METHOD_PRIORITY) {
+    if (!supportedSet.has(method)) continue;
+    if (method === 'none' && prefersConfidential) continue;
+
+    return method;
+  }
+
+  return DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD;
 }
 
 /**

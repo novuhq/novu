@@ -1,5 +1,5 @@
 import { MultiSelect, TextInput } from '@inkjs/ui';
-import { validateManagedAgentSpec, MAX_GENERATED_MCP_SERVERS, MAX_GENERATED_SKILLS } from '@novu/shared';
+import { MAX_GENERATED_MCP_SERVERS, MAX_GENERATED_SKILLS, validateManagedAgentSpec } from '@novu/shared';
 import { Box, Text, useInput, useStdout } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
@@ -12,14 +12,14 @@ import {
   PREVIEW_CREATE_ROW_INDEX,
   PREVIEW_FIELD_LABEL_WIDTH,
   PREVIEW_FIELD_ROWS,
+  type PreviewFieldRow,
+  type PreviewMultiFieldId,
+  type PreviewTextFieldId,
   readPreviewFieldValue,
   readPreviewMultiDefaultValue,
   readPreviewMultiOptions,
   readPreviewTextDefaultValue,
   readPreviewTextPlaceholder,
-  type PreviewFieldRow,
-  type PreviewMultiFieldId,
-  type PreviewTextFieldId,
 } from './preview-field-config';
 import type { GeneratedAgentPreviewResult } from './ui';
 
@@ -92,11 +92,7 @@ export function PreviewGeneratedContent({
     }
 
     setValidationError(null);
-    setUiState(
-      row.kind === 'text'
-        ? { kind: 'edit-text', fieldId: row.id }
-        : { kind: 'edit-multi', fieldId: row.id }
-    );
+    setUiState(row.kind === 'text' ? { kind: 'edit-text', fieldId: row.id } : { kind: 'edit-multi', fieldId: row.id });
   }
 
   function confirmDraft(): void {
@@ -251,9 +247,7 @@ export function PreviewGeneratedContent({
 
           const value = readPreviewFieldValue(row.id, draft);
 
-          return (
-            <PreviewFieldRow key={row.id} label={row.label} value={value} focused={isFocused} />
-          );
+          return <PreviewFieldRow key={row.id} label={row.label} value={value} focused={isFocused} />;
         })}
       </Box>
 
@@ -319,7 +313,9 @@ function PreviewTextEditor({
       <Box borderStyle="round" borderColor="#c084fc" paddingX={1} width={contentWidth - 2}>
         <TextInput defaultValue={defaultValue} placeholder={placeholder} onSubmit={onSubmit} />
       </Box>
-      {fieldId === 'identifier' ? <Text dimColor>Lowercase kebab-case · synced from name until you edit it.</Text> : null}
+      {fieldId === 'identifier' ? (
+        <Text dimColor>Lowercase kebab-case · synced from name until you edit it.</Text>
+      ) : null}
     </Box>
   );
 }

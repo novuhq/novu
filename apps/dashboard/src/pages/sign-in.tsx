@@ -9,7 +9,6 @@ import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { buildAppHomeRoute, getCurrentAppId } from '@/utils/apps';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
   appendRedirectUrlParam,
   buildCliAuthReturnUrlFromSearchParams,
@@ -17,6 +16,7 @@ import {
   resolvePendingCliAuthReturnUrl,
   storePendingCliAuth,
 } from '@/utils/cli-auth-pending';
+import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
   buildAbsoluteConnectUrl,
   buildPrimarySignInUrl,
@@ -121,9 +121,7 @@ export const SignInPage = () => {
 
   const signUpUrlWithProduct = useMemo(() => {
     const redirectUrl = readClerkRedirectUrlParam(searchParams);
-    let url = isConnectSignIn
-      ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
-      : ROUTES.SIGN_UP;
+    let url = isConnectSignIn ? `${ROUTES.SIGN_UP}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}` : ROUTES.SIGN_UP;
 
     if (redirectUrl) {
       url = appendRedirectUrlParam(url, redirectUrl);

@@ -18,7 +18,7 @@ type ConfirmationModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
-  title: string;
+  title: ReactNode;
   description: ReactNode;
   confirmButtonText: string;
   confirmTrailingIcon?: IconType;

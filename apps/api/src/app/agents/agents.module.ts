@@ -10,6 +10,7 @@ import {
   AgentMcpServerRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
+  CommunityOrganizationRepository,
   ConversationActivityRepository,
   ConversationRepository,
   IntegrationRepository,
@@ -61,12 +62,7 @@ import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.fi
 import { USE_CASES } from './usecases';
 
 @Module({
-  imports: [
-    SharedModule,
-    AuthModule,
-    EventsModule,
-    ChannelEndpointsModule,
-  ],
+  imports: [SharedModule, AuthModule, EventsModule, ChannelEndpointsModule],
   controllers: [
     AgentsController,
     AgentIntegrationsController,
@@ -84,6 +80,7 @@ import { USE_CASES } from './usecases';
     AgentMcpServerRepository,
     ChannelConnectionRepository,
     ChannelEndpointRepository,
+    CommunityOrganizationRepository,
     ConversationRepository,
     ConversationActivityRepository,
     IntegrationRepository,

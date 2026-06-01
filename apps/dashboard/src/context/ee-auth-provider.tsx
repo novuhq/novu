@@ -1,3 +1,6 @@
+import { ClerkProvider as _ClerkProvider } from '@clerk/react';
+import { PropsWithChildren } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { buttonVariants } from '@/components/primitives/button';
 import {
   CLERK_PUBLISHABLE_KEY,
@@ -17,9 +20,6 @@ import {
   PRODUCT_QUERY_PARAM,
 } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
-import { ClerkProvider as _ClerkProvider } from '@clerk/react';
-import { PropsWithChildren } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 type EEAuthProviderProps = PropsWithChildren;
 
@@ -77,12 +77,8 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
   // session natively from a plain navigation — no Clerk-side configuration needed.
   const isCrossProductHost = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
 
-  const signInUrl = isCrossProductHost
-    ? buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE })
-    : ROUTES.SIGN_IN;
-  const signUpUrl = isCrossProductHost
-    ? buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE })
-    : ROUTES.SIGN_UP;
+  const signInUrl = isCrossProductHost ? buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE }) : ROUTES.SIGN_IN;
+  const signUpUrl = isCrossProductHost ? buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE }) : ROUTES.SIGN_UP;
 
   const allowedRedirectOrigins = buildClerkAllowedRedirectOrigins();
 

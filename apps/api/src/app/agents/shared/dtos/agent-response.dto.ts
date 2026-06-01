@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import type { AgentRuntime } from '@novu/shared';
+import type { AgentRuntime, AgentVisibility } from '@novu/shared';
 
 import { AgentBehaviorDto } from './agent-behavior.dto';
 import { AgentIntegrationSummaryDto } from './agent-integration-summary.dto';
@@ -70,6 +70,13 @@ export class AgentResponseDto {
   runtime?: AgentRuntime;
 
   @ApiPropertyOptional({
+    enum: ['public', 'private'],
+    description:
+      'Discovery scope of the agent. Always `public` today; reserved for the upcoming private-agents feature.',
+  })
+  visibility?: AgentVisibility;
+
+  @ApiPropertyOptional({
     type: ManagedRuntimeResponseDto,
     description: 'Present when runtime is "managed". Contains provider and external identifiers.',
   })
@@ -80,6 +87,9 @@ export class AgentResponseDto {
 
   @ApiProperty()
   _organizationId: string;
+
+  @ApiPropertyOptional({ description: 'Mongo user id of the user who created the agent' })
+  createdBy?: string;
 
   @ApiProperty()
   createdAt: string;

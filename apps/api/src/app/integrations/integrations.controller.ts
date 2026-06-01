@@ -50,6 +50,7 @@ import {
 } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
 import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
@@ -777,7 +778,7 @@ export class IntegrationsController {
 
     if (result.type === ResponseTypeEnum.HTML) {
       res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+      res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
       res.send(result.result);
 
       return;

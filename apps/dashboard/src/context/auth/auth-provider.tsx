@@ -6,8 +6,7 @@ import { OnboardingProvisioningOverlay } from '@/components/auth/connect-provisi
 import { IS_HOSTNAME_SPLIT_ENABLED, IS_NOVU_CONNECT } from '@/config';
 import { isPublicAuthPath } from '@/utils/auth-routes';
 import { readPendingCliAuth, storePendingCliAuthFromPath } from '@/utils/cli-auth-pending';
-import { buildConnectProvisionOrgListPath } from '@/utils/connect';
-import { isActiveConnectWorkspace, isConnectWorkspace } from '@/utils/connect';
+import { buildConnectProvisionOrgListPath, isActiveConnectWorkspace, isConnectWorkspace } from '@/utils/connect';
 import { buildAbsoluteConnectUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { AuthContext } from './auth-context';

@@ -4,9 +4,14 @@ import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
-import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
-import { AGENT_RUNTIME_CHOICES, CHANNEL_CHOICES, type AgentRuntimeChoice, type ChannelChoice } from './commands/connect/types';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
+import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
+import {
+  AGENT_RUNTIME_CHOICES,
+  type AgentRuntimeChoice,
+  CHANNEL_CHOICES,
+  type ChannelChoice,
+} from './commands/connect/types';
 import { CloudRegionEnum } from './commands/dev/enums';
 import { IInitCommandOptions, init } from './commands/init';
 import { stepPublish } from './commands/step';
@@ -138,11 +143,7 @@ program
     '--connect-dashboard-url <url>',
     'Override the Connect browser-auth URL (default follows --region, e.g. connect.novu.co)'
   )
-  .option(
-    '--region <region>',
-    `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`,
-    CloudRegionEnum.US
-  )
+  .option('--region <region>', `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`, CloudRegionEnum.US)
   .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')
   .option(
     '--runtime <runtime>',

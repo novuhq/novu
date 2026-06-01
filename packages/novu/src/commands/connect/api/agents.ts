@@ -59,7 +59,10 @@ export async function generateAgent(client: ConnectApiClient, prompt: string): P
   return 'data' in body && body.data ? body.data : (body as GeneratedAgentSpec);
 }
 
-export async function createManagedAgent(client: ConnectApiClient, input: CreateManagedAgentInput): Promise<AgentRecord> {
+export async function createManagedAgent(
+  client: ConnectApiClient,
+  input: CreateManagedAgentInput
+): Promise<AgentRecord> {
   const res = await client.axios.post<{ data?: AgentRecord } | AgentRecord>('/v1/agents', {
     name: input.name,
     identifier: input.identifier,

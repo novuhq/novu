@@ -1,11 +1,12 @@
 import { useOrganization, useOrganizationList, useUser } from '@clerk/react';
 import { FeatureFlagsKeysEnum, OrganizationProductTypeEnum, tryReadOrganizationProductType } from '@novu/shared';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, type NavigateFunction } from 'react-router-dom';
+import { type NavigateFunction, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/primitives/button';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS } from '@/utils/apps';
+import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
 import {
   beginConnectProvisioning,
   buildConnectOrganizationName,
@@ -17,7 +18,6 @@ import {
   resolveConnectOrgListAction,
   writeConnectAutoCreateSessionGuard,
 } from '@/utils/connect';
-import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
 import { getPostOrgCreateRoute } from '@/utils/onboarding-redirect';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -43,9 +43,7 @@ function isMissingOrganizationError(error: unknown): boolean {
   const errors = (error as { errors?: Array<{ code?: string }> }).errors;
   if (!Array.isArray(errors)) return false;
 
-  return errors.some(
-    (entry) => entry?.code === 'organization_not_found' || entry?.code === 'resource_not_found'
-  );
+  return errors.some((entry) => entry?.code === 'organization_not_found' || entry?.code === 'resource_not_found');
 }
 
 function isSlugTakenError(error: unknown): boolean {

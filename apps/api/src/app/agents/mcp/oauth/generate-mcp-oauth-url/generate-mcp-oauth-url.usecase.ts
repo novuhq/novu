@@ -1,6 +1,7 @@
 import { createHash as nodeCreateHash, randomBytes } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import {
+  AnalyticsService,
   createHash,
   decryptMcpConnectionOAuthClient,
   encodeOAuthState,
@@ -29,6 +30,7 @@ import {
   type McpServer,
   type NovuAppOAuthCatalogEntry,
 } from '@novu/shared';
+import { trackAgentMcpOAuthCreated } from '../../../shared/analytics/agent-analytics';
 import { GenerateMcpOAuthUrlResponseDto } from '../../../shared/dtos/mcp-server.dto';
 import { assertMcpNovuAppFlagEnabled } from '../../assert-mcp-novu-app-flag-enabled';
 import {
@@ -40,9 +42,12 @@ import {
   DiscoveredProtectedResource,
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
+  type SupportedTokenEndpointAuthMethod,
+  selectTokenEndpointAuthMethod,
 } from '../mcp-oauth-discovery.service';
 import { GenerateMcpOAuthUrlCommand } from './generate-mcp-oauth-url.command';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from './mcp-oauth-state';
+import { pickReusableOAuthClient } from './pick-reusable-oauth-client';
 
 type ResolvedOAuthConfig =
   | { mode: McpConnectionAuthModeEnum.Dcr; catalog: DcrOAuthCatalogEntry }
@@ -89,6 +94,7 @@ export class GenerateMcpOAuthUrl {
     private readonly discoveryService: McpOAuthDiscoveryService,
     private readonly getNovuAppCredentials: McpNovuAppCredentialsService,
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(GenerateMcpOAuthUrl.name);
@@ -104,7 +110,7 @@ export class GenerateMcpOAuthUrl {
     const context = await this.loadAuthorizeContext(command);
 
     if (canReusePendingOAuthSession(context.existing)) {
-      return this.buildAuthorizeUrlForExistingPending(context, command);
+      return this.buildAuthorizeUrlForExistingPending(context, command, { reusedPendingSession: true });
     }
 
     return this.execute(command);
@@ -118,6 +124,15 @@ export class GenerateMcpOAuthUrl {
 
     if (oauthConfig.mode === McpConnectionAuthModeEnum.NovuApp) {
       const resolved = await this.resolveServerEndpointsForNovuApp(catalog, oauthConfig);
+
+      // novu-app catalog entries hand-pin `issuer` and `authorizationEndpoint`
+      // as sibling literals in MCP_SERVERS, so a same-origin guard here is a
+      // cheap way to catch a future copy-paste bug before we redirect a user
+      // to a third-party URL. Run BEFORE the upsert so a guard failure
+      // doesn't leave an orphaned pending-OAuth row in Mongo. DCR endpoints
+      // do NOT get this check — see `buildAuthorizeUrlFromEndpoints` for
+      // the rationale.
+      assertSameOrigin(resolved.authorizationEndpoint, resolved.issuer);
 
       await this.upsertPendingNovuAppConnection({
         enablement,
@@ -134,7 +149,6 @@ export class GenerateMcpOAuthUrl {
       const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
       const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
         authorizationEndpoint: resolved.authorizationEndpoint,
-        expectedIssuer: resolved.issuer,
         clientId: oauthConfig.credentials.clientId,
         scopes: resolved.scopes,
         resource: resolved.resource,
@@ -142,7 +156,7 @@ export class GenerateMcpOAuthUrl {
         pkceVerifier,
       });
 
-      return { authorizeUrl };
+      return this.buildOAuthUrlResponse(command, context, authorizeUrl);
     }
 
     // DCR mode — existing behaviour.
@@ -169,12 +183,38 @@ export class GenerateMcpOAuthUrl {
     const state = await this.buildSignedState(enablement, subscriber._id, agent._id, command);
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: resolved.asMetadata.authorizationEndpoint,
-      expectedIssuer: resolved.asMetadata.issuer,
       clientId: oauthClient.clientId,
       scopes: resolved.scopes,
       resource: resolved.resource,
       state,
       pkceVerifier,
+    });
+
+    return this.buildOAuthUrlResponse(command, context, authorizeUrl);
+  }
+
+  private buildOAuthUrlResponse(
+    command: GenerateMcpOAuthUrlCommand,
+    context: {
+      oauthConfig: ResolvedOAuthConfig;
+      agent: { _id: string };
+    },
+    authorizeUrl: string,
+    options?: { reusedPendingSession?: boolean }
+  ): GenerateMcpOAuthUrlResponseDto {
+    trackAgentMcpOAuthCreated(this.analyticsService, {
+      userId: command.userId,
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      agentId: context.agent._id,
+      agentIdentifier: command.agentIdentifier,
+      mcpId: command.mcpId,
+      authMode: context.oauthConfig.mode,
+      scope: McpConnectionScopeEnum.Subscriber,
+      subscriberId: command.subscriberId,
+      source: command.userId === 'system' ? 'setup_card' : 'api',
+      conversationId: command.conversationId,
+      reusedPendingSession: options?.reusedPendingSession,
     });
 
     return { authorizeUrl };
@@ -251,7 +291,8 @@ export class GenerateMcpOAuthUrl {
       subscriber: { _id: string };
       existing: McpConnectionEntity | null;
     },
-    command: GenerateMcpOAuthUrlCommand
+    command: GenerateMcpOAuthUrlCommand,
+    options?: { reusedPendingSession?: boolean }
   ): Promise<GenerateMcpOAuthUrlResponseDto> {
     const { catalog, oauthConfig, enablement, agent, subscriber, existing } = context;
 
@@ -278,9 +319,12 @@ export class GenerateMcpOAuthUrl {
       }
 
       const resolved = await this.resolveServerEndpointsForNovuApp(catalog, oauthConfig);
+      // novu-app endpoints are hand-pinned literals, so a same-origin guard
+      // catches a copy-paste bug before we redirect the user. DCR endpoints are
+      // exempt — see `buildAuthorizeUrlFromEndpoints` for the rationale.
+      assertSameOrigin(authorizationEndpoint, expectedIssuer);
       const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
         authorizationEndpoint,
-        expectedIssuer,
         clientId: oauthConfig.credentials.clientId,
         scopes: resolved.scopes,
         resource,
@@ -288,7 +332,7 @@ export class GenerateMcpOAuthUrl {
         pkceVerifier,
       });
 
-      return { authorizeUrl };
+      return this.buildOAuthUrlResponse(command, context, authorizeUrl, options);
     }
 
     if (!existing.oauthClient || !existing.oauthState?.expectedIssuer || !existing.oauthState.resource) {
@@ -298,7 +342,6 @@ export class GenerateMcpOAuthUrl {
     const oauthClient = decryptMcpConnectionOAuthClient(existing.oauthClient);
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: oauthClient.authorizationEndpoint,
-      expectedIssuer: existing.oauthState.expectedIssuer,
       clientId: oauthClient.clientId,
       scopes: oauthClient.scopesGranted ?? [],
       resource: existing.oauthState.resource,
@@ -306,7 +349,7 @@ export class GenerateMcpOAuthUrl {
       pkceVerifier,
     });
 
-    return { authorizeUrl };
+    return this.buildOAuthUrlResponse(command, context, authorizeUrl, options);
   }
 
   /**
@@ -354,6 +397,15 @@ export class GenerateMcpOAuthUrl {
       }
       case McpConnectionAuthModeEnum.UserApp:
         throw new BadRequestException(`MCP "${command.mcpId}" auth mode "${entry.mode}" is not yet supported.`);
+      case McpConnectionAuthModeEnum.ProviderManaged:
+        // Provider-managed MCPs delegate OAuth to the runtime provider — Novu
+        // never builds an authorize URL or exchanges codes for them. Callers
+        // must use `POST /agents/:identifier/mcp-servers/:mcpId/provider-vault`
+        // which ensures the provider vault and returns the deep link to the
+        // provider's vault UI instead.
+        throw new BadRequestException(
+          `MCP "${command.mcpId}" is provider-managed; use the provider-vault endpoint instead of Novu OAuth.`
+        );
       default: {
         const _exhaustive: never = entry;
 
@@ -490,13 +542,14 @@ export class GenerateMcpOAuthUrl {
     scopes: string[];
   }): Promise<McpConnectionOAuthClient> {
     const { existing, asMetadata, oauthConfig, scopes } = args;
-    const reusable = pickReusableOAuthClient(existing?.oauthClient, asMetadata.issuer);
+    const redirectUri = buildMcpOAuthRedirectUri();
+    const reusable = pickReusableOAuthClient(existing?.oauthClient, asMetadata.issuer, redirectUri);
 
     if (reusable) {
       return reusable;
     }
 
-    const registration = await this.registerNewClient({ asMetadata, oauthConfig, scopes });
+    const registration = await this.registerNewClient({ asMetadata, oauthConfig, scopes, redirectUri });
 
     return {
       clientId: registration.clientId,
@@ -511,6 +564,8 @@ export class GenerateMcpOAuthUrl {
       tokenEndpoint: asMetadata.tokenEndpoint,
       registrationEndpoint: asMetadata.registrationEndpoint,
       scopesGranted: scopes.length > 0 ? scopes : undefined,
+      tokenEndpointAuthMethod: registration.tokenEndpointAuthMethod,
+      redirectUri,
       registeredAt: new Date(),
     };
   }
@@ -519,30 +574,53 @@ export class GenerateMcpOAuthUrl {
     asMetadata: AuthorizationServerMetadata;
     oauthConfig: DcrOAuthCatalogEntry;
     scopes: string[];
+    redirectUri: string;
   }): Promise<{
     clientId: string;
     clientSecret?: string;
     clientSecretExpiresAt?: number;
     registrationAccessToken?: string;
     registrationClientUri?: string;
+    tokenEndpointAuthMethod: SupportedTokenEndpointAuthMethod;
   }> {
-    const { asMetadata, oauthConfig, scopes } = args;
+    const { asMetadata, oauthConfig, scopes, redirectUri } = args;
     const frontBase = (process.env.DASHBOARD_URL ?? process.env.FRONT_BASE_URL)?.replace(/\/$/, '');
+    // Confidential client = we will receive a `client_secret` back. Web apps
+    // (`application_type: 'web'`) always run server-side; only `native`
+    // installs are eligible for the `none` auth method as a public client.
+    const prefersConfidential = (oauthConfig.applicationType ?? 'web') === 'web';
+    const tokenEndpointAuthMethod = selectTokenEndpointAuthMethod(
+      asMetadata.tokenEndpointAuthMethodsSupported,
+      prefersConfidential
+    );
 
     try {
-      return await this.discoveryService.registerClient(asMetadata, {
-        redirect_uris: [buildMcpOAuthRedirectUri()],
+      const registration = await this.discoveryService.registerClient(asMetadata, {
+        redirect_uris: [redirectUri],
         client_name: NOVU_MCP_CLIENT_NAME,
         application_type: oauthConfig.applicationType ?? 'web',
         grant_types: ['authorization_code', 'refresh_token'],
         response_types: ['code'],
-        token_endpoint_auth_method: 'client_secret_post',
+        token_endpoint_auth_method: tokenEndpointAuthMethod,
         scope: scopes.length > 0 ? scopes.join(' ') : undefined,
         client_uri: frontBase,
         logo_uri: frontBase ? `${frontBase}/images/novu.svg` : undefined,
         software_id: oauthConfig.softwareId ?? DEFAULT_SOFTWARE_ID,
         software_version: SOFTWARE_VERSION,
       });
+
+      // A secret-bearing method that comes back without a `client_secret`
+      // would persist a confidential client we can never authenticate,
+      // surfacing later as an opaque `invalid_client` at token exchange.
+      // Fail fast so the error points at registration instead.
+      if (tokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
+        throw new McpOAuthDiscoveryError(
+          'mcp_registration_failed',
+          `Dynamic Client Registration returned no client_secret for "${tokenEndpointAuthMethod}".`
+        );
+      }
+
+      return { ...registration, tokenEndpointAuthMethod };
     } catch (err) {
       throw mapDiscoveryError(err, `MCP authorization server "${asMetadata.issuer}"`);
     }
@@ -692,6 +770,8 @@ export class GenerateMcpOAuthUrl {
       mcpId: command.mcpId,
       scope: McpConnectionScopeEnum.Subscriber,
       timestamp: Date.now(),
+      userId: command.userId,
+      source: command.userId === 'system' ? 'setup_card' : 'api',
       ...(command.conversationId ? { conversationId: command.conversationId } : {}),
     };
 
@@ -709,25 +789,26 @@ export class GenerateMcpOAuthUrl {
   /**
    * Build the authorize URL from a (clientId, AS endpoints) pair.
    *
-   * `expectedIssuer` is required so the caller can opt into a
-   * defence-in-depth check that `authorizationEndpoint`'s origin matches
-   * the issuer's origin. This catches accidental endpoint swaps inside
-   * the use case (e.g. mixing a DCR-discovered endpoint with a novu-app
-   * catalog issuer) before we send the user to a third-party URL.
-   * Cross-origin mismatches throw a 500-ish `Error` because they
-   * indicate a bug in this module, not a user-visible failure.
+   * Same-origin enforcement between the authorize endpoint and the issuer
+   * is intentionally NOT performed here. RFC 8414 permits an AS to advertise
+   * an `authorization_endpoint` on a sibling origin (e.g. Ahrefs publishes
+   * `issuer = https://api.ahrefs.com` but `authorization_endpoint =
+   * https://app.ahrefs.com/...`) and rejecting that breaks legitimate
+   * providers. For DCR the metadata document is already authenticated
+   * against the requested issuer by `isAcceptableIssuerMatch` in the
+   * discovery layer, so the provider itself vouches for its endpoints.
+   * For `novu-app` mode, where issuer + endpoints are hand-pinned literals
+   * in the catalog, the same-origin guard is applied at the call site.
    */
   private buildAuthorizeUrlFromEndpoints(args: {
     authorizationEndpoint: string;
-    expectedIssuer: string;
     clientId: string;
     scopes: string[];
     resource: string;
     state: string;
     pkceVerifier: string;
   }): string {
-    const { authorizationEndpoint, expectedIssuer, clientId, scopes, resource, state, pkceVerifier } = args;
-    assertSameOrigin(authorizationEndpoint, expectedIssuer);
+    const { authorizationEndpoint, clientId, scopes, resource, state, pkceVerifier } = args;
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: buildMcpOAuthRedirectUri(),
@@ -757,21 +838,10 @@ export class GenerateMcpOAuthUrl {
 }
 
 /**
- * Decide whether to reuse the row's existing DCR-issued client. Returns the
- * decrypted client when:
- *  - the row has an `oauthClient`,
- *  - the recorded `issuer` matches the AS metadata `issuer` (no rotation), and
- *  - `clientSecretExpiresAt` is in the future (or absent, meaning non-expiring).
- *
- * Otherwise returns `undefined` and the caller re-registers.
- *
- * NOTE: `McpConnectionOAuthClient.clientSecretExpiresAt` is declared as `Date`
- * on the entity type, but `BaseRepositoryV2.mapProjectedEntity` runs the row
- * through `convertObjectIds` (see `libs/dal/src/repositories/projection.types.ts`)
- * which serialises every `Date` instance to an ISO string. So at runtime this
- * field is a string when loaded from Mongo, and only a `Date` immediately
- * after construction in-process. We accept both shapes — `new Date(value)`
- * happily takes either.
+ * Decide whether a `pending_oauth` session can be reused without rotating PKCE.
+ * For DCR the recorded client is validated through `pickReusableOAuthClient`
+ * (issuer match, unexpired secret, and matching redirect URI); for `novu-app`
+ * the pinned endpoints recorded on the session are sufficient.
  */
 function canReusePendingOAuthSession(existing: McpConnectionEntity | null): boolean {
   if (!existing) {
@@ -798,27 +868,11 @@ function canReusePendingOAuthSession(existing: McpConnectionEntity | null): bool
     return Boolean(
       oauthState.expectedIssuer &&
         oauthState.resource &&
-        pickReusableOAuthClient(existing.oauthClient, oauthState.expectedIssuer)
+        pickReusableOAuthClient(existing.oauthClient, oauthState.expectedIssuer, buildMcpOAuthRedirectUri())
     );
   }
 
   return false;
-}
-
-function pickReusableOAuthClient(
-  client: McpConnectionOAuthClient | undefined,
-  asIssuer: string
-): McpConnectionOAuthClient | undefined {
-  if (!client) return undefined;
-  if (client.issuer !== asIssuer) return undefined;
-  if (client.clientSecretExpiresAt) {
-    const expiresMs = new Date(client.clientSecretExpiresAt as unknown as string | Date).getTime();
-    if (Number.isFinite(expiresMs) && expiresMs <= Date.now()) {
-      return undefined;
-    }
-  }
-
-  return decryptMcpConnectionOAuthClient(client);
 }
 
 function mapDiscoveryError(err: unknown, contextLabel: string): never {
@@ -862,14 +916,19 @@ function base64UrlEncode(buf: Buffer): string {
 }
 
 /**
- * Defence in depth: throw if `endpoint` does not live on the same origin as
- * `issuer`. RFC 8414 §3 binds the issuer to its advertised endpoints, and
- * the novu-app catalog hand-pins the relationship — a divergence here would
- * be a coding mistake (wrong field copied into the URL builder), not a
- * recoverable user error, so we surface a plain `Error` and let the global
- * filter render the standard 500. We do NOT compare full URLs because a
- * legitimate AS may serve `authorize` and `token` from sibling paths under
- * the same origin.
+ * Defence in depth for `novu-app` catalog entries ONLY.
+ *
+ * For hand-pinned upstreams in MCP_SERVERS the `issuer` and
+ * `authorizationEndpoint` literals sit next to each other in the same
+ * object, so a copy-paste bug (wrong field, wrong tenant) is the most
+ * realistic failure mode. Throwing a plain `Error` lets the global filter
+ * render a 500 — this is a coding mistake, not a recoverable user error.
+ *
+ * Do NOT call this for DCR-discovered endpoints: RFC 8414 allows the AS
+ * to host its `authorization_endpoint` on a sibling origin (e.g. Ahrefs
+ * splits `api.ahrefs.com` issuer from `app.ahrefs.com` authorize) and the
+ * discovery layer already validates the metadata document against the
+ * requested issuer origin.
  */
 function assertSameOrigin(endpoint: string, issuer: string): void {
   let endpointOrigin: string;

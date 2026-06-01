@@ -44,10 +44,7 @@ export function getPreviewFieldLabel(fieldId: PreviewEditableFieldId): string {
   return row!.label;
 }
 
-export function readPreviewFieldValue(
-  fieldId: PreviewEditableFieldId,
-  draft: GeneratedAgentSpec
-): string {
+export function readPreviewFieldValue(fieldId: PreviewEditableFieldId, draft: GeneratedAgentSpec): string {
   if (fieldId === 'name') return draft.name;
   if (fieldId === 'identifier') return draft.identifier;
   if (fieldId === 'systemPrompt') return draft.systemPrompt;

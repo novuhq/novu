@@ -1,9 +1,9 @@
 import {
   getHostnameWithoutPort,
   IS_HOSTNAME_SPLIT_ENABLED,
-  normalizeAppHost,
   NOVU_CONNECT_HOSTNAME,
   NOVU_PLATFORM_HOSTNAME,
+  normalizeAppHost,
 } from '@/config';
 import { ROUTES } from '@/utils/routes';
 

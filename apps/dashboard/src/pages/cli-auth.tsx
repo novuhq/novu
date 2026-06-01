@@ -1,12 +1,12 @@
-import { useAuth as useClerkAuth, useClerk, useUser } from '@clerk/react';
+import { useClerk, useAuth as useClerkAuth, useUser } from '@clerk/react';
 import { FeatureFlagsKeysEnum, PermissionsEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiCheckLine, RiCommandLine, RiLockLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCheckLine, RiCommandLine, RiLockLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { approveCliDeviceSession } from '@/api/cli-auth';
-import { AuthLayout } from '@/components/auth-layout';
 import { ConnectBrandLogo } from '@/components/auth/connect-brand-logo';
+import { AuthLayout } from '@/components/auth-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
@@ -15,10 +15,13 @@ import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
 import { clearConnectProvisioning } from '@/utils/connect';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
+import { readOnboardingSessionId } from '@/utils/onboarding-session-id';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 function isValidDeviceCode(deviceCode: string | null): deviceCode is string {
   if (!deviceCode) return false;
@@ -67,6 +70,7 @@ export const CliAuthPage = () => {
 function CliAuthContent() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const telemetry = useTelemetry();
   const clerk = useClerk();
   const { user } = useUser();
   const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
@@ -78,6 +82,7 @@ function CliAuthContent() {
 
   const deviceCode = searchParams.get('device_code');
   const callerName = searchParams.get('name');
+  const onboardingSessionId = readOnboardingSessionId(searchParams);
   const deviceCodeOk = isValidDeviceCode(deviceCode);
   const canReadApiKeys = has({ permission: PermissionsEnum.API_KEY_READ });
 
@@ -88,6 +93,14 @@ function CliAuthContent() {
   const apiKey = apiKeysQuery.data?.data?.[0]?.key;
 
   const developmentEnvironment = useMemo(() => environments?.find((env) => env.name === 'Development'), [environments]);
+
+  useEffect(() => {
+    telemetry(TelemetryEvent.CLI_AUTH_PAGE_VIEWED, {
+      callerName: callerName ?? 'unknown',
+      isConnect,
+      onboardingSessionId,
+    });
+  }, [callerName, isConnect, onboardingSessionId, telemetry]);
 
   useEffect(() => {
     if (developmentEnvironment && currentEnvironment?._id !== developmentEnvironment._id) {
@@ -109,6 +122,11 @@ function CliAuthContent() {
 
       clearPendingCliAuth();
       setDidAuthorize(true);
+      telemetry(TelemetryEvent.CLI_AUTH_APPROVED, {
+        callerName: callerName ?? 'unknown',
+        isConnect,
+        onboardingSessionId,
+      });
       showSuccessToast('Novu CLI authorized. You can return to your terminal.');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to approve CLI authorization';
@@ -116,9 +134,15 @@ function CliAuthContent() {
     } finally {
       setIsAuthorizing(false);
     }
-  }, [deviceCodeOk, deviceCode, apiKey, currentEnvironment]);
+  }, [deviceCodeOk, deviceCode, apiKey, currentEnvironment, callerName, isConnect, onboardingSessionId, telemetry]);
 
   function handleCancel() {
+    telemetry(TelemetryEvent.CLI_AUTH_DENIED, {
+      callerName: callerName ?? 'unknown',
+      isConnect,
+      onboardingSessionId,
+      reason: 'cancelled',
+    });
     navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: currentEnvironment?.slug ?? 'default' }));
   }
 
@@ -272,13 +296,7 @@ function CliAuthContent() {
   );
 }
 
-function CliAuthHeader({
-  isConnect,
-  callerDisplayName,
-}: {
-  isConnect: boolean;
-  callerDisplayName: string;
-}) {
+function CliAuthHeader({ isConnect, callerDisplayName }: { isConnect: boolean; callerDisplayName: string }) {
   if (isConnect) {
     return <ConnectBrandLogo />;
   }

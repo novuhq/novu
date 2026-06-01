@@ -49,8 +49,8 @@ export class ListAgentMcpServersResponseDto {
 
 /**
  * Hard cap on the desired-state payload to keep the bulk endpoint bounded
- * (one Mongo round trip per row + one upstream sync). Well above the size of
- * the catalog so it never bites a real caller, just rejects malformed input.
+ * (one Mongo round trip per row + one upstream sync). Product limit: agents
+ * are not expected to enable more than 100 MCPs at once.
  */
 const MCP_SET_MAX_IDS = 100;
 
@@ -177,4 +177,24 @@ export class GenerateMcpOAuthUrlRequestDto {
 export class GenerateMcpOAuthUrlResponseDto {
   @ApiProperty({ description: 'Fully-qualified URL the dashboard should redirect the user to.' })
   authorizeUrl: string;
+}
+
+/**
+ * Response from the provider-managed vault ensure endpoint. Used by the
+ * dashboard's "Add from Claude" flow: after the backend ensures the
+ * subscriber vault container exists, the dashboard opens `vaultUrl` in a new
+ * tab so the user can complete connector OAuth inside the provider (Claude).
+ */
+export class EnsureProviderManagedVaultResponseDto {
+  @ApiProperty({
+    description:
+      'Deep link to the managed agent runtime provider\u2019s vault UI. Open in a new tab so the user can finish ' +
+      'connector OAuth inside the provider.',
+  })
+  vaultUrl: string;
+
+  @ApiProperty({
+    description: 'Provider-side vault container id Novu provisioned for the current subscriber + agent.',
+  })
+  externalVaultId: string;
 }

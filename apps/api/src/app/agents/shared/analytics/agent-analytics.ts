@@ -251,6 +251,94 @@ export function trackAgentMcpServerDisabled(
   });
 }
 
+export function trackAgentMcpOAuthCreated(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    agentIdentifier: string;
+    mcpId: string;
+    authMode: string;
+    scope: string;
+    subscriberId: string;
+    source: 'api' | 'setup_card';
+    conversationId?: string;
+    reusedPendingSession?: boolean;
+  }
+): void {
+  analytics.track(`Agent MCP OAuth Created - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    agentIdentifier: params.agentIdentifier,
+    mcpId: params.mcpId,
+    authMode: params.authMode,
+    scope: params.scope,
+    subscriberId: params.subscriberId,
+    source: params.source,
+    conversationId: params.conversationId,
+    reusedPendingSession: params.reusedPendingSession,
+  });
+}
+
+export function trackAgentMcpOAuthCompleted(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    mcpId: string;
+    authMode: string;
+    scope: string;
+    connectionId: string;
+    source: 'api' | 'setup_card';
+    conversationId?: string;
+  }
+): void {
+  analytics.track(`Agent MCP OAuth Completed - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    mcpId: params.mcpId,
+    authMode: params.authMode,
+    scope: params.scope,
+    connectionId: params.connectionId,
+    source: params.source,
+    conversationId: params.conversationId,
+  });
+}
+
+export function trackAgentMcpOAuthFailed(
+  analytics: AnalyticsService,
+  params: {
+    userId: string;
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    mcpId: string;
+    authMode?: string;
+    scope: string;
+    errorCode: string;
+    source: 'api' | 'setup_card';
+    conversationId?: string;
+  }
+): void {
+  analytics.track(`Agent MCP OAuth Failed - ${AGENT_SEGMENT_CATEGORY}`, params.userId, {
+    _organization: params.organizationId,
+    environmentId: params.environmentId,
+    agentId: params.agentId,
+    mcpId: params.mcpId,
+    authMode: params.authMode,
+    scope: params.scope,
+    errorCode: params.errorCode,
+    source: params.source,
+    conversationId: params.conversationId,
+  });
+}
+
 /** Fired once per agent–integration when the first inbound webhook is successfully resolved (sets connectedAt). */
 export function trackAgentIntegrationFirstWebhook(
   analytics: AnalyticsService,

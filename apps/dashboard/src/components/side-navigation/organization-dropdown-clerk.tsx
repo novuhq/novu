@@ -1,8 +1,8 @@
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { IS_NOVU_CONNECT } from '@/config';
 import { isConnectWorkspace } from '@/utils/connect';
 import { isPlatformWorkspace } from '@/utils/platform-workspace';
-import { IS_NOVU_CONNECT } from '@/config';
 
 type OrganizationMembershipLike = {
   id: string;

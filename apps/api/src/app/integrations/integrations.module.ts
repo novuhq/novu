@@ -25,12 +25,7 @@ const PROVIDERS = [
 ];
 
 @Module({
-  imports: [
-    SharedModule,
-    forwardRef(() => AuthModule),
-    ChannelConnectionsModule,
-    ChannelEndpointsModule,
-  ],
+  imports: [SharedModule, forwardRef(() => AuthModule), ChannelConnectionsModule, ChannelEndpointsModule],
   controllers: [IntegrationsController, IntegrationsPublicController],
   providers: [
     ...USE_CASES,

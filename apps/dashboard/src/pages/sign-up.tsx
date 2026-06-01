@@ -8,8 +8,8 @@ import { PageMeta } from '@/components/page-meta';
 import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import { appendRedirectUrlParam, readCliAuthReturnUrl } from '@/utils/cli-auth-pending';
+import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
   buildAbsoluteConnectUrl,
   buildPrimarySignUpUrl,
@@ -88,9 +88,7 @@ export const SignUpPage = () => {
 
   const signInUrlWithProduct = useMemo(() => {
     const redirectUrl = readClerkRedirectUrlParam(searchParams);
-    let url = isConnectSignUp
-      ? `${ROUTES.SIGN_IN}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
-      : ROUTES.SIGN_IN;
+    let url = isConnectSignUp ? `${ROUTES.SIGN_IN}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}` : ROUTES.SIGN_IN;
 
     if (redirectUrl) {
       url = appendRedirectUrlParam(url, redirectUrl);

@@ -584,6 +584,32 @@ export async function setAgentMcpServers(
   });
 }
 
+export type EnsureProviderManagedVaultResponse = {
+  /** Deep link the dashboard opens in a new tab so the user can finish connector OAuth in Claude. */
+  vaultUrl: string;
+  /** Provider-side vault container id (e.g. Anthropic `vlt_…`) Novu provisioned for the current subscriber + agent. */
+  externalVaultId: string;
+};
+
+/**
+ * Idempotent "ensure provider-managed enablement + vault" call. Used by the
+ * dashboard's "Add from Claude" flow for MCPs whose catalog
+ * `oauth.mode === 'provider-managed'`. Open `vaultUrl` in a new tab so the
+ * user can finish connector OAuth in the provider's vault UI.
+ */
+export async function ensureProviderManagedVault(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<EnsureProviderManagedVaultResponse> {
+  const response = await post<{ data: EnsureProviderManagedVaultResponse } | EnsureProviderManagedVaultResponse>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}/provider-vault`,
+    { environment }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
 type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
 
 /** Enable or disable the Novu shared inbox for a single agent. */

@@ -1016,9 +1016,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&code=fake-auth-code`
       );
-      // 200 HTML fallback (no DASHBOARD_URL) OR 302 redirect — both are
-      // success-side responses; the assertion that matters is the row state.
-      expect([200, 302], `unexpected callback status (body=${JSON.stringify(cb.body)})`).to.include(cb.status);
+      // The callback always renders a self-contained "flow complete" HTML page
+      // (no dashboard redirect); the assertion that matters is the row state.
+      expect(cb.status, `unexpected callback status (body=${JSON.stringify(cb.body)})`).to.equal(200);
+      expect(cb.text, 'callback should render the success page').to.include('Connection complete');
 
       const conn = await findGithubConnection(agentId);
       expect(conn, 'mcp_connection row should exist').to.exist;
@@ -1099,7 +1100,8 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&error=access_denied&error_description=${encodeURIComponent('The user cancelled the consent')}`
       );
-      expect([200, 302]).to.include(cb.status);
+      expect(cb.status).to.equal(200);
+      expect(cb.text, 'callback should render the error page').to.include('Connection failed');
 
       const conn = await findGithubConnection(agentId);
       expect(conn!.status).to.equal(McpConnectionStatusEnum.Error);
@@ -1130,7 +1132,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(conn!.lastError?.code).to.equal('mcp_novu_app_credentials_missing');
     });
 
-    it('token-exchange body includes RFC 8707 resource + client_secret + PKCE verifier', async () => {
+    it('token-exchange uses HTTP Basic for client_secret_basic and carries RFC 8707 resource + PKCE verifier in the body', async () => {
       const { state } = await authorizeAndCaptureState();
 
       // Capture the POST body so we can assert form-encoded params without
@@ -1153,18 +1155,34 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&code=fake-auth-code`
       );
-      expect([200, 302]).to.include(cb.status);
+      expect(cb.status).to.equal(200);
 
       const tokenCall = safeJsonStub
         .getCalls()
         .find((c) => (c.args[0] as { url: string }).url.includes('/login/oauth/access_token'));
       expect(tokenCall, 'token endpoint should have been called').to.exist;
-      const tokenArgs = tokenCall!.args[0] as { method: string; body: string };
+      const tokenArgs = tokenCall!.args[0] as { method: string; body: string; headers: Record<string, string> };
       expect(tokenArgs.method).to.equal('POST');
+      // novu-app mode reconstructs an ephemeral oauthClient with no
+      // `tokenEndpointAuthMethod` persisted, so the callback resolves to
+      // the RFC 8414 §2 default of `client_secret_basic` — credentials go
+      // into an HTTP Basic header instead of the form body. RFC 6749 §2.3.1
+      // also requires URL-encoding the id:secret BEFORE base64; neither of
+      // these fake fixture values contains a reserved character, so the
+      // expected value is a straight base64 of `id:secret`.
+      const expectedBasic = Buffer.from(
+        `${encodeURIComponent('Iv23livefakeclientid')}:${encodeURIComponent('ghs_fakeclientsecret')}`,
+        'utf8'
+      ).toString('base64');
+      expect(tokenArgs.headers.Authorization).to.equal(`Basic ${expectedBasic}`);
       const bodyParams = new URLSearchParams(tokenArgs.body);
       expect(bodyParams.get('grant_type')).to.equal('authorization_code');
-      expect(bodyParams.get('client_id')).to.equal('Iv23livefakeclientid');
-      expect(bodyParams.get('client_secret')).to.equal('ghs_fakeclientsecret');
+      // `client_secret_basic` must NOT replay credentials in the form body
+      // (RFC 6749 §2.3.1) — that would defeat the whole point of the
+      // negotiated header method.
+      expect(bodyParams.get('client_id'), 'client_id must not be carried in body for client_secret_basic').to.be.null;
+      expect(bodyParams.get('client_secret'), 'client_secret must not be carried in body for client_secret_basic').to.be
+        .null;
       expect(bodyParams.get('code')).to.equal('fake-auth-code');
       expect(bodyParams.get('code_verifier')).to.match(/^[A-Za-z0-9_-]{43}$/);
       expect(bodyParams.get('resource')).to.equal('https://api.githubcopilot.com/mcp/');

@@ -3,7 +3,7 @@ import { McpConnectionStatusEnum } from '@novu/shared';
 
 import { GenerateMcpOAuthUrlCommand } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
-import type { OAuthMcp } from './oauth-mcp.types';
+import { isProviderManagedOAuthMcp, type OAuthMcp } from './oauth-mcp.types';
 import { buildSetupCard, type SetupCardRow } from './setup-card.helpers';
 
 export async function buildSetupCardForMcps(params: {
@@ -23,6 +23,12 @@ export async function buildSetupCardForMcps(params: {
   for (const mcp of params.mcps) {
     if (params.resolved || mcp.status === McpConnectionStatusEnum.Connected) {
       rows.push(mcp);
+
+      continue;
+    }
+
+    if (isProviderManagedOAuthMcp(mcp)) {
+      rows.push({ ...mcp, treatAsConnected: true });
 
       continue;
     }

@@ -6,6 +6,7 @@ import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
+import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
 import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
@@ -38,7 +39,13 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    if (turn.subscriber && turn.message?.id) {
+    if (!turn.subscriber) {
+      await this.replyUnresolvedSubscriberAccess(turn);
+
+      return;
+    }
+
+    if (turn.message?.id) {
       const parked = await this.handleManagedAgentSetupInbound.execute(
         ManagedAgentSetupInboundCommand.create({
           userId: 'system',
@@ -120,6 +127,24 @@ export class ManagedRuntime implements AgentRuntime {
           channel: this.conversationService.getPrimaryChannel(turn.conversation),
           agentIdentifier: turn.config.agentIdentifier,
           content: DEMO_QUOTA_EXHAUSTED_REPLY,
+          environmentId: turn.config.environmentId,
+          organizationId: turn.config.organizationId,
+        },
+      }
+    );
+  }
+
+  private async replyUnresolvedSubscriberAccess(turn: ConversationTurn): Promise<void> {
+    applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
+    await this.outboundGateway.replyOnThread(
+      turn.thread,
+      { markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY },
+      {
+        persist: {
+          conversationId: turn.conversation._id,
+          channel: this.conversationService.getPrimaryChannel(turn.conversation),
+          agentIdentifier: turn.config.agentIdentifier,
+          content: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
           environmentId: turn.config.environmentId,
           organizationId: turn.config.organizationId,
         },
