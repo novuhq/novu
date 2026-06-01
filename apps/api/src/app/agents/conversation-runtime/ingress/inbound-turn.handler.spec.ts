@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
@@ -52,7 +52,9 @@ describe('AgentInboundHandler', () => {
   ) {
     const logger = makeLogger();
     const subscriberResolver = {
-      resolve: overrides.subscriberResolve ?? sinon.stub().resolves(null),
+      resolveOnly: overrides.subscriberResolve ?? sinon.stub().resolves(null),
+      resolveOrProvision:
+        overrides.subscriberResolve ?? sinon.stub().resolves(`sub_${Math.random().toString(36).slice(2, 14)}`),
     };
     const conversationService = {
       createOrGetConversation: sinon.stub().resolves(conversation),

@@ -1,5 +1,6 @@
 import { RiArrowRightUpLine, RiCheckLine } from 'react-icons/ri';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { BetaBadge } from '@/components/primitives/beta-badge';
 
 type ConnectSwitchConfirmationModalProps = {
   open: boolean;
@@ -7,17 +8,18 @@ type ConnectSwitchConfirmationModalProps = {
   onConfirm: () => void;
 };
 
-export function ConnectSwitchConfirmationModal({
-  open,
-  onOpenChange,
-  onConfirm,
-}: ConnectSwitchConfirmationModalProps) {
+export function ConnectSwitchConfirmationModal({ open, onOpenChange, onConfirm }: ConnectSwitchConfirmationModalProps) {
   return (
     <ConfirmationModal
       open={open}
       onOpenChange={onOpenChange}
       onConfirm={onConfirm}
-      title="Switch to Novu Connect?"
+      title={
+        <span className="flex items-center gap-1.5">
+          Switch to Novu Connect?
+          <BetaBadge className="shrink-0" />
+        </span>
+      }
       description={
         <div className="flex flex-col gap-3">
           <p>

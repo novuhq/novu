@@ -1,8 +1,8 @@
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CloudRegionEnum } from '../../dev/enums';
-import { NovuApiError } from '../api/client';
 import type { ConnectApiClient } from '../api/client';
+import { NovuApiError } from '../api/client';
 import type { ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { resolveAgentRuntimeIntegration } from './resolve-agent-runtime-integration';
@@ -63,13 +63,7 @@ describe('resolveAgentRuntimeIntegration credential retry', () => {
       )
       .mockResolvedValueOnce(undefined);
 
-    const result = await resolveAgentRuntimeIntegration(
-      createClient(),
-      ui,
-      createOptions(),
-      'claude',
-      'env-1'
-    );
+    const result = await resolveAgentRuntimeIntegration(createClient(), ui, createOptions(), 'claude', 'env-1');
 
     expect(promptForSecretInput).toHaveBeenCalledTimes(2);
     expect(promptForSecretInput.mock.calls[1][0]).toMatchObject({
@@ -81,10 +75,7 @@ describe('resolveAgentRuntimeIntegration credential retry', () => {
   });
 
   it('re-prompts when submitted credentials are incomplete in interactive mode', async () => {
-    const promptForSecretInput = vi
-      .fn()
-      .mockResolvedValueOnce('')
-      .mockResolvedValueOnce('good-key');
+    const promptForSecretInput = vi.fn().mockResolvedValueOnce('').mockResolvedValueOnce('good-key');
     const ui = createUi({ promptForSecretInput });
 
     await resolveAgentRuntimeIntegration(createClient(), ui, createOptions(), 'claude', 'env-1');
@@ -118,13 +109,7 @@ describe('resolveAgentRuntimeIntegration credential retry', () => {
       )
       .mockResolvedValueOnce(undefined);
 
-    const result = await resolveAgentRuntimeIntegration(
-      createClient(),
-      ui,
-      createOptions(),
-      'claude-aws',
-      'env-1'
-    );
+    const result = await resolveAgentRuntimeIntegration(createClient(), ui, createOptions(), 'claude-aws', 'env-1');
 
     expect(pickAwsClaudeRegion).toHaveBeenCalledTimes(2);
     expect(promptForSecretInput).toHaveBeenCalledTimes(4);

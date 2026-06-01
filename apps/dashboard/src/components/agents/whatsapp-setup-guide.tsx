@@ -3,18 +3,18 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightUpLine, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
+import { patchSubscriber } from '@/api/subscribers';
+import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { patchSubscriber } from '@/api/subscribers';
-import { useConnectSubscriber } from '@/components/connect/connect-subscriber-provider';
-import { API_HOSTNAME } from '@/config';
+import { getAgentApiBaseUrl } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureWhatsAppWebhook } from '@/hooks/use-configure-whatsapp-webhook';
-import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useSendWhatsAppTestTemplate } from '@/hooks/use-send-whatsapp-test-template';
 import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
@@ -31,12 +31,8 @@ export type WhatsAppSetupGuideProps = {
 
 const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 
-function getApiBaseUrl(): string {
-  return (API_HOSTNAME ?? 'https://api.novu.co').replace(/\/$/, '');
-}
-
 function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
-  return `${getApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+  return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
 }
 
 function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {

@@ -1,9 +1,5 @@
 import { CONNECT_EVENTS } from '../../analytics/events';
-import {
-  getTelegramMobileLinkStatus,
-  issueTelegramMobileLink,
-  issueTelegramSubscriberLink,
-} from '../../api/agents';
+import { getTelegramMobileLinkStatus, issueTelegramMobileLink, issueTelegramSubscriberLink } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import { createTelegramIntegration, type IntegrationRecord } from '../../api/integrations';
 import type { AgentSummary } from '../../types';

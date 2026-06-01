@@ -30,6 +30,8 @@ import {
   ApiResponse,
 } from '../../shared/framework/response.decorator';
 import { UserSession } from '../../shared/framework/user.decorator';
+import { EnsureProviderManagedVaultCommand } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.command';
+import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GetMcpConnectionStatusCommand } from '../mcp/connections/get-mcp-connection-status/get-mcp-connection-status.command';
 import { GetMcpConnectionStatus } from '../mcp/connections/get-mcp-connection-status/get-mcp-connection-status.usecase';
 import { GenerateMcpOAuthUrlCommand } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
@@ -47,6 +49,7 @@ import {
   AgentMcpServerEnablementResponseDto,
   AgentRuntimeConfigResponseDto,
   EnableAgentMcpServerRequestDto,
+  EnsureProviderManagedVaultResponseDto,
   GenerateManagedAgentRequestDto,
   GenerateManagedAgentResponseDto,
   GenerateMcpOAuthUrlRequestDto,
@@ -93,6 +96,7 @@ export class AgentRuntimeController {
     private readonly setAgentMcpServersUsecase: SetAgentMcpServers,
     private readonly listAgentMcpServersUsecase: ListAgentMcpServers,
     private readonly generateMcpOAuthUrlUsecase: GenerateMcpOAuthUrl,
+    private readonly ensureProviderManagedVaultUsecase: EnsureProviderManagedVault,
     private readonly getMcpConnectionStatusUsecase: GetMcpConnectionStatus,
     private readonly verifyManagedCredentialsUsecase: VerifyManagedCredentials,
     private readonly generateManagedAgentUsecase: GenerateManagedAgent,
@@ -410,6 +414,37 @@ export class AgentRuntimeController {
         mcpId,
         subscriberId: body.subscriberId,
         conversationId: body.conversationId,
+      })
+    );
+  }
+
+  @Post('/:identifier/mcp-servers/:mcpId/provider-vault')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(EnsureProviderManagedVaultResponseDto, 200)
+  @ApiOperation({
+    summary: 'Ensure a provider-managed vault and return the redirect URL',
+    description:
+      'For MCPs whose catalog `oauth.mode === "provider-managed"`, ensures the catalog enablement row, projects ' +
+      'the agent on the runtime provider, ensures a per-subscriber vault container exists, and returns the deep ' +
+      'link the dashboard opens in a new tab so the user can complete connector OAuth inside the provider ' +
+      '(Claude). The subscriber is derived from the current dashboard user. Gated by ' +
+      '`IS_MCP_PROVIDER_MANAGED_ENABLED`.',
+  })
+  @ApiNotFoundResponse({ description: 'Agent or runtime integration not found.' })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  @UseFilters(AgentRuntimeExceptionFilter)
+  ensureProviderManagedVault(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('mcpId') mcpId: string
+  ): Promise<EnsureProviderManagedVaultResponseDto> {
+    return this.ensureProviderManagedVaultUsecase.execute(
+      EnsureProviderManagedVaultCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        mcpId,
       })
     );
   }

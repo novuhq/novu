@@ -33,6 +33,11 @@ const agentSchema = new Schema<AgentDBModel>(
       enum: ['self-hosted', 'managed'],
       default: 'self-hosted',
     },
+    visibility: {
+      type: Schema.Types.String,
+      enum: ['public', 'private'],
+      default: 'public',
+    },
     managedRuntime: {
       providerId: Schema.Types.String,
       _integrationId: {

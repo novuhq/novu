@@ -77,13 +77,10 @@ export async function pollForAgentLinkConnected(
   integrationIdentifier: string,
   options: { intervalMs: number; timeoutMs: number }
 ): Promise<boolean> {
-  return pollUntil(
-    async () => {
-      const links = await listAgentIntegrations(client, agentIdentifier);
-      const link = findAgentIntegrationLink(links, integrationIdentifier);
+  return pollUntil(async () => {
+    const links = await listAgentIntegrations(client, agentIdentifier);
+    const link = findAgentIntegrationLink(links, integrationIdentifier);
 
-      return link?.connectedAt ? 'done' : 'pending';
-    },
-    options
-  );
+    return link?.connectedAt ? 'done' : 'pending';
+  }, options);
 }

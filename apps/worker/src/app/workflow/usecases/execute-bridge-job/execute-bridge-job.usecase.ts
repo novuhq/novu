@@ -68,11 +68,15 @@ export class ExecuteBridgeJob {
 
     let workflow: NotificationTemplateEntity | null = null;
     if (isStateful) {
-      if (
-        command.workflow &&
-        (command.workflow.type === ResourceTypeEnum.ECHO || command.workflow.type === ResourceTypeEnum.BRIDGE)
-      ) {
-        workflow = command.workflow;
+      if (command.workflow) {
+        /*
+         * The workflow was already loaded upstream (e.g. by run-job). The DB lookup below only
+         * returns a workflow whose type is ECHO or BRIDGE for the same `_id`, so when the workflow
+         * is already in memory its type fully determines the result — querying again is redundant.
+         */
+        const isBridgeWorkflow =
+          command.workflow.type === ResourceTypeEnum.ECHO || command.workflow.type === ResourceTypeEnum.BRIDGE;
+        workflow = isBridgeWorkflow ? command.workflow : null;
       } else {
         workflow = await this.notificationTemplateRepository.findOne(
           {

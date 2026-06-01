@@ -11,11 +11,48 @@ describe('MCP_SERVERS catalog', () => {
       expect(sentry?.oauth?.mode).toBe(McpConnectionAuthModeEnum.Dcr);
     });
 
-    it('leaves unsupported entries without an oauth field', () => {
+    it('marks every catalog entry with an oauth mode (no "coming soon" rows)', () => {
+      const missing = MCP_SERVERS.filter((entry) => !entry.oauth).map((entry) => entry.id);
+
+      expect(missing).toEqual([]);
+    });
+
+    it('marks Slack as provider-managed (Claude owns the connector)', () => {
       const slack = MCP_SERVERS.find((entry) => entry.id === 'slack');
 
       expect(slack).toBeDefined();
-      expect(slack?.oauth).toBeUndefined();
+      expect(slack?.oauth?.mode).toBe(McpConnectionAuthModeEnum.ProviderManaged);
+    });
+
+    it('covers every provider-managed MCP with a mode-only oauth entry', () => {
+      const providerManaged = MCP_SERVERS.filter(
+        (entry) => entry.oauth?.mode === McpConnectionAuthModeEnum.ProviderManaged
+      );
+
+      expect(providerManaged.length).toBeGreaterThan(0);
+
+      for (const entry of providerManaged) {
+        expect(entry.oauth).toEqual({ mode: McpConnectionAuthModeEnum.ProviderManaged });
+      }
+    });
+
+    it('includes Claude vault delta MCPs as provider-managed', () => {
+      const deltaIds = ['gmail', 'google-calendar', 'microsoft-365', 'monday-com', 'miro', 'vercel', 'zapier'];
+
+      for (const id of deltaIds) {
+        const entry = MCP_SERVERS.find((server) => server.id === id);
+
+        expect(entry).toBeDefined();
+        expect(entry?.oauth?.mode).toBe(McpConnectionAuthModeEnum.ProviderManaged);
+      }
+    });
+
+    it('uses unique catalog ids and urls', () => {
+      const ids = MCP_SERVERS.map((entry) => entry.id);
+      const urls = MCP_SERVERS.map((entry) => entry.url);
+
+      expect(new Set(ids).size).toBe(ids.length);
+      expect(new Set(urls).size).toBe(urls.length);
     });
 
     it('covers every DCR-verified MCP', () => {
@@ -95,6 +132,8 @@ describe('MCP_SERVERS catalog', () => {
             return entry.issuer;
           case McpConnectionAuthModeEnum.UserApp:
             return entry.issuer;
+          case McpConnectionAuthModeEnum.ProviderManaged:
+            return entry.mode;
           default: {
             const _exhaustive: never = entry;
 
@@ -104,6 +143,7 @@ describe('MCP_SERVERS catalog', () => {
       }
 
       expect(assertExhaustive({ mode: McpConnectionAuthModeEnum.Dcr })).toBe('web');
+      expect(assertExhaustive({ mode: McpConnectionAuthModeEnum.ProviderManaged })).toBe('provider-managed');
     });
   });
 });

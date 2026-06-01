@@ -20,6 +20,10 @@ export interface McpOAuthState {
   timestamp: number;
   /** Conversation that initiated setup — used to replay the parked inbound turn. */
   conversationId?: string;
+  /** Dashboard/API user that initiated the flow; `system` for managed setup cards. */
+  userId?: string;
+  /** Where the OAuth URL was generated — round-trips for consistent callback attribution. */
+  source?: 'api' | 'setup_card';
 }
 
 export function buildMcpOAuthRedirectUri(): string {

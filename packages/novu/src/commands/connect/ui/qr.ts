@@ -6,10 +6,7 @@ import QRCode from 'qrcode';
  * Half-blocks (`▀ ▄ █`) give square modules on 2:1 terminal cells and scan
  * reliably on phones — denser glyph packings (braille, quadrant blocks) often fail.
  */
-export async function renderQR(
-  text: string,
-  errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'L'
-): Promise<string> {
+export async function renderQR(text: string, errorCorrectionLevel: 'L' | 'M' | 'Q' | 'H' = 'L'): Promise<string> {
   const qr = QRCode.create(text, { errorCorrectionLevel });
   const { data, size } = qr.modules;
 

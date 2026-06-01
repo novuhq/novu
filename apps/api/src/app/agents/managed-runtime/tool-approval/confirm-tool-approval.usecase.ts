@@ -12,7 +12,11 @@ import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/hand
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { ManagedAgentService } from '../managed-agent.service';
 import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
-import { buildToolApprovalVerdictCard, type ParsedToolApprovalAction } from './approval-card.builder';
+import {
+  getToolApprovalVerdictCard,
+  type ParsedToolApprovalAction,
+  resolveVerdictToolDescription,
+} from './approval-card.builder';
 import { ConfirmToolApprovalCommand } from './confirm-tool-approval.command';
 import { mergeToolTrustPatch, resolveTrustForPendingTool } from './tool-trust.helper';
 
@@ -165,7 +169,12 @@ export class ConfirmToolApproval {
       return;
     }
 
-    const verdictCard = buildToolApprovalVerdictCard(approved, command.actionValue);
+    const delivery = getToolApprovalVerdictCard({
+      platform: command.platform,
+      approved,
+      toolDescription: resolveVerdictToolDescription(command.actionValue, command.parsed),
+    });
+
     this.handleAgentReply
       .execute(
         HandleAgentReplyCommand.create({
@@ -175,7 +184,8 @@ export class ConfirmToolApproval {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          edit: { messageId: command.sourceMessageId, content: { card: verdictCard } },
+          edit: { messageId: command.sourceMessageId, content: delivery.content },
+          slackNative: delivery.slackNative,
         })
       )
       .catch((err) => {

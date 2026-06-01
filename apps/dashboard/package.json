@@ -158,8 +158,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.2.0",
     "@clerk/backend": "^3.4.11",
-    "@clerk/testing": "^2.0.31",
     "@clerk/shared": "^4.12.2",
+    "@clerk/testing": "^2.0.31",
     "@faker-js/faker": "^9.5.0",
     "@hookform/devtools": "^4.3.0",
     "@novu/dal": "workspace:*",

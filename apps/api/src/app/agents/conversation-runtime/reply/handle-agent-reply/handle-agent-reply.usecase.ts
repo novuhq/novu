@@ -189,7 +189,8 @@ export class HandleAgentReply {
         agentName,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-      }
+      },
+      { slackNative: command.slackNative }
     );
   }
 
@@ -216,7 +217,8 @@ export class HandleAgentReply {
         agentName,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-      }
+      },
+      { slackNative: command.slackNative }
     );
   }
 

@@ -15,6 +15,23 @@ export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 
 export const API_HOSTNAME = window._env_?.VITE_API_HOSTNAME || import.meta.env.VITE_API_HOSTNAME;
 
+/** Publicly reachable API host for agent webhooks/OAuth (e.g. ngrok). Falls back to `API_HOSTNAME`. */
+export const AGENT_API_HOSTNAME = window._env_?.VITE_AGENT_API_HOSTNAME || import.meta.env.VITE_AGENT_API_HOSTNAME;
+
+/** Base URL for agent webhook/OAuth URLs shown to external providers (Slack, Teams, Meta, etc.). */
+export function getAgentApiBaseUrl(): string {
+  return (AGENT_API_HOSTNAME || API_HOSTNAME || 'https://api.novu.co').replace(/\/$/, '');
+}
+
+/** Hostname portion of {@link getAgentApiBaseUrl} for manifests that require a domain only. */
+export function getAgentApiHostname(): string {
+  try {
+    return new URL(getAgentApiBaseUrl()).hostname;
+  } catch {
+    return 'api.novu.co';
+  }
+}
+
 export const BETTER_AUTH_BASE_URL =
   window._env_?.VITE_BETTER_AUTH_BASE_URL ||
   import.meta.env.VITE_BETTER_AUTH_BASE_URL ||

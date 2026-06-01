@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { ConnectResourcesSection } from '@/components/connect/dashboard/connect-resources-section';
 import { ConnectWelcomeHeading } from '@/components/connect/dashboard/connect-welcome-heading';
 import { ExplorePlatformSection } from '@/components/connect/dashboard/explore-platform-section';
@@ -7,9 +9,19 @@ import { useConnectSetupSteps } from '@/components/connect/dashboard/use-connect
 import { WhatsNextSection } from '@/components/connect/dashboard/whats-next-section';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
+import { useTelemetry } from '@/hooks/use-telemetry';
+import { isOnboardingSource } from '@/utils/onboarding-redirect';
+import { TelemetryEvent } from '@/utils/telemetry';
 
 export function ConnectDashboardPage() {
   const { isComplete, showOnboardingMessaging } = useConnectSetupSteps();
+  const telemetry = useTelemetry();
+  const [searchParams] = useSearchParams();
+  const fromOnboarding = isOnboardingSource(searchParams);
+
+  useEffect(() => {
+    telemetry(TelemetryEvent.CONNECT_DASHBOARD_PAGE_VIEWED, { fromOnboarding });
+  }, [fromOnboarding, telemetry]);
 
   return (
     <>

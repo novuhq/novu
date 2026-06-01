@@ -34,6 +34,19 @@ export interface BrowserAuthInput {
    * `novu-wizard`.
    */
   name?: string;
+  /**
+   * Correlates CLI onboarding events with dashboard CLI auth telemetry.
+   * Forwarded as `onboarding_session_id` on the `/cli/auth` URL.
+   */
+  onboardingSessionId?: string;
+  /**
+   * Called when browser auth begins (URL opened / poll started).
+   */
+  onAuthStarted?: () => void;
+  /**
+   * Called when browser auth fails before credentials are returned.
+   */
+  onAuthFailed?: (message: string) => void;
 }
 
 export async function browserDeviceAuth(input: BrowserAuthInput): Promise<ResolvedAuth> {
@@ -51,7 +64,12 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
     const target = new URL('/cli/auth', input.dashboardUrl);
     target.searchParams.set('device_code', session.deviceCode);
     target.searchParams.set('name', input.name ?? 'novu-wizard');
+    if (input.onboardingSessionId) {
+      target.searchParams.set('onboarding_session_id', input.onboardingSessionId);
+    }
     const targetUrl = target.toString();
+
+    input.onAuthStarted?.();
 
     if (useExternalStatus) {
       input.onStatus?.('Waiting for browser authorization…');
@@ -73,12 +91,19 @@ export async function browserDeviceAuth(input: BrowserAuthInput): Promise<Resolv
     });
 
     const pollIntervalMs = resolvePollIntervalMs(session.interval);
-    const approved = await pollUntilApproved({
-      apiUrl: input.apiUrl,
-      deviceCode: session.deviceCode,
-      pollIntervalMs,
-      timeoutMs: input.timeoutMs ?? DEFAULT_TIMEOUT_MS,
-    });
+    let approved: Extract<CliDeviceSessionPollResponse, { status: 'approved' }>;
+    try {
+      approved = await pollUntilApproved({
+        apiUrl: input.apiUrl,
+        deviceCode: session.deviceCode,
+        pollIntervalMs,
+        timeoutMs: input.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      input.onAuthFailed?.(message);
+      throw err;
+    }
 
     return {
       secretKey: approved.apiKey,

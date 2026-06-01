@@ -2,7 +2,7 @@ import { ChannelTypeEnum, type IIntegration, providers as novuProviders, Permiss
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { type ReactNode, useEffect, useMemo } from 'react';
 import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import {
   type AgentIntegrationLink,
   type AgentResponse,
@@ -22,7 +22,7 @@ import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS } from '@/utils/apps';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
@@ -373,10 +373,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       ? links.find((link) => link.integration.identifier === integrationIdentifier)
       : undefined;
 
-  const integrationsStorePath = selectedIntegration
-    ? buildRoute(ROUTES.INTEGRATIONS_UPDATE, { integrationId: selectedIntegration.integration._id })
-    : ROUTES.INTEGRATIONS;
-
   const selectedIntegrationUpdatedAtMs =
     selectedIntegration != null ? Date.parse(selectedIntegration.updatedAt) : undefined;
   const lastUpdatedParts = listQuery.isSuccess
@@ -532,18 +528,6 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
             <span className="text-text-soft">{lastUpdatedParts.prefix}</span>
             <span className="text-text-sub font-medium">{lastUpdatedParts.emphasis}</span>
           </p>
-
-          <div className="border-stroke-soft border-t pt-3">
-            <p className="text-text-soft text-label-xs font-medium leading-4">Quick actions</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Link
-                to={integrationsStorePath}
-                className="border-stroke-soft text-text-strong hover:bg-bg-weak text-label-xs inline-flex h-7 items-center rounded-md border bg-transparent px-3 font-medium transition-colors"
-              >
-                View integration store
-              </Link>
-            </div>
-          </div>
         </div>
       </aside>
 

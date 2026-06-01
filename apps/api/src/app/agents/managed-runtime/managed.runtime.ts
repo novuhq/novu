@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { DEMO_QUOTA_EXHAUSTED_REPLY, DemoQuotaExhaustedError, PinoLogger } from '@novu/application-generic';
-import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../shared/util/agent-inbound-replies';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime.port';
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
+import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
 import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';

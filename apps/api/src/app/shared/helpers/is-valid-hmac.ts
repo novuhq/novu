@@ -1,6 +1,6 @@
+import { timingSafeEqual } from 'node:crypto';
 import { createContextHash, createHash, decryptApiKey } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
-import { timingSafeEqual } from 'node:crypto';
 
 export function areHexDigestsEqual(expected: string, provided: string): boolean {
   if (expected.length !== provided.length) {

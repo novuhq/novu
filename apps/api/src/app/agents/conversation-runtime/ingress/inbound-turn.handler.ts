@@ -11,7 +11,7 @@ import {
 } from '@novu/dal';
 import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
-import type { EmojiValue, Message, Thread } from 'chat';
+import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -24,9 +24,14 @@ import {
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
+import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
-import { AgentSubscriberResolver } from '../conversation/agent-subscriber-resolver.service';
+import {
+  AgentSubscriberResolver,
+  BotAuthorSkippedError,
+  ConnectOrgSubscriberCapExceededError,
+} from '../conversation/agent-subscriber-resolver.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
@@ -75,6 +80,42 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
   "This connection link wasn't issued for this bot. Open the link from your Novu dashboard again (or request a new one) and make sure you're messaging the same bot you configured.";
 
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
+
+const NOVU_PRICING_URL = 'https://novu.co/pricing';
+
+/**
+ * Workspace-label copy keyed by every platform in `AUTO_PROVISION_PLATFORMS`.
+ * Adding a future auto-provision platform without a label here fails the
+ * type check at the map literal — exactly where you want the reminder.
+ */
+const CAPACITY_PLATFORM_LABELS: Record<AutoProvisionPlatform, string> = {
+  [AgentPlatformEnum.SLACK]: 'Slack workspace',
+  [AgentPlatformEnum.TEAMS]: 'Teams workspace',
+};
+
+function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement {
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content: `This ${CAPACITY_PLATFORM_LABELS[platform]} has reached the agent capacity included with your current Novu plan. Ask your workspace admin to invite you, or upgrade to a higher tier to keep this agent available to new teammates.`,
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'View Novu pricing',
+            url: NOVU_PRICING_URL,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}
 
 function asRecord(value: unknown): Record<string, unknown> | undefined {
   if (!value || typeof value !== 'object') {
@@ -226,7 +267,54 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const subscriberId = await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+    let subscriberId: string | null;
+    try {
+      subscriberId = isAutoProvisionPlatform(config.platform)
+        ? await this.subscriberResolver.resolveOrProvision({
+            environmentId: config.environmentId,
+            organizationId: config.organizationId,
+            platform: config.platform,
+            platformUserId: message.author.userId,
+            integrationIdentifier: config.integrationIdentifier,
+            agentIdentifier: config.agentIdentifier,
+            authorFullName: message.author.fullName,
+            authorUserName: message.author.userName,
+            // chat-sdk types isBot as `boolean | "unknown"`; treat anything except `true` as a non-bot author.
+            authorIsBot: message.author.isBot === true,
+          })
+        : await this.resolveSubscriberId(agentId, config, message.author.userId, 'resolve-subscriber');
+    } catch (err) {
+      if (err instanceof BotAuthorSkippedError) {
+        this.logger.debug(
+          `[agent:${agentId}] Inbound from bot author ${config.platform}:${message.author.userId} skipped without dispatch`
+        );
+
+        return;
+      }
+
+      if (err instanceof ConnectOrgSubscriberCapExceededError) {
+        this.logger.warn(
+          { agentId, organizationId: config.organizationId, count: err.count, limit: err.limit },
+          'Connect org at auto-provisioned subscriber cap — posting tier-upgrade card and skipping dispatch.'
+        );
+        await this.postCapacityReachedReply(agentId, config, thread, message);
+
+        return;
+      }
+
+      /**
+       * Only `resolveOrProvision` (SLACK / TEAMS) can reach here — the
+       * `resolveSubscriberId` read path soft-fails to `null` internally and
+       * never throws. For auto-provision platforms an unknown error means we
+       * don't know the subscriber state, so we keep dispatch off and surface
+       * the failure rather than silently degrading to a PLATFORM_USER
+       * participant the removed-anonymous-state contract was meant to eliminate.
+       */
+      captureAgentWarning(err, { component: 'agent-inbound-handler', operation: 'resolve-subscriber', agentId });
+
+      throw err;
+    }
+
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
     const conversation = await this.openConversation(agentId, config, message, subscriberId, platformThreadId);
 
@@ -454,7 +542,7 @@ export class AgentInboundHandler implements OnModuleInit {
     operation: string
   ): Promise<string | null> {
     return this.subscriberResolver
-      .resolve({
+      .resolveOnly({
         environmentId: config.environmentId,
         organizationId: config.organizationId,
         platform: config.platform,
@@ -565,6 +653,44 @@ export class AgentInboundHandler implements OnModuleInit {
         component: 'agent-inbound-handler',
         operation: 'post-telegram-subscriber-link-reply',
         agentId,
+      });
+    }
+  }
+
+  /**
+   * Surface the tier-upgrade prompt when the Connect-org auto-provisioned
+   * subscriber cap is hit. Posted on the live inbound thread via the outbound
+   * gateway (mirrors `safePostInboundReply`). Errors are logged but swallowed —
+   * failing to post the capacity card should not crash the inbound webhook.
+   */
+  private async postCapacityReachedReply(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    message: Message
+  ): Promise<void> {
+    /**
+     * `ConnectOrgSubscriberCapExceededError` is only thrown by
+     * `resolveOrProvision`, which itself only runs for `AUTO_PROVISION_PLATFORMS`.
+     * The cast narrows `config.platform` to the union the card builder accepts
+     * and keeps the exhaustive-record check honest.
+     */
+    const platform = config.platform as AutoProvisionPlatform;
+
+    try {
+      await this.outboundGateway.replyOnThread(thread, {
+        card: buildCapacityReachedCard(platform) as unknown as Record<string, unknown>,
+      });
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `[agent:${agentId}] Failed to post auto-provision capacity-reached card for inbound message ${message.id ?? '<unknown>'}`
+      );
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-capacity-reached-card',
+        agentId,
+        platform: config.platform,
       });
     }
   }

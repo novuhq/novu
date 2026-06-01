@@ -19,9 +19,7 @@ interface UiBundle {
 
 // Hide the import from TypeScript's CJS transform so we can dynamically pull
 // in the ESM Ink bundle at runtime without ts-node trying to require() it.
-const dynamicImport = new Function('specifier', 'return import(specifier)') as (
-  specifier: string
-) => Promise<unknown>;
+const dynamicImport = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<unknown>;
 
 async function loadInkUi(): Promise<UiBundle> {
   const bundlePath = path.join(__dirname, 'ui', 'index.mjs');
@@ -43,6 +41,7 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
     ci: !!options.ci,
     hasPrompt: !!options.prompt,
     skipSlack: !!options.skipSlack,
+    onboardingSessionId: anonymousId,
   });
 
   try {
@@ -51,7 +50,9 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
       const result = await runConnectPipeline({
         options,
         ui,
-        onTrack: (event, data) => trackConnect(analytics, anonymousId, event, data ?? {}),
+        onboardingSessionId: anonymousId,
+        onTrack: (event, data) =>
+          trackConnect(analytics, anonymousId, event, { ...(data ?? {}), onboardingSessionId: anonymousId }),
       });
       if (result.exitCode !== 0) process.exitCode = result.exitCode;
     } else {
@@ -60,14 +61,16 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
       const result = await runConnectPipeline({
         options,
         ui: mounted.ui,
-        onTrack: (event, data) => trackConnect(analytics, anonymousId, event, data ?? {}),
+        onboardingSessionId: anonymousId,
+        onTrack: (event, data) =>
+          trackConnect(analytics, anonymousId, event, { ...(data ?? {}), onboardingSessionId: anonymousId }),
       });
       const exitCode = (await mounted.done) || result.exitCode;
       if (exitCode !== 0) process.exitCode = exitCode;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    trackConnect(analytics, anonymousId, CONNECT_EVENTS.ERROR, { message });
+    trackConnect(analytics, anonymousId, CONNECT_EVENTS.ERROR, { message, onboardingSessionId: anonymousId });
     console.error(chalk.red(`Connect failed: ${message}`));
     process.exitCode = 1;
   } finally {

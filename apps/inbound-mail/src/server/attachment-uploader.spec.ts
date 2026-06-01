@@ -139,9 +139,7 @@ describe('uploadAttachmentsToS3', () => {
     env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR = 'true';
 
     // uploadSingle returns null without throwing — a structural failure that a sender retry can never fix.
-    const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [
-      { filename: 'empty.txt', contentType: 'text/plain' },
-    ]);
+    const result = await uploadAttachmentsToS3(TEST_MESSAGE_ID, [{ filename: 'empty.txt', contentType: 'text/plain' }]);
 
     expect(result.uploaded).to.have.length(0);
     expect(result.failedCount).to.equal(1);

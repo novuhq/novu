@@ -15,16 +15,25 @@ export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
  * OAuth mechanism the connection was established with. Mirrors the catalog
  * `mode` for the MCP — each MCP supports exactly one mechanism.
  *
- * - `dcr`      — Dynamic Client Registration (RFC 7591). A fresh OAuth client
- *                is registered per subscriber against the upstream AS.
- *                Encrypted access/refresh tokens live in the `auth` blob and
- *                the registered client lives in `oauthClient`.
- * - `novu-app` — Novu's single pre-registered OAuth application is used.
- *                `client_id` / `client_secret` come from server env vars.
- * - `user-app` — The Novu customer's own pre-registered OAuth application is
- *                used. Credentials come from a per-org credential table.
+ * - `dcr`              — Dynamic Client Registration (RFC 7591). A fresh
+ *                        OAuth client is registered per subscriber against
+ *                        the upstream AS. Encrypted access/refresh tokens
+ *                        live in the `auth` blob and the registered client
+ *                        lives in `oauthClient`.
+ * - `novu-app`         — Novu's single pre-registered OAuth application is
+ *                        used. `client_id` / `client_secret` come from
+ *                        server env vars.
+ * - `user-app`         — The Novu customer's own pre-registered OAuth
+ *                        application is used. Credentials come from a
+ *                        per-org credential table.
+ * - `provider-managed` — OAuth is owned by the managed agent runtime
+ *                        provider (e.g. Claude). Rows of this mode carry
+ *                        `auth.externalVaultId` only; `auth.accessToken`,
+ *                        `auth.refreshToken`, `oauthState`, and
+ *                        `oauthClient` are intentionally absent because Novu
+ *                        never speaks OAuth for these MCPs.
  */
-export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app';
+export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app' | 'provider-managed';
 
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
 

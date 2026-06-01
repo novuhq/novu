@@ -4,7 +4,7 @@ import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { Response } from 'express';
 
 import { ThrottlerCategory } from '../../../rate-limiting/guards';
-import { renderConnectionResultPage } from '../../../shared/html/connection-result-page';
+import { CONNECTION_RESULT_CSP, renderConnectionResultPage } from '../../../shared/html/connection-result-page';
 import { McpOAuthCallbackCommand } from './mcp-oauth-callback/mcp-oauth-callback.command';
 import { McpOAuthCallback } from './mcp-oauth-callback/mcp-oauth-callback.usecase';
 
@@ -56,9 +56,9 @@ export class AgentsMcpOAuthController {
     );
 
     // Render a self-contained "flow complete" page instead of redirecting to the
-    // dashboard. The shared renderer already shows a "Close this tab" action, so
-    // the message stays short and avoids repeating it. A best-effort postMessage
-    // lets any same-origin opener (e.g. a popup-based flow) auto-detect the outcome.
+    // dashboard. The shared renderer tells the user they can close the tab.
+    // so the message stays short and avoids repeating it. Openers detect the
+    // outcome via popup-close detection / status polling, not from this page.
     const isConnected = result.status === 'connected';
     const page = isConnected
       ? renderConnectionResultPage({
@@ -66,18 +66,16 @@ export class AgentsMcpOAuthController {
           title: 'Connection complete',
           heading: "You're all set",
           message: 'Your MCP server is connected and ready to use.',
-          postMessagePayload: { type: 'novu-mcp-oauth-result', status: 'connected' },
         })
       : renderConnectionResultPage({
           status: 'error',
           title: 'Connection failed',
           heading: "We couldn't connect",
           message: 'Something went wrong while connecting your MCP server. Please go back and try again.',
-          postMessagePayload: { type: 'novu-mcp-oauth-result', status: 'error', reason: result.message },
         });
 
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+    res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
     res.send(page);
   }
 }

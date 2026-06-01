@@ -5,6 +5,7 @@ import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '
 import { trackAgentMcpServerEnabled } from '../../../shared/analytics/agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../../shared/dtos/mcp-server.dto';
 import { assertMcpNovuAppFlagEnabled } from '../../assert-mcp-novu-app-flag-enabled';
+import { assertMcpProviderManagedFlagEnabled } from '../../assert-mcp-provider-managed-flag-enabled';
 import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';
@@ -86,6 +87,19 @@ export class EnableAgentMcpServer {
     // cost and the auth flow does not depend on Novu-managed credentials.
     if (defaultAuthMode === McpConnectionAuthModeEnum.NovuApp) {
       await assertMcpNovuAppFlagEnabled({
+        featureFlagsService: this.featureFlagsService,
+        mcpId: command.mcpId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
+    }
+
+    // provider-managed entries don't run Novu OAuth at all — Claude owns the
+    // connector lifecycle. Gate per-org so the catalog migration (which
+    // touches every entry that previously had no oauth field) can ship
+    // ahead of the dashboard "Add from Claude" UX rollout.
+    if (defaultAuthMode === McpConnectionAuthModeEnum.ProviderManaged) {
+      await assertMcpProviderManagedFlagEnabled({
         featureFlagsService: this.featureFlagsService,
         mcpId: command.mcpId,
         environmentId: command.environmentId,

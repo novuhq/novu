@@ -1,6 +1,6 @@
 import { ScanEye } from 'lucide-react';
 import { type ReactNode } from 'react';
-import { GithubIcon, LinearIcon, NotionIcon } from '@/components/icons/mcp';
+import { McpIcon } from '@/components/agents/mcp-icon';
 import { ConnectBrandLogo } from './connect-brand-logo';
 import { TrustedCompanies } from './trusted-companies';
 
@@ -13,8 +13,7 @@ export function ConnectAuthSideBanner() {
           <ConnectBrandLogo />
           <div className="hidden max-w-[331px] flex-col items-start gap-1.5 md:flex">
             <h2 className="text-[24px] font-medium leading-9 tracking-[-0.36px] text-[#0e121b]">
-              Connect your agent.{' '}
-              <span className="text-[#99a0ae]">Everywhere your team works.</span>
+              Connect your agent. <span className="text-[#99a0ae]">Everywhere your team works.</span>
             </h2>
             <div className="flex items-center gap-1">
               <CheckCircleSoft className="size-3 shrink-0" />
@@ -37,11 +36,7 @@ export function ConnectAuthSideBanner() {
             <IntegrationPill
               rotate={1}
               icon={
-                <img
-                  src="/images/providers/light/square/whatsapp-business.svg"
-                  alt=""
-                  className="size-3.5 shrink-0"
-                />
+                <img src="/images/providers/light/square/whatsapp-business.svg" alt="" className="size-3.5 shrink-0" />
               }
             >
               WhatsApp
@@ -56,20 +51,18 @@ export function ConnectAuthSideBanner() {
           </FeatureRow>
 
           <FeatureRow>
-            <span className="shrink-0 whitespace-nowrap">
-              Authorize tools mid-conversation. No setup gauntlets.
-            </span>
+            <span className="shrink-0 whitespace-nowrap">Authorize tools mid-conversation. No setup gauntlets.</span>
           </FeatureRow>
 
           <FeatureRow>
             <span className="shrink-0 whitespace-nowrap">Connect tools and MCPs you use:</span>
-            <IntegrationPill rotate={-1} icon={<GithubIcon className="size-3.5 shrink-0" />}>
+            <IntegrationPill rotate={-1} icon={<McpIcon mcpId="github" className="size-3.5 shrink-0" />}>
               GitHub
             </IntegrationPill>
-            <IntegrationPill rotate={1} icon={<LinearIcon className="size-3.5 shrink-0" />}>
+            <IntegrationPill rotate={1} icon={<McpIcon mcpId="linear" className="size-3.5 shrink-0" />}>
               Linear
             </IntegrationPill>
-            <IntegrationPill rotate={-1} icon={<NotionIcon className="size-3.5 shrink-0" />}>
+            <IntegrationPill rotate={-1} icon={<McpIcon mcpId="notion" className="size-3.5 shrink-0" />}>
               Notion
             </IntegrationPill>
           </FeatureRow>
@@ -117,13 +110,7 @@ function CheckCircleSoft({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
       <circle cx="6" cy="6" r="5" stroke="#99a0ae" strokeWidth="1" />
-      <path
-        d="M4 6.2 5.3 7.5 8 4.8"
-        stroke="#99a0ae"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M4 6.2 5.3 7.5 8 4.8" stroke="#99a0ae" strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
