@@ -36,13 +36,14 @@ export async function buildSetupCardForMcps(params: {
     try {
       const result = await params.generateMcpOAuthUrl.executeForSetupCard(
         GenerateMcpOAuthUrlCommand.create({
-          userId: 'system',
+          userId: params.organizationId,
           environmentId: params.environmentId,
           organizationId: params.organizationId,
           agentIdentifier: params.agentIdentifier,
           mcpId: mcp.mcpId,
           subscriberId: params.subscriberId,
           conversationId: params.conversationId,
+          source: 'setup_card',
         })
       );
 

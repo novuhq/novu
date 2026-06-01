@@ -48,7 +48,7 @@ export class ManagedRuntime implements AgentRuntime {
     if (turn.message?.id) {
       const parked = await this.handleManagedAgentSetupInbound.execute(
         ManagedAgentSetupInboundCommand.create({
-          userId: 'system',
+          userId: turn.config.organizationId,
           environmentId: turn.config.environmentId,
           organizationId: turn.config.organizationId,
           conversationId: turn.conversation._id,
@@ -100,7 +100,7 @@ export class ManagedRuntime implements AgentRuntime {
 
     await this.confirmToolApproval.execute(
       ConfirmToolApprovalCommand.create({
-        userId: 'system',
+        userId: turn.config.organizationId,
         environmentId: turn.config.environmentId,
         organizationId: turn.config.organizationId,
         conversationId: turn.conversation._id,

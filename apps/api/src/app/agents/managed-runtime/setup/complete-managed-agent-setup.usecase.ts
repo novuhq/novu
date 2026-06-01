@@ -200,7 +200,7 @@ export class CompleteManagedAgentSetup {
 
     await this.handleAgentReply.execute(
       HandleAgentReplyCommand.create({
-        userId: 'system',
+        userId: config.organizationId,
         organizationId: config.organizationId,
         environmentId: config.environmentId,
         conversationId: conversation._id,
@@ -290,7 +290,7 @@ export class CompleteManagedAgentSetup {
       try {
         await this.handleAgentReply.execute(
           HandleAgentReplyCommand.create({
-            userId: 'system',
+            userId: config.organizationId,
             organizationId: config.organizationId,
             environmentId: config.environmentId,
             conversationId: conversation._id,

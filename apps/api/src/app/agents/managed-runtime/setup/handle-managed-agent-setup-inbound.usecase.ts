@@ -117,7 +117,7 @@ export class HandleManagedAgentSetupInbound {
     });
 
     const replyCommandBase = {
-      userId: 'system',
+      userId: command.organizationId,
       organizationId: command.organizationId,
       environmentId: command.environmentId,
       conversationId: command.conversationId,
@@ -210,7 +210,7 @@ export class HandleManagedAgentSetupInbound {
     try {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
-          userId: 'system',
+          userId: command.organizationId,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
           conversationId: command.conversationId,
