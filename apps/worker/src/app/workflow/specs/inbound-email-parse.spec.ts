@@ -236,15 +236,15 @@ describe('Should handle the new arrived mail', () => {
   });
 
   it('should not send webhook request with missing transactionId', async () => {
-    try {
-      const mail = getMailData({ skipTransactionId: true });
+    const mail = getMailData({ skipTransactionId: true });
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.contains('Missing transactionId on address');
-    }
+    // Malformed addresses are non-retriable — log a warning trace and stop.
+    sinon.assert.calledOnce(logInboundEmailRequest.logUnresolvedFailure);
+    const logArg = logInboundEmailRequest.logUnresolvedFailure.getCall(0).args[0];
+    expect(logArg.message).to.contain('Missing transactionId on address');
+    expect(logArg.severity).to.equal('warning');
   });
 
   it('should not send webhook request with when domain white list', async () => {

@@ -92,6 +92,8 @@ export class InboundEmailParse {
           message: extractMessage(error),
           severity: 'warning',
         });
+
+        return;
       }
 
       // For all other throws (DB error, unhandled exception, etc.) we let

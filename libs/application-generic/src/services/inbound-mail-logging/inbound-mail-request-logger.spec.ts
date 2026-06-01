@@ -49,8 +49,17 @@ describe('InboundMailRequestLogger', () => {
   });
 
   afterEach(() => {
-    process.env.IS_ANALYTICS_LOGS_ENABLED = ORIGINAL_ANALYTICS;
-    process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED = ORIGINAL_INBOUND;
+    if (ORIGINAL_ANALYTICS === undefined) {
+      delete process.env.IS_ANALYTICS_LOGS_ENABLED;
+    } else {
+      process.env.IS_ANALYTICS_LOGS_ENABLED = ORIGINAL_ANALYTICS;
+    }
+
+    if (ORIGINAL_INBOUND === undefined) {
+      delete process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED;
+    } else {
+      process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED = ORIGINAL_INBOUND;
+    }
   });
 
   describe('logReceived', () => {
