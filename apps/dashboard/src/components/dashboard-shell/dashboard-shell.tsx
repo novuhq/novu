@@ -67,7 +67,6 @@ type ConnectBreadcrumbEntry = {
   label: string;
   icon?: ReactNode;
   to?: string;
-  showBeta?: boolean;
 };
 
 function shouldShowConnectBreadcrumbBeta(
@@ -83,11 +82,7 @@ function shouldShowConnectBreadcrumbBeta(
     return false;
   }
 
-  if (itemKey === 'section') {
-    return isLast;
-  }
-
-  if (itemKey === 'leaf') {
+  if (itemKey === 'section' || itemKey === 'leaf') {
     return isLast;
   }
 
