@@ -1,6 +1,6 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { encryptCredentials, PinoLogger } from '@novu/application-generic';
-import { IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, SLACK_AGENT_OAUTH_SCOPES } from '@novu/shared';
 import axios, { AxiosError } from 'axios';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../generate-chat-oath-url/chat-oauth.constants';
@@ -33,6 +33,7 @@ export class SlackQuickSetup {
 
   constructor(
     private integrationRepository: IntegrationRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository,
     private logger: PinoLogger
   ) {
     this.logger.setContext(SlackQuickSetup.name);
@@ -77,11 +78,48 @@ export class SlackQuickSetup {
 
     const { client_id, client_secret, signing_secret } = slackResponse.credentials;
 
+    await this.ensureAgentIntegrationLink(command);
     await this.saveCredentials(command, client_id, client_secret, signing_secret, slackResponse.app_id);
 
     this.logger.info(`Slack quick setup: credentials saved for integrationId=${command.integrationId}`);
 
     return {};
+  }
+
+  private async ensureAgentIntegrationLink(command: SlackQuickSetupCommand): Promise<void> {
+    const existing = await this.agentIntegrationRepository.findOne(
+      {
+        _agentId: command.agentId,
+        _integrationId: command.integrationId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id']
+    );
+
+    if (existing) {
+      return;
+    }
+
+    const linkedElsewhere = await this.agentIntegrationRepository.findOne(
+      {
+        _integrationId: command.integrationId,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_agentId']
+    );
+
+    if (linkedElsewhere) {
+      throw new ConflictException('Integration is already linked to a different agent');
+    }
+
+    await this.agentIntegrationRepository.create({
+      _agentId: command.agentId,
+      _integrationId: command.integrationId,
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+    });
   }
 
   /**

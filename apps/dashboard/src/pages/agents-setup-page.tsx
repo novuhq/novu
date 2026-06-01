@@ -26,6 +26,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
+import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import {
   getPostOnboardingRoute,
   resolveOnboardingAppId,
@@ -243,6 +244,7 @@ export function AgentsSetupPage() {
       skippedFrom: 'agents-setup',
     });
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'skip' });
+    clearPersistedCliOnboardingSessionId();
 
     if (currentEnvironment?.slug) {
       goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
@@ -256,6 +258,7 @@ export function AgentsSetupPage() {
   const handleNavigateToOverview = useCallback(() => {
     telemetry(TelemetryEvent.ONBOARDING_COMPLETED, buildOnboardingCompletionProps());
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'complete' });
+    clearPersistedCliOnboardingSessionId();
 
     if (currentEnvironment?.slug) {
       goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);

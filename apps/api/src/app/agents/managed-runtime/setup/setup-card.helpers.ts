@@ -9,6 +9,11 @@ export interface SetupCardRow extends OAuthMcp {
   connectUnavailableReason?: string;
   /** Provider-managed MCPs render as connected without Novu OAuth. */
   treatAsConnected?: boolean;
+  /**
+   * Override for the link-button label. Provider-managed MCPs use "Connect from provider"
+   * to signal that auth completes inside the runtime provider's vault UI.
+   */
+  connectButtonLabel?: string;
 }
 
 export function resolveSetupCardOAuthFailureReason(err: unknown): string {
@@ -106,6 +111,10 @@ export function isSetupMcpRowConnected(mcp: SetupCardRow): boolean {
 }
 
 export function isSetupMcpRowPending(mcp: SetupCardRow): boolean {
+  if (mcp.status === McpConnectionStatusEnum.Connected && mcp.authorizeUrl) {
+    return true;
+  }
+
   return !isSetupMcpRowConnected(mcp);
 }
 
@@ -304,22 +313,31 @@ export function buildSetupMcpPortableCard(mcp: SetupCardRow): Record<string, unk
   }
 
   if (mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
-    const labels = resolveSetupConnectButtonLabels(mcp);
-    const actionButtons: Array<{ type: string; label: string; url: string }> = [];
+    const actionButtons: Array<{ type: string; label: string; url: string; style?: string }> = [];
 
-    if (mcp.authorizeUrlWithAutoApprove) {
+    if (mcp.authorizeUrlWithAutoApprove && !mcp.connectButtonLabel) {
+      const labels = resolveSetupConnectButtonLabels(mcp);
+
       actionButtons.push({
         type: 'link-button',
         label: labels.connectWithAutoApprove,
         url: mcp.authorizeUrlWithAutoApprove,
       });
-    }
+      actionButtons.push({
+        type: 'link-button',
+        label: labels.connect,
+        url: mcp.authorizeUrl,
+      });
+    } else {
+      const defaultLabel = isSetupMcpRowError(mcp) ? SETUP_RETRY_BUTTON_LABEL : SETUP_CONNECT_BUTTON_LABEL;
 
-    actionButtons.push({
-      type: 'link-button',
-      label: labels.connect,
-      url: mcp.authorizeUrl,
-    });
+      actionButtons.push({
+        type: 'link-button',
+        label: mcp.connectButtonLabel ?? defaultLabel,
+        url: mcp.authorizeUrl,
+        style: 'primary',
+      });
+    }
 
     children.push({
       type: 'actions',

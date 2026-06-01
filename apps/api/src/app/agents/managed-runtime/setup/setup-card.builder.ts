@@ -5,6 +5,8 @@ import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gate
 import type { SlackNativeDelivery } from '../../conversation-runtime/egress/slack-native-delivery';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { EnsureProviderManagedVaultCommand } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.command';
+import { EnsureProviderManagedVault } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GenerateMcpOAuthUrlCommand } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
@@ -12,6 +14,8 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { isProviderManagedOAuthMcp, type OAuthMcp } from './oauth-mcp.types';
 import { buildSetupCard, resolveSetupCardOAuthFailureReason, type SetupCardRow } from './setup-card.helpers';
 import { buildSetupSlackBlocks } from './setup-card.slack';
+
+const PROVIDER_MANAGED_CONNECT_LABEL = 'Connect from provider';
 
 export type SetupCardDelivery = {
   content: ReplyContentDto;
@@ -37,28 +41,65 @@ export type BuildSetupRowsResult = {
   sessionRotated: boolean;
 };
 
-export async function buildSetupRowsForMcps(params: {
+type BuildSetupRowsParams = {
   mcps: OAuthMcp[];
+  resolved?: boolean;
+  forceReconnectAgentMcpServerIds?: ReadonlySet<string>;
   environmentId: string;
   organizationId: string;
   agentIdentifier: string;
   subscriberId: string;
   conversationId: string;
   generateMcpOAuthUrl: GenerateMcpOAuthUrl;
+  ensureProviderManagedVault: EnsureProviderManagedVault;
   logger: PinoLogger;
-}): Promise<BuildSetupRowsResult> {
+};
+
+export async function buildSetupRowsForMcps(params: BuildSetupRowsParams): Promise<BuildSetupRowsResult> {
   const rows: SetupCardRow[] = [];
   let sessionRotated = false;
 
   for (const mcp of params.mcps) {
-    if (mcp.status === McpConnectionStatusEnum.Connected) {
+    const needsReconnect = params.forceReconnectAgentMcpServerIds?.has(mcp.agentMcpServerId) ?? false;
+    const skipConnectUrl = !needsReconnect && (params.resolved || mcp.status === McpConnectionStatusEnum.Connected);
+
+    if (skipConnectUrl) {
       rows.push(mcp);
 
       continue;
     }
 
     if (isProviderManagedOAuthMcp(mcp)) {
-      rows.push({ ...mcp, treatAsConnected: true });
+      try {
+        const result = await params.ensureProviderManagedVault.executeForSetupCard(
+          EnsureProviderManagedVaultCommand.create({
+            userId: 'system',
+            environmentId: params.environmentId,
+            organizationId: params.organizationId,
+            agentIdentifier: params.agentIdentifier,
+            mcpId: mcp.mcpId,
+            subscriberId: params.subscriberId,
+            conversationId: params.conversationId,
+          })
+        );
+
+        rows.push({
+          ...mcp,
+          authorizeUrl: result.vaultUrl,
+          connectButtonLabel: PROVIDER_MANAGED_CONNECT_LABEL,
+        });
+      } catch (err) {
+        params.logger.warn(
+          {
+            err: err instanceof Error ? err.message : String(err),
+            mcpId: mcp.mcpId,
+            conversationId: params.conversationId,
+          },
+          'EnsureProviderManagedVault failed while building managed-agent setup card'
+        );
+
+        throw err;
+      }
 
       continue;
     }
@@ -99,6 +140,20 @@ export async function buildSetupRowsForMcps(params: {
   }
 
   return { rows, sessionRotated };
+}
+
+export async function buildSetupCardForMcps(
+  params: BuildSetupRowsParams & {
+    showProcessingHint?: boolean;
+  }
+): Promise<Record<string, unknown>> {
+  const { rows } = await buildSetupRowsForMcps(params);
+
+  return buildSetupCard({
+    mcps: rows,
+    resolved: params.resolved,
+    showProcessingHint: params.showProcessingHint,
+  });
 }
 
 export async function syncSetupCardMessage(params: {

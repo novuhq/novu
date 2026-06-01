@@ -25,6 +25,7 @@ export interface ConnectPipelineInput {
   ui: ConnectUI;
   onboardingSessionId?: string;
   onTrack?: (event: string, data?: Record<string, unknown>) => void;
+  onIdentityResolved?: (user: NonNullable<ResolvedAuth['user']>) => void;
 }
 
 export interface ConnectPipelineResult {
@@ -51,6 +52,10 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     });
     track(CONNECT_EVENTS.AUTH_COMPLETED, { source: auth.source, region: options.region, ...sessionProps });
     ui.authCompleted(auth.environmentName ?? null);
+
+    if (auth.user?.id) {
+      input.onIdentityResolved?.(auth.user);
+    }
 
     const client = createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
 

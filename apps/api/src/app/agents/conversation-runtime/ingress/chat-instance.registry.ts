@@ -248,8 +248,16 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
 
     switch (platform) {
       case AgentPlatformEnum.SLACK: {
-        if (!connectionAccessToken || !credentials.signingSecret) {
-          throw new BadRequestException('Slack agent integration requires botToken and signingSecret credentials');
+        if (!credentials.signingSecret) {
+          throw new BadRequestException(
+            'Slack agent integration requires a signing secret. Complete Slack app setup for this integration.'
+          );
+        }
+
+        if (!connectionAccessToken) {
+          throw new BadRequestException(
+            'Slack agent integration requires a workspace bot token. Install the app to your Slack workspace via OAuth in the agent setup guide.'
+          );
         }
 
         const { createSlackAdapter } = await esmImport('@chat-adapter/slack');

@@ -11,6 +11,7 @@ import {
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { EnsureProviderManagedVault } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { CompleteManagedAgentSetup } from './complete-managed-agent-setup.usecase';
 import { listOAuthMcps } from './list-oauth-mcps.helper';
@@ -32,6 +33,7 @@ export class HandleManagedAgentSetupInbound {
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly conversationRepository: ConversationRepository,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly outboundGateway: OutboundGateway,
     private readonly completeManagedAgentSetup: CompleteManagedAgentSetup,
@@ -118,6 +120,7 @@ export class HandleManagedAgentSetupInbound {
       subscriberId: command.subscriberId,
       conversationId: command.conversationId,
       generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+      ensureProviderManagedVault: this.ensureProviderManagedVault,
       logger: this.logger,
     });
 

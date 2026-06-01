@@ -8,3 +8,11 @@ export const measure = async (event: string, data?: Record<string, unknown>): Pr
     },
   });
 };
+
+export const identifyTelemetry = async (anonymousId: string): Promise<void> => {
+  await post('/telemetry/identify', {
+    body: {
+      anonymousId,
+    },
+  });
+};
