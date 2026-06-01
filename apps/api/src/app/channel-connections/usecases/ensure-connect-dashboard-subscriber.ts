@@ -3,13 +3,13 @@ import { CreateOrUpdateSubscriberCommand, CreateOrUpdateSubscriberUseCase } from
 import { SubscriberRepository } from '@novu/dal';
 import { CONNECT_SUBSCRIBER_PREFIX } from '@novu/shared';
 
-type EnsureConnectDashboardSubscriberParams = {
+interface EnsureConnectDashboardSubscriberParams {
   subscriberId: string;
   environmentId: string;
   organizationId: string;
   subscriberRepository: SubscriberRepository;
   createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase;
-};
+}
 
 /**
  * Ensures the subscriber exists before creating a channel connection or
