@@ -6,7 +6,6 @@ WORKDIR /usr/src/app
 
 RUN npm --no-update-notifier --no-fund --global install pnpm@11.0.9
 
-COPY .npmrc .
 COPY package.json .
 
 COPY apps/dashboard ./apps/dashboard
