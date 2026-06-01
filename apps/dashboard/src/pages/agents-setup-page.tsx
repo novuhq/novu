@@ -174,6 +174,9 @@ export function AgentsSetupPage() {
   const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
   const isConnectFlow = appId === APP_IDS.CONNECT;
   const isConnectHost = IS_NOVU_CONNECT || isConnectFlow;
+  const pageTitle = isConnectHost
+    ? "Let's connect your agent to where you work"
+    : 'Connect your first agent';
 
   const [envLoaded, setEnvLoaded] = useState(false);
   const { environments } = useFetchEnvironments({
@@ -293,9 +296,7 @@ export function AgentsSetupPage() {
 
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <PageMeta
-          title={isConnectHost ? 'Build and distribute agents' : "Let's connect your agent to where you work"}
-        />
+        <PageMeta title={isConnectHost ? 'Build and distribute agents' : pageTitle} />
         <OnboardingLoader variant={isConnectHost ? 'connect' : 'platform'} />
       </div>
     );
@@ -303,15 +304,13 @@ export function AgentsSetupPage() {
 
   const leftContent = (
     <>
-      <PageMeta title="Let's connect your agent to where you work" />
+      <PageMeta title={pageTitle} />
       <StepHeader
         current={phase === 'connect' ? 2 : 3}
         onBack={phase === 'connect' ? handleBackFromConnectPhase : handleBackToConnect}
       />
 
-      <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">
-        Let's connect your agent to where you work
-      </h1>
+      <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-medium leading-4">
         A few steps to your first multi-channel agent conversation.
       </p>
