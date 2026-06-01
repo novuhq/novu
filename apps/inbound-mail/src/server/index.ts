@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { BullMqService } from '@novu/application-generic';
+import { BullMqService, buildEnvelopeRequestSource } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import Promise from 'bluebird';
 import dns from 'dns';
@@ -27,6 +27,13 @@ const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 
 const inboundMailService = new InboundMailService();
 BullMqService.haveProInstalled();
+
+/**
+ * Exposed for tests so they can inject mock `requestLogger` / `tenantResolver`
+ * without standing up real ClickHouse / MongoDB. Production code should not
+ * read from this export.
+ */
+export const __testInboundMailService = inboundMailService;
 
 class Mailin extends events.EventEmitter {
   public configuration: IConfiguration;
@@ -207,7 +214,8 @@ class Mailin extends events.EventEmitter {
               `${connection.id} Processing message from ${connection.envelope.mailFrom.address}`
             );
 
-            return retrieveRawEmail(connection)
+            return logInboundMailAccepted(connection)
+              .then(() => retrieveRawEmail(connection))
               .then((rawEmail) =>
                 Promise.all([
                   rawEmail,
@@ -335,6 +343,7 @@ class Mailin extends events.EventEmitter {
                 () => unlinkFile(connection).then(() => resolve()),
                 (processingError) => {
                   nr.noticeError(processingError);
+                  emitProcessingFailureTrace(connection, processingError);
                   logger.error(
                     { err: processingError, context: LOG_CONTEXT, connectionId: connection.id },
                     `${connection.id} Unable to finish processing message!!`
@@ -543,6 +552,53 @@ class Mailin extends events.EventEmitter {
       return parsedEmail;
     }
 
+    function logInboundMailAccepted(connection) {
+      return nr.startSegment('inbound-mail/log-received', true, async () => {
+        const requestLogger = inboundMailService.requestLogger;
+        const tenantResolver = inboundMailService.tenantResolver;
+
+        if (!requestLogger || !tenantResolver) {
+          return;
+        }
+
+        const toAddress = getEnvelopeToAddress(connection);
+
+        if (!toAddress) {
+          return;
+        }
+
+        try {
+          const tenant = await tenantResolver.resolve(toAddress, undefined);
+          const durationMs = connection.startTimeMs ? Date.now() - connection.startTimeMs : 0;
+
+          const requestLogId = await requestLogger.logReceived({
+            source: buildEnvelopeRequestSource(connection.envelope, {
+              remoteAddress: connection.remoteAddress,
+              clientHostname: connection.clientHostname,
+            }),
+            toAddress,
+            tenant,
+            durationMs,
+          });
+
+          if (requestLogId) {
+            connection.requestLogContext = {
+              requestLogId,
+              organizationId: tenant.organizationId,
+              environmentId: tenant.environmentId,
+              transactionId: tenant.transactionId,
+            };
+          }
+        } catch (error) {
+          // Observability writes must never block the SMTP pipeline.
+          logger.warn(
+            { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+            `${connection.id} Failed to write inbound-mail request log — continuing`
+          );
+        }
+      });
+    }
+
     function postQueue(connection, finalizedMessage) {
       return nr.startSegment(
         'inbound-mail/post-queue',
@@ -558,6 +614,11 @@ class Mailin extends events.EventEmitter {
               { context: LOG_CONTEXT, connectionId: connection.id },
               `${connection.id} Adding mail to queue `
             );
+
+            const requestLogContext = connection.requestLogContext;
+            if (requestLogContext?.requestLogId) {
+              finalizedMessage.requestLogId = requestLogContext.requestLogId;
+            }
 
             const toAddress = getAddressTo(finalizedMessage);
             const parts: string[] = toAddress.split('@');
@@ -594,16 +655,62 @@ class Mailin extends events.EventEmitter {
                 data: finalizedMessage,
                 groupId,
               })
-              .then(() => resolve())
+              .then(() => {
+                emitQueueLifecycleTrace(connection, 'queued');
+                resolve();
+              })
               .catch((error) => {
                 logger.error(
                   { err: error, context: LOG_CONTEXT, connectionId: connection.id },
                   `${connection.id} Failed to add inbound mail to queue`
                 );
+                emitQueueLifecycleTrace(
+                  connection,
+                  'queue-failed',
+                  error instanceof Error ? error.message : 'Failed to enqueue inbound mail'
+                );
                 reject(error);
               });
           })
       );
+    }
+
+    function emitProcessingFailureTrace(connection, processingError) {
+      const requestLogger = inboundMailService.requestLogger;
+      const context = connection.requestLogContext;
+
+      if (!requestLogger || !context) {
+        return;
+      }
+
+      const message = processingError instanceof Error ? processingError.message : 'Inbound mail processing failed';
+
+      requestLogger.logProcessingFailed({ ...context, message }).catch((traceError) => {
+        logger.warn(
+          { err: traceError, context: LOG_CONTEXT, connectionId: connection.id },
+          `${connection.id} Failed to write inbound-mail processing-failure trace`
+        );
+      });
+    }
+
+    function emitQueueLifecycleTrace(connection, phase: 'queued' | 'queue-failed', message?: string) {
+      const requestLogger = inboundMailService.requestLogger;
+      const context = connection.requestLogContext;
+
+      if (!requestLogger || !context) {
+        return;
+      }
+
+      const promise =
+        phase === 'queued' ? requestLogger.logQueued(context) : requestLogger.logQueueFailed({ ...context, message });
+
+      promise.catch((traceError) => {
+        // Trace writes are best-effort; never fail the SMTP pipeline on them.
+        logger.warn(
+          { err: traceError, context: LOG_CONTEXT, connectionId: connection.id, phase },
+          `${connection.id} Failed to write inbound-mail ${phase} trace`
+        );
+      });
     }
     /*
      * Best-effort cleanup of the raw email temp file. Used on both success and
@@ -653,6 +760,7 @@ class Mailin extends events.EventEmitter {
           `${connection.id} Receiving message from ${connection.envelope.mailFrom.address}`
         );
 
+        connection.startTimeMs = Date.now();
         _this.emit('startMessage', connection);
 
         stream.pipe(fs.createWriteStream(mailPath));
@@ -789,6 +897,18 @@ class Mailin extends events.EventEmitter {
   public _convertHtmlToText(html) {
     return convert(html);
   }
+}
+
+function getEnvelopeToAddress(connection) {
+  const rcptTo = connection.envelope?.rcptTo;
+
+  if (!rcptTo) {
+    return '';
+  }
+
+  const toAddressObject = Array.isArray(rcptTo) ? rcptTo[0] : rcptTo;
+
+  return toAddressObject?.address ?? toAddressObject ?? '';
 }
 
 function getAddressTo(finalizedMessage) {

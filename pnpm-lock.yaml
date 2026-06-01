@@ -1243,6 +1243,9 @@ importers:
       '@novu/application-generic':
         specifier: workspace:*
         version: link:../../libs/application-generic
+      '@novu/dal':
+        specifier: workspace:*
+        version: link:../../libs/dal
       '@novu/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -31665,7 +31668,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.39.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.2(zod@4.3.5)
+      better-call: 1.3.2(zod@4.3.6)
       jose: 6.1.3
       kysely: 0.28.17
       nanostores: 1.2.0
@@ -45424,7 +45427,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
-      better-call: 1.3.2(zod@4.3.5)
+      better-call: 1.3.2(zod@4.3.6)
       defu: 6.1.6
       jose: 6.1.3
       kysely: 0.28.17
@@ -45442,15 +45445,6 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
-
-  better-call@1.3.2(zod@4.3.5):
-    dependencies:
-      '@better-auth/utils': 0.3.1
-      '@better-fetch/fetch': 1.1.21
-      rou3: 0.7.12
-      set-cookie-parser: 3.1.0
-    optionalDependencies:
-      zod: 4.3.5
 
   better-call@1.3.2(zod@4.3.6):
     dependencies:

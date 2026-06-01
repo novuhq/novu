@@ -17,6 +17,7 @@ import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { IS_INBOUND_LOGS_ENABLED } from '../../config';
 import type { RequestLog } from '../../types/logs';
 import { LogsDetailPanel } from './logs-detail-panel';
 import { RequestLogsEmptyState } from './logs-empty-state';
@@ -56,6 +57,10 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     transactionId: filters.transactionId || undefined,
     urlPattern: filters.urlPattern || undefined,
     createdGte: filters.createdGte ? Number(filters.createdGte) : undefined,
+    // When inbound logs are disabled, only HTTP rows are requested so the
+    // existing experience is unchanged. When enabled, an empty source means
+    // "all sources" and a chosen value narrows the list.
+    source: IS_INBOUND_LOGS_ENABLED ? filters.source || undefined : 'http',
   });
 
   const logsData = logsResponse?.data || [];
@@ -108,6 +113,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
           onFiltersChange={handleFiltersChange}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
+          showSourceFilter={IS_INBOUND_LOGS_ENABLED}
         />
         <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
       </div>

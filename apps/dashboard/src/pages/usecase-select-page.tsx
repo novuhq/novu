@@ -21,6 +21,7 @@ import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-u
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
+import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { getOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
 import { ROUTES } from '@/utils/routes';
@@ -356,10 +357,20 @@ export function UsecaseSelectPage() {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const telemetry = useTelemetry();
   const [selected, setSelected] = useState<UsecaseId>('agents');
+  const provisioningActive = useOnboardingProvisioningActive();
+
+  useOnboardingProvisioningDismiss({
+    isReady: true,
+    fallbackVariant: 'platform',
+  });
 
   useEffect(() => {
     telemetry(TelemetryEvent.USECASE_SELECT_PAGE_VIEWED);
   }, [telemetry]);
+
+  if (provisioningActive) {
+    return null;
+  }
 
   if (!isAgentsEnabled) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;

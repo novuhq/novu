@@ -18,8 +18,19 @@ import {
 } from '@novu/dal';
 import { InboundEmailAttachment, StepTypeEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
+import {
+  InboundParseOutcome,
+  InboundParseProcessingError,
+  toCustomerDeliveryFailureMessage,
+} from '../inbound-parse-outcome';
 
 const LOG_CONTEXT = 'ReplyToStrategy';
+
+type ResolvedReplyToContext = {
+  organizationId: string;
+  environmentId: string;
+  transactionId: string;
+};
 
 @Injectable()
 export class ReplyToStrategy {
@@ -30,7 +41,7 @@ export class ReplyToStrategy {
     private attachmentRehydrator: AttachmentRehydrator
   ) {}
 
-  async execute(command: InboundEmailParseCommand): Promise<void> {
+  async execute(command: InboundEmailParseCommand): Promise<InboundParseOutcome> {
     const { domain, transactionId, environmentId } = this.splitTo(command.to[0].address);
 
     Logger.log({ domain, transactionId, environmentId }, 'Processing reply-to email', LOG_CONTEXT);
@@ -40,15 +51,25 @@ export class ReplyToStrategy {
       environmentId
     );
 
+    // Tenant context is fully resolved here; failures from this point on carry it
+    // so the centralized emit point can still write a request log row.
+    const resolved: ResolvedReplyToContext = {
+      organizationId: job._organizationId,
+      environmentId,
+      transactionId,
+    };
+
     if (domain !== environment?.dns?.inboundParseDomain) {
-      this.throwError('Domain is not in environment white list');
+      this.fail(resolved, 422, 'Domain is not in environment white list');
     }
 
     const currentParseWebhook = template?.steps?.find((step) => step?._id?.toString() === job?.step?._id)?.replyCallback
       ?.url;
 
     if (!currentParseWebhook) {
-      this.throwError(
+      this.fail(
+        resolved,
+        422,
         `Missing parse webhook on template ${template._id} job ${job._id} transactionId ${transactionId}.`
       );
     }
@@ -61,14 +82,14 @@ export class ReplyToStrategy {
     const requestUrl = normalizeOutboundHttpUrl(compiledDomain);
 
     if (!requestUrl) {
-      this.throwError('Reply callback URL blocked (SSRF): Invalid URL format.');
+      this.fail(resolved, 422, 'Reply callback URL blocked (SSRF): Invalid URL format.');
     }
 
     try {
       assertSafeOutboundUrl(requestUrl);
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        this.throwError(`Reply callback URL blocked (SSRF): ${err.message}`);
+        this.fail(resolved, 422, `Reply callback URL blocked (SSRF): ${err.message}`);
       }
       throw err;
     }
@@ -94,10 +115,27 @@ export class ReplyToStrategy {
       await safeOutboundJsonRequest({ url: requestUrl, method: 'POST', body: userPayload });
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        this.throwError(`Reply callback URL blocked (SSRF): ${err.message}`);
+        this.fail(resolved, 422, `Reply callback URL blocked (SSRF): ${err.message}`);
       }
-      throw err;
+      this.fail(
+        resolved,
+        502,
+        `Reply callback delivery failed: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
     }
+
+    return { ...resolved, strategy: 'reply-to', status: 200 };
+  }
+
+  private fail(resolved: ResolvedReplyToContext, status: number, message: string): never {
+    Logger.error(message, LOG_CONTEXT);
+    const customerMessage = toCustomerDeliveryFailureMessage(status, message);
+    throw new InboundParseProcessingError(message, {
+      ...resolved,
+      strategy: 'reply-to',
+      status,
+      message: customerMessage,
+    });
   }
 
   private splitTo(address: string) {
