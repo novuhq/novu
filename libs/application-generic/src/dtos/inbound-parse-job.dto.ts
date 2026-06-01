@@ -58,6 +58,17 @@ export interface IInboundParseDataDto {
   connection: IConnection;
   envelopeFrom: IEnvelopeFrom;
   envelopeTo: IEnvelopeTo[];
+  /**
+   * Identifier of the early ClickHouse `requests` row written by the
+   * inbound-mail server before this job was enqueued. The worker links its
+   * terminal completion trace (`request_delivered` / `request_failed`) to
+   * this id so the request detail view shows the full lifecycle.
+   *
+   * Optional for backward compatibility with jobs queued before early logging
+   * was deployed; missing id means the worker should fall back to writing the
+   * full row itself (legacy path).
+   */
+  requestLogId?: string;
 }
 
 export interface IHeaders {

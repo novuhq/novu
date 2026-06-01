@@ -16,6 +16,7 @@ import {
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 import {
+  InboundParseDroppedError,
   InboundParseOutcome,
   InboundParseProcessingError,
   InboundParseStrategy,
@@ -141,7 +142,7 @@ export class DomainRouteStrategy {
       return { ...resolved, status: 200 };
     }
 
-    return undefined;
+    return { ...baseResolved, strategy: 'domain-route', status: 422, message: `Unsupported route type: ${route.type}` };
   }
 
   private fail(resolved: ResolvedDomainRouteContext, status: number, message: string): never {
@@ -175,8 +176,7 @@ export class DomainRouteStrategy {
   ): Promise<InboundParseOutcome | undefined> {
     if (!localPart) {
       this.logger.info({ toAddress }, 'Shared agent domain: missing local part - dropping');
-
-      return undefined;
+      throw new InboundParseDroppedError('Shared agent domain: missing local part');
     }
 
     const parsed = parseAgentSharedInboxLocalPart(localPart);
@@ -185,8 +185,7 @@ export class DomainRouteStrategy {
         { toAddress, localPart },
         'Shared agent domain: local part did not match {slug}-{inboxRoutingKey} - dropping'
       );
-
-      return undefined;
+      throw new InboundParseDroppedError('Shared agent domain: local part did not match expected pattern');
     }
 
     const integration = await this.integrationRepository.findAgentInboundByInboxRoutingKey(parsed.inboxRoutingKey);
@@ -195,8 +194,7 @@ export class DomainRouteStrategy {
         { toAddress, inboxRoutingKey: parsed.inboxRoutingKey },
         'Shared agent domain: no integration found for routing key - dropping'
       );
-
-      return undefined;
+      throw new InboundParseDroppedError('Shared agent domain: no integration found for routing key');
     }
 
     if (integration.active === false) {
@@ -204,8 +202,10 @@ export class DomainRouteStrategy {
         { toAddress, integrationId: integration._id },
         'Shared agent domain: integration is inactive - dropping'
       );
-
-      return undefined;
+      throw new InboundParseDroppedError('Shared agent domain: integration is inactive', {
+        organizationId: integration._organizationId,
+        environmentId: integration._environmentId,
+      });
     }
 
     if (integration.credentials?.sharedInboxDisabled) {
@@ -213,8 +213,10 @@ export class DomainRouteStrategy {
         { toAddress, integrationId: integration._id },
         'Shared agent domain: shared inbox disabled for this agent - dropping'
       );
-
-      return undefined;
+      throw new InboundParseDroppedError('Shared agent domain: shared inbox disabled for this agent', {
+        organizationId: integration._organizationId,
+        environmentId: integration._environmentId,
+      });
     }
 
     const link = await this.agentIntegrationRepository.findOne(
@@ -230,8 +232,10 @@ export class DomainRouteStrategy {
         { toAddress, integrationId: integration._id },
         'Shared agent domain: no agent link found for integration - dropping'
       );
-
-      return undefined;
+      throw new InboundParseDroppedError('Shared agent domain: no agent link found for integration', {
+        organizationId: integration._organizationId,
+        environmentId: integration._environmentId,
+      });
     }
 
     const agent = await this.agentRepository.findByIdForWebhook(link._agentId);
@@ -240,14 +244,18 @@ export class DomainRouteStrategy {
         { toAddress, agentId: link._agentId },
         'Shared agent domain: no agent found for link - dropping'
       );
-
-      return undefined;
+      throw new InboundParseDroppedError('Shared agent domain: no agent found for link', {
+        organizationId: integration._organizationId,
+        environmentId: integration._environmentId,
+      });
     }
 
     if (agent.active === false) {
       this.logger.info({ toAddress, agentId: agent._id }, 'Shared agent domain: agent is inactive - dropping');
-
-      return undefined;
+      throw new InboundParseDroppedError('Shared agent domain: agent is inactive', {
+        organizationId: agent._organizationId,
+        environmentId: agent._environmentId,
+      });
     }
 
     const resolved: ResolvedDomainRouteContext = {

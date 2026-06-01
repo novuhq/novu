@@ -21,6 +21,7 @@ import {
   GetDecryptedSecretKey,
   GetTenant,
   HttpClientService,
+  InboundMailRequestLogger,
   InMemoryLRUCacheService,
   InvalidateCacheService,
   LoggerModule,
@@ -109,6 +110,10 @@ const ANALYTICS_PROVIDERS = [
   clickHouseService,
   clickHouseBatchService,
   WorkflowRunService,
+
+  // Inbound mail logging (shared with apps/inbound-mail; worker only writes
+  // terminal completion traces so the tenant resolver is not needed here).
+  InboundMailRequestLogger,
 ];
 
 const PROVIDERS = [

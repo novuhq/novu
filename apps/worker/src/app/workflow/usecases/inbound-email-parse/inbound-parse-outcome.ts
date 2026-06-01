@@ -1,5 +1,4 @@
 import { generateObjectId } from '@novu/application-generic';
-import { InboundEmailParseCommand } from './inbound-email-parse.command';
 
 /**
  * Which inbound-email resolution path produced the request log row. Maps to the
@@ -44,6 +43,23 @@ export class InboundParseProcessingError extends Error {
 }
 
 /**
+ * Thrown when the inbound mail server cannot route a message to any tenant
+ * (e.g. shared agent inbox: unknown routing key, inactive agent, missing
+ * integration link). Carries an optional reason for the trace `message`. The
+ * worker's safety-net handler converts these into a terminal `request_failed`
+ * trace using `command.requestLogId`. Non-retriable.
+ */
+export class InboundParseDroppedError extends Error {
+  constructor(
+    public readonly reason: string,
+    public readonly tenant?: { organizationId?: string; environmentId?: string; transactionId?: string }
+  ) {
+    super(reason);
+    this.name = 'InboundParseDroppedError';
+  }
+}
+
+/**
  * Inbound emails arriving through the domain-route / agent paths have no native
  * Novu transaction id. We derive a deterministic id from the RFC 5322
  * Message-ID so retries of the same email collapse onto one logical request.
@@ -52,29 +68,4 @@ export function inboundTransactionIdFromMessageId(messageId: string | undefined)
   const cleaned = messageId?.replace(/[<>]/g, '').trim();
 
   return cleaned || `inbound_${generateObjectId()}`;
-}
-
-/**
- * Metadata snapshot of an inbound email for the `request_body` column.
- * Excludes raw `html`/`text` bodies (same boundary as inbound-mail APM). Includes
- * routing fields (`from`, `to`, `subject`) so tenant-scoped Requests debugging works;
- * retention follows the `requests` table TTL policy.
- */
-export function buildInboundRequestMetadata(command: InboundEmailParseCommand): string {
-  const metadata = {
-    subject: command.subject,
-    messageId: command.messageId,
-    from: command.from?.map((sender) => sender.address),
-    to: command.to?.map((recipient) => recipient.address),
-    dkim: command.dkim,
-    spf: command.spf,
-    spamScore: command.spamScore,
-    attachments: command.attachments?.map((attachment) => ({
-      filename: attachment.filename,
-      contentType: attachment.contentType,
-      size: attachment.size,
-    })),
-  };
-
-  return JSON.stringify(metadata);
 }

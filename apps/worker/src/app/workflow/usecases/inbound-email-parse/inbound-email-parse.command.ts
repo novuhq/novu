@@ -123,4 +123,8 @@ export class InboundEmailParseCommand extends BaseCommand implements IInboundPar
 
   @IsDefined()
   envelopeTo: IEnvelopeTo[];
+
+  @IsOptional()
+  @IsString()
+  requestLogId?: string;
 }

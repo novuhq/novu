@@ -330,6 +330,7 @@ class Mailin extends events.EventEmitter {
                   return finalizedMessage;
                 })
               )
+              .then(logInboundMailReceived.bind(null, connection))
               .then(postQueue.bind(null, connection))
               .then(
                 () => unlinkFile(connection).then(() => resolve()),
@@ -543,6 +544,49 @@ class Mailin extends events.EventEmitter {
       return parsedEmail;
     }
 
+    function logInboundMailReceived(connection, finalizedMessage) {
+      return nr.startSegment('inbound-mail/log-received', true, async () => {
+        const requestLogger = inboundMailService.requestLogger;
+        const tenantResolver = inboundMailService.tenantResolver;
+
+        if (!requestLogger || !tenantResolver) {
+          return finalizedMessage;
+        }
+
+        const toAddress = getAddressTo(finalizedMessage);
+
+        try {
+          const tenant = await tenantResolver.resolve(toAddress, finalizedMessage.messageId);
+          const durationMs = connection.startTimeMs ? Date.now() - connection.startTimeMs : 0;
+
+          const requestLogId = await requestLogger.logReceived({
+            source: finalizedMessage,
+            toAddress,
+            tenant,
+            durationMs,
+          });
+
+          if (requestLogId) {
+            finalizedMessage.requestLogId = requestLogId;
+            connection.requestLogContext = {
+              requestLogId,
+              organizationId: tenant.organizationId,
+              environmentId: tenant.environmentId,
+              transactionId: tenant.transactionId,
+            };
+          }
+        } catch (error) {
+          // Observability writes must never block the SMTP pipeline.
+          logger.warn(
+            { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+            `${connection.id} Failed to write inbound-mail request log — continuing`
+          );
+        }
+
+        return finalizedMessage;
+      });
+    }
+
     function postQueue(connection, finalizedMessage) {
       return nr.startSegment(
         'inbound-mail/post-queue',
@@ -594,16 +638,45 @@ class Mailin extends events.EventEmitter {
                 data: finalizedMessage,
                 groupId,
               })
-              .then(() => resolve())
+              .then(() => {
+                emitQueueLifecycleTrace(connection, 'queued');
+                resolve();
+              })
               .catch((error) => {
                 logger.error(
                   { err: error, context: LOG_CONTEXT, connectionId: connection.id },
                   `${connection.id} Failed to add inbound mail to queue`
                 );
+                emitQueueLifecycleTrace(
+                  connection,
+                  'queue-failed',
+                  error instanceof Error ? error.message : 'Failed to enqueue inbound mail'
+                );
                 reject(error);
               });
           })
       );
+    }
+
+    function emitQueueLifecycleTrace(connection, phase: 'queued' | 'queue-failed', message?: string) {
+      const requestLogger = inboundMailService.requestLogger;
+      const context = connection.requestLogContext;
+
+      if (!requestLogger || !context) {
+        return;
+      }
+
+      const promise = phase === 'queued'
+        ? requestLogger.logQueued(context)
+        : requestLogger.logQueueFailed({ ...context, message });
+
+      promise.catch((traceError) => {
+        // Trace writes are best-effort; never fail the SMTP pipeline on them.
+        logger.warn(
+          { err: traceError, context: LOG_CONTEXT, connectionId: connection.id, phase },
+          `${connection.id} Failed to write inbound-mail ${phase} trace`
+        );
+      });
     }
     /*
      * Best-effort cleanup of the raw email temp file. Used on both success and
@@ -653,6 +726,7 @@ class Mailin extends events.EventEmitter {
           `${connection.id} Receiving message from ${connection.envelope.mailFrom.address}`
         );
 
+        connection.startTimeMs = Date.now();
         _this.emit('startMessage', connection);
 
         stream.pipe(fs.createWriteStream(mailPath));
