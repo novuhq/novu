@@ -10,6 +10,7 @@ import { FeatureFlagsService } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
   AgentRepository,
+  EnvironmentRepository,
   IntegrationRepository,
   McpConnectionRepository,
   SubscriberRepository,
@@ -75,6 +76,7 @@ describe('EnsureProviderManagedVault', () => {
   let mcpConnectionRepository: sinon.SinonStubbedInstance<McpConnectionRepository>;
   let integrationRepository: sinon.SinonStubbedInstance<IntegrationRepository>;
   let subscriberRepository: sinon.SinonStubbedInstance<SubscriberRepository>;
+  let environmentRepository: sinon.SinonStubbedInstance<EnvironmentRepository>;
   let createOrUpdateSubscriber: { execute: sinon.SinonStub };
   let enableAgentMcpServer: { execute: sinon.SinonStub };
   let mcpConnectionVaultService: { ensureConnectionVault: sinon.SinonStub };
@@ -87,6 +89,8 @@ describe('EnsureProviderManagedVault', () => {
     mcpConnectionRepository = sinon.createStubInstance(McpConnectionRepository);
     integrationRepository = sinon.createStubInstance(IntegrationRepository);
     subscriberRepository = sinon.createStubInstance(SubscriberRepository);
+    environmentRepository = sinon.createStubInstance(EnvironmentRepository);
+    environmentRepository.findOne.resolves({ apiKeys: [{ key: 'env-test-api-key' }] } as never);
     createOrUpdateSubscriber = { execute: sinon.stub() };
     enableAgentMcpServer = { execute: sinon.stub().resolves({}) };
     mcpConnectionVaultService = { ensureConnectionVault: sinon.stub().resolves(EXTERNAL_VAULT_ID) };
@@ -126,6 +130,7 @@ describe('EnsureProviderManagedVault', () => {
       mcpConnectionRepository as never,
       integrationRepository as never,
       subscriberRepository as never,
+      environmentRepository as never,
       createOrUpdateSubscriber as never,
       enableAgentMcpServer as never,
       mcpConnectionVaultService as never,
@@ -255,5 +260,65 @@ describe('EnsureProviderManagedVault', () => {
 
     expect(result.externalVaultId).to.equal('vlt_winner');
     expect(mcpConnectionVaultService.ensureConnectionVault.called).to.equal(false);
+  });
+
+  describe('executeForSetupCard', () => {
+    const CHANNEL_SUBSCRIBER_ID = 'slack-user-42';
+    const CHANNEL_SUBSCRIBER_MONGO_ID = 'sub_mongo_channel';
+    let originalApiRootUrl: string | undefined;
+
+    beforeEach(() => {
+      originalApiRootUrl = process.env.API_ROOT_URL;
+      process.env.API_ROOT_URL = 'https://api.example.com';
+      subscriberRepository.findBySubscriberId.withArgs(ENV_ID, CHANNEL_SUBSCRIBER_ID).resolves({
+        _id: CHANNEL_SUBSCRIBER_MONGO_ID,
+        subscriberId: CHANNEL_SUBSCRIBER_ID,
+      } as never);
+    });
+
+    afterEach(() => {
+      if (originalApiRootUrl === undefined) {
+        delete process.env.API_ROOT_URL;
+      } else {
+        process.env.API_ROOT_URL = originalApiRootUrl;
+      }
+    });
+
+    it('rejects when subscriberId is missing', async () => {
+      try {
+        await useCase.executeForSetupCard(makeCommand());
+        expect.fail('Expected BadRequestException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(BadRequestException);
+      }
+    });
+
+    it('resolves the channel subscriber directly without falling back to connect:<userId>', async () => {
+      const result = await useCase.executeForSetupCard(makeCommand({ subscriberId: CHANNEL_SUBSCRIBER_ID }));
+
+      // The setup-card flow returns a signed Novu intermediate URL that
+      // promotes the connection on click and 302s to the Claude vault.
+      expect(result.vaultUrl).to.match(/\/v1\/agents\/mcp\/provider-managed\/redirect\?state=/);
+      expect(result.externalVaultId).to.equal(EXTERNAL_VAULT_ID);
+      expect(subscriberRepository.findBySubscriberId.calledOnce).to.equal(true);
+      expect(subscriberRepository.findBySubscriberId.firstCall.args).to.deep.equal([ENV_ID, CHANNEL_SUBSCRIBER_ID]);
+      expect(createOrUpdateSubscriber.execute.called).to.equal(false);
+      // Side-effect bug fix: must not promote the row to `connected` during
+      // card construction; promotion happens via the redirect endpoint.
+      expect(mcpConnectionRepository.update.called).to.equal(false);
+    });
+
+    it('throws NotFoundException when the channel subscriber cannot be found', async () => {
+      subscriberRepository.findBySubscriberId.withArgs(ENV_ID, CHANNEL_SUBSCRIBER_ID).resolves(null);
+
+      try {
+        await useCase.executeForSetupCard(makeCommand({ subscriberId: CHANNEL_SUBSCRIBER_ID }));
+        expect.fail('Expected NotFoundException');
+      } catch (err) {
+        expect(err).to.be.instanceOf(NotFoundException);
+      }
+
+      expect(createOrUpdateSubscriber.execute.called).to.equal(false);
+    });
   });
 });

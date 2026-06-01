@@ -16,6 +16,7 @@ import { AgentConfigResolver, type ResolvedAgentConfig } from '../../channels/ag
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { EnsureProviderManagedVault } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { ManagedAgentService } from '../managed-agent.service';
@@ -40,6 +41,7 @@ export class CompleteManagedAgentSetup {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly managedAgentService: ManagedAgentService,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly outboundGateway: OutboundGateway,
     private readonly logger: PinoLogger
@@ -195,6 +197,7 @@ export class CompleteManagedAgentSetup {
       subscriberId: subscriber.subscriberId,
       conversationId: conversation._id,
       generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+      ensureProviderManagedVault: this.ensureProviderManagedVault,
       logger: this.logger,
     });
 
@@ -284,6 +287,7 @@ export class CompleteManagedAgentSetup {
         subscriberId: subscriber.subscriberId,
         conversationId: conversation._id,
         generateMcpOAuthUrl: this.generateMcpOAuthUrl,
+        ensureProviderManagedVault: this.ensureProviderManagedVault,
         logger: this.logger,
       });
 

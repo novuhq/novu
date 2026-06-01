@@ -1,10 +1,14 @@
 import { forwardRef, Module } from '@nestjs/common';
 import {
+  analyticsService,
   CalculateLimitNovuIntegration,
   ChannelFactory,
   CompileTemplate,
+  CreateOrUpdateSubscriberUseCase,
   GetNovuProviderCredentials,
   MsTeamsTokenService,
+  UpdateSubscriber,
+  UpdateSubscriberChannel,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { TelegramMobileLinkTokenService } from '../agents/channels/telegram-linking/telegram-mobile-link-token.service';
@@ -33,6 +37,10 @@ const PROVIDERS = [
     CommunityUserRepository,
     TelegramMobileLinkTokenService,
     ...PROVIDERS,
+    analyticsService,
+    CreateOrUpdateSubscriberUseCase,
+    UpdateSubscriber,
+    UpdateSubscriberChannel,
   ],
   exports: [...USE_CASES],
 })

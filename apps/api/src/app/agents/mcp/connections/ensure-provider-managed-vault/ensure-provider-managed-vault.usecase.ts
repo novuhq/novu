@@ -15,6 +15,7 @@ import {
 import {
   AgentMcpServerRepository,
   AgentRepository,
+  EnvironmentRepository,
   IntegrationRepository,
   McpConnectionRepository,
   SubscriberRepository,
@@ -35,6 +36,7 @@ import { EnableAgentMcpServerCommand } from '../../servers/enable-agent-mcp-serv
 import { EnableAgentMcpServer } from '../../servers/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
 import { McpConnectionVaultService } from '../mcp-connection-vault.service';
 import { EnsureProviderManagedVaultCommand } from './ensure-provider-managed-vault.command';
+import { buildProviderManagedRedirectUrl, signProviderManagedRedirectState } from './provider-managed-redirect-state';
 
 export type EnsureProviderManagedVaultResult = {
   /** Deep link the dashboard opens in a new tab so the user can finish connector OAuth in Claude. */
@@ -79,6 +81,7 @@ export class EnsureProviderManagedVault {
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
+    private readonly environmentRepository: EnvironmentRepository,
     private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private readonly enableAgentMcpServer: EnableAgentMcpServer,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
@@ -88,7 +91,84 @@ export class EnsureProviderManagedVault {
     this.logger.setContext(EnsureProviderManagedVault.name);
   }
 
+  /**
+   * Provision (or reuse) the provider-managed vault for the channel subscriber
+   * triggering a managed-agent setup card and return the deep link the in-thread
+   * "Connect from provider" button opens. Mirrors `execute` but resolves the
+   * subscriber from the inbound `subscriberId` instead of mapping a dashboard
+   * `userId` to `connect:<userId>`.
+   */
+  async executeForSetupCard(command: EnsureProviderManagedVaultCommand): Promise<EnsureProviderManagedVaultResult> {
+    if (!command.subscriberId) {
+      throw new BadRequestException('subscriberId is required for the setup-card vault flow.');
+    }
+
+    // Setup-card flow only provisions the vault container; it must NOT promote
+    // the connection to `connected` here. Promotion happens when the user
+    // clicks the in-channel link, which is intercepted by the Novu redirect
+    // endpoint (the click is the user-intent signal — provider-managed MCPs
+    // have no Novu OAuth callback that could confirm OAuth completion).
+    const internal = await this.executeInternal(command, { markConnectedOnProvision: false });
+
+    const apiKey = await this.getEnvironmentApiKey(command.environmentId);
+    const signedState = signProviderManagedRedirectState(
+      {
+        connectionId: internal.connection._id,
+        agentId: internal.agentId,
+        agentMcpServerId: internal.agentMcpServerId,
+        subscriberId: internal.subscriberMongoId,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        mcpId: command.mcpId,
+        externalVaultId: internal.externalVaultId,
+        ...(internal.externalWorkspaceId ? { externalWorkspaceId: internal.externalWorkspaceId } : {}),
+        ...(command.conversationId ? { conversationId: command.conversationId } : {}),
+        timestamp: Date.now(),
+      },
+      apiKey
+    );
+
+    return {
+      vaultUrl: buildProviderManagedRedirectUrl(signedState),
+      externalVaultId: internal.externalVaultId,
+    };
+  }
+
   async execute(command: EnsureProviderManagedVaultCommand): Promise<EnsureProviderManagedVaultResult> {
+    // Dashboard "Add from Claude" flow: the user explicitly clicked the
+    // button, so we treat the click as intent and promote the connection
+    // to `connected` so the "Added from Claude" badge can light up.
+    const internal = await this.executeInternal(command, { markConnectedOnProvision: true });
+
+    return {
+      vaultUrl: buildClaudePlatformVaultUrl(internal.externalVaultId, internal.externalWorkspaceId),
+      externalVaultId: internal.externalVaultId,
+    };
+  }
+
+  private async getEnvironmentApiKey(environmentId: string): Promise<string> {
+    const environment = await this.environmentRepository.findOne({ _id: environmentId }, ['apiKeys']);
+
+    if (!environment?.apiKeys?.length) {
+      throw new UnprocessableEntityException(
+        'Environment has no API keys; cannot sign provider-managed redirect state.'
+      );
+    }
+
+    return environment.apiKeys[0].key;
+  }
+
+  private async executeInternal(
+    command: EnsureProviderManagedVaultCommand,
+    options: { markConnectedOnProvision: boolean }
+  ): Promise<{
+    externalVaultId: string;
+    externalWorkspaceId?: string;
+    connection: { _id: string; _subscriberId?: string };
+    agentId: string;
+    agentMcpServerId: string;
+    subscriberMongoId: string;
+  }> {
     const catalog = MCP_SERVERS.find((entry) => entry.id === command.mcpId);
 
     if (!catalog) {
@@ -201,10 +281,11 @@ export class EnsureProviderManagedVault {
     });
 
     let externalVaultId: string;
+    let provisionedConnection: { _id: string; _subscriberId?: string } | null = null;
 
     if (existingConnection?.auth?.externalVaultId) {
       externalVaultId = existingConnection.auth.externalVaultId;
-      await this.markProviderManagedConnectionConnected(existingConnection, command);
+      provisionedConnection = existingConnection;
     } else {
       const connection = await this.createOrFetchProviderManagedConnection({
         command,
@@ -214,7 +295,6 @@ export class EnsureProviderManagedVault {
 
       if (connection.auth?.externalVaultId) {
         externalVaultId = connection.auth.externalVaultId;
-        await this.markProviderManagedConnectionConnected(connection, command);
       } else if (subscriberVaultId) {
         await this.mcpConnectionRepository.setConnectionExternalVaultIdIfMissing({
           connectionId: connection._id,
@@ -223,34 +303,61 @@ export class EnsureProviderManagedVault {
           externalVaultId: subscriberVaultId,
         });
         externalVaultId = subscriberVaultId;
-        await this.markProviderManagedConnectionConnected(connection, command);
       } else {
         externalVaultId = await this.mcpConnectionVaultService.ensureConnectionVault({
           connection,
           agentId: agent._id,
           runtimeProvider: resolved.provider,
         });
-
-        await this.markProviderManagedConnectionConnected(connection, command);
       }
+
+      provisionedConnection = connection;
+    }
+
+    if (options.markConnectedOnProvision && provisionedConnection) {
+      await this.markProviderManagedConnectionConnected(provisionedConnection, command);
+    }
+
+    if (!provisionedConnection) {
+      throw new UnprocessableEntityException('Provider-managed vault provisioning produced no connection row.');
     }
 
     return {
-      vaultUrl: buildClaudePlatformVaultUrl(externalVaultId, externalWorkspaceId),
       externalVaultId,
+      ...(externalWorkspaceId ? { externalWorkspaceId } : {}),
+      connection: provisionedConnection,
+      agentId: agent._id,
+      agentMcpServerId: enablement._id,
+      subscriberMongoId: subscriber._id,
     };
   }
 
   /**
-   * Map the dashboard user to a Novu subscriber. Connect-product platform
-   * flows (Slack setup-card OAuth, CLI onboarding) key vaults by the
-   * `connect:<userId>` subscriber id — not the raw dashboard user id.
-   * Prefer that row so "Add from Claude" reuses the same vault container
-   * the in-channel Connect button already provisioned.
+   * Map the calling identity to a Novu subscriber.
+   *
+   * - When `command.subscriberId` is set (managed-agent setup-card flow), use
+   *   the channel subscriber directly. The vault must belong to the person
+   *   triggering the agent in Slack/Teams, not the dashboard admin.
+   * - Otherwise (dashboard "Add from Claude") map `userId` to a
+   *   `connect:<userId>` subscriber, falling back to the legacy raw `userId`
+   *   row before provisioning a fresh one.
    */
   private async resolveSubscriber(
     command: EnsureProviderManagedVaultCommand
   ): Promise<{ _id: string; subscriberId: string }> {
+    if (command.subscriberId) {
+      const channelSubscriber = await this.subscriberRepository.findBySubscriberId(
+        command.environmentId,
+        command.subscriberId
+      );
+
+      if (!channelSubscriber) {
+        throw new NotFoundException(`Subscriber "${command.subscriberId}" not found in this environment.`);
+      }
+
+      return channelSubscriber;
+    }
+
     const connectSubscriberId = buildConnectSubscriberId(command.userId);
     const connectSubscriber = await this.subscriberRepository.findBySubscriberId(
       command.environmentId,
@@ -341,7 +448,7 @@ export class EnsureProviderManagedVault {
    * vault id is known. Idempotent — safe on every "Add from Claude" retry.
    */
   private async markProviderManagedConnectionConnected(
-    connection: { _id: string },
+    connection: { _id: string; _subscriberId?: string },
     command: EnsureProviderManagedVaultCommand
   ): Promise<void> {
     await this.mcpConnectionRepository.update(
