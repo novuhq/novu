@@ -23,7 +23,10 @@ function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<strin
 // Managed-agent (Thalamus) config is a Novu Cloud concern. On self-hosted (or whenever the URL is
 // blank) we must not run envalid's `url()` validator, which rejects an empty string even with a
 // default — a blank `THALAMUS_CF_URL=` is common in self-hosted .env files and would block boot.
-function getThalamusValidators(): Record<string, ValidatorSpec<unknown>> {
+function getThalamusValidators(): {
+  THALAMUS_CF_URL: ValidatorSpec<string>;
+  THALAMUS_WEBHOOK_SECRET: ValidatorSpec<string>;
+} {
   if (processEnv.IS_SELF_HOSTED === 'true' || !processEnv.THALAMUS_CF_URL) {
     return {
       THALAMUS_CF_URL: str({ default: undefined }),
