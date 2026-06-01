@@ -55,8 +55,8 @@ export class CompleteProviderManagedRedirect {
       throw new NotFoundException('Environment for redirect state not found or has no API keys.');
     }
 
-    const expected = createHash(environment.apiKeys[0].key, rawPayload);
-    if (signature !== expected) {
+    const isValidSignature = environment.apiKeys.some(({ key }) => createHash(key, rawPayload) === signature);
+    if (!isValidSignature) {
       throw new BadRequestException('Provider-managed redirect signature mismatch.');
     }
 
