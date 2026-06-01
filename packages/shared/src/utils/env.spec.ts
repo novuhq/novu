@@ -61,4 +61,10 @@ describe('isOutboundSsrfProtectionEnabled', () => {
       expect(isOutboundSsrfProtectionEnabled()).toBe(true);
     });
   });
+
+  test('returns false when CI_EE_TEST is enabled on self-hosted', () => {
+    withEnv({ [CI_EE_TEST_KEY]: 'true', [IS_SELF_HOSTED_KEY]: 'true' }, () => {
+      expect(isOutboundSsrfProtectionEnabled()).toBe(false);
+    });
+  });
 });

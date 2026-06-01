@@ -111,6 +111,7 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
     });
 
     let requestHeaders: Record<string, string> = { ...this.headers, ...data.headers };
+    const baseUrl = this.assertSafeSmsUrl(this.config.baseUrl, 'Generic SMS URL blocked');
 
     if (this.config?.authenticateByToken) {
       const authTokenKey = this.config.authenticationTokenKey;
@@ -141,8 +142,6 @@ export class GenericSmsProvider extends BaseProvider implements ISmsProvider {
         [authTokenKey]: token,
       };
     }
-
-    const baseUrl = this.assertSafeSmsUrl(this.config.baseUrl, 'Generic SMS URL blocked');
 
     const response = await this.safeJsonRequest(baseUrl, {
       method: 'POST',

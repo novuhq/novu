@@ -19,6 +19,15 @@ import { setTimeout } from 'node:timers/promises';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
+const PROTECTED_HEADER_NAMES = new Set(['content-type', 'x-novu-signature']);
+
+export class EmailWebhookUrlBlockedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EmailWebhookUrlBlockedError';
+  }
+}
+
 export class EmailWebhookProvider extends BaseProvider implements IEmailProvider {
   protected casing: CasingEnum = CasingEnum.CAMEL_CASE;
   readonly id = EmailProviderIdEnum.EmailWebhook;
@@ -52,10 +61,15 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
     const transformedData = this.transform(bridgeProviderData, options);
     const bodyData = this.createBody(transformedData.body);
     const hmacValue = this.computeHmac(bodyData);
+    const passthroughHeaders = Object.fromEntries(
+      Object.entries(transformedData.headers ?? {}).filter(
+        ([headerName]) => !PROTECTED_HEADER_NAMES.has(headerName.toLowerCase())
+      )
+    );
     const requestHeaders = {
+      ...passthroughHeaders,
       'content-type': 'application/json',
       'X-Novu-Signature': hmacValue,
-      ...transformedData.headers,
     };
 
     if (isOutboundSsrfProtectionEnabled()) {
@@ -93,14 +107,16 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
     const webhookUrl = normalizeOutboundHttpUrl(this.config.webhookUrl);
 
     if (!webhookUrl) {
-      throw new Error('Email webhook URL blocked: Invalid URL format.');
+      throw new EmailWebhookUrlBlockedError('Email webhook URL blocked: Invalid URL format.');
     }
 
+    // Structure-only check (scheme, credentials, blocked hostnames). Literal private IPs
+    // are rejected at connect time inside safeOutboundJsonRequest.
     try {
       assertSafeOutboundUrl(webhookUrl);
     } catch (err) {
       if (err instanceof SsrfBlockedError) {
-        throw new Error(`Email webhook URL blocked: ${err.message}`);
+        throw new EmailWebhookUrlBlockedError(`Email webhook URL blocked: ${err.message}`);
       }
       throw err;
     }
@@ -116,7 +132,7 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
           body: bodyData,
         }).catch((err: unknown) => {
           if (err instanceof SsrfBlockedError) {
-            throw new Error(`Email webhook URL blocked: ${err.message}`);
+            throw new EmailWebhookUrlBlockedError(`Email webhook URL blocked: ${err.message}`);
           }
           throw err;
         });
@@ -127,7 +143,7 @@ export class EmailWebhookProvider extends BaseProvider implements IEmailProvider
 
         sent = true;
       } catch (error) {
-        if (error instanceof Error && error.message.startsWith('Email webhook URL blocked')) {
+        if (error instanceof EmailWebhookUrlBlockedError || error instanceof SsrfBlockedError) {
           throw error;
         }
         await setTimeout(this.config.retryDelay);

@@ -73,8 +73,9 @@ export const isBetterAuthEnabled = () => isEEAuthEnabled() && getEEAuthProvider(
  * Self-hosted and community deployments may intentionally target internal URLs.
  */
 export const isOutboundSsrfProtectionEnabled = (): boolean => {
-  const isEnterprise = process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
-  const isSelfHosted = process.env.IS_SELF_HOSTED === 'true';
+  const isEnterprise =
+    getEnvVariable('NOVU_ENTERPRISE') === 'true' || getEnvVariable('CI_EE_TEST') === 'true';
+  const isSelfHosted = getEnvVariable('IS_SELF_HOSTED') === 'true';
 
   return isEnterprise && !isSelfHosted;
 };
