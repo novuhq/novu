@@ -73,8 +73,7 @@ export function ConnectSwitchConfirmationModal({
 
             <ul className="flex flex-1 flex-col gap-3 px-4">
               <FeatureRow>
-                <span className="text-text-strong">Best for:</span>
-                <span>Internal team workflows and personal use-cases</span>
+                <span>Best for: Internal team workflows and personal use-cases</span>
               </FeatureRow>
 
               <FeatureRow>
