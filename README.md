@@ -58,9 +58,6 @@
   ·
   <a href="https://go.novu.co/contact?utm_source=github&utm_medium=readme&utm_campaign=contact-us-link" target="_blank" rel="noopener noreferrer"
 >Contact us</a>
-.
-<a href="https://www.recent.dev">Recent.dev</a>
-</p>
 
 Software is becoming more conversational, and user expectations are rising with it. People no longer want static, irrelevant notifications they glance at and forget, they want to engage, ask questions, and go deeper. Instead of a one-way report dropped in their inbox, they expect a thread they can explore: follow up on a metric, drill into an anomaly, or continue a conversation right where they left off. That shift, from broadcast to meaningful dialog is what Novu's communication infrastructure is built for.
 
@@ -113,6 +110,14 @@ Novu handles the plumbing in both directions: it receives inbound messages from 
 - **Bring your own agent** — works with whatever you've built, whether that's Claude Managed Agents, AI SDK, LangGraph, or a custom stack; Novu doesn't constrain your agent logic
 - **Best practices built in** — conversation threading, reactions, channel-aware formatting, actions and a single integration surface
 Novu connects the agent to the world, it is not the agent itself.
+
+### Want to see ACI in action?
+We have built [Novu Connect](https://novu.co/connect) to showcase the power of ACI, build on integrate an existing Claude Managed Agent as a teammate in Slack, Telegram, or Email in less than 2 minutes. 
+
+Try it now:
+```
+npx novu@latest connect
+```
 
 ## Embeddable Inbox component
 
