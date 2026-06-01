@@ -7,6 +7,7 @@ import { ConnectSwitchConfirmationModal } from '@/components/dashboard-shell/con
 import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
 import { ConnectLogo } from '@/components/icons/connect-logo';
 import { LogoCircle } from '@/components/icons/logo-circle';
+import { BetaBadge } from '@/components/primitives/beta-badge';
 import { Sheet, SheetContent, SheetTitle } from '@/components/primitives/sheet';
 import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -21,6 +22,7 @@ type MobileBrand = {
   id: AppId;
   Icon: ComponentType<{ className?: string }>;
   label: string;
+  showBeta?: boolean;
 };
 
 const PLATFORM_BRAND: MobileBrand = {
@@ -33,6 +35,7 @@ const CONNECT_BRAND: MobileBrand = {
   id: APP_IDS.CONNECT,
   Icon: ConnectLogo,
   label: 'Novu Connect',
+  showBeta: true,
 };
 
 function MobileAppSwitcher() {
@@ -67,7 +70,10 @@ function MobileAppSwitcher() {
         className="bg-bg-weak border-stroke-weak flex items-center gap-2 rounded-md border px-2 py-1.5"
       >
         <CurrentIcon className="size-4" aria-hidden />
-        <span className="text-foreground-950 text-sm font-medium">{currentBrand.label}</span>
+        <span className="text-foreground-950 flex items-center gap-1 text-sm font-medium">
+          {currentBrand.label}
+          {currentBrand.showBeta ? <BetaBadge className="shrink-0" /> : null}
+        </span>
       </span>
 
       {otherHref ? (
@@ -80,7 +86,10 @@ function MobileAppSwitcher() {
             aria-label={`Open ${otherBrand.label}`}
           >
             <OtherIcon className="size-4" aria-hidden />
-            <span>{otherBrand.label}</span>
+            <span className="flex items-center gap-1">
+              {otherBrand.label}
+              {otherBrand.showBeta ? <BetaBadge className="shrink-0" /> : null}
+            </span>
             {IS_HOSTNAME_SPLIT_ENABLED && <RiArrowRightUpLine className="text-foreground-400 size-3.5" aria-hidden />}
           </CrossAppLink>
           {showConnectSwitchModal ? (

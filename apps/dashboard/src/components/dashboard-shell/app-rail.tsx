@@ -23,6 +23,7 @@ type BrandConfig = {
   tooltip: string;
   subtitle: string;
   features: string[];
+  showBeta?: boolean;
 };
 
 const PLATFORM_BRAND: BrandConfig = {
@@ -50,6 +51,7 @@ const CONNECT_BRAND: BrandConfig = {
     'Connect your agent to where you work.',
     'Connect the tools your team works on.',
   ],
+  showBeta: true,
 };
 
 type BrandTileProps = {
@@ -79,7 +81,7 @@ type SwitcherTileProps = {
 };
 
 function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherTileProps) {
-  const { Icon, label, tooltip, subtitle, features } = brand;
+  const { Icon, label, tooltip, subtitle, features, showBeta } = brand;
   const { isModalOpen, setIsModalOpen, handleSwitcherClick, handleConfirm, showConnectSwitchModal } =
     useConnectSwitchConfirmation({
       targetAppId: brand.id,
@@ -137,7 +139,7 @@ function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherT
           size="lg"
           className="border-stroke-weak w-auto overflow-hidden rounded-lg border p-0 shadow-md"
         >
-          <AppSwitcherTooltipContent label={label} subtitle={subtitle} features={features} />
+          <AppSwitcherTooltipContent label={label} subtitle={subtitle} features={features} showBeta={showBeta} />
         </TooltipContent>
       </Tooltip>
       {showConnectSwitchModal ? (
