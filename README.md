@@ -22,11 +22,11 @@
 </p>
 
 <h1 align="center">
- The &lt;Inbox /&gt; infrastructure for modern products
+ The open-source communication infrastructure for agents and products
 </h1>
 
 <div align="center">
-  The notification platform that turns complex multi-channel delivery into a single component. Built for developers, designed for growth, powered by open source.
+  One API and one unified conversation model to connect your <strong>products</strong> and your <strong>agents</strong> to every channel your users live on — Inbox, Email, SMS, Push, Chat, Slack, Microsoft Teams, Telegram, and more.
 </div>
 
 <p align="center">
@@ -73,16 +73,6 @@ There are two ways to build with Novu, and they share the same foundation: a sin
 
 > **Novu isn't the brain of your agent.** You bring the intelligence, Novu is the connective layer between your agent and the people it talks to.
 
-## ✨ Features
-
-- Embeddable Inbox component with real-time support
-- Single API for all messaging providers (Inbox/In-App, Email, SMS, Push, Chat)
-- Digest Engine to combine multiple notification in to a single E-mail
-- No-Code Block Editor for Email
-- Notification Workflow Engine
-- Embeddable user preferences component gives your subscribers control over their notifications
-- Community-driven
-
 ## 🚀 Getting Started
 
 [Create a free account](https://go.novu.co/dashboard?utm_source=github&utm_medium=readme&utm_campaign=create-free-account-link) and follow the instructions on the dashboard.
@@ -92,14 +82,9 @@ There are two ways to build with Novu, and they share the same foundation: a sin
 - [Why Novu?](#️-why-novu)
 - [Communication infrastructure for products](#-communication-infrastructure-for-products)
 - [Agent Communication Infrastructure (ACI)](#-agent-communication-infrastructure-aci)
-- [Features](#-features)
 - [Getting Started](#-getting-started)
 - [Embeddable Inbox and Preferences](#embeddable-inbox-component)
 - [Providers](#providers)
-- [Need Help?](#need-help)
-- [Links](#links)
-- [License](#license)
-
 
 ## 📬 Communication infrastructure for products
  
