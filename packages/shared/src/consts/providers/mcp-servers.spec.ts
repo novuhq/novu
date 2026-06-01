@@ -29,7 +29,7 @@ describe('MCP_SERVERS catalog', () => {
         (entry) => entry.oauth?.mode === McpConnectionAuthModeEnum.ProviderManaged
       );
 
-      expect(providerManaged.length).toBeGreaterThanOrEqual(215);
+      expect(providerManaged).toHaveLength(228);
 
       for (const entry of providerManaged) {
         expect(entry.oauth).toEqual({ mode: McpConnectionAuthModeEnum.ProviderManaged });

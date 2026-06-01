@@ -1,4 +1,10 @@
-import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
 import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
@@ -15,6 +21,7 @@ import {
 import {
   AgentRuntimeProviderIdEnum,
   buildClaudePlatformVaultUrl,
+  buildConnectSubscriberId,
   isClaudePlatformConsoleProvider,
   MCP_SERVERS,
   McpConnectionAuthModeEnum,
@@ -285,9 +292,7 @@ export class EnsureProviderManagedVault {
       // ConflictException is the documented "already enabled and healthy"
       // signal. Anything else (catalog mismatch, flag off, sync failure)
       // bubbles up to the caller untouched.
-      const name = err instanceof Error ? err.name : '';
-
-      if (name !== 'ConflictException') {
+      if (!(err instanceof ConflictException)) {
         throw err;
       }
     }
@@ -398,9 +403,4 @@ export class EnsureProviderManagedVault {
       throw err;
     }
   }
-}
-
-/** Matches `apps/dashboard/src/utils/connect-subscriber-id.ts`. */
-function buildConnectSubscriberId(userId: string): string {
-  return `connect:${userId}`;
 }

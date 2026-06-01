@@ -49,8 +49,8 @@ export class ListAgentMcpServersResponseDto {
 
 /**
  * Hard cap on the desired-state payload to keep the bulk endpoint bounded
- * (one Mongo round trip per row + one upstream sync). Well above the size of
- * the catalog so it never bites a real caller, just rejects malformed input.
+ * (one Mongo round trip per row + one upstream sync). Product limit: agents
+ * are not expected to enable more than 100 MCPs at once.
  */
 const MCP_SET_MAX_IDS = 100;
 
