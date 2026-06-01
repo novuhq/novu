@@ -49,7 +49,6 @@ export class DemoClaudeQuotaPolicy {
       this.analyticsService.track('[Novu Managed Claude] - Conversation limit reached', context.config.organizationId, {
         _organization: context.config.organizationId,
         environmentId: context.config.environmentId,
-        organizationId: context.config.organizationId,
         agentId: agent._id,
         ...quota.conversations,
       });
@@ -59,7 +58,6 @@ export class DemoClaudeQuotaPolicy {
       this.analyticsService.track('[Novu Managed Claude] - Token limit reached', context.config.organizationId, {
         _organization: context.config.organizationId,
         environmentId: context.config.environmentId,
-        organizationId: context.config.organizationId,
         agentId: agent._id,
         conversationId: String(context.conversation._id),
         ...quota.tokens,
