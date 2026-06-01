@@ -1,12 +1,41 @@
 import type { ReactNode } from 'react';
+import { useEffect, useRef } from 'react';
 import { RiAddLine, RiArrowRightSLine, RiBookMarkedLine, RiCheckLine } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import { docsUrl } from '@/components/header-navigation/support-drawer-constants';
 import { Button } from '@/components/primitives/button';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useTelemetry } from '@/hooks/use-telemetry';
 import { buildRoute, ROUTES } from '@/utils/routes';
+import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
-import { useConnectSetupSteps } from './use-connect-setup-steps';
+import { useConnectSetupSteps, type ConnectSetupStepId } from './use-connect-setup-steps';
+
+const CONNECT_SETUP_COMPLETED_STEPS_KEY = 'novu_connect_setup_completed_steps';
+
+function readPersistedCompletedSteps(): Set<ConnectSetupStepId> {
+  try {
+    const raw = sessionStorage.getItem(CONNECT_SETUP_COMPLETED_STEPS_KEY);
+
+    if (!raw) {
+      return new Set();
+    }
+
+    return new Set(JSON.parse(raw) as ConnectSetupStepId[]);
+  } catch {
+    return new Set();
+  }
+}
+
+function persistCompletedStep(stepId: ConnectSetupStepId, completedSteps: Set<ConnectSetupStepId>): void {
+  completedSteps.add(stepId);
+
+  try {
+    sessionStorage.setItem(CONNECT_SETUP_COMPLETED_STEPS_KEY, JSON.stringify([...completedSteps]));
+  } catch {
+    // sessionStorage unavailable
+  }
+}
 
 type DisplayStep = {
   id: string;
@@ -106,12 +135,31 @@ function StepRow({
 
 export function SetThingsUpSection() {
   const navigate = useNavigate();
+  const telemetry = useTelemetry();
   const { currentEnvironment } = useEnvironment();
   const { steps: hookSteps, shouldShowOnboarding, isLoading } = useConnectSetupSteps();
+  const completedStepsRef = useRef<Set<ConnectSetupStepId>>(readPersistedCompletedSteps());
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    for (const step of hookSteps) {
+      if (step.status !== 'completed' || completedStepsRef.current.has(step.id)) {
+        continue;
+      }
+
+      persistCompletedStep(step.id, completedStepsRef.current);
+      telemetry(TelemetryEvent.CONNECT_SETUP_STEP_COMPLETED, { stepId: step.id });
+    }
+  }, [hookSteps, isLoading, telemetry]);
 
   if (!shouldShowOnboarding) {
     return null;
   }
+
+  const trackCtaClick = (stepId: ConnectSetupStepId) => {
+    telemetry(TelemetryEvent.CONNECT_SETUP_STEP_CTA_CLICKED, { stepId });
+  };
 
   const environmentSlug = currentEnvironment?.slug ?? '';
   const stepById = new Map(hookSteps.map((s) => [s.id, s]));
@@ -121,12 +169,14 @@ export function SetThingsUpSection() {
   const sendMessage = stepById.get('send-first-message');
 
   const goToAddAgent = () => {
+    trackCtaClick('add-agent');
     if (!environmentSlug) return;
 
     navigate(`${buildRoute(ROUTES.CONNECT_AGENTS, { environmentSlug })}?create=1`);
   };
 
   const goToSetupChannel = () => {
+    trackCtaClick('setup-channel');
     if (!environmentSlug || !setupChannel?.agentIdentifier) return;
 
     navigate(

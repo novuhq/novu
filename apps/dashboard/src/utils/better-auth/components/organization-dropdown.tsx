@@ -1,3 +1,7 @@
+import { AnimatePresence, motion } from 'motion/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -11,10 +15,6 @@ import { isConnectWorkspace } from '@/utils/connect';
 import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
-import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '../index';
 
 const SCROLL_THRESHOLD = 100;

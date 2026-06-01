@@ -4,8 +4,8 @@ import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { OrganizationPicker } from '@/components/auth/organization-picker';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
+import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import {
   getOnboardingAppId,

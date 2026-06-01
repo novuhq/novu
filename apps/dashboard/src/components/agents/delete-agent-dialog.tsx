@@ -50,10 +50,7 @@ export function DeleteAgentDialog({
                 checked={deleteFromProvider}
                 onCheckedChange={(checked) => setDeleteFromProvider(checked === true)}
               />
-              <Label
-                htmlFor="delete-from-provider"
-                className="cursor-pointer text-foreground-600 text-sm font-normal"
-              >
+              <Label htmlFor="delete-from-provider" className="cursor-pointer text-foreground-600 text-sm font-normal">
                 Also delete from provider
               </Label>
             </div>

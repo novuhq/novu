@@ -98,6 +98,9 @@ export function PhaseContent({
         <Box flexDirection="column" gap={1}>
           <Text bold>{phase.title}</Text>
           {phase.hint ? <Text dimColor>{phase.hint}</Text> : null}
+          {phase.verificationError ? (
+            <Text color="yellow">Credentials were rejected: {phase.verificationError}</Text>
+          ) : null}
           <Box borderStyle="round" paddingX={1}>
             <TextInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
           </Box>
@@ -160,10 +163,7 @@ export function PhaseContent({
           ) : null}
           <Text dimColor>e.g. a customer-support agent that books demos and escalates billing questions.</Text>
           <Box borderStyle="round" paddingX={1}>
-            <TextInput
-              placeholder="Describe what your agent should do…"
-              onSubmit={(value) => phase.resolve(value)}
-            />
+            <TextInput placeholder="Describe what your agent should do…" onSubmit={(value) => phase.resolve(value)} />
           </Box>
           <Text dimColor>Press Enter to submit. Minimum 8 characters.</Text>
         </Box>
@@ -195,11 +195,7 @@ export function PhaseContent({
           <Text bold wrap="wrap">
             Pick a channel to connect this agent to
           </Text>
-          <ChannelSelect
-            options={options}
-            onChange={(value) => phase.resolve(value)}
-            onHighlight={onChannelHover}
-          />
+          <ChannelSelect options={options} onChange={(value) => phase.resolve(value)} onHighlight={onChannelHover} />
         </Box>
       );
     }
@@ -358,11 +354,7 @@ export function PhaseContent({
   }
 }
 
-function RuntimeSelect({
-  onChange,
-}: {
-  onChange: (value: AgentRuntimeChoice) => void;
-}): React.ReactElement {
+function RuntimeSelect({ onChange }: { onChange: (value: AgentRuntimeChoice) => void }): React.ReactElement {
   const options: Array<{ value: AgentRuntimeChoice; title: string; detail?: string }> = [
     { value: 'demo', title: 'Demo Credentials', detail: '10 conversations per month' },
     { value: 'claude', title: 'Claude Managed Agents' },
@@ -399,8 +391,7 @@ function RuntimeSelect({
   );
 }
 
-const DASHBOARD_CHANNEL_HINT =
-  'Onboarding for this channel is currently only available in the Novu Connect UI.';
+const DASHBOARD_CHANNEL_HINT = 'Onboarding for this channel is currently only available in the Novu Connect UI.';
 /** Keeps the picker + hint from widening the centered layout when the hint appears. */
 const CHANNEL_PICKER_WIDTH = 48;
 
@@ -690,9 +681,7 @@ function renderSuccessChannelMessage(
   }
 
   if (redirectChannelLabel) {
-    return (
-      <Text color="cyan">Finish {redirectChannelLabel} setup in Novu Connect — we opened it for you.</Text>
-    );
+    return <Text color="cyan">Finish {redirectChannelLabel} setup in Novu Connect — we opened it for you.</Text>;
   }
 
   return <Text dimColor>No channel connected. Run `npx novu connect` again to wire one up.</Text>;

@@ -11,10 +11,7 @@ import {
 } from '../../api/integrations';
 import type { AgentSummary, ConnectCommandOptions } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
-import {
-  ensureAgentIntegrationLinked,
-  resolveIntegrationForAgent,
-} from '../integration-helpers';
+import { ensureAgentIntegrationLinked, resolveIntegrationForAgent } from '../integration-helpers';
 import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil } from '../poll-until';
 
 const SLACK_PROVIDER_ID = 'slack';

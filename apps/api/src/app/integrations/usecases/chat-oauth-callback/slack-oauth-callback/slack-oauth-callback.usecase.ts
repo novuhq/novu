@@ -17,6 +17,7 @@ import { CreateChannelConnectionCommand } from '../../../../channel-connections/
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
 import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import {
   GenerateSlackOauthUrl,
@@ -28,7 +29,6 @@ import { SlackOauthCallbackCommand } from './slack-oauth-callback.command';
 @Injectable()
 export class SlackOauthCallback {
   private readonly SLACK_ACCESS_URL = 'https://slack.com/api/oauth.v2.access';
-  private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
 
   constructor(
     private integrationRepository: IntegrationRepository,
@@ -103,7 +103,12 @@ export class SlackOauthCallback {
 
     return {
       type: ResponseTypeEnum.HTML,
-      result: this.SCRIPT_CLOSE_TAB,
+      result: renderConnectionResultPage({
+        status: 'success',
+        title: 'Connection complete',
+        heading: "You're all set",
+        message: 'Your Slack workspace is connected and ready to use.',
+      }),
     };
   }
 

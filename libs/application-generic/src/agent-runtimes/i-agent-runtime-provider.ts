@@ -5,6 +5,7 @@ import type {
   AgentRuntimeProviderIdEnum,
   AgentSkillDto,
   AgentToolDto,
+  McpTokenEndpointAuthMethod,
 } from '@novu/shared';
 
 export type CreateAgentInput = {
@@ -70,6 +71,14 @@ export interface VaultCredentialAuthOAuthClient {
   tokenEndpoint: string;
   /** RFC 8707 resource indicator replayed verbatim on refresh. */
   resource?: string;
+  /**
+   * `token_endpoint_auth_method` negotiated at DCR time (RFC 8414 §2). Drives
+   * how the runtime provider's vault authenticates refresh requests to the
+   * upstream token endpoint. Absent on legacy credentials registered before
+   * negotiation existed — callers default to `'client_secret_basic'` per
+   * RFC 8414.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
 }
 
 /**

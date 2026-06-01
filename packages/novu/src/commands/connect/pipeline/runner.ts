@@ -10,7 +10,7 @@ import {
   sendAgentWelcomeMessage,
 } from '../api/agents';
 import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../api/client';
-import { type IntegrationRecord, deleteIntegration } from '../api/integrations';
+import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
 import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
@@ -18,14 +18,12 @@ import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
-import {
-  resolveAgentRuntimeIntegration,
-  resolveRuntimeFromOptions,
-} from './resolve-agent-runtime-integration';
+import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
   ui: ConnectUI;
+  onboardingSessionId?: string;
   onTrack?: (event: string, data?: Record<string, unknown>) => void;
 }
 
@@ -34,8 +32,9 @@ export interface ConnectPipelineResult {
 }
 
 export async function runConnectPipeline(input: ConnectPipelineInput): Promise<ConnectPipelineResult> {
-  const { options, ui, onTrack } = input;
+  const { options, ui, onTrack, onboardingSessionId } = input;
   const track = onTrack ?? (() => undefined);
+  const sessionProps = onboardingSessionId ? { onboardingSessionId } : {};
 
   try {
     await ui.showWelcome();
@@ -46,15 +45,18 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       onDashboardUrl: (u) => ui.authDashboardUrl(u),
       name: 'novu-connect',
       authDashboardUrl: options.connectDashboardUrl,
+      onboardingSessionId,
+      onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, sessionProps),
+      onAuthFailed: (message) => track(CONNECT_EVENTS.AUTH_FAILED, { ...sessionProps, message }),
     });
-    track(CONNECT_EVENTS.AUTH_COMPLETED, { source: auth.source, region: options.region });
+    track(CONNECT_EVENTS.AUTH_COMPLETED, { source: auth.source, region: options.region, ...sessionProps });
     ui.authCompleted(auth.environmentName ?? null);
 
     const client = createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
 
     ui.listingAgents();
     const existingAgents = await listAgents(client);
-    track(CONNECT_EVENTS.AGENT_LISTED, { count: existingAgents.length });
+    track(CONNECT_EVENTS.AGENT_LISTED, { count: existingAgents.length, ...sessionProps });
 
     let agent: AgentSummary;
     let flow: 'created' | 'reused';
@@ -64,16 +66,16 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       if (pick.action === 'use') {
         agent = pick.agent;
         flow = 'reused';
-        track(CONNECT_EVENTS.AGENT_REUSED, { identifier: agent.identifier });
+        track(CONNECT_EVENTS.AGENT_REUSED, { identifier: agent.identifier, ...sessionProps });
       } else {
-        agent = await createAgentFlow(client, ui, options, auth.environmentId);
+        agent = await createAgentFlow(client, ui, options, auth.environmentId, track, sessionProps);
         flow = 'created';
-        track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier });
+        track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier, ...sessionProps });
       }
     } else {
-      agent = await createAgentFlow(client, ui, options, auth.environmentId);
+      agent = await createAgentFlow(client, ui, options, auth.environmentId, track, sessionProps);
       flow = 'created';
-      track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier });
+      track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier, ...sessionProps });
     }
 
     ui.agentCreated(agent);
@@ -85,21 +87,19 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     const channel: ChannelChoice = options.skipSlack ? 'skip' : (options.channel ?? (await ui.pickChannel()));
 
+    if (channel === 'skip') {
+      track(CONNECT_EVENTS.CHANNEL_SKIPPED, sessionProps);
+    } else {
+      track(CONNECT_EVENTS.CHANNEL_SELECTED, { channel, ...sessionProps });
+    }
+
     switch (channel) {
       case 'skip':
         ui.slackSkipped();
         break;
       case 'slack': {
         const subscriberId = await ensureSubscriberForUser(client, auth);
-        const result = await connectSlackForAgent(
-          client,
-          agent,
-          ui,
-          options,
-          auth.environmentId,
-          subscriberId,
-          track
-        );
+        const result = await connectSlackForAgent(client, agent, ui, options, auth.environmentId, subscriberId, track);
         connectedIntegration = result.integration;
         channelConnected = result.connected;
         if (channelConnected) connectedChannel = 'slack';
@@ -107,14 +107,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       }
       case 'telegram': {
         const subscriberId = await ensureSubscriberForUser(client, auth);
-        const result = await connectTelegramForAgent(
-          client,
-          agent,
-          ui,
-          auth.environmentId,
-          subscriberId,
-          track
-        );
+        const result = await connectTelegramForAgent(client, agent, ui, auth.environmentId, subscriberId, track);
         connectedIntegration = result.integration;
         channelConnected = result.connected;
         if (channelConnected) connectedChannel = 'telegram';
@@ -136,6 +129,12 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           tab: 'integrations',
         });
 
+        track(CONNECT_EVENTS.DASHBOARD_REDIRECT_OPENED, {
+          channel,
+          agent: agent.identifier,
+          ...sessionProps,
+        });
+
         await ui.awaitDashboardChannelOpen({ channel, agentDetailsUrl });
         void open(agentDetailsUrl).catch(() => undefined);
         dashboardRedirectChannel = channel;
@@ -149,7 +148,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       ui.sendingWelcome();
       try {
         await sendAgentWelcomeMessage(client, agent.identifier, connectedIntegration.identifier);
-        track(CONNECT_EVENTS.WELCOME_SENT, { agent: agent.identifier });
+        track(CONNECT_EVENTS.WELCOME_SENT, { agent: agent.identifier, ...sessionProps });
       } catch (err) {
         ui.failure(`Could not send the welcome message: ${describeError(err)}`);
       }
@@ -164,7 +163,14 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       dashboardRedirectChannel,
     });
 
-    track(CONNECT_EVENTS.COMPLETED, { flow, channel: connectedChannel ?? channel });
+    track(CONNECT_EVENTS.COMPLETED, {
+      flow,
+      channel: connectedChannel ?? channel,
+      dashboardRedirectChannel,
+      setupComplete: channelConnected,
+      source: 'cli',
+      ...sessionProps,
+    });
 
     const exitCode = await ui.shutdown();
 
@@ -172,7 +178,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
   } catch (err) {
     const message = describeError(err);
     ui.failure(message);
-    track(CONNECT_EVENTS.ERROR, { message });
+    track(CONNECT_EVENTS.ERROR, { message, ...sessionProps });
     const exitCode = await ui.shutdown();
 
     return { exitCode: exitCode || 1 };
@@ -183,17 +189,27 @@ async function createAgentFlow(
   client: ConnectApiClient,
   ui: ConnectUI,
   options: ConnectCommandOptions,
-  environmentId: string
+  environmentId: string,
+  track: (event: string, data?: Record<string, unknown>) => void,
+  sessionProps: Record<string, unknown>
 ): Promise<AgentSummary> {
   const runtime =
     resolveRuntimeFromOptions(options) ??
-    (await ui.pickAgentRuntime({ preselected: options.runtime ?? 'demo' }));
+    (await ui.pickAgentRuntime({ preselected: options.runtime ?? 'demo' }).then((picked) => {
+      track(CONNECT_EVENTS.RUNTIME_SELECTED, { runtime: picked, ...sessionProps });
+
+      return picked;
+    }));
+
+  if (resolveRuntimeFromOptions(options)) {
+    track(CONNECT_EVENTS.RUNTIME_SELECTED, { runtime, ...sessionProps });
+  }
 
   ui.loadingIntegrations();
   const resolved = await resolveAgentRuntimeIntegration(client, ui, options, runtime, environmentId);
 
   const prompt = await ui.promptForDescription(options.prompt);
-  let generated = await generateAndPreviewAgent(client, ui, prompt.trim());
+  const generated = await generateAndPreviewAgent(client, ui, prompt.trim(), track, sessionProps);
 
   ui.creatingAgent(generated.name);
 
@@ -226,7 +242,9 @@ async function createAgentFlow(
 async function generateAndPreviewAgent(
   client: ConnectApiClient,
   ui: ConnectUI,
-  initialPrompt: string
+  initialPrompt: string,
+  track: (event: string, data?: Record<string, unknown>) => void,
+  sessionProps: Record<string, unknown>
 ): Promise<Awaited<ReturnType<typeof generateAgent>>> {
   let prompt = initialPrompt;
 
@@ -237,6 +255,13 @@ async function generateAndPreviewAgent(
 
     ui.generatingAgent();
     const generated = await generateAgent(client, prompt.trim());
+    track(CONNECT_EVENTS.AGENT_PROMPT_GENERATED, {
+      promptLength: prompt.trim().length,
+      toolsCount: generated.tools.length,
+      mcpsCount: generated.mcpServers.length,
+      skillsCount: generated.skills.length,
+      ...sessionProps,
+    });
     const result = await ui.previewGeneratedAgent(generated);
 
     if (result.action === 'confirm') {

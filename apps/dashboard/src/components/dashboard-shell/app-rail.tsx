@@ -1,3 +1,4 @@
+import { ComponentType } from 'react';
 import { AppSwitcherTooltipContent } from '@/components/dashboard-shell/app-switcher-tooltip-content';
 import { ConnectSwitchConfirmationModal } from '@/components/dashboard-shell/connect-switch-confirmation-modal';
 import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
@@ -10,7 +11,6 @@ import { IS_ENTERPRISE, IS_HOSTNAME_SPLIT_ENABLED, IS_SELF_HOSTED } from '@/conf
 import { useEnvironment } from '@/context/environment/hooks';
 import { useConnectSwitchConfirmation } from '@/hooks/use-connect-switch-confirmation';
 import { APP_IDS, type AppId, buildAppHomeRoute, buildOtherAppExternalUrl } from '@/utils/apps';
-import { ComponentType } from 'react';
 
 import { useCurrentApp } from '../../hooks/use-current-app';
 

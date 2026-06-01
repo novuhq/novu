@@ -2,10 +2,7 @@ import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { EnvironmentRepository } from '@novu/dal';
 
-import {
-  CliDeviceSessionNotFoundError,
-  CliDeviceSessionService,
-} from '../../services/cli-device-session.service';
+import { CliDeviceSessionNotFoundError, CliDeviceSessionService } from '../../services/cli-device-session.service';
 import { ApproveCliDeviceSessionCommand } from './approve-cli-device-session.command';
 
 @Injectable()

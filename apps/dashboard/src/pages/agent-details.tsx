@@ -40,7 +40,6 @@ import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS } from '@/utils/apps';
-import { CONNECT_ONBOARDING_COMPLETED } from '@/utils/constants';
 import {
   AGENT_DETAILS_DEFAULT_TAB,
   AGENT_DETAILS_TABS,
@@ -133,7 +132,9 @@ export function AgentDetailsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
-      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, { deleteFromProvider }),
+      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
+        deleteFromProvider,
+      }),
     onSuccess: async (_, { identifier }) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
@@ -170,16 +171,6 @@ export function AgentDetailsPage() {
 
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
-
-  // Persist Connect onboarding completion once the user has finished setting up the agent
-  // (i.e. the agent has at least one connected integration on this page)
-  useEffect(() => {
-    if (!hasConnectedIntegration) {
-      return;
-    }
-
-    localStorage.setItem(CONNECT_ONBOARDING_COMPLETED, 'true');
-  }, [hasConnectedIntegration]);
 
   const isProductionEnv = readOnly;
   const agent = agentQuery.data;

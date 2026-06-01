@@ -50,17 +50,12 @@ function MobileAppSwitcher() {
 
   const { Icon: CurrentIcon } = currentBrand;
   const { Icon: OtherIcon } = otherBrand;
-  const {
-    isModalOpen,
-    setIsModalOpen,
-    handleSwitcherClick,
-    handleConfirm,
-    showConnectSwitchModal,
-  } = useConnectSwitchConfirmation({
-    targetAppId: otherBrand.id,
-    href: otherHref ?? '',
-    openInNewTab: false,
-  });
+  const { isModalOpen, setIsModalOpen, handleSwitcherClick, handleConfirm, showConnectSwitchModal } =
+    useConnectSwitchConfirmation({
+      targetAppId: otherBrand.id,
+      href: otherHref ?? '',
+      openInNewTab: false,
+    });
 
   return (
     <nav

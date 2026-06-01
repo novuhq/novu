@@ -129,7 +129,9 @@ export function AgentsList() {
 
   const deleteMutation = useMutation({
     mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
-      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, { deleteFromProvider }),
+      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
+        deleteFromProvider,
+      }),
     onSuccess: async (_, { identifier }) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');

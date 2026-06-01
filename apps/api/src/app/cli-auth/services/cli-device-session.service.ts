@@ -1,11 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
-import type {
-  CliDeviceSessionPollResponse,
-  CliDeviceSessionUser,
-  CreateCliDeviceSessionResponse,
-} from '@novu/shared';
+import type { CliDeviceSessionPollResponse, CliDeviceSessionUser, CreateCliDeviceSessionResponse } from '@novu/shared';
 
 const CLI_DEVICE_SESSION_TTL_SECONDS = 5 * 60;
 const CLI_DEVICE_SESSION_POLL_INTERVAL_SECONDS = 2;

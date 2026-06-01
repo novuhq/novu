@@ -2,8 +2,8 @@ import { Box, useApp, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { ChannelChoice } from '../types';
-import { computeOrbLabel, computeOrbTint } from './orb/orb-tint';
 import { PersistentOrb } from './orb/orb-renderer';
+import { computeOrbLabel, computeOrbTint } from './orb/orb-tint';
 import { usePreviewOrbMorph } from './orb/use-preview-orb-morph';
 import { PhaseContent } from './phase-content';
 import type { ConnectStore } from './store';
@@ -47,11 +47,7 @@ export function App({ store, registerExit }: AppProps): React.ReactElement {
         label={label}
         previewMorphProgress={phase.kind === 'preview-generated' ? previewMorphProgress : null}
       />
-      <PhaseContent
-        phase={phase}
-        onChannelHover={setHoveredChannel}
-        previewMorphComplete={previewMorphComplete}
-      />
+      <PhaseContent phase={phase} onChannelHover={setHoveredChannel} previewMorphComplete={previewMorphComplete} />
     </Box>
   );
 }

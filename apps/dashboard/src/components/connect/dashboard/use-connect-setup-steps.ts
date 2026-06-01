@@ -8,10 +8,7 @@ import {
   listAgentIntegrations,
   listAgents,
 } from '@/api/agents';
-import { getConversationsList } from '@/api/conversations';
-import { conversationQueryKeys } from '@/components/conversations/conversation-query-keys';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { CONNECT_ONBOARDING_COMPLETED } from '@/utils/constants';
 
 export type ConnectSetupStepId = 'create-account' | 'add-agent' | 'setup-channel' | 'send-first-message';
 
@@ -34,11 +31,11 @@ export type ConnectSetupStep = {
 export type UseConnectSetupStepsResult = {
   steps: ConnectSetupStep[];
   isComplete: boolean;
-  /** True while prerequisite queries are still resolving onboarding state. */
+  /** True while the agent/channel queries backing the checklist are still resolving. */
   isLoading: boolean;
-  /** True only when onboarding is incomplete and setup state has been resolved. */
+  /** True while setup is incomplete (and resolved) — keeps the "Set things up" section visible. */
   shouldShowOnboarding: boolean;
-  /** Drives welcome copy — avoids onboarding messaging flash for returning users while loading. */
+  /** Drives welcome copy — mirrors `shouldShowOnboarding`. */
   showOnboardingMessaging: boolean;
 };
 
@@ -81,24 +78,8 @@ export function useConnectSetupSteps(): UseConnectSetupStepsResult {
     return links.some((link) => Boolean(link.connectedAt));
   }, [agentIntegrationsQuery.data?.data]);
 
-  const conversationsQuery = useQuery({
-    queryKey: [conversationQueryKeys.fetchConversations, currentEnvironment?._id, 'connect-setup-steps'],
-    queryFn: ({ signal }) =>
-      getConversationsList({
-        environment: requireEnvironment(currentEnvironment, 'No environment selected'),
-        limit: 1,
-        signal,
-      }),
-    enabled: !!currentEnvironment,
-    retry: false,
-  });
-
-  const hasAnyConversation =
-    (conversationsQuery.data?.totalCount ?? 0) > 0 || (conversationsQuery.data?.data?.length ?? 0) > 0;
-
   const addAgentCompleted = hasAgent;
   const setupChannelCompleted = hasAgent && hasConnectedChannelOnOnlyAgent;
-  const sendMessageCompleted = hasAnyConversation;
   const setupChannelCtaAvailable = agents.length === 1 && !hasConnectedChannelOnOnlyAgent;
   const agentSetupComplete = addAgentCompleted && setupChannelCompleted;
 
@@ -130,22 +111,22 @@ export function useConnectSetupSteps(): UseConnectSetupStepsResult {
         id: 'send-first-message',
         title: 'Send your first message',
         description: 'Start a conversation with one of your subscribers.',
-        status: sendMessageCompleted ? 'completed' : 'pending',
+        status: 'pending',
         ctaAvailable: false,
       },
     ],
-    [addAgentCompleted, onlyAgent?.identifier, sendMessageCompleted, setupChannelCompleted, setupChannelCtaAvailable]
+    [addAgentCompleted, onlyAgent?.identifier, setupChannelCompleted, setupChannelCtaAvailable]
   );
 
-  const isOnboardingCompletedInStorage = localStorage.getItem(CONNECT_ONBOARDING_COMPLETED) === 'true';
   const hasResolvedAgents = agentsQuery.isSuccess || agentsQuery.isError;
   const hasResolvedIntegrations = !onlyAgent || agentIntegrationsQuery.isSuccess || agentIntegrationsQuery.isError;
-  const hasResolvedConversations = !hasAgent || conversationsQuery.isSuccess || conversationsQuery.isError;
-  const isSetupResolved = hasResolvedAgents && hasResolvedIntegrations && hasResolvedConversations;
-  const isComplete = isOnboardingCompletedInStorage || agentSetupComplete || hasAnyConversation;
-  const isLoading = !isOnboardingCompletedInStorage && !isSetupResolved;
-  const shouldShowOnboarding = isSetupResolved && !isComplete;
-  const showOnboardingMessaging = isSetupResolved ? !isComplete : !isOnboardingCompletedInStorage;
+  const isResolved = hasResolvedAgents && hasResolvedIntegrations;
+  const isComplete = agentSetupComplete;
+  const isLoading = !isResolved;
+  // Keep the "Set things up" section visible until setup is complete. Gate on resolved state so the
+  // checklist doesn't flash before the agent/channel queries settle.
+  const shouldShowOnboarding = isResolved && !isComplete;
+  const showOnboardingMessaging = isResolved && !isComplete;
 
   return {
     steps,
