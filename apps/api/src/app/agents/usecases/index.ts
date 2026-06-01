@@ -33,6 +33,8 @@ import { UpdateAgentInboxShared } from '../management/usecases/update-agent-inbo
 import { UpdateAgentRuntimeConfig } from '../management/usecases/update-agent-runtime-config/update-agent-runtime-config.usecase';
 import { UploadCustomSkill } from '../management/usecases/upload-custom-skill/upload-custom-skill.usecase';
 import { VerifyManagedCredentials } from '../management/usecases/verify-managed-credentials/verify-managed-credentials.usecase';
+import { CompleteProviderManagedRedirect } from '../mcp/connections/ensure-provider-managed-vault/complete-provider-managed-redirect.usecase';
+import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GetMcpConnectionStatus } from '../mcp/connections/get-mcp-connection-status/get-mcp-connection-status.usecase';
 import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
@@ -90,6 +92,8 @@ export const USE_CASES = [
   SetAgentMcpServers,
   ListAgentMcpServers,
   GenerateMcpOAuthUrl,
+  EnsureProviderManagedVault,
+  CompleteProviderManagedRedirect,
   HandleManagedAgentSetupInbound,
   CompleteManagedAgentSetup,
   McpOAuthCallback,

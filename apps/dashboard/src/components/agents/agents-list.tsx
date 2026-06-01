@@ -30,7 +30,8 @@ import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { APP_IDS } from '@/utils/apps';
-import { AGENT_DETAILS_DEFAULT_TAB, buildRoute } from '@/utils/routes';
+import { withAppId } from '@/utils/onboarding-redirect';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
@@ -207,6 +208,10 @@ export function AgentsList() {
     setBefore(undefined);
   }, []);
 
+  const goToFirstAgentSetup = useCallback(() => {
+    navigate(withAppId(ROUTES.AGENTS_SETUP, currentApp));
+  }, [currentApp, navigate]);
+
   const handleCreateSubmit = useCallback(
     async (form: CreateAgentForm) => {
       await submitCreateAgent(form, {
@@ -275,7 +280,7 @@ export function AgentsList() {
               variant="secondary"
               mode="gradient"
               trailingIcon={RiArrowRightSLine}
-              onClick={() => setCreateOpen(true)}
+              onClick={goToFirstAgentSetup}
             >
               Setup an agent
             </PermissionButton>

@@ -2,8 +2,6 @@ import { IOrganizationEntity } from '@novu/shared';
 import React from 'react';
 import { AuthContextProvider } from './auth.resource';
 import { ClerkLoaded } from './clerk-loaded';
-import { Show } from './show';
-import { useAuth } from './use-auth';
 import {
   OrganizationList,
   OrganizationProfile,
@@ -17,6 +15,8 @@ import {
 import { getJwtToken, isJwtValid } from './jwt-manager';
 import { OrganizationContextProvider, useOrganization } from './organization.resource';
 import { OrganizationSwitcher } from './organization-switcher';
+import { Show } from './show';
+import { useAuth } from './use-auth';
 import { UserContextProvider, useUser } from './user.resource';
 import { UserButton } from './user-button';
 

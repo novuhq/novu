@@ -31,6 +31,9 @@ if (process.env.NODE_ENV === 'development') {
 }
 const anonymousIdLocalState = config.getValue('anonymousId');
 const anonymousId = anonymousIdLocalState || uuidv4();
+if (!anonymousIdLocalState) {
+  config.setValue('anonymousId', anonymousId);
+}
 const program = new Command();
 
 program.name('novu').description(`A CLI tool to interact with Novu Cloud`);
@@ -134,7 +137,7 @@ program
 
 program
   .command('connect')
-  .description('Create a managed agent and connect it to Slack from the CLI (beta)')
+  .description('Create a managed agent and connect it to Slack from the CLI')
   .argument('[prompt]', 'Agent description. When provided, skips the picker and creates a new agent from this prompt.')
   .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key')
   .option('-a, --api-url <url>', 'Override the Novu API URL (default follows --region)')

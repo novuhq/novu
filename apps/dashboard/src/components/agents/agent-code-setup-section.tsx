@@ -17,8 +17,7 @@ import { deriveStepStatus } from './setup-guide-step-utils';
 const CLI_DEFAULT_API_URL = 'https://api.novu.co';
 const BRIDGE_POLL_INTERVAL_MS = 2000;
 
-// TODO: change to 'latest' when agents are GA and IS_CONVERSATIONAL_AGENTS_ENABLED flag is removed
-const CLI_PACKAGE_TAG = 'rc';
+const CLI_PACKAGE_TAG = 'latest';
 
 function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;

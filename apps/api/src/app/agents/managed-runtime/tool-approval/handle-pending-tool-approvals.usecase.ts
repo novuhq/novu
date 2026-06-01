@@ -15,7 +15,7 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { ManagedAgentService } from '../managed-agent.service';
 import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
-import { buildToolApprovalCard, extractPendingToolApprovals } from './approval-card.builder';
+import { extractPendingToolApprovals, getToolApprovalCard } from './approval-card.builder';
 import { HandlePendingToolApprovalsCommand } from './handle-pending-tool-approvals.command';
 import { resolveTrustForPendingTool } from './tool-trust.helper';
 
@@ -79,7 +79,7 @@ export class HandlePendingToolApprovals {
     }
 
     // No trusted tools in this batch — prompt for the first one only (sequential approval).
-    await this.deliverApprovalCard(command, nextTool);
+    await this.deliverApprovalCard(command, nextTool, needsPromptTools.length);
   }
 
   private async fetchPendingTools(
@@ -232,8 +232,16 @@ export class HandlePendingToolApprovals {
 
   private async deliverApprovalCard(
     command: HandlePendingToolApprovalsCommand,
-    tool: PendingToolApproval
+    tool: PendingToolApproval,
+    pendingQueueTotal?: number
   ): Promise<void> {
+    const delivery = getToolApprovalCard({
+      platform: command.platform,
+      tool,
+      turnId: command.turnId,
+      pendingQueueTotal,
+    });
+
     try {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
@@ -243,7 +251,8 @@ export class HandlePendingToolApprovals {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          reply: { card: buildToolApprovalCard(tool, command.turnId) },
+          reply: delivery.content,
+          slackNative: delivery.slackNative,
         })
       );
     } catch (err) {

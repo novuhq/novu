@@ -445,6 +445,12 @@ importers:
       '@sentry/tracing':
         specifier: ^7.120.3
         version: 7.120.3
+      '@slack/types':
+        specifier: 2.20.1
+        version: 2.20.1
+      '@slack/web-api':
+        specifier: 7.15.0
+        version: 7.15.0
       '@team-plain/typescript-sdk':
         specifier: 5.8.0
         version: 5.8.0
@@ -40370,6 +40376,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - debug
+      - supports-color
       - utf-8-validate
 
   '@slack/types@2.20.1': {}
@@ -40380,7 +40387,7 @@ snapshots:
       '@slack/types': 2.20.1
       '@types/node': 22.15.13
       '@types/retry': 0.12.0
-      axios: 1.16.0
+      axios: 1.16.1
       eventemitter3: 5.0.4
       form-data: 4.0.5
       is-electron: 2.2.2
@@ -40390,6 +40397,7 @@ snapshots:
       retry: 0.13.1
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   '@smithy/abort-controller@3.1.1':
     dependencies:

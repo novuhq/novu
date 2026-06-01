@@ -390,7 +390,15 @@ export function AgentSetupSteps({
           lastSentConversationIdRef.current = null;
         }
       });
-  }, [onSetupComplete, currentEnvironment, integrationIdentifier, agent.identifier, selectedProviderId, setSearchParams, trackWelcomeSent]);
+  }, [
+    onSetupComplete,
+    currentEnvironment,
+    integrationIdentifier,
+    agent.identifier,
+    selectedProviderId,
+    setSearchParams,
+    trackWelcomeSent,
+  ]);
 
   const handleProviderStepsCompleted = useCallback(() => {
     queryClient.invalidateQueries({
@@ -505,7 +513,9 @@ export function AgentSetupSteps({
               stepOffset={providerGuideStepOffset}
               embedded={false}
               onStepsCompleted={handleProviderStepsCompleted}
-              onWelcomeSent={isOnboarding && selectedProviderId ? () => trackWelcomeSent(selectedProviderId) : undefined}
+              onWelcomeSent={
+                isOnboarding && selectedProviderId ? () => trackWelcomeSent(selectedProviderId) : undefined
+              }
             />
           </motion.div>
         ) : null}

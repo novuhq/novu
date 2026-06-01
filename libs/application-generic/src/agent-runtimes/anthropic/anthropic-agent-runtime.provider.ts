@@ -46,6 +46,7 @@ import {
   buildMcpOAuthCreateAuth,
   buildMcpOAuthUpdateAuth,
   buildToolsPayload,
+  extractApiErrorMessage,
   extractSkillNameFromBundle,
   isDuplicateDisplayTitleError,
   isTransient,
@@ -118,29 +119,30 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
     if (err instanceof APIError) {
       const requestId = err.requestID ?? err.headers?.get?.('request-id') ?? undefined;
+      const message = extractApiErrorMessage(err);
 
       if (err.status === 401) {
-        throw new AgentRuntimeUnauthorizedError(err.message, providerId, requestId);
+        throw new AgentRuntimeUnauthorizedError(message, providerId, requestId);
       }
       if (err.status === 403) {
-        throw new AgentRuntimeForbiddenError(err.message, providerId, requestId);
+        throw new AgentRuntimeForbiddenError(message, providerId, requestId);
       }
       if (err.status === 404) {
-        throw new AgentRuntimeNotFoundError(err.message, providerId, requestId);
+        throw new AgentRuntimeNotFoundError(message, providerId, requestId);
       }
       if (err.status === 429) {
         const retryAfterMs = parseRetryAfter(err.headers?.get?.('retry-after') ?? undefined);
 
-        throw new AgentRuntimeRateLimitedError(err.message, providerId, retryAfterMs, requestId);
+        throw new AgentRuntimeRateLimitedError(message, providerId, retryAfterMs, requestId);
       }
       if (err.status === 529) {
-        throw new AgentRuntimeOverloadedError(err.message, providerId, requestId);
+        throw new AgentRuntimeOverloadedError(message, providerId, requestId);
       }
       if (err.status >= 500) {
-        throw new AgentRuntimeServiceUnavailableError(err.message, providerId, requestId);
+        throw new AgentRuntimeServiceUnavailableError(message, providerId, requestId);
       }
       if (err.status === 400 || err.status === 422) {
-        throw new AgentRuntimeBadRequestError(err.message, providerId, requestId);
+        throw new AgentRuntimeBadRequestError(message, providerId, requestId);
       }
     }
 

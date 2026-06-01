@@ -1,8 +1,5 @@
 import { expect } from 'chai';
-import {
-  CONNECTION_RESULT_CSP,
-  renderConnectionResultPage,
-} from './connection-result-page';
+import { CONNECTION_RESULT_CSP, renderConnectionResultPage } from './connection-result-page';
 
 describe('connection-result-page', () => {
   describe('CONNECTION_RESULT_CSP', () => {
@@ -10,7 +7,7 @@ describe('connection-result-page', () => {
       expect(CONNECTION_RESULT_CSP).to.match(/(?:^|;\s*)style-src\s+[^;]*'unsafe-inline'/);
     });
 
-    it("does not allow inline scripts — the page is style-only", () => {
+    it('does not allow inline scripts — the page is style-only', () => {
       expect(CONNECTION_RESULT_CSP).to.not.match(/(?:^|;\s*)script-src\s+[^;]*'unsafe-inline'/);
     });
 
