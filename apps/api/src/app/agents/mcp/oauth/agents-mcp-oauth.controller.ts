@@ -1,4 +1,4 @@
-import { BadRequestException, Controller, Get, HttpStatus, Query, Res } from '@nestjs/common';
+import { BadRequestException, Controller, Get, HttpStatus, NotFoundException, Query, Res } from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
 import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { Response } from 'express';
@@ -105,8 +105,43 @@ export class AgentsMcpOAuthController {
       throw new BadRequestException('Missing required redirect parameter: state');
     }
 
-    const result = await this.completeProviderManagedRedirect.execute(state);
+    try {
+      const result = await this.completeProviderManagedRedirect.execute(state);
 
-    res.redirect(HttpStatus.FOUND, result.redirectUrl);
+      res.redirect(HttpStatus.FOUND, result.redirectUrl);
+    } catch (err) {
+      const isExpired =
+        err instanceof BadRequestException &&
+        typeof err.message === 'string' &&
+        err.message.includes('redirect state expired');
+      const isNotFound = err instanceof NotFoundException;
+
+      let title = 'Connection failed';
+      let heading = "We couldn't connect";
+      let message =
+        'Something went wrong while opening the provider connection. Send a new message to your agent and try again.';
+
+      if (isExpired) {
+        title = 'Link expired';
+        heading = 'This link has expired';
+        message =
+          'This setup link is no longer valid. Send a new message to your agent to get a fresh Connect from provider link.';
+      } else if (isNotFound) {
+        message =
+          'The connection or environment for this link no longer exists. Send a new message to your agent to restart setup.';
+      }
+
+      const page = renderConnectionResultPage({
+        status: 'error',
+        title,
+        heading,
+        message,
+      });
+
+      res.status(HttpStatus.OK);
+      res.setHeader('Content-Type', 'text/html');
+      res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
+      res.send(page);
+    }
   }
 }
