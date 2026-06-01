@@ -73,7 +73,7 @@ jobs:
       deployments: write
       id-token: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
         name: Checkout with submodules
         with:
           submodules: true
@@ -123,7 +123,7 @@ jobs:
         run: CI='' pnpm build:web --skip-nx-cache
 
       - name: Deploy WEB
-        uses: nwtgck/actions-netlify@v1.2
+        uses: nwtgck/actions-netlify@ac1cb16858bada08a9c71a81240a85cfc3f72913 # v1.2
         with:
           publish-dir: apps/web/build
           github-token: ${{ secrets.GITHUB_TOKEN }}
