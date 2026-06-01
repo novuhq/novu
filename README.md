@@ -63,9 +63,15 @@
 </p>
 
 ## ⭐️ Why Novu?
+ 
+Every product and every agent eventually needs to talk to people, across the channels those people already use. Novu is the open-source layer that handles that communication for you, so you don't rebuild Inbox feeds, provider integrations, and channel webhooks from scratch every time.
+ 
+There are two ways to build with Novu, and they share the same foundation: a single API and a unified conversation model.
+ 
+- **Communication infrastructure for products** — Send notifications across Inbox/In-App, Email, SMS, Push, and Chat through one API, with workflows, digests, and an embeddable `<Inbox />` component.
+- **Agent Communication Infrastructure (ACI)** — Connect any agent you've already built to any communication channel: Slack, Microsoft Teams, Telegram, WhatsApp, email through one conversation model.
 
-Novu provides a unified API that makes it simple to send notifications through multiple channels, including Inbox/In-App, Push, Email, SMS, and Chat.
-With Novu, you can create custom workflows and define conditions for each channel, ensuring that your notifications are delivered in the most effective way possible.
+> **Novu isn't the brain of your agent.** You bring the intelligence, Novu is the connective layer between your agent and the people it talks to.
 
 ## ✨ Features
 
@@ -82,13 +88,46 @@ With Novu, you can create custom workflows and define conditions for each channe
 [Create a free account](https://go.novu.co/dashboard?utm_source=github&utm_medium=readme&utm_campaign=create-free-account-link) and follow the instructions on the dashboard.
 
 ## 📚 Table of contents
+ 
+- [Why Novu?](#️-why-novu)
+- [Communication infrastructure for products](#-communication-infrastructure-for-products)
+- [Agent Communication Infrastructure (ACI)](#-agent-communication-infrastructure-aci)
+- [Features](#-features)
+- [Getting Started](#-getting-started)
+- [Embeddable Inbox and Preferences](#embeddable-inbox-component)
+- [Providers](#providers)
+- [Need Help?](#need-help)
+- [Links](#links)
+- [License](#license)
 
-- [Getting Started](https://github.com/novuhq/novu#-getting-started)
-- [Embeddable Inbox and Preferences](https://github.com/novuhq/novu#embeddable-notification-center)
-- [Providers](https://github.com/novuhq/novu#providers)
-- [Need Help?](https://github.com/novuhq/novu#-need-help)
-- [Links](https://github.com/novuhq/novu#-links)
-- [License](https://github.com/novuhq/novu#%EF%B8%8F-license)
+
+## 📬 Communication infrastructure for products
+ 
+The notification platform that turns complex multi-channel delivery into a single component. Built for developers, designed for growth, powered by open source.
+ 
+Novu provides a unified API to send notifications through multiple channels — **Inbox/In-App, Push, Email, SMS, and Chat**. Create custom workflows, define per-channel conditions, and let Novu deliver each notification in the most effective way, without stitching together a provider for every channel yourself.
+ 
+- One API for all messaging providers
+- Embeddable, real-time `<Inbox />` component
+- Notification workflow engine with branching and conditions
+- Digest engine to batch multiple notifications into a single message
+- No-code email editor
+- Embeddable preferences component so users control their own notifications
+
+## 🤖 Agent Communication Infrastructure (ACI)
+ 
+> **You build the agent. Novu gives it a voice.**
+ 
+ACI is a complete suite for companies already building agents that need to talk to users on real communication channels. It connects your agent to any channel and abstracts away the quirks of each platform behind a single, unified conversation model.
+ 
+Novu handles the plumbing in both directions: it receives inbound messages from each channel, normalizes them into one consistent shape, routes them to your agent, and sends your agent's responses back out, so you integrate once instead of building and maintaining a webhook handler per platform.
+ 
+- **Unified conversation model** — one consistent model across every channel, instead of per-platform message formats and webhook quirks
+- **Bidirectional messaging** — receive user messages and send agent replies through the same layer
+- **Channel integrations** — Slack, Microsoft Teams, Telegram, WhatsApp, Email, and an In-App Inbox for agents
+- **Bring your own agent** — works with whatever you've built, whether that's Claude Managed Agents, AI SDK, LangGraph, or a custom stack; Novu doesn't constrain your agent logic
+- **Best practices built in** — conversation threading, reactions, channel-aware formatting, actions and a single integration surface
+Novu connects the agent to the world, it is not the agent itself.
 
 ## Embeddable Inbox component
 
