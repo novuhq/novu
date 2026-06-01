@@ -1,7 +1,7 @@
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { differenceInDays, startOfDay } from 'date-fns';
 
-export const DASHBOARD_DEPRECATION_DATE = new Date(2026, 6, 30);
+export const DASHBOARD_DEPRECATION_DATE = new Date(2026, 5, 30);
 
 /** Bump suffix if the notice should be shown again to everyone who dismissed a previous version. */
 export const LEGACY_DASHBOARD_DEPRECATION_MODAL_DISMISSED_KEY = 'novu_legacy_dashboard_deprecation_modal_dismissed_v1';

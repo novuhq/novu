@@ -5,7 +5,7 @@ import { differenceInDays, startOfDay } from 'date-fns';
 import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
 import { useAuth } from '../../../hooks/useAuth';
 
-const DASHBOARD_DEPRECATION_DATE = new Date(2026, 6, 30);
+const DASHBOARD_DEPRECATION_DATE = new Date(2026, 5, 30);
 
 function getDaysUntilDashboardDeprecation(): number {
   return Math.max(0, differenceInDays(startOfDay(DASHBOARD_DEPRECATION_DATE), startOfDay(new Date())));
