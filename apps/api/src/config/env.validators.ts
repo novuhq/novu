@@ -71,7 +71,9 @@ export const envValidators = {
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   THALAMUS_CF_API_KEY: str({ default: undefined }),
-  ...(processEnv.THALAMUS_CF_URL
+  // Managed-agent (Thalamus) config is a Novu Cloud concern. On self-hosted we never require it,
+  // even if a URL happens to be present in the environment.
+  ...(processEnv.THALAMUS_CF_URL && processEnv.IS_SELF_HOSTED !== 'true'
     ? {
         THALAMUS_CF_URL: url(),
         THALAMUS_WEBHOOK_SECRET: str(),
