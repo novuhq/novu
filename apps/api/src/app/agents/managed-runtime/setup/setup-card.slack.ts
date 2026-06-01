@@ -101,13 +101,12 @@ export function buildSetupMcpSlackBlocks(mcp: SetupCardRow): SlackNativeDelivery
 export function buildSetupSlackBlocks(mcps: SetupCardRow[]): SlackNativeDelivery {
   const pendingRows = sortPendingSetupCardRows(mcps);
 
-  const blocks: Block[] = [
-    {
-      type: 'section',
-      text: { type: 'mrkdwn', text: SETUP_INTRO_TEXT, verbatim: false },
-    } satisfies SectionBlock,
-    ...pendingRows.map((mcp) => buildMcpSlackCardBlock(mcp)),
-  ];
+  const introBlock: SectionBlock = {
+    type: 'section',
+    text: { type: 'mrkdwn', text: SETUP_INTRO_TEXT, verbatim: false },
+  };
+
+  const blocks = [introBlock, ...pendingRows.map((mcp) => buildMcpSlackCardBlock(mcp))];
 
   const pendingNames = pendingRows.map((row) => row.name).join(', ');
 

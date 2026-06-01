@@ -144,7 +144,7 @@ export class HandleManagedAgentSetupInbound {
       command.conversationId,
       {
         pendingPlatformMessageId: pendingState.pendingPlatformMessageId,
-        setupMessageId,
+        setupMessageId: setupMessageId ?? pendingState.setupMessageId,
       }
     );
 

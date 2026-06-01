@@ -294,15 +294,12 @@ function appendHintLine(lines: string[], hint: string | undefined): void {
 }
 
 export function buildMcpRowPlainText(mcp: SetupCardRow): string {
-  const lines = [`**${mcp.name}**`];
-
   const body = buildMcpCardBodyMarkdown(mcp)
     .split('\n')
-    .map((line) => line.replace(/^_(.+)_$/, '$1'));
+    .map((line) => line.replace(/^_(.+)_$/, '$1'))
+    .filter(Boolean);
 
-  lines.push(...body.filter(Boolean));
-
-  return lines.join('\n');
+  return body.join('\n');
 }
 
 export function buildSetupMcpPortableCard(mcp: SetupCardRow): Record<string, unknown> {
