@@ -88,13 +88,17 @@ describe('LogInboundEmailRequest', () => {
   it('emits request_failed with error severity for 502 outcomes (downstream failure)', async () => {
     await usecase.execute({
       command: buildCommand(),
-      outcome: { ...successOutcome, status: 502, message: 'Inbound delivery failed' },
+      outcome: {
+        ...successOutcome,
+        status: 502,
+        message: 'Inbound delivery failed due to a temporary internal error',
+      },
     });
 
     const arg = inboundMailRequestLogger.logCompleted.getCall(0).args[0];
     expect(arg.delivered).to.equal(false);
     expect(arg.severity).to.equal('error');
-    expect(arg.message).to.equal('Inbound delivery failed');
+    expect(arg.message).to.equal('Inbound delivery failed due to a temporary internal error');
   });
 
   describe('logUnresolvedFailure', () => {

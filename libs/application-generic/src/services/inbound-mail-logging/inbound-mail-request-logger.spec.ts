@@ -178,6 +178,26 @@ describe('InboundMailRequestLogger', () => {
     });
   });
 
+  describe('logProcessingFailed', () => {
+    it('emits a request_failed trace with the processing failure reason', async () => {
+      process.env.IS_ANALYTICS_LOGS_ENABLED = 'true';
+      process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED = 'true';
+
+      await logger.logProcessingFailed({
+        requestLogId: 'req_abc',
+        organizationId: 'org_1',
+        environmentId: 'env_1',
+        transactionId: 'txn_1',
+        message: 'Unable to parse email',
+      });
+
+      const [traces] = traceLogRepository.createRequest.mock.calls[0];
+      expect(traces[0].event_type).toBe('request_failed');
+      expect(traces[0].status).toBe('error');
+      expect(traces[0].message).toBe('Unable to parse email');
+    });
+  });
+
   describe('logQueueFailed', () => {
     it('emits a request_failed trace with the failure reason', async () => {
       process.env.IS_ANALYTICS_LOGS_ENABLED = 'true';

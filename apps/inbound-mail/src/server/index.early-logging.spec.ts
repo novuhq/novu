@@ -1,19 +1,20 @@
+import fs from 'node:fs';
+import net from 'node:net';
 import {
   InboundMailRequestLogger,
   InboundMailTenantResolver,
   InboundParseQueueService,
 } from '@novu/application-generic';
 import { expect } from 'chai';
-import net from 'node:net';
 import sinon from 'sinon';
 
 import mailinServer, { __testInboundMailService } from './index';
 
 /*
  * Validates that the inbound-mail SMTP pipeline writes the early `requests`
- * row in apps/inbound-mail (before BullMQ enqueue) and threads the resulting
- * `requestLogId` through the queue payload so the worker can later append
- * the terminal completion trace.
+ * row as soon as SMTP DATA completes (before parse / BullMQ enqueue) and
+ * threads the resulting `requestLogId` through the queue payload so the
+ * worker can later append the terminal completion trace.
  *
  * Analytics initialization in `InboundMailService.initializeAnalytics` is
  * skipped in this test because the feature-flag env vars are unset. Instead
@@ -27,6 +28,7 @@ describe('Mailin SMTP DATA handler — early request logging', () => {
   let logReceivedStub: sinon.SinonStub;
   let logQueuedStub: sinon.SinonStub;
   let logQueueFailedStub: sinon.SinonStub;
+  let logProcessingFailedStub: sinon.SinonStub;
   let resolveStub: sinon.SinonStub;
   let queueAddStub: sinon.SinonStub;
 
@@ -116,6 +118,7 @@ describe('Mailin SMTP DATA handler — early request logging', () => {
     logReceivedStub = sinon.stub().resolves('req_test_123');
     logQueuedStub = sinon.stub().resolves();
     logQueueFailedStub = sinon.stub().resolves();
+    logProcessingFailedStub = sinon.stub().resolves();
     resolveStub = sinon.stub().resolves({
       organizationId: 'org_test',
       environmentId: 'env_test',
@@ -128,6 +131,7 @@ describe('Mailin SMTP DATA handler — early request logging', () => {
       logReceived: logReceivedStub,
       logQueued: logQueuedStub,
       logQueueFailed: logQueueFailedStub,
+      logProcessingFailed: logProcessingFailedStub,
     } as unknown as InboundMailRequestLogger;
     __testInboundMailService.tenantResolver = {
       resolve: resolveStub,
@@ -164,6 +168,27 @@ describe('Mailin SMTP DATA handler — early request logging', () => {
     expect(queuedContext.environmentId).to.equal('env_test');
 
     sinon.assert.notCalled(logQueueFailedStub);
+    sinon.assert.notCalled(logProcessingFailedStub);
+  });
+
+  it('writes a request_failed trace when processing fails after the early row is written', async () => {
+    const readFileStub = sinon.stub(fs.promises, 'readFile').rejects(new Error('Simulated parse failure'));
+
+    const transcript = await sendInboundMessage();
+    const retryReply = transcript.find((line) => line.startsWith('451 '));
+    expect(retryReply, `expected 451 retry on processing failure, transcript: ${transcript.join(' | ')}`).to.exist;
+
+    await new Promise((r) => setTimeout(r, 250));
+
+    sinon.assert.calledOnce(logReceivedStub);
+    sinon.assert.calledOnce(logProcessingFailedStub);
+    const failedContext = logProcessingFailedStub.getCall(0).args[0];
+    expect(failedContext.requestLogId).to.equal('req_test_123');
+    expect(failedContext.message).to.contain('Simulated parse failure');
+    sinon.assert.notCalled(logQueuedStub);
+    sinon.assert.notCalled(logQueueFailedStub);
+
+    readFileStub.restore();
   });
 
   it('writes a request_failed trace when the queue insert fails', async () => {

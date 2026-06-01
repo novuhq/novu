@@ -55,8 +55,9 @@ export interface InboundCompletionContext {
 
 /**
  * Centralized writer for the inbound-mail `requests` row plus its lifecycle
- * traces. Used by both `apps/inbound-mail` (early row + queued/queue-failed
- * trace) and `apps/worker` (terminal delivered/failed trace).
+ * traces. Used by both `apps/inbound-mail` (early row at SMTP DATA acceptance,
+ * plus `request_queued` / processing-failure traces) and `apps/worker`
+ * (terminal delivered/failed trace).
  *
  * Failures in this writer never propagate — observability must not break the
  * inbound mail pipeline. Both feature flags must be enabled for any write to
@@ -140,24 +141,21 @@ export class InboundMailRequestLogger {
   }
 
   /**
+   * Appends a terminal `request_failed` trace when SMTP-side processing fails
+   * after the early `requests` row was written (parse, validation, attachment
+   * upload, etc.). The sending MTA may retry delivery.
+   */
+  async logProcessingFailed(context: InboundCompletionContext): Promise<void> {
+    await this.logRequestFailed(context);
+  }
+
+  /**
    * Appends a `request_failed` trace when BullMQ enqueue fails (the SMTP
    * server returns 451 to the sending MTA). Mail is not lost, but it never
    * reaches the worker, so this is the terminal trace for that lifecycle.
    */
   async logQueueFailed(context: InboundCompletionContext): Promise<void> {
-    if (!this.isEnabled() || !context.requestLogId) {
-      return;
-    }
-
-    await this.appendTrace({
-      requestLogId: context.requestLogId,
-      organizationId: context.organizationId,
-      environmentId: context.environmentId,
-      transactionId: context.transactionId,
-      eventType: 'request_failed',
-      status: 'error',
-      message: context.message,
-    });
+    await this.logRequestFailed(context);
   }
 
   /**
@@ -183,6 +181,22 @@ export class InboundMailRequestLogger {
       transactionId: context.transactionId,
       eventType: context.delivered ? 'request_delivered' : 'request_failed',
       status: context.severity ?? (context.delivered ? 'success' : 'error'),
+      message: context.message,
+    });
+  }
+
+  private async logRequestFailed(context: InboundCompletionContext): Promise<void> {
+    if (!this.isEnabled() || !context.requestLogId) {
+      return;
+    }
+
+    await this.appendTrace({
+      requestLogId: context.requestLogId,
+      organizationId: context.organizationId,
+      environmentId: context.environmentId,
+      transactionId: context.transactionId,
+      eventType: 'request_failed',
+      status: 'error',
       message: context.message,
     });
   }

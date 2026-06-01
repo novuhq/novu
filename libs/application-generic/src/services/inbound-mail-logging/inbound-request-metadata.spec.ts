@@ -1,5 +1,7 @@
 import {
+  buildEnvelopeRequestSource,
   buildInboundRequestMetadata,
+  InboundRequestSource,
   inferInboundParseStrategy,
   parseReplyToAddress,
 } from './inbound-request-metadata';
@@ -34,6 +36,24 @@ describe('inbound-request-metadata', () => {
 
     it('returns null when environmentId is missing', () => {
       expect(parseReplyToAddress('parse+txn@reply.novu.co')).toBeNull();
+    });
+  });
+
+  describe('buildEnvelopeRequestSource', () => {
+    it('maps SMTP envelope addresses before the message is parsed', () => {
+      const source = buildEnvelopeRequestSource(
+        {
+          mailFrom: { address: 'sender@example.com' },
+          rcptTo: [{ address: 'support@customer.com' }],
+        },
+        { remoteAddress: '203.0.113.5', clientHostname: 'mta.example.com' } as InboundRequestSource['connection']
+      );
+
+      expect(source.from).toEqual([{ address: 'sender@example.com', name: '' }]);
+      expect(source.to).toEqual([{ address: 'support@customer.com', name: '' }]);
+      expect(source.connection).toEqual({ remoteAddress: '203.0.113.5', clientHostname: 'mta.example.com' });
+      expect(source.subject).toBeUndefined();
+      expect(source.messageId).toBeUndefined();
     });
   });
 

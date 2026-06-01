@@ -17,8 +17,8 @@ import logger from './logger';
  *
  * In addition to the BullMQ queue producer, we now also wire ClickHouse +
  * MongoDB clients so the server can write the canonical `requests` row (plus
- * `request_received`/`request_queued` traces) before the message is enqueued.
- * Both stores are best-effort: failures during analytics writes never block
+ * `request_received`/`request_queued` traces) as soon as SMTP DATA completes,
+ * before parse or enqueue. Both stores are best-effort: failures during analytics writes never block
  * SMTP acceptance, and the analytics path can be turned off entirely via the
  * `IS_ANALYTICS_LOGS_ENABLED` / `IS_INBOUND_ANALYTICS_LOGS_ENABLED` env vars.
  */

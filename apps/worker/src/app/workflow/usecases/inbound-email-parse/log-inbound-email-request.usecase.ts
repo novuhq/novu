@@ -13,9 +13,9 @@ export interface LogInboundEmailCompletedCommand {
  * `request_delivered` (status 200) or `request_failed` (any other status).
  *
  * The early `requests` row, the `request_received` trace, and the
- * `request_queued` trace are all written in `apps/inbound-mail` before the
- * BullMQ job is enqueued. The worker links its terminal trace to that row
- * via `command.requestLogId`.
+ * `request_queued` trace are all written in `apps/inbound-mail` as soon as
+ * SMTP DATA completes (before parse/enqueue). The worker links its terminal
+ * trace to that row via `command.requestLogId`.
  *
  * Failures here never propagate — observability must not break inbound mail
  * processing — and we silently no-op when no `requestLogId` is present so
@@ -42,7 +42,7 @@ export class LogInboundEmailRequest {
         environmentId: outcome.environmentId,
         transactionId: outcome.transactionId,
         delivered: outcome.status >= 200 && outcome.status < 300,
-        severity: severityFromStatus(outcome.status),
+        severity: severityFromInboundStatus(outcome.status),
         message: outcome.message,
       });
     } catch (error) {
@@ -100,7 +100,7 @@ export class LogInboundEmailRequest {
  * - `5xx` → `error` (downstream system failure — retriable; the worker only
  *   emits a trace once retries are exhausted)
  */
-function severityFromStatus(status: number): TraceStatus {
+export function severityFromInboundStatus(status: number): TraceStatus {
   if (status >= 200 && status < 300) {
     return 'success';
   }

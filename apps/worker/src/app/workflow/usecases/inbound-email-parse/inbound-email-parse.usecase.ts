@@ -1,7 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
-import { InboundParseDroppedError, InboundParseProcessingError } from './inbound-parse-outcome';
+import {
+  InboundParseDroppedError,
+  InboundParseProcessingError,
+  isRetriableInboundFailureStatus,
+} from './inbound-parse-outcome';
 import { LogInboundEmailRequest } from './log-inbound-email-request.usecase';
 import { DomainRouteStrategy } from './strategies/domain-route.strategy';
 import { ReplyToStrategy } from './strategies/reply-to.strategy';
@@ -21,8 +25,12 @@ import { ReplyToStrategy } from './strategies/reply-to.strategy';
  * Terminal-trace policy:
  * - Strategy returns an outcome → trace `request_delivered` (200) or
  *   `request_failed` (4xx/5xx).
- * - Strategy throws `InboundParseProcessingError` with an outcome → trace
- *   `request_failed` from the carried outcome.
+ * - Strategy throws `InboundParseProcessingError` with a 4xx outcome → trace
+ *   `request_failed` once and stop (non-retriable).
+ * - Strategy throws `InboundParseProcessingError` with a 5xx outcome →
+ *   re-thrown without tracing so BullMQ can retry; the `failed` handler on
+ *   `InboundParseWorker` writes exactly one terminal trace after the final
+ *   attempt.
  * - Strategy throws `BadRequestException` (malformed address / unknown
  *   domain) → trace `request_failed` with `warning` severity (non-retriable).
  * - Strategy throws `InboundParseDroppedError` (silent shared-agent drop) →
@@ -69,8 +77,13 @@ export class InboundEmailParse {
       });
     } catch (error) {
       if (error instanceof InboundParseProcessingError && error.outcome) {
+        if (isRetriableInboundFailureStatus(error.outcome.status)) {
+          throw error;
+        }
+
         await this.logInboundEmailRequest.execute({ command, outcome: error.outcome });
-        throw error;
+
+        return;
       }
 
       if (error instanceof InboundParseDroppedError) {

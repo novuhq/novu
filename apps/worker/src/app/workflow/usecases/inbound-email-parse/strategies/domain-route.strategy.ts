@@ -16,11 +16,13 @@ import {
 import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
 import {
+  getDeliveryFailureDiagnostics,
   InboundParseDroppedError,
   InboundParseOutcome,
   InboundParseProcessingError,
   InboundParseStrategy,
   inboundTransactionIdFromMessageId,
+  toCustomerDeliveryFailureMessage,
 } from '../inbound-parse-outcome';
 
 type ResolvedDomainRouteContext = {
@@ -147,12 +149,29 @@ export class DomainRouteStrategy {
 
   private fail(resolved: ResolvedDomainRouteContext, status: number, message: string): never {
     this.logger.error({ err: message }, 'Error processing domain-route email');
-    throw new InboundParseProcessingError(message, { ...resolved, status, message });
+    const customerMessage = toCustomerDeliveryFailureMessage(status, message);
+    throw new InboundParseProcessingError(message, { ...resolved, status, message: customerMessage });
   }
 
   private failDelivery(resolved: ResolvedDomainRouteContext, err: unknown): never {
-    const message = `Inbound delivery failed: ${err instanceof Error ? err.message : 'Unknown error'}`;
-    throw new InboundParseProcessingError(message, { ...resolved, status: 502, message });
+    const diagnostics = getDeliveryFailureDiagnostics(err);
+
+    this.logger.error(
+      {
+        err,
+        statusCode: diagnostics.statusCode,
+        responseBody: diagnostics.responseBody,
+        organizationId: resolved.organizationId,
+        environmentId: resolved.environmentId,
+        transactionId: resolved.transactionId,
+        strategy: resolved.strategy,
+      },
+      'Inbound domain-route delivery failed'
+    );
+
+    const customerMessage = toCustomerDeliveryFailureMessage(502, diagnostics.message);
+
+    throw new InboundParseProcessingError(diagnostics.message, { ...resolved, status: 502, message: customerMessage });
   }
 
   /**

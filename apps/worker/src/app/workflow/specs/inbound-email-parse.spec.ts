@@ -248,38 +248,32 @@ describe('Should handle the new arrived mail', () => {
   });
 
   it('should not send webhook request with when domain white list', async () => {
-    try {
-      const mail = getMailData({ userDomain: 'invalid-domain.com' });
-      sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
+    const mail = getMailData({ userDomain: 'invalid-domain.com' });
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.equal('Domain is not in environment white list');
-    }
-
-    // Post-resolution failures still emit a request log, with a 422 outcome.
+    // Post-resolution 422 failures are non-retriable — trace once and stop.
     sinon.assert.calledOnce(logInboundEmailRequest.execute);
     const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
     expect(logArg.outcome.status).to.equal(422);
     expect(logArg.outcome.strategy).to.equal('reply-to');
+    expect(logArg.outcome.message).to.equal('Domain is not in environment white list');
   });
 
   it('should not send webhook request when missing replay callback url', async () => {
-    try {
-      const entitiesWithMissingParseWebhook = getEntitiesStubObject;
-      entitiesWithMissingParseWebhook.template.steps[0].replyCallback = {} as any;
+    const entitiesWithMissingParseWebhook = getEntitiesStubObject;
+    entitiesWithMissingParseWebhook.template.steps[0].replyCallback = {} as any;
 
-      const mail = getMailData();
-      sandbox.stub(replyToStrategy as any, 'getEntities').resolves(entitiesWithMissingParseWebhook);
+    const mail = getMailData();
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(entitiesWithMissingParseWebhook);
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.contains('Missing parse webhook on template');
-    }
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.status).to.equal(422);
+    expect(logArg.outcome.message).to.contain('Missing parse webhook on template');
   });
 
   interface IMailData {

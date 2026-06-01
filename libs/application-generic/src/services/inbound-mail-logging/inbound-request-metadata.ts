@@ -1,4 +1,4 @@
-import { IInboundParseDataDto } from '../../dtos/inbound-parse-job.dto';
+import { IConnection, IInboundParseDataDto } from '../../dtos/inbound-parse-job.dto';
 
 /**
  * Path-style identifier for an inbound mail processing strategy. Mirrored into
@@ -14,10 +14,13 @@ const REPLY_TO_DELIMITER = '-nv-e=';
  * either the worker (`InboundEmailParseCommand`) or the inbound-mail server
  * (the finalized message before it is added to the queue).
  */
-export type InboundRequestSource = Pick<
-  IInboundParseDataDto,
-  'subject' | 'messageId' | 'from' | 'to' | 'dkim' | 'spf' | 'spamScore' | 'attachments' | 'connection'
->;
+export type InboundRequestSource = Partial<
+  Pick<IInboundParseDataDto, 'subject' | 'messageId' | 'from' | 'to' | 'dkim' | 'spf' | 'spamScore' | 'attachments'>
+> & {
+  // Only the fields the request log actually consumes — the full `IConnection`
+  // is never needed and forcing it would require synthesizing unused SMTP state.
+  connection?: Pick<IConnection, 'remoteAddress' | 'clientHostname'>;
+};
 
 /**
  * Metadata snapshot of an inbound email for the `requests.request_body` column.
@@ -25,6 +28,31 @@ export type InboundRequestSource = Pick<
  * routing fields (`from`, `to`, `subject`) so tenant-scoped Requests debugging works;
  * retention follows the `requests` table TTL policy.
  */
+/**
+ * Minimal request metadata available as soon as SMTP DATA completes — before
+ * parse, DKIM/SPF, or attachment handling. Used for the earliest `requests`
+ * row so parse failures still appear in the dashboard.
+ */
+export function buildEnvelopeRequestSource(
+  envelope: {
+    mailFrom?: { address?: string };
+    rcptTo?: Array<{ address?: string }> | { address?: string };
+  },
+  connection?: InboundRequestSource['connection']
+): InboundRequestSource {
+  const rcptTo = envelope.rcptTo;
+  const recipients = Array.isArray(rcptTo) ? rcptTo : rcptTo ? [rcptTo] : [];
+
+  return {
+    from: envelope.mailFrom?.address ? [{ address: envelope.mailFrom.address, name: '' }] : undefined,
+    to: recipients.map((recipient) => ({
+      address: recipient.address ?? String(recipient),
+      name: '',
+    })),
+    connection,
+  };
+}
+
 export function buildInboundRequestMetadata(source: InboundRequestSource): string {
   const metadata = {
     subject: source.subject,

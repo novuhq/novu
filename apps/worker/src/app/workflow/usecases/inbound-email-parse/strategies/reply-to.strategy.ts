@@ -18,7 +18,11 @@ import {
 } from '@novu/dal';
 import { InboundEmailAttachment, StepTypeEnum } from '@novu/shared';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
-import { InboundParseOutcome, InboundParseProcessingError } from '../inbound-parse-outcome';
+import {
+  InboundParseOutcome,
+  InboundParseProcessingError,
+  toCustomerDeliveryFailureMessage,
+} from '../inbound-parse-outcome';
 
 const LOG_CONTEXT = 'ReplyToStrategy';
 
@@ -125,7 +129,13 @@ export class ReplyToStrategy {
 
   private fail(resolved: ResolvedReplyToContext, status: number, message: string): never {
     Logger.error(message, LOG_CONTEXT);
-    throw new InboundParseProcessingError(message, { ...resolved, strategy: 'reply-to', status, message });
+    const customerMessage = toCustomerDeliveryFailureMessage(status, message);
+    throw new InboundParseProcessingError(message, {
+      ...resolved,
+      strategy: 'reply-to',
+      status,
+      message: customerMessage,
+    });
   }
 
   private splitTo(address: string) {
