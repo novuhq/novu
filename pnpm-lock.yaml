@@ -445,6 +445,12 @@ importers:
       '@sentry/tracing':
         specifier: ^7.120.3
         version: 7.120.3
+      '@slack/types':
+        specifier: 2.20.1
+        version: 2.20.1
+      '@slack/web-api':
+        specifier: 7.15.0
+        version: 7.15.0
       '@team-plain/typescript-sdk':
         specifier: 5.8.0
         version: 5.8.0
@@ -31659,7 +31665,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.39.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.2(zod@4.3.5)
+      better-call: 1.3.2(zod@4.3.6)
       jose: 6.1.3
       kysely: 0.28.17
       nanostores: 1.2.0
@@ -40370,6 +40376,7 @@ snapshots:
     transitivePeerDependencies:
       - bufferutil
       - debug
+      - supports-color
       - utf-8-validate
 
   '@slack/types@2.20.1': {}
@@ -40380,7 +40387,7 @@ snapshots:
       '@slack/types': 2.20.1
       '@types/node': 22.15.13
       '@types/retry': 0.12.0
-      axios: 1.16.0
+      axios: 1.16.1
       eventemitter3: 5.0.4
       form-data: 4.0.5
       is-electron: 2.2.2
@@ -40390,6 +40397,7 @@ snapshots:
       retry: 0.13.1
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   '@smithy/abort-controller@3.1.1':
     dependencies:
@@ -45416,7 +45424,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
-      better-call: 1.3.2(zod@4.3.5)
+      better-call: 1.3.2(zod@4.3.6)
       defu: 6.1.6
       jose: 6.1.3
       kysely: 0.28.17
@@ -45434,15 +45442,6 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
-
-  better-call@1.3.2(zod@4.3.5):
-    dependencies:
-      '@better-auth/utils': 0.3.1
-      '@better-fetch/fetch': 1.1.21
-      rou3: 0.7.12
-      set-cookie-parser: 3.1.0
-    optionalDependencies:
-      zod: 4.3.5
 
   better-call@1.3.2(zod@4.3.6):
     dependencies:

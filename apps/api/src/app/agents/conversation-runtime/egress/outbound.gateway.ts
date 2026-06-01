@@ -1,14 +1,24 @@
 import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
+import { PinoLogger } from '@novu/application-generic';
 import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import type { AdapterPostableMessage, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
+import {
+  editSlackNativeBlocks,
+  getSlackApiErrorCode,
+  postSlackNativeBlocks,
+  type SlackNativeDelivery,
+} from './slack-native-delivery';
+
+export type { SlackNativeDelivery } from './slack-native-delivery';
 
 export interface ConversationTarget {
   agentId: string;
@@ -27,6 +37,10 @@ export interface OutboundPersistContext {
 }
 
 export type OutboundMessage = ReplyContentDto;
+
+export type OutboundDeliveryOptions = {
+  slackNative?: SlackNativeDelivery;
+};
 
 /**
  * Persist context for a fallback reply posted on the live inbound thread.
@@ -81,20 +95,25 @@ export class OutboundGateway {
     private readonly registry: ChatInstanceRegistry,
     private readonly conversation: AgentConversationService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly fileMaterializer: FileMaterializer
-  ) {}
+    private readonly fileMaterializer: FileMaterializer,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async deliver(
     target: ConversationTarget,
     msg: OutboundMessage,
-    persist: OutboundPersistContext
+    persist: OutboundPersistContext,
+    options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
     const sent = await this.postToConversation(
       target.agentId,
       target.integrationIdentifier,
       target.platform,
       target.platformThreadId,
-      msg
+      msg,
+      options
     );
     await this.persistDelivered(persist, sent, msg);
 
@@ -105,7 +124,8 @@ export class OutboundGateway {
     target: ConversationTarget,
     messageId: string,
     msg: OutboundMessage,
-    persist: OutboundPersistContext
+    persist: OutboundPersistContext,
+    options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
     const sent = await this.editInConversation(
       target.agentId,
@@ -113,7 +133,8 @@ export class OutboundGateway {
       target.platform,
       target.platformThreadId,
       messageId,
-      msg
+      msg,
+      options
     );
     await this.conversation.persistAgentEdit({
       conversationId: persist.conversationId,
@@ -170,8 +191,27 @@ export class OutboundGateway {
     integrationIdentifier: string,
     platform: string,
     platformThreadId: string,
-    content: ReplyContentDto
+    content: ReplyContentDto,
+    options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
+    if (platform === AgentPlatformEnum.SLACK && options?.slackNative) {
+      try {
+        const botToken = await this.resolveSlackBotToken(agentId, integrationIdentifier);
+
+        return await postSlackNativeBlocks({
+          botToken,
+          platformThreadId,
+          slackNative: options.slackNative,
+        });
+      } catch (err) {
+        if (getSlackApiErrorCode(err) !== 'invalid_blocks') {
+          toDeliveryError(err);
+        }
+
+        this.logger.warn({ platformThreadId }, 'Slack rejected native blocks; falling back to portable card delivery');
+      }
+    }
+
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -232,8 +272,31 @@ export class OutboundGateway {
     platform: string,
     platformThreadId: string,
     platformMessageId: string,
-    content: ReplyContentDto
+    content: ReplyContentDto,
+    options?: OutboundDeliveryOptions
   ): Promise<SentMessageInfo> {
+    if (platform === AgentPlatformEnum.SLACK && options?.slackNative) {
+      try {
+        const botToken = await this.resolveSlackBotToken(agentId, integrationIdentifier);
+
+        return await editSlackNativeBlocks({
+          botToken,
+          platformThreadId,
+          platformMessageId,
+          slackNative: options.slackNative,
+        });
+      } catch (err) {
+        if (getSlackApiErrorCode(err) !== 'invalid_blocks') {
+          toDeliveryError(err);
+        }
+
+        this.logger.warn(
+          { platformThreadId, platformMessageId },
+          'Slack rejected native blocks on edit; falling back to portable card delivery'
+        );
+      }
+    }
+
     const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
     const instanceKey = `${agentId}:${integrationIdentifier}`;
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
@@ -336,6 +399,17 @@ export class OutboundGateway {
     const adapter = chat.getAdapter(platform);
     const resolved = await this.resolveEmoji(emojiName);
     await adapter.removeReaction(platformThreadId, platformMessageId, resolved);
+  }
+
+  private async resolveSlackBotToken(agentId: string, integrationIdentifier: string): Promise<string> {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const token = config.connectionAccessToken;
+
+    if (!token) {
+      throw new BadRequestException('Slack integration missing bot token');
+    }
+
+    return token;
   }
 
   private async resolveEmoji(name: string): Promise<EmojiValue> {
