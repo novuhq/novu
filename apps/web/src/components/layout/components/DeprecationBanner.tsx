@@ -5,7 +5,7 @@ import { differenceInDays, startOfDay } from 'date-fns';
 import { useSubscription } from '../../../ee/billing/hooks/useSubscription';
 import { useAuth } from '../../../hooks/useAuth';
 
-const DASHBOARD_DEPRECATION_DATE = new Date(2026, 4, 31);
+const DASHBOARD_DEPRECATION_DATE = new Date(2026, 6, 30);
 
 function getDaysUntilDashboardDeprecation(): number {
   return Math.max(0, differenceInDays(startOfDay(DASHBOARD_DEPRECATION_DATE), startOfDay(new Date())));
@@ -19,8 +19,8 @@ export function DeprecationBanner() {
     return null;
   }
 
-  const isFreeOrg = apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const migrationGuideBaseUrl = isFreeOrg ? 'https://dub.sh/eGRzfpk' : 'https://go.novu.co/migration-guide';
+  const isFreeOrProOrg = apiServiceLevel === ApiServiceLevelEnum.FREE || apiServiceLevel === ApiServiceLevelEnum.PRO;
+  const migrationGuideBaseUrl = isFreeOrProOrg ? 'https://dub.sh/eGRzfpk' : 'https://go.novu.co/migration-guide';
   const migrationGuideUrl = new URL(migrationGuideBaseUrl);
 
   // Dub passes any query string to the destination, but the Dub dashboard only breaks out
