@@ -10,7 +10,7 @@ import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/gene
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { isProviderManagedOAuthMcp, type OAuthMcp } from './oauth-mcp.types';
-import { buildSetupCard, type SetupCardRow } from './setup-card.helpers';
+import { buildSetupCard, resolveSetupCardOAuthFailureReason, type SetupCardRow } from './setup-card.helpers';
 import { buildSetupSlackBlocks } from './setup-card.slack';
 
 export type SetupCardDelivery = {
@@ -31,6 +31,12 @@ export function buildSetupCardDelivery(params: { platform?: string; mcps: SetupC
   return { content };
 }
 
+export type BuildSetupRowsResult = {
+  rows: SetupCardRow[];
+  /** True when any MCP OAuth session was rotated (new PKCE) during this build. */
+  sessionRotated: boolean;
+};
+
 export async function buildSetupRowsForMcps(params: {
   mcps: OAuthMcp[];
   environmentId: string;
@@ -40,8 +46,9 @@ export async function buildSetupRowsForMcps(params: {
   conversationId: string;
   generateMcpOAuthUrl: GenerateMcpOAuthUrl;
   logger: PinoLogger;
-}): Promise<SetupCardRow[]> {
+}): Promise<BuildSetupRowsResult> {
   const rows: SetupCardRow[] = [];
+  let sessionRotated = false;
 
   for (const mcp of params.mcps) {
     if (mcp.status === McpConnectionStatusEnum.Connected) {
@@ -66,32 +73,13 @@ export async function buildSetupRowsForMcps(params: {
         subscriberId: params.subscriberId,
         conversationId: params.conversationId,
       });
-      const result = await params.generateMcpOAuthUrl.executeForSetupCard(oauthCommand);
-      let authorizeUrlWithAutoApprove: string | undefined;
-
-      try {
-        const autoApproveResult = await params.generateMcpOAuthUrl.executeForSetupCard(
-          GenerateMcpOAuthUrlCommand.create({
-            ...oauthCommand,
-            trustToolsOnConnect: true,
-          })
-        );
-        authorizeUrlWithAutoApprove = autoApproveResult.authorizeUrl;
-      } catch (err) {
-        params.logger.warn(
-          {
-            err: err instanceof Error ? err.message : String(err),
-            mcpId: mcp.mcpId,
-            conversationId: params.conversationId,
-          },
-          'GenerateMcpOAuthUrl auto-approve variant failed while building managed-agent setup card'
-        );
-      }
+      const oauthUrls = await params.generateMcpOAuthUrl.executeForSetupCard(oauthCommand);
+      sessionRotated = sessionRotated || oauthUrls.sessionRotated;
 
       rows.push({
         ...mcp,
-        authorizeUrl: result.authorizeUrl,
-        authorizeUrlWithAutoApprove,
+        authorizeUrl: oauthUrls.authorizeUrl,
+        authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
       });
     } catch (err) {
       params.logger.warn(
@@ -103,11 +91,14 @@ export async function buildSetupRowsForMcps(params: {
         'GenerateMcpOAuthUrl failed while building managed-agent setup card'
       );
 
-      rows.push(mcp);
+      rows.push({
+        ...mcp,
+        connectUnavailableReason: resolveSetupCardOAuthFailureReason(err),
+      });
     }
   }
 
-  return rows;
+  return { rows, sessionRotated };
 }
 
 export async function syncSetupCardMessage(params: {

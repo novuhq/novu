@@ -5,8 +5,47 @@ import { isProviderManagedOAuthMcp, type OAuthMcp } from './oauth-mcp.types';
 export interface SetupCardRow extends OAuthMcp {
   authorizeUrl?: string;
   authorizeUrlWithAutoApprove?: string;
+  /** Shown when OAuth URL generation failed and no Connect button can be rendered. */
+  connectUnavailableReason?: string;
   /** Provider-managed MCPs render as connected without Novu OAuth. */
   treatAsConnected?: boolean;
+}
+
+export function resolveSetupCardOAuthFailureReason(err: unknown): string {
+  let body: unknown;
+
+  if (err && typeof err === 'object' && 'response' in err) {
+    body = (err as { response?: unknown }).response;
+  } else if (err && typeof err === 'object' && 'getResponse' in err) {
+    body = (err as { getResponse: () => unknown }).getResponse();
+  }
+
+  const errorCode =
+    body && typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string'
+      ? body.error
+      : undefined;
+
+  if (errorCode === 'mcp_novu_app_disabled') {
+    return 'Not enabled for this workspace yet.';
+  }
+
+  if (errorCode === 'mcp_novu_app_credentials_missing') {
+    return 'GitHub is not configured on this server. Remove it from the agent or ask an admin.';
+  }
+
+  let message: string | undefined;
+
+  if (body && typeof body === 'object' && body !== null && 'message' in body && typeof body.message === 'string') {
+    message = body.message;
+  } else if (err instanceof Error) {
+    message = err.message;
+  }
+
+  if (message?.includes('NOVU_GITHUB_MCP_APP_CLIENT')) {
+    return 'GitHub is not configured on this server. Remove it from the agent or ask an admin.';
+  }
+
+  return 'Connect is not available. Try again from the dashboard.';
 }
 
 export const SETUP_CONNECT_BUTTON_LABEL = 'Connect';
@@ -48,6 +87,17 @@ export const SETUP_GATE_NUDGE_MARKDOWN =
   'Please finish connecting your tools using the card above. Your latest message will run automatically once setup is complete.';
 
 export const SETUP_AUTO_APPROVE_HINT = 'Auto-approve skips approval prompts for all tools from this integration.';
+
+/** Slack native card `body` / `subtext` mrkdwn fields allow at most 200 characters. */
+export const SLACK_CARD_MCP_TEXT_MAX = 200;
+
+export function truncateSlackCardText(text: string, max = SLACK_CARD_MCP_TEXT_MAX): string {
+  if (text.length <= max) {
+    return text;
+  }
+
+  return `${text.slice(0, max - 1).trimEnd()}…`;
+}
 
 export const PROVIDER_MANAGED_FOOTER_HINT = 'Some tools are already connected via your workspace — no OAuth needed.';
 
@@ -162,30 +212,64 @@ export function buildMcpCardBodyMarkdown(mcp: SetupCardRow): string {
   }
 
   if (!mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
-    lines.push('_Connect unavailable — try again from the dashboard._');
+    lines.push(
+      `_${mcp.connectUnavailableReason ?? "Connect isn't available right now. Try again from the dashboard."}_`
+    );
   }
 
   return lines.join('\n');
 }
 
-/** Short subtitle for Slack native cards — status hints only (description lives in card body). */
+/** Short subtitle for Slack native cards — one-line status only; longer copy goes in body. */
 export function buildMcpCardSubtitleMarkdown(mcp: SetupCardRow): string | undefined {
-  const parts: string[] = [];
+  if (mcp.status === McpConnectionStatusEnum.Expired) {
+    return 'Connection expired';
+  }
 
-  const statusHint = resolveMcpStatusHint(mcp);
-  if (statusHint) {
-    parts.push(statusHint);
+  if (mcp.status === McpConnectionStatusEnum.Revoked) {
+    return 'Access revoked';
+  }
+
+  if (mcp.status === McpConnectionStatusEnum.Error) {
+    return 'Connection failed';
   }
 
   if (!mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
-    parts.push('Connect unavailable — try again from the dashboard.');
+    return 'Connect unavailable';
   }
 
-  if (parts.length === 0) {
+  return undefined;
+}
+
+/** Catalog description only — Slack card `body` is capped at 200 characters. */
+export function buildMcpSlackCardBodyText(mcp: SetupCardRow): string | undefined {
+  const description = resolveMcpDescription(mcp.mcpId);
+
+  if (!description) {
     return undefined;
   }
 
-  return parts.join(' · ');
+  return truncateSlackCardText(description);
+}
+
+/** Secondary hint below the body: unavailable reason, error detail, or auto-approve copy. */
+export function resolveMcpSlackCardSubtext(mcp: SetupCardRow): string | undefined {
+  if (!mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
+    return truncateSlackCardText(
+      mcp.connectUnavailableReason ?? 'Connect is not available. Try again from the dashboard.'
+    );
+  }
+
+  const statusHint = resolveMcpStatusHint(mcp);
+  if (statusHint) {
+    return truncateSlackCardText(statusHint);
+  }
+
+  if (mcp.authorizeUrlWithAutoApprove && isSetupMcpRowPending(mcp)) {
+    return SETUP_AUTO_APPROVE_HINT;
+  }
+
+  return undefined;
 }
 
 export function buildMcpRowMarkdown(mcp: SetupCardRow): string {

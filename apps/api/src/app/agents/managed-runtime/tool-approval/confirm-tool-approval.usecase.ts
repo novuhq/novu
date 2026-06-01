@@ -6,17 +6,12 @@ import {
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
-import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { ManagedAgentService } from '../managed-agent.service';
 import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
-import {
-  getToolApprovalVerdictCard,
-  type ParsedToolApprovalAction,
-  resolveVerdictToolDescription,
-} from './approval-card.builder';
+import { type ParsedToolApprovalAction } from './approval-card.builder';
 import { ConfirmToolApprovalCommand } from './confirm-tool-approval.command';
 import { mergeToolTrustPatch, resolveTrustForPendingTool } from './tool-trust.helper';
 
@@ -29,7 +24,7 @@ export class ConfirmToolApproval {
     private readonly conversationRepository: ConversationRepository,
     private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly managedAgentService: ManagedAgentService,
-    private readonly handleAgentReply: HandleAgentReply,
+    private readonly outboundGateway: OutboundGateway,
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly logger: PinoLogger
   ) {
@@ -56,7 +51,7 @@ export class ConfirmToolApproval {
       turnId: parsed.turnId,
     });
 
-    this.updateCardWithVerdict(command, parsed.approved);
+    this.deleteApprovalCard(command);
     this.updatePlanProgress(command, parsed);
   }
 
@@ -164,32 +159,21 @@ export class ConfirmToolApproval {
     return conversation?.externalSessionId;
   }
 
-  private updateCardWithVerdict(command: ConfirmToolApprovalCommand, approved: boolean): void {
-    if (!command.sourceMessageId) {
+  private deleteApprovalCard(command: ConfirmToolApprovalCommand): void {
+    if (!command.sourceMessageId || !command.platform || !command.platformThreadId) {
       return;
     }
 
-    const delivery = getToolApprovalVerdictCard({
-      platform: command.platform,
-      approved,
-      toolDescription: resolveVerdictToolDescription(command.actionValue, command.parsed),
-    });
-
-    this.handleAgentReply
-      .execute(
-        HandleAgentReplyCommand.create({
-          userId: command.userId,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          conversationId: command.conversationId,
-          agentIdentifier: command.agentIdentifier,
-          integrationIdentifier: command.integrationIdentifier,
-          edit: { messageId: command.sourceMessageId, content: delivery.content },
-          slackNative: delivery.slackNative,
-        })
+    this.outboundGateway
+      .deleteInConversation(
+        command.agentId,
+        command.integrationIdentifier,
+        command.platform,
+        command.platformThreadId,
+        command.sourceMessageId
       )
       .catch((err) => {
-        this.logger.warn(err, 'Failed to update tool approval card with verdict');
+        this.logger.warn(err, 'Failed to delete tool approval card after user verdict');
       });
   }
 

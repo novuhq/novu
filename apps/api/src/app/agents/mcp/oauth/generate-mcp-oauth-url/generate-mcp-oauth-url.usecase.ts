@@ -101,19 +101,48 @@ export class GenerateMcpOAuthUrl {
   }
 
   /**
-   * Build an authorize URL for a managed-agent setup card without rotating
-   * PKCE when a reusable `pending_oauth` session already exists for this
-   * subscriber + MCP. Each card only gets a fresh signed `state` (with its
-   * `conversationId`); the shared connection row stays stable across threads.
+   * Build Connect + auto-approve authorize URLs for a setup card from one
+   * pending OAuth session. Rotates PKCE at most once so both buttons share
+   * the verifier on the subscriber-scoped connection row.
    */
-  async executeForSetupCard(command: GenerateMcpOAuthUrlCommand): Promise<GenerateMcpOAuthUrlResponseDto> {
-    const context = await this.loadAuthorizeContext(command);
+  async executeForSetupCard(command: GenerateMcpOAuthUrlCommand): Promise<{
+    authorizeUrl: string;
+    authorizeUrlWithAutoApprove?: string;
+    sessionRotated: boolean;
+  }> {
+    let context = await this.loadAuthorizeContext(command);
+    const sessionRotated = !canReusePendingOAuthSession(context.existing);
 
-    if (canReusePendingOAuthSession(context.existing)) {
-      return this.buildAuthorizeUrlForExistingPending(context, command, { reusedPendingSession: true });
+    if (sessionRotated) {
+      await this.execute(command);
+      context = await this.loadAuthorizeContext(command);
     }
 
-    return this.execute(command);
+    const reuseOpts = { reusedPendingSession: !sessionRotated };
+    const authorizeUrl = (await this.buildAuthorizeUrlForExistingPending(context, command, reuseOpts)).authorizeUrl;
+
+    let authorizeUrlWithAutoApprove: string | undefined;
+
+    try {
+      authorizeUrlWithAutoApprove = (
+        await this.buildAuthorizeUrlForExistingPending(
+          context,
+          GenerateMcpOAuthUrlCommand.create({ ...command, trustToolsOnConnect: true }),
+          reuseOpts
+        )
+      ).authorizeUrl;
+    } catch (err) {
+      this.logger.warn(
+        {
+          err: err instanceof Error ? err.message : String(err),
+          mcpId: command.mcpId,
+          conversationId: command.conversationId,
+        },
+        'GenerateMcpOAuthUrl auto-approve variant failed while building managed-agent setup card'
+      );
+    }
+
+    return { authorizeUrl, authorizeUrlWithAutoApprove, sessionRotated };
   }
 
   async execute(command: GenerateMcpOAuthUrlCommand): Promise<GenerateMcpOAuthUrlResponseDto> {

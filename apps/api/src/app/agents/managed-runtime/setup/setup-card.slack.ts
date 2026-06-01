@@ -4,10 +4,11 @@ import type { Block, SectionBlock } from '@slack/types';
 import type { SlackNativeDelivery } from '../../conversation-runtime/egress/slack-native-delivery';
 import {
   buildMcpCardSubtitleMarkdown,
+  buildMcpSlackCardBodyText,
   isSetupMcpRowPending,
   resolveMcpDescription,
+  resolveMcpSlackCardSubtext,
   resolveSetupConnectButtonLabels,
-  SETUP_AUTO_APPROVE_HINT,
   SETUP_INTRO_TEXT,
   type SetupCardRow,
   sortPendingSetupCardRows,
@@ -30,9 +31,13 @@ type SlackCardBlock = Block & {
 
 function resolveDashboardBaseUrl(): string {
   for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
-    if (candidate?.trim()) {
-      return candidate.replace(/\/$/, '');
+    const trimmed = candidate?.trim();
+
+    if (!trimmed || trimmed.startsWith('^')) {
+      continue;
     }
+
+    return trimmed.replace(/\/$/, '');
   }
 
   return 'https://dashboard.novu.co';
@@ -44,6 +49,8 @@ function resolveMcpIconUrl(mcpId: string): string {
 
 function buildMcpSlackCardBlock(mcp: SetupCardRow): SlackCardBlock {
   const subtitle = buildMcpCardSubtitleMarkdown(mcp);
+  const body = buildMcpSlackCardBodyText(mcp);
+  const subtext = resolveMcpSlackCardSubtext(mcp);
   const description = resolveMcpDescription(mcp.mcpId);
 
   const cardBlock: SlackCardBlock = {
@@ -55,10 +62,8 @@ function buildMcpSlackCardBlock(mcp: SetupCardRow): SlackCardBlock {
     },
     title: { type: 'mrkdwn', text: `*${mcp.name}*`, verbatim: false },
     ...(subtitle ? { subtitle: { type: 'mrkdwn', text: subtitle, verbatim: false } } : {}),
-    ...(description ? { body: { type: 'mrkdwn', text: description, verbatim: false } } : {}),
-    ...(mcp.authorizeUrlWithAutoApprove && isSetupMcpRowPending(mcp)
-      ? { subtext: { type: 'mrkdwn', text: SETUP_AUTO_APPROVE_HINT, verbatim: false } }
-      : {}),
+    ...(body ? { body: { type: 'mrkdwn', text: body, verbatim: false } } : {}),
+    ...(subtext ? { subtext: { type: 'mrkdwn', text: subtext, verbatim: false } } : {}),
   };
 
   if (mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {

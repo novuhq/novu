@@ -12,6 +12,7 @@ import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gate
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
+import { CompleteManagedAgentSetup } from './complete-managed-agent-setup.usecase';
 import { listOAuthMcps } from './list-oauth-mcps.helper';
 import { ManagedAgentSetupInboundCommand } from './managed-agent-setup-inbound.command';
 import { isOAuthMcpPending, type OAuthMcp } from './oauth-mcp.types';
@@ -33,6 +34,7 @@ export class HandleManagedAgentSetupInbound {
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly outboundGateway: OutboundGateway,
+    private readonly completeManagedAgentSetup: CompleteManagedAgentSetup,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -108,7 +110,7 @@ export class HandleManagedAgentSetupInbound {
       pendingState
     );
 
-    const rows = await buildSetupRowsForMcps({
+    const { rows, sessionRotated } = await buildSetupRowsForMcps({
       mcps,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
@@ -142,6 +144,15 @@ export class HandleManagedAgentSetupInbound {
         setupMessageId,
       }
     );
+
+    if (sessionRotated) {
+      await this.completeManagedAgentSetup.refreshPendingSetupCards({
+        agentId: command.agentId,
+        integrationIdentifier: command.integrationIdentifier,
+        subscriberExternalId: command.subscriberId,
+        mcps,
+      });
+    }
 
     if (isRepeatSetup) {
       await this.sendSetupGateNudge(command);
