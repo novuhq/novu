@@ -66,6 +66,10 @@ export interface ResolvedAgentConfig {
 
 const DEFAULT_REACTION_ON_RESOLVED: WellKnownEmoji = 'check';
 
+function isDuplicateKeyError(err: unknown): boolean {
+  return Boolean(err && typeof err === 'object' && 'code' in err && (err as { code: unknown }).code === 11000);
+}
+
 async function resolveReaction(
   value: string | null | undefined,
   defaultEmoji: WellKnownEmoji,
@@ -328,12 +332,48 @@ export class AgentConfigResolver {
       return null;
     }
 
-    const link = await this.agentIntegrationRepository.create({
-      _agentId: params.agentId,
-      _integrationId: params.integration._id,
-      _environmentId: params.environmentId,
-      _organizationId: params.organizationId,
-    });
+    let link: AgentIntegrationEntity;
+
+    try {
+      link = await this.agentIntegrationRepository.create({
+        _agentId: params.agentId,
+        _integrationId: params.integration._id,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+      });
+    } catch (err) {
+      if (!isDuplicateKeyError(err)) {
+        throw err;
+      }
+
+      const winner = await this.agentIntegrationRepository.findOne(
+        {
+          _integrationId: params.integration._id,
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+        },
+        '*'
+      );
+
+      if (!winner) {
+        throw err;
+      }
+
+      if (winner._agentId !== params.agentId) {
+        this.logger.warn(
+          {
+            agentId: params.agentId,
+            integrationIdentifier: params.integrationIdentifier,
+            linkedAgentId: winner._agentId,
+          },
+          'Inbound webhook targets an integration already linked to a different agent'
+        );
+
+        return null;
+      }
+
+      link = winner;
+    }
 
     this.logger.info(
       {
