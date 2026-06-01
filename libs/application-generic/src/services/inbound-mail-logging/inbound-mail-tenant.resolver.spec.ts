@@ -71,6 +71,42 @@ describe('InboundMailTenantResolver', () => {
       expect(result.transactionId).toBe('msg-id@example.com');
     });
 
+    it('returns empty tenant when the domain is not yet verified', async () => {
+      domainRepository.findByName.mockResolvedValueOnce({
+        _id: 'd_1',
+        name: 'customer.com',
+        status: 'pending',
+        mxRecordConfigured: true,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        data: {},
+      } as any);
+
+      const result = await resolver.resolve('support@customer.com', '<msg-id@example.com>');
+
+      expect(result.organizationId).toBe('');
+      expect(result.environmentId).toBe('');
+      expect(result.transactionId).toBe('msg-id@example.com');
+    });
+
+    it('returns empty tenant when the domain is verified but MX is not configured', async () => {
+      domainRepository.findByName.mockResolvedValueOnce({
+        _id: 'd_1',
+        name: 'customer.com',
+        status: 'verified',
+        mxRecordConfigured: false,
+        _environmentId: 'env_1',
+        _organizationId: 'org_1',
+        data: {},
+      } as any);
+
+      const result = await resolver.resolve('support@customer.com', '<msg-id@example.com>');
+
+      expect(result.organizationId).toBe('');
+      expect(result.environmentId).toBe('');
+      expect(result.transactionId).toBe('msg-id@example.com');
+    });
+
     it('does not throw when the DB lookup fails', async () => {
       domainRepository.findByName.mockRejectedValueOnce(new Error('mongo down'));
 
