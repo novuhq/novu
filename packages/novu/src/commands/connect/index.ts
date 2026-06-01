@@ -2,7 +2,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import chalk from 'chalk';
 import { AnalyticService } from '../../services/analytics.service';
-import { CONNECT_EVENTS, trackConnect } from './analytics/events';
+import { aliasConnectSession, CONNECT_EVENTS, trackConnect } from './analytics/events';
 import { runConnectPipeline } from './pipeline/runner';
 import type { ConnectCommandOptions } from './types';
 import { createLoggingUI } from './ui/logging-ui';
@@ -34,14 +34,32 @@ async function loadInkUi(): Promise<UiBundle> {
 }
 
 export async function connectCommand(options: ConnectCommandOptions, anonymousId?: string): Promise<void> {
-  trackConnect(analytics, anonymousId, CONNECT_EVENTS.STARTED, {
+  let resolvedUserId: string | undefined;
+
+  const trackEvent = (event: string, data?: Record<string, unknown>) => {
+    trackConnect(
+      analytics,
+      anonymousId,
+      event,
+      { ...(data ?? {}), onboardingSessionId: anonymousId },
+      resolvedUserId
+    );
+  };
+
+  const onIdentityResolved = (user: { id: string; email?: string | null; firstName?: string | null; lastName?: string | null }) => {
+    if (!anonymousId || resolvedUserId) return;
+
+    aliasConnectSession(analytics, anonymousId, user);
+    resolvedUserId = user.id;
+  };
+
+  trackEvent(CONNECT_EVENTS.STARTED, {
     region: options.region,
     apiUrl: options.apiUrl,
     connectDashboardUrl: options.connectDashboardUrl,
     ci: !!options.ci,
     hasPrompt: !!options.prompt,
     skipSlack: !!options.skipSlack,
-    onboardingSessionId: anonymousId,
   });
 
   try {
@@ -51,8 +69,8 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
         options,
         ui,
         onboardingSessionId: anonymousId,
-        onTrack: (event, data) =>
-          trackConnect(analytics, anonymousId, event, { ...(data ?? {}), onboardingSessionId: anonymousId }),
+        onTrack: trackEvent,
+        onIdentityResolved,
       });
       if (result.exitCode !== 0) process.exitCode = result.exitCode;
     } else {
@@ -62,15 +80,15 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
         options,
         ui: mounted.ui,
         onboardingSessionId: anonymousId,
-        onTrack: (event, data) =>
-          trackConnect(analytics, anonymousId, event, { ...(data ?? {}), onboardingSessionId: anonymousId }),
+        onTrack: trackEvent,
+        onIdentityResolved,
       });
       const exitCode = (await mounted.done) || result.exitCode;
       if (exitCode !== 0) process.exitCode = exitCode;
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    trackConnect(analytics, anonymousId, CONNECT_EVENTS.ERROR, { message, onboardingSessionId: anonymousId });
+    trackEvent(CONNECT_EVENTS.ERROR, { message });
     console.error(chalk.red(`Connect failed: ${message}`));
     process.exitCode = 1;
   } finally {

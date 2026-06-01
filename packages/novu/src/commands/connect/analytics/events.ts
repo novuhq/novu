@@ -24,16 +24,32 @@ export const CONNECT_EVENTS = {
 
 export type ConnectEvent = (typeof CONNECT_EVENTS)[keyof typeof CONNECT_EVENTS];
 
+type ConnectAuthUser = {
+  id: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+};
+
+export function aliasConnectSession(
+  analytics: AnalyticService,
+  anonymousId: string,
+  user: ConnectAuthUser
+): void {
+  analytics.alias({ previousId: anonymousId, userId: user.id });
+}
+
 export function trackConnect(
   analytics: AnalyticService,
   anonymousId: string | undefined,
   event: ConnectEvent | string,
-  data: Record<string, unknown> = {}
+  data: Record<string, unknown> = {},
+  userId?: string
 ): void {
   if (!anonymousId) return;
 
   analytics.track({
-    identity: { anonymousId },
+    identity: userId ? { userId, anonymousId } : { anonymousId },
     event,
     data,
   });
