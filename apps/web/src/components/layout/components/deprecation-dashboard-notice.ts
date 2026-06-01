@@ -1,7 +1,7 @@
 import { ApiServiceLevelEnum } from '@novu/shared';
 import { differenceInDays, startOfDay } from 'date-fns';
 
-export const DASHBOARD_DEPRECATION_DATE = new Date(2026, 4, 31);
+export const DASHBOARD_DEPRECATION_DATE = new Date(2026, 5, 30);
 
 /** Bump suffix if the notice should be shown again to everyone who dismissed a previous version. */
 export const LEGACY_DASHBOARD_DEPRECATION_MODAL_DISMISSED_KEY = 'novu_legacy_dashboard_deprecation_modal_dismissed_v1';
@@ -16,8 +16,8 @@ export function buildMigrationGuideUrl(
   apiServiceLevel: ApiServiceLevelEnum | undefined,
   currentOrganization: OrganizationLike
 ): string {
-  const isFreeOrg = apiServiceLevel === ApiServiceLevelEnum.FREE;
-  const migrationGuideBaseUrl = isFreeOrg ? 'https://dub.sh/eGRzfpk' : 'https://go.novu.co/migration-guide';
+  const isFreeOrProOrg = apiServiceLevel === ApiServiceLevelEnum.FREE || apiServiceLevel === ApiServiceLevelEnum.PRO;
+  const migrationGuideBaseUrl = isFreeOrProOrg ? 'https://dub.sh/eGRzfpk' : 'https://go.novu.co/migration-guide';
   const migrationGuideUrl = new URL(migrationGuideBaseUrl);
 
   migrationGuideUrl.searchParams.set('utm_source', 'legacy_dashboard');
