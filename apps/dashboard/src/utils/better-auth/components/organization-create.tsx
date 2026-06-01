@@ -208,7 +208,7 @@ function OrganizationListContent({
   };
 
   const handleCreateSuccess = () => {
-    window.location.href = afterCreateOrganizationUrl || ROUTES.INBOX_USECASE;
+    window.location.href = afterCreateOrganizationUrl || ROUTES.USECASE_SELECT;
   };
 
   if (isLoading || (organizations.length === 1 && autoSelectTriggeredRef.current && isSelecting)) {

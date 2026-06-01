@@ -18,10 +18,7 @@ import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
-import {
-  persistCliOnboardingSessionId,
-  readActiveCliOnboardingSessionId,
-} from '@/utils/cli-onboarding-identity';
+import { persistCliOnboardingSessionId, readActiveCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { clearConnectProvisioning } from '@/utils/connect';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { readOnboardingSessionId } from '@/utils/onboarding-session-id';

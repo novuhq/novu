@@ -102,6 +102,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // org (old membership, cross-tab, or a deliberate Platform sign-in) fails the recency check and
   // falls through to the normal Platform resolution below.
   const recentlyJoinedConnect = useMemo(() => {
+    // Connect only exists when hostnames are split (never on self-hosted, which uses custom auth
+    // and has no Connect product). Bail early so we don't touch the Clerk-shaped membership shim,
+    // whose entries lack a real `createdAt` and would crash on `.getTime()`.
+    if (!IS_HOSTNAME_SPLIT_ENABLED) {
+      return false;
+    }
+
     const memberships = clerkUser?.organizationMemberships ?? [];
 
     if (memberships.length === 0) {
@@ -111,6 +118,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const newest = memberships.reduce((latest, membership) =>
       membership.createdAt > latest.createdAt ? membership : latest
     );
+
+    if (!newest.createdAt) {
+      return false;
+    }
 
     const joinedAgoMs = Date.now() - newest.createdAt.getTime();
     const isFreshJoin = joinedAgoMs >= 0 && joinedAgoMs <= FRESH_JOIN_WINDOW_MS;

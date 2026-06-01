@@ -1,8 +1,8 @@
 import { RiChat1Line, RiUserAddLine } from 'react-icons/ri';
 import { usePlainChat } from '@/hooks/use-plain-chat';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { cn } from '@/utils/ui';
 import { TelemetryEvent } from '@/utils/telemetry';
+import { cn } from '@/utils/ui';
 import { IS_SELF_HOSTED } from '../../config';
 import { ROUTES } from '../../utils/routes';
 import { NavigationGroup } from './navigation-group';

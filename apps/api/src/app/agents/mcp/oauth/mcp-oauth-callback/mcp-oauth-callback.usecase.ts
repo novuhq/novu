@@ -196,8 +196,23 @@ export class McpOAuthCallback {
     );
 
     if (!claimed) {
+      const existing = await this.mcpConnectionRepository.findSubscriberConnection({
+        organizationId: stateData.organizationId,
+        environmentId: stateData.environmentId,
+        agentMcpServerId: stateData.agentMcpServerId,
+        subscriberId: stateData.subscriberId,
+      });
+
+      if (existing?.status === McpConnectionStatusEnum.Connected) {
+        this.trackOAuthCompleted(stateData, existing._id, oauthConfig.mode);
+
+        return { status: 'connected' };
+      }
+
+      await this.refreshSetupCardsIfApplicable(stateData);
+
       throw new BadRequestException(
-        'OAuth callback rejected: connection is not awaiting authorisation, or has already been claimed by a concurrent callback. Restart the flow.'
+        'OAuth callback rejected: connection is not awaiting authorisation, or has already been claimed by a concurrent callback. Close this tab and click Connect again from the setup card in Slack.'
       );
     }
 
@@ -667,6 +682,23 @@ export class McpOAuthCallback {
         $unset: { oauthState: 1 },
       }
     );
+
+    await this.refreshSetupCardsIfApplicable(stateData);
+  }
+
+  private async refreshSetupCardsIfApplicable(stateData: McpOAuthState): Promise<void> {
+    if (stateData.source !== 'setup_card') {
+      return;
+    }
+
+    try {
+      await this.completeManagedAgentSetup.refreshPendingSetupCardsFromOAuthState(stateData);
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), conversationId: stateData.conversationId },
+        'Failed to refresh managed-agent setup cards after OAuth error'
+      );
+    }
   }
 
   private async exchangeCode(args: {

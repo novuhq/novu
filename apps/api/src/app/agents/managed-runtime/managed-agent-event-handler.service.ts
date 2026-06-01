@@ -209,7 +209,7 @@ export class ManagedAgentEventHandler {
 
   private buildBaseFields(metadata: Record<string, string>): BaseCommandFields {
     return {
-      userId: 'system',
+      userId: metadata.organizationId,
       environmentId: metadata.environmentId,
       organizationId: metadata.organizationId,
       conversationId: metadata.conversationId,

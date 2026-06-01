@@ -1,75 +1,371 @@
-import { McpConnectionStatusEnum } from '@novu/shared';
+import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
 
-import type { OAuthMcp } from './oauth-mcp.types';
+import { isProviderManagedOAuthMcp, type OAuthMcp } from './oauth-mcp.types';
 
 export interface SetupCardRow extends OAuthMcp {
   authorizeUrl?: string;
+  authorizeUrlWithAutoApprove?: string;
+  /** Shown when OAuth URL generation failed and no Connect button can be rendered. */
+  connectUnavailableReason?: string;
+  /** Provider-managed MCPs render as connected without Novu OAuth. */
+  treatAsConnected?: boolean;
   /**
-   * Override for the link-button label. Defaults to "Connect" / "Retry"
-   * (on error) when omitted. Provider-managed MCPs use "Connect from provider"
+   * Override for the link-button label. Provider-managed MCPs use "Connect from provider"
    * to signal that auth completes inside the runtime provider's vault UI.
    */
   connectButtonLabel?: string;
 }
 
-const SETUP_REQUIRED_TEXT =
-  'Connect the tools below to continue. Your message will be handled automatically once setup is complete.';
+export function resolveSetupCardOAuthFailureReason(err: unknown): string {
+  let body: unknown;
 
-const SETUP_COMPLETE_TEXT_CELEBRATION = "You're all set!";
+  if (err && typeof err === 'object' && 'response' in err) {
+    body = (err as { response?: unknown }).response;
+  } else if (err && typeof err === 'object' && 'getResponse' in err) {
+    body = (err as { getResponse: () => unknown }).getResponse();
+  }
 
-const SETUP_COMPLETE_TEXT_WITH_PROCESSING_HINT = 'All tools connected. Your message will run automatically.';
+  const errorCode =
+    body && typeof body === 'object' && body !== null && 'error' in body && typeof body.error === 'string'
+      ? body.error
+      : undefined;
+
+  if (errorCode === 'mcp_novu_app_disabled') {
+    return 'Not enabled for this workspace yet.';
+  }
+
+  if (errorCode === 'mcp_novu_app_credentials_missing') {
+    return 'GitHub is not configured on this server. Remove it from the agent or ask an admin.';
+  }
+
+  let message: string | undefined;
+
+  if (body && typeof body === 'object' && body !== null && 'message' in body && typeof body.message === 'string') {
+    message = body.message;
+  } else if (err instanceof Error) {
+    message = err.message;
+  }
+
+  if (message?.includes('NOVU_GITHUB_MCP_APP_CLIENT')) {
+    return 'GitHub is not configured on this server. Remove it from the agent or ask an admin.';
+  }
+
+  return 'Connect is not available. Try again from the dashboard.';
+}
+
+export const SETUP_CONNECT_BUTTON_LABEL = 'Connect';
+
+export const SETUP_CONNECT_AUTO_APPROVE_BUTTON_LABEL = 'Connect & auto-approve';
+
+export const SETUP_RETRY_BUTTON_LABEL = 'Retry';
+
+export const SETUP_RETRY_AUTO_APPROVE_BUTTON_LABEL = 'Retry & auto-approve';
+
+export function resolveSetupConnectButtonLabels(mcp: SetupCardRow): {
+  connect: string;
+  connectWithAutoApprove: string;
+} {
+  if (isSetupMcpRowError(mcp)) {
+    return {
+      connect: SETUP_RETRY_BUTTON_LABEL,
+      connectWithAutoApprove: SETUP_RETRY_AUTO_APPROVE_BUTTON_LABEL,
+    };
+  }
+
+  return {
+    connect: SETUP_CONNECT_BUTTON_LABEL,
+    connectWithAutoApprove: SETUP_CONNECT_AUTO_APPROVE_BUTTON_LABEL,
+  };
+}
+
+export const SETUP_INTRO_TEXT =
+  'Connect the remaining tools below. Your message runs automatically when setup is complete.';
+
+/** @deprecated Use SETUP_INTRO_TEXT — kept for callers outside the setup card builders. */
+export const SETUP_REQUIRED_TEXT = SETUP_INTRO_TEXT;
+
+export const SETUP_COMPLETE_TEXT_CELEBRATION = "You're all set!";
+
+export const SETUP_COMPLETE_TEXT_WITH_PROCESSING_HINT = 'All tools connected. Your message will run automatically.';
 
 export const SETUP_GATE_NUDGE_MARKDOWN =
   'Please finish connecting your tools using the card above. Your latest message will run automatically once setup is complete.';
 
-function isErrorStatus(status: OAuthMcp['status']): boolean {
+export const SETUP_AUTO_APPROVE_HINT = 'Auto-approve skips approval prompts for all tools from this integration.';
+
+/** Slack native card `body` / `subtext` mrkdwn fields allow at most 200 characters. */
+export const SLACK_CARD_MCP_TEXT_MAX = 200;
+
+export function truncateSlackCardText(text: string, max = SLACK_CARD_MCP_TEXT_MAX): string {
+  if (text.length <= max) {
+    return text;
+  }
+
+  return `${text.slice(0, max - 1).trimEnd()}…`;
+}
+
+export const PROVIDER_MANAGED_FOOTER_HINT = 'Some tools are already connected via your workspace — no OAuth needed.';
+
+export function isSetupMcpRowConnected(mcp: SetupCardRow): boolean {
+  return mcp.treatAsConnected === true || mcp.status === McpConnectionStatusEnum.Connected;
+}
+
+export function isSetupMcpRowPending(mcp: SetupCardRow): boolean {
+  if (mcp.status === McpConnectionStatusEnum.Connected && mcp.authorizeUrl) {
+    return true;
+  }
+
+  return !isSetupMcpRowConnected(mcp);
+}
+
+export function isSetupMcpRowError(mcp: SetupCardRow): boolean {
   return (
-    status === McpConnectionStatusEnum.Error ||
-    status === McpConnectionStatusEnum.Expired ||
-    status === McpConnectionStatusEnum.Revoked
+    mcp.status === McpConnectionStatusEnum.Error ||
+    mcp.status === McpConnectionStatusEnum.Expired ||
+    mcp.status === McpConnectionStatusEnum.Revoked
   );
 }
 
-function buildConnectedRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  return [{ type: 'text', content: `**${mcp.name}**  ✅` }];
+export function countConnectedSetupCardRows(mcps: SetupCardRow[]): number {
+  return mcps.filter(isSetupMcpRowConnected).length;
 }
 
-function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  const blocks: Record<string, unknown>[] = [{ type: 'text', content: `**${mcp.name}**` }];
+export function hasProviderManagedConnectedSetupRows(mcps: SetupCardRow[]): boolean {
+  return mcps.some((mcp) => isSetupMcpRowConnected(mcp) && (mcp.treatAsConnected || isProviderManagedOAuthMcp(mcp)));
+}
 
-  if (isErrorStatus(mcp.status) && mcp.errorMessage) {
-    blocks.push({ type: 'text', content: mcp.errorMessage, style: 'muted' });
+/** Pending rows only, errors first, then alphabetical. */
+export function sortPendingSetupCardRows(mcps: SetupCardRow[]): SetupCardRow[] {
+  return mcps.filter(isSetupMcpRowPending).sort((left, right) => {
+    const leftError = isSetupMcpRowError(left) ? 0 : 1;
+    const rightError = isSetupMcpRowError(right) ? 0 : 1;
+
+    if (leftError !== rightError) {
+      return leftError - rightError;
+    }
+
+    return left.name.localeCompare(right.name);
+  });
+}
+
+export function resolveMcpDescription(mcpId: string): string {
+  return MCP_SERVERS.find((entry) => entry.id === mcpId)?.description ?? '';
+}
+
+function resolveMcpPermissionHint(mcpId: string): string | undefined {
+  const oauth = MCP_SERVERS.find((entry) => entry.id === mcpId)?.oauth;
+
+  if (
+    !oauth ||
+    oauth.mode === McpConnectionAuthModeEnum.ProviderManaged ||
+    oauth.mode === McpConnectionAuthModeEnum.Dcr
+  ) {
+    return undefined;
   }
 
-  if (mcp.authorizeUrl) {
-    const defaultLabel = isErrorStatus(mcp.status) ? 'Retry' : 'Connect';
+  if (!('scopes' in oauth) || oauth.scopes.length === 0) {
+    return undefined;
+  }
 
-    blocks.push({
+  const preview = oauth.scopes.slice(0, 4).join(', ');
+  const suffix = oauth.scopes.length > 4 ? ', …' : '';
+
+  return `Permissions requested: ${preview}${suffix}`;
+}
+
+export function resolveMcpStatusHint(mcp: SetupCardRow): string | undefined {
+  if (mcp.status === McpConnectionStatusEnum.Expired) {
+    return 'Connection expired — reconnect to continue.';
+  }
+
+  if (mcp.status === McpConnectionStatusEnum.Revoked) {
+    return 'Access revoked — reconnect to continue.';
+  }
+
+  if (mcp.status === McpConnectionStatusEnum.Error) {
+    return mcp.errorMessage ?? 'Connection failed — try again.';
+  }
+
+  return undefined;
+}
+
+export function resolveProviderManagedRowHint(mcp: SetupCardRow): string | undefined {
+  if (!mcp.treatAsConnected && !isProviderManagedOAuthMcp(mcp)) {
+    return undefined;
+  }
+
+  return 'Connected via your workspace — no OAuth needed.';
+}
+
+export function buildMcpCardBodyMarkdown(mcp: SetupCardRow): string {
+  const lines: string[] = [];
+
+  const description = resolveMcpDescription(mcp.mcpId);
+  if (description) {
+    lines.push(description);
+  }
+
+  const providerManagedHint = resolveProviderManagedRowHint(mcp);
+  if (providerManagedHint) {
+    lines.push(`_${providerManagedHint}_`);
+  }
+
+  const statusHint = resolveMcpStatusHint(mcp);
+  if (statusHint) {
+    lines.push(`_${statusHint}_`);
+  }
+
+  const permissionHint = resolveMcpPermissionHint(mcp.mcpId);
+  if (permissionHint) {
+    lines.push(`_${permissionHint}_`);
+  }
+
+  if (!mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
+    lines.push(
+      `_${mcp.connectUnavailableReason ?? "Connect isn't available right now. Try again from the dashboard."}_`
+    );
+  }
+
+  return lines.join('\n');
+}
+
+/** Short subtitle for Slack native cards — one-line status only; longer copy goes in body. */
+export function buildMcpCardSubtitleMarkdown(mcp: SetupCardRow): string | undefined {
+  if (mcp.status === McpConnectionStatusEnum.Expired) {
+    return 'Connection expired';
+  }
+
+  if (mcp.status === McpConnectionStatusEnum.Revoked) {
+    return 'Access revoked';
+  }
+
+  if (mcp.status === McpConnectionStatusEnum.Error) {
+    return 'Connection failed';
+  }
+
+  if (!mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
+    return 'Connect unavailable';
+  }
+
+  return undefined;
+}
+
+/** Catalog description only — Slack card `body` is capped at 200 characters. */
+export function buildMcpSlackCardBodyText(mcp: SetupCardRow): string | undefined {
+  const description = resolveMcpDescription(mcp.mcpId);
+
+  if (!description) {
+    return undefined;
+  }
+
+  return truncateSlackCardText(description);
+}
+
+/** Secondary hint below the body: unavailable reason, error detail, or auto-approve copy. */
+export function resolveMcpSlackCardSubtext(mcp: SetupCardRow): string | undefined {
+  if (!mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
+    return truncateSlackCardText(
+      mcp.connectUnavailableReason ?? 'Connect is not available. Try again from the dashboard.'
+    );
+  }
+
+  const statusHint = resolveMcpStatusHint(mcp);
+  if (statusHint) {
+    return truncateSlackCardText(statusHint);
+  }
+
+  if (mcp.authorizeUrlWithAutoApprove && isSetupMcpRowPending(mcp)) {
+    return SETUP_AUTO_APPROVE_HINT;
+  }
+
+  return undefined;
+}
+
+export function buildMcpRowMarkdown(mcp: SetupCardRow): string {
+  const lines = [`*${mcp.name}*`, ...buildMcpCardBodyMarkdown(mcp).split('\n').filter(Boolean)];
+
+  return lines.join('\n');
+}
+
+function appendHintLine(lines: string[], hint: string | undefined): void {
+  if (hint) {
+    lines.push(hint);
+  }
+}
+
+export function buildMcpRowPlainText(mcp: SetupCardRow): string {
+  const body = buildMcpCardBodyMarkdown(mcp)
+    .split('\n')
+    .map((line) => line.replace(/^_(.+)_$/, '$1'))
+    .filter(Boolean);
+
+  return body.join('\n');
+}
+
+export function buildSetupMcpPortableCard(mcp: SetupCardRow): Record<string, unknown> {
+  const children: Record<string, unknown>[] = [{ type: 'text', content: buildMcpRowPlainText(mcp) }];
+
+  if (mcp.authorizeUrlWithAutoApprove && isSetupMcpRowPending(mcp)) {
+    children.push({ type: 'text', content: SETUP_AUTO_APPROVE_HINT });
+  }
+
+  if (mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
+    const actionButtons: Array<{ type: string; label: string; url: string; style?: string }> = [];
+
+    if (mcp.authorizeUrlWithAutoApprove && !mcp.connectButtonLabel) {
+      const labels = resolveSetupConnectButtonLabels(mcp);
+
+      actionButtons.push({
+        type: 'link-button',
+        label: labels.connectWithAutoApprove,
+        url: mcp.authorizeUrlWithAutoApprove,
+      });
+      actionButtons.push({
+        type: 'link-button',
+        label: labels.connect,
+        url: mcp.authorizeUrl,
+      });
+    } else {
+      const defaultLabel = isSetupMcpRowError(mcp) ? SETUP_RETRY_BUTTON_LABEL : SETUP_CONNECT_BUTTON_LABEL;
+
+      actionButtons.push({
+        type: 'link-button',
+        label: mcp.connectButtonLabel ?? defaultLabel,
+        url: mcp.authorizeUrl,
+        style: 'primary',
+      });
+    }
+
+    children.push({
       type: 'actions',
-      children: [
-        {
-          type: 'link-button',
-          label: mcp.connectButtonLabel ?? defaultLabel,
-          url: mcp.authorizeUrl,
-          style: 'primary',
-        },
-      ],
+      children: actionButtons,
     });
   }
 
-  return blocks;
+  return {
+    type: 'card',
+    title: mcp.name,
+    children,
+  };
 }
 
-function buildMcpRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  // When an authorize URL is present on a connected row, the connection needs
-  // to be re-authorized (e.g. Thalamus reported MCP initialize failed even
-  // though Novu's DB row says connected). Render the pending row so the user
-  // sees the Connect button instead of a stale checkmark.
-  if (mcp.status === McpConnectionStatusEnum.Connected && !mcp.authorizeUrl) {
-    return buildConnectedRowBlocks(mcp);
-  }
+function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
+  return [buildSetupMcpPortableCard(mcp)];
+}
 
-  return buildPendingRowBlocks(mcp);
+export function buildPendingPortableRowBlocks(mcps: SetupCardRow[]): Record<string, unknown>[] {
+  const pendingRows = sortPendingSetupCardRows(mcps);
+  const blocks: Record<string, unknown>[] = [];
+
+  pendingRows.forEach((mcp, index) => {
+    if (index > 0) {
+      blocks.push({ type: 'divider' });
+    }
+
+    blocks.push(...buildPendingRowBlocks(mcp));
+  });
+
+  return blocks;
 }
 
 export function buildSetupCard(params: {
@@ -90,10 +386,7 @@ export function buildSetupCard(params: {
     };
   }
 
-  const children = [
-    { type: 'text', content: SETUP_REQUIRED_TEXT },
-    ...params.mcps.flatMap((mcp) => buildMcpRowBlocks(mcp)),
-  ];
+  const children = [{ type: 'text', content: SETUP_INTRO_TEXT }, ...buildPendingPortableRowBlocks(params.mcps)];
 
   return {
     type: 'card',

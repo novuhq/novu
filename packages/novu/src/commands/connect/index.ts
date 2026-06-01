@@ -37,16 +37,15 @@ export async function connectCommand(options: ConnectCommandOptions, anonymousId
   let resolvedUserId: string | undefined;
 
   const trackEvent = (event: string, data?: Record<string, unknown>) => {
-    trackConnect(
-      analytics,
-      anonymousId,
-      event,
-      { ...(data ?? {}), onboardingSessionId: anonymousId },
-      resolvedUserId
-    );
+    trackConnect(analytics, anonymousId, event, { ...(data ?? {}), onboardingSessionId: anonymousId }, resolvedUserId);
   };
 
-  const onIdentityResolved = (user: { id: string; email?: string | null; firstName?: string | null; lastName?: string | null }) => {
+  const onIdentityResolved = (user: {
+    id: string;
+    email?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+  }) => {
     if (!anonymousId || resolvedUserId) return;
 
     aliasConnectSession(analytics, anonymousId, user);

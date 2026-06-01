@@ -31,11 +31,7 @@ type ConnectAuthUser = {
   lastName?: string | null;
 };
 
-export function aliasConnectSession(
-  analytics: AnalyticService,
-  anonymousId: string,
-  user: ConnectAuthUser
-): void {
+export function aliasConnectSession(analytics: AnalyticService, anonymousId: string, user: ConnectAuthUser): void {
   analytics.alias({ previousId: anonymousId, userId: user.id });
 }
 

@@ -90,7 +90,7 @@ describe('setup-card helpers', () => {
   });
 
   describe('buildSetupCard', () => {
-    it('renders a checkmark when the MCP status is connected', () => {
+    it('omits connected MCPs from the pending setup card', () => {
       const card = buildSetupCard({
         mcps: [
           {
@@ -105,7 +105,7 @@ describe('setup-card helpers', () => {
       const children = card.children as Array<{ type: string; content?: string }>;
       const figmaRow = children.find((block) => block.type === 'text' && block.content?.includes('Figma'));
 
-      expect(figmaRow?.content).to.equal('**Figma**  ✅');
+      expect(figmaRow).to.equal(undefined);
     });
 
     it('renders a "Connect from provider" button when connectButtonLabel is set', () => {
