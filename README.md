@@ -62,7 +62,7 @@
 <a href="https://www.recent.dev">Recent.dev</a>
 </p>
 
-Software is becoming more conversational, and user expectations are rising with it. People no longer want static, irrelevant notifications they glance at and forget — they want to engage, ask questions, and go deeper. Instead of a one-way report dropped in their inbox, they expect a thread they can explore: follow up on a metric, drill into an anomaly, or continue a conversation right where they left off. That shift — from broadcast to dialogue — is what Novu's communication infrastructure is built for.
+Software is becoming more conversational, and user expectations are rising with it. People no longer want static, irrelevant notifications they glance at and forget, they want to engage, ask questions, and go deeper. Instead of a one-way report dropped in their inbox, they expect a thread they can explore: follow up on a metric, drill into an anomaly, or continue a conversation right where they left off. That shift, from broadcast to meaningful dialog is what Novu's communication infrastructure is built for.
 
 ## ⭐️ Why Novu?
  
