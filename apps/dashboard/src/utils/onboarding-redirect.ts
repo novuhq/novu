@@ -71,8 +71,7 @@ export function getPostOrgCreateRoute(appId: AppId, _isAgentsEnabled: boolean): 
     return ROUTES.AGENTS_SETUP;
   }
 
-  // Platform skips the usecase picker and starts directly with notifications/inbox.
-  return ROUTES.INBOX_USECASE;
+  return ROUTES.USECASE_SELECT;
 }
 
 // May return an absolute URL when crossing to the other product host — callers must check

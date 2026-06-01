@@ -410,11 +410,10 @@ export function OrganizationList(props?: {
   afterSelectOrganizationUrl?: string;
   afterCreateOrganizationUrl?: string;
 }) {
-  // Platform skips the usecase picker and starts directly with notifications/inbox.
   return (
     <OrganizationCreateComponent
       afterSelectOrganizationUrl={props?.afterSelectOrganizationUrl || ROUTES.ENV}
-      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || ROUTES.INBOX_USECASE}
+      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || ROUTES.USECASE_SELECT}
     />
   );
 }
