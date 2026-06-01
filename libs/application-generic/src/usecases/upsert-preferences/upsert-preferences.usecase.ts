@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   EnforceEnvOrOrgIds,
-  ErrorCodesEnum,
+  isDuplicateKeyError,
   PreferencesDBModel,
   PreferencesEntity,
   PreferencesRepository,
@@ -193,14 +193,15 @@ export class UpsertPreferences {
         contextKeys: useContextFiltering && isContextScoped ? (command.contextKeys ?? []) : undefined,
       });
     } catch (error) {
-      const isDuplicateKeyError =
-        error && typeof error === 'object' && 'code' in error && error.code === ErrorCodesEnum.DUPLICATE_KEY;
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
 
-      if (isDuplicateKeyError) {
-        const existingPreference = await this.getPreference(command);
-        if (existingPreference) {
-          return existingPreference;
-        }
+      const existingPreference =
+        (await this.getPreference(command)) ?? (await this.findPreferenceAfterDuplicateKey(command));
+
+      if (existingPreference) {
+        return this.updatePreferences(existingPreference, command);
       }
 
       throw error;
@@ -245,6 +246,25 @@ export class UpsertPreferences {
     }
 
     return undefined;
+  }
+
+  /**
+   * After E11000, the conflicting row may not match context-scoped getPreference
+   * (legacy unique index or race). Look up by the stable identity fields only.
+   */
+  private async findPreferenceAfterDuplicateKey(
+    command: UpsertPreferencesCommand
+  ): Promise<PreferencesEntity | undefined> {
+    const query: FilterQuery<PreferencesDBModel> & EnforceEnvOrOrgIds = {
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      _subscriberId: command._subscriberId,
+      _topicSubscriptionId: command.topicSubscriptionId,
+      _templateId: command.templateId,
+      type: command.type,
+    };
+
+    return await this.preferencesRepository.findOne(query);
   }
 
   private async getPreference(command: UpsertPreferencesCommand): Promise<PreferencesEntity | undefined> {
