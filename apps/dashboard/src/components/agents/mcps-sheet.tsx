@@ -144,20 +144,13 @@ function sortSupportedFirst(entries: McpServer[], options: McpBadgeKindOptions):
 }
 
 /**
- * Provider-managed MCPs are enabled via the immediate "Add from Claude"
- * endpoint, not the staged Save diff. Always union them into the bulk save
- * payload so "Save changes" never disables rows the user already provisioned.
+ * Bulk save sends the staged enablement set. Provider-managed rows are kept
+ * in `stagedIds` by the immediate add/remove mutations, so the ref alone is
+ * the source of truth and a stale `enabledServers` snapshot cannot re-add
+ * a row the user just removed.
  */
-function buildSaveMcpIds(stagedIds: Set<string>, enabledServers: AgentMcpServerEnablement[]): string[] {
-  const merged = new Set(stagedIds);
-
-  for (const server of enabledServers) {
-    if (server.defaultAuthMode === McpConnectionAuthModeEnum.ProviderManaged) {
-      merged.add(server.mcpId);
-    }
-  }
-
-  return [...merged];
+function buildSaveMcpIds(stagedIds: Set<string>): string[] {
+  return [...stagedIds];
 }
 
 function formatPartialFailureMessage(failures: SetAgentMcpServersFailure[]): string {
@@ -251,7 +244,7 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
     mutationFn: () => {
       const env = requireEnvironment(currentEnvironment, 'No environment selected');
 
-      return setAgentMcpServers(env, agent.identifier, buildSaveMcpIds(stagedIds, enabledServersRef.current));
+      return setAgentMcpServers(env, agent.identifier, buildSaveMcpIds(stagedIds));
     },
     onSuccess: async (response) => {
       await invalidateMcpsQuery();

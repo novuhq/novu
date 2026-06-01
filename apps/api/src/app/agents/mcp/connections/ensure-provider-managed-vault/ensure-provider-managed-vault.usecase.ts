@@ -203,7 +203,10 @@ export class EnsureProviderManagedVault {
         subscriberMongoId: subscriber._id,
       });
 
-      if (subscriberVaultId) {
+      if (connection.auth?.externalVaultId) {
+        externalVaultId = connection.auth.externalVaultId;
+        await this.markProviderManagedConnectionConnected(connection, command);
+      } else if (subscriberVaultId) {
         await this.mcpConnectionRepository.setConnectionExternalVaultIdIfMissing({
           connectionId: connection._id,
           environmentId: command.environmentId,

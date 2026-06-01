@@ -221,4 +221,18 @@ describe('EnsureProviderManagedVault', () => {
     ]);
     expect(createOrUpdateSubscriber.execute.called).to.equal(false);
   });
+
+  it('reuses a vault id already stored on a concurrent-winner connection row', async () => {
+    mcpConnectionRepository.findSubscriberConnection.onFirstCall().resolves(null);
+    mcpConnectionRepository.create.rejects(new Error('duplicate key'));
+    mcpConnectionRepository.findSubscriberConnection.onSecondCall().resolves({
+      _id: 'conn_winner',
+      auth: { externalVaultId: 'vlt_winner' },
+    } as never);
+
+    const result = await useCase.execute(makeCommand());
+
+    expect(result.externalVaultId).to.equal('vlt_winner');
+    expect(mcpConnectionVaultService.ensureConnectionVault.called).to.equal(false);
+  });
 });
