@@ -8,6 +8,7 @@ import {
 import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
+  FeatureFlagsService,
   PinoLogger,
   resolveAgentRuntime,
 } from '@novu/application-generic';
@@ -29,6 +30,7 @@ import {
   McpConnectionStatusEnum,
 } from '@novu/shared';
 
+import { assertMcpProviderManagedFlagEnabled } from '../../assert-mcp-provider-managed-flag-enabled';
 import { EnableAgentMcpServerCommand } from '../../servers/enable-agent-mcp-server/enable-agent-mcp-server.command';
 import { EnableAgentMcpServer } from '../../servers/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
 import { McpConnectionVaultService } from '../mcp-connection-vault.service';
@@ -48,10 +50,9 @@ export type EnsureProviderManagedVaultResult = {
  *
  * Pure delegation flow — Novu never speaks OAuth for these MCPs:
  *
- *   1. Gate the flow per-org (`IS_MCP_PROVIDER_MANAGED_ENABLED`). The
- *      `EnableAgentMcpServer` invocation below performs the same assertion;
- *      we run it here too so a flag-off org never gets a half-completed
- *      enablement row even if the catalog mode is provider-managed.
+ *   1. Gate the flow per-org (`IS_MCP_PROVIDER_MANAGED_ENABLED`) before any
+ *      subscriber provisioning or enablement writes. `EnableAgentMcpServer`
+ *      re-asserts the same flag as defense in depth.
  *   2. Map the dashboard `userId` to a Novu subscriber in the current
  *      environment so the vault is keyed by the same `Subscriber._id` the
  *      runtime providers use for `vault_ids` at dispatch.
@@ -81,6 +82,7 @@ export class EnsureProviderManagedVault {
     private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase,
     private readonly enableAgentMcpServer: EnableAgentMcpServer,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(EnsureProviderManagedVault.name);
@@ -98,6 +100,13 @@ export class EnsureProviderManagedVault {
         `MCP "${command.mcpId}" is not provider-managed; use the standard OAuth endpoints instead.`
       );
     }
+
+    await assertMcpProviderManagedFlagEnabled({
+      featureFlagsService: this.featureFlagsService,
+      mcpId: command.mcpId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+    });
 
     const agent = await this.agentRepository.findOne(
       {

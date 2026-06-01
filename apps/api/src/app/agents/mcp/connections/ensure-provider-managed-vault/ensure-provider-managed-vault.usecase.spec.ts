@@ -1,10 +1,12 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
 import * as ApplicationGeneric from '@novu/application-generic';
+import { FeatureFlagsService } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
   AgentRepository,
@@ -76,6 +78,7 @@ describe('EnsureProviderManagedVault', () => {
   let createOrUpdateSubscriber: { execute: sinon.SinonStub };
   let enableAgentMcpServer: { execute: sinon.SinonStub };
   let mcpConnectionVaultService: { ensureConnectionVault: sinon.SinonStub };
+  let featureFlagsService: sinon.SinonStubbedInstance<FeatureFlagsService>;
   let runtimeProvider: { capabilities: { tokenVault: boolean }; createVault?: sinon.SinonStub };
 
   beforeEach(() => {
@@ -87,6 +90,8 @@ describe('EnsureProviderManagedVault', () => {
     createOrUpdateSubscriber = { execute: sinon.stub() };
     enableAgentMcpServer = { execute: sinon.stub().resolves({}) };
     mcpConnectionVaultService = { ensureConnectionVault: sinon.stub().resolves(EXTERNAL_VAULT_ID) };
+    featureFlagsService = sinon.createStubInstance(FeatureFlagsService);
+    featureFlagsService.getFlag.resolves(true);
     runtimeProvider = { capabilities: { tokenVault: true } };
 
     sinon.stub(ApplicationGeneric, 'resolveAgentRuntime').returns({
@@ -124,6 +129,7 @@ describe('EnsureProviderManagedVault', () => {
       createOrUpdateSubscriber as never,
       enableAgentMcpServer as never,
       mcpConnectionVaultService as never,
+      featureFlagsService as never,
       makeLogger() as never
     );
   });
@@ -148,6 +154,21 @@ describe('EnsureProviderManagedVault', () => {
     } catch (err) {
       expect(err).to.be.instanceOf(BadRequestException);
     }
+  });
+
+  it('rejects when the provider-managed rollout flag is off before provisioning a subscriber', async () => {
+    featureFlagsService.getFlag.resolves(false);
+
+    try {
+      await useCase.execute(makeCommand());
+      expect.fail('Expected ForbiddenException');
+    } catch (err) {
+      expect(err).to.be.instanceOf(ForbiddenException);
+    }
+
+    expect(subscriberRepository.findBySubscriberId.called).to.equal(false);
+    expect(createOrUpdateSubscriber.execute.called).to.equal(false);
+    expect(enableAgentMcpServer.execute.called).to.equal(false);
   });
 
   it('rejects when the agent does not exist', async () => {
