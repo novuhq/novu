@@ -73,8 +73,6 @@ There are two ways to build with Novu, and they share the same foundation: a sin
 - **Communication infrastructure for products** — Send notifications across Inbox/In-App, Email, SMS, Push, and Chat through one API, with workflows, digests, and an embeddable `<Inbox />` component.
 - **Agent Communication Infrastructure (ACI)** — Connect any agent you've already built to any communication channel: Slack, Microsoft Teams, Telegram, WhatsApp, email through one conversation model.
 
-> **Novu isn't the brain of your agent.** You bring the intelligence, Novu is the connective layer between your agent and the people it talks to.
-
 ## 🚀 Getting Started
 
 [Create a free account](https://go.novu.co/dashboard?utm_source=github&utm_medium=readme&utm_campaign=create-free-account-link) and follow the instructions on the dashboard.
