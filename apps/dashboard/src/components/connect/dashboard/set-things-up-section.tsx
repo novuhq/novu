@@ -6,6 +6,8 @@ import { docsUrl } from '@/components/header-navigation/support-drawer-constants
 import { Button } from '@/components/primitives/button';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { APP_IDS } from '@/utils/apps';
+import { withAppId } from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
@@ -170,9 +172,7 @@ export function SetThingsUpSection() {
 
   const goToAddAgent = () => {
     trackCtaClick('add-agent');
-    if (!environmentSlug) return;
-
-    navigate(`${buildRoute(ROUTES.CONNECT_AGENTS, { environmentSlug })}?create=1`);
+    navigate(withAppId(ROUTES.AGENTS_SETUP, APP_IDS.CONNECT));
   };
 
   const goToSetupChannel = () => {

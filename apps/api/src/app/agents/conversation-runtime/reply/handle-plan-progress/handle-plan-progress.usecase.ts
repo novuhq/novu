@@ -150,7 +150,7 @@ export class HandlePlanProgress {
     try {
       const result = await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({
-          userId: 'system',
+          userId: command.organizationId,
           environmentId: command.environmentId,
           organizationId: command.organizationId,
           conversationId: command.conversationId,

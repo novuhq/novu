@@ -242,7 +242,7 @@ export class GenerateMcpOAuthUrl {
         authMode: context.oauthConfig.mode,
         scope: McpConnectionScopeEnum.Subscriber,
         subscriberId: command.subscriberId,
-        source: command.userId === 'system' ? 'setup_card' : 'api',
+        source: command.source ?? 'api',
         conversationId: command.conversationId,
         reusedPendingSession: options?.reusedPendingSession,
       });
@@ -802,7 +802,7 @@ export class GenerateMcpOAuthUrl {
       scope: McpConnectionScopeEnum.Subscriber,
       timestamp: Date.now(),
       userId: command.userId,
-      source: command.userId === 'system' ? 'setup_card' : 'api',
+      source: command.source ?? 'api',
       ...(command.conversationId ? { conversationId: command.conversationId } : {}),
       ...(command.trustToolsOnConnect ? { trustToolsOnConnect: true } : {}),
     };

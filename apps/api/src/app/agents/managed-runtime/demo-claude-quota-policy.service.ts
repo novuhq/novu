@@ -46,18 +46,18 @@ export class DemoClaudeQuotaPolicy {
     }
 
     if (quota.reason === 'conversations') {
-      this.analyticsService.track('[Novu Managed Claude] - Conversation limit reached', 'system', {
+      this.analyticsService.track('[Novu Managed Claude] - Conversation limit reached', context.config.organizationId, {
+        _organization: context.config.organizationId,
         environmentId: context.config.environmentId,
-        organizationId: context.config.organizationId,
         agentId: agent._id,
         ...quota.conversations,
       });
     }
 
     if (quota.reason === 'tokens') {
-      this.analyticsService.track('[Novu Managed Claude] - Token limit reached', 'system', {
+      this.analyticsService.track('[Novu Managed Claude] - Token limit reached', context.config.organizationId, {
+        _organization: context.config.organizationId,
         environmentId: context.config.environmentId,
-        organizationId: context.config.organizationId,
         agentId: agent._id,
         conversationId: String(context.conversation._id),
         ...quota.tokens,
