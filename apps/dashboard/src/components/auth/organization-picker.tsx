@@ -460,21 +460,7 @@ export function OrganizationPicker({
   const [isCreating, setIsCreating] = useState(false);
   const hasTrackedRef = useRef(false);
   const hasInitializedViewRef = useRef(false);
-
-  // Initial routing decision once the full membership list is in. If there are zero matching
-  // workspaces (post-delete, post-leave, or a fresh sign-up that didn't auto-provision), drop
-  // into the create form. No cross-product bouncing: invited memberships often arrive without
-  // `publicMetadata.productType` set yet, so any host-hop decision based on that metadata is
-  // unreliable — better to let the user create / pick on the host they're currently on.
-  useEffect(() => {
-    if (!isFullListLoaded || hasInitializedViewRef.current) return;
-
-    hasInitializedViewRef.current = true;
-
-    if (filteredMemberships.length === 0) {
-      setView('create');
-    }
-  }, [isFullListLoaded, filteredMemberships.length]);
+  const autoSelectTriggeredRef = useRef(false);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {
@@ -578,6 +564,29 @@ export function OrganizationPicker({
     void onSignOut();
   }, [filteredMemberships.length, onSignOut]);
 
+  // Initial routing decision once the full membership list is in. If there are zero matching
+  // workspaces (post-delete, post-leave, or a fresh sign-up that didn't auto-provision), drop
+  // into the create form. If there is exactly one matching workspace, skip the picker and
+  // auto-select it. No cross-product bouncing: invited memberships often arrive without
+  // `publicMetadata.productType` set yet, so any host-hop decision based on that metadata is
+  // unreliable — better to let the user create / pick on the host they're currently on.
+  useEffect(() => {
+    if (!isFullListLoaded || hasInitializedViewRef.current) return;
+
+    hasInitializedViewRef.current = true;
+
+    if (filteredMemberships.length === 0) {
+      setView('create');
+
+      return;
+    }
+
+    if (filteredMemberships.length === 1) {
+      autoSelectTriggeredRef.current = true;
+      void handleSelect(filteredMemberships[0].organization.id);
+    }
+  }, [isFullListLoaded, filteredMemberships, handleSelect]);
+
   // Show the full-screen spinner only while page 1 is in flight. Once page 1 lands we render the
   // picker and surface the inline "Loading more…" row for any subsequent pages — same model as
   // `OrganizationDropdown`. Exception: if page 1 yields no matching orgs but more pages are
@@ -586,7 +595,15 @@ export function OrganizationPicker({
   const isStreamingMorePages = isFirstPageReady && !isFullListLoaded;
   const shouldWaitForMorePages = isStreamingMorePages && filteredMemberships.length === 0;
 
-  if (!isFirstPageReady || shouldWaitForMorePages) {
+  // Suppress the picker when a single matching org will be (or is being) auto-selected.
+  // `pendingSingleOrgAutoSelect` covers the render before the initialization effect fires;
+  // `isAutoSelectInProgress` covers the period after the effect triggered `handleSelect`
+  // until the navigation completes (or `handleSelect` errors out and resets `isSelecting`).
+  const pendingSingleOrgAutoSelect =
+    isFullListLoaded && filteredMemberships.length === 1 && !hasInitializedViewRef.current;
+  const isAutoSelectInProgress = autoSelectTriggeredRef.current && isSelecting;
+
+  if (!isFirstPageReady || shouldWaitForMorePages || pendingSingleOrgAutoSelect || isAutoSelectInProgress) {
     return (
       <div className="flex min-h-[280px] w-full items-center justify-center">
         <RiLoader4Line className="text-text-sub size-5 animate-spin" />

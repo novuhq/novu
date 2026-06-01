@@ -145,12 +145,28 @@ function OrganizationListContent({
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const autoSelectTriggeredRef = useRef(false);
 
   useEffect(() => {
     const loadOrganizations = async () => {
       try {
         const { data } = await authClient.organization.list();
-        setOrganizations(data || []);
+        const orgs = data || [];
+        setOrganizations(orgs);
+
+        if (orgs.length === 1 && !autoSelectTriggeredRef.current) {
+          autoSelectTriggeredRef.current = true;
+          setIsSelecting(true);
+          try {
+            await authClient.organization.setActive({ organizationId: orgs[0].id });
+            window.location.href = afterSelectOrganizationUrl || ROUTES.ENV;
+
+            return;
+          } catch (e: any) {
+            console.error('Failed to auto-select organization:', e);
+            setIsSelecting(false);
+          }
+        }
       } catch (e: any) {
         console.error('Failed to load organizations:', e);
       } finally {
@@ -158,8 +174,8 @@ function OrganizationListContent({
       }
     };
 
-    loadOrganizations();
-  }, []);
+    void loadOrganizations();
+  }, [afterSelectOrganizationUrl]);
 
   const handleSelectOrganization = async (organizationId: string) => {
     setIsSelecting(true);
@@ -178,7 +194,7 @@ function OrganizationListContent({
     window.location.href = afterCreateOrganizationUrl || ROUTES.INBOX_USECASE;
   };
 
-  if (isLoading) {
+  if (isLoading || (organizations.length === 1 && autoSelectTriggeredRef.current)) {
     return (
       <div className="flex items-center justify-center py-12">
         <RiLoader4Line className="size-6 animate-spin text-foreground-600" />
