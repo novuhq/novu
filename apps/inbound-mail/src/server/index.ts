@@ -28,6 +28,13 @@ const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 const inboundMailService = new InboundMailService();
 BullMqService.haveProInstalled();
 
+/**
+ * Exposed for tests so they can inject mock `requestLogger` / `tenantResolver`
+ * without standing up real ClickHouse / MongoDB. Production code should not
+ * read from this export.
+ */
+export const __testInboundMailService = inboundMailService;
+
 class Mailin extends events.EventEmitter {
   public configuration: IConfiguration;
 

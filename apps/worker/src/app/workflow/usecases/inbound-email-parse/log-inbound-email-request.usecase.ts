@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  InboundMailRequestLogger,
-  PinoLogger,
-  TraceStatus,
-} from '@novu/application-generic';
+import { InboundMailRequestLogger, PinoLogger, TraceStatus } from '@novu/application-generic';
 import { InboundEmailParseCommand } from './inbound-email-parse.command';
 import { InboundParseOutcome } from './inbound-parse-outcome';
 

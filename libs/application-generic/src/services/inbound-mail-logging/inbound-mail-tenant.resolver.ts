@@ -1,7 +1,7 @@
 import { Injectable, Optional } from '@nestjs/common';
 import { DomainRepository } from '@novu/dal';
-import { generateObjectId } from '../../utils/generate-id';
 import { PinoLogger } from '../../logging';
+import { generateObjectId } from '../../utils/generate-id';
 import { inferInboundParseStrategy, parseReplyToAddress } from './inbound-request-metadata';
 
 /**

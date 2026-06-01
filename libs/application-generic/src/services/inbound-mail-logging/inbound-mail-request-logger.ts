@@ -1,22 +1,18 @@
 import { Injectable, Optional } from '@nestjs/common';
-import { generateObjectId } from '../../utils/generate-id';
 import { PinoLogger } from '../../logging';
+import { generateObjectId } from '../../utils/generate-id';
 import {
   LogRepository,
+  mapEventTypeToTitle,
   RequestLog,
   RequestLogRepository,
   RequestLogSourceEnum,
   RequestTraceInput,
   TraceLogRepository,
   TraceStatus,
-  mapEventTypeToTitle,
 } from '../analytic-logs';
-import {
-  InboundParseStrategy,
-  InboundRequestSource,
-  buildInboundRequestMetadata,
-} from './inbound-request-metadata';
 import { InboundMailTenant } from './inbound-mail-tenant.resolver';
+import { buildInboundRequestMetadata, InboundParseStrategy, InboundRequestSource } from './inbound-request-metadata';
 
 const INBOUND_METHOD = 'INBOUND';
 
@@ -78,9 +74,7 @@ export class InboundMailRequestLogger {
   }
 
   isEnabled(): boolean {
-    return (
-      process.env.IS_ANALYTICS_LOGS_ENABLED === 'true' && process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED === 'true'
-    );
+    return process.env.IS_ANALYTICS_LOGS_ENABLED === 'true' && process.env.IS_INBOUND_ANALYTICS_LOGS_ENABLED === 'true';
   }
 
   /**
@@ -101,12 +95,15 @@ export class InboundMailRequestLogger {
     const strategy = context.strategy ?? inferStrategyFromTo(context.toAddress);
 
     try {
-      await this.requestLogRepository.create(
-        this.buildRequestLog(requestLogId, context, strategy),
-        { organizationId: context.tenant.organizationId, environmentId: context.tenant.environmentId }
-      );
+      await this.requestLogRepository.create(this.buildRequestLog(requestLogId, context, strategy), {
+        organizationId: context.tenant.organizationId,
+        environmentId: context.tenant.environmentId,
+      });
     } catch (error) {
-      this.logger?.warn({ err: error, transactionId: context.tenant.transactionId }, 'Failed to write inbound-email request log');
+      this.logger?.warn(
+        { err: error, transactionId: context.tenant.transactionId },
+        'Failed to write inbound-email request log'
+      );
 
       return null;
     }
