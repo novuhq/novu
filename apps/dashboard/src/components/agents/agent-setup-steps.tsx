@@ -237,7 +237,10 @@ export function AgentSetupSteps({
       ?.integration.sharedInboundAddress;
   }, [agentIntegrationLinks]);
 
-  const useCloudMergedListenStep = Boolean(sharedInboundAddress);
+  const isManagedRuntime = agent.runtime === 'managed';
+  // The merged listen step (shared address + Email card) is for custom-code agents
+  // completing bridge setup. Managed agents pick chat providers only.
+  const useCloudMergedListenStep = Boolean(sharedInboundAddress) && !isManagedRuntime;
   const legacyDefaultFromAgent = useCloudMergedListenStep ? undefined : agent.integrations?.[0];
   const effectiveIntegrationId = validatedSelectedId ?? legacyDefaultFromAgent?.integrationId;
 
@@ -260,7 +263,6 @@ export function AgentSetupSteps({
   const selectedProviderId =
     selectedIntegration?.providerId ?? (useCloudMergedListenStep ? undefined : legacyDefaultFromAgent?.providerId);
 
-  const isManagedRuntime = agent.runtime === 'managed';
   const isOnboarding = Boolean(connectSummary);
   const brainStepsBefore = isOnboarding ? BRAIN_STEPS : 0;
   const handlerStepsAfter = isManagedRuntime ? 0 : HANDLER_STEPS;
@@ -531,6 +533,7 @@ export function AgentSetupSteps({
           agentIdentifier={agent.identifier}
           agentName={agent.name}
           selectedIntegrationId={selectedIntegrationIdForCards}
+          selectedProviderId={selectedProviderId}
           existingLinks={agentIntegrationLinks}
           onSelect={handleProviderSelect}
         />
