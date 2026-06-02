@@ -98,6 +98,17 @@ export class ThreadResolver {
     await state.setIfNotExists(threadSubjectKey(threadId), subject, STATE_TTL_MS);
   }
 
+  /**
+   * Returns the first message ID recorded for the thread — the authoritative
+   * thread root. `undefined` when the thread has no tracked messages yet.
+   */
+  async getRootMessageId(threadId: string): Promise<string | undefined> {
+    const state = this.getState();
+    const messages = await state.getList<string>(threadMessagesKey(threadId));
+
+    return messages?.[0] ?? undefined;
+  }
+
   async getReplyHeaders(threadId: string): Promise<Record<string, string> | undefined> {
     const state = this.getState();
     const messages = await state.getList<string>(threadMessagesKey(threadId));

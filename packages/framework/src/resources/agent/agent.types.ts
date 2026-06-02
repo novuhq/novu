@@ -92,6 +92,19 @@ export interface AgentHistoryEntry {
   createdAt: string;
 }
 
+/** Resolved inbound email domain metadata (present when `platform === 'email'`). */
+export interface AgentEmailDomainContext {
+  id: string;
+  name: string;
+  data?: Record<string, string>;
+}
+
+/** Resolved inbound email route metadata (present when `platform === 'email'`). */
+export interface AgentEmailRouteContext {
+  address: string;
+  data?: Record<string, string>;
+}
+
 /** Platform-specific identifiers for the thread and channel. */
 export interface AgentPlatformContext {
   /** Platform-native thread ID (e.g. Slack thread `ts`, Teams conversation ID). */
@@ -100,6 +113,13 @@ export interface AgentPlatformContext {
   channelId: string;
   /** Whether the message arrived in a direct message rather than a shared channel. */
   isDM: boolean;
+  /** Platform-native raw message payload from the chat SDK adapter (e.g. email `NovuEmailRawMessage`). */
+  message?: unknown;
+  /** Resolved inbound email routing metadata extracted from the raw payload. */
+  email?: {
+    domain?: AgentEmailDomainContext;
+    route?: AgentEmailRouteContext;
+  };
 }
 
 // ---------------------------------------------------------------------------

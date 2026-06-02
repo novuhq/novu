@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AgentIntegrationRepository, IntegrationRepository } from '@novu/dal';
+import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
+import { AgentIntegrationRepository, DomainRouteEntity, IntegrationRepository } from '@novu/dal';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { PinoLogger } from '../../logging';
@@ -142,5 +143,66 @@ describe('InboundDomainRouteDelivery.previewAgentMailPayload', () => {
     expect(payload.inReplyTo).to.equal('previous@example.com');
     expect(payload.references).to.equal('ref-1@example.com ref-2@example.com');
     expect(payload.date).to.equal(new Date('2024-01-01T00:00:00.000Z').toISOString());
+  });
+
+  it('includes normalized headers with a size cap', () => {
+    const payload = usecase.previewAgentMailPayload({
+      ...baseMail,
+      headers: {
+        from: 'sender@example.com',
+        to: 'agent@inbox.example.com',
+        subject: 'Hello',
+        'message-id': 'msg-001@example.com',
+        'content-type': 'text/plain',
+        date: 'Mon, 01 Jan 2024 00:00:00 +0000',
+        'mime-version': '1.0',
+      } as InboundDomainRouteMailInput['headers'],
+    });
+
+    expect(payload.headers).to.deep.equal({
+      from: 'sender@example.com',
+      to: 'agent@inbox.example.com',
+      subject: 'Hello',
+      'message-id': 'msg-001@example.com',
+      'content-type': 'text/plain',
+      date: 'Mon, 01 Jan 2024 00:00:00 +0000',
+      'mime-version': '1.0',
+    });
+  });
+
+  it('includes resolved domain and route metadata when provided', () => {
+    const payload = usecase.previewAgentMailPayload(baseMail, {
+      domain: {
+        _id: 'domain-1',
+        name: 'inbox.example.com',
+        status: DomainStatusEnum.VERIFIED,
+        mxRecordConfigured: true,
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        data: { tier: 'pro' },
+      },
+      route: {
+        _id: 'route-1',
+        _domainId: 'domain-1',
+        address: 'support',
+        destination: 'agent-1',
+        type: DomainRouteTypeEnum.AGENT,
+        data: { queue: 'tier-1' },
+        _environmentId: 'env-1',
+        _organizationId: 'org-1',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-01T00:00:00.000Z',
+      } as DomainRouteEntity,
+    });
+
+    expect(payload.domain).to.deep.equal({
+      id: 'domain-1',
+      name: 'inbox.example.com',
+      data: { tier: 'pro' },
+    });
+    expect(payload.route).to.deep.equal({
+      address: 'support',
+      data: { queue: 'tier-1' },
+    });
   });
 });

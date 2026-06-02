@@ -20,6 +20,7 @@ import type { MetadataOp } from '../../conversation/agent-conversation.service';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { OutboundGateway } from '../../egress/outbound.gateway';
 import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
+import { buildAgentPlatformContext } from '../../runtime/build-platform-context.util';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
@@ -467,11 +468,13 @@ export class HandleAgentReply {
       subscriber,
       history,
       message: null,
-      platformContext: {
-        threadId: channel.platformThreadId,
+      platformContext: buildAgentPlatformContext({
+        platformThreadId: channel.platformThreadId,
         channelId: '',
         isDM: false,
-      },
+        platform: config.platform,
+        message: null,
+      }),
     });
   }
 }

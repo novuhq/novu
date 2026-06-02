@@ -6,8 +6,10 @@ import { captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from './agent-runtime.port';
-import { type AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
+import type { AgentExecutionParams } from './bridge-executor.service';
+import { BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
 import type { ConversationTurn } from './conversation-turn';
+import { buildAgentPlatformContext } from './build-platform-context.util';
 import { applyPlatformThreadIdToThread } from './platform-thread.util';
 
 const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
@@ -70,11 +72,13 @@ export class BridgeRuntime implements AgentRuntime {
       subscriber: turn.subscriber,
       history: turn.history,
       message: turn.message,
-      platformContext: {
-        threadId: turn.platformThreadId,
+      platformContext: buildAgentPlatformContext({
+        platformThreadId: turn.platformThreadId,
         channelId: turn.thread.channelId,
         isDM: turn.thread.isDM,
-      },
+        platform: turn.config.platform,
+        message: turn.message,
+      }),
       storedAttachments: turn.storedAttachments,
       action: turn.action,
       reaction: turn.reaction,
