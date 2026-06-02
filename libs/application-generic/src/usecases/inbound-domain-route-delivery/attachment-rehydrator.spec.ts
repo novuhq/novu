@@ -6,9 +6,24 @@ import { NonExistingFileError } from '../../services/storage/non-existing-file.e
 import { StorageService } from '../../services/storage/storage.service';
 import { AttachmentRehydrator } from './attachment-rehydrator';
 
+/*
+ * StorageService is an abstract class with no concrete methods, so
+ * `sandbox.createStubInstance(StorageService)` cannot walk it. Hand-build a
+ * minimal stub object that satisfies the only methods AttachmentRehydrator
+ * touches (`getFile`).
+ */
+type StorageServiceStubs = {
+  getFile: sinon.SinonStub;
+  getSignedUrl: sinon.SinonStub;
+  getReadSignedUrl: sinon.SinonStub;
+  fileExists: sinon.SinonStub;
+  uploadFile: sinon.SinonStub;
+  deleteFile: sinon.SinonStub;
+};
+
 describe('AttachmentRehydrator', () => {
   let rehydrator: AttachmentRehydrator;
-  let storageService: sinon.SinonStubbedInstance<StorageService>;
+  let storageService: StorageServiceStubs;
   let sandbox: sinon.SinonSandbox;
 
   const makeAttachment = (overrides: Partial<IInboundParseAttachment> = {}): IInboundParseAttachment => ({
@@ -22,7 +37,14 @@ describe('AttachmentRehydrator', () => {
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
-    storageService = sandbox.createStubInstance(StorageService);
+    storageService = {
+      getFile: sandbox.stub(),
+      getSignedUrl: sandbox.stub(),
+      getReadSignedUrl: sandbox.stub(),
+      fileExists: sandbox.stub(),
+      uploadFile: sandbox.stub(),
+      deleteFile: sandbox.stub(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [AttachmentRehydrator, { provide: StorageService, useValue: storageService }],
@@ -118,5 +140,45 @@ describe('AttachmentRehydrator', () => {
     expect(result).to.have.length(2);
     expect(result[0].content).to.be.null;
     expect(result[1].content!.data).to.deep.equal([7, 8, 9]);
+  });
+
+  it('passes inline-mode attachments through unchanged without calling S3', async () => {
+    const inlineAttachment = {
+      filename: 'inline.pdf',
+      contentType: 'application/pdf',
+      size: 4,
+      content: { type: 'Buffer' as const, data: [37, 80, 68, 70] },
+    };
+
+    const result = await rehydrator.rehydrate([inlineAttachment]);
+
+    expect(result).to.have.length(1);
+    expect(result[0].filename).to.equal('inline.pdf');
+    expect(result[0].size).to.equal(4);
+    expect(result[0].content).to.deep.equal({ type: 'Buffer', data: [37, 80, 68, 70] });
+    expect(result[0].contentBytes).to.equal(4);
+    expect(result[0].url).to.be.undefined;
+    expect(result[0].storagePath).to.be.undefined;
+    sinon.assert.notCalled(storageService.getFile);
+  });
+
+  it('mixes inline and S3 attachments in a single batch', async () => {
+    storageService.getFile.resolves(Buffer.from([1, 2, 3]));
+
+    const s3Attachment = makeAttachment({ filename: 's3.pdf' });
+    const inlineAttachment = {
+      filename: 'inline.pdf',
+      contentType: 'application/pdf',
+      size: 2,
+      content: { type: 'Buffer' as const, data: [9, 9] },
+    };
+
+    const result = await rehydrator.rehydrate([s3Attachment, inlineAttachment]);
+
+    expect(result).to.have.length(2);
+    expect(result[0].content).to.deep.equal({ type: 'Buffer', data: [1, 2, 3] });
+    expect(result[1].content).to.deep.equal({ type: 'Buffer', data: [9, 9] });
+    sinon.assert.calledOnce(storageService.getFile);
+    sinon.assert.calledWithExactly(storageService.getFile, s3Attachment.storagePath);
   });
 });

@@ -267,6 +267,181 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
     });
   });
 
+  describe('PUT /v1/agents/:identifier/mcp-servers (bulk set)', () => {
+    type EnablementResponse = { mcpId: string; enabled: boolean; status: string };
+    type SetMcpsResponseBody = {
+      data: EnablementResponse[];
+      failed: Array<{ mcpId: string; operation: 'enable' | 'disable'; code: string; message: string }>;
+    };
+
+    async function putDesired(identifier: string, mcpIds: string[]) {
+      return session.testAgent.put(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`).send({ mcpIds });
+    }
+
+    async function findEnabledIds(agentId: string): Promise<string[]> {
+      const rows = await agentMcpServerRepository.findByAgent({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+        agentId,
+        enabledOnly: true,
+      });
+
+      return rows.map((r) => r.mcpId).sort();
+    }
+
+    it('enables every id in the desired set on a fresh agent', async () => {
+      const { identifier, agentId } = await createManagedAgent();
+
+      const res = await putDesired(identifier, ['linear', 'sentry']);
+
+      expect(res.status, `bulk PUT failed: ${JSON.stringify(res.body)}`).to.equal(200);
+      const body = res.body as SetMcpsResponseBody;
+      expect(body.failed).to.deep.equal([]);
+      expect(body.data.map((r) => r.mcpId).sort()).to.deep.equal(['linear', 'sentry']);
+      expect(body.data.every((r) => r.enabled)).to.equal(true);
+
+      expect(await findEnabledIds(agentId)).to.deep.equal(['linear', 'sentry']);
+      // Sync ran per enable (sequential orchestration today); the post-batch
+      // assertion that matters is that the upstream saw the final set at
+      // least once.
+      expect(mockProvider.updateConfig.callCount, 'updateConfig should run for each enable').to.be.greaterThan(0);
+      const lastCallProjection = mockProvider.updateConfig.lastCall.args[1].mcpServers as Array<{ externalId: string }>;
+      expect(lastCallProjection.map((p) => p.externalId).sort()).to.deep.equal(['linear', 'sentry']);
+    });
+
+    it('disables every currently-enabled id when the desired set is empty', async () => {
+      const { identifier, agentId } = await createManagedAgent();
+      await putDesired(identifier, ['linear', 'sentry']);
+
+      const res = await putDesired(identifier, []);
+
+      expect(res.status, `bulk PUT failed: ${JSON.stringify(res.body)}`).to.equal(200);
+      const body = res.body as SetMcpsResponseBody;
+      expect(body.failed).to.deep.equal([]);
+      expect(body.data).to.deep.equal([]);
+      expect(await findEnabledIds(agentId)).to.deep.equal([]);
+    });
+
+    it('is a no-op when the desired set already matches the current set', async () => {
+      const { identifier, agentId } = await createManagedAgent();
+      await putDesired(identifier, ['linear']);
+      const callsBeforeNoop = mockProvider.updateConfig.callCount;
+
+      const res = await putDesired(identifier, ['linear']);
+
+      expect(res.status).to.equal(200);
+      const body = res.body as SetMcpsResponseBody;
+      expect(body.failed).to.deep.equal([]);
+      expect(body.data.map((r) => r.mcpId)).to.deep.equal(['linear']);
+      expect(await findEnabledIds(agentId)).to.deep.equal(['linear']);
+      // Nothing in the diff → no further enable/disable usecase calls → no
+      // extra sync round-trip.
+      expect(mockProvider.updateConfig.callCount, 'no-op PUT should not trigger another sync').to.equal(
+        callsBeforeNoop
+      );
+    });
+
+    it('applies enables and disables together when the desired set differs from current', async () => {
+      const { identifier, agentId } = await createManagedAgent();
+      await putDesired(identifier, ['linear', 'sentry']);
+
+      // Swap: drop linear, keep sentry (no-op for sentry), add notion.
+      const res = await putDesired(identifier, ['sentry', 'notion']);
+
+      expect(res.status).to.equal(200);
+      const body = res.body as SetMcpsResponseBody;
+      expect(body.failed).to.deep.equal([]);
+      expect(body.data.map((r) => r.mcpId).sort()).to.deep.equal(['notion', 'sentry']);
+      expect(await findEnabledIds(agentId)).to.deep.equal(['notion', 'sentry']);
+    });
+
+    it('rejects the whole request with 400 when any id is not in the catalog (no partial writes)', async () => {
+      const { identifier, agentId } = await createManagedAgent();
+      await putDesired(identifier, ['linear']);
+
+      const res = await putDesired(identifier, ['linear', 'this-mcp-does-not-exist', 'sentry']);
+
+      expect(res.status).to.equal(400);
+      // Pre-existing enablement must be untouched and the never-seen ids
+      // must not have been partially written.
+      expect(await findEnabledIds(agentId)).to.deep.equal(['linear']);
+    });
+
+    it('rejects the request with 422 when the same id is listed twice (ArrayUnique DTO validation)', async () => {
+      // DTO-level class-validator failures route through Nest's
+      // ValidationPipe which the API configures with
+      // `errorHttpStatusCode: 422`. That's why this is 422 while the
+      // usecase-thrown "unknown catalog id" case above is 400 — different
+      // gates, different mappings.
+      const { identifier } = await createManagedAgent();
+
+      const res = await putDesired(identifier, ['linear', 'linear']);
+
+      expect(res.status).to.equal(422);
+    });
+
+    it('returns 404 when the agent does not exist', async () => {
+      const res = await session.testAgent
+        .put(`/v1/agents/agent-does-not-exist/mcp-servers`)
+        .send({ mcpIds: ['linear'] });
+
+      expect(res.status).to.equal(404);
+    });
+
+    it('collects per-row failures into `failed[]` while still surfacing the persisted converged state', async () => {
+      const { identifier, agentId } = await createManagedAgent();
+
+      // Force the *second* upstream projection to fail: first call (the
+      // initial linear enable as part of this PUT) succeeds, the second
+      // call (sentry enable) trips an upstream error. The bulk usecase
+      // must catch it and record the failure without aborting the rest
+      // of the batch.
+      mockProvider.updateConfig.onCall(1).rejects(new Error('Provider is unavailable'));
+
+      const res = await putDesired(identifier, ['linear', 'sentry']);
+
+      expect(res.status).to.equal(200);
+      const body = res.body as SetMcpsResponseBody;
+
+      expect(body.failed).to.have.length(1);
+      expect(body.failed[0].mcpId).to.equal('sentry');
+      expect(body.failed[0].operation).to.equal('enable');
+      expect(body.failed[0].code).to.be.a('string').that.is.not.empty;
+      expect(body.failed[0].message).to.be.a('string').that.is.not.empty;
+
+      // `data` mirrors the persisted state, same shape as GET
+      // /mcp-servers: both rows are `enabled: true` so both are returned.
+      // The fact that something didn't take healthily is communicated
+      // through `failed[]`, not by omission from `data`.
+      //
+      // Note on linear's status: SyncAgentMcpServers marks *every*
+      // currently-enabled row as `error` when the upstream projection
+      // call fails (it's a batch projection, not per-row). So sentry's
+      // failed sync flips linear's status from `active` back to `error`
+      // too. This is a known behaviour of the per-row sync model — pin
+      // it here so any future "skip the batch on sentry failure" or
+      // "per-row sync isolation" refactor has to consciously update
+      // this expectation.
+      expect(body.data.map((r) => r.mcpId).sort()).to.deep.equal(['linear', 'sentry']);
+      const linearRow = body.data.find((r) => r.mcpId === 'linear');
+      const sentryRow = body.data.find((r) => r.mcpId === 'sentry');
+      expect(linearRow?.status).to.equal('error');
+      expect(sentryRow?.status).to.equal('error');
+
+      expect(await findEnabledIds(agentId)).to.deep.equal(['linear', 'sentry']);
+
+      const erroredSentry = await agentMcpServerRepository.findByAgentAndMcpId({
+        organizationId: session.organization._id,
+        environmentId: session.environment._id,
+        agentId,
+        mcpId: 'sentry',
+      });
+      expect(erroredSentry, 'sentry row should still exist in error state').to.exist;
+      expect(erroredSentry!.status).to.equal('error');
+      expect(erroredSentry!.lastError, 'lastError should be populated on sync failure').to.exist;
+    });
+  });
+
   describe('DELETE /v1/agents/:identifier/mcp-servers/:mcpId', () => {
     it('cascade-deletes mcp_connection rows and removes the enablement', async () => {
       const { identifier, agentId } = await createManagedAgent();
@@ -841,9 +1016,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&code=fake-auth-code`
       );
-      // 200 HTML fallback (no DASHBOARD_URL) OR 302 redirect — both are
-      // success-side responses; the assertion that matters is the row state.
-      expect([200, 302], `unexpected callback status (body=${JSON.stringify(cb.body)})`).to.include(cb.status);
+      // The callback always renders a self-contained "flow complete" HTML page
+      // (no dashboard redirect); the assertion that matters is the row state.
+      expect(cb.status, `unexpected callback status (body=${JSON.stringify(cb.body)})`).to.equal(200);
+      expect(cb.text, 'callback should render the success page').to.include('Connection complete');
 
       const conn = await findGithubConnection(agentId);
       expect(conn, 'mcp_connection row should exist').to.exist;
@@ -924,7 +1100,8 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&error=access_denied&error_description=${encodeURIComponent('The user cancelled the consent')}`
       );
-      expect([200, 302]).to.include(cb.status);
+      expect(cb.status).to.equal(200);
+      expect(cb.text, 'callback should render the error page').to.include('Connection failed');
 
       const conn = await findGithubConnection(agentId);
       expect(conn!.status).to.equal(McpConnectionStatusEnum.Error);
@@ -955,7 +1132,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(conn!.lastError?.code).to.equal('mcp_novu_app_credentials_missing');
     });
 
-    it('token-exchange body includes RFC 8707 resource + client_secret + PKCE verifier', async () => {
+    it('token-exchange uses HTTP Basic for client_secret_basic and carries RFC 8707 resource + PKCE verifier in the body', async () => {
       const { state } = await authorizeAndCaptureState();
 
       // Capture the POST body so we can assert form-encoded params without
@@ -978,18 +1155,34 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const cb = await session.testAgent.get(
         `/v1/agents/mcp/oauth/callback?state=${encodeURIComponent(state)}&code=fake-auth-code`
       );
-      expect([200, 302]).to.include(cb.status);
+      expect(cb.status).to.equal(200);
 
       const tokenCall = safeJsonStub
         .getCalls()
         .find((c) => (c.args[0] as { url: string }).url.includes('/login/oauth/access_token'));
       expect(tokenCall, 'token endpoint should have been called').to.exist;
-      const tokenArgs = tokenCall!.args[0] as { method: string; body: string };
+      const tokenArgs = tokenCall!.args[0] as { method: string; body: string; headers: Record<string, string> };
       expect(tokenArgs.method).to.equal('POST');
+      // novu-app mode reconstructs an ephemeral oauthClient with no
+      // `tokenEndpointAuthMethod` persisted, so the callback resolves to
+      // the RFC 8414 §2 default of `client_secret_basic` — credentials go
+      // into an HTTP Basic header instead of the form body. RFC 6749 §2.3.1
+      // also requires URL-encoding the id:secret BEFORE base64; neither of
+      // these fake fixture values contains a reserved character, so the
+      // expected value is a straight base64 of `id:secret`.
+      const expectedBasic = Buffer.from(
+        `${encodeURIComponent('Iv23livefakeclientid')}:${encodeURIComponent('ghs_fakeclientsecret')}`,
+        'utf8'
+      ).toString('base64');
+      expect(tokenArgs.headers.Authorization).to.equal(`Basic ${expectedBasic}`);
       const bodyParams = new URLSearchParams(tokenArgs.body);
       expect(bodyParams.get('grant_type')).to.equal('authorization_code');
-      expect(bodyParams.get('client_id')).to.equal('Iv23livefakeclientid');
-      expect(bodyParams.get('client_secret')).to.equal('ghs_fakeclientsecret');
+      // `client_secret_basic` must NOT replay credentials in the form body
+      // (RFC 6749 §2.3.1) — that would defeat the whole point of the
+      // negotiated header method.
+      expect(bodyParams.get('client_id'), 'client_id must not be carried in body for client_secret_basic').to.be.null;
+      expect(bodyParams.get('client_secret'), 'client_secret must not be carried in body for client_secret_basic').to.be
+        .null;
       expect(bodyParams.get('code')).to.equal('fake-auth-code');
       expect(bodyParams.get('code_verifier')).to.match(/^[A-Za-z0-9_-]{43}$/);
       expect(bodyParams.get('resource')).to.equal('https://api.githubcopilot.com/mcp/');

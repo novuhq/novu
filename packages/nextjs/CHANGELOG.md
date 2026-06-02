@@ -1,3 +1,13 @@
+## v3.17.0 (2026-06-01)
+
+### 🚀 Features
+
+- **js,react,api-service:** implement MS Teams connect and link-user components ([#10870](https://github.com/novuhq/novu/pull/10870))
+
+### ❤️ Thank You
+
+- George Djabarov @djabarovgeorge
+
 ## v3.16.0 (2026-04-27)
 
 ### 🚀 Features

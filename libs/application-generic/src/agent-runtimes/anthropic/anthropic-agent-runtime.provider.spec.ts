@@ -576,4 +576,43 @@ describe('AnthropicAgentRuntimeProvider.updateConfig', () => {
     expect(mcpToolset?.mcp_server_name).to.equal('Slack');
     expect(mcpToolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_ask' });
   });
+
+  it('uses always_allow permission policies when useAlwaysAllowToolPermissions is true', async () => {
+    const provider = createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey: 'test-key' });
+
+    const retrieve = jest.fn().mockResolvedValue({
+      version: 1,
+      tools: [
+        {
+          type: 'agent_toolset_20260401',
+          configs: [{ name: 'bash', enabled: true }],
+        },
+      ],
+      mcp_servers: [],
+    });
+
+    const update = jest.fn().mockResolvedValue({
+      model: 'claude-sonnet-4-5',
+      system: '',
+      tools: [],
+      mcp_servers: [{ name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
+      skills: [],
+    });
+
+    installUpdateConfigMockClient(provider, { retrieve, update });
+
+    await provider.updateConfig('ext-agent-id', {
+      mcpServers: [{ externalId: 'Slack', name: 'Slack', url: 'https://mcp.slack.com/mcp' }],
+      useAlwaysAllowToolPermissions: true,
+    });
+
+    const [, updatePayload] = update.mock.calls[0];
+    const toolset = getToolsetPayload(updatePayload as { tools?: AgentToolsetPayloadEntry[] });
+    const mcpToolset = (updatePayload as { tools?: AgentToolsetPayloadEntry[] }).tools?.find(
+      (t) => t.type === 'mcp_toolset'
+    );
+
+    expect(toolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_allow' });
+    expect(mcpToolset?.default_config?.permission_policy).to.deep.equal({ type: 'always_allow' });
+  });
 });

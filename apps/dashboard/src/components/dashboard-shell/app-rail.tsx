@@ -1,3 +1,4 @@
+import { ComponentType } from 'react';
 import { AppSwitcherTooltipContent } from '@/components/dashboard-shell/app-switcher-tooltip-content';
 import { ConnectSwitchConfirmationModal } from '@/components/dashboard-shell/connect-switch-confirmation-modal';
 import { CrossAppLink } from '@/components/dashboard-shell/cross-app-link';
@@ -10,7 +11,6 @@ import { IS_ENTERPRISE, IS_HOSTNAME_SPLIT_ENABLED, IS_SELF_HOSTED } from '@/conf
 import { useEnvironment } from '@/context/environment/hooks';
 import { useConnectSwitchConfirmation } from '@/hooks/use-connect-switch-confirmation';
 import { APP_IDS, type AppId, buildAppHomeRoute, buildOtherAppExternalUrl } from '@/utils/apps';
-import { ComponentType } from 'react';
 
 import { useCurrentApp } from '../../hooks/use-current-app';
 
@@ -23,6 +23,7 @@ type BrandConfig = {
   tooltip: string;
   subtitle: string;
   features: string[];
+  showBeta?: boolean;
 };
 
 const PLATFORM_BRAND: BrandConfig = {
@@ -32,6 +33,7 @@ const PLATFORM_BRAND: BrandConfig = {
   tooltip: 'Open Novu Platform',
   subtitle: 'Notifications for your product',
   features: [
+    'Connect your customer facing agents to any channel.',
     'Email, push, and in-app workflows.',
     'Embed Novu Inbox directly in your product.',
     'Manage subscribers and deliver at scale.',
@@ -49,6 +51,7 @@ const CONNECT_BRAND: BrandConfig = {
     'Connect your agent to where you work.',
     'Connect the tools your team works on.',
   ],
+  showBeta: true,
 };
 
 type BrandTileProps = {
@@ -78,7 +81,7 @@ type SwitcherTileProps = {
 };
 
 function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherTileProps) {
-  const { Icon, label, tooltip, subtitle, features } = brand;
+  const { Icon, label, tooltip, subtitle, features, showBeta } = brand;
   const { isModalOpen, setIsModalOpen, handleSwitcherClick, handleConfirm, showConnectSwitchModal } =
     useConnectSwitchConfirmation({
       targetAppId: brand.id,
@@ -136,7 +139,7 @@ function SwitcherTile({ brand, to, isExternal, openInNewTab = false }: SwitcherT
           size="lg"
           className="border-stroke-weak w-auto overflow-hidden rounded-lg border p-0 shadow-md"
         >
-          <AppSwitcherTooltipContent label={label} subtitle={subtitle} features={features} />
+          <AppSwitcherTooltipContent label={label} subtitle={subtitle} features={features} showBeta={showBeta} />
         </TooltipContent>
       </Tooltip>
       {showConnectSwitchModal ? (

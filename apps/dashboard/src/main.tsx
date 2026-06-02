@@ -53,6 +53,7 @@ import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setu
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { AgentsUsecasePage } from './pages/agents-usecase-page';
+import { CliAuthPage } from './pages/cli-auth';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
@@ -100,6 +101,10 @@ const router = createBrowserRouter([
       {
         path: `${ROUTES.LANDING_1_SIGN_UP}/*`,
         element: <Landing1SignUpPage />,
+      },
+      {
+        path: ROUTES.CLI_AUTH,
+        element: <CliAuthPage />,
       },
       {
         // Public, unauthenticated mobile setup page for Telegram. Mounted outside
@@ -169,7 +174,11 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.AGENTS_SETUP,
-            element: <AgentsSetupPage />,
+            element: (
+              <ConnectSubscriberProvider>
+                <AgentsSetupPage />
+              </ConnectSubscriberProvider>
+            ),
           },
           {
             path: ROUTES.INBOX_USECASE,

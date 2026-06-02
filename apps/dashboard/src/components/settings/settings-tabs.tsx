@@ -25,7 +25,7 @@ import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index'
 import { ROUTES } from '@/utils/routes';
 
 // Pin Clerk's post-leave/delete redirect to the local `/auth/organization-list`. Without this,
-// Clerk falls back to `<ClerkProvider signInUrl>`, which on the Connect satellite points at
+// Clerk falls back to `<ClerkProvider signInUrl>`, which on the Connect host points at
 // Platform's sign-in — so deleting a Connect org would kick the user out of Connect even when
 // they still have Connect work to do. Keeping it same-host lets `AuthProvider` clear any cross-
 // product org Clerk auto-activates and lets the picker render this product's empty state.

@@ -2,11 +2,7 @@ import { useOrganizationList } from '@clerk/react';
 import { type MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useCrossAppNavigation } from '@/hooks/use-cross-app-navigation';
 import { APP_IDS, type AppId } from '@/utils/apps';
-import {
-  beginConnectProvisioning,
-  hasExplicitConnectMembership,
-  withConnectProvisioningIntent,
-} from '@/utils/connect';
+import { hasExplicitConnectMembership, withConnectProvisioningIntent } from '@/utils/connect';
 
 type UseConnectSwitchConfirmationOptions = {
   targetAppId: AppId;
@@ -61,8 +57,6 @@ export function useConnectSwitchConfirmation({
 
   const handleConfirm = useCallback(() => {
     setIsModalOpen(false);
-    // Set the same-origin flag and append `?provision=1` for the cross-origin handoff.
-    beginConnectProvisioning();
     navigateCrossApp(withConnectProvisioningIntent(href), openInNewTab);
   }, [href, navigateCrossApp, openInNewTab]);
 

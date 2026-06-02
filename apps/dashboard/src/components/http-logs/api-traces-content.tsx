@@ -74,6 +74,9 @@ function TraceEventSkeleton() {
 function TraceEvent({ trace }: { trace: ApiTrace }) {
   const badgeStatus = mapTraceStatusToBadgeStatus(trace.status);
   const StatusIcon = getStatusIcon(trace.status);
+  const hasMessage = Boolean(trace.message?.trim());
+  const hasRawData = Boolean(trace.rawData?.trim());
+  const hasHoverContent = hasMessage || hasRawData;
 
   return (
     <div className="flex items-center gap-2 w-full h-6">
@@ -86,7 +89,7 @@ function TraceEvent({ trace }: { trace: ApiTrace }) {
         <div className="bg-white rounded flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <div>
-              {trace.rawData ? (
+              {hasHoverContent ? (
                 <HoverCard openDelay={200}>
                   <HoverCardTrigger asChild>
                     <p className="text-label-xs font-medium text-text-sub whitespace-pre border-b border-dotted border-text-sub cursor-help">
@@ -95,10 +98,22 @@ function TraceEvent({ trace }: { trace: ApiTrace }) {
                   </HoverCardTrigger>
                   <HoverCardContent className="w-96 max-h-80 overflow-auto">
                     <div className="space-y-2">
-                      <div className="text-xs font-medium text-text-strong">Raw Data</div>
-                      <pre className="text-xs bg-neutral-50 rounded p-2 overflow-auto font-mono text-text-sub">
-                        {formatRawData(trace.rawData)}
-                      </pre>
+                      {hasMessage && (
+                        <>
+                          <div className="text-xs font-medium text-text-strong">Message</div>
+                          <pre className="text-xs bg-neutral-50 rounded p-2 overflow-auto font-mono text-text-sub whitespace-pre-wrap">
+                            {trace.message}
+                          </pre>
+                        </>
+                      )}
+                      {hasRawData && (
+                        <>
+                          <div className="text-xs font-medium text-text-strong">Raw Data</div>
+                          <pre className="text-xs bg-neutral-50 rounded p-2 overflow-auto font-mono text-text-sub">
+                            {formatRawData(trace.rawData ?? '')}
+                          </pre>
+                        </>
+                      )}
                     </div>
                   </HoverCardContent>
                 </HoverCard>

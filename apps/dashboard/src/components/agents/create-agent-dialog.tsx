@@ -183,6 +183,7 @@ export function CreateAgentDialog({
   const [externalEnvironmentId, setExternalEnvironmentId] = useState('');
   const [errors, setErrors] = useState<CreateAgentFormErrors>({});
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
+  const [isIntegrationNameTouched, setIsIntegrationNameTouched] = useState(false);
   // Brief confirmation badge that flashes in the dropdown trigger right after a successful save.
   const [showSavedBadge, setShowSavedBadge] = useState(false);
   const savedBadgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -298,7 +299,7 @@ export function CreateAgentDialog({
   // Default integration name = "<Provider> <next-index>"
   useEffect(() => {
     if (!credentialsPanelVisible || !selectedConnector?.providerLabel) return;
-    if (integrationName.trim()) return;
+    if (isIntegrationNameTouched || integrationName.trim()) return;
 
     const nextIndex = matchingAnthropicIntegrations.length + 1;
     setIntegrationName(`${selectedConnector.providerLabel} ${nextIndex}`);
@@ -307,6 +308,7 @@ export function CreateAgentDialog({
     selectedConnector?.providerLabel,
     matchingAnthropicIntegrations.length,
     integrationName,
+    isIntegrationNameTouched,
   ]);
 
   useEffect(() => {
@@ -336,6 +338,7 @@ export function CreateAgentDialog({
     setInstructions('');
     resetCredentials();
     setIntegrationName('');
+    setIsIntegrationNameTouched(false);
     setExternalAgentId('');
     setExternalEnvironmentId('');
     setErrors({});
@@ -455,7 +458,7 @@ export function CreateAgentDialog({
     setCredentialsPanelVisible(true);
     setCredentialsPanelExpanded(true);
 
-    if (option.providerLabel && !integrationName.trim()) {
+    if (option.providerLabel && !isIntegrationNameTouched && !integrationName.trim()) {
       const nextIndex = getClaudeManagedAgentIntegrations(integrations, option.providerId).length + 1;
       setIntegrationName(`${option.providerLabel} ${nextIndex}`);
     }
@@ -483,8 +486,10 @@ export function CreateAgentDialog({
       },
       onError: (err) => {
         if (lastVerifiedKeyRef.current !== verifyKey) return;
+        const message = err instanceof Error ? err.message : 'Invalid';
         setVerifyStatus('invalid');
-        setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
+        setVerifyMessage(message);
+        showErrorToast(`Verification failed: ${message}`, 'Verification failed');
       },
     });
   };
@@ -526,7 +531,6 @@ export function CreateAgentDialog({
       setCredentialsPanelVisible(true);
       setCredentialsPanelExpanded(false);
       setSelectedIntegrationId(integration._id);
-      resetCredentials();
       setShowSavedBadge(true);
       if (savedBadgeTimerRef.current) clearTimeout(savedBadgeTimerRef.current);
       savedBadgeTimerRef.current = setTimeout(() => setShowSavedBadge(false), 2500);
@@ -725,9 +729,11 @@ export function CreateAgentDialog({
                   status={verifyStatus}
                   statusMessage={verifyMessage}
                   isSaving={isSavingIntegration}
+                  showSaveButton={!selectedIntegrationId}
                   expanded={credentialsPanelExpanded}
                   onExpandedChange={setCredentialsPanelExpanded}
                   onIntegrationNameChange={(next) => {
+                    setIsIntegrationNameTouched(true);
                     setIntegrationName(next);
                     setErrors((prev) => ({ ...prev, integrationName: undefined }));
                   }}

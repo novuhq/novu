@@ -86,12 +86,6 @@ function stateToStepId(state: SimulatorState): string | null {
   }
 }
 
-type OAuthResultMessage = {
-  type: 'novu-mcp-oauth-result';
-  status: 'connected' | 'error';
-  reason?: string;
-};
-
 export function FlowSimulator({
   credentials,
   agent,
@@ -107,10 +101,8 @@ export function FlowSimulator({
   const [branch, setBranch] = useState<FlowBranch | undefined>(undefined);
   const [completedStepIds, setCompletedStepIds] = useState<ReadonlySet<string>>(new Set());
 
-  // Refs to support cancellation + ignoring stale popup messages from prior runs.
   const runIdRef = useRef(0);
   const popupRef = useRef<Window | null>(null);
-  const oauthResolverRef = useRef<((status: 'connected' | 'error', reason?: string) => void) | null>(null);
 
   const storage = useStorageDescriptor(agent);
 
@@ -121,7 +113,6 @@ export function FlowSimulator({
 
   const reset = useCallback(() => {
     runIdRef.current += 1; // cancels any in-flight simulation
-    oauthResolverRef.current = null;
     if (popupRef.current && !popupRef.current.closed) {
       popupRef.current.close();
     }
@@ -129,22 +120,6 @@ export function FlowSimulator({
     setState({ kind: 'idle' });
     setBranch(undefined);
     setCompletedStepIds(new Set());
-  }, []);
-
-  // Listen for postMessage from the OAuth result page. We accept the message
-  // when an OAuth round-trip is in flight; otherwise it's a stale event.
-  useEffect(() => {
-    function onMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
-      const data = event.data as OAuthResultMessage | undefined;
-      if (!data || data.type !== 'novu-mcp-oauth-result') return;
-      const resolve = oauthResolverRef.current;
-      if (!resolve) return;
-      resolve(data.status, data.reason);
-    }
-    window.addEventListener('message', onMessage);
-
-    return () => window.removeEventListener('message', onMessage);
   }, []);
 
   // Reset the simulator when the selection changes — stale state across MCPs
@@ -160,7 +135,6 @@ export function FlowSimulator({
     if (!ready || !agent || !enablement) return;
 
     const runId = ++runIdRef.current;
-    oauthResolverRef.current = null;
     setCompletedStepIds(new Set());
     setBranch(undefined);
 
@@ -268,10 +242,6 @@ export function FlowSimulator({
       }
       if (isCanceled()) return;
 
-      // Intentionally omit `noopener`: the same-origin OAuth result page calls
-      // `window.opener.postMessage(...)` to deliver the outcome, which requires
-      // opener access. The `noopener=no` form is ambiguous across browsers — an
-      // omitted feature is the unambiguous "opener access allowed" signal.
       const popup = window.open(authorizeUrl, 'novu-mcp-oauth-flow', 'width=520,height=720,scrollbars=yes');
       if (!popup) {
         failAt('Browser blocked the OAuth popup. Allow popups for this origin and re-run the simulation.', 'novu-dcr');
@@ -282,46 +252,23 @@ export function FlowSimulator({
 
       await advance({ kind: 'user-authorizes' }, 'novu-dcr');
 
-      // ── Wait for postMessage from oauth/result page (or popup close) ─────
-      const oauthOutcome = await new Promise<{ status: 'connected' | 'error'; reason?: string }>((resolve) => {
-        // Defensive: if the user closes the popup without completing OAuth,
-        // detect via polling and treat as an error. Cleared in every resolver
-        // path (postMessage, popup-closed, cancel) to avoid a leaked timer.
+      // ── Wait for the popup to close, then status-poll for the outcome ────
+      // The OAuth result page closes itself; we use that close event as the
+      // completion signal and ask the API whether the token actually landed.
+      await new Promise<void>((resolve) => {
         const interval = setInterval(() => {
-          if (isCanceled()) {
+          if (isCanceled() || popupRef.current?.closed) {
             clearInterval(interval);
-
-            return;
-          }
-          if (popupRef.current?.closed) {
-            clearInterval(interval);
-            if (oauthResolverRef.current) {
-              const r = oauthResolverRef.current;
-              oauthResolverRef.current = null;
-              r('error', 'OAuth popup was closed before completion.');
-            }
+            resolve();
           }
         }, 600);
-
-        oauthResolverRef.current = (status, reason) => {
-          clearInterval(interval);
-          oauthResolverRef.current = null;
-          resolve({ status, reason });
-        };
       });
 
       if (isCanceled()) return;
       popupRef.current = null;
 
-      if (oauthOutcome.status === 'error') {
-        failAt(`OAuth did not complete: ${oauthOutcome.reason ?? 'unknown reason'}`, 'user-authorizes');
-
-        return;
-      }
-
       await advance({ kind: 'novu-stores-token' }, 'user-authorizes');
 
-      // ── Real call: confirm the connection actually landed ────────────────
       try {
         const confirm = await getMcpConnectionStatus(
           credentials,
@@ -331,7 +278,7 @@ export function FlowSimulator({
         );
         if (confirm?.status !== 'connected') {
           failAt(
-            `Connection status is "${confirm?.status ?? 'missing'}" after OAuth callback; expected "connected".`,
+            `Connection status is "${confirm?.status ?? 'missing'}" after OAuth callback; expected "connected". Did the popup close before authorisation completed?`,
             'novu-stores-token'
           );
 

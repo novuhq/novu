@@ -8,12 +8,14 @@ import { PageMeta } from '@/components/page-meta';
 import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
-import { beginConnectProvisioning, buildConnectProvisionOrgListPath } from '@/utils/connect';
+import { appendRedirectUrlParam, readCliAuthReturnUrl } from '@/utils/cli-auth-pending';
+import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
   buildAbsoluteConnectUrl,
   buildPrimarySignUpUrl,
   CONNECT_PRODUCT_VALUE,
   PRODUCT_QUERY_PARAM,
+  readClerkRedirectUrlParam,
 } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -30,19 +32,31 @@ export const SignUpPage = () => {
     [searchParams]
   );
 
-  // Clean Connect provisioning entry point. Always the same URL — Clerk's satellite domain SDK
-  // performs the session-sync handshake natively when the destination page loads.
+  // Clean Connect provisioning entry point. Always the same URL — primary's session cookies
+  // live on the shared registrable domain, so the Connect host loads signed-in immediately.
   const connectProvisionRedirect = useMemo(
     () => buildAbsoluteConnectUrl(buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)),
     []
   );
 
-  // Sign-up flows are primary-only — bounce satellite visitors back with Connect branding.
+  // Persist pending CLI auth from inbound redirect_url; org creation still runs first.
+  useEffect(() => {
+    readCliAuthReturnUrl(searchParams, { preferConnectHost: isConnectSignUp });
+  }, [searchParams, isConnectSignUp]);
+
+  // Sign-up flows are primary-only — bounce Connect-host visitors back with Connect branding.
   useEffect(() => {
     if (IS_NOVU_CONNECT) {
-      window.location.replace(buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE }));
+      const redirectUrl = readClerkRedirectUrlParam(searchParams);
+      let primaryUrl = buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE });
+
+      if (redirectUrl) {
+        primaryUrl = appendRedirectUrlParam(primaryUrl, redirectUrl);
+      }
+
+      window.location.replace(primaryUrl);
     }
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     const utmParams = getUtmParams();
@@ -55,9 +69,10 @@ export const SignUpPage = () => {
   }, []);
 
   // Already-signed-in user landing on `/auth/sign-up` with Connect intent — hand off to Connect
-  // immediately. We deliberately drop any inbound `redirect_url` (e.g. a stale `?__clerk_synced=false`
-  // Connect URL) and always go to the clean provision entry point — Clerk's satellite SDK syncs
-  // the session on arrival. Honoring the stale return URL is what caused the redirect loop.
+  // immediately. The Connect host shares Clerk session cookies with primary via the registrable
+  // domain, so it loads signed-in from a plain navigation. Inbound `redirect_url` is dropped and
+  // we always go to the clean provision entry point so a stale return URL can't strand the user.
+  // CLI auth resumes through pending session storage after org provisioning completes.
   useEffect(() => {
     if (!isLoaded || !isSignedIn || IS_NOVU_CONNECT || hasRedirectedRef.current) {
       return;
@@ -68,16 +83,22 @@ export const SignUpPage = () => {
     }
 
     hasRedirectedRef.current = true;
-    beginConnectProvisioning();
     window.location.assign(connectProvisionRedirect);
   }, [isLoaded, isSignedIn, isConnectSignUp, connectProvisionRedirect]);
 
-  const signInUrlWithProduct = isConnectSignUp
-    ? `${ROUTES.SIGN_IN}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}`
-    : ROUTES.SIGN_IN;
+  const signInUrlWithProduct = useMemo(() => {
+    const redirectUrl = readClerkRedirectUrlParam(searchParams);
+    let url = isConnectSignUp ? `${ROUTES.SIGN_IN}?${PRODUCT_QUERY_PARAM}=${CONNECT_PRODUCT_VALUE}` : ROUTES.SIGN_IN;
+
+    if (redirectUrl) {
+      url = appendRedirectUrlParam(url, redirectUrl);
+    }
+
+    return url;
+  }, [searchParams, isConnectSignUp]);
 
   // Render nothing while redirecting:
-  //   - On the satellite (`IS_NOVU_CONNECT`) the page is mid-replace to primary.
+  //   - On the Connect host (`IS_NOVU_CONNECT`) the page is mid-replace to primary.
   //   - On the primary when the user is already signed in the effect above is handling the bounce.
   if (IS_NOVU_CONNECT || (isLoaded && isSignedIn)) {
     return null;

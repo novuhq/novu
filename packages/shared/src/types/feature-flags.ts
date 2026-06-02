@@ -43,6 +43,8 @@ export enum FeatureFlagsKeysEnum {
   IS_WORKFLOW_NODE_PREVIEW_ENABLED = 'IS_WORKFLOW_NODE_PREVIEW_ENABLED',
   IS_WEBHOOKS_MANAGEMENT_ENABLED = 'IS_WEBHOOKS_MANAGEMENT_ENABLED',
   IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED = 'IS_KEYLESS_ENVIRONMENT_CREATION_ENABLED',
+  /** When enabled, API-key auth on GET /v1/environments returns decrypted apiKeys for every environment in the org (pre-NV-7641 opt-in behavior). */
+  IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED = 'IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED',
   IS_TEST_PROVIDER_LIMITS_ENABLED = 'IS_TEST_PROVIDER_LIMITS_ENABLED',
   IS_2025_Q1_LEGACY_TIERING_MIGRATION = 'IS_2025_Q1_LEGACY_TIERING_MIGRATION',
   IS_SUBSCRIBER_ID_VALIDATION_DRY_RUN_ENABLED = 'IS_SUBSCRIBER_ID_VALIDATION_DRY_RUN_ENABLED',
@@ -76,6 +78,8 @@ export enum FeatureFlagsKeysEnum {
   IS_BILLING_USAGE_CLICKHOUSE_SHADOW_ENABLED = 'IS_BILLING_USAGE_CLICKHOUSE_SHADOW_ENABLED',
   IS_BILLING_USAGE_DETAILED_DIAGNOSTICS_ENABLED = 'IS_BILLING_USAGE_DETAILED_DIAGNOSTICS_ENABLED',
   IS_AI_WORKFLOW_GENERATION_ENABLED = 'IS_AI_WORKFLOW_GENERATION_ENABLED',
+  /** Enable the Novu Wizard LLM Gateway (`POST /v2/llm/messages`) for an organization. Enterprise-only. */
+  IS_LLM_GATEWAY_ENABLED = 'IS_LLM_GATEWAY_ENABLED',
   IS_CLICKHOUSE_BATCHING_ENABLED = 'IS_CLICKHOUSE_BATCHING_ENABLED',
   IS_ORG_KILLSWITCH_FLAG_ENABLED = 'IS_ORG_KILLSWITCH_FLAG_ENABLED',
   IS_USAGE_REPORT_ENABLED = 'IS_USAGE_REPORT_ENABLED',
@@ -106,6 +110,21 @@ export enum FeatureFlagsKeysEnum {
    * by this flag.
    */
   IS_MCP_NOVU_APP_ENABLED = 'IS_MCP_NOVU_APP_ENABLED',
+  /**
+   * Enable MCP connections where OAuth is fully delegated to the managed
+   * agent runtime provider (`auth mode = 'provider-managed'`). Gates the
+   * "Add from Claude" flow in the dashboard and the
+   * `POST .../mcp-servers/:mcpId/provider-vault` endpoint. When off,
+   * provider-managed catalog rows still appear in the picker but the Add
+   * button is disabled.
+   */
+  IS_MCP_PROVIDER_MANAGED_ENABLED = 'IS_MCP_PROVIDER_MANAGED_ENABLED',
+  /**
+   * When enabled, managed agents are provisioned with `always_allow` permission
+   * policies on builtin toolsets and MCP toolsets instead of the default
+   * `always_ask`. Gates org-by-org rollout of permissive MCP defaults.
+   */
+  IS_AGENT_DEFAULT_MCP_ALWAYS_ALLOW_ENABLED = 'IS_AGENT_DEFAULT_MCP_ALWAYS_ALLOW_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"
@@ -126,6 +145,7 @@ export enum FeatureFlagsKeysEnum {
   MAX_ENVIRONMENT_VARIABLES_LIMIT_NUMBER = 'MAX_ENVIRONMENT_VARIABLES_LIMIT_NUMBER',
   MAX_STEP_RESOLVERS_NUMBER = 'MAX_STEP_RESOLVERS_NUMBER',
   MAX_DOMAINS_LIMIT_NUMBER = 'MAX_DOMAINS_LIMIT_NUMBER',
+  MAX_CONNECT_ORG_AUTO_PROVISIONED_SUBSCRIBERS_NUMBER = 'MAX_CONNECT_ORG_AUTO_PROVISIONED_SUBSCRIBERS_NUMBER',
   IS_ANALYTICS_PAGE_ENABLED = 'IS_ANALYTICS_PAGE_ENABLED',
   IS_LEGACY_SELECTOR_BUTTON_VISIBLE = 'IS_LEGACY_SELECTOR_BUTTON_VISIBLE',
 }

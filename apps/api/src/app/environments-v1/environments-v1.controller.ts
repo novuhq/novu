@@ -137,12 +137,21 @@ export class EnvironmentsControllerV1 {
     const isApiKeyAuth = user.scheme === ApiAuthSchemeEnum.API_KEY;
     const canAccessApiKeys = isApiKeyAuth ? true : await this.canUserAccessApiKeys(user);
 
+    const isListEnvironmentsApiKeysEnabled = await this.featureFlagService.getFlag({
+      organization: { _id: user.organizationId },
+      user: { _id: user._id },
+      key: FeatureFlagsKeysEnum.IS_LIST_ENVIRONMENTS_API_KEYS_ENABLED,
+      defaultValue: false,
+    });
+
+    const shouldScopeApiKeysToCallerEnvironment = isApiKeyAuth && !isListEnvironmentsApiKeysEnabled;
+
     return await this.getMyEnvironmentsUsecase.execute(
       GetMyEnvironmentsCommand.create({
         organizationId: user.organizationId,
         environmentId: user.environmentId,
         returnApiKeys: canAccessApiKeys,
-        apiKeysEnvironmentId: isApiKeyAuth ? user.environmentId : undefined,
+        apiKeysEnvironmentId: shouldScopeApiKeysToCallerEnvironment ? user.environmentId : undefined,
         userId: user._id,
       })
     );

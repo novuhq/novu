@@ -4,6 +4,7 @@ export * from './claude-skills';
 export * from './claude-tools';
 export * from './conversational-providers';
 export * from './credentials';
+export * from './managed-agent-spec';
 export * from './mcp-servers';
 export * from './provider.interface';
 export * from './providers';

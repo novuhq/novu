@@ -27,7 +27,11 @@ import {
 import type { AgentBridgeRequest } from '@novu/framework';
 import { HttpHeaderKeysEnum } from '@novu/framework/internal';
 import sinon from 'sinon';
-import { AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from '../../services/bridge-executor.service';
+import {
+  AgentExecutionParams,
+  BridgeExecutorService,
+  NoBridgeUrlError,
+} from '../../conversation-runtime/runtime/bridge-executor.service';
 
 interface BridgeExecutorInternals {
   resolveBridgeUrl: (

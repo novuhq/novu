@@ -6,8 +6,14 @@ import {
   type IIntegration,
   providers as novuProviders,
 } from '@novu/shared';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowRightSLine, RiCheckboxCircleFill, RiLoader4Line, RiLockStarLine } from 'react-icons/ri';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  RiArrowLeftSLine,
+  RiArrowRightSLine,
+  RiCheckboxCircleFill,
+  RiLoader4Line,
+  RiLockStarLine,
+} from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
 import type { AgentIntegrationLink } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -105,7 +111,17 @@ function useHorizontalScrollEdges<T extends HTMLElement>() {
     };
   }, []);
 
-  return { ref, ...edges };
+  const scrollBy = useCallback((direction: 'left' | 'right') => {
+    const node = ref.current;
+    if (!node) return;
+
+    // Scroll by ~80% of the visible width so the next batch of cards becomes the focus
+    // while keeping one card of context visible from the previous view.
+    const delta = Math.max(node.clientWidth * 0.8, 160);
+    node.scrollBy({ left: direction === 'right' ? delta : -delta, behavior: 'smooth' });
+  }, []);
+
+  return { ref, ...edges, scrollBy };
 }
 
 type ProviderCardItem = {
@@ -224,6 +240,41 @@ function SelectedPill({ loading, connected }: { loading: boolean; connected: boo
 
 function SelectedStatusBadge() {
   return <RiCheckboxCircleFill className="text-success-base size-4 shrink-0" aria-hidden />;
+}
+
+function ScrollEdgeButton({
+  direction,
+  visible,
+  onClick,
+}: {
+  direction: 'left' | 'right';
+  visible: boolean;
+  onClick: () => void;
+}) {
+  // Avoid the aria-hidden focus warning by unmounting the button entirely when it would be
+  // visually hidden. A click on the button is the typical trigger for visibility flipping, so
+  // keeping the element around with `aria-hidden` traps focus on a hidden control.
+  if (!visible) return null;
+
+  const isRight = direction === 'right';
+  const Icon = isRight ? RiArrowRightSLine : RiArrowLeftSLine;
+  const label = isRight ? 'Scroll right to see more channels' : 'Scroll left to see more channels';
+
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className={cn(
+        'cursor-pointer pointer-events-auto absolute bottom-1 top-px z-10 flex w-4 items-center justify-center rounded-[4px]',
+        'bg-bg-white bg-[linear-gradient(180deg,rgba(0,0,0,0)_30%,rgba(0,0,0,0.02)_100%)] text-text-sub',
+        'shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea] transition-colors hover:text-text-strong',
+        isRight ? '-right-1' : '-left-1'
+      )}
+    >
+      <Icon className="size-4" aria-hidden />
+    </button>
+  );
 }
 
 function TopRightIndicator({
@@ -433,11 +484,13 @@ export function ProviderCards({
     );
   };
 
-  const { ref: scrollRef, canScrollLeft, canScrollRight } = useHorizontalScrollEdges<HTMLDivElement>();
+  const { ref: scrollRef, canScrollLeft, canScrollRight, scrollBy } = useHorizontalScrollEdges<HTMLDivElement>();
   const maskImage = buildEdgeFadeMask(canScrollLeft, canScrollRight);
 
   return (
-    <div className="w-full">
+    <div className="relative w-full">
+      <ScrollEdgeButton direction="left" visible={canScrollLeft} onClick={() => scrollBy('left')} />
+      <ScrollEdgeButton direction="right" visible={canScrollRight} onClick={() => scrollBy('right')} />
       <div
         ref={scrollRef}
         className="nv-no-scrollbar -mx-1 flex items-stretch gap-2.5 overflow-x-auto px-1 pb-1 pt-px"

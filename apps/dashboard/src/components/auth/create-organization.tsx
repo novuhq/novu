@@ -4,6 +4,7 @@ import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { OrganizationPicker } from '@/components/auth/organization-picker';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import {
@@ -57,8 +58,10 @@ function OrganizationForm() {
 
   // Only forward `?appId=` when it was set explicitly — hostname detection covers the rest.
   const explicitAppId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
-  const afterCreateUrl = withAppId(getPostOrgCreateRoute(appId, isAgentsEnabled), explicitAppId);
-  const afterSelectUrl = withAppId(ROUTES.ENV, explicitAppId);
+  const pendingCliAuthReturnUrl = useMemo(() => resolvePendingCliAuthReturnUrl(), []);
+  const afterCreateUrl =
+    pendingCliAuthReturnUrl ?? withAppId(getPostOrgCreateRoute(appId, isAgentsEnabled), explicitAppId);
+  const afterSelectUrl = pendingCliAuthReturnUrl ?? withAppId(ROUTES.ENV, explicitAppId);
 
   const handleSignOut = useCallback(async () => {
     const fallbackUrl = buildAfterSignOutUrl();
