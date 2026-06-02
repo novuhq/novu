@@ -27,6 +27,7 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../usecases/inbound-email-parse/inbound-email-parse.command';
 import { InboundEmailParse } from '../usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { LogInboundEmailRequest } from '../usecases/inbound-email-parse/log-inbound-email-request.usecase';
 import { DomainRouteStrategy } from '../usecases/inbound-email-parse/strategies/domain-route.strategy';
 import { IUserWebhookPayload, ReplyToStrategy } from '../usecases/inbound-email-parse/strategies/reply-to.strategy';
 
@@ -43,12 +44,14 @@ describe('Should handle the new arrived mail', () => {
 
   let sandbox;
   let attachmentRehydrator: sinon.SinonStubbedInstance<AttachmentRehydrator>;
+  let logInboundEmailRequest: sinon.SinonStubbedInstance<LogInboundEmailRequest>;
 
   beforeEach(async () => {
     sandbox = sinon.createSandbox();
 
     compileTemplate = sandbox.createStubInstance(CompileTemplate);
     attachmentRehydrator = sandbox.createStubInstance(AttachmentRehydrator);
+    logInboundEmailRequest = sandbox.createStubInstance(LogInboundEmailRequest);
     // Default: return empty array (no attachments to rehydrate)
     attachmentRehydrator.rehydrate.resolves([]);
 
@@ -57,6 +60,7 @@ describe('Should handle the new arrived mail', () => {
         InboundEmailParse,
         ReplyToStrategy,
         DomainRouteStrategy,
+        { provide: LogInboundEmailRequest, useValue: logInboundEmailRequest },
         { provide: JobRepository, useValue: sandbox.createStubInstance(JobRepository) },
         { provide: MessageRepository, useValue: sandbox.createStubInstance(MessageRepository) },
         { provide: DomainRepository, useValue: sandbox.createStubInstance(DomainRepository) },
@@ -113,6 +117,13 @@ describe('Should handle the new arrived mail', () => {
     expect(payload.hmac).to.ok;
     expect(payload.notification).to.ok;
     expect(payload.templateIdentifier).to.ok;
+
+    // Successful reply-to delivery should emit a request log with a 200 outcome.
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.strategy).to.equal('reply-to');
+    expect(logArg.outcome.status).to.equal(200);
+    expect(logArg.outcome.organizationId).to.equal('657ec2402c5ac81fb1e0efb6');
   });
 
   it('should include rehydrated attachments in the reply-to webhook payload', async () => {
@@ -225,44 +236,44 @@ describe('Should handle the new arrived mail', () => {
   });
 
   it('should not send webhook request with missing transactionId', async () => {
-    try {
-      const mail = getMailData({ skipTransactionId: true });
+    const mail = getMailData({ skipTransactionId: true });
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.contains('Missing transactionId on address');
-    }
+    // Malformed addresses are non-retriable — log a warning trace and stop.
+    sinon.assert.calledOnce(logInboundEmailRequest.logUnresolvedFailure);
+    const logArg = logInboundEmailRequest.logUnresolvedFailure.getCall(0).args[0];
+    expect(logArg.message).to.contain('Missing transactionId on address');
+    expect(logArg.severity).to.equal('warning');
   });
 
   it('should not send webhook request with when domain white list', async () => {
-    try {
-      const mail = getMailData({ userDomain: 'invalid-domain.com' });
-      sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
+    const mail = getMailData({ userDomain: 'invalid-domain.com' });
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(getEntitiesStubObject);
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.equal('Domain is not in environment white list');
-    }
+    // Post-resolution 422 failures are non-retriable — trace once and stop.
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.status).to.equal(422);
+    expect(logArg.outcome.strategy).to.equal('reply-to');
+    expect(logArg.outcome.message).to.equal('Domain is not in environment white list');
   });
 
   it('should not send webhook request when missing replay callback url', async () => {
-    try {
-      const entitiesWithMissingParseWebhook = getEntitiesStubObject;
-      entitiesWithMissingParseWebhook.template.steps[0].replyCallback = {} as any;
+    const entitiesWithMissingParseWebhook = getEntitiesStubObject;
+    entitiesWithMissingParseWebhook.template.steps[0].replyCallback = {} as any;
 
-      const mail = getMailData();
-      sandbox.stub(replyToStrategy as any, 'getEntities').resolves(entitiesWithMissingParseWebhook);
+    const mail = getMailData();
+    sandbox.stub(replyToStrategy as any, 'getEntities').resolves(entitiesWithMissingParseWebhook);
 
-      await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
+    await inboundEmailParseUsecase.execute(InboundEmailParseCommand.create(mail));
 
-      throw new Error('Should not reach here, en error should be thrown');
-    } catch (e) {
-      expect(e.message).to.contains('Missing parse webhook on template');
-    }
+    sinon.assert.calledOnce(logInboundEmailRequest.execute);
+    const logArg = logInboundEmailRequest.execute.getCall(0).args[0];
+    expect(logArg.outcome.status).to.equal(422);
+    expect(logArg.outcome.message).to.contain('Missing parse webhook on template');
   });
 
   interface IMailData {

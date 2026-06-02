@@ -1,3 +1,10 @@
+export const RequestLogSource = {
+  HTTP: 'http',
+  INBOUND_EMAIL: 'inbound_email',
+} as const;
+
+export type RequestLogSourceType = (typeof RequestLogSource)[keyof typeof RequestLogSource];
+
 export type RequestLog = {
   id: string;
   createdAt: string;
@@ -17,6 +24,7 @@ export type RequestLog = {
   environmentId: string;
   authType: string;
   durationMs: number;
+  source: RequestLogSourceType;
 };
 
 export type ApiTrace = {

@@ -120,11 +120,12 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
     [memberRole]
   );
 
-  const isLoaded = !isPending && !isOrgLoading;
+  const isSessionLoaded = !isPending;
+  const isLoaded = isSessionLoaded && !isOrgLoading;
   const isSignedIn = !!user;
 
   const { isAutoLoginPending, isAutoLoginFailed } = useCursorAgentAutoLogin({
-    isLoaded,
+    isLoaded: isSessionLoaded,
     isSignedIn,
     refreshSession,
   });
@@ -135,6 +136,7 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
       organization: organization || null,
       memberRole,
       isLoaded,
+      isSessionLoaded,
       signOut,
       getToken,
       refreshSession,
@@ -147,6 +149,7 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
       organization,
       memberRole,
       isLoaded,
+      isSessionLoaded,
       refreshSession,
       signOut,
       getToken,
@@ -166,7 +169,7 @@ export function useAuth() {
   }
 
   return {
-    isLoaded: context.isLoaded,
+    isLoaded: context.isSessionLoaded,
     isSignedIn: !!context.user,
     userId: context.user?.id,
     orgId: context.organization?.id,
@@ -207,7 +210,7 @@ export function useUser() {
           },
         }
       : null,
-    isLoaded: context.isLoaded,
+    isLoaded: context.isSessionLoaded,
   };
 }
 
@@ -309,9 +312,20 @@ export function useOrganizationList(options?: { userMemberships?: { infinite?: b
 
 export function useClerk() {
   const context = useContext(AuthContext);
+  const { isPending } = authClient.useSession();
 
   return {
-    setActive: async ({ organization }: { organization?: string }) => {
+    loaded: context?.isSessionLoaded ?? !isPending,
+    setActive: async ({ organization }: { organization?: string | null }) => {
+      if (organization === null) {
+        await authClient.organization.setActive({
+          organizationId: null,
+        });
+        window.location.reload();
+
+        return;
+      }
+
       if (organization) {
         await authClient.organization.setActive({
           organizationId: organization,
@@ -458,6 +472,15 @@ export function Protect({ children, permission, role, condition, fallback }: Pro
   if (!hasAccess) {
     return fallback ? <>{fallback}</> : null;
   }
+
+  return <>{children}</>;
+}
+
+/** Mirrors Clerk's gate — session bootstrap only, not active-organization resolution. */
+export function ClerkLoaded({ children }: { children: React.ReactNode }) {
+  const { isPending } = authClient.useSession();
+
+  if (isPending) return null;
 
   return <>{children}</>;
 }

@@ -1,4 +1,9 @@
-import type { IEmailAlternative, NovuEmailAttachment } from '@novu/shared';
+import type {
+  EmailWebhookDomainContext,
+  EmailWebhookRouteContext,
+  IEmailAlternative,
+  NovuEmailAttachment,
+} from '@novu/shared';
 import type { Adapter } from 'chat';
 
 export type { EmailWebhookPayload, NovuEmailAttachment } from '@novu/shared';
@@ -69,7 +74,13 @@ export interface NovuEmailRawMessage {
   subject: string;
   text?: string;
   html?: string;
+  /** RFC 2822 `In-Reply-To` header as sent by the client (parent message). */
+  inReplyTo?: string;
+  /** RFC 2822 `References` header as sent by the client (whitespace-separated chain). */
+  references?: string;
   headers?: Record<string, string>;
+  domain?: EmailWebhookDomainContext;
+  route?: EmailWebhookRouteContext;
   createdAt: string;
   attachments?: NovuEmailAttachment[];
 }

@@ -9,23 +9,28 @@ export function PersistentOrb({
   tintColor,
   label,
   previewMorphProgress,
+  paused = false,
 }: {
   tintColor: string;
   label: string | undefined;
   previewMorphProgress: number | null;
+  /** When true, freeze the orb so URL lines beneath it are not redrawn every frame. */
+  paused?: boolean;
 }): React.ReactElement {
   const [frame, setFrame] = React.useState(0);
   const [elapsedMs, setElapsedMs] = React.useState(0);
   const bornAtRef = React.useRef(Date.now());
 
   React.useEffect(() => {
+    if (paused) return;
+
     const t = setInterval(() => {
       setFrame((f) => f + 1);
       setElapsedMs(Date.now() - bornAtRef.current);
     }, ORB_FRAME_MS);
 
     return () => clearInterval(t);
-  }, []);
+  }, [paused]);
 
   const entryProgress = Math.min(1, elapsedMs / ENTRY_MS);
   // Ease-out cubic — fast start, gentle landing. Plays nicer than linear

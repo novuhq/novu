@@ -22,6 +22,7 @@
     "@aws-sdk/client-secrets-manager": "^3.1037.0",
     "@aws-sdk/s3-request-presigner": "^3.996.0",
     "@novu/application-generic": "workspace:*",
+    "@novu/dal": "workspace:*",
     "@novu/shared": "workspace:*",
     "@sentry/browser": "^8.33.1",
     "@sentry/hub": "^7.114.0",

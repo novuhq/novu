@@ -173,6 +173,7 @@ type ProviderCardsProps = {
    *     pre-existing integrations are only unlinked.
    */
   existingLinks?: AgentIntegrationLink[];
+  showCloudEmailCard?: boolean;
   onSelect: (providerId: string, integration?: IIntegration) => void;
 };
 
@@ -401,6 +402,7 @@ export function ProviderCards({
   agentName,
   selectedIntegrationId,
   existingLinks,
+  showCloudEmailCard = false,
   onSelect,
 }: ProviderCardsProps) {
   const { integrations } = useFetchIntegrations();
@@ -408,12 +410,12 @@ export function ProviderCards({
   const navigate = useNavigate();
 
   const conversationalProviders = useMemo(() => {
-    if (IS_SELF_HOSTED) {
+    if (IS_SELF_HOSTED || showCloudEmailCard) {
       return CONVERSATIONAL_PROVIDERS;
     }
 
     return CONVERSATIONAL_PROVIDERS.filter((cp) => cp.providerId !== EmailProviderIdEnum.NovuAgent);
-  }, []);
+  }, [showCloudEmailCard]);
 
   const items = useMemo(
     () => buildCardItems(conversationalProviders, integrations),
@@ -475,6 +477,19 @@ export function ProviderCards({
   };
 
   const handleNovuAgentLink = (item: ProviderCardItem) => {
+    const existingNovuLink = existingLinks?.find(
+      (link) => link.integration.providerId === EmailProviderIdEnum.NovuAgent
+    );
+
+    if (existingNovuLink && isAgentIntegrationConnected(existingNovuLink)) {
+      const integration = integrations?.find((i) => i._id === existingNovuLink.integration._id);
+      if (integration) {
+        onSelect(item.providerId, integration);
+
+        return;
+      }
+    }
+
     void linkProvider(
       {
         providerId: item.providerId,
