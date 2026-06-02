@@ -2,7 +2,7 @@ import { ChatProviderIdEnum, EmailProviderIdEnum } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { Loader } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCheckLine, RiFileCopyLine, RiInformation2Line, RiMailSendLine } from 'react-icons/ri';
 import type { AgentResponse } from '@/api/agents';
 import { getAgent, getAgentDetailQueryKey } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
@@ -116,6 +116,13 @@ function getProviderSlackMessage(agentName: string): string {
   return `Hey @${agentName}, can you help me?`;
 }
 
+function buildTestEmailMailto(agentName: string, inboundAddress: string): string {
+  const subject = `Hi ${agentName}!`;
+  const body = `Hey ${agentName},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
+
+  return `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
 function getProviderSendTitle(providerId: string | undefined): string {
   switch (providerId) {
     case ChatProviderIdEnum.Slack:
@@ -179,6 +186,48 @@ export function CopySlackMessageButton({ agentName }: { agentName: string }) {
       {copied ? <RiCheckLine className="size-4" /> : <RiFileCopyLine className="size-4" />}
       <span className="text-label-xs font-medium">{copied ? 'Copied!' : 'Copy Slack message'}</span>
     </button>
+  );
+}
+
+function EmailTestActions({ agentName, inboundAddress }: { agentName: string; inboundAddress: string }) {
+  const [copied, setCopied] = useState(false);
+  const copyTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mailtoUrl = buildTestEmailMailto(agentName, inboundAddress);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+    };
+  }, []);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(inboundAddress);
+      setCopied(true);
+      copyTimeoutRef.current = setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // clipboard write failed silently
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <a
+        href={mailtoUrl}
+        className="text-text-sub hover:text-text-strong inline-flex items-center gap-1 transition-colors"
+      >
+        <RiMailSendLine className="size-4" />
+        <span className="text-label-xs font-medium">Open in email client</span>
+      </a>
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="text-text-sub hover:text-text-strong flex cursor-pointer items-center gap-1 transition-colors"
+      >
+        {copied ? <RiCheckLine className="size-4" /> : <RiFileCopyLine className="size-4" />}
+        <span className="text-label-xs font-medium">{copied ? 'Copied!' : 'Copy email address'}</span>
+      </button>
+    </div>
   );
 }
 
@@ -287,6 +336,7 @@ type AgentCodeSetupSectionProps = {
    */
   totalSteps: number;
   providerId?: string;
+  sharedInboundAddress?: string;
   onBridgeConnected?: () => void;
   onAddProvider?: () => void;
 };
@@ -296,6 +346,7 @@ export function AgentCodeSetupSection({
   stepOffset,
   totalSteps,
   providerId,
+  sharedInboundAddress,
   onBridgeConnected,
   onAddProvider,
 }: AgentCodeSetupSectionProps) {
@@ -370,7 +421,11 @@ export function AgentCodeSetupSection({
         title={getProviderSendTitle(providerId)}
         description={getProviderSendDescription(providerId, agent.name)}
         rightContent={
-          providerId === ChatProviderIdEnum.Slack ? <CopySlackMessageButton agentName={agent.name} /> : undefined
+          providerId === ChatProviderIdEnum.Slack ? (
+            <CopySlackMessageButton agentName={agent.name} />
+          ) : providerId === EmailProviderIdEnum.NovuAgent && sharedInboundAddress ? (
+            <EmailTestActions agentName={agent.name} inboundAddress={sharedInboundAddress} />
+          ) : undefined
         }
       />
 
