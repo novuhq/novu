@@ -252,7 +252,7 @@
   "devDependencies": {
     "@apidevtools/json-schema-ref-parser": "11.6.4",
     "@arethetypeswrong/cli": "^0.17.4",
-    "@nestjs/common": "11.1.21",
+    "@nestjs/common": "11.1.24",
     "@sveltejs/kit": "^1.27.3",
     "@types/aws-lambda": "^8.10.141",
     "@types/express": "^4.17.13",

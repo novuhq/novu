@@ -21,7 +21,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "peerDependencies": {
-    "@nestjs/common": "11.1.21"
+    "@nestjs/common": "11.1.24"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.382.0",
