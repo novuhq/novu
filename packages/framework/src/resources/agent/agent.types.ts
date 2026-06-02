@@ -105,6 +105,17 @@ export interface AgentEmailRouteContext {
   data?: Record<string, string>;
 }
 
+/** Resolved inbound email envelope (present when `platform === 'email'`). */
+export interface AgentEmailContext {
+  domain?: AgentEmailDomainContext;
+  route?: AgentEmailRouteContext;
+  /**
+   * Platform-native Message-ID of the message that started this email thread.
+   * Equals the current message ID on the first message of a thread.
+   */
+  rootMessageId?: string;
+}
+
 /** Platform-specific identifiers for the thread and channel. */
 export interface AgentPlatformContext {
   /** Platform-native thread ID (e.g. Slack thread `ts`, Teams conversation ID). */
@@ -116,15 +127,7 @@ export interface AgentPlatformContext {
   /** Platform-native raw message payload from the chat SDK adapter (e.g. email `NovuEmailRawMessage`). */
   message?: unknown;
   /** Resolved inbound email routing metadata extracted from the raw payload. */
-  email?: {
-    domain?: AgentEmailDomainContext;
-    route?: AgentEmailRouteContext;
-    /**
-     * Platform-native Message-ID of the message that started this email thread.
-     * Equals the current message ID on the first message of a thread.
-     */
-    rootMessageId?: string;
-  };
+  email?: AgentEmailContext;
 }
 
 // ---------------------------------------------------------------------------

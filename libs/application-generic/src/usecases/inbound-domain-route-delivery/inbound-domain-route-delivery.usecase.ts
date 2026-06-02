@@ -38,10 +38,10 @@ function normalizeMailHeaders(headers: InboundDomainRouteMailInput['headers'] | 
 
   for (const [key, value] of Object.entries(headers)) {
     const stringValue = Array.isArray(value) ? value.join(', ') : String(value ?? '');
-    const entrySize = key.length + stringValue.length;
+    const entrySize = Buffer.byteLength(key) + Buffer.byteLength(stringValue);
 
     if (totalSize + entrySize > MAX_HEADERS_BYTES) {
-      break;
+      continue;
     }
 
     normalized[key] = stringValue;
