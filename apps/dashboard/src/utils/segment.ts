@@ -2,7 +2,18 @@ import type { IUserEntity } from '@novu/shared';
 import { AnalyticsBrowser } from '@segment/analytics-next';
 import * as Sentry from '@sentry/react';
 import * as mixpanel from 'mixpanel-browser';
-import { MIXPANEL_KEY, SEGMENT_KEY } from '@/config';
+import { IS_NOVU_CONNECT, MIXPANEL_KEY, SEGMENT_KEY } from '@/config';
+
+const CONNECT_SESSION_REPLAY_SAMPLE_PERCENT = 100;
+const PLATFORM_SESSION_REPLAY_SAMPLE_PERCENT = 100;
+
+function getSessionReplaySamplePercent(): number {
+  if (IS_NOVU_CONNECT) {
+    return CONNECT_SESSION_REPLAY_SAMPLE_PERCENT;
+  }
+
+  return PLATFORM_SESSION_REPLAY_SAMPLE_PERCENT;
+}
 
 export class SegmentService {
   private _segment: AnalyticsBrowser | null = null;
@@ -18,15 +29,17 @@ export class SegmentService {
     if (this._mixpanelEnabled) {
       mixpanel.init(MIXPANEL_KEY as string, {
         //@ts-expect-error missing from types
-        record_sessions_percent: 100,
+        record_sessions_percent: getSessionReplaySamplePercent(),
       });
 
-      try {
-        //@ts-expect-error missing from types
-        mixpanel.start_session_recording();
-      } catch (e) {
-        Sentry.captureException(e);
-        console.error(e);
+      if (IS_NOVU_CONNECT) {
+        try {
+          //@ts-expect-error missing from types
+          mixpanel.start_session_recording();
+        } catch (e) {
+          Sentry.captureException(e);
+          console.error(e);
+        }
       }
     }
 
