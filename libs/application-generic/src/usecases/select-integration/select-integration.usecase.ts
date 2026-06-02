@@ -20,15 +20,15 @@ export class SelectIntegration {
 
   @InstrumentUsecase()
   async execute(command: SelectIntegrationCommand): Promise<IntegrationEntity | undefined> {
-    const isCrossEnvironmentIntegrationDisabled = await this.isCrossEnvironmentIntegrationDisabled(command);
+    const isCrossEnvironmentIntegrationEnabled = await this.isCrossEnvironmentIntegrationEnabled(command);
 
     let integration: IntegrationEntity | null = await this.getPrimaryIntegration(
       command,
-      isCrossEnvironmentIntegrationDisabled
+      isCrossEnvironmentIntegrationEnabled
     );
 
     if (!command.identifier && command.filterData.tenant && command.userId) {
-      const query = this.getIntegrationQuery(command);
+      const query = this.getIntegrationQuery(command, isCrossEnvironmentIntegrationEnabled);
 
       const integrations = await this.integrationRepository.find(query);
 
@@ -89,40 +89,46 @@ export class SelectIntegration {
   @Instrument()
   private async getPrimaryIntegration(
     command: SelectIntegrationCommand,
-    isCrossEnvironmentIntegrationDisabled: boolean
+    isCrossEnvironmentIntegrationEnabled: boolean
   ): Promise<IntegrationEntity | null> {
     const isChannelSupportsPrimary = CHANNELS_WITH_PRIMARY.includes(command.channelType);
 
     const query: Partial<IntegrationEntity> & { _organizationId: string } = command.identifier
       ? {
           _organizationId: command.organizationId,
-          ...(isCrossEnvironmentIntegrationDisabled && {
+          ...(!isCrossEnvironmentIntegrationEnabled && {
             _environmentId: command.environmentId,
           }),
           channel: command.channelType,
           identifier: command.identifier,
           active: true,
         }
-      : this.getIntegrationQuery(command, isChannelSupportsPrimary);
+      : this.getIntegrationQuery(command, isCrossEnvironmentIntegrationEnabled, isChannelSupportsPrimary);
 
     return await this.integrationRepository.findOne(query, undefined, {
       query: { sort: { createdAt: -1 } },
     });
   }
 
-  private async isCrossEnvironmentIntegrationDisabled(command: SelectIntegrationCommand): Promise<boolean> {
+  private async isCrossEnvironmentIntegrationEnabled(command: SelectIntegrationCommand): Promise<boolean> {
     return this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_CROSS_ENVIRONMENT_INTEGRATION_DISABLED,
-      defaultValue: true,
+      key: FeatureFlagsKeysEnum.IS_CROSS_ENVIRONMENT_INTEGRATION_ENABLED,
+      defaultValue: false,
       organization: { _id: String(command.organizationId) },
       environment: { _id: String(command.environmentId) },
     });
   }
 
-  private getIntegrationQuery(command: SelectIntegrationCommand, isChannelSupportsPrimary = false) {
+  private getIntegrationQuery(
+    command: SelectIntegrationCommand,
+    isCrossEnvironmentIntegrationEnabled: boolean,
+    isChannelSupportsPrimary = false
+  ) {
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
       _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
+      ...(!isCrossEnvironmentIntegrationEnabled && {
+        _environmentId: command.environmentId,
+      }),
       channel: command.channelType,
       active: true,
     };
