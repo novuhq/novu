@@ -251,6 +251,25 @@ describe('McpOAuthDiscoveryService', () => {
       expect(md.tokenEndpointAuthMethodsSupported).to.equal(undefined);
     });
 
+    it('accepts the Clerk delegated-issuer pattern where PRM lists the product origin', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://clerk.context7.com',
+          authorization_endpoint: 'https://context7.com/api/oauth/authorize',
+          token_endpoint: 'https://context7.com/api/oauth/token',
+          registration_endpoint: 'https://context7.com/api/oauth/register',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['client_secret_post'],
+          authorization_response_iss_parameter_supported: false,
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://context7.com');
+
+      expect(md.issuer).to.equal('https://clerk.context7.com');
+      expect(md.registrationEndpoint).to.equal('https://context7.com/api/oauth/register');
+    });
+
     it('rejects metadata when issuer does not match the discovery URL', async () => {
       safeJsonStub.resolves(jsonResponse(200, { ...AS_BODY_BASE, issuer: 'https://attacker.example' }));
 

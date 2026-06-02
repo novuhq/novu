@@ -282,19 +282,21 @@ export class McpOAuthDiscoveryService {
         // Never echo the raw response body — DCR servers occasionally return
         // a `registration_access_token` in the body, which we MUST NOT log.
         const upstreamErrorCode = pickStringField(response.body, 'error');
+        const upstreamErrorDescription = pickStringField(response.body, 'error_description');
         this.logger.warn(
           {
             issuer: asMetadata.issuer,
             registrationEndpoint: asMetadata.registrationEndpoint,
             status: response.statusCode,
             upstreamErrorCode,
+            upstreamErrorDescription,
           },
           'MCP DCR registration failed'
         );
 
         throw new McpOAuthDiscoveryError(
           'mcp_registration_failed',
-          `Dynamic Client Registration with "${asMetadata.issuer}" failed${upstreamErrorCode ? `: ${upstreamErrorCode}` : '.'}`
+          `Dynamic Client Registration with "${asMetadata.issuer}" failed${upstreamErrorCode ? `: ${upstreamErrorCode}` : '.'}${upstreamErrorDescription ? ` — ${upstreamErrorDescription}` : ''}`
         );
       }
 
@@ -488,7 +490,17 @@ export class McpOAuthDiscoveryService {
 
   private parseAuthorizationServerMetadata(issuer: string, body: Record<string, unknown>): AuthorizationServerMetadata {
     const docIssuer = pickStringField(body, 'issuer');
-    if (!docIssuer || !isAcceptableIssuerMatch(issuer, docIssuer)) {
+    const authorizationEndpoint = pickStringField(body, 'authorization_endpoint');
+    const tokenEndpoint = pickStringField(body, 'token_endpoint');
+    const registrationEndpoint = pickStringField(body, 'registration_endpoint') ?? undefined;
+    const issuerMatch = docIssuer
+      ? isAcceptableIssuerMatch(issuer, docIssuer, {
+          authorizationEndpoint,
+          tokenEndpoint,
+          registrationEndpoint,
+        })
+      : false;
+    if (!docIssuer || !issuerMatch) {
       // Per RFC 8414 §3.3 the `issuer` value in the document MUST equal the
       // identifier used to construct the well-known URL. We additionally
       // accept the narrow "tenant-suffix" relaxation handled by
@@ -500,8 +512,6 @@ export class McpOAuthDiscoveryService {
       );
     }
 
-    const authorizationEndpoint = pickStringField(body, 'authorization_endpoint');
-    const tokenEndpoint = pickStringField(body, 'token_endpoint');
     if (!authorizationEndpoint || !tokenEndpoint) {
       throw new McpOAuthDiscoveryError(
         'mcp_no_as_metadata',
@@ -513,7 +523,7 @@ export class McpOAuthDiscoveryService {
       issuer: docIssuer,
       authorizationEndpoint,
       tokenEndpoint,
-      registrationEndpoint: pickStringField(body, 'registration_endpoint') ?? undefined,
+      registrationEndpoint,
       codeChallengeMethodsSupported: pickStringArrayField(body, 'code_challenge_methods_supported') ?? [],
       scopesSupported: pickStringArrayField(body, 'scopes_supported') ?? undefined,
       tokenEndpointAuthMethodsSupported:
@@ -591,8 +601,25 @@ function dedupe(list: string[]): string[] {
  *   - advertised issuers with a non-empty path different from the
  *     requested one (a path swap could redirect us to a different
  *     tenant on the same host).
+ *
+ * We additionally accept the Clerk-style delegated-issuer pattern when
+ * optional OAuth endpoint URLs are supplied:
+ *
+ *   - PRM lists a product origin like `https://context7.com` as the
+ *     authorization server identifier,
+ *   - the metadata document declares a delegated issuer on a subdomain
+ *     (`https://clerk.context7.com`), and
+ *   - authorize/token/(register) endpoints remain on the PRM-listed host.
  */
-function isAcceptableIssuerMatch(requested: string, advertised: string): boolean {
+function isAcceptableIssuerMatch(
+  requested: string,
+  advertised: string,
+  opts?: {
+    authorizationEndpoint?: string;
+    tokenEndpoint?: string;
+    registrationEndpoint?: string;
+  }
+): boolean {
   if (requested === advertised) {
     return true;
   }
@@ -606,14 +633,64 @@ function isAcceptableIssuerMatch(requested: string, advertised: string): boolean
     return false;
   }
 
-  if (requestedUrl.origin !== advertisedUrl.origin) {
+  if (requestedUrl.origin === advertisedUrl.origin) {
+    const advertisedPath = advertisedUrl.pathname.replace(/\/+$/, '');
+    const requestedPath = requestedUrl.pathname.replace(/\/+$/, '');
+
+    if (advertisedPath === '' && requestedPath !== '') {
+      return true;
+    }
+  }
+
+  return isDelegatedProductIssuer(requested, advertised, opts);
+}
+
+function isDelegatedProductIssuer(
+  requested: string,
+  advertised: string,
+  opts?: {
+    authorizationEndpoint?: string;
+    tokenEndpoint?: string;
+    registrationEndpoint?: string;
+  }
+): boolean {
+  if (!opts?.authorizationEndpoint || !opts.tokenEndpoint) {
     return false;
   }
 
-  const advertisedPath = advertisedUrl.pathname.replace(/\/+$/, '');
-  const requestedPath = requestedUrl.pathname.replace(/\/+$/, '');
+  let requestedHost: string;
+  let advertisedHost: string;
+  try {
+    requestedHost = new URL(requested).hostname;
+    advertisedHost = new URL(advertised).hostname;
+  } catch {
+    return false;
+  }
 
-  return advertisedPath === '' && requestedPath !== '';
+  if (requestedHost === advertisedHost) {
+    return false;
+  }
+
+  if (advertisedHost !== requestedHost && !advertisedHost.endsWith(`.${requestedHost}`)) {
+    return false;
+  }
+
+  const endpointUrls = [opts.authorizationEndpoint, opts.tokenEndpoint];
+  if (opts.registrationEndpoint) {
+    endpointUrls.push(opts.registrationEndpoint);
+  }
+
+  return endpointUrls.every((endpoint) => hostnameBelongsToProductHost(endpoint, requestedHost));
+}
+
+function hostnameBelongsToProductHost(url: string, productHost: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+
+    return host === productHost || host.endsWith(`.${productHost}`);
+  } catch {
+    return false;
+  }
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
