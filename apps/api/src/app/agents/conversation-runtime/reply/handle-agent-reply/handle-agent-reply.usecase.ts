@@ -20,7 +20,7 @@ import type { MetadataOp } from '../../conversation/agent-conversation.service';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { OutboundGateway } from '../../egress/outbound.gateway';
 import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
-import { buildAgentPlatformContext } from '../../runtime/build-platform-context.util';
+import { buildAgentPlatformContext, buildEmailPlatformContext } from '../../runtime/build-platform-context.util';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
@@ -472,9 +472,12 @@ export class HandleAgentReply {
         platformThreadId: channel.platformThreadId,
         channelId: '',
         isDM: false,
-        platform: config.platform,
         message: null,
-        firstPlatformMessageId: channel.firstPlatformMessageId,
+        email: buildEmailPlatformContext({
+          platform: config.platform,
+          message: null,
+          firstPlatformMessageId: channel.firstPlatformMessageId,
+        }),
       }),
     });
   }

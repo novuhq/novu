@@ -9,7 +9,7 @@ import type { AgentRuntime } from './agent-runtime.port';
 import type { AgentExecutionParams } from './bridge-executor.service';
 import { BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
 import type { ConversationTurn } from './conversation-turn';
-import { buildAgentPlatformContext } from './build-platform-context.util';
+import { buildAgentPlatformContext, buildEmailPlatformContext } from './build-platform-context.util';
 import { applyPlatformThreadIdToThread } from './platform-thread.util';
 
 const BRIDGE_OFFLINE_REPLY_MARKDOWN = `*The agent is currently offline.*
@@ -76,9 +76,12 @@ export class BridgeRuntime implements AgentRuntime {
         platformThreadId: turn.platformThreadId,
         channelId: turn.thread.channelId,
         isDM: turn.thread.isDM,
-        platform: turn.config.platform,
         message: turn.message,
-        firstPlatformMessageId: this.conversationService.getPrimaryChannel(turn.conversation).firstPlatformMessageId,
+        email: buildEmailPlatformContext({
+          platform: turn.config.platform,
+          message: turn.message,
+          firstPlatformMessageId: this.conversationService.getPrimaryChannel(turn.conversation).firstPlatformMessageId,
+        }),
       }),
       storedAttachments: turn.storedAttachments,
       action: turn.action,
