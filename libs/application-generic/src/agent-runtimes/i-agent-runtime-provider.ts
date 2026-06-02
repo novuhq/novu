@@ -5,6 +5,7 @@ import type {
   AgentRuntimeProviderIdEnum,
   AgentSkillDto,
   AgentToolDto,
+  McpTokenEndpointAuthMethod,
 } from '@novu/shared';
 
 export type CreateAgentInput = {
@@ -17,6 +18,11 @@ export type CreateAgentInput = {
   mcpServers?: Array<{ name: string; url: string }>;
   /** Skills to attach to the agent at creation time. Maximum 20. */
   skills?: AgentSkillDto[];
+  /**
+   * When true, builtin and MCP toolsets are provisioned with `always_allow`
+   * permission policies instead of the default `always_ask`.
+   */
+  useAlwaysAllowToolPermissions?: boolean;
 };
 
 export type CreateAgentResult = {
@@ -39,11 +45,18 @@ export type UpdateAgentRuntimeConfigInput = {
   mcpServers?: AgentMcpServerDto[];
   tools?: AgentToolDto[];
   skills?: AgentSkillDto[];
+  /**
+   * When true, rebuilt toolset payloads use `always_allow` permission policies
+   * instead of the default `always_ask`.
+   */
+  useAlwaysAllowToolPermissions?: boolean;
 };
 
 export type ProvisionIntegrationInput = {
   /** Human-readable name for the integration; used as the environment/resource name on the provider. */
   integrationName: string;
+  /** Provider-side environment/vault name stem; defaults to integrationName. */
+  resourceName?: string;
 };
 
 export type ProvisionIntegrationResult = {
@@ -55,6 +68,104 @@ export type ProvisionIntegrationResult = {
   /** Optional provider-specific metadata (not stored in credentials). */
   metadata?: Record<string, unknown>;
 };
+
+/**
+ * OAuth client metadata recorded at authorize-URL time. Providers whose vault
+ * supports server-side refresh (e.g. Anthropic's `mcp_oauth.refresh` block)
+ * use this to register the upstream token endpoint with the vault so refreshes
+ * can happen without round-tripping back through Novu.
+ */
+export interface VaultCredentialAuthOAuthClient {
+  clientId: string;
+  clientSecret?: string;
+  tokenEndpoint: string;
+  /** RFC 8707 resource indicator replayed verbatim on refresh. */
+  resource?: string;
+  /**
+   * `token_endpoint_auth_method` negotiated at DCR time (RFC 8414 §2). Drives
+   * how the runtime provider's vault authenticates refresh requests to the
+   * upstream token endpoint. Absent on legacy credentials registered before
+   * negotiation existed — callers default to `'client_secret_basic'` per
+   * RFC 8414.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
+}
+
+/**
+ * Decoded credential payload pushed to a provider's vault.
+ *
+ * Mirrors `McpConnectionAuth` from `@novu/dal` but is intentionally redeclared
+ * here so the provider abstraction stays independent of the persistence layer.
+ * Callers decrypt before passing in.
+ */
+export interface VaultCredentialAuth {
+  accessToken?: string;
+  refreshToken?: string;
+  expiresAt?: string;
+  tokenType?: string;
+  scopes?: string[];
+  oauthClient?: VaultCredentialAuthOAuthClient;
+}
+
+export interface CreateVaultInput {
+  displayName: string;
+}
+
+export interface CreateVaultResult {
+  externalVaultId: string;
+}
+
+export interface UpsertVaultCredentialInput {
+  /**
+   * Decrypted integration credentials blob kept provider-agnostic for API-key
+   * access during vault operations.
+   */
+  integrationCredentials: Record<string, unknown>;
+  /** Scoped Anthropic vault container (`vlt_…`) that owns this credential. */
+  externalVaultId: string;
+  /** Canonical MCP server URL the credential authorises. */
+  mcpServerUrl: string;
+  /** Human-readable label surfaced in the provider's vault UI. */
+  displayName: string;
+  /** Decrypted OAuth tokens issued by the upstream MCP authorization server. */
+  auth: VaultCredentialAuth;
+  /**
+   * When set, update the existing vault credential instead of creating a new
+   * one. Returned by a previous `upsertVaultCredential` call.
+   */
+  existingCredentialId?: string;
+}
+
+export interface UpsertVaultCredentialResult {
+  /** Stable identifier for subsequent `update` / `delete` calls. */
+  vaultCredentialId: string;
+}
+
+export interface DeleteVaultCredentialInput {
+  /** Decrypted integration credentials blob; see `UpsertVaultCredentialInput`. */
+  integrationCredentials: Record<string, unknown>;
+  /** Scoped Anthropic vault container (`vlt_…`) that owns this credential. */
+  externalVaultId: string;
+  vaultCredentialId: string;
+}
+
+/**
+ * Snapshot of a tool call the runtime is waiting on user approval for.
+ *
+ * Used by the worker when a turn ends in `requires-action` (e.g. Anthropic
+ * MCP toolsets configured with `permission_policy: always_ask`) to materialise
+ * an Approve/Deny card on the SDK side without coupling the worker to any
+ * one provider's session-events shape.
+ */
+export interface PendingToolApproval {
+  /** Provider-side event id (e.g. Anthropic `sevt_...`). */
+  toolUseId: string;
+  toolName: string;
+  /** Set when the tool comes from an MCP toolset; undefined for builtin / custom tools. */
+  mcpServerName?: string;
+  /** Tool arguments — surfaced to the user so they can decide. */
+  input?: Record<string, unknown>;
+}
 
 export type UploadSkillFile = {
   /** Relative path of the file inside the skill bundle (e.g. 'SKILL.md', 'lib/helpers.py'). */
@@ -77,6 +188,12 @@ export type UploadSkillResult = {
   version: string | null;
 };
 
+export type ValidateCredentialsInput = {
+  apiKey?: string;
+  region?: string;
+  externalWorkspaceId?: string;
+};
+
 export interface IAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
   readonly capabilities: AgentRuntimeCapabilities;
@@ -85,7 +202,7 @@ export interface IAgentRuntimeProvider {
    * Validate the supplied credentials against the provider's API.
    * Throws AgentRuntimeUnauthorizedError / AgentRuntimeForbiddenError on failure.
    */
-  validateCredentials(apiKey: string): Promise<void>;
+  validateCredentials(input: ValidateCredentialsInput): Promise<void>;
 
   /**
    * Create a new agent on the provider side.
@@ -139,6 +256,41 @@ export interface IAgentRuntimeProvider {
    * Best-effort — callers should still proceed with local cleanup on error.
    */
   deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
+
+  /**
+   * Inspect a session that ended in `requires-action` (or was rejected for
+   * "waiting on responses to events") and return every pending
+   * tool-confirmation request, oldest first.
+   *
+   * Providers without a session-scoped event log return `[]`; callers fall
+   * back to a generic error reply.
+   */
+  getAllPendingToolApprovals(sessionId: string): Promise<PendingToolApproval[]>;
+
+  /**
+   * Create an empty credential vault on the provider (Anthropic: `vlt_…`).
+   * Only callable when `capabilities.tokenVault === true`.
+   */
+  createVault(input: CreateVaultInput): Promise<CreateVaultResult>;
+
+  /**
+   * Push an OAuth credential to the provider's per-environment vault so the
+   * upstream MCP initialise step can succeed on the next turn.
+   *
+   * Only callable when `capabilities.tokenVault === true`. Providers without
+   * a token vault fall back to having Novu inject the bearer per request —
+   * use `BaseAgentRuntimeProvider`'s default, which throws
+   * `UnsupportedCapabilityError`, to fail loudly if a caller forgets the
+   * capability gate.
+   */
+  upsertVaultCredential(input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult>;
+
+  /**
+   * Delete a credential previously pushed via `upsertVaultCredential` (called
+   * on disable / revoke). Only callable when `capabilities.tokenVault === true`.
+   * Best-effort — callers should still proceed with local cleanup on error.
+   */
+  deleteVaultCredential(input: DeleteVaultCredentialInput): Promise<void>;
 
   /**
    * Upload a custom skill bundle to the provider and return a stable skillId

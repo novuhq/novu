@@ -1,12 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  FeatureFlagsService,
-  InstrumentUsecase,
-  PinoLogger,
-  TraceRollupRepository,
-  WorkflowRunRepository,
-} from '@novu/application-generic';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { InstrumentUsecase, PinoLogger, TraceRollupRepository } from '@novu/application-generic';
 import { ActiveSubscribersDataPointDto } from '../../dtos/get-charts.response.dto';
 import { BuildActiveSubscribersChartCommand } from './build-active-subscribers-chart.command';
 
@@ -14,8 +7,6 @@ import { BuildActiveSubscribersChartCommand } from './build-active-subscribers-c
 export class BuildActiveSubscribersChart {
   constructor(
     private traceRollupRepository: TraceRollupRepository,
-    private workflowRunRepository: WorkflowRunRepository,
-    private featureFlagsService: FeatureFlagsService,
     private logger: PinoLogger
   ) {
     this.logger.setContext(BuildActiveSubscribersChart.name);
@@ -29,45 +20,15 @@ export class BuildActiveSubscribersChart {
     const previousEndDate = new Date(startDate.getTime() - 1);
     const previousStartDate = new Date(previousEndDate.getTime() - periodDuration);
 
-    const featureFlagContext = {
-      organization: { _id: organizationId },
-      environment: { _id: environmentId },
-    };
-
-    const [isGlobalEnabled, isDedicatedEnabled] = await Promise.all([
-      this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_ANALYTIC_V2_LOGS_READ_GLOBAL_ENABLED,
-        defaultValue: false,
-        ...featureFlagContext,
-      }),
-      this.featureFlagsService.getFlag({
-        key: FeatureFlagsKeysEnum.IS_ANALYTIC_V2_ACTIVE_SUBSCRIBERS_READ_ENABLED,
-        defaultValue: false,
-        ...featureFlagContext,
-      }),
-    ]);
-
-    const useNewQuery = isGlobalEnabled || isDedicatedEnabled;
-
-    const result = useNewQuery
-      ? await this.traceRollupRepository.getActiveSubscribersCount(
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-          previousStartDate,
-          previousEndDate,
-          workflowIds
-        )
-      : await this.workflowRunRepository.getActiveSubscribersData(
-          environmentId,
-          organizationId,
-          startDate,
-          endDate,
-          previousStartDate,
-          previousEndDate,
-          workflowIds
-        );
+    const result = await this.traceRollupRepository.getActiveSubscribersCount(
+      environmentId,
+      organizationId,
+      startDate,
+      endDate,
+      previousStartDate,
+      previousEndDate,
+      workflowIds
+    );
 
     return {
       currentPeriod: result.currentPeriod,

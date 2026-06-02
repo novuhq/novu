@@ -1,11 +1,12 @@
 import type {
+  AgentMcpServerEnablementDto,
   AgentRuntime,
   AgentRuntimeProviderIdEnum,
   ChannelTypeEnum,
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
-import { del, get, getApiBaseUrl, NovuApiError, patch, post } from '@/api/api.client';
+import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
@@ -17,6 +18,8 @@ const AGENT_INTEGRATIONS_QUERY_KEY = 'fetchAgentIntegrations' as const;
 const AGENT_EMOJI_QUERY_KEY = 'fetchAgentEmoji' as const;
 
 const AGENT_RUNTIME_CONFIG_QUERY_KEY = 'fetchAgentRuntimeConfig' as const;
+
+const AGENT_MCP_SERVERS_QUERY_KEY = 'fetchAgentMcpServers' as const;
 
 export function getAgentDetailQueryKey(environmentId: string | undefined, identifier: string | undefined) {
   return [AGENT_DETAIL_QUERY_KEY, environmentId, identifier] as const;
@@ -35,6 +38,10 @@ export function getAgentsListQueryKey(
 
 export function getAgentRuntimeConfigQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
   return [AGENT_RUNTIME_CONFIG_QUERY_KEY, environmentId, agentIdentifier] as const;
+}
+
+export function getAgentMcpServersQueryKey(environmentId: string | undefined, agentIdentifier: string | undefined) {
+  return [AGENT_MCP_SERVERS_QUERY_KEY, environmentId, agentIdentifier] as const;
 }
 
 export type AgentIntegrationSummary = {
@@ -106,8 +113,16 @@ type ManagedRuntimeDto = {
 };
 
 export type CreateAgentBody = {
-  name: string;
-  identifier: string;
+  /**
+   * Optional in the adopt-existing managed flow — the backend resolves it from the provider when
+   * `managedRuntime.externalAgentId` is set. Required otherwise.
+   */
+  name?: string;
+  /**
+   * Optional in the adopt-existing managed flow — auto-generated from the provider agent name
+   * when omitted. Required otherwise.
+   */
+  identifier?: string;
   description?: string;
   active?: boolean;
   runtime?: AgentRuntime;
@@ -191,6 +206,47 @@ export async function getAgent(
   return response.data;
 }
 
+export type AgentDemoQuota = {
+  conversations: { count: number; limit: number };
+  tokens?: { count: number; limit: number };
+  isExhausted: boolean;
+  reason?: 'conversations' | 'tokens';
+  isDemoAgent: boolean;
+};
+
+export function getAgentDemoQuotaQueryKey(environmentId: string | undefined, agentIdentifier: string) {
+  return ['agent-demo-quota', environmentId, agentIdentifier] as const;
+}
+
+export async function getAgentDemoQuota(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentDemoQuota> {
+  const response = await get<{ data: AgentDemoQuota } | AgentDemoQuota>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/demo-quota`,
+    { environment, signal }
+  );
+
+  return 'data' in response ? response.data : response;
+}
+
+export async function migrateAgentRuntime(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  body: { integrationId: string }
+): Promise<{ integrationId: string; externalAgentId: string }> {
+  const response = await post<
+    | { data: { integrationId: string; externalAgentId: string } }
+    | {
+        integrationId: string;
+        externalAgentId: string;
+      }
+  >(`/agents/${encodeURIComponent(agentIdentifier)}/migrate-runtime`, { environment, body });
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function createAgent(environment: IEnvironment, body: CreateAgentBody): Promise<AgentResponse> {
   const response = await post<AgentApiEnvelope>('/agents', { environment, body });
 
@@ -201,6 +257,7 @@ export type VerifyManagedCredentialsBody = {
   providerId: AgentRuntimeProviderIdEnum;
   apiKey: string;
   externalWorkspaceId?: string;
+  region?: string;
 };
 
 export type VerifyManagedCredentialsResponse = { valid: true };
@@ -218,6 +275,44 @@ export async function verifyManagedCredentials(
   return 'data' in response ? response.data : response;
 }
 
+export type GeneratedManagedAgentSkill = {
+  skillId: string;
+};
+
+export type GeneratedManagedAgent = {
+  name: string;
+  identifier: string;
+  systemPrompt: string;
+  tools: string[];
+  mcpServers: string[];
+  skills: GeneratedManagedAgentSkill[];
+};
+
+export async function generateManagedAgent({
+  environment,
+  prompt,
+  runtime,
+  signal,
+}: {
+  environment: IEnvironment;
+  prompt: string;
+  /**
+   * `managed` (default) returns the full Claude tools/MCPs/skills payload; `self-hosted`
+   * returns only name, identifier and systemPrompt and skips the catalog selection on the
+   * backend. Use `self-hosted` for the Custom Scaffold flow.
+   */
+  runtime?: AgentRuntime;
+  signal?: AbortSignal;
+}): Promise<GeneratedManagedAgent> {
+  const response = await post<{ data: GeneratedManagedAgent } | GeneratedManagedAgent>('/agents/generate', {
+    environment,
+    body: { prompt, ...(runtime ? { runtime } : {}) },
+    signal,
+  });
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function updateAgent(
   environment: IEnvironment,
   identifier: string,
@@ -228,8 +323,14 @@ export async function updateAgent(
   return response.data;
 }
 
-export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
-  return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
+export function deleteAgent(
+  environment: IEnvironment,
+  identifier: string,
+  options?: { deleteFromProvider?: boolean }
+): Promise<void> {
+  const params = options?.deleteFromProvider ? '?deleteFromProvider=true' : '';
+
+  return del(`/agents/${encodeURIComponent(identifier)}${params}`, { environment });
 }
 
 /** Picked integration fields on an agent–integration link (matches API `integration`). */
@@ -385,7 +486,6 @@ export type AgentRuntimeConfig = {
 export type PatchAgentRuntimeConfigBody = {
   model?: string;
   systemPrompt?: string;
-  mcpServers?: AgentMcpServer[];
   tools?: AgentTool[];
   skills?: AgentSkillInputDto[];
 };
@@ -416,6 +516,98 @@ export async function patchAgentRuntimeConfig(
   );
 
   return response.data;
+}
+
+export type AgentMcpServerEnablement = AgentMcpServerEnablementDto;
+
+export async function listAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  signal?: AbortSignal
+): Promise<AgentMcpServerEnablement[]> {
+  const response = await get<{ data: AgentMcpServerEnablement[] }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
+    { environment, signal }
+  );
+
+  return response.data;
+}
+
+export async function enableAgentMcpServer(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<AgentMcpServerEnablement> {
+  const response = await post<{ data: AgentMcpServerEnablement }>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`,
+    { environment, body: { mcpId } }
+  );
+
+  return response.data;
+}
+
+export function disableAgentMcpServer(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<void> {
+  return del(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}`, {
+    environment,
+  });
+}
+
+export type SetAgentMcpServersFailure = {
+  mcpId: string;
+  operation: 'enable' | 'disable';
+  code: string;
+  message: string;
+};
+
+export type SetAgentMcpServersResponse = {
+  data: AgentMcpServerEnablement[];
+  failed: SetAgentMcpServersFailure[];
+};
+
+/**
+ * Bulk "set desired state" — replaces the agent's enabled MCP set with
+ * `mcpIds`. Returns the final enabled list plus a per-id `failed[]` array
+ * for any rows the server could not mutate (the rest still take effect).
+ */
+export async function setAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpIds: string[]
+): Promise<SetAgentMcpServersResponse> {
+  return put<SetAgentMcpServersResponse>(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`, {
+    environment,
+    body: { mcpIds },
+  });
+}
+
+export type EnsureProviderManagedVaultResponse = {
+  /** Deep link the dashboard opens in a new tab so the user can finish connector OAuth in Claude. */
+  vaultUrl: string;
+  /** Provider-side vault container id (e.g. Anthropic `vlt_…`) Novu provisioned for the current subscriber + agent. */
+  externalVaultId: string;
+};
+
+/**
+ * Idempotent "ensure provider-managed enablement + vault" call. Used by the
+ * dashboard's "Add from Claude" flow for MCPs whose catalog
+ * `oauth.mode === 'provider-managed'`. Open `vaultUrl` in a new tab so the
+ * user can finish connector OAuth in the provider's vault UI.
+ */
+export async function ensureProviderManagedVault(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<EnsureProviderManagedVaultResponse> {
+  const response = await post<{ data: EnsureProviderManagedVaultResponse } | EnsureProviderManagedVaultResponse>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}/provider-vault`,
+    { environment }
+  );
+
+  return 'data' in response ? response.data : response;
 }
 
 type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
@@ -562,11 +754,11 @@ export async function sendWhatsAppTestTemplate(
   environment: IEnvironment,
   agentIdentifier: string,
   integrationIdentifier: string,
-  to: string
+  subscriberId: string
 ): Promise<SendWhatsAppTestTemplateResponse> {
   const response = await post<{ data: SendWhatsAppTestTemplateResponse }>(
     `/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationIdentifier)}/whatsapp/test-template`,
-    { environment, body: { to } }
+    { environment, body: { subscriberId } }
   );
 
   return response.data;

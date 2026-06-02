@@ -1,20 +1,14 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { motion } from 'motion/react';
 import { useMemo, useState } from 'react';
-import {
-  RiAlertLine,
-  RiCheckLine,
-  RiErrorWarningLine,
-  RiSendPlaneLine,
-  RiTimeLine,
-} from 'react-icons/ri';
+import { RiAlertLine, RiCheckLine, RiErrorWarningLine, RiSendPlaneLine, RiTimeLine } from 'react-icons/ri';
 import { useParams } from 'react-router-dom';
 import {
   getIntegrationStoreTelegramMobileSetupStatus,
   type IntegrationStoreTelegramMobileLinkStatus,
   IntegrationStoreTelegramMobileSubmitError,
-  submitIntegrationStoreTelegramMobileCredentials,
   type SubmitIntegrationStoreTelegramMobileCredentialsResult,
+  submitIntegrationStoreTelegramMobileCredentials,
 } from '@/api/integrations';
 import { Button } from '@/components/primitives/button';
 import { Textarea } from '@/components/primitives/textarea';
@@ -45,9 +39,7 @@ export function IntegrationStoreTelegramMobileSetupPage() {
     <PageShell>
       {!token && <InactiveLinkCard reason="invalid" />}
       {token && statusQuery.isLoading && <LoadingCard />}
-      {token && statusQuery.data && !statusQuery.data.valid && (
-        <InactiveLinkCard reason={statusQuery.data.reason} />
-      )}
+      {token && statusQuery.data && !statusQuery.data.valid && <InactiveLinkCard reason={statusQuery.data.reason} />}
       {token && statusQuery.isError && <InactiveLinkCard reason="invalid" />}
       {token && statusQuery.data?.valid && <SetupForm token={token} />}
     </PageShell>
@@ -75,7 +67,10 @@ function LoadingCard() {
   return (
     <Card>
       <div className="flex flex-col items-center gap-3 py-6">
-        <div className="border-stroke-soft border-t-text-strong size-7 animate-spin rounded-full border-2" aria-label="Loading" />
+        <div
+          className="border-stroke-soft border-t-text-strong size-7 animate-spin rounded-full border-2"
+          aria-label="Loading"
+        />
         <p className="text-text-soft text-paragraph-xs">Checking your setup link…</p>
       </div>
     </Card>
@@ -123,8 +118,8 @@ function SetupForm({ token }: SetupFormProps) {
           Finish setting up your Telegram bot
         </h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
-          Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and add the
-          Telegram integration to your Novu environment — nothing else to fill in.
+          Paste the message BotFather just sent you on Telegram. We&apos;ll detect the bot token and add the Telegram
+          integration to your Novu environment — nothing else to fill in.
         </p>
       </div>
 
@@ -137,12 +132,11 @@ function SetupForm({ token }: SetupFormProps) {
           simple
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder={'Done! Congratulations on your new bot…\n\nUse this token to access the HTTP API:\n1234567890:AAFdT8_…\n\nYou will find it at t.me/YourBot_bot.'}
+          placeholder={
+            'Done! Congratulations on your new bot…\n\nUse this token to access the HTTP API:\n1234567890:AAFdT8_…\n\nYou will find it at t.me/YourBot_bot.'
+          }
           rows={7}
-          className={cn(
-            'font-mono text-xs',
-            parsedToken && 'border-success-base ring-success-base/40 ring-1'
-          )}
+          className={cn('font-mono text-xs', parsedToken && 'border-success-base ring-success-base/40 ring-1')}
           autoFocus
           spellCheck={false}
           autoCapitalize="off"
@@ -197,7 +191,14 @@ function ParseStatus({ draft, parsedToken, parsedUsername }: ParseStatusProps) {
     <div className="text-success-base text-label-xs flex items-start gap-1.5 leading-4">
       <RiCheckLine className="mt-0.5 size-3.5 shrink-0" />
       <span>
-        Token detected{parsedUsername ? <> for <span className="font-semibold">@{parsedUsername}</span></> : null}.
+        Token detected
+        {parsedUsername ? (
+          <>
+            {' '}
+            for <span className="font-semibold">@{parsedUsername}</span>
+          </>
+        ) : null}
+        .
       </span>
     </div>
   );
@@ -214,8 +215,8 @@ function SuccessCard({ botUsername }: { botUsername: string }) {
         </div>
         <h1 className="text-text-strong text-paragraph-md font-semibold">Telegram integration created</h1>
         <p className="text-text-soft text-paragraph-xs leading-5">
-          <span className="text-text-strong font-medium">@{botUsername}</span> is now wired up to your Novu
-          environment. Hop back to your dashboard to assign it to an agent or start sending notifications.
+          <span className="text-text-strong font-medium">@{botUsername}</span> is now wired up to your Novu environment.
+          Hop back to your dashboard to assign it to an agent or start sending notifications.
         </p>
       </div>
 

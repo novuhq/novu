@@ -92,8 +92,7 @@ export function CreateIntegrationSidebar({ isOpened }: CreateIntegrationSidebarP
 
     const newOne = integrations.find(
       (integration) =>
-        integration.providerId === ChatProviderIdEnum.Telegram &&
-        !initialTelegramIdsRef.current?.has(integration._id)
+        integration.providerId === ChatProviderIdEnum.Telegram && !initialTelegramIdsRef.current?.has(integration._id)
     );
 
     if (newOne) {

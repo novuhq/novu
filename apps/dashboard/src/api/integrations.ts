@@ -158,17 +158,16 @@ export type IntegrationStoreTelegramMobileLink = {
 type IntegrationStoreTelegramMobileLinkEnvelope = { data: IntegrationStoreTelegramMobileLink };
 
 /**
- * Issues a signed, single-use, short-lived JWT that lets an unauthenticated
+ * Issues an opaque, single-use, short-lived setup token that lets an unauthenticated
  * mobile visitor create a Telegram integration from the Integration Store
  * create flow. The integration is created server-side on submit.
  */
 export async function requestIntegrationStoreTelegramMobileLink(
   environment: IEnvironment
 ): Promise<IntegrationStoreTelegramMobileLink> {
-  const response = await post<IntegrationStoreTelegramMobileLinkEnvelope>(
-    `/integrations/telegram/mobile-link`,
-    { environment }
-  );
+  const response = await post<IntegrationStoreTelegramMobileLinkEnvelope>(`/integrations/telegram/mobile-link`, {
+    environment,
+  });
 
   return response.data;
 }

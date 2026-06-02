@@ -1,4 +1,4 @@
-import { useOrganization } from '@clerk/clerk-react';
+import { useOrganization } from '@clerk/react';
 import { ChannelTypeEnum, IIntegration } from '@novu/shared';
 import { useMemo } from 'react';
 import { IS_SELF_HOSTED, ONBOARDING_DEMO_WORKFLOW_ID } from '../config';

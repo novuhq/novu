@@ -157,15 +157,19 @@ export function useLinkAgentIntegration({
       };
 
       /**
-       * Removes every existing link that is not the freshly linked one. Runs only when
-       * `replaceExisting` is enabled. Only integrations provisioned by this hook are deleted;
-       * pre-existing integrations are unlinked but left intact. Failures are logged but never
-       * surfaced because the primary link succeeded.
+       * Removes other links for the *same provider* as the freshly linked one. Runs only when
+       * `replaceExisting` is enabled. Links for other providers (including the auto-provisioned
+       * NovuAgent email link) are always preserved — picking a Slack card replaces a previous
+       * Slack link, not MsTeams or NovuEmail. Only integrations provisioned by this hook are
+       * deleted; pre-existing integrations are unlinked but left intact. Failures are logged
+       * but never surfaced because the primary link succeeded.
        */
       const removePreviousLinks = async (keepIntegrationId: string | undefined) => {
         if (!replaceExisting || !existingLinks?.length) return;
 
-        const toRemove = existingLinks.filter((link) => link.integration._id !== keepIntegrationId);
+        const toRemove = existingLinks.filter(
+          (link) => link.integration._id !== keepIntegrationId && link.integration.providerId === item.providerId
+        );
 
         await Promise.all(
           toRemove.map(async (link) => {

@@ -42,6 +42,7 @@ import { Landing1SignUpPage } from '@/pages/landing-1-signup';
 import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
+import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
@@ -52,6 +53,7 @@ import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setu
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { AgentsUsecasePage } from './pages/agents-usecase-page';
+import { CliAuthPage } from './pages/cli-auth';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
@@ -99,6 +101,10 @@ const router = createBrowserRouter([
       {
         path: `${ROUTES.LANDING_1_SIGN_UP}/*`,
         element: <Landing1SignUpPage />,
+      },
+      {
+        path: ROUTES.CLI_AUTH,
+        element: <CliAuthPage />,
       },
       {
         // Public, unauthenticated mobile setup page for Telegram. Mounted outside
@@ -168,7 +174,11 @@ const router = createBrowserRouter([
           },
           {
             path: ROUTES.AGENTS_SETUP,
-            element: <AgentsSetupPage />,
+            element: (
+              <ConnectSubscriberProvider>
+                <AgentsSetupPage />
+              </ConnectSubscriberProvider>
+            ),
           },
           {
             path: ROUTES.INBOX_USECASE,
@@ -390,32 +400,37 @@ const router = createBrowserRouter([
                 ],
               },
               {
-                path: ROUTES.AGENTS,
-                element: <AgentsPage />,
-              },
-              {
-                path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS_TAB,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
-              },
-              {
-                path: ROUTES.AGENT_DETAILS,
-                element: (
-                  <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
-                    <AgentDetailsPage />
-                  </ProtectedRoute>
-                ),
+                element: <ConnectSubscriberProvider />,
+                children: [
+                  {
+                    path: ROUTES.AGENTS,
+                    element: <AgentsPage />,
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
               },
               {
                 path: ROUTES.DOMAINS,
@@ -616,7 +631,9 @@ const router = createBrowserRouter([
                 path: ROUTES.CONNECT_HOME,
                 element: (
                   <ConnectProtectedRoute>
-                    <Outlet />
+                    <ConnectSubscriberProvider>
+                      <Outlet />
+                    </ConnectSubscriberProvider>
                   </ConnectProtectedRoute>
                 ),
                 children: [

@@ -20,6 +20,26 @@ function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<strin
   return str({ default: undefined });
 }
 
+// Managed-agent (Thalamus) config is a Novu Cloud concern. On self-hosted (or whenever the URL is
+// blank) we must not run envalid's `url()` validator, which rejects an empty string even with a
+// default — a blank `THALAMUS_CF_URL=` is common in self-hosted .env files and would block boot.
+function getThalamusValidators(): {
+  THALAMUS_CF_URL: ValidatorSpec<string>;
+  THALAMUS_WEBHOOK_SECRET: ValidatorSpec<string>;
+} {
+  if (processEnv.IS_SELF_HOSTED === 'true' || !processEnv.THALAMUS_CF_URL) {
+    return {
+      THALAMUS_CF_URL: str({ default: undefined }),
+      THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+    };
+  }
+
+  return {
+    THALAMUS_CF_URL: url(),
+    THALAMUS_WEBHOOK_SECRET: str(),
+  };
+}
+
 export const envValidators = {
   TZ: str({ default: 'UTC' }),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local'], default: 'local' }),
@@ -71,21 +91,16 @@ export const envValidators = {
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   THALAMUS_CF_API_KEY: str({ default: undefined }),
-  ...(processEnv.THALAMUS_CF_URL
-    ? {
-        THALAMUS_CF_URL: url(),
-        THALAMUS_WEBHOOK_SECRET: str(),
-      }
-    : {
-        THALAMUS_CF_URL: url({ default: undefined }),
-        THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
-      }),
+  ...getThalamusValidators(),
   /**
    * Shared inbound domain for the agent default inbox feature, e.g. `agentconnect.sh`.
    * When unset the feature is disabled and the worker falls through to the existing
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  NOVU_MANAGED_CLAUDE_API_KEY: str({ default: undefined }),
+  MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS: num({ default: 10 }),
+  MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION: num({ default: 100_000 }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {
@@ -118,6 +133,17 @@ export const envValidators = {
       AI_LLM_PROMPT_CACHE_RETENTION: str({ choices: ['in-memory', '24h'], default: '24h' }),
       // Brand enrichment
       CONTEXT_DEV_API_KEY: str({ default: '' }),
+      ...(['production', 'dev'].includes(processEnv.NODE_ENV)
+        ? {
+            THALAMUS_CF_API_KEY: str(),
+            THALAMUS_CF_URL: url(),
+            THALAMUS_WEBHOOK_SECRET: str(),
+          }
+        : {
+            THALAMUS_CF_API_KEY: str({ default: undefined }),
+            THALAMUS_CF_URL: url({ default: undefined }),
+            THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+          }),
     }),
 
   // Feature Flags

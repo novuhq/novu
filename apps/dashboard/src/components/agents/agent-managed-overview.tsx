@@ -1,12 +1,17 @@
-import { EmailProviderIdEnum } from '@novu/shared';
+import { EmailProviderIdEnum, FeatureFlagsKeysEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { type AgentResponse, getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
+import { useAgentDemoQuota } from '@/hooks/use-agent-demo-quota';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { RecentConversationsSection } from '../agents/recent-conversations-section';
 import { AgentSetupGuide } from './agent-setup-guide';
 import { ConnectedProvidersSection } from './connected-providers-section';
+import { DemoClaudeUpgradePanel } from './demo-claude-upgrade-panel';
+import { DemoQuotaBanner } from './demo-quota-banner';
 import { McpsSection } from './mcps-section';
+import { SystemPromptSection } from './system-prompt-section';
 import { ToolsSection } from './tools-section';
 
 type AgentManagedOverviewProps = {
@@ -15,6 +20,9 @@ type AgentManagedOverviewProps = {
 
 export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
   const { currentEnvironment } = useEnvironment();
+  const isDemoManagedClaudeEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_DEMO_MANAGED_CLAUDE_ENABLED);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const demoQuotaQuery = useAgentDemoQuota(agent.identifier);
 
   const integrationsQuery = useQuery({
     queryKey: getAgentIntegrationsQueryKey(currentEnvironment?._id, agent.identifier),
@@ -43,10 +51,17 @@ export function AgentManagedOverview({ agent }: AgentManagedOverviewProps) {
 
   return (
     <div className="flex min-w-0 flex-1 flex-col gap-4 w-full">
+      {isDemoManagedClaudeEnabled && demoQuotaQuery.data ? (
+        <DemoQuotaBanner quota={demoQuotaQuery.data} onUpgrade={() => setUpgradeOpen(true)} />
+      ) : null}
       {showSetupGuide ? <AgentSetupGuide agent={agent} /> : <ConnectedProvidersSection agent={agent} />}
       <McpsSection agent={agent} />
+      <SystemPromptSection agent={agent} />
       <ToolsSection agent={agent} />
       <RecentConversationsSection agent={agent} />
+      {isDemoManagedClaudeEnabled ? (
+        <DemoClaudeUpgradePanel agent={agent} open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      ) : null}
     </div>
   );
 }

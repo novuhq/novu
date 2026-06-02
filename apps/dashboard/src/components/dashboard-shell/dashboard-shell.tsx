@@ -2,6 +2,7 @@ import { Fragment, ReactNode, useEffect, useState } from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 import { useLocation } from 'react-router-dom';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
+import { InboxButton } from '@/components/inbox-button';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
 import { ConnectSideNavigation } from '@/components/side-navigation/connect-side-navigation';
 import { LegacySideNavigation } from '@/components/side-navigation/side-navigation';
@@ -17,6 +18,7 @@ import {
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useCommandPalette } from '../command-palette/hooks/use-command-palette';
+import { BetaBadge } from '../primitives/beta-badge';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -66,6 +68,22 @@ type ConnectBreadcrumbEntry = {
   icon?: ReactNode;
   to?: string;
 };
+
+function shouldShowConnectBreadcrumbBeta(itemKey: string, connectSection: ConnectSectionId, isLast: boolean): boolean {
+  if (itemKey === 'root') {
+    return true;
+  }
+
+  if (connectSection !== 'agents') {
+    return false;
+  }
+
+  if (itemKey === 'section' || itemKey === 'leaf') {
+    return isLast;
+  }
+
+  return false;
+}
 
 export function DashboardShell({
   children,
@@ -131,6 +149,7 @@ export function DashboardShell({
             <BreadcrumbList>
               {connectBreadcrumbItems.map((item, index) => {
                 const isLast = index === connectLastIndex;
+                const showBeta = shouldShowConnectBreadcrumbBeta(item.key, connectSection, isLast);
 
                 return (
                   <Fragment key={item.key}>
@@ -140,11 +159,13 @@ export function DashboardShell({
                         <BreadcrumbPage className="flex min-w-0 items-center gap-1.5">
                           {item.icon}
                           <span className="truncate">{item.label}</span>
+                          {showBeta ? <BetaBadge className="shrink-0" /> : null}
                         </BreadcrumbPage>
                       ) : (
                         <BreadcrumbLink to={item.to ?? '#'} className="flex min-w-0 items-center gap-1.5 text-text-sub">
                           {item.icon}
                           <span className="truncate">{item.label}</span>
+                          {showBeta ? <BetaBadge className="shrink-0" /> : null}
                         </BreadcrumbLink>
                       )}
                     </BreadcrumbItem>
@@ -172,6 +193,7 @@ export function DashboardShell({
                   >
                     <RiSearchLine className="size-3 text-text-sub" />
                   </Button>
+                  <InboxButton />
                 </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>

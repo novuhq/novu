@@ -28,8 +28,10 @@ import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
 import { APP_IDS } from '@/utils/apps';
-import { AGENT_DETAILS_DEFAULT_TAB, buildRoute } from '@/utils/routes';
+import { withAppId } from '@/utils/onboarding-redirect';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
@@ -127,9 +129,11 @@ export function AgentsList() {
   const { submit: submitCreateAgent, isPending: isCreatingAgent } = useCreateAgentMutation();
 
   const deleteMutation = useMutation({
-    mutationFn: (identifier: string) =>
-      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier),
-    onSuccess: async (_, identifier) => {
+    mutationFn: ({ identifier, deleteFromProvider }: { identifier: string; deleteFromProvider?: boolean }) =>
+      deleteAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, {
+        deleteFromProvider,
+      }),
+    onSuccess: async (_, { identifier }) => {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
 
@@ -204,6 +208,10 @@ export function AgentsList() {
     setBefore(undefined);
   }, []);
 
+  const goToFirstAgentSetup = useCallback(() => {
+    navigate(withAppId(ROUTES.AGENTS_SETUP, currentApp));
+  }, [currentApp, navigate]);
+
   const handleCreateSubmit = useCallback(
     async (form: CreateAgentForm) => {
       await submitCreateAgent(form, {
@@ -272,9 +280,9 @@ export function AgentsList() {
               variant="secondary"
               mode="gradient"
               trailingIcon={RiArrowRightSLine}
-              onClick={() => setCreateOpen(true)}
+              onClick={goToFirstAgentSetup}
             >
-              Create agent
+              Setup an agent
             </PermissionButton>
           }
         />
@@ -301,12 +309,7 @@ export function AgentsList() {
               </TooltipTrigger>
               <TooltipContent className="max-w-60">
                 {'Add agents in your development environment. '}
-                <a
-                  href="https://docs.novu.co/platform/agents"
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="underline"
-                >
+                <a href={AGENTS_DOCS_PROVIDERS_URL} target="_blank" rel="noreferrer noopener" className="underline">
                   Learn More ↗
                 </a>
               </TooltipContent>
@@ -381,14 +384,15 @@ export function AgentsList() {
             setAgentToDelete(null);
           }
         }}
-        onConfirm={() => {
+        onConfirm={({ deleteFromProvider }) => {
           if (agentToDelete) {
-            deleteMutation.mutate(agentToDelete.identifier);
+            deleteMutation.mutate({ identifier: agentToDelete.identifier, deleteFromProvider });
           }
         }}
         agentName={agentToDelete?.name ?? ''}
         agentIdentifier={agentToDelete?.identifier ?? ''}
         isDeleting={deleteMutation.isPending}
+        isManagedRuntime={agentToDelete?.runtime === 'managed'}
       />
     </>
   );

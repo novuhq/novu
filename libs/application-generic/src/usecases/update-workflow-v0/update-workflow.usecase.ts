@@ -417,9 +417,9 @@ export class UpdateWorkflowV0 {
    * step (or variant) at a `_templateId` belonging to a different workflow, which would
    * otherwise allow cross-workflow data corruption via `UpdateMessageTemplate`.
    */
-  private buildAllowedTemplateIds(existingSteps: NotificationStepEntity[] | NotificationStepData[] | undefined): Set<
-    string
-  > {
+  private buildAllowedTemplateIds(
+    existingSteps: NotificationStepEntity[] | NotificationStepData[] | undefined
+  ): Set<string> {
     const allowed = new Set<string>();
     for (const step of existingSteps || []) {
       if (step._templateId) {

@@ -16,9 +16,7 @@ const str32 = makeValidator((variable) => {
   return variable;
 });
 
-function getFeatureFlagValidator(
-  key: FeatureFlagsKeysEnum
-): ValidatorSpec<string | number | boolean | undefined> {
+function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<string | number | boolean | undefined> {
   if (key.endsWith('_NUMBER') || key === FeatureFlagsKeysEnum.MAX_ENVIRONMENT_COUNT) {
     return num({ default: undefined });
   }

@@ -2,6 +2,7 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { ReactNode } from 'react';
 import { HeaderNavigation } from '@/components/header-navigation/header-navigation';
 import { MobileDesktopPrompt } from '@/components/mobile-desktop-prompt';
+import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 
 export const FullPageLayout = ({
@@ -11,7 +12,8 @@ export const FullPageLayout = ({
   children: ReactNode;
   headerStartItems?: ReactNode;
 }) => {
-  const isShellV2 = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
+  const isShellV2FlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONNECT_DASHBOARD_ENABLED, false);
+  const isShellV2 = IS_HOSTNAME_SPLIT_ENABLED && isShellV2FlagEnabled;
 
   if (isShellV2) {
     return (

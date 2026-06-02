@@ -30,7 +30,12 @@ export function generateMessageId(fromAddress: string): string {
 }
 
 const NAMED_ENTITIES: Record<string, string> = {
-  amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
 };
 
 function decodeEntities(text: string): string {
@@ -46,8 +51,14 @@ export function stripHtml(html: string): string {
   const chars: string[] = [];
   let depth = 0;
   for (const ch of html) {
-    if (ch === '<') { depth++; continue; }
-    if (ch === '>') { if (depth > 0) depth--; continue; }
+    if (ch === '<') {
+      depth++;
+      continue;
+    }
+    if (ch === '>') {
+      if (depth > 0) depth--;
+      continue;
+    }
     if (depth === 0) chars.push(ch);
   }
 

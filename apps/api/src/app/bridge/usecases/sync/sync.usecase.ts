@@ -61,7 +61,7 @@ export class Sync {
     const environment = await this.findEnvironment(command);
     const discover = await this.executeDiscover(command);
     this.sendAnalytics(command, environment, discover);
-    const persistedWorkflowsInBridge = await this.processWorkflows(command, discover.workflows);
+    const persistedWorkflowsInBridge = await this.processWorkflows(command, discover.workflows ?? []);
 
     await this.disposeOldWorkflows(command, persistedWorkflowsInBridge);
     await this.updateBridgeUrl(command);
@@ -259,7 +259,7 @@ export class Sync {
     if (!notificationGroupId) {
       throw new BadRequestException('Notification group not found');
     }
-    const steps = await this.mapSteps(command, workflow.steps);
+    const steps = await this.mapSteps(command, workflow.steps ?? []);
     const workflowActive = this.castToAnyNotSupportedParam(workflow)?.active ?? true;
 
     return await this.createWorkflowUsecase.execute(
@@ -296,7 +296,7 @@ export class Sync {
     command: SyncCommand,
     workflow: DiscoverWorkflowOutput
   ): Promise<UpdateWorkflowCommandV0> {
-    const steps = await this.mapSteps(command, workflow.steps, workflowExist);
+    const steps = await this.mapSteps(command, workflow.steps ?? [], workflowExist);
     const workflowActive = this.castToAnyNotSupportedParam(workflow)?.active ?? true;
 
     return {
@@ -338,8 +338,10 @@ export class Sync {
       });
     }
 
+    const steps = commandWorkflowSteps ?? [];
+
     return Promise.all(
-      commandWorkflowSteps.map(async (step: DiscoverStepOutput) => {
+      steps.map(async (step: DiscoverStepOutput) => {
         const foundStep = workflow?.steps?.find((workflowStep) => workflowStep.stepId === step.stepId);
 
         const issues: StepIssuesDto = await this.buildStepIssuesUsecase.execute({

@@ -1,6 +1,10 @@
 import { useState } from 'react';
-import { RiCloseLine, RiComputerLine, RiArrowRightLine } from 'react-icons/ri';
+import { RiArrowRightLine, RiCloseLine, RiComputerLine } from 'react-icons/ri';
+import { ConnectLogo } from '@/components/icons/connect-logo';
 import { LogoCircle } from '@/components/icons/logo-circle';
+import { NOVU_CONNECT_HOSTNAME } from '@/config';
+import { useCurrentApp } from '@/hooks/use-current-app';
+import { APP_IDS } from '@/utils/apps';
 import { cn } from '@/utils/ui';
 
 const MOBILE_PROMPT_DISMISSED_KEY = 'novu-mobile-prompt-dismissed';
@@ -14,6 +18,9 @@ export function MobileDesktopPrompt() {
     }
   });
 
+  const currentApp = useCurrentApp();
+  const isConnect = currentApp === APP_IDS.CONNECT;
+
   const handleDismiss = () => {
     setIsDismissed(true);
     try {
@@ -22,6 +29,10 @@ export function MobileDesktopPrompt() {
   };
 
   if (isDismissed) return null;
+
+  const brandLabel = isConnect ? 'Novu Connect' : 'Novu';
+  const productCopy = isConnect ? 'Novu Connect' : "Novu's dashboard";
+  const desktopUrl = isConnect ? (NOVU_CONNECT_HOSTNAME || 'connect.novu.co') : 'dashboard.novu.co';
 
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in fixed inset-x-0 bottom-0 z-[100] p-3 duration-500 md:hidden">
@@ -42,15 +53,15 @@ export function MobileDesktopPrompt() {
         <div className="relative px-5 pb-5 pt-4">
           <div className="mb-3 flex items-center gap-2.5">
             <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500/10 to-purple-500/10">
-              <LogoCircle className="size-5" />
+              {isConnect ? <ConnectLogo className="size-5" /> : <LogoCircle className="size-5" />}
             </div>
-            <span className="text-sm font-semibold text-neutral-900">Novu</span>
+            <span className="text-sm font-semibold text-neutral-900">{brandLabel}</span>
           </div>
 
           <div className="mb-4">
             <h3 className="mb-1.5 text-base font-semibold text-neutral-900">Best on desktop</h3>
             <p className="text-sm leading-relaxed text-neutral-500">
-              Novu's dashboard is designed for desktop screens. Switch to your computer for the full experience with
+              {productCopy} is designed for desktop screens. Switch to your computer for the full experience with
               workflow editing, code integration, and more.
             </p>
           </div>
@@ -61,7 +72,7 @@ export function MobileDesktopPrompt() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-neutral-800">Open on your computer</p>
-              <p className="truncate text-xs text-neutral-400">dashboard.novu.co</p>
+              <p className="truncate text-xs text-neutral-400">{desktopUrl}</p>
             </div>
             <RiArrowRightLine className="size-4 shrink-0 text-neutral-400" />
           </div>

@@ -17,8 +17,7 @@ import { deriveStepStatus } from './setup-guide-step-utils';
 const CLI_DEFAULT_API_URL = 'https://api.novu.co';
 const BRIDGE_POLL_INTERVAL_MS = 2000;
 
-// TODO: change to 'latest' when agents are GA and IS_CONVERSATIONAL_AGENTS_ENABLED flag is removed
-const CLI_PACKAGE_TAG = 'rc';
+const CLI_PACKAGE_TAG = 'latest';
 
 function maskSecretKey(key: string): string {
   return `nv-${'•'.repeat(16)}${key.slice(-4)}`;
@@ -280,6 +279,13 @@ function BridgeConnectionStatus({ connected, onAddProvider }: { connected: boole
 type AgentCodeSetupSectionProps = {
   agent: AgentResponse;
   stepOffset: number;
+  /**
+   * Total number of steps across every visible section in the current context.
+   * Used to render the "X/Y SETUP AGENT HANDLER" section label so the count
+   * matches what the user actually sees (onboarding vs agent details, managed
+   * vs self-hosted).
+   */
+  totalSteps: number;
   providerId?: string;
   onBridgeConnected?: () => void;
   onAddProvider?: () => void;
@@ -288,6 +294,7 @@ type AgentCodeSetupSectionProps = {
 export function AgentCodeSetupSection({
   agent,
   stepOffset,
+  totalSteps,
   providerId,
   onBridgeConnected,
   onAddProvider,
@@ -310,7 +317,7 @@ export function AgentCodeSetupSection({
       <SetupStep
         index={stepOffset}
         status={deriveStepStatus(stepOffset, firstIncompleteStep)}
-        sectionLabel="2/2 SETUP AGENT HANDLER"
+        sectionLabel={`${stepOffset}/${totalSteps} SETUP AGENT HANDLER`}
         title={
           <span className="inline-flex items-center gap-1">
             Scaffold your agent project

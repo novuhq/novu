@@ -10,6 +10,7 @@ import { DomainRouteTypeEnum, DomainStatusEnum, EmailProviderIdEnum } from '@nov
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { InboundEmailParseCommand } from '../inbound-email-parse.command';
+import { InboundParseProcessingError } from '../inbound-parse-outcome';
 import { DomainRouteStrategy } from './domain-route.strategy';
 
 const ENV_ID = 'env-001';
@@ -114,6 +115,31 @@ describe('DomainRouteStrategy', () => {
     sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToAgent);
   });
 
+  it('should sanitize downstream 5xx delivery failures for customer traces', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.AGENT, destination: 'agent-001' }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+    inboundDomainRouteDelivery.deliverToAgent.rejects(
+      Object.assign(new Error('Response code 500 (Internal Server Error)'), {
+        statusCode: 500,
+        responseBody: { message: 'Internal server error' },
+      })
+    );
+
+    try {
+      await strategy.execute(makeCommand('support'));
+      throw new Error('Expected InboundParseProcessingError');
+    } catch (error) {
+      expect(error).to.be.instanceOf(Error);
+      expect((error as Error).message).to.equal('Response code 500 (Internal Server Error)');
+      const processingError = error as InboundParseProcessingError;
+      expect(processingError.outcome?.status).to.equal(502);
+      expect(processingError.outcome?.message).to.equal('Inbound delivery failed due to a temporary internal error');
+    }
+
+    sinon.assert.calledOnce(logger.error as any);
+  });
+
   it('should fire webhook when an exact WEBHOOK route matches', async () => {
     const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
     domainRepository.findByName.resolves(makeVerifiedDomain() as any);
@@ -125,6 +151,36 @@ describe('DomainRouteStrategy', () => {
     const call = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
     expect(call.args[0].mail.subject).to.equal('Hello');
     expect(call.args[0].route.address).to.equal('support');
+  });
+
+  it('should pass slim IInboundParseAttachment (no binary content) through commandToMail to the delivery layer', async () => {
+    const routes = makeRoutes([{ address: 'support', type: DomainRouteTypeEnum.WEBHOOK }]);
+    domainRepository.findByName.resolves(makeVerifiedDomain() as any);
+    domainRouteRepository.findByDomainAndAddresses.resolves(routes as any);
+
+    const slimAttachment = {
+      filename: 'doc.pdf',
+      contentType: 'application/pdf',
+      size: 2048,
+      url: 'https://s3.example.com/inbound-mail/2024-01-01/msg/uuid-doc.pdf?sig=xyz',
+      storagePath: 'inbound-mail/2024-01-01/msg/uuid-doc.pdf',
+    };
+    const command = makeCommand('support');
+    (command as any).attachments = [slimAttachment];
+
+    await strategy.execute(command);
+
+    sinon.assert.calledOnce(inboundDomainRouteDelivery.deliverToWebhook);
+    const call = inboundDomainRouteDelivery.deliverToWebhook.getCall(0);
+    const passedAttachments = call.args[0].mail.attachments as unknown as Array<Record<string, unknown>>;
+
+    // The slim queue shape is forwarded — no `content` binary blob here.
+    // Rehydration happens inside InboundDomainRouteDelivery (tested separately).
+    expect(passedAttachments).to.have.length(1);
+    expect(passedAttachments[0]['filename']).to.equal('doc.pdf');
+    expect(passedAttachments[0]['size']).to.equal(2048);
+    expect(String(passedAttachments[0]['url'])).to.include('s3.example.com');
+    expect(passedAttachments[0]['content']).to.be.undefined;
   });
 
   it('should NOT fire webhook for a WEBHOOK route that does not match the local-part', async () => {
@@ -295,10 +351,7 @@ describe('DomainRouteStrategy', () => {
       const call = inboundDomainRouteDelivery.deliverToAgent.getCall(0);
       expect(call.args[0].route.destination).to.equal(AGENT_ID);
       expect(call.args[0].domain.name).to.equal(SHARED_DOMAIN);
-      sinon.assert.calledOnceWithExactly(
-        integrationRepository.findAgentInboundByInboxRoutingKey as any,
-        ROUTING_KEY
-      );
+      sinon.assert.calledOnceWithExactly(integrationRepository.findAgentInboundByInboxRoutingKey as any, ROUTING_KEY);
       sinon.assert.notCalled(domainRepository.findByName as any);
     });
 

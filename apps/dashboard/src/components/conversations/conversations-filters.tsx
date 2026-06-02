@@ -1,4 +1,4 @@
-import { useOrganization } from '@clerk/clerk-react';
+import { useOrganization } from '@clerk/react';
 import { DirectionEnum, PermissionsEnum } from '@novu/shared';
 import { useQuery } from '@tanstack/react-query';
 import { CalendarIcon } from 'lucide-react';

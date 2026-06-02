@@ -153,9 +153,9 @@ describe('Domain Connect usecases', () => {
     const result = await usecase.execute(command);
 
     expect(result.available).to.equal(true);
-    expect(
-      domainConnectDiscoveryServiceMock.discoverDomainConnectHost.calledWith('example.com', 'Vercel')
-    ).to.equal(true);
+    expect(domainConnectDiscoveryServiceMock.discoverDomainConnectHost.calledWith('example.com', 'Vercel')).to.equal(
+      true
+    );
   });
 
   it('uses discovered root domain provider settings for submitted subdomains', async () => {

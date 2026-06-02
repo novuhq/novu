@@ -1,6 +1,7 @@
 import { DynamicModule, Logger, Module, OnApplicationShutdown, Provider, Type } from '@nestjs/common';
 import { ForwardReference } from '@nestjs/common/interfaces/modules/forward-reference.interface';
 import {
+  AttachmentRehydrator,
   BulkCreateExecutionDetails,
   CalculateLimitNovuIntegration,
   CompileEmailTemplate,
@@ -76,6 +77,7 @@ import {
 } from './usecases';
 import { AddJob, MergeOrCreateDigest } from './usecases/add-job';
 import { InboundEmailParse } from './usecases/inbound-email-parse/inbound-email-parse.usecase';
+import { LogInboundEmailRequest } from './usecases/inbound-email-parse/log-inbound-email-request.usecase';
 import { DomainRouteStrategy } from './usecases/inbound-email-parse/strategies/domain-route.strategy';
 import { ReplyToStrategy } from './usecases/inbound-email-parse/strategies/reply-to.strategy';
 import { NoopSendWebhookMessage } from './usecases/noop-send-webhook-message.usecase';
@@ -210,6 +212,8 @@ const USE_CASES = [
   TriggerMulticast,
   CompileInAppTemplate,
   InboundEmailParse,
+  LogInboundEmailRequest,
+  AttachmentRehydrator,
   InboundDomainRouteDelivery,
   ReplyToStrategy,
   DomainRouteStrategy,

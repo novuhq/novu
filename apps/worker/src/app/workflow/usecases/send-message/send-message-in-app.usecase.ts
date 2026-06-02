@@ -314,6 +314,7 @@ export class SendMessageInApp extends SendMessageBase {
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      environment: command.environment,
     });
 
     await this.sendWebhookMessage.execute({
@@ -326,6 +327,7 @@ export class SendMessageInApp extends SendMessageBase {
       },
       organizationId: command.organizationId,
       environmentId: command.environmentId,
+      environment: command.environment,
     });
 
     return {
