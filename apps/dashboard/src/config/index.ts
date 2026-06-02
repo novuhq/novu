@@ -106,11 +106,6 @@ export const IS_ENTERPRISE = (window._env_?.VITE_NOVU_ENTERPRISE || import.meta.
 
 export const IS_AI_FEATURES_ENABLED = !(IS_SELF_HOSTED && IS_ENTERPRISE);
 
-// Surfaces inbound-email rows (source='inbound_email') in the Requests view.
-// When disabled, the dashboard only requests HTTP logs (source='http') and hides
-// the inbound "Type" filter, preserving the existing experience.
-export const IS_INBOUND_LOGS_ENABLED = getEnvVar('VITE_IS_INBOUND_LOGS_ENABLED') === 'true';
-
 if (!IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'clerk' && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
 }
