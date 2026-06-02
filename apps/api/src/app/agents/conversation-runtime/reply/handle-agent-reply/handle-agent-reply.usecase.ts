@@ -474,6 +474,7 @@ export class HandleAgentReply {
         isDM: false,
         platform: config.platform,
         message: null,
+        firstPlatformMessageId: channel.firstPlatformMessageId,
       }),
     });
   }

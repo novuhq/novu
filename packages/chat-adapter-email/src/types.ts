@@ -78,11 +78,6 @@ export interface NovuEmailRawMessage {
   inReplyTo?: string;
   /** RFC 2822 `References` header as sent by the client (whitespace-separated chain). */
   references?: string;
-  /**
-   * Server-authoritative root message ID for this thread — the first message Novu
-   * recorded for the thread. Equals `messageId` on the first message of a thread.
-   */
-  rootMessageId?: string;
   headers?: Record<string, string>;
   domain?: EmailWebhookDomainContext;
   route?: EmailWebhookRouteContext;

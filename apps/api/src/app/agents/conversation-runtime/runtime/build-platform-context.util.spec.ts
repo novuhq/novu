@@ -18,9 +18,10 @@ describe('buildAgentPlatformContext', () => {
     expect(context.message).to.deep.equal(raw);
   });
 
-  it('extracts resolved domain and route for email platform', () => {
+  it('extracts resolved domain, route, and thread root for email platform', () => {
     const raw = {
-      messageId: 'msg-1@example.com',
+      id: 'reply3@example.com',
+      messageId: 'reply3@example.com',
       domain: { id: 'domain-1', name: 'inbox.example.com', data: { tier: 'pro' } },
       route: { address: 'support', data: { queue: 'tier-1' } },
     };
@@ -30,12 +31,30 @@ describe('buildAgentPlatformContext', () => {
       channelId: 'email:dima@novu.co',
       isDM: false,
       platform: AgentPlatformEnum.EMAIL,
-      message: { raw } as never,
+      message: { raw, id: 'reply3@example.com' } as never,
+      firstPlatformMessageId: 'root@example.com',
     });
 
     expect(context.email).to.deep.equal({
       domain: raw.domain,
       route: raw.route,
+      rootMessageId: 'root@example.com',
+    });
+  });
+
+  it('falls back to the current message id as the email root when no first message id is tracked', () => {
+    const context = buildAgentPlatformContext({
+      platformThreadId: 'email:dima@novu.co:abc',
+      channelId: 'email:dima@novu.co',
+      isDM: false,
+      platform: AgentPlatformEnum.EMAIL,
+      message: { raw: { messageId: 'root@example.com' }, id: 'root@example.com' } as never,
+    });
+
+    expect(context.email).to.deep.equal({
+      domain: undefined,
+      route: undefined,
+      rootMessageId: 'root@example.com',
     });
   });
 
@@ -50,14 +69,15 @@ describe('buildAgentPlatformContext', () => {
       channelId: 'slack:C123',
       isDM: false,
       platform: AgentPlatformEnum.SLACK,
-      message: { raw } as never,
+      message: { raw, id: '123.456' } as never,
+      firstPlatformMessageId: '123.456',
     });
 
     expect(context.message).to.deep.equal(raw);
     expect(context.email).to.be.undefined;
   });
 
-  it('omits message and email when no chat message is provided', () => {
+  it('omits message and email when there is no chat message or tracked root', () => {
     const context: AgentPlatformContext = buildAgentPlatformContext({
       platformThreadId: 'email:dima@novu.co:abc',
       channelId: 'email:dima@novu.co',
@@ -68,5 +88,22 @@ describe('buildAgentPlatformContext', () => {
 
     expect(context.message).to.be.undefined;
     expect(context.email).to.be.undefined;
+  });
+
+  it('sets email root from the tracked first message id during onResolve (no inbound message)', () => {
+    const context = buildAgentPlatformContext({
+      platformThreadId: 'email:dima@novu.co:abc',
+      channelId: '',
+      isDM: false,
+      platform: AgentPlatformEnum.EMAIL,
+      message: null,
+      firstPlatformMessageId: 'root@example.com',
+    });
+
+    expect(context.email).to.deep.equal({
+      domain: undefined,
+      route: undefined,
+      rootMessageId: 'root@example.com',
+    });
   });
 });

@@ -119,6 +119,11 @@ export interface AgentPlatformContext {
   email?: {
     domain?: AgentEmailDomainContext;
     route?: AgentEmailRouteContext;
+    /**
+     * Platform-native Message-ID of the message that started this email thread.
+     * Equals the current message ID on the first message of a thread.
+     */
+    rootMessageId?: string;
   };
 }
 

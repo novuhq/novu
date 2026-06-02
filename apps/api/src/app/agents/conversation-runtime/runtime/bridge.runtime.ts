@@ -78,6 +78,7 @@ export class BridgeRuntime implements AgentRuntime {
         isDM: turn.thread.isDM,
         platform: turn.config.platform,
         message: turn.message,
+        firstPlatformMessageId: this.conversationService.getPrimaryChannel(turn.conversation).firstPlatformMessageId,
       }),
       storedAttachments: turn.storedAttachments,
       action: turn.action,

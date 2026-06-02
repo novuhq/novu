@@ -109,22 +109,18 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
     });
 
     const agentAddress = payload.to[0]?.address;
-    const [, , rootMessageId] = await Promise.all([
+    await Promise.all([
       this.threadResolver.trackSubject(threadId, payload.subject),
       agentAddress ? this.threadResolver.trackAgentAddress(threadId, agentAddress) : Promise.resolve(),
-      this.threadResolver.getRootMessageId(threadId),
     ]);
 
-    const message = this.parseMessage(this.toRawMessage(payload, rootMessageId));
+    const message = this.parseMessage(this.toRawMessage(payload));
     this.chat.processMessage(this, threadId, message, options);
 
     return new Response(null, { status: 200 });
   }
 
-  private toRawMessage(
-    payload: import('./types.js').EmailWebhookPayload,
-    rootMessageId?: string
-  ): NovuEmailRawMessage {
+  private toRawMessage(payload: import('./types.js').EmailWebhookPayload): NovuEmailRawMessage {
     return {
       id: payload.messageId,
       messageId: payload.messageId,
@@ -135,7 +131,6 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       html: payload.html,
       inReplyTo: payload.inReplyTo,
       references: payload.references,
-      rootMessageId: rootMessageId ?? payload.messageId,
       headers: payload.headers,
       domain: payload.domain,
       route: payload.route,

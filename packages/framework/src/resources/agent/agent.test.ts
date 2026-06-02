@@ -443,6 +443,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
             email: {
               domain: emailRaw.domain,
               route: emailRaw.route,
+              rootMessageId: 'root@example.com',
             },
           },
         });
@@ -466,6 +467,7 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.platformContext.email).toEqual({
       domain: emailRaw.domain,
       route: emailRaw.route,
+      rootMessageId: 'root@example.com',
     });
   });
 
