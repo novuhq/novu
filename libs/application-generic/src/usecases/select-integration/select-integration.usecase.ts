@@ -28,7 +28,7 @@ export class SelectIntegration {
     );
 
     if (!command.identifier && command.filterData.tenant && command.userId) {
-      const query = this.getIntegrationQuery(command, isCrossEnvironmentIntegrationDisabled);
+      const query = this.getIntegrationQuery(command);
 
       const integrations = await this.integrationRepository.find(query);
 
@@ -103,7 +103,7 @@ export class SelectIntegration {
           identifier: command.identifier,
           active: true,
         }
-      : this.getIntegrationQuery(command, isCrossEnvironmentIntegrationDisabled, isChannelSupportsPrimary);
+      : this.getIntegrationQuery(command, isChannelSupportsPrimary);
 
     return await this.integrationRepository.findOne(query, undefined, {
       query: { sort: { createdAt: -1 } },
@@ -119,16 +119,10 @@ export class SelectIntegration {
     });
   }
 
-  private getIntegrationQuery(
-    command: SelectIntegrationCommand,
-    isCrossEnvironmentIntegrationDisabled: boolean,
-    isChannelSupportsPrimary = false
-  ) {
+  private getIntegrationQuery(command: SelectIntegrationCommand, isChannelSupportsPrimary = false) {
     const query: Partial<IntegrationEntity> & { _organizationId: string } = {
       _organizationId: command.organizationId,
-      ...(isCrossEnvironmentIntegrationDisabled && {
-        _environmentId: command.environmentId,
-      }),
+      _environmentId: command.environmentId,
       channel: command.channelType,
       active: true,
     };
