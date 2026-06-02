@@ -1,6 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { BulkCreateExecutionDetails, InstrumentUsecase, StepRunRepository } from '@novu/application-generic';
-import { DalException, JobRepository, JobStatusEnum } from '@novu/dal';
+import {
+  BulkCreateExecutionDetails,
+  CreateExecutionDetails,
+  CreateExecutionDetailsCommand,
+  DetailEnum,
+  InstrumentUsecase,
+  StepRunRepository,
+} from '@novu/application-generic';
+import { DalException, JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
+import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { PlatformException } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
@@ -11,7 +19,8 @@ export class StoreSubscriberJobs {
     private addJob: AddJob,
     private jobRepository: JobRepository,
     protected bulkCreateExecutionDetails: BulkCreateExecutionDetails,
-    private stepRunRepository: StepRunRepository
+    private stepRunRepository: StepRunRepository,
+    private createExecutionDetails: CreateExecutionDetails
   ) {}
 
   @InstrumentUsecase()
@@ -27,6 +36,9 @@ export class StoreSubscriberJobs {
     }
 
     await this.stepRunRepository.createMany(storedJobs, { status: JobStatusEnum.QUEUED });
+
+    await this.emitStepCreatedTraces(storedJobs);
+
     const firstJob = storedJobs[0];
 
     const addJobCommand = {
@@ -40,5 +52,22 @@ export class StoreSubscriberJobs {
     };
 
     await this.addJob.execute(addJobCommand);
+  }
+
+  private async emitStepCreatedTraces(storedJobs: JobEntity[]): Promise<void> {
+    await Promise.all(
+      storedJobs.map((job) =>
+        this.createExecutionDetails.execute(
+          CreateExecutionDetailsCommand.create({
+            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
+            detail: DetailEnum.STEP_CREATED,
+            source: ExecutionDetailsSourceEnum.INTERNAL,
+            status: ExecutionDetailsStatusEnum.SUCCESS,
+            isTest: false,
+            isRetry: false,
+          })
+        )
+      )
+    );
   }
 }
