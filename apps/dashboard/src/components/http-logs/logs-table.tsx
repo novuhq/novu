@@ -31,6 +31,9 @@ type RequestsTableProps = {
 };
 
 export function RequestsTable({ onLogClick }: RequestsTableProps) {
+  const track = useTelemetry();
+  const isInboundLogsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_LOGS_ENABLED, false);
+
   const {
     selectedLogId,
     handleLogSelect,
@@ -43,10 +46,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     currentPage,
     limit,
     filters,
-  } = useLogsUrlState();
-
-  const track = useTelemetry();
-  const isInboundLogsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_LOGS_ENABLED, false);
+  } = useLogsUrlState({ isSourceFilterEnabled: isInboundLogsEnabled });
 
   const {
     data: logsResponse,
