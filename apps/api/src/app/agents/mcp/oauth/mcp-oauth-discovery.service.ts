@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, SsrfBlockedError, safeOutboundJsonRequest, safeOutboundRequest } from '@novu/application-generic';
-import { DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD, type McpTokenEndpointAuthMethod } from '@novu/shared';
+import {
+  DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD,
+  MCP_TOKEN_ENDPOINT_AUTH_METHODS,
+  type McpTokenEndpointAuthMethod,
+} from '@novu/shared';
 import { LRUCache } from 'lru-cache';
 
 /**
@@ -154,6 +158,12 @@ export interface DynamicClientRegistrationResponse {
   clientSecretExpiresAt?: number;
   registrationAccessToken?: string;
   registrationClientUri?: string;
+  /**
+   * Effective `token_endpoint_auth_method` returned by the AS (RFC 7591 §3.2.1).
+   * May differ from the value sent in the registration request — e.g. Jotform
+   * downgrades confidential registrations to `none`.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
 }
 
 interface CachedDocument<T> {
@@ -315,6 +325,7 @@ export class McpOAuthDiscoveryService {
         clientSecretExpiresAt: pickNumberField(body, 'client_secret_expires_at') ?? undefined,
         registrationAccessToken: pickStringField(body, 'registration_access_token') ?? undefined,
         registrationClientUri: pickStringField(body, 'registration_client_uri') ?? undefined,
+        tokenEndpointAuthMethod: parseTokenEndpointAuthMethod(body),
       };
     } catch (err) {
       if (err instanceof McpOAuthDiscoveryError) {
@@ -695,6 +706,20 @@ function hostnameBelongsToProductHost(url: string, productHost: string): boolean
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseTokenEndpointAuthMethod(body: unknown): McpTokenEndpointAuthMethod | undefined {
+  const value = pickStringField(body, 'token_endpoint_auth_method');
+
+  if (!value) {
+    return undefined;
+  }
+
+  if ((MCP_TOKEN_ENDPOINT_AUTH_METHODS as readonly string[]).includes(value)) {
+    return value as McpTokenEndpointAuthMethod;
+  }
+
+  return undefined;
 }
 
 function pickStringField(body: unknown, key: string): string | undefined {

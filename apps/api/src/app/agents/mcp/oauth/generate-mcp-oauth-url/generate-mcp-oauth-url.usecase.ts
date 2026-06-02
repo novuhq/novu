@@ -640,18 +640,23 @@ export class GenerateMcpOAuthUrl {
         software_version: SOFTWARE_VERSION,
       });
 
+      // Honor the AS-returned method when present (RFC 7591 §3.2.1). Some
+      // upstreams (e.g. Jotform) accept `client_secret_post` but register a
+      // public client and respond with `token_endpoint_auth_method: "none"`.
+      const effectiveTokenEndpointAuthMethod = registration.tokenEndpointAuthMethod ?? tokenEndpointAuthMethod;
+
       // A secret-bearing method that comes back without a `client_secret`
       // would persist a confidential client we can never authenticate,
       // surfacing later as an opaque `invalid_client` at token exchange.
       // Fail fast so the error points at registration instead.
-      if (tokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
+      if (effectiveTokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
         throw new McpOAuthDiscoveryError(
           'mcp_registration_failed',
-          `Dynamic Client Registration returned no client_secret for "${tokenEndpointAuthMethod}".`
+          `Dynamic Client Registration returned no client_secret for "${effectiveTokenEndpointAuthMethod}".`
         );
       }
 
-      return { ...registration, tokenEndpointAuthMethod };
+      return { ...registration, tokenEndpointAuthMethod: effectiveTokenEndpointAuthMethod };
     } catch (err) {
       throw mapDiscoveryError(err, `MCP authorization server "${asMetadata.issuer}"`);
     }

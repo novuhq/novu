@@ -387,6 +387,7 @@ describe('McpOAuthDiscoveryService', () => {
           client_secret_expires_at: 0,
           registration_access_token: 'rat',
           registration_client_uri: 'https://auth.example.com/register/abc123',
+          token_endpoint_auth_method: 'client_secret_post',
         })
       );
 
@@ -396,6 +397,7 @@ describe('McpOAuthDiscoveryService', () => {
       expect(result.clientSecretExpiresAt).to.equal(0);
       expect(result.registrationAccessToken).to.equal('rat');
       expect(result.registrationClientUri).to.equal('https://auth.example.com/register/abc123');
+      expect(result.tokenEndpointAuthMethod).to.equal('client_secret_post');
 
       const call = safeJsonStub.firstCall.args[0];
       expect(call.url).to.equal('https://auth.example.com/register');
@@ -436,6 +438,24 @@ describe('McpOAuthDiscoveryService', () => {
         expect(err).to.be.instanceOf(McpOAuthDiscoveryError);
         expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_registration_failed');
       }
+    });
+
+    it('surfaces token_endpoint_auth_method when the AS downgrades to a public client', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          client_id: 'public-client',
+          token_endpoint_auth_method: 'none',
+        })
+      );
+
+      const result = await service.registerClient(AS_METADATA, {
+        ...CLIENT_METADATA,
+        token_endpoint_auth_method: 'client_secret_post',
+      });
+
+      expect(result.clientId).to.equal('public-client');
+      expect(result.clientSecret).to.equal(undefined);
+      expect(result.tokenEndpointAuthMethod).to.equal('none');
     });
   });
 
