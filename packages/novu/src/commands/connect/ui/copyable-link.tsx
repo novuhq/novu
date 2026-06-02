@@ -28,6 +28,8 @@ export function CopyableLink({ url, hint, color = 'cyan' }: CopyableLinkProps): 
 
   useInput(
     (input) => {
+      if (!url) return;
+
       if (input === 'c') {
         try {
           clipboardy.writeSync(url);
@@ -49,7 +51,7 @@ export function CopyableLink({ url, hint, color = 'cyan' }: CopyableLinkProps): 
         );
       }
     },
-    { isActive: true }
+    { isActive: Boolean(url) }
   );
 
   React.useEffect(() => {
@@ -64,7 +66,7 @@ export function CopyableLink({ url, hint, color = 'cyan' }: CopyableLinkProps): 
       {hint ? <Text dimColor>{hint}</Text> : null}
       <Text color={color}>{`${OSC8_OPEN(url)}${url}${OSC8_CLOSE}`}</Text>
       <Text dimColor>Press c to copy · o to open in browser</Text>
-      {actionHint ? <Text color={actionHint.tone === 'ok' ? 'green' : 'yellow'}>{actionHint.text}</Text> : null}
+      {actionHint ? <Text color={actionHint.tone === 'ok' ? 'green' : 'red'}>{actionHint.text}</Text> : null}
     </Box>
   );
 }
