@@ -197,5 +197,36 @@ describe('setup-card helpers', () => {
 
       expect(linearRow?.content).to.equal('**Linear**');
     });
+
+    it('keeps pending rows flat (no nested card) so portable adapters render the buttons', () => {
+      const card = buildSetupCard({
+        mcps: [
+          {
+            mcpId: 'linear',
+            name: 'Linear',
+            agentMcpServerId: 'en-1',
+            authorizeUrl: 'https://example.com/oauth/linear',
+          },
+          {
+            mcpId: 'slack',
+            name: 'Slack',
+            agentMcpServerId: 'en-2',
+            authorizeUrl: 'https://example.com/oauth/slack',
+            connectButtonLabel: 'Connect from provider',
+          },
+        ],
+      });
+
+      const children = card.children as Array<{ type: string; children?: Array<{ type: string }> }>;
+
+      expect(children.some((block) => block.type === 'card')).to.equal(false);
+
+      const actionBlocks = children.filter((block) => block.type === 'actions');
+
+      expect(actionBlocks).to.have.length(2);
+      actionBlocks.forEach((actions) => {
+        expect(actions.children?.every((child) => child.type === 'link-button')).to.equal(true);
+      });
+    });
   });
 });

@@ -281,18 +281,6 @@ export function resolveMcpSlackCardSubtext(mcp: SetupCardRow): string | undefine
   return undefined;
 }
 
-export function buildMcpRowMarkdown(mcp: SetupCardRow): string {
-  const lines = [`*${mcp.name}*`, ...buildMcpCardBodyMarkdown(mcp).split('\n').filter(Boolean)];
-
-  return lines.join('\n');
-}
-
-function appendHintLine(lines: string[], hint: string | undefined): void {
-  if (hint) {
-    lines.push(hint);
-  }
-}
-
 export function buildMcpRowPlainText(mcp: SetupCardRow): string {
   const body = buildMcpCardBodyMarkdown(mcp)
     .split('\n')
@@ -302,55 +290,51 @@ export function buildMcpRowPlainText(mcp: SetupCardRow): string {
   return body.join('\n');
 }
 
-export function buildSetupMcpPortableCard(mcp: SetupCardRow): Record<string, unknown> {
-  const children: Record<string, unknown>[] = [{ type: 'text', content: buildMcpRowPlainText(mcp) }];
+type SetupActionButton = { type: 'link-button'; label: string; url: string; style?: string };
+
+function buildSetupMcpActionButtons(mcp: SetupCardRow): SetupActionButton[] {
+  const authorizeUrl = mcp.authorizeUrl as string;
+
+  if (mcp.authorizeUrlWithAutoApprove && !mcp.connectButtonLabel) {
+    const labels = resolveSetupConnectButtonLabels(mcp);
+
+    return [
+      { type: 'link-button', label: labels.connectWithAutoApprove, url: mcp.authorizeUrlWithAutoApprove },
+      { type: 'link-button', label: labels.connect, url: authorizeUrl },
+    ];
+  }
+
+  const defaultLabel = isSetupMcpRowError(mcp) ? SETUP_RETRY_BUTTON_LABEL : SETUP_CONNECT_BUTTON_LABEL;
+
+  return [{ type: 'link-button', label: mcp.connectButtonLabel ?? defaultLabel, url: authorizeUrl, style: 'primary' }];
+}
+
+/**
+ * Flat portable blocks for one MCP: a bold name header, optional description/status
+ * lines, and an `actions` block with the Connect link-buttons — all appended directly
+ * to the parent card's children rather than wrapped in a nested `card`. The Chat SDK
+ * card schema has no nested-card element, so non-Slack adapters (Telegram, Teams,
+ * Discord, Google Chat, WhatsApp, …) silently drop a `card` placed inside a card and
+ * never render its buttons. Keeping the rows flat lets every portable adapter render
+ * the Connect buttons. Slack uses its own native Block Kit builder in setup-card.slack.ts.
+ */
+export function buildSetupMcpPortableRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
+  const blocks: Record<string, unknown>[] = [{ type: 'text', content: `**${mcp.name}**` }];
+
+  const body = buildMcpRowPlainText(mcp);
+  if (body) {
+    blocks.push({ type: 'text', content: body, style: 'muted' });
+  }
 
   if (mcp.authorizeUrlWithAutoApprove && isSetupMcpRowPending(mcp)) {
-    children.push({ type: 'text', content: SETUP_AUTO_APPROVE_HINT });
+    blocks.push({ type: 'text', content: SETUP_AUTO_APPROVE_HINT, style: 'muted' });
   }
 
   if (mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
-    const actionButtons: Array<{ type: string; label: string; url: string; style?: string }> = [];
-
-    if (mcp.authorizeUrlWithAutoApprove && !mcp.connectButtonLabel) {
-      const labels = resolveSetupConnectButtonLabels(mcp);
-
-      actionButtons.push({
-        type: 'link-button',
-        label: labels.connectWithAutoApprove,
-        url: mcp.authorizeUrlWithAutoApprove,
-      });
-      actionButtons.push({
-        type: 'link-button',
-        label: labels.connect,
-        url: mcp.authorizeUrl,
-      });
-    } else {
-      const defaultLabel = isSetupMcpRowError(mcp) ? SETUP_RETRY_BUTTON_LABEL : SETUP_CONNECT_BUTTON_LABEL;
-
-      actionButtons.push({
-        type: 'link-button',
-        label: mcp.connectButtonLabel ?? defaultLabel,
-        url: mcp.authorizeUrl,
-        style: 'primary',
-      });
-    }
-
-    children.push({
-      type: 'actions',
-      children: actionButtons,
-    });
+    blocks.push({ type: 'actions', children: buildSetupMcpActionButtons(mcp) });
   }
 
-  return {
-    type: 'card',
-    title: mcp.name,
-    children,
-  };
-}
-
-function buildPendingRowBlocks(mcp: SetupCardRow): Record<string, unknown>[] {
-  return [buildSetupMcpPortableCard(mcp)];
+  return blocks;
 }
 
 export function buildPendingPortableRowBlocks(mcps: SetupCardRow[]): Record<string, unknown>[] {
@@ -362,7 +346,7 @@ export function buildPendingPortableRowBlocks(mcps: SetupCardRow[]): Record<stri
       blocks.push({ type: 'divider' });
     }
 
-    blocks.push(...buildPendingRowBlocks(mcp));
+    blocks.push(...buildSetupMcpPortableRowBlocks(mcp));
   });
 
   return blocks;
