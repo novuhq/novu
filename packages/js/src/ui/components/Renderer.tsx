@@ -23,8 +23,13 @@ import type {
   RouterPush,
   Tab,
 } from '../types';
+import { ConnectChat } from './connect-chat/ConnectChat';
 import { Bell, Root } from './elements';
 import { Inbox, InboxContent, InboxContentProps, InboxPage } from './Inbox';
+import { MsTeamsConnectButton } from './msteams-connect-button/MsTeamsConnectButton';
+import { MsTeamsLinkUser } from './msteams-link-user/MsTeamsLinkUser';
+import { SlackConnectButton } from './slack-connect-button/SlackConnectButton';
+import { SlackLinkUser } from './slack-link-user/SlackLinkUser';
 import { Subscription } from './subscription/Subscription';
 import { SubscriptionButtonWrapper as SubscriptionButton } from './subscription/SubscriptionButtonWrapper';
 import { SubscriptionPreferencesWrapper as SubscriptionPreferences } from './subscription/SubscriptionPreferencesWrapper';
@@ -60,9 +65,21 @@ export const novuComponents = {
   Subscription,
   SubscriptionButton,
   SubscriptionPreferences,
+  ConnectChat,
+  SlackLinkUser,
+  SlackConnectButton,
+  MsTeamsLinkUser,
+  MsTeamsConnectButton,
 };
 
 const SUBSCRIPTION_COMPONENTS = ['Subscription', 'SubscriptionButton', 'SubscriptionPreferences'];
+const CHANNEL_COMPONENTS = [
+  'ConnectChat',
+  'SlackLinkUser',
+  'SlackConnectButton',
+  'MsTeamsLinkUser',
+  'MsTeamsConnectButton',
+];
 
 export type NovuComponent = { name: NovuComponentName; props?: any };
 
@@ -124,7 +141,7 @@ const InboxComponentsRenderer = (props: {
   );
 };
 
-const SubscriptionComponentsRenderer = (props: {
+const SimpleComponentsRenderer = (props: {
   elements: MountableElement[];
   nodes: Map<MountableElement, NovuComponent>;
 }) => {
@@ -166,12 +183,17 @@ type RendererProps = {
 export const Renderer = (props: RendererProps) => {
   const inboxComponents = createMemo(() =>
     [...props.nodes.entries()]
-      .filter(([_, node]) => !SUBSCRIPTION_COMPONENTS.includes(node.name))
+      .filter(([_, node]) => !SUBSCRIPTION_COMPONENTS.includes(node.name) && !CHANNEL_COMPONENTS.includes(node.name))
       .map(([element, _]) => element)
   );
   const subscriptionComponents = createMemo(() =>
     [...props.nodes.entries()]
       .filter(([_, node]) => SUBSCRIPTION_COMPONENTS.includes(node.name))
+      .map(([element, _]) => element)
+  );
+  const channelComponents = createMemo(() =>
+    [...props.nodes.entries()]
+      .filter(([_, node]) => CHANNEL_COMPONENTS.includes(node.name))
       .map(([element, _]) => element)
   );
 
@@ -209,7 +231,8 @@ export const Renderer = (props: RendererProps) => {
               routerPush={props.routerPush}
             >
               <InboxComponentsRenderer elements={inboxComponents()} nodes={props.nodes} />
-              <SubscriptionComponentsRenderer elements={subscriptionComponents()} nodes={props.nodes} />
+              <SimpleComponentsRenderer elements={subscriptionComponents()} nodes={props.nodes} />
+              <SimpleComponentsRenderer elements={channelComponents()} nodes={props.nodes} />
             </InboxProvider>
           </FocusManagerProvider>
         </AppearanceProvider>

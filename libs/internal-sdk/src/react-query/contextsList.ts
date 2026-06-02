@@ -5,32 +5,41 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildContextsListQuery,
   ContextsListQueryData,
   prefetchContextsList,
   queryKeyContextsList,
-} from './contextsList.core.js';
-export { buildContextsListQuery, type ContextsListQueryData, prefetchContextsList, queryKeyContextsList };
+} from "./contextsList.core.js";
+export {
+  buildContextsListQuery,
+  type ContextsListQueryData,
+  prefetchContextsList,
+  queryKeyContextsList,
+};
 
 export type ContextsListQueryError =
   | errors.ErrorDto
@@ -55,11 +64,15 @@ export type ContextsListQueryError =
  */
 export function useContextsList(
   request: operations.ContextsControllerListContextsRequest,
-  options?: QueryHookOptions<ContextsListQueryData, ContextsListQueryError>
+  options?: QueryHookOptions<ContextsListQueryData, ContextsListQueryError>,
 ): UseQueryResult<ContextsListQueryData, ContextsListQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildContextsListQuery(client, request, options),
+    ...buildContextsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -75,11 +88,18 @@ export function useContextsList(
  */
 export function useContextsListSuspense(
   request: operations.ContextsControllerListContextsRequest,
-  options?: SuspenseQueryHookOptions<ContextsListQueryData, ContextsListQueryError>
+  options?: SuspenseQueryHookOptions<
+    ContextsListQueryData,
+    ContextsListQueryError
+  >,
 ): UseSuspenseQueryResult<ContextsListQueryData, ContextsListQueryError> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildContextsListQuery(client, request, options),
+    ...buildContextsListQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -100,7 +120,7 @@ export function setContextsListData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: ContextsListQueryData
+  data: ContextsListQueryData,
 ): ContextsListQueryData | undefined {
   const key = queryKeyContextsList(...queryKeyBase);
 
@@ -110,35 +130,33 @@ export function setContextsListData(
 export function invalidateContextsList(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        after?: string | undefined;
-        before?: string | undefined;
-        limit?: number | undefined;
-        orderDirection?: operations.OrderDirection | undefined;
-        orderBy?: string | undefined;
-        includeCursor?: boolean | undefined;
-        type?: string | undefined;
-        id?: string | undefined;
-        search?: string | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      after?: string | undefined;
+      before?: string | undefined;
+      limit?: number | undefined;
+      orderDirection?: operations.OrderDirection | undefined;
+      orderBy?: string | undefined;
+      includeCursor?: boolean | undefined;
+      type?: string | undefined;
+      id?: string | undefined;
+      search?: string | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Contexts', 'list', ...queryKeyBase],
+    queryKey: ["@novu/api", "Contexts", "list", ...queryKeyBase],
   });
 }
 
 export function invalidateAllContextsList(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Contexts', 'list'],
+    queryKey: ["@novu/api", "Contexts", "list"],
   });
 }

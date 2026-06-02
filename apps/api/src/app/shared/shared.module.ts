@@ -22,6 +22,7 @@ import {
   LoggerModule,
   QueuesModule,
   RequestLogRepository,
+  SafeOutboundHttpService,
   StepRunRepository,
   storageService,
   TraceLogRepository,
@@ -30,12 +31,16 @@ import {
   WorkflowRunRepository,
 } from '@novu/application-generic';
 import {
+  AgentIntegrationRepository,
+  AgentRepository,
   ChangeRepository,
   CommunityMemberRepository,
   CommunityOrganizationRepository,
   CommunityUserRepository,
   ControlValuesRepository,
   DalService,
+  DomainRepository,
+  DomainRouteRepository,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   ExecutionDetailsRepository,
@@ -111,6 +116,10 @@ const DAL_MODELS = [
   ControlValuesRepository,
   PreferencesRepository,
   EnvironmentVariableRepository,
+  AgentRepository,
+  AgentIntegrationRepository,
+  DomainRepository,
+  DomainRouteRepository,
 ];
 
 const dalService = {
@@ -156,6 +165,7 @@ const PROVIDERS = [
   ExecuteStepResolverRequest,
   GetDecryptedSecretKey,
   HttpClientService,
+  SafeOutboundHttpService,
   ...ANALYTICS_PROVIDERS,
 ];
 

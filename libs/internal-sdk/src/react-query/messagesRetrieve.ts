@@ -5,32 +5,36 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
-import * as components from '../models/components/index.js';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
+import * as components from "../models/components/index.js";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildMessagesRetrieveQuery,
   MessagesRetrieveQueryData,
   prefetchMessagesRetrieve,
   queryKeyMessagesRetrieve,
-} from './messagesRetrieve.core.js';
+} from "./messagesRetrieve.core.js";
 export {
   buildMessagesRetrieveQuery,
   type MessagesRetrieveQueryData,
@@ -60,11 +64,18 @@ export type MessagesRetrieveQueryError =
  */
 export function useMessagesRetrieve(
   request: operations.MessagesControllerGetMessagesRequest,
-  options?: QueryHookOptions<MessagesRetrieveQueryData, MessagesRetrieveQueryError>
+  options?: QueryHookOptions<
+    MessagesRetrieveQueryData,
+    MessagesRetrieveQueryError
+  >,
 ): UseQueryResult<MessagesRetrieveQueryData, MessagesRetrieveQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildMessagesRetrieveQuery(client, request, options),
+    ...buildMessagesRetrieveQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -79,11 +90,21 @@ export function useMessagesRetrieve(
  */
 export function useMessagesRetrieveSuspense(
   request: operations.MessagesControllerGetMessagesRequest,
-  options?: SuspenseQueryHookOptions<MessagesRetrieveQueryData, MessagesRetrieveQueryError>
-): UseSuspenseQueryResult<MessagesRetrieveQueryData, MessagesRetrieveQueryError> {
+  options?: SuspenseQueryHookOptions<
+    MessagesRetrieveQueryData,
+    MessagesRetrieveQueryError
+  >,
+): UseSuspenseQueryResult<
+  MessagesRetrieveQueryData,
+  MessagesRetrieveQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildMessagesRetrieveQuery(client, request, options),
+    ...buildMessagesRetrieveQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -101,7 +122,7 @@ export function setMessagesRetrieveData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: MessagesRetrieveQueryData
+  data: MessagesRetrieveQueryData,
 ): MessagesRetrieveQueryData | undefined {
   const key = queryKeyMessagesRetrieve(...queryKeyBase);
 
@@ -111,32 +132,30 @@ export function setMessagesRetrieveData(
 export function invalidateMessagesRetrieve(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        channel?: components.ChannelTypeEnum | undefined;
-        subscriberId?: string | undefined;
-        transactionId?: Array<string> | undefined;
-        contextKeys?: Array<string> | undefined;
-        page?: number | undefined;
-        limit?: number | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      channel?: components.ChannelTypeEnum | undefined;
+      subscriberId?: string | undefined;
+      transactionId?: Array<string> | undefined;
+      contextKeys?: Array<string> | undefined;
+      page?: number | undefined;
+      limit?: number | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Messages', 'retrieve', ...queryKeyBase],
+    queryKey: ["@novu/api", "Messages", "retrieve", ...queryKeyBase],
   });
 }
 
 export function invalidateAllMessagesRetrieve(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Messages', 'retrieve'],
+    queryKey: ["@novu/api", "Messages", "retrieve"],
   });
 }

@@ -16,7 +16,7 @@ type WorkerModuleTree = { workerClass: WorkerClass; queueDependencies: JobTopicN
 
 type WorkerDepTree = Partial<Record<JobTopicNameEnum, WorkerModuleTree>>;
 
-export const WORKER_MAPPING: WorkerDepTree = {
+const WORKER_MAPPING: WorkerDepTree = {
   [JobTopicNameEnum.STANDARD]: {
     workerClass: StandardWorker,
     queueDependencies: [JobTopicNameEnum.WEB_SOCKETS, JobTopicNameEnum.STANDARD, JobTopicNameEnum.PROCESS_SUBSCRIBER],

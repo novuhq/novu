@@ -20,7 +20,9 @@ export class DeleteLayoutUseCase {
     private analyticsService: AnalyticsService,
     private moduleRef: ModuleRef,
     private logger: PinoLogger
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   async execute(command: DeleteLayoutCommand): Promise<void> {
     const { environmentId, organizationId, userId } = command;

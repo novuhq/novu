@@ -75,7 +75,7 @@ const PropertyListItemSchema = z.object({
 export type PropertyListItem = z.infer<typeof PropertyListItemSchema>;
 
 // This is the overall shape of the form data for the SchemaEditor
-export const SchemaEditorFormValuesSchema = z.object({
+const SchemaEditorFormValuesSchema = z.object({
   propertyList: z.array(PropertyListItemSchema).superRefine((list, ctx) => {
     // Check for unique keyNames among properties
     const names = new Set<string>();

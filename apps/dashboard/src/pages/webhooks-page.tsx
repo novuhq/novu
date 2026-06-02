@@ -154,8 +154,8 @@ export function WebhooksPage() {
                 </div>
                 <h2 className="text-foreground-900 text-label-md">Enable Webhooks for This Environment</h2>
                 <p className="text-text-soft text-label-xs mb-3 max-w-[300px]">
-                  Once enabled, you'll be able to configure webhook endpoints, monitor events, and view delivery logs for
-                  this environment.
+                  Once enabled, you'll be able to configure webhook endpoints, monitor events, and view delivery logs
+                  for this environment.
                 </p>
               </div>
             </div>

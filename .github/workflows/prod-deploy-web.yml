@@ -1,0 +1,55 @@
+name: Deploy PROD WEB
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  workflow_dispatch:
+
+env:
+  NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  deploy_web_eu:
+    uses: ./.github/workflows/reusable-web-deploy.yml
+    with:
+      environment: Production
+      react_app_api_url: https://eu.api.novu.co
+      react_app_ws_url: https://eu.ws.novu.co
+      react_app_webhook_url: https://eu.webhook.novu.co
+      react_app_widget_embed_path: https://eu.embed.novu.co/embed.umd.min.js
+      react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
+      react_app_environment: production
+      react_app_mail_server_domain: eu.inbound-mail.novu.co
+      react_app_hubspot_embed: 44416662
+      netlify_deploy_message: Prod deployment
+      netlify_alias: prod
+      netlify_gh_env: Production
+      netlify_site_id: d2e8b860-7016-4202-9256-ebca0f13259a
+      clerk_publishable_key: pk_live_Y2xlcmsuZXUuZGFzaGJvYXJkLm5vdnUuY28k
+      clerk_is_ee_auth_enabled: true
+      new_dashboard_url: https://eu.dashboard.novu.co
+      extra_env_variables: ${{ vars.EU_EXTRA_VARIABLES || '' }}
+    secrets: inherit
+
+  deploy_web_us:
+    uses: ./.github/workflows/reusable-web-deploy.yml
+    with:
+      environment: Production
+      react_app_api_url: https://api.novu.co
+      react_app_ws_url: https://ws.novu.co
+      react_app_webhook_url: https://webhook.novu.co
+      react_app_widget_embed_path: https://embed.novu.co/embed.umd.min.js
+      react_app_sentry_dsn: https://2b5160da86384949be4cc66679c54e79@o1161119.ingest.sentry.io/6250907
+      react_app_environment: production
+      react_app_mail_server_domain: inbound-mail.novu.co
+      react_app_hubspot_embed: 44416662
+      netlify_deploy_message: Prod deployment
+      netlify_alias: prod
+      netlify_gh_env: Production
+      netlify_site_id: 8639d8b9-81f9-44c3-b885-585a7fd2b5ff
+      clerk_publishable_key: pk_live_Y2xlcmsuZGFzaGJvYXJkLm5vdnUuY28k
+      clerk_is_ee_auth_enabled: true
+      new_dashboard_url: https://dashboard.novu.co
+      extra_env_variables: ${{ vars.US_EXTRA_VARIABLES || '' }}
+    secrets: inherit

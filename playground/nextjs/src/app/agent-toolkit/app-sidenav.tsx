@@ -12,6 +12,7 @@ type LinkType = {
 
 const LINKS: LinkType[] = [
   { href: '/agent-toolkit', label: 'Refund Agent (HITL)', category: 'AI' },
+  { href: '/agents-mcp', label: 'Agent MCP OAuth', category: 'AI' },
   { href: '/', label: 'Default Inbox', category: 'Components' },
   { href: '/render-bell', label: 'Render Bell', category: 'Components' },
   { href: '/render-notification', label: 'Render Notification', category: 'Components' },
@@ -38,7 +39,7 @@ const NavLink = ({ href, label }: LinkType) => {
         'flex items-center gap-3 px-3 py-2 text-sm font-medium transition-colors rounded-md',
         'hover:bg-accent hover:text-accent-foreground',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
-        isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-muted-foreground',
+        isActive ? 'bg-accent text-accent-foreground font-semibold' : 'text-muted-foreground'
       )}
     >
       {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" aria-hidden="true" />}
@@ -55,7 +56,7 @@ export default function AppSideNav() {
       acc[category].push(link);
       return acc;
     },
-    {} as Record<string, LinkType[]>,
+    {} as Record<string, LinkType[]>
   );
 
   return (
@@ -63,9 +64,7 @@ export default function AppSideNav() {
       <nav className="p-4 space-y-6">
         {Object.entries(groupedLinks).map(([category, links]) => (
           <div key={category} className="space-y-2">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">
-              {category}
-            </h3>
+            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-3">{category}</h3>
             <div className="space-y-1">
               {links.map((link) => (
                 <NavLink key={link.href} {...link} />

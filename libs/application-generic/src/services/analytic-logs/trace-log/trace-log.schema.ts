@@ -183,6 +183,7 @@ export type EventType =
   | 'step_canceled'
   | 'request_received'
   | 'request_queued'
+  | 'request_delivered'
   | 'request_failed'
   | 'request_organization_not_found'
   | 'request_environment_not_found'

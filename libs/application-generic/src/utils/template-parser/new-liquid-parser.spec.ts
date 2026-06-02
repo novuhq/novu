@@ -229,6 +229,110 @@ describe('extractLiquidTemplateVariables', () => {
     });
   });
 
+  describe('For loop collection type inference', () => {
+    it('should mark collection variable as for-loop collection with iterator properties', () => {
+      const template = '{% for provider in payload.providers %}{{ provider.label }} ({{ provider.id }}){% endfor %}';
+      const { validVariables } = extractLiquidTemplateVariables({ template });
+
+      const collectionVar = validVariables.find((v) => v.name === 'payload.providers');
+      expect(collectionVar).to.exist;
+      expect(collectionVar!.isForLoopCollection).to.equal(true);
+      expect(collectionVar!.iteratorProperties).to.have.members(['label', 'id']);
+    });
+
+    it('should set empty iteratorProperties for array of scalars', () => {
+      const template = '{% for tag in payload.tags %}{{ tag }}{% endfor %}';
+      const { validVariables } = extractLiquidTemplateVariables({ template });
+
+      const collectionVar = validVariables.find((v) => v.name === 'payload.tags');
+      expect(collectionVar).to.exist;
+      expect(collectionVar!.isForLoopCollection).to.equal(true);
+      expect(collectionVar!.iteratorProperties).to.have.lengthOf(0);
+    });
+
+    it('should set empty iteratorProperties when iterator is not used', () => {
+      const template = '{% for i in payload.items %}static content{% endfor %}';
+      const { validVariables } = extractLiquidTemplateVariables({ template });
+
+      const collectionVar = validVariables.find((v) => v.name === 'payload.items');
+      expect(collectionVar).to.exist;
+      expect(collectionVar!.isForLoopCollection).to.equal(true);
+      expect(collectionVar!.iteratorProperties).to.have.lengthOf(0);
+    });
+
+    it('should handle deep property access on iterator', () => {
+      const template = '{% for user in payload.users %}{{ user.address.city }}{% endfor %}';
+      const { validVariables } = extractLiquidTemplateVariables({ template });
+
+      const collectionVar = validVariables.find((v) => v.name === 'payload.users');
+      expect(collectionVar).to.exist;
+      expect(collectionVar!.isForLoopCollection).to.equal(true);
+      expect(collectionVar!.iteratorProperties).to.include('address.city');
+    });
+
+    it('should not set isForLoopCollection for range expressions', () => {
+      const template = '{% for i in (1..5) %}{{ i }}{% endfor %}';
+      const { validVariables } = extractLiquidTemplateVariables({ template });
+
+      for (const v of validVariables) {
+        expect(v.isForLoopCollection).to.not.equal(true);
+      }
+    });
+
+    it('should handle nested for loops', () => {
+      const template = `
+        {% for user in payload.users %}
+          {{ user.name }}
+          {% for post in user.posts %}
+            {{ post.title }}
+          {% endfor %}
+        {% endfor %}
+      `;
+      const { validVariables } = extractLiquidTemplateVariables({ template });
+
+      const collectionVar = validVariables.find((v) => v.name === 'payload.users');
+      expect(collectionVar).to.exist;
+      expect(collectionVar!.isForLoopCollection).to.equal(true);
+      expect(collectionVar!.iteratorProperties).to.include('name');
+      expect(collectionVar!.iteratorProperties).to.include('posts');
+    });
+
+    it('should handle tablerow with iterator properties', () => {
+      const template =
+        '{% tablerow product in payload.products %}{{ product.name }} - {{ product.price }}{% endtablerow %}';
+      const { validVariables } = extractLiquidTemplateVariables({ template });
+
+      const collectionVar = validVariables.find((v) => v.name === 'payload.products');
+      expect(collectionVar).to.exist;
+      expect(collectionVar!.isForLoopCollection).to.equal(true);
+      expect(collectionVar!.iteratorProperties).to.have.members(['name', 'price']);
+    });
+
+    it('should deduplicate iterator properties', () => {
+      const template = `
+        {% for item in payload.items %}
+          {{ item.name }} - {{ item.name }} - {{ item.price }}
+        {% endfor %}
+      `;
+      const { validVariables } = extractLiquidTemplateVariables({ template });
+
+      const collectionVar = validVariables.find((v) => v.name === 'payload.items');
+      expect(collectionVar).to.exist;
+      expect(collectionVar!.iteratorProperties).to.have.lengthOf(2);
+      expect(collectionVar!.iteratorProperties).to.have.members(['name', 'price']);
+    });
+
+    it('should annotate collection on invalidVariables when collection is invalid', () => {
+      const template = '{% for item in invalidCollection %}{{ item.name }}{% endfor %}';
+      const { invalidVariables } = extractLiquidTemplateVariables({ template });
+
+      const collectionVar = invalidVariables.find((v) => v.name === 'invalidCollection');
+      expect(collectionVar).to.exist;
+      expect(collectionVar!.isForLoopCollection).to.equal(true);
+      expect(collectionVar!.iteratorProperties).to.have.members(['name']);
+    });
+  });
+
   describe('Conditional tags', () => {
     it('should handle if statements with valid condition', () => {
       const template = '{% if payload.isActive %}Welcome!{{invalid}}{% endif %}';

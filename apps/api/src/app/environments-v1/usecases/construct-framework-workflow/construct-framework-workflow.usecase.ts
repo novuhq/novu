@@ -55,7 +55,9 @@ export class ConstructFrameworkWorkflow {
     private throttleOutputRendererUseCase: ThrottleOutputRendererUsecase,
     private featureFlagsService: FeatureFlagsService,
     private inMemoryLRUCacheService: InMemoryLRUCacheService
-  ) {}
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   @InstrumentUsecase()
   async execute(command: ConstructFrameworkWorkflowCommand): Promise<Workflow> {
@@ -100,13 +102,13 @@ export class ConstructFrameworkWorkflow {
       _creatorId: environment._organizationId,
     } as NotificationTemplateEntity;
 
-    return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context }) => {
+    return workflow(LAYOUT_PREVIEW_WORKFLOW_ID, async ({ step, payload, subscriber, context, env }) => {
       await step.email(
         LAYOUT_PREVIEW_EMAIL_STEP,
         async (controlValues) => {
           return this.emailOutputRendererUseCase.execute({
             controlValues,
-            fullPayloadForRender: { payload, subscriber, context, steps: {} },
+            fullPayloadForRender: { payload, subscriber, context, steps: {}, env },
             dbWorkflow: syntheticDbWorkflow,
             organization,
             locale: subscriber.locale ?? undefined,
@@ -138,13 +140,14 @@ export class ConstructFrameworkWorkflow {
   }): Workflow {
     return workflow(
       dbWorkflow.triggers[0].identifier,
-      async ({ step, payload, subscriber, context }) => {
+      async ({ step, payload, subscriber, context, env }) => {
         const fullPayloadForRender: FullPayloadForRender = {
           workflow: dbWorkflow as unknown as Record<string, unknown>,
           payload,
           subscriber,
           context,
           steps: {},
+          env,
         };
         for (const staticStep of dbWorkflow.steps) {
           fullPayloadForRender.steps[staticStep.stepId || staticStep._templateId] = await this.constructStep({
@@ -217,7 +220,12 @@ export class ConstructFrameworkWorkflow {
     const stepControls = stepTemplate.controls;
 
     if (!stepControls) {
-      throw new InternalServerErrorException(`Step controls not found for step ${staticStep.stepId}`);
+      this.logger.warn(`Step controls not found for step ${stepId}, skipping step`, LOG_CONTEXT);
+
+      return step.custom(stepId, async () => ({}), {
+        controlSchema: PERMISSIVE_EMPTY_SCHEMA,
+        skip: () => true,
+      });
     }
 
     switch (stepType) {

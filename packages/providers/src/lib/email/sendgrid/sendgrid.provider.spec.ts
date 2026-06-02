@@ -1,3 +1,4 @@
+import { EmailEventStatusEnum } from '@novu/stateless';
 import { Client } from '@sendgrid/client';
 import { MailService } from '@sendgrid/mail';
 import { expect, test, vi } from 'vitest';
@@ -130,6 +131,39 @@ test('should trigger sendgrid correctly with _passthrough', async () => {
   });
 });
 
+test('should send custom MIME alternatives in content array', async () => {
+  const provider = new SendgridEmailProvider(mockConfig);
+  const spy = vi.spyOn(MailService.prototype, 'send').mockImplementation(async () => {
+    return {} as any;
+  });
+  const reactionAlternative = {
+    contentType: 'text/vnd.google.email-reaction+json',
+    content: JSON.stringify({ version: 1, emoji: '👀' }),
+  };
+
+  await provider.sendMessage({
+    ...mockNovuMessage,
+    text: '👀',
+    html: '<p>👀</p>',
+    alternatives: [reactionAlternative],
+  });
+
+  const payload = spy.mock.calls[0][0] as unknown as Record<string, unknown>;
+  expect(payload).not.toHaveProperty('html');
+  expect(payload).toEqual(
+    expect.objectContaining({
+      content: [
+        { type: 'text/plain', value: '👀' },
+        { type: 'text/html', value: '<p>👀</p>' },
+        {
+          type: 'text/vnd.google.email-reaction+json',
+          value: JSON.stringify({ version: 1, emoji: '👀' }),
+        },
+      ],
+    })
+  );
+});
+
 test('should check provider integration correctly', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
   const spy = vi.spyOn(MailService.prototype, 'send').mockImplementation(async () => {
@@ -200,4 +234,28 @@ test('should not set data residency when region is not provided', async () => {
   new SendgridEmailProvider(mockConfig);
 
   expect(setDataResidencySpy).not.toHaveBeenCalled();
+});
+
+test('parseEventBody maps SendGrid blocked event to BLOCKED status', () => {
+  const provider = new SendgridEmailProvider(mockConfig);
+  const externalId = 'sg-msg-blocked-1';
+
+  const result = provider.parseEventBody(
+    {
+      id: externalId,
+      event: 'blocked',
+      attempt: '1',
+      response: 'blocked by suppression',
+    },
+    externalId
+  );
+
+  expect(result).toEqual({
+    status: EmailEventStatusEnum.BLOCKED,
+    date: expect.any(String),
+    externalId,
+    attempts: 1,
+    response: 'blocked by suppression',
+    row: expect.any(String),
+  });
 });

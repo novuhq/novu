@@ -1,12 +1,11 @@
-
 'use-client';
 
-import { useState } from 'react';
 import type { Notification } from '@novu/nextjs';
-import { PiNotificationFill } from 'react-icons/pi';
+import { useState } from 'react';
 import { FaRegCheckSquare } from 'react-icons/fa';
 import { FiArchive, FiCornerUpLeft } from 'react-icons/fi';
 import { GrDocumentText } from 'react-icons/gr';
+import { PiNotificationFill } from 'react-icons/pi';
 import { Show } from './show';
 
 export const InboxItem = ({

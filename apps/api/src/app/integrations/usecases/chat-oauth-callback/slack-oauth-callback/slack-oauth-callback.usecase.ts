@@ -17,6 +17,8 @@ import { CreateChannelConnectionCommand } from '../../../../channel-connections/
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
+import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import {
   GenerateSlackOauthUrl,
   StateData,
@@ -27,7 +29,6 @@ import { SlackOauthCallbackCommand } from './slack-oauth-callback.command';
 @Injectable()
 export class SlackOauthCallback {
   private readonly SLACK_ACCESS_URL = 'https://slack.com/api/oauth.v2.access';
-  private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
 
   constructor(
     private integrationRepository: IntegrationRepository,
@@ -43,9 +44,10 @@ export class SlackOauthCallback {
     const credentials = await this.getIntegrationCredentials(integration);
 
     const authData = await this.exchangeCodeForAuthData(command.providerCode, credentials);
-    const isIncomingWebhook = authData.incoming_webhook;
 
-    if (isIncomingWebhook) {
+    if (stateData.mode === 'link_user') {
+      await this.linkUserEndpoint(stateData, integration, authData);
+    } else if (authData.incoming_webhook) {
       /*
        * Incoming webhooks are handled differently from workspace connections:
        *
@@ -60,14 +62,16 @@ export class SlackOauthCallback {
        */
       await this.createIncomingWebhookEndpoint(stateData, integration, authData);
     } else {
-      await this.createChannelConnection.execute(
+      const isSharedMode = stateData.connectionMode === 'shared';
+      const connection = await this.createChannelConnection.execute(
         CreateChannelConnectionCommand.create({
           identifier: stateData.identifier,
           organizationId: stateData.organizationId,
           environmentId: stateData.environmentId,
           integrationIdentifier: integration.identifier,
-          subscriberId: stateData.subscriberId,
+          subscriberId: isSharedMode ? undefined : stateData.subscriberId,
           context: stateData.context,
+          connectionMode: stateData.connectionMode,
           auth: {
             accessToken: authData.access_token,
           },
@@ -77,6 +81,20 @@ export class SlackOauthCallback {
           },
         })
       );
+      if (stateData.autoLinkUser === true && stateData.subscriberId && authData.authed_user?.id) {
+        await this.createChannelEndpoint.execute(
+          CreateChannelEndpointCommand.create({
+            organizationId: stateData.organizationId,
+            environmentId: stateData.environmentId,
+            integrationIdentifier: integration.identifier,
+            connectionIdentifier: connection.identifier,
+            subscriberId: stateData.subscriberId,
+            context: stateData.context,
+            type: ENDPOINT_TYPES.SLACK_USER,
+            endpoint: { userId: authData.authed_user.id },
+          })
+        );
+      }
     }
 
     if (credentials.redirectUrl) {
@@ -85,8 +103,38 @@ export class SlackOauthCallback {
 
     return {
       type: ResponseTypeEnum.HTML,
-      result: this.SCRIPT_CLOSE_TAB,
+      result: renderConnectionResultPage({
+        status: 'success',
+        title: 'Connection complete',
+        heading: "You're all set",
+        message: 'Your Slack workspace is connected and ready to use.',
+      }),
     };
+  }
+
+  private async linkUserEndpoint(stateData: StateData, integration: IntegrationEntity, authData: any): Promise<void> {
+    if (!stateData.subscriberId) {
+      throw new BadRequestException('subscriberId is required for link_user mode');
+    }
+
+    const userId = authData.authed_user?.id;
+
+    if (!userId) {
+      throw new BadRequestException('Slack did not return a user ID in the OAuth response');
+    }
+
+    await this.createChannelEndpoint.execute(
+      CreateChannelEndpointCommand.create({
+        organizationId: stateData.organizationId,
+        environmentId: stateData.environmentId,
+        integrationIdentifier: integration.identifier,
+        connectionIdentifier: stateData.identifier,
+        subscriberId: stateData.subscriberId,
+        context: stateData.context,
+        type: ENDPOINT_TYPES.SLACK_USER,
+        endpoint: { userId },
+      })
+    );
   }
 
   private async createIncomingWebhookEndpoint(
@@ -150,7 +198,7 @@ export class SlackOauthCallback {
   private async getDemoNovuSlackCredentials(integration: IntegrationEntity): Promise<ICredentialsEntity> {
     return await this.getNovuProviderCredentials.execute(
       GetNovuProviderCredentialsCommand.create({
-        channelType: integration.channel,
+        channelType: integration.channel ?? ChannelTypeEnum.CHAT,
         providerId: integration.providerId,
         environmentId: integration._environmentId,
         organizationId: integration._organizationId,
@@ -188,9 +236,7 @@ export class SlackOauthCallback {
 
   private async decodeSlackState(state: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload] = decoded.split('.');
-      const preliminaryData = JSON.parse(payload);
+      const preliminaryData = peekOAuthStatePayload<Partial<StateData>>(state);
 
       if (!preliminaryData.environmentId) {
         throw new BadRequestException('Invalid Slack state: missing environmentId');

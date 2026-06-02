@@ -1,5 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, shortId } from '@novu/application-generic';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  CreateOrUpdateSubscriberUseCase,
+  encryptChannelConnectionAuth,
+  InstrumentUsecase,
+  shortId,
+} from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
   ChannelConnectionRepository,
@@ -8,6 +13,8 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
+import { validateConnectionMode } from '../channel-connection.utils';
+import { ensureConnectDashboardSubscriber } from '../ensure-connect-dashboard-subscriber';
 import { CreateChannelConnectionCommand } from './create-channel-connection.command';
 
 @Injectable()
@@ -16,7 +23,8 @@ export class CreateChannelConnection {
     private readonly channelConnectionRepository: ChannelConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly contextRepository: ContextRepository
+    private readonly contextRepository: ContextRepository,
+    private readonly createOrUpdateSubscriber: CreateOrUpdateSubscriberUseCase
   ) {}
 
   @InstrumentUsecase()
@@ -50,11 +58,11 @@ export class CreateChannelConnection {
   }
 
   private validateResourceOrContext(command: CreateChannelConnectionCommand) {
-    const { subscriberId, context } = command;
-
-    if (!subscriberId && !context) {
-      throw new BadRequestException('Either subscriberId or context must be provided');
-    }
+    validateConnectionMode({
+      connectionMode: command.connectionMode,
+      subscriberId: command.subscriberId,
+      context: command.context,
+    });
   }
 
   private async resolveContexts(command: CreateChannelConnectionCommand): Promise<string[]> {
@@ -110,6 +118,8 @@ export class CreateChannelConnection {
     integration: IntegrationEntity,
     contextKeys: string[]
   ): Promise<ChannelConnectionEntity> {
+    const subscriberId = command.connectionMode === 'shared' ? undefined : command.subscriberId;
+
     const channelConnection = await this.channelConnectionRepository.create({
       identifier,
       integrationIdentifier: integration.identifier,
@@ -117,10 +127,10 @@ export class CreateChannelConnection {
       channel: integration.channel,
       _organizationId: command.organizationId,
       _environmentId: command.environmentId,
-      subscriberId: command.subscriberId,
+      subscriberId,
       contextKeys,
       workspace: command.workspace,
-      auth: command.auth,
+      auth: encryptChannelConnectionAuth(command.auth),
     });
 
     return channelConnection;
@@ -131,15 +141,13 @@ export class CreateChannelConnection {
       return;
     }
 
-    const found = await this.subscriberRepository.findOne({
+    await ensureConnectDashboardSubscriber({
       subscriberId: command.subscriberId,
-      _organizationId: command.organizationId,
-      _environmentId: command.environmentId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      subscriberRepository: this.subscriberRepository,
+      createOrUpdateSubscriber: this.createOrUpdateSubscriber,
     });
-
-    if (!found) throw new NotFoundException(`Subscriber not found: ${command.subscriberId}`);
-
-    return;
   }
 
   private async findIntegration(command: CreateChannelConnectionCommand) {
@@ -157,6 +165,6 @@ export class CreateChannelConnection {
   }
 
   private generateIdentifier(): string {
-    return `chconn-${shortId(6)}`;
+    return `chconn_${shortId(12)}`;
   }
 }

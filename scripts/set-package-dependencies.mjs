@@ -37,12 +37,23 @@ async function getPackageNames() {
 
 const novuPackages = new Set(await getPackageNames());
 
-// Update versions of all @novu dependencies
+// Update versions of all @novu workspace dependencies only.
+// Pinned semver versions (e.g. agent-toolkit's published @novu/api SDK) must stay unchanged.
 function updateNovuDependencies(dependencies) {
-  for (const [key] of Object.entries(dependencies || {})) {
-    if (key.startsWith('@novu/') && novuPackages.has(key)) {
-      dependencies[key] = replacement;
+  for (const [key, value] of Object.entries(dependencies || {})) {
+    if (!key.startsWith('@novu/') || !novuPackages.has(key)) {
+      continue;
     }
+
+    if (replacement === 'latest' && value !== 'workspace:*') {
+      continue;
+    }
+
+    if (replacement === 'workspace:*' && value !== 'latest') {
+      continue;
+    }
+
+    dependencies[key] = replacement;
   }
 }
 

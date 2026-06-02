@@ -73,10 +73,7 @@ reviews:
     - Keep the entire summary under 300 words.
   auto_review:
     enabled: true
-    drafts: false
-    ignore_title_keywords:
-      - "WIP"
-      - "DO NOT MERGE"
+    drafts: true
     auto_pause_after_reviewed_commits: 5
   path_instructions:
     - path: "apps/api/**"

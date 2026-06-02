@@ -7,8 +7,7 @@ import { Button } from '@/components/primitives/button';
 import { useConditionsCount } from '@/hooks/use-conditions-count';
 import { cn } from '@/utils/ui';
 
-const SIDEPANEL_ACTION_ROW_BASE_CLASS =
-  'flex h-12 w-full justify-start gap-1.5 rounded-none px-3 text-xs font-medium';
+const SIDEPANEL_ACTION_ROW_BASE_CLASS = 'flex h-12 w-full justify-start gap-1.5 rounded-none px-3 text-xs font-medium';
 
 type SkipConditionsButtonProps = {
   origin: ResourceOriginEnum;

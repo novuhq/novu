@@ -7,6 +7,8 @@ coverage
 *.log
 package-lock.json
 
+terminalOutput
+
 node_modules
 build
 *.log
@@ -124,3 +126,5 @@ demos/agent-chat-demo/.next
 demos/agent-chat-demo/.env.local
 demos/agent-chat-demo/tsconfig.tsbuildinfo
 demos/agent-chat-demo/next-env.d.ts
+
+.claude/worktrees

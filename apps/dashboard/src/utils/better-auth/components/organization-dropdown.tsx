@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowDownSLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/primitives/avatar';
 import {
   DropdownMenu,
@@ -9,6 +10,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { IS_NOVU_CONNECT } from '@/config';
+import { isConnectWorkspace } from '@/utils/connect';
+import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '../index';
@@ -91,6 +95,7 @@ export function OrganizationDropdown() {
   const { organization: currentOrganization, isLoaded: isOrgLoaded } = useOrganization();
   const { orgId } = useAuth();
   const clerk = useClerk();
+  const navigate = useNavigate();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isSwitching, setIsSwitching] = useState(false);
@@ -151,7 +156,9 @@ export function OrganizationDropdown() {
     (membership: any) => {
       if (membership.organization.id === orgId) return false;
 
-      return true;
+      const metadata = membership.organization?.publicMetadata;
+
+      return IS_NOVU_CONNECT ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
     },
     [orgId]
   );
@@ -226,7 +233,7 @@ export function OrganizationDropdown() {
             isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
           )}
           onSelect={() => {
-            window.location.href = ROUTES.SIGNUP_ORGANIZATION_LIST;
+            navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
           }}
         >
           <RiAddCircleLine className="size-4 text-text-sub" />

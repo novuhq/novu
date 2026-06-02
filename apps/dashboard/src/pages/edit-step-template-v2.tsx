@@ -27,6 +27,11 @@ export function EditStepTemplateV2Page() {
   const prevStepIdRef = useRef<string | undefined>(undefined);
   const prevHashRef = useRef<string | undefined>(undefined);
   const prevControlsFingerprintRef = useRef<string | null>(null);
+  // Tracks ALL in-flight save fingerprints so that any server response that
+  // echoes back one of our own saves is recognized and does not reset the form.
+  // A single ref would be overwritten by rapid successive saves, causing the
+  // guard to fail for earlier in-flight requests.
+  const inFlightFingerprintsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!step) return;
@@ -43,10 +48,25 @@ export function EditStepTemplateV2Page() {
     const controlsChanged =
       prevControlsFingerprintRef.current !== null && fingerprint !== prevControlsFingerprintRef.current;
 
-    if (isFirstBind || stepIdChanged || hashChanged || controlsChanged) {
-      prevStepIdRef.current = step.stepId;
-      prevHashRef.current = step.stepResolverHash;
-      prevControlsFingerprintRef.current = fingerprint;
+    // If there are any in-flight saves, any server-side change we receive is
+    // the result of our own edits. Skip the reset so we don't overwrite edits
+    // the user made while requests were in-flight. The invocationQueue may
+    // apply pending requests on top, so the server response FP may not exactly
+    // match any single in-flight FP — checking the count is safer.
+    const hasInFlightSaves = inFlightFingerprintsRef.current.size > 0;
+    const isOwnSaveEcho = controlsChanged && (inFlightFingerprintsRef.current.has(fingerprint) || hasInFlightSaves);
+
+    if (inFlightFingerprintsRef.current.has(fingerprint)) {
+      inFlightFingerprintsRef.current.delete(fingerprint);
+    }
+
+    const shouldReset = isFirstBind || stepIdChanged || hashChanged || (controlsChanged && !isOwnSaveEcho);
+
+    prevStepIdRef.current = step.stepId;
+    prevHashRef.current = step.stepResolverHash;
+    prevControlsFingerprintRef.current = fingerprint;
+
+    if (shouldReset) {
       hasInitializedRef.current = true;
       form.reset(getControlsDefaultValues(step), { keepErrors: true });
     }
@@ -58,10 +78,27 @@ export function EditStepTemplateV2Page() {
     save: (data, { onSuccess }) => {
       if (!workflow || !step) return;
 
+      const fp = JSON.stringify({
+        v: data,
+        ui: step.controls?.uiSchema,
+        ds: step.controls?.dataSchema,
+      });
+
+      // Add to in-flight set before the request goes out. The fingerprint
+      // effect will recognize any server response that matches this value and
+      // skip the form.reset() that would otherwise overwrite in-progress edits.
+      inFlightFingerprintsRef.current.add(fp);
+
       const updateStepData: Partial<StepUpdateDto> = {
         controlValues: data,
       };
-      update(updateStepInWorkflow(workflow, step.stepId, updateStepData), { onSuccess });
+      update(updateStepInWorkflow(workflow, step.stepId, updateStepData), {
+        onSuccess: () => {
+          // Clean up the in-flight fingerprint on success.
+          inFlightFingerprintsRef.current.delete(fp);
+          onSuccess?.();
+        },
+      });
     },
   });
 

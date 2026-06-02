@@ -4,8 +4,6 @@ export const MODE = import.meta.env.MODE;
 
 export const LAUNCH_DARKLY_CLIENT_SIDE_ID = import.meta.env.VITE_LAUNCH_DARKLY_CLIENT_SIDE_ID;
 
-export const HUBSPOT_PORTAL_ID = import.meta.env.VITE_HUBSPOT_EMBED;
-
 export const EE_AUTH_PROVIDER = (window._env_?.VITE_EE_AUTH_PROVIDER ||
   import.meta.env.VITE_EE_AUTH_PROVIDER ||
   'clerk') as 'clerk' | 'better-auth';
@@ -16,6 +14,23 @@ export const CLERK_PUBLISHABLE_KEY =
 export const APP_ID = import.meta.env.VITE_NOVU_APP_ID || '';
 
 export const API_HOSTNAME = window._env_?.VITE_API_HOSTNAME || import.meta.env.VITE_API_HOSTNAME;
+
+/** Publicly reachable API host for agent webhooks/OAuth (e.g. ngrok). Falls back to `API_HOSTNAME`. */
+export const AGENT_API_HOSTNAME = window._env_?.VITE_AGENT_API_HOSTNAME || import.meta.env.VITE_AGENT_API_HOSTNAME;
+
+/** Base URL for agent webhook/OAuth URLs shown to external providers (Slack, Teams, Meta, etc.). */
+export function getAgentApiBaseUrl(): string {
+  return (AGENT_API_HOSTNAME || API_HOSTNAME || 'https://api.novu.co').replace(/\/$/, '');
+}
+
+/** Hostname portion of {@link getAgentApiBaseUrl} for manifests that require a domain only. */
+export function getAgentApiHostname(): string {
+  try {
+    return new URL(getAgentApiBaseUrl()).hostname;
+  } catch {
+    return 'api.novu.co';
+  }
+}
 
 export const BETTER_AUTH_BASE_URL =
   window._env_?.VITE_BETTER_AUTH_BASE_URL ||
@@ -38,6 +53,49 @@ export const LEGACY_DASHBOARD_URL =
 
 export const DASHBOARD_URL = window._env_?.VITE_DASHBOARD_URL || import.meta.env.VITE_DASHBOARD_URL;
 
+// Connect host. Must share registrable domain with `NOVU_PLATFORM_HOSTNAME` so Clerk session
+// cookies (Domain=<root>) are visible on both. Empty when Connect is not deployed (self-hosted/dev).
+export const NOVU_CONNECT_HOSTNAME =
+  window._env_?.VITE_NOVU_CONNECT_HOSTNAME || import.meta.env.VITE_NOVU_CONNECT_HOSTNAME || '';
+
+// Clerk primary hostname. Required when `NOVU_CONNECT_HOSTNAME` is set.
+export const NOVU_PLATFORM_HOSTNAME =
+  window._env_?.VITE_NOVU_PLATFORM_HOSTNAME || import.meta.env.VITE_NOVU_PLATFORM_HOSTNAME || '';
+
+/** Lowercase host comparison — env may omit port locally while `location.host` includes it. */
+export function normalizeAppHost(host: string): string {
+  return host.trim().toLowerCase();
+}
+
+function getHostnameWithoutPort(host: string): string {
+  return normalizeAppHost(host).split(':')[0];
+}
+
+export { getHostnameWithoutPort };
+
+// Fail fast when the hostname split is half-configured. Without `NOVU_PLATFORM_HOSTNAME`,
+// Connect → Platform handoffs (Clerk sign-in, cross-product redirects) silently break.
+if (NOVU_CONNECT_HOSTNAME && !NOVU_PLATFORM_HOSTNAME) {
+  throw new Error(
+    'NOVU_PLATFORM_HOSTNAME is required when NOVU_CONNECT_HOSTNAME is set. ' +
+      'Set VITE_NOVU_PLATFORM_HOSTNAME to the Clerk primary host, or unset VITE_NOVU_CONNECT_HOSTNAME to disable the split.'
+  );
+}
+
+export const IS_HOSTNAME_SPLIT_ENABLED = NOVU_CONNECT_HOSTNAME.length > 0;
+
+export const IS_NOVU_CONNECT =
+  IS_HOSTNAME_SPLIT_ENABLED &&
+  typeof window !== 'undefined' &&
+  normalizeAppHost(window.location.host) === normalizeAppHost(NOVU_CONNECT_HOSTNAME);
+
+// True when the hostname split is disabled (single-host deploys) AND when the split is enabled
+// but the current host does not match `NOVU_CONNECT_HOSTNAME`. Mirrors `IS_NOVU_CONNECT` /
+// `IS_HOSTNAME_SPLIT_ENABLED` above. NOTE: all three constants evaluate once at module load
+// (window.location.host is read on import), so their values will not change without a full
+// page reload.
+export const IS_NOVU_PLATFORM = !IS_NOVU_CONNECT;
+
 export const PLAIN_SUPPORT_CHAT_APP_ID = import.meta.env.VITE_PLAIN_SUPPORT_CHAT_APP_ID;
 
 export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
@@ -45,6 +103,13 @@ export const ONBOARDING_DEMO_WORKFLOW_ID = 'onboarding-demo-workflow';
 export const IS_SELF_HOSTED = (window._env_?.VITE_SELF_HOSTED || import.meta.env.VITE_SELF_HOSTED) === 'true';
 
 export const IS_ENTERPRISE = (window._env_?.VITE_NOVU_ENTERPRISE || import.meta.env.VITE_NOVU_ENTERPRISE) === 'true';
+
+export const IS_AI_FEATURES_ENABLED = !(IS_SELF_HOSTED && IS_ENTERPRISE);
+
+// Surfaces inbound-email rows (source='inbound_email') in the Requests view.
+// When disabled, the dashboard only requests HTTP logs (source='http') and hides
+// the inbound "Type" filter, preserving the existing experience.
+export const IS_INBOUND_LOGS_ENABLED = getEnvVar('VITE_IS_INBOUND_LOGS_ENABLED') === 'true';
 
 if (!IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'clerk' && !CLERK_PUBLISHABLE_KEY) {
   throw new Error('Missing Clerk Publishable Key');
@@ -67,3 +132,10 @@ export function getEnvVar(key: string, fallback: string = ''): string {
     fallback
   );
 }
+
+/** Cursor cloud agent only: auto sign-in with the pre-seeded dev user (see .env.agent). */
+export const CURSOR_AGENT_AUTO_LOGIN = getEnvVar('VITE_CURSOR_AGENT_AUTO_LOGIN') === 'true';
+
+export const CURSOR_AGENT_SEED_EMAIL = getEnvVar('VITE_AGENT_SEED_EMAIL');
+
+export const CURSOR_AGENT_SEED_PASSWORD = getEnvVar('VITE_AGENT_SEED_PASSWORD');

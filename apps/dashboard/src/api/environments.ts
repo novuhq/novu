@@ -84,7 +84,7 @@ export interface IEnvironmentPublishResponse {
 }
 
 export type ResourceToPublish = {
-  resourceType: 'workflow' | 'layout' | 'localization_group' | 'step';
+  resourceType: 'workflow' | 'layout' | 'localization_group' | 'step' | 'agent';
   resourceId: string;
 };
 

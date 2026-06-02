@@ -1,4 +1,4 @@
-import { JwtPayload } from '@clerk/types';
+import type { JwtPayload } from '@clerk/shared/types';
 
 export type ClerkJwtPayload = JwtPayload & {
   _id: string;

@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
+import { areHexDigestsEqual } from '../../shared/helpers/is-valid-hmac';
 
 @Injectable()
 export class PlainCardsGuard implements CanActivate {
@@ -13,6 +14,6 @@ export class PlainCardsGuard implements CanActivate {
     if (!incomingSignature) throw new UnauthorizedException('Plain request signature is missing');
     const expectedSignature = crypto.createHmac('sha-256', plainCardsHMACSecretKey).update(requestBody).digest('hex');
 
-    return incomingSignature === expectedSignature;
+    return areHexDigestsEqual(expectedSignature, incomingSignature);
   }
 }

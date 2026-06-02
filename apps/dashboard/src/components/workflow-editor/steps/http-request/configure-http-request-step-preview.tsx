@@ -1,7 +1,7 @@
 import { RiGlobalLine } from 'react-icons/ri';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { CurlDisplay } from './curl-display';
-import { buildRawCurlString, getUrlDisplay, type KeyValuePair } from './curl-utils';
+import { buildRawCurlString, getUrlDisplay, type HttpRequestBodyValue, type KeyValuePair } from './curl-utils';
 
 type ConfigureHttpRequestStepPreviewProps = {
   controlValues: Record<string, unknown>;
@@ -12,7 +12,7 @@ export function ConfigureHttpRequestStepPreview({ controlValues, className }: Co
   const url = (controlValues.url as string) ?? '';
   const method = (controlValues.method as string) ?? 'GET';
   const headers = ((controlValues.headers as KeyValuePair[]) ?? []).filter((h) => h.key);
-  const body = (controlValues.body as KeyValuePair[]) ?? [];
+  const body = controlValues.body as HttpRequestBodyValue;
 
   const urlDisplay = getUrlDisplay(url);
   const curlString = buildRawCurlString(url, method, headers, body);

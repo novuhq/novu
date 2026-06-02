@@ -76,6 +76,7 @@ function InternalConditionsEditor({
   onQueryChange,
   saveForm,
   enhancedVariables,
+  disabled,
 }: {
   fields: EnhancedField[];
   variables: LiquidVariable[];
@@ -84,6 +85,7 @@ function InternalConditionsEditor({
   onQueryChange: (query: RuleGroupType) => void;
   saveForm: () => void;
   enhancedVariables?: EnhancedLiquidVariable[];
+  disabled?: boolean;
 }) {
   const fieldDataMap = useMemo(() => {
     if (!enhancedVariables) return new Map();
@@ -217,6 +219,7 @@ function InternalConditionsEditor({
       resetOnFieldChange={false}
       getOperators={getOperators}
       getValueEditorType={getValueEditorType}
+      disabled={disabled}
     />
   );
 }
@@ -240,6 +243,7 @@ export function ConditionsEditor({
   variables,
   isAllowedVariable,
   enhancedVariables,
+  disabled,
 }: {
   query: RuleGroupType;
   onQueryChange: (query: RuleGroupType) => void;
@@ -248,6 +252,7 @@ export function ConditionsEditor({
   variables: LiquidVariable[];
   isAllowedVariable: IsAllowedVariable;
   enhancedVariables?: EnhancedLiquidVariable[];
+  disabled?: boolean;
 }) {
   return (
     <ConditionsEditorProvider query={query} onQueryChange={onQueryChange}>
@@ -259,6 +264,7 @@ export function ConditionsEditor({
         onQueryChange={onQueryChange}
         saveForm={saveForm}
         enhancedVariables={enhancedVariables}
+        disabled={disabled}
       />
     </ConditionsEditorProvider>
   );

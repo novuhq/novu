@@ -11,9 +11,12 @@ import {
 } from '@novu/application-generic';
 import { JobEntity, JobRepository } from '@novu/dal';
 import { StepTypeEnum } from '@novu/shared';
+import { subDays } from 'date-fns';
 import { GetWorkflowRunResponseDto, StepRunDto } from '../../dtos/workflow-run-response.dto';
 import { mapTraceToExecutionDetailDto, mapWorkflowRunStatusToDto } from '../../shared/mappers';
 import { GetWorkflowRunCommand } from './get-workflow-run.command';
+
+const TRACE_AFTER_BUFFER_DAYS = 1;
 
 const workflowRunSelectColumns = [
   'workflow_run_id',
@@ -221,7 +224,11 @@ export class GetWorkflowRun {
       }
 
       const stepRunIds = stepRunsResult.data.map((stepRun) => stepRun.step_run_id);
-      const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(stepRunIds, command);
+      const executionDetailsByStepRunId = await this.getExecutionDetailsByEntityId(
+        stepRunIds,
+        command,
+        workflowRun.created_at ? new Date(`${workflowRun.created_at} UTC`) : undefined
+      );
 
       // BACKWARD COMPATIBILITY: Check if any step runs are missing digest data
       // TODO: Remove this logic as part of task nv-6576 once all step runs have digest data stored
@@ -259,22 +266,33 @@ export class GetWorkflowRun {
 
   private async getExecutionDetailsByEntityId(
     entityIds: string[],
-    command: GetWorkflowRunCommand
+    command: GetWorkflowRunCommand,
+    /**
+     * Lower bound for the trace `created_at` scan. Should be the parent workflow run's
+     * creation time — traces (e.g. message_seen, delivery callbacks) can arrive long
+     * after, but never before, the workflow run that produced them. Passing this lets
+     * ClickHouse prune partitions and skip granules on the `toDate(created_at)` sort key.
+     */
+    workflowRunCreatedAt?: Date
   ): Promise<Map<string, TraceFetchResult[]>> {
     if (entityIds.length === 0) {
       return new Map();
     }
 
     try {
-      const traceQuery = new QueryBuilder<Trace>({
+      const traceQueryBuilder = new QueryBuilder<Trace>({
         environmentId: command.environmentId,
       })
         .whereIn('entity_id', entityIds)
         .whereEquals('entity_type', 'step_run')
-        .build();
+        .whereEquals('organization_id', command.organizationId);
+
+      if (workflowRunCreatedAt) {
+        traceQueryBuilder.whereGreaterThanOrEqual('created_at', subDays(workflowRunCreatedAt, TRACE_AFTER_BUFFER_DAYS));
+      }
 
       const traceResult = await this.traceLogRepository.find({
-        where: traceQuery,
+        where: traceQueryBuilder.build(),
         orderBy: 'created_at',
         orderDirection: 'ASC',
         select: traceSelectColumns,

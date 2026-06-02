@@ -1,7 +1,9 @@
 import { AiAgentTypeEnum, AiMessageRoleEnum, AiResourceTypeEnum } from '@novu/shared';
 import * as Sentry from '@sentry/react';
-import { ChatStatus, DataUIPart, DynamicToolUIPart, generateId, UIMessage } from 'ai';
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { ChatStatus, DataUIPart, DynamicToolUIPart, UIMessage } from 'ai';
+import { createContext, FC, SVGProps, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { IconType } from 'react-icons';
 import { useLocation } from 'react-router-dom';
 import { cancelStream } from '@/api/ai';
 import { ConfirmationModal } from '@/components/confirmation-modal';
@@ -13,6 +15,7 @@ import { useFetchLatestAiChat } from '@/hooks/use-fetch-latest-ai-chat';
 import { useKeepAiChanges } from '@/hooks/use-keep-ai-changes';
 import { useRevertMessage } from '@/hooks/use-revert-message';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { showErrorToast } from '../primitives/sonner-helpers';
 import { isCancelledToolCall } from './message-utils';
@@ -33,17 +36,20 @@ export type AiChatContextValue = {
   isActionPending: boolean;
   isReviewingChanges: boolean;
   inputText: string;
+  newChatSuggestions?: { label: string; icon: IconType | FC<SVGProps<SVGSVGElement>> }[];
   setInputText: (text: string) => void;
   handleSendMessage: (message: string) => Promise<void>;
   handleKeepAll: () => Promise<void>;
   handleTryAgain: (messageId: string) => Promise<void>;
   handleRevertMessage: (messageId: string) => Promise<void>;
   handleDiscard: (messageId: string) => Promise<void>;
+  handleSuggestionClick: (suggestion: string) => void;
 };
 
 export type AiChatResourceConfig = {
   resourceType: AiResourceTypeEnum;
   resourceId?: string;
+  newChatSuggestions?: { label: string; icon: IconType | FC<SVGProps<SVGSVGElement>> }[];
   agentType: AiAgentTypeEnum;
   metadata?: Record<string, unknown>;
   isResourceLoading?: boolean;
@@ -118,6 +124,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   const {
     resourceType,
     resourceId,
+    newChatSuggestions,
     agentType,
     metadata,
     isResourceLoading = false,
@@ -139,8 +146,10 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   const hasHandledInitialResumeRef = useRef(false);
   const isStoppingRef = useRef(false);
   const skipMessageSyncRef = useRef(false);
+  const pendingSendRef = useRef<{ chatId: string; prompt: string; metadata: Record<string, unknown> } | null>(null);
   const location = useLocation();
   const { areEnvironmentsInitialLoading, currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
 
   const {
     latestChat,
@@ -158,7 +167,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       return location.state.chatId as string;
     }
 
-    return latestChat?._id ?? generateId();
+    return latestChat?._id;
   }, [location, latestChat]);
 
   const { setMessages, sendPrompt, stop, status, isGenerating, messages, dataParts, isAborted, resume, error } =
@@ -203,6 +212,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       },
     });
   const dataRef = useDataRef({
+    currentEnvironment,
     isGenerating,
     resourceType,
     resourceId,
@@ -250,6 +260,14 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
   }, [latestChat, resume, track, dataRef]);
 
   useEffect(() => {
+    if (chatId && pendingSendRef.current && chatId === pendingSendRef.current.chatId) {
+      const pending = pendingSendRef.current;
+      pendingSendRef.current = null;
+      sendPrompt({ chatId: pending.chatId, prompt: pending.prompt, metadata: pending.metadata });
+    }
+  }, [chatId, sendPrompt]);
+
+  useEffect(() => {
     isMountedRef.current = true;
 
     return () => {
@@ -278,7 +296,8 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
   const handleSendMessage = useCallback(
     async (message: string) => {
-      const { resourceType, resourceId, agentType, latestChat, messages, metadata } = dataRef.current;
+      const { resourceType, resourceId, agentType, latestChat, messages, metadata, currentEnvironment } =
+        dataRef.current;
       const isLastUserMessage = messages.length > 0 && messages[messages.length - 1].role === AiMessageRoleEnum.USER;
 
       const messageToSend = message.trim();
@@ -286,12 +305,16 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
       if (!latestChat) {
         const newChat = await createAiChat({ resourceType, resourceId });
+        queryClient.setQueryData([QueryKeys.fetchChat, currentEnvironment?._id, resourceType, resourceId], newChat);
         track(TelemetryEvent.COPILOT_CHAT_CREATED, {
           chatId: newChat._id,
           resourceType,
           agentType,
         });
-        sendPrompt({ chatId: newChat._id, prompt: messageToSend, metadata: { ...metadata } });
+        // we don't pre-create the chat until the user sends a message and the useAiChatStream hook uses the autogenerated chatId
+        // if we update the chatId right away here, the useAiChatStream hook will reset its state and the user sent message and stream will be lost
+        // defer sending the message to the stream until the chat is created and chatId is updated for the useAiChatStream hook
+        pendingSendRef.current = { chatId: newChat._id, prompt: messageToSend, metadata: { ...metadata } };
       } else if (isLastUserMessage) {
         const lastUserMessage = messages.filter((m) => m.role === AiMessageRoleEnum.USER).pop();
         sendPrompt({
@@ -313,7 +336,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
 
       setInputText('');
     },
-    [dataRef, createAiChat, sendPrompt, track]
+    [dataRef, queryClient, createAiChat, sendPrompt, track]
   );
 
   const handleKeepAll = useCallback(async () => {
@@ -540,12 +563,14 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       isActionPending,
       isReviewingChanges,
       inputText,
+      newChatSuggestions,
       setInputText,
       handleSendMessage,
       handleKeepAll,
       handleTryAgain,
       handleRevertMessage,
       handleDiscard,
+      handleSuggestionClick: handleSendMessage,
     }),
     [
       hasNoChatHistory,
@@ -561,6 +586,7 @@ export function AiChatProvider({ children, config }: { children: React.ReactNode
       isActionPending,
       isReviewingChanges,
       inputText,
+      newChatSuggestions,
       handleSendMessage,
       handleKeepAll,
       handleTryAgain,

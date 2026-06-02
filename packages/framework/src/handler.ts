@@ -21,18 +21,30 @@ import {
   SigningKeyNotFoundError,
 } from './errors';
 import { isPlatformError } from './errors/guard.errors';
+import type {
+  Agent,
+  AgentActionContext,
+  AgentBridgeRequest,
+  AgentMessageContext,
+  AgentReactionContext,
+  AgentResolveContext,
+  MessageContent,
+} from './resources/agent';
+import { AgentContextImpl, AgentDeliveryError, AgentEventEnum } from './resources/agent';
 import type { Awaitable, EventTriggerParams, Workflow } from './types';
-import { createHmacSubtle, initApiClient } from './utils';
+import { createHmacSubtle, initApiClient, timingSafeEqual } from './utils';
 
-export type ServeHandlerOptions = {
+export interface ServeHandlerOptions {
   client?: Client;
-  workflows: Array<Workflow>;
-};
+  workflows?: Array<Workflow>;
+  agents?: Array<Agent>;
+}
 
 export type INovuRequestHandlerOptions<Input extends any[] = any[], Output = any> = ServeHandlerOptions & {
   frameworkName: string;
   client?: Client;
-  workflows: Array<Workflow>;
+  workflows?: Array<Workflow>;
+  agents?: Array<Agent>;
   handler: Handler<Input, Output>;
 };
 
@@ -45,6 +57,7 @@ type HandlerResponse<Output = any> = {
   queryString?: (key: string, url: URL) => Awaitable<string | null | undefined>;
   url: () => Awaitable<URL>;
   transformResponse: (res: IActionResponse<string>) => Output;
+  waitUntil?: (promise: Promise<unknown>) => void;
 };
 
 export type IActionResponse<TBody extends string = string> = {
@@ -62,14 +75,17 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
   private readonly hmacEnabled: boolean;
   private readonly http;
   private readonly workflows: Array<Workflow>;
+  private readonly agents: Array<Agent>;
 
   constructor(options: INovuRequestHandlerOptions<Input, Output>) {
     this.handler = options.handler;
     this.client = options.client ? options.client : new Client();
-    this.workflows = options.workflows;
+    this.workflows = options.workflows || [];
+    this.agents = options.agents || [];
     this.http = initApiClient(this.client.secretKey, this.client.apiUrl);
     this.frameworkName = options.frameworkName;
     this.hmacEnabled = this.client.strictAuthentication;
+    this.client.addAgents(this.agents);
   }
 
   public createHandler(): (...args: Input) => Promise<Output> {
@@ -129,6 +145,8 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     const action = url.searchParams.get(HttpQueryKeysEnum.ACTION) || GetActionEnum.HEALTH_CHECK;
     const workflowId = url.searchParams.get(HttpQueryKeysEnum.WORKFLOW_ID) || '';
     const stepId = url.searchParams.get(HttpQueryKeysEnum.STEP_ID) || '';
+    const agentId = url.searchParams.get(HttpQueryKeysEnum.AGENT_ID) || '';
+    const agentEvent = url.searchParams.get(HttpQueryKeysEnum.EVENT) || '';
     const signatureHeader = (await actions.headers(HttpHeaderKeysEnum.NOVU_SIGNATURE)) || '';
 
     let body: Record<string, unknown> = {};
@@ -145,7 +163,15 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         await this.validateHmac(body, signatureHeader);
       }
 
-      const postActionMap = this.getPostActionMap(body, workflowId, stepId, action);
+      const postActionMap = this.getPostActionMap(
+        body,
+        workflowId,
+        stepId,
+        action,
+        agentId,
+        agentEvent,
+        actions.waitUntil
+      );
       const getActionMap = this.getGetActionMap(workflowId, stepId);
 
       if (method === HttpMethodEnum.POST) {
@@ -171,7 +197,10 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     body: any,
     workflowId: string,
     stepId: string,
-    action: string
+    action: string,
+    agentId: string,
+    agentEvent: string,
+    waitUntil?: (promise: Promise<unknown>) => void
   ): Record<PostActionEnum, () => Promise<IActionResponse>> {
     return {
       [PostActionEnum.TRIGGER]: this.triggerAction({ workflowId, ...body }),
@@ -194,6 +223,29 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
         });
 
         return this.createResponse(HttpStatusEnum.OK, result);
+      },
+      [PostActionEnum.AGENT_EVENT]: async () => {
+        const registeredAgent = this.client.getAgent(agentId);
+
+        if (!registeredAgent) {
+          return this.createResponse(HttpStatusEnum.NOT_FOUND, { error: `Agent '${agentId}' not registered` });
+        }
+
+        const ctx = new AgentContextImpl(body as AgentBridgeRequest, this.client.secretKey);
+
+        const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
+          if (err instanceof AgentDeliveryError) {
+            console.error(`[agent:${agentId}] ${err.message}`);
+          } else {
+            console.error(`[agent:${agentId}] Handler error:`, err);
+          }
+        });
+
+        if (waitUntil) {
+          waitUntil(handlerPromise);
+        }
+
+        return this.createResponse(HttpStatusEnum.OK, { status: 'ack' });
       },
     };
   }
@@ -264,6 +316,37 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
     }
   }
 
+  private async runAgentHandler(registeredAgent: Agent, event: string, ctx: AgentContextImpl): Promise<void> {
+    const replyIfPresent = async (result: MessageContent | void) => {
+      if (result != null) await ctx.reply(result);
+    };
+
+    switch (event) {
+      case AgentEventEnum.ON_MESSAGE:
+        await replyIfPresent(await registeredAgent.handlers.onMessage(ctx.message!, ctx as AgentMessageContext));
+        break;
+      case AgentEventEnum.ON_ACTION:
+        if (registeredAgent.handlers.onAction) {
+          await replyIfPresent(await registeredAgent.handlers.onAction(ctx.action!, ctx as AgentActionContext));
+        }
+        break;
+      case AgentEventEnum.ON_REACTION:
+        if (registeredAgent.handlers.onReaction) {
+          await replyIfPresent(await registeredAgent.handlers.onReaction(ctx.reaction!, ctx as AgentReactionContext));
+        }
+        break;
+      case AgentEventEnum.ON_RESOLVE:
+        if (registeredAgent.handlers.onResolve) {
+          await replyIfPresent(await registeredAgent.handlers.onResolve(ctx as AgentResolveContext));
+        }
+        break;
+      default:
+        throw new InvalidActionError(event, AgentEventEnum);
+    }
+
+    await ctx.flush();
+  }
+
   private handleError(error: unknown): IActionResponse {
     if (isFrameworkError(error)) {
       if (error.statusCode >= 500) {
@@ -295,25 +378,62 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       throw new SigningKeyNotFoundError();
     }
 
-    const [timestampPart, signaturePart] = hmacHeader.split(',');
-    if (!timestampPart || !signaturePart) {
+    const parsed = parseSignatureHeader(hmacHeader);
+    if (!parsed.v1 || parsed.t === undefined) {
       throw new SignatureInvalidError();
     }
 
-    const [timestamp, timestampPayload] = timestampPart.split('=');
-
-    const [signatureVersion, signaturePayload] = signaturePart.split('=');
-
-    if (Number(timestamp) < Date.now() - SIGNATURE_TIMESTAMP_TOLERANCE) {
+    const now = Date.now();
+    if (parsed.t < now - SIGNATURE_TIMESTAMP_TOLERANCE || parsed.t > now + SIGNATURE_TIMESTAMP_TOLERANCE) {
       throw new SignatureExpiredError();
     }
 
-    const localHash = await createHmacSubtle(this.client.secretKey, `${timestampPayload}.${JSON.stringify(payload)}`);
+    const localHash = await createHmacSubtle(this.client.secretKey, `${parsed.t}.${JSON.stringify(payload)}`);
 
-    const isMatching = localHash === signaturePayload;
-
-    if (!isMatching) {
+    if (!timingSafeEqual(localHash, parsed.v1)) {
       throw new SignatureMismatchError();
     }
   }
+}
+
+interface ParsedSignatureHeader {
+  t?: number;
+  v1?: string;
+}
+
+/**
+ * Parse a `Novu-Signature` header into its named fields.
+ *
+ * Header format: `t=<unix-ms>,v1=<hex-hmac>` (order/whitespace tolerant).
+ *
+ * Splitting only on `=` was previously used here, which broke the timestamp
+ * extraction (`timestamp` ended up as the literal string "t") and silently
+ * disabled replay protection. We now split each comma-separated part on the
+ * first `=` only and look up fields by name so additional or reordered fields
+ * cannot bypass validation.
+ */
+function parseSignatureHeader(header: string): ParsedSignatureHeader {
+  const fields: Record<string, string> = {};
+
+  for (const rawPart of header.split(',')) {
+    const part = rawPart.trim();
+    if (!part) continue;
+
+    const eqIdx = part.indexOf('=');
+    if (eqIdx <= 0) continue;
+
+    const key = part.slice(0, eqIdx);
+    const value = part.slice(eqIdx + 1);
+    if (key && value && !(key in fields)) {
+      fields[key] = value;
+    }
+  }
+
+  const tRaw = fields.t;
+  const t = tRaw !== undefined ? Number(tRaw) : NaN;
+
+  return {
+    t: Number.isFinite(t) ? t : undefined,
+    v1: fields.v1,
+  };
 }

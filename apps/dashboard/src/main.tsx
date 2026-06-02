@@ -2,7 +2,7 @@ import '@novu/maily-core/style.css';
 import { PermissionsEnum } from '@novu/shared';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { createBrowserRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, Navigate, Outlet, RouterProvider } from 'react-router-dom';
 import './index.css';
 
 import { ConfigureWorkflow } from '@/components/workflow-editor/configure-workflow';
@@ -30,21 +30,36 @@ import {
   WelcomePage,
   WorkflowsPage,
 } from '@/pages';
+import {
+  ConnectApiKeysPage,
+  ConnectConversationsPage,
+  ConnectDashboardPage,
+  ConnectSettingsPage,
+} from '@/pages/connect';
 import { DuplicateWorkflowPage } from '@/pages/duplicate-workflow';
 import { EditStepTemplateV2Page } from '@/pages/edit-step-template-v2';
 import { Landing1SignUpPage } from '@/pages/landing-1-signup';
 import { SubscribersPage } from '@/pages/subscribers';
 import { TranslationSettingsPage } from '@/pages/translation-settings-page';
 import { WebhooksPage } from '@/pages/webhooks-page';
+import { ConnectSubscriberProvider } from './components/connect/connect-subscriber-provider';
 import { CreateIntegrationSidebar } from './components/integrations/components/create-integration-sidebar';
 import { UpdateIntegrationSidebar } from './components/integrations/components/update-integration-sidebar';
 import { ChannelPreferences } from './components/workflow-editor/channel-preferences';
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
+import { AgentDetailsPage } from './pages/agent-details';
+import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
+import { AgentsPage } from './pages/agents';
+import { AgentsSetupPage } from './pages/agents-setup-page';
+import { AgentsUsecasePage } from './pages/agents-usecase-page';
+import { CliAuthPage } from './pages/cli-auth';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
 import { CreateTopicPage } from './pages/create-topic';
+import { DomainDetailPage } from './pages/domain-detail';
+import { DomainsPage } from './pages/domains';
 import { DuplicateLayoutPage } from './pages/duplicate-layout-page';
 import { EditContextPage } from './pages/edit-context';
 import { EditLayoutPage } from './pages/edit-layout';
@@ -57,15 +72,18 @@ import { ForgotPasswordPage } from './pages/forgot-password';
 import { InboxEmbedPage } from './pages/inbox-embed-page';
 import { InboxEmbedSuccessPage } from './pages/inbox-embed-success-page';
 import { InboxUsecasePage } from './pages/inbox-usecase-page';
+import { IntegrationStoreTelegramMobileSetupPage } from './pages/integration-store-telegram-mobile-setup-page';
 import { RedirectToLegacyStudioAuth } from './pages/redirect-to-legacy-studio-auth';
 import { ResetPasswordPage } from './pages/reset-password';
 import { TestWorkflowDrawerPage } from './pages/test-workflow-drawer-page';
 import { TestWorkflowRouteHandler } from './pages/test-workflow-route-handler';
 import { TopicsPage } from './pages/topics';
 import { UpsertVariablePage } from './pages/upsert-variable';
+import { UsecaseSelectPage } from './pages/usecase-select-page';
 import { VariablesPage } from './pages/variables';
 import { VercelIntegrationPage } from './pages/vercel-integration-page';
 import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute } from './routes';
+import { ConnectProtectedRoute } from './routes/connect-protected-route';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
 import { ROUTES } from './utils/routes';
@@ -83,6 +101,22 @@ const router = createBrowserRouter([
       {
         path: `${ROUTES.LANDING_1_SIGN_UP}/*`,
         element: <Landing1SignUpPage />,
+      },
+      {
+        path: ROUTES.CLI_AUTH,
+        element: <CliAuthPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for Telegram. Mounted outside
+        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
+        path: ROUTES.AGENT_TELEGRAM_MOBILE_SETUP,
+        element: <AgentTelegramMobileSetupPage />,
+      },
+      {
+        // Public, unauthenticated mobile setup page for the Telegram integration
+        // store create flow. Creates a new integration server-side on submit.
+        path: ROUTES.INTEGRATION_TELEGRAM_MOBILE_SETUP,
+        element: <IntegrationStoreTelegramMobileSetupPage />,
       },
       {
         element: <AuthRoute />,
@@ -130,6 +164,22 @@ const router = createBrowserRouter([
         path: '/onboarding',
         element: <OnboardingParentRoute />,
         children: [
+          {
+            path: ROUTES.USECASE_SELECT,
+            element: <UsecaseSelectPage />,
+          },
+          {
+            path: ROUTES.AGENTS_USECASE,
+            element: <AgentsUsecasePage />,
+          },
+          {
+            path: ROUTES.AGENTS_SETUP,
+            element: (
+              <ConnectSubscriberProvider>
+                <AgentsSetupPage />
+              </ConnectSubscriberProvider>
+            ),
+          },
           {
             path: ROUTES.INBOX_USECASE,
             element: <InboxUsecasePage />,
@@ -350,6 +400,48 @@ const router = createBrowserRouter([
                 ],
               },
               {
+                element: <ConnectSubscriberProvider />,
+                children: [
+                  {
+                    path: ROUTES.AGENTS,
+                    element: <AgentsPage />,
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                ],
+              },
+              {
+                path: ROUTES.DOMAINS,
+                element: !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainsPage /> : <Navigate to={ROUTES.ROOT} replace />,
+              },
+              {
+                path: ROUTES.DOMAIN_DETAIL,
+                element:
+                  !IS_SELF_HOSTED || IS_ENTERPRISE ? <DomainDetailPage /> : <Navigate to={ROUTES.ROOT} replace />,
+              },
+              {
                 path: ROUTES.API_KEYS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.API_KEY_READ}>
@@ -393,6 +485,14 @@ const router = createBrowserRouter([
               },
               {
                 path: ROUTES.ACTIVITY_REQUESTS,
+                element: (
+                  <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
+                    <ActivityFeed />
+                  </ProtectedRoute>
+                ),
+              },
+              {
+                path: ROUTES.ACTIVITY_CONVERSATIONS,
                 element: (
                   <ProtectedRoute permission={PermissionsEnum.NOTIFICATION_READ}>
                     <ActivityFeed />
@@ -527,6 +627,51 @@ const router = createBrowserRouter([
                   </ProtectedRoute>
                 ),
               },
+              {
+                path: ROUTES.CONNECT_HOME,
+                element: (
+                  <ConnectProtectedRoute>
+                    <ConnectSubscriberProvider>
+                      <Outlet />
+                    </ConnectSubscriberProvider>
+                  </ConnectProtectedRoute>
+                ),
+                children: [
+                  { index: true, element: <ConnectDashboardPage /> },
+                  { path: ROUTES.CONNECT_AGENTS, element: <AgentsPage /> },
+                  {
+                    path: ROUTES.CONNECT_AGENT_DETAILS_INTEGRATIONS_DETAIL,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.CONNECT_AGENT_DETAILS_TAB,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  {
+                    path: ROUTES.CONNECT_AGENT_DETAILS,
+                    element: (
+                      <ProtectedRoute permission={PermissionsEnum.AGENT_READ}>
+                        <AgentDetailsPage />
+                      </ProtectedRoute>
+                    ),
+                  },
+                  { path: ROUTES.CONNECT_CONVERSATIONS, element: <ConnectConversationsPage /> },
+                  { path: ROUTES.CONNECT_API_KEYS, element: <ConnectApiKeysPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_ACCOUNT, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_ORGANIZATION, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_TEAM, element: <ConnectSettingsPage /> },
+                  { path: ROUTES.CONNECT_SETTINGS_BILLING, element: <ConnectSettingsPage /> },
+                ],
+              },
 
               {
                 path: '*',
@@ -616,7 +761,11 @@ const router = createBrowserRouter([
   },
 ]);
 
-createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+
+if (!rootElement) throw new Error('Root element not found');
+
+createRoot(rootElement).render(
   <StrictMode>
     <FeatureFlagsProvider>
       <RouterProvider router={router} />

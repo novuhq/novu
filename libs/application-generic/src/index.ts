@@ -1,3 +1,4 @@
+export * from './agent-runtimes';
 export * from './commands/index';
 export * from './config';
 export * from './custom-providers';
@@ -10,6 +11,7 @@ export * from './http';
 export * from './instrumentation/index';
 export * from './logging/index';
 export * from './modules';
+export * from './oauth';
 export * from './pipes';
 export * from './resilience';
 export * from './schemas/channel-endpoint';

@@ -10,6 +10,8 @@ export type DevCommandOptions = {
   route: string;
   tunnel: string;
   headless: boolean;
+  studio: boolean;
+  run?: string;
 };
 
 export type LocalTunnelResponse = {

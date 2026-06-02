@@ -5,31 +5,35 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import * as operations from '../models/operations/index.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import * as operations from "../models/operations/index.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildSubscribersSearchQuery,
   prefetchSubscribersSearch,
   queryKeySubscribersSearch,
   SubscribersSearchQueryData,
-} from './subscribersSearch.core.js';
+} from "./subscribersSearch.core.js";
 export {
   buildSubscribersSearchQuery,
   prefetchSubscribersSearch,
@@ -58,11 +62,18 @@ export type SubscribersSearchQueryError =
  */
 export function useSubscribersSearch(
   request: operations.SubscribersControllerSearchSubscribersRequest,
-  options?: QueryHookOptions<SubscribersSearchQueryData, SubscribersSearchQueryError>
+  options?: QueryHookOptions<
+    SubscribersSearchQueryData,
+    SubscribersSearchQueryError
+  >,
 ): UseQueryResult<SubscribersSearchQueryData, SubscribersSearchQueryError> {
   const client = useNovuContext();
   return useQuery({
-    ...buildSubscribersSearchQuery(client, request, options),
+    ...buildSubscribersSearchQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -76,11 +87,21 @@ export function useSubscribersSearch(
  */
 export function useSubscribersSearchSuspense(
   request: operations.SubscribersControllerSearchSubscribersRequest,
-  options?: SuspenseQueryHookOptions<SubscribersSearchQueryData, SubscribersSearchQueryError>
-): UseSuspenseQueryResult<SubscribersSearchQueryData, SubscribersSearchQueryError> {
+  options?: SuspenseQueryHookOptions<
+    SubscribersSearchQueryData,
+    SubscribersSearchQueryError
+  >,
+): UseSuspenseQueryResult<
+  SubscribersSearchQueryData,
+  SubscribersSearchQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildSubscribersSearchQuery(client, request, options),
+    ...buildSubscribersSearchQuery(
+      client,
+      request,
+      options,
+    ),
     ...options,
   });
 }
@@ -102,7 +123,7 @@ export function setSubscribersSearchData(
       idempotencyKey?: string | undefined;
     },
   ],
-  data: SubscribersSearchQueryData
+  data: SubscribersSearchQueryData,
 ): SubscribersSearchQueryData | undefined {
   const key = queryKeySubscribersSearch(...queryKeyBase);
 
@@ -112,36 +133,34 @@ export function setSubscribersSearchData(
 export function invalidateSubscribersSearch(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [
-      parameters: {
-        after?: string | undefined;
-        before?: string | undefined;
-        limit?: number | undefined;
-        orderDirection?: operations.QueryParamOrderDirection | undefined;
-        orderBy?: string | undefined;
-        includeCursor?: boolean | undefined;
-        email?: string | undefined;
-        name?: string | undefined;
-        phone?: string | undefined;
-        subscriberId?: string | undefined;
-        idempotencyKey?: string | undefined;
-      },
-    ]
+    [parameters: {
+      after?: string | undefined;
+      before?: string | undefined;
+      limit?: number | undefined;
+      orderDirection?: operations.QueryParamOrderDirection | undefined;
+      orderBy?: string | undefined;
+      includeCursor?: boolean | undefined;
+      email?: string | undefined;
+      name?: string | undefined;
+      phone?: string | undefined;
+      subscriberId?: string | undefined;
+      idempotencyKey?: string | undefined;
+    }]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Subscribers', 'search', ...queryKeyBase],
+    queryKey: ["@novu/api", "Subscribers", "search", ...queryKeyBase],
   });
 }
 
 export function invalidateAllSubscribersSearch(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Subscribers', 'search'],
+    queryKey: ["@novu/api", "Subscribers", "search"],
   });
 }

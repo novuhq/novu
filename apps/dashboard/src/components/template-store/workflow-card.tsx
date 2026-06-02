@@ -10,6 +10,7 @@ type WorkflowCardProps = {
   description: string;
   steps?: StepType[];
   onClick?: () => void;
+  children?: React.ReactNode;
 };
 
 export function WorkflowCard({
@@ -17,6 +18,7 @@ export function WorkflowCard({
   description,
   steps = [StepTypeEnum.IN_APP, StepTypeEnum.EMAIL, StepTypeEnum.SMS, StepTypeEnum.PUSH],
   onClick,
+  children,
 }: WorkflowCardProps) {
   return (
     <Card
@@ -27,7 +29,9 @@ export function WorkflowCard({
         <div className="overflow-hidden rounded-lg border border-neutral-100">
           <div className="bg-bg-weak relative h-[100px] bg-[url(/images/dots.svg)] bg-cover">
             <div className="flex h-full w-full items-center justify-center">
-              {!steps?.length ? (
+              {children ? (
+                children
+              ) : !steps?.length ? (
                 <RiAddFill className="text-[#D6D6D6]" />
               ) : (
                 steps.map((step, index) => (
@@ -42,7 +46,7 @@ export function WorkflowCard({
         </div>
 
         <div className="mt-4">
-          <h3 className="text-label-sm text-text-strong mb-1">{name}</h3>
+          <h3 className="text-label-sm text-text-strong mb-1 truncate">{name}</h3>
           <p className="text-paragraph-xs text-text-sub truncate">{description}</p>
         </div>
       </CardContent>

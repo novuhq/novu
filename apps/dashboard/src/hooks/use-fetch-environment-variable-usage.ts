@@ -3,10 +3,10 @@ import { GetEnvironmentVariableUsageResponse, getEnvironmentVariableUsage } from
 import { QueryKeys } from '@/utils/query-keys';
 
 export const useFetchEnvironmentVariableUsage = ({
-  variableId,
+  variableKey,
   enabled = true,
 }: {
-  variableId: string;
+  variableKey: string;
   enabled?: boolean;
 }) => {
   const {
@@ -14,9 +14,9 @@ export const useFetchEnvironmentVariableUsage = ({
     isPending,
     error,
   } = useQuery<GetEnvironmentVariableUsageResponse>({
-    queryKey: [QueryKeys.fetchEnvironmentVariableUsage, variableId],
-    queryFn: () => getEnvironmentVariableUsage(variableId),
-    enabled: !!variableId && enabled,
+    queryKey: [QueryKeys.fetchEnvironmentVariableUsage, variableKey],
+    queryFn: () => getEnvironmentVariableUsage(variableKey),
+    enabled: !!variableKey && enabled,
   });
 
   return {

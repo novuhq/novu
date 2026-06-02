@@ -196,7 +196,9 @@ function StepBreadcrumb({ step }: { step: StepResponseDto }) {
           <DropdownMenu>
             <DropdownMenuTrigger className="flex h-6 max-w-[34ch] cursor-pointer items-center gap-1 rounded-md border border-transparent px-1.5 text-xs transition-colors hover:border-neutral-alpha-200 hover:bg-neutral-alpha-50 data-[state=open]:border-neutral-alpha-200 data-[state=open]:bg-neutral-alpha-50">
               <Icon className="text-foreground-950 size-3.5 shrink-0" />
-              <span className="text-foreground-950 truncate font-medium">{step.name || STEP_TYPE_LABELS[step.type]}</span>
+              <span className="text-foreground-950 truncate font-medium">
+                {step.name || STEP_TYPE_LABELS[step.type]}
+              </span>
               <RiExpandUpDownLine className="text-foreground-400 size-3 shrink-0" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="min-w-[220px] max-w-[280px] p-1">

@@ -3,11 +3,6 @@ import {
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   decryptCredentials,
-  FeatureFlagsService,
-  IChannelCredentialsCommand,
-  OAuthHandlerEnum,
-  UpdateSubscriberChannel,
-  UpdateSubscriberChannelCommand,
 } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
@@ -16,7 +11,7 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ENDPOINT_TYPES, FeatureFlagsKeysEnum, ICredentialsDto } from '@novu/shared';
+import { ENDPOINT_TYPES, ICredentialsDto } from '@novu/shared';
 import axios from 'axios';
 import { CreateChannelEndpointCommand } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
@@ -34,12 +29,10 @@ export class ChatOauthCallback {
   readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
 
   constructor(
-    private updateSubscriberChannelUsecase: UpdateSubscriberChannel,
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
     private createSubscriberUsecase: CreateOrUpdateSubscriberUseCase,
-    private createChannelEndpoint: CreateChannelEndpoint,
-    private featureFlagsService: FeatureFlagsService
+    private createChannelEndpoint: CreateChannelEndpoint
   ) {}
 
   async execute(command: ChatOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
@@ -59,7 +52,7 @@ export class ChatOauthCallback {
 
     await this.createSubscriber(_organizationId, command, webhookUrl, integration);
 
-    if (integrationCredentials && integrationCredentials.redirectUrl) {
+    if (integrationCredentials?.redirectUrl) {
       return { typeOfResponse: ResponseTypeEnum.URL, resultString: integrationCredentials.redirectUrl };
     }
 
@@ -80,42 +73,16 @@ export class ChatOauthCallback {
       })
     );
 
-    const isSlackTeamsEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
-      defaultValue: false,
-      environment: { _id: command.environmentId },
-      organization: { _id: organizationId },
-    });
-
-    if (isSlackTeamsEnabled) {
-      await this.createChannelEndpoint.execute(
-        CreateChannelEndpointCommand.create({
-          organizationId: organizationId,
-          environmentId: command.environmentId,
-          integrationIdentifier: integration.identifier,
-          subscriberId: command.subscriberId,
-          type: ENDPOINT_TYPES.WEBHOOK,
-          endpoint: {
-            url: webhookUrl,
-          },
-        })
-      );
-
-      return;
-    }
-
-    const subscriberCredentials: IChannelCredentialsCommand = { webhookUrl, channel: command.providerId };
-
-    await this.updateSubscriberChannelUsecase.execute(
-      UpdateSubscriberChannelCommand.create({
-        organizationId,
+    await this.createChannelEndpoint.execute(
+      CreateChannelEndpointCommand.create({
+        organizationId: organizationId,
         environmentId: command.environmentId,
+        integrationIdentifier: integration.identifier,
         subscriberId: command.subscriberId,
-        providerId: command.providerId,
-        integrationIdentifier: command.integrationIdentifier,
-        credentials: subscriberCredentials,
-        oauthHandler: OAuthHandlerEnum.NOVU,
-        isIdempotentOperation: false,
+        type: ENDPOINT_TYPES.WEBHOOK,
+        endpoint: {
+          url: webhookUrl,
+        },
       })
     );
   }

@@ -1,5 +1,6 @@
 import { Sema } from 'async-sema';
 import { async as glob } from 'fast-glob';
+import { readFileSync } from 'fs';
 import fs from 'fs/promises';
 import os from 'os';
 import path from 'path';
@@ -8,6 +9,39 @@ import { copy } from '../helpers/copy';
 import { install } from '../helpers/install';
 
 import { GetTemplateFileArgs, InstallTemplateArgs, TemplateTypeEnum } from './types';
+
+function resolveCliPackageJson(): Record<string, any> | null {
+  const distIndex = __dirname.lastIndexOf(`${path.sep}dist${path.sep}`);
+  if (distIndex === -1) return null;
+
+  const pkgRoot = __dirname.slice(0, distIndex);
+  try {
+    return JSON.parse(readFileSync(path.join(pkgRoot, 'package.json'), 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+function resolveFrameworkVersion(): string {
+  const pkg = resolveCliPackageJson();
+  if (!pkg) return 'latest';
+
+  const ver = pkg.dependencies?.['@novu/framework'];
+  if (!ver || ver.startsWith('workspace:')) return 'latest';
+
+  return ver;
+}
+
+function resolveCliTag(): string {
+  const pkg = resolveCliPackageJson();
+  if (!pkg?.version) return 'latest';
+
+  if (pkg.version.includes('-beta')) return 'beta';
+  if (pkg.version.includes('-rc')) return 'rc';
+  if (pkg.version.includes('-alpha')) return 'rc';
+
+  return 'latest';
+}
 /**
  * Get the file path for a given file in a template, e.g. "next.config.js".
  */
@@ -31,8 +65,10 @@ export const installTemplate = async ({
   srcDir,
   importAlias,
   secretKey,
+  apiUrl,
   applicationId,
   userId,
+  agentIdentifier,
 }: InstallTemplateArgs) => {
   console.log(bold(`Using ${packageManager}.`));
 
@@ -45,6 +81,13 @@ export const installTemplate = async ({
   if (!eslint) copySource.push('!eslintrc.json');
   if (!template.includes('react')) {
     copySource.push(mode === 'ts' ? 'tailwind.config.ts' : '!tailwind.config.js', '!postcss.config.cjs');
+  }
+
+  const renameAgent = template === TemplateTypeEnum.APP_AGENT && agentIdentifier;
+  if (renameAgent && !/^[a-z0-9]+(?:[-_][a-z0-9]+)*$/.test(agentIdentifier)) {
+    throw new Error(
+      `Invalid agent identifier: "${agentIdentifier}". Must be a lowercase slug (a-z, 0-9, hyphens, underscores).`
+    );
   }
 
   await copy(copySource, root, {
@@ -63,12 +106,27 @@ export const installTemplate = async ({
         case 'README-template.md': {
           return 'README.md';
         }
+        case 'support-agent.tsx': {
+          return renameAgent ? `${agentIdentifier}.tsx` : name;
+        }
         default: {
           return name;
         }
       }
     },
   });
+
+  if (renameAgent) {
+    const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
+    const files = await glob('**/*.{tsx,ts,md}', { cwd: root, absolute: true, followSymbolicLinks: false });
+    await Promise.all(
+      files.map(async (file) => {
+        const before = await fs.readFile(file, 'utf8');
+        const after = before.replace(/supportAgent/g, camelName).replace(/support-agent/g, agentIdentifier);
+        if (after !== before) await fs.writeFile(file, after);
+      })
+    );
+  }
 
   const tsconfigFile = path.join(root, 'tsconfig.json');
   await fs.writeFile(
@@ -148,52 +206,68 @@ export const installTemplate = async ({
   }
 
   /* write .env file */
-  const val = Object.entries({
-    NOVU_SECRET_KEY: secretKey,
-    NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId,
-    NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId,
-  }).reduce((acc, [key, value]) => {
+  const envVars =
+    template === TemplateTypeEnum.APP_AGENT
+      ? { NOVU_SECRET_KEY: secretKey, NOVU_API_URL: apiUrl ?? 'https://api.novu.co' }
+      : {
+          NOVU_SECRET_KEY: secretKey,
+          NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER: applicationId ?? '',
+          NEXT_PUBLIC_NOVU_SUBSCRIBER_ID: userId ?? '',
+        };
+
+  const val = Object.entries(envVars).reduce((acc, [key, value]) => {
     return `${acc}${key}=${value}${os.EOL}`;
   }, '');
 
   await fs.writeFile(path.join(root, '.env.local'), val);
 
-  /* write github action */
-  await copy(copySource, `${root}/.github`, {
-    parents: true,
-    cwd: path.join(__dirname, `./github`),
-  });
+  /* write github action (skip for agent template) */
+  if (template !== TemplateTypeEnum.APP_AGENT) {
+    await copy(copySource, `${root}/.github`, {
+      parents: true,
+      cwd: path.join(__dirname, `./github`),
+    });
+  }
 
   /** Copy the version from package.json or override for tests. */
   const version = '16.2.1';
 
   /** Create a package.json for the new project and write it to disk. */
+  const isAgentTemplate = template === TemplateTypeEnum.APP_AGENT;
+
+  const baseDependencies: Record<string, string> = {
+    react: '^19',
+    'react-dom': '^19',
+    next: version,
+    '@novu/framework': resolveFrameworkVersion(),
+  };
+
+  if (!isAgentTemplate) {
+    baseDependencies['@novu/nextjs'] = '^2.5.0';
+  }
+
+  const scripts: Record<string, string> = {
+    dev: 'next dev --port=4000',
+    build: 'next build',
+    start: 'next start',
+    lint: 'next lint',
+  };
+
+  if (isAgentTemplate) {
+    const cliTag = resolveCliTag();
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4000`;
+    scripts['dev:novu'] = `npx novu@${cliTag} dev -p 4000 --no-studio --run "next dev --port=4000"`;
+  }
+
   const packageJson: any = {
     name: appName,
     version: '0.1.0',
     private: true,
-    scripts: {
-      dev: `next dev --port=4000`,
-      build: 'next build',
-      start: 'next start',
-      lint: 'next lint',
-    },
-    /**
-     * Default dependencies.
-     */
-    dependencies: {
-      react: '^19',
-      'react-dom': '^19',
-      next: version,
-      '@novu/framework': 'latest',
-      '@novu/nextjs': '^2.5.0',
-    },
+    scripts,
+    dependencies: baseDependencies,
     devDependencies: {},
   };
 
-  /**
-   * TypeScript projects will have type definitions and other devDependencies.
-   */
   if (mode === 'ts') {
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
@@ -204,7 +278,6 @@ export const installTemplate = async ({
     };
   }
 
-  /* Add Tailwind CSS dependencies. */
   if (template === TemplateTypeEnum.APP_REACT_EMAIL) {
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
@@ -217,8 +290,9 @@ export const installTemplate = async ({
       '@react-email/components': '0.0.18',
       '@react-email/tailwind': '0.0.18',
     };
+  }
 
-    /* Zod dependencies used in react email example */
+  if (template === TemplateTypeEnum.APP_REACT_EMAIL || isAgentTemplate) {
     packageJson.dependencies = {
       ...packageJson.dependencies,
       zod: '^3.23.8',
@@ -230,7 +304,7 @@ export const installTemplate = async ({
   if (eslint) {
     packageJson.devDependencies = {
       ...packageJson.devDependencies,
-      eslint: '^8',
+      eslint: '^9',
       'eslint-config-next': version,
     };
   }

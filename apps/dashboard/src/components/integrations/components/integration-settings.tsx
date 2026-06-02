@@ -1,7 +1,7 @@
 import {
   ChannelTypeEnum,
   ChatProviderIdEnum,
-  FeatureFlagsKeysEnum,
+  CredentialsKeyEnum,
   IIntegration,
   IProviderConfig,
   PermissionsEnum,
@@ -10,12 +10,11 @@ import {
 import { useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { RiInputField } from 'react-icons/ri';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/primitives/accordion';
 import { Form, FormRoot } from '@/components/primitives/form/form';
 import { Label } from '@/components/primitives/label';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { Protect } from '@/utils/protect';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '../../../utils/ui';
@@ -23,7 +22,13 @@ import { InlineToast } from '../../primitives/inline-toast';
 import { EnvironmentDropdown } from '../../side-navigation/environment-dropdown';
 import { CredentialSection } from './credential-section';
 import { GeneralSettings } from './integration-general-settings';
+import { SlackCredentialsPaste } from './slack-credentials-paste';
+import { TelegramCredentialsPaste, type TelegramCredentialsPasteMobileSetup } from './telegram-credentials-paste';
+import { useSlackCredentialsPasteFallback } from './use-slack-credentials-paste-fallback';
+import { useWhatsAppCredentialsPasteFallback } from './use-whatsapp-credentials-paste-fallback';
 import { isDemoIntegration } from './utils/helpers';
+import { WhatsAppCredentialsPaste } from './whatsapp-credentials-paste';
+import { WhatsAppCredentialsValidator } from './whatsapp-credentials-validator';
 
 type IntegrationFormData = {
   name: string;
@@ -44,6 +49,11 @@ type IntegrationConfigurationProps = {
   isChannelSupportPrimary?: boolean;
   hasOtherProviders?: boolean;
   isReadOnly?: boolean;
+  agentOnboarding?: boolean;
+  /** Agent identifier — only set during the agent-onboarding flow. */
+  agentIdentifier?: string;
+  /** Quickstart test subscriber for Telegram mobile `/start` deep links. */
+  testSubscriberId?: string | null;
   onFormStateChange?: (formState: { isValid: boolean; errors: Record<string, unknown>; isDirty: boolean }) => void;
 };
 
@@ -64,9 +74,13 @@ export function IntegrationSettings({
   isChannelSupportPrimary,
   hasOtherProviders,
   isReadOnly,
+  agentOnboarding,
+  agentIdentifier,
+  testSubscriberId,
   onFormStateChange,
 }: IntegrationConfigurationProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { currentEnvironment, environments } = useEnvironment();
 
   const form = useForm<IntegrationFormData>({
@@ -116,30 +130,67 @@ export function IntegrationSettings({
   }, [name, mode, setValue]);
 
   const isDemo = integration && isDemoIntegration(integration.providerId);
-  const isSlackTeamsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED, false);
+  const isAgentOnboarding = agentOnboarding || searchParams.get('agent_onboarding') === 'true';
+  const isSlackOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.Slack;
+  const isWhatsAppOnboarding = isAgentOnboarding && provider.id === ChatProviderIdEnum.WhatsAppBusiness;
+  const isTelegramProvider = provider.id === ChatProviderIdEnum.Telegram;
+  // The BotFather paste helper is an onboarding affordance — once the integration
+  // already has a saved bot token, the textarea and mobile QR card are noise
+  // (and the "Auto-filled from the BotFather message above…" hint becomes
+  // misleading), so hide all of it and fall back to the regular API token field.
+  const telegramApiToken = integration?.credentials?.[CredentialsKeyEnum.ApiToken];
+  const hasExistingTelegramToken =
+    isTelegramProvider && typeof telegramApiToken === 'string' && telegramApiToken.trim().length > 0;
+  const showTelegramPaste = isTelegramProvider && !isReadOnly && !hasExistingTelegramToken;
+  // Picks the QR variant: agent flow when we already have agent + integration,
+  // integration-store flow in the create flow where neither exists yet, none
+  // otherwise (e.g. plain edit of a non-agent Telegram integration).
+  const telegramMobileVariant = useMemo<TelegramCredentialsPasteMobileSetup | undefined>(() => {
+    if (!showTelegramPaste) return undefined;
 
-  // Filter credentials based on provider and feature flag
-  const providerCredentials = useMemo(() => {
-    // MS Teams: only show OAuth credentials when feature flag is enabled
-    if (provider.id === ChatProviderIdEnum.MsTeams) {
-      return isSlackTeamsEnabled ? provider.credentials : [];
+    if (isAgentOnboarding && agentIdentifier && integration?._id) {
+      return { kind: 'agent', agentIdentifier, integrationId: integration._id, testSubscriberId };
     }
 
-    // Slack: hide HMAC for new integrations when feature flag is enabled
-    // But keep HMAC visible for existing integrations (backward compatibility)
-    if (provider.id === ChatProviderIdEnum.Slack && isSlackTeamsEnabled) {
+    if (mode === 'create') return { kind: 'integration-store' };
+
+    return undefined;
+  }, [showTelegramPaste, isAgentOnboarding, agentIdentifier, integration?._id, mode, testSubscriberId]);
+  const handleSlackCredentialsPaste = useSlackCredentialsPasteFallback({
+    control,
+    setValue,
+    isEnabled: isSlackOnboarding && !isReadOnly,
+  });
+  const handleWhatsAppCredentialsPaste = useWhatsAppCredentialsPasteFallback({
+    control,
+    setValue,
+    isEnabled: isWhatsAppOnboarding && !isReadOnly,
+  });
+  const handleAgentOnboardingPaste = isWhatsAppOnboarding
+    ? handleWhatsAppCredentialsPaste
+    : handleSlackCredentialsPaste;
+
+  const providerCredentials = useMemo(() => {
+    let credentials = provider.credentials;
+
+    if (provider.id === ChatProviderIdEnum.Slack) {
       // For existing integrations (update mode), show HMAC if it is true in credentials
       if (mode === 'update' && integration?.credentials?.hmac === true) {
-        return provider.credentials;
+        credentials = provider.credentials;
+      } else {
+        // For new integrations (create mode), use config without HMAC
+        credentials = slackConfig;
       }
-
-      // For new integrations (create mode), use config without HMAC
-      return slackConfig;
     }
 
-    // Default: return all credentials
-    return provider.credentials;
-  }, [provider.id, provider.credentials, isSlackTeamsEnabled, mode, integration?.credentials]);
+    const visibleCredentials = credentials.filter((credential) => credential.hidden !== true);
+
+    if (isAgentOnboarding) {
+      return visibleCredentials.filter((credential) => credential.key !== CredentialsKeyEnum.RedirectUrl);
+    }
+
+    return visibleCredentials;
+  }, [provider.id, provider.credentials, mode, integration?.credentials, isAgentOnboarding]);
 
   return (
     <Form {...form}>
@@ -168,39 +219,41 @@ export function IntegrationSettings({
             />
           </div>
         </div>
-        <Accordion type="single" collapsible defaultValue="layout" className="p-3">
-          <AccordionItem value="layout">
-            <AccordionTrigger>
-              <div className="flex items-center gap-1 text-xs">
-                <RiInputField className="text-feature size-5" />
-                General Settings
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <GeneralSettings
-                control={control}
-                mode={mode}
-                isReadOnly={isReadOnly}
-                hidePrimarySelector={!isChannelSupportPrimary}
-                disabledPrimary={!hasOtherProviders && integration?.primary}
-                configurations={provider.configurations}
-                integrationId={integration?._id}
-                isDemo={isDemo}
-                provider={provider}
-                formData={form.getValues()}
-                onAutoConfigureSuccess={(updatedIntegration) => {
-                  // Update form with the new integration data
-                  setValue('configurations', updatedIntegration.configurations as Record<string, string>);
-                  setValue('credentials', updatedIntegration.credentials as Record<string, string>);
-                  setValue('name', updatedIntegration.name);
-                  setValue('identifier', updatedIntegration.identifier);
-                  setValue('active', updatedIntegration.active);
-                  setValue('primary', updatedIntegration.primary ?? false);
-                }}
-              />
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
+        {!isAgentOnboarding && (
+          <Accordion type="single" collapsible defaultValue="layout" className="p-3">
+            <AccordionItem value="layout">
+              <AccordionTrigger>
+                <div className="flex items-center gap-1 text-xs">
+                  <RiInputField className="text-feature size-5" />
+                  General Settings
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <GeneralSettings
+                  control={control}
+                  mode={mode}
+                  isReadOnly={isReadOnly}
+                  hidePrimarySelector={!isChannelSupportPrimary}
+                  disabledPrimary={!hasOtherProviders && integration?.primary}
+                  configurations={provider.configurations}
+                  integrationId={integration?._id}
+                  isDemo={isDemo}
+                  provider={provider}
+                  formData={form.getValues()}
+                  onAutoConfigureSuccess={(updatedIntegration) => {
+                    // Update form with the new integration data
+                    setValue('configurations', updatedIntegration.configurations as Record<string, string>);
+                    setValue('credentials', updatedIntegration.credentials as Record<string, string>);
+                    setValue('name', updatedIntegration.name);
+                    setValue('identifier', updatedIntegration.identifier);
+                    setValue('active', updatedIntegration.active);
+                    setValue('primary', updatedIntegration.primary ?? false);
+                  }}
+                />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        )}
 
         {isDemo && (
           <div className="p-3">
@@ -228,7 +281,7 @@ export function IntegrationSettings({
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    {provider?.id === ChatProviderIdEnum.MsTeams && isSlackTeamsEnabled && (
+                    {provider?.id === ChatProviderIdEnum.MsTeams && (
                       <InlineToast
                         variant="tip"
                         className="mb-3"
@@ -236,15 +289,41 @@ export function IntegrationSettings({
                       />
                     )}
                     <div className="border-neutral-alpha-200 bg-background text-foreground-600 mx-0 mt-0 flex flex-col gap-2 rounded-lg border p-3">
-                      {providerCredentials.map((credential) => (
-                        <CredentialSection
-                          key={`${credential.key}-${integration?._id || 'no-id'}`}
-                          credential={credential}
+                      {isSlackOnboarding && (
+                        <SlackCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />
+                      )}
+                      {isWhatsAppOnboarding && (
+                        <>
+                          <WhatsAppCredentialsPaste control={control} setValue={setValue} isReadOnly={isReadOnly} />
+                          <WhatsAppCredentialsValidator control={control} />
+                        </>
+                      )}
+                      {showTelegramPaste && (
+                        <TelegramCredentialsPaste
                           control={control}
+                          setValue={setValue}
                           isReadOnly={isReadOnly}
-                          integrationId={integration?._id}
+                          mobileSetup={telegramMobileVariant}
                         />
-                      ))}
+                      )}
+                      <div onPasteCapture={handleAgentOnboardingPaste} className="flex flex-col gap-2">
+                        {providerCredentials.map((credential) => (
+                          <CredentialSection
+                            key={`${credential.key}-${integration?._id || 'no-id'}`}
+                            credential={
+                              showTelegramPaste && credential.key === CredentialsKeyEnum.ApiToken
+                                ? {
+                                    ...credential,
+                                    description: 'Auto-filled from the BotFather message above, or enter it manually.',
+                                  }
+                                : credential
+                            }
+                            control={control}
+                            isReadOnly={isReadOnly}
+                            integrationId={integration?._id}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>
@@ -253,7 +332,10 @@ export function IntegrationSettings({
 
             {/* TODO: This is a temporary solution to show the guide only for in-app channel, 
               we need to replace it with dedicated view per integration channel */}
-            {integration && integration.channel === ChannelTypeEnum.IN_APP && !integration.connected ? (
+            {!isAgentOnboarding &&
+            integration &&
+            integration.channel === ChannelTypeEnum.IN_APP &&
+            !integration.connected ? (
               <InlineToast
                 variant={'tip'}
                 className="mt-3"
@@ -262,6 +344,7 @@ export function IntegrationSettings({
                 onCtaClick={() => navigate(`${ROUTES.INBOX_EMBED}?environmentId=${integration._environmentId}`)}
               />
             ) : (
+              !isAgentOnboarding &&
               provider?.docReference && (
                 <InlineToast
                   variant={'tip'}

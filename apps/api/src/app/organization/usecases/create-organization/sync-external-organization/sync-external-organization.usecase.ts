@@ -1,7 +1,13 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
+import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
+import {
+  ApiAuthSchemeEnum,
+  MemberRoleEnum,
+  NOVU_PRODUCT_TYPE_HEADER_LOWERCASE,
+  OrganizationProductTypeEnum,
+} from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
@@ -45,6 +51,7 @@ export class SyncExternalOrganization {
       {
         externalId: command.externalId,
         apiServiceLevel: isSelfHosted && isEnterprise ? 'unlimited' : undefined,
+        productType: this.resolveProductType(command.headers),
       },
       { headers: command.headers }
     );
@@ -64,6 +71,7 @@ export class SyncExternalOrganization {
         organizationId: devEnv._organizationId,
         userId: command.userId,
         name: devEnv.name,
+        environmentType: devEnv.type,
       })
     );
 
@@ -100,6 +108,7 @@ export class SyncExternalOrganization {
         organizationId: prodEnv._organizationId,
         userId: command.userId,
         name: prodEnv.name,
+        environmentType: prodEnv.type,
       })
     );
 
@@ -133,11 +142,66 @@ export class SyncExternalOrganization {
       })
     );
 
-    if (organizationAfterChanges !== null) {
+    if (organizationAfterChanges) {
       await this.createCustomer(command.email, organizationAfterChanges._id);
     }
 
+    const domain = organization.domain || this.extractDomainFromEmail(command.email);
+    if (domain) {
+      this.triggerBrandEnrichment(command.userId, organization._id, devEnv._id, domain).catch((error) =>
+        this.logger.error(error, 'Failed to trigger brand enrichment (fire-and-forget)')
+      );
+    }
+
     return organizationAfterChanges as OrganizationEntity;
+  }
+
+  private extractDomainFromEmail(email: string): string | null {
+    const parts = email.split('@');
+    if (parts.length !== 2) return null;
+
+    return parts[1];
+  }
+
+  /**
+   * Pull the product context from the request header so the EE repository can mirror it onto
+   * Clerk and Mongo. Missing or unknown values resolve to `platform` to keep existing tenants
+   * working without backfill.
+   */
+  private resolveProductType(headers?: Record<string, string | string[] | undefined>): OrganizationProductTypeEnum {
+    const raw = headers?.[NOVU_PRODUCT_TYPE_HEADER_LOWERCASE];
+    const value = Array.isArray(raw) ? raw[0] : raw;
+
+    if (value === OrganizationProductTypeEnum.CONNECT) {
+      return OrganizationProductTypeEnum.CONNECT;
+    }
+
+    return OrganizationProductTypeEnum.PLATFORM;
+  }
+
+  private async triggerBrandEnrichment(
+    userId: string,
+    organizationId: string,
+    environmentId: string,
+    domain: string
+  ): Promise<void> {
+    try {
+      const enrichUsecase = this.moduleRef.get('EnrichOrganizationBrand', { strict: false });
+
+      await enrichUsecase.execute({
+        user: {
+          _id: userId,
+          organizationId,
+          environmentId,
+          roles: [MemberRoleEnum.ADMIN],
+          permissions: [],
+          scheme: ApiAuthSchemeEnum.BEARER,
+        },
+        domain,
+      });
+    } catch (error) {
+      this.logger.warn({ err: error }, `EnrichOrganizationBrand has failed for ${domain}, skipping`);
+    }
   }
 
   private async createCustomer(billingEmail: string, organizationId: string) {

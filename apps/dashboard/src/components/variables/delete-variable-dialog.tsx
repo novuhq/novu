@@ -18,7 +18,7 @@ export const DeleteVariableDialog = ({
   isLoading,
 }: DeleteVariableDialogProps) => {
   const { usage, isPending: isUsagePending } = useFetchEnvironmentVariableUsage({
-    variableId: variable._id,
+    variableKey: variable.key,
     enabled: open,
   });
 

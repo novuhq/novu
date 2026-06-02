@@ -49,6 +49,8 @@ export type UpdateLayoutDto = {
 
 export type DuplicateLayoutDto = {
   name: string;
+  /** When set, used as the new layout identifier instead of slugifying the name. */
+  layoutId?: string;
   isTranslationEnabled?: boolean;
 };
 

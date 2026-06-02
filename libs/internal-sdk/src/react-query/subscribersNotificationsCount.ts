@@ -5,30 +5,34 @@
 import {
   InvalidateQueryFilters,
   QueryClient,
-  UseQueryResult,
-  UseSuspenseQueryResult,
   useQuery,
+  UseQueryResult,
   useSuspenseQuery,
-} from '@tanstack/react-query';
+  UseSuspenseQueryResult,
+} from "@tanstack/react-query";
 import {
   ConnectionError,
   InvalidRequestError,
   RequestAbortedError,
   RequestTimeoutError,
   UnexpectedClientError,
-} from '../models/errors/httpclienterrors.js';
-import * as errors from '../models/errors/index.js';
-import { NovuError } from '../models/errors/novuerror.js';
-import { ResponseValidationError } from '../models/errors/responsevalidationerror.js';
-import { SDKValidationError } from '../models/errors/sdkvalidationerror.js';
-import { useNovuContext } from './_context.js';
-import { QueryHookOptions, SuspenseQueryHookOptions, TupleToPrefixes } from './_types.js';
+} from "../models/errors/httpclienterrors.js";
+import * as errors from "../models/errors/index.js";
+import { NovuError } from "../models/errors/novuerror.js";
+import { ResponseValidationError } from "../models/errors/responsevalidationerror.js";
+import { SDKValidationError } from "../models/errors/sdkvalidationerror.js";
+import { useNovuContext } from "./_context.js";
+import {
+  QueryHookOptions,
+  SuspenseQueryHookOptions,
+  TupleToPrefixes,
+} from "./_types.js";
 import {
   buildSubscribersNotificationsCountQuery,
   prefetchSubscribersNotificationsCount,
   queryKeySubscribersNotificationsCount,
   SubscribersNotificationsCountQueryData,
-} from './subscribersNotificationsCount.core.js';
+} from "./subscribersNotificationsCount.core.js";
 export {
   buildSubscribersNotificationsCountQuery,
   prefetchSubscribersNotificationsCount,
@@ -52,18 +56,30 @@ export type SubscribersNotificationsCountQueryError =
  * Retrieve subscriber notifications count
  *
  * @remarks
- * Retrieve count of notifications for a subscriber by its unique key identifier **subscriberId**.
- *     Supports multiple filters to count notifications by different criteria, including context keys.
+ * Retrieve count of in-app (inbox) notifications for a subscriber by its unique key identifier **subscriberId**.
+ *     Supports multiple filters to count in-app (inbox) notifications by different criteria, including context keys.
  */
 export function useSubscribersNotificationsCount(
   subscriberId: string,
   filters: string,
   idempotencyKey?: string | undefined,
-  options?: QueryHookOptions<SubscribersNotificationsCountQueryData, SubscribersNotificationsCountQueryError>
-): UseQueryResult<SubscribersNotificationsCountQueryData, SubscribersNotificationsCountQueryError> {
+  options?: QueryHookOptions<
+    SubscribersNotificationsCountQueryData,
+    SubscribersNotificationsCountQueryError
+  >,
+): UseQueryResult<
+  SubscribersNotificationsCountQueryData,
+  SubscribersNotificationsCountQueryError
+> {
   const client = useNovuContext();
   return useQuery({
-    ...buildSubscribersNotificationsCountQuery(client, subscriberId, filters, idempotencyKey, options),
+    ...buildSubscribersNotificationsCountQuery(
+      client,
+      subscriberId,
+      filters,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
@@ -72,26 +88,41 @@ export function useSubscribersNotificationsCount(
  * Retrieve subscriber notifications count
  *
  * @remarks
- * Retrieve count of notifications for a subscriber by its unique key identifier **subscriberId**.
- *     Supports multiple filters to count notifications by different criteria, including context keys.
+ * Retrieve count of in-app (inbox) notifications for a subscriber by its unique key identifier **subscriberId**.
+ *     Supports multiple filters to count in-app (inbox) notifications by different criteria, including context keys.
  */
 export function useSubscribersNotificationsCountSuspense(
   subscriberId: string,
   filters: string,
   idempotencyKey?: string | undefined,
-  options?: SuspenseQueryHookOptions<SubscribersNotificationsCountQueryData, SubscribersNotificationsCountQueryError>
-): UseSuspenseQueryResult<SubscribersNotificationsCountQueryData, SubscribersNotificationsCountQueryError> {
+  options?: SuspenseQueryHookOptions<
+    SubscribersNotificationsCountQueryData,
+    SubscribersNotificationsCountQueryError
+  >,
+): UseSuspenseQueryResult<
+  SubscribersNotificationsCountQueryData,
+  SubscribersNotificationsCountQueryError
+> {
   const client = useNovuContext();
   return useSuspenseQuery({
-    ...buildSubscribersNotificationsCountQuery(client, subscriberId, filters, idempotencyKey, options),
+    ...buildSubscribersNotificationsCountQuery(
+      client,
+      subscriberId,
+      filters,
+      idempotencyKey,
+      options,
+    ),
     ...options,
   });
 }
 
 export function setSubscribersNotificationsCountData(
   client: QueryClient,
-  queryKeyBase: [subscriberId: string, parameters: { filters: string; idempotencyKey?: string | undefined }],
-  data: SubscribersNotificationsCountQueryData
+  queryKeyBase: [
+    subscriberId: string,
+    parameters: { filters: string; idempotencyKey?: string | undefined },
+  ],
+  data: SubscribersNotificationsCountQueryData,
 ): SubscribersNotificationsCountQueryData | undefined {
   const key = queryKeySubscribersNotificationsCount(...queryKeyBase);
 
@@ -101,22 +132,25 @@ export function setSubscribersNotificationsCountData(
 export function invalidateSubscribersNotificationsCount(
   client: QueryClient,
   queryKeyBase: TupleToPrefixes<
-    [subscriberId: string, parameters: { filters: string; idempotencyKey?: string | undefined }]
+    [
+      subscriberId: string,
+      parameters: { filters: string; idempotencyKey?: string | undefined },
+    ]
   >,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Notifications', 'count', ...queryKeyBase],
+    queryKey: ["@novu/api", "Notifications", "count", ...queryKeyBase],
   });
 }
 
 export function invalidateAllSubscribersNotificationsCount(
   client: QueryClient,
-  filters?: Omit<InvalidateQueryFilters, 'queryKey' | 'predicate' | 'exact'>
+  filters?: Omit<InvalidateQueryFilters, "queryKey" | "predicate" | "exact">,
 ): Promise<void> {
   return client.invalidateQueries({
     ...filters,
-    queryKey: ['@novu/api', 'Notifications', 'count'],
+    queryKey: ["@novu/api", "Notifications", "count"],
   });
 }

@@ -65,6 +65,8 @@ export enum PermissionsEnum {
   BRIDGE_WRITE = 'org:bridge:write',
   ORG_SETTINGS_WRITE = 'org:settings:write',
   ORG_SETTINGS_READ = 'org:settings:read',
+  AGENT_READ = 'org:agent:read',
+  AGENT_WRITE = 'org:agent:write',
 }
 
 export const ALL_PERMISSIONS = Object.values(PermissionsEnum);
@@ -73,6 +75,8 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
   [MemberRoleEnum.OWNER]: [
     PermissionsEnum.WORKFLOW_READ,
     PermissionsEnum.WORKFLOW_WRITE,
+    PermissionsEnum.AGENT_READ,
+    PermissionsEnum.AGENT_WRITE,
     PermissionsEnum.WEBHOOK_READ,
     PermissionsEnum.WEBHOOK_WRITE,
     PermissionsEnum.ENVIRONMENT_WRITE,
@@ -99,6 +103,8 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
   [MemberRoleEnum.ADMIN]: [
     PermissionsEnum.WORKFLOW_READ,
     PermissionsEnum.WORKFLOW_WRITE,
+    PermissionsEnum.AGENT_READ,
+    PermissionsEnum.AGENT_WRITE,
     PermissionsEnum.WEBHOOK_READ,
     PermissionsEnum.WEBHOOK_WRITE,
     PermissionsEnum.ENVIRONMENT_WRITE,
@@ -124,6 +130,8 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
   [MemberRoleEnum.AUTHOR]: [
     PermissionsEnum.WORKFLOW_READ,
     PermissionsEnum.WORKFLOW_WRITE,
+    PermissionsEnum.AGENT_READ,
+    PermissionsEnum.AGENT_WRITE,
     PermissionsEnum.EVENT_WRITE,
     PermissionsEnum.INTEGRATION_READ,
     PermissionsEnum.INTEGRATION_WRITE,
@@ -137,6 +145,7 @@ export const ROLE_PERMISSIONS: Record<MemberRoleEnum, PermissionsEnum[]> = {
   ],
   [MemberRoleEnum.VIEWER]: [
     PermissionsEnum.WORKFLOW_READ,
+    PermissionsEnum.AGENT_READ,
     PermissionsEnum.INTEGRATION_READ,
     PermissionsEnum.MESSAGE_READ,
     PermissionsEnum.SUBSCRIBER_READ,

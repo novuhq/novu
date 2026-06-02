@@ -16,11 +16,15 @@ import { Tooltip, TooltipContent, TooltipPortal, TooltipTrigger } from '@/compon
 import { useConditionsEditorContext } from './conditions-editor-context';
 
 export const RuleActions = React.memo(
-  ({ path, ruleOrGroup, context }: ActionWithRulesProps) => {
+  ({ path, ruleOrGroup, context, disabled }: ActionWithRulesProps) => {
     const { removeRuleOrGroup, cloneRuleOrGroup, getParentGroup } = useConditionsEditorContext();
     const parentGroup = useMemo(() => getParentGroup(ruleOrGroup.id), [ruleOrGroup, getParentGroup]);
     const isGroup = isRuleGroup(ruleOrGroup);
     const isDuplicateDisabled = !!(parentGroup && parentGroup.rules && parentGroup.rules.length >= 10);
+
+    if (disabled) {
+      return null;
+    }
 
     return (
       <DropdownMenu modal={false}>
@@ -73,6 +77,10 @@ export const RuleActions = React.memo(
     );
   },
   (prevProps, nextProps) => {
-    return prevProps.path === nextProps.path && prevProps.ruleOrGroup === nextProps.ruleOrGroup;
+    return (
+      prevProps.path === nextProps.path &&
+      prevProps.ruleOrGroup === nextProps.ruleOrGroup &&
+      prevProps.disabled === nextProps.disabled
+    );
   }
 );

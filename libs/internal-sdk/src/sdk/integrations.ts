@@ -5,6 +5,8 @@
 import { integrationsCreate } from "../funcs/integrationsCreate.js";
 import { integrationsDelete } from "../funcs/integrationsDelete.js";
 import { integrationsGenerateChatOAuthUrl } from "../funcs/integrationsGenerateChatOAuthUrl.js";
+import { integrationsGenerateConnectOAuthUrl } from "../funcs/integrationsGenerateConnectOAuthUrl.js";
+import { integrationsGenerateLinkUserOAuthUrl } from "../funcs/integrationsGenerateLinkUserOAuthUrl.js";
 import { integrationsIntegrationsControllerAutoConfigureIntegration } from "../funcs/integrationsIntegrationsControllerAutoConfigureIntegration.js";
 import { integrationsList } from "../funcs/integrationsList.js";
 import { integrationsListActive } from "../funcs/integrationsListActive.js";
@@ -158,12 +160,59 @@ export class Integrations extends ClientSDK {
   }
 
   /**
+   * Generate OAuth URL for a workspace/tenant connection
+   *
+   * @remarks
+   * Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent).
+   *     The generated URL expires after 5 minutes.
+   */
+  async generateConnectOAuthUrl(
+    generateConnectOauthUrlRequestDto:
+      components.GenerateConnectOauthUrlRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<operations.IntegrationsControllerGenerateConnectOAuthUrlResponse> {
+    return unwrapAsync(integrationsGenerateConnectOAuthUrl(
+      this,
+      generateConnectOauthUrlRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
+   * Generate OAuth URL to link a subscriber user identity
+   *
+   * @remarks
+   * Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID).
+   *     The generated URL expires after 5 minutes.
+   */
+  async generateLinkUserOAuthUrl(
+    generateLinkUserOauthUrlRequestDto:
+      components.GenerateLinkUserOauthUrlRequestDto,
+    idempotencyKey?: string | undefined,
+    options?: RequestOptions,
+  ): Promise<
+    operations.IntegrationsControllerGenerateLinkUserOAuthUrlResponse
+  > {
+    return unwrapAsync(integrationsGenerateLinkUserOAuthUrl(
+      this,
+      generateLinkUserOauthUrlRequestDto,
+      idempotencyKey,
+      options,
+    ));
+  }
+
+  /**
    * Generate chat OAuth URL
    *
    * @remarks
-   * Generate an OAuth URL for chat integrations like Slack and MS Teams.
+   * **Deprecated** — use `POST /integrations/channel-connections/oauth` (connect) or `POST /integrations/channel-endpoints/oauth` (link_user) instead.
+   *     Generate an OAuth URL for chat integrations like Slack and MS Teams.
    *     This URL allows subscribers to authorize the integration, enabling the system to send messages
    *     through their chat workspace. The generated URL expires after 5 minutes.
+   *
+   * @deprecated method: This will be removed in a future release, please migrate away from it as soon as possible.
    */
   async generateChatOAuthUrl(
     generateChatOauthUrlRequestDto: components.GenerateChatOauthUrlRequestDto,

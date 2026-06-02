@@ -138,25 +138,11 @@ function WebhooksEmptyStateSvg() {
       </g>
       <rect x="94.375" y="73.375" width="136.25" height="33.25" rx="5.625" stroke="#F2F5F8" strokeWidth="0.75" />
       <defs>
-        <linearGradient
-          id={paint0}
-          x1="50.5903"
-          y1="84"
-          x2="79.4364"
-          y2="110.016"
-          gradientUnits="userSpaceOnUse"
-        >
+        <linearGradient id={paint0} x1="50.5903" y1="84" x2="79.4364" y2="110.016" gradientUnits="userSpaceOnUse">
           <stop stopColor="#BCC3CE" />
           <stop offset="0.759383" stopColor="white" stopOpacity="0.5" />
         </linearGradient>
-        <linearGradient
-          id={paint1}
-          x1="266.001"
-          y1="82"
-          x2="220"
-          y2="93.5"
-          gradientUnits="userSpaceOnUse"
-        >
+        <linearGradient id={paint1} x1="266.001" y1="82" x2="220" y2="93.5" gradientUnits="userSpaceOnUse">
           <stop stopColor="#BCC3CE" />
           <stop offset="1" stopColor="white" stopOpacity="0.5" />
         </linearGradient>
@@ -172,14 +158,7 @@ function WebhooksEmptyStateSvg() {
           <stop offset="0.613" stopColor="#E300BD" />
           <stop offset="0.767" stopColor="#FF4CE1" />
         </radialGradient>
-        <linearGradient
-          id={paint3}
-          x1="22.3999"
-          y1="50.5999"
-          x2="21"
-          y2="63"
-          gradientUnits="userSpaceOnUse"
-        >
+        <linearGradient id={paint3} x1="22.3999" y1="50.5999" x2="21" y2="63" gradientUnits="userSpaceOnUse">
           <stop offset="0.085" stopColor="#FFBA33" />
           <stop offset="0.553" stopColor="#FF006A" stopOpacity="0" />
         </linearGradient>
@@ -187,25 +166,11 @@ function WebhooksEmptyStateSvg() {
           <stop offset="0.547" stopColor="white" stopOpacity="0" />
           <stop offset="1" stopColor="white" stopOpacity="0.6" />
         </linearGradient>
-        <linearGradient
-          id={paint5}
-          x1="95"
-          y1="90.5"
-          x2="236.225"
-          y2="90.5"
-          gradientUnits="userSpaceOnUse"
-        >
+        <linearGradient id={paint5} x1="95" y1="90.5" x2="236.225" y2="90.5" gradientUnits="userSpaceOnUse">
           <stop offset="0.0501219" stopColor="white" />
           <stop offset="0.313279" stopColor="white" stopOpacity="0" />
         </linearGradient>
-        <linearGradient
-          id={paint6}
-          x1="64"
-          y1="90.5"
-          x2="263.5"
-          y2="90.5"
-          gradientUnits="userSpaceOnUse"
-        >
+        <linearGradient id={paint6} x1="64" y1="90.5" x2="263.5" y2="90.5" gradientUnits="userSpaceOnUse">
           <stop offset="0.712157" stopColor="white" stopOpacity="0" />
           <stop offset="0.85" stopColor="white" />
         </linearGradient>

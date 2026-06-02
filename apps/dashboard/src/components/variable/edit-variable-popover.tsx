@@ -228,7 +228,7 @@ export const EditVariablePopover = ({
 
                     <InputRoot size="2xs" hasError={validation.hasError}>
                       <InputWrapper>
-                        <Code2 className="h-4 w-4 shrink-0 text-gray-500" />
+                        <Code2 className="h-4 w-4 shrink-0 text-feature" />
                         <InputPure
                           ref={nameInputRef}
                           value={name}

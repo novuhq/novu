@@ -139,44 +139,44 @@ export function PreviewContextPanel({
   });
 
   // Use the preview context hook with persistence callback
-  const { accordionValue, setAccordionValue, errors, previewContext, updatePreviewSection } = usePreviewContext<
-    ParsedData,
-    ValidationErrors
-  >({
-    value,
-    onChange,
-    defaultAccordionValue: DEFAULT_ACCORDION_VALUES,
-    defaultErrors: {
-      subscriber: null,
-      payload: null,
-      steps: null,
-      context: null,
-      env: null,
-    },
-    parseJsonValue,
-    onDataPersist: (data: ParsedData) => {
-      // Persist payload, subscriber and context data
-      if (data.payload !== undefined) {
-        savePersistedPayload(data.payload);
-      }
+  const { accordionValue, setAccordionValue, errors, previewContext, updatePreviewSection, trackedOnChange } =
+    usePreviewContext<ParsedData, ValidationErrors>({
+      value,
+      onChange,
+      defaultAccordionValue: DEFAULT_ACCORDION_VALUES,
+      defaultErrors: {
+        subscriber: null,
+        payload: null,
+        steps: null,
+        context: null,
+        env: null,
+      },
+      parseJsonValue,
+      onDataPersist: (data: ParsedData) => {
+        if (data.payload !== undefined) {
+          savePersistedPayload(data.payload);
+        }
 
-      if (data.subscriber !== undefined) {
-        savePersistedSubscriber(data.subscriber);
-      }
+        if (data.subscriber !== undefined) {
+          savePersistedSubscriber(data.subscriber);
+        }
 
-      if (data.context !== undefined) {
-        savePersistedContext(data.context);
-      }
-    },
-  });
+        if (data.context !== undefined) {
+          savePersistedContext(data.context);
+        }
+      },
+    });
 
-  // Initialize data using the new simplified hook
+  // Initialize data using the new simplified hook.
+  // trackedOnChange keeps a synchronous ref of the latest value so that
+  // subsequent updatePreviewSection calls in the same render cycle
+  // (e.g. the subscriber-default effect) read fresh data instead of stale props.
   usePreviewDataInitialization({
     workflowId: workflow?.workflowId,
     stepId: currentStepId,
     environmentId: currentEnvironment?._id,
     value,
-    onChange,
+    onChange: trackedOnChange,
     workflow,
     isPayloadSchemaEnabled,
     loadPersistedPayload,

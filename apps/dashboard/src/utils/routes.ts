@@ -9,11 +9,14 @@ export const ROUTES = {
   SSO_SIGN_IN: '/auth/sso',
   VERIFY_EMAIL: '/auth/verify-email',
   USECASE_SELECT: '/onboarding/usecase',
+  AGENTS_USECASE: '/onboarding/agents',
+  AGENTS_SETUP: '/onboarding/agents/setup',
   INBOX_USECASE: '/onboarding/inbox',
   INBOX_EMBED: '/onboarding/inbox/embed',
   INBOX_EMBED_SUCCESS: '/onboarding/inbox/success',
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
+  CLI_AUTH: '/cli/auth',
   ENV: '/env',
   SETTINGS: '/settings',
   SETTINGS_ACCOUNT: '/settings/account',
@@ -42,6 +45,7 @@ export const ROUTES = {
   ACTIVITY_FEED: '/env/:environmentSlug/activity-feed',
   ACTIVITY_WORKFLOW_RUNS: '/env/:environmentSlug/activity/workflow-runs',
   ACTIVITY_REQUESTS: '/env/:environmentSlug/activity/requests',
+  ACTIVITY_CONVERSATIONS: '/env/:environmentSlug/activity/conversations',
   ANALYTICS: '/env/:environmentSlug/analytics',
   LOGS: '/env/:environmentSlug/requests',
   TEMPLATE_STORE: '/env/:environmentSlug/workflows/templates',
@@ -52,6 +56,8 @@ export const ROUTES = {
   EDIT_SUBSCRIBER: '/env/:environmentSlug/subscribers/:subscriberId',
   CREATE_SUBSCRIBER: '/env/:environmentSlug/subscribers/create',
   PARTNER_INTEGRATIONS_VERCEL: '/partner-integrations/vercel',
+  DOMAINS: '/env/:environmentSlug/domains',
+  DOMAIN_DETAIL: '/env/:environmentSlug/domains/:domain',
   WEBHOOKS: '/env/:environmentSlug/webhooks',
   WEBHOOKS_ENDPOINTS: '/env/:environmentSlug/webhooks/endpoints',
   WEBHOOKS_EVENT_CATALOG: '/env/:environmentSlug/webhooks/event-catalog',
@@ -71,7 +77,43 @@ export const ROUTES = {
   TRANSLATIONS_EDIT: '/env/:environmentSlug/translations/:resourceType/:resourceId/:locale',
   VARIABLES: '/env/:environmentSlug/variables',
   VARIABLES_CREATE: '/env/:environmentSlug/variables/create',
+  AGENTS: '/env/:environmentSlug/agents',
+  AGENT_DETAILS: '/env/:environmentSlug/agents/:agentIdentifier',
+  /** Must be registered before AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
+  AGENT_DETAILS_INTEGRATIONS_DETAIL:
+    '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
+  AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
+  AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
+  INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',
+  CONNECT_HOME: '/env/:environmentSlug/connect',
+  CONNECT_AGENTS: '/env/:environmentSlug/connect/agents',
+  CONNECT_AGENT_DETAILS: '/env/:environmentSlug/connect/agents/:agentIdentifier',
+  /** Must be registered before CONNECT_AGENT_DETAILS_TAB so `.../integrations/:integrationIdentifier` is not parsed as a tab name. */
+  CONNECT_AGENT_DETAILS_INTEGRATIONS_DETAIL:
+    '/env/:environmentSlug/connect/agents/:agentIdentifier/integrations/:integrationIdentifier',
+  CONNECT_AGENT_DETAILS_TAB: '/env/:environmentSlug/connect/agents/:agentIdentifier/:agentTab',
+  CONNECT_CONVERSATIONS: '/env/:environmentSlug/connect/conversations',
+  CONNECT_API_KEYS: '/env/:environmentSlug/connect/api-keys',
+  CONNECT_SETTINGS: '/env/:environmentSlug/connect/settings',
+  CONNECT_SETTINGS_ACCOUNT: '/env/:environmentSlug/connect/settings/account',
+  CONNECT_SETTINGS_ORGANIZATION: '/env/:environmentSlug/connect/settings/organization',
+  CONNECT_SETTINGS_TEAM: '/env/:environmentSlug/connect/settings/team',
+  CONNECT_SETTINGS_BILLING: '/env/:environmentSlug/connect/settings/billing',
 } as const;
+
+export const AGENT_DETAILS_DEFAULT_TAB = 'overview';
+
+export const AGENT_DETAILS_TABS = ['overview', 'integrations'] as const;
+
+export type AgentDetailsTab = (typeof AGENT_DETAILS_TABS)[number];
+
+export function parseAgentDetailsTab(tab: string | undefined): AgentDetailsTab {
+  if (tab && (AGENT_DETAILS_TABS as readonly string[]).includes(tab)) {
+    return tab as AgentDetailsTab;
+  }
+
+  return AGENT_DETAILS_DEFAULT_TAB;
+}
 
 export const buildRoute = (route: string, params: Record<string, string>) => {
   return Object.entries(params).reduce((acc, [key, value]) => {

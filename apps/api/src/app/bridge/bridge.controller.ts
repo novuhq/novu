@@ -16,11 +16,13 @@ import {
 import { ApiExcludeController } from '@nestjs/swagger';
 import {
   AnalyticsService,
+  assertSafeOutboundUrl,
   ExternalApiAccessible,
   PreviewStep,
   PreviewStepCommand,
   RequirePermissions,
   SkipPermissionsCheck,
+  SsrfBlockedError,
   UserSession,
 } from '@novu/application-generic';
 import { ControlValuesRepository, EnvironmentRepository, NotificationTemplateRepository } from '@novu/dal';
@@ -220,11 +222,27 @@ export class BridgeController {
     @UserSession() user: UserSessionData,
     @Body() body: ValidateBridgeUrlRequestDto
   ): Promise<ValidateBridgeUrlResponseDto> {
+    // Reject SSRF candidates (loopback, link-local, cloud metadata, non-http
+    // schemes, embedded credentials) before issuing the outbound health-check.
+    // The endpoint is gated by BRIDGE_WRITE, but an authenticated operator can
+    // otherwise probe internal hosts via the API process.
+    try {
+      assertSafeOutboundUrl(body.bridgeUrl);
+    } catch (err) {
+      if (err instanceof SsrfBlockedError) {
+        return { isValid: false, error: err.message };
+      }
+      throw err;
+    }
+
     try {
       const result = await this.getBridgeStatus.execute(
         GetBridgeStatusCommand.create({
           environmentId: user.environmentId,
           statelessBridgeUrl: body.bridgeUrl,
+          // User-supplied bridgeUrl: enforce DNS-pinned SSRF guard at connect
+          // time so IP-literal private addresses cannot reach internal hosts.
+          enforceSsrfProtection: true,
         })
       );
 

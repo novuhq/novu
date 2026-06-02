@@ -41,6 +41,7 @@ import {
   ContextPayload,
   ControlValuesLevelEnum,
   CustomDataType,
+  EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
@@ -65,7 +66,12 @@ import { ScheduleDto } from '../../../shared/dtos/schedule';
 import { isHmacValid } from '../../../shared/helpers/is-valid-hmac';
 import { SubscriberDto, SubscriberSessionRequestDto } from '../../dtos/subscriber-session-request.dto';
 import { SubscriberSessionResponseDto } from '../../dtos/subscriber-session-response.dto';
-import { AnalyticsEventsEnum } from '../../utils';
+import {
+  AnalyticsEventsEnum,
+  KEYLESS_ENVIRONMENT_PREFIX,
+  KEYLESS_SUBSCRIBER_ID,
+  KEYLESS_WORKFLOW_IDENTIFIER,
+} from '../../utils';
 import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
@@ -79,7 +85,7 @@ const MAX_NOTIFICATIONS_COUNT = 100;
 
 @Injectable()
 export class Session {
-  private readonly KEYLESS_ENVIRONMENT_PREFIX = 'pk_keyless_';
+  private readonly KEYLESS_ENVIRONMENT_PREFIX = KEYLESS_ENVIRONMENT_PREFIX;
 
   constructor(
     private environmentRepository: EnvironmentRepository,
@@ -283,7 +289,7 @@ export class Session {
       unreadCount,
       removeNovuBranding,
       maxSnoozeDurationHours,
-      isDevelopmentMode: environment.name.toLowerCase() !== 'production',
+      isDevelopmentMode: this.isInboxDevelopmentMode(environment),
       schedule,
       contextKeys,
     };
@@ -329,6 +335,26 @@ export class Session {
     return updatedGlobalPreference.schedule;
   }
 
+  /**
+   * Live (production-type) environments must not show the Inbox "Development mode" footer,
+   * regardless of display name. Legacy orgs may lack `type`; fall back to the old name check.
+   */
+  private isInboxDevelopmentMode(environment: EnvironmentEntity): boolean {
+    if (environment.identifier?.startsWith(this.KEYLESS_ENVIRONMENT_PREFIX)) {
+      return true;
+    }
+
+    if (environment.type === EnvironmentTypeEnum.PROD) {
+      return false;
+    }
+
+    if (environment.type === EnvironmentTypeEnum.DEV) {
+      return true;
+    }
+
+    return environment.name.toLowerCase() !== 'production';
+  }
+
   private validateRequestData(requestData: SubscriberSessionRequestDto): void {
     if (!requestData.applicationIdentifier && this.extractSubscriberInfo(requestData, true)?.subscriberId) {
       throw new UnprocessableEntityException(
@@ -339,7 +365,7 @@ export class Session {
 
   private buildPlatformSubscriber(requestData: SubscriberSessionRequestDto): SubscriberDto {
     if (!requestData.applicationIdentifier || this.isKeylessApplication(requestData.applicationIdentifier)) {
-      return { subscriberId: 'keyless-subscriber-id' };
+      return { subscriberId: KEYLESS_SUBSCRIBER_ID };
     }
 
     return this.extractSubscriberInfo(requestData);
@@ -500,6 +526,7 @@ export class Session {
       _organizationId: organization._id,
       name: `Keyless ${new Date().toISOString()}`,
       identifier,
+      type: EnvironmentTypeEnum.DEV,
       apiKeys: [
         {
           key: encryptedApiKey,
@@ -709,7 +736,7 @@ export class Session {
       triggers: [
         {
           type: 'event',
-          identifier: 'hello-world',
+          identifier: KEYLESS_WORKFLOW_IDENTIFIER,
           variables: [
             { name: 'subject', type: 'string' },
             { name: 'body', type: 'string' },

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { PinoLogger } from '@novu/application-generic';
+import { decryptCredentials, MsTeamsTokenService, PinoLogger } from '@novu/application-generic';
 import {
   ChannelTypeEnum,
   EnvironmentRepository,
@@ -7,9 +7,15 @@ import {
   IntegrationEntity,
   IntegrationRepository,
 } from '@novu/dal';
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, ENDPOINT_TYPES } from '@novu/shared';
+import axios from 'axios';
 import { CreateChannelConnectionCommand } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.command';
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
+import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
+import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
+import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
+import { GenerateMsTeamsOauthUrlCommand } from '../../generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.command';
 import {
   GenerateMsTeamsOauthUrl,
   StateData,
@@ -17,24 +23,107 @@ import {
 import { ChatOauthCallbackResult, ResponseTypeEnum } from '../chat-oauth-callback.response';
 import { MsTeamsOauthCallbackCommand } from './msteams-oauth-callback.command';
 
+const MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
+
 @Injectable()
 export class MsTeamsOauthCallback {
-  private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
+  private readonly MS_TEAMS_TOKEN_URL = 'https://login.microsoftonline.com';
 
   constructor(
     private integrationRepository: IntegrationRepository,
     private environmentRepository: EnvironmentRepository,
     private createChannelConnection: CreateChannelConnection,
-    private logger: PinoLogger
+    private createChannelEndpoint: CreateChannelEndpoint,
+    private msTeamsTokenService: MsTeamsTokenService,
+    private logger: PinoLogger,
+    private generateMsTeamsOauthUrl: GenerateMsTeamsOauthUrl
   ) {
     this.logger.setContext(MsTeamsOauthCallback.name);
   }
 
   async execute(command: MsTeamsOauthCallbackCommand): Promise<ChatOauthCallbackResult> {
+    this.logger.info(
+      `MS Teams OAuth callback received: mode=${command.adminConsent ? 'admin_consent' : 'link_user'} tenant=${command.tenant ?? 'n/a'}`
+    );
+
     const stateData = await this.decodeMsTeamsState(command.state);
     const integration = await this.getIntegration(stateData);
     const credentials = await this.getIntegrationCredentials(integration);
 
+    if (stateData.mode === 'link_user') {
+      try {
+        await this.linkUserEndpoint(command, stateData, integration, credentials);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+
+        if (message.includes('MS Teams bot installation failed')) {
+          return { type: ResponseTypeEnum.HTML, result: this.buildErrorHtml(message) };
+        }
+
+        throw error;
+      }
+
+      this.logger.info(
+        `MS Teams link_user completed successfully: subscriberId=${stateData.subscriberId} integrationId=${integration._id}`
+      );
+    } else {
+      await this.createAdminConsentConnection(command, stateData, integration);
+      this.logger.info(
+        `MS Teams admin consent connection created: tenant=${command.tenant} integrationId=${integration._id} identifier=${stateData.identifier}`
+      );
+
+      /*
+       * After admin consent, if autoLinkUser is explicitly true and a subscriberId is
+       * present, chain into the link_user OAuth flow so the subscriber who clicked
+       * "Connect" also gets their personal Teams identity linked in one go.
+       *
+       * autoLinkUser must be explicitly true — absent or false skips the chain.
+       * The MsTeamsConnectButton SDK component defaults autoLinkUser to true so SDK
+       * users get this behaviour by default; raw API callers must opt in explicitly.
+       */
+      if (stateData.autoLinkUser === true && stateData.subscriberId) {
+        try {
+          const linkUserUrl = await this.generateMsTeamsOauthUrl.execute(
+            GenerateMsTeamsOauthUrlCommand.create({
+              environmentId: stateData.environmentId,
+              organizationId: stateData.organizationId,
+              connectionIdentifier: stateData.identifier,
+              subscriberId: stateData.subscriberId,
+              integration,
+              context: stateData.context,
+              mode: 'link_user',
+            })
+          );
+
+          return { type: ResponseTypeEnum.URL, result: linkUserUrl };
+        } catch (error) {
+          this.logger.warn(
+            `Could not chain link_user redirect after admin consent: ${error instanceof Error ? error.message : String(error)}`
+          );
+        }
+      }
+    }
+
+    if (credentials.redirectUrl) {
+      return { type: ResponseTypeEnum.URL, result: credentials.redirectUrl };
+    }
+
+    return {
+      type: ResponseTypeEnum.HTML,
+      result: renderConnectionResultPage({
+        status: 'success',
+        title: 'Connection complete',
+        heading: "You're all set",
+        message: 'Microsoft Teams is connected and ready to use.',
+      }),
+    };
+  }
+
+  private async createAdminConsentConnection(
+    command: MsTeamsOauthCallbackCommand,
+    stateData: StateData,
+    integration: IntegrationEntity
+  ): Promise<void> {
     if (!command.tenant) {
       throw new BadRequestException('Missing tenant parameter from MS Teams admin consent');
     }
@@ -51,14 +140,6 @@ export class MsTeamsOauthCallback {
      * - When sending: use client_credentials to get fresh app-only tokens
      * - Messages sent as bot/app identity, not as user
      */
-    const authData = {
-      accessToken: 'app-only',
-    };
-
-    const workspaceData = {
-      id: command.tenant,
-    };
-
     await this.createChannelConnection.execute(
       CreateChannelConnectionCommand.create({
         identifier: stateData.identifier,
@@ -67,19 +148,232 @@ export class MsTeamsOauthCallback {
         integrationIdentifier: integration.identifier,
         subscriberId: stateData.subscriberId,
         context: stateData.context,
-        auth: authData,
-        workspace: workspaceData,
+        auth: { accessToken: 'app-only' },
+        workspace: { id: command.tenant },
       })
     );
+  }
 
-    if (credentials.redirectUrl) {
-      return { type: ResponseTypeEnum.URL, result: credentials.redirectUrl };
+  private async linkUserEndpoint(
+    command: MsTeamsOauthCallbackCommand,
+    stateData: StateData,
+    integration: IntegrationEntity,
+    credentials: ICredentialsEntity
+  ): Promise<void> {
+    if (!stateData.subscriberId) {
+      throw new BadRequestException('subscriberId is required for link_user mode');
     }
 
-    return {
-      type: ResponseTypeEnum.HTML,
-      result: this.SCRIPT_CLOSE_TAB,
+    if (!command.providerCode) {
+      throw new BadRequestException('Missing authorization code for link_user mode');
+    }
+
+    const decrypted = decryptCredentials(credentials);
+    const oid = await this.exchangeCodeForAadObjectId(command.providerCode, decrypted);
+
+    await this.installBotForUser(oid, decrypted);
+
+    await this.createChannelEndpoint.execute(
+      CreateChannelEndpointCommand.create({
+        organizationId: stateData.organizationId,
+        environmentId: stateData.environmentId,
+        integrationIdentifier: integration.identifier,
+        connectionIdentifier: stateData.identifier,
+        subscriberId: stateData.subscriberId,
+        context: stateData.context,
+        type: ENDPOINT_TYPES.MS_TEAMS_USER,
+        endpoint: { userId: oid },
+      })
+    );
+  }
+
+  private async installBotForUser(oid: string, credentials: ICredentialsEntity): Promise<void> {
+    const { clientId, secretKey, tenantId } = credentials;
+
+    this.logger.info(`MS Teams bot install: acquiring graph token for clientId=${clientId} tenantId=${tenantId}`);
+
+    const graphToken = await this.msTeamsTokenService.getGraphToken(
+      clientId as string,
+      secretKey as string,
+      tenantId as string
+    );
+
+    this.logger.info(`MS Teams bot install: resolving Teams app catalog ID for clientId=${clientId}`);
+    const teamsAppId = await this.resolveTeamsAppId(graphToken, clientId as string);
+
+    this.logger.info(`MS Teams bot install: installing app teamsAppId=${teamsAppId} for userOid=${oid}`);
+    await this.installAppForUser(graphToken, oid, teamsAppId);
+
+    this.logger.info(`MS Teams bot install: app installed successfully for userOid=${oid} teamsAppId=${teamsAppId}`);
+  }
+
+  private async resolveTeamsAppId(graphToken: string, azureClientId: string): Promise<string> {
+    /*
+     * We scope the query to distributionMethod eq 'organization' to avoid picking up sideloaded
+     * copies of the same app. Filtering server-side guarantees a unique match: the org catalog
+     * allows only one published entry per externalId, so the combination is effectively unique.
+     *
+     * Edge case — store apps: globally-published Teams store apps use distributionMethod='store'
+     * and would be missed by this filter. That is intentional here: Novu customers supply their
+     * own Azure bot (clientId + secretKey), which is always an org-published custom app. Store
+     * apps use a different identity model. If store-app support is ever needed, expand the filter
+     * to: distributionMethod eq 'organization' or distributionMethod eq 'store'.
+     */
+    const url = `${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps?$filter=externalId eq '${azureClientId}' and distributionMethod eq 'organization'`;
+
+    let response: { data: { value: Array<{ id: string }> } };
+
+    try {
+      response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${graphToken}` },
+      });
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 403) {
+        throw new BadRequestException(
+          'MS Teams bot installation failed: missing AppCatalog.Read.All permission. ' +
+            'Please grant AppCatalog.Read.All application permission in Azure Portal and re-run admin consent.'
+        );
+      }
+
+      throw new BadRequestException(
+        `MS Teams bot installation failed while resolving Teams app ID: ${
+          axios.isAxiosError(error) ? error.message : String(error)
+        }`
+      );
+    }
+
+    const apps = response.data.value;
+
+    if (!apps || apps.length === 0) {
+      throw new BadRequestException(
+        'MS Teams bot installation failed: app not found in your organization catalog. ' +
+          'Please upload the Teams app manifest to your organization catalog first.'
+      );
+    }
+
+    if (apps.length > 1) {
+      this.logger.warn(
+        `Multiple org-published Teams apps found for clientId ${azureClientId} — using first match (id=${apps[0].id})`
+      );
+    }
+
+    return apps[0].id;
+  }
+
+  private async installAppForUser(graphToken: string, userOid: string, teamsAppId: string): Promise<void> {
+    const url = `${MS_GRAPH_BASE_URL}/users/${userOid}/teamwork/installedApps`;
+    const body = {
+      'teamsApp@odata.bind': `${MS_GRAPH_BASE_URL}/appCatalogs/teamsApps/${teamsAppId}`,
     };
+
+    try {
+      await axios.post(url, body, {
+        headers: {
+          Authorization: `Bearer ${graphToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const status = error.response?.status;
+
+        if (status === 409) {
+          this.logger.info(
+            `MS Teams bot install: app already installed for userOid=${userOid} (409 conflict — skipping)`
+          );
+
+          return;
+        }
+
+        if (status === 403) {
+          throw new BadRequestException(
+            'MS Teams bot installation failed: the TeamsAppInstallation.ReadWriteSelfForUser.All permission has not yet propagated.'
+          );
+        }
+
+        if (status === 404) {
+          throw new BadRequestException(
+            'MS Teams bot installation failed: user or app not found. ' +
+              'Ensure the app is published to your organization catalog and the user exists in the tenant.'
+          );
+        }
+      }
+
+      throw new BadRequestException(
+        `MS Teams bot installation failed: ${axios.isAxiosError(error) ? error.message : String(error)}`
+      );
+    }
+  }
+
+  /**
+   * Bot-install failures during link_user OAuth. Uses the shared connection-result
+   * page (same card as MCP/Slack success paths) instead of bespoke HTML so terminal
+   * pages stay visually consistent. Permission-related errors keep the Azure
+   * propagation hint in `footerNote`.
+   */
+  private buildErrorHtml(message: string): string {
+    const isPermissionError =
+      message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') || message.includes('AppCatalog.Read.All');
+
+    return renderConnectionResultPage({
+      status: 'error',
+      title: 'Setup error',
+      heading: "We couldn't set up Microsoft Teams",
+      message,
+      footerNote: isPermissionError
+        ? 'Azure permission changes can take up to 60 minutes to take effect. If you just granted the required permissions, wait a few minutes and try again.'
+        : undefined,
+    });
+  }
+
+  private async exchangeCodeForAadObjectId(code: string, credentials: ICredentialsEntity): Promise<string> {
+    const { clientId, secretKey, tenantId } = credentials;
+
+    if (!clientId || !secretKey || !tenantId) {
+      throw new BadRequestException(
+        'MS Teams integration missing required credentials (clientId, secretKey, tenantId)'
+      );
+    }
+
+    const tokenParams = new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: clientId,
+      client_secret: secretKey,
+      code,
+      redirect_uri: GenerateMsTeamsOauthUrl.buildRedirectUri(),
+      scope: 'openid profile User.Read',
+    });
+
+    const response = await axios.post(
+      `${this.MS_TEAMS_TOKEN_URL}/${tenantId}/oauth2/v2.0/token`,
+      tokenParams.toString(),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+
+    const { id_token: idToken } = response.data;
+
+    if (!idToken) {
+      throw new BadRequestException('MS Teams OAuth response missing id_token');
+    }
+
+    const oid = this.extractOidFromIdToken(idToken);
+
+    if (!oid) {
+      throw new BadRequestException('MS Teams id_token missing oid claim — ensure the Azure app is single-tenant');
+    }
+
+    return oid;
+  }
+
+  private extractOidFromIdToken(idToken: string): string | undefined {
+    try {
+      const payload = idToken.split('.')[1];
+      const decoded = JSON.parse(Buffer.from(payload, 'base64url').toString('utf-8'));
+
+      return decoded.oid as string | undefined;
+    } catch {
+      throw new BadRequestException('Failed to decode MS Teams id_token');
+    }
   }
 
   private async getIntegration(stateData: StateData): Promise<IntegrationEntity> {
@@ -116,9 +410,7 @@ export class MsTeamsOauthCallback {
 
   private async decodeMsTeamsState(state: string): Promise<StateData> {
     try {
-      const decoded = Buffer.from(state, 'base64url').toString();
-      const [payload] = decoded.split('.');
-      const preliminaryData = JSON.parse(payload);
+      const preliminaryData = peekOAuthStatePayload<Partial<StateData>>(state);
 
       if (!preliminaryData.environmentId) {
         throw new BadRequestException('Invalid MS Teams state: missing environmentId');

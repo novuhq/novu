@@ -1,8 +1,9 @@
 import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/utils/routes';
 import { EE_AUTH_PROVIDER, IS_SELF_HOSTED } from '../../config';
+import { AuthContext, type BetterAuthOrganization, type BetterAuthUser } from './auth-context';
 import { authClient } from './client';
 import {
   ForgotPassword as ForgotPasswordComponent,
@@ -20,33 +21,10 @@ import {
   VerifyEmail as VerifyEmailComponent,
 } from './components';
 import { ROLE_PERMISSIONS } from './role-permissions';
+import { Show } from './show';
+import { useCursorAgentAutoLogin } from './use-cursor-agent-auto-login';
 
-type BetterAuthUser = {
-  id: string;
-  email: string;
-  name: string;
-  image?: string;
-  emailVerified: boolean;
-};
-
-type BetterAuthOrganization = {
-  id: string;
-  name: string;
-  slug: string;
-};
-
-type AuthContextType = {
-  user: BetterAuthUser | null;
-  organization: BetterAuthOrganization | null;
-  memberRole: MemberRoleEnum | null;
-  isLoaded: boolean;
-  signOut: () => Promise<void>;
-  getToken: () => Promise<string | null>;
-  refreshSession: () => Promise<void>;
-  has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean;
-};
-
-const AuthContext = createContext<AuthContextType | null>(null);
+export { Show };
 
 export function ClerkProvider({ children }: { children: React.ReactNode }) {
   const { data: sessionData, isPending, refetch } = authClient.useSession();
@@ -142,18 +120,43 @@ export function ClerkProvider({ children }: { children: React.ReactNode }) {
     [memberRole]
   );
 
+  const isSessionLoaded = !isPending;
+  const isLoaded = isSessionLoaded && !isOrgLoading;
+  const isSignedIn = !!user;
+
+  const { isAutoLoginPending, isAutoLoginFailed } = useCursorAgentAutoLogin({
+    isLoaded: isSessionLoaded,
+    isSignedIn,
+    refreshSession,
+  });
+
   const value = useMemo(
     () => ({
       user,
       organization: organization || null,
       memberRole,
-      isLoaded: !isPending && !isOrgLoading,
+      isLoaded,
+      isSessionLoaded,
       signOut,
       getToken,
       refreshSession,
       has,
+      isAutoLoginPending,
+      isAutoLoginFailed,
     }),
-    [user, organization, memberRole, isPending, isOrgLoading, refreshSession, signOut, getToken, has]
+    [
+      user,
+      organization,
+      memberRole,
+      isLoaded,
+      isSessionLoaded,
+      refreshSession,
+      signOut,
+      getToken,
+      has,
+      isAutoLoginPending,
+      isAutoLoginFailed,
+    ]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -166,7 +169,7 @@ export function useAuth() {
   }
 
   return {
-    isLoaded: context.isLoaded,
+    isLoaded: context.isSessionLoaded,
     isSignedIn: !!context.user,
     userId: context.user?.id,
     orgId: context.organization?.id,
@@ -207,7 +210,7 @@ export function useUser() {
           },
         }
       : null,
-    isLoaded: context.isLoaded,
+    isLoaded: context.isSessionLoaded,
   };
 }
 
@@ -217,8 +220,8 @@ export function useOrganization() {
     throw new Error('useOrganization must be used within ClerkProvider');
   }
 
-  return {
-    organization: context.organization
+  const organization = useMemo(() => {
+    return context.organization
       ? {
           id: context.organization.id,
           name: context.organization.name,
@@ -232,7 +235,11 @@ export function useOrganization() {
             return Promise.resolve();
           },
         }
-      : null,
+      : null;
+  }, [context.organization]);
+
+  return {
+    organization,
     isLoaded: context.isLoaded,
   };
 }
@@ -305,9 +312,20 @@ export function useOrganizationList(options?: { userMemberships?: { infinite?: b
 
 export function useClerk() {
   const context = useContext(AuthContext);
+  const { isPending } = authClient.useSession();
 
   return {
-    setActive: async ({ organization }: { organization?: string }) => {
+    loaded: context?.isSessionLoaded ?? !isPending,
+    setActive: async ({ organization }: { organization?: string | null }) => {
+      if (organization === null) {
+        await authClient.organization.setActive({
+          organizationId: null,
+        });
+        window.location.reload();
+
+        return;
+      }
+
       if (organization) {
         await authClient.organization.setActive({
           organizationId: organization,
@@ -350,6 +368,18 @@ export function RedirectToSignIn() {
 }
 
 export function SignIn() {
+  const context = useContext(AuthContext);
+  const isAutoLoginPending = context?.isAutoLoginPending ?? false;
+  const isAutoLoginFailed = context?.isAutoLoginFailed ?? false;
+
+  if (isAutoLoginPending && !isAutoLoginFailed) {
+    return (
+      <div className="mx-auto w-full max-w-md pt-12 text-center">
+        <p className="text-sm text-foreground-600">Signing in to the agent environment…</p>
+      </div>
+    );
+  }
+
   return <SignInComponent />;
 }
 
@@ -397,7 +427,7 @@ export function OrganizationList(props?: {
   return (
     <OrganizationCreateComponent
       afterSelectOrganizationUrl={props?.afterSelectOrganizationUrl || ROUTES.ENV}
-      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || ROUTES.INBOX_USECASE}
+      afterCreateOrganizationUrl={props?.afterCreateOrganizationUrl || ROUTES.USECASE_SELECT}
     />
   );
 }
@@ -442,6 +472,15 @@ export function Protect({ children, permission, role, condition, fallback }: Pro
   if (!hasAccess) {
     return fallback ? <>{fallback}</> : null;
   }
+
+  return <>{children}</>;
+}
+
+/** Mirrors Clerk's gate — session bootstrap only, not active-organization resolution. */
+export function ClerkLoaded({ children }: { children: React.ReactNode }) {
+  const { isPending } = authClient.useSession();
+
+  if (isPending) return null;
 
   return <>{children}</>;
 }

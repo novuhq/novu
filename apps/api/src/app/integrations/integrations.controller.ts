@@ -4,8 +4,10 @@ import {
   ClassSerializerInterceptor,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
-  NotFoundException,
+  HttpCode,
+  HttpStatus,
   Param,
   Post,
   Put,
@@ -23,10 +25,12 @@ import {
   GetDecryptedIntegrations,
   IntegrationResponseDto,
   OtelSpan,
+  PinoLogger,
   RequirePermissions,
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository } from '@novu/dal';
 import {
+  ApiAuthSchemeEnum,
   ApiServiceLevelEnum,
   ChannelTypeEnum,
   FeatureFlagsKeysEnum,
@@ -46,33 +50,61 @@ import {
 } from '../shared/framework/response.decorator';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
+import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
 import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
 import { GenerateChatOAuthUrlResponseDto } from './dtos/generate-chat-oauth-url-response.dto';
+import { GenerateConnectOauthUrlRequestDto } from './dtos/generate-connect-oauth-url-request.dto';
+import { GenerateLinkUserOauthUrlRequestDto } from './dtos/generate-link-user-oauth-url-request.dto';
 import { ChannelTypeLimitDto } from './dtos/get-channel-type-limit.sto';
+import { IssueIntegrationStoreTelegramMobileLinkResponseDto } from './dtos/issue-integration-store-telegram-mobile-link-response.dto';
+import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
+import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
+import { AzureSetupOauthCallbackCommand } from './usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.command';
+import { AzureSetupOauthCallback } from './usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.usecase';
 import { ChatOauthCallbackCommand } from './usecases/chat-oauth-callback/chat-oauth-callback.command';
 import { ResponseTypeEnum } from './usecases/chat-oauth-callback/chat-oauth-callback.response';
 import { ChatOauthCallback } from './usecases/chat-oauth-callback/chat-oauth-callback.usecase';
 import { CreateIntegrationCommand } from './usecases/create-integration/create-integration.command';
 import { CreateIntegration } from './usecases/create-integration/create-integration.usecase';
+import { GenerateAzureSetupOauthUrlCommand } from './usecases/generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.command';
+import { GenerateAzureSetupOauthUrl } from './usecases/generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.usecase';
 import { GenerateChatOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.command';
 import { GenerateChatOauthUrl } from './usecases/generate-chat-oath-url/generate-chat-oauth-url.usecase';
+import { GenerateConnectOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-connect-oauth-url.command';
+import { GenerateConnectOauthUrl } from './usecases/generate-chat-oath-url/generate-connect-oauth-url.usecase';
+import { GenerateLinkUserOauthUrlCommand } from './usecases/generate-chat-oath-url/generate-link-user-oauth-url.command';
+import { GenerateLinkUserOauthUrl } from './usecases/generate-chat-oath-url/generate-link-user-oauth-url.usecase';
+import { GenerateMsTeamsArmTemplateCommand } from './usecases/generate-msteams-arm-template/generate-msteams-arm-template.command';
+import { GenerateMsTeamsArmTemplate } from './usecases/generate-msteams-arm-template/generate-msteams-arm-template.usecase';
+import { GetMsTeamsArmTemplate } from './usecases/generate-msteams-arm-template/get-msteams-arm-template.usecase';
 import { GetInAppActivatedCommand } from './usecases/get-in-app-activated/get-in-app-activated.command';
 import { GetInAppActivated } from './usecases/get-in-app-activated/get-in-app-activated.usecase';
 import { GetIntegrationsCommand } from './usecases/get-integrations/get-integrations.command';
 import { GetIntegrations } from './usecases/get-integrations/get-integrations.usecase';
 import { GetWebhookSupportStatusCommand } from './usecases/get-webhook-support-status/get-webhook-support-status.command';
 import { GetWebhookSupportStatus } from './usecases/get-webhook-support-status/get-webhook-support-status.usecase';
+import { IssueIntegrationStoreTelegramMobileLinkCommand } from './usecases/issue-integration-store-telegram-mobile-link/issue-integration-store-telegram-mobile-link.command';
+import { IssueIntegrationStoreTelegramMobileLink } from './usecases/issue-integration-store-telegram-mobile-link/issue-integration-store-telegram-mobile-link.usecase';
+import { MsTeamsHealthCheckCommand } from './usecases/msteams-health-check/msteams-health-check.command';
+import {
+  MsTeamsHealthCheck,
+  MsTeamsHealthCheckResult,
+} from './usecases/msteams-health-check/msteams-health-check.usecase';
 import { RemoveIntegrationCommand } from './usecases/remove-integration/remove-integration.command';
 import { RemoveIntegration } from './usecases/remove-integration/remove-integration.usecase';
 import { SetIntegrationAsPrimaryCommand } from './usecases/set-integration-as-primary/set-integration-as-primary.command';
 import { SetIntegrationAsPrimary } from './usecases/set-integration-as-primary/set-integration-as-primary.usecase';
+import { SlackQuickSetupCommand } from './usecases/slack-quick-setup/slack-quick-setup.command';
+import { SlackQuickSetup } from './usecases/slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegrationCommand } from './usecases/update-integration/update-integration.command';
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
+import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
+import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
 
 @ApiCommonResponses()
 @Controller('/integrations')
@@ -92,9 +124,22 @@ export class IntegrationsController {
     private calculateLimitNovuIntegration: CalculateLimitNovuIntegration,
     private organizationRepository: CommunityOrganizationRepository,
     private generateChatOauthUrlUsecase: GenerateChatOauthUrl,
+    private generateConnectOauthUrlUsecase: GenerateConnectOauthUrl,
+    private generateLinkUserOauthUrlUsecase: GenerateLinkUserOauthUrl,
     private chatOauthCallbackUsecase: ChatOauthCallback,
-    private featureFlagsService: FeatureFlagsService
-  ) {}
+    private slackQuickSetupUsecase: SlackQuickSetup,
+    private featureFlagsService: FeatureFlagsService,
+    private generateMsTeamsArmTemplateUsecase: GenerateMsTeamsArmTemplate,
+    private getMsTeamsArmTemplateUsecase: GetMsTeamsArmTemplate,
+    private generateAzureSetupOauthUrlUsecase: GenerateAzureSetupOauthUrl,
+    private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
+    private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
+    private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
+    private issueIntegrationStoreTelegramMobileLinkUsecase: IssueIntegrationStoreTelegramMobileLink,
+    private logger: PinoLogger
+  ) {
+    this.logger.setContext(IntegrationsController.name);
+  }
 
   @Get('/')
   @ApiOkResponse({
@@ -117,6 +162,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -143,6 +189,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
+        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
       })
     );
   }
@@ -191,6 +238,8 @@ export class IntegrationsController {
     @Body() body: CreateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
+      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.createIntegrationUsecase.execute(
         CreateIntegrationCommand.create({
@@ -201,6 +250,7 @@ export class IntegrationsController {
           organizationId: user.organizationId,
           providerId: body.providerId,
           channel: body.channel,
+          kind: body.kind,
           credentials: body.credentials,
           active: body.active ?? false,
           check: body.check ?? false,
@@ -244,6 +294,8 @@ export class IntegrationsController {
     @Body() body: UpdateIntegrationRequestDto
   ): Promise<IntegrationResponseDto> {
     try {
+      this.assertEnvironmentScopedForApiKey(user, body._environmentId);
+
       const canAccessCredentials = await this.canUserAccessCredentials(user);
       const integration = await this.updateIntegrationUsecase.execute(
         UpdateIntegrationCommand.create({
@@ -259,6 +311,7 @@ export class IntegrationsController {
           check: body.check ?? false,
           conditions: body.conditions,
           configurations: body.configurations,
+          restrictToUserEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
         })
       );
 
@@ -405,13 +458,197 @@ export class IntegrationsController {
     );
   }
 
+  @Get('/:integrationId/msteams-arm-template/deploy-url')
+  @ApiOkResponse({
+    description: 'Signed Azure Portal "Deploy to Azure" URL for the MS Teams ARM template.',
+  })
+  @ApiOperation({
+    summary: 'Get MS Teams ARM template deploy URL',
+    description:
+      'Returns a short-lived signed URL that opens the Azure Portal with a pre-filled ARM template to create the Azure Bot resource and enable the MS Teams channel.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async getMsTeamsArmTemplateDeployUrl(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string
+  ): Promise<{ deployUrl: string }> {
+    return this.generateMsTeamsArmTemplateUsecase.execute(
+      GenerateMsTeamsArmTemplateCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        integrationId,
+      })
+    );
+  }
+
+  /**
+   * Public endpoint fetched by Azure Portal when the user clicks "Deploy to Azure".
+   * Protected by an HMAC-signed, time-expiring `sig` + `exp` query parameter pair —
+   * no session cookie is available because Azure's servers make this request, not the browser.
+   */
+  @Get('/:integrationId/msteams-arm-template')
+  @ApiExcludeEndpoint()
+  @ApiOperation({ summary: 'Serve MS Teams ARM template JSON (signed)' })
+  async getMsTeamsArmTemplateJson(
+    @Res() res: Response,
+    @Param('integrationId') integrationId: string,
+    @Query('sig') sig: string,
+    @Query('exp') exp: string
+  ): Promise<void> {
+    if (!sig || !exp) {
+      throw new BadRequestException('Missing required parameters: sig, exp');
+    }
+
+    const { template } = await this.getMsTeamsArmTemplateUsecase.execute(integrationId, sig, exp);
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Cache-Control', 'no-store');
+    res.send(JSON.stringify(template, null, 2));
+  }
+
+  /**
+   * Quick Setup: generate an Azure AD OAuth URL so Novu can create the App Registration
+   * on the user's behalf via Microsoft Graph.
+   */
+  @Get('/:integrationId/msteams-azure-setup/oauth-url')
+  @ApiOkResponse({
+    description: 'Azure AD OAuth URL for the Quick Setup flow (Novu creates the app registration).',
+  })
+  @ApiOperation({
+    summary: 'Get Azure Quick Setup OAuth URL',
+    description:
+      'Returns an Azure AD OAuth URL that authorizes Novu to create an App Registration and client secret on your behalf via Microsoft Graph.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async getAzureSetupOauthUrl(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string
+  ): Promise<{ url: string }> {
+    const url = await this.generateAzureSetupOauthUrlUsecase.execute(
+      GenerateAzureSetupOauthUrlCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        environmentId: user.environmentId,
+        integrationId,
+      })
+    );
+
+    return { url };
+  }
+
+  /**
+   * Health-check endpoint polled by the dashboard to determine if the saved MS Teams
+   * credentials, app catalog entry, and Graph permissions are ready after the Quick
+   * Setup OAuth flow.
+   */
+  @Get('/:integrationId/msteams-health')
+  @ApiOkResponse({
+    description: 'Per-checkpoint health status for an MS Teams integration after Quick Setup.',
+  })
+  @ApiOperation({
+    summary: 'Get MS Teams integration health status',
+    description:
+      'Returns the readiness status of the stored MS Teams credentials, app catalog entry, and Graph permissions. Poll this endpoint after the OAuth setup completes to determine when it is safe to proceed to admin consent.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
+  async getMsTeamsHealth(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string,
+    @Query('checks') checksParam?: string
+  ): Promise<MsTeamsHealthCheckResult> {
+    const checks = checksParam
+      ? checksParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+    return this.msTeamsHealthCheckUsecase.execute(
+      MsTeamsHealthCheckCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        integrationId,
+        checks,
+      })
+    );
+  }
+
+  /**
+   * Quick Setup callback: Azure AD redirects here after the user authorizes Novu.
+   * Creates the App Registration, secret, and service principal via Graph, saves
+   * credentials to the integration, then attempts to upload the Teams app to the catalog.
+   * Returns a self-closing script that posts a message to the opener tab and closes itself.
+   */
+  @Get('/chat/oauth/azure-setup/callback')
+  @ApiExcludeEndpoint()
+  @ApiOperation({ summary: 'Azure Quick Setup OAuth callback' })
+  async handleAzureSetupOauthCallback(
+    @Res() res: Response,
+    @Query('code') code?: string,
+    @Query('state') state?: string,
+    @Query('error') error?: string,
+    @Query('error_description') errorDescription?: string
+  ): Promise<void> {
+    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+
+    if (!state) {
+      res
+        .status(400)
+        .type('html')
+        .send(
+          AzureSetupOauthCallback.buildPopupHtml({
+            success: false,
+            errorMessage: 'Missing required OAuth parameter: state',
+          })
+        );
+
+      return;
+    }
+
+    try {
+      const result = await this.azureSetupOauthCallbackUsecase.execute(
+        AzureSetupOauthCallbackCommand.create({
+          state,
+          code,
+          error,
+          errorDescription,
+        })
+      );
+
+      res.type('html').send(result.html);
+    } catch (err: unknown) {
+      this.logger.error({ err }, 'Azure OAuth callback failed');
+
+      res
+        .status(200)
+        .type('html')
+        .send(
+          AzureSetupOauthCallback.buildPopupHtml({
+            success: false,
+            errorMessage: 'An unexpected error occurred while completing Azure setup.',
+          })
+        );
+    }
+  }
+
+  /**
+   * @deprecated Use POST /integrations/channel-connections/oauth or POST /integrations/channel-endpoints/oauth instead.
+   */
   @Post('/chat/oauth')
   @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
   @ApiOperation({
     summary: 'Generate chat OAuth URL',
-    description: `Generate an OAuth URL for chat integrations like Slack and MS Teams. 
+    description: `**Deprecated** — use \`POST /integrations/channel-connections/oauth\` (connect) or \`POST /integrations/channel-endpoints/oauth\` (link_user) instead.
+    Generate an OAuth URL for chat integrations like Slack and MS Teams. 
     This URL allows subscribers to authorize the integration, enabling the system to send messages 
     through their chat workspace. The generated URL expires after 5 minutes.`,
+    deprecated: true,
   })
   @SdkMethodName('generateChatOAuthUrl')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
@@ -421,8 +658,6 @@ export class IntegrationsController {
     @UserSession() user: UserSessionData,
     @Body() body: GenerateChatOauthUrlRequestDto
   ): Promise<GenerateChatOAuthUrlResponseDto> {
-    await this.checkFeatureEnabled(user);
-
     const url = await this.generateChatOauthUrlUsecase.execute(
       GenerateChatOauthUrlCommand.create({
         environmentId: user.environmentId,
@@ -432,6 +667,72 @@ export class IntegrationsController {
         connectionIdentifier: body.connectionIdentifier,
         context: body.context,
         scope: body.scope,
+        userScope: body.userScope,
+        mode: body.mode,
+        connectionMode: body.connectionMode,
+        autoLinkUser: body.autoLinkUser,
+      })
+    );
+
+    return { url };
+  }
+
+  @Post('/channel-connections/oauth')
+  @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
+  @ApiOperation({
+    summary: 'Generate OAuth URL for a workspace/tenant connection',
+    description: `Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent). 
+    The generated URL expires after 5 minutes.`,
+  })
+  @SdkMethodName('generateConnectOAuthUrl')
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @ExternalApiAccessible()
+  @RequireAuthentication()
+  async generateConnectOAuthUrl(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateConnectOauthUrlRequestDto
+  ): Promise<GenerateChatOAuthUrlResponseDto> {
+    const url = await this.generateConnectOauthUrlUsecase.execute(
+      GenerateConnectOauthUrlCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId: body.subscriberId,
+        integrationIdentifier: body.integrationIdentifier,
+        connectionIdentifier: body.connectionIdentifier,
+        context: body.context,
+        scope: body.scope,
+        connectionMode: body.connectionMode,
+        autoLinkUser: body.autoLinkUser,
+      })
+    );
+
+    return { url };
+  }
+
+  @Post('/channel-endpoints/oauth')
+  @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
+  @ApiOperation({
+    summary: 'Generate OAuth URL to link a subscriber user identity',
+    description: `Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID). 
+    The generated URL expires after 5 minutes.`,
+  })
+  @SdkMethodName('generateLinkUserOAuthUrl')
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @ExternalApiAccessible()
+  @RequireAuthentication()
+  async generateLinkUserOAuthUrl(
+    @UserSession() user: UserSessionData,
+    @Body() body: GenerateLinkUserOauthUrlRequestDto
+  ): Promise<GenerateChatOAuthUrlResponseDto> {
+    const url = await this.generateLinkUserOauthUrlUsecase.execute(
+      GenerateLinkUserOauthUrlCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        subscriberId: body.subscriberId,
+        integrationIdentifier: body.integrationIdentifier,
+        connectionIdentifier: body.connectionIdentifier,
+        context: body.context,
+        userScope: body.userScope,
       })
     );
 
@@ -477,7 +778,7 @@ export class IntegrationsController {
 
     if (result.type === ResponseTypeEnum.HTML) {
       res.setHeader('Content-Type', 'text/html');
-      res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline'");
+      res.setHeader('Content-Security-Policy', CONNECTION_RESULT_CSP);
       res.send(result.result);
 
       return;
@@ -486,19 +787,107 @@ export class IntegrationsController {
     res.redirect(result.result);
   }
 
-  private async checkFeatureEnabled(user: UserSessionData) {
-    const isEnabled = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.IS_SLACK_TEAMS_ENABLED,
-      defaultValue: false,
-      organization: { _id: user.organizationId },
-    });
+  @Post('/whatsapp/validate-token')
+  @ApiResponse(WhatsAppValidateTokenResponseDto, 200)
+  @ApiOperation({
+    summary: 'Validate WhatsApp Business credentials inline',
+    description:
+      'Calls the Meta Graph API to validate a WhatsApp Cloud API access token (and optional phone number ID) before the user saves the integration. Returns the available scopes and resolves the WhatsApp Business Account ID, used by the dashboard onboarding flow to surface friendly inline errors.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async validateWhatsAppToken(
+    @UserSession() user: UserSessionData,
+    @Body() body: WhatsAppValidateTokenRequestDto
+  ): Promise<WhatsAppValidateTokenResponseDto> {
+    return this.whatsAppValidateTokenUsecase.execute(
+      WhatsAppValidateTokenCommand.create({
+        userId: user._id,
+        organizationId: user.organizationId,
+        accessToken: body.accessToken,
+        phoneNumberIdentification: body.phoneNumberIdentification,
+        businessAccountId: body.businessAccountId,
+      })
+    );
+  }
 
-    if (!isEnabled) {
-      throw new NotFoundException('Feature not enabled');
+  @Post('/telegram/mobile-link')
+  @ApiResponse(IssueIntegrationStoreTelegramMobileLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a short-lived Telegram mobile setup link for the integration store',
+    description:
+      'Returns an opaque, single-use, short-lived setup token plus a mobile URL. The visitor pastes the BotFather token on the linked landing page and the consume endpoint creates a brand-new Telegram integration in the current environment.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @HttpCode(HttpStatus.OK)
+  async createTelegramMobileLink(
+    @UserSession() user: UserSessionData
+  ): Promise<IssueIntegrationStoreTelegramMobileLinkResponseDto> {
+    return this.issueIntegrationStoreTelegramMobileLinkUsecase.execute(
+      IssueIntegrationStoreTelegramMobileLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+      })
+    );
+  }
+
+  @Post('/:integrationId/slack-quick-setup')
+  @ExternalApiAccessible()
+  @ApiResponse(SlackQuickSetupResponseDto, 201)
+  @ApiOperation({
+    summary: 'Quick-setup a Slack integration',
+    description: `Creates a Slack app from a manifest using the provided App Configuration Token and saves the resulting credentials (client ID, client secret, signing secret) directly on the integration. The configuration token is used ephemerally and is never stored.`,
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  async slackQuickSetup(
+    @UserSession() user: UserSessionData,
+    @Param('integrationId') integrationId: string,
+    @Body() body: SlackQuickSetupRequestDto
+  ): Promise<SlackQuickSetupResponseDto> {
+    return this.slackQuickSetupUsecase.execute(
+      SlackQuickSetupCommand.create({
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        userId: user._id,
+        integrationId,
+        agentId: body.agentId,
+        configToken: body.configToken,
+        subscriberId: body.subscriberId,
+        connectionIdentifier: body.connectionIdentifier,
+      })
+    );
+  }
+
+  private assertEnvironmentScopedForApiKey(user: UserSessionData, requestedEnvironmentId?: string): void {
+    if (user.scheme !== ApiAuthSchemeEnum.API_KEY) {
+      return;
+    }
+
+    if (requestedEnvironmentId && requestedEnvironmentId !== user.environmentId) {
+      throw new ForbiddenException(
+        'API key authentication is scoped to a single environment and cannot target a different `_environmentId`. ' +
+          'Use an API key from the target environment, or authenticate with a session token.'
+      );
     }
   }
 
   private async canUserAccessCredentials(user: UserSessionData): Promise<boolean> {
+    /*
+     * API-key auth must never receive decrypted provider credentials, regardless of RBAC state.
+     * API keys grant ALL_PERMISSIONS in `community.auth.service.ts`, which would otherwise
+     * allow the RBAC path below to succeed and leak every stored provider secret to any
+     * caller holding an environment API key.
+     */
+    if (user.scheme === ApiAuthSchemeEnum.API_KEY) {
+      return false;
+    }
+
     const organization = await this.organizationRepository.findOne({
       _id: user.organizationId,
     });

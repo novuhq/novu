@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   CommunityOrganizationRepository,
+  DomainRepository,
   EnvironmentEntity,
   EnvironmentRepository,
   EnvironmentVariableRepository,
@@ -41,6 +42,7 @@ export const SYSTEM_LIMITS = {
   SUBSCRIBER_DEVICE_TOKENS: 100,
   ENVIRONMENT_VARIABLES: 10,
   STEP_RESOLVERS: 1000,
+  DOMAINS: 10,
 } as const;
 
 /* The threshold below which validation is skipped */
@@ -60,7 +62,8 @@ export class ResourceValidatorService {
     private featureFlagService: FeatureFlagsService,
     private layoutRepository: LayoutRepository,
     private environmentVariableRepository: EnvironmentVariableRepository,
-    private messageTemplateRepository: MessageTemplateRepository
+    private messageTemplateRepository: MessageTemplateRepository,
+    private domainRepository: DomainRepository
   ) {}
 
   async validateStepsLimit(environmentId: string, organizationId: string, steps: NotificationStep[]): Promise<void> {
@@ -314,6 +317,25 @@ export class ResourceValidatorService {
         message: `Environment variables limit exceeded. Maximum allowed variables is ${maxEnvironmentVariablesLimit}.`,
         currentCount: variablesCount,
         limit: maxEnvironmentVariablesLimit,
+      });
+    }
+  }
+
+  async validateDomainsLimit(organizationId: string): Promise<void> {
+    const domainsCount = await this.domainRepository.count({
+      _organizationId: organizationId,
+    });
+    const maxDomainsLimit = await this.featureFlagService.getFlag({
+      key: FeatureFlagsKeysEnum.MAX_DOMAINS_LIMIT_NUMBER,
+      defaultValue: SYSTEM_LIMITS.DOMAINS,
+      organization: { _id: organizationId },
+    });
+
+    if (domainsCount >= maxDomainsLimit) {
+      throw new BadRequestException({
+        message: `Domain limit exceeded. Maximum allowed domains is ${maxDomainsLimit}.`,
+        currentCount: domainsCount,
+        limit: maxDomainsLimit,
       });
     }
   }

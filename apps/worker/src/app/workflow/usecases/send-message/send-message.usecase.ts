@@ -20,6 +20,7 @@ import {
 } from '@novu/application-generic';
 import {
   ContextRepository,
+  EnvironmentEntity,
   EnvironmentRepository,
   EnvironmentVariableRepository,
   JobEntity,
@@ -87,7 +88,7 @@ export class SendMessage {
 
   @InstrumentUsecase()
   public async execute(command: SendMessageCommand): Promise<SendMessageResult> {
-    const variables = await this.buildVariables(command);
+    const { compileContext: variables, environment } = await this.buildVariables(command);
 
     const stepType = command.step?.template?.type;
 
@@ -168,6 +169,7 @@ export class SendMessage {
       compileContext: variables,
       bridgeData: bridgeResponse,
       severity,
+      environment,
     });
 
     switch (stepType) {
@@ -419,7 +421,9 @@ export class SendMessage {
   }
 
   @Instrument()
-  private async buildVariables(command: SendMessageCommand): Promise<ICompileContext> {
+  private async buildVariables(
+    command: SendMessageCommand
+  ): Promise<{ compileContext: ICompileContext; environment: EnvironmentEntity }> {
     const [subscriber, actor, tenant, context, envVars, environmentEntity] = await Promise.all([
       this.getSubscriberBySubscriberId({
         subscriberId: command.subscriberId,
@@ -450,7 +454,7 @@ export class SendMessage {
       ...environmentSystemVars,
     };
 
-    return {
+    const compileContext: ICompileContext = {
       subscriber,
       payload: command.payload,
       step: {
@@ -463,6 +467,8 @@ export class SendMessage {
       ...(context && { context }),
       env,
     };
+
+    return { compileContext, environment: environmentEntity };
   }
 
   @Instrument()

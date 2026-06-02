@@ -1,10 +1,21 @@
+import { MemberRoleEnum, PermissionsEnum } from '@novu/shared';
 import React from 'react';
 import { createContextHook } from '../context';
 import { DecodedJwt } from '.';
 import { getJwtToken, isJwtValid } from './jwt-manager';
-import { createUserFromJwt } from './user.types';
+import { createUserFromJwt, SelfHostedUser } from './user.types';
 
-export const AuthContext = React.createContext({});
+export type SelfHostedAuthContextValue = {
+  currentUser: SelfHostedUser | null;
+  has: (params: { permission: PermissionsEnum } | { role: MemberRoleEnum }) => boolean;
+};
+
+const defaultAuthContextValue: SelfHostedAuthContextValue = {
+  currentUser: null,
+  has: () => true,
+};
+
+export const AuthContext = React.createContext<SelfHostedAuthContextValue>(defaultAuthContextValue);
 
 export function AuthContextProvider({ children }: any) {
   const jwt = getJwtToken();
@@ -18,4 +29,4 @@ export function AuthContextProvider({ children }: any) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export const useAuth = createContextHook(AuthContext);
+export const useAuthContext = createContextHook(AuthContext);

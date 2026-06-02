@@ -25,6 +25,13 @@ export type Variable = {
 
   /** The end index of the output */
   outputEnd: number;
+
+  /** True when this variable is used as a collection in a {% for %} or {% tablerow %} loop */
+  isForLoopCollection?: boolean;
+
+  /** Property paths accessed on the iterator inside the loop body (e.g. ["label", "id"]).
+   *  Non-empty means array of objects; empty means array of scalars. */
+  iteratorProperties?: string[];
 };
 
 export type VariableDetails = {

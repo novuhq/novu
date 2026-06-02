@@ -50,7 +50,7 @@ export class CreateWebhookPortalUsecase {
         appId: app.uid!,
       };
     } catch (error) {
-      throw new BadRequestException(`Failed to generate Svix portal token: ${error?.message}`);
+      throw new BadRequestException(`Failed to generate webhook portal token: ${error?.message}`);
     }
   }
 }

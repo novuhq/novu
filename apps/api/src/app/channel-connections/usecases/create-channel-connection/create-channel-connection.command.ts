@@ -1,7 +1,7 @@
 import { IsValidContextPayload } from '@novu/application-generic';
-import { ContextPayload } from '@novu/shared';
+import { ConnectionMode, ContextPayload } from '@novu/shared';
 import { Type } from 'class-transformer';
-import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsDefined, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentCommand } from '../../../shared/commands/project.command';
 import { AuthDto, WorkspaceDto } from '../../dtos/shared.dto';
 
@@ -21,6 +21,11 @@ export class CreateChannelConnectionCommand extends EnvironmentCommand {
   @IsOptional()
   @IsValidContextPayload({ maxCount: 5 })
   context?: ContextPayload;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(['subscriber', 'shared'])
+  connectionMode?: ConnectionMode;
 
   @IsDefined()
   @ValidateNested()

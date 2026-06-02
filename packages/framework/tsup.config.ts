@@ -7,6 +7,8 @@ const frameworks: SupportedFrameworkName[] = ['h3', 'express', 'next', 'nuxt', '
 const baseConfig: Options = {
   entry: [
     'src/index.ts',
+    'src/jsx-runtime.ts',
+    'src/jsx-dev-runtime.ts',
     'src/internal/index.ts',
     'src/step-resolver.ts',
     'src/validators.ts',
@@ -19,6 +21,7 @@ const baseConfig: Options = {
   minifyWhitespace: true,
   minifyIdentifiers: true,
   minifySyntax: true,
+  noExternal: ['chat'],
   define: {
     SDK_VERSION: `"${version}"`,
     FRAMEWORK_VERSION: `"2024-06-26"`,
