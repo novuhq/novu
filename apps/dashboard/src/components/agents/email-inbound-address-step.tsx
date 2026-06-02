@@ -16,9 +16,6 @@ type EmailInboundAddressStepProps = {
  * `completed` and never participates in `firstIncompleteStep` resolution —
  * it exists purely to advertise the address before the user picks an
  * additional channel.
- *
- * Cloud agents with a shared inbox use {@link AgentListenStep} instead, which
- * merges the address block and provider cards into a single step.
  */
 export function EmailInboundAddressStep({
   index,

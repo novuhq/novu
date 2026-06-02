@@ -231,6 +231,22 @@ function EmailTestActions({ agentName, inboundAddress }: { agentName: string; in
   );
 }
 
+function renderProviderSendActions(
+  providerId: string | undefined,
+  agentName: string,
+  sharedInboundAddress: string | undefined
+) {
+  if (providerId === ChatProviderIdEnum.Slack) {
+    return <CopySlackMessageButton agentName={agentName} />;
+  }
+
+  if (providerId === EmailProviderIdEnum.NovuAgent && sharedInboundAddress) {
+    return <EmailTestActions agentName={agentName} inboundAddress={sharedInboundAddress} />;
+  }
+
+  return undefined;
+}
+
 function useBridgeConnectionPolling(agent: AgentResponse, onBridgeConnected?: () => void) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
@@ -420,13 +436,7 @@ export function AgentCodeSetupSection({
         status={deriveStepStatus(stepOffset + 2, firstIncompleteStep)}
         title={getProviderSendTitle(providerId)}
         description={getProviderSendDescription(providerId, agent.name)}
-        rightContent={
-          providerId === ChatProviderIdEnum.Slack ? (
-            <CopySlackMessageButton agentName={agent.name} />
-          ) : providerId === EmailProviderIdEnum.NovuAgent && sharedInboundAddress ? (
-            <EmailTestActions agentName={agent.name} inboundAddress={sharedInboundAddress} />
-          ) : undefined
-        }
+        rightContent={renderProviderSendActions(providerId, agent.name, sharedInboundAddress)}
       />
 
       <BridgeConnectionStatus connected={bridgeConnected} onAddProvider={onAddProvider} />

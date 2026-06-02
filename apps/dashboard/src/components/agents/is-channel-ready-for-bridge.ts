@@ -6,14 +6,9 @@ type IsChannelReadyForBridgeParams = {
   selectedProviderId: string | undefined;
   selectedIntegrationId: string | undefined;
   agentIntegrationLinks: AgentIntegrationLink[];
-  /** Cloud agents with an auto-provisioned shared inbox use the email-card selection path. */
   useCloudMergedListenStep: boolean;
 };
 
-/**
- * Returns whether the user has completed channel setup enough to surface bridge
- * handler steps for custom-code agents.
- */
 export function isChannelReadyForBridge({
   selectedProviderId,
   selectedIntegrationId,

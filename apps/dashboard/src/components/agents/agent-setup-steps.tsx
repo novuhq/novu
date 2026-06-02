@@ -25,7 +25,6 @@ import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { AgentListenStep } from './agent-listen-step';
 import { EmailInboundAddressStep } from './email-inbound-address-step';
 import { EmailSetupGuide } from './email-setup-guide';
-import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
 import { SetupStep } from './setup-guide-primitives';
@@ -238,8 +237,6 @@ export function AgentSetupSteps({
   }, [agentIntegrationLinks]);
 
   const isManagedRuntime = agent.runtime === 'managed';
-  // The merged listen step (shared address + Email card) is for custom-code agents
-  // completing bridge setup. Managed agents pick chat providers only.
   const useCloudMergedListenStep = Boolean(sharedInboundAddress) && !isManagedRuntime;
   const legacyDefaultFromAgent = useCloudMergedListenStep ? undefined : agent.integrations?.[0];
   const effectiveIntegrationId = validatedSelectedId ?? legacyDefaultFromAgent?.integrationId;
@@ -273,16 +270,15 @@ export function AgentSetupSteps({
   const channelStepIndex = useCloudMergedListenStep ? listenStepIndex : legacyChannelStepIndex;
   const providerGuideStepOffset = channelStepIndex + 1;
 
+  const channelReadyForBridge = isChannelReadyForBridge({
+    selectedProviderId,
+    selectedIntegrationId: validatedSelectedId,
+    agentIntegrationLinks,
+    useCloudMergedListenStep,
+  });
+
   const skipProviderGuide =
-    useCloudMergedListenStep &&
-    selectedProviderId === EmailProviderIdEnum.NovuAgent &&
-    Boolean(validatedSelectedId) &&
-    agentIntegrationLinks.some(
-      (link) =>
-        link.integration._id === validatedSelectedId &&
-        link.integration.providerId === EmailProviderIdEnum.NovuAgent &&
-        isAgentIntegrationConnected(link)
-    );
+    useCloudMergedListenStep && selectedProviderId === EmailProviderIdEnum.NovuAgent && channelReadyForBridge;
 
   const bridgeStepOffset = skipProviderGuide
     ? channelStepIndex + 1
@@ -291,13 +287,6 @@ export function AgentSetupSteps({
   const totalSteps = useCloudMergedListenStep
     ? brainStepsBefore + 1 + PROVIDER_GUIDE_RESERVED_STEPS + handlerStepsAfter
     : brainStepsBefore + (showLegacyEmailInboundStep ? 2 : 1) + PROVIDER_GUIDE_RESERVED_STEPS + handlerStepsAfter;
-
-  const channelReadyForBridge = isChannelReadyForBridge({
-    selectedProviderId,
-    selectedIntegrationId: validatedSelectedId,
-    agentIntegrationLinks,
-    useCloudMergedListenStep,
-  });
 
   const firstIncompleteStep = useMemo(() => {
     if (!effectiveIntegrationId) {
@@ -356,16 +345,13 @@ export function AgentSetupSteps({
   useEffect(() => {
     if (!isOnboarding || channelConnectedTrackedRef.current) return;
 
-    if (useCloudMergedListenStep && selectedProviderId === EmailProviderIdEnum.NovuAgent && validatedSelectedId) {
-      const emailLink = agentIntegrationLinks.find((link) => link.integration._id === validatedSelectedId);
-      if (!emailLink || !isAgentIntegrationConnected(emailLink)) return;
-
+    if (useCloudMergedListenStep && channelReadyForBridge && selectedProviderId === EmailProviderIdEnum.NovuAgent) {
       channelConnectedTrackedRef.current = true;
       onChannelConnected?.(EmailProviderIdEnum.NovuAgent);
       telemetry(TelemetryEvent.ONBOARDING_CHANNEL_CONNECTED, {
         agentIdentifier: agent.identifier,
         providerId: EmailProviderIdEnum.NovuAgent,
-        integrationIdentifier: emailLink.integration.identifier,
+        integrationIdentifier: selectedIntegration?.identifier,
       });
 
       return;
@@ -387,15 +373,15 @@ export function AgentSetupSteps({
     });
   }, [
     agent.identifier,
-    agentIntegrationLinks,
     agentIntegrationsQuery.data?.data,
+    channelReadyForBridge,
     hasConnectedIntegration,
     isOnboarding,
     onChannelConnected,
+    selectedIntegration?.identifier,
     selectedProviderId,
     telemetry,
     useCloudMergedListenStep,
-    validatedSelectedId,
   ]);
 
   useEffect(() => {
@@ -524,12 +510,12 @@ export function AgentSetupSteps({
         </div>
       )}
 
-      {useCloudMergedListenStep && sharedInboundAddress ? (
+      {useCloudMergedListenStep ? (
         <AgentListenStep
           index={listenStepIndex}
           totalSteps={totalSteps}
           firstIncompleteStep={firstIncompleteStep}
-          sharedInboundAddress={sharedInboundAddress}
+          sharedInboundAddress={sharedInboundAddress!}
           agentIdentifier={agent.identifier}
           agentName={agent.name}
           selectedIntegrationId={selectedIntegrationIdForCards}

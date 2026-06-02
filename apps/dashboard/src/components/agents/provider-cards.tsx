@@ -173,10 +173,6 @@ type ProviderCardsProps = {
    *     pre-existing integrations are only unlinked.
    */
   existingLinks?: AgentIntegrationLink[];
-  /**
-   * Cloud-only: when the agent has an auto-provisioned shared inbox, keep the
-   * Email card in the picker so users can select it without going through Slack.
-   */
   showCloudEmailCard?: boolean;
   onSelect: (providerId: string, integration?: IIntegration) => void;
 };
@@ -486,9 +482,12 @@ export function ProviderCards({
     );
 
     if (existingNovuLink && isAgentIntegrationConnected(existingNovuLink)) {
-      onSelect(item.providerId, existingNovuLink.integration as IIntegration);
+      const integration = integrations?.find((i) => i._id === existingNovuLink.integration._id);
+      if (integration) {
+        onSelect(item.providerId, integration);
 
-      return;
+        return;
+      }
     }
 
     void linkProvider(
