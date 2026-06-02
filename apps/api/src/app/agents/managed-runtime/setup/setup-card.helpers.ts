@@ -290,10 +290,15 @@ export function buildMcpRowPlainText(mcp: SetupCardRow): string {
   return body.join('\n');
 }
 
-type SetupActionButton = { type: 'link-button'; label: string; url: string; style?: string };
+interface SetupActionButton {
+  type: 'link-button';
+  label: string;
+  url: string;
+  style?: string;
+}
 
-function buildSetupMcpActionButtons(mcp: SetupCardRow): SetupActionButton[] {
-  const authorizeUrl = mcp.authorizeUrl as string;
+function buildSetupMcpActionButtons(mcp: SetupCardRow & { authorizeUrl: string }): SetupActionButton[] {
+  const authorizeUrl = mcp.authorizeUrl;
 
   if (mcp.authorizeUrlWithAutoApprove && !mcp.connectButtonLabel) {
     const labels = resolveSetupConnectButtonLabels(mcp);
@@ -326,12 +331,13 @@ export function buildSetupMcpPortableRowBlocks(mcp: SetupCardRow): Record<string
     blocks.push({ type: 'text', content: body, style: 'muted' });
   }
 
-  if (mcp.authorizeUrlWithAutoApprove && isSetupMcpRowPending(mcp)) {
+  if (mcp.authorizeUrlWithAutoApprove && !mcp.connectButtonLabel && isSetupMcpRowPending(mcp)) {
     blocks.push({ type: 'text', content: SETUP_AUTO_APPROVE_HINT, style: 'muted' });
   }
 
-  if (mcp.authorizeUrl && isSetupMcpRowPending(mcp)) {
-    blocks.push({ type: 'actions', children: buildSetupMcpActionButtons(mcp) });
+  const authorizeUrl = mcp.authorizeUrl;
+  if (authorizeUrl && isSetupMcpRowPending(mcp)) {
+    blocks.push({ type: 'actions', children: buildSetupMcpActionButtons({ ...mcp, authorizeUrl }) });
   }
 
   return blocks;
