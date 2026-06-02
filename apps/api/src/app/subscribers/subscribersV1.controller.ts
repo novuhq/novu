@@ -658,9 +658,8 @@ export class SubscribersV1Controller {
   @Post('/:subscriberId/messages/markAs')
   @ApiOperation({
     summary: 'Mark a subscriber feed messages as seen or as read',
-    description: `This API is deprecated, use v2 API instead. Introducing '/:subscriberId/messages/mark-as endpoint for consistent read and seen message handling,
+    description: `Introducing '/:subscriberId/messages/mark-as endpoint for consistent read and seen message handling,
      deprecating old legacy endpoint.`,
-    deprecated: true,
   })
   @SdkGroupName('Subscribers.Messages')
   @SdkMethodName('markAs')
@@ -689,7 +688,7 @@ export class SubscribersV1Controller {
   @ApiOperation({
     summary: 'Update notifications state',
     description: `This API is deprecated, use v2 API instead. Update subscriber's multiple in-app notifications state such as seen, read, unseen or unread by **subscriberId**. 
-      **messageId** is of type mongodbId of notifications. This API is deprecated, use v2 API instead.`,
+      **messageId** is of type mongodbId of notifications.`,
     deprecated: true,
   })
   @ExternalApiAccessible()
