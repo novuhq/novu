@@ -3,6 +3,7 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { Chat, Message, ReactionEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -68,7 +69,8 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly logger: PinoLogger,
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly actionTokenService: AgentEmailActionTokenService,
+    private readonly emailActionTokenService: AgentEmailActionTokenService,
+    private readonly agentActionTokenService: AgentActionTokenService,
     private readonly agentEmailSender: AgentEmailSender
   ) {
     this.logger.setContext(this.constructor.name);
@@ -343,7 +345,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
               const userIdentifier = extractRecipientFromThreadId(threadId);
-              const { url } = await this.actionTokenService.signActionToken({
+              const { url } = await this.emailActionTokenService.signActionToken({
                 agentId,
                 agentIdentifier: config.agentIdentifier,
                 agentName: config.agentName,
@@ -409,13 +411,28 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           return;
         }
 
+        const resolvedAction = await this.agentActionTokenService.resolveForDispatch(
+          event.actionId,
+          event.value,
+          {
+            agentId,
+            integrationIdentifier: cached.config.integrationIdentifier,
+            environmentId: cached.config.environmentId,
+            organizationId: cached.config.organizationId,
+          }
+        );
+
+        if (!resolvedAction) {
+          return;
+        }
+
         await callbacks.onAction(
           agentId,
           cached.config,
           event.thread as Thread,
           {
-            id: event.actionId,
-            value: event.value,
+            id: resolvedAction.id,
+            value: resolvedAction.value,
             sourceMessageId: event.messageId,
           },
           event.user.userId

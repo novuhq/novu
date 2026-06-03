@@ -7,6 +7,10 @@ import { AgentConfigResolver } from '../../channels/agent-config-resolver.servic
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
+import {
+  AgentActionTokenService,
+  type AgentActionTokenBinding,
+} from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
@@ -96,6 +100,7 @@ export class OutboundGateway {
     private readonly conversation: AgentConversationService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly fileMaterializer: FileMaterializer,
+    private readonly actionTokenService: AgentActionTokenService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -155,12 +160,17 @@ export class OutboundGateway {
   async replyOnThread(
     thread: Thread,
     msg: OutboundMessage,
-    opts?: { failSoft?: boolean; persist?: ThreadReplyPersistContext }
+    opts?: {
+      failSoft?: boolean;
+      persist?: ThreadReplyPersistContext;
+      actionTokenBinding?: AgentActionTokenBinding;
+    }
   ): Promise<SentMessageInfo | null> {
     let sent: { id: string; threadId: string };
     try {
+      const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
       sent = await (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(
-        this.toThreadPostArg(msg)
+        postArg
       );
     } catch (err) {
       if (opts?.failSoft) {
@@ -218,8 +228,12 @@ export class OutboundGateway {
 
     const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, platform, agentId);
+    const tokenizedContent = await this.applyActionTokensForDelivery(
+      deliveryContent,
+      this.toActionTokenBinding(agentId, config)
+    );
 
-    const postArg = this.buildAdapterPostableMessage(deliveryContent);
+    const postArg = this.buildAdapterPostableMessage(tokenizedContent);
 
     const sent = await thread.post(postArg).catch(toDeliveryError);
 
@@ -256,8 +270,12 @@ export class OutboundGateway {
 
     const dmThread = await chat.openDM(platformUserId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
+    const tokenizedContent = await this.applyActionTokensForDelivery(
+      deliveryContent,
+      this.toActionTokenBinding(agentId, config)
+    );
 
-    const postArg = this.buildAdapterPostableMessage(deliveryContent);
+    const postArg = this.buildAdapterPostableMessage(tokenizedContent);
 
     const sent = await dmThread.post(postArg).catch(toDeliveryError);
 
@@ -307,15 +325,19 @@ export class OutboundGateway {
     }
 
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, platform, agentId);
+    const tokenizedContent = await this.applyActionTokensForDelivery(
+      deliveryContent,
+      this.toActionTokenBinding(agentId, config)
+    );
 
-    const editPayload = this.buildAdapterPostableMessage(deliveryContent);
+    const editPayload = this.buildAdapterPostableMessage(tokenizedContent);
 
     let editPromise: Promise<{ id: string; threadId: string }>;
-    if (deliveryContent.card) {
+    if (tokenizedContent.card) {
       editPromise = adapter.editMessage(
         platformThreadId,
         platformMessageId,
-        deliveryContent.card as unknown as AdapterPostableMessage
+        tokenizedContent.card as unknown as AdapterPostableMessage
       );
     } else {
       editPromise = adapter.editMessage(platformThreadId, platformMessageId, editPayload);
@@ -477,6 +499,53 @@ export class OutboundGateway {
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
+  }
+
+  private async buildThreadPostArg(
+    msg: OutboundMessage,
+    actionTokenBinding?: AgentActionTokenBinding
+  ): Promise<unknown> {
+    if (!msg.card || !actionTokenBinding) {
+      return this.toThreadPostArg(msg);
+    }
+
+    const tokenized = await this.applyActionTokensForDelivery({ card: msg.card }, actionTokenBinding);
+
+    return tokenized.card ?? this.toThreadPostArg(msg);
+  }
+
+  private toActionTokenBinding(
+    agentId: string,
+    config: { environmentId: string; organizationId: string; integrationIdentifier: string }
+  ): AgentActionTokenBinding {
+    return {
+      agentId,
+      integrationIdentifier: config.integrationIdentifier,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    };
+  }
+
+  private async applyActionTokensForDelivery(
+    deliveryContent: ChatSdkReplyContent,
+    binding: AgentActionTokenBinding
+  ): Promise<ChatSdkReplyContent> {
+    if (!deliveryContent.card) {
+      return deliveryContent;
+    }
+
+    try {
+      const tokenizedCard = await this.actionTokenService.tokenizeCardForDelivery(deliveryContent.card, binding);
+
+      return { ...deliveryContent, card: tokenizedCard };
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), agentId: binding.agentId },
+        'Failed to tokenize card actions; delivering with raw action ids'
+      );
+
+      return deliveryContent;
+    }
   }
 
   private extractTextFallback(msg: OutboundMessage): string {

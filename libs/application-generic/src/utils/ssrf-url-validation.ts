@@ -430,7 +430,13 @@ function performPinnedRequest(params: PinnedRequestParams): Promise<SafeOutbound
     });
 
     req.on('timeout', () => {
-      req.destroy(new Error(`Request to ${parsed.hostname} timed out after ${timeoutMs}ms.`));
+      const timeoutError: NodeJS.ErrnoException = new Error(
+        `Request to ${parsed.hostname} timed out after ${timeoutMs}ms.`
+      );
+      // Tag the error so callers (e.g. HttpClientService retry logic) can treat
+      // socket timeouts as a retryable transport failure, matching the `got` path.
+      timeoutError.code = 'ETIMEDOUT';
+      req.destroy(timeoutError);
     });
     req.on('error', reject);
 

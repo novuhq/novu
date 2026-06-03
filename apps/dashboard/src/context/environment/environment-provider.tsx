@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { EnvironmentContext } from '@/context/environment/environment-context';
 import { useFetchEnvironments } from '@/context/environment/hooks';
+import { useBootstrapOrganization } from '@/context/environment/use-bootstrap-organization';
 import { loadFromStorage, saveToStorage } from '@/utils/local-storage';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
@@ -84,6 +85,8 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     },
     [navigate, pathname, search, hash, paramsEnvironmentSlug, currentOrganization?._id]
   );
+
+  useBootstrapOrganization();
 
   const { environments, areEnvironmentsInitialLoading } = useFetchEnvironments({
     organizationId: currentOrganization?._id,
