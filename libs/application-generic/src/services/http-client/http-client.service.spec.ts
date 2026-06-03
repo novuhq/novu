@@ -192,4 +192,28 @@ describe('HttpClientService — SSRF-safe path retries', () => {
     expect(retries).to.have.lengthOf(1);
     expect(retries[0]).to.include({ attemptCount: 1, errorCode: 'ETIMEDOUT' });
   });
+
+  it('classifies an exhausted timeout as TIMEOUT and preserves the ETIMEDOUT code', async () => {
+    handler = () => {
+      // Never respond so every attempt hits the socket timeout.
+    };
+
+    const service = createService();
+    let caught: unknown;
+    try {
+      await service.request({
+        url: baseUrl,
+        method: 'GET',
+        timeout: 100,
+        enforceSsrfProtection: true,
+        retry: { limit: 1 },
+      });
+    } catch (error) {
+      caught = error;
+    }
+
+    expect(caught).to.be.instanceOf(HttpClientError);
+    expect((caught as HttpClientError).type).to.equal(HttpClientErrorType.TIMEOUT);
+    expect((caught as HttpClientError).networkCode).to.equal('ETIMEDOUT');
+  });
 });

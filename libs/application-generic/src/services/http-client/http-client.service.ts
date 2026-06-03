@@ -43,7 +43,7 @@ type GotRequestParams = {
   httpsOptions: { rejectUnauthorized: boolean };
 };
 
-type SafeRequestParams = {
+interface SafeRequestParams {
   url: string;
   method: Method;
   headers: Record<string, string> | undefined;
@@ -51,14 +51,14 @@ type SafeRequestParams = {
   timeout: number;
   responseType: 'json' | 'text';
   rejectUnauthorized: boolean;
-};
+}
 
-type RetryConfig = {
+interface RetryConfig {
   retriesLimit: number;
   retryStatusCodes: number[];
   retryErrorCodes: string[];
   onRetry?: HttpRequestOptions['onRetry'];
-};
+}
 
 /** A retry signal describes which condition (status or transport code) makes the failure retryable. */
 type RetrySignal = { statusCode: number } | { errorCode: string };
@@ -153,8 +153,10 @@ export class HttpClientService {
   private async requestSafeWithRetry<T>(params: SafeRequestParams, retryConfig: RetryConfig): Promise<HttpResponse<T>> {
     const { retriesLimit, retryStatusCodes, retryErrorCodes, onRetry } = retryConfig;
 
-    // `attempt` counts retries (1 = first retry), mirroring `got`'s
-    // `attemptCount` so the backoff curve matches the non-SSRF path.
+    // `attempt` is a 1-based iteration counter: it is 1 when the initial
+    // request fails (the decision point for the first retry), 2 when the first
+    // retry fails, etc. This mirrors `got`'s `attemptCount` so the backoff curve
+    // and `onRetry` semantics are identical to the non-SSRF path.
     for (let attempt = 1; ; attempt += 1) {
       try {
         return await this.requestSafe<T>(params);
@@ -316,6 +318,21 @@ export class HttpClientService {
     }
 
     if (!(error instanceof RequestError)) {
+      // The SSRF-safe runner does not use `got`, so its transport failures
+      // surface as plain Node errors carrying an errno `code` (e.g. ETIMEDOUT,
+      // ECONNRESET). Preserve that code as `networkCode` and classify timeouts
+      // as TIMEOUT so callers branching on `error.type` / `error.networkCode`
+      // behave identically to the `got` path.
+      const networkCode = (error as NodeJS.ErrnoException | null)?.code;
+      if (typeof networkCode === 'string') {
+        return new HttpClientError({
+          type: networkCode === 'ETIMEDOUT' ? HttpClientErrorType.TIMEOUT : HttpClientErrorType.NETWORK_ERROR,
+          message: error instanceof Error ? error.message : String(error),
+          networkCode,
+          cause: error,
+        });
+      }
+
       return new HttpClientError({
         type: HttpClientErrorType.UNKNOWN,
         message: error instanceof Error ? error.message : String(error),
