@@ -106,13 +106,14 @@ export async function buildSetupRowsForMcps(params: BuildSetupRowsParams): Promi
 
     try {
       const oauthCommand = GenerateMcpOAuthUrlCommand.create({
-        userId: 'system',
+        userId: params.organizationId,
         environmentId: params.environmentId,
         organizationId: params.organizationId,
         agentIdentifier: params.agentIdentifier,
         mcpId: mcp.mcpId,
         subscriberId: params.subscriberId,
         conversationId: params.conversationId,
+        source: 'setup_card',
       });
       const oauthUrls = await params.generateMcpOAuthUrl.executeForSetupCard(oauthCommand);
       sessionRotated = sessionRotated || oauthUrls.sessionRotated;
@@ -171,7 +172,7 @@ export async function syncSetupCardMessage(params: {
   const existingMessageId = params.pendingState.setupMessageId;
 
   const replyCommandBase = {
-    userId: 'system',
+    userId: params.organizationId,
     organizationId: params.organizationId,
     environmentId: params.environmentId,
     conversationId: params.conversationId,

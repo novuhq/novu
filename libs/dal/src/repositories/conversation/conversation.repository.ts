@@ -232,6 +232,25 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  async setActivePlanMessageId(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    planMessageId: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { activePlanMessageId: planMessageId } }
+    );
+  }
+
+  async clearActivePlanMessageId(environmentId: string, organizationId: string, conversationId: string): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $unset: { activePlanMessageId: '' } }
+    );
+  }
+
   async clearPendingManagedAgentSetup(
     environmentId: string,
     organizationId: string,

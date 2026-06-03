@@ -51,6 +51,7 @@ export enum FeatureFlagsKeysEnum {
   IS_TOPIC_KEYS_VALIDATION_DRY_RUN_ENABLED = 'IS_TOPIC_KEYS_VALIDATION_DRY_RUN_ENABLED',
   IS_RBAC_ENABLED = 'IS_RBAC_ENABLED',
   IS_HTTP_LOGS_PAGE_ENABLED = 'IS_HTTP_LOGS_PAGE_ENABLED',
+  IS_INBOUND_LOGS_ENABLED = 'IS_INBOUND_LOGS_ENABLED',
   IS_TRACE_LOGS_ENABLED = 'IS_TRACE_LOGS_ENABLED',
   IS_TRACE_LOGS_READ_ENABLED = 'IS_TRACE_LOGS_READ_ENABLED',
   IS_INBOUND_WEBHOOKS_ENABLED = 'IS_INBOUND_WEBHOOKS_ENABLED',
@@ -119,6 +120,12 @@ export enum FeatureFlagsKeysEnum {
    * button is disabled.
    */
   IS_MCP_PROVIDER_MANAGED_ENABLED = 'IS_MCP_PROVIDER_MANAGED_ENABLED',
+  /**
+   * When enabled, managed agents are provisioned with `always_allow` permission
+   * policies on builtin toolsets and MCP toolsets instead of the default
+   * `always_ask`. Gates org-by-org rollout of permissive MCP defaults.
+   */
+  IS_AGENT_DEFAULT_MCP_ALWAYS_ALLOW_ENABLED = 'IS_AGENT_DEFAULT_MCP_ALWAYS_ALLOW_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

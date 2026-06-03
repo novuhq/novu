@@ -491,6 +491,19 @@ export function ProviderCards({
   };
 
   const handleNovuAgentLink = (item: ProviderCardItem) => {
+    const existingNovuLink = existingLinks?.find(
+      (link) => link.integration.providerId === EmailProviderIdEnum.NovuAgent
+    );
+
+    if (existingNovuLink && isAgentIntegrationConnected(existingNovuLink)) {
+      const integration = integrations?.find((i) => i._id === existingNovuLink.integration._id);
+      if (integration) {
+        onSelect(item.providerId, integration);
+
+        return;
+      }
+    }
+
     void linkProvider(
       {
         providerId: item.providerId,

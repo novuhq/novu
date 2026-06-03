@@ -165,7 +165,7 @@ export class HandleManagedAgentSetupInbound {
   private async sendSetupGateNudge(command: ManagedAgentSetupInboundCommand): Promise<void> {
     await this.handleAgentReply.execute(
       HandleAgentReplyCommand.create({
-        userId: 'system',
+        userId: command.organizationId,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         conversationId: command.conversationId,

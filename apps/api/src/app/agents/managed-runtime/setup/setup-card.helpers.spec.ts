@@ -1,7 +1,7 @@
 import { McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import { findOAuthMcpByServerName, isOAuthMcpPending, isProviderManagedOAuthMcp } from './oauth-mcp.types';
-import { buildSetupCard } from './setup-card.helpers';
+import { buildSetupCard, SETUP_AUTO_APPROVE_HINT } from './setup-card.helpers';
 
 describe('setup-card helpers', () => {
   describe('isProviderManagedOAuthMcp', () => {
@@ -132,6 +132,28 @@ describe('setup-card helpers', () => {
       expect(linkButton?.url).to.equal('https://platform.claude.com/workspaces/ws_1/vaults/vlt_1');
     });
 
+    it('omits the auto-approve hint when connectButtonLabel overrides the dual-button row', () => {
+      const card = buildSetupCard({
+        mcps: [
+          {
+            mcpId: 'slack',
+            name: 'Slack',
+            agentMcpServerId: 'en-1',
+            authorizeUrl: 'https://example.com/oauth/slack',
+            authorizeUrlWithAutoApprove: 'https://example.com/oauth/slack?auto_approve=true',
+            connectButtonLabel: 'Connect from provider',
+          },
+        ],
+      });
+
+      const children = card.children as Array<{ type: string; content?: string }>;
+      const autoApproveHint = children.find(
+        (block) => block.type === 'text' && block.content === SETUP_AUTO_APPROVE_HINT
+      );
+
+      expect(autoApproveHint).to.equal(undefined);
+    });
+
     it('falls back to the default "Connect" label for DCR MCPs', () => {
       const card = buildSetupCard({
         mcps: [
@@ -196,6 +218,37 @@ describe('setup-card helpers', () => {
       const linearRow = children.find((block) => block.type === 'text' && block.content?.includes('Linear'));
 
       expect(linearRow?.content).to.equal('**Linear**');
+    });
+
+    it('keeps pending rows flat (no nested card) so portable adapters render the buttons', () => {
+      const card = buildSetupCard({
+        mcps: [
+          {
+            mcpId: 'linear',
+            name: 'Linear',
+            agentMcpServerId: 'en-1',
+            authorizeUrl: 'https://example.com/oauth/linear',
+          },
+          {
+            mcpId: 'slack',
+            name: 'Slack',
+            agentMcpServerId: 'en-2',
+            authorizeUrl: 'https://example.com/oauth/slack',
+            connectButtonLabel: 'Connect from provider',
+          },
+        ],
+      });
+
+      const children = card.children as Array<{ type: string; children?: Array<{ type: string }> }>;
+
+      expect(children.some((block) => block.type === 'card')).to.equal(false);
+
+      const actionBlocks = children.filter((block) => block.type === 'actions');
+
+      expect(actionBlocks).to.have.length(2);
+      actionBlocks.forEach((actions) => {
+        expect(actions.children?.every((child) => child.type === 'link-button')).to.equal(true);
+      });
     });
   });
 });

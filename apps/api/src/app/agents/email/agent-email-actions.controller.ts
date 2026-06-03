@@ -607,9 +607,6 @@ function renderSuccessPage(params: SuccessPageParams): string {
   const { claims } = params;
   const label = claims.label || claims.actionId;
 
-  // Inline onclick on the close link so it works in both the full-page-load path AND the
-  // XHR-swap path (scripts inserted via DOMParser/replaceWith don't auto-execute, but inline
-  // event handler attributes are honored).
   const body = `
 <div class="card" data-state="success">
   <div class="check">
@@ -617,8 +614,6 @@ function renderSuccessPage(params: SuccessPageParams): string {
   </div>
   <h1 class="message-heading">Action submitted</h1>
   <p class="intro"><strong>${escapeHtml(claims.agentName)}</strong> received <strong>${escapeHtml(label)}</strong> and is processing it.</p>
-  <a class="secondary" href="javascript:void(0)" onclick="try{window.close();}catch(e){}setTimeout(function(){if(!document.hidden){var h=this&&this.nextElementSibling;if(h)h.classList.add('visible');}}.bind(this),150);return false;">← Close this tab</a>
-  <div class="cancel-hint">You can close this tab manually.</div>
 </div>`;
 
   return pageShell('Action submitted', body);

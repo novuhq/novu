@@ -213,8 +213,8 @@ export class AgentSubscriberResolver {
     }
 
     if (params.authorIsBot) {
-      this.analyticsService.track('[Agent Platform] - Bot author inbound skipped', 'system', {
-        organizationId: params.organizationId,
+      this.analyticsService.track('[Agent Platform] - Bot author inbound skipped', params.organizationId, {
+        _organization: params.organizationId,
         environmentId: params.environmentId,
         platform: params.platform,
         agentIdentifier: params.agentIdentifier,
@@ -321,8 +321,8 @@ export class AgentSubscriberResolver {
     );
 
     if (count >= limit) {
-      this.analyticsService.track('[Agent Platform] - Connect org subscriber cap reached', 'system', {
-        organizationId: params.organizationId,
+      this.analyticsService.track('[Agent Platform] - Connect org subscriber cap reached', params.organizationId, {
+        _organization: params.organizationId,
         environmentId: params.environmentId,
         platform: params.platform,
         agentIdentifier: params.agentIdentifier,
@@ -418,8 +418,8 @@ export class AgentSubscriberResolver {
       return winner.subscriberId;
     }
 
-    this.analyticsService.track('[Agent Platform] - Subscriber auto-provisioned', 'system', {
-      organizationId: params.organizationId,
+    this.analyticsService.track('[Agent Platform] - Subscriber auto-provisioned', params.organizationId, {
+      _organization: params.organizationId,
       environmentId: params.environmentId,
       platform: params.platform,
       agentIdentifier: params.agentIdentifier,

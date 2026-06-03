@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, ModuleMetadata, Provider, RequestMethod } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { FeatureFlagsService } from '@novu/application-generic';
+import { FeatureFlagsService, featureFlagsService } from '@novu/application-generic';
 import { CommunityMemberRepository, CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { AuthProviderEnum, PassportStrategyEnum } from '@novu/shared';
 import passport from 'passport';
@@ -37,7 +37,7 @@ export function getCommunityAuthModuleConfig(): ModuleMetadata {
     }),
   ];
 
-  const baseProviders = [...AUTH_STRATEGIES, AuthService, RootEnvironmentGuard];
+  const baseProviders = [...AUTH_STRATEGIES, AuthService, RootEnvironmentGuard, featureFlagsService];
 
   // Wherever is the string token used, override it with the provider
   const injectableProviders = [

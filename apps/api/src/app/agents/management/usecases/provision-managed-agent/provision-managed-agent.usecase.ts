@@ -3,6 +3,7 @@ import {
   areNovuManagedClaudeCredentialsSet,
   decryptCredentials,
   encryptCredentials,
+  FeatureFlagsService,
   getAgentRuntimeProvider,
   getNovuManagedClaudeApiKey,
   PinoLogger,
@@ -12,6 +13,7 @@ import {
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, type ICredentialsDto, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
+import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
 import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
@@ -33,6 +35,7 @@ export class ProvisionManagedAgent {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {}
 
@@ -125,6 +128,11 @@ export class ProvisionManagedAgent {
       await runtimeProvider.validateCredentials(validateCredentialsInput);
 
       const resolvedMcpServers = command.mcpServers ? resolveMcpServersById(command.mcpServers) : undefined;
+      const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
+        featureFlagsService: this.featureFlagsService,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+      });
 
       const response = await runtimeProvider.createAgent({
         name: command.name ?? '',
@@ -133,6 +141,7 @@ export class ProvisionManagedAgent {
         tools: command.tools,
         mcpServers: resolvedMcpServers,
         skills: command.skills,
+        useAlwaysAllowToolPermissions,
       });
 
       externalAgentId = response.externalAgentId;
