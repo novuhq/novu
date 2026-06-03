@@ -1,5 +1,5 @@
 import { useOrganization, useUser } from '@clerk/react';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, type IEnvironment } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
@@ -51,8 +51,26 @@ function goToPostOnboardingRoute(target: string, navigate: (path: string) => voi
   navigate(targetWithSource);
 }
 
-type LoadingPhase = 'initializing' | 'loading' | 'ready' | 'error';
 type SetupPhase = 'connect' | 'details';
+
+function isAgentsSetupEnvironmentReady({
+  currentEnvironment,
+  environments,
+  isOrganizationSyncing,
+  organizationSyncTimedOut,
+}: {
+  currentEnvironment?: IEnvironment;
+  environments?: IEnvironment[];
+  isOrganizationSyncing: boolean;
+  organizationSyncTimedOut: boolean;
+}): boolean {
+  return Boolean(
+    currentEnvironment &&
+      environments?.length &&
+      !isOrganizationSyncing &&
+      !organizationSyncTimedOut
+  );
+}
 
 function getIllustrationState({ phase, setupComplete }: { phase: SetupPhase; setupComplete: boolean }): AgentFlowState {
   if (setupComplete) {
@@ -72,43 +90,6 @@ function toIllustrationRuntime(runtime: RuntimeType): AgentFlowRuntime {
 
 function resolveCreatedAgentRuntime(agent: AgentResponse): AgentFlowRuntime {
   return agent.runtime === 'managed' ? 'claude' : 'scratch';
-}
-
-function useAgentEnvLoading(organizationId?: string) {
-  const [phase, setPhase] = useState<LoadingPhase>('initializing');
-  const { refetchEnvironments } = useFetchEnvironments({ organizationId });
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  const initializeAndFetch = useCallback(async () => {
-    if (!organizationId) return;
-
-    try {
-      setPhase('initializing');
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      setPhase('loading');
-      await refetchEnvironments();
-      setPhase('ready');
-    } catch (error) {
-      console.warn('Failed to load environment:', error);
-      setPhase('error');
-    }
-  }, [organizationId, refetchEnvironments]);
-
-  useEffect(() => {
-    if (organizationId) {
-      timeoutRef.current = setTimeout(() => {
-        void initializeAndFetch();
-      }, 50);
-    }
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, [organizationId, initializeAndFetch]);
-
-  return phase;
 }
 
 type SkipBannerProps = {
@@ -167,7 +148,13 @@ export function AgentsSetupPage() {
   const { organization } = useOrganization();
   const telemetry = useTelemetry();
   const { currentOrganization } = useAuth();
-  const { currentEnvironment } = useEnvironment();
+  const {
+    currentEnvironment,
+    environments,
+    areEnvironmentsInitialLoading,
+    isOrganizationSyncing,
+    organizationSyncTimedOut,
+  } = useEnvironment();
   const agentRoutes = useAgentRoutes();
 
   const [searchParams] = useSearchParams();
@@ -178,28 +165,50 @@ export function AgentsSetupPage() {
     ? "Let's connect your agent to where you work"
     : 'Connect your first agent';
 
-  const [envLoaded, setEnvLoaded] = useState(false);
-  const { environments } = useFetchEnvironments({
-    organizationId: !envLoaded ? 'org' : '',
-    refetchInterval: !envLoaded ? 1000 : undefined,
+  const organizationId = currentOrganization?._id;
+  const isEnvironmentReady = isAgentsSetupEnvironmentReady({
+    currentEnvironment,
+    environments,
+    isOrganizationSyncing,
+    organizationSyncTimedOut,
+  });
+
+  const shouldPollForEnvironments = Boolean(
+    organizationId &&
+      !isOrganizationSyncing &&
+      !areEnvironmentsInitialLoading &&
+      !environments?.length
+  );
+
+  useFetchEnvironments({
+    organizationId: organizationId ?? '',
+    refetchInterval: shouldPollForEnvironments ? 1000 : undefined,
     showError: false,
   });
 
-  const loadingPhase = useAgentEnvLoading(currentOrganization?._id);
   const provisioningActive = useOnboardingProvisioningActive();
-  const isDataReady = Boolean(currentEnvironment) && loadingPhase === 'ready';
+  const isEnvironmentLoading =
+    isOrganizationSyncing ||
+    organizationSyncTimedOut ||
+    areEnvironmentsInitialLoading ||
+    Boolean(organizationId && !isEnvironmentReady);
+  const isDataReady = isEnvironmentReady;
 
   useOnboardingProvisioningDismiss({
     isReady: isDataReady,
     fallbackVariant: isConnectHost ? 'connect' : 'platform',
   });
 
+  const hasReloadedClerkRef = useRef(false);
+
   useEffect(() => {
-    if (environments?.length) {
-      user?.reload();
-      organization?.reload();
-      setEnvLoaded(true);
+    if (!environments?.length || hasReloadedClerkRef.current) {
+      return;
     }
+
+    hasReloadedClerkRef.current = true;
+    void user?.reload();
+    void organization?.reload();
   }, [environments, user, organization]);
 
   useEffect(() => {
@@ -289,11 +298,11 @@ export function AgentsSetupPage() {
     return <Navigate to={isConnectFlow ? ROUTES.ROOT : ROUTES.INBOX_USECASE} replace />;
   }
 
-  if (!isDataReady || provisioningActive) {
-    if (provisioningActive) {
-      return null;
-    }
+  if (provisioningActive) {
+    return null;
+  }
 
+  if (isEnvironmentLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <PageMeta title={isConnectHost ? 'Build and distribute agents' : pageTitle} />
