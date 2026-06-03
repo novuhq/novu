@@ -68,6 +68,33 @@ describe('isAcceptableIssuerMatch', () => {
     ).to.equal(false);
   });
 
+  it('rejects delegated-issuer pattern when token endpoint leaves the product domain', () => {
+    expect(
+      isAcceptableIssuerMatch('https://context7.com', 'https://clerk.context7.com', {
+        ...CONTEXT7_OPTS,
+        tokenEndpoint: 'https://evil.example/oauth/token',
+      })
+    ).to.equal(false);
+  });
+
+  it('rejects parent-domain pattern when token endpoint leaves the allowed domain', () => {
+    expect(
+      isAcceptableIssuerMatch('https://mcp.vercel.com', 'https://vercel.com', {
+        ...VERCEL_OPTS,
+        tokenEndpoint: 'https://evil.example/oauth/token',
+      })
+    ).to.equal(false);
+  });
+
+  it('rejects sibling-subdomain pattern when token endpoint leaves the registrable domain', () => {
+    expect(
+      isAcceptableIssuerMatch('https://mcp.newrelic.com', 'https://login.newrelic.com', {
+        ...NEW_RELIC_OPTS,
+        tokenEndpoint: 'https://evil.example/oauth/token',
+      })
+    ).to.equal(false);
+  });
+
   it('rejects cross-origin issuer mismatch without a matching relaxation', () => {
     expect(isAcceptableIssuerMatch('https://auth.example.com', 'https://attacker.example')).to.equal(false);
   });
