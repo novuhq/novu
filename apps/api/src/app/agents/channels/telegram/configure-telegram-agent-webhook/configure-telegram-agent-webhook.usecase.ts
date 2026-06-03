@@ -16,8 +16,37 @@ import { ConfigureTelegramAgentWebhookCommand } from './configure-telegram-agent
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
 const TELEGRAM_MAX_RETRIES = 3;
 const TELEGRAM_RETRY_DELAY_BASE_MS = 500;
-/** Inline keyboard clicks arrive as callback_query; reactions as message_reaction. */
-const TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES = ['message', 'callback_query', 'message_reaction'] as const;
+/**
+ * Every update type from Telegram's Update object (Bot API).
+ * @see https://core.telegram.org/bots/api#update
+ */
+const TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES = [
+  'message',
+  'edited_message',
+  'channel_post',
+  'edited_channel_post',
+  'business_connection',
+  'business_message',
+  'edited_business_message',
+  'deleted_business_messages',
+  'guest_message',
+  'message_reaction',
+  'message_reaction_count',
+  'inline_query',
+  'chosen_inline_result',
+  'callback_query',
+  'shipping_query',
+  'pre_checkout_query',
+  'purchased_paid_media',
+  'poll',
+  'poll_answer',
+  'my_chat_member',
+  'chat_member',
+  'chat_join_request',
+  'chat_boost',
+  'removed_chat_boost',
+  'managed_bot',
+] as const;
 
 interface TelegramSetWebhookResult {
   webhookUrl: string;
