@@ -49,12 +49,11 @@ export type ManagedCardDelivery = {
 };
 
 // Slack button clicks include action.id (parsed below) and action.value (label text only).
-// Id: mcp-approval:{approve|deny|approve-tool|approve-server}:{toolUseIds}:{turnId}
-// "Always allow" buttons append :{toolName}:{mcpServerName} (URI-encoded) for trust storage.
+// Id: mcp-approval:{approve|deny}:{toolUseIds}
+// "Always allow" buttons: mcp-approval:{approve-tool|approve-server}:{toolUseIds}:{toolName}:{mcpServerName}
 export type ParsedToolApprovalAction = {
   approved: boolean;
   toolUseIds: string[];
-  turnId: string;
   persistScope?: 'tool' | 'server';
   toolName?: string;
   mcpServerName?: string;
@@ -64,15 +63,14 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
   if (!id) return null;
   const parts = id.split(':');
   if (parts[0] !== TOOL_APPROVAL_ACTION_PREFIX) return null;
-  if (parts.length !== 4 && parts.length !== 6) return null;
+  if (parts.length !== 3 && parts.length !== 5) return null;
 
   const verdict = parts[1];
   const toolUseIdsPart = parts[2];
-  const turnId = parts[3];
   const isApprove = verdict === 'approve' || verdict === 'approve-tool' || verdict === 'approve-server';
   const isDeny = verdict === 'deny';
 
-  if ((!isApprove && !isDeny) || !toolUseIdsPart || !turnId) return null;
+  if ((!isApprove && !isDeny) || !toolUseIdsPart) return null;
 
   const toolUseIds = toolUseIdsPart.split(',').filter(Boolean);
   if (toolUseIds.length === 0) return null;
@@ -80,7 +78,6 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
   const parsed: ParsedToolApprovalAction = {
     approved: isApprove,
     toolUseIds,
-    turnId,
   };
 
   if (verdict === 'approve-tool') {
@@ -91,9 +88,9 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
     parsed.persistScope = 'server';
   }
 
-  if (parts.length === 6) {
-    parsed.toolName = decodeURIComponent(parts[4]) || undefined;
-    parsed.mcpServerName = decodeURIComponent(parts[5]) || undefined;
+  if (parts.length === 5) {
+    parsed.toolName = decodeURIComponent(parts[3]) || undefined;
+    parsed.mcpServerName = decodeURIComponent(parts[4]) || undefined;
   }
 
   return parsed;
@@ -101,13 +98,12 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
 
 export function buildToolApprovalPersistActionId(
   verdict: 'approve-tool' | 'approve-server',
-  tool: PendingToolApproval,
-  turnId: string
+  tool: PendingToolApproval
 ): string {
   const toolName = encodeURIComponent(tool.toolName);
   const mcpServerName = encodeURIComponent(tool.mcpServerName ?? '');
 
-  return `${TOOL_APPROVAL_ACTION_PREFIX}:${verdict}:${tool.toolUseId}:${turnId}:${toolName}:${mcpServerName}`;
+  return `${TOOL_APPROVAL_ACTION_PREFIX}:${verdict}:${tool.toolUseId}:${toolName}:${mcpServerName}`;
 }
 
 export function extractPendingToolApprovals(response: ThalamusResponse): PendingToolApproval[] {
@@ -134,7 +130,7 @@ export function formatToolLabelForApproval(tool: PendingToolApproval): string {
   return `${tool.toolName}${input}`;
 }
 
-export function buildToolApprovalCard(tool: PendingToolApproval, turnId: string): Record<string, unknown> {
+export function buildToolApprovalCard(tool: PendingToolApproval): Record<string, unknown> {
   const toolLabel = formatToolLabelForApproval(tool);
 
   const children: Record<string, unknown>[] = [
@@ -143,14 +139,14 @@ export function buildToolApprovalCard(tool: PendingToolApproval, turnId: string)
       children: [
         {
           type: 'button',
-          id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}:${turnId}`,
+          id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}`,
           label: 'Deny',
           style: 'default',
           value: toolLabel,
         },
         {
           type: 'button',
-          id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}:${turnId}`,
+          id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}`,
           label: 'Approve once',
           style: 'primary',
           value: toolLabel,
@@ -163,14 +159,14 @@ export function buildToolApprovalCard(tool: PendingToolApproval, turnId: string)
       children: [
         {
           type: 'button',
-          id: buildToolApprovalPersistActionId('approve-tool', tool, turnId),
+          id: buildToolApprovalPersistActionId('approve-tool', tool),
           label: 'Always allow this tool',
           style: 'default',
           value: toolLabel,
         },
         {
           type: 'button',
-          id: buildToolApprovalPersistActionId('approve-server', tool, turnId),
+          id: buildToolApprovalPersistActionId('approve-server', tool),
           label: `Always allow ${tool.mcpServerName ?? 'MCP'}`,
           style: 'default',
           value: toolLabel,
@@ -215,7 +211,7 @@ function formatToolArgumentsBody(tool: PendingToolApproval): string | undefined 
   return truncatedBody.length <= SLACK_CARD_BODY_MAX ? truncatedBody : truncatedBody.slice(0, SLACK_CARD_BODY_MAX);
 }
 
-function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string): SlackNativeDelivery {
+function buildToolApprovalSlackBlocks(tool: PendingToolApproval): SlackNativeDelivery {
   const argumentsBody = formatToolArgumentsBody(tool);
   const toolLabel = formatToolLabelForApproval(tool);
 
@@ -232,14 +228,14 @@ function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string)
     actions: [
       {
         type: 'button',
-        action_id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}:${turnId}`,
+        action_id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}`,
         value: toolLabel,
         text: { type: 'plain_text', text: 'Deny', emoji: false },
       },
       {
         type: 'button',
         style: 'primary',
-        action_id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}:${turnId}`,
+        action_id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}`,
         value: toolLabel,
         text: { type: 'plain_text', text: 'Approve once', emoji: false },
       },
@@ -251,7 +247,7 @@ function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string)
     elements: [
       {
         type: 'button',
-        action_id: buildToolApprovalPersistActionId('approve-tool', tool, turnId),
+        action_id: buildToolApprovalPersistActionId('approve-tool', tool),
         value: toolLabel,
         text: {
           type: 'plain_text',
@@ -261,7 +257,7 @@ function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string)
       },
       {
         type: 'button',
-        action_id: buildToolApprovalPersistActionId('approve-server', tool, turnId),
+        action_id: buildToolApprovalPersistActionId('approve-server', tool),
         value: toolLabel,
         text: {
           type: 'plain_text',
@@ -281,16 +277,15 @@ function buildToolApprovalSlackBlocks(tool: PendingToolApproval, turnId: string)
 export function getToolApprovalCard(params: {
   platform?: string;
   tool: PendingToolApproval;
-  turnId: string;
   pendingQueueTotal?: number;
 }): ManagedCardDelivery {
-  const card = buildToolApprovalCard(params.tool, params.turnId);
+  const card = buildToolApprovalCard(params.tool);
   const content: ReplyContentDto = { card };
 
   if (params.platform === AgentPlatformEnum.SLACK) {
     return {
       content,
-      slackNative: buildToolApprovalSlackBlocks(params.tool, params.turnId),
+      slackNative: buildToolApprovalSlackBlocks(params.tool),
     };
   }
 

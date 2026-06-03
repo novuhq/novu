@@ -667,6 +667,7 @@ export default {
             { status: 400 }
           );
         }
+
         const stub = env.SESSION_OBSERVER.getByName(body.sessionId);
         await stub.startObserving(body);
 

@@ -248,18 +248,18 @@ function InboxFeatureList() {
 
 const USECASE_OPTIONS = [
   {
-    id: 'agents' as const,
-    icon: Bot,
-    title: "I'm building an AI agent",
-    description:
-      'Connect your agent to Novu and Novu gives it voice. Distribute your agent across multiple channels with a unified API.',
-  },
-  {
     id: 'inbox' as const,
     icon: Notification5Fill,
     title: "I'm adding notifications to my app",
     description:
       'Plug in <Inbox />, connect providers, and orchestrate workflows. Go from event → trigger → delivery with full control.',
+  },
+  {
+    id: 'agents' as const,
+    icon: Bot,
+    title: "I'm building an AI agent",
+    description:
+      'Connect your agent to Novu and Novu gives it voice. Distribute your agent across multiple channels with a unified API.',
   },
 ] as const;
 
@@ -268,12 +268,19 @@ type UsecaseId = 'agents' | 'inbox';
 function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect: (id: UsecaseId) => void }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const telemetry = useTelemetry();
   const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
 
   const handleContinue = () => {
+    telemetry(TelemetryEvent.USECASE_SELECTED, { usecase: selected });
+
     if (selected === 'inbox') {
       navigate(withAppId(ROUTES.INBOX_USECASE, appId));
-    } else if (selected === 'agents') {
+
+      return;
+    }
+
+    if (selected === 'agents') {
       navigate(withAppId(ROUTES.AGENTS_SETUP, appId));
     }
   };
@@ -356,7 +363,7 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
 export function UsecaseSelectPage() {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const telemetry = useTelemetry();
-  const [selected, setSelected] = useState<UsecaseId>('agents');
+  const [selected, setSelected] = useState<UsecaseId>('inbox');
   const provisioningActive = useOnboardingProvisioningActive();
 
   useOnboardingProvisioningDismiss({

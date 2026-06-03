@@ -145,6 +145,14 @@ overrides:
   micromatch@<4.0.0: ^4.0.8
   defu@<=6.1.4: ^6.1.5
   '@smithy/config-resolver@<4.4.0': ^4.4.0
+  # GHSA-j965-2qgj-vjmq: aws-sdk v2 is deprecated by AWS in favor of v3.
+  # The npm `aws-lambda` package (a debugging CLI, last published 2020) still
+  # pulls in aws-sdk v2 as a runtime dependency for its CLI. We only consume
+  # type-only imports from `aws-lambda` in `packages/framework/src/servers/lambda.ts`
+  # (types provided by `@types/aws-lambda`), so the runtime aws-sdk is never
+  # required at build/test time. Strip the transitive aws-sdk to remove the
+  # advisory from our dependency graph.
+  aws-lambda>aws-sdk: '-'
   esbuild@<0.25.0: ^0.25.0
   follow-redirects@<=1.15.11: ^1.16.0
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1

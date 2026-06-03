@@ -31,6 +31,7 @@ import { TelegramStartCodeService } from './channels/telegram-linking/telegram-s
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
+import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
 import { AgentInboundController } from './conversation-runtime/ingress/agent-inbound.controller';
@@ -92,6 +93,7 @@ import { USE_CASES } from './usecases';
     AgentSubscriberResolver,
     AgentConversationService,
     AgentEmailActionTokenService,
+    AgentActionTokenService,
     AgentInboundHandler,
     BridgeExecutorService,
     BridgeRuntime,

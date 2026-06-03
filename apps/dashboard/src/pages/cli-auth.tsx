@@ -84,7 +84,7 @@ function CliAuthContent() {
   const telemetry = useTelemetry();
   const clerk = useClerk();
   const { user } = useUser();
-  const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
+  const { currentEnvironment, environments, switchEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
   const apiKeysQuery = useFetchApiKeys();
   const has = useHasPermission();
   const isLlmGatewayEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_LLM_GATEWAY_ENABLED);
@@ -169,21 +169,22 @@ function CliAuthContent() {
     }
   }, [clerk]);
 
-  const isLoading = apiKeysQuery.isLoading || !currentEnvironment;
+  const isAuthorizeDataLoading = areEnvironmentsInitialLoading || apiKeysQuery.isLoading || !currentEnvironment;
 
   const reason = (() => {
     if (!deviceCodeOk) return 'This page must be opened from the Novu CLI.';
     if (!isConnect && !isLlmGatewayEnabled) {
       return `${callerDisplayName} is not enabled for your account yet.`;
     }
+    if (isAuthorizeDataLoading) return null;
     if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';
-    if (isLoading) return null;
     if (!apiKey) return 'No API key is available in this environment.';
 
     return null;
   })();
 
-  const canAuthorize = !reason && !isLoading && !!apiKey && !isAuthorizing && !didAuthorize;
+  const canAuthorize =
+    !reason && !isAuthorizeDataLoading && !!apiKey && !isAuthorizing && !didAuthorize;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -277,8 +278,8 @@ function CliAuthContent() {
                     className="flex-1"
                     trailingIcon={RiArrowRightSLine}
                     onClick={handleAuthorize}
-                    disabled={!!reason || isLoading || !apiKey || isAuthorizing}
-                    isLoading={isAuthorizing || isLoading}
+                    disabled={!!reason || isAuthorizeDataLoading || !apiKey || isAuthorizing}
+                    isLoading={isAuthorizing || isAuthorizeDataLoading}
                   >
                     Authorize
                   </Button>

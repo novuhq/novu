@@ -236,7 +236,8 @@ export class HandleAgentReply {
         channel.platform,
         channel.platformThreadId,
         plan.messageId,
-        plan.model
+        plan.model,
+        plan.phase
       );
 
       return { messageId: plan.messageId, platformThreadId: channel.platformThreadId };
@@ -247,7 +248,8 @@ export class HandleAgentReply {
       command.integrationIdentifier,
       channel.platform,
       channel.platformThreadId,
-      plan.model
+      plan.model,
+      plan.phase
     );
   }
 
