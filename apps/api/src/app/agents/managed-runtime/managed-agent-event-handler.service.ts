@@ -56,7 +56,7 @@ export class ManagedAgentEventHandler {
   }
 
   createHandlers(context: SessionEventContext): StreamCallbacks {
-    const { sessionId, turnId, metadata } = context;
+    const { sessionId, metadata } = context;
 
     if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
       this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
@@ -76,7 +76,6 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
@@ -109,7 +108,6 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
@@ -135,7 +133,6 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 status: event.isError === true ? 'error' : 'complete',
@@ -161,7 +158,6 @@ export class ManagedAgentEventHandler {
                 subscriberId: metadata.subscriberId,
                 platform: metadata.platform,
                 sessionId,
-                turnId,
                 response: event.response,
               })
             );
@@ -179,7 +175,7 @@ export class ManagedAgentEventHandler {
             event.response.usage
           );
           await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { turnId, action: 'complete' } })
+            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { action: 'complete' } })
           );
         } catch (err) {
           this.logger.error(err, `onFinish failed: session=${sessionId}`);
@@ -194,7 +190,7 @@ export class ManagedAgentEventHandler {
 
       onError: async (event: { error: Error }) => {
         try {
-          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, turnId);
+          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields);
         } catch (err) {
           this.logger.error(err, `onError handler failed: session=${sessionId}`);
           captureAgentException(err, {
@@ -222,8 +218,7 @@ export class ManagedAgentEventHandler {
     metadata: Record<string, string>,
     sessionId: string,
     error: Error,
-    baseCommand: BaseCommandFields,
-    turnId: string
+    baseCommand: BaseCommandFields
   ): Promise<void> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
@@ -246,7 +241,7 @@ export class ManagedAgentEventHandler {
     if (postedReconnectSetupCard) {
       try {
         await this.handlePlanProgress.execute(
-          HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { turnId, action: 'fail' } })
+          HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
         );
       } catch (err) {
         this.logger.error(err, `Failed to mark plan progress failed for session ${sessionId}`);
@@ -267,7 +262,7 @@ export class ManagedAgentEventHandler {
         HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
       );
       await this.handlePlanProgress.execute(
-        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { turnId, action: 'fail' } })
+        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);

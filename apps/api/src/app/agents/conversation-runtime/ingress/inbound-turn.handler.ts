@@ -483,6 +483,14 @@ export class AgentInboundHandler implements OnModuleInit {
     });
 
     if (isFirstMessage && message.id) {
+      /*
+       * Reflect the first message id on the in-memory conversation immediately so
+       * downstream context builders (e.g. platformContext.email.rootMessageId) read
+       * a consistent value within this turn, even though the DB write below is
+       * fire-and-forget.
+       */
+      this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId = message.id;
+
       this.conversationService
         .setFirstPlatformMessageId(
           config.environmentId,

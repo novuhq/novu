@@ -5,6 +5,7 @@ import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import type { AgentRuntimeChoice, ChannelChoice } from '../types';
+import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore } from './store';
 import { WelcomeContent } from './welcome-content';
@@ -39,10 +40,7 @@ export function PhaseContent({
         <Box flexDirection="column" gap={1}>
           <Text color="cyan">{phase.status}</Text>
           {phase.dashboardUrl ? (
-            <Box flexDirection="column">
-              <Text dimColor>If your browser didn't open, visit:</Text>
-              <Text color="cyan">{phase.dashboardUrl}</Text>
-            </Box>
+            <CopyableLink url={phase.dashboardUrl} hint="If your browser didn't open, visit:" />
           ) : null}
         </Box>
       );
@@ -255,10 +253,7 @@ export function PhaseContent({
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>Authorize Slack to finish setup</Text>
-          <Box flexDirection="column">
-            <Text dimColor>Opened in your browser. If nothing happened, visit:</Text>
-            <Text color="cyan">{phase.authorizeUrl}</Text>
-          </Box>
+          <CopyableLink url={phase.authorizeUrl} hint="Opened in your browser. If nothing happened, visit:" />
           <Text dimColor>Waiting for Slack authorization…</Text>
         </Box>
       );
@@ -305,10 +300,7 @@ export function PhaseContent({
             webhook for you.
           </Text>
           <Text>{phase.mobileQr}</Text>
-          <Box flexDirection="column">
-            <Text dimColor>Or open this on your phone:</Text>
-            <Text color="cyan">{phase.mobileUrl}</Text>
-          </Box>
+          <CopyableLink url={phase.mobileUrl} hint="Or open this on your phone:" />
           <Text dimColor>Waiting for your bot token…</Text>
         </Box>
       );
@@ -323,10 +315,7 @@ export function PhaseContent({
             Scan to open <Text color="white">@{phase.botUsername}</Text> in Telegram and tap Start.
           </Text>
           <Text>{phase.deepLinkQr}</Text>
-          <Box flexDirection="column">
-            <Text dimColor>Or open this link:</Text>
-            <Text color="cyan">{phase.deepLinkUrl}</Text>
-          </Box>
+          <CopyableLink url={phase.deepLinkUrl} hint="Or open this link:" />
           <Text dimColor>Waiting for /start in Telegram…</Text>
         </Box>
       );
@@ -631,7 +620,7 @@ function DashboardChannelReadyContent({
         {channelLabel} setup is not available in the CLI yet. Press Enter to open your agent in Novu Connect and finish
         connecting there.
       </Text>
-      <Text color="cyan">{agentDetailsUrl}</Text>
+      <CopyableLink url={agentDetailsUrl} hint="Or open this link:" />
       <Text dimColor>Press Enter to open Novu Connect →</Text>
     </Box>
   );

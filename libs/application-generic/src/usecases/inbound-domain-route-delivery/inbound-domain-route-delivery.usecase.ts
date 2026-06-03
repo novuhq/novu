@@ -26,6 +26,34 @@ import { AttachmentRehydrator } from './attachment-rehydrator';
  * cap and skip the binary (forward metadata only) when it is exceeded.
  */
 const MAX_INLINE_ATTACHMENT_BYTES = 5 * 1024 * 1024;
+const MAX_HEADERS_BYTES = 16 * 1024;
+
+function normalizeMailHeaders(headers: InboundDomainRouteMailInput['headers'] | undefined): Record<string, string> | undefined {
+  if (!headers) {
+    return undefined;
+  }
+
+  const normalized: Record<string, string> = {};
+  let totalSize = 0;
+
+  for (const [key, value] of Object.entries(headers)) {
+    const stringValue = Array.isArray(value) ? value.join(', ') : String(value ?? '');
+    const entrySize = Buffer.byteLength(key) + Buffer.byteLength(stringValue);
+
+    if (totalSize + entrySize > MAX_HEADERS_BYTES) {
+      continue;
+    }
+
+    normalized[key] = stringValue;
+    totalSize += entrySize;
+  }
+
+  if (Object.keys(normalized).length === 0) {
+    return undefined;
+  }
+
+  return normalized;
+}
 
 export interface RoutableDomain
   extends Pick<
@@ -171,7 +199,10 @@ export class InboundDomainRouteDelivery {
       params.domain._organizationId
     );
 
-    const payload = this.buildAgentEmailWebhookPayload(params.mail);
+    const payload = this.buildAgentEmailWebhookPayload(params.mail, {
+      domain: params.domain,
+      route: params.route,
+    });
     const signature = buildNovuSignatureHeader(secretKey, payload);
     const apiBaseUrl = process.env.API_ROOT_URL;
 
@@ -196,13 +227,20 @@ export class InboundDomainRouteDelivery {
     };
   }
 
-  previewAgentMailPayload(mail: InboundDomainRouteMailInput): EmailWebhookPayload {
-    return this.buildAgentEmailWebhookPayload(mail);
+  previewAgentMailPayload(
+    mail: InboundDomainRouteMailInput,
+    options?: { domain?: RoutableDomain; route?: DomainRouteEntity }
+  ): EmailWebhookPayload {
+    return this.buildAgentEmailWebhookPayload(mail, options);
   }
 
-  private buildAgentEmailWebhookPayload(mail: InboundDomainRouteMailInput): EmailWebhookPayload {
+  private buildAgentEmailWebhookPayload(
+    mail: InboundDomainRouteMailInput,
+    options?: { domain?: RoutableDomain; route?: DomainRouteEntity }
+  ): EmailWebhookPayload {
     const from = mail.from[0];
     const refs = normalizeReferences(mail.references);
+    const headers = normalizeMailHeaders(mail.headers);
 
     return {
       messageId: mail.messageId,
@@ -216,6 +254,20 @@ export class InboundDomainRouteDelivery {
       subject: mail.subject,
       text: mail.text || undefined,
       html: mail.html || undefined,
+      headers,
+      domain: options?.domain
+        ? {
+            id: options.domain._id,
+            name: options.domain.name,
+            data: options.domain.data ?? {},
+          }
+        : undefined,
+      route: options?.route
+        ? {
+            address: options.route.address,
+            data: options.route.data ?? {},
+          }
+        : undefined,
       attachments: mail.attachments?.map((att) => {
         /*
          * Inline-mode (S3-not-configured) fallback: the inbound-mail server

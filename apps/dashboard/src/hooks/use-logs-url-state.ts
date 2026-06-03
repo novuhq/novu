@@ -1,5 +1,5 @@
 import { useOrganization } from '@clerk/react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { getPersistedPageSize, usePersistedPageSize } from '@/hooks/use-persisted-page-size';
@@ -30,7 +30,11 @@ export interface LogsUrlState {
   hasActiveFilters: boolean;
 }
 
-export function useLogsUrlState(): LogsUrlState {
+type UseLogsUrlStateOptions = {
+  isSourceFilterEnabled?: boolean;
+};
+
+export function useLogsUrlState({ isSourceFilterEnabled = true }: UseLogsUrlStateOptions = {}): LogsUrlState {
   const [searchParams, setSearchParams] = useSearchParams();
   const { organization } = useOrganization();
   const { subscription } = useFetchSubscription();
@@ -170,15 +174,27 @@ export function useLogsUrlState(): LogsUrlState {
     });
   }, [setSearchParams]);
 
+  useEffect(() => {
+    if (isSourceFilterEnabled || filters.source.trim() === '') {
+      return;
+    }
+
+    setSearchParams((prev) => {
+      prev.delete('source');
+
+      return prev;
+    });
+  }, [isSourceFilterEnabled, filters.source, setSearchParams]);
+
   const hasActiveFilters = useMemo(() => {
     return (
       filters.status.length > 0 ||
       filters.transactionId.trim() !== '' ||
       filters.createdGte !== maxAvailableLogsDateRange ||
       filters.urlPattern.trim() !== '' ||
-      filters.source.trim() !== ''
+      (isSourceFilterEnabled && filters.source.trim() !== '')
     );
-  }, [filters, maxAvailableLogsDateRange]);
+  }, [filters, maxAvailableLogsDateRange, isSourceFilterEnabled]);
 
   return useMemo(
     () => ({

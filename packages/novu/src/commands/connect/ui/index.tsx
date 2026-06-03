@@ -34,6 +34,12 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     {
       patchConsole: false,
       exitOnCtrlC: false,
+      /**
+       * Only re-emit terminal lines that changed between frames. Without this,
+       * the orb animation (~10 fps) redraws the whole screen and clears any
+       * active mouse selection on static URL lines (auth, Slack OAuth, etc.).
+       */
+      incrementalRendering: true,
       // No alternate-screen here: the connect flow is short and we want the
       // final success message to remain visible in scrollback after exit.
     }
