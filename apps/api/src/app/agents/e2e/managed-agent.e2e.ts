@@ -880,10 +880,15 @@ describe('Managed Agents API #novu-v2', () => {
       expect(rows[0].enabled).to.equal(true);
       expect(rows[0].externalProjection?.providerId).to.equal(AgentRuntimeProviderIdEnum.Anthropic);
 
-      // Both endpoints must have been called once during adoption — the parallel
-      // getAgent + getConfig round-trips are the contract the usecase relies on.
+      // Both endpoints must have been called during adoption — the parallel
+      // getAgent + getConfig round-trips are the contract the usecase relies
+      // on. getConfig is also invoked a second time by CreateAgent.loadRuntimeConfig
+      // to populate the response payload, so we only assert it was called and
+      // that the adoption call carried the right externalAgentId.
       expect(mockProvider.getAgent.calledOnce, 'getAgent should be called once').to.be.true;
-      expect(mockProvider.getConfig.calledOnce, 'getConfig should be called once').to.be.true;
+      expect(mockProvider.getAgent.firstCall.args[0]).to.equal(FAKE_ADOPT_AGENT_ID);
+      expect(mockProvider.getConfig.called, 'getConfig should be called').to.be.true;
+      expect(mockProvider.getConfig.firstCall.args[0]).to.equal(FAKE_ADOPT_AGENT_ID);
     });
   });
 
