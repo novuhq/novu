@@ -5,6 +5,8 @@ export type EnvironmentContextValue = {
   currentEnvironment?: IEnvironment;
   environments?: IEnvironment[];
   areEnvironmentsInitialLoading: boolean;
+  isOrganizationSyncing: boolean;
+  organizationSyncTimedOut: boolean;
   readOnly: boolean;
   switchEnvironment: (newEnvironmentSlug?: string) => void;
   setBridgeUrl: (url: string) => void;

@@ -4,6 +4,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '@/context/auth/hooks';
 import { EnvironmentContext } from '@/context/environment/environment-context';
 import { useFetchEnvironments } from '@/context/environment/hooks';
+import { useSyncClerkExternalOrgId } from '@/context/environment/use-sync-clerk-external-org-id';
 import { loadFromStorage, saveToStorage } from '@/utils/local-storage';
 import { buildRoute, ROUTES } from '@/utils/routes';
 
@@ -85,6 +86,8 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
     [navigate, pathname, search, hash, paramsEnvironmentSlug, currentOrganization?._id]
   );
 
+  const { isOrganizationSyncing, organizationSyncTimedOut } = useSyncClerkExternalOrgId();
+
   const { environments, areEnvironmentsInitialLoading } = useFetchEnvironments({
     organizationId: currentOrganization?._id,
     showError: false,
@@ -137,6 +140,8 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       currentEnvironment,
       environments,
       areEnvironmentsInitialLoading,
+      isOrganizationSyncing,
+      organizationSyncTimedOut,
       readOnly: currentEnvironment?._parentId !== undefined,
       oppositeEnvironment,
       switchEnvironment,
@@ -146,6 +151,8 @@ export function EnvironmentProvider({ children }: { children: React.ReactNode })
       currentEnvironment,
       environments,
       areEnvironmentsInitialLoading,
+      isOrganizationSyncing,
+      organizationSyncTimedOut,
       oppositeEnvironment,
       switchEnvironment,
       setBridgeUrl,

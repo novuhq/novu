@@ -16,7 +16,6 @@ import { useSegment } from '@/context/segment';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchApiKeys } from '@/hooks/use-fetch-api-keys';
 import { useHasPermission } from '@/hooks/use-has-permission';
-import { useSyncClerkExternalOrgId } from '@/hooks/use-sync-clerk-external-org-id';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
 import { persistCliOnboardingSessionId, readActiveCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
@@ -85,9 +84,15 @@ function CliAuthContent() {
   const telemetry = useTelemetry();
   const clerk = useClerk();
   const { user } = useUser();
-  const { currentEnvironment, environments, switchEnvironment } = useEnvironment();
+  const {
+    currentEnvironment,
+    environments,
+    switchEnvironment,
+    areEnvironmentsInitialLoading,
+    isOrganizationSyncing,
+    organizationSyncTimedOut,
+  } = useEnvironment();
   const apiKeysQuery = useFetchApiKeys();
-  const { isSyncingOrg, syncTimedOut } = useSyncClerkExternalOrgId();
   const has = useHasPermission();
   const isLlmGatewayEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_LLM_GATEWAY_ENABLED);
   const [isAuthorizing, setIsAuthorizing] = useState(false);
@@ -171,7 +176,12 @@ function CliAuthContent() {
     }
   }, [clerk]);
 
-  const isLoading = isSyncingOrg || apiKeysQuery.isLoading || !currentEnvironment;
+  const isAuthorizeDataLoading =
+    !organizationSyncTimedOut &&
+    (isOrganizationSyncing ||
+      areEnvironmentsInitialLoading ||
+      apiKeysQuery.isLoading ||
+      !currentEnvironment);
 
   const reason = (() => {
     if (!deviceCodeOk) return 'This page must be opened from the Novu CLI.';
@@ -179,16 +189,17 @@ function CliAuthContent() {
       return `${callerDisplayName} is not enabled for your account yet.`;
     }
     if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';
-    if (syncTimedOut) {
+    if (organizationSyncTimedOut) {
       return 'Your workspace is still being set up. Please refresh the page in a moment.';
     }
-    if (isLoading) return null;
+    if (isAuthorizeDataLoading) return null;
     if (!apiKey) return 'No API key is available in this environment.';
 
     return null;
   })();
 
-  const canAuthorize = !reason && !isLoading && !!apiKey && !isAuthorizing && !didAuthorize;
+  const canAuthorize =
+    !reason && !isAuthorizeDataLoading && !!apiKey && !isAuthorizing && !didAuthorize;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -282,8 +293,8 @@ function CliAuthContent() {
                     className="flex-1"
                     trailingIcon={RiArrowRightSLine}
                     onClick={handleAuthorize}
-                    disabled={!!reason || isLoading || !apiKey || isAuthorizing}
-                    isLoading={isAuthorizing || isLoading}
+                    disabled={!!reason || isAuthorizeDataLoading || !apiKey || isAuthorizing}
+                    isLoading={isAuthorizing || isAuthorizeDataLoading}
                   >
                     Authorize
                   </Button>
