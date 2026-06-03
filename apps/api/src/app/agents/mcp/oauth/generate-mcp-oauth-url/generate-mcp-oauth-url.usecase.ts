@@ -45,6 +45,13 @@ import {
   type SupportedTokenEndpointAuthMethod,
   selectTokenEndpointAuthMethod,
 } from '../mcp-oauth-discovery.service';
+import {
+  canReusePendingOAuthSession,
+  resolveDcrAuthorizeScopes,
+  resolveDcrClientMetadataUris,
+  scopesMatch,
+  shouldRotatePendingOAuthSessionForCatalogScopes,
+} from './dcr-oauth-session';
 import { GenerateMcpOAuthUrlCommand } from './generate-mcp-oauth-url.command';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from './mcp-oauth-state';
 import { pickReusableOAuthClient } from './pick-reusable-oauth-client';
@@ -111,7 +118,11 @@ export class GenerateMcpOAuthUrl {
     sessionRotated: boolean;
   }> {
     let context = await this.loadAuthorizeContext(command);
-    const sessionRotated = !canReusePendingOAuthSession(context.existing);
+    const catalogScopes =
+      context.oauthConfig.mode === McpConnectionAuthModeEnum.Dcr ? context.oauthConfig.catalog.scopes : undefined;
+    const sessionRotated =
+      !canReusePendingOAuthSession(context.existing) ||
+      shouldRotatePendingOAuthSessionForCatalogScopes(context.existing, catalogScopes);
 
     if (sessionRotated) {
       await this.execute(command);
@@ -213,6 +224,7 @@ export class GenerateMcpOAuthUrl {
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: resolved.asMetadata.authorizationEndpoint,
       clientId: oauthClient.clientId,
+      redirectUri: oauthClient.redirectUri,
       scopes: resolved.scopes,
       resource: resolved.resource,
       state,
@@ -371,10 +383,12 @@ export class GenerateMcpOAuthUrl {
     }
 
     const oauthClient = decryptMcpConnectionOAuthClient(existing.oauthClient);
+    const authorizeScopes = resolveDcrAuthorizeScopes(oauthConfig.catalog.scopes, oauthClient);
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: oauthClient.authorizationEndpoint,
       clientId: oauthClient.clientId,
-      scopes: oauthClient.scopesGranted ?? [],
+      redirectUri: oauthClient.redirectUri,
+      scopes: authorizeScopes,
       resource: existing.oauthState.resource,
       state,
       pkceVerifier,
@@ -456,7 +470,8 @@ export class GenerateMcpOAuthUrl {
     mcpId: string
   ): Promise<{ asMetadata: AuthorizationServerMetadata; resource: string; scopes: string[] }> {
     const { asMetadata, prm } = await this.resolveAuthorizationServer(catalog.url, mcpId);
-    const scopes = this.selectScopes(prm);
+    const catalogScopes = catalog.oauth?.mode === McpConnectionAuthModeEnum.Dcr ? catalog.oauth.scopes : undefined;
+    const scopes = this.selectScopes(prm, [], catalogScopes);
     // RFC 8707 §2 — the `resource` indicator MUST be the canonical resource
     // URI advertised by the protected resource. PRM exposes that explicitly;
     // we fall back to the catalog URL only when discovery produced no
@@ -508,7 +523,7 @@ export class GenerateMcpOAuthUrl {
     // when present, so a server that advertises a tighter consent footprint
     // doesn't get overridden by the catalog's superset. Falls back to the
     // catalog's curated list (mirrors Anthropic's connector) otherwise.
-    const scopes = this.selectScopes(prm, oauthConfig.catalog.scopes);
+    const scopes = this.selectScopes(prm, oauthConfig.catalog.scopes, oauthConfig.catalog.scopes);
 
     return {
       issuer: oauthConfig.catalog.issuer,
@@ -550,14 +565,18 @@ export class GenerateMcpOAuthUrl {
   /**
    * RFC 9728 + MCP-spec Scope Selection Strategy:
    *   1. Use the `scope` parameter from the initial WWW-Authenticate challenge.
-   *   2. Otherwise use all of `scopes_supported` from PRM.
-   *   3. Otherwise use `fallback` — `[]` for DCR (omit `scope`), the curated
+   *   2. Otherwise use catalog `scopes` when the entry pins a curated list.
+   *   3. Otherwise use all of `scopes_supported` from PRM.
+   *   4. Otherwise use `fallback` — `[]` for DCR (omit `scope`), the curated
    *      catalog list for novu-app (a missing `scope` would cause the
    *      upstream consent screen to silently downgrade the grant or 400).
    */
-  private selectScopes(prm: DiscoveredProtectedResource, fallback: string[] = []): string[] {
+  private selectScopes(prm: DiscoveredProtectedResource, fallback: string[] = [], catalogScopes?: string[]): string[] {
     if (prm.challengeScopes && prm.challengeScopes.length > 0) {
       return prm.challengeScopes;
+    }
+    if (catalogScopes && catalogScopes.length > 0) {
+      return catalogScopes;
     }
     if (prm.scopesSupported.length > 0) {
       return prm.scopesSupported;
@@ -576,11 +595,16 @@ export class GenerateMcpOAuthUrl {
     const redirectUri = buildMcpOAuthRedirectUri();
     const reusable = pickReusableOAuthClient(existing?.oauthClient, asMetadata.issuer, redirectUri);
 
-    if (reusable) {
+    if (reusable && scopesMatch(reusable.scopesGranted, scopes)) {
       return reusable;
     }
 
-    const registration = await this.registerNewClient({ asMetadata, oauthConfig, scopes, redirectUri });
+    const registration = await this.registerNewClient({
+      asMetadata,
+      oauthConfig,
+      scopes,
+      redirectUri,
+    });
 
     return {
       clientId: registration.clientId,
@@ -615,7 +639,9 @@ export class GenerateMcpOAuthUrl {
     tokenEndpointAuthMethod: SupportedTokenEndpointAuthMethod;
   }> {
     const { asMetadata, oauthConfig, scopes, redirectUri } = args;
-    const frontBase = (process.env.DASHBOARD_URL ?? process.env.FRONT_BASE_URL)?.replace(/\/$/, '');
+    const { client_uri: clientUri, logo_uri: logoUri } = resolveDcrClientMetadataUris(
+      (process.env.DASHBOARD_URL ?? process.env.FRONT_BASE_URL)?.replace(/\/$/, '')
+    );
     // Confidential client = we will receive a `client_secret` back. Web apps
     // (`application_type: 'web'`) always run server-side; only `native`
     // installs are eligible for the `none` auth method as a public client.
@@ -634,24 +660,34 @@ export class GenerateMcpOAuthUrl {
         response_types: ['code'],
         token_endpoint_auth_method: tokenEndpointAuthMethod,
         scope: scopes.length > 0 ? scopes.join(' ') : undefined,
-        client_uri: frontBase,
-        logo_uri: frontBase ? `${frontBase}/images/novu.svg` : undefined,
+        client_uri: clientUri,
+        logo_uri: logoUri,
         software_id: oauthConfig.softwareId ?? DEFAULT_SOFTWARE_ID,
         software_version: SOFTWARE_VERSION,
       });
 
-      // A secret-bearing method that comes back without a `client_secret`
-      // would persist a confidential client we can never authenticate,
-      // surfacing later as an opaque `invalid_client` at token exchange.
-      // Fail fast so the error points at registration instead.
-      if (tokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
-        throw new McpOAuthDiscoveryError(
-          'mcp_registration_failed',
-          `Dynamic Client Registration returned no client_secret for "${tokenEndpointAuthMethod}".`
-        );
+      // Honor the AS-returned method when present (RFC 7591 §3.2.1). Some
+      // upstreams (e.g. Jotform) accept `client_secret_post` but register a
+      // public client and respond with `token_endpoint_auth_method: "none"`.
+      // Others (e.g. Postman) echo the requested confidential method but omit
+      // `client_secret` — treat that as an implicit public-client downgrade
+      // when the AS also advertises `none`.
+      let effectiveTokenEndpointAuthMethod = registration.tokenEndpointAuthMethod ?? tokenEndpointAuthMethod;
+
+      if (effectiveTokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
+        const asSupportsPublicClient = asMetadata.tokenEndpointAuthMethodsSupported?.includes('none') ?? false;
+
+        if (asSupportsPublicClient) {
+          effectiveTokenEndpointAuthMethod = 'none';
+        } else {
+          throw new McpOAuthDiscoveryError(
+            'mcp_registration_failed',
+            `Dynamic Client Registration returned no client_secret for "${effectiveTokenEndpointAuthMethod}".`
+          );
+        }
       }
 
-      return { ...registration, tokenEndpointAuthMethod };
+      return { ...registration, tokenEndpointAuthMethod: effectiveTokenEndpointAuthMethod };
     } catch (err) {
       throw mapDiscoveryError(err, `MCP authorization server "${asMetadata.issuer}"`);
     }
@@ -827,7 +863,7 @@ export class GenerateMcpOAuthUrl {
    * `issuer = https://api.ahrefs.com` but `authorization_endpoint =
    * https://app.ahrefs.com/...`) and rejecting that breaks legitimate
    * providers. For DCR the metadata document is already authenticated
-   * against the requested issuer by `isAcceptableIssuerMatch` in the
+   * against the requested issuer by `mcp-oauth-issuer-match` in the
    * discovery layer, so the provider itself vouches for its endpoints.
    * For `novu-app` mode, where issuer + endpoints are hand-pinned literals
    * in the catalog, the same-origin guard is applied at the call site.
@@ -835,15 +871,16 @@ export class GenerateMcpOAuthUrl {
   private buildAuthorizeUrlFromEndpoints(args: {
     authorizationEndpoint: string;
     clientId: string;
+    redirectUri?: string;
     scopes: string[];
     resource: string;
     state: string;
     pkceVerifier: string;
   }): string {
-    const { authorizationEndpoint, clientId, scopes, resource, state, pkceVerifier } = args;
+    const { authorizationEndpoint, clientId, redirectUri, scopes, resource, state, pkceVerifier } = args;
     const params = new URLSearchParams({
       client_id: clientId,
-      redirect_uri: buildMcpOAuthRedirectUri(),
+      redirect_uri: redirectUri ?? buildMcpOAuthRedirectUri(),
       response_type: 'code',
       state,
       code_challenge: deriveCodeChallenge(pkceVerifier),
@@ -855,7 +892,12 @@ export class GenerateMcpOAuthUrl {
       params.set('scope', scopes.join(' '));
     }
 
-    return `${authorizationEndpoint}?${params.toString()}`;
+    const authorizeUrl = new URL(authorizationEndpoint);
+    for (const [key, value] of params) {
+      authorizeUrl.searchParams.set(key, value);
+    }
+
+    return authorizeUrl.toString();
   }
 
   private async getEnvironmentApiKey(environmentId: string): Promise<string> {
@@ -867,44 +909,6 @@ export class GenerateMcpOAuthUrl {
 
     return apiKeys[0].key;
   }
-}
-
-/**
- * Decide whether a `pending_oauth` session can be reused without rotating PKCE.
- * For DCR the recorded client is validated through `pickReusableOAuthClient`
- * (issuer match, unexpired secret, and matching redirect URI); for `novu-app`
- * the pinned endpoints recorded on the session are sufficient.
- */
-function canReusePendingOAuthSession(existing: McpConnectionEntity | null): boolean {
-  if (!existing) {
-    return false;
-  }
-
-  if (existing.status !== McpConnectionStatusEnum.PendingOAuth) {
-    return false;
-  }
-
-  const oauthState = existing.oauthState;
-
-  if (!oauthState?.pkceVerifier || oauthState.callbackClaimedAt) {
-    return false;
-  }
-
-  if (existing.authMode === McpConnectionAuthModeEnum.NovuApp) {
-    return Boolean(
-      oauthState.expectedIssuer && oauthState.resource && oauthState.tokenEndpoint && oauthState.authorizationEndpoint
-    );
-  }
-
-  if (existing.authMode === McpConnectionAuthModeEnum.Dcr) {
-    return Boolean(
-      oauthState.expectedIssuer &&
-        oauthState.resource &&
-        pickReusableOAuthClient(existing.oauthClient, oauthState.expectedIssuer, buildMcpOAuthRedirectUri())
-    );
-  }
-
-  return false;
 }
 
 function mapDiscoveryError(err: unknown, contextLabel: string): never {

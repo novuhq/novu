@@ -577,6 +577,15 @@ export async function safeOutboundJsonRequest<T = unknown>(
     } catch {
       // Leave parsed as string if JSON parsing fails.
     }
+  } else if (typeof parsed === 'string') {
+    const trimmed = parsed.trim();
+    if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+      try {
+        parsed = JSON.parse(trimmed);
+      } catch {
+        // Leave parsed as string if JSON parsing fails.
+      }
+    }
   }
 
   return {
