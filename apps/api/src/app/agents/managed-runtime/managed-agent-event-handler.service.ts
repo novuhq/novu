@@ -165,9 +165,13 @@ export class ManagedAgentEventHandler {
             return;
           }
 
-          await this.handleAgentReply.execute(
-            HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: event.response.content } })
-          );
+          const replyMarkdown = event.response.content?.trim();
+          if (replyMarkdown) {
+            await this.handleAgentReply.execute(
+              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: replyMarkdown } })
+            );
+          }
+
           await this.demoQuota.recordUsage(
             metadata.environmentId,
             metadata.organizationId,

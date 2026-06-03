@@ -15,6 +15,8 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
+import { buildPlanDeliveryMarkdown } from './plan-model-to-markdown';
+import { supportsLivePlanDelivery } from './plan-live-delivery';
 import {
   editSlackNativeBlocks,
   getSlackApiErrorCode,
@@ -379,13 +381,19 @@ export class OutboundGateway {
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
     const adapter = chat.getAdapter(platform);
-    if (typeof adapter.postObject !== 'function') {
+    if (!supportsLivePlanDelivery(platform, adapter)) {
       return null;
     }
 
-    const sent = await adapter.postObject(platformThreadId, 'plan', model).catch(toDeliveryError);
+    if (typeof adapter.postObject === 'function') {
+      const sent = await adapter.postObject(platformThreadId, 'plan', model).catch(toDeliveryError);
 
-    return { messageId: sent.id, platformThreadId: sent.threadId };
+      return { messageId: sent.id, platformThreadId: sent.threadId };
+    }
+
+    const markdown = buildPlanDeliveryMarkdown(model);
+
+    return this.postToConversation(agentId, integrationIdentifier, platform, platformThreadId, { markdown });
   }
 
   async editPlanObject(
@@ -401,11 +409,26 @@ export class OutboundGateway {
     const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
 
     const adapter = chat.getAdapter(platform);
-    if (typeof adapter.editObject !== 'function') {
+    if (!supportsLivePlanDelivery(platform, adapter)) {
       return;
     }
 
-    await adapter.editObject(platformThreadId, platformMessageId, 'plan', model).catch(toDeliveryError);
+    if (typeof adapter.editObject === 'function') {
+      await adapter.editObject(platformThreadId, platformMessageId, 'plan', model).catch(toDeliveryError);
+
+      return;
+    }
+
+    const markdown = buildPlanDeliveryMarkdown(model);
+
+    await this.editInConversation(
+      agentId,
+      integrationIdentifier,
+      platform,
+      platformThreadId,
+      platformMessageId,
+      { markdown }
+    );
   }
 
   async reactToMessage(
