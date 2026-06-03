@@ -95,11 +95,9 @@ Move rows here when DCR onboarding ships or the entry moves to another OAuth mod
 | `webflow` | Webflow | 2026-06-03 | DCR probe succeeded (`mcp.webflow.com/oauth/register`, `token_endpoint_auth_method: client_secret_post`); catalog `oauth.mode` → `dcr` |
 | `monte-carlo` | Monte Carlo | 2026-06-03 | DCR probe succeeded (`auth.getmontecarlo.com/oauth2/register`, `token_endpoint_auth_method: client_secret_post`); catalog `oauth.mode` → `dcr` |
 | `eraser` | Eraser | 2026-06-03 | DCR probe succeeded (`app.eraser.io/api/oauth/register`, public client `token_endpoint_auth_method: none`); catalog `oauth.mode` → `dcr` |
-| `webflow` | Webflow | 2026-06-03 | DCR probe succeeded (`mcp.webflow.com/oauth/register`, `token_endpoint_auth_method: client_secret_post`); catalog `oauth.mode` → `dcr` |
 | `motherduck` | MotherDuck | 2026-06-03 | DCR probe succeeded (`mcp-auth.motherduck.com/register`, `token_endpoint_auth_method: none`); catalog `oauth.mode` → `dcr` |
 | `posthog` | PostHog | 2026-06-03 | DCR probe succeeded (`oauth.posthog.com/oauth/register/`); catalog `oauth.mode` → `dcr` |
 | `exa` | Exa | 2026-06-03 | DCR probe succeeded (`auth.exa.ai/api/oauth/register`); catalog `oauth.mode` → `dcr` |
-| `motherduck` | MotherDuck | 2026-06-03 | DCR probe succeeded (`mcp-auth.motherduck.com/register`); catalog `oauth.mode` → `dcr` |
 | `magic-patterns` | Magic Patterns | 2026-06-03 | DCR probe succeeded (`oauth.magicpatterns.com/oauth2/register`, `token_endpoint_auth_method: client_secret_post`); catalog `oauth.mode` → `dcr` |
 | `incident-io` | incident.io | 2026-06-03 | DCR probe succeeded; catalog `oauth.mode` → `dcr` |
 | `jentic` | Jentic | 2026-06-03 | DCR probe succeeded (`api.jentic.com/oauth2/register`); catalog `oauth.mode` → `dcr` |

@@ -75,4 +75,16 @@ describe('isAcceptableIssuerMatch', () => {
   it('rejects relaxations when OAuth endpoints are omitted', () => {
     expect(isAcceptableIssuerMatch('https://mcp.vercel.com', 'https://vercel.com')).to.equal(false);
   });
+
+  it('rejects sibling relaxation when hosts share only a multi-level public suffix', () => {
+    const opts: IssuerMatchOpts = {
+      authorizationEndpoint: 'https://service.example.co.uk/oauth/authorize',
+      tokenEndpoint: 'https://service.example.co.uk/oauth/token',
+      registrationEndpoint: 'https://service.example.co.uk/oauth/register',
+    };
+
+    expect(isAcceptableIssuerMatch('https://service.example.co.uk', 'https://login.attacker.co.uk', opts)).to.equal(
+      false
+    );
+  });
 });

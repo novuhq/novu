@@ -1,12 +1,12 @@
 import type { McpOAuthErrorCode } from '../mcp-oauth-discovery.service';
 
-export type DcrTokenResponse = {
+export interface DcrTokenResponse {
   access_token: string;
   refresh_token?: string;
   expires_in?: number;
   token_type?: string;
   scope?: string;
-};
+}
 
 export type DcrTokenExchangeErrorLogVariant = 'non_2xx' | 'inline_error' | 'malformed';
 

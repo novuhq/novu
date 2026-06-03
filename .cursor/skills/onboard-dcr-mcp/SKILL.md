@@ -5,7 +5,7 @@ description: Onboard a new DCR OAuth MCP catalog entry with provider-doc vetting
 
 # Onboard DCR MCP
 
-Use this checklist when adding a new `mode: dcr` entry to [`packages/shared/src/consts/providers/mcp-servers.ts`](packages/shared/src/consts/providers/mcp-servers.ts).
+Use this checklist when adding a new `mode: dcr` entry to [`packages/shared/src/consts/providers/mcp-servers.ts`](../../../packages/shared/src/consts/providers/mcp-servers.ts).
 
 ## Candidate selection (run before probes)
 

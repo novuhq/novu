@@ -1,8 +1,7 @@
+import { getDomain } from 'tldts';
+
 /**
  * RFC 8414 §3.3 issuer comparison with narrow relaxations for real-world MCP gateways.
- *
- * Intentionally uses a naive registrable-domain heuristic (last two hostname labels)
- * rather than a full PSL — sufficient for known Novu upstreams; document before changing.
  */
 
 export type IssuerMatchOpts = {
@@ -90,18 +89,9 @@ function collectOAuthEndpointUrls(opts?: IssuerMatchOpts): string[] | null {
   return urls;
 }
 
-/**
- * Naive registrable-domain label (not full PSL). Used only to tie OAuth endpoints
- * to an advertised issuer within the same organizational domain.
- */
+/** Public-suffix-aware registrable domain via `tldts` (e.g. `example.co.uk`, not `co.uk`). */
 function getRegistrableDomain(hostname: string): string {
-  const parts = hostname.split('.');
-
-  if (parts.length <= 2) {
-    return hostname;
-  }
-
-  return parts.slice(-2).join('.');
+  return getDomain(hostname) ?? hostname;
 }
 
 function hostnameBelongsToDomain(url: string, domain: string): boolean {

@@ -1,4 +1,5 @@
-import { decryptMcpConnectionOAuthClient } from '@novu/application-generic';
+import { isIP } from 'node:net';
+import { decryptMcpConnectionOAuthClient, isPrivateIp } from '@novu/application-generic';
 import { McpConnectionEntity, McpConnectionOAuthClient } from '@novu/dal';
 import { McpConnectionAuthModeEnum, McpConnectionStatusEnum } from '@novu/shared';
 
@@ -80,9 +81,13 @@ function isPublicDcrClientMetadataBase(base: string): boolean {
     return false;
   }
 
-  const host = parsed.hostname.toLowerCase();
+  const host = parsed.hostname.toLowerCase().replace(/^\[(.*)\]$/, '$1');
 
-  if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host.endsWith('.localhost')) {
+  if (host === 'localhost' || host.endsWith('.localhost')) {
+    return false;
+  }
+
+  if (isIP(host) !== 0 && isPrivateIp(host)) {
     return false;
   }
 
