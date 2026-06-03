@@ -373,7 +373,7 @@ export function SlackSetupGuide({
     ) : null;
 
   const renderSlackInstallStepRightContent = (completePrerequisiteStepIndex: number) => (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3 w-full">
       {isCredentialsSaved && slackInstallConnectControl ? (
         slackInstallConnectControl
       ) : (
@@ -403,7 +403,7 @@ export function SlackSetupGuide({
           </span>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton href="https://api.slack.com/apps">Slack App Configuration Token</SetupButton>
             {!isCredentialsSaved ? (
               isConnectSubscriberReady && connectionIdentifier ? (
@@ -430,6 +430,7 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, firstIncompleteStep)}
+        dimmed={!isCredentialsSaved}
         title="Verify by installing the app to your workspace"
         description="This is what your users need to do to install the slack app to their workspace to start interacting with it."
         rightContent={renderSlackInstallStepRightContent(base)}
@@ -438,6 +439,7 @@ export function SlackSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, firstIncompleteStep)}
+        dimmed={!isCredentialsSaved}
         title="Send your first message"
         description={
           <span>

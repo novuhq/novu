@@ -111,7 +111,7 @@ export function ClaudeAgentPreviewIllustration({
   );
 }
 
-type AgentCardProps = {
+export type AgentCardProps = {
   connector: ManagedConnectorKind;
   isDemoCredential: boolean;
   status: ManagedAgentPreviewStatus;
@@ -130,7 +130,7 @@ type AgentCardProps = {
   tools: ReadonlyArray<string>;
 };
 
-function AgentCard({
+export function AgentCard({
   connector,
   isDemoCredential,
   status,
@@ -411,12 +411,12 @@ type McpTagProps = {
 };
 
 function McpTag({ id }: McpTagProps) {
-  const Icon = getMcpIconPath(id);
+  const iconPath = getMcpIconPath(id);
   const label = formatMcpLabel(id);
 
   return (
     <span className="border border-stroke-soft bg-bg-weak inline-flex h-5 items-center gap-1 rounded px-1 py-0.5">
-      {Icon ? <Icon className="size-3.5" aria-hidden /> : null}
+      {iconPath ? <img src={iconPath} alt={label} className="size-3.5" aria-hidden /> : null}
       <span className="text-text-sub text-[12px] font-medium leading-4">{label}</span>
     </span>
   );

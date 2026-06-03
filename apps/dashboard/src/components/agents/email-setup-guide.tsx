@@ -49,6 +49,8 @@ export type EmailSetupGuideProps = {
    * back to the previous behavior of requiring a custom address.
    */
   integrationLink?: AgentIntegrationLink;
+  /** Onboarding hides the custom-address add-form; the shared inbox is enough to get started. */
+  isOnboarding?: boolean;
 };
 
 export function EmailSetupGuide({
@@ -58,6 +60,7 @@ export function EmailSetupGuide({
   onStepsCompleted,
   embedded = false,
   integrationLink,
+  isOnboarding = false,
 }: EmailSetupGuideProps) {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
@@ -157,7 +160,7 @@ export function EmailSetupGuide({
         }
         rightContent={
           <div className="flex w-full flex-col gap-1.5">
-            <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} />
+            <OutboundProviderSelect selectedId={outboundId || undefined} onSelect={onOutboundSelect} hideLabel />
             {isOutboundDemo ? <DemoProviderHint /> : null}
           </div>
         }
@@ -202,10 +205,12 @@ export function EmailSetupGuide({
         description="Add one or more email addresses across different domains. Subscribers send emails to these addresses to talk to your agent."
         rightContent={
           <InboundAddressConfig
+            sharedInboundAddress={hasSharedInbox ? sharedInboundAddress : undefined}
             configuredAddresses={configuredAddresses}
             domains={domains}
             onAddAddress={addAddress}
             onRemoveAddress={removeAddress}
+            hideCustomAddressForm={isOnboarding}
           />
         }
       />

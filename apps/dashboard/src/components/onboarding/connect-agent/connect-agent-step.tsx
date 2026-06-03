@@ -105,6 +105,12 @@ type ConnectAgentStepProps = {
   onRuntimeChange?: (runtime: RuntimeType) => void;
   onPreviewChange?: (preview: ConnectAgentPreview) => void;
   isManagedEnabled: boolean;
+  /**
+   * Onboarding "demo agent" mode: renders only the simplified brain step (prompt + suggestions +
+   * demo-credentials hint + full-width "Setup agent" CTA). The connector, template, and
+   * credentials surfaces are hidden — the agent is provisioned on the Novu demo Claude credentials.
+   */
+  simplifiedDemo?: boolean;
 };
 
 const DEFAULT_TEMPLATE = DEFAULT_AGENT_TEMPLATES[0];
@@ -116,6 +122,7 @@ export function ConnectAgentStep({
   onRuntimeChange,
   onPreviewChange,
   isManagedEnabled,
+  simplifiedDemo,
 }: ConnectAgentStepProps) {
   const telemetry = useTelemetry();
   const queryClient = useQueryClient();
@@ -140,6 +147,9 @@ export function ConnectAgentStep({
   // animation flickers off in between `isGenerating` and `isPending` and reveals the
   // submit button momentarily.
   const [isPromptSubmitInFlight, setIsPromptSubmitInFlight] = useState(false);
+  // Set when the user cancels generation, so the in-flight submit bails before creating the agent
+  // even if the aborted request's promise resolves (or settles late) instead of rejecting.
+  const generationCancelledRef = useRef(false);
 
   const {
     generate: generateManagedAgent,
@@ -413,7 +423,9 @@ export function ConnectAgentStep({
   }, []);
 
   const handleCancelGeneration = useCallback(() => {
+    generationCancelledRef.current = true;
     cancelGeneration();
+    setIsPromptSubmitInFlight(false);
   }, [cancelGeneration]);
 
   const handleTemplateChange = (next: TemplateSelection) => {
@@ -610,6 +622,7 @@ export function ConnectAgentStep({
         }
       }
 
+      generationCancelledRef.current = false;
       setIsPromptSubmitInFlight(true);
 
       try {
@@ -625,6 +638,14 @@ export function ConnectAgentStep({
         }
         const message = err instanceof Error ? err.message : 'Could not generate agent.';
         showErrorToast(message, 'Generation failed');
+
+        return;
+      }
+
+      // The user cancelled while the request was in flight — bail before creating the agent even
+      // if the aborted request still resolved.
+      if (generationCancelledRef.current) {
+        setIsPromptSubmitInFlight(false);
 
         return;
       }
@@ -759,7 +780,19 @@ export function ConnectAgentStep({
     );
   };
 
-  const submitButton = (
+  const submitButton = simplifiedDemo ? (
+    <Button
+      type="submit"
+      variant="secondary"
+      mode="filled"
+      size="2xs"
+      className="mt-1 w-full justify-center gap-1"
+      isLoading={isSubmitBusy}
+      trailingIcon={RiArrowRightSLine}
+    >
+      Setup agent
+    </Button>
+  ) : (
     <Button
       type="submit"
       variant="secondary"
@@ -866,6 +899,7 @@ export function ConnectAgentStep({
         onVerify={handleVerify}
         onSaveIntegration={handleSaveIntegration}
         submitSlot={useAiGeneration || isScratchRuntime ? submitButton : undefined}
+        simplifiedDemo={simplifiedDemo}
       />
 
       {!useAiGeneration && !isScratchRuntime && <div className="flex flex-col gap-2 pl-6">{submitButton}</div>}

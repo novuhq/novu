@@ -92,6 +92,11 @@ export function SetupStep({
    * and the title.
    */
   headerSlot,
+  /**
+   * Visually mutes a not-yet-reachable step (e.g. steps shown before credentials are saved) by
+   * lowering opacity and disabling pointer interaction on its content.
+   */
+  dimmed,
 }: {
   index: number;
   status: StepStatus;
@@ -102,21 +107,27 @@ export function SetupStep({
   extraContent?: ReactNode;
   fullWidthContent?: ReactNode;
   headerSlot?: ReactNode;
+  dimmed?: boolean;
 }) {
   return (
     <div className="relative flex flex-col gap-4 pl-6">
       <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
-      <div className="flex flex-col gap-4 md:flex-row md:gap-20">
-        <div className="flex min-w-0 flex-1 gap-4 flex-col md:max-w-[400px]">
+      <div
+        className={cn(
+          'flex flex-col gap-4 transition-opacity duration-300 ease-out md:flex-row md:gap-20',
+          dimmed && 'pointer-events-none opacity-30'
+        )}
+      >
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
           <div className="flex flex-col gap-2">
             {sectionLabel && (
               <p className="text-text-soft text-code-xs font-normal leading-4 tracking-[-0.24px]">{sectionLabel}</p>
             )}
             {headerSlot}
-            <p className="text-text-strong text-label-sm font-medium leading-5">{title}</p>
-            <div className="text-text-soft text-label-xs font-normal leading-4">{description}</div>
+            <p className={cn('text-label-sm font-medium leading-5 text-text-strong')}>{title}</p>
+            <div className={cn('text-label-xs font-normal leading-4 text-text-soft')}>{description}</div>
           </div>
           {extraContent}
         </div>
