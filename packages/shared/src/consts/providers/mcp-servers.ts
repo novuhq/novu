@@ -1748,11 +1748,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'omni-analytics',
     name: 'Omni Analytics',
-    description: 'Connect Omni Analytics to your agent via the managed runtime provider.',
+    description: 'Query Omni Analytics data, models, and dashboards through your agent.',
     url: 'https://callbacks.omniapp.co/callback/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'orion-by-gravity',
@@ -1955,11 +1955,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'pylon',
     name: 'Pylon',
-    description: 'Connect Pylon to your agent via the managed runtime provider.',
+    description: 'Access Pylon customer support conversations, accounts, and issues through your agent.',
     url: 'https://mcp.usepylon.com/',
     category: 'communication',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'quartr',
@@ -2104,6 +2104,15 @@ export const MCP_SERVERS: McpServer[] = [
     category: 'communication',
     popular: false,
     oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+  },
+  {
+    id: 'sourcegraph',
+    name: 'Sourcegraph',
+    description: 'Search code, navigate repositories, and run Deep Search across your Sourcegraph instance.',
+    url: 'https://sourcegraph.com/.api/mcp',
+    category: 'code',
+    popular: false,
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'shapes',

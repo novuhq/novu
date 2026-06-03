@@ -7,6 +7,38 @@ description: Onboard a new DCR OAuth MCP catalog entry with provider-doc vetting
 
 Use this checklist when adding a new `mode: dcr` entry to [`packages/shared/src/consts/providers/mcp-servers.ts`](packages/shared/src/consts/providers/mcp-servers.ts).
 
+## Candidate selection (run before probes)
+
+**Default goal:** upgrade or add catalog entries — not re-audit providers already on `dcr`.
+
+Read [`mcp-servers.ts`](../../../packages/shared/src/consts/providers/mcp-servers.ts) and [`blocked-mcp-servers.md`](./blocked-mcp-servers.md), then classify each target:
+
+| Catalog `oauth.mode` | Blocked list | Action |
+|----------------------|--------------|--------|
+| `provider-managed` (or missing entry) | not listed | **Onboard** — docs gate + probes + catalog/blocker edits |
+| `provider-managed` | open blocker | **Skip** — already triaged; only re-probe if user says unblocked |
+| `dcr` | — | **Skip** — do **not** run full onboarding or assign batch agents |
+| `novu-app` / `user-app` | — | **Skip** — out of scope for this skill unless user asks |
+
+**Do not** label work as `VERIFY_ONLY` in a batch onboarding run. That outcome is for explicit single-provider regression requests only (e.g. “re-probe Sentry after an outage”).
+
+### Picking providers (including parallel / N-agent runs)
+
+1. Build the eligible pool: `provider-managed` (or net-new) + user’s category filter (e.g. `category: 'code'`) − open blockers − already `dcr`.
+2. Assign **one unique id per agent** from that pool only.
+3. If the pool has fewer than N candidates, onboard fewer — do **not** pad with existing `dcr` entries.
+4. Prefer catalog entries whose description still says “managed runtime provider” — strong signal they were never probed.
+
+```bash
+# Example: list provider-managed code MCPs not on the blocked list (adjust paths)
+rg "id: '" packages/shared/src/consts/providers/mcp-servers.ts -A6 | rg -B5 "ProviderManaged" | rg "category: 'code'"
+rg "^\| \`" .cursor/skills/onboard-dcr-mcp/blocked-mcp-servers.md
+```
+
+### When re-probing an existing `dcr` entry is allowed
+
+Only if the user **explicitly** requests verification or there is a production incident for that id. Then: probes + short report; **no** catalog mode change unless probes fail (downgrade to `provider-managed` + blocker row).
+
 ## Provider docs gate (run first)
 
 Before curl probes, catalog edits, or strategy work:
@@ -138,6 +170,7 @@ See the `example/` fixture directory for layout.
 
 ## Code touch list
 
+0. Confirm candidate was **not** already `oauth.mode: dcr` (see Candidate selection)
 1. Add catalog entry in `packages/shared/src/consts/providers/mcp-servers.ts`
 2. Run `pnpm build --filter @novu/shared` if shared types changed
 3. Only if needed: add strategy file + register in `dcr-provider-strategy-registry.ts`
