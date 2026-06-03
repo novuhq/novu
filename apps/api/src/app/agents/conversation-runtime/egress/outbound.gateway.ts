@@ -17,7 +17,7 @@ import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.servi
 import { FileMaterializer } from './file-materializer.service';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
-import { supportsLivePlanDelivery } from './plan-live-delivery';
+import { resolvePlanDeliveryMode } from './plan-live-delivery';
 import {
   editSlackNativeBlocks,
   getSlackApiErrorCode,
@@ -379,12 +379,14 @@ export class OutboundGateway {
     phase: PlanPhase
   ): Promise<SentMessageInfo | null> {
     const adapter = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
-    if (!supportsLivePlanDelivery(platform, adapter)) {
+    const mode = resolvePlanDeliveryMode(platform, adapter);
+
+    if (!mode) {
       return null;
     }
 
-    if (typeof adapter.postObject === 'function') {
-      const sent = await adapter.postObject(platformThreadId, 'plan', model).catch(toDeliveryError);
+    if (mode === 'native') {
+      const sent = await adapter.postObject!(platformThreadId, 'plan', model).catch(toDeliveryError);
 
       return { messageId: sent.id, platformThreadId: sent.threadId };
     }
@@ -404,12 +406,14 @@ export class OutboundGateway {
     phase: PlanPhase
   ): Promise<void> {
     const adapter = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
-    if (!supportsLivePlanDelivery(platform, adapter)) {
+    const mode = resolvePlanDeliveryMode(platform, adapter);
+
+    if (!mode) {
       return;
     }
 
-    if (typeof adapter.editObject === 'function') {
-      await adapter.editObject(platformThreadId, platformMessageId, 'plan', model).catch(toDeliveryError);
+    if (mode === 'native') {
+      await adapter.editObject!(platformThreadId, platformMessageId, 'plan', model).catch(toDeliveryError);
 
       return;
     }

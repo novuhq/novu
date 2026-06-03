@@ -6,19 +6,29 @@ interface PlanCapableAdapter {
   editMessage?: (threadId: string, messageId: string, message: unknown) => Promise<{ id: string; threadId: string }>;
 }
 
+export type PlanDeliveryMode = 'native' | 'markdown';
+
 const MARKDOWN_PLAN_PLATFORMS = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.TELEGRAM,
   AgentPlatformEnum.TEAMS,
 ]);
 
-export function supportsLivePlanDelivery(platform: string, adapter: PlanCapableAdapter): boolean {
+export function resolvePlanDeliveryMode(platform: string, adapter: PlanCapableAdapter): PlanDeliveryMode | null {
   if (typeof adapter.postObject === 'function' && typeof adapter.editObject === 'function') {
-    return true;
+    return 'native';
   }
 
   if (!MARKDOWN_PLAN_PLATFORMS.has(platform as AgentPlatformEnum)) {
-    return false;
+    return null;
   }
 
-  return typeof adapter.editMessage === 'function';
+  if (typeof adapter.editMessage !== 'function') {
+    return null;
+  }
+
+  return 'markdown';
+}
+
+export function supportsLivePlanDelivery(platform: string, adapter: PlanCapableAdapter): boolean {
+  return resolvePlanDeliveryMode(platform, adapter) !== null;
 }
