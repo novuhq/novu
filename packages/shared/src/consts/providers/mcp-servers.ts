@@ -1587,11 +1587,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'monday-com',
     name: 'monday.com',
-    description: 'Connect monday.com to your agent via the managed runtime provider.',
+    description: 'Query boards, create items, update columns, and manage work on monday.com.',
     url: 'https://mcp.monday.com/mcp',
     category: 'productivity',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'monte-carlo',

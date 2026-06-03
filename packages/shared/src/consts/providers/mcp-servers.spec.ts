@@ -54,7 +54,7 @@ describe('MCP_SERVERS catalog', () => {
     });
 
     it('includes Claude vault delta MCPs that remain provider-managed', () => {
-      const providerManagedDeltaIds = ['gmail', 'google-calendar', 'microsoft-365', 'monday-com', 'vercel'];
+      const providerManagedDeltaIds = ['gmail', 'google-calendar', 'microsoft-365', 'vercel'];
 
       for (const id of providerManagedDeltaIds) {
         const entry = MCP_SERVERS.find((server) => server.id === id);
@@ -65,7 +65,7 @@ describe('MCP_SERVERS catalog', () => {
     });
 
     it('includes Claude vault delta MCPs migrated to dcr', () => {
-      const dcrDeltaIds = ['miro', 'zapier'];
+      const dcrDeltaIds = ['miro', 'monday-com', 'zapier'];
 
       for (const id of dcrDeltaIds) {
         const entry = MCP_SERVERS.find((server) => server.id === id);

@@ -1,11 +1,27 @@
 ---
 name: onboard-dcr-mcp
-description: Onboard a new DCR OAuth MCP catalog entry with curl probes, optional recorded fixtures, and per-provider strategy guidance. Use when adding or changing `mode: dcr` entries in MCP_SERVERS or wiring a quirky DCR provider.
+description: Onboard a new DCR OAuth MCP catalog entry with provider-doc vetting, curl probes, optional recorded fixtures, and per-provider strategy guidance. Use when adding or changing `mode: dcr` entries in MCP_SERVERS or wiring a quirky DCR provider. Abort if the provider requires whitelist or manual approval.
 ---
 
 # Onboard DCR MCP
 
 Use this checklist when adding a new `mode: dcr` entry to [`packages/shared/src/consts/providers/mcp-servers.ts`](packages/shared/src/consts/providers/mcp-servers.ts).
+
+## Provider docs gate (run first)
+
+Before curl probes, catalog edits, or strategy work:
+
+1. Read the provider's official OAuth / MCP / DCR documentation.
+2. Confirm Novu can register clients dynamically without manual intervention.
+
+**Abort onboarding** and report back to the user if the provider requires any of:
+
+- Redirect URI or OAuth app **whitelist** pre-approval
+- Manual review / approval of DCR registrations before the client becomes active
+- A fixed pre-registered app (`client_id` supplied by the provider) instead of RFC 7591 DCR
+- Partner or onboarding approval before OAuth apps are allowed
+
+Include the doc link and the specific requirement that blocked onboarding. Do not add a catalog entry or run live probes for providers that fail this gate.
 
 ## When you need more than a catalog entry
 
