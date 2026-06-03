@@ -13,3 +13,22 @@ export function mintRandomToken(bytes: number): string {
 export function buildOpaqueStorageKey(keyPrefix: string, token: string): string {
   return `${keyPrefix}${token}`;
 }
+
+export function mintedOpaqueTokenBodyLength(randomTokenBytes: number): number {
+  return Math.ceil((randomTokenBytes * 8) / 6);
+}
+
+export function isMintedOpaqueActionId(
+  actionId: string | undefined,
+  prefix: string,
+  randomTokenBytes: number
+): boolean {
+  if (!actionId?.startsWith(prefix)) {
+    return false;
+  }
+
+  const body = actionId.slice(prefix.length);
+  const expectedLength = mintedOpaqueTokenBodyLength(randomTokenBytes);
+
+  return new RegExp(`^[A-Za-z0-9_-]{${expectedLength}}$`).test(body);
+}

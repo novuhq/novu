@@ -1,6 +1,7 @@
 import type { ButtonElement, CardChild, CardElement } from 'chat';
 
 export const TELEGRAM_CALLBACK_DATA_PREFIX = 'chat:';
+export const TELEGRAM_CALLBACK_DATA_LIMIT_BYTES = 64;
 
 type ActionBlockChild = ButtonElement | { type: string; id?: string; value?: string; label?: string };
 
@@ -8,6 +9,10 @@ export function encodedTelegramCallbackDataByteLength(actionId: string): number 
   const callbackData = `${TELEGRAM_CALLBACK_DATA_PREFIX}${JSON.stringify({ a: actionId })}`;
 
   return Buffer.byteLength(callbackData, 'utf8');
+}
+
+export function callbackPayloadNeedsTokenization(actionId: string): boolean {
+  return encodedTelegramCallbackDataByteLength(actionId) > TELEGRAM_CALLBACK_DATA_LIMIT_BYTES;
 }
 
 function isActionsBlock(child: CardChild): child is CardChild & { type: 'actions'; children: ActionBlockChild[] } {
