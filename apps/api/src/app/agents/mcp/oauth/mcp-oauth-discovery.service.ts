@@ -656,6 +656,15 @@ function dedupe(list: string[]): string[] {
  *     (e.g. `https://api.planetscale.com`), and
  *   - authorize/token/(register) endpoints belong to the advertised issuer's
  *     registrable domain (e.g. `app.planetscale.com`, `auth.planetscale.com`).
+ *
+ * We additionally accept the sibling-subdomain MCP gateway pattern when optional
+ * OAuth endpoint URLs are supplied:
+ *
+ *   - PRM lists the MCP product host (e.g. `https://mcp.newrelic.com`),
+ *   - AS metadata at that host declares a sibling auth subdomain as issuer
+ *     (`https://login.newrelic.com`), and
+ *   - authorize/token/(register) endpoints stay within the shared registrable
+ *     domain (`newrelic.com`).
  */
 function isAcceptableIssuerMatch(
   requested: string,
@@ -699,6 +708,10 @@ function isAcceptableIssuerMatch(
   }
 
   if (isParentDomainIssuer(requested, advertised, opts)) {
+    return true;
+  }
+
+  if (isSiblingRegistrableDomainIssuer(requested, advertised, opts)) {
     return true;
   }
 
@@ -785,6 +798,53 @@ function hostnameBelongsToRegistrableDomain(url: string, registrableDomain: stri
   } catch {
     return false;
   }
+}
+
+/**
+ * New Relic-style split-host MCP gateways: PRM lists the MCP product host
+ * (e.g. `https://mcp.newrelic.com`) while RFC 8414 metadata served at that
+ * host declares a sibling auth subdomain as issuer (`https://login.newrelic.com`)
+ * with OAuth endpoints split across both hosts on the same registrable domain.
+ */
+function isSiblingRegistrableDomainIssuer(
+  requested: string,
+  advertised: string,
+  opts?: {
+    authorizationEndpoint?: string;
+    tokenEndpoint?: string;
+    registrationEndpoint?: string;
+  }
+): boolean {
+  if (!opts?.authorizationEndpoint || !opts.tokenEndpoint) {
+    return false;
+  }
+
+  let requestedUrl: URL;
+  let advertisedUrl: URL;
+  try {
+    requestedUrl = new URL(requested);
+    advertisedUrl = new URL(advertised);
+  } catch {
+    return false;
+  }
+
+  if (requestedUrl.origin === advertisedUrl.origin) {
+    return false;
+  }
+
+  const requestedDomain = getRegistrableDomain(requestedUrl.hostname);
+  const advertisedDomain = getRegistrableDomain(advertisedUrl.hostname);
+
+  if (requestedDomain !== advertisedDomain) {
+    return false;
+  }
+
+  const endpointUrls = [opts.authorizationEndpoint, opts.tokenEndpoint];
+  if (opts.registrationEndpoint) {
+    endpointUrls.push(opts.registrationEndpoint);
+  }
+
+  return endpointUrls.every((endpoint) => hostnameBelongsToRegistrableDomain(endpoint, requestedDomain));
 }
 
 function isParentDomainIssuer(

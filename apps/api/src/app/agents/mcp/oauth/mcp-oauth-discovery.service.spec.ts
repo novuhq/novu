@@ -324,6 +324,27 @@ describe('McpOAuthDiscoveryService', () => {
       expect(md.registrationEndpoint).to.equal('https://auth.planetscale.com/oauth/registration');
     });
 
+    it('accepts the sibling-subdomain MCP gateway pattern (New Relic)', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://login.newrelic.com',
+          authorization_endpoint: 'https://login.newrelic.com/login',
+          token_endpoint: 'https://mcp.newrelic.com/oauth2/token',
+          registration_endpoint: 'https://mcp.newrelic.com/register',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
+          authorization_response_iss_parameter_supported: false,
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://mcp.newrelic.com');
+
+      expect(md.issuer).to.equal('https://login.newrelic.com');
+      expect(md.authorizationEndpoint).to.equal('https://login.newrelic.com/login');
+      expect(md.tokenEndpoint).to.equal('https://mcp.newrelic.com/oauth2/token');
+      expect(md.registrationEndpoint).to.equal('https://mcp.newrelic.com/register');
+    });
+
     it('rejects the MCP well-known gateway pattern when OAuth endpoints leave the advertised domain', async () => {
       safeJsonStub.resolves(
         jsonResponse(200, {

@@ -885,7 +885,12 @@ export class GenerateMcpOAuthUrl {
       params.set('scope', scopes.join(' '));
     }
 
-    return `${authorizationEndpoint}?${params.toString()}`;
+    const authorizeUrl = new URL(authorizationEndpoint);
+    for (const [key, value] of params) {
+      authorizeUrl.searchParams.set(key, value);
+    }
+
+    return authorizeUrl.toString();
   }
 
   private async getEnvironmentApiKey(environmentId: string): Promise<string> {
