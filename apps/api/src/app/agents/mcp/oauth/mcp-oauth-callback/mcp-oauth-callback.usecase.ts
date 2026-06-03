@@ -35,9 +35,6 @@ import { McpNovuAppCredentialsService } from '../../connections/get-mcp-novu-app
 import { McpConnectionVaultService } from '../../connections/mcp-connection-vault.service';
 import { SyncAgentMcpServersCommand } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
-import type { DcrTokenExchangeOutcome } from '../dcr-provider-strategies/dcr-provider-strategy';
-import { resolveDcrProviderStrategy } from '../dcr-provider-strategies/dcr-provider-strategy-registry';
-import { resolveDefaultDcrTokenExchangeOutcome } from '../dcr-provider-strategies/resolve-default-dcr-token-exchange-outcome';
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
 import {
@@ -46,6 +43,7 @@ import {
   type McpOAuthErrorCode,
 } from '../mcp-oauth-discovery.service';
 import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oauth-callback.command';
+import { type DcrTokenExchangeOutcome, resolveDcrTokenExchangeOutcome } from './token-exchange-outcome';
 
 const MAX_ERROR_MESSAGE_LEN = 256;
 
@@ -807,14 +805,7 @@ export class McpOAuthCallback {
         timeoutMs: 10_000,
       });
 
-      const defaultOutcome = resolveDefaultDcrTokenExchangeOutcome(response.statusCode, response.body);
-      const strategy = resolveDcrProviderStrategy(stateData.mcpId);
-      const overriddenOutcome = strategy.interpretTokenExchangeResponse?.({
-        statusCode: response.statusCode,
-        body: response.body,
-        defaults: defaultOutcome,
-      });
-      const outcome = overriddenOutcome ?? defaultOutcome;
+      const outcome = resolveDcrTokenExchangeOutcome(response.statusCode, response.body);
 
       if (outcome.kind === 'error') {
         return this.handleTokenExchangeErrorOutcome({
@@ -1013,48 +1004,6 @@ export function mapUpstreamCallbackErrorCode(
   }
 
   return 'oauth_callback_error';
-}
-
-/**
- * Map an upstream OAuth token-exchange error onto our `McpOAuthErrorCode`
- * union. Conservative by default — anything we don't explicitly recognise
- * lands on the generic `mcp_token_exchange_failed` so the dashboard
- * doesn't render misleading copy.
- *
- * Currently recognised:
- *  - `access_denied`                                       → `mcp_user_denied`
- *  - `application_suspended` / `app_blocked` / 403 + "Resource not accessible by integration"
- *                                                          → `mcp_github_org_block`
- *  - everything else                                       → `mcp_token_exchange_failed`
- *
- * The `providerError` value is the sanitized OAuth `error` token (or
- * `message` fallback) — never the full body — so it's safe to switch on.
- *
- * `mcp_app_not_installed` is exported on the error union for future use
- * (a disconnect or installation-check flow could emit it by hitting
- * `/applications/{client_id}/token` — see the plan's "Non-Goals"). The
- * `/login/oauth/access_token` endpoint does NOT 404 for missing org
- * approval — the consent screen simply never returns — so we deliberately
- * do not map 404 here to avoid mis-labelling unrelated transport errors.
- */
-export function mapTokenExchangeErrorCode(statusCode: number, providerError: string | undefined): McpOAuthErrorCode {
-  const normalised = providerError?.toLowerCase() ?? '';
-
-  if (normalised === 'access_denied') {
-    return 'mcp_user_denied';
-  }
-  if (normalised === 'application_suspended' || normalised === 'app_blocked') {
-    return 'mcp_github_org_block';
-  }
-  // GitHub surfaces the org-block as a 403 + body
-  // `"Resource not accessible by integration"` from the REST surface; the
-  // OAuth endpoint usually returns one of the codes above, but accept the
-  // free-form message as a fallback.
-  if (statusCode === 403 && normalised.includes('resource not accessible')) {
-    return 'mcp_github_org_block';
-  }
-
-  return 'mcp_token_exchange_failed';
 }
 
 function resolveMcpOAuthAnalyticsSource(stateData: McpOAuthState): 'api' | 'setup_card' {

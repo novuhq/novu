@@ -1,5 +1,0 @@
-{
-  "resource": "https://mcp.example.com/mcp",
-  "authorization_servers": ["https://auth.example.com"],
-  "scopes_supported": ["read", "write"]
-}

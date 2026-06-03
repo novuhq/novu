@@ -1,5 +1,24 @@
-import { mapTokenExchangeErrorCode } from '../mcp-oauth-callback/mcp-oauth-callback.usecase';
-import type { DcrTokenExchangeOutcome, DcrTokenResponse } from './dcr-provider-strategy';
+import type { McpOAuthErrorCode } from '../mcp-oauth-discovery.service';
+
+export type DcrTokenResponse = {
+  access_token: string;
+  refresh_token?: string;
+  expires_in?: number;
+  token_type?: string;
+  scope?: string;
+};
+
+export type DcrTokenExchangeErrorLogVariant = 'non_2xx' | 'inline_error' | 'malformed';
+
+export type DcrTokenExchangeOutcome =
+  | { kind: 'success'; tokens: DcrTokenResponse }
+  | {
+      kind: 'error';
+      code: McpOAuthErrorCode;
+      message: string;
+      providerError?: string;
+      logVariant: DcrTokenExchangeErrorLogVariant;
+    };
 
 function pickProviderErrorCode(body: unknown): string | undefined {
   if (!body || typeof body !== 'object') {
@@ -46,11 +65,31 @@ function parseTokenResponseBody(body: unknown): DcrTokenResponse | null {
 }
 
 /**
- * Pure default interpretation for a DCR token-endpoint response. Matches the
- * generic branch in `McpOAuthCallback.exchangeCode` before any per-provider
- * strategy override.
+ * Map an upstream OAuth token-exchange error onto our `McpOAuthErrorCode`
+ * union. Conservative by default — anything we don't explicitly recognise
+ * lands on the generic `mcp_token_exchange_failed` so the dashboard
+ * doesn't render misleading copy.
  */
-export function resolveDefaultDcrTokenExchangeOutcome(statusCode: number, body: unknown): DcrTokenExchangeOutcome {
+export function mapTokenExchangeErrorCode(statusCode: number, providerError: string | undefined): McpOAuthErrorCode {
+  const normalised = providerError?.toLowerCase() ?? '';
+
+  if (normalised === 'access_denied') {
+    return 'mcp_user_denied';
+  }
+  if (normalised === 'application_suspended' || normalised === 'app_blocked') {
+    return 'mcp_github_org_block';
+  }
+  if (statusCode === 403 && normalised.includes('resource not accessible')) {
+    return 'mcp_github_org_block';
+  }
+
+  return 'mcp_token_exchange_failed';
+}
+
+/**
+ * Interpret a DCR token-endpoint response (RFC 6749 + GitHub-style 200 + inline `error`).
+ */
+export function resolveDcrTokenExchangeOutcome(statusCode: number, body: unknown): DcrTokenExchangeOutcome {
   if (statusCode < 200 || statusCode >= 300) {
     const providerError = pickProviderErrorCode(body);
     const mappedCode = mapTokenExchangeErrorCode(statusCode, providerError);
