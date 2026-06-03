@@ -1,6 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PinoLogger, shortId } from '@novu/application-generic';
-import { ConversationActivityEntity, ConversationActivityRepository, type ConversationChannel } from '@novu/dal';
+import {
+  ConversationActivityEntity,
+  ConversationActivityRepository,
+  type ConversationChannel,
+  ConversationRepository,
+} from '@novu/dal';
 import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
@@ -19,6 +24,7 @@ interface ToolTask {
 export class HandlePlanProgress {
   constructor(
     private readonly activityRepository: ConversationActivityRepository,
+    private readonly conversationRepository: ConversationRepository,
     private readonly conversationService: AgentConversationService,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly logger: PinoLogger
@@ -39,38 +45,44 @@ export class HandlePlanProgress {
     const channel = this.conversationService.getPrimaryChannel(conversation);
     const { toolProgress } = command;
 
-    const existingActivities = await this.activityRepository.findToolActivitiesByTurnId(
-      command.environmentId,
-      command.conversationId,
-      toolProgress.turnId
-    );
+    const activePlanMessageId = conversation.activePlanMessageId;
+    const existingActivities = activePlanMessageId
+      ? await this.activityRepository.findToolActivitiesByPlanMessageId(
+          command.environmentId,
+          command.conversationId,
+          activePlanMessageId
+        )
+      : [];
 
     if (toolProgress.action === 'tool-use') {
-      await this.handleToolUse(command, channel, toolProgress, existingActivities);
+      await this.handleToolUse(command, channel, toolProgress, existingActivities, activePlanMessageId);
 
       return;
     }
 
     if (toolProgress.action === 'awaiting-approval') {
-      await this.handleAwaitingApproval(command, existingActivities);
+      await this.handleAwaitingApproval(command, existingActivities, activePlanMessageId);
 
       return;
     }
 
     if (toolProgress.action === 'approved' || toolProgress.action === 'denied') {
-      await this.handleVerdictUpdate(command, toolProgress.action, existingActivities);
+      await this.handleVerdictUpdate(command, toolProgress.action, existingActivities, activePlanMessageId);
 
       return;
     }
 
-    await this.handleFinalize(command, toolProgress, existingActivities);
+    if (toolProgress.action === 'complete' || toolProgress.action === 'fail') {
+      await this.handleFinalize(command, toolProgress, existingActivities, activePlanMessageId);
+    }
   }
 
   private async handleToolUse(
     command: HandlePlanProgressCommand,
     channel: ConversationChannel,
     toolProgress: ToolProgressPayload,
-    existingActivities: ConversationActivityEntity[]
+    existingActivities: ConversationActivityEntity[],
+    activePlanMessageId: string | undefined
   ): Promise<void> {
     if (!toolProgress.toolUseId || !toolProgress.status) {
       return;
@@ -86,60 +98,69 @@ export class HandlePlanProgress {
     tasks.set(toolProgress.toolUseId, { toolUseId: toolProgress.toolUseId, toolName, mcpServerName, status, details });
 
     const model = this.toModel('Thinking…', tasks, false);
-    const planMessageId = await this.postOrEditPlan(command, this.findPlanMessageId(existingActivities), model);
+    const planMessageId = await this.postOrEditPlan(command, activePlanMessageId, model);
+
+    if (planMessageId && planMessageId !== activePlanMessageId) {
+      await this.conversationRepository.setActivePlanMessageId(
+        command.environmentId,
+        command.organizationId,
+        command.conversationId,
+        planMessageId
+      );
+    }
 
     await this.persistToolActivity(command, channel, toolProgress, toolName, details, planMessageId);
   }
 
   private async handleAwaitingApproval(
     command: HandlePlanProgressCommand,
-    existingActivities: ConversationActivityEntity[]
+    existingActivities: ConversationActivityEntity[],
+    activePlanMessageId: string | undefined
   ): Promise<void> {
-    const planMessageId = this.findPlanMessageId(existingActivities);
-    if (!existingActivities.length || !planMessageId) {
+    if (!activePlanMessageId || !existingActivities.length) {
       return;
     }
 
     const tasks = this.collectTasks(existingActivities);
-    for (const task of tasks.values()) {
-      if (task.status === 'in_progress') {
-        task.status = 'in_progress';
-      }
-    }
 
-    await this.postOrEditPlan(command, planMessageId, this.toModel('Waiting for approval…', tasks, false));
+    await this.postOrEditPlan(command, activePlanMessageId, this.toModel('Waiting for approval…', tasks, false));
   }
 
   private async handleVerdictUpdate(
     command: HandlePlanProgressCommand,
     verdict: 'approved' | 'denied',
-    existingActivities: ConversationActivityEntity[]
+    existingActivities: ConversationActivityEntity[],
+    activePlanMessageId: string | undefined
   ): Promise<void> {
-    const planMessageId = this.findPlanMessageId(existingActivities);
-    if (!existingActivities.length || !planMessageId) {
+    if (!activePlanMessageId || !existingActivities.length) {
       return;
     }
 
     const title = verdict === 'approved' ? 'Approved, resuming…' : 'Denied, resuming…';
     const tasks = this.collectTasks(existingActivities);
 
-    await this.postOrEditPlan(command, planMessageId, this.toModel(title, tasks, false));
+    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(title, tasks, false));
   }
 
   private async handleFinalize(
     command: HandlePlanProgressCommand,
     toolProgress: ToolProgressPayload,
-    existingActivities: ConversationActivityEntity[]
+    existingActivities: ConversationActivityEntity[],
+    activePlanMessageId: string | undefined
   ): Promise<void> {
-    const planMessageId = this.findPlanMessageId(existingActivities);
-    if (!existingActivities.length || !planMessageId) {
+    if (!activePlanMessageId || !existingActivities.length) {
       return;
     }
 
     const title = toolProgress.action === 'fail' ? 'Something went wrong' : 'Finished thinking';
     const tasks = this.collectTasks(existingActivities);
 
-    await this.postOrEditPlan(command, planMessageId, this.toModel(title, tasks, true));
+    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(title, tasks, true));
+    await this.conversationRepository.clearActivePlanMessageId(
+      command.environmentId,
+      command.organizationId,
+      command.conversationId
+    );
   }
 
   private async postOrEditPlan(
@@ -187,7 +208,6 @@ export class HandlePlanProgress {
       signalData: {
         type: 'tool-use',
         payload: {
-          turnId: toolProgress.turnId,
           planMessageId,
           toolUseId: toolProgress.toolUseId,
           toolName,
@@ -199,15 +219,6 @@ export class HandlePlanProgress {
       environmentId: command.environmentId,
       organizationId: command.organizationId,
     });
-  }
-
-  private findPlanMessageId(activities: ConversationActivityEntity[]): string | undefined {
-    for (const activity of activities) {
-      const id = activity.signalData?.payload?.planMessageId;
-      if (typeof id === 'string' && id) return id;
-    }
-
-    return undefined;
   }
 
   private collectTasks(activities: ConversationActivityEntity[]): Map<string, ToolTask> {

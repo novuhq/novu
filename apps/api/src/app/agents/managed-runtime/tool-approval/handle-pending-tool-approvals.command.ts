@@ -28,9 +28,5 @@ export class HandlePendingToolApprovalsCommand extends EnvironmentWithUserComman
   @IsNotEmpty()
   sessionId: string;
 
-  @IsString()
-  @IsNotEmpty()
-  turnId: string;
-
   response: ThalamusResponse;
 }

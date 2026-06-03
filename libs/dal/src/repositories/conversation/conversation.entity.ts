@@ -86,6 +86,13 @@ export class ConversationEntity {
   managedSessionVaultId?: string;
 
   /**
+   * Slack message ID of the currently active plan card.
+   * Set on first tool, cleared on finalize.
+   * Only one card is always active per conversation.
+   */
+  activePlanMessageId?: string;
+
+  /**
    * Set while managed-agent setup blocks dispatch for this thread. Cleared after
    * the parked inbound is replayed or the setup card is resolved without replay.
    */

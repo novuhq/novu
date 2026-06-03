@@ -48,7 +48,6 @@ export class ConfirmToolApproval {
       platform: command.platform,
       toolUseIds,
       approved: parsed.approved,
-      turnId: parsed.turnId,
     });
 
     this.deleteApprovalCard(command);
@@ -190,7 +189,6 @@ export class ConfirmToolApproval {
               agentIdentifier: command.agentIdentifier,
               integrationIdentifier: command.integrationIdentifier,
               toolProgress: {
-                turnId: parsed.turnId,
                 action: 'tool-use',
                 toolUseId,
                 status: 'error',
@@ -216,7 +214,6 @@ export class ConfirmToolApproval {
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
           toolProgress: {
-            turnId: parsed.turnId,
             action: 'approved',
           },
         })
