@@ -97,7 +97,7 @@
     "typedoc": "^0.24.0",
     "typescript": "5.6.2",
     "uuid": "^11.1.1",
-    "vitest": "2.1.9"
+    "vitest": "4.1.0"
   },
   "nx": {
     "tags": [
