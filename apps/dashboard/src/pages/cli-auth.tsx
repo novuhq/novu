@@ -84,14 +84,7 @@ function CliAuthContent() {
   const telemetry = useTelemetry();
   const clerk = useClerk();
   const { user } = useUser();
-  const {
-    currentEnvironment,
-    environments,
-    switchEnvironment,
-    areEnvironmentsInitialLoading,
-    isOrganizationSyncing,
-    organizationSyncTimedOut,
-  } = useEnvironment();
+  const { currentEnvironment, environments, switchEnvironment, areEnvironmentsInitialLoading } = useEnvironment();
   const apiKeysQuery = useFetchApiKeys();
   const has = useHasPermission();
   const isLlmGatewayEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_LLM_GATEWAY_ENABLED);
@@ -176,20 +169,12 @@ function CliAuthContent() {
     }
   }, [clerk]);
 
-  const isAuthorizeDataLoading =
-    !organizationSyncTimedOut &&
-    (isOrganizationSyncing ||
-      areEnvironmentsInitialLoading ||
-      apiKeysQuery.isLoading ||
-      !currentEnvironment);
+  const isAuthorizeDataLoading = areEnvironmentsInitialLoading || apiKeysQuery.isLoading || !currentEnvironment;
 
   const reason = (() => {
     if (!deviceCodeOk) return 'This page must be opened from the Novu CLI.';
     if (!isConnect && !isLlmGatewayEnabled) {
       return `${callerDisplayName} is not enabled for your account yet.`;
-    }
-    if (organizationSyncTimedOut) {
-      return 'Your workspace is still being set up. Please refresh the page in a moment.';
     }
     if (isAuthorizeDataLoading) return null;
     if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';

@@ -1,7 +1,6 @@
-import { useOrganization, useUser } from '@clerk/react';
-import { FeatureFlagsKeysEnum, type IEnvironment } from '@novu/shared';
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
@@ -20,7 +19,7 @@ import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
 import { IS_NOVU_CONNECT } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
-import { useEnvironment, useFetchEnvironments } from '@/context/environment/hooks';
+import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
@@ -52,25 +51,6 @@ function goToPostOnboardingRoute(target: string, navigate: (path: string) => voi
 }
 
 type SetupPhase = 'connect' | 'details';
-
-function isAgentsSetupEnvironmentReady({
-  currentEnvironment,
-  environments,
-  isOrganizationSyncing,
-  organizationSyncTimedOut,
-}: {
-  currentEnvironment?: IEnvironment;
-  environments?: IEnvironment[];
-  isOrganizationSyncing: boolean;
-  organizationSyncTimedOut: boolean;
-}): boolean {
-  return Boolean(
-    currentEnvironment &&
-      environments?.length &&
-      !isOrganizationSyncing &&
-      !organizationSyncTimedOut
-  );
-}
 
 function getIllustrationState({ phase, setupComplete }: { phase: SetupPhase; setupComplete: boolean }): AgentFlowState {
   if (setupComplete) {
@@ -144,17 +124,9 @@ export function AgentsSetupPage() {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
   const navigate = useNavigate();
-  const { user } = useUser();
-  const { organization } = useOrganization();
   const telemetry = useTelemetry();
   const { currentOrganization } = useAuth();
-  const {
-    currentEnvironment,
-    environments,
-    areEnvironmentsInitialLoading,
-    isOrganizationSyncing,
-    organizationSyncTimedOut,
-  } = useEnvironment();
+  const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
 
   const [searchParams] = useSearchParams();
@@ -165,50 +137,15 @@ export function AgentsSetupPage() {
     ? "Let's connect your agent to where you work"
     : 'Connect your first agent';
 
-  const organizationId = currentOrganization?._id;
-  const isEnvironmentReady = isAgentsSetupEnvironmentReady({
-    currentEnvironment,
-    environments,
-    isOrganizationSyncing,
-    organizationSyncTimedOut,
-  });
-
-  const shouldPollForEnvironments = Boolean(
-    organizationId &&
-      !isOrganizationSyncing &&
-      !areEnvironmentsInitialLoading &&
-      !environments?.length
-  );
-
-  useFetchEnvironments({
-    organizationId: organizationId ?? '',
-    refetchInterval: shouldPollForEnvironments ? 1000 : undefined,
-    showError: false,
-  });
-
+  // Org bootstrap (poll Novu envs + reload Clerk after org creation) lives in EnvironmentProvider.
+  // Here we only gate on Novu's org id + the resolved environment, like the inbox onboarding page.
+  const isDataReady = Boolean(currentOrganization?._id) && Boolean(currentEnvironment);
   const provisioningActive = useOnboardingProvisioningActive();
-  const isEnvironmentLoading =
-    isOrganizationSyncing ||
-    areEnvironmentsInitialLoading ||
-    Boolean(organizationId && !isEnvironmentReady);
-  const isDataReady = isEnvironmentReady;
 
   useOnboardingProvisioningDismiss({
     isReady: isDataReady,
     fallbackVariant: isConnectHost ? 'connect' : 'platform',
   });
-
-  const hasReloadedClerkRef = useRef(false);
-
-  useEffect(() => {
-    if (!environments?.length || hasReloadedClerkRef.current) {
-      return;
-    }
-
-    hasReloadedClerkRef.current = true;
-    void user?.reload();
-    void organization?.reload();
-  }, [environments, user, organization]);
 
   useEffect(() => {
     telemetry(TelemetryEvent.AGENTS_SETUP_PAGE_VIEWED);
@@ -301,21 +238,7 @@ export function AgentsSetupPage() {
     return null;
   }
 
-  if (organizationSyncTimedOut) {
-    return (
-      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 px-4">
-        <PageMeta title={isConnectHost ? 'Build and distribute agents' : pageTitle} />
-        <p className="text-text-sub text-label-sm max-w-md text-center">
-          Your workspace is still being set up. Please refresh the page in a moment.
-        </p>
-        <Button variant="secondary" mode="outline" size="xs" onClick={() => window.location.reload()}>
-          Refresh page
-        </Button>
-      </div>
-    );
-  }
-
-  if (isEnvironmentLoading) {
+  if (!isDataReady) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <PageMeta title={isConnectHost ? 'Build and distribute agents' : pageTitle} />
