@@ -710,48 +710,19 @@ export class McpOAuthCallback {
   }): Promise<never> {
     const { outcome, oauthClient, stateData, statusCode } = args;
 
-    if (outcome.logVariant === 'non_2xx') {
-      this.logger.warn(
-        {
-          tokenEndpoint: oauthClient.tokenEndpoint,
-          status: statusCode,
-          providerError: outcome.providerError,
-          mappedCode: outcome.code,
-        },
-        'MCP OAuth token exchange returned non-2xx'
-      );
-
-      await this.markConnectionError(stateData, outcome.code, outcome.message);
-
-      throw new BadRequestException(
-        outcome.providerError ? `OAuth token exchange failed: ${outcome.providerError}` : 'OAuth token exchange failed.'
-      );
-    }
-
-    if (outcome.logVariant === 'inline_error') {
-      this.logger.warn(
-        {
-          tokenEndpoint: oauthClient.tokenEndpoint,
-          status: statusCode,
-          providerError: outcome.providerError,
-          mappedCode: outcome.code,
-        },
-        'MCP OAuth token exchange returned 2xx with inline error'
-      );
-
-      await this.markConnectionError(stateData, outcome.code, outcome.message);
-
-      throw new BadRequestException(`OAuth token exchange failed: ${outcome.providerError}`);
-    }
-
     this.logger.warn(
-      { tokenEndpoint: oauthClient.tokenEndpoint, status: statusCode },
-      'MCP OAuth token exchange returned a malformed 2xx body'
+      {
+        tokenEndpoint: oauthClient.tokenEndpoint,
+        status: statusCode,
+        providerError: outcome.providerError,
+        mappedCode: outcome.code,
+      },
+      outcome.logMessage
     );
 
     await this.markConnectionError(stateData, outcome.code, outcome.message);
 
-    throw new BadRequestException('OAuth token exchange returned a malformed response.');
+    throw new BadRequestException(outcome.exceptionMessage);
   }
 
   private async exchangeCode(args: {

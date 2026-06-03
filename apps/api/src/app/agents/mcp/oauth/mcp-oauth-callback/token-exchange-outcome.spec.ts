@@ -50,6 +50,8 @@ describe('resolveDcrTokenExchangeOutcome', () => {
       message: 'Token exchange failed: invalid_grant',
       providerError: 'invalid_grant',
       logVariant: 'non_2xx',
+      logMessage: 'MCP OAuth token exchange returned non-2xx',
+      exceptionMessage: 'OAuth token exchange failed: invalid_grant',
     });
   });
 
@@ -62,6 +64,8 @@ describe('resolveDcrTokenExchangeOutcome', () => {
       message: 'Token exchange failed: bad_verification_code',
       providerError: 'bad_verification_code',
       logVariant: 'inline_error',
+      logMessage: 'MCP OAuth token exchange returned 2xx with inline error',
+      exceptionMessage: 'OAuth token exchange failed: bad_verification_code',
     });
   });
 
@@ -73,6 +77,8 @@ describe('resolveDcrTokenExchangeOutcome', () => {
       code: 'mcp_token_exchange_failed',
       message: 'Token exchange returned a malformed response.',
       logVariant: 'malformed',
+      logMessage: 'MCP OAuth token exchange returned a malformed 2xx body',
+      exceptionMessage: 'OAuth token exchange returned a malformed response.',
     });
   });
 
@@ -106,6 +112,8 @@ describe('resolveDcrTokenExchangeOutcome', () => {
       message: 'Token exchange failed: application_suspended',
       providerError: 'application_suspended',
       logVariant: 'non_2xx',
+      logMessage: 'MCP OAuth token exchange returned non-2xx',
+      exceptionMessage: 'OAuth token exchange failed: application_suspended',
     });
   });
 });

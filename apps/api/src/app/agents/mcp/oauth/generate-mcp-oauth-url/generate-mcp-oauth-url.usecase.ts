@@ -45,6 +45,13 @@ import {
   type SupportedTokenEndpointAuthMethod,
   selectTokenEndpointAuthMethod,
 } from '../mcp-oauth-discovery.service';
+import {
+  canReusePendingOAuthSession,
+  resolveDcrAuthorizeScopes,
+  resolveDcrClientMetadataUris,
+  scopesMatch,
+  shouldRotatePendingOAuthSessionForCatalogScopes,
+} from './dcr-oauth-session';
 import { GenerateMcpOAuthUrlCommand } from './generate-mcp-oauth-url.command';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from './mcp-oauth-state';
 import { pickReusableOAuthClient } from './pick-reusable-oauth-client';
@@ -376,7 +383,7 @@ export class GenerateMcpOAuthUrl {
     }
 
     const oauthClient = decryptMcpConnectionOAuthClient(existing.oauthClient);
-    const authorizeScopes = resolveDcrAuthorizeScopes(oauthConfig, oauthClient);
+    const authorizeScopes = resolveDcrAuthorizeScopes(oauthConfig.catalog.scopes, oauthClient);
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: oauthClient.authorizationEndpoint,
       clientId: oauthClient.clientId,
@@ -856,7 +863,7 @@ export class GenerateMcpOAuthUrl {
    * `issuer = https://api.ahrefs.com` but `authorization_endpoint =
    * https://app.ahrefs.com/...`) and rejecting that breaks legitimate
    * providers. For DCR the metadata document is already authenticated
-   * against the requested issuer by `isAcceptableIssuerMatch` in the
+   * against the requested issuer by `mcp-oauth-issuer-match` in the
    * discovery layer, so the provider itself vouches for its endpoints.
    * For `novu-app` mode, where issuer + endpoints are hand-pinned literals
    * in the catalog, the same-origin guard is applied at the call site.
@@ -902,104 +909,6 @@ export class GenerateMcpOAuthUrl {
 
     return apiKeys[0].key;
   }
-}
-
-function resolveDcrAuthorizeScopes(
-  oauthConfig: Extract<ResolvedOAuthConfig, { mode: McpConnectionAuthModeEnum.Dcr }>,
-  oauthClient: McpConnectionOAuthClient
-): string[] {
-  if (oauthConfig.catalog.scopes?.length) {
-    return oauthConfig.catalog.scopes;
-  }
-
-  return oauthClient.scopesGranted ?? [];
-}
-
-function scopesMatch(stored: string[] | undefined, requested: string[]): boolean {
-  if (requested.length === 0) {
-    return !stored || stored.length === 0;
-  }
-
-  if (!stored || stored.length !== requested.length) {
-    return false;
-  }
-
-  const storedSet = new Set(stored);
-
-  return requested.every((scope) => storedSet.has(scope));
-}
-
-/**
- * Rotate a pending DCR session when the catalog pins scopes but the stored
- * client was registered against the full PRM superset (e.g. PostHog).
- */
-function shouldRotatePendingOAuthSessionForCatalogScopes(
-  existing: McpConnectionEntity | null,
-  catalogScopes?: string[]
-): boolean {
-  if (!catalogScopes?.length || !existing?.oauthClient) {
-    return false;
-  }
-
-  const client = decryptMcpConnectionOAuthClient(existing.oauthClient);
-  const storedScopes = client.scopesGranted;
-
-  if (!storedScopes?.length) {
-    return true;
-  }
-
-  const stored = new Set(storedScopes);
-  const catalog = new Set(catalogScopes);
-
-  if (stored.size !== catalog.size) {
-    return true;
-  }
-
-  for (const scope of catalog) {
-    if (!stored.has(scope)) {
-      return true;
-    }
-  }
-
-  return false;
-}
-
-/**
- * Decide whether a `pending_oauth` session can be reused without rotating PKCE.
- * For DCR the recorded client is validated through `pickReusableOAuthClient`
- * (issuer match, unexpired secret, and matching redirect URI); for `novu-app`
- * the pinned endpoints recorded on the session are sufficient.
- */
-function canReusePendingOAuthSession(existing: McpConnectionEntity | null): boolean {
-  if (!existing) {
-    return false;
-  }
-
-  if (existing.status !== McpConnectionStatusEnum.PendingOAuth) {
-    return false;
-  }
-
-  const oauthState = existing.oauthState;
-
-  if (!oauthState?.pkceVerifier || oauthState.callbackClaimedAt) {
-    return false;
-  }
-
-  if (existing.authMode === McpConnectionAuthModeEnum.NovuApp) {
-    return Boolean(
-      oauthState.expectedIssuer && oauthState.resource && oauthState.tokenEndpoint && oauthState.authorizationEndpoint
-    );
-  }
-
-  if (existing.authMode === McpConnectionAuthModeEnum.Dcr) {
-    return Boolean(
-      oauthState.expectedIssuer &&
-        oauthState.resource &&
-        pickReusableOAuthClient(existing.oauthClient, oauthState.expectedIssuer, buildMcpOAuthRedirectUri())
-    );
-  }
-
-  return false;
 }
 
 function mapDiscoveryError(err: unknown, contextLabel: string): never {
@@ -1057,42 +966,6 @@ function base64UrlEncode(buf: Buffer): string {
  * discovery layer already validates the metadata document against the
  * requested issuer origin.
  */
-/**
- * RFC 7591 optional client metadata. Some ASes (e.g. Make) reject
- * `client_uri` / `logo_uri` when the hostname is localhost or otherwise
- * not publicly routable — omit the fields rather than fail registration.
- */
-function resolveDcrClientMetadataUris(frontBase: string | undefined): {
-  client_uri?: string;
-  logo_uri?: string;
-} {
-  if (!frontBase || !isPublicDcrClientMetadataBase(frontBase)) {
-    return {};
-  }
-
-  return {
-    client_uri: frontBase,
-    logo_uri: `${frontBase}/images/novu.svg`,
-  };
-}
-
-function isPublicDcrClientMetadataBase(base: string): boolean {
-  let parsed: URL;
-  try {
-    parsed = new URL(base);
-  } catch {
-    return false;
-  }
-
-  const host = parsed.hostname.toLowerCase();
-
-  if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host.endsWith('.localhost')) {
-    return false;
-  }
-
-  return true;
-}
-
 function assertSameOrigin(endpoint: string, issuer: string): void {
   let endpointOrigin: string;
   let issuerOrigin: string;

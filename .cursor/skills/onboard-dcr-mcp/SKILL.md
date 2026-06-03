@@ -61,7 +61,7 @@ Include the doc link and the specific requirement that blocked onboarding. Do no
 |-----------|--------|
 | PRM + AS metadata + DCR + token exchange all follow RFC behavior | Catalog entry only |
 | AS downgrades auth method at DCR (e.g. returns `none`) | Generic flow already handles RFC 7591 §3.2.1 |
-| Issuer / PRM / gateway mismatch (Clerk, Vercel, PlanetScale-style) | Extend `mcp-oauth-discovery.service.ts` issuer matching (review-gated) |
+| Issuer / PRM / gateway mismatch (Clerk, Vercel, PlanetScale-style) | Extend `mcp-oauth-issuer-match.ts` (review-gated) |
 | Token endpoint returns non-standard JSON | Extend `mcp-oauth-callback/token-exchange-outcome.ts` (review-gated) |
 | PRM advertises oversized `scopes_supported` (Slack URL limits) | Pin `oauth.scopes` on the catalog `dcr` entry |
 

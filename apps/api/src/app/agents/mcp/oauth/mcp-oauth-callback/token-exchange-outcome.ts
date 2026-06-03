@@ -18,7 +18,15 @@ export type DcrTokenExchangeOutcome =
       message: string;
       providerError?: string;
       logVariant: DcrTokenExchangeErrorLogVariant;
+      logMessage: string;
+      exceptionMessage: string;
     };
+
+const TOKEN_EXCHANGE_ERROR_LOG_MESSAGES: Record<DcrTokenExchangeErrorLogVariant, string> = {
+  non_2xx: 'MCP OAuth token exchange returned non-2xx',
+  inline_error: 'MCP OAuth token exchange returned 2xx with inline error',
+  malformed: 'MCP OAuth token exchange returned a malformed 2xx body',
+};
 
 function pickProviderErrorCode(body: unknown): string | undefined {
   if (!body || typeof body !== 'object') {
@@ -64,6 +72,34 @@ function parseTokenResponseBody(body: unknown): DcrTokenResponse | null {
   };
 }
 
+function buildTokenExchangeErrorOutcome(args: {
+  code: McpOAuthErrorCode;
+  message: string;
+  providerError?: string;
+  logVariant: DcrTokenExchangeErrorLogVariant;
+}): Extract<DcrTokenExchangeOutcome, { kind: 'error' }> {
+  const { code, message, providerError, logVariant } = args;
+  let exceptionMessage: string;
+
+  if (logVariant === 'non_2xx') {
+    exceptionMessage = providerError ? `OAuth token exchange failed: ${providerError}` : 'OAuth token exchange failed.';
+  } else if (logVariant === 'inline_error') {
+    exceptionMessage = `OAuth token exchange failed: ${providerError}`;
+  } else {
+    exceptionMessage = 'OAuth token exchange returned a malformed response.';
+  }
+
+  return {
+    kind: 'error',
+    code,
+    message,
+    ...(providerError !== undefined ? { providerError } : {}),
+    logVariant,
+    logMessage: TOKEN_EXCHANGE_ERROR_LOG_MESSAGES[logVariant],
+    exceptionMessage,
+  };
+}
+
 /**
  * Map an upstream OAuth token-exchange error onto our `McpOAuthErrorCode`
  * union. Conservative by default — anything we don't explicitly recognise
@@ -94,36 +130,33 @@ export function resolveDcrTokenExchangeOutcome(statusCode: number, body: unknown
     const providerError = pickProviderErrorCode(body);
     const mappedCode = mapTokenExchangeErrorCode(statusCode, providerError);
 
-    return {
-      kind: 'error',
+    return buildTokenExchangeErrorOutcome({
       code: mappedCode,
       message: providerError ? `Token exchange failed: ${providerError}` : 'Token exchange failed.',
       providerError,
       logVariant: 'non_2xx',
-    };
+    });
   }
 
   const inlineProviderError = pickProviderErrorCode(body);
   if (inlineProviderError) {
     const mappedCode = mapTokenExchangeErrorCode(statusCode, inlineProviderError);
 
-    return {
-      kind: 'error',
+    return buildTokenExchangeErrorOutcome({
       code: mappedCode,
       message: `Token exchange failed: ${inlineProviderError}`,
       providerError: inlineProviderError,
       logVariant: 'inline_error',
-    };
+    });
   }
 
   const parsed = parseTokenResponseBody(body);
   if (!parsed) {
-    return {
-      kind: 'error',
+    return buildTokenExchangeErrorOutcome({
       code: 'mcp_token_exchange_failed',
       message: 'Token exchange returned a malformed response.',
       logVariant: 'malformed',
-    };
+    });
   }
 
   return { kind: 'success', tokens: parsed };
