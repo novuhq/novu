@@ -248,34 +248,34 @@ function InboxFeatureList() {
 
 const USECASE_OPTIONS = [
   {
-    id: 'agents' as const,
-    icon: Bot,
-    title: "I'm building an AI agent",
-    description:
-      'Connect your agent to Novu and Novu gives it voice. Distribute your agent across multiple channels with a unified API.',
-  },
-  {
     id: 'inbox' as const,
     icon: Notification5Fill,
     title: "I'm adding notifications to my app",
     description:
       'Plug in <Inbox />, connect providers, and orchestrate workflows. Go from event → trigger → delivery with full control.',
   },
+  {
+    id: 'agents' as const,
+    icon: Bot,
+    title: "I'm building an AI agent",
+    description:
+      'Connect your agent to Novu and Novu gives it voice. Distribute your agent across multiple channels with a unified API.',
+  },
 ] as const;
 
 type UsecaseId = 'agents' | 'inbox';
 
-function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect: (id: UsecaseId) => void }) {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
-
+function UsecaseSelector({
+  selected,
+  onSelect,
+  onContinue,
+}: {
+  selected: UsecaseId;
+  onSelect: (id: UsecaseId) => void;
+  onContinue: (usecase: UsecaseId) => void;
+}) {
   const handleContinue = () => {
-    if (selected === 'inbox') {
-      navigate(withAppId(ROUTES.INBOX_USECASE, appId));
-    } else if (selected === 'agents') {
-      navigate(withAppId(ROUTES.AGENTS_SETUP, appId));
-    }
+    onContinue(selected);
   };
 
   return (
@@ -356,7 +356,20 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
 export function UsecaseSelectPage() {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const telemetry = useTelemetry();
-  const [selected, setSelected] = useState<UsecaseId>('agents');
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
+  const [selected, setSelected] = useState<UsecaseId>('inbox');
+
+  const handleContinue = (usecase: UsecaseId) => {
+    telemetry(TelemetryEvent.USECASE_SELECTED, { usecase });
+
+    if (usecase === 'inbox') {
+      navigate(withAppId(ROUTES.INBOX_USECASE, appId));
+    } else if (usecase === 'agents') {
+      navigate(withAppId(ROUTES.AGENTS_SETUP, appId));
+    }
+  };
   const provisioningActive = useOnboardingProvisioningActive();
 
   useOnboardingProvisioningDismiss({
@@ -387,7 +400,7 @@ export function UsecaseSelectPage() {
       <p className="text-text-sub mt-2 text-sm leading-relaxed">
         Pick what you would like to start with, you can always set up the other path anytime.
       </p>
-      <UsecaseSelector selected={selected} onSelect={setSelected} />
+      <UsecaseSelector selected={selected} onSelect={setSelected} onContinue={handleContinue} />
     </>
   );
 

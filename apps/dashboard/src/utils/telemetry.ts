@@ -32,6 +32,7 @@ export enum TelemetryEvent {
   ONBOARDING_WELCOME_SENT = 'Onboarding welcome sent - [Onboarding]',
   ONBOARDING_REDIRECT = 'Onboarding redirect - [Onboarding]',
   USECASE_SELECT_PAGE_VIEWED = 'Use case select page viewed - [Onboarding]',
+  USECASE_SELECTED = 'Use case selected - [Onboarding]',
   AGENTS_USECASE_PAGE_VIEWED = 'Agents use case page viewed - [Onboarding]',
   AGENTS_SETUP_PAGE_VIEWED = 'Agents setup page viewed - [Onboarding]',
   INBOX_USECASE_PAGE_VIEWED = 'Inbox use case page viewed - [Onboarding]',
