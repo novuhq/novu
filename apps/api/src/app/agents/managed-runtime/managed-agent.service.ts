@@ -78,64 +78,20 @@ export class ManagedAgentService implements OnModuleInit {
       ? [{ role: MessageRole.USER, content: context.userMessageText }]
       : await this.buildMessagesWithHistory(context);
 
-    const webhookMetadata = this.buildWebhookMetadata({
-      conversationId: String(context.conversation._id),
-      environmentId: context.config.environmentId,
-      organizationId: context.config.organizationId,
-      agentIdentifier: context.config.agentIdentifier,
-      integrationIdentifier: context.config.integrationIdentifier,
-      subscriberId: context.subscriber?.subscriberId,
-      platform: context.config.platform,
+    const { sessionId: newSessionId } = await provider.send({
+      messages,
+      sessionId,
+      vaultIds,
+      webhookMetadata: this.buildWebhookMetadata({
+        conversationId: String(context.conversation._id),
+        environmentId: context.config.environmentId,
+        organizationId: context.config.organizationId,
+        agentIdentifier: context.config.agentIdentifier,
+        integrationIdentifier: context.config.integrationIdentifier,
+        subscriberId: context.subscriber?.subscriberId,
+        platform: context.config.platform,
+      }),
     });
-
-    this.logger.info(
-      {
-        conversationId: String(context.conversation._id),
-        agentId: agent._id,
-        existingSessionId,
-        sessionId,
-        vaultIds,
-        messageCount: messages.length,
-        isNewSession: !sessionId,
-      },
-      'Dispatching managed agent turn — thalamus observer /observe should be triggered on send'
-    );
-
-    let newSessionId: string;
-    let runId: string;
-
-    try {
-      ({ sessionId: newSessionId, runId } = await provider.send({
-        messages,
-        sessionId,
-        vaultIds,
-        webhookMetadata,
-      }));
-    } catch (err) {
-      this.logger.error(
-        {
-          err: err instanceof Error ? err.message : String(err),
-          conversationId: String(context.conversation._id),
-          agentId: agent._id,
-          sessionId,
-          vaultIds,
-        },
-        'Managed agent thalamus send failed before session could be created'
-      );
-
-      throw err;
-    }
-
-    this.logger.info(
-      {
-        conversationId: String(context.conversation._id),
-        agentId: agent._id,
-        newSessionId,
-        runId,
-        hadExistingSession: Boolean(existingSessionId),
-      },
-      'Managed agent thalamus send completed'
-    );
 
     await this.conversationRepository.setExternalSessionIdIfMissing(
       context.config.environmentId,

@@ -15,7 +15,8 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
-import { buildPlanDeliveryMarkdown } from './plan-model-to-markdown';
+import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
+import type { PlanPhase } from './plan-phase';
 import { supportsLivePlanDelivery } from './plan-live-delivery';
 import {
   editSlackNativeBlocks,
@@ -374,13 +375,10 @@ export class OutboundGateway {
     integrationIdentifier: string,
     platform: string,
     platformThreadId: string,
-    model: PlanModel
+    model: PlanModel,
+    phase: PlanPhase
   ): Promise<SentMessageInfo | null> {
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
-    const instanceKey = `${agentId}:${integrationIdentifier}`;
-    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-
-    const adapter = chat.getAdapter(platform);
+    const adapter = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
     if (!supportsLivePlanDelivery(platform, adapter)) {
       return null;
     }
@@ -391,7 +389,7 @@ export class OutboundGateway {
       return { messageId: sent.id, platformThreadId: sent.threadId };
     }
 
-    const markdown = buildPlanDeliveryMarkdown(model);
+    const markdown = renderPlanModelAsMarkdown(model, phase);
 
     return this.postToConversation(agentId, integrationIdentifier, platform, platformThreadId, { markdown });
   }
@@ -402,13 +400,10 @@ export class OutboundGateway {
     platform: string,
     platformThreadId: string,
     platformMessageId: string,
-    model: PlanModel
+    model: PlanModel,
+    phase: PlanPhase
   ): Promise<void> {
-    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
-    const instanceKey = `${agentId}:${integrationIdentifier}`;
-    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
-
-    const adapter = chat.getAdapter(platform);
+    const adapter = await this.resolvePlanAdapter(agentId, integrationIdentifier, platform);
     if (!supportsLivePlanDelivery(platform, adapter)) {
       return;
     }
@@ -419,7 +414,7 @@ export class OutboundGateway {
       return;
     }
 
-    const markdown = buildPlanDeliveryMarkdown(model);
+    const markdown = renderPlanModelAsMarkdown(model, phase);
 
     await this.editInConversation(
       agentId,
@@ -429,6 +424,14 @@ export class OutboundGateway {
       platformMessageId,
       { markdown }
     );
+  }
+
+  private async resolvePlanAdapter(agentId: string, integrationIdentifier: string, platform: string) {
+    const config = await this.agentConfigResolver.resolve(agentId, integrationIdentifier);
+    const instanceKey = `${agentId}:${integrationIdentifier}`;
+    const chat = await this.registry.getOrCreate(instanceKey, agentId, config.platform, config);
+
+    return chat.getAdapter(platform);
   }
 
   async reactToMessage(

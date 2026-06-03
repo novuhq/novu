@@ -1,49 +1,54 @@
 import { expect } from 'chai';
-import { buildPlanDeliveryMarkdown, renderPlanModelAsMarkdown } from './plan-model-to-markdown';
+import { PLAN_THINKING_TASK_ID } from './plan-phase';
+import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 
 describe('renderPlanModelAsMarkdown', () => {
-  it('renders title and task statuses', () => {
-    const markdown = renderPlanModelAsMarkdown({
-      title: 'Working',
-      tasks: [
-        { id: '1', title: 'mcp: search', status: 'completed' },
-        { id: '2', title: 'Thinking…', status: 'in_progress' },
-      ],
-    });
+  it('renders phase title and task statuses', () => {
+    const markdown = renderPlanModelAsMarkdown(
+      {
+        title: 'ignored',
+        tasks: [
+          { id: '1', title: 'mcp: search', status: 'complete' },
+          { id: '2', title: 'Thinking…', status: 'in_progress' },
+        ],
+      },
+      'thinking'
+    );
 
-    expect(markdown).to.equal('📋 **Working**\n\n✅ `mcp: search`\n🔄 `Thinking…`');
+    expect(markdown).to.equal('🧠 **Thinking…**\n\n✅ `mcp: search`\n🔄 `Thinking…`');
   });
 
-  it('uses brain emoji for thinking title and hides synthetic thinking task', () => {
-    const markdown = renderPlanModelAsMarkdown({
-      title: 'Thinking…',
-      tasks: [
-        { id: '1', title: 'Linear: save_issue', status: 'complete' },
-        { id: '__thinking__', title: 'Thinking…', status: 'in_progress' },
-      ],
-    });
+  it('hides synthetic thinking task', () => {
+    const markdown = renderPlanModelAsMarkdown(
+      {
+        title: 'ignored',
+        tasks: [
+          { id: '1', title: 'Linear: save_issue', status: 'complete' },
+          { id: PLAN_THINKING_TASK_ID, title: 'Thinking…', status: 'in_progress' },
+        ],
+      },
+      'thinking'
+    );
 
     expect(markdown).to.equal('🧠 **Thinking…**\n\n✅ `Linear: save_issue`');
   });
 
-  it('uses checkmark for finished thinking title', () => {
-    const markdown = renderPlanModelAsMarkdown({
-      title: 'Finished thinking',
-      tasks: [{ id: '1', title: 'Linear: save_issue', status: 'complete' }],
-    });
+  it('uses finished phase title and emoji', () => {
+    const markdown = renderPlanModelAsMarkdown(
+      {
+        title: 'ignored',
+        tasks: [{ id: '1', title: 'Linear: save_issue', status: 'complete' }],
+      },
+      'finished'
+    );
 
     expect(markdown).to.equal('✅ **Finished thinking**\n\n✅ `Linear: save_issue`');
   });
 
-  it('defaults title when missing', () => {
-    const markdown = renderPlanModelAsMarkdown({ title: '', tasks: [] });
-
-    expect(markdown).to.equal('📋 **Plan**');
-  });
-
-  it('buildPlanDeliveryMarkdown never returns empty', () => {
-    const markdown = buildPlanDeliveryMarkdown({ title: '', tasks: [] });
+  it('never returns empty markdown', () => {
+    const markdown = renderPlanModelAsMarkdown({ title: '', tasks: [] }, 'thinking');
 
     expect(markdown.trim().length).to.be.greaterThan(0);
+    expect(markdown).to.equal('🧠 **Thinking…**');
   });
 });

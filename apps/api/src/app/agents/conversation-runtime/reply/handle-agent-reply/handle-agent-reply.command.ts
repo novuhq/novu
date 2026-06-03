@@ -1,5 +1,6 @@
 import type { Signal } from '@novu/framework';
 import type { PlanModel } from 'chat';
+import type { PlanPhase } from '../../egress/plan-phase';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
@@ -45,7 +46,7 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsObject()
-  plan?: { model: PlanModel; messageId?: string };
+  plan?: { model: PlanModel; phase: PlanPhase; messageId?: string };
 
   @IsOptional()
   slackNative?: SlackNativeDelivery;

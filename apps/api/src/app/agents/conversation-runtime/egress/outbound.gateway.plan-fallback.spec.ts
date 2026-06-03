@@ -5,9 +5,10 @@ import { OutboundGateway } from './outbound.gateway';
 
 describe('OutboundGateway plan fallback', () => {
   const planModel = {
-    title: 'Working',
+    title: 'Thinking…',
     tasks: [{ id: 't1', title: 'search_files', status: 'in_progress' as const }],
   };
+  const planPhase = 'thinking' as const;
 
   function makeGateway(adapter: Record<string, unknown>) {
     const registry = {
@@ -39,11 +40,18 @@ describe('OutboundGateway plan fallback', () => {
       .stub(gateway, 'postToConversation')
       .resolves({ messageId: 'msg-1', platformThreadId: 'thread-1' });
 
-    const result = await gateway.postPlanObject('agent1', 'telegram-main', 'telegram', 'thread-1', planModel);
+    const result = await gateway.postPlanObject(
+      'agent1',
+      'telegram-main',
+      'telegram',
+      'thread-1',
+      planModel,
+      planPhase
+    );
 
     expect(postStub.calledOnce).to.equal(true);
     expect(postStub.firstCall.args[4]).to.deep.equal({
-      markdown: '📋 **Working**\n\n🔄 `search_files`',
+      markdown: '🧠 **Thinking…**\n\n🔄 `search_files`',
     });
     expect(result).to.deep.equal({ messageId: 'msg-1', platformThreadId: 'thread-1' });
 
@@ -57,11 +65,11 @@ describe('OutboundGateway plan fallback', () => {
       platformThreadId: 'thread-1',
     });
 
-    await gateway.editPlanObject('agent1', 'telegram-main', 'telegram', 'thread-1', 'msg-1', planModel);
+    await gateway.editPlanObject('agent1', 'telegram-main', 'telegram', 'thread-1', 'msg-1', planModel, planPhase);
 
     expect(editStub.calledOnce).to.equal(true);
     expect(editStub.firstCall.args[5]).to.deep.equal({
-      markdown: '📋 **Working**\n\n🔄 `search_files`',
+      markdown: '🧠 **Thinking…**\n\n🔄 `search_files`',
     });
 
     editStub.restore();
@@ -71,7 +79,14 @@ describe('OutboundGateway plan fallback', () => {
     const { gateway } = makeGateway({ editMessage: async () => ({ id: '1', threadId: 't' }) });
     const postStub = sinon.stub(gateway, 'postToConversation');
 
-    const result = await gateway.postPlanObject('agent1', 'whatsapp-main', 'whatsapp', 'thread-1', planModel);
+    const result = await gateway.postPlanObject(
+      'agent1',
+      'whatsapp-main',
+      'whatsapp',
+      'thread-1',
+      planModel,
+      planPhase
+    );
 
     expect(result).to.equal(null);
     expect(postStub.called).to.equal(false);
@@ -84,7 +99,7 @@ describe('OutboundGateway plan fallback', () => {
     const { gateway } = makeGateway({ postObject, editObject: sinon.stub() });
     const postToConversation = sinon.stub(gateway, 'postToConversation');
 
-    const result = await gateway.postPlanObject('agent1', 'slack-main', 'slack', 'thread-1', planModel);
+    const result = await gateway.postPlanObject('agent1', 'slack-main', 'slack', 'thread-1', planModel, planPhase);
 
     expect(postObject.calledOnce).to.equal(true);
     expect(postToConversation.called).to.equal(false);

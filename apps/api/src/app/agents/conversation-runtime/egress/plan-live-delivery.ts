@@ -11,10 +11,6 @@ const MARKDOWN_PLAN_PLATFORMS = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.TEAMS,
 ]);
 
-/**
- * Live plan UI updates one message in place. WhatsApp and email cannot edit messages;
- * other channels without native plan objects fall back to markdown post/edit.
- */
 export function supportsLivePlanDelivery(platform: string, adapter: PlanCapableAdapter): boolean {
   if (typeof adapter.postObject === 'function' && typeof adapter.editObject === 'function') {
     return true;

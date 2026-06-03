@@ -8,6 +8,7 @@ import {
 } from '@novu/dal';
 import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
+import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleForPhase } from '../../egress/plan-phase';
 import { HandleAgentReplyCommand } from '../handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand, type ToolProgressPayload } from './handle-plan-progress.command';
@@ -97,8 +98,8 @@ export class HandlePlanProgress {
 
     tasks.set(toolProgress.toolUseId, { toolUseId: toolProgress.toolUseId, toolName, mcpServerName, status, details });
 
-    const model = this.toModel('Thinking…', tasks, false);
-    const planMessageId = await this.postOrEditPlan(command, activePlanMessageId, model);
+    const model = this.toModel('thinking', tasks, false);
+    const planMessageId = await this.postOrEditPlan(command, activePlanMessageId, model, 'thinking');
 
     if (planMessageId && planMessageId !== activePlanMessageId) {
       await this.conversationRepository.setActivePlanMessageId(
@@ -123,7 +124,7 @@ export class HandlePlanProgress {
 
     const tasks = this.collectTasks(existingActivities);
 
-    await this.postOrEditPlan(command, activePlanMessageId, this.toModel('Waiting for approval…', tasks, false));
+    await this.postOrEditPlan(command, activePlanMessageId, this.toModel('awaiting-approval', tasks, false), 'awaiting-approval');
   }
 
   private async handleVerdictUpdate(
@@ -136,10 +137,10 @@ export class HandlePlanProgress {
       return;
     }
 
-    const title = verdict === 'approved' ? 'Approved, resuming…' : 'Denied, resuming…';
+    const phase: PlanPhase = verdict === 'approved' ? 'approved' : 'denied';
     const tasks = this.collectTasks(existingActivities);
 
-    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(title, tasks, false));
+    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(phase, tasks, false), phase);
   }
 
   private async handleFinalize(
@@ -152,10 +153,10 @@ export class HandlePlanProgress {
       return;
     }
 
-    const title = toolProgress.action === 'fail' ? 'Something went wrong' : 'Finished thinking';
+    const phase: PlanPhase = toolProgress.action === 'fail' ? 'failed' : 'finished';
     const tasks = this.collectTasks(existingActivities);
 
-    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(title, tasks, true));
+    await this.postOrEditPlan(command, activePlanMessageId, this.toModel(phase, tasks, true), phase);
     await this.conversationRepository.clearActivePlanMessageId(
       command.environmentId,
       command.organizationId,
@@ -166,7 +167,8 @@ export class HandlePlanProgress {
   private async postOrEditPlan(
     command: HandlePlanProgressCommand,
     existingMessageId: string | undefined,
-    model: PlanModel
+    model: PlanModel,
+    phase: PlanPhase
   ): Promise<string | undefined> {
     try {
       const result = await this.handleAgentReply.execute(
@@ -177,7 +179,7 @@ export class HandlePlanProgress {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          plan: { model, messageId: existingMessageId },
+          plan: { model, phase, messageId: existingMessageId },
         })
       );
 
@@ -253,7 +255,7 @@ export class HandlePlanProgress {
     return tasks;
   }
 
-  private toModel(title: string, tasks: Map<string, ToolTask>, isFinalized: boolean): PlanModel {
+  private toModel(phase: PlanPhase, tasks: Map<string, ToolTask>, isFinalized: boolean): PlanModel {
     const planTasks = [...tasks.values()].map((t) => ({
       id: t.toolUseId,
       title: t.mcpServerName ? `${t.mcpServerName}: ${t.toolName}` : t.toolName,
@@ -263,10 +265,14 @@ export class HandlePlanProgress {
 
     const hasInProgress = planTasks.some((t) => t.status === 'in_progress');
     if (!isFinalized && !hasInProgress) {
-      planTasks.push({ id: '__thinking__', title: 'Thinking…', status: 'in_progress' as PlanTaskStatus });
+      planTasks.push({
+        id: PLAN_THINKING_TASK_ID,
+        title: planTitleForPhase('thinking'),
+        status: 'in_progress' as PlanTaskStatus,
+      });
     }
 
-    return { title, tasks: planTasks };
+    return { title: planTitleForPhase(phase), tasks: planTasks };
   }
 }
 
