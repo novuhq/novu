@@ -1,5 +1,10 @@
 import { expect } from 'chai';
-import { buildOpaqueStorageKey, mintRandomToken, parseTtlFromEnv } from './opaque-token.util';
+import {
+  buildOpaqueStorageKey,
+  isMintedOpaqueActionId,
+  mintRandomToken,
+  parseTtlFromEnv,
+} from './opaque-token.util';
 
 describe('opaque-token.util', () => {
   it('parseTtlFromEnv falls back to default for invalid values', () => {
@@ -17,5 +22,14 @@ describe('opaque-token.util', () => {
 
   it('buildOpaqueStorageKey prefixes the token', () => {
     expect(buildOpaqueStorageKey('agent:action:', 'abc')).to.equal('agent:action:abc');
+  });
+
+  it('isMintedOpaqueActionId matches only full minted token shape', () => {
+    const prefix = 'at:';
+    const minted = `${prefix}${mintRandomToken(16)}`;
+
+    expect(isMintedOpaqueActionId(minted, prefix, 16)).to.equal(true);
+    expect(isMintedOpaqueActionId('at:approve', prefix, 16)).to.equal(false);
+    expect(isMintedOpaqueActionId('at:', prefix, 16)).to.equal(false);
   });
 });

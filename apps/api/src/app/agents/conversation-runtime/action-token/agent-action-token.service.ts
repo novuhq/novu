@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { ButtonElement, CardElement } from 'chat';
-import { forEachCallbackButton } from './card-callback-button.walker';
-import { buildOpaqueStorageKey, mintRandomToken, parseTtlFromEnv } from './opaque-token.util';
+import { callbackPayloadNeedsTokenization, forEachCallbackButton } from './card-callback-button.walker';
+import {
+  buildOpaqueStorageKey,
+  isMintedOpaqueActionId,
+  mintRandomToken,
+  parseTtlFromEnv,
+} from './opaque-token.util';
 
 export const AGENT_ACTION_TOKEN_PREFIX = 'at:' as const;
 
@@ -10,26 +15,26 @@ const KEY_PREFIX = 'agent:action:';
 const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 3;
 const TOKEN_BYTES = 16;
 
-export type AgentActionTokenClaims = {
+export interface AgentActionTokenClaims {
   id: string;
   value?: string;
   agentId: string;
   integrationIdentifier: string;
   environmentId: string;
   organizationId: string;
-};
+}
 
-export type AgentActionTokenBinding = {
+export interface AgentActionTokenBinding {
   agentId: string;
   integrationIdentifier: string;
   environmentId: string;
   organizationId: string;
-};
+}
 
-type MintedButtonToken = {
+interface MintedButtonToken {
   button: ButtonElement;
   token: string;
-};
+}
 
 @Injectable()
 export class AgentActionTokenService {
@@ -44,7 +49,7 @@ export class AgentActionTokenService {
   }
 
   isActionToken(actionId: string | undefined): boolean {
-    return Boolean(actionId?.startsWith(AGENT_ACTION_TOKEN_PREFIX));
+    return isMintedOpaqueActionId(actionId, AGENT_ACTION_TOKEN_PREFIX, TOKEN_BYTES);
   }
 
   async mintActionToken(claims: AgentActionTokenClaims): Promise<string> {
@@ -95,9 +100,11 @@ export class AgentActionTokenService {
           agentId: binding.agentId,
           integrationIdentifier: binding.integrationIdentifier,
           environmentId: binding.environmentId,
+          organizationId: binding.organizationId,
           tokenAgentId: claims.agentId,
           tokenIntegrationIdentifier: claims.integrationIdentifier,
           tokenEnvironmentId: claims.environmentId,
+          tokenOrganizationId: claims.organizationId,
         },
         'Agent action token binding mismatch'
       );
@@ -138,6 +145,10 @@ export class AgentActionTokenService {
     const minted: MintedButtonToken[] = [];
 
     await forEachCallbackButton(clone, async (button) => {
+      if (!callbackPayloadNeedsTokenization(button.id)) {
+        return;
+      }
+
       const value = typeof button.value === 'string' ? button.value : undefined;
       const token = await this.mintActionToken({
         ...claimsBase,

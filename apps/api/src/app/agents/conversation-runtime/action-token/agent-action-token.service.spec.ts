@@ -124,10 +124,19 @@ describe('AgentActionTokenService', () => {
     expect(resolved).to.deep.equal({ id: 'custom:action', value: 'label' });
   });
 
-  it('resolveForDispatch returns null when token resolution fails', async () => {
+  it('resolveForDispatch passes through at-prefixed raw action ids that are not minted tokens', async () => {
     const { service } = makeService();
 
-    const resolved = await service.resolveForDispatch(`${AGENT_ACTION_TOKEN_PREFIX}gone`, undefined, binding);
+    const resolved = await service.resolveForDispatch('at:approve', 'payload', binding);
+
+    expect(resolved).to.deep.equal({ id: 'at:approve', value: 'payload' });
+  });
+
+  it('resolveForDispatch returns null when token resolution fails', async () => {
+    const { service } = makeService();
+    const missingToken = `${AGENT_ACTION_TOKEN_PREFIX}${'A'.repeat(22)}`;
+
+    const resolved = await service.resolveForDispatch(missingToken, undefined, binding);
 
     expect(resolved).to.equal(null);
   });
@@ -187,8 +196,8 @@ describe('AgentActionTokenService', () => {
     expect(encodedTelegramCallbackDataByteLength(denyButton.id)).to.be.at.most(64);
     expect(denyButton.value).to.equal(undefined);
     expect(linkButton.url).to.equal('https://example.com');
-    expect(nestedApprove.id.startsWith(AGENT_ACTION_TOKEN_PREFIX)).to.equal(true);
-    expect(nestedApprove.value).to.equal(undefined);
+    expect(nestedApprove.id).to.equal('nested:approve:tool2:turn2');
+    expect(nestedApprove.value).to.equal('nested-value');
 
     const resolvedDeny = await service.resolveActionToken(denyButton.id, binding);
 
@@ -196,7 +205,7 @@ describe('AgentActionTokenService', () => {
     expect(resolvedDeny?.value).to.equal('GitHub -> get_me');
   });
 
-  it('does not leave orphan redis keys when mint fails mid-card', async () => {
+  it('propagates error when mint fails mid-card after an earlier button was tokenized', async () => {
     let mintCount = 0;
     const { service, cacheService } = makeService({
       set: sinon.stub().callsFake(async (key: string, value: string) => {
@@ -207,14 +216,20 @@ describe('AgentActionTokenService', () => {
       }),
     });
 
+    const longActionId =
+      'mcp-approval:deny:sevt_01Xa5zpiCUkjKH8a6zShGUZj:550e8400-e29b-41d4-a716-446655440000';
     const card = {
       type: 'card',
       children: [
         {
           type: 'actions',
           children: [
-            { type: 'button', id: 'action-1', label: 'One' },
-            { type: 'button', id: 'action-2', label: 'Two' },
+            { type: 'button', id: longActionId, label: 'One' },
+            {
+              type: 'button',
+              id: 'mcp-approval:approve:sevt_01Xa5zpiCUkjKH8a6zShGUZj:550e8400-e29b-41d4-a716-446655440001',
+              label: 'Two',
+            },
           ],
         },
       ],

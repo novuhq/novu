@@ -427,7 +427,9 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             {
               agentId,
               integrationIdentifier: cached.config.integrationIdentifier,
-              actionId: event.actionId,
+              actionId: this.agentActionTokenService.isActionToken(event.actionId)
+                ? `${event.actionId.slice(0, 3)}[redacted]`
+                : event.actionId,
             },
             'Ignoring inbound action — token missing, expired, or binding mismatch'
           );

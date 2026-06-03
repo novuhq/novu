@@ -12,6 +12,10 @@ export function encodedTelegramCallbackDataByteLength(actionId: string): number 
   return Buffer.byteLength(callbackData, 'utf8');
 }
 
+export function callbackPayloadNeedsTokenization(actionId: string): boolean {
+  return encodedTelegramCallbackDataByteLength(actionId) > TELEGRAM_CALLBACK_DATA_LIMIT_BYTES;
+}
+
 function isActionsBlock(child: CardChild): child is CardChild & { type: 'actions'; children: ActionBlockChild[] } {
   return child.type === 'actions' && Array.isArray(child.children);
 }
