@@ -24,11 +24,10 @@ import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { AgentCodeSetupSection } from './agent-code-setup-section';
 import { AgentListenStep } from './agent-listen-step';
-import { EmailInboundAddressStep } from './email-inbound-address-step';
 import { EmailSetupGuide } from './email-setup-guide';
 import { isChannelReadyForBridge } from './is-channel-ready-for-bridge';
 import { ProviderCards } from './provider-cards';
-import { SetupStep } from './setup-guide-primitives';
+import { CompletedStepIndicator, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { SlackSetupGuide } from './slack-setup-guide';
 import { TeamsSetupGuide } from './teams-setup-guide';
@@ -117,11 +116,7 @@ function ViewAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; 
   return (
     <div className="relative flex items-center pl-6">
       <div className="absolute -left-[20px] flex w-5 justify-center">
-        <div className="border-success-dark bg-success-base flex size-5 shrink-0 items-center justify-center rounded-full shadow-[0px_0px_0px_1px_hsl(var(--static-white)),0px_0px_0px_2px_hsl(var(--stroke-soft))] border">
-          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-            <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <CompletedStepIndicator />
       </div>
       <button
         type="button"
@@ -340,12 +335,9 @@ export function AgentSetupSteps({
   const isEmailChannelSelected = selectedProviderId === EmailProviderIdEnum.NovuAgent;
   const effectiveIntegrationId = validatedSelectedId ?? legacyDefaultFromAgent?.integrationId;
 
-  // Email is surfaced as a provider card inside the merged listen step (not its own numbered step);
-  // the legacy path keeps a dedicated inbound-address step before the channel cards.
-  const showLegacyEmailInboundStep = !useCloudMergedListenStep && Boolean(sharedInboundAddress);
-  const listenStepIndex = brainStepsBefore + 1;
-  const legacyChannelStepIndex = brainStepsBefore + (showLegacyEmailInboundStep ? 2 : 1);
-  const channelStepIndex = useCloudMergedListenStep ? listenStepIndex : legacyChannelStepIndex;
+  // Email is surfaced as a provider card inside the listen step, so it never gets its own numbered
+  // step — the channel cards are always the first step after the brain section.
+  const channelStepIndex = brainStepsBefore + 1;
   const providerGuideStepOffset = channelStepIndex + 1;
 
   const channelReadyForBridge = isChannelReadyForBridge({
@@ -360,9 +352,7 @@ export function AgentSetupSteps({
   const providerGuideSteps = skipProviderGuide ? 0 : PROVIDER_GUIDE_RESERVED_STEPS;
   const bridgeStepOffset = providerGuideStepOffset + providerGuideSteps;
 
-  const legacyListenSteps = showLegacyEmailInboundStep ? 2 : 1;
-  const listenSteps = useCloudMergedListenStep ? 1 : legacyListenSteps;
-  const totalSteps = brainStepsBefore + listenSteps + providerGuideSteps + handlerStepsAfter;
+  const totalSteps = brainStepsBefore + 1 + providerGuideSteps + handlerStepsAfter;
 
   useEffect(() => {
     if (useCloudMergedListenStep) return;
@@ -648,7 +638,7 @@ export function AgentSetupSteps({
       >
         {useCloudMergedListenStep && sharedInboundAddress ? (
           <AgentListenStep
-            index={listenStepIndex}
+            index={channelStepIndex}
             totalSteps={totalSteps}
             firstIncompleteStep={firstIncompleteStep}
             sharedInboundAddress={sharedInboundAddress}
@@ -660,39 +650,21 @@ export function AgentSetupSteps({
             onSelect={handleProviderSelect}
           />
         ) : (
-          <div className="flex flex-col gap-10">
-            {showLegacyEmailInboundStep && sharedInboundAddress ? (
-              <EmailInboundAddressStep
-                index={listenStepIndex}
-                totalSteps={totalSteps}
-                firstIncompleteStep={firstIncompleteStep}
-                sharedInboundAddress={sharedInboundAddress}
+          <SetupStep
+            index={channelStepIndex}
+            status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
+            title="Choose where your agent can talk"
+            description="Connect a channel so users can message the agent and receive replies."
+            fullWidthContent={
+              <ProviderCards
+                agentIdentifier={agent.identifier}
+                agentName={agent.name}
+                selectedIntegrationId={effectiveIntegrationId}
+                existingLinks={agentIntegrationLinks}
+                onSelect={handleProviderSelect}
               />
-            ) : null}
-
-            <SetupStep
-              index={channelStepIndex}
-              status={deriveStepStatus(channelStepIndex, firstIncompleteStep)}
-              sectionLabel={
-                showLegacyEmailInboundStep ? undefined : `${channelStepIndex}/${totalSteps} SETUP WHERE TO LISTEN`
-              }
-              title={
-                showLegacyEmailInboundStep
-                  ? 'Add another channel for your agent to communicate'
-                  : 'Choose where your agent listens and communicates'
-              }
-              description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
-              fullWidthContent={
-                <ProviderCards
-                  agentIdentifier={agent.identifier}
-                  agentName={agent.name}
-                  selectedIntegrationId={effectiveIntegrationId}
-                  existingLinks={agentIntegrationLinks}
-                  onSelect={handleProviderSelect}
-                />
-              }
-            />
-          </div>
+            }
+          />
         )}
       </motion.div>
 

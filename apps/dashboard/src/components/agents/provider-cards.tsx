@@ -6,7 +6,7 @@ import {
   type IIntegration,
   providers as novuProviders,
 } from '@novu/shared';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo } from 'react';
 import {
   RiArrowLeftSLine,
   RiArrowRightSLine,
@@ -20,6 +20,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
+import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { useIsAgentEmailAvailable } from '@/hooks/use-is-agent-email-available';
 import { useLinkAgentIntegration } from '@/hooks/use-link-agent-integration';
 import { ROUTES } from '@/utils/routes';
@@ -32,6 +33,7 @@ import { isAgentIntegrationConnected } from './is-agent-integration-connected';
  * on the card. Keep in sync with provider docs / setup guides.
  */
 const PROVIDER_SETUP_TIME: Record<string, string> = {
+  [EmailProviderIdEnum.NovuAgent]: '~ 30 seconds',
   [ChatProviderIdEnum.Slack]: '~ 30 seconds',
   [ChatProviderIdEnum.MsTeams]: '~ 1 hour',
   [ChatProviderIdEnum.WhatsAppBusiness]: '~ 1 hour',
@@ -45,83 +47,6 @@ const PROVIDER_SETUP_TIME: Record<string, string> = {
 
 function getSetupTimeLabel(providerId: string): string {
   return PROVIDER_SETUP_TIME[providerId] ?? '~ 5 minutes';
-}
-
-const FADE_WIDTH_PX = 32;
-
-/**
- * Builds a horizontal mask gradient that fades out the edges with overflowing content.
- * `none` is returned when neither edge has overflow, so the cards stay fully opaque.
- */
-function buildEdgeFadeMask(canScrollLeft: boolean, canScrollRight: boolean): string | undefined {
-  if (!canScrollLeft && !canScrollRight) return undefined;
-
-  const leftStop = canScrollLeft ? `transparent 0, black ${FADE_WIDTH_PX}px` : 'black 0';
-  const rightStop = canScrollRight ? `black calc(100% - ${FADE_WIDTH_PX}px), transparent 100%` : 'black 100%';
-
-  return `linear-gradient(to right, ${leftStop}, ${rightStop})`;
-}
-
-function useHorizontalScrollEdges<T extends HTMLElement>() {
-  const ref = useRef<T | null>(null);
-  const [edges, setEdges] = useState({ canScrollLeft: false, canScrollRight: false });
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return;
-
-    const update = () => {
-      // Allow a 1px tolerance for sub-pixel rounding.
-      const canScrollLeft = node.scrollLeft > 1;
-      const canScrollRight = node.scrollLeft + node.clientWidth < node.scrollWidth - 1;
-
-      setEdges((prev) =>
-        prev.canScrollLeft === canScrollLeft && prev.canScrollRight === canScrollRight
-          ? prev
-          : { canScrollLeft, canScrollRight }
-      );
-    };
-
-    update();
-    node.addEventListener('scroll', update, { passive: true });
-
-    // Observe both the container and its children so we react to viewport resizes,
-    // children being added/removed, and individual child size changes.
-    const resizeObserver = new ResizeObserver(update);
-    resizeObserver.observe(node);
-
-    const observeChildren = () => {
-      for (const child of Array.from(node.children)) {
-        resizeObserver.observe(child);
-      }
-    };
-
-    observeChildren();
-
-    const mutationObserver = new MutationObserver(() => {
-      observeChildren();
-      update();
-    });
-    mutationObserver.observe(node, { childList: true });
-
-    return () => {
-      node.removeEventListener('scroll', update);
-      resizeObserver.disconnect();
-      mutationObserver.disconnect();
-    };
-  }, []);
-
-  const scrollBy = useCallback((direction: 'left' | 'right') => {
-    const node = ref.current;
-    if (!node) return;
-
-    // Scroll by ~80% of the visible width so the next batch of cards becomes the focus
-    // while keeping one card of context visible from the previous view.
-    const delta = Math.max(node.clientWidth * 0.8, 160);
-    node.scrollBy({ left: direction === 'right' ? delta : -delta, behavior: 'smooth' });
-  }, []);
-
-  return { ref, ...edges, scrollBy };
 }
 
 type ProviderCardItem = {

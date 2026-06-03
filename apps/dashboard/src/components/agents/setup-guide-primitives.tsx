@@ -59,19 +59,25 @@ export function SetupModeToggle({ mode, onChange }: { mode: SetupMode; onChange:
   );
 }
 
-function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
-  if (status === 'completed') {
-    return (
-      <div className="flex size-5 shrink-0 items-center justify-center rounded-full border border-success-dark bg-success-base shadow-[0px_0px_0px_1px_hsl(var(--static-white)),0px_0px_0px_2px_hsl(var(--stroke-soft))]">
-        <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-          <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+export function CompletedStepIndicator() {
+  return (
+    <div className="bg-bg-weak flex size-5 shrink-0 items-center justify-center rounded-full shadow-[0px_0px_0px_2px_#FFF,0px_0px_0px_3px_#E1E4EA]">
+      <div className="flex size-full items-center justify-center rounded-full border border-[#5ec269] bg-[#77db89] shadow-[inset_0px_-3px_0px_0px_#64ce6e]">
+        <svg width="8" height="10" viewBox="0 0 8 10" fill="none">
+          <path d="M1.5 5.3125L3.5 7.8125L6.5 2.1875" stroke="white" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-    );
+    </div>
+  );
+}
+
+function StepIndicator({ status, index }: { status: StepStatus; index: number }) {
+  if (status === 'completed') {
+    return <CompletedStepIndicator />;
   }
 
   return (
-    <div className="bg-bg-weak text-text-strong flex size-5 shrink-0 items-center justify-center rounded-full text-[12px] font-medium leading-[10px] shadow-[0px_0px_0px_1px_#FFF,0px_0px_0px_2px_#E1E4EA]">
+    <div className="bg-bg-weak text-text-strong flex size-5 shrink-0 items-center justify-center rounded-full text-[12px] font-medium leading-[10px] shadow-[0px_0px_0px_2px_#FFF,0px_0px_0px_3px_#E1E4EA]">
       {index}
     </div>
   );
@@ -111,7 +117,7 @@ export function SetupStep({
 }) {
   return (
     <div className="relative flex flex-col gap-4 pl-6">
-      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-5' : 'top-0')}>
+      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-6' : 'top-0')}>
         <StepIndicator status={status} index={index} />
       </div>
       <div

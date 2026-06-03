@@ -267,11 +267,12 @@ export function ConnectAgentForm({
         title="What should your agent do?"
         description="We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials."
         fullWidthContent={
-          <div className="flex flex-col gap-3 mt-5">
+          <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
             {aiGeneration.suggestions.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-text-soft text-label-xs font-medium leading-4">Try:</span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-text-soft text-label-xs shrink-0 font-medium leading-4">Try:</span>
                 <AgentSuggestionPills
+                  className="min-w-0 flex-1"
                   suggestions={aiGeneration.suggestions}
                   onSelect={aiGeneration.onSelectSuggestion}
                   disabled={disabled || (aiGeneration.isGenerating ?? false)}

@@ -7,7 +7,7 @@ import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { AgentSetupSteps, ManagedAgentRecap } from '@/components/agents/agent-setup-steps';
 import { ProviderCards } from '@/components/agents/provider-cards';
-import { SetupStep } from '@/components/agents/setup-guide-primitives';
+import { CompletedStepIndicator, SetupStep } from '@/components/agents/setup-guide-primitives';
 import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
 import { getConnectorById } from '@/components/onboarding/connect-agent/connector-options';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
@@ -133,8 +133,8 @@ function ChannelStepPreview() {
         index={2}
         status="upcoming"
         dimmed
-        title="Add another channel for your agent to communicate"
-        description="Start with one provider your agent can receive and respond on and you can always add more providers as you need."
+        title="Choose where your agent can talk"
+        description="Connect a channel so users can message the agent and receive replies."
         fullWidthContent={<ProviderCards agentIdentifier="" onSelect={() => {}} disabled dimmed />}
       />
     </div>
@@ -150,17 +150,7 @@ function ShowAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; 
     <div className="relative flex items-center py-5 pl-8 pr-3 md:pr-6">
       <div className="relative flex items-center pl-6">
         <div className="absolute -left-[20px] flex w-5 justify-center">
-          <div className="border-success-dark bg-success-base flex size-5 shrink-0 items-center justify-center rounded-full border shadow-[0px_0px_0px_1px_hsl(var(--static-white)),0px_0px_0px_2px_hsl(var(--stroke-soft))]">
-            <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-              <path
-                d="M1 4L3.5 6.5L9 1"
-                stroke="white"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
+          <CompletedStepIndicator />
         </div>
         <button
           type="button"
@@ -211,7 +201,7 @@ export function AgentsSetupPage() {
   const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
   const isConnectFlow = appId === APP_IDS.CONNECT;
   const isConnectHost = IS_NOVU_CONNECT || isConnectFlow;
-  const pageTitle = isConnectHost ? "Let's connect your agent to where you work" : 'Connect your first agent';
+  const pageTitle = isConnectHost ? 'Connect your agent to where work happens' : 'Connect your first agent';
 
   const [envLoaded, setEnvLoaded] = useState(false);
   const { environments } = useFetchEnvironments({
@@ -349,8 +339,9 @@ export function AgentsSetupPage() {
       {!isConnectFlow && <StepHeader current={1} onBack={handleBackStep} />}
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
-      <p className="text-text-soft mt-1 text-xs font-medium leading-4">
-        A few steps to your first multi-channel agent conversation.
+      <p className="text-text-soft mt-1 text-xs font-medium leading-4 w-1/2">
+        Start with a Claude demo agent, connect channels, and see how conversations flow. You can bring your own agent
+        later.
       </p>
 
       {/*
@@ -359,7 +350,7 @@ export function AgentsSetupPage() {
        * interactive channel step in place. Keyed on `createdAgent` — the back arrow returns to the
        * brain form.
        */}
-      <div className="relative">
+      <div className="relative mt-12">
         {/* Single continuous rail line behind every step segment. Each segment also draws its own
          * gradient line, but those fade to transparent at their edges and pinch where segments meet;
          * this same-colored line sits underneath and fills those gaps so the toggle, brain step, and
