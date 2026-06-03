@@ -339,7 +339,7 @@ export function AgentsSetupPage() {
       {!isConnectFlow && <StepHeader current={1} onBack={handleBackStep} />}
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
-      <p className="text-text-soft mt-1 text-xs font-medium leading-4 w-1/2">
+      <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
         Start with a Claude demo agent, connect channels, and see how conversations flow. You can bring your own agent
         later.
       </p>
