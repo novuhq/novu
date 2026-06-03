@@ -550,11 +550,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'airops',
     name: 'AirOps',
-    description: 'Connect AirOps to your agent via the managed runtime provider.',
+    description: 'Access AEO analytics, Brand Kits, reports, and Knowledge Bases from AirOps.',
     url: 'https://app.airops.com/mcp',
     category: 'sales-and-marketing',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'airwallex-developer',
@@ -577,11 +577,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'apollo-io',
     name: 'Apollo.io',
-    description: 'Connect Apollo.io to your agent via the managed runtime provider.',
+    description: 'Search and enrich B2B prospects, manage contacts, and run outbound sequences.',
     url: 'https://mcp.apollo.io/mcp',
     category: 'sales-and-marketing',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'aura',
@@ -649,11 +649,14 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'bitly',
     name: 'Bitly',
-    description: 'Connect Bitly to your agent via the managed runtime provider.',
+    description: 'Shorten links, manage Bitlinks, and view analytics via OAuth-backed MCP.',
     url: 'https://api-ssl.bitly.com/v4/mcp',
     category: 'sales-and-marketing',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['mcp.all'],
+    },
   },
   {
     id: 'calendly',
@@ -694,11 +697,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'cb-insights',
     name: 'CB Insights',
-    description: 'Connect CB Insights to your agent via the managed runtime provider.',
+    description: 'Query CB Insights market intelligence and ChatCBI via MCP.',
     url: 'https://mcp.cbinsights.com',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'cdata-connect-ai',
@@ -820,11 +823,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'contentsquare',
     name: 'Contentsquare',
-    description: 'Connect Contentsquare to your agent via the managed runtime provider.',
+    description: 'Query digital experience analytics and behavioral insights from Contentsquare.',
     url: 'https://api.contentsquare.com/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'context7',
@@ -901,11 +904,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'day-ai',
     name: 'Day AI',
-    description: 'Connect Day AI to your agent via the managed runtime provider.',
+    description: 'Access CRM contacts, organizations, meetings, and opportunities.',
     url: 'https://day.ai/api/mcp',
     category: 'productivity',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'definely',
@@ -2072,11 +2075,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'scite',
     name: 'Scite',
-    description: 'Connect Scite to your agent via the managed runtime provider.',
+    description: 'Search scientific literature with Smart Citations and full-text research access.',
     url: 'https://api.scite.ai/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'semgrep',
