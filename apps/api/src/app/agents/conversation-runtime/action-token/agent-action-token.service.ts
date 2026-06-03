@@ -129,7 +129,9 @@ export class AgentActionTokenService {
     const replacements: Array<{ button: ButtonElement; token: string }> = [];
 
     await forEachCallbackButton(clone, async (button) => {
-      if (!callbackPayloadNeedsTokenization(button.id)) {
+      const buttonValue = typeof button.value === 'string' ? button.value : undefined;
+
+      if (!callbackPayloadNeedsTokenization(button.id, buttonValue)) {
         return;
       }
 

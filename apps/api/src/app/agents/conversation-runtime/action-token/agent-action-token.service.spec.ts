@@ -243,6 +243,35 @@ describe('AgentActionTokenService', () => {
     expect(cacheService.set.callCount).to.equal(2);
   });
 
+  it('tokenizes short action ids when the button value exceeds the Telegram callback limit', async () => {
+    const { service } = makeService();
+    const actionId = 'mcp-approval:approve:toolu_01ABC';
+    const value = 'stripe -> create_payment_intent: {"amount":1000,"currency":"usd"}';
+
+    const tokenized = await service.tokenizeCardForDelivery(
+      {
+        type: 'card',
+        children: [
+          {
+            type: 'actions',
+            children: [{ type: 'button', id: actionId, label: 'Approve once', value }],
+          },
+        ],
+      },
+      binding
+    );
+
+    const button = tokenized.children[0].children[0] as { id: string; value?: string };
+
+    expect(button.id.startsWith(AGENT_ACTION_TOKEN_PREFIX)).to.equal(true);
+    expect(encodedTelegramCallbackDataByteLength(button.id)).to.be.at.most(64);
+    expect(button.value).to.equal(undefined);
+
+    const resolved = await service.resolveActionToken(button.id, binding);
+
+    expect(resolved).to.deep.equal({ id: actionId, value });
+  });
+
   it('reusable tokens resolve on repeated peek without deleting', async () => {
     const { service, cacheService } = makeService();
 

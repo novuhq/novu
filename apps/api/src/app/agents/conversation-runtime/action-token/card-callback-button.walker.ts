@@ -5,14 +5,20 @@ export const TELEGRAM_CALLBACK_DATA_LIMIT_BYTES = 64;
 
 type ActionBlockChild = ButtonElement | { type: string; id?: string; value?: string; label?: string };
 
-export function encodedTelegramCallbackDataByteLength(actionId: string): number {
-  const callbackData = `${TELEGRAM_CALLBACK_DATA_PREFIX}${JSON.stringify({ a: actionId })}`;
+export function encodedTelegramCallbackDataByteLength(actionId: string, value?: string): number {
+  const payload: { a: string; v?: string } = { a: actionId };
+
+  if (typeof value === 'string') {
+    payload.v = value;
+  }
+
+  const callbackData = `${TELEGRAM_CALLBACK_DATA_PREFIX}${JSON.stringify(payload)}`;
 
   return Buffer.byteLength(callbackData, 'utf8');
 }
 
-export function callbackPayloadNeedsTokenization(actionId: string): boolean {
-  return encodedTelegramCallbackDataByteLength(actionId) > TELEGRAM_CALLBACK_DATA_LIMIT_BYTES;
+export function callbackPayloadNeedsTokenization(actionId: string, value?: string): boolean {
+  return encodedTelegramCallbackDataByteLength(actionId, value) > TELEGRAM_CALLBACK_DATA_LIMIT_BYTES;
 }
 
 function isActionsBlock(child: CardChild): child is CardChild & { type: 'actions'; children: ActionBlockChild[] } {

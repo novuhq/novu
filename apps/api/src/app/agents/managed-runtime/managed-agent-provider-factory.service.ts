@@ -163,11 +163,22 @@ export class ManagedAgentProviderFactory {
       throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL is required for managed agents');
     }
 
+    const webhookUrl = `${webhookBaseUrl}/v1/agents/events`;
+
+    this.logger.info(
+      {
+        thalamusCfUrl: cfUrl,
+        webhookUrl,
+        hasCfApiKey: Boolean(process.env.THALAMUS_CF_API_KEY),
+      },
+      'Configured thalamus cloudflare durable backend for managed agents'
+    );
+
     return cloudflare({
       url: cfUrl,
       apiKey: process.env.THALAMUS_CF_API_KEY,
       webhook: {
-        url: `${webhookBaseUrl}/v1/agents/events`,
+        url: webhookUrl,
         secret: webhookSecret,
       },
     });

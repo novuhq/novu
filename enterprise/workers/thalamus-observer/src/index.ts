@@ -144,6 +144,10 @@ export class SessionObserver extends Agent<Env, State> {
   /* ---------- RPC: observation control ---------- */
 
   async startObserving(params: ObservationParams): Promise<void> {
+    console.log(
+      `[thalamus-observer] startObserving sessionId=${params.sessionId} runId=${params.runId} turnId=${params.turnId} provider=${params.provider} streamUrl=${params.streamUrl} webhookUrl=${params.webhook.url}`
+    );
+
     this.abortController?.abort();
 
     this.updateObservation({ ...params, status: 'active' });
@@ -211,6 +215,10 @@ export class SessionObserver extends Agent<Env, State> {
     });
 
     if (!response.ok || !response.body) {
+      console.error(
+        `[thalamus-observer] SSE connection failed sessionId=${params.sessionId} runId=${params.runId} status=${response.status} streamUrl=${params.streamUrl}`
+      );
+
       this.updateObservation({
         ...(this.state.observation ?? params),
         status: 'error',
@@ -660,6 +668,14 @@ export default {
       if (request.method === 'POST' && path === '/observe') {
         const body = await request.json();
         if (!validateObservationParams(body)) {
+          console.warn('[thalamus-observer] POST /observe rejected — invalid params', {
+            sessionId: typeof body?.sessionId === 'string' ? body.sessionId : undefined,
+            runId: typeof body?.runId === 'string' ? body.runId : undefined,
+            provider: typeof body?.provider === 'string' ? body.provider : undefined,
+            hasStreamUrl: typeof body?.streamUrl === 'string',
+            hasWebhook: typeof body?.webhook === 'object' && body.webhook !== null,
+          });
+
           return Response.json(
             {
               error: 'Invalid params: sessionId, streamUrl, headers, provider, and webhook are required',
@@ -667,6 +683,11 @@ export default {
             { status: 400 }
           );
         }
+
+        console.log(
+          `[thalamus-observer] POST /observe sessionId=${body.sessionId} runId=${body.runId} turnId=${body.turnId} provider=${body.provider} webhookUrl=${body.webhook.url}`
+        );
+
         const stub = env.SESSION_OBSERVER.getByName(body.sessionId);
         await stub.startObserving(body);
 

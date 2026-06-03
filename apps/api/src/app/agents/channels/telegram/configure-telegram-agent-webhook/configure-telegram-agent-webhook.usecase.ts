@@ -16,6 +16,8 @@ import { ConfigureTelegramAgentWebhookCommand } from './configure-telegram-agent
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
 const TELEGRAM_MAX_RETRIES = 3;
 const TELEGRAM_RETRY_DELAY_BASE_MS = 500;
+/** Inline keyboard clicks arrive as callback_query; reactions as message_reaction. */
+const TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES = ['message', 'callback_query', 'message_reaction'] as const;
 
 interface TelegramSetWebhookResult {
   webhookUrl: string;
@@ -179,7 +181,7 @@ export class ConfigureTelegramAgentWebhook {
       try {
         const { data } = await Axios.post<TelegramApiResponse>(
           telegramUrl,
-          { url, secret_token: secretToken, allowed_updates: ['message'] },
+          { url, secret_token: secretToken, allowed_updates: [...TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES] },
           {
             timeout: TELEGRAM_API_TIMEOUT_MS,
             maxRedirects: 0,
