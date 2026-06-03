@@ -423,15 +423,6 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
         );
 
         if (!resolvedAction) {
-          this.logger.warn(
-            {
-              agentId,
-              integrationIdentifier: cached.config.integrationIdentifier,
-              actionId: event.actionId,
-            },
-            'Ignoring inbound action — token missing, expired, or binding mismatch'
-          );
-
           return;
         }
 

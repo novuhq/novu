@@ -26,11 +26,6 @@ export type AgentActionTokenBinding = {
   organizationId: string;
 };
 
-type MintedButtonToken = {
-  button: ButtonElement;
-  token: string;
-};
-
 @Injectable()
 export class AgentActionTokenService {
   private readonly ttlSeconds: number;
@@ -90,28 +85,12 @@ export class AgentActionTokenService {
     }
 
     if (!this.claimsMatchBinding(claims, binding)) {
-      this.logger.warn(
-        {
-          agentId: binding.agentId,
-          integrationIdentifier: binding.integrationIdentifier,
-          environmentId: binding.environmentId,
-          tokenAgentId: claims.agentId,
-          tokenIntegrationIdentifier: claims.integrationIdentifier,
-          tokenEnvironmentId: claims.environmentId,
-        },
-        'Agent action token binding mismatch'
-      );
-
       return null;
     }
 
     return { id: claims.id, value: claims.value };
   }
 
-  /**
-   * Resolves an opaque `at:` token or passes through a raw platform action id.
-   * Returns null when a token is present but missing, expired, or fails binding checks.
-   */
   async resolveForDispatch(
     actionId: string,
     value: string | undefined,
@@ -124,36 +103,38 @@ export class AgentActionTokenService {
     const resolved = await this.resolveActionToken(actionId, binding);
 
     if (!resolved) {
-      return null;
+      this.logger.warn(
+        { agentId: binding.agentId, integrationIdentifier: binding.integrationIdentifier, actionId },
+        'Ignoring inbound action — token missing, expired, or binding mismatch'
+      );
     }
 
     return resolved;
   }
 
   async tokenizeCardForDelivery(
-    card: CardElement | Record<string, unknown>,
-    claimsBase: Omit<AgentActionTokenClaims, 'id' | 'value'>
+    card: Record<string, unknown>,
+    binding: AgentActionTokenBinding
   ): Promise<Record<string, unknown>> {
     const clone = structuredClone(card) as CardElement;
-    const minted: MintedButtonToken[] = [];
+    const replacements: Array<{ button: ButtonElement; token: string }> = [];
 
     await forEachCallbackButton(clone, async (button) => {
-      const value = typeof button.value === 'string' ? button.value : undefined;
       const token = await this.mintActionToken({
-        ...claimsBase,
+        ...binding,
         id: button.id,
-        value,
+        value: typeof button.value === 'string' ? button.value : undefined,
       });
 
-      minted.push({ button, token });
+      replacements.push({ button, token });
     });
 
-    for (const { button, token } of minted) {
+    for (const { button, token } of replacements) {
       button.id = token;
       delete button.value;
     }
 
-    return clone as unknown as Record<string, unknown>;
+    return clone as Record<string, unknown>;
   }
 
   private claimsMatchBinding(claims: AgentActionTokenClaims, binding: AgentActionTokenBinding): boolean {

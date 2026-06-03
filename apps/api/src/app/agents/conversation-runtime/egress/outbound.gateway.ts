@@ -157,11 +157,6 @@ export class OutboundGateway {
     return sent;
   }
 
-  /**
-   * Posts on the live inbound thread. Cards with callback `button` actions must use
-   * `deliver` / `postToConversation` (or pass `actionTokenBinding`) so action ids are
-   * tokenized for platforms with short callback payloads (e.g. Telegram 64-byte limit).
-   */
   async replyOnThread(
     thread: Thread,
     msg: OutboundMessage,
@@ -233,12 +228,10 @@ export class OutboundGateway {
 
     const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, platform, agentId);
-    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, {
-      agentId,
-      integrationIdentifier: config.integrationIdentifier,
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-    });
+    const tokenizedContent = await this.applyActionTokensForDelivery(
+      deliveryContent,
+      this.toActionTokenBinding(agentId, config)
+    );
 
     const postArg = this.buildAdapterPostableMessage(tokenizedContent);
 
@@ -277,12 +270,10 @@ export class OutboundGateway {
 
     const dmThread = await chat.openDM(platformUserId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
-    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, {
-      agentId,
-      integrationIdentifier: config.integrationIdentifier,
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-    });
+    const tokenizedContent = await this.applyActionTokensForDelivery(
+      deliveryContent,
+      this.toActionTokenBinding(agentId, config)
+    );
 
     const postArg = this.buildAdapterPostableMessage(tokenizedContent);
 
@@ -334,12 +325,10 @@ export class OutboundGateway {
     }
 
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, platform, agentId);
-    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, {
-      agentId,
-      integrationIdentifier: config.integrationIdentifier,
-      environmentId: config.environmentId,
-      organizationId: config.organizationId,
-    });
+    const tokenizedContent = await this.applyActionTokensForDelivery(
+      deliveryContent,
+      this.toActionTokenBinding(agentId, config)
+    );
 
     const editPayload = this.buildAdapterPostableMessage(tokenizedContent);
 
@@ -520,22 +509,25 @@ export class OutboundGateway {
       return this.toThreadPostArg(msg);
     }
 
-    const tokenized = await this.applyActionTokensForDelivery(
-      { card: msg.card },
-      actionTokenBinding.agentId,
-      actionTokenBinding
-    );
+    const tokenized = await this.applyActionTokensForDelivery({ card: msg.card }, actionTokenBinding);
 
-    if (tokenized.card) {
-      return tokenized.card;
-    }
+    return tokenized.card ?? this.toThreadPostArg(msg);
+  }
 
-    return this.toThreadPostArg(msg);
+  private toActionTokenBinding(
+    agentId: string,
+    config: { environmentId: string; organizationId: string; integrationIdentifier: string }
+  ): AgentActionTokenBinding {
+    return {
+      agentId,
+      integrationIdentifier: config.integrationIdentifier,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    };
   }
 
   private async applyActionTokensForDelivery(
     deliveryContent: ChatSdkReplyContent,
-    agentId: string,
     binding: AgentActionTokenBinding
   ): Promise<ChatSdkReplyContent> {
     if (!deliveryContent.card) {
@@ -543,17 +535,12 @@ export class OutboundGateway {
     }
 
     try {
-      const tokenizedCard = await this.actionTokenService.tokenizeCardForDelivery(deliveryContent.card, {
-        agentId,
-        integrationIdentifier: binding.integrationIdentifier,
-        environmentId: binding.environmentId,
-        organizationId: binding.organizationId,
-      });
+      const tokenizedCard = await this.actionTokenService.tokenizeCardForDelivery(deliveryContent.card, binding);
 
       return { ...deliveryContent, card: tokenizedCard };
     } catch (err) {
       this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), agentId },
+        { err: err instanceof Error ? err.message : String(err), agentId: binding.agentId },
         'Failed to tokenize card actions; delivering with raw action ids'
       );
 

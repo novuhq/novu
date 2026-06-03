@@ -1,8 +1,6 @@
 import type { ButtonElement, CardChild, CardElement } from 'chat';
 
-/** Telegram inline keyboard `callback_data` limit (see @chat-adapter/telegram). */
 export const TELEGRAM_CALLBACK_DATA_PREFIX = 'chat:';
-export const TELEGRAM_CALLBACK_DATA_LIMIT_BYTES = 64;
 
 type ActionBlockChild = ButtonElement | { type: string; id?: string; value?: string; label?: string };
 
@@ -34,10 +32,10 @@ function asCallbackButton(action: ActionBlockChild): ButtonElement | null {
 }
 
 export async function forEachCallbackButton(
-  card: CardElement | Record<string, unknown>,
+  card: CardElement,
   visit: (button: ButtonElement) => void | Promise<void>
 ): Promise<void> {
-  const children = (card as CardElement).children;
+  const children = card.children;
 
   if (!Array.isArray(children)) {
     return;

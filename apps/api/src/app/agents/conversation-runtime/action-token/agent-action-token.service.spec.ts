@@ -7,14 +7,12 @@ import {
 import { encodedTelegramCallbackDataByteLength } from './card-callback-button.walker';
 
 describe('AgentActionTokenService', () => {
-  const claimsBase = {
+  const binding = {
     agentId: 'agent1',
     integrationIdentifier: 'slack-main',
     environmentId: 'env1',
     organizationId: 'org1',
   };
-
-  const binding = { ...claimsBase };
 
   function makeService(cacheOverrides: { get?: sinon.SinonStub; set?: sinon.SinonStub } = {}) {
     const storage = new Map<string, string>();
@@ -45,7 +43,7 @@ describe('AgentActionTokenService', () => {
     const { service, cacheService } = makeService();
 
     const token = await service.mintActionToken({
-      ...claimsBase,
+      ...binding,
       id: 'mcp-approval:approve:tool123:turn456',
       value: 'GitHub -> get_me',
     });
@@ -60,7 +58,7 @@ describe('AgentActionTokenService', () => {
     const { service } = makeService();
 
     const token = await service.mintActionToken({
-      ...claimsBase,
+      ...binding,
       id: 'custom-action:do-thing',
       value: 'payload',
     });
@@ -90,7 +88,7 @@ describe('AgentActionTokenService', () => {
     const { service } = makeService();
 
     const token = await service.mintActionToken({
-      ...claimsBase,
+      ...binding,
       id: 'action-1',
     });
 
@@ -107,7 +105,7 @@ describe('AgentActionTokenService', () => {
     });
 
     const token = await service.mintActionToken({
-      ...claimsBase,
+      ...binding,
       id: 'action-1',
     });
 
@@ -174,7 +172,7 @@ describe('AgentActionTokenService', () => {
       ],
     };
 
-    const tokenized = await service.tokenizeCardForDelivery(original, claimsBase);
+    const tokenized = await service.tokenizeCardForDelivery(original, binding);
 
     expect(original.children[0].children[0].id).to.include('mcp-approval:deny');
     expect(original.children[0].children[0].value).to.equal('GitHub -> get_me');
@@ -196,7 +194,7 @@ describe('AgentActionTokenService', () => {
     expect(resolvedDeny?.value).to.equal('GitHub -> get_me');
   });
 
-  it('does not leave orphan redis keys when mint fails mid-card', async () => {
+  it('throws before patching the card when mint fails mid-card', async () => {
     let mintCount = 0;
     const { service, cacheService } = makeService({
       set: sinon.stub().callsFake(async (key: string, value: string) => {
@@ -221,7 +219,7 @@ describe('AgentActionTokenService', () => {
     };
 
     try {
-      await service.tokenizeCardForDelivery(card, claimsBase);
+      await service.tokenizeCardForDelivery(card, binding);
       expect.fail('expected tokenize to throw');
     } catch (err) {
       expect((err as Error).message).to.equal('redis down');
@@ -234,7 +232,7 @@ describe('AgentActionTokenService', () => {
     const { service, cacheService } = makeService();
 
     const token = await service.mintActionToken({
-      ...claimsBase,
+      ...binding,
       id: 'repeatable:refresh',
     });
 
