@@ -305,6 +305,63 @@ describe('McpOAuthDiscoveryService', () => {
       expect(md.registrationEndpoint).to.equal('https://vercel.com/api/login/oauth/register');
     });
 
+    it('accepts the MCP well-known gateway pattern (PlanetScale)', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://api.planetscale.com',
+          authorization_endpoint: 'https://app.planetscale.com/oauth/authorize',
+          token_endpoint: 'https://auth.planetscale.com/oauth/token',
+          registration_endpoint: 'https://auth.planetscale.com/oauth/registration',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'],
+          authorization_response_iss_parameter_supported: false,
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://mcp.pscale.dev/mcp/planetscale');
+
+      expect(md.issuer).to.equal('https://api.planetscale.com');
+      expect(md.registrationEndpoint).to.equal('https://auth.planetscale.com/oauth/registration');
+    });
+
+    it('rejects the MCP well-known gateway pattern when OAuth endpoints leave the advertised domain', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://api.planetscale.com',
+          authorization_endpoint: 'https://app.planetscale.com/oauth/authorize',
+          token_endpoint: 'https://evil.example/oauth/token',
+          registration_endpoint: 'https://auth.planetscale.com/oauth/registration',
+          code_challenge_methods_supported: ['S256'],
+        })
+      );
+
+      try {
+        await service.discoverAuthorizationServer('https://mcp.pscale.dev/mcp/planetscale');
+        throw new Error('expected discoverAuthorizationServer to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(McpOAuthDiscoveryError);
+        expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_no_as_metadata');
+      }
+    });
+
+    it('accepts AS metadata when PRM lists the issuer with a trailing slash (Monte Carlo)', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://auth.getmontecarlo.com',
+          authorization_endpoint: 'https://auth.getmontecarlo.com/oauth2/authorize',
+          token_endpoint: 'https://auth.getmontecarlo.com/oauth2/token',
+          registration_endpoint: 'https://auth.getmontecarlo.com/oauth2/register',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['client_secret_post', 'none'],
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://auth.getmontecarlo.com/');
+
+      expect(md.issuer).to.equal('https://auth.getmontecarlo.com');
+      expect(md.registrationEndpoint).to.equal('https://auth.getmontecarlo.com/oauth2/register');
+    });
+
     it('rejects metadata when issuer does not match the discovery URL', async () => {
       safeJsonStub.resolves(jsonResponse(200, { ...AS_BODY_BASE, issuer: 'https://attacker.example' }));
 

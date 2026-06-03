@@ -520,7 +520,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp-demo.airwallex.com/developer',
     category: 'financial-services',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'alma',
@@ -714,11 +714,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'cloudinary',
     name: 'Cloudinary',
-    description: 'Connect Cloudinary to your agent via the managed runtime provider.',
+    description: 'Upload, transform, search, and organize media assets in Cloudinary.',
     url: 'https://asset-management.mcp.cloudinary.com/sse',
     category: 'design',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'cocounsel-legal',
@@ -795,11 +795,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'craft',
     name: 'Craft',
-    description: 'Connect Craft to your agent via the managed runtime provider.',
+    description: 'Read and update Craft documents, daily notes, and tasks in your space.',
     url: 'https://mcp.craft.do/my/mcp',
     category: 'productivity',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'crossbeam',
@@ -948,11 +948,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'eraser',
     name: 'Eraser',
-    description: 'Connect Eraser to your agent via the managed runtime provider.',
+    description: 'Generate and edit architecture diagrams, ERDs, flowcharts, and technical design docs.',
     url: 'https://app.eraser.io/api/mcp',
     category: 'design',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'euler',
@@ -975,11 +975,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'exa',
     name: 'Exa',
-    description: 'Connect Exa to your agent via the managed runtime provider.',
+    description: 'Search the web and fetch page content with Exa.',
     url: 'https://mcp.exa.ai/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'factset-ai-ready-data',
@@ -1191,11 +1191,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'honeycomb',
     name: 'Honeycomb',
-    description: 'Connect Honeycomb to your agent via the managed runtime provider.',
+    description: 'Query datasets, explore environments, and analyze trace and log data in Honeycomb.',
     url: 'https://mcp.honeycomb.io/mcp',
     category: 'code',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'hugging-face',
@@ -1245,11 +1245,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'incident-io',
     name: 'incident.io',
-    description: 'Connect incident.io to your agent via the managed runtime provider.',
+    description: 'Query incidents, alerts, on-call schedules, and escalations via incident.io.',
     url: 'https://mcp.incident.io/mcp',
     category: 'code',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'indeed',
@@ -1317,20 +1317,21 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'jam',
     name: 'Jam',
-    description: 'Connect Jam to your agent via the managed runtime provider.',
+    description:
+      'Load Jam recording context—video, console logs, network requests, and user events—for bug analysis and fixes.',
     url: 'https://mcp.jam.dev/mcp',
     category: 'code',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'jentic',
     name: 'Jentic',
-    description: 'Connect Jentic to your agent via the managed runtime provider.',
+    description: 'Search, load, and execute 1,500+ APIs through Jentic with centralized credentials.',
     url: 'https://api.jentic.com/mcp',
     category: 'code',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'jotform',
@@ -1348,12 +1349,12 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://app.ketryx.com/api/mcp',
     category: 'code',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'klarity',
     name: 'Klarity',
-    description: 'Connect Klarity to your agent via the managed runtime provider.',
+    description: 'Technical architecture and documentation tooling for developers.',
     url: 'https://architect-v2-api.klarity.ai/mcp',
     category: 'productivity',
     popular: false,
@@ -1479,11 +1480,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'magic-patterns',
     name: 'Magic Patterns',
-    description: 'Connect Magic Patterns to your agent via the managed runtime provider.',
+    description: 'Import and export UI designs between Magic Patterns and your codebase.',
     url: 'https://mcp.magicpatterns.com/mcp',
     category: 'design',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'mailerlite',
@@ -1596,11 +1597,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'monte-carlo',
     name: 'Monte Carlo',
-    description: 'Connect Monte Carlo to your agent via the managed runtime provider.',
+    description: 'Query data observability, monitoring, alerting, and lineage from Monte Carlo.',
     url: 'https://mcp.getmontecarlo.com/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'moodys',
@@ -1623,11 +1624,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'motherduck',
     name: 'MotherDuck',
-    description: 'Connect MotherDuck to your agent via the managed runtime provider.',
+    description: 'Query and explore MotherDuck databases and data through the remote MCP server.',
     url: 'https://api.motherduck.com/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'motion-creative-analytics',
@@ -1776,11 +1777,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'planetscale',
     name: 'PlanetScale',
-    description: 'Connect PlanetScale to your agent via the managed runtime provider.',
+    description: 'Manage PlanetScale organizations, databases, branches, schema, and Insights through your agent.',
     url: 'https://mcp.pscale.dev/mcp/planetscale',
     category: 'code',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'play-sheet-music',
@@ -1812,11 +1813,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'posthog',
     name: 'PostHog',
-    description: 'Connect PostHog to your agent via the managed runtime provider.',
+    description: 'Query product analytics, feature flags, experiments, and insights from PostHog.',
     url: 'https://mcp.posthog.com/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'postman',
@@ -2037,11 +2038,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'stytch',
     name: 'Stytch',
-    description: 'Connect Stytch to your agent via the managed runtime provider.',
+    description: 'Manage Stytch auth projects, API keys, and project settings through your agent.',
     url: 'https://mcp.stytch.dev/mcp',
     category: 'code',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'superhuman-mail',
@@ -2109,11 +2110,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'tavily',
     name: 'Tavily',
-    description: 'Connect Tavily to your agent via the managed runtime provider.',
+    description: 'Search the web and extract page content with Tavily.',
     url: 'https://mcp.tavily.com/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'third-bridge',
@@ -2262,11 +2263,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'webflow',
     name: 'Webflow',
-    description: 'Connect Webflow to your agent via the managed runtime provider.',
+    description: 'Manage Webflow sites, CMS content, and Designer canvas via OAuth-backed MCP.',
     url: 'https://mcp.webflow.com/mcp',
     category: 'design',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'windsor-ai',
@@ -2289,11 +2290,11 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'wordpress-com',
     name: 'WordPress.com',
-    description: 'Connect WordPress.com to your agent via the managed runtime provider.',
+    description: 'Search, read, and manage WordPress.com sites, posts, and media via OAuth-backed MCP.',
     url: 'https://public-api.wordpress.com/wpcom/v2/mcp/v1',
     category: 'productivity',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'workable',

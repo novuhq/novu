@@ -645,6 +645,17 @@ function dedupe(list: string[]): string[] {
  *   - the metadata document declares the parent origin as issuer
  *     (`https://vercel.com`), and
  *   - authorize/token/(register) endpoints are served from that parent host.
+ *
+ * We additionally accept the MCP well-known gateway pattern when optional
+ * OAuth endpoint URLs are supplied:
+ *
+ *   - PRM lists a path-based MCP resource URL as the authorization server
+ *     (e.g. `https://mcp.pscale.dev/mcp/planetscale`),
+ *   - AS metadata is served at `/.well-known/oauth-authorization-server{path}`
+ *     on that host but declares a canonical issuer on another origin
+ *     (e.g. `https://api.planetscale.com`), and
+ *   - authorize/token/(register) endpoints belong to the advertised issuer's
+ *     registrable domain (e.g. `app.planetscale.com`, `auth.planetscale.com`).
  */
 function isAcceptableIssuerMatch(
   requested: string,
@@ -656,6 +667,12 @@ function isAcceptableIssuerMatch(
   }
 ): boolean {
   if (requested === advertised) {
+    return true;
+  }
+
+  const requestedRoot = normalizeRootIssuerIdentifier(requested);
+  const advertisedRoot = normalizeRootIssuerIdentifier(advertised);
+  if (requestedRoot && advertisedRoot && requestedRoot === advertisedRoot) {
     return true;
   }
 
@@ -681,7 +698,93 @@ function isAcceptableIssuerMatch(
     return true;
   }
 
-  return isParentDomainIssuer(requested, advertised, opts);
+  if (isParentDomainIssuer(requested, advertised, opts)) {
+    return true;
+  }
+
+  return isWellKnownGatewayIssuer(requested, advertised, opts);
+}
+
+/** Root issuers that differ only by a trailing slash (e.g. Monte Carlo PRM). */
+function normalizeRootIssuerIdentifier(issuer: string): string | null {
+  try {
+    const parsed = new URL(issuer);
+    const path = parsed.pathname.replace(/\/+$/, '');
+
+    if (path !== '') {
+      return null;
+    }
+
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * PlanetScale / Speakeasy-style MCP gateways: PRM uses the MCP resource URL as
+ * the authorization server identifier, while RFC 8414 metadata at
+ * `/.well-known/oauth-authorization-server{path}` on the MCP host declares the
+ * real issuer (e.g. `api.planetscale.com`) with OAuth on sibling subdomains.
+ */
+function isWellKnownGatewayIssuer(
+  requested: string,
+  advertised: string,
+  opts?: {
+    authorizationEndpoint?: string;
+    tokenEndpoint?: string;
+    registrationEndpoint?: string;
+  }
+): boolean {
+  if (!opts?.authorizationEndpoint || !opts.tokenEndpoint) {
+    return false;
+  }
+
+  let requestedUrl: URL;
+  let advertisedUrl: URL;
+  try {
+    requestedUrl = new URL(requested);
+    advertisedUrl = new URL(advertised);
+  } catch {
+    return false;
+  }
+
+  const requestedPath = requestedUrl.pathname.replace(/\/+$/, '');
+  if (requestedPath === '') {
+    return false;
+  }
+
+  if (requestedUrl.origin === advertisedUrl.origin) {
+    return false;
+  }
+
+  const advertisedDomain = getRegistrableDomain(advertisedUrl.hostname);
+  const endpointUrls = [opts.authorizationEndpoint, opts.tokenEndpoint];
+  if (opts.registrationEndpoint) {
+    endpointUrls.push(opts.registrationEndpoint);
+  }
+
+  return endpointUrls.every((endpoint) => hostnameBelongsToRegistrableDomain(endpoint, advertisedDomain));
+}
+
+function getRegistrableDomain(hostname: string): string {
+  const parts = hostname.split('.');
+
+  if (parts.length <= 2) {
+    return hostname;
+  }
+
+  return parts.slice(-2).join('.');
+}
+
+function hostnameBelongsToRegistrableDomain(url: string, registrableDomain: string): boolean {
+  try {
+    const host = new URL(url).hostname;
+
+    return host === registrableDomain || host.endsWith(`.${registrableDomain}`);
+  } catch {
+    return false;
+  }
 }
 
 function isParentDomainIssuer(

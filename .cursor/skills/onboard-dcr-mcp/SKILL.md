@@ -21,7 +21,7 @@ Before curl probes, catalog edits, or strategy work:
 - A fixed pre-registered app (`client_id` supplied by the provider) instead of RFC 7591 DCR
 - Partner or onboarding approval before OAuth apps are allowed
 
-Include the doc link and the specific requirement that blocked onboarding. Do not add a catalog entry or run live probes for providers that fail this gate.
+Include the doc link and the specific requirement that blocked onboarding. Do not add a catalog entry or run live probes for providers that fail this gate. **Append the provider to [`blocked-mcp-servers.md`](./blocked-mcp-servers.md)** (Open blockers table).
 
 ## When you need more than a catalog entry
 
@@ -143,3 +143,4 @@ See the `example/` fixture directory for layout.
 3. Only if needed: add strategy file + register in `dcr-provider-strategy-registry.ts`
 4. Only if needed: add fixture replay spec under `dcr-provider-strategies/__fixtures__/`
 5. Confirm `packages/shared/src/consts/providers/mcp-servers.spec.ts` DCR schema test passes
+6. If blocked: append a row to [`blocked-mcp-servers.md`](./blocked-mcp-servers.md); if unblocked later, move the row to Resolved
