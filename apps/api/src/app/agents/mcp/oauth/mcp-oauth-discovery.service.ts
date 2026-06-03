@@ -291,8 +291,9 @@ export class McpOAuthDiscoveryService {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         // Never echo the raw response body — DCR servers occasionally return
         // a `registration_access_token` in the body, which we MUST NOT log.
-        const upstreamErrorCode = pickStringField(response.body, 'error');
-        const upstreamErrorDescription = pickStringField(response.body, 'error_description');
+        const upstreamErrorCode = pickStringField(response.body, 'error') ?? pickStringField(response.body, 'code');
+        const upstreamErrorDescription =
+          pickStringField(response.body, 'error_description') ?? pickStringField(response.body, 'message');
         this.logger.warn(
           {
             issuer: asMetadata.issuer,
@@ -482,7 +483,22 @@ export class McpOAuthDiscoveryService {
     mcpUrl: string,
     body: Record<string, unknown>
   ): Omit<DiscoveredProtectedResource, 'challengeScopes'> {
-    const authorizationServers = pickStringArrayField(body, 'authorization_servers');
+    let authorizationServers = pickStringArrayField(body, 'authorization_servers');
+
+    // Some providers (e.g. Netlify MCP) serve RFC 8414 AS metadata at the PRM
+    // well-known URL instead of RFC 9728 PRM. When the document advertises OAuth
+    // endpoints and an issuer but omits authorization_servers, treat the issuer
+    // as the sole authorization server for this resource.
+    if (!authorizationServers || authorizationServers.length === 0) {
+      const issuer = pickStringField(body, 'issuer');
+      const authorizationEndpoint = pickStringField(body, 'authorization_endpoint');
+      const tokenEndpoint = pickStringField(body, 'token_endpoint');
+
+      if (issuer && authorizationEndpoint && tokenEndpoint) {
+        authorizationServers = [issuer];
+      }
+    }
+
     if (!authorizationServers || authorizationServers.length === 0) {
       throw new McpOAuthDiscoveryError(
         'mcp_no_protected_resource_metadata',
@@ -621,6 +637,14 @@ function dedupe(list: string[]): string[] {
  *   - the metadata document declares a delegated issuer on a subdomain
  *     (`https://clerk.context7.com`), and
  *   - authorize/token/(register) endpoints remain on the PRM-listed host.
+ *
+ * We additionally accept the Vercel-style parent-domain pattern when
+ * optional OAuth endpoint URLs are supplied:
+ *
+ *   - PRM lists a product subdomain like `https://mcp.vercel.com`,
+ *   - the metadata document declares the parent origin as issuer
+ *     (`https://vercel.com`), and
+ *   - authorize/token/(register) endpoints are served from that parent host.
  */
 function isAcceptableIssuerMatch(
   requested: string,
@@ -653,7 +677,57 @@ function isAcceptableIssuerMatch(
     }
   }
 
-  return isDelegatedProductIssuer(requested, advertised, opts);
+  if (isDelegatedProductIssuer(requested, advertised, opts)) {
+    return true;
+  }
+
+  return isParentDomainIssuer(requested, advertised, opts);
+}
+
+function isParentDomainIssuer(
+  requested: string,
+  advertised: string,
+  opts?: {
+    authorizationEndpoint?: string;
+    tokenEndpoint?: string;
+    registrationEndpoint?: string;
+  }
+): boolean {
+  if (!opts?.authorizationEndpoint || !opts.tokenEndpoint) {
+    return false;
+  }
+
+  let requestedUrl: URL;
+  let advertisedUrl: URL;
+  try {
+    requestedUrl = new URL(requested);
+    advertisedUrl = new URL(advertised);
+  } catch {
+    return false;
+  }
+
+  const requestedHost = requestedUrl.hostname;
+  const advertisedHost = advertisedUrl.hostname;
+
+  if (requestedHost === advertisedHost) {
+    return false;
+  }
+
+  if (!requestedHost.endsWith(`.${advertisedHost}`)) {
+    return false;
+  }
+
+  const advertisedPath = advertisedUrl.pathname.replace(/\/+$/, '');
+  if (advertisedPath !== '') {
+    return false;
+  }
+
+  const endpointUrls = [opts.authorizationEndpoint, opts.tokenEndpoint];
+  if (opts.registrationEndpoint) {
+    endpointUrls.push(opts.registrationEndpoint);
+  }
+
+  return endpointUrls.every((endpoint) => hostnameBelongsToProductHost(endpoint, advertisedHost));
 }
 
 function isDelegatedProductIssuer(
@@ -785,6 +859,13 @@ export function selectTokenEndpointAuthMethod(
     if (method === 'none' && prefersConfidential) continue;
 
     return method;
+  }
+
+  const firstAdvertised = supported.find((method): method is McpTokenEndpointAuthMethod =>
+    (MCP_TOKEN_ENDPOINT_AUTH_METHODS as readonly string[]).includes(method)
+  );
+  if (firstAdvertised) {
+    return firstAdvertised;
   }
 
   return DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD;

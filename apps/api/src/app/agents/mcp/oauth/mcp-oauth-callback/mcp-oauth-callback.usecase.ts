@@ -35,6 +35,9 @@ import { McpNovuAppCredentialsService } from '../../connections/get-mcp-novu-app
 import { McpConnectionVaultService } from '../../connections/mcp-connection-vault.service';
 import { SyncAgentMcpServersCommand } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.command';
 import { SyncAgentMcpServers } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
+import type { DcrTokenExchangeOutcome } from '../dcr-provider-strategies/dcr-provider-strategy';
+import { resolveDcrProviderStrategy } from '../dcr-provider-strategies/dcr-provider-strategy-registry';
+import { resolveDefaultDcrTokenExchangeOutcome } from '../dcr-provider-strategies/resolve-default-dcr-token-exchange-outcome';
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
 import {
@@ -701,6 +704,58 @@ export class McpOAuthCallback {
     }
   }
 
+  private async handleTokenExchangeErrorOutcome(args: {
+    outcome: Extract<DcrTokenExchangeOutcome, { kind: 'error' }>;
+    oauthClient: McpConnectionOAuthClient;
+    stateData: McpOAuthState;
+    statusCode: number;
+  }): Promise<never> {
+    const { outcome, oauthClient, stateData, statusCode } = args;
+
+    if (outcome.logVariant === 'non_2xx') {
+      this.logger.warn(
+        {
+          tokenEndpoint: oauthClient.tokenEndpoint,
+          status: statusCode,
+          providerError: outcome.providerError,
+          mappedCode: outcome.code,
+        },
+        'MCP OAuth token exchange returned non-2xx'
+      );
+
+      await this.markConnectionError(stateData, outcome.code, outcome.message);
+
+      throw new BadRequestException(
+        outcome.providerError ? `OAuth token exchange failed: ${outcome.providerError}` : 'OAuth token exchange failed.'
+      );
+    }
+
+    if (outcome.logVariant === 'inline_error') {
+      this.logger.warn(
+        {
+          tokenEndpoint: oauthClient.tokenEndpoint,
+          status: statusCode,
+          providerError: outcome.providerError,
+          mappedCode: outcome.code,
+        },
+        'MCP OAuth token exchange returned 2xx with inline error'
+      );
+
+      await this.markConnectionError(stateData, outcome.code, outcome.message);
+
+      throw new BadRequestException(`OAuth token exchange failed: ${outcome.providerError}`);
+    }
+
+    this.logger.warn(
+      { tokenEndpoint: oauthClient.tokenEndpoint, status: statusCode },
+      'MCP OAuth token exchange returned a malformed 2xx body'
+    );
+
+    await this.markConnectionError(stateData, outcome.code, outcome.message);
+
+    throw new BadRequestException('OAuth token exchange returned a malformed response.');
+  }
+
   private async exchangeCode(args: {
     claimed: McpConnectionEntity;
     oauthClient: McpConnectionOAuthClient;
@@ -719,7 +774,7 @@ export class McpOAuthCallback {
       code,
       code_verifier: pkceVerifier,
       grant_type: 'authorization_code',
-      redirect_uri: buildMcpOAuthRedirectUri(),
+      redirect_uri: oauthClient.redirectUri ?? buildMcpOAuthRedirectUri(),
     });
 
     if (resource) {
@@ -752,72 +807,25 @@ export class McpOAuthCallback {
         timeoutMs: 10_000,
       });
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        const providerError = pickProviderErrorCode(response.body);
-        const mappedCode = mapTokenExchangeErrorCode(response.statusCode, providerError);
-        this.logger.warn(
-          {
-            tokenEndpoint: oauthClient.tokenEndpoint,
-            status: response.statusCode,
-            providerError,
-            mappedCode,
-          },
-          'MCP OAuth token exchange returned non-2xx'
-        );
+      const defaultOutcome = resolveDefaultDcrTokenExchangeOutcome(response.statusCode, response.body);
+      const strategy = resolveDcrProviderStrategy(stateData.mcpId);
+      const overriddenOutcome = strategy.interpretTokenExchangeResponse?.({
+        statusCode: response.statusCode,
+        body: response.body,
+        defaults: defaultOutcome,
+      });
+      const outcome = overriddenOutcome ?? defaultOutcome;
 
-        await this.markConnectionError(
+      if (outcome.kind === 'error') {
+        return this.handleTokenExchangeErrorOutcome({
+          outcome,
+          oauthClient,
           stateData,
-          mappedCode,
-          providerError ? `Token exchange failed: ${providerError}` : 'Token exchange failed.'
-        );
-
-        throw new BadRequestException(
-          providerError ? `OAuth token exchange failed: ${providerError}` : 'OAuth token exchange failed.'
-        );
+          statusCode: response.statusCode,
+        });
       }
 
-      // 2xx with a JSON `error` field — GitHub's `/login/oauth/access_token`
-      // returns 200 + `{ "error": "bad_verification_code" }` on token-side
-      // failures (yes, really) instead of a 4xx, so we re-run the same
-      // mapping on the body before treating it as success.
-      const inlineProviderError = pickProviderErrorCode(response.body);
-      if (inlineProviderError) {
-        const mappedCode = mapTokenExchangeErrorCode(response.statusCode, inlineProviderError);
-        this.logger.warn(
-          {
-            tokenEndpoint: oauthClient.tokenEndpoint,
-            status: response.statusCode,
-            providerError: inlineProviderError,
-            mappedCode,
-          },
-          'MCP OAuth token exchange returned 2xx with inline error'
-        );
-
-        await this.markConnectionError(stateData, mappedCode, `Token exchange failed: ${inlineProviderError}`);
-
-        throw new BadRequestException(`OAuth token exchange failed: ${inlineProviderError}`);
-      }
-
-      const parsed = parseTokenResponseBody(response.body);
-      if (!parsed) {
-        // 2xx with malformed body — never let it propagate to encryption /
-        // update so we can't persist a broken connection. Funnels into the
-        // same sanitized error path used for non-2xx responses.
-        this.logger.warn(
-          { tokenEndpoint: oauthClient.tokenEndpoint, status: response.statusCode },
-          'MCP OAuth token exchange returned a malformed 2xx body'
-        );
-
-        await this.markConnectionError(
-          stateData,
-          'mcp_token_exchange_failed',
-          'Token exchange returned a malformed response.'
-        );
-
-        throw new BadRequestException('OAuth token exchange returned a malformed response.');
-      }
-
-      return parsed;
+      return outcome.tokens;
     } catch (err) {
       if (err instanceof BadRequestException) {
         throw err;
@@ -1047,51 +1055,6 @@ export function mapTokenExchangeErrorCode(statusCode: number, providerError: str
   }
 
   return 'mcp_token_exchange_failed';
-}
-
-function pickProviderErrorCode(body: unknown): string | undefined {
-  if (!body || typeof body !== 'object') return undefined;
-  const data = body as { error?: unknown; message?: unknown };
-
-  // OAuth 2 standard: `error` is a short token (e.g. "invalid_grant").
-  // Accept `message` as a generic fallback. Never log/return the full
-  // body — it may contain access tokens.
-  if (typeof data.error === 'string' && data.error.length > 0 && data.error.length <= 64) {
-    return data.error;
-  }
-  if (typeof data.message === 'string' && data.message.length > 0 && data.message.length <= 64) {
-    return data.message;
-  }
-
-  return undefined;
-}
-
-/**
- * Validate the upstream token response shape before we hand it to encryption
- * + persistence. RFC 6749 §5.1 requires `access_token` and `token_type`;
- * `expires_in` / `refresh_token` / `scope` are optional but typed when
- * present. A response that does not match is treated as a token-exchange
- * failure rather than silently writing a broken `mcp_connection` row.
- */
-function parseTokenResponseBody(body: unknown): TokenResponse | null {
-  if (!body || typeof body !== 'object') return null;
-  const data = body as Record<string, unknown>;
-
-  if (typeof data.access_token !== 'string' || data.access_token.length === 0) return null;
-
-  const refreshToken = typeof data.refresh_token === 'string' ? data.refresh_token : undefined;
-  const expiresIn =
-    typeof data.expires_in === 'number' && Number.isFinite(data.expires_in) ? data.expires_in : undefined;
-  const tokenType = typeof data.token_type === 'string' ? data.token_type : undefined;
-  const scope = typeof data.scope === 'string' ? data.scope : undefined;
-
-  return {
-    access_token: data.access_token,
-    refresh_token: refreshToken,
-    expires_in: expiresIn,
-    token_type: tokenType,
-    scope,
-  };
 }
 
 function resolveMcpOAuthAnalyticsSource(stateData: McpOAuthState): 'api' | 'setup_card' {

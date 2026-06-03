@@ -1,0 +1,6 @@
+{
+  "mcpUrl": "https://mcp.example.com/mcp",
+  "issuer": "https://auth.example.com",
+  "registrationEndpoint": "https://auth.example.com/register",
+  "tokenEndpoint": "https://auth.example.com/token"
+}

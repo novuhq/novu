@@ -102,13 +102,9 @@ describe('McpOAuthDiscoveryService', () => {
       expect(selectTokenEndpointAuthMethod(['client_secret_basic', 'none'], true)).to.equal('client_secret_basic');
     });
 
-    it('selects none only when the client is not confidential', () => {
+    it('selects none when the AS advertises only none', () => {
       expect(selectTokenEndpointAuthMethod(['none'], false)).to.equal('none');
-      // Confidential client with only `none` advertised cannot represent its
-      // secret in band — fall back to the RFC default so DCR surfaces a
-      // typed error from the upstream instead of silently dropping the
-      // secret.
-      expect(selectTokenEndpointAuthMethod(['none'], true)).to.equal('client_secret_basic');
+      expect(selectTokenEndpointAuthMethod(['none'], true)).to.equal('none');
     });
 
     it('defaults to client_secret_basic when the AS omits the field (RFC 8414 §2 default)', () => {
@@ -203,6 +199,26 @@ describe('McpOAuthDiscoveryService', () => {
         expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_no_protected_resource_metadata');
       }
     });
+
+    it('accepts co-located AS metadata served at the PRM well-known URL', async () => {
+      safeRawStub.resolves(rawResponse(405, {}));
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          resource: 'https://netlify-mcp.netlify.app/mcp',
+          issuer: 'https://netlify-mcp.netlify.app/',
+          authorization_endpoint: 'https://netlify-mcp.netlify.app/oauth-server/auth',
+          token_endpoint: 'https://netlify-mcp.netlify.app/oauth-server/token',
+          registration_endpoint: 'https://netlify-mcp.netlify.app/oauth-server/reg',
+          scopes_supported: ['openid', 'read', 'write'],
+        })
+      );
+
+      const prm = await service.discoverProtectedResource('https://netlify-mcp.netlify.app/mcp');
+
+      expect(prm.resource).to.equal('https://netlify-mcp.netlify.app/mcp');
+      expect(prm.authorizationServers).to.deep.equal(['https://netlify-mcp.netlify.app/']);
+      expect(prm.scopesSupported).to.deep.equal(['openid', 'read', 'write']);
+    });
   });
 
   describe('discoverAuthorizationServer', () => {
@@ -268,6 +284,25 @@ describe('McpOAuthDiscoveryService', () => {
 
       expect(md.issuer).to.equal('https://clerk.context7.com');
       expect(md.registrationEndpoint).to.equal('https://context7.com/api/oauth/register');
+    });
+
+    it('accepts the parent-domain issuer pattern where PRM lists a product subdomain', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://vercel.com',
+          authorization_endpoint: 'https://vercel.com/oauth/authorize',
+          token_endpoint: 'https://vercel.com/api/login/oauth/token',
+          registration_endpoint: 'https://vercel.com/api/login/oauth/register',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['none'],
+          authorization_response_iss_parameter_supported: false,
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://mcp.vercel.com');
+
+      expect(md.issuer).to.equal('https://vercel.com');
+      expect(md.registrationEndpoint).to.equal('https://vercel.com/api/login/oauth/register');
     });
 
     it('rejects metadata when issuer does not match the discovery URL', async () => {

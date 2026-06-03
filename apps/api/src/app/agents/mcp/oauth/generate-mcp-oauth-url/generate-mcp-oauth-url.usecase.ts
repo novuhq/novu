@@ -213,6 +213,7 @@ export class GenerateMcpOAuthUrl {
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: resolved.asMetadata.authorizationEndpoint,
       clientId: oauthClient.clientId,
+      redirectUri: oauthClient.redirectUri,
       scopes: resolved.scopes,
       resource: resolved.resource,
       state,
@@ -374,6 +375,7 @@ export class GenerateMcpOAuthUrl {
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: oauthClient.authorizationEndpoint,
       clientId: oauthClient.clientId,
+      redirectUri: oauthClient.redirectUri,
       scopes: oauthClient.scopesGranted ?? [],
       resource: existing.oauthState.resource,
       state,
@@ -580,7 +582,12 @@ export class GenerateMcpOAuthUrl {
       return reusable;
     }
 
-    const registration = await this.registerNewClient({ asMetadata, oauthConfig, scopes, redirectUri });
+    const registration = await this.registerNewClient({
+      asMetadata,
+      oauthConfig,
+      scopes,
+      redirectUri,
+    });
 
     return {
       clientId: registration.clientId,
@@ -615,7 +622,9 @@ export class GenerateMcpOAuthUrl {
     tokenEndpointAuthMethod: SupportedTokenEndpointAuthMethod;
   }> {
     const { asMetadata, oauthConfig, scopes, redirectUri } = args;
-    const frontBase = (process.env.DASHBOARD_URL ?? process.env.FRONT_BASE_URL)?.replace(/\/$/, '');
+    const { client_uri: clientUri, logo_uri: logoUri } = resolveDcrClientMetadataUris(
+      (process.env.DASHBOARD_URL ?? process.env.FRONT_BASE_URL)?.replace(/\/$/, '')
+    );
     // Confidential client = we will receive a `client_secret` back. Web apps
     // (`application_type: 'web'`) always run server-side; only `native`
     // installs are eligible for the `none` auth method as a public client.
@@ -634,8 +643,8 @@ export class GenerateMcpOAuthUrl {
         response_types: ['code'],
         token_endpoint_auth_method: tokenEndpointAuthMethod,
         scope: scopes.length > 0 ? scopes.join(' ') : undefined,
-        client_uri: frontBase,
-        logo_uri: frontBase ? `${frontBase}/images/novu.svg` : undefined,
+        client_uri: clientUri,
+        logo_uri: logoUri,
         software_id: oauthConfig.softwareId ?? DEFAULT_SOFTWARE_ID,
         software_version: SOFTWARE_VERSION,
       });
@@ -643,17 +652,22 @@ export class GenerateMcpOAuthUrl {
       // Honor the AS-returned method when present (RFC 7591 §3.2.1). Some
       // upstreams (e.g. Jotform) accept `client_secret_post` but register a
       // public client and respond with `token_endpoint_auth_method: "none"`.
-      const effectiveTokenEndpointAuthMethod = registration.tokenEndpointAuthMethod ?? tokenEndpointAuthMethod;
+      // Others (e.g. Postman) echo the requested confidential method but omit
+      // `client_secret` — treat that as an implicit public-client downgrade
+      // when the AS also advertises `none`.
+      let effectiveTokenEndpointAuthMethod = registration.tokenEndpointAuthMethod ?? tokenEndpointAuthMethod;
 
-      // A secret-bearing method that comes back without a `client_secret`
-      // would persist a confidential client we can never authenticate,
-      // surfacing later as an opaque `invalid_client` at token exchange.
-      // Fail fast so the error points at registration instead.
       if (effectiveTokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
-        throw new McpOAuthDiscoveryError(
-          'mcp_registration_failed',
-          `Dynamic Client Registration returned no client_secret for "${effectiveTokenEndpointAuthMethod}".`
-        );
+        const asSupportsPublicClient = asMetadata.tokenEndpointAuthMethodsSupported?.includes('none') ?? false;
+
+        if (asSupportsPublicClient) {
+          effectiveTokenEndpointAuthMethod = 'none';
+        } else {
+          throw new McpOAuthDiscoveryError(
+            'mcp_registration_failed',
+            `Dynamic Client Registration returned no client_secret for "${effectiveTokenEndpointAuthMethod}".`
+          );
+        }
       }
 
       return { ...registration, tokenEndpointAuthMethod: effectiveTokenEndpointAuthMethod };
@@ -840,15 +854,16 @@ export class GenerateMcpOAuthUrl {
   private buildAuthorizeUrlFromEndpoints(args: {
     authorizationEndpoint: string;
     clientId: string;
+    redirectUri?: string;
     scopes: string[];
     resource: string;
     state: string;
     pkceVerifier: string;
   }): string {
-    const { authorizationEndpoint, clientId, scopes, resource, state, pkceVerifier } = args;
+    const { authorizationEndpoint, clientId, redirectUri, scopes, resource, state, pkceVerifier } = args;
     const params = new URLSearchParams({
       client_id: clientId,
-      redirect_uri: buildMcpOAuthRedirectUri(),
+      redirect_uri: redirectUri ?? buildMcpOAuthRedirectUri(),
       response_type: 'code',
       state,
       code_challenge: deriveCodeChallenge(pkceVerifier),
@@ -967,6 +982,42 @@ function base64UrlEncode(buf: Buffer): string {
  * discovery layer already validates the metadata document against the
  * requested issuer origin.
  */
+/**
+ * RFC 7591 optional client metadata. Some ASes (e.g. Make) reject
+ * `client_uri` / `logo_uri` when the hostname is localhost or otherwise
+ * not publicly routable — omit the fields rather than fail registration.
+ */
+function resolveDcrClientMetadataUris(frontBase: string | undefined): {
+  client_uri?: string;
+  logo_uri?: string;
+} {
+  if (!frontBase || !isPublicDcrClientMetadataBase(frontBase)) {
+    return {};
+  }
+
+  return {
+    client_uri: frontBase,
+    logo_uri: `${frontBase}/images/novu.svg`,
+  };
+}
+
+function isPublicDcrClientMetadataBase(base: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(base);
+  } catch {
+    return false;
+  }
+
+  const host = parsed.hostname.toLowerCase();
+
+  if (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0' || host.endsWith('.localhost')) {
+    return false;
+  }
+
+  return true;
+}
+
 function assertSameOrigin(endpoint: string, issuer: string): void {
   let endpointOrigin: string;
   let issuerOrigin: string;

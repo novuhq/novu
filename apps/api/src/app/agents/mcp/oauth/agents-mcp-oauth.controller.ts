@@ -60,10 +60,6 @@ export class AgentsMcpOAuthController {
       })
     );
 
-    // Render a self-contained "flow complete" page instead of redirecting to the
-    // dashboard. The shared renderer tells the user they can close the tab.
-    // so the message stays short and avoids repeating it. Openers detect the
-    // outcome via popup-close detection / status polling, not from this page.
     const isConnected = result.status === 'connected';
     const page = isConnected
       ? renderConnectionResultPage({
