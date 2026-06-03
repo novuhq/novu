@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger, SsrfBlockedError, safeOutboundJsonRequest, safeOutboundRequest } from '@novu/application-generic';
-import { DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD, type McpTokenEndpointAuthMethod } from '@novu/shared';
+import {
+  DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD,
+  MCP_TOKEN_ENDPOINT_AUTH_METHODS,
+  type McpTokenEndpointAuthMethod,
+} from '@novu/shared';
 import { LRUCache } from 'lru-cache';
+import { isAcceptableIssuerMatch } from './mcp-oauth-issuer-match';
 
 /**
  * Discovery + DCR primitives for the MCP authorization spec
@@ -154,6 +159,12 @@ export interface DynamicClientRegistrationResponse {
   clientSecretExpiresAt?: number;
   registrationAccessToken?: string;
   registrationClientUri?: string;
+  /**
+   * Effective `token_endpoint_auth_method` returned by the AS (RFC 7591 §3.2.1).
+   * May differ from the value sent in the registration request — e.g. Jotform
+   * downgrades confidential registrations to `none`.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
 }
 
 interface CachedDocument<T> {
@@ -281,20 +292,23 @@ export class McpOAuthDiscoveryService {
       if (response.statusCode < 200 || response.statusCode >= 300) {
         // Never echo the raw response body — DCR servers occasionally return
         // a `registration_access_token` in the body, which we MUST NOT log.
-        const upstreamErrorCode = pickStringField(response.body, 'error');
+        const upstreamErrorCode = pickStringField(response.body, 'error') ?? pickStringField(response.body, 'code');
+        const upstreamErrorDescription =
+          pickStringField(response.body, 'error_description') ?? pickStringField(response.body, 'message');
         this.logger.warn(
           {
             issuer: asMetadata.issuer,
             registrationEndpoint: asMetadata.registrationEndpoint,
             status: response.statusCode,
             upstreamErrorCode,
+            upstreamErrorDescription,
           },
           'MCP DCR registration failed'
         );
 
         throw new McpOAuthDiscoveryError(
           'mcp_registration_failed',
-          `Dynamic Client Registration with "${asMetadata.issuer}" failed${upstreamErrorCode ? `: ${upstreamErrorCode}` : '.'}`
+          `Dynamic Client Registration with "${asMetadata.issuer}" failed${upstreamErrorCode ? `: ${upstreamErrorCode}` : '.'}${upstreamErrorDescription ? ` — ${upstreamErrorDescription}` : ''}`
         );
       }
 
@@ -313,6 +327,7 @@ export class McpOAuthDiscoveryService {
         clientSecretExpiresAt: pickNumberField(body, 'client_secret_expires_at') ?? undefined,
         registrationAccessToken: pickStringField(body, 'registration_access_token') ?? undefined,
         registrationClientUri: pickStringField(body, 'registration_client_uri') ?? undefined,
+        tokenEndpointAuthMethod: parseTokenEndpointAuthMethod(body),
       };
     } catch (err) {
       if (err instanceof McpOAuthDiscoveryError) {
@@ -469,7 +484,22 @@ export class McpOAuthDiscoveryService {
     mcpUrl: string,
     body: Record<string, unknown>
   ): Omit<DiscoveredProtectedResource, 'challengeScopes'> {
-    const authorizationServers = pickStringArrayField(body, 'authorization_servers');
+    let authorizationServers = pickStringArrayField(body, 'authorization_servers');
+
+    // Some providers (e.g. Netlify MCP) serve RFC 8414 AS metadata at the PRM
+    // well-known URL instead of RFC 9728 PRM. When the document advertises OAuth
+    // endpoints and an issuer but omits authorization_servers, treat the issuer
+    // as the sole authorization server for this resource.
+    if (!authorizationServers || authorizationServers.length === 0) {
+      const issuer = pickStringField(body, 'issuer');
+      const authorizationEndpoint = pickStringField(body, 'authorization_endpoint');
+      const tokenEndpoint = pickStringField(body, 'token_endpoint');
+
+      if (issuer && authorizationEndpoint && tokenEndpoint) {
+        authorizationServers = [issuer];
+      }
+    }
+
     if (!authorizationServers || authorizationServers.length === 0) {
       throw new McpOAuthDiscoveryError(
         'mcp_no_protected_resource_metadata',
@@ -488,20 +518,27 @@ export class McpOAuthDiscoveryService {
 
   private parseAuthorizationServerMetadata(issuer: string, body: Record<string, unknown>): AuthorizationServerMetadata {
     const docIssuer = pickStringField(body, 'issuer');
-    if (!docIssuer || !isAcceptableIssuerMatch(issuer, docIssuer)) {
+    const authorizationEndpoint = pickStringField(body, 'authorization_endpoint');
+    const tokenEndpoint = pickStringField(body, 'token_endpoint');
+    const registrationEndpoint = pickStringField(body, 'registration_endpoint') ?? undefined;
+    const issuerMatch = docIssuer
+      ? isAcceptableIssuerMatch(issuer, docIssuer, {
+          authorizationEndpoint,
+          tokenEndpoint,
+          registrationEndpoint,
+        })
+      : false;
+    if (!docIssuer || !issuerMatch) {
       // Per RFC 8414 §3.3 the `issuer` value in the document MUST equal the
-      // identifier used to construct the well-known URL. We additionally
-      // accept the narrow "tenant-suffix" relaxation handled by
-      // `isAcceptableIssuerMatch` — see that helper for the rationale and
-      // the security envelope (same origin, no path swap).
+      // identifier used to construct the well-known URL. Narrow relaxations
+      // (Auth0 tenant suffix, delegated issuers, MCP gateways) live in
+      // `mcp-oauth-issuer-match.ts`.
       throw new McpOAuthDiscoveryError(
         'mcp_no_as_metadata',
         `Authorization server metadata issuer mismatch (expected "${issuer}", got "${docIssuer ?? 'absent'}").`
       );
     }
 
-    const authorizationEndpoint = pickStringField(body, 'authorization_endpoint');
-    const tokenEndpoint = pickStringField(body, 'token_endpoint');
     if (!authorizationEndpoint || !tokenEndpoint) {
       throw new McpOAuthDiscoveryError(
         'mcp_no_as_metadata',
@@ -513,7 +550,7 @@ export class McpOAuthDiscoveryService {
       issuer: docIssuer,
       authorizationEndpoint,
       tokenEndpoint,
-      registrationEndpoint: pickStringField(body, 'registration_endpoint') ?? undefined,
+      registrationEndpoint,
       codeChallengeMethodsSupported: pickStringArrayField(body, 'code_challenge_methods_supported') ?? [],
       scopesSupported: pickStringArrayField(body, 'scopes_supported') ?? undefined,
       tokenEndpointAuthMethodsSupported:
@@ -565,59 +602,22 @@ function dedupe(list: string[]): string[] {
   return Array.from(new Set(list));
 }
 
-/**
- * Strict-by-default issuer comparison with a narrow relaxation for the
- * Auth0-tenant pattern.
- *
- * RFC 8414 §3.3 requires `requested === advertised`, and that remains the
- * baseline. We additionally accept the case where:
- *
- *   - `requested` is a tenant-pathed URL like
- *     `https://auth.atlassian.com/<tenant>` (used to build the well-known
- *     discovery URL), and
- *   - `advertised` is the same origin with no path
- *     (`https://auth.atlassian.com`).
- *
- * This is the documented Auth0 behavior backing several upstreams (e.g.
- * Atlassian Rovo): per-tenant AS metadata is served under
- * `/.well-known/oauth-authorization-server/<tenant>` but the document
- * declares only the base origin as its `issuer`. Without this relaxation
- * the entire DCR flow is unreachable for those upstreams.
- *
- * Security envelope — we never accept:
- *
- *   - cross-origin mismatches (different scheme/host/port), which would
- *     let a hostile metadata document substitute its own AS;
- *   - advertised issuers with a non-empty path different from the
- *     requested one (a path swap could redirect us to a different
- *     tenant on the same host).
- */
-function isAcceptableIssuerMatch(requested: string, advertised: string): boolean {
-  if (requested === advertised) {
-    return true;
-  }
-
-  let requestedUrl: URL;
-  let advertisedUrl: URL;
-  try {
-    requestedUrl = new URL(requested);
-    advertisedUrl = new URL(advertised);
-  } catch {
-    return false;
-  }
-
-  if (requestedUrl.origin !== advertisedUrl.origin) {
-    return false;
-  }
-
-  const advertisedPath = advertisedUrl.pathname.replace(/\/+$/, '');
-  const requestedPath = requestedUrl.pathname.replace(/\/+$/, '');
-
-  return advertisedPath === '' && requestedPath !== '';
-}
-
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parseTokenEndpointAuthMethod(body: unknown): McpTokenEndpointAuthMethod | undefined {
+  const value = pickStringField(body, 'token_endpoint_auth_method');
+
+  if (!value) {
+    return undefined;
+  }
+
+  if ((MCP_TOKEN_ENDPOINT_AUTH_METHODS as readonly string[]).includes(value)) {
+    return value as McpTokenEndpointAuthMethod;
+  }
+
+  return undefined;
 }
 
 function pickStringField(body: unknown, key: string): string | undefined {
@@ -661,15 +661,14 @@ function serializeError(err: unknown): { name: string; message: string } | strin
  *    default as `client_secret_basic`, so an absent list is treated as if it
  *    contained only `client_secret_basic`.
  *  - `prefersConfidential` — whether Novu will hold a `client_secret` for
- *    this registration. When `false` we accept the `none` method (public
- *    client), otherwise we refuse it because a confidential client posting
- *    `none` would have nowhere to send its secret.
+ *    this registration. The priority loop skips `none` when confidential;
+ *    if the AS advertises only `none`, the fallback returns that method so
+ *    public-only upstreams (e.g. Jotform) can register — `GenerateMcpOAuthUrl`
+ *    handles missing `client_secret` via RFC 7591 §3.2.1 downgrade.
  *
  * Returns the first method from `TOKEN_ENDPOINT_AUTH_METHOD_PRIORITY` that
- * intersects the advertised list. When no overlap exists we fall back to
- * `client_secret_basic` (the RFC default) — most ASes that reject a method
- * will surface that as `invalid_client_metadata` at register time and the
- * caller can map that into a `mcp_registration_failed` error.
+ * intersects the advertised list, else the first recognised advertised
+ * method, else `client_secret_basic` (RFC 8414 §2 default).
  */
 export function selectTokenEndpointAuthMethod(
   advertised: string[] | undefined,
@@ -683,6 +682,14 @@ export function selectTokenEndpointAuthMethod(
     if (method === 'none' && prefersConfidential) continue;
 
     return method;
+  }
+
+  const firstRecognised = supported.find((method): method is McpTokenEndpointAuthMethod =>
+    (MCP_TOKEN_ENDPOINT_AUTH_METHODS as readonly string[]).includes(method)
+  );
+
+  if (firstRecognised) {
+    return firstRecognised;
   }
 
   return DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD;

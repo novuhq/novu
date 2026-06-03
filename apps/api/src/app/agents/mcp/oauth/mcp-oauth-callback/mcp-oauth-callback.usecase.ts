@@ -43,6 +43,7 @@ import {
   type McpOAuthErrorCode,
 } from '../mcp-oauth-discovery.service';
 import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oauth-callback.command';
+import { type DcrTokenExchangeOutcome, resolveDcrTokenExchangeOutcome } from './token-exchange-outcome';
 
 const MAX_ERROR_MESSAGE_LEN = 256;
 
@@ -701,6 +702,29 @@ export class McpOAuthCallback {
     }
   }
 
+  private async handleTokenExchangeErrorOutcome(args: {
+    outcome: Extract<DcrTokenExchangeOutcome, { kind: 'error' }>;
+    oauthClient: McpConnectionOAuthClient;
+    stateData: McpOAuthState;
+    statusCode: number;
+  }): Promise<never> {
+    const { outcome, oauthClient, stateData, statusCode } = args;
+
+    this.logger.warn(
+      {
+        tokenEndpoint: oauthClient.tokenEndpoint,
+        status: statusCode,
+        providerError: outcome.providerError,
+        mappedCode: outcome.code,
+      },
+      outcome.logMessage
+    );
+
+    await this.markConnectionError(stateData, outcome.code, outcome.message);
+
+    throw new BadRequestException(outcome.exceptionMessage);
+  }
+
   private async exchangeCode(args: {
     claimed: McpConnectionEntity;
     oauthClient: McpConnectionOAuthClient;
@@ -719,7 +743,7 @@ export class McpOAuthCallback {
       code,
       code_verifier: pkceVerifier,
       grant_type: 'authorization_code',
-      redirect_uri: buildMcpOAuthRedirectUri(),
+      redirect_uri: oauthClient.redirectUri ?? buildMcpOAuthRedirectUri(),
     });
 
     if (resource) {
@@ -752,72 +776,18 @@ export class McpOAuthCallback {
         timeoutMs: 10_000,
       });
 
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        const providerError = pickProviderErrorCode(response.body);
-        const mappedCode = mapTokenExchangeErrorCode(response.statusCode, providerError);
-        this.logger.warn(
-          {
-            tokenEndpoint: oauthClient.tokenEndpoint,
-            status: response.statusCode,
-            providerError,
-            mappedCode,
-          },
-          'MCP OAuth token exchange returned non-2xx'
-        );
+      const outcome = resolveDcrTokenExchangeOutcome(response.statusCode, response.body);
 
-        await this.markConnectionError(
+      if (outcome.kind === 'error') {
+        return this.handleTokenExchangeErrorOutcome({
+          outcome,
+          oauthClient,
           stateData,
-          mappedCode,
-          providerError ? `Token exchange failed: ${providerError}` : 'Token exchange failed.'
-        );
-
-        throw new BadRequestException(
-          providerError ? `OAuth token exchange failed: ${providerError}` : 'OAuth token exchange failed.'
-        );
+          statusCode: response.statusCode,
+        });
       }
 
-      // 2xx with a JSON `error` field — GitHub's `/login/oauth/access_token`
-      // returns 200 + `{ "error": "bad_verification_code" }` on token-side
-      // failures (yes, really) instead of a 4xx, so we re-run the same
-      // mapping on the body before treating it as success.
-      const inlineProviderError = pickProviderErrorCode(response.body);
-      if (inlineProviderError) {
-        const mappedCode = mapTokenExchangeErrorCode(response.statusCode, inlineProviderError);
-        this.logger.warn(
-          {
-            tokenEndpoint: oauthClient.tokenEndpoint,
-            status: response.statusCode,
-            providerError: inlineProviderError,
-            mappedCode,
-          },
-          'MCP OAuth token exchange returned 2xx with inline error'
-        );
-
-        await this.markConnectionError(stateData, mappedCode, `Token exchange failed: ${inlineProviderError}`);
-
-        throw new BadRequestException(`OAuth token exchange failed: ${inlineProviderError}`);
-      }
-
-      const parsed = parseTokenResponseBody(response.body);
-      if (!parsed) {
-        // 2xx with malformed body — never let it propagate to encryption /
-        // update so we can't persist a broken connection. Funnels into the
-        // same sanitized error path used for non-2xx responses.
-        this.logger.warn(
-          { tokenEndpoint: oauthClient.tokenEndpoint, status: response.statusCode },
-          'MCP OAuth token exchange returned a malformed 2xx body'
-        );
-
-        await this.markConnectionError(
-          stateData,
-          'mcp_token_exchange_failed',
-          'Token exchange returned a malformed response.'
-        );
-
-        throw new BadRequestException('OAuth token exchange returned a malformed response.');
-      }
-
-      return parsed;
+      return outcome.tokens;
     } catch (err) {
       if (err instanceof BadRequestException) {
         throw err;
@@ -1005,93 +975,6 @@ export function mapUpstreamCallbackErrorCode(
   }
 
   return 'oauth_callback_error';
-}
-
-/**
- * Map an upstream OAuth token-exchange error onto our `McpOAuthErrorCode`
- * union. Conservative by default — anything we don't explicitly recognise
- * lands on the generic `mcp_token_exchange_failed` so the dashboard
- * doesn't render misleading copy.
- *
- * Currently recognised:
- *  - `access_denied`                                       → `mcp_user_denied`
- *  - `application_suspended` / `app_blocked` / 403 + "Resource not accessible by integration"
- *                                                          → `mcp_github_org_block`
- *  - everything else                                       → `mcp_token_exchange_failed`
- *
- * The `providerError` value is the sanitized OAuth `error` token (or
- * `message` fallback) — never the full body — so it's safe to switch on.
- *
- * `mcp_app_not_installed` is exported on the error union for future use
- * (a disconnect or installation-check flow could emit it by hitting
- * `/applications/{client_id}/token` — see the plan's "Non-Goals"). The
- * `/login/oauth/access_token` endpoint does NOT 404 for missing org
- * approval — the consent screen simply never returns — so we deliberately
- * do not map 404 here to avoid mis-labelling unrelated transport errors.
- */
-export function mapTokenExchangeErrorCode(statusCode: number, providerError: string | undefined): McpOAuthErrorCode {
-  const normalised = providerError?.toLowerCase() ?? '';
-
-  if (normalised === 'access_denied') {
-    return 'mcp_user_denied';
-  }
-  if (normalised === 'application_suspended' || normalised === 'app_blocked') {
-    return 'mcp_github_org_block';
-  }
-  // GitHub surfaces the org-block as a 403 + body
-  // `"Resource not accessible by integration"` from the REST surface; the
-  // OAuth endpoint usually returns one of the codes above, but accept the
-  // free-form message as a fallback.
-  if (statusCode === 403 && normalised.includes('resource not accessible')) {
-    return 'mcp_github_org_block';
-  }
-
-  return 'mcp_token_exchange_failed';
-}
-
-function pickProviderErrorCode(body: unknown): string | undefined {
-  if (!body || typeof body !== 'object') return undefined;
-  const data = body as { error?: unknown; message?: unknown };
-
-  // OAuth 2 standard: `error` is a short token (e.g. "invalid_grant").
-  // Accept `message` as a generic fallback. Never log/return the full
-  // body — it may contain access tokens.
-  if (typeof data.error === 'string' && data.error.length > 0 && data.error.length <= 64) {
-    return data.error;
-  }
-  if (typeof data.message === 'string' && data.message.length > 0 && data.message.length <= 64) {
-    return data.message;
-  }
-
-  return undefined;
-}
-
-/**
- * Validate the upstream token response shape before we hand it to encryption
- * + persistence. RFC 6749 §5.1 requires `access_token` and `token_type`;
- * `expires_in` / `refresh_token` / `scope` are optional but typed when
- * present. A response that does not match is treated as a token-exchange
- * failure rather than silently writing a broken `mcp_connection` row.
- */
-function parseTokenResponseBody(body: unknown): TokenResponse | null {
-  if (!body || typeof body !== 'object') return null;
-  const data = body as Record<string, unknown>;
-
-  if (typeof data.access_token !== 'string' || data.access_token.length === 0) return null;
-
-  const refreshToken = typeof data.refresh_token === 'string' ? data.refresh_token : undefined;
-  const expiresIn =
-    typeof data.expires_in === 'number' && Number.isFinite(data.expires_in) ? data.expires_in : undefined;
-  const tokenType = typeof data.token_type === 'string' ? data.token_type : undefined;
-  const scope = typeof data.scope === 'string' ? data.scope : undefined;
-
-  return {
-    access_token: data.access_token,
-    refresh_token: refreshToken,
-    expires_in: expiresIn,
-    token_type: tokenType,
-    scope,
-  };
 }
 
 function resolveMcpOAuthAnalyticsSource(stateData: McpOAuthState): 'api' | 'setup_card' {
