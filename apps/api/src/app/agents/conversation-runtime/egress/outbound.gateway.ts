@@ -7,6 +7,7 @@ import { AgentConfigResolver } from '../../channels/agent-config-resolver.servic
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
+import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
@@ -96,6 +97,7 @@ export class OutboundGateway {
     private readonly conversation: AgentConversationService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly fileMaterializer: FileMaterializer,
+    private readonly actionTokenService: AgentActionTokenService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -218,8 +220,9 @@ export class OutboundGateway {
 
     const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, platform, agentId);
+    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, config);
 
-    const postArg = this.buildAdapterPostableMessage(deliveryContent);
+    const postArg = this.buildAdapterPostableMessage(tokenizedContent);
 
     const sent = await thread.post(postArg).catch(toDeliveryError);
 
@@ -256,8 +259,9 @@ export class OutboundGateway {
 
     const dmThread = await chat.openDM(platformUserId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
+    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, config);
 
-    const postArg = this.buildAdapterPostableMessage(deliveryContent);
+    const postArg = this.buildAdapterPostableMessage(tokenizedContent);
 
     const sent = await dmThread.post(postArg).catch(toDeliveryError);
 
@@ -307,15 +311,16 @@ export class OutboundGateway {
     }
 
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, platform, agentId);
+    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, config);
 
-    const editPayload = this.buildAdapterPostableMessage(deliveryContent);
+    const editPayload = this.buildAdapterPostableMessage(tokenizedContent);
 
     let editPromise: Promise<{ id: string; threadId: string }>;
-    if (deliveryContent.card) {
+    if (tokenizedContent.card) {
       editPromise = adapter.editMessage(
         platformThreadId,
         platformMessageId,
-        deliveryContent.card as unknown as AdapterPostableMessage
+        tokenizedContent.card as unknown as AdapterPostableMessage
       );
     } else {
       editPromise = adapter.editMessage(platformThreadId, platformMessageId, editPayload);
@@ -477,6 +482,34 @@ export class OutboundGateway {
       environmentId: persist.environmentId,
       organizationId: persist.organizationId,
     });
+  }
+
+  private async applyActionTokensForDelivery(
+    deliveryContent: ChatSdkReplyContent,
+    agentId: string,
+    config: { environmentId: string; organizationId: string; integrationIdentifier: string }
+  ): Promise<ChatSdkReplyContent> {
+    if (!deliveryContent.card) {
+      return deliveryContent;
+    }
+
+    try {
+      const tokenizedCard = await this.actionTokenService.tokenizeCardForDelivery(deliveryContent.card, {
+        agentId,
+        integrationIdentifier: config.integrationIdentifier,
+        environmentId: config.environmentId,
+        organizationId: config.organizationId,
+      });
+
+      return { ...deliveryContent, card: tokenizedCard };
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), agentId },
+        'Failed to tokenize card actions; delivering with raw action ids'
+      );
+
+      return deliveryContent;
+    }
   }
 
   private extractTextFallback(msg: OutboundMessage): string {

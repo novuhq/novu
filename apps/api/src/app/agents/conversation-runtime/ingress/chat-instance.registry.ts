@@ -3,6 +3,7 @@ import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { Chat, Message, ReactionEvent, Thread } from 'chat';
 import { LRUCache } from 'lru-cache';
 import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentEmailActionTokenService } from '../../email/agent-email-action-token.service';
 import { AgentEmailSender, resolveAgentEmailSenderName } from '../../email/agent-email-sender.service';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
@@ -69,6 +70,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly actionTokenService: AgentEmailActionTokenService,
+    private readonly agentActionTokenService: AgentActionTokenService,
     private readonly agentEmailSender: AgentEmailSender
   ) {
     this.logger.setContext(this.constructor.name);
@@ -369,6 +371,33 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     }
   }
 
+  private async resolveInboundAction(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    actionId: string,
+    value: string | undefined
+  ): Promise<{ id: string; value?: string } | null> {
+    if (!this.agentActionTokenService.isActionToken(actionId)) {
+      return { id: actionId, value };
+    }
+
+    const resolved = await this.agentActionTokenService.resolveActionToken(actionId, {
+      agentId,
+      integrationIdentifier: config.integrationIdentifier,
+    });
+
+    if (!resolved) {
+      this.logger.warn(
+        { agentId, integrationIdentifier: config.integrationIdentifier, actionId },
+        'Ignoring inbound action — token missing, expired, or binding mismatch'
+      );
+
+      return null;
+    }
+
+    return resolved;
+  }
+
   private registerEventHandlers(agentId: string, cached: CachedChat) {
     if (!this.inboundCallbacks) {
       this.logger.warn(`[agent:${agentId}] No inbound callbacks registered, skipping event handler setup`);
@@ -409,13 +438,19 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           return;
         }
 
+        const resolvedAction = await this.resolveInboundAction(agentId, cached.config, event.actionId, event.value);
+
+        if (!resolvedAction) {
+          return;
+        }
+
         await callbacks.onAction(
           agentId,
           cached.config,
           event.thread as Thread,
           {
-            id: event.actionId,
-            value: event.value,
+            id: resolvedAction.id,
+            value: resolvedAction.value,
             sourceMessageId: event.messageId,
           },
           event.user.userId
