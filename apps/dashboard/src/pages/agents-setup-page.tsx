@@ -189,7 +189,6 @@ export function AgentsSetupPage() {
   const provisioningActive = useOnboardingProvisioningActive();
   const isEnvironmentLoading =
     isOrganizationSyncing ||
-    organizationSyncTimedOut ||
     areEnvironmentsInitialLoading ||
     Boolean(organizationId && !isEnvironmentReady);
   const isDataReady = isEnvironmentReady;
@@ -300,6 +299,20 @@ export function AgentsSetupPage() {
 
   if (provisioningActive) {
     return null;
+  }
+
+  if (organizationSyncTimedOut) {
+    return (
+      <div className="flex h-screen w-full flex-col items-center justify-center gap-4 px-4">
+        <PageMeta title={isConnectHost ? 'Build and distribute agents' : pageTitle} />
+        <p className="text-text-sub text-label-sm max-w-md text-center">
+          Your workspace is still being set up. Please refresh the page in a moment.
+        </p>
+        <Button variant="secondary" mode="outline" size="xs" onClick={() => window.location.reload()}>
+          Refresh page
+        </Button>
+      </div>
+    );
   }
 
   if (isEnvironmentLoading) {

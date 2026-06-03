@@ -188,11 +188,11 @@ function CliAuthContent() {
     if (!isConnect && !isLlmGatewayEnabled) {
       return `${callerDisplayName} is not enabled for your account yet.`;
     }
-    if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';
     if (organizationSyncTimedOut) {
       return 'Your workspace is still being set up. Please refresh the page in a moment.';
     }
     if (isAuthorizeDataLoading) return null;
+    if (!canReadApiKeys) return 'You need the api_key:read permission to authorize the CLI.';
     if (!apiKey) return 'No API key is available in this environment.';
 
     return null;

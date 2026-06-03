@@ -1,6 +1,6 @@
 import type { OrganizationResource } from '@clerk/shared/types';
 import { useOrganization } from '@clerk/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/context/auth/hooks';
 
 const POLL_INTERVAL_MS = 1500;
@@ -33,6 +33,9 @@ export function useSyncClerkExternalOrgId() {
     isOrgLoaded && isOrganizationLoaded && organization && !externalOrgId
   );
 
+  const organizationRef = useRef(organization);
+  organizationRef.current = organization;
+
   useEffect(() => {
     if (!needsSync) {
       setSyncTimedOut(false);
@@ -45,9 +48,10 @@ export function useSyncClerkExternalOrgId() {
     async function pollUntilSynced() {
       for (let attempt = 0; attempt < MAX_ATTEMPTS && !cancelled; attempt += 1) {
         try {
-          const refreshed = await organization?.reload();
+          const currentOrganization = organizationRef.current;
+          const refreshed = await currentOrganization?.reload();
 
-          if (readExternalOrgId(refreshed ?? organization)) {
+          if (readExternalOrgId(refreshed ?? currentOrganization)) {
             return;
           }
         } catch {
@@ -69,7 +73,7 @@ export function useSyncClerkExternalOrgId() {
     return () => {
       cancelled = true;
     };
-  }, [needsSync, organization]);
+  }, [needsSync]);
 
   const isOrganizationSyncing = needsSync && !syncTimedOut;
 
