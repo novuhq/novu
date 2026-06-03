@@ -111,9 +111,8 @@ export type McpOAuthCatalogEntry =
  *   Discovery happens at runtime in `McpOAuthDiscoveryService`; if any
  *   upstream removes DCR support, `GenerateMcpOAuthUrl` surfaces a
  *   `mcp_no_dcr_support` error on the connection's `lastError`.
- *   Per-provider DCR quirks belong in
- *   `apps/api/.../dcr-provider-strategies/` (see
- *   `.cursor/skills/onboard-dcr-mcp/SKILL.md`) — not in the shared flow.
+ *   Per-provider DCR quirks belong in the API OAuth layer (discovery or
+ *   callback token parsing) — see `.cursor/skills/onboard-dcr-mcp/SKILL.md`.
  *
  * - `novu-app` entries — hand-verified probe checklist (no live-probe CI;
  *   onboarding a new entry is the same vetting Anthropic uses for its

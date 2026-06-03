@@ -6,6 +6,7 @@ import {
   type McpTokenEndpointAuthMethod,
 } from '@novu/shared';
 import { LRUCache } from 'lru-cache';
+import { isAcceptableIssuerMatch } from './mcp-oauth-issuer-match';
 
 /**
  * Discovery + DCR primitives for the MCP authorization spec
@@ -529,10 +530,9 @@ export class McpOAuthDiscoveryService {
       : false;
     if (!docIssuer || !issuerMatch) {
       // Per RFC 8414 §3.3 the `issuer` value in the document MUST equal the
-      // identifier used to construct the well-known URL. We additionally
-      // accept the narrow "tenant-suffix" relaxation handled by
-      // `isAcceptableIssuerMatch` — see that helper for the rationale and
-      // the security envelope (same origin, no path swap).
+      // identifier used to construct the well-known URL. Narrow relaxations
+      // (Auth0 tenant suffix, delegated issuers, MCP gateways) live in
+      // `mcp-oauth-issuer-match.ts`.
       throw new McpOAuthDiscoveryError(
         'mcp_no_as_metadata',
         `Authorization server metadata issuer mismatch (expected "${issuer}", got "${docIssuer ?? 'absent'}").`
@@ -602,345 +602,6 @@ function dedupe(list: string[]): string[] {
   return Array.from(new Set(list));
 }
 
-/**
- * Strict-by-default issuer comparison with a narrow relaxation for the
- * Auth0-tenant pattern.
- *
- * RFC 8414 §3.3 requires `requested === advertised`, and that remains the
- * baseline. We additionally accept the case where:
- *
- *   - `requested` is a tenant-pathed URL like
- *     `https://auth.atlassian.com/<tenant>` (used to build the well-known
- *     discovery URL), and
- *   - `advertised` is the same origin with no path
- *     (`https://auth.atlassian.com`).
- *
- * This is the documented Auth0 behavior backing several upstreams (e.g.
- * Atlassian Rovo): per-tenant AS metadata is served under
- * `/.well-known/oauth-authorization-server/<tenant>` but the document
- * declares only the base origin as its `issuer`. Without this relaxation
- * the entire DCR flow is unreachable for those upstreams.
- *
- * Security envelope — we never accept:
- *
- *   - cross-origin mismatches (different scheme/host/port), which would
- *     let a hostile metadata document substitute its own AS;
- *   - advertised issuers with a non-empty path different from the
- *     requested one (a path swap could redirect us to a different
- *     tenant on the same host).
- *
- * We additionally accept the Clerk-style delegated-issuer pattern when
- * optional OAuth endpoint URLs are supplied:
- *
- *   - PRM lists a product origin like `https://context7.com` as the
- *     authorization server identifier,
- *   - the metadata document declares a delegated issuer on a subdomain
- *     (`https://clerk.context7.com`), and
- *   - authorize/token/(register) endpoints remain on the PRM-listed host.
- *
- * We additionally accept the Vercel-style parent-domain pattern when
- * optional OAuth endpoint URLs are supplied:
- *
- *   - PRM lists a product subdomain like `https://mcp.vercel.com`,
- *   - the metadata document declares the parent origin as issuer
- *     (`https://vercel.com`), and
- *   - authorize/token/(register) endpoints are served from that parent host.
- *
- * We additionally accept the MCP well-known gateway pattern when optional
- * OAuth endpoint URLs are supplied:
- *
- *   - PRM lists a path-based MCP resource URL as the authorization server
- *     (e.g. `https://mcp.pscale.dev/mcp/planetscale`),
- *   - AS metadata is served at `/.well-known/oauth-authorization-server{path}`
- *     on that host but declares a canonical issuer on another origin
- *     (e.g. `https://api.planetscale.com`), and
- *   - authorize/token/(register) endpoints belong to the advertised issuer's
- *     registrable domain (e.g. `app.planetscale.com`, `auth.planetscale.com`).
- *
- * We additionally accept the sibling-subdomain MCP gateway pattern when optional
- * OAuth endpoint URLs are supplied:
- *
- *   - PRM lists the MCP product host (e.g. `https://mcp.newrelic.com`),
- *   - AS metadata at that host declares a sibling auth subdomain as issuer
- *     (`https://login.newrelic.com`), and
- *   - authorize/token/(register) endpoints stay within the shared registrable
- *     domain (`newrelic.com`).
- */
-function isAcceptableIssuerMatch(
-  requested: string,
-  advertised: string,
-  opts?: {
-    authorizationEndpoint?: string;
-    tokenEndpoint?: string;
-    registrationEndpoint?: string;
-  }
-): boolean {
-  if (requested === advertised) {
-    return true;
-  }
-
-  const requestedRoot = normalizeRootIssuerIdentifier(requested);
-  const advertisedRoot = normalizeRootIssuerIdentifier(advertised);
-  if (requestedRoot && advertisedRoot && requestedRoot === advertisedRoot) {
-    return true;
-  }
-
-  let requestedUrl: URL;
-  let advertisedUrl: URL;
-  try {
-    requestedUrl = new URL(requested);
-    advertisedUrl = new URL(advertised);
-  } catch {
-    return false;
-  }
-
-  if (requestedUrl.origin === advertisedUrl.origin) {
-    const advertisedPath = advertisedUrl.pathname.replace(/\/+$/, '');
-    const requestedPath = requestedUrl.pathname.replace(/\/+$/, '');
-
-    if (advertisedPath === '' && requestedPath !== '') {
-      return true;
-    }
-  }
-
-  if (isDelegatedProductIssuer(requested, advertised, opts)) {
-    return true;
-  }
-
-  if (isParentDomainIssuer(requested, advertised, opts)) {
-    return true;
-  }
-
-  if (isSiblingRegistrableDomainIssuer(requested, advertised, opts)) {
-    return true;
-  }
-
-  return isWellKnownGatewayIssuer(requested, advertised, opts);
-}
-
-/** Root issuers that differ only by a trailing slash (e.g. Monte Carlo PRM). */
-function normalizeRootIssuerIdentifier(issuer: string): string | null {
-  try {
-    const parsed = new URL(issuer);
-    const path = parsed.pathname.replace(/\/+$/, '');
-
-    if (path !== '') {
-      return null;
-    }
-
-    return parsed.origin;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * PlanetScale / Speakeasy-style MCP gateways: PRM uses the MCP resource URL as
- * the authorization server identifier, while RFC 8414 metadata at
- * `/.well-known/oauth-authorization-server{path}` on the MCP host declares the
- * real issuer (e.g. `api.planetscale.com`) with OAuth on sibling subdomains.
- */
-function isWellKnownGatewayIssuer(
-  requested: string,
-  advertised: string,
-  opts?: {
-    authorizationEndpoint?: string;
-    tokenEndpoint?: string;
-    registrationEndpoint?: string;
-  }
-): boolean {
-  if (!opts?.authorizationEndpoint || !opts.tokenEndpoint) {
-    return false;
-  }
-
-  let requestedUrl: URL;
-  let advertisedUrl: URL;
-  try {
-    requestedUrl = new URL(requested);
-    advertisedUrl = new URL(advertised);
-  } catch {
-    return false;
-  }
-
-  const requestedPath = requestedUrl.pathname.replace(/\/+$/, '');
-  if (requestedPath === '') {
-    return false;
-  }
-
-  if (requestedUrl.origin === advertisedUrl.origin) {
-    return false;
-  }
-
-  const advertisedDomain = getRegistrableDomain(advertisedUrl.hostname);
-  const endpointUrls = [opts.authorizationEndpoint, opts.tokenEndpoint];
-  if (opts.registrationEndpoint) {
-    endpointUrls.push(opts.registrationEndpoint);
-  }
-
-  return endpointUrls.every((endpoint) => hostnameBelongsToRegistrableDomain(endpoint, advertisedDomain));
-}
-
-function getRegistrableDomain(hostname: string): string {
-  const parts = hostname.split('.');
-
-  if (parts.length <= 2) {
-    return hostname;
-  }
-
-  return parts.slice(-2).join('.');
-}
-
-function hostnameBelongsToRegistrableDomain(url: string, registrableDomain: string): boolean {
-  try {
-    const host = new URL(url).hostname;
-
-    return host === registrableDomain || host.endsWith(`.${registrableDomain}`);
-  } catch {
-    return false;
-  }
-}
-
-/**
- * New Relic-style split-host MCP gateways: PRM lists the MCP product host
- * (e.g. `https://mcp.newrelic.com`) while RFC 8414 metadata served at that
- * host declares a sibling auth subdomain as issuer (`https://login.newrelic.com`)
- * with OAuth endpoints split across both hosts on the same registrable domain.
- */
-function isSiblingRegistrableDomainIssuer(
-  requested: string,
-  advertised: string,
-  opts?: {
-    authorizationEndpoint?: string;
-    tokenEndpoint?: string;
-    registrationEndpoint?: string;
-  }
-): boolean {
-  if (!opts?.authorizationEndpoint || !opts.tokenEndpoint) {
-    return false;
-  }
-
-  let requestedUrl: URL;
-  let advertisedUrl: URL;
-  try {
-    requestedUrl = new URL(requested);
-    advertisedUrl = new URL(advertised);
-  } catch {
-    return false;
-  }
-
-  if (requestedUrl.origin === advertisedUrl.origin) {
-    return false;
-  }
-
-  const requestedDomain = getRegistrableDomain(requestedUrl.hostname);
-  const advertisedDomain = getRegistrableDomain(advertisedUrl.hostname);
-
-  if (requestedDomain !== advertisedDomain) {
-    return false;
-  }
-
-  const endpointUrls = [opts.authorizationEndpoint, opts.tokenEndpoint];
-  if (opts.registrationEndpoint) {
-    endpointUrls.push(opts.registrationEndpoint);
-  }
-
-  return endpointUrls.every((endpoint) => hostnameBelongsToRegistrableDomain(endpoint, requestedDomain));
-}
-
-function isParentDomainIssuer(
-  requested: string,
-  advertised: string,
-  opts?: {
-    authorizationEndpoint?: string;
-    tokenEndpoint?: string;
-    registrationEndpoint?: string;
-  }
-): boolean {
-  if (!opts?.authorizationEndpoint || !opts.tokenEndpoint) {
-    return false;
-  }
-
-  let requestedUrl: URL;
-  let advertisedUrl: URL;
-  try {
-    requestedUrl = new URL(requested);
-    advertisedUrl = new URL(advertised);
-  } catch {
-    return false;
-  }
-
-  const requestedHost = requestedUrl.hostname;
-  const advertisedHost = advertisedUrl.hostname;
-
-  if (requestedHost === advertisedHost) {
-    return false;
-  }
-
-  if (!requestedHost.endsWith(`.${advertisedHost}`)) {
-    return false;
-  }
-
-  const advertisedPath = advertisedUrl.pathname.replace(/\/+$/, '');
-  if (advertisedPath !== '') {
-    return false;
-  }
-
-  const endpointUrls = [opts.authorizationEndpoint, opts.tokenEndpoint];
-  if (opts.registrationEndpoint) {
-    endpointUrls.push(opts.registrationEndpoint);
-  }
-
-  return endpointUrls.every((endpoint) => hostnameBelongsToProductHost(endpoint, advertisedHost));
-}
-
-function isDelegatedProductIssuer(
-  requested: string,
-  advertised: string,
-  opts?: {
-    authorizationEndpoint?: string;
-    tokenEndpoint?: string;
-    registrationEndpoint?: string;
-  }
-): boolean {
-  if (!opts?.authorizationEndpoint || !opts.tokenEndpoint) {
-    return false;
-  }
-
-  let requestedHost: string;
-  let advertisedHost: string;
-  try {
-    requestedHost = new URL(requested).hostname;
-    advertisedHost = new URL(advertised).hostname;
-  } catch {
-    return false;
-  }
-
-  if (requestedHost === advertisedHost) {
-    return false;
-  }
-
-  if (advertisedHost !== requestedHost && !advertisedHost.endsWith(`.${requestedHost}`)) {
-    return false;
-  }
-
-  const endpointUrls = [opts.authorizationEndpoint, opts.tokenEndpoint];
-  if (opts.registrationEndpoint) {
-    endpointUrls.push(opts.registrationEndpoint);
-  }
-
-  return endpointUrls.every((endpoint) => hostnameBelongsToProductHost(endpoint, requestedHost));
-}
-
-function hostnameBelongsToProductHost(url: string, productHost: string): boolean {
-  try {
-    const host = new URL(url).hostname;
-
-    return host === productHost || host.endsWith(`.${productHost}`);
-  } catch {
-    return false;
-  }
-}
-
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -1000,15 +661,14 @@ function serializeError(err: unknown): { name: string; message: string } | strin
  *    default as `client_secret_basic`, so an absent list is treated as if it
  *    contained only `client_secret_basic`.
  *  - `prefersConfidential` — whether Novu will hold a `client_secret` for
- *    this registration. When `false` we accept the `none` method (public
- *    client), otherwise we refuse it because a confidential client posting
- *    `none` would have nowhere to send its secret.
+ *    this registration. The priority loop skips `none` when confidential;
+ *    if the AS advertises only `none`, the fallback returns that method so
+ *    public-only upstreams (e.g. Jotform) can register — `GenerateMcpOAuthUrl`
+ *    handles missing `client_secret` via RFC 7591 §3.2.1 downgrade.
  *
  * Returns the first method from `TOKEN_ENDPOINT_AUTH_METHOD_PRIORITY` that
- * intersects the advertised list. When no overlap exists we fall back to
- * `client_secret_basic` (the RFC default) — most ASes that reject a method
- * will surface that as `invalid_client_metadata` at register time and the
- * caller can map that into a `mcp_registration_failed` error.
+ * intersects the advertised list, else the first recognised advertised
+ * method, else `client_secret_basic` (RFC 8414 §2 default).
  */
 export function selectTokenEndpointAuthMethod(
   advertised: string[] | undefined,
@@ -1024,11 +684,12 @@ export function selectTokenEndpointAuthMethod(
     return method;
   }
 
-  const firstAdvertised = supported.find((method): method is McpTokenEndpointAuthMethod =>
+  const firstRecognised = supported.find((method): method is McpTokenEndpointAuthMethod =>
     (MCP_TOKEN_ENDPOINT_AUTH_METHODS as readonly string[]).includes(method)
   );
-  if (firstAdvertised) {
-    return firstAdvertised;
+
+  if (firstRecognised) {
+    return firstRecognised;
   }
 
   return DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD;

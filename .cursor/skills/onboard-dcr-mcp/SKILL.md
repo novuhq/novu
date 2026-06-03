@@ -1,11 +1,11 @@
 ---
 name: onboard-dcr-mcp
-description: Onboard a new DCR OAuth MCP catalog entry with provider-doc vetting, curl probes, optional recorded fixtures, and per-provider strategy guidance. Use when adding or changing `mode: dcr` entries in MCP_SERVERS or wiring a quirky DCR provider. Abort if the provider requires whitelist or manual approval.
+description: Onboard a new DCR OAuth MCP catalog entry with provider-doc vetting and curl probes. Use when adding or changing `mode: dcr` entries in MCP_SERVERS. Abort if the provider requires whitelist or manual approval.
 ---
 
 # Onboard DCR MCP
 
-Use this checklist when adding a new `mode: dcr` entry to [`packages/shared/src/consts/providers/mcp-servers.ts`](packages/shared/src/consts/providers/mcp-servers.ts).
+Use this checklist when adding a new `mode: dcr` entry to [`packages/shared/src/consts/providers/mcp-servers.ts`](../../../packages/shared/src/consts/providers/mcp-servers.ts).
 
 ## Candidate selection (run before probes)
 
@@ -41,7 +41,7 @@ Only if the user **explicitly** requests verification or there is a production i
 
 ## Provider docs gate (run first)
 
-Before curl probes, catalog edits, or strategy work:
+Before curl probes or catalog edits:
 
 1. Read the provider's official OAuth / MCP / DCR documentation.
 2. Confirm Novu can register clients dynamically without manual intervention.
@@ -60,11 +60,12 @@ Include the doc link and the specific requirement that blocked onboarding. Do no
 | Situation | Action |
 |-----------|--------|
 | PRM + AS metadata + DCR + token exchange all follow RFC behavior | Catalog entry only |
-| AS downgrades auth method at DCR (e.g. returns `none`) | Generic flow already handles RFC 7591 §3.2.1 — no strategy file |
-| Token endpoint returns non-standard JSON (200 + inline error, custom fields) | Add `apps/api/src/app/agents/mcp/oauth/dcr-provider-strategies/<mcp-id>.strategy.ts` and register it in `dcr-provider-strategy-registry.ts` |
-| Discovery needs provider-specific behavior | Stop — discuss a new hook in `dcr-provider-strategy.ts` first (review-gated) |
+| AS downgrades auth method at DCR (e.g. returns `none`) | Generic flow already handles RFC 7591 §3.2.1 |
+| Issuer / PRM / gateway mismatch (Clerk, Vercel, PlanetScale-style) | Extend `mcp-oauth-issuer-match.ts` (review-gated) |
+| Token endpoint returns non-standard JSON | Extend `mcp-oauth-callback/token-exchange-outcome.ts` (review-gated) |
+| PRM advertises oversized `scopes_supported` (Slack URL limits) | Pin `oauth.scopes` on the catalog `dcr` entry |
 
-Default rule: **do not touch** `generate-mcp-oauth-url.usecase.ts` or `mcp-oauth-callback.usecase.ts` for a new provider.
+Default rule: **do not touch** `generate-mcp-oauth-url.usecase.ts` or `mcp-oauth-callback.usecase.ts` for a new provider unless discovery or token parsing truly cannot express the quirk generically.
 
 ## Curl probe checklist
 
@@ -125,22 +126,7 @@ Confirm:
 
 ### 4. Scope sanity
 
-Record which scopes the PRM advertises and which scope string Novu should request on authorize. If PRM omits scopes, note that in the PR.
-
-## Optional recorded fixture (quirky providers)
-
-For providers that need regression coverage without live network tests:
-
-1. Capture JSON from the probes above.
-2. Create `apps/api/src/app/agents/mcp/oauth/dcr-provider-strategies/__fixtures__/<mcp-id>/` with:
-   - `manifest.json`
-   - `prm.json`
-   - `as-metadata.json`
-   - `dcr-register-response.json` (optional)
-   - `token-exchange-response.json` (optional)
-3. Add a Vitest/Mocha spec that calls `loadDcrFixtureDirectory()` and `createDcrFixtureOutboundHandlers()` from [`__fixtures__/_shared/replay.ts`](apps/api/src/app/agents/mcp/oauth/dcr-provider-strategies/__fixtures__/_shared/replay.ts).
-
-See the `example/` fixture directory for layout.
+Record which scopes the PRM advertises and which scope string Novu should request on authorize. If PRM omits scopes, note that in the PR. If the list is huge, pin a curated subset on `oauth.scopes` in the catalog entry.
 
 ## PR body template
 
@@ -163,9 +149,10 @@ See the `example/` fixture directory for layout.
 ### Scope notes
 (which scopes PRM advertises / which Novu will request)
 
-### Strategy needed?
+### Code changes beyond catalog?
 - [ ] No — catalog entry only
-- [ ] Yes — `<mcp-id>.strategy.ts` because ...
+- [ ] Yes — discovery issuer matching because ...
+- [ ] Yes — token-exchange-outcome because ...
 ```
 
 ## Code touch list
@@ -173,7 +160,6 @@ See the `example/` fixture directory for layout.
 0. Confirm candidate was **not** already `oauth.mode: dcr` (see Candidate selection)
 1. Add catalog entry in `packages/shared/src/consts/providers/mcp-servers.ts`
 2. Run `pnpm build --filter @novu/shared` if shared types changed
-3. Only if needed: add strategy file + register in `dcr-provider-strategy-registry.ts`
-4. Only if needed: add fixture replay spec under `dcr-provider-strategies/__fixtures__/`
-5. Confirm `packages/shared/src/consts/providers/mcp-servers.spec.ts` DCR schema test passes
-6. If blocked: append a row to [`blocked-mcp-servers.md`](./blocked-mcp-servers.md); if unblocked later, move the row to Resolved
+3. Only if needed: discovery or `token-exchange-outcome.ts` changes (review-gated)
+4. Confirm `packages/shared/src/consts/providers/mcp-servers.spec.ts` DCR schema test passes
+5. If blocked: append a row to [`blocked-mcp-servers.md`](./blocked-mcp-servers.md); if unblocked later, move the row to Resolved
