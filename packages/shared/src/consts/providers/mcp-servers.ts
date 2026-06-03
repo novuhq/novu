@@ -41,6 +41,13 @@ export type McpServerCategory =
 export type DcrOAuthCatalogEntry = {
   mode: McpConnectionAuthModeEnum.Dcr;
   /**
+   * Curated OAuth scopes for providers whose PRM advertises an oversized
+   * `scopes_supported` list (e.g. PostHog publishes every API scope). When set,
+   * Novu requests this list instead of the full PRM superset so authorize URLs
+   * stay within Slack button URL limits.
+   */
+  scopes?: string[];
+  /**
    * OIDC Dynamic Client Registration `application_type`. Defaults to `'web'`
    * since Novu redirects through a hosted callback URL.
    */
@@ -1817,7 +1824,33 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.posthog.com/mcp',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      // PostHog PRM advertises every API scope (~175); MCP_SERVER_OAUTH_SCOPES is
+      // the subset PostHog defaults to for mcp.posthog.com authorize requests.
+      scopes: [
+        'openid',
+        'profile',
+        'email',
+        'introspection',
+        'user:read',
+        'organization:read',
+        'project:read',
+        'feature_flag:read',
+        'feature_flag:write',
+        'experiment:read',
+        'experiment:write',
+        'insight:read',
+        'insight:write',
+        'dashboard:read',
+        'dashboard:write',
+        'query:read',
+        'survey:read',
+        'survey:write',
+        'error_tracking:read',
+        'logs:read',
+      ],
+    },
   },
   {
     id: 'postman',

@@ -111,7 +111,11 @@ export class GenerateMcpOAuthUrl {
     sessionRotated: boolean;
   }> {
     let context = await this.loadAuthorizeContext(command);
-    const sessionRotated = !canReusePendingOAuthSession(context.existing);
+    const catalogScopes =
+      context.oauthConfig.mode === McpConnectionAuthModeEnum.Dcr ? context.oauthConfig.catalog.scopes : undefined;
+    const sessionRotated =
+      !canReusePendingOAuthSession(context.existing) ||
+      shouldRotatePendingOAuthSessionForCatalogScopes(context.existing, catalogScopes);
 
     if (sessionRotated) {
       await this.execute(command);
@@ -372,11 +376,12 @@ export class GenerateMcpOAuthUrl {
     }
 
     const oauthClient = decryptMcpConnectionOAuthClient(existing.oauthClient);
+    const authorizeScopes = resolveDcrAuthorizeScopes(oauthConfig, oauthClient);
     const authorizeUrl = this.buildAuthorizeUrlFromEndpoints({
       authorizationEndpoint: oauthClient.authorizationEndpoint,
       clientId: oauthClient.clientId,
       redirectUri: oauthClient.redirectUri,
-      scopes: oauthClient.scopesGranted ?? [],
+      scopes: authorizeScopes,
       resource: existing.oauthState.resource,
       state,
       pkceVerifier,
@@ -458,7 +463,8 @@ export class GenerateMcpOAuthUrl {
     mcpId: string
   ): Promise<{ asMetadata: AuthorizationServerMetadata; resource: string; scopes: string[] }> {
     const { asMetadata, prm } = await this.resolveAuthorizationServer(catalog.url, mcpId);
-    const scopes = this.selectScopes(prm);
+    const catalogScopes = catalog.oauth?.mode === McpConnectionAuthModeEnum.Dcr ? catalog.oauth.scopes : undefined;
+    const scopes = this.selectScopes(prm, [], catalogScopes);
     // RFC 8707 §2 — the `resource` indicator MUST be the canonical resource
     // URI advertised by the protected resource. PRM exposes that explicitly;
     // we fall back to the catalog URL only when discovery produced no
@@ -510,7 +516,7 @@ export class GenerateMcpOAuthUrl {
     // when present, so a server that advertises a tighter consent footprint
     // doesn't get overridden by the catalog's superset. Falls back to the
     // catalog's curated list (mirrors Anthropic's connector) otherwise.
-    const scopes = this.selectScopes(prm, oauthConfig.catalog.scopes);
+    const scopes = this.selectScopes(prm, oauthConfig.catalog.scopes, oauthConfig.catalog.scopes);
 
     return {
       issuer: oauthConfig.catalog.issuer,
@@ -552,14 +558,18 @@ export class GenerateMcpOAuthUrl {
   /**
    * RFC 9728 + MCP-spec Scope Selection Strategy:
    *   1. Use the `scope` parameter from the initial WWW-Authenticate challenge.
-   *   2. Otherwise use all of `scopes_supported` from PRM.
-   *   3. Otherwise use `fallback` — `[]` for DCR (omit `scope`), the curated
+   *   2. Otherwise use catalog `scopes` when the entry pins a curated list.
+   *   3. Otherwise use all of `scopes_supported` from PRM.
+   *   4. Otherwise use `fallback` — `[]` for DCR (omit `scope`), the curated
    *      catalog list for novu-app (a missing `scope` would cause the
    *      upstream consent screen to silently downgrade the grant or 400).
    */
-  private selectScopes(prm: DiscoveredProtectedResource, fallback: string[] = []): string[] {
+  private selectScopes(prm: DiscoveredProtectedResource, fallback: string[] = [], catalogScopes?: string[]): string[] {
     if (prm.challengeScopes && prm.challengeScopes.length > 0) {
       return prm.challengeScopes;
+    }
+    if (catalogScopes && catalogScopes.length > 0) {
+      return catalogScopes;
     }
     if (prm.scopesSupported.length > 0) {
       return prm.scopesSupported;
@@ -578,7 +588,7 @@ export class GenerateMcpOAuthUrl {
     const redirectUri = buildMcpOAuthRedirectUri();
     const reusable = pickReusableOAuthClient(existing?.oauthClient, asMetadata.issuer, redirectUri);
 
-    if (reusable) {
+    if (reusable && scopesMatch(reusable.scopesGranted, scopes)) {
       return reusable;
     }
 
@@ -887,6 +897,66 @@ export class GenerateMcpOAuthUrl {
 
     return apiKeys[0].key;
   }
+}
+
+function resolveDcrAuthorizeScopes(
+  oauthConfig: Extract<ResolvedOAuthConfig, { mode: McpConnectionAuthModeEnum.Dcr }>,
+  oauthClient: McpConnectionOAuthClient
+): string[] {
+  if (oauthConfig.catalog.scopes?.length) {
+    return oauthConfig.catalog.scopes;
+  }
+
+  return oauthClient.scopesGranted ?? [];
+}
+
+function scopesMatch(stored: string[] | undefined, requested: string[]): boolean {
+  if (requested.length === 0) {
+    return !stored || stored.length === 0;
+  }
+
+  if (!stored || stored.length !== requested.length) {
+    return false;
+  }
+
+  const storedSet = new Set(stored);
+
+  return requested.every((scope) => storedSet.has(scope));
+}
+
+/**
+ * Rotate a pending DCR session when the catalog pins scopes but the stored
+ * client was registered against the full PRM superset (e.g. PostHog).
+ */
+function shouldRotatePendingOAuthSessionForCatalogScopes(
+  existing: McpConnectionEntity | null,
+  catalogScopes?: string[]
+): boolean {
+  if (!catalogScopes?.length || !existing?.oauthClient) {
+    return false;
+  }
+
+  const client = decryptMcpConnectionOAuthClient(existing.oauthClient);
+  const storedScopes = client.scopesGranted;
+
+  if (!storedScopes?.length) {
+    return true;
+  }
+
+  const stored = new Set(storedScopes);
+  const catalog = new Set(catalogScopes);
+
+  if (stored.size !== catalog.size) {
+    return true;
+  }
+
+  for (const scope of catalog) {
+    if (!stored.has(scope)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**
