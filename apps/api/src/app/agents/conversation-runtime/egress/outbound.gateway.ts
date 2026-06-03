@@ -7,7 +7,10 @@ import { AgentConfigResolver } from '../../channels/agent-config-resolver.servic
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
-import { AgentActionTokenService } from '../action-token/agent-action-token.service';
+import {
+  AgentActionTokenService,
+  type AgentActionTokenBinding,
+} from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
@@ -154,15 +157,25 @@ export class OutboundGateway {
     return sent;
   }
 
+  /**
+   * Posts on the live inbound thread. Cards with callback `button` actions must use
+   * `deliver` / `postToConversation` (or pass `actionTokenBinding`) so action ids are
+   * tokenized for platforms with short callback payloads (e.g. Telegram 64-byte limit).
+   */
   async replyOnThread(
     thread: Thread,
     msg: OutboundMessage,
-    opts?: { failSoft?: boolean; persist?: ThreadReplyPersistContext }
+    opts?: {
+      failSoft?: boolean;
+      persist?: ThreadReplyPersistContext;
+      actionTokenBinding?: AgentActionTokenBinding;
+    }
   ): Promise<SentMessageInfo | null> {
     let sent: { id: string; threadId: string };
     try {
+      const postArg = await this.buildThreadPostArg(msg, opts?.actionTokenBinding);
       sent = await (thread as unknown as { post(arg: unknown): Promise<{ id: string; threadId: string }> }).post(
-        this.toThreadPostArg(msg)
+        postArg
       );
     } catch (err) {
       if (opts?.failSoft) {
@@ -220,7 +233,12 @@ export class OutboundGateway {
 
     const thread = chat.thread(platformThreadId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, platform, agentId);
-    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, config);
+    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, {
+      agentId,
+      integrationIdentifier: config.integrationIdentifier,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    });
 
     const postArg = this.buildAdapterPostableMessage(tokenizedContent);
 
@@ -259,7 +277,12 @@ export class OutboundGateway {
 
     const dmThread = await chat.openDM(platformUserId);
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, config.platform, agentId);
-    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, config);
+    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, {
+      agentId,
+      integrationIdentifier: config.integrationIdentifier,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    });
 
     const postArg = this.buildAdapterPostableMessage(tokenizedContent);
 
@@ -311,7 +334,12 @@ export class OutboundGateway {
     }
 
     const deliveryContent = await this.fileMaterializer.prepareContentForDelivery(content, platform, agentId);
-    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, config);
+    const tokenizedContent = await this.applyActionTokensForDelivery(deliveryContent, agentId, {
+      agentId,
+      integrationIdentifier: config.integrationIdentifier,
+      environmentId: config.environmentId,
+      organizationId: config.organizationId,
+    });
 
     const editPayload = this.buildAdapterPostableMessage(tokenizedContent);
 
@@ -484,10 +512,31 @@ export class OutboundGateway {
     });
   }
 
+  private async buildThreadPostArg(
+    msg: OutboundMessage,
+    actionTokenBinding?: AgentActionTokenBinding
+  ): Promise<unknown> {
+    if (!msg.card || !actionTokenBinding) {
+      return this.toThreadPostArg(msg);
+    }
+
+    const tokenized = await this.applyActionTokensForDelivery(
+      { card: msg.card },
+      actionTokenBinding.agentId,
+      actionTokenBinding
+    );
+
+    if (tokenized.card) {
+      return tokenized.card;
+    }
+
+    return this.toThreadPostArg(msg);
+  }
+
   private async applyActionTokensForDelivery(
     deliveryContent: ChatSdkReplyContent,
     agentId: string,
-    config: { environmentId: string; organizationId: string; integrationIdentifier: string }
+    binding: AgentActionTokenBinding
   ): Promise<ChatSdkReplyContent> {
     if (!deliveryContent.card) {
       return deliveryContent;
@@ -496,9 +545,9 @@ export class OutboundGateway {
     try {
       const tokenizedCard = await this.actionTokenService.tokenizeCardForDelivery(deliveryContent.card, {
         agentId,
-        integrationIdentifier: config.integrationIdentifier,
-        environmentId: config.environmentId,
-        organizationId: config.organizationId,
+        integrationIdentifier: binding.integrationIdentifier,
+        environmentId: binding.environmentId,
+        organizationId: binding.organizationId,
       });
 
       return { ...deliveryContent, card: tokenizedCard };

@@ -4,15 +4,12 @@ import { AGENT_ACTION_TOKEN_PREFIX } from '../action-token/agent-action-token.se
 import { OutboundGateway } from './outbound.gateway';
 
 describe('OutboundGateway action token egress', () => {
-  const config = {
-    environmentId: 'env1',
-    organizationId: 'org1',
-    integrationIdentifier: 'telegram-main',
-    agentIdentifier: 'support-agent',
-    platform: 'telegram',
-    integrationId: 'integration1',
-    acknowledgeOnReceived: false,
-  };
+    const binding = {
+      agentId: 'agent1',
+      environmentId: 'env1',
+      organizationId: 'org1',
+      integrationIdentifier: 'telegram-main',
+    };
 
   function makeGateway(actionTokenOverrides: {
     tokenizeCardForDelivery?: sinon.SinonStub;
@@ -69,7 +66,7 @@ describe('OutboundGateway action token egress', () => {
     };
     const deliveryContent = { card };
 
-    const tokenized = await (gateway as any).applyActionTokensForDelivery(deliveryContent, 'agent1', config);
+    const tokenized = await (gateway as any).applyActionTokensForDelivery(deliveryContent, binding.agentId, binding);
 
     expect(actionTokenService.tokenizeCardForDelivery.calledOnce).to.equal(true);
     expect(deliveryContent.card.children[0].children[0].id).to.include('mcp-approval:approve');
@@ -87,7 +84,7 @@ describe('OutboundGateway action token egress', () => {
     };
     const deliveryContent = { card };
 
-    const result = await (gateway as any).applyActionTokensForDelivery(deliveryContent, 'agent1', config);
+    const result = await (gateway as any).applyActionTokensForDelivery(deliveryContent, binding.agentId, binding);
 
     expect(result.card).to.deep.equal(card);
     expect(logger.warn.calledOnce).to.equal(true);
@@ -96,7 +93,7 @@ describe('OutboundGateway action token egress', () => {
   it('skips tokenization for markdown-only messages', async () => {
     const { gateway, actionTokenService } = makeGateway();
 
-    const result = await (gateway as any).applyActionTokensForDelivery({ markdown: 'hello' }, 'agent1', config);
+    const result = await (gateway as any).applyActionTokensForDelivery({ markdown: 'hello' }, binding.agentId, binding);
 
     expect(result).to.deep.equal({ markdown: 'hello' });
     expect(actionTokenService.tokenizeCardForDelivery.called).to.equal(false);

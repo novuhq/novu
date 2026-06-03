@@ -1,6 +1,8 @@
-import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import type { ButtonElement, CardElement } from 'chat';
+import { forEachCallbackButton } from './card-callback-button.walker';
+import { buildOpaqueStorageKey, mintRandomToken, parseTtlFromEnv } from './opaque-token.util';
 
 export const AGENT_ACTION_TOKEN_PREFIX = 'at:' as const;
 
@@ -20,9 +22,14 @@ export type AgentActionTokenClaims = {
 export type AgentActionTokenBinding = {
   agentId: string;
   integrationIdentifier: string;
+  environmentId: string;
+  organizationId: string;
 };
 
-type CardChild = Record<string, unknown>;
+type MintedButtonToken = {
+  button: ButtonElement;
+  token: string;
+};
 
 @Injectable()
 export class AgentActionTokenService {
@@ -33,9 +40,7 @@ export class AgentActionTokenService {
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
-    const raw = process.env.AGENT_ACTION_TOKEN_TTL;
-    const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;
-    this.ttlSeconds = Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TTL_SECONDS;
+    this.ttlSeconds = parseTtlFromEnv(process.env.AGENT_ACTION_TOKEN_TTL, DEFAULT_TTL_SECONDS);
   }
 
   isActionToken(actionId: string | undefined): boolean {
@@ -43,7 +48,7 @@ export class AgentActionTokenService {
   }
 
   async mintActionToken(claims: AgentActionTokenClaims): Promise<string> {
-    const token = randomBytes(TOKEN_BYTES).toString('base64url');
+    const token = mintRandomToken(TOKEN_BYTES);
 
     await this.cacheService.set(this.storageKey(token), JSON.stringify(claims), { ttl: this.ttlSeconds });
 
@@ -84,16 +89,15 @@ export class AgentActionTokenService {
       return null;
     }
 
-    if (
-      claims.agentId !== binding.agentId ||
-      claims.integrationIdentifier !== binding.integrationIdentifier
-    ) {
+    if (!this.claimsMatchBinding(claims, binding)) {
       this.logger.warn(
         {
           agentId: binding.agentId,
           integrationIdentifier: binding.integrationIdentifier,
+          environmentId: binding.environmentId,
           tokenAgentId: claims.agentId,
           tokenIntegrationIdentifier: claims.integrationIdentifier,
+          tokenEnvironmentId: claims.environmentId,
         },
         'Agent action token binding mismatch'
       );
@@ -104,70 +108,65 @@ export class AgentActionTokenService {
     return { id: claims.id, value: claims.value };
   }
 
+  /**
+   * Resolves an opaque `at:` token or passes through a raw platform action id.
+   * Returns null when a token is present but missing, expired, or fails binding checks.
+   */
+  async resolveForDispatch(
+    actionId: string,
+    value: string | undefined,
+    binding: AgentActionTokenBinding
+  ): Promise<{ id: string; value?: string } | null> {
+    if (!this.isActionToken(actionId)) {
+      return { id: actionId, value };
+    }
+
+    const resolved = await this.resolveActionToken(actionId, binding);
+
+    if (!resolved) {
+      return null;
+    }
+
+    return resolved;
+  }
+
   async tokenizeCardForDelivery(
-    card: Record<string, unknown>,
+    card: CardElement | Record<string, unknown>,
     claimsBase: Omit<AgentActionTokenClaims, 'id' | 'value'>
   ): Promise<Record<string, unknown>> {
-    const clone = structuredClone(card) as Record<string, unknown>;
-    const children = clone.children;
+    const clone = structuredClone(card) as CardElement;
+    const minted: MintedButtonToken[] = [];
 
-    if (!Array.isArray(children)) {
-      return clone;
-    }
-
-    await this.tokenizeCardChildren(children, claimsBase);
-
-    return clone;
-  }
-
-  private async tokenizeCardChildren(
-    children: CardChild[],
-    claimsBase: Omit<AgentActionTokenClaims, 'id' | 'value'>
-  ): Promise<void> {
-    for (const child of children) {
-      if (!child || typeof child !== 'object') {
-        continue;
-      }
-
-      if (child.type === 'actions' && Array.isArray(child.children)) {
-        await this.tokenizeActionBlockChildren(child.children as CardChild[], claimsBase);
-        continue;
-      }
-
-      if (child.type === 'section' && Array.isArray(child.children)) {
-        await this.tokenizeCardChildren(child.children as CardChild[], claimsBase);
-      }
-    }
-  }
-
-  private async tokenizeActionBlockChildren(
-    actions: CardChild[],
-    claimsBase: Omit<AgentActionTokenClaims, 'id' | 'value'>
-  ): Promise<void> {
-    for (const action of actions) {
-      if (!action || typeof action !== 'object' || action.type !== 'button') {
-        continue;
-      }
-
-      const actionId = action.id;
-      if (typeof actionId !== 'string' || !actionId) {
-        continue;
-      }
-
-      const value = typeof action.value === 'string' ? action.value : undefined;
+    await forEachCallbackButton(clone, async (button) => {
+      const value = typeof button.value === 'string' ? button.value : undefined;
       const token = await this.mintActionToken({
         ...claimsBase,
-        id: actionId,
+        id: button.id,
         value,
       });
 
-      action.id = token;
-      delete action.value;
+      minted.push({ button, token });
+    });
+
+    for (const { button, token } of minted) {
+      button.id = token;
+      delete button.value;
     }
+
+    return clone as unknown as Record<string, unknown>;
+  }
+
+  private claimsMatchBinding(claims: AgentActionTokenClaims, binding: AgentActionTokenBinding): boolean {
+    return (
+      claims.agentId === binding.agentId &&
+      claims.integrationIdentifier === binding.integrationIdentifier &&
+      claims.environmentId === binding.environmentId &&
+      claims.organizationId === binding.organizationId
+    );
   }
 
   private storageKey(token: string): string {
-    return `${KEY_PREFIX}${token}`;
+    return buildOpaqueStorageKey(KEY_PREFIX, token);
   }
 
   private parseClaims(raw: string): AgentActionTokenClaims | null {

@@ -69,7 +69,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
     private readonly logger: PinoLogger,
     private readonly cacheService: CacheService,
     private readonly agentConfigResolver: AgentConfigResolver,
-    private readonly actionTokenService: AgentEmailActionTokenService,
+    private readonly emailActionTokenService: AgentEmailActionTokenService,
     private readonly agentActionTokenService: AgentActionTokenService,
     private readonly agentEmailSender: AgentEmailSender
   ) {
@@ -345,7 +345,7 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
             sendEmail: this.agentEmailSender.buildSendEmailCallback(config, outboundIntegrationId),
             actionUrlBuilder: async ({ threadId, messageId, actionId, value, label, style }) => {
               const userIdentifier = extractRecipientFromThreadId(threadId);
-              const { url } = await this.actionTokenService.signActionToken({
+              const { url } = await this.emailActionTokenService.signActionToken({
                 agentId,
                 agentIdentifier: config.agentIdentifier,
                 agentName: config.agentName,
@@ -369,33 +369,6 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
       default:
         throw new BadRequestException(`Unsupported platform: ${platform}`);
     }
-  }
-
-  private async resolveInboundAction(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    actionId: string,
-    value: string | undefined
-  ): Promise<{ id: string; value?: string } | null> {
-    if (!this.agentActionTokenService.isActionToken(actionId)) {
-      return { id: actionId, value };
-    }
-
-    const resolved = await this.agentActionTokenService.resolveActionToken(actionId, {
-      agentId,
-      integrationIdentifier: config.integrationIdentifier,
-    });
-
-    if (!resolved) {
-      this.logger.warn(
-        { agentId, integrationIdentifier: config.integrationIdentifier, actionId },
-        'Ignoring inbound action — token missing, expired, or binding mismatch'
-      );
-
-      return null;
-    }
-
-    return resolved;
   }
 
   private registerEventHandlers(agentId: string, cached: CachedChat) {
@@ -438,9 +411,27 @@ export class ChatInstanceRegistry implements OnModuleDestroy {
           return;
         }
 
-        const resolvedAction = await this.resolveInboundAction(agentId, cached.config, event.actionId, event.value);
+        const resolvedAction = await this.agentActionTokenService.resolveForDispatch(
+          event.actionId,
+          event.value,
+          {
+            agentId,
+            integrationIdentifier: cached.config.integrationIdentifier,
+            environmentId: cached.config.environmentId,
+            organizationId: cached.config.organizationId,
+          }
+        );
 
         if (!resolvedAction) {
+          this.logger.warn(
+            {
+              agentId,
+              integrationIdentifier: cached.config.integrationIdentifier,
+              actionId: event.actionId,
+            },
+            'Ignoring inbound action — token missing, expired, or binding mismatch'
+          );
+
           return;
         }
 
