@@ -273,6 +273,7 @@ export function AgentsList() {
 
       return (
         <AgentsEmptyTeaser
+          isConnectApp={isConnectApp}
           cta={
             <PermissionButton
               permission={PermissionsEnum.AGENT_WRITE}
