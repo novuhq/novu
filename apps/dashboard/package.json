@@ -139,7 +139,7 @@
     "react-qr-code": "^2.0.21",
     "react-querybuilder": "^8.3.0",
     "react-resizable-panels": "^4.7.6",
-    "react-router-dom": "^7.12.0",
+    "react-router-dom": "^7.16.0",
     "react-timezone-select": "^3.2.8",
     "recharts": "2.15.4",
     "shiki": "^3.21.0",
