@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import {
   AgentIntegrationRepository,
+  AgentMcpServerRepository,
   AgentRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
@@ -8,6 +9,7 @@ import {
   ConversationRepository,
   EnvironmentRepository,
   IntegrationRepository,
+  McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import { AuthModule } from '../auth/auth.module';
@@ -30,6 +32,8 @@ import { ClaimKeylessConnect } from './usecases/claim-keyless-connect/claim-keyl
     ConversationRepository,
     ConversationActivityRepository,
     SubscriberRepository,
+    AgentMcpServerRepository,
+    McpConnectionRepository,
     EnvironmentRepository,
   ],
   exports: [ConnectClaimTokenService],

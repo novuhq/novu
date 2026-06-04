@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
+  AgentMcpServerRepository,
   AgentRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
@@ -10,6 +11,7 @@ import {
   EnvironmentEntity,
   EnvironmentRepository,
   IntegrationRepository,
+  McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import { ChannelTypeEnum, EnvironmentTypeEnum } from '@novu/shared';
@@ -37,6 +39,8 @@ export class ClaimKeylessConnect {
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
     private readonly subscriberRepository: SubscriberRepository,
+    private readonly agentMcpServerRepository: AgentMcpServerRepository,
+    private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -91,6 +95,11 @@ export class ClaimKeylessConnect {
       // The conversation + its full activity history (preserves continuity).
       await this.conversationRepository.update(sourceScope, { $set: target }, { session });
       await this.conversationActivityRepository.update(sourceScope, { $set: target }, { session });
+
+      // The agent's MCP enablements + their OAuth connections (e.g. Supabase),
+      // otherwise the MCPs are stranded in the keyless env and disappear.
+      await this.agentMcpServerRepository.update(sourceScope, { $set: target }, { session });
+      await this.mcpConnectionRepository.update(sourceScope, { $set: target }, { session });
 
       // The channel subscriber(s); skip the inbox demo subscriber.
       await this.subscriberRepository.update(
