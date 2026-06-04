@@ -1,7 +1,7 @@
 import type { JSONSchema7, JSONSchema7TypeName } from '../json-schema';
 
 // Helper to carry over common/metadata keywords
-function carryOverCommonKeywords(originalSchema: JSONSchema7, newSchema: Partial<JSONSchema7>) {
+export function carryOverCommonKeywords(originalSchema: JSONSchema7, newSchema: Partial<JSONSchema7>) {
   if (originalSchema.title !== undefined) newSchema.title = originalSchema.title;
   if (originalSchema.description !== undefined) newSchema.description = originalSchema.description;
   if (originalSchema.default !== undefined) newSchema.default = originalSchema.default; // Type compatibility should be ensured by caller or validation

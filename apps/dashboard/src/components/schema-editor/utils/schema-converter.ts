@@ -87,6 +87,10 @@ export function convertPropertyListToSchema(propertyList?: PropertyListItem[]): 
       return;
     }
 
+    if (properties[item.keyName] !== undefined) {
+      return;
+    }
+
     const currentDefinition = processPropertyDefinition(item.definition, item.isNullable);
 
     if (item.isRequired) {

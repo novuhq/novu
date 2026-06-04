@@ -2557,6 +2557,40 @@ export function getMcpIconUrl(mcpId: string, baseUrl: string): string {
   return `${normalizedBase}${getMcpIconPath(mcpId)}`;
 }
 
+export type MergeMcpCatalogEntriesResult = {
+  catalog: McpServer[];
+  /** Incoming catalog ids skipped because `id` or `url` already exists in the catalog. */
+  skippedIds: string[];
+};
+
+/**
+ * Merges Claude vault delta (or other) rows into a catalog. When an incoming row
+ * collides on `id` or `url`, the existing row is kept in full so catalog oauth
+ * schema (mode, endpoints, scopes) is not overwritten.
+ */
+export function mergeMcpCatalogEntries(
+  existing: McpServer[],
+  incoming: McpServer[]
+): MergeMcpCatalogEntriesResult {
+  const ids = new Set(existing.map((entry) => entry.id));
+  const urls = new Set(existing.map((entry) => entry.url));
+  const catalog = [...existing];
+  const skippedIds: string[] = [];
+
+  for (const entry of incoming) {
+    if (ids.has(entry.id) || urls.has(entry.url)) {
+      skippedIds.push(entry.id);
+      continue;
+    }
+
+    catalog.push(entry);
+    ids.add(entry.id);
+    urls.add(entry.url);
+  }
+
+  return { catalog, skippedIds };
+}
+
 export function resolveMcpCatalogIdByName(name: string | undefined): string | undefined {
   if (!name) {
     return undefined;

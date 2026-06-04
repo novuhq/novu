@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { McpConnectionAuthModeEnum } from '../../dto/agent/managed-runtime.dto';
 import {
   MCP_SERVERS,
+  mergeMcpCatalogEntries,
   type McpOAuthCatalogEntry,
+  type McpServer,
   type McpServerCategory,
   type NovuAppOAuthCatalogEntry,
 } from './mcp-servers';
@@ -162,5 +164,79 @@ describe('MCP_SERVERS catalog', () => {
       expect(assertExhaustive({ mode: McpConnectionAuthModeEnum.Dcr })).toBe('web');
       expect(assertExhaustive({ mode: McpConnectionAuthModeEnum.ProviderManaged })).toBe('provider-managed');
     });
+  });
+});
+
+describe('mergeMcpCatalogEntries', () => {
+  const existing: McpServer[] = [
+    {
+      id: 'miro',
+      name: 'Miro',
+      description: 'Existing Miro entry',
+      url: 'https://mcp.miro.com/mcp',
+      category: 'design',
+      popular: false,
+      oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+    },
+  ];
+
+  it('keeps existing oauth schema when incoming row duplicates id', () => {
+    const incoming: McpServer[] = [
+      {
+        id: 'miro',
+        name: 'Miro',
+        description: 'Vault delta overwrite attempt',
+        url: 'https://mcp.miro.com/mcp',
+        category: 'design',
+        popular: false,
+        oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+      },
+    ];
+
+    const { catalog, skippedIds } = mergeMcpCatalogEntries(existing, incoming);
+
+    expect(skippedIds).toEqual(['miro']);
+    expect(catalog).toHaveLength(1);
+    expect(catalog[0]?.oauth?.mode).toBe(McpConnectionAuthModeEnum.Dcr);
+  });
+
+  it('keeps existing row when incoming row duplicates url with a different id', () => {
+    const incoming: McpServer[] = [
+      {
+        id: 'miro-vault-alias',
+        name: 'Miro alias',
+        description: 'Same URL as catalog row',
+        url: 'https://mcp.miro.com/mcp',
+        category: 'design',
+        popular: false,
+        oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+      },
+    ];
+
+    const { catalog, skippedIds } = mergeMcpCatalogEntries(existing, incoming);
+
+    expect(skippedIds).toEqual(['miro-vault-alias']);
+    expect(catalog[0]?.id).toBe('miro');
+    expect(catalog[0]?.oauth?.mode).toBe(McpConnectionAuthModeEnum.Dcr);
+  });
+
+  it('appends net-new vault delta rows', () => {
+    const incoming: McpServer[] = [
+      {
+        id: 'new-vault-mcp',
+        name: 'New Vault MCP',
+        description: 'Net-new connector',
+        url: 'https://mcp.example.com/mcp',
+        category: 'other',
+        popular: false,
+        oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+      },
+    ];
+
+    const { catalog, skippedIds } = mergeMcpCatalogEntries(existing, incoming);
+
+    expect(skippedIds).toEqual([]);
+    expect(catalog).toHaveLength(2);
+    expect(catalog[1]?.id).toBe('new-vault-mcp');
   });
 });

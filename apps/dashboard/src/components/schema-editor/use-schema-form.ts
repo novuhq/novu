@@ -1,10 +1,11 @@
 import { standardSchemaResolver } from '@hookform/resolvers/standard-schema';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 import { MAX_NESTING_DEPTH } from './constants';
 import type { JSONSchema7, JSONSchema7TypeName } from './json-schema';
 import type { SchemaFormPath, UseSchemaFormProps, UseSchemaFormReturn } from './types';
 import {
+  carryOverCommonKeywords,
   convertPropertyListToSchema,
   convertSchemaToPropertyList,
   createPropertyItem,
@@ -24,6 +25,12 @@ const defaultFormValues: SchemaEditorFormValues = {
 const DEBOUNCE_DELAY = 300;
 
 export function useSchemaForm({ initialSchema, onChange, onValidityChange }: UseSchemaFormProps): UseSchemaFormReturn {
+  const rootSchemaRef = useRef(initialSchema);
+
+  useEffect(() => {
+    rootSchemaRef.current = initialSchema;
+  }, [initialSchema]);
+
   const initialTransformedValues: SchemaEditorFormValues = {
     propertyList: initialSchema?.properties
       ? convertSchemaToPropertyList(initialSchema.properties, initialSchema.required)
@@ -58,7 +65,10 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         if (onChange && value.propertyList) {
-          const outputSchema = createSchemaFromPropertyList(value.propertyList as PropertyListItem[]);
+          const outputSchema = createSchemaFromPropertyList(
+            value.propertyList as PropertyListItem[],
+            rootSchemaRef.current
+          );
           onChange(outputSchema);
         }
       }, DEBOUNCE_DELAY);
@@ -115,7 +125,8 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
 
   const getCurrentSchema = useCallback((): JSONSchema7 => {
     const propertyList = getValues().propertyList as PropertyListItem[];
-    return createSchemaFromPropertyList(propertyList);
+
+    return createSchemaFromPropertyList(propertyList, rootSchemaRef.current);
   }, [getValues]);
 
   const resetToSchema = useCallback(
@@ -145,14 +156,20 @@ export function useSchemaForm({ initialSchema, onChange, onValidityChange }: Use
 }
 
 // Helper functions
-function createSchemaFromPropertyList(propertyList: PropertyListItem[]): JSONSchema7 {
+function createSchemaFromPropertyList(propertyList: PropertyListItem[], rootSchema?: JSONSchema7): JSONSchema7 {
   const { properties, required } = convertPropertyListToSchema(propertyList);
 
-  return {
+  const schema: JSONSchema7 = {
     type: 'object',
     properties,
     ...(required && required.length > 0 ? { required } : {}),
   };
+
+  if (rootSchema) {
+    carryOverCommonKeywords(rootSchema, schema);
+  }
+
+  return schema;
 }
 
 function appendRootProperty(
