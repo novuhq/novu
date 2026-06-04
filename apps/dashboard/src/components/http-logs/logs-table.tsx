@@ -1,4 +1,5 @@
 /** biome-ignore-all lint/correctness/useUniqueElementIds: expected */
+import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import { ResizablePanel, ResizablePanelGroup } from '@/components/primitives/resizable';
@@ -13,11 +14,11 @@ import {
 } from '@/components/primitives/table';
 import { TablePaginationFooter } from '@/components/primitives/table-pagination-footer';
 import { UpdatedAgo } from '@/components/updated-ago';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchRequestLogs } from '@/hooks/use-fetch-request-logs';
 import { useLogsUrlState } from '@/hooks/use-logs-url-state';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
-import { IS_INBOUND_LOGS_ENABLED } from '../../config';
 import type { RequestLog } from '../../types/logs';
 import { LogsDetailPanel } from './logs-detail-panel';
 import { RequestLogsEmptyState } from './logs-empty-state';
@@ -30,6 +31,9 @@ type RequestsTableProps = {
 };
 
 export function RequestsTable({ onLogClick }: RequestsTableProps) {
+  const track = useTelemetry();
+  const isInboundLogsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_INBOUND_LOGS_ENABLED, false);
+
   const {
     selectedLogId,
     handleLogSelect,
@@ -42,9 +46,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     currentPage,
     limit,
     filters,
-  } = useLogsUrlState();
-
-  const track = useTelemetry();
+  } = useLogsUrlState({ isSourceFilterEnabled: isInboundLogsEnabled });
 
   const {
     data: logsResponse,
@@ -60,7 +62,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
     // When inbound logs are disabled, only HTTP rows are requested so the
     // existing experience is unchanged. When enabled, an empty source means
     // "all sources" and a chosen value narrows the list.
-    source: IS_INBOUND_LOGS_ENABLED ? filters.source || undefined : 'http',
+    source: isInboundLogsEnabled ? filters.source || undefined : 'http',
   });
 
   const logsData = logsResponse?.data || [];
@@ -113,7 +115,7 @@ export function RequestsTable({ onLogClick }: RequestsTableProps) {
           onFiltersChange={handleFiltersChange}
           onClearFilters={clearFilters}
           hasActiveFilters={hasActiveFilters}
-          showSourceFilter={IS_INBOUND_LOGS_ENABLED}
+          showSourceFilter={isInboundLogsEnabled}
         />
         <UpdatedAgo lastUpdated={lastUpdated} onRefresh={handleRefresh} />
       </div>

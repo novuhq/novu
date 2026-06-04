@@ -156,7 +156,6 @@ export class ManagedAgentService implements OnModuleInit {
     platform?: AgentPlatformEnum;
     toolUseIds: string[];
     approved: boolean;
-    turnId: string;
   }): Promise<void> {
     const conversation = await this.conversationRepository.findOne(
       { _id: params.conversationId, _environmentId: params.environmentId, _organizationId: params.organizationId },
@@ -213,7 +212,6 @@ export class ManagedAgentService implements OnModuleInit {
       messages: [],
       sessionId,
       vaultIds,
-      turnId: params.turnId,
       toolResults: params.toolUseIds.map((toolUseId) => ({ toolUseId, approved: params.approved, content: [] })),
       webhookMetadata,
     });

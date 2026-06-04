@@ -28,7 +28,6 @@
     "@aws-sdk/s3-request-presigner": "^3.382.0",
     "@faker-js/faker": "^6.0.0",
     "@novu/shared": "workspace:*",
-    "aws-sdk": "^2.665.0",
     "class-transformer": "0.5.1",
     "cross-fetch": "^3.0.4",
     "date-fns": "^2.29.2",

@@ -30,6 +30,22 @@ export type ConnectSummary = {
    * Display name used when the user provisioned a new managed-runtime integration inline.
    */
   integrationName?: string;
+  /**
+   * MCP server ids the user picked during the connect phase. Populated from the
+   * LLM-generated payload when the AI flow is used, or from the chosen template's
+   * `suggestedMcpServers`. Used as a pre-creation preview hint and as a fallback when the
+   * post-creation API response omits the live runtime view (e.g. provider read failed); the
+   * authoritative post-creation source is `agent.managedRuntime.mcpServers`.
+   */
+  mcpServers?: ReadonlyArray<string>;
+  /**
+   * Tool ids the user picked during the connect phase (Claude built-in tool `type` strings).
+   * Populated from the LLM-generated payload when the AI flow is used. Empty for static
+   * templates. Used as a pre-creation preview hint and as a fallback when the post-creation
+   * API response omits the live runtime view; the authoritative post-creation source is
+   * `agent.managedRuntime.tools`.
+   */
+  tools?: ReadonlyArray<string>;
 };
 
 function resolveRuntime(connectorId: ConnectorId): RuntimeType {

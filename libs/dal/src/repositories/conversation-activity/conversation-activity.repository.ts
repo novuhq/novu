@@ -141,10 +141,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
-  async findToolActivitiesByTurnId(
+  async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
-    turnId: string
+    planMessageId: string
   ): Promise<ConversationActivityEntity[]> {
     return this.find(
       {
@@ -152,7 +152,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _conversationId: conversationId,
         type: ConversationActivityTypeEnum.SIGNAL,
         'signalData.type': 'tool-use',
-        'signalData.payload.turnId': turnId,
+        'signalData.payload.planMessageId': planMessageId,
       } as FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds,
       '*',
       { sort: { createdAt: 1 } }

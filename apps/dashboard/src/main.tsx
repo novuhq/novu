@@ -52,7 +52,6 @@ import { AgentDetailsPage } from './pages/agent-details';
 import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
-import { AgentsUsecasePage } from './pages/agents-usecase-page';
 import { CliAuthPage } from './pages/cli-auth';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
@@ -167,10 +166,6 @@ const router = createBrowserRouter([
           {
             path: ROUTES.USECASE_SELECT,
             element: <UsecaseSelectPage />,
-          },
-          {
-            path: ROUTES.AGENTS_USECASE,
-            element: <AgentsUsecasePage />,
           },
           {
             path: ROUTES.AGENTS_SETUP,

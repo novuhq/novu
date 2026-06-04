@@ -16,6 +16,32 @@ import { ConfigureTelegramAgentWebhookCommand } from './configure-telegram-agent
 const TELEGRAM_API_TIMEOUT_MS = 10_000;
 const TELEGRAM_MAX_RETRIES = 3;
 const TELEGRAM_RETRY_DELAY_BASE_MS = 500;
+/**
+ * Every update type from Telegram's Update object (Bot API).
+ * @see https://core.telegram.org/bots/api#update
+ */
+const TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES = [
+  'message',
+  'edited_message',
+  'channel_post',
+  'edited_channel_post',
+  'message_reaction',
+  'message_reaction_count',
+  'inline_query',
+  'chosen_inline_result',
+  'callback_query',
+  'shipping_query',
+  'pre_checkout_query',
+  'purchased_paid_media',
+  'poll',
+  'poll_answer',
+  'my_chat_member',
+  'chat_member',
+  'chat_join_request',
+  'chat_boost',
+  'removed_chat_boost',
+  'managed_bot',
+] as const;
 
 interface TelegramSetWebhookResult {
   webhookUrl: string;
@@ -179,7 +205,7 @@ export class ConfigureTelegramAgentWebhook {
       try {
         const { data } = await Axios.post<TelegramApiResponse>(
           telegramUrl,
-          { url, secret_token: secretToken, allowed_updates: ['message'] },
+          { url, secret_token: secretToken, allowed_updates: [...TELEGRAM_AGENT_WEBHOOK_ALLOWED_UPDATES] },
           {
             timeout: TELEGRAM_API_TIMEOUT_MS,
             maxRedirects: 0,

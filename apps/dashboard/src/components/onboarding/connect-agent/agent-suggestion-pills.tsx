@@ -2,9 +2,11 @@ import { useMemo } from 'react';
 import { type AgentTemplate } from '@/components/agents/create-agent-fields';
 import { McpIcon } from '@/components/agents/mcp-icon';
 import { OrbIcon } from '@/components/icons/orb';
+import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { cn } from '@/utils/ui';
 
 const VISIBLE_INTEGRATION_ICONS = 2;
+const PILL_FADE_WIDTH_PX = 24;
 
 type AgentSuggestionPillsProps = {
   suggestions: AgentTemplate[];
@@ -14,10 +16,17 @@ type AgentSuggestionPillsProps = {
 };
 
 export function AgentSuggestionPills({ suggestions, onSelect, disabled, className }: AgentSuggestionPillsProps) {
+  const { ref: scrollRef, canScrollLeft, canScrollRight } = useHorizontalScrollEdges<HTMLDivElement>();
+  const maskImage = buildEdgeFadeMask(canScrollLeft, canScrollRight, PILL_FADE_WIDTH_PX);
+
   if (!suggestions.length) return null;
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-2', className)}>
+    <div
+      ref={scrollRef}
+      className={cn('nv-no-scrollbar flex min-w-0 items-center gap-2 overflow-x-auto', className)}
+      style={maskImage ? { maskImage, WebkitMaskImage: maskImage } : undefined}
+    >
       {suggestions.map((suggestion) => (
         <SuggestionPill key={suggestion.label} suggestion={suggestion} disabled={disabled} onSelect={onSelect} />
       ))}
@@ -45,7 +54,7 @@ function SuggestionPill({ suggestion, disabled, onSelect }: SuggestionPillProps)
       onClick={() => onSelect(suggestion)}
       disabled={disabled}
       className={cn(
-        'bg-bg-white border-stroke-soft hover:bg-bg-weak inline-flex items-center gap-2 rounded-full border px-1.5 py-1 transition-colors',
+        'bg-bg-white border-stroke-soft hover:bg-bg-weak inline-flex shrink-0 items-center gap-2 rounded-full border px-1.5 py-1 transition-colors',
         'disabled:cursor-not-allowed disabled:opacity-50'
       )}
     >

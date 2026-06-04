@@ -235,9 +235,9 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
 
         const handlerPromise = this.runAgentHandler(registeredAgent, agentEvent, ctx).catch((err) => {
           if (err instanceof AgentDeliveryError) {
-            console.error(`[agent:${agentId}] ${err.message}`);
+            this.client.logger.error(`[agent:${agentId}] ${err.message}`);
           } else {
-            console.error(`[agent:${agentId}] Handler error:`, err);
+            this.client.logger.error(`[agent:${agentId}] Handler error:`, err);
           }
         });
 
@@ -354,7 +354,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
          * Log bridge server errors to assist the Developer in debugging errors with their integration.
          * This path is reached when the Bridge application throws an error, ensuring they can see the error in their logs.
          */
-        console.error(error);
+        this.client.logger.error(error);
       }
 
       return this.createError(error);
@@ -362,7 +362,7 @@ export class NovuRequestHandler<Input extends any[] = any[], Output = any> {
       return this.createError(error);
     } else {
       const bridgeError = new BridgeError(error);
-      console.error(bridgeError);
+      this.client.logger.error(bridgeError);
 
       return this.createError(bridgeError);
     }

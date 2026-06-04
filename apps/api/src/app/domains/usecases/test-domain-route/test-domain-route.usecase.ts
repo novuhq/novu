@@ -61,7 +61,7 @@ export class TestDomainRoute {
         };
       }
 
-      const agentPayload = this.inboundDomainRouteDelivery.previewAgentMailPayload(mail);
+      const agentPayload = this.inboundDomainRouteDelivery.previewAgentMailPayload(mail, { domain, route });
       const apiBaseUrl = process.env.API_ROOT_URL ?? '';
       const agentId = route.destination ?? '';
       const wouldDeliverTo =

@@ -1,6 +1,10 @@
-import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import {
+  buildOpaqueStorageKey,
+  mintRandomToken,
+  parseTtlFromEnv,
+} from '../conversation-runtime/action-token/opaque-token.util';
 
 const KEY_PREFIX = 'agent:email:action:';
 const MESSAGE_KEY_PREFIX = 'agent:email:action:msg:';
@@ -96,9 +100,7 @@ export class AgentEmailActionTokenService {
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
-    const raw = process.env.AGENT_EMAIL_ACTION_TOKEN_TTL;
-    const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN;
-    this.ttlSeconds = Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_TTL_SECONDS;
+    this.ttlSeconds = parseTtlFromEnv(process.env.AGENT_EMAIL_ACTION_TOKEN_TTL, DEFAULT_TTL_SECONDS);
   }
 
   /**
@@ -106,7 +108,7 @@ export class AgentEmailActionTokenService {
    * embedded in the email body carries only the random token, never the claims themselves.
    */
   async signActionToken(claims: AgentEmailActionClaims): Promise<{ token: string; url: string }> {
-    const token = randomBytes(TOKEN_BYTES).toString('base64url');
+    const token = mintRandomToken(TOKEN_BYTES);
     const mintedAt = Math.floor(Date.now() / 1000);
     const expiresAt = mintedAt + this.ttlSeconds;
     const entry: StoredEntry = { claims, expiresAt, mintedAt };
@@ -264,7 +266,7 @@ export class AgentEmailActionTokenService {
   }
 
   private storageKey(token: string): string {
-    return `${KEY_PREFIX}${token}`;
+    return buildOpaqueStorageKey(KEY_PREFIX, token);
   }
 
   private messageKey(messageId: string): string {

@@ -14,6 +14,7 @@ const MAX_OUTPUT_TOKENS = 4096;
 export type GeneratedManagedAgentResult = {
   name: string;
   identifier: string;
+  description: string;
   systemPrompt: string;
   tools: string[];
   mcpServers: string[];
@@ -229,6 +230,7 @@ export class GenerateManagedAgent {
         name: generated.name,
         identifier: generated.identifier,
         systemPrompt: generated.systemPrompt,
+        description: generated.description,
         tools: [],
         mcpServers: [],
         skills: [],
@@ -239,6 +241,7 @@ export class GenerateManagedAgent {
       name: generated.name,
       identifier: generated.identifier,
       systemPrompt: generated.systemPrompt,
+      description: generated.description,
       tools: ensureDefaultTools([...generated.tools]),
       mcpServers: generated.mcpServers,
       skills: generated.skills.map((skill) => ({ skillId: skill.skillId })),
