@@ -132,6 +132,9 @@ describe('AgentInboundHandler', () => {
     const channelEndpointRepository = {
       findByPlatformIdentity: overrides.findTelegramEndpointByIdentity ?? sinon.stub().resolves(null),
     };
+    const connectClaimTokenService = {
+      issue: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -145,7 +148,8 @@ describe('AgentInboundHandler', () => {
       attachmentStorage as any,
       startCodeService as any,
       channelEndpointRepository as any,
-      linkTelegramChatToSubscriber as any
+      linkTelegramChatToSubscriber as any,
+      connectClaimTokenService as any
     );
 
     return {

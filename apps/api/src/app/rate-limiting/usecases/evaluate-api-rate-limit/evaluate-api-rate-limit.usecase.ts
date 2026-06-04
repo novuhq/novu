@@ -29,8 +29,12 @@ export class EvaluateApiRateLimit {
     let maxLimitPerSecond: number;
     let apiServiceLevel: ApiServiceLevel;
 
-    // For keyless environments, we implement strict rate limiting to prevent abuse:
-    if (!command.organizationId || !command.environmentId) {
+    // For keyless requests we implement strict, IP-keyed rate limiting to prevent
+    // abuse. `command.ip` is only set for keyless callers (see the throttler), so
+    // it also covers authenticated keyless sessions (e.g. `novu connect`) whose
+    // resolved keyless org/env would otherwise pin them to that org's tier limits
+    // and make the high keyless per-request cost unusable across a multi-call flow.
+    if (!command.organizationId || !command.environmentId || command.ip) {
       maxLimitPerSecond = 3000;
       apiServiceLevel = ApiServiceLevelEnum.ENTERPRISE;
     } else {

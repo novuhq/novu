@@ -29,6 +29,7 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../../shared/framework/response.decorator';
+import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
 import { UserSession } from '../../shared/framework/user.decorator';
 import { EnsureProviderManagedVaultCommand } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.command';
 import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
@@ -106,6 +107,7 @@ export class AgentRuntimeController {
 
   @Post('/verify-credentials')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @ApiResponse(VerifyManagedCredentialsResponseDto)
   @ApiOperation({
     summary: 'Verify managed-runtime credentials',
@@ -134,6 +136,7 @@ export class AgentRuntimeController {
 
   @Post('/generate')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @ApiResponse(GenerateManagedAgentResponseDto)
   @ApiOperation({
     summary: 'Generate an agent configuration from a free-form prompt',

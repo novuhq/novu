@@ -12,6 +12,7 @@ import {
 import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
+import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -82,6 +83,46 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
+
+/**
+ * Number of agent replies a keyless (anonymous Connect) demo conversation gets
+ * before the agent stops responding and asks the user to sign up. Overridable
+ * via `KEYLESS_DEMO_REPLY_CAP`.
+ */
+const KEYLESS_DEMO_REPLY_CAP = Number(process.env.KEYLESS_DEMO_REPLY_CAP) || 5;
+
+function resolveConnectClaimBaseUrl(): string {
+  return (process.env.CONNECT_WEB_URL || process.env.CONNECT_DASHBOARD_URL || 'https://connect.novu.co').replace(
+    /\/$/,
+    ''
+  );
+}
+
+function buildKeylessSignupCard(claimUrl: string): CardElement {
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content:
+          "You've reached the limit of this free demo. Sign up for a free Novu account to keep this agent — your " +
+          'conversation and setup carry over, and the agent picks up right where it left off.',
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'Sign up & keep this agent',
+            url: claimUrl,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}
 
 /**
  * Workspace-label copy keyed by every platform in `AUTO_PROVISION_PLATFORMS`.
@@ -242,7 +283,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly attachmentStorage: AgentAttachmentStorage,
     private readonly startCodeService: TelegramStartCodeService,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber
+    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
+    private readonly connectClaimTokenService: ConnectClaimTokenService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -340,6 +382,16 @@ export class AgentInboundHandler implements OnModuleInit {
         'managedRuntime',
       ]),
     ]);
+
+    // Keyless (anonymous Connect demo) conversations get a hard cap on agent
+    // replies. Once reached, the agent stops responding and posts a signup CTA
+    // until the env is claimed into a real org (after which `isKeyless` is false
+    // and dispatch resumes with the full prior history intact).
+    if (config.isKeyless && (await this.isKeylessDemoCapReached(config, conversation._id))) {
+      await this.postKeylessSignupCta(agentId, config, thread);
+
+      return;
+    }
 
     await this.acknowledgeReceipt(agentId, config, thread, message, isFirstMessage);
 
@@ -699,6 +751,43 @@ export class AgentInboundHandler implements OnModuleInit {
         operation: 'post-capacity-reached-card',
         agentId,
         platform: config.platform,
+      });
+    }
+  }
+
+  private async isKeylessDemoCapReached(config: ResolvedAgentConfig, conversationId: string): Promise<boolean> {
+    const agentReplies = await this.conversationService.countAgentMessages(config.environmentId, conversationId);
+
+    return agentReplies >= KEYLESS_DEMO_REPLY_CAP;
+  }
+
+  /**
+   * Posts the keyless demo signup CTA into the live thread. Mints a single-use,
+   * signed claim token bound to the keyless environment and links to the
+   * dashboard claim page. Errors are logged but swallowed — failing to post the
+   * card must not crash the inbound webhook.
+   */
+  private async postKeylessSignupCta(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread
+  ): Promise<void> {
+    try {
+      const { token } = await this.connectClaimTokenService.issue({
+        env: config.environmentId,
+        org: config.organizationId,
+      });
+      const claimUrl = `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
+
+      await this.outboundGateway.replyOnThread(thread, {
+        card: buildKeylessSignupCard(claimUrl) as unknown as Record<string, unknown>,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to post keyless signup CTA`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-keyless-signup-cta',
+        agentId,
       });
     }
   }

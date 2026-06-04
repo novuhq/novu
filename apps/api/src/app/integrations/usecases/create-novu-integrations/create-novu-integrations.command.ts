@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, EnvironmentEnum, EnvironmentTypeEnum } from '@novu/shared';
-import { IsArray, IsEnum, IsOptional } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class CreateNovuIntegrationsCommand extends EnvironmentWithUserCommand {
@@ -9,6 +9,15 @@ export class CreateNovuIntegrationsCommand extends EnvironmentWithUserCommand {
   @IsArray()
   @IsEnum(ChannelTypeEnum, { each: true })
   readonly channels?: ChannelTypeEnum[];
+
+  /**
+   * Force provisioning of the Novu-managed Claude (demo) agent integration even
+   * when the environment is not named `Development`. Used by the keyless
+   * (`novu connect`) flow so the anonymous demo env has a demo runtime to use.
+   */
+  @IsOptional()
+  @IsBoolean()
+  readonly includeManagedClaude?: boolean;
 
   /**
    * Type of the environment the integrations are being created for. Used to decide

@@ -45,6 +45,16 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  /** Counts outbound agent messages in a conversation; used to enforce the keyless demo reply cap. */
+  async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _conversationId: conversationId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      type: ConversationActivityTypeEnum.MESSAGE,
+    });
+  }
+
   async createUserActivity(params: {
     identifier: string;
     conversationId: string;

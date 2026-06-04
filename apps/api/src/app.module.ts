@@ -19,6 +19,7 @@ import { ChangeModule } from './app/change/change.module';
 import { ChannelConnectionsModule } from './app/channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from './app/channel-endpoints/channel-endpoints.module';
 import { CliAuthModule } from './app/cli-auth/cli-auth.module';
+import { ConnectModule } from './app/connect/connect.module';
 import { ContentTemplatesModule } from './app/content-templates/content-templates.module';
 import { ContextsModule } from './app/contexts/contexts.module';
 import { DomainsModule } from './app/domains/domains.module';
@@ -133,6 +134,7 @@ const baseModules: Array<Type | DynamicModule | Promise<DynamicModule> | Forward
   OrganizationModule,
   ActivityModule,
   AgentsModule,
+  ConnectModule,
   DomainsModule.forRoot(),
   UserModule,
   IntegrationModule,

@@ -52,7 +52,9 @@ export async function createAgentRuntimeIntegration(
     name: input.name,
     active: true,
     credentials: input.credentials,
-    _environmentId: input.environmentId,
+    // Omit when empty (keyless mode has no client-side env id); the API then
+    // scopes to the session/keyless environment. Sending '' fails IsMongoId.
+    ...(input.environmentId ? { _environmentId: input.environmentId } : {}),
   });
   const body = res.data;
 
@@ -73,7 +75,9 @@ export async function createSlackIntegration(
     name: input.name,
     active: true,
     credentials: {},
-    _environmentId: input.environmentId,
+    // Omit when empty (keyless mode has no client-side env id); the API then
+    // scopes to the session/keyless environment. Sending '' fails IsMongoId.
+    ...(input.environmentId ? { _environmentId: input.environmentId } : {}),
   });
   const body = res.data;
 
@@ -90,7 +94,9 @@ export async function createTelegramIntegration(
     name: input.name,
     active: true,
     credentials: {},
-    _environmentId: input.environmentId,
+    // Omit when empty (keyless mode has no client-side env id); the API then
+    // scopes to the session/keyless environment. Sending '' fails IsMongoId.
+    ...(input.environmentId ? { _environmentId: input.environmentId } : {}),
   });
   const body = res.data;
 

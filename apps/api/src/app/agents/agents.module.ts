@@ -21,6 +21,7 @@ import {
 
 import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
+import { ConnectClaimTokenService } from '../connect/services/connect-claim-token.service';
 import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
@@ -115,6 +116,7 @@ import { USE_CASES } from './usecases';
     McpOAuthDiscoveryService,
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
+    ConnectClaimTokenService,
     CalculateLimitNovuIntegration,
     CalculateDemoClaudeQuota,
     CreateOrUpdateSubscriberUseCase,

@@ -7,6 +7,7 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { APP_IDS } from '@/utils/apps';
 import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
+import { resolvePendingConnectClaimReturnUrl } from '@/utils/connect-claim-pending';
 import {
   beginConnectProvisioning,
   buildConnectOrganizationName,
@@ -59,6 +60,17 @@ function isSlugTakenError(error: unknown): boolean {
 }
 
 function navigateToPostConnectOrgResolution(navigate: NavigateFunction, fallbackPath: string) {
+  // A pending keyless connect claim wins: route back to `/connect/claim` to merge the
+  // agent + conversation and show success, rather than the connect onboarding flow.
+  const pendingConnectClaimReturnUrl = resolvePendingConnectClaimReturnUrl();
+
+  if (pendingConnectClaimReturnUrl) {
+    clearConnectProvisioning();
+    window.location.assign(pendingConnectClaimReturnUrl);
+
+    return;
+  }
+
   const pendingCliAuthReturnUrl = resolvePendingCliAuthReturnUrl();
 
   if (pendingCliAuthReturnUrl) {

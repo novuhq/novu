@@ -257,6 +257,11 @@ export class AgentConversationService {
     return this.activityRepository.findByConversation(environmentId, conversationId, limit);
   }
 
+  /** Counts outbound agent messages in a conversation; used to enforce the keyless demo reply cap. */
+  async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
+    return this.activityRepository.countAgentMessages(environmentId, conversationId);
+  }
+
   async getConversation(
     conversationId: string,
     environmentId: string,

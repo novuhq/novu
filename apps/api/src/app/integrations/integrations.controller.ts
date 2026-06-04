@@ -48,6 +48,7 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
@@ -151,6 +152,7 @@ export class IntegrationsController {
     description: 'List all the channels integrations created in the organization',
   })
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_READ)
   async listIntegrations(@UserSession() user: UserSessionData): Promise<IntegrationResponseDto[]> {
@@ -162,7 +164,11 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+        // Keyless callers share a single backing org, so org-wide listing would
+        // leak other keyless sessions' integrations. Always scope keyless (and
+        // API key) callers to their own environment.
+        scopeToEnvironment:
+          user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.KEYLESS,
       })
     );
   }
@@ -231,6 +237,7 @@ export class IntegrationsController {
     Each provider supports different credentials, check the provider documentation for more details.`,
   })
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async createIntegration(
@@ -405,6 +412,7 @@ export class IntegrationsController {
     This action is irreversible.`,
   })
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async removeIntegration(
@@ -687,6 +695,7 @@ export class IntegrationsController {
   @SdkMethodName('generateConnectOAuthUrl')
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @RequireAuthentication()
   async generateConnectOAuthUrl(
     @UserSession() user: UserSessionData,
@@ -843,6 +852,7 @@ export class IntegrationsController {
     description: `Creates a Slack app from a manifest using the provided App Configuration Token and saves the resulting credentials (client ID, client secret, signing secret) directly on the integration. The configuration token is used ephemerally and is never stored.`,
   })
   @ApiExcludeEndpoint()
+  @KeylessAccessible()
   @RequireAuthentication()
   @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
   async slackQuickSetup(
@@ -865,14 +875,19 @@ export class IntegrationsController {
   }
 
   private assertEnvironmentScopedForApiKey(user: UserSessionData, requestedEnvironmentId?: string): void {
-    if (user.scheme !== ApiAuthSchemeEnum.API_KEY) {
+    // Keyless callers share a single backing org; pin them to their own
+    // environment exactly like API key callers so they can't target another
+    // keyless session's environment via `_environmentId`.
+    const isEnvironmentScopedScheme =
+      user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.KEYLESS;
+    if (!isEnvironmentScopedScheme) {
       return;
     }
 
     if (requestedEnvironmentId && requestedEnvironmentId !== user.environmentId) {
       throw new ForbiddenException(
-        'API key authentication is scoped to a single environment and cannot target a different `_environmentId`. ' +
-          'Use an API key from the target environment, or authenticate with a session token.'
+        'This authentication scheme is scoped to a single environment and cannot target a different `_environmentId`. ' +
+          'Use credentials from the target environment, or authenticate with a session token.'
       );
     }
   }

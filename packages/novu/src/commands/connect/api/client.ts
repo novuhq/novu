@@ -16,16 +16,42 @@ export class NovuApiError extends Error {
 export interface ConnectApiClient {
   readonly axios: AxiosInstance;
   readonly apiUrl: string;
+  /** True when the client authenticates with a keyless `pk_keyless_*` identifier instead of a secret key. */
+  readonly isKeyless: boolean;
 }
 
-export function createConnectApiClient(input: { apiUrl: string; secretKey: string }): ConnectApiClient {
+/**
+ * Builds the Connect API client. Pass `secretKey` for the standard authenticated
+ * flow, or `keylessApplicationIdentifier` (a `pk_keyless_*` value) for the
+ * anonymous keyless flow. Keyless requests authenticate via the `Keyless` scheme
+ * which the API resolves to the shared keyless org + per-session environment.
+ */
+export function createConnectApiClient(input: {
+  apiUrl: string;
+  secretKey?: string;
+  keylessApplicationIdentifier?: string;
+}): ConnectApiClient {
   const baseURL = input.apiUrl.replace(/\/$/, '');
   const debug = process.env.NOVU_CLI_DEBUG === '1' || process.env.NOVU_CLI_DEBUG === 'true';
+  const keylessIdentifier = input.keylessApplicationIdentifier?.trim();
+  const isKeyless = Boolean(keylessIdentifier);
+
+  if (!isKeyless && !input.secretKey) {
+    throw new Error('createConnectApiClient requires either a secretKey or a keylessApplicationIdentifier.');
+  }
+
+  const authHeaders = isKeyless
+    ? {
+        Authorization: `Keyless ${keylessIdentifier}`,
+        'Novu-Application-Identifier': keylessIdentifier as string,
+      }
+    : {
+        Authorization: `ApiKey ${input.secretKey}`,
+      };
+
   const instance = createNovuAxios({
     apiUrl: baseURL,
-    headers: {
-      Authorization: `ApiKey ${input.secretKey}`,
-    },
+    headers: authHeaders,
   });
 
   if (debug) {
@@ -67,5 +93,5 @@ export function createConnectApiClient(input: { apiUrl: string; secretKey: strin
     }
   );
 
-  return { axios: instance, apiUrl: baseURL };
+  return { axios: instance, apiUrl: baseURL, isKeyless };
 }

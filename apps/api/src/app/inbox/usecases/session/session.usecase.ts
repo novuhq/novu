@@ -543,6 +543,9 @@ export class Session {
         userId: user._id,
         name: 'Keyless Integration',
         channels: [ChannelTypeEnum.IN_APP],
+        // Provision the Novu-managed Claude demo agent integration so the keyless
+        // `novu connect` flow can create an agent on the default demo runtime.
+        includeManagedClaude: true,
       })
     );
 

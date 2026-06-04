@@ -1,6 +1,5 @@
 import open from 'open';
-import { resolveAuth } from '../../wizard/auth/resolve-auth';
-import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
+import { resolveConnectAuth, type ResolvedConnectAuth } from '../auth/resolve-connect-auth';
 import { CONNECT_EVENTS } from '../analytics/events';
 import {
   type AgentRecord,
@@ -25,7 +24,7 @@ export interface ConnectPipelineInput {
   ui: ConnectUI;
   onboardingSessionId?: string;
   onTrack?: (event: string, data?: Record<string, unknown>) => void;
-  onIdentityResolved?: (user: NonNullable<ResolvedAuth['user']>) => void;
+  onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
 }
 
 export interface ConnectPipelineResult {
@@ -41,7 +40,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     await ui.showWelcome();
 
     ui.authStarted();
-    const auth = await resolveAuth(toWizardAuthOptions(options), {
+    const auth = await resolveConnectAuth(options, {
       onStatus: (m) => ui.authStatus(m),
       onDashboardUrl: (u) => ui.authDashboardUrl(u),
       name: 'novu-connect',
@@ -50,14 +49,21 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, sessionProps),
       onAuthFailed: (message) => track(CONNECT_EVENTS.AUTH_FAILED, { ...sessionProps, message }),
     });
-    track(CONNECT_EVENTS.AUTH_COMPLETED, { source: auth.source, region: options.region, ...sessionProps });
+    track(CONNECT_EVENTS.AUTH_COMPLETED, {
+      source: auth.source,
+      region: options.region,
+      keyless: auth.isKeyless,
+      ...sessionProps,
+    });
     ui.authCompleted(auth.environmentName ?? null);
 
     if (auth.user?.id) {
       input.onIdentityResolved?.(auth.user);
     }
 
-    const client = createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
+    const client = auth.isKeyless
+      ? createConnectApiClient({ apiUrl: auth.apiUrl, keylessApplicationIdentifier: auth.keylessApplicationIdentifier })
+      : createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
 
     ui.listingAgents();
     const existingAgents = await listAgents(client);
@@ -277,7 +283,7 @@ async function generateAndPreviewAgent(
   }
 }
 
-async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedAuth): Promise<string> {
+async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedConnectAuth): Promise<string> {
   if (auth.user?.id) {
     const subscriberId = `connect:${auth.user.id}`;
     await upsertSubscriber(client, {
@@ -286,6 +292,16 @@ async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedA
       lastName: auth.user.lastName ?? undefined,
       email: auth.user.email ?? undefined,
     });
+
+    return subscriberId;
+  }
+
+  // Keyless sessions have no user; use a stable per-session subscriber id keyed
+  // off the keyless identifier so OAuth endpoint binding and the welcome DM
+  // resolve to the same subscriber, and so the claim flow can locate it later.
+  if (auth.isKeyless && auth.keylessApplicationIdentifier) {
+    const subscriberId = `connect-keyless:${auth.keylessApplicationIdentifier}`;
+    await upsertSubscriber(client, { subscriberId });
 
     return subscriberId;
   }
@@ -309,15 +325,4 @@ function describeError(err: unknown): string {
   if (err instanceof Error) return err.message;
 
   return String(err);
-}
-
-function toWizardAuthOptions(options: ConnectCommandOptions): WizardCommandOptions {
-  return {
-    secretKey: options.secretKey,
-    apiUrl: options.apiUrl,
-    dashboardUrl: options.dashboardUrl,
-    region: options.region,
-    yes: false,
-    ci: !!options.ci,
-  };
 }

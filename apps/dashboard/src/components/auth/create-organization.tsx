@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { OrganizationPicker } from '@/components/auth/organization-picker';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
+import { resolvePendingConnectClaimReturnUrl } from '@/utils/connect-claim-pending';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import {
@@ -59,9 +60,16 @@ function OrganizationForm() {
   // Only forward `?appId=` when it was set explicitly — hostname detection covers the rest.
   const explicitAppId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
   const pendingCliAuthReturnUrl = useMemo(() => resolvePendingCliAuthReturnUrl(), []);
+  // A pending keyless connect claim takes precedence: after creating their org the
+  // user should land on `/connect/claim` (which merges the agent + conversation and
+  // shows success), not the regular onboarding flow.
+  const pendingConnectClaimReturnUrl = useMemo(() => resolvePendingConnectClaimReturnUrl(), []);
   const afterCreateUrl =
-    pendingCliAuthReturnUrl ?? withAppId(getPostOrgCreateRoute(appId, isAgentsEnabled), explicitAppId);
-  const afterSelectUrl = pendingCliAuthReturnUrl ?? withAppId(ROUTES.ENV, explicitAppId);
+    pendingConnectClaimReturnUrl ??
+    pendingCliAuthReturnUrl ??
+    withAppId(getPostOrgCreateRoute(appId, isAgentsEnabled), explicitAppId);
+  const afterSelectUrl =
+    pendingConnectClaimReturnUrl ?? pendingCliAuthReturnUrl ?? withAppId(ROUTES.ENV, explicitAppId);
 
   const handleSignOut = useCallback(async () => {
     const fallbackUrl = buildAfterSignOutUrl();
