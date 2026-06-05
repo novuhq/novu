@@ -262,7 +262,6 @@ export class SessionObserver extends Agent<Env, State> {
         ...this.state.observation!,
         status: 'completed',
       });
-      void this.drainQueue(params);
 
       return;
     }
@@ -281,11 +280,10 @@ export class SessionObserver extends Agent<Env, State> {
         ...(this.state.observation ?? params),
         status: 'error',
       });
-      void this.drainQueue(params);
     }
   }
 
-  private async drainQueue(lastParams: ObservationParams): Promise<void> {
+  private async drainQueue(sessionId: string, lastParams: ObservationParams): Promise<void> {
     const row = this.ctx.storage.sql
       .exec<MessageQueueRow>('SELECT * FROM message_queue ORDER BY id LIMIT 1')
       .toArray()[0];
@@ -299,21 +297,25 @@ export class SessionObserver extends Agent<Env, State> {
 
     const request = JSON.parse(row.request_json);
     const webhook = JSON.parse(row.webhook_json);
+    const event = { type: 'queue-ready', request } as unknown as StreamPart;
+    const sequence = this.getNextSequence(sessionId);
+    this.persistEvent(sessionId, sequence, event);
 
-    const sequence = this.getNextSequence(row.session_id);
-    this.persistEvent(row.session_id, sequence, {
-      type: 'queue-ready',
-      request,
-    } as unknown as StreamPart);
-    this.triggerDelivery({
-      sessionId: row.session_id,
+    const drainParams: ObservationParams = {
+      sessionId,
       runId: row.run_id,
       turnId: row.turn_id,
       streamUrl: '',
       headers: {},
       provider: lastParams.provider,
       webhook,
-    });
+    };
+
+    const eventRow = this.getPendingEvents(sessionId)[0];
+    if (eventRow) {
+      await this.deliverOne(eventRow, event, drainParams);
+      this.cleanupEvents(sessionId);
+    }
   }
 
   private parseSSEEvent(
@@ -443,6 +445,7 @@ export class SessionObserver extends Agent<Env, State> {
           if (event.type === 'error') {
             this.cleanupEvents(sessionId);
             this.setState({ observation: null, queueState: this.state.queueState });
+            await this.drainQueue(sessionId, params);
 
             return;
           }
@@ -456,6 +459,7 @@ export class SessionObserver extends Agent<Env, State> {
             }
             this.cleanupEvents(sessionId);
             this.setState({ observation: null, queueState: this.state.queueState });
+            await this.drainQueue(sessionId, params);
 
             return;
           }
