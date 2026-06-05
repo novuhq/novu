@@ -33,7 +33,11 @@ export function clearPersistedAgentTemplateId(): void {
 }
 
 export function readActiveAgentTemplateId(urlValue?: string | null): string | undefined {
-  return urlValue?.trim() || readPersistedAgentTemplateId();
+  if (urlValue !== null && urlValue !== undefined) {
+    return urlValue.trim() || undefined;
+  }
+
+  return readPersistedAgentTemplateId();
 }
 
 // Reads the param from the current URL and persists it. Safe to call at module load on every
