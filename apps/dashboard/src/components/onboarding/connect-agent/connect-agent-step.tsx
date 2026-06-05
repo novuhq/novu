@@ -12,13 +12,13 @@ import {
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
 import {
-  AGENT_TEMPLATES,
   type AgentTemplate,
   buildManagedIntegrationCredentials,
   buildVerifyCredentialsPayload,
   buildVerifyFingerprint,
   type CreateAgentForm,
   type CreateAgentFormErrors,
+  findAgentTemplateById,
   hasCompleteManagedCredentials,
   hasFormErrors,
   type ManagedAgentRuntimeOverrides,
@@ -32,6 +32,7 @@ import { ClaudeIcon } from '@/components/icons/claude';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentTemplates } from '@/hooks/use-agent-templates';
 import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -39,6 +40,7 @@ import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-g
 import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
+import { clearPersistedAgentTemplateId } from '@/utils/agent-template-identity';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 import type { AgentGenerationMode } from './connect-agent-form';
@@ -106,6 +108,11 @@ type ConnectAgentStepProps = {
   onPreviewChange?: (preview: ConnectAgentPreview) => void;
   isManagedEnabled: boolean;
   /**
+   * Optional template id (Sanity `id.current`) coming from an external deep-link. When it matches a
+   * fetched template, the prompt + agent fields are prefilled once and the persisted id is cleared.
+   */
+  agentTemplateId?: string;
+  /**
    * Onboarding "demo agent" mode: renders only the simplified brain step (prompt + suggestions +
    * demo-credentials hint + full-width "Setup agent" CTA). The connector, template, and
    * credentials surfaces are hidden — the agent is provisioned on the Novu demo Claude credentials.
@@ -122,6 +129,7 @@ export function ConnectAgentStep({
   onRuntimeChange,
   onPreviewChange,
   isManagedEnabled,
+  agentTemplateId,
   simplifiedDemo,
 }: ConnectAgentStepProps) {
   const telemetry = useTelemetry();
@@ -129,6 +137,7 @@ export function ConnectAgentStep({
   const { currentEnvironment } = useEnvironment();
   const { submit, isPending } = useCreateAgentMutation();
   const { integrations } = useFetchIntegrations();
+  const { templates: agentTemplates } = useAgentTemplates();
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
@@ -150,6 +159,8 @@ export function ConnectAgentStep({
   // Set when the user cancels generation, so the in-flight submit bails before creating the agent
   // even if the aborted request's promise resolves (or settles late) instead of rejecting.
   const generationCancelledRef = useRef(false);
+  // Guards the deep-link template prefill so it runs at most once per template id.
+  const appliedTemplateIdRef = useRef<string | undefined>(undefined);
 
   const {
     generate: generateManagedAgent,
@@ -224,6 +235,28 @@ export function ConnectAgentStep({
   useEffect(() => {
     onRuntimeChange?.(runtime);
   }, [runtime, onRuntimeChange]);
+
+  // Deep-link prefill: when an `agentTemplateId` matches a fetched template, drop into prompt mode
+  // with the prompt + agent fields filled in. Runs once per id (templates may load asynchronously),
+  // then clears the persisted id so a refresh doesn't re-apply it.
+  useEffect(() => {
+    if (!agentTemplateId) return;
+    if (appliedTemplateIdRef.current === agentTemplateId) return;
+
+    const template = findAgentTemplateById(agentTemplates, agentTemplateId);
+    if (!template) return;
+
+    appliedTemplateIdRef.current = agentTemplateId;
+    setGenerationMode('prompt');
+    setPrompt(template.instructions);
+    setPromptError(undefined);
+    setName(template.name);
+    if (!isIdentifierTouched) {
+      setIdentifier(slugify(template.name));
+    }
+    setInstructions(template.instructions);
+    clearPersistedAgentTemplateId();
+  }, [agentTemplateId, agentTemplates, isIdentifierTouched]);
 
   const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
   const isSubmitBusy = isPending || isGenerating || isPromptSubmitInFlight;
@@ -843,7 +876,7 @@ export function ConnectAgentStep({
                 prompt,
                 onPromptChange: handlePromptChange,
                 promptError,
-                suggestions: AGENT_TEMPLATES,
+                suggestions: agentTemplates,
                 onSelectSuggestion: handleSelectSuggestion,
                 textareaRef: promptTextareaRef,
                 isGenerating: isSubmitBusy,

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { type AgentTemplate } from '@/components/agents/create-agent-fields';
+import { type AgentTemplate, type McpServerPreview } from '@/components/agents/create-agent-fields';
 import { McpIcon } from '@/components/agents/mcp-icon';
 import { OrbIcon } from '@/components/icons/orb';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
@@ -42,11 +42,12 @@ type SuggestionPillProps = {
 
 function SuggestionPill({ suggestion, disabled, onSelect }: SuggestionPillProps) {
   const { visibleIcons, overflowCount } = useMemo(() => {
-    const visible = suggestion.suggestedMcpServers.slice(0, VISIBLE_INTEGRATION_ICONS);
-    const overflow = Math.max(0, suggestion.suggestedMcpServers.length - VISIBLE_INTEGRATION_ICONS);
+    const servers: McpServerPreview[] = suggestion.mcpServers ?? suggestion.suggestedMcpServers.map((id) => ({ id }));
+    const visible = servers.slice(0, VISIBLE_INTEGRATION_ICONS);
+    const overflow = Math.max(0, servers.length - VISIBLE_INTEGRATION_ICONS);
 
     return { visibleIcons: visible, overflowCount: overflow };
-  }, [suggestion.suggestedMcpServers]);
+  }, [suggestion.mcpServers, suggestion.suggestedMcpServers]);
 
   return (
     <button
@@ -64,12 +65,12 @@ function SuggestionPill({ suggestion, disabled, onSelect }: SuggestionPillProps)
       </span>
       {(visibleIcons.length > 0 || overflowCount > 0) && (
         <span className="inline-flex items-center gap-0.5">
-          {visibleIcons.map((id) => (
+          {visibleIcons.map((server) => (
             <span
-              key={id}
+              key={server.id}
               className="border-stroke-soft-100 inline-flex size-[18px] items-center justify-center rounded-[4px] border bg-[#fbfbfb]"
             >
-              <McpIcon mcpId={id} className="size-[14px]" />
+              <McpIcon mcpId={server.id} className="size-[14px]" />
             </span>
           ))}
           {overflowCount > 0 && (

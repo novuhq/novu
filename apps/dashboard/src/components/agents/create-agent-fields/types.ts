@@ -4,12 +4,38 @@ export type RuntimeType = 'scratch' | 'claude' | 'vertex';
 
 export type CreateAgentMode = 'create' | 'existing';
 
+/**
+ * Normalized MCP server reference for a template pill. `iconUrl` is set when the icon comes from a
+ * remote source (e.g. Sanity); otherwise the pill falls back to the local `McpIcon` keyed by `id`.
+ */
+export type McpServerPreview = {
+  id: string;
+  name?: string;
+  iconUrl?: string;
+};
+
 export type AgentTemplate = {
+  /** Stable identifier used to match an incoming `agentTemplateId` (Sanity `id.current`). */
+  templateId?: string;
   label: string;
   name: string;
   instructions: string;
+  /** MCP server ids (e.g. `sentry`, `datadog`). Drives the pill icons via the local `McpIcon`. */
   suggestedMcpServers: string[];
+  /** Richer MCP server data (with remote icon URLs) used by the pills when available. */
+  mcpServers?: McpServerPreview[];
 };
+
+export function findAgentTemplateById(
+  templates: AgentTemplate[],
+  id: string | undefined | null
+): AgentTemplate | undefined {
+  if (!id) {
+    return undefined;
+  }
+
+  return templates.find((template) => template.templateId === id);
+}
 
 export type CreateAgentForm = {
   name: string;
@@ -75,6 +101,7 @@ export const AWS_CLAUDE_API_KEYS_HREF =
 
 export const AGENT_TEMPLATES: AgentTemplate[] = [
   {
+    templateId: 'incident-triage',
     label: 'Incident Triage',
     name: 'Incident Triage Agent',
     instructions: `You are an on-call engineer. When the user asks about production issues or error spikes:
@@ -105,6 +132,7 @@ Rules:
     suggestedMcpServers: ['sentry', 'datadog'],
   },
   {
+    templateId: 'ship-and-track',
     label: 'Ship & Track',
     name: 'Ship & Track Agent',
     instructions: `You are an engineering lead assistant. When the user asks about shipping work, PRs, or sprint progress:
@@ -136,6 +164,7 @@ Rules:
     suggestedMcpServers: ['github', 'linear'],
   },
   {
+    templateId: 'feature-adoption',
     label: 'Feature Adoption',
     name: 'Feature Adoption Agent',
     instructions: `You are a product engineer focused on launch quality. When the user asks about a feature rollout, experiment, or funnel:
