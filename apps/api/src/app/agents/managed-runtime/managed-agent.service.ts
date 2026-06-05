@@ -11,7 +11,7 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { type Message, MessageRole } from '@novu/thalamus';
+import { type Message, MessageRole, type SerializedRequestParams } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
@@ -274,7 +274,45 @@ export class ManagedAgentService implements OnModuleInit {
     return createWebhookHandler({
       secret,
       onSessionEvents: (context) => this.eventHandler.createHandlers(context),
+      onQueueReady: async (params) => {
+        /**
+         * The observer queued this message while a previous turn was running.
+         * It can't dispatch directly (no SDK/credentials), so it sends the
+         * original request params back here for us to dispatch via the provider.
+         */
+        await this.handleQueueReady(params);
+      },
     });
+  }
+
+  private async handleQueueReady(params: {
+    sessionId: string;
+    runId: string;
+    turnId: string;
+    request: SerializedRequestParams;
+  }): Promise<void> {
+    const metadata = params.request.webhookMetadata;
+    if (!metadata?.agentIdentifier || !metadata?.environmentId) {
+      this.logger.warn({ sessionId: params.sessionId }, 'queue-ready missing agentIdentifier or environmentId');
+
+      return;
+    }
+
+    const provider = await this.providerFactory.tryGetProviderByAgentIdentifier(
+      metadata.agentIdentifier,
+      metadata.environmentId
+    );
+
+    if (!provider) {
+      this.logger.warn(
+        { sessionId: params.sessionId, agentIdentifier: metadata.agentIdentifier },
+        'queue-ready: could not resolve provider'
+      );
+
+      return;
+    }
+
+    await provider.dispatchQueued(params.sessionId, params.runId, params.turnId, params.request);
   }
 
   private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
