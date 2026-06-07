@@ -15,6 +15,7 @@ import { AgentRuntimeProviderIdEnum, type ICredentialsDto, MCP_SERVERS, McpConne
 import type { ClientSession } from 'mongoose';
 import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
 import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/resolve-mcp-servers';
+import { sanitizeUrlForLogging } from '../../../mcp/sanitize-url-for-logging';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
 export type ProvisionManagedAgentOptions = {
@@ -117,7 +118,10 @@ export class ProvisionManagedAgent {
             agentId: command.agentId,
             externalAgentId,
             providerId: runtimeProviderId,
-            unmatched: unmatched.map((entry) => ({ name: entry.name, url: entry.url })),
+            unmatched: unmatched.map((entry) => ({
+              name: entry.name,
+              url: entry.url ? sanitizeUrlForLogging(entry.url) : entry.url,
+            })),
           },
           `Dropping ${unmatched.length} provider MCP server(s) with no matching catalog entry during adoption. ` +
             'Rows are skipped so Mongo never points at servers Novu cannot render in the picker.'
