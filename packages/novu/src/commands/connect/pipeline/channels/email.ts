@@ -12,7 +12,8 @@ export async function connectEmailForAgent(
   client: ConnectApiClient,
   agent: AgentSummary,
   ui: ConnectUI,
-  track: (event: string, data?: Record<string, unknown>) => void
+  track: (event: string, data?: Record<string, unknown>) => void,
+  opts?: { sendFromEmail?: string; canGoBack?: boolean }
 ): Promise<{ connected: boolean; integration: IntegrationRecord }> {
   ui.addingEmailIntegration();
 
@@ -48,9 +49,14 @@ export async function connectEmailForAgent(
   const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
   const mailtoUrl = `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  await ui.awaitEmailOpen({ inboundAddress, mailtoUrl });
+  await ui.awaitEmailOpen({
+    inboundAddress,
+    mailtoUrl,
+    sendFromEmail: opts?.sendFromEmail,
+    canGoBack: opts?.canGoBack,
+  });
   void open(mailtoUrl).catch(() => undefined);
-  ui.showEmailWaiting({ inboundAddress });
+  ui.showEmailWaiting({ inboundAddress, sendFromEmail: opts?.sendFromEmail });
 
   const connected = await pollForAgentLinkConnected(client, agent.identifier, integration.identifier, {
     intervalMs: CHANNEL_POLL_INTERVAL_MS,

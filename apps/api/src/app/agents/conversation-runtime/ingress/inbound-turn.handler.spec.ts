@@ -134,9 +134,7 @@ describe('AgentInboundHandler', () => {
     };
     const connectClaimTokenService = {
       issue: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
-      issueOrGetForEnvironment: sinon
-        .stub()
-        .resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
+      issueOrGetForEnvironment: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
       isSignupCtaPosted: sinon.stub().resolves(false),
       tryMarkSignupCtaPosted: sinon.stub().resolves(true),
     };
@@ -216,6 +214,41 @@ describe('AgentInboundHandler', () => {
         ts: '1777837477.371619',
       },
       attachments: [],
+    };
+  }
+
+  function makeEmailDmThread() {
+    return {
+      id: 'email:thread1:',
+      channelId: 'email:thread1',
+      isDM: true,
+      toJSON: () => ({ id: 'email:thread1:', channelId: 'email:thread1', isDM: true }),
+      startTyping: sinon.stub().resolves(undefined),
+      post: sinon.stub().resolves({ id: 'email-reply-1', threadId: 'email:thread1:' }),
+    };
+  }
+
+  function makeEmailDmMessage(senderEmail: string) {
+    return {
+      id: 'email-msg-1',
+      threadId: 'email:thread1:',
+      text: 'hello',
+      author: {
+        userId: senderEmail,
+        fullName: 'Unknown Sender',
+        userName: senderEmail,
+        isBot: false,
+      },
+      raw: {},
+      attachments: [],
+    };
+  }
+
+  function makeManagedAgentStub() {
+    return {
+      _id: 'agent1',
+      runtime: 'managed',
+      managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
     };
   }
 
@@ -382,11 +415,7 @@ describe('AgentInboundHandler', () => {
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves({
-          _id: 'agent1',
-          runtime: 'managed',
-          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
-        }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
       const thread = makeSlackDmThread();
       const message = makeSlackDmMessage();
@@ -398,6 +427,29 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
         markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
       });
+    });
+
+    it('should reply with email-specific no-access message when sender email is unknown', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+      };
+      const senderEmail = 'unknown@example.com';
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
     });
   });
 
