@@ -83,17 +83,47 @@ function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): Conne
   return 'idle';
 }
 
+/**
+ * Snapshot of the connect-phase form values that drives the right-side preview illustration
+ * for managed Claude connectors. Includes everything the illustration needs to render the
+ * agent card without having to introspect any of the form's internal state.
+ */
+export type ConnectAgentPreview = {
+  connectorId: ConnectorId;
+  isClaudeSelected: boolean;
+  isDemoCredential: boolean;
+  isPending: boolean;
+  name?: string;
+  description?: string;
+  instructions?: string;
+  mcpServers: ReadonlyArray<string>;
+  tools: ReadonlyArray<string>;
+};
+
 type ConnectAgentStepProps = {
   onAgentCreated: (agent: AgentResponse, summary: ConnectSummary) => void;
   onRuntimeChange?: (runtime: RuntimeType) => void;
+  onPreviewChange?: (preview: ConnectAgentPreview) => void;
   isManagedEnabled: boolean;
+  /**
+   * Onboarding "demo agent" mode: renders only the simplified brain step (prompt + suggestions +
+   * demo-credentials hint + full-width "Setup agent" CTA). The connector, template, and
+   * credentials surfaces are hidden — the agent is provisioned on the Novu demo Claude credentials.
+   */
+  simplifiedDemo?: boolean;
 };
 
 const DEFAULT_TEMPLATE = DEFAULT_AGENT_TEMPLATES[0];
 
 const MIN_PROMPT_LENGTH = 8;
 
-export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEnabled }: ConnectAgentStepProps) {
+export function ConnectAgentStep({
+  onAgentCreated,
+  onRuntimeChange,
+  onPreviewChange,
+  isManagedEnabled,
+  simplifiedDemo,
+}: ConnectAgentStepProps) {
   const telemetry = useTelemetry();
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
@@ -117,6 +147,9 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   // animation flickers off in between `isGenerating` and `isPending` and reveals the
   // submit button momentarily.
   const [isPromptSubmitInFlight, setIsPromptSubmitInFlight] = useState(false);
+  // Set when the user cancels generation, so the in-flight submit bails before creating the agent
+  // even if the aborted request's promise resolves (or settles late) instead of rejecting.
+  const generationCancelledRef = useRef(false);
 
   const {
     generate: generateManagedAgent,
@@ -191,6 +224,61 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   useEffect(() => {
     onRuntimeChange?.(runtime);
   }, [runtime, onRuntimeChange]);
+
+  const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
+  const isSubmitBusy = isPending || isGenerating || isPromptSubmitInFlight;
+
+  // Build a preview snapshot for the right-side illustration. Pulls instructions / MCPs from
+  // the active template (or the manual form fields when "Start from scratch" is picked) so the
+  // managed Claude card stays in sync with what the user is choosing before submission.
+  useEffect(() => {
+    if (!onPreviewChange) return;
+
+    const trimmedInstructions = instructions.trim();
+    const trimmedName = name.trim();
+    let previewName: string | undefined;
+    let previewInstructions: string | undefined;
+    let previewMcpServers: ReadonlyArray<string> = [];
+
+    if (useAiGeneration) {
+      // In the prompt flow, the connect-phase form doesn't carry a name/instructions yet — those
+      // only materialize after the LLM call inside handleSubmit. While in `manual` mode the
+      // textareas are bound to `name`/`instructions` directly, so surface those for the preview.
+      if (generationMode === 'manual') {
+        previewName = trimmedName || undefined;
+        previewInstructions = trimmedInstructions || undefined;
+      }
+    } else if (templateSelection.kind === 'template') {
+      previewName = templateSelection.template.name;
+      previewInstructions = templateSelection.template.instructions;
+      previewMcpServers = templateSelection.template.suggestedMcpServers;
+    } else if (templateSelection.kind === 'scratch') {
+      previewName = trimmedName || undefined;
+      previewInstructions = trimmedInstructions || undefined;
+    }
+
+    onPreviewChange({
+      connectorId,
+      isClaudeSelected,
+      isDemoCredential: isDemoProviderSelected,
+      isPending: isSubmitBusy,
+      name: previewName,
+      instructions: previewInstructions,
+      mcpServers: previewMcpServers,
+      tools: [],
+    });
+  }, [
+    onPreviewChange,
+    connectorId,
+    isClaudeSelected,
+    isDemoProviderSelected,
+    isSubmitBusy,
+    useAiGeneration,
+    generationMode,
+    templateSelection,
+    name,
+    instructions,
+  ]);
 
   // When the connector changes away from a managed runtime, the "Use an existing agent" mode is
   // no longer reachable — collapse back to scratch so the form fields stay consistent.
@@ -335,7 +423,9 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   }, []);
 
   const handleCancelGeneration = useCallback(() => {
+    generationCancelledRef.current = true;
     cancelGeneration();
+    setIsPromptSubmitInFlight(false);
   }, [cancelGeneration]);
 
   const handleTemplateChange = (next: TemplateSelection) => {
@@ -506,6 +596,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     let effectiveName = name;
     let effectiveIdentifier = identifier;
     let effectiveInstructions = instructions;
+    let effectiveDescription = instructions;
     let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
 
     if (isPromptGenerationMode) {
@@ -531,6 +622,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         }
       }
 
+      generationCancelledRef.current = false;
       setIsPromptSubmitInFlight(true);
 
       try {
@@ -550,8 +642,17 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         return;
       }
 
+      // The user cancelled while the request was in flight — bail before creating the agent even
+      // if the aborted request still resolved.
+      if (generationCancelledRef.current) {
+        setIsPromptSubmitInFlight(false);
+
+        return;
+      }
+
       effectiveName = generated.name;
       effectiveIdentifier = generated.identifier;
+      effectiveDescription = generated.description;
       effectiveInstructions = generated.systemPrompt;
       managedOverrides = {
         systemPrompt: generated.systemPrompt,
@@ -574,6 +675,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     const form: CreateAgentForm = {
       name: effectiveName,
       identifier: effectiveIdentifier,
+      description: effectiveDescription,
       instructions: effectiveInstructions,
       apiKey,
       runtime,
@@ -608,6 +710,15 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       promptLength: isPromptGenerationMode ? prompt.trim().length : undefined,
     });
 
+    // Surface the MCPs/tools captured for the just-created agent so downstream consumers (like
+    // the managed-Claude preview illustration) can show them. Prefer the LLM-generated payload
+    // — when absent (static template / scratch), fall back to the template's suggested MCPs so
+    // the preview keeps showing what the user picked.
+    const summaryMcpServers =
+      managedOverrides?.mcpServers ??
+      (templateSelection.kind === 'template' ? templateSelection.template.suggestedMcpServers : []);
+    const summaryTools = managedOverrides?.tools ?? [];
+
     const summary: ConnectSummary = {
       connectorId,
       templateSelection,
@@ -621,6 +732,8 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       region: region.trim() || undefined,
       selectedIntegrationId,
       integrationName,
+      mcpServers: summaryMcpServers,
+      tools: summaryTools,
     };
 
     await submit(
@@ -628,6 +741,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         name: effectiveName.trim(),
         identifier: effectiveIdentifier.trim(),
         instructions: effectiveInstructions.trim(),
+        description: effectiveDescription.trim(),
         apiKey: apiKey.trim(),
         runtime,
         isExistingMode,
@@ -666,10 +780,19 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     );
   };
 
-  const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
-  const isSubmitBusy = isPending || isGenerating || isPromptSubmitInFlight;
-
-  const submitButton = (
+  const submitButton = simplifiedDemo ? (
+    <Button
+      type="submit"
+      variant="secondary"
+      mode="filled"
+      size="2xs"
+      className="mt-1 w-full justify-center gap-1"
+      isLoading={isSubmitBusy}
+      trailingIcon={RiArrowRightSLine}
+    >
+      Setup agent
+    </Button>
+  ) : (
     <Button
       type="submit"
       variant="secondary"
@@ -776,6 +899,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         onVerify={handleVerify}
         onSaveIntegration={handleSaveIntegration}
         submitSlot={useAiGeneration || isScratchRuntime ? submitButton : undefined}
+        simplifiedDemo={simplifiedDemo}
       />
 
       {!useAiGeneration && !isScratchRuntime && <div className="flex flex-col gap-2 pl-6">{submitButton}</div>}

@@ -2,8 +2,8 @@ import { EmailProviderIdEnum, type IIntegration } from '@novu/shared';
 import type { AgentIntegrationLink } from '@/api/agents';
 import { ProviderCards } from './provider-cards';
 import { SetupStep } from './setup-guide-primitives';
-import { SharedInboundAddressField } from './shared-inbound-address-field';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { SharedInboundAddressField } from './shared-inbound-address-field';
 
 type AgentListenStepProps = {
   index: number;
@@ -30,8 +30,7 @@ export function AgentListenStep({
   existingLinks,
   onSelect,
 }: AgentListenStepProps) {
-  const isEmailSelected =
-    selectedProviderId === EmailProviderIdEnum.NovuAgent && Boolean(selectedIntegrationId);
+  const isEmailSelected = selectedProviderId === EmailProviderIdEnum.NovuAgent && Boolean(selectedIntegrationId);
 
   return (
     <SetupStep
@@ -47,7 +46,6 @@ export function AgentListenStep({
             agentName={agentName}
             selectedIntegrationId={selectedIntegrationId}
             existingLinks={existingLinks}
-            showCloudEmailCard
             onSelect={onSelect}
           />
           {isEmailSelected ? <SharedInboundAddressField sharedInboundAddress={sharedInboundAddress} /> : null}

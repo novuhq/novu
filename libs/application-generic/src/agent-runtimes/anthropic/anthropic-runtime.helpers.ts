@@ -229,9 +229,7 @@ export type ManagedAgentPermissionConfig =
   | typeof MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG
   | typeof MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG;
 
-export function resolveManagedAgentPermissionConfig(
-  useAlwaysAllow: boolean | undefined
-): ManagedAgentPermissionConfig {
+export function resolveManagedAgentPermissionConfig(useAlwaysAllow: boolean | undefined): ManagedAgentPermissionConfig {
   if (useAlwaysAllow) {
     return MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG;
   }

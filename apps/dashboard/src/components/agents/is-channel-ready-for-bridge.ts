@@ -22,8 +22,7 @@ export function isChannelReadyForBridge({
   if (useCloudMergedListenStep && selectedProviderId === EmailProviderIdEnum.NovuAgent) {
     const novuLink = agentIntegrationLinks.find(
       (link) =>
-        link.integration.providerId === EmailProviderIdEnum.NovuAgent &&
-        link.integration._id === selectedIntegrationId
+        link.integration.providerId === EmailProviderIdEnum.NovuAgent && link.integration._id === selectedIntegrationId
     );
 
     return Boolean(novuLink && isAgentIntegrationConnected(novuLink));

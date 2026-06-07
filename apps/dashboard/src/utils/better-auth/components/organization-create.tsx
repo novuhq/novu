@@ -1,10 +1,10 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
+import { AutoCreateConnectOrganization } from '@/components/auth/auto-create-connect-organization';
 import { Avatar, AvatarFallback } from '@/components/primitives/avatar';
 import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
-import { AutoCreateConnectOrganization } from '@/components/auth/auto-create-connect-organization';
 import { isManualOrgCreationAllowed } from '@/utils/connect';
 import { ROUTES } from '@/utils/routes';
 import { useTelemetry } from '../../../hooks/use-telemetry';

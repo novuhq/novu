@@ -1,9 +1,6 @@
 import { expect } from 'chai';
 import sinon from 'sinon';
-import {
-  AGENT_ACTION_TOKEN_PREFIX,
-  AgentActionTokenService,
-} from './agent-action-token.service';
+import { AGENT_ACTION_TOKEN_PREFIX, AgentActionTokenService } from './agent-action-token.service';
 import { encodedTelegramCallbackDataByteLength } from './card-callback-button.walker';
 
 describe('AgentActionTokenService', () => {
@@ -214,8 +211,7 @@ describe('AgentActionTokenService', () => {
       }),
     });
 
-    const longActionId =
-      'mcp-approval:deny:sevt_01Xa5zpiCUkjKH8a6zShGUZj:550e8400-e29b-41d4-a716-446655440000';
+    const longActionId = 'mcp-approval:deny:sevt_01Xa5zpiCUkjKH8a6zShGUZj:550e8400-e29b-41d4-a716-446655440000';
     const card = {
       type: 'card',
       children: [

@@ -26,9 +26,10 @@ function AgentsPill({ children, className }: AgentsPillProps) {
 
 type AgentsEmptyTeaserProps = {
   cta: ReactNode;
+  isConnectApp?: boolean;
 };
 
-export function AgentsEmptyTeaser({ cta }: AgentsEmptyTeaserProps) {
+export function AgentsEmptyTeaser({ cta, isConnectApp = false }: AgentsEmptyTeaserProps) {
   return (
     <div className="flex h-full flex-col items-center justify-center px-4 py-10 md:px-8">
       <div className="flex w-full max-w-[800px] flex-col items-stretch gap-12">
@@ -43,10 +44,14 @@ export function AgentsEmptyTeaser({ cta }: AgentsEmptyTeaserProps) {
         <div className="flex w-full max-w-[700px] flex-col items-start gap-3 self-start">
           <div className="flex flex-col gap-1 text-left">
             <p className="text-text-strong text-[16px] font-medium leading-6 tracking-[-0.176px]">
-              Connect your agent. Everywhere your team works.
+              {isConnectApp
+                ? 'Connect your agent. Everywhere your team works.'
+                : 'Connect your agent. Everywhere your customers are.'}
             </p>
             <p className="text-text-soft text-[14px] font-medium leading-5 tracking-[-0.084px]">
-              Give it a voice in every channel your team uses.
+              {isConnectApp
+                ? 'Give it a voice in every channel your team uses.'
+                : 'A unified API to connect AI SDK/Langchain/Claude managed agents to any channel'}
             </p>
           </div>
 
@@ -74,23 +79,25 @@ export function AgentsEmptyTeaser({ cta }: AgentsEmptyTeaserProps) {
               <span>Authorize tools mid-conversation. No setup gauntlets.</span>
             </li>
 
-            <li className="text-text-sub flex flex-wrap items-center gap-1 text-[14px] font-medium leading-5 tracking-[-0.084px]">
-              <RiCheckLine className="text-success size-3 shrink-0" aria-hidden />
-              <span>Connect tools and MCPs</span>
-              <AgentsPill className="-rotate-1">
-                <RiGithubFill className="size-3.5 shrink-0" aria-hidden />
-                <span>GitHub</span>
-              </AgentsPill>
-              <AgentsPill className="rotate-1">
-                <SiLinear className="size-3.5 shrink-0 text-[#5C6BF1]" aria-hidden />
-                <span>Linear</span>
-              </AgentsPill>
-              <AgentsPill className="-rotate-1">
-                <SiNotion className="text-text-strong size-3.5 shrink-0" aria-hidden />
-                <span>Notion</span>
-              </AgentsPill>
-              <span>and custom tools your team works on.</span>
-            </li>
+            {isConnectApp ? (
+              <li className="text-text-sub flex flex-wrap items-center gap-1 text-[14px] font-medium leading-5 tracking-[-0.084px]">
+                <RiCheckLine className="text-success size-3 shrink-0" aria-hidden />
+                <span>Connect tools and MCPs</span>
+                <AgentsPill className="-rotate-1">
+                  <RiGithubFill className="size-3.5 shrink-0" aria-hidden />
+                  <span>GitHub</span>
+                </AgentsPill>
+                <AgentsPill className="rotate-1">
+                  <SiLinear className="size-3.5 shrink-0 text-[#5C6BF1]" aria-hidden />
+                  <span>Linear</span>
+                </AgentsPill>
+                <AgentsPill className="-rotate-1">
+                  <SiNotion className="text-text-strong size-3.5 shrink-0" aria-hidden />
+                  <span>Notion</span>
+                </AgentsPill>
+                <span>and custom tools your team works on.</span>
+              </li>
+            ) : null}
           </ul>
 
           <div className="flex w-full justify-start">{cta}</div>

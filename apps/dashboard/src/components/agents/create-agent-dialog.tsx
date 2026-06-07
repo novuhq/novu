@@ -551,6 +551,7 @@ export function CreateAgentDialog({
     let effectiveName = name;
     let effectiveIdentifier = identifier;
     let effectiveInstructions = instructions;
+    let effectiveDescription = instructions;
     let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
 
     if (isPromptGenerationMode) {
@@ -598,6 +599,7 @@ export function CreateAgentDialog({
       effectiveName = generated.name;
       effectiveIdentifier = generated.identifier;
       effectiveInstructions = generated.systemPrompt;
+      effectiveDescription = generated.description;
       managedOverrides = {
         systemPrompt: generated.systemPrompt,
         tools: generated.tools,
@@ -608,6 +610,7 @@ export function CreateAgentDialog({
 
     const nextErrors = validateCreateAgentForm({
       name: effectiveName,
+      description: effectiveDescription,
       identifier: effectiveIdentifier,
       instructions: effectiveInstructions,
       apiKey,
@@ -641,6 +644,7 @@ export function CreateAgentDialog({
         name: effectiveName.trim(),
         identifier: effectiveIdentifier.trim(),
         instructions: effectiveInstructions.trim(),
+        description: effectiveDescription.trim(),
         apiKey: apiKey.trim(),
         runtime,
         isExistingMode,

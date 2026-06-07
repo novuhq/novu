@@ -13,8 +13,8 @@ import {
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, type ICredentialsDto, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
-import { resolveMcpServersById } from '../../../mcp/resolve-mcp-servers';
 import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
+import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/resolve-mcp-servers';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
 export type ProvisionManagedAgentOptions = {
@@ -87,14 +87,42 @@ export class ProvisionManagedAgent {
 
     let externalAgentId: string;
     let adoptedName: string | undefined;
+    // Catalog ids (e.g. "slack") to seed `agent_mcp_server` rows with. In
+    // provision mode this is exactly what the caller passed. In adopt mode
+    // we derive it from the provider's live MCP server list so Mongo mirrors
+    // whatever is already wired upstream.
+    let mcpIdsToPersist: string[] | undefined;
 
     if (command.externalAgentId) {
       // ── Adopt mode ────────────────────────────────────────────────────────
-      // A single getAgent() call validates both auth (401) and existence (404).
-      const agentInfo = await runtimeProvider.getAgent(command.externalAgentId);
+      // getAgent() validates both auth (401) and existence (404). Run it in
+      // parallel with getConfig() so the extra round-trip needed to fetch the
+      // upstream MCP list doesn't add to total latency. If either rejects,
+      // Promise.all surfaces the same `AgentRuntime*Error` shapes the caller
+      // already handles.
+      const [agentInfo, providerConfig] = await Promise.all([
+        runtimeProvider.getAgent(command.externalAgentId),
+        runtimeProvider.getConfig(command.externalAgentId),
+      ]);
 
       externalAgentId = agentInfo.externalAgentId;
       adoptedName = agentInfo.name;
+
+      const { matchedIds, unmatched } = resolveProviderMcpServerIds(providerConfig.mcpServers ?? []);
+      mcpIdsToPersist = matchedIds;
+
+      if (unmatched.length > 0) {
+        this.logger.warn(
+          {
+            agentId: command.agentId,
+            externalAgentId,
+            providerId: runtimeProviderId,
+            unmatched: unmatched.map((entry) => ({ name: entry.name, url: entry.url })),
+          },
+          `Dropping ${unmatched.length} provider MCP server(s) with no matching catalog entry during adoption. ` +
+            'Rows are skipped so Mongo never points at servers Novu cannot render in the picker.'
+        );
+      }
     } else {
       // ── Provision mode ────────────────────────────────────────────────────
       await runtimeProvider.validateCredentials(validateCredentialsInput);
@@ -117,6 +145,7 @@ export class ProvisionManagedAgent {
       });
 
       externalAgentId = response.externalAgentId;
+      mcpIdsToPersist = command.mcpServers;
     }
 
     // Snapshot the pre-update runtime fields so we can compensate when the
@@ -167,13 +196,13 @@ export class ProvisionManagedAgent {
       agentRuntimePersisted = true;
 
       // Mongo is the source of truth for the agent's MCP list. Mirror the
-      // initial set sent to the provider as `agent_mcp_server` rows so the
-      // dashboard and runtime config endpoints can read them directly.
-      // In adopt mode we do not know the authoritative set on the provider
-      // until a separate reconcile step (out of scope here), so skip
-      // seeding to avoid writing rows that disagree with the provider.
-      if (!command.externalAgentId && command.mcpServers?.length) {
-        await this.persistAgentMcpServers(command, session);
+      // catalog ids resolved above as `agent_mcp_server` rows so the
+      // dashboard and runtime config endpoints can read them directly. In
+      // provision mode this is the set we just sent to the provider; in
+      // adopt mode it's what the provider reported back, projected onto the
+      // catalog. Either way, Mongo never silently disagrees with upstream.
+      if (mcpIdsToPersist?.length) {
+        await this.persistAgentMcpServers(mcpIdsToPersist, command, session);
       }
     } catch (mongoError) {
       this.logger.error({ err: mongoError }, 'Failed to persist managed runtime on agent after provisioning');
@@ -301,17 +330,18 @@ export class ProvisionManagedAgent {
   }
 
   private async persistAgentMcpServers(
+    mcpIds: string[],
     command: ProvisionManagedAgentCommand,
     session: ClientSession | null
   ): Promise<void> {
-    if (!command.mcpServers?.length) {
+    if (!mcpIds.length) {
       return;
     }
 
     const syncedAt = new Date();
     const writeOptions = session ? { session } : {};
 
-    for (const mcpId of command.mcpServers) {
+    for (const mcpId of mcpIds) {
       const catalog = MCP_SERVERS.find((entry) => entry.id === mcpId);
 
       if (!catalog || !catalog.oauth) {

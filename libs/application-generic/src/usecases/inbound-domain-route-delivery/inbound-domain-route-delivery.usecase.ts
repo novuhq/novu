@@ -28,7 +28,9 @@ import { AttachmentRehydrator } from './attachment-rehydrator';
 const MAX_INLINE_ATTACHMENT_BYTES = 5 * 1024 * 1024;
 const MAX_HEADERS_BYTES = 16 * 1024;
 
-function normalizeMailHeaders(headers: InboundDomainRouteMailInput['headers'] | undefined): Record<string, string> | undefined {
+function normalizeMailHeaders(
+  headers: InboundDomainRouteMailInput['headers'] | undefined
+): Record<string, string> | undefined {
   if (!headers) {
     return undefined;
   }

@@ -183,8 +183,7 @@ function CliAuthContent() {
     return null;
   })();
 
-  const canAuthorize =
-    !reason && !isAuthorizeDataLoading && !!apiKey && !isAuthorizing && !didAuthorize;
+  const canAuthorize = !reason && !isAuthorizeDataLoading && !!apiKey && !isAuthorizing && !didAuthorize;
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {

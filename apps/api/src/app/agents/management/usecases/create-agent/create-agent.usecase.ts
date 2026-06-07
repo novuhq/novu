@@ -10,8 +10,10 @@ import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository
 import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentCreated } from '../../../shared/analytics/agent-analytics';
-import type { AgentResponseDto } from '../../../shared/dtos';
+import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
 import { toAgentResponse } from '../../../shared/mappers/agent-response.mapper';
+import { GetAgentRuntimeConfigCommand } from '../get-agent-runtime-config/get-agent-runtime-config.command';
+import { GetAgentRuntimeConfig } from '../get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { ProvisionManagedAgentCommand } from '../provision-managed-agent/provision-managed-agent.command';
 import { ProvisionManagedAgent } from '../provision-managed-agent/provision-managed-agent.usecase';
 import { CreateAgentCommand } from './create-agent.command';
@@ -26,6 +28,7 @@ export class CreateAgent {
     private readonly analyticsService: AnalyticsService,
     private readonly provisionManagedAgentUsecase: ProvisionManagedAgent,
     private readonly findOrCreateNovuEmail: NovuEmailProvisioningService,
+    private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly logger: PinoLogger
@@ -186,7 +189,38 @@ export class CreateAgent {
 
     await this.autoProvisionDefaultEmailInbox(agent._id, command.environmentId, command.organizationId);
 
-    return toAgentResponse(updatedAgent ?? agent);
+    const runtimeConfig = await this.loadRuntimeConfig(updatedAgent ?? agent, command);
+
+    return toAgentResponse(updatedAgent ?? agent, undefined, runtimeConfig);
+  }
+
+  private async loadRuntimeConfig(
+    agent: { runtime?: string; identifier: string },
+    command: CreateAgentCommand
+  ): Promise<AgentRuntimeConfigResponseDto | undefined> {
+    if (agent.runtime !== 'managed') {
+      return undefined;
+    }
+
+    try {
+      const config = await this.getAgentRuntimeConfigUsecase.execute(
+        GetAgentRuntimeConfigCommand.create({
+          userId: command.userId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          identifier: agent.identifier,
+        })
+      );
+
+      return config;
+    } catch (err) {
+      this.logger.warn(
+        { err, agentIdentifier: agent.identifier },
+        'Failed to load managed-runtime runtime config after CreateAgent; returning agent without runtime config.'
+      );
+
+      return undefined;
+    }
   }
 
   /**

@@ -523,7 +523,7 @@ function ConnectAndLinkSection({
   }, [onFullyConnected]);
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex min-w-0 flex-col gap-3 w-full">
       {/* container={undefined} satisfies the Pick<NovuUIOptions, 'container' | 'appearance'> requirement */}
       <MsTeamsConnectButton
         integrationIdentifier={integrationIdentifier}
@@ -551,7 +551,7 @@ function ConnectAndLinkSection({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="flex min-w-0 flex-col gap-3">
+            <div className="flex min-w-0 flex-col gap-3 w-full">
               <InlineToast
                 className="w-full"
                 variant="warning"
@@ -910,7 +910,7 @@ export function TeamsSetupGuide({
           )
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               leadingIcon={
                 isConnectingAzure ? null : (
@@ -956,6 +956,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 1}
         status={deriveStepStatus(base + 1, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title={quickReadinessTitle}
         description={quickReadinessDescription}
         rightContent={
@@ -985,6 +986,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 2}
         status={deriveStepStatus(base + 2, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title="Add the bot to Microsoft Teams"
         description={
           <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
@@ -1020,7 +1022,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <div className="self-start">
               <SetupButton
                 leadingIcon={<Download className="size-3.5" />}
@@ -1062,10 +1064,11 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 3}
         status={deriveStepStatus(base + 3, quickFirstIncomplete)}
+        dimmed={!hasCredentials}
         title="Connect Novu to MS Teams"
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             {/* teamsAppCatalogId is available here for future use (e.g. an "Open in Teams" deep link once catalog propagation is confirmed) */}
             {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
               <ConnectAndLinkSection
@@ -1140,7 +1143,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               href="https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/RegisteredApps"
               leadingIcon={
@@ -1274,6 +1277,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 3}
         status={deriveStepStatus(base + 3, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Deploy the Azure Bot to your subscription"
         description={
           <div className="flex flex-col gap-3">
@@ -1298,7 +1302,7 @@ export function TeamsSetupGuide({
           </div>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             <SetupButton
               leadingIcon={
                 isDeploying ? null : (
@@ -1334,6 +1338,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 4}
         status={deriveStepStatus(base + 4, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Download the Teams app package"
         description={
           <ol className="flex flex-col gap-1.5 pl-4 [list-style:decimal]">
@@ -1353,7 +1358,7 @@ export function TeamsSetupGuide({
           </ol>
         }
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3 self-stretch">
+          <div className="flex min-w-0 flex-col gap-3 self-stretch w-full">
             <div className="self-start">
               <SetupButton
                 leadingIcon={<Download className="size-3.5" />}
@@ -1380,6 +1385,7 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 5}
         status={deriveStepStatus(base + 5, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Upload to Teams and verify"
         description={
           <div className="flex flex-col gap-4">
@@ -1461,10 +1467,11 @@ export function TeamsSetupGuide({
       <SetupStep
         index={base + 6}
         status={deriveStepStatus(base + 6, firstIncomplete)}
+        dimmed={!hasCredentials}
         title="Connect Novu to MS Teams"
         description="Grant admin consent and verify the connection by signing in with a Microsoft account that has Teams admin permissions."
         rightContent={
-          <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex min-w-0 flex-col gap-3 w-full">
             {hasCredentials && isConnectSubscriberReady && connectionIdentifier ? (
               <ConnectAndLinkSection
                 integrationIdentifier={integrationIdentifier}

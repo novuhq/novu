@@ -3,6 +3,7 @@ import type { AgentRuntime, AgentVisibility } from '@novu/shared';
 
 import { AgentBehaviorDto } from './agent-behavior.dto';
 import { AgentIntegrationSummaryDto } from './agent-integration-summary.dto';
+import { AgentMcpServerDto, AgentToolDto } from './agent-runtime-config.dto';
 
 export class ManagedRuntimeResponseDto {
   @ApiProperty()
@@ -33,6 +34,28 @@ export class ManagedRuntimeResponseDto {
     description: 'Deep link to the agent in the provider console (e.g. platform.claude.com).',
   })
   consoleUrl?: string;
+
+  @ApiPropertyOptional({
+    type: [AgentToolDto],
+    description:
+      'Live tools enabled on the managed-runtime provider for this agent. ' +
+      'Sourced from the provider on read; omitted when the provider is temporarily unreachable.',
+  })
+  tools?: AgentToolDto[];
+
+  @ApiPropertyOptional({
+    type: [AgentMcpServerDto],
+    description:
+      'MCP servers enabled on this agent, projected onto the runtime catalog `{ externalId, name, url }` shape. ' +
+      'Mongo is the source of truth; the projection matches what the provider sees. ' +
+      'Omitted when the provider read fails after a managed-agent write.',
+  })
+  mcpServers?: AgentMcpServerDto[];
+
+  @ApiPropertyOptional({
+    description: 'System prompt used when invoking the agent.',
+  })
+  systemPrompt?: string;
 }
 
 export class AgentResponseDto {

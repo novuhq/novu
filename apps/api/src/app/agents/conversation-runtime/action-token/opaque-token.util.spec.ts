@@ -1,10 +1,5 @@
 import { expect } from 'chai';
-import {
-  buildOpaqueStorageKey,
-  isMintedOpaqueActionId,
-  mintRandomToken,
-  parseTtlFromEnv,
-} from './opaque-token.util';
+import { buildOpaqueStorageKey, isMintedOpaqueActionId, mintRandomToken, parseTtlFromEnv } from './opaque-token.util';
 
 describe('opaque-token.util', () => {
   it('parseTtlFromEnv falls back to default for invalid values', () => {

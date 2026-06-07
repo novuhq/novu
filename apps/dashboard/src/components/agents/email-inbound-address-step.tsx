@@ -1,6 +1,6 @@
 import { SetupStep } from './setup-guide-primitives';
-import { SharedInboundAddressField } from './shared-inbound-address-field';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { SharedInboundAddressField } from './shared-inbound-address-field';
 
 type EmailInboundAddressStepProps = {
   index: number;

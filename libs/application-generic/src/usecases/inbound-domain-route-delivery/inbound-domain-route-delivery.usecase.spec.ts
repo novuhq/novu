@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { AgentIntegrationRepository, DomainRouteEntity, IntegrationRepository } from '@novu/dal';
+import { DomainRouteTypeEnum, DomainStatusEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { PinoLogger } from '../../logging';

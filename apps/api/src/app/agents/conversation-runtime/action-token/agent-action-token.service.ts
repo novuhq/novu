@@ -2,12 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import type { ButtonElement, CardElement } from 'chat';
 import { callbackPayloadNeedsTokenization, forEachCallbackButton } from './card-callback-button.walker';
-import {
-  buildOpaqueStorageKey,
-  isMintedOpaqueActionId,
-  mintRandomToken,
-  parseTtlFromEnv,
-} from './opaque-token.util';
+import { buildOpaqueStorageKey, isMintedOpaqueActionId, mintRandomToken, parseTtlFromEnv } from './opaque-token.util';
 
 export const AGENT_ACTION_TOKEN_PREFIX = 'at:' as const;
 
@@ -112,7 +107,9 @@ export class AgentActionTokenService {
         {
           agentId: binding.agentId,
           integrationIdentifier: binding.integrationIdentifier,
-          actionId: this.isActionToken(actionId) ? `${actionId.slice(0, AGENT_ACTION_TOKEN_PREFIX.length)}[redacted]` : actionId,
+          actionId: this.isActionToken(actionId)
+            ? `${actionId.slice(0, AGENT_ACTION_TOKEN_PREFIX.length)}[redacted]`
+            : actionId,
         },
         'Ignoring inbound action — token missing, expired, or binding mismatch'
       );

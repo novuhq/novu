@@ -639,7 +639,7 @@ export function ProviderDropdown({
         <span className="text-text-soft ml-0.5 text-[10px]">&#9432;</span>
       </div>
 
-      <div className="w-full max-w-[320px]">
+      <div className="w-full">
         <Popover open={open} onOpenChange={handleOpenChange}>
           <PopoverTrigger asChild>{defaultTrigger}</PopoverTrigger>
           {popoverContent}

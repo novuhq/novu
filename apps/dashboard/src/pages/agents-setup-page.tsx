@@ -1,16 +1,12 @@
 import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { RiArrowLeftSLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowLeftSLine, RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
-import { AgentSetupSteps } from '@/components/agents/agent-setup-steps';
-import type { RuntimeType } from '@/components/agents/create-agent-fields';
-import {
-  AgentFlowIllustration,
-  type AgentFlowRuntime,
-  type AgentFlowState,
-} from '@/components/onboarding/agent-flow-illustration';
+import { AgentSetupSteps, ManagedAgentRecap } from '@/components/agents/agent-setup-steps';
+import { ProviderCards } from '@/components/agents/provider-cards';
+import { CompletedStepIndicator, SetupStep } from '@/components/agents/setup-guide-primitives';
 import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
 import { getConnectorById } from '@/components/onboarding/connect-agent/connector-options';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
@@ -50,27 +46,7 @@ function goToPostOnboardingRoute(target: string, navigate: (path: string) => voi
   navigate(targetWithSource);
 }
 
-type SetupPhase = 'connect' | 'details';
-
-function getIllustrationState({ phase, setupComplete }: { phase: SetupPhase; setupComplete: boolean }): AgentFlowState {
-  if (setupComplete) {
-    return 'connected';
-  }
-
-  if (phase === 'details') {
-    return 'details';
-  }
-
-  return 'connect';
-}
-
-function toIllustrationRuntime(runtime: RuntimeType): AgentFlowRuntime {
-  return runtime === 'claude' ? 'claude' : 'scratch';
-}
-
-function resolveCreatedAgentRuntime(agent: AgentResponse): AgentFlowRuntime {
-  return agent.runtime === 'managed' ? 'claude' : 'scratch';
-}
+type LoadingPhase = 'initializing' | 'loading' | 'ready' | 'error';
 
 type SkipBannerProps = {
   onSkip: () => void;
@@ -101,8 +77,60 @@ function SkipBanner({ onSkip }: SkipBannerProps) {
   );
 }
 
+/**
+ * Dimmed, non-interactive preview of the channel step shown during the connect phase, so the
+ * user can see what comes next while still authoring the agent. Mirrors the
+ * `AgentSetupSteps` channel step layout/rail; activates for real once the agent is created.
+ */
+function ChannelStepPreview() {
+  return (
+    <div className="pointer-events-none relative flex select-none flex-col gap-10 pl-8 pr-3 opacity-60 md:pr-6">
+      <div
+        className="absolute bottom-0 left-[22px] top-0 w-px"
+        style={{
+          background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+        }}
+      />
+      <SetupStep
+        index={2}
+        status="upcoming"
+        dimmed
+        title="Choose where your agent can talk"
+        description="Connect a channel so users can message the agent and receive replies."
+        fullWidthContent={<ProviderCards agentIdentifier="" onSelect={() => {}} disabled dimmed />}
+      />
+    </div>
+  );
+}
+
+/**
+ * Collapsed marker for the completed agent-brain + channel-selection steps. Toggling it reveals or
+ * hides the agent preview and channel cards while the channel setup guide stays visible.
+ */
+function ShowAllInstructionsToggle({ expanded, onToggle }: { expanded: boolean; onToggle: () => void }) {
+  return (
+    <div className="relative flex items-center py-5 pl-8 pr-3 md:pr-6">
+      <div className="relative flex items-center pl-6">
+        <div className="absolute -left-[20px] flex w-5 justify-center">
+          <CompletedStepIndicator />
+        </div>
+        <button
+          type="button"
+          onClick={onToggle}
+          className="text-text-sub hover:text-text-strong flex cursor-pointer items-center gap-1 transition-colors"
+        >
+          <span className="text-label-xs font-medium">
+            {expanded ? 'Hide all instructions' : 'Show all instructions'}
+          </span>
+          <RiExpandUpDownLine className="size-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 type StepHeaderProps = {
-  current: 2 | 3;
+  current: 1 | 2 | undefined;
   onBack?: () => void;
 };
 
@@ -115,7 +143,7 @@ function StepHeader({ current, onBack }: StepHeaderProps) {
       className="mb-5 flex cursor-pointer items-center gap-0.5 disabled:cursor-default"
     >
       <RiArrowLeftSLine className="text-text-sub size-4" />
-      <span className="text-text-sub text-xs">{current}/3</span>
+      {typeof current === 'number' ? <span className="text-text-sub text-xs">{current}/2</span> : null}
     </button>
   );
 }
@@ -133,9 +161,7 @@ export function AgentsSetupPage() {
   const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
   const isConnectFlow = appId === APP_IDS.CONNECT;
   const isConnectHost = IS_NOVU_CONNECT || isConnectFlow;
-  const pageTitle = isConnectHost
-    ? "Let's connect your agent to where you work"
-    : 'Connect your first agent';
+  const pageTitle = isConnectHost ? 'Connect your agent to where work happens' : 'Connect your first agent';
 
   // Org bootstrap (poll Novu envs + reload Clerk after org creation) lives in EnvironmentProvider.
   // Here we only gate on Novu's org id + the resolved environment, like the inbox onboarding page.
@@ -152,11 +178,13 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.ONBOARDING_PHASE_VIEWED, { phase: 'connect' });
   }, [telemetry]);
 
-  const [phase, setPhase] = useState<SetupPhase>('connect');
   const [createdAgent, setCreatedAgent] = useState<AgentResponse | null>(null);
   const [connectSummary, setConnectSummary] = useState<ConnectSummary | null>(null);
   const [setupComplete, setSetupComplete] = useState(false);
-  const [selectedRuntime, setSelectedRuntime] = useState<AgentFlowRuntime>('scratch');
+  // True once the user picks a channel: the agent preview + channel cards collapse behind a
+  // "Show all instructions" toggle so only the channel setup guide is shown.
+  const [channelGuideActive, setChannelGuideActive] = useState(false);
+  const [instructionsExpanded, setInstructionsExpanded] = useState(false);
 
   const [connectedProviderId, setConnectedProviderId] = useState<string | undefined>(undefined);
 
@@ -173,17 +201,13 @@ export function AgentsSetupPage() {
 
   const handleAgentCreated = useCallback(
     (agent: AgentResponse, summary: ConnectSummary) => {
+      // Stay on the connect view — the brain form just morphs into the agent preview in place.
       setCreatedAgent(agent);
       setConnectSummary(summary);
-      setPhase('details');
       telemetry(TelemetryEvent.ONBOARDING_PHASE_VIEWED, { phase: 'details', agentIdentifier: agent.identifier });
     },
     [telemetry]
   );
-
-  const handleRuntimeChange = useCallback((runtime: RuntimeType) => {
-    setSelectedRuntime(toIllustrationRuntime(runtime));
-  }, []);
 
   const handleSkip = useCallback(() => {
     const completionProps = buildOnboardingCompletionProps();
@@ -225,10 +249,14 @@ export function AgentsSetupPage() {
     );
   }, [agentRoutes.detailsTab, createdAgent, currentEnvironment?.slug, navigate]);
 
-  const handleBackToConnect = useCallback(() => setPhase('connect'), []);
-
   // Connect skips the usecase picker, so there's no back target for the connect phase.
-  const handleBackFromConnectPhase = isConnectFlow ? undefined : () => navigate(ROUTES.USECASE_SELECT);
+  const handleBackStep = useCallback(() => {
+    if (isConnectFlow) {
+      return;
+    }
+
+    void navigate(ROUTES.USECASE_SELECT);
+  }, [isConnectFlow, navigate]);
 
   if (!isAgentsEnabled) {
     return <Navigate to={isConnectFlow ? ROUTES.ROOT : ROUTES.INBOX_USECASE} replace />;
@@ -247,96 +275,153 @@ export function AgentsSetupPage() {
     );
   }
 
+  // Collapse the agent preview + channel cards once a channel guide is active, unless the user
+  // expands "Show all instructions".
+  const collapsePreview = channelGuideActive && !instructionsExpanded;
+
   const leftContent = (
     <>
       <PageMeta title={pageTitle} />
-      <StepHeader
-        current={phase === 'connect' ? 2 : 3}
-        onBack={phase === 'connect' ? handleBackFromConnectPhase : handleBackToConnect}
-      />
+      {!isConnectFlow && <StepHeader current={1} onBack={handleBackStep} />}
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
-      <p className="text-text-soft mt-1 text-xs font-medium leading-4">
-        A few steps to your first multi-channel agent conversation.
+      <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
+        Start with a Claude demo agent, connect channels, and see how conversations flow. You can bring your own agent
+        later.
       </p>
 
       {/*
-       * Collapse the connect-phase steps and expand the details-phase steps inline. Same
-       * height/opacity + clipPath pattern used by `ConnectPhaseRecap` so the two transitions
-       * read as one continuous timeline rather than a page swap.
+       * The user stays on one screen. Step 1 crossfades the brain form into the created-agent
+       * preview card; step 2 (channels) crossfades from the dimmed/disabled preview into the live,
+       * interactive channel step in place. Keyed on `createdAgent` — the back arrow returns to the
+       * brain form.
        */}
-      <AnimatePresence mode="wait" initial={false}>
-        {phase === 'connect' ? (
-          <motion.div
-            key="connect"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
-          >
-            <div className="relative">
+      <div className="relative mt-12">
+        {/* Single continuous rail line behind every step segment. Each segment also draws its own
+         * gradient line, but those fade to transparent at their edges and pinch where segments meet;
+         * this same-colored line sits underneath and fills those gaps so the toggle, brain step, and
+         * channel steps read as one unbroken vertical timeline. */}
+        <div
+          className="absolute bottom-0 left-[22px] top-0 w-px"
+          style={{
+            background:
+              'linear-gradient(to bottom, transparent 0, #E1E4EA 24px, #E1E4EA calc(100% - 24px), transparent 100%)',
+          }}
+        />
+
+        {/* Once a channel is picked, the completed agent-brain + channel-selection steps collapse
+         * behind this toggle so only the channel setup guide remains visible. It animates in
+         * (height + opacity) in sync with the collapsing preview so the whole transition is one beat. */}
+        <AnimatePresence initial={false}>
+          {createdAgent && channelGuideActive ? (
+            <motion.div
+              key="show-all-instructions"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              style={{ clipPath: 'inset(0 -100% -100% -100%)', overflow: 'hidden' }}
+            >
+              <ShowAllInstructionsToggle
+                expanded={instructionsExpanded}
+                onToggle={() => setInstructionsExpanded((prev) => !prev)}
+              />
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+
+        {/*
+         * Step 1: the brain form crossfades into the created-agent preview card, overlapping in the
+         * same grid cell so the swap reads as an in-place morph. Collapses to height 0 once a
+         * channel guide is active (unless the user expands "Show all instructions").
+         */}
+        <motion.div
+          initial={false}
+          animate={{
+            height: collapsePreview ? 0 : 'auto',
+            opacity: collapsePreview ? 0 : 1,
+          }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          style={{ clipPath: 'inset(0 -100% -100% -100%)', overflow: 'hidden' }}
+        >
+          {/* The brain form unmounts instantly when the agent is created (no overlap → no ghosting)
+           * and the preview fades/rises in. There's no crossfade or animated height, so the section
+           * height changes exactly once — the scrollbar can't flick on/off mid-transition. */}
+          {createdAgent && connectSummary ? (
+            <motion.div
+              key="agent-preview"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="relative py-6 pl-8 pr-3 md:pr-6">
+                <div
+                  className="absolute bottom-0 left-[22px] top-0 w-px"
+                  style={{
+                    background:
+                      'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+                  }}
+                />
+                <ManagedAgentRecap agent={createdAgent} summary={connectSummary} />
+              </div>
+            </motion.div>
+          ) : (
+            <div className="relative pb-12">
               <ConnectAgentStep
                 onAgentCreated={handleAgentCreated}
-                onRuntimeChange={handleRuntimeChange}
                 isManagedEnabled={isManagedEnabled}
+                simplifiedDemo
               />
             </div>
-            <SkipBanner onSkip={handleSkip} />
-          </motion.div>
-        ) : createdAgent ? (
-          <motion.div
-            key="details"
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-            style={{ clipPath: 'inset(0 -100% -100% -100%)' }}
-          >
-            <AgentSetupSteps
-              agent={createdAgent}
-              onSetupComplete={() => setSetupComplete(true)}
-              onChannelConnected={(providerId) => setConnectedProviderId(providerId)}
-              hideAddProvider
-              connectSummary={connectSummary}
-            />
+          )}
+        </motion.div>
 
-            {setupComplete ? (
-              <div className="mt-6 flex items-center gap-3 pb-10 pl-6">
-                <Button
-                  className="text-label-xs gap-1 rounded-lg p-2"
-                  variant="primary"
-                  size="xs"
-                  onClick={handleNavigateToOverview}
-                >
-                  Navigate to Dashboard
-                  <RiArrowRightSLine className="size-4" />
-                </Button>
-                <button
-                  type="button"
-                  onClick={handleSetupAnotherChannel}
-                  className="text-text-sub hover:text-text-strong text-label-xs cursor-pointer font-medium"
-                >
-                  Setup another channel
-                </button>
-              </div>
-            ) : (
-              <SkipBanner onSkip={handleSkip} />
-            )}
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+        {/*
+         * Step 2: the channel section becomes interactive once the agent exists. When the user picks
+         * a channel its setup guide replaces the cards in place (the cards collapse via
+         * `collapseChannelSelection`).
+         */}
+        {createdAgent ? (
+          <AgentSetupSteps
+            agent={createdAgent}
+            onSetupComplete={() => setSetupComplete(true)}
+            onChannelConnected={(providerId) => setConnectedProviderId(providerId)}
+            hideAddProvider
+            hideRecap
+            collapseChannelSelection={collapsePreview}
+            onChannelGuideActiveChange={setChannelGuideActive}
+            connectSummary={connectSummary}
+          />
+        ) : (
+          <ChannelStepPreview />
+        )}
+      </div>
+
+      {/* Footer actions live outside the rail so the continuous line ends at the last step. */}
+      {createdAgent && setupComplete ? (
+        <div className="mt-6 flex items-center gap-3 pb-10 pl-6">
+          <Button
+            className="text-label-xs gap-1 rounded-lg p-2"
+            variant="primary"
+            size="xs"
+            onClick={handleNavigateToOverview}
+          >
+            Navigate to Dashboard
+            <RiArrowRightSLine className="size-4" />
+          </Button>
+          <button
+            type="button"
+            onClick={handleSetupAnotherChannel}
+            className="text-text-sub hover:text-text-strong text-label-xs cursor-pointer font-medium"
+          >
+            Setup another channel
+          </button>
+        </div>
+      ) : (
+        <SkipBanner onSkip={handleSkip} />
+      )}
     </>
   );
-  const illustrationState = getIllustrationState({ phase, setupComplete });
-  const illustrationRuntime = createdAgent ? resolveCreatedAgentRuntime(createdAgent) : selectedRuntime;
 
-  return (
-    <OnboardingShell
-      left={leftContent}
-      right={<AgentFlowIllustration state={illustrationState} runtime={illustrationRuntime} />}
-      maxLeftWidth="860px"
-      alignLeft="top"
-    />
-  );
+  return <OnboardingShell left={leftContent} maxLeftWidth="864px" alignLeft="top" />;
 }

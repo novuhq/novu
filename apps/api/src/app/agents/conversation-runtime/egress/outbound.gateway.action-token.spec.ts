@@ -11,9 +11,7 @@ describe('OutboundGateway action token egress', () => {
     integrationIdentifier: 'telegram-main',
   };
 
-  function makeGateway(actionTokenOverrides: {
-    tokenizeCardForDelivery?: sinon.SinonStub;
-  } = {}) {
+  function makeGateway(actionTokenOverrides: { tokenizeCardForDelivery?: sinon.SinonStub } = {}) {
     const actionTokenService = {
       tokenizeCardForDelivery:
         actionTokenOverrides.tokenizeCardForDelivery ??
