@@ -6,7 +6,7 @@ export const UNRESOLVED_SUBSCRIBER_ACCESS_REPLY =
 
 export function buildUnresolvedSubscriberAccessReply(params: {
   platform: AgentPlatformEnum;
-  senderEmail?: string | null;
+  senderEmail?: string;
 }): string {
   const sender = params.senderEmail?.trim();
 

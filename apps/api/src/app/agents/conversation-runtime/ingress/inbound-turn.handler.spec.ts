@@ -3,10 +3,7 @@ import sinon from 'sinon';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import {
-  buildUnresolvedSubscriberAccessReply,
-  UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
-} from '../../shared/util/agent-inbound-replies';
+import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
@@ -220,6 +217,41 @@ describe('AgentInboundHandler', () => {
     };
   }
 
+  function makeEmailDmThread() {
+    return {
+      id: 'email:thread1:',
+      channelId: 'email:thread1',
+      isDM: true,
+      toJSON: () => ({ id: 'email:thread1:', channelId: 'email:thread1', isDM: true }),
+      startTyping: sinon.stub().resolves(undefined),
+      post: sinon.stub().resolves({ id: 'email-reply-1', threadId: 'email:thread1:' }),
+    };
+  }
+
+  function makeEmailDmMessage(senderEmail: string) {
+    return {
+      id: 'email-msg-1',
+      threadId: 'email:thread1:',
+      text: 'hello',
+      author: {
+        userId: senderEmail,
+        fullName: 'Unknown Sender',
+        userName: senderEmail,
+        isBot: false,
+      },
+      raw: {},
+      attachments: [],
+    };
+  }
+
+  function makeManagedAgentStub() {
+    return {
+      _id: 'agent1',
+      runtime: 'managed',
+      managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
+    };
+  }
+
   function makeReactionEvent() {
     return {
       emoji: { name: 'thumbs_up', toJSON: () => 'thumbs_up', toString: () => 'thumbs_up' },
@@ -383,11 +415,7 @@ describe('AgentInboundHandler', () => {
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves({
-          _id: 'agent1',
-          runtime: 'managed',
-          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
-        }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
       const thread = makeSlackDmThread();
       const message = makeSlackDmMessage();
@@ -407,48 +435,21 @@ describe('AgentInboundHandler', () => {
         platform: AgentPlatformEnum.EMAIL,
         integrationIdentifier: 'email-main',
       };
+      const senderEmail = 'unknown@example.com';
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
         subscriberFindById: sinon.stub().resolves(null),
-        agentFindOne: sinon.stub().resolves({
-          _id: 'agent1',
-          runtime: 'managed',
-          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
-        }),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
       });
-      const thread = {
-        id: 'email:thread1:',
-        channelId: 'email:thread1',
-        isDM: true,
-        toJSON: () => ({ id: 'email:thread1:', channelId: 'email:thread1', isDM: true }),
-        startTyping: sinon.stub().resolves(undefined),
-        post: sinon.stub().resolves({ id: 'email-reply-1', threadId: 'email:thread1:' }),
-      };
-      const message = {
-        id: 'email-msg-1',
-        threadId: 'email:thread1:',
-        text: 'hello',
-        author: {
-          userId: 'unknown@example.com',
-          fullName: 'Unknown Sender',
-          userName: 'unknown@example.com',
-          isBot: false,
-        },
-        raw: {},
-        attachments: [],
-      };
-      const expectedReply = buildUnresolvedSubscriberAccessReply({
-        platform: AgentPlatformEnum.EMAIL,
-        senderEmail: 'unknown@example.com',
-      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
 
       await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
       expect(managedAgentService.dispatch.called).to.equal(false);
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
-      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
-        markdown: expectedReply,
-      });
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
+      expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
     });
   });
 

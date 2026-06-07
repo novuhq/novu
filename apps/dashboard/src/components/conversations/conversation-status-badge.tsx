@@ -15,7 +15,7 @@ const STATUS_CONFIG: Record<string, StatusStyle> = {
     bgClass: 'bg-[#FEF7E6]',
     textClass: 'text-[#EAB33E]',
     tooltip:
-      'The agent is actively handling this thread. It becomes Resolved when the agent calls resolve(), and reopens automatically if a new message arrives.',
+      'The agent is actively handling this thread. It becomes Resolved when finished, and reopens if a new message arrives.',
   },
   failed: {
     label: 'FAILED',

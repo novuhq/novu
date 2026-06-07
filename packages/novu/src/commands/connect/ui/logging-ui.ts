@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
+import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
@@ -165,7 +166,7 @@ export function createLoggingUI(): ConnectUI {
       stop();
       console.log(`${chalk.cyan('→')} Your agent's inbound address: ${chalk.bold(inboundAddress)}`);
       if (sendFromEmail) {
-        console.log(`${chalk.cyan('→')} Send from your Novu account email: ${chalk.bold(sendFromEmail)}`);
+        console.log(`${chalk.cyan('→')} ${SEND_FROM_ACCOUNT_LABEL} ${chalk.bold(sendFromEmail)}`);
       }
       console.log(`${chalk.cyan('→')} Open in your mail client: ${chalk.underline(mailtoUrl)}`);
       // Non-interactive: nothing to await — the user will copy/paste the

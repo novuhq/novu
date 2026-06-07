@@ -77,17 +77,15 @@ export type Phase =
       inboundAddress: string;
       /** Pre-built mailto: URL with subject/body pre-filled; opening it launches the user's mail client. */
       mailtoUrl: string;
-      /** Novu account email the user must send from; shown when authenticated. */
-      sendFromEmail?: string | null;
+      sendFromEmail?: string;
       /** Resolves when the user hits Enter — the pipeline then runs `open()`. */
       resolve: () => void;
-      /** Rejects with ConnectChannelBackError when the user hits Escape. */
-      reject: (reason: Error) => void;
+      onBack?: () => void;
     }
   | {
       kind: 'email-waiting';
       inboundAddress: string;
-      sendFromEmail?: string | null;
+      sendFromEmail?: string;
     }
   | { kind: 'adding-telegram' }
   | {

@@ -3,8 +3,8 @@ import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
-import { ConnectChannelBackError } from '../pipeline/connect-channel-back-error';
 import type { AgentRuntimeChoice, ChannelChoice } from '../types';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
@@ -269,7 +269,7 @@ export function PhaseContent({
           mailtoUrl={phase.mailtoUrl}
           sendFromEmail={phase.sendFromEmail}
           onContinue={phase.resolve}
-          onBack={() => phase.reject(new ConnectChannelBackError())}
+          onBack={phase.onBack}
         />
       );
 
@@ -284,7 +284,7 @@ export function PhaseContent({
           </Box>
           {phase.sendFromEmail ? (
             <Text dimColor>
-              Send from your Novu account email: <Text color="white">{phase.sendFromEmail}</Text>
+              {SEND_FROM_ACCOUNT_LABEL} <Text color="white">{phase.sendFromEmail}</Text>
             </Text>
           ) : null}
           <Text dimColor>Waiting for your email to arrive…</Text>
@@ -542,18 +542,16 @@ function EmailReadyContent({
 }: {
   inboundAddress: string;
   mailtoUrl: string;
-  sendFromEmail?: string | null;
+  sendFromEmail?: string;
   onContinue: () => void;
-  onBack: () => void;
+  onBack?: () => void;
 }): React.ReactElement {
   useInput((_input, key) => {
-    if (key.escape) {
+    if (key.escape && onBack) {
       onBack();
-
-      return;
+    } else if (key.return || _input === ' ') {
+      onContinue();
     }
-
-    if (key.return || _input === ' ') onContinue();
   });
 
   return (
@@ -579,7 +577,7 @@ function EmailReadyContent({
       ) : null}
       <CopyableLink url={mailtoUrl} hint="Pre-filled draft email:" color="white" />
       <Text color="cyan">Press Enter to open a pre-filled draft in your default mail client →</Text>
-      <Text dimColor>Esc · back to channel list</Text>
+      {onBack ? <Text dimColor>Esc · back to channel list</Text> : null}
     </Box>
   );
 }

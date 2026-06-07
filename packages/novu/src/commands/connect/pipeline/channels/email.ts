@@ -3,6 +3,7 @@ import { CONNECT_EVENTS } from '../../analytics/events';
 import { addAgentEmailIntegration } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import type { IntegrationRecord } from '../../api/integrations';
+import { formatSendFromMailtoHint } from '../../copy/email-onboarding';
 import type { AgentSummary } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 import { pollForAgentLinkConnected } from '../integration-helpers';
@@ -13,7 +14,7 @@ export async function connectEmailForAgent(
   agent: AgentSummary,
   ui: ConnectUI,
   track: (event: string, data?: Record<string, unknown>) => void,
-  opts?: { sendFromEmail?: string | null }
+  opts?: { sendFromEmail?: string; canGoBack?: boolean }
 ): Promise<{ connected: boolean; integration: IntegrationRecord }> {
   ui.addingEmailIntegration();
 
@@ -46,11 +47,16 @@ export async function connectEmailForAgent(
   }
 
   const subject = `Hi ${agent.name}!`;
-  const sendFromHint = opts?.sendFromEmail ? `\n\n(Send this from your Novu account email: ${opts.sendFromEmail})` : '';
+  const sendFromHint = opts?.sendFromEmail ? formatSendFromMailtoHint(opts.sendFromEmail) : '';
   const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!${sendFromHint}`;
   const mailtoUrl = `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  await ui.awaitEmailOpen({ inboundAddress, mailtoUrl, sendFromEmail: opts?.sendFromEmail });
+  await ui.awaitEmailOpen({
+    inboundAddress,
+    mailtoUrl,
+    sendFromEmail: opts?.sendFromEmail,
+    canGoBack: opts?.canGoBack,
+  });
   void open(mailtoUrl).catch(() => undefined);
   ui.showEmailWaiting({ inboundAddress, sendFromEmail: opts?.sendFromEmail });
 

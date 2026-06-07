@@ -12,12 +12,12 @@ import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
 import { type ResolvedConnectAuth, resolveConnectAuth } from '../auth/resolve-connect-auth';
 import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
+import { ConnectChannelBackError } from '../errors';
 import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
-import { ConnectChannelBackError } from './connect-channel-back-error';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
 
 export interface ConnectPipelineInput {
@@ -97,11 +97,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let dashboardRedirectChannel: ChannelChoice | null = null;
     let connectedIntegration: IntegrationRecord | null = null;
 
+    const isChannelPreset = Boolean(options.skipSlack || options.channel);
+    const allowChannelPickerBack = !isChannelPreset;
     const presetChannel: ChannelChoice | undefined = options.skipSlack ? 'skip' : options.channel;
     let channel: ChannelChoice = presetChannel ?? 'skip';
 
     while (true) {
-      if (!presetChannel) {
+      if (!isChannelPreset) {
         channel = await ui.pickChannel();
       }
 
@@ -142,8 +144,10 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           }
           case 'email': {
             await ensureSubscriberForUser(client, auth);
+            const sendFromEmail = auth.user?.email?.trim() || undefined;
             const result = await connectEmailForAgent(client, agent, ui, track, {
-              sendFromEmail: auth.user?.email ?? null,
+              sendFromEmail,
+              canGoBack: allowChannelPickerBack,
             });
             connectedIntegration = result.integration;
             channelConnected = result.connected;
@@ -176,7 +180,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
         break;
       } catch (err) {
-        if (err instanceof ConnectChannelBackError && !presetChannel) {
+        if (err instanceof ConnectChannelBackError && allowChannelPickerBack) {
           continue;
         }
 
