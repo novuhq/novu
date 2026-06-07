@@ -1,5 +1,6 @@
+// Keep in sync with packages/shared/src/utils/in-app-redirect-url.ts
 export const IN_APP_REDIRECT_URL_REGEX =
-  /^(?:\{\{[^}]*\}\}.*|(?!mailto:)(?:https?:\/\/[^\s/$.?#][^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)|\/[^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)$/;
+  /^(?:\{\{[^}]*\}\}.*|(?!mailto:)(?:https?:\/\/[^\s/$.?#][^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)|\/(?!\/)[^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)$/;
 
 const IN_APP_REDIRECT_TARGETS = ['_self', '_blank', '_parent', '_top', '_unfencedTop'] as const;
 

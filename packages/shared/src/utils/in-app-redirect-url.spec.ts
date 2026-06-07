@@ -31,6 +31,12 @@ describe('in-app-redirect-url', () => {
     it('should reject mailto links', () => {
       expect(isValidInAppRedirectUrl('mailto:test@example.com')).toBe(false);
     });
+
+    it('should reject protocol-relative URLs', () => {
+      expect(isValidInAppRedirectUrl('//evil.com')).toBe(false);
+      expect(isValidInAppRedirectUrl('//evil.com/path')).toBe(false);
+      expect(isValidInAppRedirectUrl('///evil.com')).toBe(false);
+    });
   });
 
   describe('isValidInAppRedirectTarget', () => {

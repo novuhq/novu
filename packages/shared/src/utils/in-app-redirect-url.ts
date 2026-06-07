@@ -9,10 +9,11 @@
  *    - Example: https://example.com, https://example.com/{{variable}}
  *
  * 3. Paths starting with / that may contain template variables anywhere
+ *    - Excludes protocol-relative URLs (//host)
  *    - Example: /path/to/page, /path/{{variable}}/page
  */
 export const IN_APP_REDIRECT_URL_REGEX =
-  /^(?:\{\{[^}]*\}\}.*|(?!mailto:)(?:https?:\/\/[^\s/$.?#][^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)|\/[^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)$/;
+  /^(?:\{\{[^}]*\}\}.*|(?!mailto:)(?:https?:\/\/[^\s/$.?#][^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)|\/(?!\/)[^\s{}]*(?:\{\{[^}]*\}\}[^\s{}]*)*)$/;
 
 export const IN_APP_REDIRECT_TARGETS = ['_self', '_blank', '_parent', '_top', '_unfencedTop'] as const;
 
