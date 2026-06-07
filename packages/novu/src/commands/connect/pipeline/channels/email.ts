@@ -3,7 +3,6 @@ import { CONNECT_EVENTS } from '../../analytics/events';
 import { addAgentEmailIntegration } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import type { IntegrationRecord } from '../../api/integrations';
-import { formatSendFromMailtoHint } from '../../copy/email-onboarding';
 import type { AgentSummary } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 import { pollForAgentLinkConnected } from '../integration-helpers';
@@ -47,8 +46,7 @@ export async function connectEmailForAgent(
   }
 
   const subject = `Hi ${agent.name}!`;
-  const sendFromHint = opts?.sendFromEmail ? formatSendFromMailtoHint(opts.sendFromEmail) : '';
-  const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!${sendFromHint}`;
+  const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
   const mailtoUrl = `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
   await ui.awaitEmailOpen({
