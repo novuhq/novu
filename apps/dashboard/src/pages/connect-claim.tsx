@@ -1,4 +1,6 @@
 import { useAuth as useClerkAuth } from '@clerk/react';
+import type { IEnvironment } from '@novu/shared';
+import { EnvironmentTypeEnum } from '@novu/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiCheckLine, RiLoader4Line } from 'react-icons/ri';
 import { Navigate, useSearchParams } from 'react-router-dom';
@@ -8,8 +10,10 @@ import { AuthLayout } from '@/components/auth-layout';
 import { PageMeta } from '@/components/page-meta';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
+import { useAuth } from '@/context/auth/hooks';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
-import { useEnvironment } from '@/context/environment/hooks';
+import { useFetchEnvironments } from '@/context/environment/hooks';
+import { BOOTSTRAP_ORG_CACHE_KEY } from '@/context/environment/use-bootstrap-organization';
 import { appendRedirectUrlParam } from '@/utils/cli-auth-pending';
 import { clearConnectProvisioning } from '@/utils/connect';
 import {
@@ -65,8 +69,32 @@ export const ConnectClaimPage = () => {
   );
 };
 
+function hasClaimableDevelopmentEnvironment(environments?: IEnvironment[]): boolean {
+  if (!environments?.length) {
+    return false;
+  }
+
+  return Boolean(
+    environments.find((env) => env.type === EnvironmentTypeEnum.DEV && !env._parentId) ??
+      environments.find((env) => !env._parentId)
+  );
+}
+
 function ConnectClaimContent({ token }: { token: string | null }) {
-  const { areEnvironmentsInitialLoading } = useEnvironment();
+  const { currentOrganization } = useAuth();
+  const novuOrganizationId = currentOrganization?._id;
+  const [isEnvironmentReady, setIsEnvironmentReady] = useState(false);
+  const { environments } = useFetchEnvironments({
+    organizationId: novuOrganizationId || BOOTSTRAP_ORG_CACHE_KEY,
+    refetchInterval: isEnvironmentReady ? undefined : 1000,
+    showError: false,
+  });
+
+  useEffect(() => {
+    if (hasClaimableDevelopmentEnvironment(environments)) {
+      setIsEnvironmentReady(true);
+    }
+  }, [environments]);
   const [isClaiming, setIsClaiming] = useState(false);
   const [didClaim, setDidClaim] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
@@ -102,7 +130,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
   };
 
   const reason = tokenOk ? null : 'This page must be opened from the link in your chat.';
-  const canClaim = !reason && !areEnvironmentsInitialLoading && !isClaiming && !didClaim && !claimError;
+  const canClaim = !reason && isEnvironmentReady && !isClaiming && !didClaim && !claimError;
 
   useEffect(() => {
     if (canClaim && !hasAttemptedRef.current) {
@@ -133,7 +161,9 @@ function ConnectClaimContent({ token }: { token: string | null }) {
           ) : didClaim ? (
             <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
               <RiCheckLine className="mt-0.5 size-4 shrink-0" />
-              <span>Your agent is connected to your account. Head back to your chat — the agent is ready to continue.</span>
+              <span>
+                Your agent is connected to your account. Head back to your chat — the agent is ready to continue.
+              </span>
             </div>
           ) : claimError ? (
             <div className="flex w-full flex-col gap-3">
