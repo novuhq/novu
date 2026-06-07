@@ -14,6 +14,7 @@ import { appendRedirectUrlParam } from '@/utils/cli-auth-pending';
 import { clearConnectProvisioning } from '@/utils/connect';
 import {
   clearPendingConnectClaim,
+  parseConnectClaimToken,
   readPendingConnectClaim,
   storePendingConnectClaim,
 } from '@/utils/connect-claim-pending';
@@ -23,7 +24,7 @@ import { ROUTES } from '@/utils/routes';
 export const ConnectClaimPage = () => {
   const { isLoaded, isSignedIn } = useClerkAuth();
   const [searchParams] = useSearchParams();
-  const token = searchParams.get('token') ?? readPendingConnectClaim();
+  const token = parseConnectClaimToken(`?${searchParams.toString()}`) ?? readPendingConnectClaim();
 
   useEffect(() => {
     if (token) {
@@ -68,6 +69,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
   const { areEnvironmentsInitialLoading } = useEnvironment();
   const [isClaiming, setIsClaiming] = useState(false);
   const [didClaim, setDidClaim] = useState(false);
+  const [claimError, setClaimError] = useState<string | null>(null);
   const hasAttemptedRef = useRef(false);
 
   const tokenOk = Boolean(token);
@@ -79,6 +81,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
 
     hasAttemptedRef.current = true;
     setIsClaiming(true);
+    setClaimError(null);
     try {
       await claimKeylessConnect(token);
       clearPendingConnectClaim();
@@ -86,14 +89,20 @@ function ConnectClaimContent({ token }: { token: string | null }) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to claim this agent';
       showErrorToast(`Claim failed: ${message}`);
-      hasAttemptedRef.current = false;
+      setClaimError(message);
     } finally {
       setIsClaiming(false);
     }
   }, [token]);
 
+  const handleRetry = () => {
+    hasAttemptedRef.current = false;
+    setClaimError(null);
+    void handleClaim();
+  };
+
   const reason = tokenOk ? null : 'This page must be opened from the link in your chat.';
-  const canClaim = !reason && !areEnvironmentsInitialLoading && !isClaiming && !didClaim;
+  const canClaim = !reason && !areEnvironmentsInitialLoading && !isClaiming && !didClaim && !claimError;
 
   useEffect(() => {
     if (canClaim && !hasAttemptedRef.current) {
@@ -125,6 +134,19 @@ function ConnectClaimContent({ token }: { token: string | null }) {
             <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
               <RiCheckLine className="mt-0.5 size-4 shrink-0" />
               <span>Your agent is connected to your account. Head back to your chat — the agent is ready to continue.</span>
+            </div>
+          ) : claimError ? (
+            <div className="flex w-full flex-col gap-3">
+              <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
+                <span>{claimError}</span>
+              </div>
+              <button
+                type="button"
+                className="text-label-xs text-text-strong w-full rounded-lg border border-stroke-soft px-3 py-2 font-medium"
+                onClick={handleRetry}
+              >
+                Try again
+              </button>
             </div>
           ) : (
             <div className="text-text-sub flex w-full items-center justify-center gap-2 p-3 text-label-xs">

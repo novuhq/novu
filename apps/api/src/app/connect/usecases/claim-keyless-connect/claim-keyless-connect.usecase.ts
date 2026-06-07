@@ -90,6 +90,8 @@ export class ClaimKeylessConnect {
       const sourceScope = { _environmentId: keylessEnvironment._id, _organizationId: keylessOrganizationId };
       const target = { _environmentId: targetEnvironment._id, _organizationId: command.organizationId };
 
+      const sourceAgents = await this.agentRepository.find(sourceScope, ['_id', 'identifier']);
+
       await this.agentRepository.withTransaction(async (session) => {
         await this.agentRepository.update(sourceScope, { $set: target }, { session });
         await this.agentIntegrationRepository.update(sourceScope, { $set: target }, { session });
@@ -111,7 +113,10 @@ export class ClaimKeylessConnect {
         );
       });
 
-      const agent = await this.agentRepository.findOne(target, ['identifier']);
+      const migratedAgentId = sourceAgents[0]?._id;
+      const agent = migratedAgentId
+        ? await this.agentRepository.findOne({ _id: migratedAgentId, ...target }, ['identifier'])
+        : null;
 
       this.logger.info(
         {

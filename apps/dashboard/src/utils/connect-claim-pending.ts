@@ -1,10 +1,35 @@
 import { CONNECT_CLAIM_TOKEN_PATTERN } from '@novu/shared';
+import { IS_HOSTNAME_SPLIT_ENABLED, NOVU_CONNECT_HOSTNAME, NOVU_PLATFORM_HOSTNAME, normalizeAppHost } from '@/config';
 import { ROUTES } from '@/utils/routes';
 
 const STORAGE_KEY = 'pendingConnectClaim';
 
 function isValidToken(token: string | null | undefined): token is string {
   return Boolean(token) && CONNECT_CLAIM_TOKEN_PATTERN.test(token as string);
+}
+
+function isAbsoluteUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url);
+}
+
+function getTrustedRedirectOrigins(): Set<string> {
+  const origins = new Set<string>();
+
+  if (typeof window === 'undefined') {
+    return origins;
+  }
+
+  origins.add(window.location.origin);
+
+  if (IS_HOSTNAME_SPLIT_ENABLED) {
+    for (const hostname of [NOVU_CONNECT_HOSTNAME, NOVU_PLATFORM_HOSTNAME]) {
+      if (hostname) {
+        origins.add(`${window.location.protocol}//${normalizeAppHost(hostname)}`);
+      }
+    }
+  }
+
+  return origins;
 }
 
 export function isConnectClaimPath(pathname: string): boolean {
@@ -31,9 +56,22 @@ export function storePendingConnectClaim(token: string): void {
 
 export function isConnectClaimReturnUrl(url: string): boolean {
   try {
-    const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://local');
+    const base = typeof window !== 'undefined' ? window.location.origin : 'http://local';
+    const parsed = new URL(url, base);
 
-    return isConnectClaimPath(parsed.pathname);
+    if (!isConnectClaimPath(parsed.pathname)) {
+      return false;
+    }
+
+    if (isAbsoluteUrl(url) && typeof window !== 'undefined') {
+      const trustedOrigins = getTrustedRedirectOrigins();
+
+      if (!trustedOrigins.has(parsed.origin)) {
+        return false;
+      }
+    }
+
+    return true;
   } catch {
     return false;
   }
