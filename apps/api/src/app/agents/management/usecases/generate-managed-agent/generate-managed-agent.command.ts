@@ -38,6 +38,5 @@ export class GenerateManagedAgentCommand extends BaseCommand {
    */
   signal?: AbortSignal;
 
-  /** Client IP for keyless per-IP generation caps. Assigned by the controller after `create(...)`. */
   clientIp?: string;
 }

@@ -1,4 +1,3 @@
-/** Parses a non-negative integer env var; `0` disables the corresponding cap. */
 export function parsePositiveIntEnv(raw: string | undefined, fallback: number): number {
   if (raw == null || raw === '') {
     return fallback;

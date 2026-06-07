@@ -890,8 +890,7 @@ export class IntegrationsController {
      * API-key and keyless auth must never receive decrypted provider credentials, regardless of RBAC state.
      * API keys grant ALL_PERMISSIONS in `community.auth.service.ts`, which would otherwise
      * allow the RBAC path below to succeed and leak every stored provider secret to any
-     * caller holding an environment API key. Keyless sessions are anonymous and must not
-     * receive decrypted integration secrets either.
+     * caller holding an environment API key.
      */
     if (user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.KEYLESS) {
       return false;

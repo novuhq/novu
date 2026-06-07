@@ -29,10 +29,6 @@ const MANAGED_AGENT_CAP_MESSAGE =
 
 const MISSING_CLIENT_IP_MESSAGE = 'Unable to verify request origin for this demo request.';
 
-/**
- * Keyless abuse guards keyed by client IP via Redis daily counters.
- * Requires the API to run with `trust proxy` so Express `req.ip` / getClientIp reflect the real client.
- */
 @Injectable()
 export class KeylessAbuseGuardService {
   constructor(

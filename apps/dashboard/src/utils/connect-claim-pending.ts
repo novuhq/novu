@@ -5,7 +5,7 @@ import { ROUTES } from '@/utils/routes';
 const STORAGE_KEY = 'pendingConnectClaim';
 
 function isValidToken(token: string | null | undefined): token is string {
-  return Boolean(token) && CONNECT_CLAIM_TOKEN_PATTERN.test(token as string);
+  return typeof token === 'string' && CONNECT_CLAIM_TOKEN_PATTERN.test(token);
 }
 
 function isAbsoluteUrl(url: string): boolean {
@@ -37,13 +37,9 @@ export function isConnectClaimPath(pathname: string): boolean {
 }
 
 export function parseConnectClaimToken(search: string): string | null {
-  try {
-    const token = new URLSearchParams(search).get('token');
+  const token = new URLSearchParams(search).get('token');
 
-    return isValidToken(token) ? token : null;
-  } catch {
-    return null;
-  }
+  return isValidToken(token) ? token : null;
 }
 
 export function storePendingConnectClaim(token: string): void {

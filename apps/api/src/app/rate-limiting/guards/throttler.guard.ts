@@ -149,9 +149,7 @@ export class ApiRateLimitInterceptor extends ThrottlerGuard implements NestInter
 
     const user = this.getReqUser(context);
     const isKeylessRequest =
-      isResolvedKeylessAuthScheme(req.authScheme) ||
-      user?.scheme === ApiAuthSchemeEnum.KEYLESS ||
-      this.isKeylessRoute(context);
+      isResolvedKeylessAuthScheme(req.authScheme ?? user?.scheme) || this.isKeylessRoute(context);
     const apiRateLimitCategory =
       this.reflector.getAllAndOverride(ThrottlerCategory, [handler, classRef]) || defaultApiRateLimitCategory;
 

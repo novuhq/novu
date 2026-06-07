@@ -776,7 +776,6 @@ export class AgentInboundHandler implements OnModuleInit {
     return agentReplies >= KEYLESS_DEMO_REPLY_CAP;
   }
 
-  /** Failing to post the signup CTA must not crash the inbound webhook. */
   private async postKeylessSignupCta(
     agentId: string,
     config: ResolvedAgentConfig,

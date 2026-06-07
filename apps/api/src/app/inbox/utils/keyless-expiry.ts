@@ -24,10 +24,6 @@ export function isKeylessEnvironmentExpired(applicationIdentifier: string | unde
   }
 
   const parts = applicationIdentifier.replace(KEYLESS_ENVIRONMENT_PREFIX, '').split('_');
-  if (parts.length < 1) {
-    return true;
-  }
-
   const createdDate = parts[0];
 
   if (!createdDate || createdDate.length < 8) {
