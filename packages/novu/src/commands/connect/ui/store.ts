@@ -6,7 +6,7 @@ import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResul
 export type Phase =
   | {
       kind: 'welcome';
-      /** Called when the user hits Enter to authorize. Pipeline awaits this before opening the browser. */
+      /** Called when the user hits Enter to begin. Pipeline awaits this before bootstrapping the session. */
       resolve: () => void;
     }
   | { kind: 'auth'; dashboardUrl: string | null; status: string }

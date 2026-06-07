@@ -12,7 +12,7 @@ export interface ConnectUI {
   /**
    * First screen the user sees. Renders a welcome message and waits for the
    * user to hit Enter before resolving — this is the explicit consent gate
-   * for opening the browser to authorize the CLI. The Ink implementation
+   * before the connect pipeline starts. The Ink implementation
    * delays the visible text until after the orb's entry animation finishes
    * so the welcome lands on a fully-formed orb instead of mid-grow.
    */
