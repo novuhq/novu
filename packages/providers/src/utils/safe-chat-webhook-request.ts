@@ -36,7 +36,7 @@ export async function safeChatWebhookJsonRequest<T = unknown>(options: {
   const blockedPrefix = options.blockedPrefix ?? DEFAULT_BLOCKED_PREFIX;
   const safeUrl = resolveSafeChatWebhookUrl(options.url, blockedPrefix);
 
-  return safeOutboundJsonRequest<T>({
+  const response = await safeOutboundJsonRequest<T>({
     url: safeUrl,
     method: options.method ?? 'POST',
     headers: options.headers,
@@ -47,4 +47,10 @@ export async function safeChatWebhookJsonRequest<T = unknown>(options: {
     }
     throw err;
   });
+
+  if (response.statusCode < 200 || response.statusCode >= 300) {
+    throw new Error(`${blockedPrefix}: Request failed with status ${response.statusCode}`);
+  }
+
+  return response;
 }

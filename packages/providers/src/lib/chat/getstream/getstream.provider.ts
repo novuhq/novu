@@ -38,6 +38,7 @@ export class GetstreamChatProvider extends BaseProvider implements IChatProvider
     const transformedData = this.transform(bridgeProviderData, {
       text: data.content,
     });
+    // GetStream expects auth metadata inside the JSON payload, not as HTTP headers.
     const response = await safeChatWebhookJsonRequest({
       url: endpoint.url,
       body: {
