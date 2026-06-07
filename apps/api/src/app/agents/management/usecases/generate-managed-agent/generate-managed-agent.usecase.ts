@@ -1,8 +1,9 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { CLAUDE_ANTHROPIC_SKILLS, CLAUDE_BUILTIN_TOOLS, CLAUDE_DEFAULT_TOOL_TYPES, MCP_SERVERS } from '@novu/shared';
+import { ApiAuthSchemeEnum, CLAUDE_ANTHROPIC_SKILLS, CLAUDE_BUILTIN_TOOLS, CLAUDE_DEFAULT_TOOL_TYPES, MCP_SERVERS } from '@novu/shared';
 
+import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { GenerateManagedAgentCommand } from './generate-managed-agent.command';
 import { type ManagedAgentGenerationOutput, managedAgentGenerationSchema } from './managed-agent-generation.schema';
 
@@ -173,7 +174,8 @@ export class GenerateManagedAgent {
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly analyticsService: AnalyticsService,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly keylessAbuseGuard: KeylessAbuseGuardService
   ) {}
 
   @InstrumentUsecase()
@@ -181,6 +183,11 @@ export class GenerateManagedAgent {
     const { user, prompt } = command;
     const runtime = command.runtime ?? 'managed';
     const { organizationId, environmentId, _id: userId } = user;
+
+    if (user.scheme === ApiAuthSchemeEnum.KEYLESS) {
+      await this.keylessAbuseGuard.assertKeylessAiEnabled(organizationId);
+      await this.keylessAbuseGuard.assertGenerateAllowed(command.clientIp);
+    }
 
     const eeAi = this.loadEeAi();
     const llmService = this.moduleRef.get(eeAi.LlmService, { strict: false });

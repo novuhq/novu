@@ -78,6 +78,7 @@ import { NotificationsCount } from '../notifications-count/notifications-count.u
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
+import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
@@ -110,7 +111,8 @@ export class Session {
     private logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService,
     private getSubscriberSchedule: GetSubscriberSchedule,
-    private updatePreferencesUsecase: UpdatePreferences
+    private updatePreferencesUsecase: UpdatePreferences,
+    private keylessAbuseGuard: KeylessAbuseGuardService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -120,7 +122,7 @@ export class Session {
     this.validateRequestData(command.requestData);
 
     const subscriber = this.buildPlatformSubscriber(command.requestData);
-    const applicationIdentifier = await this.getApplicationIdentifier(command.requestData);
+    const applicationIdentifier = await this.getApplicationIdentifier(command.requestData, command.clientIp);
 
     const environment = await this.environmentRepository.findEnvironmentByIdentifier(applicationIdentifier);
     if (!environment) {
@@ -408,17 +410,28 @@ export class Session {
     return subscriber;
   }
 
-  private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto): Promise<string> {
+  private async getApplicationIdentifier(
+    requestData: SubscriberSessionRequestDto,
+    clientIp?: string
+  ): Promise<string> {
     const isKeylessInitialize = !requestData.applicationIdentifier;
     const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
     const isKeylessExpired = isKeyless ? await this.isKeylessExpired(requestData.applicationIdentifier) : false;
 
-    const applicationIdentifier =
-      isKeylessInitialize || isKeylessExpired
-        ? (await this.processKeyless()).identifier
-        : requestData.applicationIdentifier;
+    if (isKeylessInitialize || isKeylessExpired) {
+      const decision = await this.keylessAbuseGuard.resolveEnvCreation(clientIp);
 
-    return applicationIdentifier;
+      if (decision.action === 'reuse') {
+        return decision.applicationIdentifier;
+      }
+
+      const environment = await this.processKeyless();
+      await this.keylessAbuseGuard.recordEnvCreated(clientIp, environment.identifier);
+
+      return environment.identifier;
+    }
+
+    return requestData.applicationIdentifier!;
   }
 
   private async resolveContexts(

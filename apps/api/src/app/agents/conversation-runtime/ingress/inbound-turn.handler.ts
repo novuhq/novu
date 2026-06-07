@@ -13,6 +13,7 @@ import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
+import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -291,7 +292,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly startCodeService: TelegramStartCodeService,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
-    private readonly connectClaimTokenService: ConnectClaimTokenService
+    private readonly connectClaimTokenService: ConnectClaimTokenService,
+    private readonly keylessAbuseGuard: KeylessAbuseGuardService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -391,6 +393,14 @@ export class AgentInboundHandler implements OnModuleInit {
     ]);
 
     if (config.isKeyless) {
+      const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
+
+      if (!aiEnabled) {
+        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+
+        return;
+      }
+
       if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
         return;
       }

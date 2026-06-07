@@ -16,6 +16,7 @@ import { GetAgentRuntimeConfigCommand } from '../get-agent-runtime-config/get-ag
 import { GetAgentRuntimeConfig } from '../get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { ProvisionManagedAgentCommand } from '../provision-managed-agent/provision-managed-agent.command';
 import { ProvisionManagedAgent } from '../provision-managed-agent/provision-managed-agent.usecase';
+import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { CreateAgentCommand } from './create-agent.command';
 
 /** Temporary placeholder used for the initial Mongo insert in adopt mode. */
@@ -31,7 +32,8 @@ export class CreateAgent {
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
     private readonly environmentRepository: EnvironmentRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
-    private readonly logger: PinoLogger
+    private readonly logger: PinoLogger,
+    private readonly keylessAbuseGuard: KeylessAbuseGuardService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -67,6 +69,11 @@ export class CreateAgent {
     }
 
     const isManaged = command.runtime === 'managed';
+
+    if (isManaged) {
+      await this.keylessAbuseGuard.assertKeylessAiEnabled(command.organizationId);
+      await this.keylessAbuseGuard.assertManagedAgentCap(command.environmentId, command.organizationId);
+    }
 
     const agent = isManaged
       ? await this.agentRepository.withTransaction(async (session) => {

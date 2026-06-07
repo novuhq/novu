@@ -117,6 +117,9 @@ export const envValidators = {
       NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
       KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication', default: undefined }),
       KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication', default: undefined }),
+      KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY: num({ default: 15 }),
+      KEYLESS_GENERATE_CAP_PER_IP_PER_DAY: num({ default: 5 }),
+      KEYLESS_MAX_AGENTS_PER_ENV: num({ default: 2 }),
       // ClickHouse
       CLICK_HOUSE_URL: str({ default: '' }),
       CLICK_HOUSE_DATABASE: str({ default: '' }),
