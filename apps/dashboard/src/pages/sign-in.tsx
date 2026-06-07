@@ -17,6 +17,7 @@ import {
   storePendingCliAuth,
 } from '@/utils/cli-auth-pending';
 import { buildConnectProvisionOrgListPath } from '@/utils/connect';
+import { storePendingConnectClaimFromRedirectUrl } from '@/utils/connect-claim-pending';
 import {
   buildAbsoluteConnectUrl,
   buildPrimarySignInUrl,
@@ -60,6 +61,8 @@ export const SignInPage = () => {
     if (pending) {
       storePendingCliAuth(pending.deviceCode, pending.name, pending.returnHost);
     }
+
+    storePendingConnectClaimFromRedirectUrl(readClerkRedirectUrlParam(searchParams));
   }, [searchParams, isConnectSignIn]);
 
   // Sign-in only runs on the primary; Connect-host visitors bounce back with the Connect flag.

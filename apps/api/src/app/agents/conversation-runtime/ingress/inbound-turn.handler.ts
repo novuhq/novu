@@ -84,13 +84,25 @@ const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
-const KEYLESS_DEMO_REPLY_CAP = Number(process.env.KEYLESS_DEMO_REPLY_CAP) || 5;
+const keylessDemoReplyCapRaw = process.env.KEYLESS_DEMO_REPLY_CAP;
+const parsedKeylessDemoReplyCap = Number(keylessDemoReplyCapRaw);
+const KEYLESS_DEMO_REPLY_CAP =
+  keylessDemoReplyCapRaw != null && keylessDemoReplyCapRaw !== '' && !Number.isNaN(parsedKeylessDemoReplyCap)
+    ? parsedKeylessDemoReplyCap
+    : 5;
 
 function resolveConnectClaimBaseUrl(): string {
-  return (process.env.CONNECT_WEB_URL || process.env.CONNECT_DASHBOARD_URL || 'https://connect.novu.co').replace(
-    /\/$/,
-    ''
-  );
+  for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
+    const trimmed = candidate?.trim();
+
+    if (!trimmed || trimmed.startsWith('^')) {
+      continue;
+    }
+
+    return trimmed.replace(/\/$/, '');
+  }
+
+  return 'https://dashboard.novu.co';
 }
 
 function buildKeylessSignupCard(claimUrl: string): CardElement {
@@ -378,10 +390,16 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
-    if (config.isKeyless && (await this.isKeylessDemoCapReached(config, conversation._id))) {
-      await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+    if (config.isKeyless) {
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
+        return;
+      }
 
-      return;
+      if (await this.isKeylessDemoCapReached(config, conversation._id)) {
+        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+
+        return;
+      }
     }
 
     await this.acknowledgeReceipt(agentId, config, thread, message, isFirstMessage);

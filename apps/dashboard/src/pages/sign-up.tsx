@@ -9,6 +9,7 @@ import { IS_NOVU_CONNECT, IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { appendRedirectUrlParam, readCliAuthReturnUrl } from '@/utils/cli-auth-pending';
+import { storePendingConnectClaimFromRedirectUrl } from '@/utils/connect-claim-pending';
 import { buildConnectProvisionOrgListPath } from '@/utils/connect';
 import {
   buildAbsoluteConnectUrl,
@@ -42,6 +43,7 @@ export const SignUpPage = () => {
   // Persist pending CLI auth from inbound redirect_url; org creation still runs first.
   useEffect(() => {
     readCliAuthReturnUrl(searchParams, { preferConnectHost: isConnectSignUp });
+    storePendingConnectClaimFromRedirectUrl(readClerkRedirectUrlParam(searchParams));
   }, [searchParams, isConnectSignUp]);
 
   // Sign-up flows are primary-only — bounce Connect-host visitors back with Connect branding.

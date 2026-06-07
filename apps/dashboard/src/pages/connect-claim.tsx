@@ -7,14 +7,17 @@ import { ConnectBrandLogo } from '@/components/auth/connect-brand-logo';
 import { AuthLayout } from '@/components/auth-layout';
 import { PageMeta } from '@/components/page-meta';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
+import { IS_HOSTNAME_SPLIT_ENABLED } from '@/config';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
 import { useEnvironment } from '@/context/environment/hooks';
+import { appendRedirectUrlParam } from '@/utils/cli-auth-pending';
 import { clearConnectProvisioning } from '@/utils/connect';
 import {
   clearPendingConnectClaim,
   readPendingConnectClaim,
   storePendingConnectClaim,
 } from '@/utils/connect-claim-pending';
+import { buildPrimarySignUpUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 
 export const ConnectClaimPage = () => {
@@ -39,7 +42,14 @@ export const ConnectClaimPage = () => {
   if (!isSignedIn) {
     const search = token ? `?token=${encodeURIComponent(token)}` : '';
     const redirectUrl = `${ROUTES.CONNECT_CLAIM}${search}`;
-    const signUpUrl = `${ROUTES.SIGN_UP}?redirect_url=${encodeURIComponent(redirectUrl)}`;
+    const signUpBase = IS_HOSTNAME_SPLIT_ENABLED ? buildPrimarySignUpUrl() : ROUTES.SIGN_UP;
+    const signUpUrl = appendRedirectUrlParam(signUpBase, redirectUrl);
+
+    if (signUpUrl.startsWith('http')) {
+      window.location.replace(signUpUrl);
+
+      return null;
+    }
 
     return <Navigate to={signUpUrl} replace />;
   }
@@ -111,9 +121,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
             <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
               <span>{reason}</span>
             </div>
-          ) : null}
-
-          {didClaim ? (
+          ) : didClaim ? (
             <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
               <RiCheckLine className="mt-0.5 size-4 shrink-0" />
               <span>Your agent is connected to your account. Head back to your chat — the agent is ready to continue.</span>

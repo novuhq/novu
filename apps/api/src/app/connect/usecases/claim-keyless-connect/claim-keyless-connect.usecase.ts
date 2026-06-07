@@ -1,4 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
   AgentIntegrationRepository,
@@ -16,7 +22,11 @@ import {
 } from '@novu/dal';
 import { ChannelTypeEnum, EnvironmentTypeEnum } from '@novu/shared';
 import { KEYLESS_SUBSCRIBER_ID } from '../../../inbox/utils/keyless.constants';
-import { ConnectClaimTokenService } from '../../services/connect-claim-token.service';
+import {
+  ConnectClaimTokenCacheUnavailableError,
+  ConnectClaimTokenService,
+  InvalidConnectClaimTokenError,
+} from '../../services/connect-claim-token.service';
 import { ClaimKeylessConnectCommand } from './claim-keyless-connect.command';
 
 export interface ClaimKeylessConnectResult {
@@ -56,7 +66,12 @@ export class ClaimKeylessConnect {
     }
 
     try {
-      const payload = await this.connectClaimTokenService.verify(command.token);
+      let payload;
+      try {
+        payload = await this.connectClaimTokenService.verify(command.token);
+      } catch (error) {
+        this.rethrowConnectClaimTokenError(error);
+      }
 
       if (payload.org !== keylessOrganizationId) {
         throw new BadRequestException('Invalid claim token.');
@@ -108,7 +123,11 @@ export class ClaimKeylessConnect {
         'Claimed keyless connect assets into Development environment'
       );
 
-      await this.connectClaimTokenService.claim(command.token);
+      try {
+        await this.connectClaimTokenService.claim(command.token);
+      } catch (error) {
+        this.rethrowConnectClaimTokenError(error);
+      }
 
       return {
         environmentId: targetEnvironment._id,
@@ -117,6 +136,26 @@ export class ClaimKeylessConnect {
     } finally {
       await this.connectClaimTokenService.releaseClaimLock(command.token);
     }
+  }
+
+  private rethrowConnectClaimTokenError(error: unknown): never {
+    if (error instanceof InvalidConnectClaimTokenError) {
+      if (error.reason === 'used') {
+        throw new BadRequestException('This claim link has already been used.');
+      }
+
+      if (error.reason === 'expired') {
+        throw new BadRequestException('This claim link has expired.');
+      }
+
+      throw new BadRequestException('Invalid claim token.');
+    }
+
+    if (error instanceof ConnectClaimTokenCacheUnavailableError) {
+      throw new ServiceUnavailableException('Claim service is temporarily unavailable. Please try again.');
+    }
+
+    throw error;
   }
 
   private async resolveDevelopmentEnvironment(organizationId: string): Promise<EnvironmentEntity> {

@@ -118,6 +118,17 @@ export class ConnectClaimTokenService {
     return issued;
   }
 
+  async isSignupCtaPosted(conversationId: string): Promise<boolean> {
+    if (!this.cacheService.cacheEnabled()) {
+      return false;
+    }
+
+    const key = `${CTA_POSTED_KEY_PREFIX}{${conversationId}}`;
+    const posted = await this.cacheService.get(key);
+
+    return posted != null;
+  }
+
   async tryMarkSignupCtaPosted(conversationId: string): Promise<boolean> {
     this.assertCacheAvailable('tryMarkSignupCtaPosted');
 

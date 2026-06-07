@@ -137,6 +137,7 @@ describe('AgentInboundHandler', () => {
       issueOrGetForEnvironment: sinon
         .stub()
         .resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
+      isSignupCtaPosted: sinon.stub().resolves(false),
       tryMarkSignupCtaPosted: sinon.stub().resolves(true),
     };
     const handler = new AgentInboundHandler(

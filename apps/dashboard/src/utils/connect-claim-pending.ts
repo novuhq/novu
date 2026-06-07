@@ -29,6 +29,16 @@ export function storePendingConnectClaim(token: string): void {
   sessionStorage.setItem(STORAGE_KEY, token);
 }
 
+export function isConnectClaimReturnUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url, typeof window !== 'undefined' ? window.location.origin : 'http://local');
+
+    return isConnectClaimPath(parsed.pathname);
+  } catch {
+    return false;
+  }
+}
+
 export function storePendingConnectClaimFromPath(pathname: string, search = ''): boolean {
   if (!isConnectClaimPath(pathname)) {
     return false;
@@ -42,6 +52,27 @@ export function storePendingConnectClaimFromPath(pathname: string, search = ''):
   storePendingConnectClaim(token);
 
   return true;
+}
+
+export function storePendingConnectClaimFromRedirectUrl(redirectUrl: string | null | undefined): boolean {
+  if (!redirectUrl || !isConnectClaimReturnUrl(redirectUrl)) {
+    return false;
+  }
+
+  try {
+    const parsed = new URL(redirectUrl, typeof window !== 'undefined' ? window.location.origin : 'http://local');
+    const token = parseConnectClaimToken(parsed.search);
+
+    if (!token) {
+      return false;
+    }
+
+    storePendingConnectClaim(token);
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function readPendingConnectClaim(): string | null {
