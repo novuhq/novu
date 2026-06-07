@@ -1,3 +1,4 @@
+/** Parses a non-negative integer env var; `0` disables the corresponding cap. */
 export function parsePositiveIntEnv(raw: string | undefined, fallback: number): number {
   if (raw == null || raw === '') {
     return fallback;
@@ -26,12 +27,10 @@ export const KEYLESS_MAX_AGENTS_PER_ENV = parsePositiveIntEnv(process.env.KEYLES
 
 export const KEYLESS_DAILY_COUNTER_TTL_SECONDS = 86_400;
 
-const INCR_WITH_EXPIRE_SCRIPT = `
+export const INCR_WITH_EXPIRE_SCRIPT = `
 local current = redis.call('INCR', KEYS[1])
 if current == 1 then
   redis.call('EXPIRE', KEYS[1], ARGV[1])
 end
 return current
 `;
-
-export { INCR_WITH_EXPIRE_SCRIPT };

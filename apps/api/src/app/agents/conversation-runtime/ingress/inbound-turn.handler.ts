@@ -14,6 +14,7 @@ import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
+import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -85,12 +86,7 @@ const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
-const keylessDemoReplyCapRaw = process.env.KEYLESS_DEMO_REPLY_CAP;
-const parsedKeylessDemoReplyCap = Number(keylessDemoReplyCapRaw);
-const KEYLESS_DEMO_REPLY_CAP =
-  keylessDemoReplyCapRaw != null && keylessDemoReplyCapRaw !== '' && !Number.isNaN(parsedKeylessDemoReplyCap)
-    ? parsedKeylessDemoReplyCap
-    : 5;
+const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 5);
 
 function resolveConnectClaimBaseUrl(): string {
   for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
@@ -369,6 +365,26 @@ export class AgentInboundHandler implements OnModuleInit {
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
     const conversation = await this.openConversation(agentId, config, message, subscriberId, platformThreadId);
 
+    if (config.isKeyless) {
+      const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
+
+      if (!aiEnabled) {
+        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+
+        return;
+      }
+
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
+        return;
+      }
+
+      if (await this.isKeylessDemoCapReached(config, conversation._id)) {
+        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+
+        return;
+      }
+    }
+
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
 
@@ -391,26 +407,6 @@ export class AgentInboundHandler implements OnModuleInit {
         'managedRuntime',
       ]),
     ]);
-
-    if (config.isKeyless) {
-      const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
-
-      if (!aiEnabled) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
-
-        return;
-      }
-
-      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
-        return;
-      }
-
-      if (await this.isKeylessDemoCapReached(config, conversation._id)) {
-        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
-
-        return;
-      }
-    }
 
     await this.acknowledgeReceipt(agentId, config, thread, message, isFirstMessage);
 

@@ -72,11 +72,12 @@ export class CreateAgent {
 
     if (isManaged) {
       await this.keylessAbuseGuard.assertKeylessAiEnabled(command.organizationId);
-      await this.keylessAbuseGuard.assertManagedAgentCap(command.environmentId, command.organizationId);
     }
 
     const agent = isManaged
       ? await this.agentRepository.withTransaction(async (session) => {
+          await this.keylessAbuseGuard.assertManagedAgentCap(command.environmentId, command.organizationId);
+
           const managedRuntime = command.managedRuntime!;
 
           // In adopt mode we don't know the name/identifier yet — use temporary placeholders.

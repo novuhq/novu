@@ -54,7 +54,6 @@ import {
   StepTypeEnum,
 } from '@novu/shared';
 import { createHash } from 'crypto';
-import { differenceInHours } from 'date-fns';
 import { AuthService } from '../../../auth/services/auth.service';
 import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environment-response.dto';
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
@@ -79,9 +78,9 @@ import { UpdatePreferencesCommand } from '../update-preferences/update-preferenc
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
+import { isKeylessEnvironmentExpired } from '../../utils/keyless-expiry';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
-const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
 const MAX_NOTIFICATIONS_COUNT = 100;
 
 @Injectable()
@@ -416,17 +415,17 @@ export class Session {
   ): Promise<string> {
     const isKeylessInitialize = !requestData.applicationIdentifier;
     const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
-    const isKeylessExpired = isKeyless ? await this.isKeylessExpired(requestData.applicationIdentifier) : false;
+    const isKeylessExpired = isKeyless ? isKeylessEnvironmentExpired(requestData.applicationIdentifier) : false;
 
     if (isKeylessInitialize || isKeylessExpired) {
-      const decision = await this.keylessAbuseGuard.resolveEnvCreation(clientIp);
+      const decision = await this.keylessAbuseGuard.reserveEnvCreation(clientIp);
 
       if (decision.action === 'reuse') {
         return decision.applicationIdentifier;
       }
 
       const environment = await this.processKeyless();
-      await this.keylessAbuseGuard.recordEnvCreated(clientIp, environment.identifier);
+      await this.keylessAbuseGuard.rememberLastEnv(clientIp, environment.identifier);
 
       return environment.identifier;
     }
@@ -464,41 +463,6 @@ export class Session {
     );
 
     return tierLimitMs / 1000 / 60 / 60;
-  }
-
-  async isKeylessExpired(applicationIdentifier: string | undefined) {
-    if (!applicationIdentifier) {
-      return true; // If no identifier is provided, consider it expired
-    }
-
-    const parts = applicationIdentifier.replace(this.KEYLESS_ENVIRONMENT_PREFIX, '').split('_');
-    if (parts.length < 1) {
-      return true; // Invalid format, consider expired
-    }
-
-    const createdDate = parts[0];
-
-    if (!createdDate || createdDate.length < 8) {
-      // Ensure we have at least 4 bytes (8 hex chars)
-      return true; // Invalid timestamp format, consider expired
-    }
-
-    try {
-      const createdDateTimestamp = timestampHexToDate(createdDate);
-      const now = new Date();
-      const diffTimeInHours = differenceInHours(now, createdDateTimestamp);
-
-      if (diffTimeInHours > KEYLESS_RETENTION_TIME_IN_HOURS) {
-        return true;
-      }
-    } catch (error) {
-      this.logger.error({ err: error }, 'Error parsing timestamp');
-
-      // If there's any error parsing the timestamp, consider it expired
-      return true;
-    }
-
-    return false;
   }
 
   async processKeyless(): Promise<EnvironmentResponseDto> {
@@ -885,19 +849,4 @@ export class Session {
 
     return dto;
   }
-}
-
-function timestampHexToDate(timestampHex) {
-  if (!timestampHex || typeof timestampHex !== 'string' || timestampHex.length < 8) {
-    throw new Error('Invalid timestamp hex format');
-  }
-
-  const buffer = Buffer.from(timestampHex, 'hex');
-  if (buffer.length < 4) {
-    throw new Error('Buffer too small to read 32-bit integer');
-  }
-
-  const timestamp = buffer.readUInt32BE(0);
-
-  return new Date(timestamp * 1000);
 }
