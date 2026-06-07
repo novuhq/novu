@@ -21,6 +21,7 @@ import {
   WebSocketEvent,
 } from '../types';
 import { NovuError } from '../utils/errors';
+import { sanitizeInAppRedirect } from '../utils/in-app-redirect-url';
 import type { BaseSocketInterface } from './base-socket';
 
 export const PRODUCTION_SOCKET_URL = 'wss://socket.novu.co';
@@ -96,31 +97,16 @@ const mapToNotification = ({
     primaryAction: primaryCta && {
       label: primaryCta.content,
       isCompleted: actionType === ActionTypeEnum.PRIMARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: primaryCta.url
-        ? {
-            target: primaryCta.target,
-            url: primaryCta.url,
-          }
-        : undefined,
+      redirect: sanitizeInAppRedirect(primaryCta.url, primaryCta.target),
     },
     secondaryAction: secondaryCta && {
       label: secondaryCta.content,
       isCompleted: actionType === ActionTypeEnum.SECONDARY && actionStatus === NotificationActionStatus.DONE,
-      redirect: secondaryCta.url
-        ? {
-            target: secondaryCta.target,
-            url: secondaryCta.url,
-          }
-        : undefined,
+      redirect: sanitizeInAppRedirect(secondaryCta.url, secondaryCta.target),
     },
     channelType: channel,
     tags,
-    redirect: cta.data?.url
-      ? {
-          url: cta.data.url,
-          target: cta.data.target,
-        }
-      : undefined,
+    redirect: sanitizeInAppRedirect(cta.data?.url, cta.data?.target),
     data,
     workflow,
     severity,
