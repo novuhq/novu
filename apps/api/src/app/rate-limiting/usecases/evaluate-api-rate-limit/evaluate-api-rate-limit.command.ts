@@ -1,6 +1,6 @@
 import { BaseCommand } from '@novu/application-generic';
 import { ApiRateLimitCategoryEnum, ApiRateLimitCostEnum } from '@novu/shared';
-import { IsDefined, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsDefined, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class EvaluateApiRateLimitCommand extends BaseCommand {
   @IsOptional()
@@ -22,4 +22,9 @@ export class EvaluateApiRateLimitCommand extends BaseCommand {
   @IsOptional()
   @IsString()
   ip?: string;
+
+  /** True for keyless callers (resolved auth scheme or inbox session bootstrap). */
+  @IsOptional()
+  @IsBoolean()
+  isKeyless?: boolean;
 }

@@ -134,6 +134,10 @@ describe('AgentInboundHandler', () => {
     };
     const connectClaimTokenService = {
       issue: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
+      issueOrGetForEnvironment: sinon
+        .stub()
+        .resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
+      tryMarkSignupCtaPosted: sinon.stub().resolves(true),
     };
     const handler = new AgentInboundHandler(
       logger as any,

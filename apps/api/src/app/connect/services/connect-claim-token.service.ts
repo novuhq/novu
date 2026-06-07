@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
+import { CONNECT_CLAIM_TOKEN_PATTERN } from '@novu/shared';
 
 /**
  * Lifetime of a connect claim token (seconds). The user receives the link in
@@ -11,10 +12,15 @@ export const CONNECT_CLAIM_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 const CACHE_KEY_PREFIX = 'connect_claim_link:';
 const USED_KEY_PREFIX = 'connect_claim_link_used:';
+const ENV_TOKEN_KEY_PREFIX = 'connect_claim_link_env:';
+const CTA_POSTED_KEY_PREFIX = 'connect_claim_cta_posted:';
+const CLAIM_LOCK_KEY_PREFIX = 'connect_claim_link_lock:';
+
+/** Short lock so concurrent claim requests for the same token serialize. */
+const CLAIM_LOCK_TTL_SECONDS = 60;
 
 /** 24 bytes → 32 URL-safe base64url characters. */
 const TOKEN_BYTES = 24;
-const TOKEN_FORMAT = /^[A-Za-z0-9_-]{32}$/;
 
 /** Wrap token in `{…}` so storage + used-marker keys share a Redis Cluster hash slot. */
 function clusterSlotTag(token: string): string {
@@ -102,6 +108,66 @@ export class ConnectClaimTokenService {
     });
 
     return { token, expiresAt: new Date(expiresAtEpoch * 1000).toISOString() };
+  }
+
+  /**
+   * Returns an existing claim token for the keyless environment when one is still
+   * valid, otherwise mints a new one. Prevents unbounded Redis growth when users
+   * keep messaging after the demo cap.
+   */
+  async issueOrGetForEnvironment(payload: ConnectClaimTokenPayload): Promise<IssuedConnectClaimToken> {
+    this.assertCacheAvailable('issueOrGetForEnvironment');
+
+    const envKey = `${ENV_TOKEN_KEY_PREFIX}{${payload.env}}`;
+    const existingToken = await this.cacheService.get(envKey);
+
+    if (existingToken && this.isTokenFormatValid(existingToken)) {
+      const reused = await this.readIssuedToken(existingToken, payload);
+
+      if (reused) {
+        return reused;
+      }
+    }
+
+    const issued = await this.issue(payload);
+    await this.cacheService.set(envKey, issued.token, { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS });
+
+    return issued;
+  }
+
+  /**
+   * Marks the signup CTA as posted for a conversation. Returns true only the
+   * first time so the card is not re-sent on every subsequent inbound message.
+   */
+  async tryMarkSignupCtaPosted(conversationId: string): Promise<boolean> {
+    this.assertCacheAvailable('tryMarkSignupCtaPosted');
+
+    const key = `${CTA_POSTED_KEY_PREFIX}{${conversationId}}`;
+    const acquired = await this.cacheService.setIfNotExist(key, '1', { ttl: CONNECT_CLAIM_TOKEN_TTL_SECONDS });
+
+    return acquired === 'OK';
+  }
+
+  /** Serializes concurrent claim attempts for the same token. */
+  async tryAcquireClaimLock(token: string): Promise<boolean> {
+    this.assertCacheAvailable('tryAcquireClaimLock');
+
+    if (!this.isTokenFormatValid(token)) {
+      return false;
+    }
+
+    const key = `${CLAIM_LOCK_KEY_PREFIX}${clusterSlotTag(token)}`;
+    const acquired = await this.cacheService.setIfNotExist(key, '1', { ttl: CLAIM_LOCK_TTL_SECONDS });
+
+    return acquired === 'OK';
+  }
+
+  async releaseClaimLock(token: string): Promise<void> {
+    if (!this.cacheService.cacheEnabled() || !this.isTokenFormatValid(token)) {
+      return;
+    }
+
+    await this.cacheService.del(`${CLAIM_LOCK_KEY_PREFIX}${clusterSlotTag(token)}`);
   }
 
   /**
@@ -203,8 +269,29 @@ export class ConnectClaimTokenService {
     }
   }
 
+  private async readIssuedToken(
+    token: string,
+    expectedPayload: ConnectClaimTokenPayload
+  ): Promise<IssuedConnectClaimToken | null> {
+    const raw = await this.cacheService.get(this.storageKey(token));
+    if (!raw) {
+      return null;
+    }
+
+    const entry = this.parseEntry(raw);
+    if (
+      !entry ||
+      entry.payload.env !== expectedPayload.env ||
+      entry.payload.org !== expectedPayload.org
+    ) {
+      return null;
+    }
+
+    return { token, expiresAt: new Date(entry.expiresAt * 1000).toISOString() };
+  }
+
   private isTokenFormatValid(token: string): boolean {
-    return typeof token === 'string' && TOKEN_FORMAT.test(token);
+    return typeof token === 'string' && CONNECT_CLAIM_TOKEN_PATTERN.test(token);
   }
 
   private assertCacheAvailable(operation: string): void {

@@ -388,7 +388,7 @@ export class AgentInboundHandler implements OnModuleInit {
     // until the env is claimed into a real org (after which `isKeyless` is false
     // and dispatch resumes with the full prior history intact).
     if (config.isKeyless && (await this.isKeylessDemoCapReached(config, conversation._id))) {
-      await this.postKeylessSignupCta(agentId, config, thread);
+      await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
 
       return;
     }
@@ -770,10 +770,16 @@ export class AgentInboundHandler implements OnModuleInit {
   private async postKeylessSignupCta(
     agentId: string,
     config: ResolvedAgentConfig,
-    thread: Thread
+    thread: Thread,
+    conversationId: string
   ): Promise<void> {
     try {
-      const { token } = await this.connectClaimTokenService.issue({
+      const shouldPost = await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
+      if (!shouldPost) {
+        return;
+      }
+
+      const { token } = await this.connectClaimTokenService.issueOrGetForEnvironment({
         env: config.environmentId,
         org: config.organizationId,
       });

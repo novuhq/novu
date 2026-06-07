@@ -48,6 +48,7 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -167,8 +168,7 @@ export class IntegrationsController {
         // Keyless callers share a single backing org, so org-wide listing would
         // leak other keyless sessions' integrations. Always scope keyless (and
         // API key) callers to their own environment.
-        scopeToEnvironment:
-          user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.KEYLESS,
+        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
@@ -195,7 +195,7 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        scopeToEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+        scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
@@ -878,8 +878,7 @@ export class IntegrationsController {
     // Keyless callers share a single backing org; pin them to their own
     // environment exactly like API key callers so they can't target another
     // keyless session's environment via `_environmentId`.
-    const isEnvironmentScopedScheme =
-      user.scheme === ApiAuthSchemeEnum.API_KEY || user.scheme === ApiAuthSchemeEnum.KEYLESS;
+    const isEnvironmentScopedScheme = isEnvironmentScopedAuthScheme(user.scheme);
     if (!isEnvironmentScopedScheme) {
       return;
     }

@@ -21,7 +21,7 @@ import {
 
 import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
-import { ConnectClaimTokenService } from '../connect/services/connect-claim-token.service';
+import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
@@ -64,7 +64,7 @@ import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.fi
 import { USE_CASES } from './usecases';
 
 @Module({
-  imports: [SharedModule, AuthModule, EventsModule, ChannelEndpointsModule],
+  imports: [SharedModule, AuthModule, EventsModule, ChannelEndpointsModule, ConnectModule],
   controllers: [
     AgentsController,
     AgentIntegrationsController,
@@ -116,7 +116,6 @@ import { USE_CASES } from './usecases';
     McpOAuthDiscoveryService,
     TelegramMobileLinkTokenService,
     TelegramStartCodeService,
-    ConnectClaimTokenService,
     CalculateLimitNovuIntegration,
     CalculateDemoClaudeQuota,
     CreateOrUpdateSubscriberUseCase,

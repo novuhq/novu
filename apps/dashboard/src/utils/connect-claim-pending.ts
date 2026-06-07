@@ -1,12 +1,10 @@
+import { CONNECT_CLAIM_TOKEN_PATTERN } from '@novu/shared';
 import { ROUTES } from '@/utils/routes';
 
 const STORAGE_KEY = 'pendingConnectClaim';
 
-// Connect claim tokens are `randomBytes(24).toString('base64url')` → 32 url-safe chars.
-const TOKEN_PATTERN = /^[A-Za-z0-9_-]{32}$/;
-
 function isValidToken(token: string | null | undefined): token is string {
-  return Boolean(token) && TOKEN_PATTERN.test(token as string);
+  return Boolean(token) && CONNECT_CLAIM_TOKEN_PATTERN.test(token as string);
 }
 
 export function isConnectClaimPath(pathname: string): boolean {
