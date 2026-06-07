@@ -177,13 +177,13 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     addingEmailIntegration() {
       store.phase.set({ kind: 'adding-email' });
     },
-    awaitEmailOpen({ inboundAddress, mailtoUrl }) {
-      return new Promise<void>((resolve) => {
-        store.phase.set({ kind: 'email-ready', inboundAddress, mailtoUrl, resolve });
+    awaitEmailOpen({ inboundAddress, mailtoUrl, sendFromEmail }) {
+      return new Promise<void>((resolve, reject) => {
+        store.phase.set({ kind: 'email-ready', inboundAddress, mailtoUrl, sendFromEmail, resolve, reject });
       });
     },
-    showEmailWaiting({ inboundAddress }) {
-      store.phase.set({ kind: 'email-waiting', inboundAddress });
+    showEmailWaiting({ inboundAddress, sendFromEmail }) {
+      store.phase.set({ kind: 'email-waiting', inboundAddress, sendFromEmail });
     },
     emailConnected() {
       // Transition handled by sendingWelcome / success.

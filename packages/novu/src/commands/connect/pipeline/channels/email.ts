@@ -12,7 +12,8 @@ export async function connectEmailForAgent(
   client: ConnectApiClient,
   agent: AgentSummary,
   ui: ConnectUI,
-  track: (event: string, data?: Record<string, unknown>) => void
+  track: (event: string, data?: Record<string, unknown>) => void,
+  opts?: { sendFromEmail?: string | null }
 ): Promise<{ connected: boolean; integration: IntegrationRecord }> {
   ui.addingEmailIntegration();
 
@@ -45,12 +46,13 @@ export async function connectEmailForAgent(
   }
 
   const subject = `Hi ${agent.name}!`;
-  const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
+  const sendFromHint = opts?.sendFromEmail ? `\n\n(Send this from your Novu account email: ${opts.sendFromEmail})` : '';
+  const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!${sendFromHint}`;
   const mailtoUrl = `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  await ui.awaitEmailOpen({ inboundAddress, mailtoUrl });
+  await ui.awaitEmailOpen({ inboundAddress, mailtoUrl, sendFromEmail: opts?.sendFromEmail });
   void open(mailtoUrl).catch(() => undefined);
-  ui.showEmailWaiting({ inboundAddress });
+  ui.showEmailWaiting({ inboundAddress, sendFromEmail: opts?.sendFromEmail });
 
   const connected = await pollForAgentLinkConnected(client, agent.identifier, integration.identifier, {
     intervalMs: CHANNEL_POLL_INTERVAL_MS,

@@ -4,6 +4,7 @@ import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
+import { ConnectChannelBackError } from '../pipeline/connect-channel-back-error';
 import type { AgentRuntimeChoice, ChannelChoice } from '../types';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
@@ -266,7 +267,9 @@ export function PhaseContent({
         <EmailReadyContent
           inboundAddress={phase.inboundAddress}
           mailtoUrl={phase.mailtoUrl}
+          sendFromEmail={phase.sendFromEmail}
           onContinue={phase.resolve}
+          onBack={() => phase.reject(new ConnectChannelBackError())}
         />
       );
 
@@ -279,6 +282,11 @@ export function PhaseContent({
           <Box flexDirection="column" paddingY={1}>
             <Text bold>{phase.inboundAddress}</Text>
           </Box>
+          {phase.sendFromEmail ? (
+            <Text dimColor>
+              Send from your Novu account email: <Text color="white">{phase.sendFromEmail}</Text>
+            </Text>
+          ) : null}
           <Text dimColor>Waiting for your email to arrive…</Text>
         </Box>
       );
@@ -528,13 +536,23 @@ function SlackOAuthReadyContent({
 function EmailReadyContent({
   inboundAddress,
   mailtoUrl,
+  sendFromEmail,
   onContinue,
+  onBack,
 }: {
   inboundAddress: string;
   mailtoUrl: string;
+  sendFromEmail?: string | null;
   onContinue: () => void;
+  onBack: () => void;
 }): React.ReactElement {
   useInput((_input, key) => {
+    if (key.escape) {
+      onBack();
+
+      return;
+    }
+
     if (key.return || _input === ' ') onContinue();
   });
 
@@ -543,12 +561,25 @@ function EmailReadyContent({
       <Text bold color="cyan">
         Your agent has an inbox
       </Text>
-      <Text dimColor>Send any email to the address below — your agent will read it and reply to your inbox.</Text>
+      <Text dimColor>
+        Unlike Slack or Telegram, email starts with you sending the first message. Your agent reads it and replies to
+        the same inbox.
+      </Text>
       <Box flexDirection="column" paddingY={1}>
+        <Text dimColor>Inbound address:</Text>
         <Text bold>{inboundAddress}</Text>
       </Box>
-      <Text dimColor>{`mailto link: ${mailtoUrl.slice(0, 80)}${mailtoUrl.length > 80 ? '…' : ''}`}</Text>
+      {sendFromEmail ? (
+        <Text dimColor>
+          Email agents reply to the address you send from. Use your Novu account email:{' '}
+          <Text color="white" bold>
+            {sendFromEmail}
+          </Text>
+        </Text>
+      ) : null}
+      <CopyableLink url={mailtoUrl} hint="Pre-filled draft email:" color="white" />
       <Text color="cyan">Press Enter to open a pre-filled draft in your default mail client →</Text>
+      <Text dimColor>Esc · back to channel list</Text>
     </Box>
   );
 }

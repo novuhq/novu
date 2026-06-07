@@ -3,7 +3,10 @@ import sinon from 'sinon';
 import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
+import {
+  buildUnresolvedSubscriberAccessReply,
+  UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+} from '../../shared/util/agent-inbound-replies';
 import { OutboundGateway } from '../egress/outbound.gateway';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
@@ -134,9 +137,7 @@ describe('AgentInboundHandler', () => {
     };
     const connectClaimTokenService = {
       issue: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
-      issueOrGetForEnvironment: sinon
-        .stub()
-        .resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
+      issueOrGetForEnvironment: sinon.stub().resolves({ token: 'claim-token', expiresAt: new Date().toISOString() }),
       isSignupCtaPosted: sinon.stub().resolves(false),
       tryMarkSignupCtaPosted: sinon.stub().resolves(true),
     };
@@ -397,6 +398,56 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
         markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
+    });
+
+    it('should reply with email-specific no-access message when sender email is unknown', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+      };
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves({
+          _id: 'agent1',
+          runtime: 'managed',
+          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
+        }),
+      });
+      const thread = {
+        id: 'email:thread1:',
+        channelId: 'email:thread1',
+        isDM: true,
+        toJSON: () => ({ id: 'email:thread1:', channelId: 'email:thread1', isDM: true }),
+        startTyping: sinon.stub().resolves(undefined),
+        post: sinon.stub().resolves({ id: 'email-reply-1', threadId: 'email:thread1:' }),
+      };
+      const message = {
+        id: 'email-msg-1',
+        threadId: 'email:thread1:',
+        text: 'hello',
+        author: {
+          userId: 'unknown@example.com',
+          fullName: 'Unknown Sender',
+          userName: 'unknown@example.com',
+          isBot: false,
+        },
+        raw: {},
+        attachments: [],
+      };
+      const expectedReply = buildUnresolvedSubscriberAccessReply({
+        platform: AgentPlatformEnum.EMAIL,
+        senderEmail: 'unknown@example.com',
+      });
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: expectedReply,
       });
     });
   });

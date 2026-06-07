@@ -6,7 +6,7 @@ import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
-import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../shared/util/agent-inbound-replies';
+import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
 import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
@@ -136,16 +136,21 @@ export class ManagedRuntime implements AgentRuntime {
   }
 
   private async replyUnresolvedSubscriberAccess(turn: ConversationTurn): Promise<void> {
+    const reply = buildUnresolvedSubscriberAccessReply({
+      platform: turn.config.platform,
+      senderEmail: turn.message?.author?.userId,
+    });
+
     applyPlatformThreadIdToThread(turn.thread, turn.platformThreadId);
     await this.outboundGateway.replyOnThread(
       turn.thread,
-      { markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY },
+      { markdown: reply },
       {
         persist: {
           conversationId: turn.conversation._id,
           channel: this.conversationService.getPrimaryChannel(turn.conversation),
           agentIdentifier: turn.config.agentIdentifier,
-          content: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+          content: reply,
           environmentId: turn.config.environmentId,
           organizationId: turn.config.organizationId,
         },

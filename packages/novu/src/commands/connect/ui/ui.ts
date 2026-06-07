@@ -80,12 +80,12 @@ export interface ConnectUI {
    * client never pops up without explicit user consent (some terminals /
    * sandboxes block silent `open()` anyway).
    */
-  awaitEmailOpen(opts: { inboundAddress: string; mailtoUrl: string }): Promise<void>;
+  awaitEmailOpen(opts: { inboundAddress: string; mailtoUrl: string; sendFromEmail?: string | null }): Promise<void>;
   /**
    * Transitions to the "we're polling for your email to arrive" view. Fired
    * by the pipeline right after `open()` returns.
    */
-  showEmailWaiting(opts: { inboundAddress: string }): void;
+  showEmailWaiting(opts: { inboundAddress: string; sendFromEmail?: string | null }): void;
   emailConnected(): void;
 
   // Telegram path

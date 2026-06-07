@@ -161,9 +161,12 @@ export function createLoggingUI(): ConnectUI {
     addingEmailIntegration() {
       start('Linking Email to your agent…');
     },
-    awaitEmailOpen({ inboundAddress, mailtoUrl }) {
+    awaitEmailOpen({ inboundAddress, mailtoUrl, sendFromEmail }) {
       stop();
       console.log(`${chalk.cyan('→')} Your agent's inbound address: ${chalk.bold(inboundAddress)}`);
+      if (sendFromEmail) {
+        console.log(`${chalk.cyan('→')} Send from your Novu account email: ${chalk.bold(sendFromEmail)}`);
+      }
       console.log(`${chalk.cyan('→')} Open in your mail client: ${chalk.underline(mailtoUrl)}`);
       // Non-interactive: nothing to await — the user will copy/paste the
       // address themselves. Resolve immediately so the pipeline can move on

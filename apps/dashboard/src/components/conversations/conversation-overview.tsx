@@ -102,6 +102,18 @@ export function ConversationOverview({ conversation }: ConversationOverviewProps
           <MetaRow label="Status" isLast>
             <ConversationStatusBadge status={conversation.status} />
           </MetaRow>
+          {conversation.status === 'active' || conversation.status === 'resolved' ? (
+            <p className="text-text-soft px-1.5 pt-1 text-xs">
+              <a
+                href="https://docs.novu.co/agents/conversations"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline decoration-dashed underline-offset-2"
+              >
+                Learn how conversation status works
+              </a>
+            </p>
+          ) : null}
         </div>
 
         <div className="px-[18px]">
