@@ -20,21 +20,14 @@ import { ROUTES } from '@/utils/routes';
 export const ConnectClaimPage = () => {
   const { isLoaded, isSignedIn } = useClerkAuth();
   const [searchParams] = useSearchParams();
-  // Prefer the URL token, but fall back to the pending one persisted before the
-  // signup/org-picker hops (the token can drop off the URL across those redirects).
   const token = searchParams.get('token') ?? readPendingConnectClaim();
 
-  // Persist the token immediately so it survives signup + org creation, after
-  // which the org picker routes back here instead of regular onboarding.
   useEffect(() => {
     if (token) {
       storePendingConnectClaim(token);
     }
   }, [token]);
 
-  // The signup/org-create flow leaves the full-screen onboarding provisioning
-  // overlay active; this page is a terminal destination outside that flow, so
-  // clear it (mirrors cli-auth) — otherwise the loader stays stuck on top.
   useEffect(() => {
     clearConnectProvisioning();
   }, []);
@@ -43,8 +36,6 @@ export const ConnectClaimPage = () => {
     return null;
   }
 
-  // Signup-first: the user only lands here after the keyless demo cap, so send
-  // anonymous visitors through sign-up and return them to this page afterwards.
   if (!isSignedIn) {
     const search = token ? `?token=${encodeURIComponent(token)}` : '';
     const redirectUrl = `${ROUTES.CONNECT_CLAIM}${search}`;
@@ -85,23 +76,15 @@ function ConnectClaimContent({ token }: { token: string | null }) {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unable to claim this agent';
       showErrorToast(`Claim failed: ${message}`);
-      // Allow a manual retry after a failure.
       hasAttemptedRef.current = false;
     } finally {
       setIsClaiming(false);
     }
   }, [token]);
 
-  const reason = (() => {
-    if (!tokenOk) return 'This page must be opened from the link in your chat.';
-
-    return null;
-  })();
-
+  const reason = tokenOk ? null : 'This page must be opened from the link in your chat.';
   const canClaim = !reason && !areEnvironmentsInitialLoading && !isClaiming && !didClaim;
 
-  // Auto-run the merge once the environment is ready so the user lands straight on
-  // the success state (no extra click, no onboarding detour).
   useEffect(() => {
     if (canClaim && !hasAttemptedRef.current) {
       void handleClaim();

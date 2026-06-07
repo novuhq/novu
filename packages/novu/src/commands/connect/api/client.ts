@@ -16,16 +16,9 @@ export class NovuApiError extends Error {
 export interface ConnectApiClient {
   readonly axios: AxiosInstance;
   readonly apiUrl: string;
-  /** True when the client authenticates with a keyless `pk_keyless_*` identifier instead of a secret key. */
   readonly isKeyless: boolean;
 }
 
-/**
- * Builds the Connect API client. Pass `secretKey` for the standard authenticated
- * flow, or `keylessApplicationIdentifier` (a `pk_keyless_*` value) for the
- * anonymous keyless flow. Keyless requests authenticate via the `Keyless` scheme
- * which the API resolves to the shared keyless org + per-session environment.
- */
 export function createConnectApiClient(input: {
   apiUrl: string;
   secretKey?: string;

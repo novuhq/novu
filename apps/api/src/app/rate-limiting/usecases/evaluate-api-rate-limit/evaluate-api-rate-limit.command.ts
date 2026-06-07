@@ -23,7 +23,6 @@ export class EvaluateApiRateLimitCommand extends BaseCommand {
   @IsString()
   ip?: string;
 
-  /** True for keyless callers (resolved auth scheme or inbox session bootstrap). */
   @IsOptional()
   @IsBoolean()
   isKeyless?: boolean;

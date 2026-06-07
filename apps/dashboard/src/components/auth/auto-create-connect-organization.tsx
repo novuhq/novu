@@ -60,8 +60,6 @@ function isSlugTakenError(error: unknown): boolean {
 }
 
 function navigateToPostConnectOrgResolution(navigate: NavigateFunction, fallbackPath: string) {
-  // A pending keyless connect claim wins: route back to `/connect/claim` to merge the
-  // agent + conversation and show success, rather than the connect onboarding flow.
   const pendingConnectClaimReturnUrl = resolvePendingConnectClaimReturnUrl();
 
   if (pendingConnectClaimReturnUrl) {

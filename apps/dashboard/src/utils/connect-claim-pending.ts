@@ -29,11 +29,6 @@ export function storePendingConnectClaim(token: string): void {
   sessionStorage.setItem(STORAGE_KEY, token);
 }
 
-/**
- * Captures the claim token while still on `/connect/claim`, before the auth flow
- * redirects through the org picker (which would otherwise drop the token and the
- * user would land in regular onboarding). Mirrors `storePendingCliAuthFromPath`.
- */
 export function storePendingConnectClaimFromPath(pathname: string, search = ''): boolean {
   if (!isConnectClaimPath(pathname)) {
     return false;

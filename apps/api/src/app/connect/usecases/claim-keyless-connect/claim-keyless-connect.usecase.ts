@@ -20,9 +20,7 @@ import { ConnectClaimTokenService } from '../../services/connect-claim-token.ser
 import { ClaimKeylessConnectCommand } from './claim-keyless-connect.command';
 
 export interface ClaimKeylessConnectResult {
-  /** The Development environment the assets were merged into. */
   environmentId: string;
-  /** External identifier of the claimed agent, when one was present. */
   agentIdentifier?: string;
 }
 
@@ -58,7 +56,6 @@ export class ClaimKeylessConnect {
     }
 
     try {
-      // Peek (do not consume yet) so a failed merge can be retried with the same link.
       const payload = await this.connectClaimTokenService.verify(command.token);
 
       if (payload.org !== keylessOrganizationId) {
@@ -79,33 +76,19 @@ export class ClaimKeylessConnect {
       const target = { _environmentId: targetEnvironment._id, _organizationId: command.organizationId };
 
       await this.agentRepository.withTransaction(async (session) => {
-        // Agent + its links.
         await this.agentRepository.update(sourceScope, { $set: target }, { session });
         await this.agentIntegrationRepository.update(sourceScope, { $set: target }, { session });
-
-        // Integrations — move the agent runtime + channel integrations, but skip
-        // the keyless inbox in-app integration (the target Dev env already has its
-        // own default integrations).
         await this.integrationRepository.update(
           { ...sourceScope, channel: { $ne: ChannelTypeEnum.IN_APP } },
           { $set: target },
           { session }
         );
-
-        // Channel wiring for the moved channel integration.
         await this.channelConnectionRepository.update(sourceScope, { $set: target }, { session });
         await this.channelEndpointRepository.update(sourceScope, { $set: target }, { session });
-
-        // The conversation + its full activity history (preserves continuity).
         await this.conversationRepository.update(sourceScope, { $set: target }, { session });
         await this.conversationActivityRepository.update(sourceScope, { $set: target }, { session });
-
-        // The agent's MCP enablements + their OAuth connections (e.g. Supabase),
-        // otherwise the MCPs are stranded in the keyless env and disappear.
         await this.agentMcpServerRepository.update(sourceScope, { $set: target }, { session });
         await this.mcpConnectionRepository.update(sourceScope, { $set: target }, { session });
-
-        // The channel subscriber(s); skip the inbox demo subscriber.
         await this.subscriberRepository.update(
           { ...sourceScope, subscriberId: { $ne: KEYLESS_SUBSCRIBER_ID } },
           { $set: target },
@@ -125,7 +108,6 @@ export class ClaimKeylessConnect {
         'Claimed keyless connect assets into Development environment'
       );
 
-      // Consume the token only after a successful merge so partial failures stay retryable.
       await this.connectClaimTokenService.claim(command.token);
 
       return {

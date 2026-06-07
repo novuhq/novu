@@ -9,18 +9,9 @@ const KEYLESS_CONFIG_KEY = 'connectKeylessApplicationIdentifier' as const;
 export interface ResolvedConnectAuth extends Omit<ResolvedAuth, 'source'> {
   source: ResolvedAuth['source'] | 'keyless';
   isKeyless: boolean;
-  /** Present only when `isKeyless` — the `pk_keyless_*` identifier used for the Keyless credential. */
   keylessApplicationIdentifier?: string;
 }
 
-/**
- * Resolves how `novu connect` authenticates. Keyless is the DEFAULT: when the
- * user has not supplied a secret key (and we're not in a non-interactive shell
- * with `NOVU_SECRET_KEY`), we skip the browser device-auth flow and provision an
- * anonymous keyless environment instead. The user only signs up later, once the
- * agent demo limit is reached. Supplying `--secret-key` (or `NOVU_SECRET_KEY` in
- * CI) bypasses keyless and uses the standard authenticated path.
- */
 export async function resolveConnectAuth(
   options: ConnectCommandOptions,
   resolveOptions: ResolveAuthOptions = {}

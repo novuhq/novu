@@ -51,7 +51,6 @@ export interface ResolvedAgentConfig {
   connectionAccessToken?: string;
   environmentId: string;
   organizationId: string;
-  /** True when this agent lives in the shared keyless org (anonymous Connect demo). */
   isKeyless: boolean;
   agentId: string;
   agentIdentifier: string;

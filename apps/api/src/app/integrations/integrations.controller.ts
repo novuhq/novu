@@ -165,9 +165,6 @@ export class IntegrationsController {
         organizationId: user.organizationId,
         userId: user._id,
         returnCredentials: canAccessCredentials,
-        // Keyless callers share a single backing org, so org-wide listing would
-        // leak other keyless sessions' integrations. Always scope keyless (and
-        // API key) callers to their own environment.
         scopeToEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
@@ -875,9 +872,6 @@ export class IntegrationsController {
   }
 
   private assertEnvironmentScopedForApiKey(user: UserSessionData, requestedEnvironmentId?: string): void {
-    // Keyless callers share a single backing org; pin them to their own
-    // environment exactly like API key callers so they can't target another
-    // keyless session's environment via `_environmentId`.
     const isEnvironmentScopedScheme = isEnvironmentScopedAuthScheme(user.scheme);
     if (!isEnvironmentScopedScheme) {
       return;

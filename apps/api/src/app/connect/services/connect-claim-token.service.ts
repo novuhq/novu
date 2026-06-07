@@ -3,11 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 import { CONNECT_CLAIM_TOKEN_PATTERN } from '@novu/shared';
 
-/**
- * Lifetime of a connect claim token (seconds). The user receives the link in
- * their connected channel after hitting the keyless demo cap and may take a
- * while to sign up, so this is intentionally long-lived (7 days).
- */
 export const CONNECT_CLAIM_TOKEN_TTL_SECONDS = 7 * 24 * 60 * 60;
 
 const CACHE_KEY_PREFIX = 'connect_claim_link:';
@@ -16,10 +11,7 @@ const ENV_TOKEN_KEY_PREFIX = 'connect_claim_link_env:';
 const CTA_POSTED_KEY_PREFIX = 'connect_claim_cta_posted:';
 const CLAIM_LOCK_KEY_PREFIX = 'connect_claim_link_lock:';
 
-/** Short lock so concurrent claim requests for the same token serialize. */
 const CLAIM_LOCK_TTL_SECONDS = 60;
-
-/** 24 bytes → 32 URL-safe base64url characters. */
 const TOKEN_BYTES = 24;
 
 /** Wrap token in `{…}` so storage + used-marker keys share a Redis Cluster hash slot. */
@@ -51,21 +43,17 @@ return 'M' .. raw
 `;
 
 export interface ConnectClaimTokenPayload {
-  /** Keyless environment id being claimed. */
   env: string;
-  /** Keyless organization id (the shared keyless org). */
   org: string;
 }
 
 interface StoredEntry {
   payload: ConnectClaimTokenPayload;
-  /** Epoch seconds when this entry naturally expires. */
   expiresAt: number;
 }
 
 export interface IssuedConnectClaimToken {
   token: string;
-  /** ISO timestamp when this token expires. */
   expiresAt: string;
 }
 
@@ -110,11 +98,6 @@ export class ConnectClaimTokenService {
     return { token, expiresAt: new Date(expiresAtEpoch * 1000).toISOString() };
   }
 
-  /**
-   * Returns an existing claim token for the keyless environment when one is still
-   * valid, otherwise mints a new one. Prevents unbounded Redis growth when users
-   * keep messaging after the demo cap.
-   */
   async issueOrGetForEnvironment(payload: ConnectClaimTokenPayload): Promise<IssuedConnectClaimToken> {
     this.assertCacheAvailable('issueOrGetForEnvironment');
 
@@ -135,10 +118,6 @@ export class ConnectClaimTokenService {
     return issued;
   }
 
-  /**
-   * Marks the signup CTA as posted for a conversation. Returns true only the
-   * first time so the card is not re-sent on every subsequent inbound message.
-   */
   async tryMarkSignupCtaPosted(conversationId: string): Promise<boolean> {
     this.assertCacheAvailable('tryMarkSignupCtaPosted');
 
@@ -148,7 +127,6 @@ export class ConnectClaimTokenService {
     return acquired === 'OK';
   }
 
-  /** Serializes concurrent claim attempts for the same token. */
   async tryAcquireClaimLock(token: string): Promise<boolean> {
     this.assertCacheAvailable('tryAcquireClaimLock');
 
@@ -170,11 +148,6 @@ export class ConnectClaimTokenService {
     await this.cacheService.del(`${CLAIM_LOCK_KEY_PREFIX}${clusterSlotTag(token)}`);
   }
 
-  /**
-   * Reads the stored payload without consuming the token. Used to run the claim
-   * merge before marking the token used, so a failed merge can be retried with
-   * the same link.
-   */
   async verify(token: string): Promise<ConnectClaimTokenPayload> {
     this.assertCacheAvailable('verify');
 
@@ -210,10 +183,6 @@ export class ConnectClaimTokenService {
     return entry.payload;
   }
 
-  /**
-   * Atomically claims a token for single-use consumption (GETDEL + used marker).
-   * Returns the stored payload, or throws {@link InvalidConnectClaimTokenError}.
-   */
   async claim(token: string): Promise<ConnectClaimTokenPayload> {
     this.assertCacheAvailable('claim');
 

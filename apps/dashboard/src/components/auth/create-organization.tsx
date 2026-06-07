@@ -60,9 +60,6 @@ function OrganizationForm() {
   // Only forward `?appId=` when it was set explicitly — hostname detection covers the rest.
   const explicitAppId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
   const pendingCliAuthReturnUrl = useMemo(() => resolvePendingCliAuthReturnUrl(), []);
-  // A pending keyless connect claim takes precedence: after creating their org the
-  // user should land on `/connect/claim` (which merges the agent + conversation and
-  // shows success), not the regular onboarding flow.
   const pendingConnectClaimReturnUrl = useMemo(() => resolvePendingConnectClaimReturnUrl(), []);
   const afterCreateUrl =
     pendingConnectClaimReturnUrl ??

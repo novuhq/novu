@@ -10,11 +10,6 @@ export class CreateNovuIntegrationsCommand extends EnvironmentWithUserCommand {
   @IsEnum(ChannelTypeEnum, { each: true })
   readonly channels?: ChannelTypeEnum[];
 
-  /**
-   * Force provisioning of the Novu-managed Claude (demo) agent integration even
-   * when the environment is not named `Development`. Used by the keyless
-   * (`novu connect`) flow so the anonymous demo env has a demo runtime to use.
-   */
   @IsOptional()
   @IsBoolean()
   readonly includeManagedClaude?: boolean;

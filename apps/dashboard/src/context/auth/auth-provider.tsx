@@ -180,10 +180,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // CliAuthPage never mounts here — `shouldBlockChildren` hides it while we redirect to the
     // org picker — so persist the device session before leaving `/cli/auth`.
     storePendingCliAuthFromPath(pathname, location.search);
-
-    // Same rationale for the keyless connect claim: persist the claim token before the org
-    // picker takes over, so post-signup we can route back to `/connect/claim` instead of
-    // dropping the user into regular onboarding.
     storePendingConnectClaimFromPath(pathname, location.search);
 
     const pendingCliAuth = readPendingCliAuth();

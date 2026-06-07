@@ -296,9 +296,6 @@ async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedC
     return subscriberId;
   }
 
-  // Keyless sessions have no user; use a stable per-session subscriber id keyed
-  // off the keyless identifier so OAuth endpoint binding and the welcome DM
-  // resolve to the same subscriber, and so the claim flow can locate it later.
   if (auth.isKeyless && auth.keylessApplicationIdentifier) {
     const subscriberId = `connect-keyless:${auth.keylessApplicationIdentifier}`;
     await upsertSubscriber(client, { subscriberId });

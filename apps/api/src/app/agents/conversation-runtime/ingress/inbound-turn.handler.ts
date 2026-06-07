@@ -84,11 +84,6 @@ const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
-/**
- * Number of agent replies a keyless (anonymous Connect) demo conversation gets
- * before the agent stops responding and asks the user to sign up. Overridable
- * via `KEYLESS_DEMO_REPLY_CAP`.
- */
 const KEYLESS_DEMO_REPLY_CAP = Number(process.env.KEYLESS_DEMO_REPLY_CAP) || 5;
 
 function resolveConnectClaimBaseUrl(): string {
@@ -383,10 +378,6 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
-    // Keyless (anonymous Connect demo) conversations get a hard cap on agent
-    // replies. Once reached, the agent stops responding and posts a signup CTA
-    // until the env is claimed into a real org (after which `isKeyless` is false
-    // and dispatch resumes with the full prior history intact).
     if (config.isKeyless && (await this.isKeylessDemoCapReached(config, conversation._id))) {
       await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
 
@@ -761,12 +752,7 @@ export class AgentInboundHandler implements OnModuleInit {
     return agentReplies >= KEYLESS_DEMO_REPLY_CAP;
   }
 
-  /**
-   * Posts the keyless demo signup CTA into the live thread. Mints a single-use,
-   * signed claim token bound to the keyless environment and links to the
-   * dashboard claim page. Errors are logged but swallowed — failing to post the
-   * card must not crash the inbound webhook.
-   */
+  /** Failing to post the signup CTA must not crash the inbound webhook. */
   private async postKeylessSignupCta(
     agentId: string,
     config: ResolvedAgentConfig,
