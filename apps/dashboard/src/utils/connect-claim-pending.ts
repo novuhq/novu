@@ -9,7 +9,7 @@ function isValidToken(token: string | null | undefined): token is string {
 }
 
 function isAbsoluteUrl(url: string): boolean {
-  return /^https?:\/\//i.test(url);
+  return /^(https?:)?\/\//i.test(url);
 }
 
 function getTrustedRedirectOrigins(): Set<string> {

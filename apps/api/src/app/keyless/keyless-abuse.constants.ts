@@ -1,11 +1,11 @@
 export function parsePositiveIntEnv(raw: string | undefined, fallback: number): number {
-  if (raw == null || raw === '') {
+  if (raw == null || raw.trim() === '') {
     return fallback;
   }
 
   const parsed = Number(raw);
 
-  if (Number.isNaN(parsed) || parsed < 0) {
+  if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0) {
     return fallback;
   }
 

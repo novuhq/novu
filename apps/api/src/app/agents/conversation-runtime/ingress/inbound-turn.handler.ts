@@ -783,8 +783,7 @@ export class AgentInboundHandler implements OnModuleInit {
     conversationId: string
   ): Promise<void> {
     try {
-      const shouldPost = await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
-      if (!shouldPost) {
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversationId)) {
         return;
       }
 
@@ -797,6 +796,8 @@ export class AgentInboundHandler implements OnModuleInit {
       await this.outboundGateway.replyOnThread(thread, {
         card: buildKeylessSignupCard(claimUrl) as unknown as Record<string, unknown>,
       });
+
+      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] Failed to post keyless signup CTA`);
       captureAgentWarning(err, {

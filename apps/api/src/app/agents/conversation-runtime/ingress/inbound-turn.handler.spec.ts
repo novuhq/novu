@@ -140,6 +140,11 @@ describe('AgentInboundHandler', () => {
       isSignupCtaPosted: sinon.stub().resolves(false),
       tryMarkSignupCtaPosted: sinon.stub().resolves(true),
     };
+    const keylessAbuseGuard = {
+      isKeylessAgentAiEnabled: sinon.stub().resolves(true),
+      assertKeylessAiEnabled: sinon.stub().resolves(),
+      assertManagedAgentCap: sinon.stub().resolves(),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -154,7 +159,8 @@ describe('AgentInboundHandler', () => {
       startCodeService as any,
       channelEndpointRepository as any,
       linkTelegramChatToSubscriber as any,
-      connectClaimTokenService as any
+      connectClaimTokenService as any,
+      keylessAbuseGuard as any
     );
 
     return {

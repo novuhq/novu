@@ -1,7 +1,12 @@
 import { differenceInHours } from 'date-fns';
 import { KEYLESS_ENVIRONMENT_PREFIX } from './keyless.constants';
 
-const KEYLESS_RETENTION_TIME_IN_HOURS = parseInt(process.env.KEYLESS_RETENTION_TIME_IN_HOURS || '', 10) || 24;
+const DEFAULT_KEYLESS_RETENTION_HOURS = 24;
+const parsedRetentionHours = Number(process.env.KEYLESS_RETENTION_TIME_IN_HOURS);
+const KEYLESS_RETENTION_TIME_IN_HOURS =
+  Number.isInteger(parsedRetentionHours) && parsedRetentionHours >= 0
+    ? parsedRetentionHours
+    : DEFAULT_KEYLESS_RETENTION_HOURS;
 
 function timestampHexToDate(timestampHex: string): Date {
   if (!timestampHex || typeof timestampHex !== 'string' || timestampHex.length < 8) {
