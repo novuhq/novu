@@ -1,5 +1,5 @@
-import { expect, test, vi, beforeEach } from 'vitest';
 import axios from 'axios';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { ISendProSmsProvider } from './isendpro-sms.provider';
 
 vi.mock('axios');
@@ -24,13 +24,9 @@ test('should trigger iSendPro API correctly', async () => {
   const smsProvider = new ISendProSmsProvider(mockConfig);
   await smsProvider.sendMessage(mockSMSMessage);
 
-  expect(axios.post).toHaveBeenCalledWith(
-    'https://apirest.isendpro.com/cgi-bin/sms',
-    expect.any(URLSearchParams),
-    {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    }
-  );
+  expect(axios.post).toHaveBeenCalledWith('https://apirest.isendpro.com/cgi-bin/sms', expect.any(URLSearchParams), {
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  });
 
   const params = (axios.post as any).mock.calls[0][1] as URLSearchParams;
   expect(params.get('keyid')).toBe('test-api-key');

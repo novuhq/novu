@@ -12,6 +12,7 @@ import {
 } from '@novu/stateless';
 import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 
 export class SlackProvider extends BaseProvider implements IChatProvider {
@@ -120,15 +121,18 @@ export class SlackProvider extends BaseProvider implements IChatProvider {
   ) {
     const { endpoint } = channelData;
 
-    const response = await this.axiosInstance.post(
-      endpoint.url,
-      this.transform(bridgeProviderData, {
+    const response = await safeChatWebhookJsonRequest<string>({
+      url: endpoint.url,
+      body: this.transform(bridgeProviderData, {
         text: data.content,
         blocks: data.blocks,
         ...(data.customData || {}),
-      }).body
-    );
+      }).body,
+    });
 
-    return response;
+    return {
+      data: response.body,
+      headers: response.headers,
+    };
   }
 }
