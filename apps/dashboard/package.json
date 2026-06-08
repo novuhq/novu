@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "vite",
-    "start:portless": "node ../../scripts/with-portless-env.mjs pnpm exec portless run vite",
+    "start:portless": "node ../../scripts/portless-dev-env.mjs pnpm exec portless run vite",
     "start:test": "vite --mode test",
     "start:static:build": "http-server dist -p 4201 --proxy http://127.0.0.1:4201?",
     "dev": "pnpm start",
