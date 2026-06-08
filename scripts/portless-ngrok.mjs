@@ -202,13 +202,60 @@ export function stopNgrokTunnel(child) {
   child?.kill('SIGTERM');
 }
 
+function formatTunnelBanner(url) {
+  return [
+    '',
+    '  API tunnel (ngrok)',
+    `  ${url}`,
+    '',
+    '  OAuth / agent webhooks use this as AGENT_API_HOSTNAME',
+    '  Copy: pnpm portless:ngrok:url',
+    '',
+  ].join('\n');
+}
+
+function resolveTunnelUrl(serviceName) {
+  const reserved = normalizeNgrokDomain(process.env.PORTLESS_NGROK_DOMAIN);
+
+  if (reserved && findServiceRoute(serviceName)) {
+    return reserved;
+  }
+
+  return findPortlessNgrokUrl(serviceName);
+}
+
+function watchTunnel(serviceName) {
+  if (!isNgrokMode()) {
+    console.error('[portless-ngrok] ngrok mode is off. Use: pnpm dev:portless:ngrok');
+    process.exit(1);
+  }
+
+  process.stdout.write(`[portless-ngrok] waiting for ${serviceName} tunnel...\n`);
+
+  let lastUrl;
+
+  const tick = () => {
+    const url = resolveTunnelUrl(serviceName);
+
+    if (url && url !== lastUrl) {
+      lastUrl = url;
+      process.stdout.write(formatTunnelBanner(url));
+    }
+  };
+
+  tick();
+  setInterval(tick, 1000);
+}
+
 const isCli = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 
 if (isCli) {
   const [, , command, serviceName] = process.argv;
   const target = serviceName || API_SERVICE;
 
-  if (command === 'url' || !command) {
+  if (command === 'watch') {
+    watchTunnel(target);
+  } else if (command === 'url' || !command) {
     const immediate = normalizeNgrokDomain(process.env.PORTLESS_NGROK_DOMAIN) || findPortlessNgrokUrl(target);
 
     if (immediate) {
