@@ -1,8 +1,10 @@
 import {
   AgentRuntimeProviderIdEnum,
   FeatureFlagsKeysEnum,
+  filterDemoConfigurableMcpIds,
   type IIntegration,
   IntegrationKindEnum,
+  isProviderManagedMcp,
   slugify,
 } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
@@ -227,6 +229,18 @@ export function CreateAgentDialog({
   // teams writing their own runtime see exactly the inputs they need to fill in.
   const useAiGeneration = isManagedClaudeConnector && isManagedEnabled;
   const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+  // The demo (Novu-managed Claude) integration exposes no provider vault, so provider-managed MCPs
+  // can never be configured on it. Drop them from the suggestion pills so the demo only advertises
+  // tools the user can actually wire up; the API enforces the same filter at provision time.
+  const displayedAgentTemplates = useMemo(() => {
+    if (!isDemoProviderSelected) return agentTemplates;
+
+    return agentTemplates.map((template) => ({
+      ...template,
+      suggestedMcpServers: filterDemoConfigurableMcpIds(template.suggestedMcpServers),
+      mcpServers: template.mcpServers?.filter((server) => !isProviderManagedMcp(server.id)),
+    }));
+  }, [agentTemplates, isDemoProviderSelected]);
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
   const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
   const showManagedOptions = isManagedEnabled;
@@ -570,7 +584,10 @@ export function CreateAgentDialog({
     let effectiveName = name;
     let effectiveIdentifier = identifier;
     let effectiveInstructions = instructions;
-    let effectiveDescription = instructions;
+    // In scratch mode the single textarea IS the description, so it maps to `description`. In
+    // managed manual mode that same textarea is the Claude system prompt and must NOT leak into the
+    // description. The prompt-generation path overrides this with `generated.description` below.
+    let effectiveDescription = runtime === 'scratch' ? instructions : '';
     let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
 
     if (isPromptGenerationMode) {
@@ -869,7 +886,7 @@ export function CreateAgentDialog({
 
                 {generationMode === 'prompt' && (
                   <AgentSuggestionPills
-                    suggestions={agentTemplates}
+                    suggestions={displayedAgentTemplates}
                     onSelect={handleSelectAiSuggestion}
                     disabled={isSubmitBusy}
                   />
