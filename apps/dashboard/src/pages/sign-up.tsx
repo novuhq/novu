@@ -8,6 +8,7 @@ import { IS_SELF_HOSTED } from '@/config';
 import { useSegment } from '@/context/segment';
 import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { appendRedirectUrlParam, readCliAuthReturnUrl } from '@/utils/cli-auth-pending';
+import { storePendingConnectClaimFromRedirectUrl } from '@/utils/connect-claim-pending';
 import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -18,9 +19,10 @@ export const SignUpPage = () => {
   const { isSignedIn, isLoaded } = useAuth();
   const [searchParams] = useSearchParams();
 
-  // Persist pending CLI auth from inbound redirect_url; org creation still runs first.
+  // Persist pending CLI auth and connect claim from inbound redirect_url; org creation still runs first.
   useEffect(() => {
     readCliAuthReturnUrl(searchParams);
+    storePendingConnectClaimFromRedirectUrl(readClerkRedirectUrlParam(searchParams));
   }, [searchParams]);
 
   useEffect(() => {

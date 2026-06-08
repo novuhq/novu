@@ -347,20 +347,20 @@ importers:
         specifier: ^3.1048.0
         version: 3.1048.0
       '@chat-adapter/slack':
-        specifier: 4.28.1
-        version: 4.28.1
+        specifier: 4.30.0
+        version: 4.30.0(zod@3.25.20)
       '@chat-adapter/state-ioredis':
-        specifier: 4.28.1
-        version: 4.28.1
+        specifier: 4.30.0
+        version: 4.30.0(zod@3.25.20)
       '@chat-adapter/teams':
-        specifier: 4.28.1
-        version: 4.28.1
+        specifier: 4.30.0
+        version: 4.30.0(zod@3.25.20)
       '@chat-adapter/telegram':
-        specifier: 4.28.1
-        version: 4.28.1
+        specifier: 4.30.0
+        version: 4.30.0(zod@3.25.20)
       '@chat-adapter/whatsapp':
-        specifier: 4.28.1
-        version: 4.28.1
+        specifier: 4.30.0
+        version: 4.30.0(zod@3.25.20)
       '@godaddy/terminus':
         specifier: ^4.12.1
         version: 4.12.1
@@ -488,8 +488,8 @@ importers:
         specifier: ^4.2.1
         version: 4.10.4
       chat:
-        specifier: 4.28.1
-        version: 4.28.1
+        specifier: 4.30.0
+        version: 4.30.0(zod@3.25.20)
       class-transformer:
         specifier: 0.5.1
         version: 0.5.1
@@ -3401,8 +3401,8 @@ importers:
         specifier: 2.0.7
         version: 2.0.7(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       chat:
-        specifier: '>=4.28.1'
-        version: 4.28.1
+        specifier: '>=4.30.0'
+        version: 4.30.0(zod@4.3.6)
       hast-util-to-html:
         specifier: 9.0.5
         version: 9.0.5
@@ -3438,8 +3438,8 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       chat:
-        specifier: 4.28.1
-        version: 4.28.1
+        specifier: 4.30.0
+        version: 4.30.0(zod@3.25.20)
       cross-fetch:
         specifier: ^4.0.0
         version: 4.0.0(encoding@0.1.13)
@@ -6490,23 +6490,29 @@ packages:
   '@cfworker/json-schema@4.1.1':
     resolution: {integrity: sha512-gAmrUZSGtKc3AiBL71iNWxDsyUC5uMaKKGdvzYsBoTW/xi42JQHl7eKV2OYzCUqvc+D2RCcf7EXY2iCyFIk6og==}
 
-  '@chat-adapter/shared@4.28.1':
-    resolution: {integrity: sha512-v7AcZMrvS2gxFlRiUO1o9Nta2iipnnmV54Gie8e3nQTQvnghENfSf7j7nimA5DOUWCgj+e4DV7LE0x1pakNtkA==}
+  '@chat-adapter/shared@4.30.0':
+    resolution: {integrity: sha512-IuYtbn/p1FBXvp7JYGEMLCt07GHOMlyjx7OlZXPJwLTravcyJuP7Q6N31r6c1yubMhM8PLb8eT8l/YnjwYjs9Q==}
+    engines: {node: '>=20'}
 
-  '@chat-adapter/slack@4.28.1':
-    resolution: {integrity: sha512-JxgV7+cRXXeKpj0MzS7nzG3JvpnfhIgnPo9r/sdEIzeWhIb8tUcT2PbLl/fpSu/cb+WkICS0bCENn1I0PS39Hg==}
+  '@chat-adapter/slack@4.30.0':
+    resolution: {integrity: sha512-ZB+G/JBKmaXzvl+DuUQPBb/gCwXP3fOtUK5Cyj6wLbbeeDYzi3NQPvpvieVum/GI4iuR8OUVcNAnVQiH6P6DOQ==}
+    engines: {node: '>=20'}
 
-  '@chat-adapter/state-ioredis@4.28.1':
-    resolution: {integrity: sha512-bvzCR3wJa1u+nVdj2klOGoLxgrbzKPTx7ygTXOGA4aj2k8eSa1gPoefGclLdXBAUYmYgffx9opSV8MVjd9SgeQ==}
+  '@chat-adapter/state-ioredis@4.30.0':
+    resolution: {integrity: sha512-IJSNT3cx+QPRhvPSEDO8WfZBW/6L1SNheWO9nXkPQ43nalXagioSqJrpExqnQrfyv2CYtG4Hen29ORwRdbOSTw==}
+    engines: {node: '>=20'}
 
-  '@chat-adapter/teams@4.28.1':
-    resolution: {integrity: sha512-ESv8E4yGn0IkVfF9SBoP2cy5G1oq1TCF9CkDT3d2h41UGkTQF0b0HqKGm+kQdRAbXyC/7zpscm2KdnFUd4CFrA==}
+  '@chat-adapter/teams@4.30.0':
+    resolution: {integrity: sha512-5hm20xnePw8CeeGFAXIPI5D7gNL6TfwCE0sAhJIBwlH8H4SztxJWDvpp8AiHokYjck3ejtaHqXLiGrauUzAi0A==}
+    engines: {node: '>=20'}
 
-  '@chat-adapter/telegram@4.28.1':
-    resolution: {integrity: sha512-ZBw6zx36enxXGlbOoigzCsWH6slbTCOWyTGatCz7jq4DFTDpvjRgBBH760n9peFkZpXJWOAXZKJm/IW8saT5aw==}
+  '@chat-adapter/telegram@4.30.0':
+    resolution: {integrity: sha512-OX98fYMorz3gRvNoCVidYKOnb89Rf9UZQaUDQMhtk5IsgHX0k2qiUpEb2VOquMHyH8Pb7xkqrG52NFLnzGpspQ==}
+    engines: {node: '>=20'}
 
-  '@chat-adapter/whatsapp@4.28.1':
-    resolution: {integrity: sha512-NSU4Yda/uhbZXQNBnIgDHFWN+3ZBJ7L7mrFHUIctwZBX1XHlGkweWucfFbDynWgxb4IDm6NYZxA34+HVe8ugBA==}
+  '@chat-adapter/whatsapp@4.30.0':
+    resolution: {integrity: sha512-4iXroN/FYRsWdhgVFUNzf4VXX67a9u6xcYoBGgX2eqTwlq5THywYSe7FSA5GP7Hg0SK0mRExdpR/Hvk9+tP9xw==}
+    engines: {node: '>=20'}
 
   '@chevrotain/types@11.1.2':
     resolution: {integrity: sha512-U+HFai5+zmJCkK86QsaJtoITlboZHBqrVketcO2ROv865xfCMSFpELQoz1GkX5GzME8pTa+3kbKrZHQtI0gdbw==}
@@ -16825,8 +16831,17 @@ packages:
   chardet@2.1.1:
     resolution: {integrity: sha512-PsezH1rqdV9VvyNhxxOW32/d75r01NY7TQCmOqomRo15ZSOKbpTFVsfjghxo6JloQUCGnH4k1LGu0R4yCLlWQQ==}
 
-  chat@4.28.1:
-    resolution: {integrity: sha512-oKBeLQ746rSmHWGoXmPgDOqMVdIe9cWFQBQ1G2pw0l2vV4sAsZgfEJmc1UYqSJR4kYy4PxKgRFy31pe4RJ644Q==}
+  chat@4.30.0:
+    resolution: {integrity: sha512-8LXrauKckMmR83FcYC/R8nNEda5VJDDdIhZwUUu+hzaSbk4lqsro0IWm7rB1GGYXONRrUOG2XJlkNr4C15vgMA==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      ai: ^6.0.182
+      zod: ^3.0.0 || ^4.0.0
+    peerDependenciesMeta:
+      ai:
+        optional: true
+      zod:
+        optional: true
 
   check-disk-space@3.4.0:
     resolution: {integrity: sha512-drVkSqfwA+TvuEhFipiR1OC9boEGZL5RrWvVsOthdcvQNXyCCuKkEiTOTXZ7qxSf/GLwq4GvzfrQD/Wz325hgw==}
@@ -31759,56 +31774,68 @@ snapshots:
 
   '@cfworker/json-schema@4.1.1': {}
 
-  '@chat-adapter/shared@4.28.1':
+  '@chat-adapter/shared@4.30.0(zod@3.25.20)':
     dependencies:
-      chat: 4.28.1
+      chat: 4.30.0(zod@3.25.20)
     transitivePeerDependencies:
+      - ai
       - supports-color
+      - zod
 
-  '@chat-adapter/slack@4.28.1':
+  '@chat-adapter/slack@4.30.0(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.28.1
+      '@chat-adapter/shared': 4.30.0(zod@3.25.20)
       '@slack/socket-mode': 2.0.7
       '@slack/web-api': 7.15.0
-      chat: 4.28.1
+      chat: 4.30.0(zod@3.25.20)
     transitivePeerDependencies:
+      - ai
       - bufferutil
       - debug
       - supports-color
       - utf-8-validate
+      - zod
 
-  '@chat-adapter/state-ioredis@4.28.1':
+  '@chat-adapter/state-ioredis@4.30.0(zod@3.25.20)':
     dependencies:
-      chat: 4.28.1
-      ioredis: 5.10.1
+      chat: 4.30.0(zod@3.25.20)
+      ioredis: 5.11.0
     transitivePeerDependencies:
+      - ai
       - supports-color
+      - zod
 
-  '@chat-adapter/teams@4.28.1':
+  '@chat-adapter/teams@4.30.0(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.28.1
+      '@chat-adapter/shared': 4.30.0(zod@3.25.20)
       '@microsoft/teams.api': 2.0.11
       '@microsoft/teams.apps': 2.0.11
       '@microsoft/teams.cards': 2.0.11
       '@microsoft/teams.graph-endpoints': 2.0.11
-      chat: 4.28.1
+      chat: 4.30.0(zod@3.25.20)
     transitivePeerDependencies:
+      - ai
       - debug
       - supports-color
+      - zod
 
-  '@chat-adapter/telegram@4.28.1':
+  '@chat-adapter/telegram@4.30.0(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.28.1
-      chat: 4.28.1
+      '@chat-adapter/shared': 4.30.0(zod@3.25.20)
+      chat: 4.30.0(zod@3.25.20)
     transitivePeerDependencies:
+      - ai
       - supports-color
+      - zod
 
-  '@chat-adapter/whatsapp@4.28.1':
+  '@chat-adapter/whatsapp@4.30.0(zod@3.25.20)':
     dependencies:
-      '@chat-adapter/shared': 4.28.1
-      chat: 4.28.1
+      '@chat-adapter/shared': 4.30.0(zod@3.25.20)
+      chat: 4.30.0(zod@3.25.20)
     transitivePeerDependencies:
+      - ai
       - supports-color
+      - zod
 
   '@chevrotain/types@11.1.2': {}
 
@@ -34671,6 +34698,7 @@ snapshots:
       qs: 6.15.2
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   '@microsoft/teams.apps@2.0.11':
     dependencies:
@@ -34678,8 +34706,8 @@ snapshots:
       '@microsoft/teams.api': 2.0.11
       '@microsoft/teams.common': 2.0.11
       '@microsoft/teams.graph': 2.0.11
-      axios: 1.16.0
-      cors: 2.8.5
+      axios: 1.16.1
+      cors: 2.8.6
       express: 5.2.1
       jsonwebtoken: 9.0.3
       jwks-rsa: 3.2.2
@@ -34692,9 +34720,10 @@ snapshots:
 
   '@microsoft/teams.common@2.0.11':
     dependencies:
-      axios: 1.16.0
+      axios: 1.16.1
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   '@microsoft/teams.graph-endpoints@2.0.11': {}
 
@@ -34704,6 +34733,7 @@ snapshots:
       qs: 6.15.2
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   '@microsoft/tsdoc@0.15.0': {}
 
@@ -45921,7 +45951,7 @@ snapshots:
 
   chardet@2.1.1: {}
 
-  chat@4.28.1:
+  chat@4.30.0(zod@3.25.20):
     dependencies:
       '@workflow/serde': 4.1.0-beta.2
       mdast-util-to-string: 4.0.0
@@ -45930,6 +45960,22 @@ snapshots:
       remark-stringify: 11.0.0
       remend: 1.3.0
       unified: 11.0.5
+    optionalDependencies:
+      zod: 3.25.20
+    transitivePeerDependencies:
+      - supports-color
+
+  chat@4.30.0(zod@4.3.6):
+    dependencies:
+      '@workflow/serde': 4.1.0-beta.2
+      mdast-util-to-string: 4.0.0
+      remark-gfm: 4.0.1
+      remark-parse: 11.0.0
+      remark-stringify: 11.0.0
+      remend: 1.3.0
+      unified: 11.0.5
+    optionalDependencies:
+      zod: 4.3.6
     transitivePeerDependencies:
       - supports-color
 
@@ -48209,6 +48255,7 @@ snapshots:
       style-data: 2.0.1
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   extsprintf@1.3.0: {}
 
@@ -49465,6 +49512,7 @@ snapshots:
       remote-content: 4.0.1
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   html-encoding-sniffer@2.0.1:
     dependencies:
@@ -49853,6 +49901,7 @@ snapshots:
       specificity: 0.4.1
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   inline-style-parser@0.2.7: {}
 
@@ -51595,7 +51644,7 @@ snapshots:
 
   jwks-rsa@3.2.2:
     dependencies:
-      '@types/jsonwebtoken': 9.0.5
+      '@types/jsonwebtoken': 9.0.10
       debug: 4.4.3
       jose: 4.15.5
       limiter: 1.1.5
@@ -56048,10 +56097,11 @@ snapshots:
 
   remote-content@4.0.1:
     dependencies:
-      axios: 1.16.0
+      axios: 1.16.1
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
       - debug
+      - supports-color
 
   remove-markdown@0.3.0: {}
 
