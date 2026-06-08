@@ -2,19 +2,11 @@
 /**
  * Resolve portless service URLs and exec a wrapped dev command.
  *
- * Replaces hardcoded `https://*.novu.localhost` literals so worktree prefixes
- * and non-default proxy ports flow through automatically.
- *
- * Ngrok modes (set one):
- *   PORTLESS_NGROK=1              random public URL via portless
- *   PORTLESS_NGROK_DOMAIN=...     reserved/custom domain (API uses --manage-ngrok)
- *
  * Usage: node scripts/portless-dev-env.mjs [--manage-ngrok] <command> [args...]
  */
 import { execFileSync, spawn } from 'node:child_process';
 import { portlessCaEnv } from './portless-ca-env.mjs';
 import {
-  API_SERVICE,
   findPortlessNgrokUrl,
   isNgrokMode,
   normalizeNgrokDomain,
@@ -25,9 +17,11 @@ import {
   waitForNgrokUrl,
 } from './portless-ngrok.mjs';
 
+const API_SERVICE = 'api.novu';
 const SERVICES = ['api.novu', 'dashboard.novu', 'ws.novu', 'playground.novu'];
 
 function normalizeServiceUrl(rawUrl, name) {
+  // Normalize to https without a port so browser requests avoid CORS redirect preflights.
   try {
     const parsed = new URL(rawUrl);
     parsed.protocol = 'https:';
@@ -75,17 +69,11 @@ async function resolveAgentApiHostname() {
     return existing;
   }
 
-  console.log('[portless-dev-env] waiting for api.novu ngrok URL...');
-
   const ngrokUrl = await waitForNgrokUrl(API_SERVICE);
 
   if (!ngrokUrl) {
     console.warn('[portless-dev-env] ngrok mode enabled but no public URL found for api.novu');
-
-    return undefined;
   }
-
-  console.log(`[portless-dev-env] using ngrok URL for agent webhooks: ${ngrokUrl}`);
 
   return ngrokUrl;
 }
@@ -118,8 +106,6 @@ async function manageReservedNgrokTunnel(child) {
     return undefined;
   }
 
-  console.log(`[portless-dev-env] starting reserved ngrok domain ${domainUrl}`);
-
   const route = await pollUntil(() => findServiceRoute(API_SERVICE));
 
   if (!route) {
@@ -135,12 +121,9 @@ async function manageReservedNgrokTunnel(child) {
       hostHeader: route.hostname,
     });
 
-    console.log(`[portless-dev-env] ngrok -> ${tunnel.url}`);
-
     return tunnel.child;
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(`[portless-dev-env] ${message}`);
+    console.error(`[portless-dev-env] ${err.message}`);
     child.kill('SIGTERM');
     process.exit(1);
   }

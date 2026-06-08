@@ -1,18 +1,13 @@
-/**
- * Minimal ngrok helpers for portless dev.
- *
- * Portless 0.14 supports random ngrok URLs natively. Reserved domains only need
- * `ngrok http --url=... --host-header=...` against the app's local port.
- */
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-export const API_SERVICE = 'api.novu';
+const API_SERVICE = 'api.novu';
+const NGROK_MISSING = 'ngrok CLI not found. Install from https://ngrok.com/download';
 
-export function getRoutesPath() {
+function getRoutesPath() {
   const stateDir = process.env.PORTLESS_STATE_DIR || join(homedir(), '.portless');
 
   return join(stateDir, 'routes.json');
@@ -163,7 +158,7 @@ export function startReservedNgrokTunnel({ domainUrl, localPort, hostHeader }) {
         windowsHide: true,
       });
     } catch {
-      reject(new Error('ngrok CLI not found. Install from https://ngrok.com/download'));
+      reject(new Error(NGROK_MISSING));
 
       return;
     }
@@ -190,7 +185,7 @@ export function startReservedNgrokTunnel({ domainUrl, localPort, hostHeader }) {
     });
 
     child.on('error', () => {
-      settle(() => reject(new Error('ngrok CLI not found. Install from https://ngrok.com/download')));
+      settle(() => reject(new Error(NGROK_MISSING)));
     });
 
     child.on('exit', (code) => {
@@ -204,15 +199,7 @@ export function startReservedNgrokTunnel({ domainUrl, localPort, hostHeader }) {
 }
 
 export function stopNgrokTunnel(child) {
-  if (!child) {
-    return;
-  }
-
-  try {
-    child.kill('SIGTERM');
-  } catch {
-    // ignore
-  }
+  child?.kill('SIGTERM');
 }
 
 const isCli = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
