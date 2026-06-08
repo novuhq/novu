@@ -1,55 +1,19 @@
 #!/usr/bin/env node
 /**
- * Resolve the active ngrok URL for a portless-managed service from routes.json.
+ * Resolve the active ngrok URL for a portless-managed service.
  *
- * Portless 0.14+ stores `ngrokUrl` on each route when started with `--ngrok`
- * or `PORTLESS_NGROK=1`. `portless list` shows the same data; this helper reads
- * the state file directly so other dev scripts can wire AGENT_API_HOSTNAME.
+ * Checks, in order:
+ * 1. PORTLESS_NGROK_DOMAIN (reserved/custom domain configured for dev)
+ * 2. ~/.portless/custom-ngrok.json (active custom tunnel)
+ * 3. ~/.portless/routes.json ngrokUrl (portless-managed random tunnel)
  */
-import { existsSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { resolveActiveNgrokUrl, waitForServiceRoute } from './portless-ngrok-domain.mjs';
 
 const DEFAULT_SERVICE = 'api.novu';
 
-function getRoutesPath() {
-  const stateDir = process.env.PORTLESS_STATE_DIR || join(homedir(), '.portless');
-
-  return join(stateDir, 'routes.json');
-}
-
-function hostnameMatchesService(hostname, serviceName) {
-  return hostname === `${serviceName}.localhost` || hostname.endsWith(`.${serviceName}.localhost`);
-}
-
 export function resolvePortlessNgrokUrl(serviceName = DEFAULT_SERVICE) {
-  const routesPath = getRoutesPath();
-
-  if (!existsSync(routesPath)) {
-    return undefined;
-  }
-
-  try {
-    const routes = JSON.parse(readFileSync(routesPath, 'utf8'));
-
-    if (!Array.isArray(routes)) {
-      return undefined;
-    }
-
-    for (const route of routes) {
-      if (!route?.ngrokUrl || !route?.hostname) {
-        continue;
-      }
-
-      if (hostnameMatchesService(route.hostname, serviceName)) {
-        return route.ngrokUrl;
-      }
-    }
-  } catch {
-    return undefined;
-  }
-
-  return undefined;
+  return resolveActiveNgrokUrl(serviceName);
 }
 
 export function waitForPortlessNgrokUrl(serviceName = DEFAULT_SERVICE, options = {}) {
@@ -59,7 +23,7 @@ export function waitForPortlessNgrokUrl(serviceName = DEFAULT_SERVICE, options =
 
   return new Promise((resolve) => {
     function poll() {
-      const url = resolvePortlessNgrokUrl(serviceName);
+      const url = resolveActiveNgrokUrl(serviceName);
 
       if (url) {
         resolve(url);
@@ -80,7 +44,19 @@ export function waitForPortlessNgrokUrl(serviceName = DEFAULT_SERVICE, options =
   });
 }
 
-import { fileURLToPath } from 'node:url';
+export async function waitForNgrokReady(serviceName = DEFAULT_SERVICE, options = {}) {
+  const existing = resolveActiveNgrokUrl(serviceName);
+
+  if (existing) {
+    return existing;
+  }
+
+  if (process.env.PORTLESS_NGROK_DOMAIN?.trim()) {
+    await waitForServiceRoute(serviceName, options);
+  }
+
+  return waitForPortlessNgrokUrl(serviceName, options);
+}
 
 const [, , serviceName, mode] = process.argv;
 const isCli = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
@@ -89,7 +65,7 @@ if (isCli) {
   const target = serviceName || DEFAULT_SERVICE;
 
   if (mode === '--wait') {
-    waitForPortlessNgrokUrl(target).then((url) => {
+    waitForNgrokReady(target).then((url) => {
       if (!url) {
         console.error(`[portless-ngrok-url] timed out waiting for ngrok URL for ${target}`);
         process.exit(1);
@@ -98,10 +74,12 @@ if (isCli) {
       process.stdout.write(`${url}\n`);
     });
   } else {
-    const url = resolvePortlessNgrokUrl(target);
+    const url = resolveActiveNgrokUrl(target);
 
     if (!url) {
-      console.error(`[portless-ngrok-url] no ngrok URL found for ${target}. Is the API running with PORTLESS_NGROK=1?`);
+      console.error(
+        `[portless-ngrok-url] no ngrok URL found for ${target}. Start with PORTLESS_NGROK=1 or set PORTLESS_NGROK_DOMAIN.`
+      );
       process.exit(1);
     }
 

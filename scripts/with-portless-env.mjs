@@ -9,15 +9,17 @@
  * Used by API and dashboard `start:portless`, and by the worker `start:portless`
  * (worker is not behind `portless run` but still needs API_ROOT_URL / API_INTERNAL_ORIGIN).
  *
- * When `PORTLESS_EXPECT_NGROK=1`, waits for the API ngrok URL from portless
- * routes and sets `AGENT_API_HOSTNAME` / `VITE_AGENT_API_HOSTNAME` for agent
- * webhooks and OAuth callbacks.
+ * When `PORTLESS_EXPECT_NGROK=1`, resolves the API ngrok URL (from
+ * `PORTLESS_NGROK_DOMAIN`, portless routes, or custom tunnel state) and sets
+ * `AGENT_API_HOSTNAME` / `VITE_AGENT_API_HOSTNAME` for agent webhooks and
+ * OAuth callbacks.
  *
  * Usage: node scripts/with-portless-env.mjs <command> [args...]
  */
 import { execFileSync, spawn } from 'node:child_process';
 import { portlessCaEnv } from './portless-ca-env.mjs';
-import { resolvePortlessNgrokUrl, waitForPortlessNgrokUrl } from './portless-ngrok-url.mjs';
+import { resolveConfiguredNgrokUrl } from './portless-ngrok-domain.mjs';
+import { resolvePortlessNgrokUrl, waitForNgrokReady } from './portless-ngrok-url.mjs';
 
 const SERVICES = ['api.novu', 'dashboard.novu', 'ws.novu', 'playground.novu'];
 const API_SERVICE = 'api.novu';
@@ -63,6 +65,14 @@ async function resolveAgentApiHostname() {
     return configured;
   }
 
+  const configuredDomain = resolveConfiguredNgrokUrl();
+
+  if (configuredDomain) {
+    console.log(`[with-portless-env] using configured ngrok domain for agent webhooks: ${configuredDomain}`);
+
+    return configuredDomain;
+  }
+
   if (process.env.PORTLESS_EXPECT_NGROK !== '1') {
     return undefined;
   }
@@ -75,7 +85,7 @@ async function resolveAgentApiHostname() {
 
   console.log('[with-portless-env] waiting for api.novu ngrok URL (start the API with PORTLESS_NGROK=1)...');
 
-  const ngrokUrl = await waitForPortlessNgrokUrl(API_SERVICE);
+  const ngrokUrl = await waitForNgrokReady(API_SERVICE);
 
   if (!ngrokUrl) {
     console.warn('[with-portless-env] PORTLESS_EXPECT_NGROK=1 but no ngrok URL found for api.novu');
@@ -122,6 +132,7 @@ async function main() {
       ? {
           AGENT_API_HOSTNAME: agentApiHostname,
           VITE_AGENT_API_HOSTNAME: agentApiHostname,
+          PORTLESS_NGROK_URL: agentApiHostname,
         }
       : {}),
   };
