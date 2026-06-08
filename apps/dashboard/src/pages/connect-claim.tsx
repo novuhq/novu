@@ -22,6 +22,9 @@ import {
 } from '@/utils/connect-claim-pending';
 import { ROUTES } from '@/utils/routes';
 
+const CLAIM_FAILED_MESSAGE = 'Unable to claim this agent. Please try again or reopen the link from your chat.';
+const ENV_READY_TIMEOUT_MS = 60_000;
+
 export const ConnectClaimPage = () => {
   const { isLoaded, isSignedIn } = useClerkAuth();
   const [searchParams] = useSearchParams();
@@ -74,17 +77,35 @@ function ConnectClaimContent({ token }: { token: string | null }) {
   const { currentOrganization } = useAuth();
   const novuOrganizationId = currentOrganization?._id;
   const [isEnvironmentReady, setIsEnvironmentReady] = useState(false);
+  const [environmentSetupError, setEnvironmentSetupError] = useState<string | null>(null);
   const { environments } = useFetchEnvironments({
     organizationId: novuOrganizationId || BOOTSTRAP_ORG_CACHE_KEY,
-    refetchInterval: isEnvironmentReady ? undefined : 1000,
+    refetchInterval: isEnvironmentReady || environmentSetupError ? undefined : 1000,
     showError: false,
   });
 
   useEffect(() => {
     if (hasClaimableDevelopmentEnvironment(environments)) {
       setIsEnvironmentReady(true);
+      setEnvironmentSetupError(null);
     }
   }, [environments]);
+
+  useEffect(() => {
+    if (isEnvironmentReady || environmentSetupError) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setEnvironmentSetupError(
+        'Your development environment is taking longer than expected to set up. Please try again in a moment.'
+      );
+    }, ENV_READY_TIMEOUT_MS);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isEnvironmentReady, environmentSetupError]);
   const [isClaiming, setIsClaiming] = useState(false);
   const [didClaim, setDidClaim] = useState(false);
   const [claimError, setClaimError] = useState<string | null>(null);
@@ -105,9 +126,9 @@ function ConnectClaimContent({ token }: { token: string | null }) {
       clearPendingConnectClaim();
       setDidClaim(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to claim this agent';
-      showErrorToast(`Claim failed: ${message}`);
-      setClaimError(message);
+      console.error('Connect claim failed', error);
+      showErrorToast(CLAIM_FAILED_MESSAGE, 'Claim failed');
+      setClaimError(CLAIM_FAILED_MESSAGE);
     } finally {
       setIsClaiming(false);
     }
@@ -120,7 +141,8 @@ function ConnectClaimContent({ token }: { token: string | null }) {
   };
 
   const reason = tokenOk ? null : 'This page must be opened from the link in your chat.';
-  const canClaim = !reason && isEnvironmentReady && !isClaiming && !didClaim && !claimError;
+  const setupError = environmentSetupError;
+  const canClaim = !reason && !setupError && isEnvironmentReady && !isClaiming && !didClaim && !claimError;
 
   useEffect(() => {
     if (canClaim && !hasAttemptedRef.current) {
@@ -147,6 +169,22 @@ function ConnectClaimContent({ token }: { token: string | null }) {
           {reason ? (
             <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
               <span>{reason}</span>
+            </div>
+          ) : setupError ? (
+            <div className="flex w-full flex-col gap-3">
+              <div className="text-text-sub flex w-full items-start gap-2 rounded-lg border border-dashed border-stroke-soft p-3 text-label-xs">
+                <span>{setupError}</span>
+              </div>
+              <button
+                type="button"
+                className="text-label-xs text-text-strong w-full rounded-lg border border-stroke-soft px-3 py-2 font-medium"
+                onClick={() => {
+                  setEnvironmentSetupError(null);
+                  setIsEnvironmentReady(false);
+                }}
+              >
+                Try again
+              </button>
             </div>
           ) : didClaim ? (
             <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">

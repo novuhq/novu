@@ -80,6 +80,7 @@ import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
 import { captureAgentTemplateIdFromUrl } from './utils/agent-template-identity';
+import { captureConnectClaimTokenFromUrl } from './utils/connect-claim-pending';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
@@ -88,6 +89,8 @@ initializeSentry();
 overrideZodErrorMap();
 // Stash an incoming `?agentTemplateId=` before Clerk's auth redirects drop the query params.
 captureAgentTemplateIdFromUrl();
+// Stash an incoming connect claim token before Clerk's auth redirects drop the query params.
+captureConnectClaimTokenFromUrl();
 
 const router = createBrowserRouter([
   {

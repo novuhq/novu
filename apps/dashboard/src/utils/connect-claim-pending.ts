@@ -100,6 +100,16 @@ export function resolvePendingConnectClaimReturnUrl(): string | null {
   return `${ROUTES.CONNECT_CLAIM}?token=${encodeURIComponent(token)}`;
 }
 
+// Reads the token from the current URL and persists it. Safe to call at module load on every
+// document load — only writes when the param is present.
+export function captureConnectClaimTokenFromUrl(): void {
+  try {
+    storePendingConnectClaimFromPath(window.location.pathname, window.location.search);
+  } catch {
+    // ignore — no window available
+  }
+}
+
 export function buildConnectClaimReturnUrlFromSearchParams(searchParams?: URLSearchParams): string | null {
   const redirectUrl = searchParams?.get('redirect_url');
 
