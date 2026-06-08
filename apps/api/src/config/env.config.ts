@@ -22,4 +22,12 @@ if (dotenvPath) {
   dotenv.config({ path: dotenvPath });
 }
 
+// Portless 0.14+ injects PORTLESS_NGROK_URL when started with --ngrok. Bridge it
+// to AGENT_API_HOSTNAME so agent webhooks/OAuth use the public tunnel URL.
+const portlessNgrokUrl = process.env.PORTLESS_NGROK_URL?.trim();
+
+if (!process.env.AGENT_API_HOSTNAME?.trim() && portlessNgrokUrl) {
+  process.env.AGENT_API_HOSTNAME = portlessNgrokUrl;
+}
+
 export const CONTEXT_PATH = getContextPath(NovuComponentEnum.API);
