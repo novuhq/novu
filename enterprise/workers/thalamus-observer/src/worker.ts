@@ -39,7 +39,13 @@ export default {
 
     try {
       if (request.method === 'POST' && path === '/enqueue') {
-        const body = await request.json();
+        let body: unknown;
+        try {
+          body = await request.json();
+        } catch {
+          return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+
         if (!validateEnqueueParams(body)) {
           return Response.json(
             { error: 'Invalid params: sessionId, runId, turnId, provider, request, and webhook are required' },
@@ -53,7 +59,13 @@ export default {
       }
 
       if (request.method === 'POST' && path === '/observe') {
-        const body = await request.json();
+        let body: unknown;
+        try {
+          body = await request.json();
+        } catch {
+          return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+
         if (!validateObservationParams(body)) {
           return Response.json(
             { error: 'Invalid params: sessionId, streamUrl, headers, provider, and webhook are required' },

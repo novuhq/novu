@@ -40,7 +40,7 @@ export interface EnqueueParams {
   };
 }
 
-export type MessageQueueRow = {
+export interface MessageQueueRow {
   id: number;
   session_id: string;
   run_id: string;
@@ -49,9 +49,9 @@ export type MessageQueueRow = {
   webhook_json: string;
   created_at: number;
   [key: string]: SqlStorageValue;
-};
+}
 
-export type EventRow = {
+export interface EventRow {
   id: number;
   session_id: string;
   sequence: number;
@@ -60,7 +60,7 @@ export type EventRow = {
   attempts: number;
   created_at: number;
   [key: string]: SqlStorageValue;
-};
+}
 
 export type DeliveryOutcome = 'delivered' | 'skipped' | 'retry-later' | 'exhausted';
 
@@ -68,10 +68,10 @@ export type ObservationStatus = 'active' | 'completed' | 'error';
 
 export type QueueState = 'idle' | 'active';
 
-export type State = {
+export interface State {
   observation: (ObservationParams & { status: ObservationStatus }) | null;
   queueState: QueueState;
-};
+}
 
 export interface ProviderParser {
   createAccumulator(): import('./parsers').EdgeAccumulator;

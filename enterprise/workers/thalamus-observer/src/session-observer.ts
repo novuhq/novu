@@ -285,7 +285,7 @@ export class SessionObserver extends Agent<Env, State> {
 
   private async drainQueue(sessionId: string, lastParams: ObservationParams): Promise<void> {
     const row = this.ctx.storage.sql
-      .exec<MessageQueueRow>('SELECT * FROM message_queue ORDER BY id LIMIT 1')
+      .exec<MessageQueueRow>('SELECT * FROM message_queue WHERE session_id = ? ORDER BY id LIMIT 1', sessionId)
       .toArray()[0];
 
     if (!row) {
@@ -293,7 +293,7 @@ export class SessionObserver extends Agent<Env, State> {
       return;
     }
 
-    this.ctx.storage.sql.exec('DELETE FROM message_queue WHERE id = ?', row.id);
+    this.ctx.storage.sql.exec('DELETE FROM message_queue WHERE id = ? AND session_id = ?', row.id, sessionId);
 
     const request = JSON.parse(row.request_json);
     const webhook = JSON.parse(row.webhook_json);
