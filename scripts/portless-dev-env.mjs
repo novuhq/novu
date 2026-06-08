@@ -52,7 +52,7 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-async function resolveAgentApiHostname() {
+async function resolveAgentApiHostname({ skipNgrokWait = false } = {}) {
   const configured = process.env.AGENT_API_HOSTNAME?.trim();
 
   if (configured) {
@@ -67,6 +67,12 @@ async function resolveAgentApiHostname() {
 
   if (existing) {
     return existing;
+  }
+
+  // The API process owns the tunnel (--manage-ngrok); waiting here would deadlock
+  // because portless has not started yet.
+  if (skipNgrokWait) {
+    return undefined;
   }
 
   const ngrokUrl = await waitForNgrokUrl(API_SERVICE);
@@ -141,7 +147,7 @@ async function main() {
   }
 
   const urls = Object.fromEntries(SERVICES.map((name) => [name, getServiceUrl(name)]));
-  const agentApiHostname = await resolveAgentApiHostname();
+  const agentApiHostname = await resolveAgentApiHostname({ skipNgrokWait: manageNgrok });
 
   const dashboardUrl = urls['dashboard.novu'];
   const dashboardOriginRegex = dashboardUrl.replace(/^https?:\/\/(.+?)(:\d+)?$/, (_match, host, port = '') => {
@@ -173,7 +179,12 @@ async function main() {
       : {}),
   };
 
-  if (manageNgrok && normalizeNgrokDomain(process.env.PORTLESS_NGROK_DOMAIN)) {
+  // Only the API tunnel owner should pass PORTLESS_NGROK through to portless.
+  // Other services (dashboard, playground) inherit PORTLESS_NGROK=1 from mprocs
+  // for env resolution but must not spawn their own tunnels.
+  const usesReservedDomain = normalizeNgrokDomain(process.env.PORTLESS_NGROK_DOMAIN);
+
+  if (!manageNgrok || usesReservedDomain) {
     delete childEnv.PORTLESS_NGROK;
   }
 
