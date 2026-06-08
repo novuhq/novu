@@ -62,7 +62,7 @@ export function OnboardingProvisioningOverlay() {
   }
 
   return (
-    <div className={`fixed inset-0 z-[200] flex items-center justify-center ${AUTH_BACKGROUND_CLASS}`}>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${AUTH_BACKGROUND_CLASS}`}>
       <OnboardingLoader variant={session.variant} startedAt={session.startedAt} />
     </div>
   );
