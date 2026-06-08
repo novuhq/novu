@@ -1,4 +1,4 @@
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum, StepTypeEnum } from '@novu/shared';
+import { StepTypeEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 import { StoreSubscriberJobs } from './store-subscriber-jobs.usecase';
@@ -27,14 +27,14 @@ describe('StoreSubscriberJobs', () => {
   let usecase: StoreSubscriberJobs;
   let jobRepository: { storeJobs: sinon.SinonStub };
   let stepRunRepository: { createMany: sinon.SinonStub };
-  let createExecutionDetails: { execute: sinon.SinonStub };
+  let traceLogRepository: { createStepRun: sinon.SinonStub };
   let addJob: { execute: sinon.SinonStub };
   let bulkCreateExecutionDetails: { execute: sinon.SinonStub };
 
   beforeEach(() => {
     jobRepository = { storeJobs: sinon.stub() };
     stepRunRepository = { createMany: sinon.stub().resolves() };
-    createExecutionDetails = { execute: sinon.stub().resolves() };
+    traceLogRepository = { createStepRun: sinon.stub().resolves() };
     addJob = { execute: sinon.stub().resolves() };
     bulkCreateExecutionDetails = { execute: sinon.stub().resolves() };
 
@@ -43,7 +43,7 @@ describe('StoreSubscriberJobs', () => {
       jobRepository as never,
       bulkCreateExecutionDetails as never,
       stepRunRepository as never,
-      createExecutionDetails as never
+      traceLogRepository as never
     );
   });
 
@@ -63,20 +63,19 @@ describe('StoreSubscriberJobs', () => {
       jobs: [job1, job2],
     } as never);
 
-    expect(createExecutionDetails.execute.callCount).to.equal(2);
+    expect(traceLogRepository.createStepRun.calledOnce).to.be.true;
 
-    const firstCallArg = createExecutionDetails.execute.getCall(0).args[0];
-    expect(firstCallArg.detail).to.equal('Step created');
-    expect(firstCallArg.source).to.equal(ExecutionDetailsSourceEnum.INTERNAL);
-    expect(firstCallArg.status).to.equal(ExecutionDetailsStatusEnum.SUCCESS);
-    expect(firstCallArg.isTest).to.equal(false);
-    expect(firstCallArg.isRetry).to.equal(false);
-    expect(firstCallArg.jobId).to.equal('job_1');
-    expect(firstCallArg.channel).to.equal(StepTypeEnum.EMAIL);
+    const traces = traceLogRepository.createStepRun.getCall(0).args[0];
+    expect(traces).to.have.length(2);
 
-    const secondCallArg = createExecutionDetails.execute.getCall(1).args[0];
-    expect(secondCallArg.jobId).to.equal('job_2');
-    expect(secondCallArg.channel).to.equal(StepTypeEnum.SMS);
+    expect(traces[0].event_type).to.equal('step_created');
+    expect(traces[0].title).to.equal('Step created');
+    expect(traces[0].status).to.equal('success');
+    expect(traces[0].entity_id).to.equal('job_1');
+    expect(traces[0].step_run_type).to.equal(StepTypeEnum.EMAIL);
+
+    expect(traces[1].entity_id).to.equal('job_2');
+    expect(traces[1].step_run_type).to.equal(StepTypeEnum.SMS);
   });
 
   it('emits step_created traces before invoking addJob', async () => {
@@ -84,8 +83,8 @@ describe('StoreSubscriberJobs', () => {
     jobRepository.storeJobs.resolves([job]);
 
     const callOrder: string[] = [];
-    createExecutionDetails.execute.callsFake(async () => {
-      callOrder.push('createExecutionDetails');
+    traceLogRepository.createStepRun.callsFake(async () => {
+      callOrder.push('createStepRun');
     });
     addJob.execute.callsFake(async () => {
       callOrder.push('addJob');
@@ -98,10 +97,10 @@ describe('StoreSubscriberJobs', () => {
       jobs: [job],
     } as never);
 
-    expect(callOrder).to.deep.equal(['createExecutionDetails', 'addJob']);
+    expect(callOrder).to.deep.equal(['createStepRun', 'addJob']);
   });
 
-  it('populates trace fields from job metadata via getDetailsFromJob', async () => {
+  it('populates trace fields from job metadata', async () => {
     const job = buildJobEntity({
       _id: 'job_42',
       _environmentId: 'env_42',
@@ -124,17 +123,15 @@ describe('StoreSubscriberJobs', () => {
       jobs: [job],
     } as never);
 
-    const callArg = createExecutionDetails.execute.getCall(0).args[0];
-    expect(callArg.environmentId).to.equal('env_42');
-    expect(callArg.organizationId).to.equal('org_42');
-    expect(callArg.subscriberId).to.equal('ext_sub_42');
-    expect(callArg._subscriberId).to.equal('int_sub_42');
-    expect(callArg.notificationId).to.equal('notif_42');
-    expect(callArg.notificationTemplateId).to.equal('tpl_42');
-    expect(callArg.providerId).to.equal('prov_42');
-    expect(callArg.transactionId).to.equal('tx_42');
-    expect(callArg.workflowRunIdentifier).to.equal('wf_run_42');
-    expect(callArg.channel).to.equal(StepTypeEnum.PUSH);
+    const trace = traceLogRepository.createStepRun.getCall(0).args[0][0];
+    expect(trace.environment_id).to.equal('env_42');
+    expect(trace.organization_id).to.equal('org_42');
+    expect(trace.external_subscriber_id).to.equal('ext_sub_42');
+    expect(trace.subscriber_id).to.equal('int_sub_42');
+    expect(trace.workflow_id).to.equal('tpl_42');
+    expect(trace.provider_id).to.equal('prov_42');
+    expect(trace.workflow_run_identifier).to.equal('wf_run_42');
+    expect(trace.step_run_type).to.equal(StepTypeEnum.PUSH);
   });
 
   it('calls stepRunRepository.createMany before emitting traces', async () => {
@@ -145,8 +142,8 @@ describe('StoreSubscriberJobs', () => {
     stepRunRepository.createMany.callsFake(async () => {
       callOrder.push('createMany');
     });
-    createExecutionDetails.execute.callsFake(async () => {
-      callOrder.push('createExecutionDetails');
+    traceLogRepository.createStepRun.callsFake(async () => {
+      callOrder.push('createStepRun');
     });
 
     await usecase.execute({
@@ -157,7 +154,7 @@ describe('StoreSubscriberJobs', () => {
     } as never);
 
     expect(callOrder[0]).to.equal('createMany');
-    expect(callOrder[1]).to.equal('createExecutionDetails');
+    expect(callOrder[1]).to.equal('createStepRun');
   });
 
   it('still calls addJob even with a single stored job', async () => {
@@ -179,7 +176,7 @@ describe('StoreSubscriberJobs', () => {
   it('still calls addJob when step_created trace emission fails', async () => {
     const job = buildJobEntity();
     jobRepository.storeJobs.resolves([job]);
-    createExecutionDetails.execute.rejects(new Error('trace write failed'));
+    traceLogRepository.createStepRun.rejects(new Error('trace write failed'));
 
     await usecase.execute({
       environmentId: 'env_1',

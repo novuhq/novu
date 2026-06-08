@@ -1,14 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
   BulkCreateExecutionDetails,
-  CreateExecutionDetails,
-  CreateExecutionDetailsCommand,
-  DetailEnum,
   InstrumentUsecase,
+  LogRepository,
+  mapEventTypeToTitle,
   StepRunRepository,
+  StepRunTraceInput,
+  TraceLogRepository,
 } from '@novu/application-generic';
 import { DalException, JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
-import { ExecutionDetailsSourceEnum, ExecutionDetailsStatusEnum } from '@novu/shared';
 import { PlatformException } from '../../../shared/utils';
 import { AddJob } from '../add-job';
 import { StoreSubscriberJobsCommand } from './store-subscriber-jobs.command';
@@ -20,7 +20,7 @@ export class StoreSubscriberJobs {
     private jobRepository: JobRepository,
     protected bulkCreateExecutionDetails: BulkCreateExecutionDetails,
     private stepRunRepository: StepRunRepository,
-    private createExecutionDetails: CreateExecutionDetails
+    private traceLogRepository: TraceLogRepository
   ) {}
 
   @InstrumentUsecase()
@@ -55,28 +55,38 @@ export class StoreSubscriberJobs {
   }
 
   private async emitStepCreatedTraces(storedJobs: JobEntity[]): Promise<void> {
-    const results = await Promise.allSettled(
-      storedJobs.map((job) =>
-        this.createExecutionDetails.execute(
-          CreateExecutionDetailsCommand.create({
-            ...CreateExecutionDetailsCommand.getDetailsFromJob(job),
-            detail: DetailEnum.STEP_CREATED,
-            source: ExecutionDetailsSourceEnum.INTERNAL,
-            status: ExecutionDetailsStatusEnum.SUCCESS,
-            isTest: false,
-            isRetry: false,
-          })
-        )
-      )
-    );
+    if (storedJobs.length === 0) {
+      return;
+    }
 
-    results.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        Logger.error(
-          { err: result.reason, jobId: storedJobs[index]._id },
-          'Failed to emit step_created trace'
-        );
-      }
-    });
+    try {
+      await this.traceLogRepository.createStepRun(storedJobs.map((job) => this.buildStepCreatedTraceFromJob(job)));
+    } catch (error) {
+      Logger.error(
+        { err: error, jobIds: storedJobs.map((job) => job._id) },
+        'Failed to emit step_created traces'
+      );
+    }
+  }
+
+  private buildStepCreatedTraceFromJob(job: JobEntity): StepRunTraceInput {
+    return {
+      created_at: LogRepository.formatDateTime64(new Date()),
+      organization_id: job._organizationId,
+      environment_id: job._environmentId,
+      user_id: null,
+      subscriber_id: job._subscriberId ? job._subscriberId : job.subscriberId,
+      external_subscriber_id: job.subscriberId || null,
+      event_type: 'step_created',
+      title: mapEventTypeToTitle('step_created'),
+      message: null,
+      raw_data: null,
+      status: 'success',
+      entity_id: job._id,
+      step_run_type: job.type,
+      workflow_run_identifier: job.identifier,
+      workflow_id: job._templateId,
+      provider_id: job.providerId || null,
+    };
   }
 }
