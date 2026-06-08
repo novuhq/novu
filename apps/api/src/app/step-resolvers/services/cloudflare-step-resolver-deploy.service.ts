@@ -1,9 +1,11 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 
+// Keep in sync with compatibility_date in enterprise/workers/step-resolver/wrangler.jsonc
 const CF_COMPATIBILITY_DATE = '2025-11-18';
 const WORKER_SCRIPT_NAME = 'worker.js';
 const DEPLOY_TIMEOUT_MS = 30_000;
+const PLACEMENT_REGION_PATTERN = /^(aws|gcp|azure):[a-z0-9-]+$/;
 
 interface DeployStepResolverToCloudflareCommand {
   workerId: string;
@@ -27,6 +29,13 @@ interface CloudflareDeploymentError {
 interface CloudflareDeploymentResponse {
   success?: boolean;
   errors?: CloudflareDeploymentError[];
+}
+
+interface CloudflareScriptMetadata {
+  main_module: string;
+  compatibility_date: string;
+  tags: string[];
+  placement?: { region: string };
 }
 
 @Injectable()
@@ -124,8 +133,8 @@ export class CloudflareStepResolverDeployService {
   private buildScriptMetadata(
     config: CloudflareDeploymentConfig,
     command: DeployStepResolverToCloudflareCommand
-  ): Record<string, unknown> {
-    const metadata: Record<string, unknown> = {
+  ): CloudflareScriptMetadata {
+    const metadata: CloudflareScriptMetadata = {
       main_module: WORKER_SCRIPT_NAME,
       compatibility_date: config.compatibilityDate,
       tags: this.buildTags(command.organizationId, command.stepResolverHash),
@@ -142,7 +151,13 @@ export class CloudflareStepResolverDeployService {
     const accountId = process.env.STEP_RESOLVER_CF_ACCOUNT_ID;
     const apiToken = process.env.STEP_RESOLVER_CF_API_TOKEN;
     const dispatchNamespace = process.env.STEP_RESOLVER_CF_DISPATCH_NAMESPACE;
-    const placementRegion = process.env.STEP_RESOLVER_CF_PLACEMENT_REGION;
+    const placementRegion = process.env.STEP_RESOLVER_CF_PLACEMENT_REGION?.trim() || undefined;
+
+    if (placementRegion && !PLACEMENT_REGION_PATTERN.test(placementRegion)) {
+      throw new ServiceUnavailableException(
+        'STEP_RESOLVER_CF_PLACEMENT_REGION must use provider:region format (e.g. aws:eu-central-1)'
+      );
+    }
 
     const missingVariables = [
       ['STEP_RESOLVER_CF_ACCOUNT_ID', accountId],
@@ -163,7 +178,7 @@ export class CloudflareStepResolverDeployService {
       apiToken: apiToken!,
       dispatchNamespace: dispatchNamespace!,
       compatibilityDate: CF_COMPATIBILITY_DATE,
-      placementRegion: placementRegion || undefined,
+      placementRegion,
     };
   }
 

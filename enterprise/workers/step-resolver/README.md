@@ -198,8 +198,8 @@ If namespace names differ from your Cloudflare account, update `wrangler.jsonc`.
 
 The EU `apps/api` and `apps/worker` stacks (GitHub environment `production-eu`, Secrets Manager) must set region-specific values. No code changes are required — the same env keys are used; only values differ per region.
 
-| Variable | US (`production-us`) | EU (`production-eu`) |
-|----------|----------------------|----------------------|
+| Variable | US (`production` wrangler / `production-us` ECS) | EU (`production-eu`) |
+|----------|--------------------------------------------------|----------------------|
 | `STEP_RESOLVER_DISPATCH_URL` | `https://step-resolver.novu.co` | `https://eu.step-resolver.novu.co` |
 | `STEP_RESOLVER_CF_DISPATCH_NAMESPACE` | `novu-step-resolvers-production` | `novu-step-resolvers-production-eu` |
 | `STEP_RESOLVER_CF_ACCOUNT_ID` | Cloudflare account ID | Same account ID |
@@ -207,7 +207,7 @@ The EU `apps/api` and `apps/worker` stacks (GitHub environment `production-eu`, 
 | `STEP_RESOLVER_CF_PLACEMENT_REGION` | *(unset)* | `aws:eu-central-1` |
 | `STEP_RESOLVER_HMAC_SECRET` | US dispatch worker secret | EU dispatch worker secret (from `secret:production-eu`) |
 
-`STEP_RESOLVER_CF_PLACEMENT_REGION` is passed as tenant worker `placement.region` metadata on deploy. Set it only on the EU API stack so customer code steps are placed near EU infrastructure. Leave unset on US.
+`STEP_RESOLVER_CF_PLACEMENT_REGION` is passed as tenant worker `placement.region` metadata on deploy. Use `provider:region` format (e.g. `aws:eu-central-1`). Set it only on the EU API stack so customer code steps are placed near EU infrastructure. Leave unset on US.
 
 `apps/api` uses all six deploy/runtime variables above. `apps/worker` uses `STEP_RESOLVER_DISPATCH_URL` and `STEP_RESOLVER_HMAC_SECRET` (runtime only).
 
