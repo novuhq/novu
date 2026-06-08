@@ -9,6 +9,7 @@ import {
   useContext,
 } from 'solid-js';
 import { NotificationFilter, Redirect } from '../../types';
+import { isValidInAppRedirectTarget, isValidInAppRedirectUrl } from '../../utils/in-app-redirect-url';
 import { DEFAULT_REFERRER, DEFAULT_TARGET, getTagsFromTab } from '../helpers';
 import { useNovuEvent } from '../helpers/useNovuEvent';
 import { NotificationStatus, PreferenceGroups, PreferencesFilter, PreferencesSort, RouterPush, Tab } from '../types';
@@ -105,13 +106,14 @@ export const InboxProvider = (props: InboxProviderProps) => {
   };
 
   const navigate = (url?: string, target?: Redirect['target']) => {
-    if (!url) {
+    if (!url || !isValidInAppRedirectUrl(url)) {
       return;
     }
 
     const isAbsoluteUrl = !url.startsWith('/');
     if (isAbsoluteUrl) {
-      window.open(url, target ?? DEFAULT_TARGET, DEFAULT_REFERRER);
+      const safeTarget = isValidInAppRedirectTarget(target) ? target : DEFAULT_TARGET;
+      window.open(url, safeTarget, DEFAULT_REFERRER);
 
       return;
     }

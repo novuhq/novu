@@ -1,6 +1,7 @@
 import { AgentRuntimeProviderIdEnum, type IIntegration } from '@novu/shared';
+import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
-import { RiArrowRightSLine, RiInformation2Line } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
@@ -16,11 +17,12 @@ import {
 } from '@/components/agents/create-agent-fields';
 import { SetupStep } from '@/components/agents/setup-guide-primitives';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
+import { Button } from '@/components/primitives/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
 import { AgentSuggestionPills } from './agent-suggestion-pills';
 import type { ConnectorId } from './connector-options';
-import type { GenerationStep } from './generation-status';
+import { GenerationStatus, type GenerationStep } from './generation-status';
 import { PromptInput } from './prompt-input';
 import { TemplateDropdown, type TemplateSelection } from './template-dropdown';
 
@@ -128,6 +130,13 @@ type ConnectAgentFormProps = {
    * button next to the inputs instead of at the bottom of the page.
    */
   submitSlot?: ReactNode;
+  /**
+   * Onboarding "demo agent" mode: collapses the form to a single brain step rendered as a
+   * stacked single column — suggestion pills + prompt + a "Using Demo credentials…" hint. The
+   * connector dropdown, template step, scope tabs, and credentials panel are all omitted because
+   * onboarding always uses the Novu-provided demo Claude credentials. Requires `aiGeneration`.
+   */
+  simplifiedDemo?: boolean;
 };
 
 const RIGHT_HEADER_BY_MODE: Record<
@@ -248,7 +257,82 @@ export function ConnectAgentForm({
   onSaveIntegration,
   aiGeneration,
   submitSlot,
+  simplifiedDemo,
 }: ConnectAgentFormProps) {
+  if (simplifiedDemo && aiGeneration) {
+    return (
+      <SetupStep
+        index={1}
+        status="current"
+        title="What should your agent do?"
+        description="We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials."
+        fullWidthContent={
+          <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
+            {aiGeneration.suggestions.length > 0 && (
+              <div className="flex min-w-0 items-center gap-2">
+                <span className="text-text-soft text-label-xs shrink-0 font-medium leading-4">Try:</span>
+                <AgentSuggestionPills
+                  className="min-w-0 flex-1"
+                  suggestions={aiGeneration.suggestions}
+                  onSelect={aiGeneration.onSelectSuggestion}
+                  disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                />
+              </div>
+            )}
+            {/*
+             * Keep the prompt + helper text mounted while generating — pass `isGenerating={false}`
+             * so `PromptInput` does not swap in its own cancel/status UI (we render those below the
+             * button instead) and keeps the helper text visible. `disabled` makes the textarea
+             * read-only during generation.
+             */}
+            <PromptInput
+              value={aiGeneration.prompt}
+              onChange={aiGeneration.onPromptChange}
+              disabled={disabled || (aiGeneration.isGenerating ?? false)}
+              errorMessage={aiGeneration.promptError}
+              textareaRef={aiGeneration.textareaRef}
+              helperText="Using Demo credentials for Claude Managed Agents for onboarding"
+            />
+            {/*
+             * Render the cancel/submit toggle as different element types (button vs a wrapping
+             * div) so React never reuses the same DOM <button> and silently flips its `type` from
+             * "button" to "submit" mid-click — which would let the browser submit the form on the
+             * very click that was meant to cancel, firing a brand-new generation request.
+             */}
+            {aiGeneration.isGenerating ? (
+              <Button
+                key="brain-step-cancel"
+                type="button"
+                variant="secondary"
+                mode="outline"
+                size="2xs"
+                className="mt-1 w-full justify-center gap-1"
+                onClick={aiGeneration.onCancelGeneration}
+                disabled={aiGeneration.isCancelDisabled}
+                trailingIcon={RiCloseLine}
+              >
+                Cancel
+              </Button>
+            ) : (
+              <div key="brain-step-submit" className="contents">
+                {submitSlot}
+              </div>
+            )}
+            {aiGeneration.isGenerating && aiGeneration.generationSteps && aiGeneration.generationSteps.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <GenerationStatus steps={aiGeneration.generationSteps} />
+              </motion.div>
+            )}
+          </div>
+        }
+      />
+    );
+  }
+
   const selectedConnector = getConnectorById(connectorId);
   const showCredentialsSection = isClaudeSelected && credentialsPanelVisible && Boolean(selectedConnector?.providerId);
   const usePromptUi = Boolean(aiGeneration);

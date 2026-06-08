@@ -4,6 +4,7 @@ import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
 import { AddReactionPayloadDto, EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
+import type { PlanPhase } from '../../egress/plan-phase';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 
 export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
@@ -45,7 +46,7 @@ export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {
 
   @IsOptional()
   @IsObject()
-  plan?: { model: PlanModel; messageId?: string };
+  plan?: { model: PlanModel; phase: PlanPhase; messageId?: string };
 
   @IsOptional()
   slackNative?: SlackNativeDelivery;

@@ -18,6 +18,17 @@ export interface NovuEmailAttachment {
   url?: string;
 }
 
+export interface EmailWebhookDomainContext {
+  id: string;
+  name: string;
+  data?: Record<string, string>;
+}
+
+export interface EmailWebhookRouteContext {
+  address: string;
+  data?: Record<string, string>;
+}
+
 export interface EmailWebhookPayload {
   messageId: string;
   inReplyTo?: string;
@@ -29,4 +40,7 @@ export interface EmailWebhookPayload {
   html?: string;
   attachments?: NovuEmailAttachment[];
   date: string;
+  headers?: Record<string, string>;
+  domain?: EmailWebhookDomainContext;
+  route?: EmailWebhookRouteContext;
 }

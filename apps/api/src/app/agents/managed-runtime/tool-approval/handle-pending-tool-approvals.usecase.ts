@@ -124,7 +124,6 @@ export class HandlePendingToolApprovals {
         platform: command.platform as AgentPlatformEnum | undefined,
         toolUseIds: trustedTools.map((tool) => tool.toolUseId),
         approved: true,
-        turnId: command.turnId,
       });
     } catch (err) {
       this.logger.warn(
@@ -168,7 +167,7 @@ export class HandlePendingToolApprovals {
           conversationId: command.conversationId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          toolProgress: { turnId: command.turnId, action: 'fail' },
+          toolProgress: { action: 'fail' },
         })
       );
     } catch (deliveryErr) {
@@ -238,7 +237,6 @@ export class HandlePendingToolApprovals {
     const delivery = getToolApprovalCard({
       platform: command.platform,
       tool,
-      turnId: command.turnId,
       pendingQueueTotal,
     });
 
@@ -274,7 +272,7 @@ export class HandlePendingToolApprovals {
         conversationId: command.conversationId,
         agentIdentifier: command.agentIdentifier,
         integrationIdentifier: command.integrationIdentifier,
-        toolProgress: { turnId: command.turnId, action: 'awaiting-approval' },
+        toolProgress: { action: 'awaiting-approval' },
       })
     );
   }

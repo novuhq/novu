@@ -102,13 +102,9 @@ describe('McpOAuthDiscoveryService', () => {
       expect(selectTokenEndpointAuthMethod(['client_secret_basic', 'none'], true)).to.equal('client_secret_basic');
     });
 
-    it('selects none only when the client is not confidential', () => {
+    it('selects none when the AS advertises only none', () => {
       expect(selectTokenEndpointAuthMethod(['none'], false)).to.equal('none');
-      // Confidential client with only `none` advertised cannot represent its
-      // secret in band — fall back to the RFC default so DCR surfaces a
-      // typed error from the upstream instead of silently dropping the
-      // secret.
-      expect(selectTokenEndpointAuthMethod(['none'], true)).to.equal('client_secret_basic');
+      expect(selectTokenEndpointAuthMethod(['none'], true)).to.equal('none');
     });
 
     it('defaults to client_secret_basic when the AS omits the field (RFC 8414 §2 default)', () => {
@@ -203,6 +199,26 @@ describe('McpOAuthDiscoveryService', () => {
         expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_no_protected_resource_metadata');
       }
     });
+
+    it('accepts co-located AS metadata served at the PRM well-known URL', async () => {
+      safeRawStub.resolves(rawResponse(405, {}));
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          resource: 'https://netlify-mcp.netlify.app/mcp',
+          issuer: 'https://netlify-mcp.netlify.app/',
+          authorization_endpoint: 'https://netlify-mcp.netlify.app/oauth-server/auth',
+          token_endpoint: 'https://netlify-mcp.netlify.app/oauth-server/token',
+          registration_endpoint: 'https://netlify-mcp.netlify.app/oauth-server/reg',
+          scopes_supported: ['openid', 'read', 'write'],
+        })
+      );
+
+      const prm = await service.discoverProtectedResource('https://netlify-mcp.netlify.app/mcp');
+
+      expect(prm.resource).to.equal('https://netlify-mcp.netlify.app/mcp');
+      expect(prm.authorizationServers).to.deep.equal(['https://netlify-mcp.netlify.app/']);
+      expect(prm.scopesSupported).to.deep.equal(['openid', 'read', 'write']);
+    });
   });
 
   describe('discoverAuthorizationServer', () => {
@@ -249,6 +265,122 @@ describe('McpOAuthDiscoveryService', () => {
 
       const md = await service.discoverAuthorizationServer('https://auth.example.com');
       expect(md.tokenEndpointAuthMethodsSupported).to.equal(undefined);
+    });
+
+    it('accepts the Clerk delegated-issuer pattern where PRM lists the product origin', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://clerk.context7.com',
+          authorization_endpoint: 'https://context7.com/api/oauth/authorize',
+          token_endpoint: 'https://context7.com/api/oauth/token',
+          registration_endpoint: 'https://context7.com/api/oauth/register',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['client_secret_post'],
+          authorization_response_iss_parameter_supported: false,
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://context7.com');
+
+      expect(md.issuer).to.equal('https://clerk.context7.com');
+      expect(md.registrationEndpoint).to.equal('https://context7.com/api/oauth/register');
+    });
+
+    it('accepts the parent-domain issuer pattern where PRM lists a product subdomain', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://vercel.com',
+          authorization_endpoint: 'https://vercel.com/oauth/authorize',
+          token_endpoint: 'https://vercel.com/api/login/oauth/token',
+          registration_endpoint: 'https://vercel.com/api/login/oauth/register',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['none'],
+          authorization_response_iss_parameter_supported: false,
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://mcp.vercel.com');
+
+      expect(md.issuer).to.equal('https://vercel.com');
+      expect(md.registrationEndpoint).to.equal('https://vercel.com/api/login/oauth/register');
+    });
+
+    it('accepts the MCP well-known gateway pattern (PlanetScale)', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://api.planetscale.com',
+          authorization_endpoint: 'https://app.planetscale.com/oauth/authorize',
+          token_endpoint: 'https://auth.planetscale.com/oauth/token',
+          registration_endpoint: 'https://auth.planetscale.com/oauth/registration',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['client_secret_basic', 'client_secret_post'],
+          authorization_response_iss_parameter_supported: false,
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://mcp.pscale.dev/mcp/planetscale');
+
+      expect(md.issuer).to.equal('https://api.planetscale.com');
+      expect(md.registrationEndpoint).to.equal('https://auth.planetscale.com/oauth/registration');
+    });
+
+    it('accepts the sibling-subdomain MCP gateway pattern (New Relic)', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://login.newrelic.com',
+          authorization_endpoint: 'https://login.newrelic.com/login',
+          token_endpoint: 'https://mcp.newrelic.com/oauth2/token',
+          registration_endpoint: 'https://mcp.newrelic.com/register',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['none', 'client_secret_post'],
+          authorization_response_iss_parameter_supported: false,
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://mcp.newrelic.com');
+
+      expect(md.issuer).to.equal('https://login.newrelic.com');
+      expect(md.authorizationEndpoint).to.equal('https://login.newrelic.com/login');
+      expect(md.tokenEndpoint).to.equal('https://mcp.newrelic.com/oauth2/token');
+      expect(md.registrationEndpoint).to.equal('https://mcp.newrelic.com/register');
+    });
+
+    it('rejects the MCP well-known gateway pattern when OAuth endpoints leave the advertised domain', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://api.planetscale.com',
+          authorization_endpoint: 'https://app.planetscale.com/oauth/authorize',
+          token_endpoint: 'https://evil.example/oauth/token',
+          registration_endpoint: 'https://auth.planetscale.com/oauth/registration',
+          code_challenge_methods_supported: ['S256'],
+        })
+      );
+
+      try {
+        await service.discoverAuthorizationServer('https://mcp.pscale.dev/mcp/planetscale');
+        throw new Error('expected discoverAuthorizationServer to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(McpOAuthDiscoveryError);
+        expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_no_as_metadata');
+      }
+    });
+
+    it('accepts AS metadata when PRM lists the issuer with a trailing slash (Monte Carlo)', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          issuer: 'https://auth.getmontecarlo.com',
+          authorization_endpoint: 'https://auth.getmontecarlo.com/oauth2/authorize',
+          token_endpoint: 'https://auth.getmontecarlo.com/oauth2/token',
+          registration_endpoint: 'https://auth.getmontecarlo.com/oauth2/register',
+          code_challenge_methods_supported: ['S256'],
+          token_endpoint_auth_methods_supported: ['client_secret_post', 'none'],
+        })
+      );
+
+      const md = await service.discoverAuthorizationServer('https://auth.getmontecarlo.com/');
+
+      expect(md.issuer).to.equal('https://auth.getmontecarlo.com');
+      expect(md.registrationEndpoint).to.equal('https://auth.getmontecarlo.com/oauth2/register');
     });
 
     it('rejects metadata when issuer does not match the discovery URL', async () => {
@@ -368,6 +500,7 @@ describe('McpOAuthDiscoveryService', () => {
           client_secret_expires_at: 0,
           registration_access_token: 'rat',
           registration_client_uri: 'https://auth.example.com/register/abc123',
+          token_endpoint_auth_method: 'client_secret_post',
         })
       );
 
@@ -377,6 +510,7 @@ describe('McpOAuthDiscoveryService', () => {
       expect(result.clientSecretExpiresAt).to.equal(0);
       expect(result.registrationAccessToken).to.equal('rat');
       expect(result.registrationClientUri).to.equal('https://auth.example.com/register/abc123');
+      expect(result.tokenEndpointAuthMethod).to.equal('client_secret_post');
 
       const call = safeJsonStub.firstCall.args[0];
       expect(call.url).to.equal('https://auth.example.com/register');
@@ -417,6 +551,24 @@ describe('McpOAuthDiscoveryService', () => {
         expect(err).to.be.instanceOf(McpOAuthDiscoveryError);
         expect((err as McpOAuthDiscoveryError).code).to.equal('mcp_registration_failed');
       }
+    });
+
+    it('surfaces token_endpoint_auth_method when the AS downgrades to a public client', async () => {
+      safeJsonStub.resolves(
+        jsonResponse(200, {
+          client_id: 'public-client',
+          token_endpoint_auth_method: 'none',
+        })
+      );
+
+      const result = await service.registerClient(AS_METADATA, {
+        ...CLIENT_METADATA,
+        token_endpoint_auth_method: 'client_secret_post',
+      });
+
+      expect(result.clientId).to.equal('public-client');
+      expect(result.clientSecret).to.equal(undefined);
+      expect(result.tokenEndpointAuthMethod).to.equal('none');
     });
   });
 

@@ -25,13 +25,13 @@
     "node": ">=18.0.0"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.21",
-    "@nestjs/core": "11.1.21",
+    "@nestjs/common": "11.1.24",
+    "@nestjs/core": "11.1.24",
     "@nestjs/jwt": "11.0.2",
     "@nestjs/passport": "11.0.5",
     "@nestjs/swagger": "7.4.0",
     "@nestjs/terminus": "11.1.1",
-    "@nestjs/testing": "11.1.21",
+    "@nestjs/testing": "11.1.24",
     "jsonwebtoken": "9.0.3",
     "newrelic": "13.20.0",
     "reflect-metadata": "0.2.2"

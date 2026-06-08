@@ -170,6 +170,7 @@ export class AgentsController {
   getAgent(@UserSession() user: UserSessionData, @Param('identifier') identifier: string): Promise<AgentResponseDto> {
     return this.getAgentUsecase.execute(
       GetAgentCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier,

@@ -391,5 +391,27 @@ describe('safe-outbound-http', () => {
       const hit = upstreamHits[0]!;
       expect(hit.headers.host).toContain('test-upstream.invalid');
     });
+
+    it('parses JSON bodies served with a text/plain content-type', async () => {
+      respond = (_req, res) => {
+        res.writeHead(200, { 'content-type': 'text/plain; charset=utf-8' });
+        res.end(
+          JSON.stringify({ resource: 'https://mcp.example.com/', authorization_servers: ['https://auth.example.com'] })
+        );
+      };
+
+      vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: '127.0.0.1', family: 4 }] as never);
+
+      const response = await safeOutboundJsonRequest<{ resource: string; authorization_servers: string[] }>({
+        url: `${upstreamUrl}/prm`,
+        method: 'GET',
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toEqual({
+        resource: 'https://mcp.example.com/',
+        authorization_servers: ['https://auth.example.com'],
+      });
+    });
   });
 });
