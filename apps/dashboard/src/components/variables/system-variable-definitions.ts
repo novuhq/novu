@@ -11,13 +11,12 @@ export const SYSTEM_VARIABLE_DEFINITIONS: SystemVariableDefinition[] = [
   {
     key: 'env.name',
     resolve: (env) => env.name,
-    description:
-      'The display name of the environment. Use it in templates as {{env.name}} to reference the current environment by name.',
+    description: "This environment's display name. In templates, use {{env.name}}.",
   },
   {
     key: 'env.type',
     resolve: (env) => env.type,
     description:
-      'System classification for the environment: dev or prod.\n\n• Development → dev\n• Production and custom environments (e.g. Staging) → prod\n\nNovu uses this for platform behavior — for example, content can only be edited in dev environments, and prod environments receive updates through publishing. This value is managed by Novu and cannot be changed. Create a custom variable (e.g. environmentType) if you need your own classification.',
+      'Tells Novu if this environment is for editing (dev) or live use (prod).\n\n• Development → dev\n• Production → prod\n• Custom environments (e.g. Staging) → prod\n\nEdit workflows and content in dev only. Prod environments update when you publish.\n\nSet by Novu — not editable. Need your own label? Create a custom variable.',
   },
 ];
