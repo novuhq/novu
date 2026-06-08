@@ -32,15 +32,30 @@ export interface CreateManagedAgentInput {
   skills: Array<{ skillId: string }>;
 }
 
-export interface AgentIntegrationLink {
+export interface AgentIntegrationEmbedded {
   _id: string;
-  integrationId: string;
-  integrationIdentifier: string;
+  identifier: string;
+  name: string;
   providerId: string;
   channel?: string;
-  active?: boolean;
-  connectedAt?: string | null;
+  active: boolean;
+  sharedInboundAddress?: string;
+  defaultSenderName?: string;
 }
+
+/** Agent–integration link row returned by GET/POST `/v1/agents/:identifier/integrations`. */
+export interface AgentIntegrationLink {
+  _id: string;
+  _agentId?: string;
+  integration: AgentIntegrationEmbedded;
+  _environmentId?: string;
+  _organizationId?: string;
+  connectedAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type AgentEmailIntegrationDetail = AgentIntegrationLink;
 
 export async function listAgents(client: ConnectApiClient): Promise<AgentRecord[]> {
   const res = await client.axios.get<{ data?: AgentRecord[] } | AgentRecord[]>('/v1/agents');
@@ -94,21 +109,9 @@ export async function addAgentIntegration(
     { integrationIdentifier }
   );
   const body = res.data;
+  const link = 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 
-  return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
-}
-
-export interface AgentEmailIntegrationDetail extends AgentIntegrationLink {
-  /** Embedded integration record returned by `POST /v1/agents/:id/integrations`. */
-  integration?: {
-    _id?: string;
-    identifier?: string;
-    name?: string;
-    providerId?: string;
-    channel?: string;
-    active?: boolean;
-    sharedInboundAddress?: string;
-  };
+  return normalizeAgentIntegrationLink(link);
 }
 
 /**
@@ -128,20 +131,61 @@ export async function addAgentEmailIntegration(
     { providerId: 'novu-email-agent' }
   );
   const body = res.data;
+  const link = 'data' in body && body.data ? body.data : (body as AgentEmailIntegrationDetail);
 
-  return 'data' in body && body.data ? body.data : (body as AgentEmailIntegrationDetail);
+  return normalizeAgentIntegrationLink(link);
 }
 
 export async function listAgentIntegrations(
   client: ConnectApiClient,
-  agentIdentifier: string
+  agentIdentifier: string,
+  options?: { integrationIdentifier?: string; limit?: number }
 ): Promise<AgentIntegrationLink[]> {
   const res = await client.axios.get<{ data?: AgentIntegrationLink[] } | AgentIntegrationLink[]>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
+    {
+      params: {
+        limit: options?.limit ?? (options?.integrationIdentifier ? 1 : 100),
+        ...(options?.integrationIdentifier ? { integrationIdentifier: options.integrationIdentifier } : {}),
+      },
+    }
   );
   const body = res.data;
+  const links = Array.isArray(body) ? body : (body.data ?? []);
 
-  return Array.isArray(body) ? body : (body.data ?? []);
+  return links.map(normalizeAgentIntegrationLink);
+}
+
+function normalizeAgentIntegrationLink(link: AgentIntegrationLink): AgentIntegrationLink {
+  const legacy = link as AgentIntegrationLink & {
+    integrationIdentifier?: string;
+    integrationId?: string;
+    providerId?: string;
+    channel?: string;
+    active?: boolean;
+  };
+
+  if (legacy.integration?.identifier) {
+    return link;
+  }
+
+  if (!legacy.integrationIdentifier) {
+    return link;
+  }
+
+  return {
+    ...link,
+    integration: {
+      _id: legacy.integrationId ?? legacy.integration?._id ?? '',
+      identifier: legacy.integrationIdentifier,
+      name: legacy.integration?.name ?? legacy.integrationIdentifier,
+      providerId: legacy.providerId ?? legacy.integration?.providerId ?? '',
+      channel: legacy.channel ?? legacy.integration?.channel,
+      active: legacy.active ?? legacy.integration?.active ?? true,
+      sharedInboundAddress: legacy.integration?.sharedInboundAddress,
+      defaultSenderName: legacy.integration?.defaultSenderName,
+    },
+  };
 }
 
 export async function sendAgentWelcomeMessage(

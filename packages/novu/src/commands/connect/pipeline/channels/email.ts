@@ -27,12 +27,12 @@ export async function connectEmailForAgent(
   }
 
   const integration: IntegrationRecord = {
-    _id: link.integration?._id ?? link.integrationId,
-    identifier: link.integrationIdentifier,
-    name: link.integration?.name ?? 'Novu Email',
-    providerId: link.integration?.providerId ?? 'novu-email-agent',
+    _id: link.integration._id,
+    identifier: link.integration.identifier,
+    name: link.integration.name ?? 'Novu Email',
+    providerId: link.integration.providerId ?? 'novu-email-agent',
     channel: 'email',
-    active: link.integration?.active !== false,
+    active: link.integration.active !== false,
   };
 
   if (link.connectedAt) {

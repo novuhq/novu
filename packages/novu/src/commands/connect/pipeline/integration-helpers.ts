@@ -31,13 +31,13 @@ export async function resolveIntegrationForAgent(
   const links = await listAgentIntegrations(client, agent.identifier);
   const alreadyLinked = links.find(
     (l) =>
-      l.providerId === match.providerId &&
-      (match.channel === undefined || l.channel === match.channel) &&
-      l.active !== false
+      l.integration.providerId === match.providerId &&
+      (match.channel === undefined || l.integration.channel === match.channel) &&
+      l.integration.active !== false
   );
   if (alreadyLinked) {
     const integrations = await listIntegrations(client);
-    const integration = integrations.find((i) => i.identifier === alreadyLinked.integrationIdentifier);
+    const integration = integrations.find((i) => i.identifier === alreadyLinked.integration.identifier);
     if (integration) return integration;
   }
 
@@ -50,8 +50,8 @@ export async function ensureAgentIntegrationLinked(
   agentIdentifier: string,
   integrationIdentifier: string
 ): Promise<AgentIntegrationLink | undefined> {
-  const links = await listAgentIntegrations(client, agentIdentifier);
-  const existingLink = links.find((l) => l.integrationIdentifier === integrationIdentifier);
+  const links = await listAgentIntegrations(client, agentIdentifier, { integrationIdentifier });
+  const existingLink = links[0];
   if (existingLink) return existingLink;
 
   try {
@@ -67,7 +67,7 @@ export function findAgentIntegrationLink(
   links: AgentIntegrationLink[],
   integrationIdentifier: string
 ): AgentIntegrationLink | undefined {
-  return links.find((l) => l.integrationIdentifier === integrationIdentifier);
+  return links.find((l) => l.integration.identifier === integrationIdentifier);
 }
 
 /** Poll until `connectedAt` is set on the agent↔integration link (first inbound message). */
@@ -78,8 +78,8 @@ export async function pollForAgentLinkConnected(
   options: { intervalMs: number; timeoutMs: number }
 ): Promise<boolean> {
   return pollUntil(async () => {
-    const links = await listAgentIntegrations(client, agentIdentifier);
-    const link = findAgentIntegrationLink(links, integrationIdentifier);
+    const links = await listAgentIntegrations(client, agentIdentifier, { integrationIdentifier, limit: 1 });
+    const link = links[0];
 
     return link?.connectedAt ? 'done' : 'pending';
   }, options);

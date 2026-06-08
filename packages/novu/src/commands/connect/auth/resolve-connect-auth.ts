@@ -27,11 +27,21 @@ export async function resolveConnectAuth(
     return { ...auth, isKeyless: false };
   }
 
-  resolveOptions.onStatus?.('Setting up a temporary keyless workspace…');
-
   const config = new ConfigService();
   const stored = config.getValue(KEYLESS_CONFIG_KEY);
+
+  if (stored) {
+    resolveOptions.onStatus?.('Restoring your keyless workspace…');
+  } else {
+    resolveOptions.onStatus?.('Setting up a temporary keyless workspace…');
+  }
+
   const session = await bootstrapKeylessSession(options.apiUrl, stored);
+
+  if (session.recoveredFromStaleSession) {
+    resolveOptions.onStatus?.('Previous keyless session is no longer available. Starting a fresh workspace…');
+  }
+
   config.setValue(KEYLESS_CONFIG_KEY, session.applicationIdentifier);
 
   return {
