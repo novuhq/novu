@@ -1,12 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  buildStepRunTraceFromJob,
   BulkCreateExecutionDetails,
   InstrumentUsecase,
-  LogRepository,
   mapEventTypeToTitle,
   StepRunRepository,
-  StepRunTraceInput,
-  StepType,
   TraceLogRepository,
 } from '@novu/application-generic';
 import { DalException, JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
@@ -61,33 +59,20 @@ export class StoreSubscriberJobs {
     }
 
     try {
-      await this.traceLogRepository.createStepRun(storedJobs.map((job) => this.buildStepCreatedTraceFromJob(job)));
+      await this.traceLogRepository.createStepRun(
+        storedJobs.map((job) =>
+          buildStepRunTraceFromJob(job, {
+            event_type: 'step_created',
+            title: mapEventTypeToTitle('step_created'),
+            status: 'success',
+          })
+        )
+      );
     } catch (error) {
       Logger.error(
         { err: error, jobIds: storedJobs.map((job) => job._id) },
         'Failed to emit step_created traces'
       );
     }
-  }
-
-  private buildStepCreatedTraceFromJob(job: JobEntity): StepRunTraceInput {
-    return {
-      created_at: LogRepository.formatDateTime64(new Date()),
-      organization_id: job._organizationId,
-      environment_id: job._environmentId,
-      user_id: '',
-      subscriber_id: job._subscriberId ?? '',
-      external_subscriber_id: job.subscriberId || '',
-      event_type: 'step_created',
-      title: mapEventTypeToTitle('step_created'),
-      message: '',
-      raw_data: '',
-      status: 'success',
-      entity_id: job._id,
-      step_run_type: (job.type ?? '') as StepType,
-      workflow_run_identifier: job.identifier,
-      workflow_id: job._templateId,
-      provider_id: job.providerId || '',
-    };
   }
 }
