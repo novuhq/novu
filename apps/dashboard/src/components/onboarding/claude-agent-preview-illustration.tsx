@@ -17,7 +17,7 @@ export type ManagedConnectorKind = 'anthropic' | 'aws';
 
 export type ManagedAgentPreviewStatus = 'idle' | 'connecting' | 'connected';
 
-export type ClaudeAgentPreviewProps = {
+type ClaudeAgentPreviewProps = {
   connector: ManagedConnectorKind;
   isDemoCredential: boolean;
   status: ManagedAgentPreviewStatus;
@@ -53,7 +53,7 @@ const TRANSITION = { duration: 0.4, ease: [0.22, 1, 0.36, 1] as const };
 // once the OnboardingShell centers it in the 40% right panel.
 const FRAME_WIDTH = 400;
 
-export function ClaudeAgentPreviewIllustration({
+function ClaudeAgentPreviewIllustration({
   connector,
   isDemoCredential,
   status,
