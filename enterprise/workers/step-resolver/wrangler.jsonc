@@ -46,11 +46,34 @@
           "namespace": "novu-step-resolvers-production"
         }
       ]
+    },
+    "production-eu": {
+      "name": "step-resolver-dispatch-production-eu",
+      "workers_dev": false,
+      "placement": {
+        "region": "aws:eu-central-1"
+      },
+      "routes": [
+        {
+          "pattern": "eu.step-resolver.novu.co",
+          "custom_domain": true
+        }
+      ],
+      "dispatch_namespaces": [
+        {
+          "binding": "DISPATCHER",
+          "namespace": "novu-step-resolvers-production-eu"
+        }
+      ],
+      "vars": {
+        "REGION": "eu"
+      }
     }
   }
   /**
    * Required secret for this worker (set per environment):
    *   pnpm wrangler secret put STEP_RESOLVER_HMAC_SECRET --env staging
    *   pnpm wrangler secret put STEP_RESOLVER_HMAC_SECRET --env production
+   *   pnpm wrangler secret put STEP_RESOLVER_HMAC_SECRET --env production-eu
    */
 }

@@ -17,6 +17,7 @@ interface CloudflareDeploymentConfig {
   apiToken: string;
   dispatchNamespace: string;
   compatibilityDate: string;
+  placementRegion?: string;
 }
 
 interface CloudflareDeploymentError {
@@ -100,11 +101,7 @@ export class CloudflareStepResolverDeployService {
     config: CloudflareDeploymentConfig,
     command: DeployStepResolverToCloudflareCommand
   ): Promise<Response> {
-    const metadata = {
-      main_module: WORKER_SCRIPT_NAME,
-      compatibility_date: config.compatibilityDate,
-      tags: this.buildTags(command.organizationId, command.stepResolverHash),
-    };
+    const metadata = this.buildScriptMetadata(config, command);
 
     const formData = new FormData();
     formData.append(
@@ -124,10 +121,28 @@ export class CloudflareStepResolverDeployService {
     });
   }
 
+  private buildScriptMetadata(
+    config: CloudflareDeploymentConfig,
+    command: DeployStepResolverToCloudflareCommand
+  ): Record<string, unknown> {
+    const metadata: Record<string, unknown> = {
+      main_module: WORKER_SCRIPT_NAME,
+      compatibility_date: config.compatibilityDate,
+      tags: this.buildTags(command.organizationId, command.stepResolverHash),
+    };
+
+    if (config.placementRegion) {
+      metadata.placement = { region: config.placementRegion };
+    }
+
+    return metadata;
+  }
+
   private getConfigOrThrow(): CloudflareDeploymentConfig {
     const accountId = process.env.STEP_RESOLVER_CF_ACCOUNT_ID;
     const apiToken = process.env.STEP_RESOLVER_CF_API_TOKEN;
     const dispatchNamespace = process.env.STEP_RESOLVER_CF_DISPATCH_NAMESPACE;
+    const placementRegion = process.env.STEP_RESOLVER_CF_PLACEMENT_REGION;
 
     const missingVariables = [
       ['STEP_RESOLVER_CF_ACCOUNT_ID', accountId],
@@ -148,6 +163,7 @@ export class CloudflareStepResolverDeployService {
       apiToken: apiToken!,
       dispatchNamespace: dispatchNamespace!,
       compatibilityDate: CF_COMPATIBILITY_DATE,
+      placementRegion: placementRegion || undefined,
     };
   }
 
