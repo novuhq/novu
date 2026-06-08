@@ -21,6 +21,7 @@ export function McpIcon({ mcpId, fallbackUrl, className }: McpIconProps) {
   const sourcesKey = sources.join('|');
   const [index, setIndex] = useState(0);
   const [trackedKey, setTrackedKey] = useState(sourcesKey);
+  const safeIndex = index < sources.length ? index : 0;
 
   if (trackedKey !== sourcesKey) {
     setTrackedKey(sourcesKey);
@@ -29,7 +30,7 @@ export function McpIcon({ mcpId, fallbackUrl, className }: McpIconProps) {
 
   return (
     <img
-      src={sources[index]}
+      src={sources[safeIndex]}
       alt=""
       aria-hidden
       className={cn('size-5 shrink-0 object-contain', className)}
