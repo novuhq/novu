@@ -54,7 +54,6 @@ type OrganizationPickerProps = {
   afterSelectOrganizationUrl: string;
   // Invoked when the user cancels the create form with no orgs to fall back to.
   onSignOut: () => void | Promise<void>;
-  // False once the user should see the picker or create form (not during load / single-org auto-select).
   onResolvingChange?: (isResolving: boolean) => void;
 };
 
@@ -597,7 +596,7 @@ export function OrganizationPicker({
       setAutoSelectTriggered(true);
       void handleSelect(filteredMemberships[0].organization.id);
     }
-  }, [isFullListLoaded, filteredMemberships, handleSelect, hasInitializedView]);
+  }, [isFullListLoaded, filteredMemberships.length, handleSelect, hasInitializedView]);
 
   // Show the full-screen spinner only while page 1 is in flight. Once page 1 lands we render the
   // picker and surface the inline "Loading more…" row for any subsequent pages — same model as
@@ -607,9 +606,6 @@ export function OrganizationPicker({
   const isStreamingMorePages = isFirstPageReady && !isFullListLoaded;
   const shouldWaitForMorePages = isStreamingMorePages && filteredMemberships.length === 0;
 
-  // Keep a spinner until we know the user needs the picker/create UI. When exactly one matching
-  // org is visible, wait for the full membership list before rendering the picker — page 1 alone
-  // is not enough to auto-select safely, and showing a one-row picker flashes before redirect.
   const isSingleOrgAutoSelectPending =
     filteredMemberships.length === 1 && (!isFullListLoaded || !hasInitializedView || autoSelectTriggered);
 

@@ -216,7 +216,7 @@ function OrganizationListContent({
   };
 
   const handleCreateSuccess = () => {
-    window.location.href = afterCreateOrganizationUrl || ROUTES.USECASE_SELECT;
+    redirectAfterSelect(afterCreateOrganizationUrl || ROUTES.USECASE_SELECT);
   };
 
   if (isResolving) {
@@ -304,13 +304,6 @@ function OrganizationFormSection({
   showChrome: boolean;
   onShowChromeChange: (showChrome: boolean) => void;
 }) {
-  const handleResolvingChange = useCallback(
-    (isResolving: boolean) => {
-      onShowChromeChange(!isResolving);
-    },
-    [onShowChromeChange]
-  );
-
   return (
     <div className="flex flex-1 items-center justify-center">
       <div
@@ -324,7 +317,7 @@ function OrganizationFormSection({
           <OrganizationListContent
             afterCreateOrganizationUrl={afterCreateOrganizationUrl}
             afterSelectOrganizationUrl={afterSelectOrganizationUrl}
-            onResolvingChange={handleResolvingChange}
+            onResolvingChange={(isResolving) => onShowChromeChange(!isResolving)}
           />
         </div>
       </div>

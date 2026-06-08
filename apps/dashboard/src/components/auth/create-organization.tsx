@@ -96,14 +96,16 @@ function PageHeader() {
   return <UsecasePlaygroundHeader {...HEADER_CONFIG} />;
 }
 
-function PageContent({ onShowChromeChange }: { onShowChromeChange: (showChrome: boolean) => void }) {
-  const [showChrome, setShowChrome] = useState(false);
-
+function PageContent({
+  showChrome,
+  onShowChromeChange,
+}: {
+  showChrome: boolean;
+  onShowChromeChange: (showChrome: boolean) => void;
+}) {
   const handleResolvingChange = useCallback(
     (isResolving: boolean) => {
-      const nextShowChrome = !isResolving;
-      setShowChrome(nextShowChrome);
-      onShowChromeChange(nextShowChrome);
+      onShowChromeChange(!isResolving);
     },
     [onShowChromeChange]
   );
@@ -141,7 +143,7 @@ export default function OrganizationCreate() {
           showChrome ? undefined : 'min-h-0 w-full max-w-none border-0 bg-transparent shadow-none md:min-h-0'
         )}
       >
-        <PageContent onShowChromeChange={setShowChrome} />
+        <PageContent showChrome={showChrome} onShowChromeChange={setShowChrome} />
       </AuthCard>
     </div>
   );
