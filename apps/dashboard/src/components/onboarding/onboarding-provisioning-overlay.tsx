@@ -27,8 +27,9 @@ function readSession(): ProvisioningSession | null {
 }
 
 /**
- * Single full-screen onboarding provisioning state that stays mounted across org-list → onboarding
- * so the loader never remounts mid-flow. Shows the platform or connect variant based on session.
+ * Single full-screen onboarding provisioning state that stays mounted across org-list → usecase →
+ * destination so the loader never remounts mid-flow. Shows the platform or agents variant based on
+ * the active provisioning session.
  */
 export function OnboardingProvisioningOverlay() {
   const [session, setSession] = useState<ProvisioningSession | null>(readSession);

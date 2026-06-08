@@ -1,19 +1,9 @@
 import { useClerk } from '@clerk/react';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { useCallback, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { OrganizationPicker } from '@/components/auth/organization-picker';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
-import { resolvePendingConnectClaimReturnUrl } from '@/utils/connect-claim-pending';
-import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
-import { useFeatureFlag } from '../../hooks/use-feature-flag';
-import {
-  getOnboardingAppId,
-  getPostOrgCreateRoute,
-  resolveOnboardingAppId,
-  withAppId,
-} from '../../utils/onboarding-redirect';
+import { getPostOrgCreateRoute } from '../../utils/onboarding-redirect';
 import { ROUTES } from '../../utils/routes';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
 import { AuthCard } from './auth-card';
@@ -51,25 +41,14 @@ function FormContainer({ children }: FormContainerProps) {
 }
 
 function OrganizationForm() {
-  const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
-  const [searchParams] = useSearchParams();
   const clerk = useClerk();
 
-  const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
-
-  // Only forward `?appId=` when it was set explicitly — hostname detection covers the rest.
-  const explicitAppId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
   const pendingCliAuthReturnUrl = useMemo(() => resolvePendingCliAuthReturnUrl(), []);
-  const pendingConnectClaimReturnUrl = useMemo(() => resolvePendingConnectClaimReturnUrl(), []);
-  const afterCreateUrl =
-    pendingConnectClaimReturnUrl ??
-    pendingCliAuthReturnUrl ??
-    withAppId(getPostOrgCreateRoute(appId, isAgentsEnabled), explicitAppId);
-  const afterSelectUrl =
-    pendingConnectClaimReturnUrl ?? pendingCliAuthReturnUrl ?? withAppId(ROUTES.ENV, explicitAppId);
+  const afterCreateUrl = pendingCliAuthReturnUrl ?? getPostOrgCreateRoute();
+  const afterSelectUrl = pendingCliAuthReturnUrl ?? ROUTES.ENV;
 
   const handleSignOut = useCallback(async () => {
-    const fallbackUrl = buildAfterSignOutUrl();
+    const fallbackUrl = ROUTES.SIGN_IN;
 
     try {
       await clerk.signOut({ redirectUrl: fallbackUrl });
@@ -139,7 +118,6 @@ function PageContent() {
   );
 }
 
-// Embedded `<OrganizationPicker/>` filters memberships by `publicMetadata.productType`.
 export default function OrganizationCreate() {
   return (
     <div className="flex w-full flex-1 flex-row items-center justify-center">

@@ -10,9 +10,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { IS_NOVU_CONNECT } from '@/config';
-import { isConnectWorkspace } from '@/utils/connect';
-import { isPlatformWorkspace } from '@/utils/platform-workspace';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '../index';
@@ -154,11 +151,7 @@ export function OrganizationDropdown() {
 
   const filterMemberships = useCallback(
     (membership: any) => {
-      if (membership.organization.id === orgId) return false;
-
-      const metadata = membership.organization?.publicMetadata;
-
-      return IS_NOVU_CONNECT ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
+      return membership.organization.id !== orgId;
     },
     [orgId]
   );

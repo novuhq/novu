@@ -10,7 +10,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { useMemo } from 'react';
 import { AwsIcon } from '@/components/icons/aws';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
-import { ConnectLogomark } from '../icons/connect-logomark';
+import { LogoCircle } from '../icons/logo-circle';
 import { AnthropicAsteriskIcon } from './agent-flow-illustration-shared';
 
 export type ManagedConnectorKind = 'anthropic' | 'aws';
@@ -74,7 +74,7 @@ export function ClaudeAgentPreviewIllustration({
       ? undefined
       : connector === 'aws'
         ? 'Generate an agent via Novu Copilot and provision it on AWS Claude.'
-        : 'Generate an agent via Novu Copilot and provision it in Claude via Novu Connect.');
+        : 'Generate an agent via Novu Copilot and provision it in Claude via Novu.');
   const isCardDimmed = !agentCreated;
 
   return (
@@ -772,8 +772,8 @@ function ChannelStatusPill({ status }: ChannelStatusPillProps) {
 function NovuConnectFooter() {
   return (
     <div className="mt-1 flex h-7 items-center gap-1 px-1">
-      <ConnectLogomark surface="light" treatment="color" className="size-4" />
-      <span className="text-text-strong text-label-xs font-normal leading-4">Connect</span>
+      <LogoCircle className="size-4" />
+      <span className="text-text-strong text-label-xs font-normal leading-4">Novu</span>
     </div>
   );
 }
