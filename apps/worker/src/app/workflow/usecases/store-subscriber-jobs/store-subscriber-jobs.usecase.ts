@@ -76,7 +76,7 @@ export class StoreSubscriberJobs {
       organization_id: job._organizationId,
       environment_id: job._environmentId,
       user_id: '',
-      subscriber_id: job._subscriberId ? job._subscriberId : job.subscriberId,
+      subscriber_id: job._subscriberId ?? '',
       external_subscriber_id: job.subscriberId || '',
       event_type: 'step_created',
       title: mapEventTypeToTitle('step_created'),
