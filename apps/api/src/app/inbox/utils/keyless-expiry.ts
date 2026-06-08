@@ -48,7 +48,3 @@ export function isKeylessEnvironmentExpired(applicationIdentifier: string | unde
 
   return false;
 }
-
-export function keylessEnvironmentRetentionTtlSeconds(): number {
-  return KEYLESS_RETENTION_TIME_IN_HOURS * 3600;
-}

@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightSLine, RiCheckLine, RiCommandLine, RiLockLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { approveCliDeviceSession } from '@/api/cli-auth';
-import { ConnectBrandLogo } from '@/components/auth/connect-brand-logo';
 import { AuthLayout } from '@/components/auth-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
@@ -20,7 +19,6 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { clearPendingCliAuth, storePendingCliAuth } from '@/utils/cli-auth-pending';
 import { persistCliOnboardingSessionId, readActiveCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { clearConnectProvisioning } from '@/utils/connect';
-import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
 import { readOnboardingSessionId } from '@/utils/onboarding-session-id';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -158,7 +156,7 @@ function CliAuthContent() {
   }
 
   const handleSignOut = useCallback(async () => {
-    const fallbackUrl = buildAfterSignOutUrl();
+    const fallbackUrl = ROUTES.SIGN_IN;
 
     try {
       await clerk.signOut({ redirectUrl: fallbackUrl });
@@ -210,7 +208,7 @@ function CliAuthContent() {
     <div className="flex min-h-screen w-full items-center justify-center px-4 py-8">
       <div className="w-full max-w-[400px] rounded-lg border-[1.5px] border-black/[0.04] bg-gradient-to-b from-white/50 to-white/[0.15] px-6 py-8 shadow-sm backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-[350px] flex-col items-center gap-6">
-          <CliAuthHeader isConnect={isConnect} callerDisplayName={callerDisplayName} />
+          <CliAuthHeader callerDisplayName={callerDisplayName} />
 
           <div className="flex w-full flex-col items-center gap-3">
             <h1 className="text-label-sm text-text-strong text-center font-medium tracking-[-0.084px]">
@@ -307,11 +305,7 @@ function CliAuthContent() {
   );
 }
 
-function CliAuthHeader({ isConnect, callerDisplayName }: { isConnect: boolean; callerDisplayName: string }) {
-  if (isConnect) {
-    return <ConnectBrandLogo />;
-  }
-
+function CliAuthHeader({ callerDisplayName }: { callerDisplayName: string }) {
   return (
     <div className="flex items-center gap-2">
       <RiCommandLine className="text-text-sub size-8" />

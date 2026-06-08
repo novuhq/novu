@@ -1,13 +1,12 @@
 import {
   AgentRepository,
   ChannelEndpointRepository,
-  CommunityOrganizationRepository,
   ConversationActivitySenderTypeEnum,
   ConversationParticipantTypeEnum,
   ConversationStatusEnum,
   SubscriberRepository,
 } from '@novu/dal';
-import { ENDPOINT_TYPES, OrganizationProductTypeEnum } from '@novu/shared';
+import { ENDPOINT_TYPES } from '@novu/shared';
 import { testServer } from '@novu/testing';
 import { expect } from 'chai';
 import type { EmojiValue } from 'chat';
@@ -556,92 +555,6 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       });
       expect(endpoint).to.exist;
       expect(endpoint!.subscriberId).to.equal(provisionedSubscriberId);
-    });
-  });
-
-  describe('Connect-org subscriber cap', () => {
-    const organizationRepository = new CommunityOrganizationRepository();
-    const subscriberRepository = new SubscriberRepository();
-
-    async function setOrgToConnect(): Promise<void> {
-      await organizationRepository.update(
-        { _id: ctx.session.organization._id },
-        { $set: { productType: OrganizationProductTypeEnum.CONNECT } }
-      );
-    }
-
-    async function seedProvisionedSubscriber(slackUserId: string): Promise<void> {
-      await subscriberRepository.create({
-        subscriberId: `sub-cap-${slackUserId}-${Date.now()}`,
-        _environmentId: ctx.session.environment._id,
-        _organizationId: ctx.session.organization._id,
-        data: {
-          __novu_source: 'agent-platform-provision',
-          __novu_platform: 'slack',
-          __novu_platformUserId: slackUserId,
-          __novu_agentIdentifier: ctx.agentIdentifier,
-          __novu_firstSeenAt: new Date().toISOString(),
-        },
-      });
-    }
-
-    it('blocks dispatch and posts a tier-upgrade card when CONNECT org is at cap', async () => {
-      await setOrgToConnect();
-
-      // Default cap is 25; seed exactly that many auto-provisioned subscribers so
-      // the next inbound from a new Slack user trips `count >= limit`.
-      const capLimit = 25;
-      const seedTasks: Promise<void>[] = [];
-      for (let i = 0; i < capLimit; i += 1) {
-        seedTasks.push(seedProvisionedSubscriber(`U_CAP_SEED_${i}`));
-      }
-      await Promise.all(seedTasks);
-
-      const threadId = `T_CAP_${Date.now()}`;
-      const posted: unknown[] = [];
-      const config = await configResolver.resolve(ctx.agentId, ctx.integrationIdentifier);
-      const thread = {
-        ...mockThread(threadId),
-        post: async (payload: unknown) => {
-          posted.push(payload);
-        },
-      };
-
-      const beforeBridgeCount = bridgeCalls.length;
-      await inboundHandler.handle(
-        ctx.agentId,
-        config,
-        thread as any,
-        mockMessage({ userId: 'U_CAP_OVERFLOW', text: 'Should hit cap' }) as any,
-        AgentEventEnum.ON_MESSAGE
-      );
-
-      expect(bridgeCalls.length).to.equal(beforeBridgeCount);
-      expect(posted.length).to.equal(1);
-
-      const card = posted[0] as { type: string; children: Array<{ type: string; content?: string }> };
-      expect(card.type).to.equal('card');
-      const textChild = card.children.find((c) => c.type === 'text');
-      expect(textChild).to.exist;
-      expect(textChild!.content).to.contain('agent capacity');
-
-      const overflowSubscribers = await subscriberRepository.find({
-        _environmentId: ctx.session.environment._id,
-        _organizationId: ctx.session.organization._id,
-        'data.__novu_platformUserId': 'U_CAP_OVERFLOW',
-      });
-      expect(overflowSubscribers.length, 'cap-blocked inbound must not create a Subscriber row').to.equal(0);
-
-      const channelEndpointRepository = new ChannelEndpointRepository();
-      const overflowEndpoint = await channelEndpointRepository.findByPlatformIdentity({
-        _environmentId: ctx.session.environment._id,
-        _organizationId: ctx.session.organization._id,
-        integrationIdentifier: ctx.integrationIdentifier,
-        type: ENDPOINT_TYPES.SLACK_USER,
-        endpointField: 'userId',
-        endpointValue: 'U_CAP_OVERFLOW',
-      });
-      expect(overflowEndpoint, 'cap-blocked inbound must not create a ChannelEndpoint row').to.not.exist;
     });
   });
 

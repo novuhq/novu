@@ -36,7 +36,7 @@ export const managedAgentGenerationSchema = z.object({
   description: z
     .string()
     .min(1)
-    .max(200)
+    .max(140) // max length for the description field, enforced by provider specific limits, for example: Slack
     .describe("Agent description. A short, human-readable summary of the agent's purpose and capabilities."),
   systemPrompt: z
     .string()

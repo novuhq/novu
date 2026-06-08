@@ -6,7 +6,6 @@ import { Toaster } from '@/components/primitives/sonner';
 import { useAuth } from '@/context/auth/hooks';
 import { OptInProvider } from '@/context/opt-in-provider';
 import { useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
-import { HostnameGuard } from './hostname-guard';
 import { ProtectedRoute } from './protected-route';
 
 function DashboardProvisioningDismiss() {
@@ -29,9 +28,7 @@ export const DashboardRoute = () => {
       <OptInProvider>
         <AiDrawerProvider>
           <CommandPaletteProvider>
-            <HostnameGuard>
-              <Outlet />
-            </HostnameGuard>
+            <Outlet />
             <CommandPalette />
             <Toaster />
           </CommandPaletteProvider>

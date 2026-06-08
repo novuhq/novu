@@ -2,12 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository } from '@novu/dal';
-import {
-  ApiAuthSchemeEnum,
-  MemberRoleEnum,
-  NOVU_PRODUCT_TYPE_HEADER_LOWERCASE,
-  OrganizationProductTypeEnum,
-} from '@novu/shared';
+import { ApiAuthSchemeEnum, MemberRoleEnum } from '@novu/shared';
 import { CreateEnvironmentCommand } from '../../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../../environments-v1/usecases/create-environment/create-environment.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
@@ -51,7 +46,6 @@ export class SyncExternalOrganization {
       {
         externalId: command.externalId,
         apiServiceLevel: isSelfHosted && isEnterprise ? 'unlimited' : undefined,
-        productType: this.resolveProductType(command.headers),
       },
       { headers: command.headers }
     );
@@ -161,22 +155,6 @@ export class SyncExternalOrganization {
     if (parts.length !== 2) return null;
 
     return parts[1];
-  }
-
-  /**
-   * Pull the product context from the request header so the EE repository can mirror it onto
-   * Clerk and Mongo. Missing or unknown values resolve to `platform` to keep existing tenants
-   * working without backfill.
-   */
-  private resolveProductType(headers?: Record<string, string | string[] | undefined>): OrganizationProductTypeEnum {
-    const raw = headers?.[NOVU_PRODUCT_TYPE_HEADER_LOWERCASE];
-    const value = Array.isArray(raw) ? raw[0] : raw;
-
-    if (value === OrganizationProductTypeEnum.CONNECT) {
-      return OrganizationProductTypeEnum.CONNECT;
-    }
-
-    return OrganizationProductTypeEnum.PLATFORM;
   }
 
   private async triggerBrandEnrichment(

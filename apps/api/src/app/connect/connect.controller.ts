@@ -1,6 +1,15 @@
-import { Body, ClassSerializerInterceptor, Controller, HttpCode, HttpStatus, Post, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiExcludeController, ApiOperation } from '@nestjs/swagger';
-import { UserSessionData } from '@novu/shared';
+import { RequirePermissions } from '@novu/application-generic';
+import { PermissionsEnum, UserSessionData } from '@novu/shared';
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
 import { UserSession } from '../shared/framework/user.decorator';
@@ -18,6 +27,7 @@ export class ConnectController {
   constructor(private readonly claimKeylessConnectUsecase: ClaimKeylessConnect) {}
 
   @Post('/claim')
+  @RequirePermissions(PermissionsEnum.ENVIRONMENT_WRITE)
   @HttpCode(HttpStatus.OK)
   @ApiResponse(ClaimKeylessConnectResponseDto)
   @ApiOperation({

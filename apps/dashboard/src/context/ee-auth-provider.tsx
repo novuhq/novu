@@ -2,23 +2,9 @@ import { ClerkProvider as _ClerkProvider } from '@clerk/react';
 import { PropsWithChildren } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { buttonVariants } from '@/components/primitives/button';
-import {
-  CLERK_PUBLISHABLE_KEY,
-  EE_AUTH_PROVIDER,
-  IS_ENTERPRISE,
-  IS_HOSTNAME_SPLIT_ENABLED,
-  IS_NOVU_CONNECT,
-  IS_SELF_HOSTED,
-} from '@/config';
+import { CLERK_PUBLISHABLE_KEY, EE_AUTH_PROVIDER, IS_ENTERPRISE, IS_SELF_HOSTED } from '@/config';
 import { isAbsoluteUrl } from '@/utils/apps';
-import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
-import {
-  buildClerkAllowedRedirectOrigins,
-  buildPrimarySignInUrl,
-  buildPrimarySignUpUrl,
-  CONNECT_PRODUCT_VALUE,
-  PRODUCT_QUERY_PARAM,
-} from '@/utils/product-auth-urls';
+import { buildClerkAllowedRedirectOrigins } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
 
 type EEAuthProviderProps = PropsWithChildren;
@@ -37,8 +23,7 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
     return <_ClerkProvider>{children}</_ClerkProvider>;
   }
 
-  // Escape React Router for absolute URLs (cross-origin handoff) and re-attach `?product=` so
-  // Clerk's internal sub-route pushes don't strip the Connect-branding flag mid-flow.
+  // Escape React Router for absolute URLs; otherwise navigate in-app.
   const navigateClerk = (to: string, replace = false) => {
     if (isAbsoluteUrl(to)) {
       if (replace) {
@@ -50,35 +35,15 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
       return;
     }
 
-    let target = to;
-
-    if (typeof window !== 'undefined' && target.startsWith('/auth/')) {
-      const currentProduct = new URLSearchParams(window.location.search).get(PRODUCT_QUERY_PARAM);
-
-      if (currentProduct) {
-        const url = new URL(target, window.location.origin);
-
-        if (!url.searchParams.has(PRODUCT_QUERY_PARAM)) {
-          url.searchParams.set(PRODUCT_QUERY_PARAM, currentProduct);
-          target = `${url.pathname}${url.search}${url.hash}`;
-        }
-      }
-    }
-
     if (replace) {
-      navigate(target, { replace: true });
+      navigate(to, { replace: true });
     } else {
-      navigate(target);
+      navigate(to);
     }
   };
 
-  // Sign-in/up only renders on the primary; the Connect host bounces visitors there. Primary
-  // writes Clerk session cookies on `Domain=<registrable-root>`, so both hosts read the same
-  // session natively from a plain navigation — no Clerk-side configuration needed.
-  const isCrossProductHost = IS_HOSTNAME_SPLIT_ENABLED && IS_NOVU_CONNECT;
-
-  const signInUrl = isCrossProductHost ? buildPrimarySignInUrl({ product: CONNECT_PRODUCT_VALUE }) : ROUTES.SIGN_IN;
-  const signUpUrl = isCrossProductHost ? buildPrimarySignUpUrl({ product: CONNECT_PRODUCT_VALUE }) : ROUTES.SIGN_UP;
+  const signInUrl = ROUTES.SIGN_IN;
+  const signUpUrl = ROUTES.SIGN_UP;
 
   const allowedRedirectOrigins = buildClerkAllowedRedirectOrigins();
 
@@ -89,7 +54,7 @@ export const EEAuthProvider = (props: EEAuthProviderProps) => {
       publishableKey={CLERK_PUBLISHABLE_KEY}
       signInUrl={signInUrl}
       signUpUrl={signUpUrl}
-      afterSignOutUrl={buildAfterSignOutUrl()}
+      afterSignOutUrl={ROUTES.SIGN_IN}
       appearance={{
         userButton: {
           elements: {

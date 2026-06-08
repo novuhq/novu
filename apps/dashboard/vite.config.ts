@@ -114,8 +114,7 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       port: 4201,
-      // Bind to all interfaces so the same dev server answers `localhost` and `*.localhost`
-      // (e.g. `connect.localhost`) for the Novu Connect hostname split.
+      // Bind to all interfaces so the same dev server answers `localhost` and `*.localhost`.
       host: true,
       allowedHosts: ['localhost', '.localhost'],
       headers: {

@@ -24,11 +24,8 @@ import { TeamMembers } from '@/utils/better-auth/components/team-members';
 import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index';
 import { ROUTES } from '@/utils/routes';
 
-// Pin Clerk's post-leave/delete redirect to the local `/auth/organization-list`. Without this,
-// Clerk falls back to `<ClerkProvider signInUrl>`, which on the Connect host points at
-// Platform's sign-in — so deleting a Connect org would kick the user out of Connect even when
-// they still have Connect work to do. Keeping it same-host lets `AuthProvider` clear any cross-
-// product org Clerk auto-activates and lets the picker render this product's empty state.
+// Pin Clerk's post-leave/delete redirect to the local `/auth/organization-list` so `AuthProvider`
+// can clear any org Clerk auto-activates and let the picker render the empty state.
 const AFTER_LEAVE_ORG_URL = ROUTES.SIGNUP_ORGANIZATION_LIST;
 
 const FADE_ANIMATION = {
@@ -51,8 +48,6 @@ type SettingsTabsProps = {
    * this URL we default to the account tab.
    */
   rootRoute: string;
-  // Hides the Billing tab and its inline upgrade prompts. Used by Connect.
-  hideBilling?: boolean;
 };
 
 const getClerkComponentAppearance = (isRbacEnabled: boolean): ClerkAppearanceTheme => ({
@@ -122,7 +117,7 @@ function resolveCurrentTab(pathname: string, routes: SettingsTabRoutes, rootRout
   return entry?.[0] ?? 'account';
 }
 
-export function SettingsTabs({ routes, rootRoute, hideBilling = false }: SettingsTabsProps) {
+export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { subscription } = useFetchSubscription();
@@ -134,7 +129,7 @@ export function SettingsTabs({ routes, rootRoute, hideBilling = false }: Setting
   const clerkAppearance = useMemo(() => getClerkComponentAppearance(isRbacEnabled), [isRbacEnabled]);
   const UserProfile = EE_AUTH_PROVIDER === 'clerk' ? ClerkUserProfile : BetterAuthUserProfile;
 
-  const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission && !hideBilling;
+  const canShowBilling = !IS_SELF_HOSTED && hasBillingPermission;
 
   const currentTab = resolveCurrentTab(location.pathname, routes, rootRoute);
 

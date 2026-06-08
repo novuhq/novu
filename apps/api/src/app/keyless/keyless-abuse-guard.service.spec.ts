@@ -5,7 +5,6 @@ import { FeatureFlagsKeysEnum } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
 
-import { KEYLESS_ENVIRONMENT_PREFIX } from '../inbox/utils/keyless.constants';
 import {
   KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY,
   KEYLESS_GENERATE_CAP_PER_IP_PER_DAY,
@@ -47,31 +46,16 @@ describe('KeylessAbuseGuardService', () => {
   it('allows env creation when the daily counter is below the cap', async () => {
     cacheService.eval.resolves(1);
 
-    const decision = await guard.reserveEnvCreation(clientIp);
+    await guard.assertEnvCreationAllowed(clientIp);
 
-    expect(decision).to.deep.equal({ action: 'create' });
     expect(cacheService.eval.calledOnce).to.be.true;
   });
 
-  it('reuses the last valid keyless env when the env-create cap is exceeded', async () => {
-    const timestampHex = Buffer.alloc(4);
-    timestampHex.writeUInt32BE(Math.floor(Date.now() / 1000), 0);
-    const identifier = `${KEYLESS_ENVIRONMENT_PREFIX}${timestampHex.toString('hex')}_abcd`;
-
+  it('rejects env creation when the cap is exceeded', async () => {
     cacheService.eval.resolves(KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY + 1);
-    cacheService.get.resolves(identifier);
-
-    const decision = await guard.reserveEnvCreation(clientIp);
-
-    expect(decision).to.deep.equal({ action: 'reuse', applicationIdentifier: identifier });
-  });
-
-  it('rejects env creation when the cap is exceeded and no valid last env exists', async () => {
-    cacheService.eval.resolves(KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY + 1);
-    cacheService.get.resolves(null);
 
     try {
-      await guard.reserveEnvCreation(clientIp);
+      await guard.assertEnvCreationAllowed(clientIp);
       expect.fail('Expected HttpException');
     } catch (error) {
       expect(error).to.be.instanceOf(HttpException);
@@ -81,7 +65,7 @@ describe('KeylessAbuseGuardService', () => {
 
   it('rejects env creation when client IP is missing and cache is enabled', async () => {
     try {
-      await guard.reserveEnvCreation(undefined);
+      await guard.assertEnvCreationAllowed(undefined);
       expect.fail('Expected HttpException');
     } catch (error) {
       expect(error).to.be.instanceOf(HttpException);
@@ -94,20 +78,9 @@ describe('KeylessAbuseGuardService', () => {
   it('skips env caps when cache is disabled', async () => {
     cacheService.cacheEnabled.returns(false);
 
-    const decision = await guard.reserveEnvCreation(undefined);
+    await guard.assertEnvCreationAllowed(undefined);
 
-    expect(decision).to.deep.equal({ action: 'create' });
     expect(cacheService.eval.called).to.be.false;
-  });
-
-  it('persists the last env identifier after successful creation', async () => {
-    const identifier = `${KEYLESS_ENVIRONMENT_PREFIX}deadbeef_abcd`;
-
-    await guard.rememberLastEnv(clientIp, identifier);
-
-    expect(cacheService.set.calledOnce).to.be.true;
-    expect(cacheService.set.firstCall.args[0]).to.include(clientIp);
-    expect(cacheService.set.firstCall.args[1]).to.equal(identifier);
   });
 
   it('rejects generate when the per-IP daily cap is exceeded', async () => {
@@ -144,7 +117,9 @@ describe('KeylessAbuseGuardService', () => {
     }
 
     expect(featureFlagsService.getFlag.calledOnce).to.be.true;
-    expect(featureFlagsService.getFlag.firstCall.args[0].key).to.equal(FeatureFlagsKeysEnum.IS_KEYLESS_AGENT_AI_ENABLED);
+    expect(featureFlagsService.getFlag.firstCall.args[0].key).to.equal(
+      FeatureFlagsKeysEnum.IS_KEYLESS_AGENT_AI_ENABLED
+    );
   });
 
   it('does not gate non-keyless organizations for AI enablement', async () => {

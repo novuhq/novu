@@ -1,3 +1,4 @@
+import { MCP_SERVERS } from '@novu/shared';
 import { useMemo } from 'react';
 import { type AgentTemplate, type McpServerPreview } from '@/components/agents/create-agent-fields';
 import { McpIcon } from '@/components/agents/mcp-icon';
@@ -7,6 +8,10 @@ import { cn } from '@/utils/ui';
 
 const VISIBLE_INTEGRATION_ICONS = 2;
 const PILL_FADE_WIDTH_PX = 24;
+
+function resolveMcpName(server: McpServerPreview): string {
+  return server.name ?? MCP_SERVERS.find((entry) => entry.id === server.id)?.name ?? server.id;
+}
 
 type AgentSuggestionPillsProps = {
   suggestions: AgentTemplate[];
@@ -41,13 +46,17 @@ type SuggestionPillProps = {
 };
 
 function SuggestionPill({ suggestion, disabled, onSelect }: SuggestionPillProps) {
-  const { visibleIcons, overflowCount } = useMemo(() => {
+  const { visibleIcons, overflowServers } = useMemo(() => {
     const servers: McpServerPreview[] = suggestion.mcpServers ?? suggestion.suggestedMcpServers.map((id) => ({ id }));
-    const visible = servers.slice(0, VISIBLE_INTEGRATION_ICONS);
-    const overflow = Math.max(0, servers.length - VISIBLE_INTEGRATION_ICONS);
 
-    return { visibleIcons: visible, overflowCount: overflow };
+    return {
+      visibleIcons: servers.slice(0, VISIBLE_INTEGRATION_ICONS),
+      overflowServers: servers.slice(VISIBLE_INTEGRATION_ICONS),
+    };
   }, [suggestion.mcpServers, suggestion.suggestedMcpServers]);
+
+  const overflowCount = overflowServers.length;
+  const overflowTitle = overflowServers.map(resolveMcpName).join(', ');
 
   return (
     <button
@@ -68,13 +77,17 @@ function SuggestionPill({ suggestion, disabled, onSelect }: SuggestionPillProps)
           {visibleIcons.map((server) => (
             <span
               key={server.id}
+              title={resolveMcpName(server)}
               className="border-stroke-soft-100 inline-flex size-[18px] items-center justify-center rounded-[4px] border bg-[#fbfbfb]"
             >
-              <McpIcon mcpId={server.id} className="size-[14px]" />
+              <McpIcon mcpId={server.id} fallbackUrl={server.iconUrl} className="size-[14px]" />
             </span>
           ))}
           {overflowCount > 0 && (
-            <span className="border-stroke-soft-100 text-text-soft inline-flex size-[18px] items-center justify-center rounded-[4px] border bg-[#fbfbfb] text-[10px] font-medium leading-[14px]">
+            <span
+              title={overflowTitle}
+              className="border-stroke-soft-100 text-text-soft inline-flex size-[18px] items-center justify-center rounded-[4px] border bg-[#fbfbfb] text-[10px] font-medium leading-[14px]"
+            >
               +{overflowCount}
             </span>
           )}

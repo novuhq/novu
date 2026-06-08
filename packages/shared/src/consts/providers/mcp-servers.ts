@@ -2557,6 +2557,34 @@ export function getMcpIconUrl(mcpId: string, baseUrl: string): string {
   return `${normalizedBase}${getMcpIconPath(mcpId)}`;
 }
 
+/**
+ * True when the catalog entry delegates its connector OAuth to the managed
+ * runtime provider's vault UI (`provider-managed`). A missing `oauth` field is
+ * treated as provider-managed to match the picker contract (see `McpServer.oauth`).
+ */
+export function isProviderManagedMcp(mcpId: string): boolean {
+  const entry = MCP_SERVERS.find((server) => server.id === mcpId);
+
+  if (!entry) {
+    return false;
+  }
+
+  return !entry.oauth || entry.oauth.mode === McpConnectionAuthModeEnum.ProviderManaged;
+}
+
+/**
+ * Keep only the MCP ids a Novu-managed demo Claude agent can actually wire up.
+ *
+ * Provider-managed MCPs finish their connector OAuth inside the runtime
+ * provider's vault UI, but the demo (NovuAnthropic) integration exposes no
+ * vault deep link — the API rejects provider-managed connections for it — so
+ * those servers can never be configured on a demo agent. Novu-handled OAuth
+ * MCPs (dcr / novu-app) connect through Novu's own flow and remain usable.
+ */
+export function filterDemoConfigurableMcpIds(mcpIds: string[]): string[] {
+  return mcpIds.filter((mcpId) => !isProviderManagedMcp(mcpId));
+}
+
 export function resolveMcpCatalogIdByName(name: string | undefined): string | undefined {
   if (!name) {
     return undefined;

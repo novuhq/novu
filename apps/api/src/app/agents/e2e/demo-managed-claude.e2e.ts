@@ -1,6 +1,6 @@
 import { decryptCredentials, encryptCredentials } from '@novu/application-generic';
 import * as AgentRuntimeFactoryModule from '@novu/application-generic/build/main/agent-runtimes/agent-runtime.factory';
-import { AgentRepository, IntegrationRepository } from '@novu/dal';
+import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
@@ -14,6 +14,7 @@ const FAKE_EXTERNAL_ENV_ID = 'env_01DemoClaudeE2E';
 
 const integrationRepository = new IntegrationRepository();
 const agentRepository = new AgentRepository();
+const agentMcpServerRepository = new AgentMcpServerRepository();
 
 function buildMockProvider(overrides: Partial<Record<string, sinon.SinonStub>> = {}) {
   return {
@@ -319,6 +320,53 @@ describe('Demo Managed Claude #novu-v2', () => {
     );
 
     expect(agent).to.equal(null);
+  });
+
+  it('should drop provider-managed MCPs when provisioning on the novu-anthropic demo integration', async () => {
+    const integrationId = await createNovuAnthropicIntegration();
+    const identifier = `e2e-demo-mcp-filter-${Date.now()}`;
+    createdAgentIdentifiers.push(identifier);
+
+    // `sentry` (dcr) connects through Novu's own OAuth and stays; `slack` (provider-managed) needs
+    // the runtime provider's vault UI the demo never exposes, so it must be filtered out.
+    const res = await session.testAgent.post('/v1/agents').send({
+      name: 'Demo MCP Filter Agent',
+      identifier,
+      runtime: 'managed',
+      managedRuntime: {
+        providerId: AgentRuntimeProviderIdEnum.NovuAnthropic,
+        integrationId,
+        systemPrompt: 'You are a demo agent.',
+        mcpServers: ['sentry', 'slack'],
+      },
+    });
+
+    expect(res.status, `create failed: ${JSON.stringify(res.body)}`).to.equal(201);
+    expect(mockProvider.createAgent.calledOnce, 'createAgent should run once').to.equal(true);
+
+    const sentToProvider = mockProvider.createAgent.firstCall.args[0].mcpServers as Array<{ name: string }>;
+    const providerMcpNames = sentToProvider.map((server) => server.name);
+    expect(providerMcpNames).to.deep.equal(['Sentry']);
+    expect(providerMcpNames).to.not.include('Slack');
+
+    const agent = await agentRepository.findOne(
+      {
+        identifier,
+        _environmentId: session.environment._id,
+        _organizationId: session.organization._id,
+      },
+      ['_id']
+    );
+
+    const persistedRows = await agentMcpServerRepository.findByAgent({
+      organizationId: session.organization._id,
+      environmentId: session.environment._id,
+      agentId: agent?._id ?? '',
+    });
+
+    const persistedMcpIds = persistedRows.map((row) => row.mcpId);
+    expect(persistedMcpIds).to.deep.equal(['sentry']);
+    expect(persistedMcpIds).to.not.include('slack');
   });
 
   it('should migrate agent runtime to user Anthropic integration', async () => {

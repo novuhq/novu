@@ -2,7 +2,7 @@
  * Strict format of the bot token issued by BotFather.
  * Used for both client-side validation and server-side `class-validator` matching.
  */
-export const BOT_TOKEN_PATTERN = /^\d{8,}:[A-Za-z0-9_-]{35,}$/;
+const BOT_TOKEN_PATTERN = /^\d{8,}:[A-Za-z0-9_-]{35,}$/;
 
 const TOKEN_IN_TEXT_PATTERN = /(\d{8,}:[A-Za-z0-9_-]{35,})/;
 const USERNAME_PATTERN = /t\.me\/([A-Za-z0-9_]+)/i;

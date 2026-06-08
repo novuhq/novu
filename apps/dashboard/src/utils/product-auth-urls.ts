@@ -1,79 +1,4 @@
-import {
-  getHostnameWithoutPort,
-  IS_HOSTNAME_SPLIT_ENABLED,
-  NOVU_CONNECT_HOSTNAME,
-  NOVU_PLATFORM_HOSTNAME,
-  normalizeAppHost,
-} from '@/config';
-import { ROUTES } from '@/utils/routes';
-
-// Set when a Connect visitor is sent to Platform sign-in so the primary renders Connect branding.
-export const PRODUCT_QUERY_PARAM = 'product';
-export const CONNECT_PRODUCT_VALUE = 'connect';
-
-function buildAbsoluteUrl(host: string, path: string): string {
-  if (typeof window === 'undefined' || !host) {
-    return path;
-  }
-
-  return `${window.location.protocol}//${host}${path}`;
-}
-
-export function buildAbsoluteConnectUrl(path: string): string {
-  if (!IS_HOSTNAME_SPLIT_ENABLED || !NOVU_CONNECT_HOSTNAME) {
-    if (typeof window === 'undefined') {
-      return path;
-    }
-
-    return new URL(path, window.location.origin).href;
-  }
-
-  return buildAbsoluteUrl(NOVU_CONNECT_HOSTNAME, path);
-}
-
-export function buildAbsolutePlatformUrl(path: string): string {
-  if (!IS_HOSTNAME_SPLIT_ENABLED || !NOVU_PLATFORM_HOSTNAME) {
-    if (typeof window === 'undefined') {
-      return path;
-    }
-
-    return new URL(path, window.location.origin).href;
-  }
-
-  return buildAbsoluteUrl(NOVU_PLATFORM_HOSTNAME, path);
-}
-
-function appendProductParam(path: string, product?: typeof CONNECT_PRODUCT_VALUE): string {
-  if (!product) {
-    return path;
-  }
-
-  const separator = path.includes('?') ? '&' : '?';
-
-  return `${path}${separator}${PRODUCT_QUERY_PARAM}=${product}`;
-}
-
-type PrimaryAuthUrlOptions = {
-  product?: typeof CONNECT_PRODUCT_VALUE;
-};
-
-export function buildPrimarySignInUrl(options?: PrimaryAuthUrlOptions): string {
-  return buildAbsolutePlatformUrl(appendProductParam(ROUTES.SIGN_IN, options?.product));
-}
-
-export function buildPrimarySignUpUrl(options?: PrimaryAuthUrlOptions): string {
-  return buildAbsolutePlatformUrl(appendProductParam(ROUTES.SIGN_UP, options?.product));
-}
-
-function buildAppOrigin(hostname: string): string {
-  if (!hostname || typeof window === 'undefined') {
-    return '';
-  }
-
-  return `${window.location.protocol}//${normalizeAppHost(hostname)}`;
-}
-
-/** Primary ClerkProvider allowlist — Connect host origin must be listed so post-auth navigation back from primary is honored. */
+/** Clerk redirect-origin allowlist for the single-host Platform deployment. */
 export function buildClerkAllowedRedirectOrigins(): Array<string | RegExp> {
   const origins: Array<string | RegExp> = ['http://localhost:*'];
 
@@ -83,33 +8,7 @@ export function buildClerkAllowedRedirectOrigins(): Array<string | RegExp> {
 
   origins.push(window.location.origin);
 
-  if (!IS_HOSTNAME_SPLIT_ENABLED) {
-    return origins;
-  }
-
-  if (NOVU_CONNECT_HOSTNAME) {
-    origins.push(buildAppOrigin(NOVU_CONNECT_HOSTNAME));
-    origins.push(`https://${getHostnameWithoutPort(NOVU_CONNECT_HOSTNAME)}`);
-  }
-
-  if (NOVU_PLATFORM_HOSTNAME) {
-    origins.push(buildAppOrigin(NOVU_PLATFORM_HOSTNAME));
-    origins.push(`https://${getHostnameWithoutPort(NOVU_PLATFORM_HOSTNAME)}`);
-  }
-
   return [...new Set(origins)];
-}
-
-export function isConnectHostnameUrl(url: string): boolean {
-  if (!IS_HOSTNAME_SPLIT_ENABLED || !NOVU_CONNECT_HOSTNAME || typeof window === 'undefined') {
-    return false;
-  }
-
-  try {
-    return normalizeAppHost(new URL(url, window.location.origin).host) === normalizeAppHost(NOVU_CONNECT_HOSTNAME);
-  } catch {
-    return false;
-  }
 }
 
 /** Clerk may put auth params in the query string or inside hash routing (#/?param=). */

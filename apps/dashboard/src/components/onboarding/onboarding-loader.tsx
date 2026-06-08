@@ -1,4 +1,3 @@
-import { ConnectLogo } from '@/components/icons/connect-logo';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { motion } from 'motion/react';
 import { ComponentType, useEffect, useState } from 'react';
@@ -6,7 +5,7 @@ import { RiCheckboxCircleFill, RiLoader3Line, RiLoader4Fill } from 'react-icons/
 
 type LoaderLogoComponent = ComponentType<{ className?: string }>;
 
-export type OnboardingLoaderVariant = 'platform' | 'connect';
+export type OnboardingLoaderVariant = 'platform' | 'agents';
 
 type LoaderStep = { id: string; text: string };
 
@@ -18,7 +17,7 @@ const PLATFORM_STEPS: LoaderStep[] = [
   { id: 'final', text: 'Almost there...' },
 ];
 
-const CONNECT_STEPS: LoaderStep[] = [
+const AGENTS_STEPS: LoaderStep[] = [
   { id: 'workspace', text: 'Preparing your workspace' },
   { id: 'build', text: 'Setting up where you build agents' },
   { id: 'distribute', text: 'Connecting how you distribute them' },
@@ -34,10 +33,10 @@ const VARIANT_CONFIG: Record<
     title: 'Setting up your workspace',
     Logo: LogoCircle,
   },
-  connect: {
-    steps: CONNECT_STEPS,
+  agents: {
+    steps: AGENTS_STEPS,
     title: 'Build and distribute agents',
-    Logo: ConnectLogo,
+    Logo: LogoCircle,
   },
 };
 
@@ -46,7 +45,7 @@ const GAP = 12;
 const CONTAINER_HEIGHT = 140;
 export const ONBOARDING_STEP_DELAY_MS = 1500;
 export const PLATFORM_STEP_COUNT = PLATFORM_STEPS.length;
-export const CONNECT_STEP_COUNT = CONNECT_STEPS.length;
+export const AGENTS_STEP_COUNT = AGENTS_STEPS.length;
 
 const STEP_DELAY_MS = ONBOARDING_STEP_DELAY_MS;
 

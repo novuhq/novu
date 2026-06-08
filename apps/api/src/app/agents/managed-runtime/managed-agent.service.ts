@@ -11,14 +11,16 @@ import {
   SubscriberEntity,
   SubscriberRepository,
 } from '@novu/dal';
-import { type Message, MessageRole } from '@novu/thalamus';
+import { type Message, MessageRole, type SerializedRequestParams } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
-import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
+import { AgentConfigResolver, type ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
+import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import { McpConnectionVaultService } from '../mcp/connections/mcp-connection-vault.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
+import { showManagedInboundAck } from './managed-agent-inbound-ack';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
 
 export interface ManagedAgentContext {
@@ -38,6 +40,12 @@ type WebhookSessionMetadata = {
   platform?: AgentPlatformEnum;
 };
 
+export type ManagedAgentDispatchStatus = 'active' | 'queued';
+
+export interface ManagedAgentDispatchResult {
+  status: ManagedAgentDispatchStatus;
+}
+
 @Injectable()
 export class ManagedAgentService implements OnModuleInit {
   private webhookHandler: WebhookHandler | undefined;
@@ -51,6 +59,8 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
+    private readonly outboundGateway: OutboundGateway,
+    private readonly agentConfigResolver: AgentConfigResolver,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -60,7 +70,10 @@ export class ManagedAgentService implements OnModuleInit {
     this.webhookHandler = this.initWebhookHandler();
   }
 
-  async dispatch(context: ManagedAgentContext, agent: Pick<AgentEntity, '_id' | 'managedRuntime'>): Promise<void> {
+  async dispatch(
+    context: ManagedAgentContext,
+    agent: Pick<AgentEntity, '_id' | 'managedRuntime'>
+  ): Promise<ManagedAgentDispatchResult> {
     await this.demoQuota.assertAllowed(context, agent);
 
     const { provider, runtimeProvider } = await this.providerFactory.getOrCreate(agent, context.config.environmentId);
@@ -78,7 +91,7 @@ export class ManagedAgentService implements OnModuleInit {
       ? [{ role: MessageRole.USER, content: context.userMessageText }]
       : await this.buildMessagesWithHistory(context);
 
-    const { sessionId: newSessionId } = await provider.send({
+    const sendResult = await provider.send({
       messages,
       sessionId,
       vaultIds,
@@ -96,9 +109,11 @@ export class ManagedAgentService implements OnModuleInit {
     await this.conversationRepository.setExternalSessionIdIfMissing(
       context.config.environmentId,
       String(context.conversation._id),
-      newSessionId,
+      sendResult.sessionId,
       vaultIds[0]
     );
+
+    return { status: sendResult.status };
   }
 
   /**
@@ -274,7 +289,94 @@ export class ManagedAgentService implements OnModuleInit {
     return createWebhookHandler({
       secret,
       onSessionEvents: (context) => this.eventHandler.createHandlers(context),
+      onQueueReady: async (params) => {
+        /**
+         * The observer queued this message while a previous turn was running.
+         * It can't dispatch directly (no SDK/credentials), so it sends the
+         * original request params back here for us to dispatch via the provider.
+         */
+        await this.handleQueueReady(params);
+      },
     });
+  }
+
+  private async handleQueueReady(params: {
+    sessionId: string;
+    runId: string;
+    turnId: string;
+    request: SerializedRequestParams;
+  }): Promise<void> {
+    const metadata = params.request.webhookMetadata;
+    if (!metadata?.agentIdentifier || !metadata?.environmentId) {
+      this.logger.warn({ sessionId: params.sessionId }, 'queue-ready missing agentIdentifier or environmentId');
+
+      return;
+    }
+
+    const provider = await this.providerFactory.tryGetProviderByAgentIdentifier(
+      metadata.agentIdentifier,
+      metadata.environmentId
+    );
+
+    if (!provider) {
+      this.logger.warn(
+        { sessionId: params.sessionId, agentIdentifier: metadata.agentIdentifier },
+        'queue-ready: could not resolve provider'
+      );
+
+      return;
+    }
+
+    await this.showInboundAckBeforeQueuedDispatch(metadata);
+
+    await provider.dispatchQueued(params.sessionId, params.runId, params.turnId, params.request);
+  }
+
+  private async showInboundAckBeforeQueuedDispatch(metadata: Record<string, string>): Promise<void> {
+    const { conversationId, environmentId, organizationId, agentIdentifier, integrationIdentifier } = metadata;
+
+    if (!conversationId || !environmentId || !organizationId || !agentIdentifier || !integrationIdentifier) {
+      return;
+    }
+
+    const conversation = await this.conversationRepository.findOne(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      ['channels']
+    );
+    const platformThreadId = conversation?.channels?.[0]?.platformThreadId;
+
+    const agent = await this.agentRepository.findOne({ identifier: agentIdentifier, _environmentId: environmentId }, [
+      '_id',
+    ]);
+
+    if (!agent || !platformThreadId) {
+      return;
+    }
+
+    let config: ResolvedAgentConfig;
+    try {
+      config = await this.agentConfigResolver.resolve(agent._id, integrationIdentifier);
+    } catch (err) {
+      this.logger.warn(err, `Failed to resolve agent config before queued turn ack for conversation ${conversationId}`);
+
+      return;
+    }
+
+    try {
+      await showManagedInboundAck({
+        outboundGateway: this.outboundGateway,
+        agentId: agent._id,
+        config,
+        platformThreadId,
+        message: null,
+        isFirstMessage: false,
+      });
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `Failed to show inbound ack before queued turn dispatch for conversation ${conversationId}`
+      );
+    }
   }
 
   private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {

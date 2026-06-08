@@ -1,5 +1,5 @@
 import {
-  CONNECT_STEP_COUNT,
+  AGENTS_STEP_COUNT,
   ONBOARDING_STEP_DELAY_MS,
   PLATFORM_STEP_COUNT,
   type OnboardingLoaderVariant,
@@ -39,6 +39,19 @@ export const subscribeConnectProvisioningChange = subscribeOnboardingProvisionin
 /** @deprecated Use `notifyOnboardingProvisioningChange`. */
 export const notifyConnectProvisioningChange = notifyOnboardingProvisioningChange;
 
+// `connect` is the legacy name for the agents-flavored loader; map it forward to `agents`.
+function normalizeVariant(variant: string | undefined): OnboardingLoaderVariant | null {
+  if (variant === 'platform') {
+    return 'platform';
+  }
+
+  if (variant === 'agents' || variant === 'connect') {
+    return 'agents';
+  }
+
+  return null;
+}
+
 function readProvisioningPayload(): ProvisioningPayload | null {
   if (typeof window === 'undefined') return null;
 
@@ -46,18 +59,19 @@ function readProvisioningPayload(): ProvisioningPayload | null {
     const raw = sessionStorage.getItem(ONBOARDING_PROVISIONING_KEY);
 
     if (raw) {
-      const parsed = JSON.parse(raw) as Partial<ProvisioningPayload>;
+      const parsed = JSON.parse(raw) as Partial<ProvisioningPayload> & { variant?: string };
+      const variant = normalizeVariant(parsed.variant);
 
-      if (parsed.variant === 'platform' || parsed.variant === 'connect') {
+      if (variant) {
         return {
-          variant: parsed.variant,
+          variant,
           startedAt: typeof parsed.startedAt === 'number' ? parsed.startedAt : Date.now(),
         };
       }
     }
 
     if (sessionStorage.getItem(CONNECT_PROVISIONING_KEY) === '1') {
-      return { variant: 'connect', startedAt: Date.now() };
+      return { variant: 'agents', startedAt: Date.now() };
     }
   } catch {
     // sessionStorage unavailable or malformed payload
@@ -79,8 +93,8 @@ export function beginOnboardingProvisioning(variant: OnboardingLoaderVariant): v
   }
 }
 
-export function beginConnectProvisioning(): void {
-  beginOnboardingProvisioning('connect');
+export function beginAgentsProvisioning(): void {
+  beginOnboardingProvisioning('agents');
 }
 
 export function beginPlatformProvisioning(): void {
@@ -99,8 +113,8 @@ export function isOnboardingProvisioningActive(): boolean {
   return getOnboardingProvisioningVariant() !== null;
 }
 
-export function isConnectProvisioningActive(): boolean {
-  return getOnboardingProvisioningVariant() === 'connect';
+export function isAgentsProvisioningActive(): boolean {
+  return getOnboardingProvisioningVariant() === 'agents';
 }
 
 export function clearOnboardingProvisioning(): void {
@@ -120,7 +134,7 @@ export function clearConnectProvisioning(): void {
 }
 
 export function getMinLoaderDurationMs(variant: OnboardingLoaderVariant): number {
-  const stepCount = variant === 'connect' ? CONNECT_STEP_COUNT : PLATFORM_STEP_COUNT;
+  const stepCount = variant === 'agents' ? AGENTS_STEP_COUNT : PLATFORM_STEP_COUNT;
 
   return stepCount * ONBOARDING_STEP_DELAY_MS;
 }
@@ -162,7 +176,7 @@ export function consumeConnectProvisionIntentFromLocation(): boolean {
     return false;
   }
 
-  beginConnectProvisioning();
+  beginAgentsProvisioning();
   params.delete(CONNECT_PROVISION_QUERY);
   const nextSearch = params.toString();
   const nextUrl = `${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}${window.location.hash}`;
@@ -176,7 +190,7 @@ export function hasConnectProvisionIntent(): boolean {
     return false;
   }
 
-  if (isConnectProvisioningActive()) {
+  if (isAgentsProvisioningActive()) {
     return true;
   }
 

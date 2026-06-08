@@ -32,13 +32,20 @@ export interface CreateManagedAgentInput {
   skills: Array<{ skillId: string }>;
 }
 
-export interface AgentIntegrationLink {
+export interface AgentIntegrationEmbedded {
   _id: string;
-  integrationId: string;
-  integrationIdentifier: string;
+  identifier: string;
+  name: string;
   providerId: string;
   channel?: string;
-  active?: boolean;
+  active: boolean;
+  sharedInboundAddress?: string;
+  defaultSenderName?: string;
+}
+
+export interface AgentIntegrationLink {
+  _id: string;
+  integration: AgentIntegrationEmbedded;
   connectedAt?: string | null;
 }
 
@@ -98,19 +105,6 @@ export async function addAgentIntegration(
   return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 }
 
-export interface AgentEmailIntegrationDetail extends AgentIntegrationLink {
-  /** Embedded integration record returned by `POST /v1/agents/:id/integrations`. */
-  integration?: {
-    _id?: string;
-    identifier?: string;
-    name?: string;
-    providerId?: string;
-    channel?: string;
-    active?: boolean;
-    sharedInboundAddress?: string;
-  };
-}
-
 /**
  * `POST /v1/agents/:id/integrations` with `providerId: 'novu-email-agent'`
  * triggers the server's special-case branch (see add-agent-integration
@@ -122,22 +116,29 @@ export interface AgentEmailIntegrationDetail extends AgentIntegrationLink {
 export async function addAgentEmailIntegration(
   client: ConnectApiClient,
   agentIdentifier: string
-): Promise<AgentEmailIntegrationDetail> {
-  const res = await client.axios.post<{ data?: AgentEmailIntegrationDetail } | AgentEmailIntegrationDetail>(
+): Promise<AgentIntegrationLink> {
+  const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
     `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
     { providerId: 'novu-email-agent' }
   );
   const body = res.data;
 
-  return 'data' in body && body.data ? body.data : (body as AgentEmailIntegrationDetail);
+  return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 }
 
 export async function listAgentIntegrations(
   client: ConnectApiClient,
-  agentIdentifier: string
+  agentIdentifier: string,
+  options?: { integrationIdentifier?: string; limit?: number }
 ): Promise<AgentIntegrationLink[]> {
   const res = await client.axios.get<{ data?: AgentIntegrationLink[] } | AgentIntegrationLink[]>(
-    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
+    {
+      params: {
+        limit: options?.limit ?? (options?.integrationIdentifier ? 1 : 100),
+        ...(options?.integrationIdentifier ? { integrationIdentifier: options.integrationIdentifier } : {}),
+      },
+    }
   );
   const body = res.data;
 

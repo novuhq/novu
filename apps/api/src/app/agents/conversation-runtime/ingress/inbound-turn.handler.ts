@@ -408,7 +408,11 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
-    await this.acknowledgeReceipt(agentId, config, thread, message, isFirstMessage);
+    const isManagedAgent = !!agent?.managedRuntime;
+
+    if (!isManagedAgent) {
+      await this.acknowledgeReceipt(agentId, config, thread, message, isFirstMessage);
+    }
 
     const runtime = this.runtimeResolver.resolve(agent);
     const turn: ConversationTurn = {

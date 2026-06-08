@@ -2,23 +2,13 @@ import { useClerk, useOrganization, useUser } from '@clerk/react';
 import type { OrganizationResource, UserResource } from '@clerk/shared/types';
 import { ReactNode, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { OnboardingProvisioningOverlay } from '@/components/auth/connect-provisioning-overlay';
-import { IS_HOSTNAME_SPLIT_ENABLED, IS_NOVU_CONNECT } from '@/config';
+import { OnboardingProvisioningOverlay } from '@/components/onboarding/onboarding-provisioning-overlay';
 import { isPublicAuthPath } from '@/utils/auth-routes';
-import { readPendingCliAuth, storePendingCliAuthFromPath } from '@/utils/cli-auth-pending';
-import { storePendingConnectClaimFromPath } from '@/utils/connect-claim-pending';
-import { buildConnectProvisionOrgListPath, isActiveConnectWorkspace, isConnectWorkspace } from '@/utils/connect';
-import { buildAbsoluteConnectUrl } from '@/utils/product-auth-urls';
+import { storePendingCliAuthFromPath } from '@/utils/cli-auth-pending';
 import { ROUTES } from '@/utils/routes';
 import { AuthContext } from './auth-context';
 import { toOrganizationEntity, toUserEntity } from './mappers';
 import type { AuthContextValue } from './types';
-
-// How recently an org membership must have been created to count as a fresh invite acceptance.
-// Covers the Clerk accept -> Account Portal -> app redirect chain with a little headroom for clock
-// skew between Clerk (server `createdAt`) and the browser, while staying short enough that an old
-// membership can't be mistaken for a just-accepted invite.
-const FRESH_JOIN_WINDOW_MS = 60 * 1000;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const navigate = useNavigate();
@@ -69,66 +59,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isOnPublicAuth = isPublicAuthPath(pathname);
 
   // Computed during render so we can both (a) gate `children` (preventing the side-nav from
-  // briefly showing the wrong workspace name when the active Clerk org belongs to the OTHER
-  // product) and (b) drive the redirect effect below.
-  //
-  // Triggers on:
-  //   - no active org at all (post sign-up, post delete/leave) — picker handles it.
-  //   - cross-product org on the wrong host — e.g. user had a Connect org active, signed out,
-  //     signed back into Platform; Clerk re-activates `lastActiveOrganizationId` (the Connect
-  //     org) on the fresh session. We clear it and route through the picker.
+  // briefly showing a workspace before resolution) and (b) drive the redirect effect below.
+  // Triggers when there is no active org at all (post sign-up, post delete/leave) — the picker
+  // handles it.
   const needsOrgResolution = useMemo(() => {
     if (!isUserLoaded || !isOrganizationLoaded || !clerkUser) {
       return false;
     }
 
-    if (IS_NOVU_CONNECT) {
-      return (
-        !clerkOrganization ||
-        !isActiveConnectWorkspace(clerkOrganization.publicMetadata, {
-          userId: clerkUser.id,
-          organizationId: clerkOrganization.id,
-        })
-      );
-    }
-
-    // Orgs without productType stay on Platform to avoid duplicating Connect orgs mid-sync.
-    return !clerkOrganization || isConnectWorkspace(clerkOrganization.publicMetadata);
+    return !clerkOrganization;
   }, [isUserLoaded, isOrganizationLoaded, clerkUser, clerkOrganization]);
-
-  // "Did the user just accept a Connect invite?" — the only thing that should decide where they
-  // land, regardless of which org was previously active. The invited membership is created at
-  // accept time, so the most-recently-joined org being a Connect workspace AND freshly created
-  // (within `FRESH_JOIN_WINDOW_MS`) uniquely identifies a fresh Connect invite. A stale Connect
-  // org (old membership, cross-tab, or a deliberate Platform sign-in) fails the recency check and
-  // falls through to the normal Platform resolution below.
-  const recentlyJoinedConnect = useMemo(() => {
-    // Connect only exists when hostnames are split (never on self-hosted, which uses custom auth
-    // and has no Connect product). Bail early so we don't touch the Clerk-shaped membership shim,
-    // whose entries lack a real `createdAt` and would crash on `.getTime()`.
-    if (!IS_HOSTNAME_SPLIT_ENABLED) {
-      return false;
-    }
-
-    const memberships = clerkUser?.organizationMemberships ?? [];
-
-    if (memberships.length === 0) {
-      return false;
-    }
-
-    const newest = memberships.reduce((latest, membership) =>
-      membership.createdAt > latest.createdAt ? membership : latest
-    );
-
-    if (!newest.createdAt) {
-      return false;
-    }
-
-    const joinedAgoMs = Date.now() - newest.createdAt.getTime();
-    const isFreshJoin = joinedAgoMs >= 0 && joinedAgoMs <= FRESH_JOIN_WINDOW_MS;
-
-    return isFreshJoin && isConnectWorkspace(newest.organization.publicMetadata as Record<string, unknown>);
-  }, [clerkUser?.organizationMemberships]);
 
   // The picker / invitation-accept / public auth pages own the resolution flow themselves —
   // don't redirect away from them. (Also resets the "cleared" ref so a future stale-org
@@ -156,22 +96,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Just accepted a Connect invite (Clerk's hosted accept flow lands here on the Platform host
-    // with the invited Connect org active). Drop the user on the Connect host's org list for the
-    // product they were invited to, ignoring whichever org was previously active. A Platform
-    // invite or a stale Connect org isn't a fresh Connect join, so it falls through to the normal
-    // Platform resolution below and lands on the Platform picker.
-    if (IS_HOSTNAME_SPLIT_ENABLED && !IS_NOVU_CONNECT && recentlyJoinedConnect) {
-      redirectTo({ url: buildAbsoluteConnectUrl(ROUTES.SIGNUP_ORGANIZATION_LIST) });
-
-      return;
-    }
-
-    // Cross-product stale org — actively clear the active organization so no other component
-    // (org dropdown, env-scoped data hooks) sees the wrong workspace while the picker mounts.
-    // This is the "logging out should clear org selection" guarantee in tab-agnostic form:
-    // whether the stale org came from a fresh sign-in on the other product, a direct URL hit,
-    // or a still-open tab on the other product, the user always lands org-less on the picker.
+    // Stale org — actively clear the active organization so no other component (org dropdown,
+    // env-scoped data hooks) sees a workspace while the picker mounts. This is the "logging out
+    // should clear org selection" guarantee: the user always lands org-less on the picker.
     if (clerkOrganization && !hasClearedStaleOrgRef.current && clerk?.setActive) {
       hasClearedStaleOrgRef.current = true;
       void clerk.setActive({ organization: null });
@@ -180,25 +107,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // CliAuthPage never mounts here — `shouldBlockChildren` hides it while we redirect to the
     // org picker — so persist the device session before leaving `/cli/auth`.
     storePendingCliAuthFromPath(pathname, location.search);
-    storePendingConnectClaimFromPath(pathname, location.search);
 
-    const pendingCliAuth = readPendingCliAuth();
-    const orgListPath =
-      pendingCliAuth && IS_NOVU_CONNECT
-        ? buildConnectProvisionOrgListPath(ROUTES.SIGNUP_ORGANIZATION_LIST)
-        : ROUTES.SIGNUP_ORGANIZATION_LIST;
-
-    void navigate(orgListPath, { replace: true });
-  }, [
-    shouldHandleResolution,
-    clerkOrganization,
-    clerk,
-    redirectTo,
-    navigate,
-    pathname,
-    location.search,
-    recentlyJoinedConnect,
-  ]);
+    void navigate(ROUTES.SIGNUP_ORGANIZATION_LIST, { replace: true });
+  }, [shouldHandleResolution, clerkOrganization, clerk, redirectTo, navigate, pathname, location.search]);
 
   const currentUser = useMemo(
     () => (clerkUser ? toUserEntity(clerkUser as unknown as UserResource) : undefined),
@@ -221,8 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   // While we're queueing the redirect to `/auth/organization-list`, hide the regular app shell.
-  // Otherwise the side-nav's org dropdown + any env-scoped routes briefly render with the
-  // stale cross-product org (e.g. Connect org showing up on Platform right after sign-in).
+  // Otherwise the side-nav's org dropdown + any env-scoped routes briefly render before resolution.
   // The org-list / invitation / public-auth routes render normally — they own the resolution.
   const shouldBlockChildren = shouldHandleResolution;
 
