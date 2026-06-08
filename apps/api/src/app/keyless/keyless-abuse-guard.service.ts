@@ -32,37 +32,16 @@ export class KeylessAbuseGuardService {
   ) {}
 
   async assertEnvCreationAllowed(clientIp?: string): Promise<void> {
-    if (!this.cacheService.cacheEnabled() || KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY === 0) {
-      return;
-    }
-
-    if (!clientIp) {
-      throw new HttpException(MISSING_CLIENT_IP_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
-    }
-
-    const counterKey = this.dailyCounterKey('env_create', clientIp);
-    const nextCount = await this.incrementDailyCounter(counterKey);
-
-    if (nextCount > KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY) {
-      throw new HttpException(ENV_CREATE_LIMIT_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
-    }
+    await this.assertWithinDailyCap(
+      'env_create',
+      clientIp,
+      KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY,
+      ENV_CREATE_LIMIT_MESSAGE
+    );
   }
 
   async assertGenerateAllowed(clientIp?: string): Promise<void> {
-    if (!this.cacheService.cacheEnabled() || KEYLESS_GENERATE_CAP_PER_IP_PER_DAY === 0) {
-      return;
-    }
-
-    if (!clientIp) {
-      throw new HttpException(MISSING_CLIENT_IP_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
-    }
-
-    const counterKey = this.dailyCounterKey('generate', clientIp);
-    const nextCount = await this.incrementDailyCounter(counterKey);
-
-    if (nextCount > KEYLESS_GENERATE_CAP_PER_IP_PER_DAY) {
-      throw new HttpException(GENERATE_LIMIT_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
-    }
+    await this.assertWithinDailyCap('generate', clientIp, KEYLESS_GENERATE_CAP_PER_IP_PER_DAY, GENERATE_LIMIT_MESSAGE);
   }
 
   async isKeylessAgentAiEnabled(organizationId: string): Promise<boolean> {
@@ -97,6 +76,27 @@ export class KeylessAbuseGuardService {
 
     if (count >= KEYLESS_MAX_AGENTS_PER_ENV) {
       throw new HttpException(MANAGED_AGENT_CAP_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
+    }
+  }
+
+  private async assertWithinDailyCap(
+    kind: 'env_create' | 'generate',
+    clientIp: string | undefined,
+    cap: number,
+    limitMessage: string
+  ): Promise<void> {
+    if (!this.cacheService.cacheEnabled() || cap === 0) {
+      return;
+    }
+
+    if (!clientIp) {
+      throw new HttpException(MISSING_CLIENT_IP_MESSAGE, HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    const nextCount = await this.incrementDailyCounter(this.dailyCounterKey(kind, clientIp));
+
+    if (nextCount > cap) {
+      throw new HttpException(limitMessage, HttpStatus.TOO_MANY_REQUESTS);
     }
   }
 
