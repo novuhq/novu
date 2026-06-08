@@ -32,7 +32,7 @@ export function MobileDesktopPrompt() {
 
   const brandLabel = isConnect ? 'Novu Connect' : 'Novu';
   const productCopy = isConnect ? 'Novu Connect' : "Novu's dashboard";
-  const desktopUrl = isConnect ? (NOVU_CONNECT_HOSTNAME || 'connect.novu.co') : 'dashboard.novu.co';
+  const desktopUrl = isConnect ? NOVU_CONNECT_HOSTNAME || 'dashboard.novu.co' : 'dashboard.novu.co';
 
   return (
     <div className="animate-in slide-in-from-bottom-4 fade-in fixed inset-x-0 bottom-0 z-[100] p-3 duration-500 md:hidden">
