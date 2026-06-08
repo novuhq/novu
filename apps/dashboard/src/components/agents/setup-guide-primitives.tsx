@@ -117,12 +117,12 @@ export function SetupStep({
 }) {
   return (
     <div className="relative flex flex-col gap-4 pl-6">
-      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-6' : 'top-0')}>
+      <div className={cn('absolute -left-[20px] flex w-5 justify-center', sectionLabel ? 'top-6' : 'top-[3px]')}>
         <StepIndicator status={status} index={index} />
       </div>
       <div
         className={cn(
-          'flex flex-col gap-4 transition-opacity duration-300 ease-out md:flex-row md:gap-20',
+          'flex flex-col gap-4 transition-opacity duration-300 ease-out md:flex-row md:gap-20 pt-[3px]',
           dimmed && 'pointer-events-none opacity-30'
         )}
       >

@@ -27,7 +27,6 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAgentTemplates } from '@/hooks/use-agent-templates';
 import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
-import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
@@ -36,8 +35,6 @@ import {
   clearPersistedAgentTemplateId,
   readActiveAgentTemplateId,
 } from '@/utils/agent-template-identity';
-import { APP_IDS } from '@/utils/apps';
-import { withAppId } from '@/utils/onboarding-redirect';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -52,8 +49,6 @@ export function AgentsList() {
   const track = useTelemetry();
   const agentRoutes = useAgentRoutes();
   const canReadAgents = has({ permission: PermissionsEnum.AGENT_READ });
-  const currentApp = useCurrentApp();
-  const isConnectApp = currentApp === APP_IDS.CONNECT;
 
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -169,9 +164,7 @@ export function AgentsList() {
       showSuccessToast('Agent deleted', 'The agent was removed.');
 
       track(
-        isConnectApp
-          ? TelemetryEvent.CONNECT_AGENT_DELETED_FROM_DASHBOARD
-          : TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD,
+        TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD,
         { agentIdentifier: identifier }
       );
 
@@ -240,8 +233,8 @@ export function AgentsList() {
   }, []);
 
   const goToFirstAgentSetup = useCallback(() => {
-    navigate(withAppId(ROUTES.AGENTS_SETUP, currentApp));
-  }, [currentApp, navigate]);
+    navigate(ROUTES.AGENTS_SETUP);
+  }, [navigate]);
 
   const handleCreateSubmit = useCallback(
     async (form: CreateAgentForm) => {
@@ -249,15 +242,10 @@ export function AgentsList() {
         onSuccess: (createdAgent) => {
           showSuccessToast('Agent created', 'Your agent is ready to use.');
 
-          track(
-            isConnectApp
-              ? TelemetryEvent.CONNECT_AGENT_CREATED_FROM_DASHBOARD
-              : TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD,
-            {
-              agentIdentifier: createdAgent.identifier,
-              active: createdAgent.active,
-            }
-          );
+          track(TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD, {
+            agentIdentifier: createdAgent.identifier,
+            active: createdAgent.active,
+          });
 
           const environment = requireEnvironment(currentEnvironment, 'No environment selected');
           const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
@@ -275,7 +263,7 @@ export function AgentsList() {
         },
       });
     },
-    [submitCreateAgent, track, isConnectApp, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
+    [submitCreateAgent, track, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
   );
 
   if (!canReadAgents) {
@@ -304,7 +292,6 @@ export function AgentsList() {
 
       return (
         <AgentsEmptyTeaser
-          isConnectApp={isConnectApp}
           cta={
             <PermissionButton
               permission={PermissionsEnum.AGENT_WRITE}

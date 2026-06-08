@@ -8,6 +8,7 @@ import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/p
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
+import { showManagedInboundAck } from './managed-agent-inbound-ack';
 import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
 import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
@@ -66,7 +67,7 @@ export class ManagedRuntime implements AgentRuntime {
     }
 
     try {
-      await this.managedAgentService.dispatch(
+      const { status } = await this.managedAgentService.dispatch(
         {
           config: turn.config,
           conversation: turn.conversation,
@@ -75,6 +76,23 @@ export class ManagedRuntime implements AgentRuntime {
         },
         turn.agent
       );
+
+      if (status === 'active') {
+        const channel = this.conversationService.getPrimaryChannel(turn.conversation);
+        const isFirstMessage = !!turn.message?.id && channel.firstPlatformMessageId === turn.message.id;
+
+        await showManagedInboundAck({
+          outboundGateway: this.outboundGateway,
+          agentId: turn.agentId,
+          config: turn.config,
+          platformThreadId: turn.platformThreadId,
+          thread: turn.thread,
+          message: turn.message,
+          isFirstMessage,
+        }).catch((err) => {
+          this.logger.warn(err, `[agent:${turn.agentId}] Failed to show inbound ack after active dispatch`);
+        });
+      }
     } catch (err) {
       if (err instanceof DemoQuotaExhaustedError) {
         await this.replyDemoQuotaExhausted(turn);

@@ -13,7 +13,7 @@ import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
-import { IS_NOVU_CONNECT } from '@/config';
+import { IS_EU } from '@/config';
 import { useAuth } from '@/context/auth/hooks';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
@@ -21,14 +21,9 @@ import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
-import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
+import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
-import {
-  getPostOnboardingRoute,
-  resolveOnboardingAppId,
-  withAppId,
-  withOnboardingSource,
-} from '@/utils/onboarding-redirect';
+import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -159,14 +154,11 @@ export function AgentsSetupPage() {
   const agentRoutes = useAgentRoutes();
 
   const [searchParams] = useSearchParams();
-  const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
   const agentTemplateId = useMemo(
     () => readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM)),
     [searchParams]
   );
-  const isConnectFlow = appId === APP_IDS.CONNECT;
-  const isConnectHost = IS_NOVU_CONNECT || isConnectFlow;
-  const pageTitle = isConnectHost ? 'Connect your agent to where work happens' : 'Connect your first agent';
+  const pageTitle = 'Connect your first agent';
 
   // Org bootstrap (poll Novu envs + reload Clerk after org creation) lives in EnvironmentProvider.
   // Here we only gate on Novu's org id + the resolved environment, like the inbox onboarding page.
@@ -175,7 +167,7 @@ export function AgentsSetupPage() {
 
   useOnboardingProvisioningDismiss({
     isReady: isDataReady,
-    fallbackVariant: isConnectHost ? 'connect' : 'platform',
+    fallbackVariant: 'agents',
   });
 
   useEffect(() => {
@@ -220,27 +212,27 @@ export function AgentsSetupPage() {
       ...completionProps,
       skippedFrom: 'agents-setup',
     });
-    telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'skip' });
+    telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { from: 'skip' });
     clearPersistedCliOnboardingSessionId();
 
     if (currentEnvironment?.slug) {
-      goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
+      goToPostOnboardingRoute(getPostOnboardingRoute(currentEnvironment.slug), navigate);
 
       return;
     }
 
-    void navigate(withAppId(ROUTES.WORKFLOWS, appId));
-  }, [appId, buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
+    void navigate(ROUTES.WORKFLOWS);
+  }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleNavigateToOverview = useCallback(() => {
     telemetry(TelemetryEvent.ONBOARDING_COMPLETED, buildOnboardingCompletionProps());
-    telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { appId, from: 'complete' });
+    telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { from: 'complete' });
     clearPersistedCliOnboardingSessionId();
 
     if (currentEnvironment?.slug) {
-      goToPostOnboardingRoute(getPostOnboardingRoute(appId, currentEnvironment.slug), navigate);
+      goToPostOnboardingRoute(getPostOnboardingRoute(currentEnvironment.slug), navigate);
     }
-  }, [appId, buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
+  }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleSetupAnotherChannel = useCallback(() => {
     if (!currentEnvironment?.slug || !createdAgent) return;
@@ -254,17 +246,13 @@ export function AgentsSetupPage() {
     );
   }, [agentRoutes.detailsTab, createdAgent, currentEnvironment?.slug, navigate]);
 
-  // Connect skips the usecase picker, so there's no back target for the connect phase.
   const handleBackStep = useCallback(() => {
-    if (isConnectFlow) {
-      return;
-    }
-
     void navigate(ROUTES.USECASE_SELECT);
-  }, [isConnectFlow, navigate]);
+  }, [navigate]);
 
-  if (!isAgentsEnabled) {
-    return <Navigate to={isConnectFlow ? ROUTES.ROOT : ROUTES.INBOX_USECASE} replace />;
+  // Agents are not available in the EU region.
+  if (IS_EU || !isAgentsEnabled) {
+    return <Navigate to={ROUTES.INBOX_USECASE} replace />;
   }
 
   if (provisioningActive) {
@@ -274,8 +262,8 @@ export function AgentsSetupPage() {
   if (!isDataReady) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
-        <PageMeta title={isConnectHost ? 'Build and distribute agents' : pageTitle} />
-        <OnboardingLoader variant={isConnectHost ? 'connect' : 'platform'} />
+        <PageMeta title="Build and distribute agents" />
+        <OnboardingLoader variant="agents" />
       </div>
     );
   }
@@ -287,7 +275,7 @@ export function AgentsSetupPage() {
   const leftContent = (
     <>
       <PageMeta title={pageTitle} />
-      {!isConnectFlow && <StepHeader current={1} onBack={handleBackStep} />}
+      <StepHeader current={1} onBack={handleBackStep} />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">

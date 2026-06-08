@@ -1,4 +1,4 @@
-import { useOrganizationList, useUser } from '@clerk/react';
+import { useOrganizationList } from '@clerk/react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { RiAddCircleLine, RiArrowRightSLine, RiLoader4Line } from 'react-icons/ri';
@@ -9,17 +9,10 @@ import { Button } from '@/components/primitives/button';
 import { Input } from '@/components/primitives/input';
 import { ScrollArea } from '@/components/primitives/scroll-area';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
-import { IS_NOVU_CONNECT } from '@/config';
 import { RegionSelector, useShouldShowRegionSelector } from '@/context/region';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS, type AppId, isAbsoluteUrl } from '@/utils/apps';
-import {
-  beginOnboardingProvisioning,
-  clearOnboardingProvisioning,
-  isConnectWorkspace,
-  writeConnectAutoCreateSessionGuard,
-} from '@/utils/connect';
-import { isPlatformWorkspace } from '@/utils/platform-workspace';
+import { isAbsoluteUrl } from '@/utils/apps';
+import { clearOnboardingProvisioning } from '@/utils/connect';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 
@@ -31,12 +24,10 @@ const ORG_LIST_VISIBLE_ROWS = 6;
 // height to scroll. `max-h` alone leaves the Viewport auto-sized so content gets clipped
 // without a scrollbar appearing. Applied only when scrolling is actually needed.
 const ORG_LIST_SCROLL_HEIGHT = 'h-[336px]';
-// Clerk defaults to 10 per page — we override because the picker filters by `productType` and
-// needs the full list before it can decide whether to auto-switch to the create view. Bumping
-// to 100 (well under Clerk's 500 cap) puts virtually every real-world user on a single round trip.
+// Clerk defaults to 10 per page — we override because the picker needs the full list before it can
+// decide whether to auto-switch to the create view. Bumping to 100 (well under Clerk's 500 cap)
+// puts virtually every real-world user on a single round trip.
 const MEMBERSHIPS_PAGE_SIZE = 100;
-
-type ProductFilter = 'platform' | 'connect';
 
 type OrganizationMembershipLike = {
   id: string;
@@ -78,20 +69,6 @@ function slugify(input: string): string {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, SLUG_MAX_LENGTH);
-}
-
-function getProductFilter(): ProductFilter {
-  return IS_NOVU_CONNECT ? 'connect' : 'platform';
-}
-
-function getProductAppId(filter: ProductFilter): AppId {
-  return filter === 'connect' ? APP_IDS.CONNECT : APP_IDS.NOVU;
-}
-
-function isMatchingMembership(membership: OrganizationMembershipLike, filter: ProductFilter): boolean {
-  const metadata = membership.organization.publicMetadata;
-
-  return filter === 'connect' ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
 }
 
 function isSlugTakenError(error: unknown): boolean {
@@ -182,7 +159,6 @@ type OrganizationListViewProps = {
   memberships: OrganizationMembershipLike[];
   onSelect: (organizationId: string) => void;
   onCreateClick: () => void;
-  productFilter: ProductFilter;
   isBusy: boolean;
   busyId: string | null;
   // True while additional pages are streaming in from Clerk after page 1 has rendered.
@@ -193,12 +169,11 @@ function OrganizationListView({
   memberships,
   onSelect,
   onCreateClick,
-  productFilter,
   isBusy,
   busyId,
   isLoadingMore,
 }: OrganizationListViewProps) {
-  const productLabel = productFilter === 'connect' ? 'Novu Connect' : 'Novu Cloud';
+  const productLabel = 'Novu Cloud';
   const shouldScroll = memberships.length > ORG_LIST_VISIBLE_ROWS || isLoadingMore;
 
   return (
@@ -262,7 +237,6 @@ type CreateOrganizationViewProps = {
   onCancel: () => void;
   onSubmit: (input: { name: string; slug: string }) => Promise<void>;
   isSubmitting: boolean;
-  productFilter: ProductFilter;
 };
 
 function CreateOrganizationView({
@@ -271,13 +245,11 @@ function CreateOrganizationView({
   onCancel,
   onSubmit,
   isSubmitting,
-  productFilter,
 }: CreateOrganizationViewProps) {
   const [name, setName] = useState(defaultName);
   const [slug, setSlug] = useState(() => slugify(defaultName));
   const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
-  // Connect workspaces are pinned to a single region, so the selector never applies there.
-  const shouldShowRegionSelector = useShouldShowRegionSelector() && productFilter !== 'connect';
+  const shouldShowRegionSelector = useShouldShowRegionSelector();
   const nameId = useId();
   const slugId = useId();
 
@@ -289,7 +261,7 @@ function CreateOrganizationView({
 
   const trimmedName = name.trim();
   const trimmedSlug = slug.trim();
-  const productLabel = productFilter === 'connect' ? 'Novu Connect' : 'Novu Cloud';
+  const productLabel = 'Novu Cloud';
   const canSubmit = trimmedName.length > 0 && trimmedSlug.length > 0 && !isSubmitting;
 
   const cancelLabel = hasExistingOrgs ? 'Cancel' : 'Sign out';
@@ -373,18 +345,14 @@ function CreateOrganizationView({
   );
 }
 
-// Replacement for Clerk's <OrganizationList/> that filters memberships by `publicMetadata.productType`.
+// Replacement for Clerk's <OrganizationList/> with custom create/select UX.
 export function OrganizationPicker({
   afterCreateOrganizationUrl,
   afterSelectOrganizationUrl,
   onSignOut,
 }: OrganizationPickerProps) {
   const track = useTelemetry();
-  const { user } = useUser();
   const navigate = useNavigate();
-
-  const productFilter = useMemo(getProductFilter, []);
-  const productAppId = useMemo(() => getProductAppId(productFilter), [productFilter]);
 
   const { isLoaded, userMemberships, createOrganization, setActive } = useOrganizationList({
     userMemberships: { infinite: true, pageSize: MEMBERSHIPS_PAGE_SIZE },
@@ -424,9 +392,7 @@ export function OrganizationPicker({
     };
   }, [isLoaded, hasRevalidated]);
 
-  // Drain pagination so productType filtering runs against the full membership list. Mirrors
-  // the pre-fetch behavior in `OrganizationDropdown` when its region filter is active — both
-  // need a complete list before they can safely render filtered results.
+  // Drain pagination so the picker renders against the full membership list.
   useEffect(() => {
     if (!isLoaded || !userMemberships?.hasNextPage || userMemberships?.isFetching) {
       return;
@@ -438,20 +404,14 @@ export function OrganizationPicker({
   // Two readiness signals:
   //   - `isFirstPageReady` — render the picker as soon as page 1 lands so users with many orgs
   //     don't wait on a full-screen spinner while later pages stream in.
-  //   - `isFullListLoaded` — gate both the "auto-switch to create view if empty" and the
-  //     cross-product redirect decisions on the complete list (a matching org might sit on
-  //     page 2; the cross-product check needs all pages drained to be accurate).
+  //   - `isFullListLoaded` — gate the "auto-switch to create view if empty" decision on the
+  //     complete list (an org might sit on page 2).
   const isFirstPageReady = isLoaded && hasRevalidated;
   const isFullListLoaded = isFirstPageReady && !userMemberships?.isFetching && userMemberships?.hasNextPage !== true;
 
-  const allMemberships = useMemo<OrganizationMembershipLike[]>(
+  const filteredMemberships = useMemo<OrganizationMembershipLike[]>(
     () => (userMemberships?.data ?? []) as OrganizationMembershipLike[],
     [userMemberships?.data]
-  );
-
-  const filteredMemberships = useMemo<OrganizationMembershipLike[]>(
-    () => allMemberships.filter((membership) => isMatchingMembership(membership, productFilter)),
-    [allMemberships, productFilter]
   );
 
   const [view, setView] = useState<View>('picker');
@@ -461,11 +421,8 @@ export function OrganizationPicker({
   const hasTrackedRef = useRef(false);
   const hasInitializedViewRef = useRef(false);
 
-  // Initial routing decision once the full membership list is in. If there are zero matching
-  // workspaces (post-delete, post-leave, or a fresh sign-up that didn't auto-provision), drop
-  // into the create form. No cross-product bouncing: invited memberships often arrive without
-  // `publicMetadata.productType` set yet, so any host-hop decision based on that metadata is
-  // unreliable — better to let the user create / pick on the host they're currently on.
+  // Initial routing decision once the full membership list is in. If there are zero workspaces
+  // (post-delete, post-leave, or a fresh sign-up), drop into the create form.
   useEffect(() => {
     if (!isFullListLoaded || hasInitializedViewRef.current) return;
 
@@ -500,10 +457,8 @@ export function OrganizationPicker({
     async ({ name, slug }: { name: string; slug: string }) => {
       if (!createOrganization || !setActive) return;
 
-      const provisioningVariant = productFilter === 'connect' ? 'connect' : 'platform';
-
       setIsCreating(true);
-      beginOnboardingProvisioning(provisioningVariant);
+      clearOnboardingProvisioning();
 
       let createdOrg: Awaited<ReturnType<typeof createOrganization>> | null = null;
       let lastError: unknown = null;
@@ -532,11 +487,6 @@ export function OrganizationPicker({
         return;
       }
 
-      // `productType: connect` is written server-side during sync; the guard bridges that lag.
-      if (productFilter === 'connect' && user?.id) {
-        writeConnectAutoCreateSessionGuard(user.id, createdOrg.id);
-      }
-
       try {
         await setActive({ organization: createdOrg.id });
       } catch (error) {
@@ -552,7 +502,6 @@ export function OrganizationPicker({
         location: 'web',
         organizationId: createdOrg.id,
         organizationName: createdOrg.name,
-        product: productAppId,
         autoCreated: false,
       });
       hasTrackedRef.current = true;
@@ -565,7 +514,7 @@ export function OrganizationPicker({
 
       void navigate(afterCreateOrganizationUrl);
     },
-    [createOrganization, setActive, afterCreateOrganizationUrl, productAppId, productFilter, track, user?.id, navigate]
+    [createOrganization, setActive, afterCreateOrganizationUrl, track, navigate]
   );
 
   const handleCancel = useCallback(() => {
@@ -579,10 +528,9 @@ export function OrganizationPicker({
   }, [filteredMemberships.length, onSignOut]);
 
   // Show the full-screen spinner only while page 1 is in flight. Once page 1 lands we render the
-  // picker and surface the inline "Loading more…" row for any subsequent pages — same model as
-  // `OrganizationDropdown`. Exception: if page 1 yields no matching orgs but more pages are
-  // still streaming, keep the spinner so we don't briefly render an empty header and falsely
-  // run the cross-product redirect.
+  // picker and surface the inline "Loading more…" row for any subsequent pages. Exception: if
+  // page 1 yields no orgs but more pages are still streaming, keep the spinner so we don't briefly
+  // render an empty header.
   const isStreamingMorePages = isFirstPageReady && !isFullListLoaded;
   const shouldWaitForMorePages = isStreamingMorePages && filteredMemberships.length === 0;
 
@@ -601,7 +549,6 @@ export function OrganizationPicker({
         onCancel={handleCancel}
         onSubmit={handleCreate}
         isSubmitting={isCreating}
-        productFilter={productFilter}
       />
     );
   }
@@ -611,7 +558,6 @@ export function OrganizationPicker({
       memberships={filteredMemberships}
       onSelect={handleSelect}
       onCreateClick={() => setView('create')}
-      productFilter={productFilter}
       isBusy={isSelecting || isCreating}
       busyId={selectingId}
       isLoadingMore={isStreamingMorePages}

@@ -127,12 +127,28 @@ function LockedBadge() {
   );
 }
 
-function ConnectPill({ loading, comingSoon, locked }: { loading: boolean; comingSoon: boolean; locked: boolean }) {
+function ProviderPill({
+  loading,
+  comingSoon,
+  locked,
+  connected,
+  connecting,
+}: {
+  loading: boolean;
+  comingSoon: boolean;
+  locked: boolean;
+  connected: boolean;
+  connecting: boolean;
+}) {
   let label: string;
   if (comingSoon) {
     label = 'Coming soon';
   } else if (locked) {
     label = 'Upgrade';
+  } else if (connected) {
+    label = 'Connected';
+  } else if (connecting) {
+    label = 'Connecting...';
   } else {
     label = 'Connect';
   }
@@ -155,17 +171,6 @@ function ConnectPill({ loading, comingSoon, locked }: { loading: boolean; coming
       ) : (
         <RiArrowRightSLine className="size-4 shrink-0 text-text-soft" aria-hidden />
       )}
-    </div>
-  );
-}
-
-function SelectedPill({ loading, connected }: { loading: boolean; connected: boolean }) {
-  const label = connected ? 'Connected' : 'Connecting...';
-
-  return (
-    <div className="bg-bg-weak flex w-full items-center justify-center gap-1 rounded-[4px] p-1">
-      <span className="px-1 text-label-xs text-text-soft font-medium leading-4">{label}</span>
-      {loading ? <RiLoader4Line className="text-text-soft size-4 shrink-0 animate-spin" aria-hidden /> : null}
     </div>
   );
 }
@@ -290,11 +295,13 @@ function ProviderCard({
           <span className="text-label-xs text-text-sub font-medium leading-4">{item.displayName}</span>
         </div>
 
-        {isActive ? (
-          <SelectedPill loading={isLoading} connected={isConnected} />
-        ) : (
-          <ConnectPill loading={isLoading} comingSoon={item.comingSoon} locked={isLocked} />
-        )}
+        <ProviderPill
+          loading={isLoading}
+          comingSoon={item.comingSoon}
+          locked={isLocked}
+          connected={isConnected}
+          connecting={isActive && !isConnected}
+        />
       </div>
     </button>
   );

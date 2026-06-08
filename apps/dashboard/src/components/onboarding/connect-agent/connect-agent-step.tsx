@@ -1,4 +1,10 @@
-import { type IIntegration, IntegrationKindEnum, slugify } from '@novu/shared';
+import {
+  filterDemoConfigurableMcpIds,
+  type IIntegration,
+  IntegrationKindEnum,
+  isProviderManagedMcp,
+  slugify,
+} from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -209,6 +215,18 @@ export function ConnectAgentStep({
   // need to fill in.
   const useAiGeneration = isClaudeSelected && isManagedEnabled;
   const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+  // The demo (Novu-managed Claude) integration exposes no provider vault, so provider-managed MCPs
+  // can never be configured on it. Drop them from the suggestion pills so onboarding only advertises
+  // tools the user can actually wire up; the API enforces the same filter at provision time.
+  const displayedAgentTemplates = useMemo(() => {
+    if (!isDemoProviderSelected) return agentTemplates;
+
+    return agentTemplates.map((template) => ({
+      ...template,
+      suggestedMcpServers: filterDemoConfigurableMcpIds(template.suggestedMcpServers),
+      mcpServers: template.mcpServers?.filter((server) => !isProviderManagedMcp(server.id)),
+    }));
+  }, [agentTemplates, isDemoProviderSelected]);
   const isExistingMode =
     isClaudeSelected &&
     !isDemoProviderSelected &&
@@ -284,7 +302,9 @@ export function ConnectAgentStep({
     } else if (templateSelection.kind === 'template') {
       previewName = templateSelection.template.name;
       previewInstructions = templateSelection.template.instructions;
-      previewMcpServers = templateSelection.template.suggestedMcpServers;
+      previewMcpServers = isDemoProviderSelected
+        ? filterDemoConfigurableMcpIds(templateSelection.template.suggestedMcpServers)
+        : templateSelection.template.suggestedMcpServers;
     } else if (templateSelection.kind === 'scratch') {
       previewName = trimmedName || undefined;
       previewInstructions = trimmedInstructions || undefined;
@@ -747,9 +767,14 @@ export function ConnectAgentStep({
     // the managed-Claude preview illustration) can show them. Prefer the LLM-generated payload
     // — when absent (static template / scratch), fall back to the template's suggested MCPs so
     // the preview keeps showing what the user picked.
-    const summaryMcpServers =
+    const requestedSummaryMcpServers =
       managedOverrides?.mcpServers ??
       (templateSelection.kind === 'template' ? templateSelection.template.suggestedMcpServers : []);
+    // Mirror the API's demo provisioning filter so the summary reflects the MCPs that were actually
+    // wired up — provider-managed servers are dropped on the demo integration.
+    const summaryMcpServers = isDemoProviderSelected
+      ? filterDemoConfigurableMcpIds([...requestedSummaryMcpServers])
+      : requestedSummaryMcpServers;
     const summaryTools = managedOverrides?.tools ?? [];
 
     const summary: ConnectSummary = {
@@ -876,7 +901,7 @@ export function ConnectAgentStep({
                 prompt,
                 onPromptChange: handlePromptChange,
                 promptError,
-                suggestions: agentTemplates,
+                suggestions: displayedAgentTemplates,
                 onSelectSuggestion: handleSelectSuggestion,
                 textareaRef: promptTextareaRef,
                 isGenerating: isSubmitBusy,
