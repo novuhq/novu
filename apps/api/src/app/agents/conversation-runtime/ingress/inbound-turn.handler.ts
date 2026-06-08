@@ -12,6 +12,9 @@ import {
 import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
+import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
+import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
+import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -82,6 +85,48 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
 const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
+
+const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 5);
+
+function resolveConnectClaimBaseUrl(): string {
+  for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
+    const trimmed = candidate?.trim();
+
+    if (!trimmed || trimmed.startsWith('^')) {
+      continue;
+    }
+
+    return trimmed.replace(/\/$/, '');
+  }
+
+  return 'https://dashboard.novu.co';
+}
+
+function buildKeylessSignupCard(claimUrl: string): CardElement {
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content:
+          "You've reached the limit of this free demo. Sign up for a free Novu account to keep this agent — your " +
+          'conversation and setup carry over, and the agent picks up right where it left off.',
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'Sign up & keep this agent',
+            url: claimUrl,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}
 
 /**
  * Workspace-label copy keyed by every platform in `AUTO_PROVISION_PLATFORMS`.
@@ -242,7 +287,9 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly attachmentStorage: AgentAttachmentStorage,
     private readonly startCodeService: TelegramStartCodeService,
     private readonly channelEndpointRepository: ChannelEndpointRepository,
-    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber
+    private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
+    private readonly connectClaimTokenService: ConnectClaimTokenService,
+    private readonly keylessAbuseGuard: KeylessAbuseGuardService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -317,6 +364,26 @@ export class AgentInboundHandler implements OnModuleInit {
 
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
     const conversation = await this.openConversation(agentId, config, message, subscriberId, platformThreadId);
+
+    if (config.isKeyless) {
+      const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
+
+      if (!aiEnabled) {
+        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+
+        return;
+      }
+
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversation._id)) {
+        return;
+      }
+
+      if (await this.isKeylessDemoCapReached(config, conversation._id)) {
+        await this.postKeylessSignupCta(agentId, config, thread, conversation._id);
+
+        return;
+      }
+    }
 
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
@@ -699,6 +766,44 @@ export class AgentInboundHandler implements OnModuleInit {
         operation: 'post-capacity-reached-card',
         agentId,
         platform: config.platform,
+      });
+    }
+  }
+
+  private async isKeylessDemoCapReached(config: ResolvedAgentConfig, conversationId: string): Promise<boolean> {
+    const agentReplies = await this.conversationService.countAgentMessages(config.environmentId, conversationId);
+
+    return agentReplies >= KEYLESS_DEMO_REPLY_CAP;
+  }
+
+  private async postKeylessSignupCta(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    conversationId: string
+  ): Promise<void> {
+    try {
+      if (await this.connectClaimTokenService.isSignupCtaPosted(conversationId)) {
+        return;
+      }
+
+      const { token } = await this.connectClaimTokenService.issueOrGetForEnvironment({
+        env: config.environmentId,
+        org: config.organizationId,
+      });
+      const claimUrl = `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
+
+      await this.outboundGateway.replyOnThread(thread, {
+        card: buildKeylessSignupCard(claimUrl) as unknown as Record<string, unknown>,
+      });
+
+      await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to post keyless signup CTA`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-keyless-signup-cta',
+        agentId,
       });
     }
   }

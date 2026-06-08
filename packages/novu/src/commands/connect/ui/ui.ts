@@ -12,7 +12,7 @@ export interface ConnectUI {
   /**
    * First screen the user sees. Renders a welcome message and waits for the
    * user to hit Enter before resolving — this is the explicit consent gate
-   * for opening the browser to authorize the CLI. The Ink implementation
+   * before the connect pipeline starts. The Ink implementation
    * delays the visible text until after the orb's entry animation finishes
    * so the welcome lands on a fully-formed orb instead of mid-grow.
    */
@@ -80,12 +80,17 @@ export interface ConnectUI {
    * client never pops up without explicit user consent (some terminals /
    * sandboxes block silent `open()` anyway).
    */
-  awaitEmailOpen(opts: { inboundAddress: string; mailtoUrl: string }): Promise<void>;
+  awaitEmailOpen(opts: {
+    inboundAddress: string;
+    mailtoUrl: string;
+    sendFromEmail?: string;
+    canGoBack?: boolean;
+  }): Promise<void>;
   /**
    * Transitions to the "we're polling for your email to arrive" view. Fired
    * by the pipeline right after `open()` returns.
    */
-  showEmailWaiting(opts: { inboundAddress: string }): void;
+  showEmailWaiting(opts: { inboundAddress: string; sendFromEmail?: string }): void;
   emailConnected(): void;
 
   // Telegram path

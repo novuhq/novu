@@ -29,7 +29,7 @@ export function EmailInboundAddressStep({
       status={deriveStepStatus(index, firstIncompleteStep)}
       sectionLabel={`${index}/${totalSteps} SETUP WHERE TO LISTEN`}
       title="Email address to talk to the agent"
-      description="Your agent is reachable via the email address, to receive and send emails. Configure custom provider and custom domain later in settings."
+      description="Unlike Slack or Telegram, email starts with you sending the first message. Your agent reads it and replies to the same inbox. Configure custom provider and custom domain later in settings."
       rightContent={<SharedInboundAddressField sharedInboundAddress={sharedInboundAddress} />}
     />
   );

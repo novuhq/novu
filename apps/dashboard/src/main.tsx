@@ -53,6 +53,7 @@ import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setu
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
 import { CliAuthPage } from './pages/cli-auth';
+import { ConnectClaimPage } from './pages/connect-claim';
 import { ContextsPage } from './pages/contexts';
 import { CreateContextPage } from './pages/create-context';
 import { CreateSubscriberPage } from './pages/create-subscriber';
@@ -85,12 +86,15 @@ import { AuthRoute, CatchAllRoute, DashboardRoute, ProtectedAuthRoute, RootRoute
 import { ConnectProtectedRoute } from './routes/connect-protected-route';
 import { OnboardingParentRoute } from './routes/onboarding';
 import { ProtectedRoute } from './routes/protected-route';
+import { captureAgentTemplateIdFromUrl } from './utils/agent-template-identity';
 import { ROUTES } from './utils/routes';
 import { initializeSentry } from './utils/sentry';
 import { overrideZodErrorMap } from './utils/validation';
 
 initializeSentry();
 overrideZodErrorMap();
+// Stash an incoming `?agentTemplateId=` before Clerk's auth redirects drop the query params.
+captureAgentTemplateIdFromUrl();
 
 const router = createBrowserRouter([
   {
@@ -104,6 +108,10 @@ const router = createBrowserRouter([
       {
         path: ROUTES.CLI_AUTH,
         element: <CliAuthPage />,
+      },
+      {
+        path: ROUTES.CONNECT_CLAIM,
+        element: <ConnectClaimPage />,
       },
       {
         // Public, unauthenticated mobile setup page for Telegram. Mounted outside

@@ -56,6 +56,7 @@ import { UpdateNotificationActionCommand } from '../inbox/usecases/update-notifi
 import { UpdateNotificationAction } from '../inbox/usecases/update-notification-action/update-notification-action.usecase';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
 import { ApiCommonResponses, ApiResponse } from '../shared/framework/response.decorator';
+import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import {
   GetSubscriberGlobalPreference,
@@ -202,6 +203,7 @@ export class SubscribersController {
     description: 'Subscriber already exists (when query param failIfExists=true)',
   })
   @SdkMethodName('create')
+  @KeylessAccessible()
   @RequirePermissions(PermissionsEnum.SUBSCRIBER_WRITE)
   async createSubscriber(
     @UserSession() user: UserSessionData,

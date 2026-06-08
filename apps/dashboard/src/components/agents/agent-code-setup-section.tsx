@@ -151,7 +151,7 @@ function getProviderSendDescription(providerId: string | undefined, agentName: s
     case ChatProviderIdEnum.WhatsAppBusiness:
       return `Send a message to your WhatsApp number to test the connection.`;
     case EmailProviderIdEnum.NovuAgent:
-      return `Send an email to your agent's configured address to test the connection.`;
+      return `Email starts with you sending the first message — your agent reads it and replies to the same inbox. Send from the email address registered in your Novu account.`;
     default:
       return `Send a message to your bot from the connected provider to test the connection.`;
   }

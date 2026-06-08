@@ -1,6 +1,4 @@
 import open from 'open';
-import { resolveAuth } from '../../wizard/auth/resolve-auth';
-import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { CONNECT_EVENTS } from '../analytics/events';
 import {
   type AgentRecord,
@@ -12,7 +10,9 @@ import {
 import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../api/client';
 import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
+import { type ResolvedConnectAuth, resolveConnectAuth } from '../auth/resolve-connect-auth';
 import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
+import { ConnectChannelBackError } from '../errors';
 import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
@@ -25,7 +25,7 @@ export interface ConnectPipelineInput {
   ui: ConnectUI;
   onboardingSessionId?: string;
   onTrack?: (event: string, data?: Record<string, unknown>) => void;
-  onIdentityResolved?: (user: NonNullable<ResolvedAuth['user']>) => void;
+  onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
 }
 
 export interface ConnectPipelineResult {
@@ -41,7 +41,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     await ui.showWelcome();
 
     ui.authStarted();
-    const auth = await resolveAuth(toWizardAuthOptions(options), {
+    const auth = await resolveConnectAuth(options, {
       onStatus: (m) => ui.authStatus(m),
       onDashboardUrl: (u) => ui.authDashboardUrl(u),
       name: 'novu-connect',
@@ -50,14 +50,21 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, sessionProps),
       onAuthFailed: (message) => track(CONNECT_EVENTS.AUTH_FAILED, { ...sessionProps, message }),
     });
-    track(CONNECT_EVENTS.AUTH_COMPLETED, { source: auth.source, region: options.region, ...sessionProps });
+    track(CONNECT_EVENTS.AUTH_COMPLETED, {
+      source: auth.source,
+      region: options.region,
+      keyless: auth.isKeyless,
+      ...sessionProps,
+    });
     ui.authCompleted(auth.environmentName ?? null);
 
     if (auth.user?.id) {
       input.onIdentityResolved?.(auth.user);
     }
 
-    const client = createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
+    const client = auth.isKeyless
+      ? createConnectApiClient({ apiUrl: auth.apiUrl, keylessApplicationIdentifier: auth.keylessApplicationIdentifier })
+      : createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
 
     ui.listingAgents();
     const existingAgents = await listAgents(client);
@@ -90,63 +97,95 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let dashboardRedirectChannel: ChannelChoice | null = null;
     let connectedIntegration: IntegrationRecord | null = null;
 
-    const channel: ChannelChoice = options.skipSlack ? 'skip' : (options.channel ?? (await ui.pickChannel()));
+    const isChannelPreset = Boolean(options.skipSlack || options.channel);
+    const allowChannelPickerBack = !isChannelPreset;
+    const presetChannel: ChannelChoice | undefined = options.skipSlack ? 'skip' : options.channel;
+    let channel: ChannelChoice = presetChannel ?? 'skip';
 
-    if (channel === 'skip') {
-      track(CONNECT_EVENTS.CHANNEL_SKIPPED, sessionProps);
-    } else {
-      track(CONNECT_EVENTS.CHANNEL_SELECTED, { channel, ...sessionProps });
-    }
+    while (true) {
+      if (!isChannelPreset) {
+        channel = await ui.pickChannel();
+      }
 
-    switch (channel) {
-      case 'skip':
-        ui.slackSkipped();
-        break;
-      case 'slack': {
-        const subscriberId = await ensureSubscriberForUser(client, auth);
-        const result = await connectSlackForAgent(client, agent, ui, options, auth.environmentId, subscriberId, track);
-        connectedIntegration = result.integration;
-        channelConnected = result.connected;
-        if (channelConnected) connectedChannel = 'slack';
-        break;
+      if (channel === 'skip') {
+        track(CONNECT_EVENTS.CHANNEL_SKIPPED, sessionProps);
+      } else {
+        track(CONNECT_EVENTS.CHANNEL_SELECTED, { channel, ...sessionProps });
       }
-      case 'telegram': {
-        const subscriberId = await ensureSubscriberForUser(client, auth);
-        const result = await connectTelegramForAgent(client, agent, ui, auth.environmentId, subscriberId, track);
-        connectedIntegration = result.integration;
-        channelConnected = result.connected;
-        if (channelConnected) connectedChannel = 'telegram';
-        break;
-      }
-      case 'email': {
-        const result = await connectEmailForAgent(client, agent, ui, track);
-        connectedIntegration = result.integration;
-        channelConnected = result.connected;
-        if (channelConnected) connectedChannel = 'email';
-        break;
-      }
-      case 'whatsapp':
-      case 'teams': {
-        const agentDetailsUrl = buildConnectAgentDetailsUrl({
-          connectDashboardUrl: options.connectDashboardUrl,
-          environmentSlug: auth.environmentSlug,
-          agentIdentifier: agent.identifier,
-          tab: 'integrations',
-        });
 
-        track(CONNECT_EVENTS.DASHBOARD_REDIRECT_OPENED, {
-          channel,
-          agent: agent.identifier,
-          ...sessionProps,
-        });
+      try {
+        switch (channel) {
+          case 'skip':
+            ui.slackSkipped();
+            break;
+          case 'slack': {
+            const subscriberId = await ensureSubscriberForUser(client, auth);
+            const result = await connectSlackForAgent(
+              client,
+              agent,
+              ui,
+              options,
+              auth.environmentId,
+              subscriberId,
+              track
+            );
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'slack';
+            break;
+          }
+          case 'telegram': {
+            const subscriberId = await ensureSubscriberForUser(client, auth);
+            const result = await connectTelegramForAgent(client, agent, ui, auth.environmentId, subscriberId, track);
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'telegram';
+            break;
+          }
+          case 'email': {
+            await ensureSubscriberForUser(client, auth);
+            const sendFromEmail = auth.user?.email?.trim() || undefined;
+            const result = await connectEmailForAgent(client, agent, ui, track, {
+              sendFromEmail,
+              canGoBack: allowChannelPickerBack,
+            });
+            connectedIntegration = result.integration;
+            channelConnected = result.connected;
+            if (channelConnected) connectedChannel = 'email';
+            break;
+          }
+          case 'whatsapp':
+          case 'teams': {
+            const agentDetailsUrl = buildConnectAgentDetailsUrl({
+              connectDashboardUrl: options.connectDashboardUrl,
+              environmentSlug: auth.environmentSlug,
+              agentIdentifier: agent.identifier,
+              tab: 'integrations',
+            });
 
-        await ui.awaitDashboardChannelOpen({ channel, agentDetailsUrl });
-        void open(agentDetailsUrl).catch(() => undefined);
-        dashboardRedirectChannel = channel;
+            track(CONNECT_EVENTS.DASHBOARD_REDIRECT_OPENED, {
+              channel,
+              agent: agent.identifier,
+              ...sessionProps,
+            });
+
+            await ui.awaitDashboardChannelOpen({ channel, agentDetailsUrl });
+            void open(agentDetailsUrl).catch(() => undefined);
+            dashboardRedirectChannel = channel;
+            break;
+          }
+          default:
+            throw new Error(`${channelDisplayName(channel)} is not supported in the connect CLI yet.`);
+        }
+
         break;
+      } catch (err) {
+        if (err instanceof ConnectChannelBackError && allowChannelPickerBack) {
+          continue;
+        }
+
+        throw err;
       }
-      default:
-        throw new Error(`${channelDisplayName(channel)} is not supported in the connect CLI yet.`);
     }
 
     if (channelConnected && connectedIntegration) {
@@ -277,7 +316,7 @@ async function generateAndPreviewAgent(
   }
 }
 
-async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedAuth): Promise<string> {
+async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedConnectAuth): Promise<string> {
   if (auth.user?.id) {
     const subscriberId = `connect:${auth.user.id}`;
     await upsertSubscriber(client, {
@@ -286,6 +325,13 @@ async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedA
       lastName: auth.user.lastName ?? undefined,
       email: auth.user.email ?? undefined,
     });
+
+    return subscriberId;
+  }
+
+  if (auth.isKeyless && auth.keylessApplicationIdentifier) {
+    const subscriberId = `connect-keyless:${auth.keylessApplicationIdentifier}`;
+    await upsertSubscriber(client, { subscriberId });
 
     return subscriberId;
   }
@@ -309,15 +355,4 @@ function describeError(err: unknown): string {
   if (err instanceof Error) return err.message;
 
   return String(err);
-}
-
-function toWizardAuthOptions(options: ConnectCommandOptions): WizardCommandOptions {
-  return {
-    secretKey: options.secretKey,
-    apiUrl: options.apiUrl,
-    dashboardUrl: options.dashboardUrl,
-    region: options.region,
-    yes: false,
-    ci: !!options.ci,
-  };
 }

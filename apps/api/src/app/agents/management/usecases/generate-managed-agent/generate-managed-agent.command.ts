@@ -37,4 +37,6 @@ export class GenerateManagedAgentCommand extends BaseCommand {
    * assigns this field directly on the command instance after `create(...)`.
    */
   signal?: AbortSignal;
+
+  clientIp?: string;
 }

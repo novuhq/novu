@@ -6,6 +6,7 @@ import { OnboardingProvisioningOverlay } from '@/components/auth/connect-provisi
 import { IS_HOSTNAME_SPLIT_ENABLED, IS_NOVU_CONNECT } from '@/config';
 import { isPublicAuthPath } from '@/utils/auth-routes';
 import { readPendingCliAuth, storePendingCliAuthFromPath } from '@/utils/cli-auth-pending';
+import { storePendingConnectClaimFromPath } from '@/utils/connect-claim-pending';
 import { buildConnectProvisionOrgListPath, isActiveConnectWorkspace, isConnectWorkspace } from '@/utils/connect';
 import { buildAbsoluteConnectUrl } from '@/utils/product-auth-urls';
 import { ROUTES } from '@/utils/routes';
@@ -179,6 +180,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // CliAuthPage never mounts here — `shouldBlockChildren` hides it while we redirect to the
     // org picker — so persist the device session before leaving `/cli/auth`.
     storePendingCliAuthFromPath(pathname, location.search);
+    storePendingConnectClaimFromPath(pathname, location.search);
 
     const pendingCliAuth = readPendingCliAuth();
     const orgListPath =

@@ -20,6 +20,7 @@ import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
 import { APP_IDS, isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import {
@@ -159,6 +160,10 @@ export function AgentsSetupPage() {
 
   const [searchParams] = useSearchParams();
   const appId = useMemo(() => resolveOnboardingAppId(searchParams), [searchParams]);
+  const agentTemplateId = useMemo(
+    () => readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM)),
+    [searchParams]
+  );
   const isConnectFlow = appId === APP_IDS.CONNECT;
   const isConnectHost = IS_NOVU_CONNECT || isConnectFlow;
   const pageTitle = isConnectHost ? 'Connect your agent to where work happens' : 'Connect your first agent';
@@ -370,6 +375,7 @@ export function AgentsSetupPage() {
               <ConnectAgentStep
                 onAgentCreated={handleAgentCreated}
                 isManagedEnabled={isManagedEnabled}
+                agentTemplateId={agentTemplateId}
                 simplifiedDemo
               />
             </div>

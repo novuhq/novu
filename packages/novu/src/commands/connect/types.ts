@@ -13,7 +13,7 @@ export interface ConnectCommandOptions {
   region: CloudRegionEnum;
   apiUrl: string;
   dashboardUrl: string;
-  /** Browser-auth UI for `novu connect` (e.g. connect.novu.co); distinct from `dashboardUrl`. */
+  /** Browser-auth UI for `novu connect` (e.g. dashboard.novu.co). Defaults to `dashboardUrl` per region. */
   connectDashboardUrl: string;
   /** Pre-fill the agent description, skipping the input screen. Enables non-interactive runs. */
   prompt?: string;

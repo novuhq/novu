@@ -45,6 +45,15 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _conversationId: conversationId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      type: ConversationActivityTypeEnum.MESSAGE,
+    });
+  }
+
   async createUserActivity(params: {
     identifier: string;
     conversationId: string;

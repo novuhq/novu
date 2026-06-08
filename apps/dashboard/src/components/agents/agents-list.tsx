@@ -15,6 +15,7 @@ import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
 import { CreateAgentDialog, CreateAgentForm } from '@/components/agents/create-agent-dialog';
+import { findAgentTemplateById } from '@/components/agents/create-agent-fields';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { ListNoResults } from '@/components/list-no-results';
 import { Button } from '@/components/primitives/button';
@@ -24,11 +25,17 @@ import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
+import { useAgentTemplates } from '@/hooks/use-agent-templates';
 import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCurrentApp } from '@/hooks/use-current-app';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
+import {
+  AGENT_TEMPLATE_ID_PARAM,
+  clearPersistedAgentTemplateId,
+  readActiveAgentTemplateId,
+} from '@/utils/agent-template-identity';
 import { APP_IDS } from '@/utils/apps';
 import { withAppId } from '@/utils/onboarding-redirect';
 import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
@@ -54,28 +61,51 @@ export function AgentsList() {
   const [before, setBefore] = useState<string | undefined>();
   const [limit, setLimit] = useState(12);
   const [createOpen, setCreateOpen] = useState(false);
-  const [initialCreateValues, setInitialCreateValues] = useState<{ name?: string; description?: string }>({});
+  const [initialCreateValues, setInitialCreateValues] = useState<{
+    name?: string;
+    description?: string;
+    prompt?: string;
+  }>({});
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const { templates: agentTemplates } = useAgentTemplates();
 
   // Allow external links (e.g. connect dashboard) to open the create dialog with prefilled values
-  // via `?create=1&name=...&description=...`. Consume the params once and strip them from the URL.
+  // via `?create=1&name=...&description=...`, or a Sanity-backed template via `?agentTemplateId=...`
+  // (also picked up from sessionStorage when it survived the auth flow). Consume once and strip the
+  // params from the URL.
   useEffect(() => {
-    if (searchParams.get('create') !== '1') return;
+    const hasCreate = searchParams.get('create') === '1';
+    const templateId = readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM));
 
-    const nextName = searchParams.get('name') ?? undefined;
-    const nextDescription = searchParams.get('description') ?? undefined;
+    if (!hasCreate && !templateId) return;
 
-    setInitialCreateValues({ name: nextName, description: nextDescription });
+    let nextName = searchParams.get('name') ?? undefined;
+    let nextDescription = searchParams.get('description') ?? undefined;
+    let nextPrompt: string | undefined;
+
+    if (templateId) {
+      const template = findAgentTemplateById(agentTemplates, templateId);
+      // Templates may still be loading — wait for the match before consuming the id.
+      if (!template) return;
+
+      nextName = nextName ?? template.name;
+      nextDescription = nextDescription ?? template.instructions;
+      nextPrompt = template.instructions;
+      clearPersistedAgentTemplateId();
+    }
+
+    setInitialCreateValues({ name: nextName, description: nextDescription, prompt: nextPrompt });
     setCreateOpen(true);
 
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete('create');
     nextParams.delete('name');
     nextParams.delete('description');
+    nextParams.delete(AGENT_TEMPLATE_ID_PARAM);
     setSearchParams(nextParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [searchParams, setSearchParams, agentTemplates]);
 
   const handleCreateOpenChange = useCallback((next: boolean) => {
     setCreateOpen(next);
@@ -87,6 +117,7 @@ export function AgentsList() {
 
   const memoizedInitialName = useMemo(() => initialCreateValues.name, [initialCreateValues.name]);
   const memoizedInitialDescription = useMemo(() => initialCreateValues.description, [initialCreateValues.description]);
+  const memoizedInitialPrompt = useMemo(() => initialCreateValues.prompt, [initialCreateValues.prompt]);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -376,6 +407,7 @@ export function AgentsList() {
         isSubmitting={isCreatingAgent}
         initialName={memoizedInitialName}
         initialInstructions={memoizedInitialDescription}
+        initialPrompt={memoizedInitialPrompt}
       />
 
       <DeleteAgentDialog

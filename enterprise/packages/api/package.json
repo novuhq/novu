@@ -26,7 +26,7 @@
     "sns-validator": "^0.3.5"
   },
   "devDependencies": {
-    "@nestjs/testing": "11.1.21",
+    "@nestjs/testing": "11.1.24",
     "@types/chai": "^4.2.11",
     "@types/mocha": "^10.0.8",
     "@types/node": "^22.0.0",
@@ -40,7 +40,7 @@
     "typescript": "5.6.2"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.21",
-    "@nestjs/core": "11.1.21"
+    "@nestjs/common": "11.1.24",
+    "@nestjs/core": "11.1.24"
   }
 }

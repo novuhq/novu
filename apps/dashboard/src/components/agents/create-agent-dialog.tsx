@@ -21,6 +21,7 @@ import {
 } from '@/components/primitives/segmented-control';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentTemplates } from '@/hooks/use-agent-templates';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -49,7 +50,6 @@ import {
   getConnectorIdForProviderId,
 } from './connectors/connector-options';
 import {
-  AGENT_TEMPLATES,
   type AgentTemplate,
   buildManagedIntegrationCredentials,
   buildVerifyCredentialsPayload,
@@ -78,6 +78,8 @@ type CreateAgentDialogProps = {
   isSubmitting: boolean;
   initialName?: string;
   initialInstructions?: string;
+  /** When provided, the dialog opens in prompt mode with the textarea prefilled. */
+  initialPrompt?: string;
 };
 
 const DEFAULT_CONNECTOR_ID: ConnectorId = 'claude';
@@ -129,6 +131,21 @@ function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): Conne
   return 'idle';
 }
 
+function resolveInitialGenerationMode({
+  initialName,
+  initialInstructions,
+  initialPrompt,
+}: {
+  initialName?: string;
+  initialInstructions?: string;
+  initialPrompt?: string;
+}): AgentGenerationMode {
+  if (initialPrompt) return 'prompt';
+  if (initialName || initialInstructions) return 'manual';
+
+  return 'prompt';
+}
+
 export function CreateAgentDialog({
   open,
   onOpenChange,
@@ -136,11 +153,13 @@ export function CreateAgentDialog({
   isSubmitting,
   initialName,
   initialInstructions,
+  initialPrompt,
 }: CreateAgentDialogProps) {
   const isManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MANAGED_AGENT_RUNTIME_ENABLED, false);
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const { integrations } = useFetchIntegrations();
+  const { templates: agentTemplates } = useAgentTemplates();
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
@@ -148,12 +167,12 @@ export function CreateAgentDialog({
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<string | undefined>(undefined);
   const [credentialsPanelVisible, setCredentialsPanelVisible] = useState(false);
   const [credentialsPanelExpanded, setCredentialsPanelExpanded] = useState(true);
-  // If the caller pre-populated a name or instructions, default to manual mode so the form is
-  // already filled out. Otherwise show the prompt textarea by default.
+  // A caller-provided prompt opens in prompt mode; a pre-populated name/instructions defaults to
+  // manual mode so the form is already filled out. Otherwise show the prompt textarea by default.
   const [generationMode, setGenerationMode] = useState<AgentGenerationMode>(() =>
-    initialName || initialInstructions ? 'manual' : 'prompt'
+    resolveInitialGenerationMode({ initialName, initialInstructions, initialPrompt })
   );
-  const [prompt, setPrompt] = useState('');
+  const [prompt, setPrompt] = useState(initialPrompt ?? '');
   const [promptError, setPromptError] = useState<string | undefined>(undefined);
   const promptTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   // Keeps the dialog in a busy state for the whole submit lifecycle — across the LLM call (prompt
@@ -319,10 +338,10 @@ export function CreateAgentDialog({
     setInstructions(initialInstructions ?? '');
     setIsIdentifierTouched(false);
     setErrors({});
-    setGenerationMode(initialName || initialInstructions ? 'manual' : 'prompt');
-    setPrompt('');
+    setGenerationMode(resolveInitialGenerationMode({ initialName, initialInstructions, initialPrompt }));
+    setPrompt(initialPrompt ?? '');
     setPromptError(undefined);
-  }, [open, initialName, initialInstructions]);
+  }, [open, initialName, initialInstructions, initialPrompt]);
 
   const reset = useCallback(() => {
     setConnectorId(DEFAULT_CONNECTOR_ID);
@@ -705,8 +724,8 @@ export function CreateAgentDialog({
 
         <div className="border-stroke-soft border-y" />
 
-        <form onSubmit={handleSubmit}>
-          <div className="bg-background flex max-h-[70vh] flex-col gap-5 overflow-y-auto p-4">
+        <form onSubmit={handleSubmit} className="min-w-0">
+          <div className="bg-background flex min-w-0 max-h-[70vh] flex-col gap-5 overflow-y-auto p-4">
             <div className="flex flex-col gap-2">
               <span className="text-text-strong text-label-xs font-medium">Where do you want your agent?</span>
               <ConnectorIntegrationDropdown
@@ -850,7 +869,7 @@ export function CreateAgentDialog({
 
                 {generationMode === 'prompt' && (
                   <AgentSuggestionPills
-                    suggestions={AGENT_TEMPLATES}
+                    suggestions={agentTemplates}
                     onSelect={handleSelectAiSuggestion}
                     disabled={isSubmitBusy}
                   />
