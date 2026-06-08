@@ -59,6 +59,7 @@ import { EnvironmentResponseDto } from '../../../environments-v1/dtos/environmen
 import { GenerateUniqueApiKey } from '../../../environments-v1/usecases/generate-unique-api-key/generate-unique-api-key.usecase';
 import { CreateNovuIntegrationsCommand } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.command';
 import { CreateNovuIntegrations } from '../../../integrations/usecases/create-novu-integrations/create-novu-integrations.usecase';
+import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { GetOrganizationSettingsCommand } from '../../../organization/usecases/get-organization-settings/get-organization-settings.command';
 import { GetOrganizationSettings } from '../../../organization/usecases/get-organization-settings/get-organization-settings.usecase';
 import { ScheduleDto } from '../../../shared/dtos/schedule';
@@ -72,13 +73,12 @@ import {
   KEYLESS_WORKFLOW_IDENTIFIER,
 } from '../../utils';
 import { validateContextHmacEncryption, validateHmacEncryption } from '../../utils/encryption';
+import { isKeylessEnvironmentExpired } from '../../utils/keyless-expiry';
 import { NotificationsCountCommand } from '../notifications-count/notifications-count.command';
 import { NotificationsCount } from '../notifications-count/notifications-count.usecase';
 import { UpdatePreferencesCommand } from '../update-preferences/update-preferences.command';
 import { UpdatePreferences } from '../update-preferences/update-preferences.usecase';
 import { SessionCommand } from './session.command';
-import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
-import { isKeylessEnvironmentExpired } from '../../utils/keyless-expiry';
 
 const ALLOWED_ORIGINS_REGEX = new RegExp(process.env.FRONT_BASE_URL || '');
 const MAX_NOTIFICATIONS_COUNT = 100;
@@ -409,23 +409,14 @@ export class Session {
     return subscriber;
   }
 
-  private async getApplicationIdentifier(
-    requestData: SubscriberSessionRequestDto,
-    clientIp?: string
-  ): Promise<string> {
+  private async getApplicationIdentifier(requestData: SubscriberSessionRequestDto, clientIp?: string): Promise<string> {
     const isKeylessInitialize = !requestData.applicationIdentifier;
     const isKeyless = requestData.applicationIdentifier?.includes(this.KEYLESS_ENVIRONMENT_PREFIX);
     const isKeylessExpired = isKeyless ? isKeylessEnvironmentExpired(requestData.applicationIdentifier) : false;
 
     if (isKeylessInitialize || isKeylessExpired) {
-      const decision = await this.keylessAbuseGuard.reserveEnvCreation(clientIp);
-
-      if (decision.action === 'reuse') {
-        return decision.applicationIdentifier;
-      }
-
+      await this.keylessAbuseGuard.assertEnvCreationAllowed(clientIp);
       const environment = await this.processKeyless();
-      await this.keylessAbuseGuard.rememberLastEnv(clientIp, environment.identifier);
 
       return environment.identifier;
     }
