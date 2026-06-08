@@ -1,7 +1,7 @@
+import { spawn } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const API_SERVICE = 'api.novu';
@@ -226,7 +226,7 @@ function resolveTunnelUrl(serviceName) {
 
 function watchTunnel(serviceName) {
   if (!isNgrokMode()) {
-    console.error('[portless-ngrok] ngrok mode is off. Use: pnpm dev:portless:ngrok');
+    console.error('[portless-ngrok] ngrok mode is off. Enable in pnpm dev:config or .novu-dev.local.json');
     process.exit(1);
   }
 

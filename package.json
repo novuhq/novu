@@ -20,7 +20,7 @@
     "commit": "cz",
     "dev-environment-setup": "./scripts/dev-environment-setup.sh",
     "dev:portless": "node scripts/mprocs-dev.mjs",
-    "dev:portless:ngrok": "cross-env PORTLESS_NGROK=1 API_PORTLESS_SCRIPT=start:portless:ngrok node scripts/mprocs-dev.mjs",
+    "dev:config": "node scripts/novu-dev-config.mjs",
     "docker:build": "pnpm -r --if-present --parallel docker:build",
     "g:module": "hygen module new --name=$pnpm_config_name",
     "g:usecase": "hygen usecase new --name=$pnpm_config_name --module=$pnpm_config_module",

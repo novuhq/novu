@@ -28,4 +28,11 @@ procs:
     shell: pnpm --filter @novu/react build:watch
     autostart: false
 
+  "------":
+    shell: sleep infinity
+    autostart: false
+  "DEV CONFIG":
+    shell: node scripts/novu-dev-config.mjs
+    autostart: false
+
 scrollback: 100000

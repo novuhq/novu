@@ -1,36 +1,33 @@
 #!/usr/bin/env node
 /**
- * Run mprocs with optional ngrok-only procs appended to mprocs.yaml.
+ * Run mprocs with ngrok settings from .novu-dev.local.json (and env overrides).
  *
  * Usage: node scripts/mprocs-dev.mjs
- * Ngrok: PORTLESS_NGROK=1 node scripts/mprocs-dev.mjs
  */
 import { spawn } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { runWizard } from './novu-dev-config.mjs';
+import { configExists, loadConfig, resolveNgrokEnv } from './novu-dev-local.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const baseConfigPath = join(root, 'mprocs.yaml');
 
-const NGROK_PROCS = `
-  "------":
-    shell: sleep infinity
-    autostart: false
+const NGROK_URL_PROC = `
   "API PUBLIC URL":
     shell: node scripts/portless-ngrok.mjs watch api.novu
 `;
 
-function buildConfigPath() {
+function buildConfigPath(ngrokEnabled) {
   const base = readFileSync(baseConfigPath, 'utf8');
-  const ngrok = process.env.PORTLESS_NGROK === '1';
 
-  if (!ngrok) {
+  if (!ngrokEnabled) {
     return baseConfigPath;
   }
 
-  const merged = base.replace(/^scrollback:/m, `${NGROK_PROCS}scrollback:`);
+  const merged = base.replace(/^scrollback:/m, `${NGROK_URL_PROC}scrollback:`);
   const generatedPath = join(tmpdir(), 'novu-mprocs-ngrok.yaml');
 
   writeFileSync(generatedPath, merged);
@@ -38,8 +35,33 @@ function buildConfigPath() {
   return generatedPath;
 }
 
-function main() {
-  const configPath = buildConfigPath();
+function applyResolvedEnv(resolved) {
+  process.env.API_PORTLESS_SCRIPT = resolved.API_PORTLESS_SCRIPT;
+
+  if (resolved.PORTLESS_NGROK) {
+    process.env.PORTLESS_NGROK = resolved.PORTLESS_NGROK;
+  } else {
+    delete process.env.PORTLESS_NGROK;
+  }
+
+  if (resolved.PORTLESS_NGROK_DOMAIN) {
+    process.env.PORTLESS_NGROK_DOMAIN = resolved.PORTLESS_NGROK_DOMAIN;
+  } else {
+    delete process.env.PORTLESS_NGROK_DOMAIN;
+  }
+}
+
+async function main() {
+  if (!configExists() && process.stdin.isTTY) {
+    await runWizard({ isFirstRun: true });
+  }
+
+  const config = loadConfig();
+  const { enabled, resolved } = resolveNgrokEnv(config);
+
+  applyResolvedEnv(resolved);
+
+  const configPath = buildConfigPath(enabled);
   const child = spawn('pnpm', ['exec', 'mprocs', '-c', configPath], {
     cwd: root,
     stdio: 'inherit',
@@ -62,4 +84,7 @@ function main() {
   }
 }
 
-main();
+main().catch((err) => {
+  console.error('[mprocs-dev] failed:', err.message);
+  process.exit(1);
+});
