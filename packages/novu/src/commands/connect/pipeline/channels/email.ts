@@ -18,7 +18,7 @@ export async function connectEmailForAgent(
   ui.addingEmailIntegration();
 
   const link = await addAgentEmailIntegration(client, agent.identifier);
-  const inboundAddress = link.integration?.sharedInboundAddress;
+  const inboundAddress = link.integration.sharedInboundAddress;
   if (!inboundAddress) {
     throw new Error(
       'The server did not return an inbound address for the email integration. ' +
@@ -29,8 +29,8 @@ export async function connectEmailForAgent(
   const integration: IntegrationRecord = {
     _id: link.integration._id,
     identifier: link.integration.identifier,
-    name: link.integration.name ?? 'Novu Email',
-    providerId: link.integration.providerId ?? 'novu-email-agent',
+    name: link.integration.name,
+    providerId: link.integration.providerId,
     channel: 'email',
     active: link.integration.active !== false,
   };

@@ -11,7 +11,3 @@ export function findActiveDemoAgentIntegration(integrations: IntegrationRecord[]
       integration.active !== false
   );
 }
-
-export function hasActiveDemoAgentIntegration(integrations: IntegrationRecord[]): boolean {
-  return findActiveDemoAgentIntegration(integrations) !== undefined;
-}

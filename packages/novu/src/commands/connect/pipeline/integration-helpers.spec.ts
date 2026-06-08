@@ -19,7 +19,7 @@ describe('pollForAgentLinkConnected', () => {
     vi.clearAllMocks();
   });
 
-  it('detects connectedAt on the nested integration link shape returned by the API', async () => {
+  it('detects connectedAt on the agent integration link', async () => {
     listAgentIntegrations
       .mockResolvedValueOnce([
         {

@@ -43,19 +43,11 @@ export interface AgentIntegrationEmbedded {
   defaultSenderName?: string;
 }
 
-/** Agent–integration link row returned by GET/POST `/v1/agents/:identifier/integrations`. */
 export interface AgentIntegrationLink {
   _id: string;
-  _agentId?: string;
   integration: AgentIntegrationEmbedded;
-  _environmentId?: string;
-  _organizationId?: string;
   connectedAt?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
 }
-
-export type AgentEmailIntegrationDetail = AgentIntegrationLink;
 
 export async function listAgents(client: ConnectApiClient): Promise<AgentRecord[]> {
   const res = await client.axios.get<{ data?: AgentRecord[] } | AgentRecord[]>('/v1/agents');
@@ -124,14 +116,14 @@ export async function addAgentIntegration(
 export async function addAgentEmailIntegration(
   client: ConnectApiClient,
   agentIdentifier: string
-): Promise<AgentEmailIntegrationDetail> {
-  const res = await client.axios.post<{ data?: AgentEmailIntegrationDetail } | AgentEmailIntegrationDetail>(
+): Promise<AgentIntegrationLink> {
+  const res = await client.axios.post<{ data?: AgentIntegrationLink } | AgentIntegrationLink>(
     `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations`,
     { providerId: 'novu-email-agent' }
   );
   const body = res.data;
 
-  return 'data' in body && body.data ? body.data : (body as AgentEmailIntegrationDetail);
+  return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 }
 
 export async function listAgentIntegrations(

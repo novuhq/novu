@@ -1,6 +1,6 @@
 import { createNovuAxios, extractNovuApiMessage } from '../../shared/novu-http';
 import { createConnectApiClient } from './client';
-import { hasActiveDemoAgentIntegration } from './demo-agent-integration';
+import { findActiveDemoAgentIntegration } from './demo-agent-integration';
 import { listIntegrations } from './integrations';
 
 const KEYLESS_ENVIRONMENT_PREFIX = 'pk_keyless_';
@@ -113,7 +113,7 @@ async function isKeylessEnvironmentReadyForConnect(apiUrl: string, applicationId
   const client = createConnectApiClient({ apiUrl, keylessApplicationIdentifier: applicationIdentifier });
   const integrations = await listIntegrations(client);
 
-  return hasActiveDemoAgentIntegration(integrations);
+  return findActiveDemoAgentIntegration(integrations) != null;
 }
 
 export function isKeylessIdentifier(value: string | undefined | null): boolean {

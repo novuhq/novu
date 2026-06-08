@@ -30,11 +30,9 @@ export async function resolveConnectAuth(
   const config = new ConfigService();
   const stored = config.getValue(KEYLESS_CONFIG_KEY);
 
-  if (stored) {
-    resolveOptions.onStatus?.('Restoring your keyless workspace…');
-  } else {
-    resolveOptions.onStatus?.('Setting up a temporary keyless workspace…');
-  }
+  resolveOptions.onStatus?.(
+    stored ? 'Restoring your keyless workspace…' : 'Setting up a temporary keyless workspace…'
+  );
 
   const session = await bootstrapKeylessSession(options.apiUrl, stored);
 

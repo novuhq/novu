@@ -1,7 +1,7 @@
 import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { describe, expect, it } from 'vitest';
 import type { IntegrationRecord } from './integrations';
-import { findActiveDemoAgentIntegration, hasActiveDemoAgentIntegration } from './demo-agent-integration';
+import { findActiveDemoAgentIntegration } from './demo-agent-integration';
 
 function demoIntegration(): IntegrationRecord {
   return {
@@ -14,15 +14,12 @@ function demoIntegration(): IntegrationRecord {
   };
 }
 
-describe('demo agent integration helpers', () => {
-  it('finds an active NovuAnthropic agent integration', () => {
-    const integrations = [demoIntegration()];
-
-    expect(findActiveDemoAgentIntegration(integrations)?.identifier).toBe('novu-anthropic');
-    expect(hasActiveDemoAgentIntegration(integrations)).toBe(true);
+describe('findActiveDemoAgentIntegration', () => {
+  it('returns an active NovuAnthropic agent integration', () => {
+    expect(findActiveDemoAgentIntegration([demoIntegration()])?.identifier).toBe('novu-anthropic');
   });
 
-  it('ignores inactive or non-demo integrations', () => {
+  it('returns undefined for inactive or non-demo integrations', () => {
     const integrations = [
       { ...demoIntegration(), active: false },
       { ...demoIntegration(), providerId: AgentRuntimeProviderIdEnum.Anthropic },
@@ -30,6 +27,5 @@ describe('demo agent integration helpers', () => {
     ];
 
     expect(findActiveDemoAgentIntegration(integrations)).toBeUndefined();
-    expect(hasActiveDemoAgentIntegration(integrations)).toBe(false);
   });
 });
