@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   BulkCreateExecutionDetails,
   CreateExecutionDetails,
@@ -55,7 +55,7 @@ export class StoreSubscriberJobs {
   }
 
   private async emitStepCreatedTraces(storedJobs: JobEntity[]): Promise<void> {
-    await Promise.all(
+    const results = await Promise.allSettled(
       storedJobs.map((job) =>
         this.createExecutionDetails.execute(
           CreateExecutionDetailsCommand.create({
@@ -69,5 +69,14 @@ export class StoreSubscriberJobs {
         )
       )
     );
+
+    results.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        Logger.error(
+          { err: result.reason, jobId: storedJobs[index]._id },
+          'Failed to emit step_created trace'
+        );
+      }
+    });
   }
 }

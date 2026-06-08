@@ -175,4 +175,21 @@ describe('StoreSubscriberJobs', () => {
     const addJobArg = addJob.execute.getCall(0).args[0];
     expect(addJobArg.jobId).to.equal('job_1');
   });
+
+  it('still calls addJob when step_created trace emission fails', async () => {
+    const job = buildJobEntity();
+    jobRepository.storeJobs.resolves([job]);
+    createExecutionDetails.execute.rejects(new Error('trace write failed'));
+
+    await usecase.execute({
+      environmentId: 'env_1',
+      organizationId: 'org_1',
+      userId: 'user_1',
+      jobs: [job],
+    } as never);
+
+    expect(addJob.execute.calledOnce).to.be.true;
+    const addJobArg = addJob.execute.getCall(0).args[0];
+    expect(addJobArg.jobId).to.equal('job_1');
+  });
 });
