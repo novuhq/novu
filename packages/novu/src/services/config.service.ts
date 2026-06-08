@@ -1,9 +1,10 @@
 import { UserSessionData } from '@novu/shared';
 import Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
+import { type KeylessConfigKey } from './keyless-config';
 
 type OriginPort = number;
-type ConfigKey = 'token' | 'anonymousId' | 'connectKeylessApplicationIdentifier' | `tunnelUrl-${OriginPort}`;
+type ConfigKey = 'token' | 'anonymousId' | KeylessConfigKey | `tunnelUrl-${OriginPort}`;
 
 export class ConfigService {
   private _config: Configstore;

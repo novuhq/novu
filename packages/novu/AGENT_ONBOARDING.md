@@ -10,30 +10,9 @@ Do not wire Novu into the user's codebase. This flow only creates a hosted agent
 
 1. Ask the user which **channel** they want, and collect channel‑specific inputs.
 2. Infer the agent's purpose from the project and confirm it with the user.
-3. Run `novu connect` non‑interactively (keyless).
+3. Run `npx novu connect` non‑interactively (keyless).
 4. Watch the output and hand the user the channel‑specific next step (authorize link, inbox address, or dashboard link).
 5. Report success and explain the demo limit → sign‑up/claim.
-
----
-
-## Prerequisites (one‑time)
-
-This is the pre‑npm flow, so you invoke the CLI by its **full path** from the built output.
-
-1. Build the CLI from the repo root:
-
-```bash
-pnpm --filter novu build
-```
-
-2. Resolve the absolute repo root (the directory that contains `packages/novu`) and set the entry path you will use for every command below:
-
-```bash
-NOVU_REPO=~/projects/novu
-NOVU_CLI="$NOVU_REPO/packages/novu/dist/src/index.js"
-```
-
-> Assume the Novu API/stack is already running and configured for keyless. This guide targets the local stack via `--region local`. When the CLI ships to npm, every `node "$NOVU_CLI" connect …` below becomes simply `npx novu connect …`.
 
 ---
 
@@ -47,7 +26,7 @@ NOVU_CLI="$NOVU_REPO/packages/novu/dist/src/index.js"
 | `email` | Nothing up front. The CLI prints an inbound email address; the user sends one email to it. | Yes (with one email) |
 | `whatsapp` | Finish setup in the Novu dashboard — the CLI prints a dashboard link to open. | Partial (dashboard) |
 | `teams` | Finish setup in the Novu dashboard — the CLI prints a dashboard link to open. | Partial (dashboard) |
-| `telegram` | **Not supported through this agent flow** — Telegram setup is interactive (QR scans) and the non‑interactive CLI rejects it. Tell the user to either pick another channel, or run `node "$NOVU_CLI" connect "<description>" --region local --channel telegram` themselves (without `--ci`) and follow the prompts. | No |
+| `telegram` | **Not supported through this agent flow** — Telegram setup is interactive (QR scans) and the non‑interactive CLI rejects it. Tell the user to either pick another channel, or run `npx novu connect "<description>" --channel telegram` themselves (without `--ci`) and follow the prompts. | No |
 | `skip` | Create the agent only, connect a channel later. | n/a |
 
 Channel‑specific inputs to collect **after** they choose:
@@ -87,7 +66,7 @@ The agent may only use MCP servers from this catalog — match by **id**. These 
 - **communication:** `slack`, `intercom`, `campfire`, `circleback`, `fathom`, `fellow-ai`, `fireflies`, `gmail`, `grain`, `guru`, `krisp`, `lorikeet`, `otter-ai`, `pylon`, `read-ai`, `send`, `superhuman-mail`, `tldv`, `unthread`, `zoho-desk`, `zoom-for-claude`
 - **data:** `amplitude`, `airtable`, `mixpanel`, `neon`, `supabase`, `bigdata-com`, `cb-insights`, `cdata-connect-ai`, `consensus`, `contentsquare`, `coupler-io`, `enterpret`, `exa`, `google-cloud-bigquery`, `monte-carlo`, `motherduck`, `motion-creative-analytics`, `omni-analytics`, `orion-by-gravity`, `polar-analytics`, `posthog`, `scholar-gateway`, `scite`, `sprouts-data-intelligence`, `supermetrics-marketing-analytics`, `tavily`, `thoughtspot-spotter`, `windsor-ai`
 - **design:** `canva`, `figma`, `adobe-for-creativity`, `biorender`, `cloudinary`, `descript`, `eraser`, `gamma`, `lucid`, `magic-patterns`, `miro`, `splice`, `three-js-3d-viewer`, `trimble-sketchup`, `webflow`, `wix`
-- **financial-services:** `stripe`, `brex`, `plaid`, `square`, `aiera`, `airwallex-developer`, `carta`, `chronograph`, `coindesk`, `d-b-risk-analytics`, `daloopa`, `datasite`, `digits`, `factset-ai-ready-data`, `fiscal-ai`, `fmp`, `guidepoint`, `gusto`, `harmonic`, `ibisworld`, `ice-data-services`, `intuit-credit-karma`, `intuit-turbotax`, `lseg`, `lunarcrush`, `mercury`, `moodys`, `morningstar`, `msci`, `mt-newswires`, `paypal`, `pitchbook-premium`, `privacy-com`, `quartr`, `ramp`, `razorpay`, `rillet`, `s-p-global`, `third-bridge`, `tropic`, `verisk-underwriting-intelligence`, `xero`, `yardi-virtuoso`, `zocks`, `zoho-books`
+- **financial-services:** `stripe`, `brex`, `plaid`, `square`, `aiera`, `airwallex-developer`, `carta`, `chronograph`, `coindesk`, `d-b-risk-analytics`, `daloopa`, `datasite`, `digits`, `factset-ai-ready-data`, `fiscal-ai`, `fmp`, `guidepoint`, `gusto`, `harmonic`, `ibisworld`, `ice-data-services`, `intuit-credit-karma`, `intuit-turbotax`, `lseg`, `lunarcrush`, `mercury`, `moodys`, `msci`, `mt-newswires`, `paypal`, `pitchbook-premium`, `privacy-com`, `quartr`, `ramp`, `razorpay`, `rillet`, `s-p-global`, `third-bridge`, `tropic`, `verisk-underwriting-intelligence`, `xero`, `yardi-virtuoso`, `zocks`, `zoho-books`
 - **health-and-wellness:** `adisinsight`, `medidata`, `owkin`, `synapse-org`, `synthesize-bio`
 - **productivity:** `linear`, `atlassian-rovo`, `notion`, `asana`, `adobe-experience-manager`, `box`, `dropbox`, `google-drive`, `base44`, `calendly`, `clickup`, `craft`, `day-ai`, `devrev`, `docuseal`, `docusign`, `dovetail`, `egnyte`, `era-context`, `euler`, `google-calendar`, `granola`, `ifttt`, `imanage-work`, `ironclad-contracts`, `jotform`, `klarity`, `lumin`, `make`, `mem`, `microsoft-365`, `monday-com`, `netdocuments`, `pandadoc`, `process-street`, `sanity`, `signnow`, `todoist`, `wordpress-com`, `zapier`, `zoho-projects`
 - **sales-and-marketing:** `ahrefs`, `attio`, `hubspot`, `adobe-journey-optimizer`, `adobe-marketing-agent`, `airops`, `apollo-io`, `aura`, `bitly`, `clarify`, `clay`, `close`, `common-room`, `crossbeam`, `g2`, `indeed`, `intuit-mailchimp`, `klaviyo`, `local-falcon`, `lusha`, `mailerlite`, `metaview`, `outreach`, `peec-ai`, `phoenix-by-hg-insights`, `quo`, `semrush`, `shopify`, `similarweb`, `surveymonkey`, `sybill`, `vibe-prospecting`, `workable`, `zoho-crm`, `zoominfo`
@@ -97,14 +76,13 @@ The agent may only use MCP servers from this catalog — match by **id**. These 
 
 ---
 
-## Step 3 — Run `novu connect` (keyless, non‑interactive)
+## Step 3 — Run `npx novu connect` (keyless, non‑interactive)
 
 Run the command **streamed / in the background** so you can read its output live (Step 4 depends on this). Keyless is the default — do **not** pass `--secret-key`. Substitute the channel the user picked.
 
 ```bash
-node "$NOVU_CLI" connect "<CONFIRMED AGENT DESCRIPTION>" \
+npx novu connect "<CONFIRMED AGENT DESCRIPTION>" \
   --ci \
-  --region local \
   --channel <slack|email|whatsapp|teams|skip>
 ```
 
@@ -112,6 +90,7 @@ node "$NOVU_CLI" connect "<CONFIRMED AGENT DESCRIPTION>" \
 - `--ci` forces non‑interactive mode (no prompts, no TUI). Do **not** use `--ci` for `telegram` (it is rejected) — telegram must be run interactively by the user.
 - The positional description is **required** in non‑interactive mode.
 - Default runtime is the **demo** Claude runtime (no key). For **BYOK**, append: `--runtime claude --anthropic-api-key "sk-ant-..."`.
+- Default region is **US** Novu Cloud. Pass `--region eu`, `--region staging`, or `--region local` only when the user explicitly targets another environment.
 - **Transient Slack‑app‑creation failure:** for `slack`, if the run fails with `Failed to create Slack app: …` (Slack's app‑create can be slow on a cold first call), **silently re‑run the exact same command once** before reporting anything to the user — the step is safe to repeat. Only surface an error if the second attempt also fails.
 
 ---
@@ -134,7 +113,7 @@ Watch stdout and act based on the channel the user picked:
   → Your agent's inbound address: <address>
   ```
 
-  Give the user that address and ask them to send any email to it. The CLI polls **for 5 minutes** and completes once the email arrives; on timeout, re‑run after they've sent it. (Requires `NOVU_AGENT_SHARED_INBOUND_DOMAIN` on the API.)
+  Give the user that address and ask them to send any email to it. The CLI polls **for 5 minutes** and completes once the email arrives; on timeout, re‑run after they've sent it.
 
 - **whatsapp / teams** — The CLI prints a Novu Connect dashboard link and exits:
 
@@ -186,7 +165,7 @@ On failure (non‑zero exit, or a line starting with `✗`), surface the error m
 |---|---|
 | `connect "<description>"` | Positional agent description (required in `--ci`). |
 | `--ci` | Non‑interactive mode (omit for `telegram`). |
-| `--region local` | Target the local stack (drop / change for other environments). |
+| `--region <us\|eu\|staging\|local>` | Target environment (default: `us` / Novu Cloud). |
 | `--channel <slack\|email\|whatsapp\|teams\|telegram\|skip>` | Which channel to connect. |
 | `--slack-config-token <xoxe.xoxp-…>` | Create the Slack app headlessly (slack only). |
 | `--runtime claude --anthropic-api-key <sk-ant-…>` | Optional BYOK Claude runtime (default is the shared demo runtime). |
@@ -199,3 +178,4 @@ On failure (non‑zero exit, or a line starting with `✗`), surface the error m
 - **One run = one new agent + one channel.** Re‑running `connect` creates another agent; there's no "add a channel to the existing agent" in this non‑interactive flow yet.
 - **Channel support is uneven headlessly:** `slack` and `email` complete with one user action; `whatsapp`/`teams` finish in the dashboard; `telegram` is interactive‑only (QR) and not usable through this agent flow.
 - Keyless data is temporary until the user claims it via the in‑channel sign‑up link.
+- The CLI stores keyless credentials **per API URL**, so switching `--region` or `--api-url` between runs does not require clearing `~/.config/configstore/novu-cli.json`.
