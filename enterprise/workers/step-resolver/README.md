@@ -158,9 +158,9 @@ pnpm run namespace:create:production
 pnpm run namespace:create:production-eu
 ```
 
-2. Add the `eu.step-resolver.novu.co` custom domain in the Cloudflare dashboard (same account as US).
+1. Add the `eu.step-resolver.novu.co` custom domain in the Cloudflare dashboard (same account as US).
 
-3. Enable Regional Services for the EU hostname (requires Data Localization Suite on the account):
+1. Enable Regional Services for the EU hostname (requires Data Localization Suite on the account):
 
 ```bash
 export CLOUDFLARE_ZONE_ID="<novu.co zone id>"
@@ -168,7 +168,7 @@ export STEP_RESOLVER_CF_API_TOKEN="<token with Zone:Edit + DLS permissions>"
 pnpm run regional-services:production-eu
 ```
 
-4. Deploy dispatch workers:
+1. Deploy dispatch workers:
 
 ```bash
 pnpm run deploy:staging
@@ -176,7 +176,7 @@ pnpm run deploy:production
 pnpm run deploy:production-eu
 ```
 
-5. Set HMAC secrets per environment (must match the corresponding API/worker stack):
+1. Set HMAC secrets per environment (must match the corresponding API/worker stack):
 
 ```bash
 pnpm run secret:staging

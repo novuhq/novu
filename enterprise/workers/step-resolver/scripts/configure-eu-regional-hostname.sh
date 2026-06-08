@@ -22,11 +22,18 @@ trap 'rm -f "$response_file"' EXIT
 
 echo "Configuring Regional Services for ${EU_HOSTNAME} (region_key=${REGION_KEY})..."
 
+request_body="$(EU_HOSTNAME="$EU_HOSTNAME" REGION_KEY="$REGION_KEY" node -e "
+  console.log(JSON.stringify({
+    hostname: process.env.EU_HOSTNAME,
+    region_key: process.env.REGION_KEY,
+  }));
+")"
+
 http_code="$(curl -sS -o "$response_file" -w '%{http_code}' -X POST \
   "https://api.cloudflare.com/client/v4/zones/${ZONE_ID}/addressing/regional_hostnames" \
   -H "Authorization: Bearer ${CF_API_TOKEN}" \
   -H "Content-Type: application/json" \
-  --data "{\"hostname\":\"${EU_HOSTNAME}\",\"region_key\":\"${REGION_KEY}\"}")"
+  --data "$request_body")"
 
 RESPONSE_FILE="$response_file" HTTP_CODE="$http_code" node -e "
   const fs = require('fs');
