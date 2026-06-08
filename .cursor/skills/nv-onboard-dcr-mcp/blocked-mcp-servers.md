@@ -1,6 +1,6 @@
 # Blocked MCP servers (DCR onboarding)
 
-Living register of MCP catalog entries that **failed** the [onboard-dcr-mcp](./SKILL.md) docs gate or live probes. Keep catalog entries on `provider-managed` (or `novu-app` / `user-app` if a fixed OAuth app is viable) until a row here is resolved.
+Living register of MCP catalog entries that **failed** the [nv-onboard-dcr-mcp](./SKILL.md) docs gate or live probes. Keep catalog entries on `provider-managed` (or `novu-app` / `user-app` if a fixed OAuth app is viable) until a row here is resolved.
 
 **When to append:** any onboarding attempt that aborts before upgrading `oauth.mode` to `dcr`.
 
