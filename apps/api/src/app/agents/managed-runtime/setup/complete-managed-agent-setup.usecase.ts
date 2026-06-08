@@ -18,8 +18,8 @@ import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-
 import { EnsureProviderManagedVault } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import type { McpOAuthState } from '../../mcp/oauth/generate-mcp-oauth-url/mcp-oauth-state';
-import { PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { ManagedAgentService } from '../managed-agent.service';
+import { showManagedInboundAck } from '../managed-agent-inbound-ack';
 import { mergeToolTrustPatch } from '../tool-approval/tool-trust.helper';
 import { listOAuthMcps } from './list-oauth-mcps.helper';
 import { ManagedAgentSetupCompleteCommand } from './managed-agent-setup-complete.command';
@@ -457,7 +457,21 @@ export class CompleteManagedAgentSetup {
 
     delete conversation.pendingManagedAgentSetup;
 
-    await this.showTypingBeforeSetupReplay(conversation, agent, config);
+    try {
+      await showManagedInboundAck({
+        outboundGateway: this.outboundGateway,
+        agentId: agent._id,
+        config,
+        platformThreadId: conversation.channels?.[0]?.platformThreadId,
+        message: null,
+        isFirstMessage: false,
+      });
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `Failed to show inbound ack before managed-agent setup replay for conversation ${conversation._id}`
+      );
+    }
 
     await this.managedAgentService.replayParkedInboundTurn({
       conversation,
@@ -466,26 +480,5 @@ export class CompleteManagedAgentSetup {
       pendingPlatformMessageId: pending.pendingPlatformMessageId,
       agent,
     });
-  }
-
-  private async showTypingBeforeSetupReplay(
-    conversation: ConversationEntity,
-    agent: Pick<AgentEntity, '_id'>,
-    config: ResolvedAgentConfig
-  ): Promise<void> {
-    const platformThreadId = conversation.channels?.[0]?.platformThreadId;
-
-    if (!config.acknowledgeOnReceived || !PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform) || !platformThreadId) {
-      return;
-    }
-
-    try {
-      await this.outboundGateway.startTypingInConversation(agent._id, config.integrationIdentifier, platformThreadId);
-    } catch (err) {
-      this.logger.warn(
-        err,
-        `Failed to show typing before managed-agent setup replay for conversation ${conversation._id}`
-      );
-    }
   }
 }
