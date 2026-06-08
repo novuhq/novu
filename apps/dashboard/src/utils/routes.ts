@@ -16,6 +16,7 @@ export const ROUTES = {
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
   CLI_AUTH: '/cli/auth',
+  CONNECT_CLAIM: '/connect/claim',
   ENV: '/env',
   SETTINGS: '/settings',
   SETTINGS_ACCOUNT: '/settings/account',

@@ -14,6 +14,11 @@ import {
   resolvePendingCliAuthReturnUrl,
   storePendingCliAuth,
 } from '@/utils/cli-auth-pending';
+import {
+  buildConnectClaimReturnUrlFromSearchParams,
+  resolvePendingConnectClaimReturnUrl,
+  storePendingConnectClaimFromRedirectUrl,
+} from '@/utils/connect-claim-pending';
 import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -30,6 +35,10 @@ export const SignInPage = () => {
     () => buildCliAuthReturnUrlFromSearchParams(searchParams) ?? resolvePendingCliAuthReturnUrl(),
     [searchParams]
   );
+  const connectClaimReturnUrl = useMemo(
+    () => buildConnectClaimReturnUrlFromSearchParams(searchParams) ?? resolvePendingConnectClaimReturnUrl(),
+    [searchParams]
+  );
 
   useEffect(() => {
     const pending = parseCliAuthReturnFromSearchParams(searchParams);
@@ -37,6 +46,8 @@ export const SignInPage = () => {
     if (pending) {
       storePendingCliAuth(pending.deviceCode, pending.name);
     }
+
+    storePendingConnectClaimFromRedirectUrl(readClerkRedirectUrlParam(searchParams));
   }, [searchParams]);
 
   useEffect(() => {
@@ -65,8 +76,14 @@ export const SignInPage = () => {
       return;
     }
 
+    if (connectClaimReturnUrl) {
+      window.location.assign(connectClaimReturnUrl);
+
+      return;
+    }
+
     void navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: 'default' }), { replace: true });
-  }, [isLoaded, isSignedIn, cliAuthReturnUrl, navigate]);
+  }, [isLoaded, isSignedIn, cliAuthReturnUrl, connectClaimReturnUrl, navigate]);
 
   const signUpUrlWithRedirect = useMemo(() => {
     const redirectUrl = readClerkRedirectUrlParam(searchParams);
@@ -96,7 +113,7 @@ export const SignInPage = () => {
             path={ROUTES.SIGN_IN}
             signUpUrl={signUpUrlWithRedirect}
             appearance={clerkSignupAppearance}
-            forceRedirectUrl={cliAuthReturnUrl ?? undefined}
+            forceRedirectUrl={cliAuthReturnUrl ?? connectClaimReturnUrl ?? undefined}
           />
           {!IS_SELF_HOSTED && <RegionPicker />}
         </div>
