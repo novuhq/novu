@@ -3,10 +3,11 @@ import type { IEnvironment } from '@novu/shared';
 import { EnvironmentTypeEnum } from '@novu/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiCheckLine, RiLoader4Line } from 'react-icons/ri';
-import { Navigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import { claimKeylessConnect } from '@/api/connect';
 import { AuthLayout } from '@/components/auth-layout';
 import { PageMeta } from '@/components/page-meta';
+import { Button } from '@/components/primitives/button';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { useAuth } from '@/context/auth/hooks';
 import { EnvironmentProvider } from '@/context/environment/environment-provider';
@@ -74,6 +75,7 @@ function hasClaimableDevelopmentEnvironment(environments?: IEnvironment[]): bool
 }
 
 function ConnectClaimContent({ token }: { token: string | null }) {
+  const navigate = useNavigate();
   const { currentOrganization } = useAuth();
   const novuOrganizationId = currentOrganization?._id;
   const [isEnvironmentReady, setIsEnvironmentReady] = useState(false);
@@ -187,11 +189,23 @@ function ConnectClaimContent({ token }: { token: string | null }) {
               </button>
             </div>
           ) : didClaim ? (
-            <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
-              <RiCheckLine className="mt-0.5 size-4 shrink-0" />
-              <span>
-                Your agent is connected to your account. Head back to your chat — the agent is ready to continue.
-              </span>
+            <div className="flex w-full flex-col gap-3">
+              <div className="flex w-full items-start gap-2 rounded-lg border border-green-200 bg-green-50 p-3 text-label-xs text-green-700">
+                <RiCheckLine className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  Your agent is connected to your account. Head back to your chat — the agent is ready to continue.
+                </span>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                mode="ghost"
+                size="xs"
+                className="w-full"
+                onClick={() => navigate(ROUTES.ROOT)}
+              >
+                Visit Dashboard
+              </Button>
             </div>
           ) : claimError ? (
             <div className="flex w-full flex-col gap-3">
