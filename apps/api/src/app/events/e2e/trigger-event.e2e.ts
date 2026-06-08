@@ -1304,11 +1304,11 @@ describe('Trigger event - /v1/events/trigger (POST) #novu-v2', () => {
           attachments: [
             {
               name: 'text1.txt',
-              file: 'hello world!',
+              file: Buffer.from('hello world!', 'utf-8').toString('base64'),
             },
             {
               name: 'text2.txt',
-              file: Buffer.from('hello world!', 'utf-8'),
+              file: Buffer.from('hello world!', 'utf-8').toString('base64'),
             },
           ],
         },
