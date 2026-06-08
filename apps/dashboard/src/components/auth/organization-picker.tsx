@@ -54,6 +54,8 @@ type OrganizationPickerProps = {
   afterSelectOrganizationUrl: string;
   // Invoked when the user cancels the create form with no orgs to fall back to.
   onSignOut: () => void | Promise<void>;
+  // False once the user should see the picker or create form (not during load / single-org auto-select).
+  onResolvingChange?: (isResolving: boolean) => void;
 };
 
 type View = 'picker' | 'create';
@@ -374,10 +376,19 @@ function CreateOrganizationView({
 }
 
 // Replacement for Clerk's <OrganizationList/> that filters memberships by `publicMetadata.productType`.
+function OrganizationPickerSpinner() {
+  return (
+    <div className="flex min-h-[280px] w-full items-center justify-center">
+      <RiLoader4Line className="text-text-sub size-5 animate-spin" />
+    </div>
+  );
+}
+
 export function OrganizationPicker({
   afterCreateOrganizationUrl,
   afterSelectOrganizationUrl,
   onSignOut,
+  onResolvingChange,
 }: OrganizationPickerProps) {
   const track = useTelemetry();
   const { user } = useUser();
@@ -459,8 +470,8 @@ export function OrganizationPicker({
   const [selectingId, setSelectingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const hasTrackedRef = useRef(false);
-  const hasInitializedViewRef = useRef(false);
-  const autoSelectTriggeredRef = useRef(false);
+  const [hasInitializedView, setHasInitializedView] = useState(false);
+  const [autoSelectTriggered, setAutoSelectTriggered] = useState(false);
 
   const handleSelect = useCallback(
     async (organizationId: string) => {
@@ -475,6 +486,7 @@ export function OrganizationPicker({
       } catch (error) {
         const message = readClerkErrorMessage(error, 'Unable to switch organizations.');
         showErrorToast(message, 'Organization switch failed');
+        setAutoSelectTriggered(false);
         setIsSelecting(false);
         setSelectingId(null);
       }
@@ -571,9 +583,9 @@ export function OrganizationPicker({
   // `publicMetadata.productType` set yet, so any host-hop decision based on that metadata is
   // unreliable — better to let the user create / pick on the host they're currently on.
   useEffect(() => {
-    if (!isFullListLoaded || hasInitializedViewRef.current) return;
+    if (!isFullListLoaded || hasInitializedView) return;
 
-    hasInitializedViewRef.current = true;
+    setHasInitializedView(true);
 
     if (filteredMemberships.length === 0) {
       setView('create');
@@ -582,10 +594,10 @@ export function OrganizationPicker({
     }
 
     if (filteredMemberships.length === 1) {
-      autoSelectTriggeredRef.current = true;
+      setAutoSelectTriggered(true);
       void handleSelect(filteredMemberships[0].organization.id);
     }
-  }, [isFullListLoaded, filteredMemberships, handleSelect]);
+  }, [isFullListLoaded, filteredMemberships, handleSelect, hasInitializedView]);
 
   // Show the full-screen spinner only while page 1 is in flight. Once page 1 lands we render the
   // picker and surface the inline "Loading more…" row for any subsequent pages — same model as
@@ -595,20 +607,20 @@ export function OrganizationPicker({
   const isStreamingMorePages = isFirstPageReady && !isFullListLoaded;
   const shouldWaitForMorePages = isStreamingMorePages && filteredMemberships.length === 0;
 
-  // Suppress the picker when a single matching org will be (or is being) auto-selected.
-  // `pendingSingleOrgAutoSelect` covers the render before the initialization effect fires;
-  // `isAutoSelectInProgress` covers the period after the effect triggered `handleSelect`
-  // until the navigation completes (or `handleSelect` errors out and resets `isSelecting`).
-  const pendingSingleOrgAutoSelect =
-    isFullListLoaded && filteredMemberships.length === 1 && !hasInitializedViewRef.current;
-  const isAutoSelectInProgress = autoSelectTriggeredRef.current && isSelecting;
+  // Keep a spinner until we know the user needs the picker/create UI. When exactly one matching
+  // org is visible, wait for the full membership list before rendering the picker — page 1 alone
+  // is not enough to auto-select safely, and showing a one-row picker flashes before redirect.
+  const isSingleOrgAutoSelectPending =
+    filteredMemberships.length === 1 && (!isFullListLoaded || !hasInitializedView || autoSelectTriggered);
 
-  if (!isFirstPageReady || shouldWaitForMorePages || pendingSingleOrgAutoSelect || isAutoSelectInProgress) {
-    return (
-      <div className="flex min-h-[280px] w-full items-center justify-center">
-        <RiLoader4Line className="text-text-sub size-5 animate-spin" />
-      </div>
-    );
+  const isResolving = !isFirstPageReady || shouldWaitForMorePages || isSingleOrgAutoSelectPending;
+
+  useEffect(() => {
+    onResolvingChange?.(isResolving);
+  }, [isResolving, onResolvingChange]);
+
+  if (isResolving) {
+    return <OrganizationPickerSpinner />;
   }
 
   if (view === 'create') {

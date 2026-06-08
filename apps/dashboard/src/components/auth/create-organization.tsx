@@ -1,11 +1,12 @@
 import { useClerk } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { OrganizationPicker } from '@/components/auth/organization-picker';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
 import { buildAfterSignOutUrl } from '@/utils/cross-product-sign-out';
+import { cn } from '@/utils/ui';
 import { useFeatureFlag } from '../../hooks/use-feature-flag';
 import {
   getOnboardingAppId,
@@ -31,25 +32,13 @@ const ILLUSTRATION_CONFIG = {
   className: 'opacity-70',
 } as const;
 
-interface FormContainerProps {
-  children: React.ReactNode;
-}
-
 interface IllustrationProps {
   src: string;
   alt: string;
   className?: string;
 }
 
-function FormContainer({ children }: FormContainerProps) {
-  return (
-    <div className="flex w-full items-center p-6 md:min-w-[564px] md:max-w-[564px] md:p-[60px]">
-      <div className="flex w-full flex-col gap-[4px]">{children}</div>
-    </div>
-  );
-}
-
-function OrganizationForm() {
+function OrganizationForm({ onResolvingChange }: { onResolvingChange: (isResolving: boolean) => void }) {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const [searchParams] = useSearchParams();
   const clerk = useClerk();
@@ -82,17 +71,8 @@ function OrganizationForm() {
       afterCreateOrganizationUrl={afterCreateUrl}
       afterSelectOrganizationUrl={afterSelectUrl}
       onSignOut={handleSignOut}
+      onResolvingChange={onResolvingChange}
     />
-  );
-}
-
-function OrganizationFormSection() {
-  return (
-    <div className="flex flex-1 items-center justify-center">
-      <FormContainer>
-        <OrganizationForm />
-      </FormContainer>
-    </div>
   );
 }
 
@@ -112,34 +92,56 @@ function IllustrationSection() {
   );
 }
 
-function MainContent() {
-  return (
-    <div className="flex flex-1 flex-col md:flex-row">
-      <OrganizationFormSection />
-      <IllustrationSection />
-    </div>
-  );
-}
-
 function PageHeader() {
   return <UsecasePlaygroundHeader {...HEADER_CONFIG} />;
 }
 
-function PageContent() {
+function PageContent({ onShowChromeChange }: { onShowChromeChange: (showChrome: boolean) => void }) {
+  const [showChrome, setShowChrome] = useState(false);
+
+  const handleResolvingChange = useCallback(
+    (isResolving: boolean) => {
+      const nextShowChrome = !isResolving;
+      setShowChrome(nextShowChrome);
+      onShowChromeChange(nextShowChrome);
+    },
+    [onShowChromeChange]
+  );
+
   return (
-    <div className="flex flex-1 flex-col overflow-hidden pb-3">
-      <PageHeader />
-      <MainContent />
+    <div className={cn('flex flex-1 flex-col', showChrome && 'overflow-hidden pb-3')}>
+      {showChrome ? <PageHeader /> : null}
+      <div className="flex flex-1 flex-col md:flex-row">
+        <div className="flex flex-1 items-center justify-center">
+          <div
+            className={cn(
+              'flex w-full items-center',
+              showChrome && 'p-6 md:min-w-[564px] md:max-w-[564px] md:p-[60px]'
+            )}
+          >
+            <div className={cn('flex w-full', showChrome ? 'flex-col gap-[4px]' : 'items-center justify-center')}>
+              <OrganizationForm onResolvingChange={handleResolvingChange} />
+            </div>
+          </div>
+        </div>
+        {showChrome ? <IllustrationSection /> : null}
+      </div>
     </div>
   );
 }
 
 // Embedded `<OrganizationPicker/>` filters memberships by `publicMetadata.productType`.
 export default function OrganizationCreate() {
+  const [showChrome, setShowChrome] = useState(false);
+
   return (
     <div className="flex w-full flex-1 flex-row items-center justify-center">
-      <AuthCard>
-        <PageContent />
+      <AuthCard
+        className={cn(
+          showChrome ? undefined : 'min-h-0 w-full max-w-none border-0 bg-transparent shadow-none md:min-h-0'
+        )}
+      >
+        <PageContent onShowChromeChange={setShowChrome} />
       </AuthCard>
     </div>
   );

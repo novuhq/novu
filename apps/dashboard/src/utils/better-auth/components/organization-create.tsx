@@ -139,15 +139,17 @@ function CreateOrganizationForm({ onSuccess }: { onSuccess: () => void }) {
 function OrganizationListContent({
   afterCreateOrganizationUrl,
   afterSelectOrganizationUrl,
+  onResolvingChange,
 }: {
   afterCreateOrganizationUrl?: string;
   afterSelectOrganizationUrl?: string;
+  onResolvingChange?: (isResolving: boolean) => void;
 }) {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSelecting, setIsSelecting] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const autoSelectTriggeredRef = useRef(false);
+  const [autoSelectTriggered, setAutoSelectTriggered] = useState(false);
   const navigate = useNavigate();
 
   const redirectAfterSelect = useCallback(
@@ -170,8 +172,8 @@ function OrganizationListContent({
         const orgs = data || [];
         setOrganizations(orgs);
 
-        if (orgs.length === 1 && !autoSelectTriggeredRef.current) {
-          autoSelectTriggeredRef.current = true;
+        if (orgs.length === 1 && !autoSelectTriggered) {
+          setAutoSelectTriggered(true);
           setIsSelecting(true);
           try {
             await authClient.organization.setActive({ organizationId: orgs[0].id });
@@ -180,7 +182,7 @@ function OrganizationListContent({
             return;
           } catch (e: any) {
             console.error('Failed to auto-select organization:', e);
-            autoSelectTriggeredRef.current = false;
+            setAutoSelectTriggered(false);
             setIsSelecting(false);
           }
         }
@@ -193,6 +195,12 @@ function OrganizationListContent({
 
     void loadOrganizations();
   }, [afterSelectOrganizationUrl, redirectAfterSelect]);
+
+  const isResolving = isLoading || (organizations.length === 1 && autoSelectTriggered);
+
+  useEffect(() => {
+    onResolvingChange?.(isResolving);
+  }, [isResolving, onResolvingChange]);
 
   const handleSelectOrganization = async (organizationId: string) => {
     setIsSelecting(true);
@@ -211,7 +219,7 @@ function OrganizationListContent({
     window.location.href = afterCreateOrganizationUrl || ROUTES.USECASE_SELECT;
   };
 
-  if (isLoading || (organizations.length === 1 && autoSelectTriggeredRef.current && isSelecting)) {
+  if (isResolving) {
     return (
       <div className="flex items-center justify-center py-12">
         <RiLoader4Line className="size-6 animate-spin text-foreground-600" />
@@ -277,14 +285,6 @@ function OrganizationListContent({
   );
 }
 
-function FormContainer({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex min-w-[564px] max-w-[564px] items-center p-[60px]">
-      <div className="w-full space-y-6">{children}</div>
-    </div>
-  );
-}
-
 function Illustration({ src, alt, className }: { src: string; alt: string; className?: string }) {
   return (
     <div className="w-full max-w-[564px]">
@@ -296,18 +296,38 @@ function Illustration({ src, alt, className }: { src: string; alt: string; class
 function OrganizationFormSection({
   afterCreateOrganizationUrl,
   afterSelectOrganizationUrl,
+  showChrome,
+  onShowChromeChange,
 }: {
   afterCreateOrganizationUrl?: string;
   afterSelectOrganizationUrl?: string;
+  showChrome: boolean;
+  onShowChromeChange: (showChrome: boolean) => void;
 }) {
+  const handleResolvingChange = useCallback(
+    (isResolving: boolean) => {
+      onShowChromeChange(!isResolving);
+    },
+    [onShowChromeChange]
+  );
+
   return (
     <div className="flex flex-1 items-center justify-center">
-      <FormContainer>
-        <OrganizationListContent
-          afterCreateOrganizationUrl={afterCreateOrganizationUrl}
-          afterSelectOrganizationUrl={afterSelectOrganizationUrl}
-        />
-      </FormContainer>
+      <div
+        className={
+          showChrome
+            ? 'flex min-w-[564px] max-w-[564px] items-center p-[60px]'
+            : 'flex w-full items-center justify-center'
+        }
+      >
+        <div className={showChrome ? 'w-full space-y-6' : 'flex w-full items-center justify-center'}>
+          <OrganizationListContent
+            afterCreateOrganizationUrl={afterCreateOrganizationUrl}
+            afterSelectOrganizationUrl={afterSelectOrganizationUrl}
+            onResolvingChange={handleResolvingChange}
+          />
+        </div>
+      </div>
     </div>
   );
 }
@@ -323,17 +343,23 @@ function IllustrationSection() {
 function MainContent({
   afterCreateOrganizationUrl,
   afterSelectOrganizationUrl,
+  showChrome,
+  onShowChromeChange,
 }: {
   afterCreateOrganizationUrl?: string;
   afterSelectOrganizationUrl?: string;
+  showChrome: boolean;
+  onShowChromeChange: (showChrome: boolean) => void;
 }) {
   return (
     <div className="flex flex-1">
       <OrganizationFormSection
         afterCreateOrganizationUrl={afterCreateOrganizationUrl}
         afterSelectOrganizationUrl={afterSelectOrganizationUrl}
+        showChrome={showChrome}
+        onShowChromeChange={onShowChromeChange}
       />
-      <IllustrationSection />
+      {showChrome ? <IllustrationSection /> : null}
     </div>
   );
 }
@@ -345,11 +371,15 @@ function PageContent({
   afterCreateOrganizationUrl?: string;
   afterSelectOrganizationUrl?: string;
 }) {
+  const [showChrome, setShowChrome] = useState(false);
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden pb-3">
       <MainContent
         afterCreateOrganizationUrl={afterCreateOrganizationUrl}
         afterSelectOrganizationUrl={afterSelectOrganizationUrl}
+        showChrome={showChrome}
+        onShowChromeChange={setShowChrome}
       />
     </div>
   );
