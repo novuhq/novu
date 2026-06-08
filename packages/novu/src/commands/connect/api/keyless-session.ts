@@ -1,10 +1,9 @@
-import { AgentRuntimeProviderIdEnum } from '@novu/shared';
 import { createNovuAxios, extractNovuApiMessage } from '../../shared/novu-http';
 import { createConnectApiClient } from './client';
+import { hasActiveDemoAgentIntegration } from './demo-agent-integration';
 import { listIntegrations } from './integrations';
 
 const KEYLESS_ENVIRONMENT_PREFIX = 'pk_keyless_';
-const AGENT_INTEGRATION_KIND = 'agent';
 
 interface InboxSessionPayload {
   applicationIdentifier?: string;
@@ -25,8 +24,10 @@ export async function bootstrapKeylessSession(
   storedIdentifier?: string
 ): Promise<BootstrapKeylessSessionResult> {
   const trimmedStored = storedIdentifier?.trim();
+  let attemptedStoredSession = false;
 
   if (trimmedStored && isKeylessIdentifier(trimmedStored)) {
+    attemptedStoredSession = true;
     const restored = await requestKeylessSession(apiUrl, trimmedStored);
 
     if (restored && (await isKeylessEnvironmentReadyForConnect(apiUrl, restored.applicationIdentifier))) {
@@ -46,9 +47,7 @@ export async function bootstrapKeylessSession(
     );
   }
 
-  const recoveredFromStaleSession = Boolean(trimmedStored && isKeylessIdentifier(trimmedStored));
-
-  return { ...fresh, recoveredFromStaleSession };
+  return { ...fresh, recoveredFromStaleSession: attemptedStoredSession };
 }
 
 async function requestKeylessSession(
@@ -112,19 +111,9 @@ function describeKeylessSessionFailure(status: number, body: unknown): string {
 
 async function isKeylessEnvironmentReadyForConnect(apiUrl: string, applicationIdentifier: string): Promise<boolean> {
   const client = createConnectApiClient({ apiUrl, keylessApplicationIdentifier: applicationIdentifier });
+  const integrations = await listIntegrations(client);
 
-  try {
-    const integrations = await listIntegrations(client);
-
-    return integrations.some(
-      (integration) =>
-        integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic &&
-        integration.kind === AGENT_INTEGRATION_KIND &&
-        integration.active !== false
-    );
-  } catch {
-    return false;
-  }
+  return hasActiveDemoAgentIntegration(integrations);
 }
 
 export function isKeylessIdentifier(value: string | undefined | null): boolean {

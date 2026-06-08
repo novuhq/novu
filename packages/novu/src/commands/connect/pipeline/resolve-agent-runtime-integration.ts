@@ -6,6 +6,7 @@ import {
 } from '@novu/shared';
 import type { ConnectApiClient } from '../api/client';
 import { NovuApiError } from '../api/client';
+import { findActiveDemoAgentIntegration } from '../api/demo-agent-integration';
 import {
   createAgentRuntimeIntegration,
   type IntegrationRecord,
@@ -98,12 +99,7 @@ export async function resolveAgentRuntimeIntegration(
 }
 
 function resolveDemoIntegration(integrations: IntegrationRecord[]): ResolvedRuntimeIntegration {
-  const demo = integrations.find(
-    (integration) =>
-      integration.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic &&
-      integration.kind === AGENT_INTEGRATION_KIND &&
-      integration.active !== false
-  );
+  const demo = findActiveDemoAgentIntegration(integrations);
 
   if (!demo) {
     throw new Error(

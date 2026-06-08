@@ -63,13 +63,6 @@ export async function ensureAgentIntegrationLinked(
   return undefined;
 }
 
-export function findAgentIntegrationLink(
-  links: AgentIntegrationLink[],
-  integrationIdentifier: string
-): AgentIntegrationLink | undefined {
-  return links.find((l) => l.integration.identifier === integrationIdentifier);
-}
-
 /** Poll until `connectedAt` is set on the agent↔integration link (first inbound message). */
 export async function pollForAgentLinkConnected(
   client: ConnectApiClient,

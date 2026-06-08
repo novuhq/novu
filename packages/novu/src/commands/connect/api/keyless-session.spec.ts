@@ -114,4 +114,12 @@ describe('bootstrapKeylessSession', () => {
     expect(post).toHaveBeenCalledTimes(1);
     expect(post.mock.calls[0][1]).toEqual({});
   });
+
+  it('propagates integration-list failures instead of treating them as stale sessions', async () => {
+    post.mockResolvedValueOnce(sessionResponse(storedIdentifier));
+    listIntegrations.mockRejectedValueOnce(new Error('network down'));
+
+    await expect(bootstrapKeylessSession(apiUrl, storedIdentifier)).rejects.toThrow('network down');
+    expect(post).toHaveBeenCalledTimes(1);
+  });
 });

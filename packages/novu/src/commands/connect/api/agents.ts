@@ -109,9 +109,8 @@ export async function addAgentIntegration(
     { integrationIdentifier }
   );
   const body = res.data;
-  const link = 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 
-  return normalizeAgentIntegrationLink(link);
+  return 'data' in body && body.data ? body.data : (body as AgentIntegrationLink);
 }
 
 /**
@@ -131,9 +130,8 @@ export async function addAgentEmailIntegration(
     { providerId: 'novu-email-agent' }
   );
   const body = res.data;
-  const link = 'data' in body && body.data ? body.data : (body as AgentEmailIntegrationDetail);
 
-  return normalizeAgentIntegrationLink(link);
+  return 'data' in body && body.data ? body.data : (body as AgentEmailIntegrationDetail);
 }
 
 export async function listAgentIntegrations(
@@ -151,41 +149,8 @@ export async function listAgentIntegrations(
     }
   );
   const body = res.data;
-  const links = Array.isArray(body) ? body : (body.data ?? []);
 
-  return links.map(normalizeAgentIntegrationLink);
-}
-
-function normalizeAgentIntegrationLink(link: AgentIntegrationLink): AgentIntegrationLink {
-  const legacy = link as AgentIntegrationLink & {
-    integrationIdentifier?: string;
-    integrationId?: string;
-    providerId?: string;
-    channel?: string;
-    active?: boolean;
-  };
-
-  if (legacy.integration?.identifier) {
-    return link;
-  }
-
-  if (!legacy.integrationIdentifier) {
-    return link;
-  }
-
-  return {
-    ...link,
-    integration: {
-      _id: legacy.integrationId ?? legacy.integration?._id ?? '',
-      identifier: legacy.integrationIdentifier,
-      name: legacy.integration?.name ?? legacy.integrationIdentifier,
-      providerId: legacy.providerId ?? legacy.integration?.providerId ?? '',
-      channel: legacy.channel ?? legacy.integration?.channel,
-      active: legacy.active ?? legacy.integration?.active ?? true,
-      sharedInboundAddress: legacy.integration?.sharedInboundAddress,
-      defaultSenderName: legacy.integration?.defaultSenderName,
-    },
-  };
+  return Array.isArray(body) ? body : (body.data ?? []);
 }
 
 export async function sendAgentWelcomeMessage(
