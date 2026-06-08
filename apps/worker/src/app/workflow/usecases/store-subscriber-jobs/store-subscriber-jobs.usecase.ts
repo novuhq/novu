@@ -6,6 +6,7 @@ import {
   mapEventTypeToTitle,
   StepRunRepository,
   StepRunTraceInput,
+  StepType,
   TraceLogRepository,
 } from '@novu/application-generic';
 import { DalException, JobEntity, JobRepository, JobStatusEnum } from '@novu/dal';
@@ -74,19 +75,19 @@ export class StoreSubscriberJobs {
       created_at: LogRepository.formatDateTime64(new Date()),
       organization_id: job._organizationId,
       environment_id: job._environmentId,
-      user_id: null,
+      user_id: '',
       subscriber_id: job._subscriberId ? job._subscriberId : job.subscriberId,
-      external_subscriber_id: job.subscriberId || null,
+      external_subscriber_id: job.subscriberId || '',
       event_type: 'step_created',
       title: mapEventTypeToTitle('step_created'),
-      message: null,
-      raw_data: null,
+      message: '',
+      raw_data: '',
       status: 'success',
       entity_id: job._id,
-      step_run_type: job.type,
+      step_run_type: (job.type ?? '') as StepType,
       workflow_run_identifier: job.identifier,
       workflow_id: job._templateId,
-      provider_id: job.providerId || null,
+      provider_id: job.providerId || '',
     };
   }
 }
