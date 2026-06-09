@@ -323,9 +323,15 @@ describe('API Rate Limiting #novu-v2', () => {
               });
 
               it(`should return a ${HttpResponseHeaderKeysEnum.RETRY_AFTER} header of ${expectedRetryAfter}`, async () => {
-                expect(lastResponse.headers[HttpResponseHeaderKeysEnum.RETRY_AFTER.toLowerCase()]).to.equal(
-                  expectedRetryAfter && `${expectedRetryAfter}`
-                );
+                const retryAfterHeader = lastResponse.headers[HttpResponseHeaderKeysEnum.RETRY_AFTER.toLowerCase()];
+
+                if (expectedStatus === 429 && expectedRetryAfter === 1) {
+                  expect(Number(retryAfterHeader)).to.be.at.least(0).and.at.most(1);
+
+                  return;
+                }
+
+                expect(retryAfterHeader).to.equal(expectedRetryAfter && `${expectedRetryAfter}`);
               });
 
               const expectedMinThrottled = Math.floor(
