@@ -41,6 +41,7 @@ import {
   ContextPayload,
   ControlValuesLevelEnum,
   CustomDataType,
+  EnvironmentEnum,
   EnvironmentTypeEnum,
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
@@ -509,9 +510,10 @@ export class Session {
         environmentId: environment._id,
         organizationId: environment._organizationId,
         userId: user._id,
-        name: 'Keyless Integration',
-        channels: [ChannelTypeEnum.IN_APP],
+        name: EnvironmentEnum.DEVELOPMENT,
+        channels: [ChannelTypeEnum.IN_APP, ChannelTypeEnum.EMAIL],
         includeManagedClaude: true,
+        environmentType: EnvironmentTypeEnum.DEV,
       })
     );
 
