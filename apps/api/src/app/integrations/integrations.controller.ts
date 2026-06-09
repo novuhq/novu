@@ -315,7 +315,7 @@ export class IntegrationsController {
           check: body.check ?? false,
           conditions: body.conditions,
           configurations: body.configurations,
-          restrictToUserEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+          restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
         })
       );
 
@@ -358,7 +358,7 @@ export class IntegrationsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
-        restrictToUserEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+        restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
 
@@ -391,7 +391,7 @@ export class IntegrationsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
-        restrictToUserEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+        restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
 
@@ -425,7 +425,7 @@ export class IntegrationsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         integrationId,
-        restrictToUserEnvironment: user.scheme === ApiAuthSchemeEnum.API_KEY,
+        restrictToUserEnvironment: isEnvironmentScopedAuthScheme(user.scheme),
       })
     );
   }
