@@ -450,14 +450,6 @@ export class CompleteManagedAgentSetup {
       logger: this.logger,
     });
 
-    await this.conversationRepository.clearPendingManagedAgentSetup(
-      config.environmentId,
-      config.organizationId,
-      conversation._id
-    );
-
-    delete conversation.pendingManagedAgentSetup;
-
     const dispatchResult = await this.managedAgentService.replayParkedInboundTurn({
       conversation,
       config,
@@ -469,6 +461,14 @@ export class CompleteManagedAgentSetup {
     if (!dispatchResult) {
       return;
     }
+
+    await this.conversationRepository.clearPendingManagedAgentSetup(
+      config.environmentId,
+      config.organizationId,
+      conversation._id
+    );
+
+    delete conversation.pendingManagedAgentSetup;
 
     const channel = conversation.channels?.[0];
     const ackParams = {

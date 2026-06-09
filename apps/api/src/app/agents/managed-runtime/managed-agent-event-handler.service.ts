@@ -175,6 +175,8 @@ export class ManagedAgentEventHandler {
             );
           }
 
+          await this.inboundAck.onManagedTurnComplete(metadata);
+
           await this.demoQuota.recordUsage(
             metadata.environmentId,
             metadata.organizationId,
@@ -184,7 +186,6 @@ export class ManagedAgentEventHandler {
           await this.handlePlanProgress.execute(
             HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { action: 'complete' } })
           );
-          await this.inboundAck.onManagedTurnComplete(metadata);
         } catch (err) {
           this.logger.error(err, `onFinish failed: session=${sessionId}`);
           captureAgentException(err, {
@@ -248,6 +249,8 @@ export class ManagedAgentEventHandler {
         : false;
 
     if (postedReconnectSetupCard) {
+      await this.inboundAck.onManagedTurnComplete(metadata);
+
       try {
         await this.handlePlanProgress.execute(
           HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
@@ -261,8 +264,6 @@ export class ManagedAgentEventHandler {
         });
       }
 
-      await this.inboundAck.onManagedTurnComplete(metadata);
-
       return;
     }
 
@@ -272,10 +273,10 @@ export class ManagedAgentEventHandler {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
       );
+      await this.inboundAck.onManagedTurnComplete(metadata);
       await this.handlePlanProgress.execute(
         HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
       );
-      await this.inboundAck.onManagedTurnComplete(metadata);
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
       captureAgentException(err, {

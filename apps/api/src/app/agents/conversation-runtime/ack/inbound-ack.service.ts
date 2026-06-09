@@ -150,14 +150,17 @@ export class InboundAckService {
       return;
     }
 
-    await this.clearReaction(target, target.platformMessageId, INBOUND_ACK_EMOJI.queued, 'queue-ready-clear');
-    await this.guard(target.agentId, 'queue-ready-typing', () =>
+    const startedTyping = await this.guard(target.agentId, 'queue-ready-typing', () =>
       this.outboundGateway.startTypingInConversation(
         target.agentId,
         target.integrationIdentifier,
         target.platformThreadId
       )
     );
+
+    if (startedTyping) {
+      await this.clearReaction(target, target.platformMessageId, INBOUND_ACK_EMOJI.queued, 'queue-ready-clear');
+    }
   }
 
   /**
@@ -242,11 +245,15 @@ export class InboundAckService {
    * liveness signals, so failures are logged for NewRelic and otherwise ignored
    * (no Sentry — a missing typing indicator or reaction isn't an actionable issue).
    */
-  private async guard(agentId: string, operation: string, fn: () => Promise<void>): Promise<void> {
+  private async guard(agentId: string, operation: string, fn: () => Promise<void>): Promise<boolean> {
     try {
       await fn();
+
+      return true;
     } catch (err) {
       this.logger.warn(err, `[agent:${agentId}] inbound-ack ${operation} failed`);
+
+      return false;
     }
   }
 }

@@ -408,9 +408,7 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
-    const isManagedAgent = !!agent?.managedRuntime;
-
-    if (!isManagedAgent) {
+    if (!config.isManaged) {
       await this.inboundAck.showWorkingSignal({
         agentId,
         config,

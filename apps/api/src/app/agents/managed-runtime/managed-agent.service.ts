@@ -27,10 +27,11 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
+  platformThreadId?: string;
   platformMessageId?: string;
 }
 
-type WebhookSessionMetadata = {
+interface WebhookSessionMetadata {
   conversationId: string;
   environmentId: string;
   organizationId: string;
@@ -43,7 +44,7 @@ type WebhookSessionMetadata = {
   platformThreadId?: string;
   firstPlatformMessageId?: string;
   acknowledgeOnReceived?: boolean;
-};
+}
 
 export type ManagedAgentDispatchStatus = 'active' | 'queued';
 
@@ -109,7 +110,7 @@ export class ManagedAgentService implements OnModuleInit {
         platformMessageId: context.platformMessageId,
         subscriberId: context.subscriber?.subscriberId,
         platform: context.config.platform,
-        platformThreadId: context.conversation.channels?.[0]?.platformThreadId,
+        platformThreadId: context.platformThreadId ?? context.conversation.channels?.[0]?.platformThreadId,
         firstPlatformMessageId: context.conversation.channels?.[0]?.firstPlatformMessageId,
         acknowledgeOnReceived: context.config.acknowledgeOnReceived,
       }),
@@ -160,6 +161,7 @@ export class ManagedAgentService implements OnModuleInit {
         conversation: params.conversation,
         subscriber: params.subscriber,
         userMessageText: activity.content,
+        platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
         platformMessageId: params.pendingPlatformMessageId,
       },
       params.agent
