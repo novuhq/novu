@@ -1,5 +1,5 @@
 import { ConfigService } from '../../../services';
-import { resolveAuth, type ResolveAuthOptions } from '../../wizard/auth/resolve-auth';
+import { type ResolveAuthOptions, resolveAuth } from '../../wizard/auth/resolve-auth';
 import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { bootstrapKeylessSession } from '../api/keyless-session';
 import type { ConnectCommandOptions } from '../types';
@@ -30,9 +30,7 @@ export async function resolveConnectAuth(
   const config = new ConfigService();
   const stored = config.getValue(KEYLESS_CONFIG_KEY);
 
-  resolveOptions.onStatus?.(
-    stored ? 'Restoring your keyless workspace…' : 'Setting up a temporary keyless workspace…'
-  );
+  resolveOptions.onStatus?.(stored ? 'Restoring your keyless workspace…' : 'Setting up a temporary keyless workspace…');
 
   const session = await bootstrapKeylessSession(options.apiUrl, stored);
 

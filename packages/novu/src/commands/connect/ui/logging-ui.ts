@@ -5,6 +5,7 @@ import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
+import { logEmailHandoffEvents, logSlackHandoffEvents } from './handoff-events';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
@@ -169,6 +170,7 @@ export function createLoggingUI(): ConnectUI {
         console.log(`${chalk.cyan('→')} ${SEND_FROM_ACCOUNT_LABEL} ${chalk.bold(sendFromEmail)}`);
       }
       console.log(`${chalk.cyan('→')} Open in your mail client: ${chalk.underline(mailtoUrl)}`);
+      logEmailHandoffEvents({ inboundAddress, mailtoUrl, sendFromEmail });
       // Non-interactive: nothing to await — the user will copy/paste the
       // address themselves. Resolve immediately so the pipeline can move on
       // to polling.
@@ -224,6 +226,7 @@ export function createLoggingUI(): ConnectUI {
         console.log(`${chalk.green('✓')} Slack app created successfully.`);
       }
       console.log(`${chalk.cyan('→')} Authorize Slack here: ${chalk.underline(authorizeUrl)}`);
+      logSlackHandoffEvents({ authorizeUrl });
 
       return Promise.resolve();
     },
