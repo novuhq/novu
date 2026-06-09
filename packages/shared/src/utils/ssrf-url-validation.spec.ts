@@ -66,9 +66,25 @@ describe('ssrf-url-validation', () => {
       expect(isPrivateIp('fe8::1')).toBe(false);
       expect(isPrivateIp('feb::1')).toBe(false);
     });
+
+    it('should fail closed on malformed dotted IPv4-compatible encodings', () => {
+      expect(isPrivateIp('::169.254.999.999')).toBe(true);
+    });
+
+    it('should classify bracketed IPv6 literals consistently with bare addresses', () => {
+      expect(isPrivateIp('[::ffff:a9fe:a9fe]')).toBe(true);
+    });
   });
 
   describe('validateUrlSsrf', () => {
+    it('should block bracketed IPv6 literals that normalize to private addresses', async () => {
+      const result = await validateUrlSsrf('http://[::ffff:169.254.169.254]/');
+
+      expect(result).toBe(
+        'Requests to private or reserved IP addresses are not allowed (resolved: ::ffff:a9fe:a9fe).'
+      );
+    });
+
     it('should block hostnames that resolve to IPv6 link-local addresses', async () => {
       vi.spyOn(dns.promises, 'lookup').mockResolvedValue([{ address: 'fe80::1', family: 6 }] as never);
 

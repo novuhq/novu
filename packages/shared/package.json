@@ -43,6 +43,11 @@
       "import": "./dist/esm/utils/index.js",
       "types": "./dist/esm/utils/index.d.js"
     },
+    "./utils/private-ip-classification": {
+      "require": "./dist/cjs/utils/private-ip-classification.js",
+      "import": "./dist/esm/utils/private-ip-classification.js",
+      "types": "./dist/esm/utils/private-ip-classification.d.ts"
+    },
     "./utils/ssrf-url-validation": {
       "require": "./dist/cjs/utils/ssrf-url-validation.js",
       "import": "./dist/esm/utils/ssrf-url-validation.js",
