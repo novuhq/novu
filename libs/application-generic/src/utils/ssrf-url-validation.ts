@@ -12,6 +12,8 @@
 // Drift hazard: URL policy, redirect state machine, and DNS handling MUST stay
 // in lockstep between packages/shared and this mirror. Private IP classification
 // is canonical in @novu/shared/utils/private-ip-classification and re-exported here.
+// Runtime require() needs compiled dist output; nx build ordering (^build) builds
+// @novu/shared before application-generic.
 //
 // New code should prefer `safeOutboundRequest` / `safeOutboundJsonRequest`,
 // which enforce the policy at connect time and re-validate every redirect.

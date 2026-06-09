@@ -69,7 +69,13 @@ describe('ssrf-url-validation', () => {
     });
 
     it('should fail closed on malformed dotted IPv4-compatible encodings', () => {
+      // Invalid octet (999 > 255) — intentionally malformed to exercise fail-closed behavior.
       expect(isPrivateIp('::169.254.999.999')).toBe(true);
+    });
+
+    it('should fail closed on NAT64 dotted-decimal mixed notation', () => {
+      // Hex form (64:ff9b::808:808) is public; dotted-decimal mixed notation is always blocked.
+      expect(isPrivateIp('64:ff9b::8.8.8.8')).toBe(true);
     });
 
     it('should classify bracketed IPv6 literals consistently with bare addresses', () => {

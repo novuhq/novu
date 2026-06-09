@@ -61,20 +61,6 @@ describe('safe outbound HTTP — shared vs application-generic drift check', () 
     }
   });
 
-  it('isPrivateIp blocks representative private encodings', () => {
-    const cases = [
-      '169.254.169.254',
-      '::ffff:a9fe:a9fe',
-      '64:ff9b::a9fe:a9fe',
-      '64:ff9b::169.254.169.254',
-      '::169.254.999.999',
-    ];
-
-    for (const ip of cases) {
-      expect(sharedIsPrivateIp(ip), `expected private: ${ip}`).toBe(true);
-    }
-  });
-
   it('SsrfBlockedError shape and reason vocabulary agree', () => {
     const reasons = [
       'INVALID_URL',
