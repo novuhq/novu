@@ -13,9 +13,7 @@ PRIVATE_IPV4_BLOCKLIST.addSubnet('100.64.0.0', 10, 'ipv4');
 const PRIVATE_IPV6_BLOCKLIST = new BlockList();
 PRIVATE_IPV6_BLOCKLIST.addAddress('::', 'ipv6');
 PRIVATE_IPV6_BLOCKLIST.addAddress('::1', 'ipv6');
-/* ULA fc00::/7 */
 PRIVATE_IPV6_BLOCKLIST.addSubnet('fc00::', 7, 'ipv6');
-/* Link-local fe80::/10 */
 PRIVATE_IPV6_BLOCKLIST.addSubnet('fe80::', 10, 'ipv6');
 
 type Ipv6Hextets = [number, number, number, number, number, number, number, number];
@@ -112,12 +110,16 @@ function looksLikeTransitionEncoding(ip: string): boolean {
   return /^::\d/.test(lower) || lower.startsWith('64:ff9b:') || lower.startsWith('2002:');
 }
 
+function validatedEmbeddedIpv4(embedded: string): string | null | 'invalid' {
+  return isIPv4(embedded) ? embedded : 'invalid';
+}
+
 function extractTransitionEmbeddedIpv4(ip: string): string | null | 'invalid' {
   const dottedCompatibleMatch = /^::(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(ip);
   const dottedCompatibleIpv4 = dottedCompatibleMatch?.[1];
 
   if (dottedCompatibleIpv4) {
-    return isIPv4(dottedCompatibleIpv4) ? dottedCompatibleIpv4 : 'invalid';
+    return validatedEmbeddedIpv4(dottedCompatibleIpv4);
   }
 
   const hextets = expandIpv6Hextets(ip);
@@ -129,28 +131,18 @@ function extractTransitionEmbeddedIpv4(ip: string): string | null | 'invalid' {
   const [h0, h1, h2, h3, h4, h5, h6, h7] = hextets;
 
   if (h0 === 0 && h1 === 0 && h2 === 0 && h3 === 0 && h4 === 0 && h5 === 0) {
-    const embedded = hextetsToIpv4(h6, h7);
-
-    return isIPv4(embedded) ? embedded : 'invalid';
+    return validatedEmbeddedIpv4(hextetsToIpv4(h6, h7));
   }
 
   if (h0 === 0x64 && h1 === 0xff9b && h2 === 0 && h3 === 0 && h4 === 0 && h5 === 0) {
-    const embedded = hextetsToIpv4(h6, h7);
-
-    return isIPv4(embedded) ? embedded : 'invalid';
+    return validatedEmbeddedIpv4(hextetsToIpv4(h6, h7));
   }
 
   if (h0 === 0x2002) {
-    const embedded = hextetsToIpv4(h1, h2);
-
-    return isIPv4(embedded) ? embedded : 'invalid';
+    return validatedEmbeddedIpv4(hextetsToIpv4(h1, h2));
   }
 
   return null;
-}
-
-function isPrivateIpv4(ip: string): boolean {
-  return PRIVATE_IPV4_BLOCKLIST.check(ip, 'ipv4');
 }
 
 function isPrivateIpv6(ip: string): boolean {
@@ -158,7 +150,6 @@ function isPrivateIpv6(ip: string): boolean {
     return true;
   }
 
-  /* IPv4-mapped ::ffff:x.x.x.x — BlockList decodes these when checked as ipv6. */
   if (PRIVATE_IPV4_BLOCKLIST.check(ip, 'ipv6')) {
     return true;
   }
@@ -170,16 +161,12 @@ function isPrivateIpv6(ip: string): boolean {
   }
 
   if (embeddedIpv4 !== null) {
-    return isPrivateIpv4(embeddedIpv4);
+    return PRIVATE_IPV4_BLOCKLIST.check(embeddedIpv4, 'ipv4');
   }
 
   return false;
 }
 
-/**
- * Strips URL-style brackets from an IPv6 literal hostname so DNS and IP
- * classification see the bare address (e.g. `[::ffff:a9fe:a9fe]` → `::ffff:a9fe:a9fe`).
- */
 export function normalizeHostnameForLookup(hostname: string): string {
   return hostname.toLowerCase().replace(/^\[(.*)\]$/, '$1');
 }
@@ -189,13 +176,13 @@ export function normalizeHostnameForLookup(hostname: string): string {
  * link-local, unique-local IPv6 (fc00::/7), IPv6 loopback/link-local, IPv4-mapped
  * IPv6 of any of these, or the unspecified 0.0.0.0 address.
  *
- * Malformed transition encodings that look like embedded IPv4 fail closed (blocked).
+ * Used to reject SSRF candidates at validation **and** at connect time.
  */
 export function isPrivateIp(ip: string): boolean {
   const normalized = normalizeHostnameForLookup(ip);
 
   if (isIPv4(normalized)) {
-    return isPrivateIpv4(normalized);
+    return PRIVATE_IPV4_BLOCKLIST.check(normalized, 'ipv4');
   }
 
   if (isIPv6(normalized)) {

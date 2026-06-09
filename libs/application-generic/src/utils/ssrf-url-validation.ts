@@ -25,12 +25,11 @@ import { LRUCache } from 'lru-cache';
 
 type PrivateIpClassificationModule = typeof import('@novu/shared/dist/cjs/utils/private-ip-classification');
 
-// Runtime: subpath export. Types: direct dist path (node10 resolution cannot resolve subpath exports).
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const privateIpClassification = require('@novu/shared/utils/private-ip-classification') as PrivateIpClassificationModule;
+const { isPrivateIp, normalizeHostnameForLookup } =
+  require('@novu/shared/utils/private-ip-classification') as PrivateIpClassificationModule;
 
-export const isPrivateIp = privateIpClassification.isPrivateIp;
-export const normalizeHostnameForLookup = privateIpClassification.normalizeHostnameForLookup;
+export { isPrivateIp, normalizeHostnameForLookup };
 
 export function normalizeOutboundHttpUrl(raw: string): string | null {
   const trimmed = raw.trim();
@@ -125,16 +124,6 @@ export function assertSafeOutboundUrl(input: string | URL): URL {
   return parsed;
 }
 
-function resolveIpLiteralAddresses(normalizedHostname: string): dns.LookupAddress[] {
-  const family = isIP(normalizedHostname);
-
-  if (family === 0) {
-    return [];
-  }
-
-  return [{ address: normalizedHostname, family }];
-}
-
 export async function resolvePublicAddresses(
   hostname: string,
   options: { useCache?: boolean } = {}
@@ -150,7 +139,7 @@ export async function resolvePublicAddresses(
     const literalFamily = isIP(normalized);
 
     if (literalFamily !== 0) {
-      addresses = resolveIpLiteralAddresses(normalized);
+      addresses = [{ address: normalized, family: literalFamily }];
     } else {
       try {
         addresses = await dns.promises.lookup(normalized, { all: true });

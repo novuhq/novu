@@ -3,7 +3,7 @@ import { isIP } from 'node:net';
 import { LRUCache } from 'lru-cache';
 import { isPrivateIp, normalizeHostnameForLookup } from './private-ip-classification';
 
-export { isPrivateIp, normalizeHostnameForLookup } from './private-ip-classification';
+export { isPrivateIp, normalizeHostnameForLookup };
 
 /**
  * Resolves a webhook-style URL for outbound HTTP requests.
@@ -127,16 +127,6 @@ export function assertSafeOutboundUrl(input: string | URL): URL {
   return parsed;
 }
 
-function resolveIpLiteralAddresses(normalizedHostname: string): dns.LookupAddress[] {
-  const family = isIP(normalizedHostname);
-
-  if (family === 0) {
-    return [];
-  }
-
-  return [{ address: normalizedHostname, family }];
-}
-
 /**
  * Resolves all IP addresses for the hostname and asserts every one is public.
  *
@@ -165,7 +155,7 @@ export async function resolvePublicAddresses(
     const literalFamily = isIP(normalized);
 
     if (literalFamily !== 0) {
-      addresses = resolveIpLiteralAddresses(normalized);
+      addresses = [{ address: normalized, family: literalFamily }];
     } else {
       try {
         addresses = await dns.promises.lookup(normalized, { all: true });
