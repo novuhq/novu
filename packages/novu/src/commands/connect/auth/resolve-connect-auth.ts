@@ -21,7 +21,7 @@ export async function resolveConnectAuth(
 ): Promise<ResolvedConnectAuth> {
   const cliFlagSecret = options.secretKey?.trim();
   const envSecret = process.env.NOVU_SECRET_KEY?.trim();
-  const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY) && process.env.CI !== 'true';
+  const isInteractive = canFallbackFromKeylessToAuth();
   const wantsAuthenticated = Boolean(cliFlagSecret || (envSecret && !isInteractive));
 
   if (wantsAuthenticated) {

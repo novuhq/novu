@@ -43,7 +43,9 @@ interface ConnectAuthCallbacks {
   onAuthStarted: () => void;
   onAuthFailed: (message: string) => void;
   onAuthCompleted: (envName: string | null) => void;
+  trackAuthCompleted: (auth: ResolvedConnectAuth) => void;
   onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
+  onboardingSessionId?: string;
 }
 
 export async function runConnectPipeline(input: ConnectPipelineInput): Promise<ConnectPipelineResult> {
@@ -65,12 +67,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       onAuthStarted: authCallbacks.onAuthStarted,
       onAuthFailed: authCallbacks.onAuthFailed,
     });
-    track(CONNECT_EVENTS.AUTH_COMPLETED, {
-      source: auth.source,
-      region: options.region,
-      keyless: auth.isKeyless,
-      ...sessionProps,
-    });
+    authCallbacks.trackAuthCompleted(auth);
     authCallbacks.onAuthCompleted(auth.environmentName ?? null);
 
     if (auth.user?.id) {
@@ -374,7 +371,7 @@ async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedC
 }
 
 function buildAuthCallbacks(input: ConnectPipelineInput): ConnectAuthCallbacks {
-  const { ui, onTrack, onboardingSessionId, onIdentityResolved } = input;
+  const { ui, onTrack, onboardingSessionId, onIdentityResolved, options } = input;
   const sessionProps = onboardingSessionId ? { onboardingSessionId } : {};
   const track = onTrack ?? (() => undefined);
 
@@ -384,7 +381,15 @@ function buildAuthCallbacks(input: ConnectPipelineInput): ConnectAuthCallbacks {
     onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, sessionProps),
     onAuthFailed: (message) => track(CONNECT_EVENTS.AUTH_FAILED, { ...sessionProps, message }),
     onAuthCompleted: (envName) => ui.authCompleted(envName),
+    trackAuthCompleted: (auth) =>
+      track(CONNECT_EVENTS.AUTH_COMPLETED, {
+        source: auth.source,
+        region: options.region,
+        keyless: auth.isKeyless,
+        ...sessionProps,
+      }),
     onIdentityResolved,
+    onboardingSessionId,
   };
 }
 
@@ -392,17 +397,17 @@ async function switchToAuthenticatedAuth(
   options: ConnectCommandOptions,
   authCallbacks: ConnectAuthCallbacks
 ): Promise<ResolvedConnectAuth> {
-  authCallbacks.onAuthStarted();
-
   const auth = await fallbackToAuthenticatedConnectAuth(options, {
     onStatus: authCallbacks.onStatus,
     onDashboardUrl: authCallbacks.onDashboardUrl,
     name: 'novu-connect',
     authDashboardUrl: options.connectDashboardUrl,
+    onboardingSessionId: authCallbacks.onboardingSessionId,
     onAuthStarted: authCallbacks.onAuthStarted,
     onAuthFailed: authCallbacks.onAuthFailed,
   });
 
+  authCallbacks.trackAuthCompleted(auth);
   authCallbacks.onAuthCompleted(auth.environmentName ?? null);
 
   if (auth.user?.id) {

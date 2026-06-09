@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const bootstrapKeylessSession = vi.fn();
 const resolveAuth = vi.fn();
@@ -33,6 +33,11 @@ const options = {
 };
 
 describe('resolveConnectAuth', () => {
+  const originalCi = process.env.CI;
+  const originalNovuSecretKey = process.env.NOVU_SECRET_KEY;
+  const originalStdinIsTTY = process.stdin.isTTY;
+  const originalStdoutIsTTY = process.stdout.isTTY;
+
   beforeEach(() => {
     vi.clearAllMocks();
     configGetValue.mockReturnValue(undefined);
@@ -40,6 +45,23 @@ describe('resolveConnectAuth', () => {
     process.env.CI = 'false';
     Object.defineProperty(process.stdin, 'isTTY', { value: true, configurable: true });
     Object.defineProperty(process.stdout, 'isTTY', { value: true, configurable: true });
+  });
+
+  afterEach(() => {
+    if (originalCi === undefined) {
+      delete process.env.CI;
+    } else {
+      process.env.CI = originalCi;
+    }
+
+    if (originalNovuSecretKey === undefined) {
+      delete process.env.NOVU_SECRET_KEY;
+    } else {
+      process.env.NOVU_SECRET_KEY = originalNovuSecretKey;
+    }
+
+    Object.defineProperty(process.stdin, 'isTTY', { value: originalStdinIsTTY, configurable: true });
+    Object.defineProperty(process.stdout, 'isTTY', { value: originalStdoutIsTTY, configurable: true });
   });
 
   it('falls back to dashboard auth when keyless bootstrap hits the demo limit', async () => {
