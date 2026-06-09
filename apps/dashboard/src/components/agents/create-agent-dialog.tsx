@@ -898,6 +898,8 @@ export function CreateAgentDialog({
                       isLoading={isFetchingAgentTemplates}
                     />
                     <Button
+                      aria-label="Regenerate suggestions"
+                      title="Regenerate suggestions"
                       className="h-6 shrink-0 [&_svg]:size-2.5"
                       variant="secondary"
                       mode="ghost"
