@@ -1,4 +1,5 @@
 import * as dns from 'node:dns';
+import { BlockList, isIPv4, isIPv6 } from 'node:net';
 import { LRUCache } from 'lru-cache';
 
 /**
@@ -39,10 +40,130 @@ export function normalizeOutboundHttpUrl(raw: string): string | null {
   }
 }
 
-const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
-  max: 500,
-  ttl: 1000 * 60 * 5, // 5 minutes
-});
+const PRIVATE_IPV4_BLOCKLIST = new BlockList();
+PRIVATE_IPV4_BLOCKLIST.addAddress('0.0.0.0', 'ipv4');
+PRIVATE_IPV4_BLOCKLIST.addSubnet('10.0.0.0', 8, 'ipv4');
+PRIVATE_IPV4_BLOCKLIST.addSubnet('127.0.0.0', 8, 'ipv4');
+PRIVATE_IPV4_BLOCKLIST.addSubnet('169.254.0.0', 16, 'ipv4');
+PRIVATE_IPV4_BLOCKLIST.addSubnet('172.16.0.0', 12, 'ipv4');
+PRIVATE_IPV4_BLOCKLIST.addSubnet('192.168.0.0', 16, 'ipv4');
+/* RFC6598 shared address space (100.64.0.0/10) — cloud metadata, CGNAT */
+PRIVATE_IPV4_BLOCKLIST.addSubnet('100.64.0.0', 10, 'ipv4');
+
+const PRIVATE_IPV6_BLOCKLIST = new BlockList();
+PRIVATE_IPV6_BLOCKLIST.addAddress('::', 'ipv6');
+PRIVATE_IPV6_BLOCKLIST.addAddress('::1', 'ipv6');
+/* ULA fc00::/7 */
+PRIVATE_IPV6_BLOCKLIST.addSubnet('fc00::', 7, 'ipv6');
+/* Link-local fe80::/10 */
+PRIVATE_IPV6_BLOCKLIST.addSubnet('fe80::', 10, 'ipv6');
+
+function expandIpv6Hextets(ip: string): number[] | null {
+  const lower = ip.toLowerCase();
+
+  if (!lower.includes('::')) {
+    const parts = lower.split(':');
+
+    if (parts.length !== 8) {
+      return null;
+    }
+
+    return parts.map((part) => parseInt(part, 16));
+  }
+
+  const [head, tail] = lower.split('::');
+  const headParts = head ? head.split(':') : [];
+  const tailParts = tail ? tail.split(':') : [];
+  const missing = 8 - headParts.length - tailParts.length;
+
+  if (missing < 0) {
+    return null;
+  }
+
+  return [
+    ...headParts.map((part) => parseInt(part, 16)),
+    ...Array.from({ length: missing }, () => 0),
+    ...tailParts.map((part) => parseInt(part, 16)),
+  ];
+}
+
+function hextetsToIpv4(highHextet: number, lowHextet: number): string {
+  return [
+    (highHextet >> 8) & 0xff,
+    highHextet & 0xff,
+    (lowHextet >> 8) & 0xff,
+    lowHextet & 0xff,
+  ].join('.');
+}
+
+function extractEmbeddedIpv4(ip: string): string | null {
+  const dottedMappedMatch = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(ip);
+  const dottedMappedIpv4 = dottedMappedMatch?.[1];
+
+  if (dottedMappedIpv4) {
+    return dottedMappedIpv4;
+  }
+
+  const dottedCompatibleMatch = /^::(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(ip);
+  const dottedCompatibleIpv4 = dottedCompatibleMatch?.[1];
+
+  if (dottedCompatibleIpv4) {
+    return dottedCompatibleIpv4;
+  }
+
+  const hextets = expandIpv6Hextets(ip);
+
+  if (!hextets || hextets.length !== 8) {
+    return null;
+  }
+
+  const [h0, h1, h2, h3, h4, h5, h6, h7] = hextets as [
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
+
+  if (h5 === 0xffff) {
+    return hextetsToIpv4(h6, h7);
+  }
+
+  if (h0 === 0 && h1 === 0 && h2 === 0 && h3 === 0 && h4 === 0 && h5 === 0) {
+    return hextetsToIpv4(h6, h7);
+  }
+
+  if (h0 === 0x64 && h1 === 0xff9b && h2 === 0 && h3 === 0 && h4 === 0 && h5 === 0) {
+    return hextetsToIpv4(h6, h7);
+  }
+
+  if (h0 === 0x2002) {
+    return hextetsToIpv4(h1, h2);
+  }
+
+  return null;
+}
+
+function isPrivateIpv4(ip: string): boolean {
+  return PRIVATE_IPV4_BLOCKLIST.check(ip, 'ipv4');
+}
+
+function isPrivateIpv6(ip: string): boolean {
+  if (PRIVATE_IPV6_BLOCKLIST.check(ip, 'ipv6')) {
+    return true;
+  }
+
+  const embeddedIpv4 = extractEmbeddedIpv4(ip);
+
+  if (embeddedIpv4 && isIPv4(embeddedIpv4)) {
+    return isPrivateIpv4(embeddedIpv4);
+  }
+
+  return false;
+}
 
 /**
  * Returns true for IPs that are loopback, RFC1918 private, RFC6598 shared (CGNAT),
@@ -52,33 +173,21 @@ const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
  * Used to reject SSRF candidates at validation **and** at connect time.
  */
 export function isPrivateIp(ip: string): boolean {
-  const sharedAddressSecondOctet = '(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])';
-  const privateRanges = [
-    /^0\.0\.0\.0$/i,
-    /^127\./,
-    /^10\./,
-    /^172\.(1[6-9]|2[0-9]|3[01])\./,
-    /^192\.168\./,
-    /^169\.254\./,
-    /* RFC6598 shared address space (100.64.0.0/10) — cloud metadata, CGNAT */
-    new RegExp(`^100\\.${sharedAddressSecondOctet}\\.`),
-    /^::ffff:127\./i,
-    /^::ffff:10\./i,
-    /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./i,
-    /^::ffff:192\.168\./i,
-    /^::ffff:169\.254\./i,
-    new RegExp(`^::ffff:100\\.${sharedAddressSecondOctet}\\.`, 'i'),
-    /^::1$/i,
-    /* ULA fc00::/7 (fc00–fdff first hextet) */
-    /^f[cd][0-9a-f]{2}:/i,
-    /^::ffff:f[cd][0-9a-f]{2}:/i,
-    /* Link-local fe80::/10 (fe80–febf first hextet) */
-    /^fe[89ab][0-9a-f]:/i,
-    /^::ffff:fe[89ab][0-9a-f]:/i,
-  ];
+  if (isIPv4(ip)) {
+    return isPrivateIpv4(ip);
+  }
 
-  return privateRanges.some((range) => range.test(ip));
+  if (isIPv6(ip)) {
+    return isPrivateIpv6(ip);
+  }
+
+  return false;
 }
+
+const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
+  max: 500,
+  ttl: 1000 * 60 * 5, // 5 minutes
+});
 
 /**
  * Hostnames whose entire purpose is to expose internal/metadata endpoints.

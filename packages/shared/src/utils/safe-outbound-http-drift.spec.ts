@@ -3,7 +3,7 @@
 // and emit stray artifacts there. Vitest runs in Node and resolves the path
 // against the spec's __dirname.
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { SsrfBlockedError as SharedSsrfBlockedError, isPrivateIp as sharedIsPrivateIp } from './ssrf-url-validation';
 
 const inlinedPath = join(
@@ -18,8 +18,8 @@ const inlinedPath = join(
   'utils',
   'ssrf-url-validation.ts'
 );
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const inlined = require(inlinedPath) as {
+
+type InlinedSsrfModule = {
   isPrivateIp: (ip: string) => boolean;
   SsrfBlockedError: new (
     reason: string,
@@ -31,8 +31,15 @@ const inlined = require(inlinedPath) as {
     resolvedAddress?: string;
   };
 };
-const inlinedIsPrivateIp = inlined.isPrivateIp;
-const InlinedSsrfBlockedError = inlined.SsrfBlockedError;
+
+let inlinedIsPrivateIp: InlinedSsrfModule['isPrivateIp'];
+let InlinedSsrfBlockedError: InlinedSsrfModule['SsrfBlockedError'];
+
+beforeAll(async () => {
+  const inlined = (await import(inlinedPath)) as InlinedSsrfModule;
+  inlinedIsPrivateIp = inlined.isPrivateIp;
+  InlinedSsrfBlockedError = inlined.SsrfBlockedError;
+});
 
 /**
  * libs/application-generic carries an inlined copy of the SSRF primitives and
@@ -80,6 +87,20 @@ describe('safe outbound HTTP — shared vs application-generic drift check', () 
       '::ffff:192.168.1.1',
       '::ffff:169.254.1.1',
       '::ffff:100.100.100.200',
+      // Alternate IPv6 encodings of private IPv4
+      '::ffff:a9fe:a9fe',
+      '::ffff:7f00:1',
+      '::a9fe:a9fe',
+      '::169.254.169.254',
+      '64:ff9b::a9fe:a9fe',
+      '2002:7f00:1::',
+      '::',
+      '0:0:0:0:0:0:0:1',
+      // Public IPv6 transition encodings
+      '::ffff:8.8.8.8',
+      '::ffff:808:808',
+      '64:ff9b::808:808',
+      '2002:c000:201::',
       // Public IPv6
       '2001:4860:4860::8888',
     ];

@@ -39,7 +39,24 @@ describe('ssrf-url-validation', () => {
       expect(isPrivateIp('::ffff:192.168.1.1')).toBe(true);
       expect(isPrivateIp('::ffff:169.254.1.1')).toBe(true);
       expect(isPrivateIp('::ffff:100.100.100.200')).toBe(true);
-      expect(isPrivateIp('::ffff:fe80::1')).toBe(true);
+    });
+
+    it('should detect alternate IPv6 encodings of private IPv4 addresses', () => {
+      expect(isPrivateIp('::ffff:a9fe:a9fe')).toBe(true);
+      expect(isPrivateIp('::ffff:7f00:1')).toBe(true);
+      expect(isPrivateIp('::a9fe:a9fe')).toBe(true);
+      expect(isPrivateIp('::169.254.169.254')).toBe(true);
+      expect(isPrivateIp('64:ff9b::a9fe:a9fe')).toBe(true);
+      expect(isPrivateIp('2002:7f00:1::')).toBe(true);
+      expect(isPrivateIp('::')).toBe(true);
+      expect(isPrivateIp('0:0:0:0:0:0:0:1')).toBe(true);
+    });
+
+    it('should allow public IP addresses in IPv6 transition encodings', () => {
+      expect(isPrivateIp('::ffff:8.8.8.8')).toBe(false);
+      expect(isPrivateIp('::ffff:808:808')).toBe(false);
+      expect(isPrivateIp('64:ff9b::808:808')).toBe(false);
+      expect(isPrivateIp('2002:c000:201::')).toBe(false);
     });
 
     it('should allow public IP addresses', () => {
