@@ -23,7 +23,11 @@ function parseHextet(part: string): number | null {
     return null;
   }
 
-  const value = parseInt(part, 16);
+  if (!/^[0-9a-f]{1,4}$/i.test(part)) {
+    return null;
+  }
+
+  const value = Number.parseInt(part, 16);
 
   if (!Number.isInteger(value) || value < 0 || value > 0xffff) {
     return null;

@@ -21,6 +21,7 @@ const inlinedPath = join(
 
 type InlinedSsrfModule = {
   isPrivateIp: (ip: string) => boolean;
+  normalizeHostnameForLookup: (hostname: string) => string;
   SsrfBlockedError: new (
     reason: string,
     message: string,
@@ -33,77 +34,44 @@ type InlinedSsrfModule = {
 };
 
 let inlinedIsPrivateIp: InlinedSsrfModule['isPrivateIp'];
+let inlinedNormalizeHostnameForLookup: InlinedSsrfModule['normalizeHostnameForLookup'];
 let InlinedSsrfBlockedError: InlinedSsrfModule['SsrfBlockedError'];
 
 beforeAll(async () => {
   const inlined = (await import(inlinedPath)) as InlinedSsrfModule;
   inlinedIsPrivateIp = inlined.isPrivateIp;
+  inlinedNormalizeHostnameForLookup = inlined.normalizeHostnameForLookup;
   InlinedSsrfBlockedError = inlined.SsrfBlockedError;
 });
 
 /**
  * libs/application-generic carries an inlined copy of the SSRF primitives and
  * the safe outbound HTTP runner because its CommonJS module resolution cannot
- * honour `@novu/shared`'s subpath exports. The two implementations MUST stay
- * in lockstep — any divergence is a security regression rather than a
- * behavioural one.
- *
- * This suite asserts the two copies agree on every observable surface that a
- * caller can rely on. Drop or update the cases as primitives evolve, but
- * never delete the suite without removing the duplication.
+ * honour `@novu/shared`'s subpath exports. URL policy and DNS handling MUST stay
+ * in lockstep between the two copies. Private IP classification is delegated to
+ * `@novu/shared/utils/private-ip-classification` — this suite verifies that wiring
+ * and that the remaining mirrored surfaces have not drifted.
  */
 describe('safe outbound HTTP — shared vs application-generic drift check', () => {
-  it('isPrivateIp agrees on every documented IP class', () => {
+  it('application-generic delegates isPrivateIp to shared classification', () => {
+    expect(inlinedNormalizeHostnameForLookup('[::1]')).toBe('::1');
+
+    for (const ip of ['169.254.169.254', '::ffff:a9fe:a9fe', '64:ff9b::169.254.169.254']) {
+      expect(inlinedIsPrivateIp(ip), `disagree on ${ip}`).toBe(sharedIsPrivateIp(ip));
+    }
+  });
+
+  it('isPrivateIp blocks representative private encodings', () => {
     const cases = [
-      // Loopback & unspecified
-      '0.0.0.0',
-      '127.0.0.1',
-      '127.255.255.254',
-      // RFC1918
-      '10.0.0.1',
-      '10.255.255.254',
-      '172.16.0.1',
-      '172.31.255.254',
-      '192.168.1.1',
-      // Link-local v4 / metadata
       '169.254.169.254',
-      // RFC6598 shared address space (100.64.0.0/10)
-      '100.64.0.1',
-      '100.100.100.200',
-      '100.127.255.255',
-      // Public IPv4
-      '1.1.1.1',
-      '8.8.8.8',
-      '203.0.113.1',
-      // IPv6 loopback / link-local / ULA
-      '::1',
-      'fe80::1',
-      'fe80:abcd::1',
-      'fc00::1',
-      'fdff::1',
-      // IPv4-mapped IPv6 of private addresses
-      '::ffff:127.0.0.1',
-      '::ffff:10.0.0.1',
-      '::ffff:192.168.1.1',
-      '::ffff:169.254.1.1',
-      '::ffff:100.100.100.200',
       '::ffff:a9fe:a9fe',
-      '::ffff:7f00:1',
-      '::a9fe:a9fe',
-      '::169.254.169.254',
       '64:ff9b::a9fe:a9fe',
-      '2002:7f00:1::',
-      '::',
-      '0:0:0:0:0:0:0:1',
-      '::ffff:8.8.8.8',
-      '::ffff:808:808',
-      '64:ff9b::808:808',
-      '2002:c000:201::',
-      '2001:4860:4860::8888',
+      '64:ff9b::169.254.169.254',
+      '::169.254.999.999',
     ];
 
     for (const ip of cases) {
-      expect(inlinedIsPrivateIp(ip), `disagree on ${ip}`).toBe(sharedIsPrivateIp(ip));
+      expect(sharedIsPrivateIp(ip), `expected private: ${ip}`).toBe(true);
     }
   });
 

@@ -47,6 +47,7 @@ describe('ssrf-url-validation', () => {
       expect(isPrivateIp('::a9fe:a9fe')).toBe(true);
       expect(isPrivateIp('::169.254.169.254')).toBe(true);
       expect(isPrivateIp('64:ff9b::a9fe:a9fe')).toBe(true);
+      expect(isPrivateIp('64:ff9b::169.254.169.254')).toBe(true);
       expect(isPrivateIp('2002:7f00:1::')).toBe(true);
       expect(isPrivateIp('::')).toBe(true);
       expect(isPrivateIp('0:0:0:0:0:0:0:1')).toBe(true);
