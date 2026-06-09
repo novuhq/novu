@@ -14,6 +14,7 @@ import {
   type StreamCallbacks,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
+import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
@@ -50,6 +51,7 @@ export class ManagedAgentEventHandler {
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -161,6 +163,7 @@ export class ManagedAgentEventHandler {
                 response: event.response,
               })
             );
+            await this.inboundAck.onManagedTurnComplete(metadata);
 
             return;
           }
@@ -181,6 +184,7 @@ export class ManagedAgentEventHandler {
           await this.handlePlanProgress.execute(
             HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { action: 'complete' } })
           );
+          await this.inboundAck.onManagedTurnComplete(metadata);
         } catch (err) {
           this.logger.error(err, `onFinish failed: session=${sessionId}`);
           captureAgentException(err, {
@@ -227,6 +231,7 @@ export class ManagedAgentEventHandler {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
       await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
+      await this.inboundAck.onManagedTurnComplete(metadata);
 
       return;
     }
@@ -256,6 +261,8 @@ export class ManagedAgentEventHandler {
         });
       }
 
+      await this.inboundAck.onManagedTurnComplete(metadata);
+
       return;
     }
 
@@ -268,6 +275,7 @@ export class ManagedAgentEventHandler {
       await this.handlePlanProgress.execute(
         HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
       );
+      await this.inboundAck.onManagedTurnComplete(metadata);
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);
       captureAgentException(err, {
