@@ -10,7 +10,7 @@ import {
   listAgentIntegrations,
   sendAgentWelcomeMessage,
 } from '@/api/agents';
-import { AgentCard, type ManagedConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
+import { AgentCard, type AgentCardConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
 import { ConnectAgentForm } from '@/components/onboarding/connect-agent/connect-agent-form';
 import {
   type ConnectSummary,
@@ -207,11 +207,54 @@ const BRAIN_STEP_TITLE = 'What should your agent do?';
 const BRAIN_STEP_DESCRIPTION =
   "We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials.";
 
-export function ManagedAgentRecap({ agent, summary }: { agent: AgentResponse; summary: ConnectSummary }) {
-  const connector: ManagedConnectorKind =
+export function ManagedAgentRecap({
+  agent,
+  summary,
+  hideHeader,
+}: {
+  agent: AgentResponse;
+  summary: ConnectSummary;
+  /**
+   * When true, the step title/description are omitted and only the agent preview card is rendered
+   * next to the completed-step indicator (onboarding "Agent preview" step).
+   */
+  hideHeader?: boolean;
+}) {
+  const isManagedAgent = agent.runtime === 'managed';
+  const managedConnector: AgentCardConnectorKind =
     agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws ? 'aws' : 'anthropic';
+  // Custom-code (self-hosted) agents render the trimmed card variant: custom-code icon + footer,
+  // no status badge, and no MCPs/tools/instructions (those live in the user's own code).
+  const connector: AgentCardConnectorKind = isManagedAgent ? managedConnector : 'custom';
   const serverMcpIds = agent.managedRuntime?.mcpServers?.map((m) => m.externalId);
   const serverToolIds = agent.managedRuntime?.tools?.map((t) => t.externalId);
+
+  const agentCard = (
+    <AgentCard
+      connector={connector}
+      isDemoCredential={agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic}
+      status="connected"
+      agentCreated
+      displayName={agent.name}
+      isPlaceholderName={false}
+      description={agent.description}
+      identifier={agent.identifier}
+      instructions={agent.managedRuntime?.systemPrompt ?? summary.instructions}
+      mcpServers={serverMcpIds ?? summary.mcpServers ?? []}
+      tools={serverToolIds ?? summary.tools ?? []}
+    />
+  );
+
+  if (hideHeader) {
+    return (
+      <div className="relative flex flex-col pl-6">
+        <div className="absolute -left-[20px] top-[3px] flex w-5 justify-center">
+          <CompletedStepIndicator />
+        </div>
+        {agentCard}
+      </div>
+    );
+  }
 
   return (
     <SetupStep
@@ -219,20 +262,7 @@ export function ManagedAgentRecap({ agent, summary }: { agent: AgentResponse; su
       status="completed"
       title={BRAIN_STEP_TITLE}
       description={BRAIN_STEP_DESCRIPTION}
-      fullWidthContent={
-        <AgentCard
-          connector={connector}
-          isDemoCredential={agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic}
-          status="connected"
-          agentCreated
-          displayName={agent.name}
-          isPlaceholderName={false}
-          description={agent.description}
-          instructions={agent.managedRuntime?.systemPrompt ?? summary.instructions}
-          mcpServers={serverMcpIds ?? summary.mcpServers ?? []}
-          tools={serverToolIds ?? summary.tools ?? []}
-        />
-      }
+      fullWidthContent={agentCard}
     />
   );
 }

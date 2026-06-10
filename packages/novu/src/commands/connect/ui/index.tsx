@@ -199,13 +199,17 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     addingTelegramIntegration() {
       store.phase.set({ kind: 'adding-telegram' });
     },
-    showTelegramIntro({ botfatherQr }) {
+    showTelegramIntro({ botfatherQr, botfatherUrl: _botfatherUrl }) {
       return new Promise<void>((resolve) => {
         store.phase.set({ kind: 'telegram-intro', botfatherQr, resolve });
       });
     },
     showTelegramLinkToken({ mobileQr, mobileUrl }) {
       store.phase.set({ kind: 'telegram-link-token', mobileQr, mobileUrl });
+    },
+    savingTelegramBotToken() {
+      // Reuse the generic Telegram spinner phase — saving is near-instant.
+      store.phase.set({ kind: 'adding-telegram' });
     },
     showTelegramTest({ deepLinkQr, deepLinkUrl, botUsername }) {
       store.phase.set({ kind: 'telegram-test', deepLinkQr, deepLinkUrl, botUsername });

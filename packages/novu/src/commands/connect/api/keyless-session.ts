@@ -15,58 +15,30 @@ export interface KeylessSession {
   applicationIdentifier: string;
 }
 
-export interface BootstrapKeylessSessionResult extends KeylessSession {
-  recoveredFromStaleSession: boolean;
-}
+export async function bootstrapKeylessSession(apiUrl: string): Promise<KeylessSession> {
+  const session = await requestKeylessSession(apiUrl);
 
-export async function bootstrapKeylessSession(
-  apiUrl: string,
-  storedIdentifier?: string
-): Promise<BootstrapKeylessSessionResult> {
-  const trimmedStored = storedIdentifier?.trim();
-  let attemptedStoredSession = false;
-
-  if (trimmedStored && isKeylessIdentifier(trimmedStored)) {
-    attemptedStoredSession = true;
-    const restored = await requestKeylessSession(apiUrl, trimmedStored);
-
-    if (restored) {
-      const readiness = await checkKeylessEnvironmentReadyForConnect(apiUrl, restored.applicationIdentifier);
-
-      if (readiness.ready) {
-        return { ...restored, recoveredFromStaleSession: false };
-      }
-    }
-  }
-
-  const fresh = await requestKeylessSession(apiUrl);
-
-  if (!fresh) {
-    throw new Error('Failed to start a keyless session.');
-  }
-
-  const readiness = await checkKeylessEnvironmentReadyForConnect(apiUrl, fresh.applicationIdentifier);
+  const readiness = await checkKeylessEnvironmentReadyForConnect(apiUrl, session.applicationIdentifier);
 
   if (!readiness.ready) {
-    throw new Error(describeKeylessEnvironmentNotReady(fresh.applicationIdentifier, readiness, apiUrl));
+    throw new Error(describeKeylessEnvironmentNotReady(session.applicationIdentifier, readiness, apiUrl));
   }
 
-  return { ...fresh, recoveredFromStaleSession: attemptedStoredSession };
+  return session;
 }
 
-async function requestKeylessSession(apiUrl: string, applicationIdentifier?: string): Promise<KeylessSession | null> {
+async function requestKeylessSession(apiUrl: string): Promise<KeylessSession> {
   const axios = createNovuAxios({ apiUrl });
-  const body = applicationIdentifier ? { applicationIdentifier } : {};
 
-  const res = await axios.post<InboxSessionResponse>('/v1/inbox/session', body, {
-    validateStatus: () => true,
-  });
+  const res = await axios.post<InboxSessionResponse>(
+    '/v1/inbox/session',
+    {},
+    {
+      validateStatus: () => true,
+    }
+  );
 
   if (res.status >= 400) {
-    if (applicationIdentifier && isRecoverableKeylessSessionFailure(res.status, res.data)) {
-      return null;
-    }
-
     throw new Error(describeKeylessSessionFailure(res.status, res.data, apiUrl));
   }
 
@@ -78,20 +50,6 @@ async function requestKeylessSession(apiUrl: string, applicationIdentifier?: str
   }
 
   return { applicationIdentifier: resolvedIdentifier };
-}
-
-function isRecoverableKeylessSessionFailure(status: number, body: unknown): boolean {
-  const message = extractNovuApiMessage(body)?.toLowerCase() ?? '';
-
-  if (status === 400) {
-    return message.includes('valid application identifier');
-  }
-
-  if (status === 404) {
-    return message.includes('active in-app integration could not be found');
-  }
-
-  return false;
 }
 
 interface KeylessEnvironmentReadiness {
@@ -122,6 +80,17 @@ function describeKeylessEnvironmentNotReady(
   readiness: KeylessEnvironmentReadiness,
   apiUrl: string
 ): string {
+  const isUnauthorized = readiness.reason.includes('no longer authorized');
+
+  if (isUnauthorized) {
+    return [
+      readiness.reason,
+      'Re-run `npx novu connect` to start a fresh keyless session, or use `--secret-key <key>` for an existing environment.',
+      `Application identifier: ${applicationIdentifier}.`,
+      `API: ${apiUrl}.`,
+    ].join('\n');
+  }
+
   const serverFix =
     'On the API server, set NOVU_MANAGED_CLAUDE_API_KEY and enable IS_DEMO_MANAGED_CLAUDE_ENABLED, then restart the API.';
   const bypass = 'Alternatively, re-run with `--secret-key <key>` to use an existing environment.';

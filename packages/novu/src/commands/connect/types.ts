@@ -41,6 +41,12 @@ export interface ConnectCommandOptions {
   skipSlack?: boolean;
   /** Pre-fill the Slack App Configuration Token, skipping the paste screen. */
   slackConfigToken?: string;
+  /**
+   * Telegram bot token from @BotFather (`123456:ABC-…`). When provided, the CLI
+   * saves it on the integration directly, skipping the dashboard mobile-link
+   * handoff (which keyless users cannot access).
+   */
+  telegramBotToken?: string;
   /** Force the non-interactive logging UI (no Ink TUI). Used in CI / piped-stdin shells. */
   ci?: boolean;
 }

@@ -1,2 +1,3 @@
 export const REGISTER_API_PATH = 'REGISTER_API_PATH';
+export const REGISTER_CONTROLLER_DECORATORS = 'REGISTER_CONTROLLER_DECORATORS';
 export { NOVU_OPTIONS } from './nest.module-definition';

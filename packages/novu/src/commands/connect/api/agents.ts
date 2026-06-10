@@ -242,6 +242,33 @@ export async function getTelegramMobileLinkStatus(
   return 'data' in body && body.data ? body.data : (body as TelegramMobileLinkStatus);
 }
 
+export interface ConsumeTelegramMobileLinkResult {
+  success: true;
+  botUsername: string;
+  webhookUrl: string;
+  deepLinkUrl?: string;
+}
+
+/**
+ * Public endpoint — the opaque setup token authenticates the request. Persists
+ * the BotFather token onto the linked Telegram integration and registers the
+ * webhook. This is what the dashboard mobile-setup page calls; the CLI calls
+ * it directly when the user supplies `--telegram-bot-token`, so keyless users
+ * (who cannot sign in to the dashboard) never need the mobile page.
+ */
+export async function consumeTelegramMobileLink(
+  client: ConnectApiClient,
+  input: { token: string; botToken: string }
+): Promise<ConsumeTelegramMobileLinkResult> {
+  const res = await client.axios.post<{ data?: ConsumeTelegramMobileLinkResult } | ConsumeTelegramMobileLinkResult>(
+    '/v1/agents/public/telegram/mobile-configure',
+    { token: input.token, botToken: input.botToken }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as ConsumeTelegramMobileLinkResult);
+}
+
 export async function issueTelegramSubscriberLink(
   client: ConnectApiClient,
   agentIdentifier: string,

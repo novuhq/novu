@@ -177,7 +177,7 @@ export function AgentUsecasePreviewIllustration() {
       <g mask="url(#D)">
         <path
           fill="#000"
-          fill-opacity=".3"
+          fillOpacity=".3"
           d="M309.803 180.736a2.408 2.408 0 1 1 4.816-.084l.023 1.294a2.903 2.903 0 0 1-2.853 2.954l-1.913.034z"
         />
       </g>

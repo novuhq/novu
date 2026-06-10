@@ -100,13 +100,19 @@ export interface ConnectUI {
    * scannable QR pointing at `t.me/botfather`. Resolves when the user hits
    * Enter to advance.
    */
-  showTelegramIntro(opts: { botfatherQr: string }): Promise<void>;
+  showTelegramIntro(opts: { botfatherQr: string; botfatherUrl: string }): Promise<void>;
   /**
    * Step 2: render the mobile-link QR. Fire-and-forget — the pipeline owns
    * the polling loop and transitions away from this phase when the bot token
    * lands on the integration.
    */
   showTelegramLinkToken(opts: { mobileQr: string; mobileUrl: string }): void;
+  /**
+   * Alternative to steps 1–2: the bot token was supplied up front via
+   * `--telegram-bot-token`, so the CLI saves it directly instead of waiting
+   * for the mobile-link page. Renders a short progress state.
+   */
+  savingTelegramBotToken(): void;
   /**
    * Step 3: render the `t.me/<bot>?start=<code>` deep-link QR. Pipeline polls
    * the agent's Telegram integration link for `connectedAt`.

@@ -31,7 +31,6 @@ import { NovuApiError } from './client';
 import { bootstrapKeylessSession } from './keyless-session';
 
 const apiUrl = 'http://localhost:3000';
-const storedIdentifier = 'pk_keyless_00000001_abcd';
 const freshIdentifier = 'pk_keyless_00000002_efgh';
 
 function sessionResponse(applicationIdentifier: string, status = 200) {
@@ -58,94 +57,40 @@ describe('bootstrapKeylessSession', () => {
     listIntegrations.mockResolvedValue([demoIntegration()]);
   });
 
-  it('reuses a stored keyless session when the environment is still ready', async () => {
-    post.mockResolvedValueOnce(sessionResponse(storedIdentifier));
-
-    const result = await bootstrapKeylessSession(apiUrl, storedIdentifier);
-
-    expect(result).toEqual({
-      applicationIdentifier: storedIdentifier,
-      recoveredFromStaleSession: false,
-    });
-    expect(post).toHaveBeenCalledTimes(1);
-    expect(post.mock.calls[0][1]).toEqual({ applicationIdentifier: storedIdentifier });
-    expect(listIntegrations).toHaveBeenCalledTimes(1);
-  });
-
-  it('starts a fresh session when the stored environment no longer exists', async () => {
-    post
-      .mockResolvedValueOnce({
-        status: 400,
-        data: { message: 'Please provide a valid application identifier' },
-      })
-      .mockResolvedValueOnce(sessionResponse(freshIdentifier));
-
-    const result = await bootstrapKeylessSession(apiUrl, storedIdentifier);
-
-    expect(result).toEqual({
-      applicationIdentifier: freshIdentifier,
-      recoveredFromStaleSession: true,
-    });
-    expect(post).toHaveBeenCalledTimes(2);
-    expect(post.mock.calls[1][1]).toEqual({});
-    expect(listIntegrations).toHaveBeenCalledTimes(1);
-  });
-
-  it('starts a fresh session when the stored environment was claimed and lost its demo integration', async () => {
-    post
-      .mockResolvedValueOnce(sessionResponse(storedIdentifier))
-      .mockResolvedValueOnce(sessionResponse(freshIdentifier));
-    listIntegrations.mockResolvedValueOnce([]).mockResolvedValueOnce([demoIntegration()]);
-
-    const result = await bootstrapKeylessSession(apiUrl, storedIdentifier);
-
-    expect(result).toEqual({
-      applicationIdentifier: freshIdentifier,
-      recoveredFromStaleSession: true,
-    });
-    expect(post).toHaveBeenCalledTimes(2);
-    expect(post.mock.calls[1][1]).toEqual({});
-    expect(listIntegrations).toHaveBeenCalledTimes(2);
-  });
-
-  it('creates a new session when no stored identifier exists', async () => {
+  it('creates a new keyless session', async () => {
     post.mockResolvedValueOnce(sessionResponse(freshIdentifier));
 
     const result = await bootstrapKeylessSession(apiUrl);
 
     expect(result).toEqual({
       applicationIdentifier: freshIdentifier,
-      recoveredFromStaleSession: false,
     });
     expect(post).toHaveBeenCalledTimes(1);
     expect(post.mock.calls[0][1]).toEqual({});
+    expect(listIntegrations).toHaveBeenCalledTimes(1);
   });
 
-  it('starts a fresh session when the stored keyless session is no longer authorized', async () => {
-    post
-      .mockResolvedValueOnce(sessionResponse(storedIdentifier))
-      .mockResolvedValueOnce(sessionResponse(freshIdentifier));
-    listIntegrations
-      .mockRejectedValueOnce(new NovuApiError('Unauthorized', 401, 'GET /v1/integrations', {}))
-      .mockResolvedValueOnce([demoIntegration()]);
-
-    const result = await bootstrapKeylessSession(apiUrl, storedIdentifier);
-
-    expect(result).toEqual({
-      applicationIdentifier: freshIdentifier,
-      recoveredFromStaleSession: true,
-    });
-    expect(post).toHaveBeenCalledTimes(2);
-    expect(post.mock.calls[1][1]).toEqual({});
-    expect(listIntegrations).toHaveBeenCalledTimes(2);
-  });
-
-  it('propagates integration-list failures instead of treating them as stale sessions', async () => {
-    post.mockResolvedValueOnce(sessionResponse(storedIdentifier));
+  it('propagates integration-list failures', async () => {
+    post.mockResolvedValueOnce(sessionResponse(freshIdentifier));
     listIntegrations.mockRejectedValueOnce(new Error('network down'));
 
-    await expect(bootstrapKeylessSession(apiUrl, storedIdentifier)).rejects.toThrow('network down');
+    await expect(bootstrapKeylessSession(apiUrl)).rejects.toThrow('network down');
     expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('explains when the keyless session is no longer authorized', async () => {
+    post.mockResolvedValueOnce(sessionResponse(freshIdentifier));
+    listIntegrations.mockRejectedValueOnce(new NovuApiError('Unauthorized', 401, 'GET /v1/integrations', {}));
+
+    try {
+      await bootstrapKeylessSession(apiUrl);
+      expect.fail('expected bootstrapKeylessSession to throw');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+
+      expect(message).toContain('The keyless session is no longer authorized for Connect.');
+      expect(message).not.toContain('could not find the demo agent integration');
+    }
   });
 
   it('explains when a fresh keyless session has no demo agent integration', async () => {

@@ -1,8 +1,14 @@
 import { CONNECT_EVENTS } from '../../analytics/events';
-import { getTelegramMobileLinkStatus, issueTelegramMobileLink, issueTelegramSubscriberLink } from '../../api/agents';
+import {
+  consumeTelegramMobileLink,
+  getTelegramMobileLinkStatus,
+  issueTelegramMobileLink,
+  issueTelegramSubscriberLink,
+  type TelegramSubscriberLinkResult,
+} from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import { createTelegramIntegration, type IntegrationRecord } from '../../api/integrations';
-import type { AgentSummary } from '../../types';
+import type { AgentSummary, ConnectCommandOptions } from '../../types';
 import { renderQR } from '../../ui/qr';
 import type { ConnectUI } from '../../ui/ui';
 import {
@@ -20,6 +26,7 @@ export async function connectTelegramForAgent(
   client: ConnectApiClient,
   agent: AgentSummary,
   ui: ConnectUI,
+  options: ConnectCommandOptions,
   environmentId: string,
   subscriberId: string,
   track: (event: string, data?: Record<string, unknown>) => void
@@ -43,31 +50,61 @@ export async function connectTelegramForAgent(
     return { connected: true, integration };
   }
 
-  const botfatherQr = await renderQR(BOTFATHER_URL);
-  await ui.showTelegramIntro({ botfatherQr });
+  const botToken = options.telegramBotToken?.trim();
+  let prefetchedSubscriberLink: TelegramSubscriberLinkResult | undefined;
 
-  const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
-  const mobileQr = await renderQR(mobileLink.url);
-  ui.showTelegramLinkToken({ mobileQr, mobileUrl: mobileLink.url });
+  if (botToken) {
+    // The user already created the bot and pasted its token (e.g. collected
+    // by an AI agent in chat). Save it directly — keyless users cannot open
+    // the dashboard mobile-link page.
+    ui.savingTelegramBotToken();
+    const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
+    try {
+      const consumeResult = await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
 
-  const tokenSaved = await pollUntil(
-    async () => {
-      const status = await getTelegramMobileLinkStatus(client, mobileLink.token);
-      if (!status.valid && status.reason === 'used') return 'done';
-      if (!status.valid) return 'failed';
+      if (consumeResult.deepLinkUrl) {
+        prefetchedSubscriberLink = {
+          deepLinkUrl: consumeResult.deepLinkUrl,
+          botUsername: consumeResult.botUsername,
+          expiresAt: mobileLink.expiresAt,
+        };
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(
+        `Telegram didn't accept the bot token: ${message}. ` +
+          'Double-check the token from @BotFather and re-run with --telegram-bot-token.'
+      );
+    }
+  } else {
+    const botfatherQr = await renderQR(BOTFATHER_URL);
+    await ui.showTelegramIntro({ botfatherQr, botfatherUrl: BOTFATHER_URL });
 
-      return 'pending';
-    },
-    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
-  );
-  if (!tokenSaved) {
-    throw new Error(
-      `The bot token wasn't saved within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
-        'Re-run `npx novu connect` to get a fresh setup link.'
+    const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
+    const mobileQr = await renderQR(mobileLink.url);
+    ui.showTelegramLinkToken({ mobileQr, mobileUrl: mobileLink.url });
+
+    const tokenSaved = await pollUntil(
+      async () => {
+        const status = await getTelegramMobileLinkStatus(client, mobileLink.token);
+        if (!status.valid && status.reason === 'used') return 'done';
+        if (!status.valid) return 'failed';
+
+        return 'pending';
+      },
+      { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
     );
+    if (!tokenSaved) {
+      throw new Error(
+        `The bot token wasn't saved within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
+          'Re-run `npx novu connect` to get a fresh setup link.'
+      );
+    }
   }
 
-  const subscriberLink = await issueTelegramSubscriberLink(client, agent.identifier, integration._id, subscriberId);
+  const subscriberLink =
+    prefetchedSubscriberLink ??
+    (await issueTelegramSubscriberLink(client, agent.identifier, integration._id, subscriberId));
   const deepLinkQr = await renderQR(subscriberLink.deepLinkUrl);
   ui.showTelegramTest({
     deepLinkQr,

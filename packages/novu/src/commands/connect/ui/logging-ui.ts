@@ -5,7 +5,14 @@ import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
-import { logEmailHandoffEvents, logSlackHandoffEvents } from './handoff-events';
+import {
+  logEmailHandoffEvents,
+  logSlackHandoffEvents,
+  logTelegramBotfatherHandoffEvent,
+  logTelegramDeepLinkHandoffEvents,
+  logTelegramDeepLinkQrPngHandoffEvent,
+} from './handoff-events';
+import { renderQRPngFile } from './qr';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
@@ -185,22 +192,29 @@ export function createLoggingUI(): ConnectUI {
     addingTelegramIntegration() {
       start('Linking Telegram to your agent…');
     },
-    showTelegramIntro(_opts) {
+    showTelegramIntro({ botfatherUrl }) {
       stop();
+      console.log(`${chalk.cyan('→')} Create a bot with @BotFather: ${chalk.underline(botfatherUrl)}`);
+      logTelegramBotfatherHandoffEvent({ botfatherUrl });
 
-      return Promise.reject(
-        new Error(
-          'Telegram setup is interactive only (3 QR scans). Run `npx novu connect` without --ci to walk through it.'
-        )
+      return Promise.resolve();
+    },
+    showTelegramLinkToken(_opts) {
+      stop();
+      throw new Error(
+        'Telegram mobile-link setup is not available in CI mode. Pass --telegram-bot-token "<token>" so the CLI can configure Telegram without the dashboard mobile page.'
       );
     },
-    showTelegramLinkToken({ mobileUrl }) {
-      stop();
-      console.log(`${chalk.cyan('→')} Open on your phone to paste the bot token: ${chalk.underline(mobileUrl)}`);
+    savingTelegramBotToken() {
+      start('Saving your Telegram bot token…');
     },
     showTelegramTest({ deepLinkUrl, botUsername }) {
       stop();
       console.log(`${chalk.cyan('→')} Open Telegram and tap Start on @${botUsername}: ${chalk.underline(deepLinkUrl)}`);
+      logTelegramDeepLinkHandoffEvents({ deepLinkUrl, botUsername });
+      void renderQRPngFile(deepLinkUrl)
+        .then((deepLinkQrPngPath) => logTelegramDeepLinkQrPngHandoffEvent({ deepLinkQrPngPath }))
+        .catch(() => undefined);
     },
     telegramConnected() {
       succeed('Telegram connected');

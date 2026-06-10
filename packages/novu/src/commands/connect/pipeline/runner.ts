@@ -10,7 +10,7 @@ import {
 import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../api/client';
 import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
-import { type ResolvedConnectAuth, fallbackToAuthenticatedConnectAuth, resolveConnectAuth, shouldFallbackFromKeylessLimit } from '../auth/resolve-connect-auth';
+import { type ResolvedConnectAuth, resolveConnectAuth } from '../auth/resolve-connect-auth';
 import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
 import { ConnectChannelBackError } from '../errors';
 import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
@@ -32,22 +32,6 @@ export interface ConnectPipelineResult {
   exitCode: number;
 }
 
-interface ConnectRuntimeContext {
-  auth: ResolvedConnectAuth;
-  client: ConnectApiClient;
-}
-
-interface ConnectAuthCallbacks {
-  onStatus: (message: string) => void;
-  onDashboardUrl: (url: string | null) => void;
-  onAuthStarted: () => void;
-  onAuthFailed: (message: string) => void;
-  onAuthCompleted: (envName: string | null) => void;
-  trackAuthCompleted: (auth: ResolvedConnectAuth) => void;
-  onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
-  onboardingSessionId?: string;
-}
-
 export async function runConnectPipeline(input: ConnectPipelineInput): Promise<ConnectPipelineResult> {
   const { options, ui, onTrack, onboardingSessionId } = input;
   const track = onTrack ?? (() => undefined);
@@ -57,30 +41,33 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     await ui.showWelcome();
 
     ui.authStarted();
-    const authCallbacks = buildAuthCallbacks(input);
-    let auth = await resolveConnectAuth(options, {
-      onStatus: authCallbacks.onStatus,
-      onDashboardUrl: authCallbacks.onDashboardUrl,
+    const auth = await resolveConnectAuth(options, {
+      onStatus: (m) => ui.authStatus(m),
+      onDashboardUrl: (u) => ui.authDashboardUrl(u),
       name: 'novu-connect',
       authDashboardUrl: options.connectDashboardUrl,
       onboardingSessionId,
-      onAuthStarted: authCallbacks.onAuthStarted,
-      onAuthFailed: authCallbacks.onAuthFailed,
+      onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, sessionProps),
+      onAuthFailed: (message) => track(CONNECT_EVENTS.AUTH_FAILED, { ...sessionProps, message }),
     });
-    authCallbacks.trackAuthCompleted(auth);
-    authCallbacks.onAuthCompleted(auth.environmentName ?? null);
+    track(CONNECT_EVENTS.AUTH_COMPLETED, {
+      source: auth.source,
+      region: options.region,
+      keyless: auth.isKeyless,
+      ...sessionProps,
+    });
+    ui.authCompleted(auth.environmentName ?? null);
 
     if (auth.user?.id) {
-      authCallbacks.onIdentityResolved?.(auth.user);
+      input.onIdentityResolved?.(auth.user);
     }
 
-    const runtimeContext: ConnectRuntimeContext = {
-      auth,
-      client: createClientFromAuth(auth),
-    };
+    const client = auth.isKeyless
+      ? createConnectApiClient({ apiUrl: auth.apiUrl, keylessApplicationIdentifier: auth.keylessApplicationIdentifier })
+      : createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
 
     ui.listingAgents();
-    const existingAgents = await listAgents(runtimeContext.client);
+    const existingAgents = await listAgents(client);
     track(CONNECT_EVENTS.AGENT_LISTED, { count: existingAgents.length, ...sessionProps });
 
     let agent: AgentSummary;
@@ -93,18 +80,15 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         flow = 'reused';
         track(CONNECT_EVENTS.AGENT_REUSED, { identifier: agent.identifier, ...sessionProps });
       } else {
-        agent = await createAgentFlow(runtimeContext, ui, options, track, sessionProps, authCallbacks);
+        agent = await createAgentFlow(client, ui, options, auth.environmentId, track, sessionProps);
         flow = 'created';
         track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier, ...sessionProps });
       }
     } else {
-      agent = await createAgentFlow(runtimeContext, ui, options, track, sessionProps, authCallbacks);
+      agent = await createAgentFlow(client, ui, options, auth.environmentId, track, sessionProps);
       flow = 'created';
       track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier, ...sessionProps });
     }
-
-    auth = runtimeContext.auth;
-    const { client } = runtimeContext;
 
     ui.agentCreated(agent);
 
@@ -152,7 +136,15 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           }
           case 'telegram': {
             const subscriberId = await ensureSubscriberForUser(client, auth);
-            const result = await connectTelegramForAgent(client, agent, ui, auth.environmentId, subscriberId, track);
+            const result = await connectTelegramForAgent(
+              client,
+              agent,
+              ui,
+              options,
+              auth.environmentId,
+              subscriberId,
+              track
+            );
             connectedIntegration = result.integration;
             channelConnected = result.connected;
             if (channelConnected) connectedChannel = 'telegram';
@@ -246,12 +238,12 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 }
 
 async function createAgentFlow(
-  runtimeContext: ConnectRuntimeContext,
+  client: ConnectApiClient,
   ui: ConnectUI,
   options: ConnectCommandOptions,
+  environmentId: string,
   track: (event: string, data?: Record<string, unknown>) => void,
-  sessionProps: Record<string, unknown>,
-  authCallbacks: ConnectAuthCallbacks
+  sessionProps: Record<string, unknown>
 ): Promise<AgentSummary> {
   const runtime =
     resolveRuntimeFromOptions(options) ??
@@ -265,49 +257,37 @@ async function createAgentFlow(
     track(CONNECT_EVENTS.RUNTIME_SELECTED, { runtime, ...sessionProps });
   }
 
+  ui.loadingIntegrations();
+  const resolved = await resolveAgentRuntimeIntegration(client, ui, options, runtime, environmentId);
+
   const prompt = await ui.promptForDescription(options.prompt);
+  const generated = await generateAndPreviewAgent(client, ui, prompt.trim(), track, sessionProps);
 
-  while (true) {
-    ui.loadingIntegrations();
-    const resolved = await resolveAgentRuntimeIntegration(
-      runtimeContext.client,
-      ui,
-      options,
-      runtime,
-      runtimeContext.auth.environmentId
-    );
+  ui.creatingAgent(generated.name);
 
-    try {
-      const generated = await generateAndPreviewAgent(runtimeContext.client, ui, prompt.trim(), track, sessionProps);
+  try {
+    const created = await createManagedAgent(client, {
+      name: generated.name,
+      identifier: generated.identifier,
+      integrationId: resolved.integrationId,
+      providerId: resolved.providerId,
+      systemPrompt: generated.systemPrompt,
+      tools: generated.tools,
+      mcpServers: generated.mcpServers,
+      skills: generated.skills,
+    });
 
-      ui.creatingAgent(generated.name);
-
-      const created = await createManagedAgent(runtimeContext.client, {
-        name: generated.name,
-        identifier: generated.identifier,
-        integrationId: resolved.integrationId,
-        providerId: resolved.providerId,
-        systemPrompt: generated.systemPrompt,
-        tools: generated.tools,
-        mcpServers: generated.mcpServers,
-        skills: generated.skills,
-      });
-
-      return toSummary(created);
-    } catch (err) {
-      if (runtimeContext.auth.isKeyless && shouldFallbackFromKeylessLimit(err)) {
-        await cleanupCreatedIntegration(runtimeContext.client, resolved);
-
-        runtimeContext.auth = await switchToAuthenticatedAuth(options, authCallbacks);
-        runtimeContext.client = createClientFromAuth(runtimeContext.auth);
-
-        continue;
+    return toSummary(created);
+  } catch (err) {
+    if (resolved.createdInThisFlow) {
+      try {
+        await deleteIntegration(client, resolved.integrationId);
+      } catch {
+        // Best-effort cleanup.
       }
-
-      await cleanupCreatedIntegration(runtimeContext.client, resolved);
-
-      throw err;
     }
+
+    throw err;
   }
 }
 
@@ -368,79 +348,6 @@ async function ensureSubscriberForUser(client: ConnectApiClient, auth: ResolvedC
   await upsertSubscriber(client, { subscriberId: fallback });
 
   return fallback;
-}
-
-function buildAuthCallbacks(input: ConnectPipelineInput): ConnectAuthCallbacks {
-  const { ui, onTrack, onboardingSessionId, onIdentityResolved, options } = input;
-  const sessionProps = onboardingSessionId ? { onboardingSessionId } : {};
-  const track = onTrack ?? (() => undefined);
-
-  return {
-    onStatus: (message) => ui.authStatus(message),
-    onDashboardUrl: (url) => ui.authDashboardUrl(url),
-    onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, sessionProps),
-    onAuthFailed: (message) => track(CONNECT_EVENTS.AUTH_FAILED, { ...sessionProps, message }),
-    onAuthCompleted: (envName) => ui.authCompleted(envName),
-    trackAuthCompleted: (auth) =>
-      track(CONNECT_EVENTS.AUTH_COMPLETED, {
-        source: auth.source,
-        region: options.region,
-        keyless: auth.isKeyless,
-        ...sessionProps,
-      }),
-    onIdentityResolved,
-    onboardingSessionId,
-  };
-}
-
-async function switchToAuthenticatedAuth(
-  options: ConnectCommandOptions,
-  authCallbacks: ConnectAuthCallbacks
-): Promise<ResolvedConnectAuth> {
-  const auth = await fallbackToAuthenticatedConnectAuth(options, {
-    onStatus: authCallbacks.onStatus,
-    onDashboardUrl: authCallbacks.onDashboardUrl,
-    name: 'novu-connect',
-    authDashboardUrl: options.connectDashboardUrl,
-    onboardingSessionId: authCallbacks.onboardingSessionId,
-    onAuthStarted: authCallbacks.onAuthStarted,
-    onAuthFailed: authCallbacks.onAuthFailed,
-  });
-
-  authCallbacks.trackAuthCompleted(auth);
-  authCallbacks.onAuthCompleted(auth.environmentName ?? null);
-
-  if (auth.user?.id) {
-    authCallbacks.onIdentityResolved?.(auth.user);
-  }
-
-  return auth;
-}
-
-function createClientFromAuth(auth: ResolvedConnectAuth): ConnectApiClient {
-  if (auth.isKeyless) {
-    return createConnectApiClient({
-      apiUrl: auth.apiUrl,
-      keylessApplicationIdentifier: auth.keylessApplicationIdentifier,
-    });
-  }
-
-  return createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
-}
-
-async function cleanupCreatedIntegration(
-  client: ConnectApiClient,
-  resolved: { createdInThisFlow: boolean; integrationId: string }
-): Promise<void> {
-  if (!resolved.createdInThisFlow) {
-    return;
-  }
-
-  try {
-    await deleteIntegration(client, resolved.integrationId);
-  } catch {
-    // Best-effort cleanup.
-  }
 }
 
 function toSummary(agent: AgentRecord | AgentSummary): AgentSummary {
