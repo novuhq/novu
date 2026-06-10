@@ -2,6 +2,7 @@ import { FactoryProvider } from '@nestjs/common';
 import { NOVU_OPTIONS, REGISTER_CONTROLLER_DECORATORS } from './nest.constants';
 import { NovuController } from './nest.controller';
 import { OPTIONS_TYPE } from './nest.module-definition';
+import { applyDecoratorsInPlace } from './nest.utils';
 
 /**
  * Apply controller decorators resolved from async module options.
@@ -15,9 +16,7 @@ import { OPTIONS_TYPE } from './nest.module-definition';
 export const registerControllerDecorators: FactoryProvider = {
   provide: REGISTER_CONTROLLER_DECORATORS,
   useFactory: (options: typeof OPTIONS_TYPE) => {
-    for (const decorator of options.controllerDecorators ?? []) {
-      decorator(NovuController);
-    }
+    applyDecoratorsInPlace(NovuController, options.controllerDecorators ?? []);
   },
   inject: [NOVU_OPTIONS],
 };
