@@ -43,7 +43,7 @@ export function PrebuiltPromptBanner() {
     <div className="border-stroke-weak bg-bg-weak rounded-lg border p-1">
       <div className="bg-bg-white flex items-center gap-2 rounded-md border border-[rgba(255,132,71,0.1)] py-1.5 pl-2 pr-1.5">
         <div className="bg-text-soft h-7 w-1 shrink-0 self-stretch rounded-full" />
-        <p className="text-text-strong min-w-0 flex-1 text-sm font-medium leading-5 tracking-[-0.084px]">
+        <p className="text-text-strong text-label-sm min-w-0 flex-1 font-normal">
           Use this pre-built prompt to get started faster.
         </p>
         <div className="flex shrink-0 items-center gap-2.5">
@@ -51,7 +51,9 @@ export function PrebuiltPromptBanner() {
             href={CURSOR_DEEP_LINK}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => telemetry(TelemetryEvent.AI_PROMPT_COPIED, { source: 'agents-onboarding', method: 'cursor-deeplink' })}
+            onClick={() =>
+              telemetry(TelemetryEvent.AI_PROMPT_COPIED, { source: 'agents-onboarding', method: 'cursor-deeplink' })
+            }
             className="text-text-sub inline-flex h-7 cursor-pointer items-center gap-1 rounded-md p-1.5 text-xs font-medium shadow-[0px_1px_3px_0px_rgba(14,18,27,0.12),0px_0px_0px_1px_#e1e4ea] transition-colors hover:bg-neutral-50"
             style={{
               backgroundImage:

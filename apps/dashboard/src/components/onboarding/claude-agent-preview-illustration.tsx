@@ -7,7 +7,7 @@ import {
   getMcpIconPath,
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { RiFileCodeLine } from 'react-icons/ri';
 import { AwsIcon } from '@/components/icons/aws';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -189,20 +189,13 @@ export function AgentCard({
           ) : null}
 
           {isCustomCode ? (
-            <>
-              {identifier ? (
-                <PreviewSection label="Identifier">
-                  <AnimatedField enabled={agentCreated} signature={identifier}>
-                    <span className="text-text-sub font-mono text-[12px] leading-4" title={identifier}>
-                      {identifier}
-                    </span>
-                  </AnimatedField>
-                </PreviewSection>
-              ) : null}
-              <div className="flex max-w-full justify-center overflow-hidden">
-                <AgentUsecasePreviewIllustration />
-              </div>
-            </>
+            identifier && (
+              <PreviewSection label="Identifier">
+                <span className="text-text-sub font-mono text-[12px] leading-4" title={identifier}>
+                  {identifier}
+                </span>
+              </PreviewSection>
+            )
           ) : (
             <>
               <PreviewSection label="MCPs">
@@ -457,10 +450,13 @@ type McpTagProps = {
 function McpTag({ id }: McpTagProps) {
   const iconPath = getMcpIconPath(id);
   const label = formatMcpLabel(id);
+  const [hasIconError, setHasIconError] = useState(false);
 
   return (
     <span className="border border-stroke-soft bg-bg-weak inline-flex h-5 items-center gap-1 rounded px-1 py-0.5">
-      {iconPath ? <img src={iconPath} alt={label} className="size-3.5" aria-hidden /> : null}
+      {iconPath && !hasIconError ? (
+        <img src={iconPath} alt={label} className="size-3.5" aria-hidden onError={() => setHasIconError(true)} />
+      ) : null}
       <span className="text-text-sub text-[12px] font-medium leading-4">{label}</span>
     </span>
   );
