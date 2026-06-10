@@ -10,7 +10,7 @@ import {
   listAgentIntegrations,
   sendAgentWelcomeMessage,
 } from '@/api/agents';
-import { AgentCard, type ManagedConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
+import { AgentCard, type AgentCardConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
 import { ConnectAgentForm } from '@/components/onboarding/connect-agent/connect-agent-form';
 import {
   type ConnectSummary,
@@ -220,8 +220,12 @@ export function ManagedAgentRecap({
    */
   hideHeader?: boolean;
 }) {
-  const connector: ManagedConnectorKind =
+  const isManagedAgent = agent.runtime === 'managed';
+  const managedConnector: AgentCardConnectorKind =
     agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws ? 'aws' : 'anthropic';
+  // Custom-code (self-hosted) agents render the trimmed card variant: custom-code icon + footer,
+  // no status badge, and no MCPs/tools/instructions (those live in the user's own code).
+  const connector: AgentCardConnectorKind = isManagedAgent ? managedConnector : 'custom';
   const serverMcpIds = agent.managedRuntime?.mcpServers?.map((m) => m.externalId);
   const serverToolIds = agent.managedRuntime?.tools?.map((t) => t.externalId);
 

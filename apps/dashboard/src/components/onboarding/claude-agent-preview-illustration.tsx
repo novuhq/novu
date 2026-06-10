@@ -8,12 +8,20 @@ import {
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
 import { useMemo } from 'react';
+import { RiFileCodeLine } from 'react-icons/ri';
 import { AwsIcon } from '@/components/icons/aws';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { LogoCircle } from '../icons/logo-circle';
 import { AnthropicAsteriskIcon } from './agent-flow-illustration-shared';
 
 export type ManagedConnectorKind = 'anthropic' | 'aws';
+
+/**
+ * Connector kinds renderable by {@link AgentCard}. Custom-code (self-hosted) agents reuse the
+ * card with a trimmed-down look: no status badge and no MCPs/Tools/Instructions sections, since
+ * those are wired up in the user's own code rather than a managed runtime.
+ */
+export type AgentCardConnectorKind = ManagedConnectorKind | 'custom';
 
 export type ManagedAgentPreviewStatus = 'idle' | 'connecting' | 'connected';
 
@@ -112,7 +120,7 @@ function ClaudeAgentPreviewIllustration({
 }
 
 export type AgentCardProps = {
-  connector: ManagedConnectorKind;
+  connector: AgentCardConnectorKind;
   isDemoCredential: boolean;
   status: ManagedAgentPreviewStatus;
   /**
@@ -142,6 +150,10 @@ export function AgentCard({
   mcpServers,
   tools,
 }: AgentCardProps) {
+  // Custom-code agents host MCPs/tools/instructions in the user's own code and have no managed
+  // connection status — the card collapses to the header + description with a "Custom code" footer.
+  const isCustomCode = connector === 'custom';
+
   return (
     <div className="flex flex-col gap-1 p-1 bg-bg-weak rounded-[8px] border border-stroke-weak">
       <div className="border-stroke-soft bg-bg-white relative overflow-hidden rounded-lg border shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
@@ -159,36 +171,42 @@ export function AgentCard({
               </span>
             </AnimatedField>
           </div>
-          <StatusBadge status={status} />
+          {!isCustomCode && <StatusBadge status={status} />}
         </div>
 
-        <div className="flex flex-col gap-5 px-2 pb-3 pt-2">
-          {description ? (
-            <AnimatedField enabled={agentCreated} signature={description}>
-              <p className="text-label-xs font-normal text-text-soft line-clamp-2 leading-4" title={description}>
-                {description}
-              </p>
-            </AnimatedField>
-          ) : null}
+        {isCustomCode && !description ? null : (
+          <div className="flex flex-col gap-5 px-2 pb-3 pt-2">
+            {description ? (
+              <AnimatedField enabled={agentCreated} signature={description}>
+                <p className="text-label-xs font-normal text-text-soft line-clamp-2 leading-4" title={description}>
+                  {description}
+                </p>
+              </AnimatedField>
+            ) : null}
 
-          <PreviewSection label="MCPs">
-            <AnimatedField enabled={agentCreated} signature={mcpServers.join('|')}>
-              {mcpServers.length > 0 ? <McpTagRow ids={mcpServers} /> : <NotConfiguredLabel />}
-            </AnimatedField>
-          </PreviewSection>
+            {!isCustomCode && (
+              <>
+                <PreviewSection label="MCPs">
+                  <AnimatedField enabled={agentCreated} signature={mcpServers.join('|')}>
+                    {mcpServers.length > 0 ? <McpTagRow ids={mcpServers} /> : <NotConfiguredLabel />}
+                  </AnimatedField>
+                </PreviewSection>
 
-          <PreviewSection label="Tools">
-            <AnimatedField enabled={agentCreated} signature={tools.join('|')}>
-              {tools.length > 0 ? <ToolTagRow tools={tools} /> : <NotConfiguredLabel />}
-            </AnimatedField>
-          </PreviewSection>
+                <PreviewSection label="Tools">
+                  <AnimatedField enabled={agentCreated} signature={tools.join('|')}>
+                    {tools.length > 0 ? <ToolTagRow tools={tools} /> : <NotConfiguredLabel />}
+                  </AnimatedField>
+                </PreviewSection>
 
-          <PreviewSection label="Instructions">
-            <AnimatedField enabled={agentCreated} signature={instructions ?? ''}>
-              {instructions?.trim() ? <InstructionsBlock value={instructions} /> : <NotConfiguredLabel />}
-            </AnimatedField>
-          </PreviewSection>
-        </div>
+                <PreviewSection label="Instructions">
+                  <AnimatedField enabled={agentCreated} signature={instructions ?? ''}>
+                    {instructions?.trim() ? <InstructionsBlock value={instructions} /> : <NotConfiguredLabel />}
+                  </AnimatedField>
+                </PreviewSection>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <ConnectorFooter connector={connector} isDemoCredential={isDemoCredential} />
@@ -253,13 +271,21 @@ function AnimatedField({ enabled, signature, as = 'div', children }: AnimatedFie
 }
 
 type ConnectorBrandIconProps = {
-  connector: ManagedConnectorKind;
+  connector: AgentCardConnectorKind;
   className?: string;
 };
 
 function ConnectorBrandIcon({ connector, className }: ConnectorBrandIconProps) {
   if (connector === 'aws') {
     return <AwsIcon className={className} />;
+  }
+
+  if (connector === 'custom') {
+    return (
+      <span className={`bg-bg-weak text-text-sub flex items-center justify-center rounded-full ${className ?? ''}`}>
+        <RiFileCodeLine className="size-3" />
+      </span>
+    );
   }
 
   return <AnthropicAsteriskIcon className={className} />;
@@ -499,12 +525,18 @@ function InstructionsBlock({ value }: InstructionsBlockProps) {
 }
 
 type ConnectorFooterProps = {
-  connector: ManagedConnectorKind;
+  connector: AgentCardConnectorKind;
   isDemoCredential: boolean;
 };
 
+const CONNECTOR_FOOTER_LABELS: Record<AgentCardConnectorKind, string> = {
+  anthropic: 'Claude Managed',
+  aws: 'AWS Claude Managed',
+  custom: 'Custom code',
+};
+
 function ConnectorFooter({ connector, isDemoCredential }: ConnectorFooterProps) {
-  const label = connector === 'aws' ? 'AWS Claude Managed' : 'Claude Managed';
+  const label = CONNECTOR_FOOTER_LABELS[connector];
 
   return (
     <div className="flex h-7 items-center gap-1 px-1">
