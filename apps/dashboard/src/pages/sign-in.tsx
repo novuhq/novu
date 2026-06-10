@@ -107,7 +107,7 @@ export const SignInPage = () => {
       <div className="w-full shrink-0 md:w-auto">
         <AuthSideBanner />
       </div>
-      <div className="flex flex-1 justify-center px-4 py-8 md:items-center md:px-0 md:py-0">
+      <div className="flex flex-1 justify-center items-center px-4 py-0 sm:py-0 xl:justify-end md:px-0">
         <div className="flex w-full max-w-[400px] flex-col items-start justify-start gap-[18px] [&>.cl-rootBox,.cl-cardBox]:w-full!">
           <SignInForm
             path={ROUTES.SIGN_IN}

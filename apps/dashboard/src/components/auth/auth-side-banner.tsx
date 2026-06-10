@@ -17,7 +17,7 @@ export function AuthSideBanner() {
           <img src="/images/novu-logo-dark.svg" className="w-24" alt="logo" />
         </div>
         {IS_SELF_HOSTED ? (
-          <div className="flex flex-col items-start justify-start gap-4 md:block">
+          <div className="flex hidden flex-col items-start justify-start gap-4 md:block">
             <div className="flex flex-col items-start justify-start gap-1.5 self-stretch">
               <div className="text-2xl font-medium leading-8 text-neutral-950">
                 {IS_ENTERPRISE ? 'Welcome to Novu Enterprise' : 'Welcome to Novu Self-Hosted!'}
