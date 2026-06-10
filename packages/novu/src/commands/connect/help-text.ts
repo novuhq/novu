@@ -32,14 +32,14 @@ Examples (non-interactive / agent / CI):
   Existing Novu account (instead of keyless):
     npx novu connect "A support assistant for Acme's customers." \\
       --ci \\
-      --secret-key "NOVU_SECRET_KEY" \\
+      --secret-key "$NOVU_SECRET_KEY" \\
       --channel slack \\
       --slack-config-token "xoxe.xoxp-..."
 
 Non-interactive (agent / CI) contract:
 
   Required for --ci mode:
-    - Pass the agent description as the positional <prompt> argument (or --prompt).
+    - Pass the agent description as the positional <prompt> argument or --prompt.
     - Pass --channel <slack|email|telegram|skip>.
 
   Channel-specific flags:

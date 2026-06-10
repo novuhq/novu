@@ -188,7 +188,7 @@ program
   )
   .option(
     '--ci',
-    'Non-interactive mode (no Ink TUI). Requires positional <prompt> and --channel; see examples below',
+    'Non-interactive mode (no Ink TUI). Requires a prompt (positional <prompt> or --prompt) and --channel; see examples below',
     false
   )
   .addHelpText('after', CONNECT_HELP_TEXT)
@@ -203,6 +203,25 @@ program
     });
     // Positional `prompt` wins over `--prompt` (the positional form is the
     // primary surface; the flag exists for parity with `--ci` workflows).
+    if (options.ci) {
+      const prompt = (positionalPrompt ?? options.prompt)?.trim();
+      const channel = options.skipSlack ? 'skip' : options.channel;
+
+      if (!prompt) {
+        console.error(
+          'Non-interactive mode requires a prompt (positional <prompt> or --prompt).\n(run `novu connect --help` for the non-interactive contract and examples)'
+        );
+        process.exit(1);
+      }
+
+      if (!channel) {
+        console.error(
+          'Non-interactive mode requires --channel <slack|email|telegram|skip>.\n(run `novu connect --help` for the non-interactive contract and examples)'
+        );
+        process.exit(1);
+      }
+    }
+
     if (options.channel && !(CHANNEL_CHOICES as readonly string[]).includes(options.channel)) {
       console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
       process.exit(1);
