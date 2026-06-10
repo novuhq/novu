@@ -258,7 +258,7 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
   NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=<absolute png path>   # only when present
   ```
 
-  When they appear, embed the **QR code image** inline with markdown — `![Scan with your phone](<absolute png path>)` using the path from `NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=` — so the user can scan it from their phone. Never render the QR as ASCII/Unicode art in a code block (chat markdown breaks it and it won't scan). Also give the deep link as a clickable fallback. Ask them to open the bot and tap **Start** on `@<botUsername>` in Telegram. The CLI polls until `/start` is received (~5 min).
+  When they appear, embed the **QR code image** inline with Markdown — `![Scan with your phone](<absolute png path>)` using the path from `NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=` — so the user can scan it from their phone. Never render the QR as ASCII/Unicode art in a code block (chat Markdown breaks it and it won't scan). Also give the deep link as a clickable fallback. Ask them to open the bot and tap **Start** on `@<botUsername>` in Telegram. The CLI polls until `/start` is received (~5 min).
 
   Then wait for the CLI poll to finish — the process exits on its own once they tap Start. If it times out (~5 min), **re-run the same command** with the same `--telegram-bot-token`.
 
