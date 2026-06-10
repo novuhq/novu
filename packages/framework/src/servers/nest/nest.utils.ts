@@ -4,6 +4,6 @@ export function applyDecorators<T>(baseClass: Type<T>, decorators: Array<ClassDe
   return decorators.reduce((decoratedClass, decorator) => {
     const result = decorator(decoratedClass);
 
-    return result as Type<T>;
+    return (result ?? decoratedClass) as Type<T>;
   }, baseClass);
 }
