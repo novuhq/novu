@@ -163,7 +163,7 @@ program
   )
   .option(
     '--runtime <runtime>',
-    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo — omit in --ci keyless runs`
+    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo in keyless mode — omit --runtime unless using BYOK`
   )
   .option(
     '--agent-integration-id <id>',
@@ -175,7 +175,7 @@ program
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
   .option(
     '--channel <name>',
-    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams are dashboard-only — do not pass them in --ci mode`
+    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams print a dashboard link and exit — finish setup there`
   )
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(

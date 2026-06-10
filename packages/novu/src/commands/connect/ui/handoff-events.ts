@@ -21,10 +21,6 @@ export function logTelegramBotfatherHandoffEvent(opts: { botfatherUrl: string })
   console.log(`${HANDOFF_PREFIX}TELEGRAM_BOTFATHER_URL=${opts.botfatherUrl}`);
 }
 
-export function logTelegramMobileLinkHandoffEvent(opts: { mobileUrl: string }): void {
-  console.log(`${HANDOFF_PREFIX}TELEGRAM_MOBILE_LINK_URL=${opts.mobileUrl}`);
-}
-
 export function logTelegramDeepLinkHandoffEvents(opts: { deepLinkUrl: string; botUsername: string }): void {
   console.log(`${HANDOFF_PREFIX}TELEGRAM_DEEPLINK_URL=${opts.deepLinkUrl}`);
   console.log(`${HANDOFF_PREFIX}TELEGRAM_BOT_USERNAME=${opts.botUsername}`);

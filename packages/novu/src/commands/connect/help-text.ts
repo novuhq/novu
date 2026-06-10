@@ -32,7 +32,7 @@ Examples (non-interactive / agent / CI):
   Existing Novu account (instead of keyless):
     npx novu connect "A support assistant for Acme's customers." \\
       --ci \\
-      --secret-key "NOVU_SECRET_KEY" \\
+      --secret-key "$NOVU_SECRET_KEY" \\
       --channel slack \\
       --slack-config-token "xoxe.xoxp-..."
 
@@ -40,21 +40,20 @@ Non-interactive (agent / CI) contract:
 
   Required for --ci mode:
     - Pass the agent description as the positional <prompt> argument (or --prompt).
-    - Pass --channel <slack|email|telegram|skip>.
+    - Pass --channel <slack|email|telegram|whatsapp|teams|skip>.
 
   Channel-specific flags:
     - --channel slack    → requires --slack-config-token (xoxe.xoxp-…)
     - --channel telegram → requires --telegram-bot-token (from @BotFather)
     - --channel email    → no extra flags
     - --channel skip     → no extra flags (agent only, no channel)
+    - --channel whatsapp → prints a dashboard link and exits (finish setup in Novu Connect)
+    - --channel teams    → prints a dashboard link and exits (finish setup in Novu Connect)
 
   Defaults (do not pass unless needed):
     - Keyless mode: omit --secret-key (creates a temporary agent; user claims via in-channel sign-up link)
     - Demo runtime: omit --runtime (shared Claude runtime, ~5 free replies in keyless mode)
     - US region: omit --region (use --region eu for EU Novu Cloud)
-
-  Not supported headlessly:
-    - whatsapp and teams → use the Novu dashboard instead; do not pass --channel whatsapp or --channel teams
 
   One run = one new agent + one channel. Re-running creates another agent.
 

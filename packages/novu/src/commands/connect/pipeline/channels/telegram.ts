@@ -21,6 +21,8 @@ import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil } from '..
 const TELEGRAM_PROVIDER_ID = 'telegram';
 const TELEGRAM_CHANNEL = 'chat';
 const BOTFATHER_URL = 'https://t.me/botfather';
+const TELEGRAM_CI_BOT_TOKEN_ERROR =
+  'Telegram mobile-link setup is not available in CI mode. Pass --telegram-bot-token "<token>" so the CLI can configure Telegram without the dashboard mobile page.';
 
 export async function connectTelegramForAgent(
   client: ConnectApiClient,
@@ -81,7 +83,7 @@ export async function connectTelegramForAgent(
     await ui.showTelegramIntro({ botfatherQr, botfatherUrl: BOTFATHER_URL });
 
     if (options.ci) {
-      ui.showTelegramLinkToken({ mobileQr: botfatherQr, mobileUrl: BOTFATHER_URL });
+      throw new Error(TELEGRAM_CI_BOT_TOKEN_ERROR);
     }
 
     const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);

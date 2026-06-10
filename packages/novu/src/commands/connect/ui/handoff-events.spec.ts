@@ -4,7 +4,6 @@ import {
   logSlackHandoffEvents,
   logTelegramBotfatherHandoffEvent,
   logTelegramDeepLinkHandoffEvents,
-  logTelegramMobileLinkHandoffEvent,
 } from './handoff-events';
 
 describe('handoff-events', () => {
@@ -53,16 +52,6 @@ describe('handoff-events', () => {
     logTelegramBotfatherHandoffEvent({ botfatherUrl: 'https://t.me/botfather' });
 
     expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_BOTFATHER_URL=https://t.me/botfather');
-  });
-
-  it('logs telegram mobile link sentinel line', () => {
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-
-    logTelegramMobileLinkHandoffEvent({ mobileUrl: 'https://dashboard.novu.co/telegram/mobile/abc123' });
-
-    expect(log).toHaveBeenCalledWith(
-      'NOVU_CONNECT_TELEGRAM_MOBILE_LINK_URL=https://dashboard.novu.co/telegram/mobile/abc123'
-    );
   });
 
   it('logs telegram deep link and bot username sentinel lines', () => {
