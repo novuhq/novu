@@ -29,3 +29,7 @@ export function logTelegramDeepLinkHandoffEvents(opts: { deepLinkUrl: string; bo
   console.log(`${HANDOFF_PREFIX}TELEGRAM_DEEPLINK_URL=${opts.deepLinkUrl}`);
   console.log(`${HANDOFF_PREFIX}TELEGRAM_BOT_USERNAME=${opts.botUsername}`);
 }
+
+export function logTelegramDeepLinkQrPngHandoffEvent(opts: { deepLinkQrPngPath: string }): void {
+  console.log(`${HANDOFF_PREFIX}TELEGRAM_DEEPLINK_QR_PNG=${opts.deepLinkQrPngPath}`);
+}

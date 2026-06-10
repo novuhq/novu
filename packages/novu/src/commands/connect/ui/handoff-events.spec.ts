@@ -4,6 +4,7 @@ import {
   logSlackHandoffEvents,
   logTelegramBotfatherHandoffEvent,
   logTelegramDeepLinkHandoffEvents,
+  logTelegramDeepLinkQrPngHandoffEvent,
   logTelegramMobileLinkHandoffEvent,
 } from './handoff-events';
 
@@ -75,5 +76,13 @@ describe('handoff-events', () => {
 
     expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=https://t.me/mybot?start=abc');
     expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_BOT_USERNAME=mybot');
+  });
+
+  it('logs the QR PNG path sentinel line', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logTelegramDeepLinkQrPngHandoffEvent({ deepLinkQrPngPath: '/tmp/novu-connect-qr-abc123.png' });
+
+    expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=/tmp/novu-connect-qr-abc123.png');
   });
 });

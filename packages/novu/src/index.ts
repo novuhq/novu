@@ -4,6 +4,7 @@ import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
+import { isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
 import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
@@ -235,7 +236,7 @@ program
         process.exit(1);
       }
 
-      if (channel === 'whatsapp' || channel === 'teams') {
+      if (isDashboardOnlyChannel(channel as ChannelChoice)) {
         console.error(
           'Non-interactive mode does not support --channel whatsapp or --channel teams. Use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
         );

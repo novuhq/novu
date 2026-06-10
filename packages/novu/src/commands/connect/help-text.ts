@@ -71,6 +71,7 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
   Telegram:
     NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=<url>
     NOVU_CONNECT_TELEGRAM_BOT_USERNAME=<name>
+    NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=<absolute png path>   (only when present)
 
   Success:
     ✓ Your agent is live.
