@@ -220,6 +220,20 @@ program
         );
         process.exit(1);
       }
+
+      if (channel === 'slack' && !options.slackConfigToken?.trim()) {
+        console.error(
+          'Non-interactive mode with --channel slack requires --slack-config-token (xoxe.xoxp-…).\n(run `novu connect --help` for the non-interactive contract and examples)'
+        );
+        process.exit(1);
+      }
+
+      if (channel === 'telegram' && !options.telegramBotToken?.trim()) {
+        console.error(
+          'Non-interactive mode with --channel telegram requires --telegram-bot-token (from @BotFather).\n(run `novu connect --help` for the non-interactive contract and examples)'
+        );
+        process.exit(1);
+      }
     }
 
     if (options.channel && !(CHANNEL_CHOICES as readonly string[]).includes(options.channel)) {

@@ -5,7 +5,7 @@ Examples (non-interactive / agent / CI):
     npx novu connect "A support assistant for Acme's customers that answers billing questions." \\
       --ci \\
       --channel slack \\
-      --slack-config-token "xoxe.xoxp-..."
+      --slack-config-token "xoxe.xoxp-…"
 
   Keyless Email:
     npx novu connect "An onboarding assistant for Acme's new members." \\
@@ -34,7 +34,7 @@ Examples (non-interactive / agent / CI):
       --ci \\
       --secret-key "$NOVU_SECRET_KEY" \\
       --channel slack \\
-      --slack-config-token "xoxe.xoxp-..."
+      --slack-config-token "xoxe.xoxp-…"
 
 Non-interactive (agent / CI) contract:
 
