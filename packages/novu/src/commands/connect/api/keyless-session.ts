@@ -80,6 +80,17 @@ function describeKeylessEnvironmentNotReady(
   readiness: KeylessEnvironmentReadiness,
   apiUrl: string
 ): string {
+  const isUnauthorized = readiness.reason.includes('no longer authorized');
+
+  if (isUnauthorized) {
+    return [
+      readiness.reason,
+      'Re-run `npx novu connect` to start a fresh keyless session, or use `--secret-key <key>` for an existing environment.',
+      `Application identifier: ${applicationIdentifier}.`,
+      `API: ${apiUrl}.`,
+    ].join('\n');
+  }
+
   const serverFix =
     'On the API server, set NOVU_MANAGED_CLAUDE_API_KEY and enable IS_DEMO_MANAGED_CLAUDE_ENABLED, then restart the API.';
   const bypass = 'Alternatively, re-run with `--secret-key <key>` to use an existing environment.';

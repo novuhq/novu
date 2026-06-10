@@ -82,9 +82,15 @@ describe('bootstrapKeylessSession', () => {
     post.mockResolvedValueOnce(sessionResponse(freshIdentifier));
     listIntegrations.mockRejectedValueOnce(new NovuApiError('Unauthorized', 401, 'GET /v1/integrations', {}));
 
-    await expect(bootstrapKeylessSession(apiUrl)).rejects.toThrow(
-      'The keyless session is no longer authorized for Connect.'
-    );
+    try {
+      await bootstrapKeylessSession(apiUrl);
+      expect.fail('expected bootstrapKeylessSession to throw');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+
+      expect(message).toContain('The keyless session is no longer authorized for Connect.');
+      expect(message).not.toContain('could not find the demo agent integration');
+    }
   });
 
   it('explains when a fresh keyless session has no demo agent integration', async () => {

@@ -4,6 +4,7 @@ import {
   getTelegramMobileLinkStatus,
   issueTelegramMobileLink,
   issueTelegramSubscriberLink,
+  type TelegramSubscriberLinkResult,
 } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import { createTelegramIntegration, type IntegrationRecord } from '../../api/integrations';
@@ -50,6 +51,7 @@ export async function connectTelegramForAgent(
   }
 
   const botToken = options.telegramBotToken?.trim();
+  let prefetchedSubscriberLink: TelegramSubscriberLinkResult | undefined;
 
   if (botToken) {
     // The user already created the bot and pasted its token (e.g. collected
@@ -58,7 +60,15 @@ export async function connectTelegramForAgent(
     ui.savingTelegramBotToken();
     const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
     try {
-      await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
+      const consumeResult = await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
+
+      if (consumeResult.deepLinkUrl) {
+        prefetchedSubscriberLink = {
+          deepLinkUrl: consumeResult.deepLinkUrl,
+          botUsername: consumeResult.botUsername,
+          expiresAt: mobileLink.expiresAt,
+        };
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       throw new Error(
@@ -92,7 +102,9 @@ export async function connectTelegramForAgent(
     }
   }
 
-  const subscriberLink = await issueTelegramSubscriberLink(client, agent.identifier, integration._id, subscriberId);
+  const subscriberLink =
+    prefetchedSubscriberLink ??
+    (await issueTelegramSubscriberLink(client, agent.identifier, integration._id, subscriberId));
   const deepLinkQr = await renderQR(subscriberLink.deepLinkUrl);
   ui.showTelegramTest({
     deepLinkQr,

@@ -177,8 +177,12 @@ Wait for the user to paste the token. Pass it to the CLI via `--telegram-bot-tok
 
 Keyless is the default — do **not** pass `--secret-key`. Substitute the channel the user picked. Run the command **exactly as written** — no `>`, `tee`, or log file.
 
+Set the agent description in an environment variable first — do **not** paste user-provided prose directly into a double-quoted shell argument (command substitution would execute inside `"…"`).
+
 ```bash
-npx novu connect "<CONFIRMED AGENT DESCRIPTION>" \
+export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
+
+npx novu connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
   --channel <slack|email|telegram|skip>
 ```
@@ -188,10 +192,13 @@ Never pass `--channel whatsapp` or `--channel teams` — those channels are hand
 **Canonical example (slack):**
 
 ```bash
-npx novu connect "<CONFIRMED AGENT DESCRIPTION>" \
+export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
+export SLACK_CONFIG_TOKEN='<xoxe.xoxp-...>'
+
+npx novu connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
   --channel slack \
-  --slack-config-token "<xoxe.xoxp-...>"
+  --slack-config-token "$SLACK_CONFIG_TOKEN"
 ```
 
 **How to run the Connect shell** — pick one path; never combine with log redirection or a second watch command:
@@ -201,8 +208,8 @@ npx novu connect "<CONFIRMED AGENT DESCRIPTION>" \
 
 Conditional flags — apply each only when its condition holds:
 
-- **If channel is `slack`:** also pass `--slack-config-token "<xoxe.xoxp-...>"`.
-- **If channel is `telegram`:** also pass `--telegram-bot-token "<123456:ABC...>"` (collected after Step 2 — see [Telegram bot token (after Step 2)](#telegram-bot-token-after-step-2)). `--ci` is required (no prompts, no TUI).
+- **If channel is `slack`:** also pass `--slack-config-token "$SLACK_CONFIG_TOKEN"` (set the token in the shell environment first).
+- **If channel is `telegram`:** also pass `--telegram-bot-token "$TELEGRAM_BOT_TOKEN"` (collected after Step 2 — see [Telegram bot token (after Step 2)](#telegram-bot-token-after-step-2)). `--ci` is required (no prompts, no TUI).
 - **Runtime:** do not pass `--runtime` or `--anthropic-api-key` — the **demo runtime** is always used.
 - **Region:** pass `--region eu` only when the user explicitly asks; otherwise the default is **US** Novu Cloud.
 

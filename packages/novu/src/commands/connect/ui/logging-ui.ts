@@ -10,7 +10,6 @@ import {
   logSlackHandoffEvents,
   logTelegramBotfatherHandoffEvent,
   logTelegramDeepLinkHandoffEvents,
-  logTelegramMobileLinkHandoffEvent,
 } from './handoff-events';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
@@ -198,10 +197,11 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve();
     },
-    showTelegramLinkToken({ mobileUrl }) {
+    showTelegramLinkToken(_opts) {
       stop();
-      console.log(`${chalk.cyan('→')} Open on your phone to paste the bot token: ${chalk.underline(mobileUrl)}`);
-      logTelegramMobileLinkHandoffEvent({ mobileUrl });
+      throw new Error(
+        'Telegram mobile-link setup is not available in CI mode. Pass --telegram-bot-token "<token>" so the CLI can configure Telegram without the dashboard mobile page.'
+      );
     },
     savingTelegramBotToken() {
       start('Saving your Telegram bot token…');
