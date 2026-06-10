@@ -21,6 +21,12 @@ export interface ConsumeSlackSetupLinkResult {
   success: true;
 }
 
+/**
+ * Sentinel userId for Slack quick-setup invoked from the public setup page.
+ * Satisfies OrganizationCommand validation; not a real Novu user.
+ */
+const SYNTHETIC_USER_ID = 'slack-setup-link';
+
 @Injectable()
 export class ConsumeSlackSetupLink {
   constructor(
@@ -70,7 +76,7 @@ export class ConsumeSlackSetupLink {
 
       await this.slackQuickSetupUsecase.execute(
         SlackQuickSetupCommand.create({
-          userId: 'slack-setup-link',
+          userId: SYNTHETIC_USER_ID,
           environmentId: payload.env,
           organizationId: payload.org,
           integrationId: integration._id,
