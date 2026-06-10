@@ -16,3 +16,16 @@ export function logEmailHandoffEvents(opts: {
 export function logSlackHandoffEvents(opts: { authorizeUrl: string }): void {
   console.log(`${HANDOFF_PREFIX}SLACK_AUTHORIZE_URL=${opts.authorizeUrl}`);
 }
+
+export function logTelegramBotfatherHandoffEvent(opts: { botfatherUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}TELEGRAM_BOTFATHER_URL=${opts.botfatherUrl}`);
+}
+
+export function logTelegramMobileLinkHandoffEvent(opts: { mobileUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}TELEGRAM_MOBILE_LINK_URL=${opts.mobileUrl}`);
+}
+
+export function logTelegramDeepLinkHandoffEvents(opts: { deepLinkUrl: string; botUsername: string }): void {
+  console.log(`${HANDOFF_PREFIX}TELEGRAM_DEEPLINK_URL=${opts.deepLinkUrl}`);
+  console.log(`${HANDOFF_PREFIX}TELEGRAM_BOT_USERNAME=${opts.botUsername}`);
+}

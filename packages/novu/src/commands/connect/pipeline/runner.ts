@@ -136,7 +136,15 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           }
           case 'telegram': {
             const subscriberId = await ensureSubscriberForUser(client, auth);
-            const result = await connectTelegramForAgent(client, agent, ui, auth.environmentId, subscriberId, track);
+            const result = await connectTelegramForAgent(
+              client,
+              agent,
+              ui,
+              options,
+              auth.environmentId,
+              subscriberId,
+              track
+            );
             connectedIntegration = result.integration;
             channelConnected = result.connected;
             if (channelConnected) connectedChannel = 'telegram';

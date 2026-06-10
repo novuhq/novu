@@ -5,7 +5,13 @@ import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
-import { logEmailHandoffEvents, logSlackHandoffEvents } from './handoff-events';
+import {
+  logEmailHandoffEvents,
+  logSlackHandoffEvents,
+  logTelegramBotfatherHandoffEvent,
+  logTelegramDeepLinkHandoffEvents,
+  logTelegramMobileLinkHandoffEvent,
+} from './handoff-events';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
@@ -185,22 +191,25 @@ export function createLoggingUI(): ConnectUI {
     addingTelegramIntegration() {
       start('Linking Telegram to your agent…');
     },
-    showTelegramIntro(_opts) {
+    showTelegramIntro({ botfatherUrl }) {
       stop();
+      console.log(`${chalk.cyan('→')} Create a bot with @BotFather: ${chalk.underline(botfatherUrl)}`);
+      logTelegramBotfatherHandoffEvent({ botfatherUrl });
 
-      return Promise.reject(
-        new Error(
-          'Telegram setup is interactive only (3 QR scans). Run `npx novu connect` without --ci to walk through it.'
-        )
-      );
+      return Promise.resolve();
     },
     showTelegramLinkToken({ mobileUrl }) {
       stop();
       console.log(`${chalk.cyan('→')} Open on your phone to paste the bot token: ${chalk.underline(mobileUrl)}`);
+      logTelegramMobileLinkHandoffEvent({ mobileUrl });
+    },
+    savingTelegramBotToken() {
+      start('Saving your Telegram bot token…');
     },
     showTelegramTest({ deepLinkUrl, botUsername }) {
       stop();
       console.log(`${chalk.cyan('→')} Open Telegram and tap Start on @${botUsername}: ${chalk.underline(deepLinkUrl)}`);
+      logTelegramDeepLinkHandoffEvents({ deepLinkUrl, botUsername });
     },
     telegramConnected() {
       succeed('Telegram connected');

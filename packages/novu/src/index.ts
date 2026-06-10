@@ -169,6 +169,10 @@ program
     '--slack-config-token <token>',
     'Slack App Configuration Token (xoxe.xoxp-…) used to provision Slack OAuth credentials non-interactively'
   )
+  .option(
+    '--telegram-bot-token <token>',
+    'Telegram bot token from @BotFather (123456:ABC-…). The CLI stores it on the integration, skipping the mobile-link handoff'
+  )
   .option('--ci', 'Force non-interactive logging mode (no Ink TUI)', false)
   .action(async (positionalPrompt: string | undefined, options: ConnectCommandInput) => {
     analytics.track({

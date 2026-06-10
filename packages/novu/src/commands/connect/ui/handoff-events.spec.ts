@@ -1,5 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { logEmailHandoffEvents, logSlackHandoffEvents } from './handoff-events';
+import {
+  logEmailHandoffEvents,
+  logSlackHandoffEvents,
+  logTelegramBotfatherHandoffEvent,
+  logTelegramDeepLinkHandoffEvents,
+  logTelegramMobileLinkHandoffEvent,
+} from './handoff-events';
 
 describe('handoff-events', () => {
   afterEach(() => {
@@ -39,5 +45,35 @@ describe('handoff-events', () => {
     expect(log).toHaveBeenCalledWith(
       'NOVU_CONNECT_SLACK_AUTHORIZE_URL=https://slack.com/oauth/v2/authorize?client_id=abc'
     );
+  });
+
+  it('logs telegram botfather sentinel line', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logTelegramBotfatherHandoffEvent({ botfatherUrl: 'https://t.me/botfather' });
+
+    expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_BOTFATHER_URL=https://t.me/botfather');
+  });
+
+  it('logs telegram mobile link sentinel line', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logTelegramMobileLinkHandoffEvent({ mobileUrl: 'https://dashboard.novu.co/telegram/mobile/abc123' });
+
+    expect(log).toHaveBeenCalledWith(
+      'NOVU_CONNECT_TELEGRAM_MOBILE_LINK_URL=https://dashboard.novu.co/telegram/mobile/abc123'
+    );
+  });
+
+  it('logs telegram deep link and bot username sentinel lines', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logTelegramDeepLinkHandoffEvents({
+      deepLinkUrl: 'https://t.me/mybot?start=abc',
+      botUsername: 'mybot',
+    });
+
+    expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=https://t.me/mybot?start=abc');
+    expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_BOT_USERNAME=mybot');
   });
 });
