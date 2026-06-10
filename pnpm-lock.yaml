@@ -149,6 +149,7 @@ overrides:
   sanitize-html@<2.17.4: ^2.17.4
   samlify@<2.13.0: ^2.13.0
   better-auth: 1.5.6
+  shell-quote@<1.8.4: ^1.8.4
   vitest@<4.1.0: ^4.1.0
   js-cookie@<3.0.7: ^3.0.7
   liquidjs@<10.26.0: ^10.27.0
@@ -25441,8 +25442,9 @@ packages:
   shell-quote-word@1.0.1:
     resolution: {integrity: sha512-lT297f1WLAdq0A4O+AknIFRP6kkiI3s8C913eJ0XqBxJbZPGWUNkRQk2u8zk4bEAjUJ5i+fSLwB6z1HzeT+DEg==}
 
-  shell-quote@1.8.1:
-    resolution: {integrity: sha512-6j1W9l1iAs/4xYBI1SYOVZyFcCis9b4KCLQ8fgAGG07QvzaRLVVRQvAy85yNmmZSjYjg4MWh4gNvlPujU/5LpA==}
+  shell-quote@1.8.4:
+    resolution: {integrity: sha512-VsC6n6vz1ihYYyZZwX7YZSF5l5x36ca17OC+a69h94YqB7X6XLwf+5MOgynYir2SLFUbl8gIYvBo8K8RoNQ6bQ==}
+    engines: {node: '>= 0.4'}
 
   shelljs@0.8.5:
     resolution: {integrity: sha512-TiwcRcrkhHvbrZbnRcFYMLl30Dfov3HKqzp5tO5b4pt6G/SezKcYhmDg15zXVBswHmctSAQKznqNW2LO5tTDow==}
@@ -46845,7 +46847,7 @@ snapshots:
       mkdirp: 0.5.6
       resolve: 1.22.8
       safe-buffer: 5.2.1
-      shell-quote: 1.8.1
+      shell-quote: 1.8.4
       subarg: 1.0.0
 
   create-jest@29.7.0(@types/node@22.15.13)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@swc/core@1.7.26(@swc/helpers@0.5.15))(@types/node@22.15.13)(typescript@5.6.2)):
@@ -54046,7 +54048,7 @@ snapshots:
       minimatch: 3.1.5
       pidtree: 0.3.1
       read-pkg: 3.0.0
-      shell-quote: 1.8.1
+      shell-quote: 1.8.4
       string.prototype.padend: 3.1.4
 
   npm-run-path@2.0.2:
@@ -56984,7 +56986,7 @@ snapshots:
 
   shell-quote-word@1.0.1: {}
 
-  shell-quote@1.8.1: {}
+  shell-quote@1.8.4: {}
 
   shelljs@0.8.5:
     dependencies:

@@ -384,46 +384,73 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     const client = await this.getClient();
 
     try {
-      const iterator = (client as any).beta.sessions.events.list(sessionId, {
-        order: 'asc',
-        types: ['agent.mcp_tool_use', 'agent.tool_use', 'user.tool_confirmation'],
-      });
+      const toolUseIds = await this.getRequiresActionToolUseIds(client, sessionId);
 
-      const pendingById = new Map<string, PendingToolApproval>();
-
-      for await (const event of iterator) {
-        if (event?.type === 'user.tool_confirmation') {
-          const confirmedToolUseId = event.tool_use_id as string | undefined;
-          if (confirmedToolUseId) {
-            pendingById.delete(confirmedToolUseId);
-          }
-
-          continue;
-        }
-
-        if (event?.evaluated_permission !== 'ask') {
-          continue;
-        }
-
-        const toolUseId = event.id as string | undefined;
-        const toolName = (event.name as string | undefined) ?? 'unknown_tool';
-
-        if (!toolUseId) {
-          continue;
-        }
-
-        pendingById.set(toolUseId, {
-          toolUseId,
-          toolName,
-          mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
-          input: (event.input as Record<string, unknown> | undefined) ?? undefined,
-        });
+      if (toolUseIds.length === 0) {
+        return [];
       }
 
-      return [...pendingById.values()];
+      return this.resolvePendingToolApprovals(client, sessionId, toolUseIds);
     } catch (err) {
       this.normaliseError(err);
     }
+  }
+
+  /** Tool-use ids Anthropic is blocked on in the latest session pause. */
+  private async getRequiresActionToolUseIds(client: AnthropicCompatibleClient, sessionId: string): Promise<string[]> {
+    const iterator = (client as any).beta.sessions.events.list(sessionId, {
+      order: 'desc',
+      types: ['session.status_idle', 'session.thread_status_idle'],
+    });
+
+    for await (const event of iterator) {
+      const stopReason = event?.stop_reason as { type?: string; event_ids?: string[] } | undefined;
+
+      if (stopReason?.type === 'requires_action') {
+        return (stopReason.event_ids ?? []).filter(
+          (toolUseId): toolUseId is string => typeof toolUseId === 'string' && toolUseId.length > 0
+        );
+      }
+    }
+
+    return [];
+  }
+
+  private async resolvePendingToolApprovals(
+    client: AnthropicCompatibleClient,
+    sessionId: string,
+    toolUseIds: string[]
+  ): Promise<PendingToolApproval[]> {
+    const pendingIds = new Set(toolUseIds);
+    const tools = new Map<string, PendingToolApproval>();
+
+    const iterator = (client as any).beta.sessions.events.list(sessionId, {
+      order: 'asc',
+      types: ['agent.mcp_tool_use', 'agent.tool_use'],
+    });
+
+    for await (const event of iterator) {
+      const toolUseId = event?.id as string | undefined;
+
+      if (!toolUseId || !pendingIds.has(toolUseId)) {
+        continue;
+      }
+
+      tools.set(toolUseId, {
+        toolUseId,
+        toolName: (event.name as string | undefined) ?? 'unknown_tool',
+        mcpServerName: event.type === 'agent.mcp_tool_use' ? (event.mcp_server_name as string) : undefined,
+        input: (event.input as Record<string, unknown> | undefined) ?? undefined,
+      });
+
+      if (tools.size === pendingIds.size) {
+        break;
+      }
+    }
+
+    return toolUseIds
+      .map((toolUseId) => tools.get(toolUseId))
+      .filter((tool): tool is PendingToolApproval => tool !== undefined);
   }
 
   async createVault(input: CreateVaultInput): Promise<CreateVaultResult> {

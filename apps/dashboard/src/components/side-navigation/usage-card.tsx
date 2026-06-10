@@ -104,7 +104,7 @@ function CardContent({ currentEvents, maxEvents, resetDate }: CardContentProps) 
             <Progress value={percentage} max={100} variant={progressVariant} className="h-1 rounded-lg" />
             <span className="text-text-soft text-label-xs flex items-center gap-1 leading-[16px]">
               <RiCalendarEventLine className="size-3.5" />
-              Usage reset on {formattedResetDate}
+              Usage resets on {formattedResetDate}
             </span>
           </div>
           <div className="absolute bottom-2 left-2 right-2 translate-y-[10px] opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">

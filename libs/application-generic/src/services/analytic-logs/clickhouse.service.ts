@@ -34,7 +34,7 @@ export class ClickHouseService implements BeforeApplicationShutdown {
       });
 
       try {
-        await defaultClient.query({
+        await defaultClient.command({
           query: `CREATE DATABASE IF NOT EXISTS \`${process.env.CLICK_HOUSE_DATABASE}\``,
         });
         if (!process.env.CI) {
@@ -138,7 +138,7 @@ export class ClickHouseService implements BeforeApplicationShutdown {
       return;
     }
 
-    await this._client.exec({
+    await this._client.command({
       query,
       query_params: params,
     });

@@ -124,7 +124,12 @@ export class HandlePlanProgress {
 
     const tasks = this.collectTasks(existingActivities);
 
-    await this.postOrEditPlan(command, activePlanMessageId, this.toModel('awaiting-approval', tasks, false), 'awaiting-approval');
+    await this.postOrEditPlan(
+      command,
+      activePlanMessageId,
+      this.toModel('awaiting-approval', tasks, false),
+      'awaiting-approval'
+    );
   }
 
   private async handleVerdictUpdate(
@@ -256,10 +261,12 @@ export class HandlePlanProgress {
   }
 
   private toModel(phase: PlanPhase, tasks: Map<string, ToolTask>, isFinalized: boolean): PlanModel {
+    const terminalStatus: PlanTaskStatus = phase === 'failed' ? 'error' : 'complete';
+
     const planTasks = [...tasks.values()].map((t) => ({
       id: t.toolUseId,
       title: t.mcpServerName ? `${t.mcpServerName}: ${t.toolName}` : t.toolName,
-      status: t.status,
+      status: isFinalized && t.status !== 'complete' && t.status !== 'error' ? terminalStatus : t.status,
       ...(t.details ? { details: { markdown: t.details } } : {}),
     }));
 
