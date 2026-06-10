@@ -14,6 +14,7 @@ import {
   type StreamCallbacks,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
+import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
@@ -50,13 +51,14 @@ export class ManagedAgentEventHandler {
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   createHandlers(context: SessionEventContext): StreamCallbacks {
-    const { sessionId, turnId, metadata } = context;
+    const { sessionId, metadata } = context;
 
     if (!metadata.conversationId || !metadata.environmentId || !metadata.organizationId) {
       this.logger.error(`Webhook event missing required metadata: session=${sessionId}`);
@@ -76,7 +78,6 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
@@ -109,7 +110,6 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 toolName: event.toolName,
@@ -135,7 +135,6 @@ export class ManagedAgentEventHandler {
             HandlePlanProgressCommand.create({
               ...baseFields,
               toolProgress: {
-                turnId,
                 action: 'tool-use',
                 toolUseId: event.toolUseId,
                 status: event.isError === true ? 'error' : 'complete',
@@ -161,17 +160,23 @@ export class ManagedAgentEventHandler {
                 subscriberId: metadata.subscriberId,
                 platform: metadata.platform,
                 sessionId,
-                turnId,
                 response: event.response,
               })
             );
+            await this.inboundAck.onManagedTurnComplete(metadata);
 
             return;
           }
 
-          await this.handleAgentReply.execute(
-            HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: event.response.content } })
-          );
+          const replyMarkdown = event.response.content?.trim();
+          if (replyMarkdown) {
+            await this.handleAgentReply.execute(
+              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: replyMarkdown } })
+            );
+          }
+
+          await this.inboundAck.onManagedTurnComplete(metadata);
+
           await this.demoQuota.recordUsage(
             metadata.environmentId,
             metadata.organizationId,
@@ -179,7 +184,7 @@ export class ManagedAgentEventHandler {
             event.response.usage
           );
           await this.handlePlanProgress.execute(
-            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { turnId, action: 'complete' } })
+            HandlePlanProgressCommand.create({ ...baseFields, toolProgress: { action: 'complete' } })
           );
         } catch (err) {
           this.logger.error(err, `onFinish failed: session=${sessionId}`);
@@ -194,7 +199,7 @@ export class ManagedAgentEventHandler {
 
       onError: async (event: { error: Error }) => {
         try {
-          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields, turnId);
+          await this.handleErrorEvent(metadata, sessionId, event.error, baseFields);
         } catch (err) {
           this.logger.error(err, `onError handler failed: session=${sessionId}`);
           captureAgentException(err, {
@@ -222,12 +227,12 @@ export class ManagedAgentEventHandler {
     metadata: Record<string, string>,
     sessionId: string,
     error: Error,
-    baseCommand: BaseCommandFields,
-    turnId: string
+    baseCommand: BaseCommandFields
   ): Promise<void> {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
       await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
+      await this.inboundAck.onManagedTurnComplete(metadata);
 
       return;
     }
@@ -244,9 +249,11 @@ export class ManagedAgentEventHandler {
         : false;
 
     if (postedReconnectSetupCard) {
+      await this.inboundAck.onManagedTurnComplete(metadata);
+
       try {
         await this.handlePlanProgress.execute(
-          HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { turnId, action: 'fail' } })
+          HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
         );
       } catch (err) {
         this.logger.error(err, `Failed to mark plan progress failed for session ${sessionId}`);
@@ -266,8 +273,9 @@ export class ManagedAgentEventHandler {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
       );
+      await this.inboundAck.onManagedTurnComplete(metadata);
       await this.handlePlanProgress.execute(
-        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { turnId, action: 'fail' } })
+        HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
       );
     } catch (err) {
       this.logger.error(err, `Failed to deliver error message for session ${sessionId}`);

@@ -26,6 +26,7 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../../shared/framework/response.decorator';
+import { KeylessAccessible } from '../../shared/framework/swagger/keyless.security';
 import { UserSession } from '../../shared/framework/user.decorator';
 import { AgentRuntimeExceptionFilter } from '../shared/agent-runtime-exception.filter';
 import {
@@ -78,6 +79,7 @@ export class AgentsController {
 
   @Post('/')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @ApiResponse(AgentResponseDto, 201)
   @ApiOperation({
     summary: 'Create agent',
@@ -103,6 +105,7 @@ export class AgentsController {
 
   @Get('/')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @ApiResponse(ListAgentsResponseDto)
   @ApiOperation({
     summary: 'List agents',
@@ -170,6 +173,7 @@ export class AgentsController {
   getAgent(@UserSession() user: UserSessionData, @Param('identifier') identifier: string): Promise<AgentResponseDto> {
     return this.getAgentUsecase.execute(
       GetAgentCommand.create({
+        userId: user._id,
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier,

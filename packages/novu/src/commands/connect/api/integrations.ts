@@ -11,6 +11,10 @@ export interface IntegrationRecord {
   active?: boolean;
 }
 
+function integrationEnvironmentId(environmentId: string) {
+  return environmentId ? { _environmentId: environmentId } : {};
+}
+
 export async function listIntegrations(client: ConnectApiClient): Promise<IntegrationRecord[]> {
   const res = await client.axios.get<{ data?: IntegrationRecord[] } | IntegrationRecord[]>('/v1/integrations');
   const body = res.data;
@@ -52,7 +56,7 @@ export async function createAgentRuntimeIntegration(
     name: input.name,
     active: true,
     credentials: input.credentials,
-    _environmentId: input.environmentId,
+    ...integrationEnvironmentId(input.environmentId),
   });
   const body = res.data;
 
@@ -73,7 +77,7 @@ export async function createSlackIntegration(
     name: input.name,
     active: true,
     credentials: {},
-    _environmentId: input.environmentId,
+    ...integrationEnvironmentId(input.environmentId),
   });
   const body = res.data;
 
@@ -90,7 +94,7 @@ export async function createTelegramIntegration(
     name: input.name,
     active: true,
     credentials: {},
-    _environmentId: input.environmentId,
+    ...integrationEnvironmentId(input.environmentId),
   });
   const body = res.data;
 

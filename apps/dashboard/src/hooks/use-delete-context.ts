@@ -17,7 +17,7 @@ export const useDeleteContext = (options?: UseMutationOptions<void, unknown, Del
       return deleteContext({ environment, ...args });
     },
     ...options,
-    onSuccess: async (_, variables, ctx) => {
+    onSuccess: async (_, variables, onMutateResult, context) => {
       // Remove the specific context from cache
       queryClient.removeQueries({
         queryKey: [QueryKeys.fetchContext, currentEnvironment?._id, variables.type, variables.id],
@@ -31,7 +31,7 @@ export const useDeleteContext = (options?: UseMutationOptions<void, unknown, Del
         refetchType: 'all',
       });
 
-      options?.onSuccess?.(_, variables, ctx);
+      options?.onSuccess?.(_, variables, onMutateResult, context);
     },
   });
 

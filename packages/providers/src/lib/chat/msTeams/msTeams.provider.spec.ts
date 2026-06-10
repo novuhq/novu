@@ -2,10 +2,11 @@ import { ENDPOINT_TYPES } from '@novu/stateless';
 import { v4 as uuidv4 } from 'uuid';
 import { expect, test } from 'vitest';
 import { axiosSpy } from '../../../utils/test/spy-axios';
+import { safeOutboundJsonSpy } from '../../../utils/test/spy-safe-outbound';
 import { MsTeamsProvider } from './msTeams.provider';
 
 test('should trigger msTeams webhook correctly', async () => {
-  const { mockPost: fakePost } = axiosSpy({
+  const { mockSafeOutboundJsonRequest: fakePost } = safeOutboundJsonSpy({
     headers: { 'request-id': uuidv4() },
   });
 
@@ -25,13 +26,18 @@ test('should trigger msTeams webhook correctly', async () => {
   });
 
   expect(fakePost).toHaveBeenCalled();
-  expect(fakePost).toHaveBeenCalledWith(testWebhookUrl, {
-    title: 'Message test title',
+  expect(fakePost).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: undefined,
+    body: {
+      title: 'Message test title',
+    },
   });
 });
 
 test('should trigger msTeams webhook correctly with _passthrough', async () => {
-  const { mockPost: fakePost } = axiosSpy({
+  const { mockSafeOutboundJsonRequest: fakePost } = safeOutboundJsonSpy({
     headers: { 'request-id': uuidv4() },
   });
 
@@ -60,13 +66,18 @@ test('should trigger msTeams webhook correctly with _passthrough', async () => {
   );
 
   expect(fakePost).toHaveBeenCalled();
-  expect(fakePost).toHaveBeenCalledWith(testWebhookUrl, {
-    title: '_passthrough test title',
+  expect(fakePost).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: undefined,
+    body: {
+      title: '_passthrough test title',
+    },
   });
 });
 
 test('should handle plain text content in webhook', async () => {
-  const { mockPost: fakePost } = axiosSpy({
+  const { mockSafeOutboundJsonRequest: fakePost } = safeOutboundJsonSpy({
     headers: { 'request-id': uuidv4() },
   });
 
@@ -86,8 +97,13 @@ test('should handle plain text content in webhook', async () => {
   });
 
   expect(fakePost).toHaveBeenCalled();
-  expect(fakePost).toHaveBeenCalledWith(testWebhookUrl, {
-    text: 'Plain text message',
+  expect(fakePost).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: undefined,
+    body: {
+      text: 'Plain text message',
+    },
   });
 });
 

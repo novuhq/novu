@@ -411,6 +411,66 @@ describe('agent dispatch via NovuRequestHandler', () => {
     expect(capturedCtx.history).toEqual([]);
   });
 
+  it('should expose platformContext.message and platformContext.email for email agents', async () => {
+    let capturedCtx: any;
+
+    const testBot = agent('test-bot', {
+      onMessage: async (_message, ctx) => {
+        capturedCtx = ctx;
+        await ctx.reply('ok');
+      },
+    });
+
+    const emailRaw = {
+      messageId: 'msg-1@example.com',
+      subject: 'Hello',
+      domain: { id: 'domain-1', name: 'inbox.example.com', data: { tier: 'pro' } },
+      route: { address: 'support', data: { queue: 'tier-1' } },
+    };
+
+    const handler = new NovuRequestHandler({
+      frameworkName: 'test',
+      agents: [testBot],
+      client,
+      handler: () => {
+        const body = createMockBridgeRequest({
+          platform: 'email',
+          platformContext: {
+            threadId: 'email:user@example.com:abc',
+            channelId: 'email:user@example.com',
+            isDM: false,
+            message: emailRaw,
+            email: {
+              domain: emailRaw.domain,
+              route: emailRaw.route,
+              rootMessageId: 'root@example.com',
+            },
+          },
+        });
+        const url = new URL(`http://localhost?action=${PostActionEnum.AGENT_EVENT}&agentId=test-bot&event=onMessage`);
+
+        return {
+          body: () => body,
+          headers: () => null,
+          method: () => 'POST',
+          url: () => url,
+          transformResponse: (res: any) => res,
+        };
+      },
+    });
+
+    await handler.createHandler()();
+    await vi.waitFor(() => expect(capturedCtx).toBeDefined());
+
+    expect(capturedCtx.platform).toBe('email');
+    expect(capturedCtx.platformContext.message).toEqual(emailRaw);
+    expect(capturedCtx.platformContext.email).toEqual({
+      domain: emailRaw.domain,
+      route: emailRaw.route,
+      rootMessageId: 'root@example.com',
+    });
+  });
+
   it('should serialize markdown content on reply', async () => {
     const testBot = agent('test-bot', {
       onMessage: async (_message, ctx) => {

@@ -29,8 +29,7 @@ export class EvaluateApiRateLimit {
     let maxLimitPerSecond: number;
     let apiServiceLevel: ApiServiceLevel;
 
-    // For keyless environments, we implement strict rate limiting to prevent abuse:
-    if (!command.organizationId || !command.environmentId) {
+    if (!command.organizationId || !command.environmentId || command.isKeyless) {
       maxLimitPerSecond = 3000;
       apiServiceLevel = ApiServiceLevelEnum.ENTERPRISE;
     } else {

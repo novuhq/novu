@@ -11,19 +11,20 @@ import {
   Settings,
   Smartphone,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { RiArrowLeftSLine, RiCheckLine } from 'react-icons/ri';
-import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { BOOK_DEMO_URL } from '@/components/header-navigation/support-drawer-constants';
 import { LogoCircle } from '@/components/icons/logo-circle';
 import { Notification5Fill } from '@/components/icons/notification-5-fill';
 import { AgentUsecasePreviewIllustration } from '@/components/onboarding/agent-usecase-preview-illustration';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
+import { IS_EU } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { getOnboardingAppId, withAppId } from '@/utils/onboarding-redirect';
+import { beginOnboardingProvisioning } from '@/utils/connect/onboarding-session';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -248,18 +249,18 @@ function InboxFeatureList() {
 
 const USECASE_OPTIONS = [
   {
-    id: 'agents' as const,
-    icon: Bot,
-    title: "I'm building an AI agent",
-    description:
-      'Connect your agent to Novu and Novu gives it voice. Distribute your agent across multiple channels with a unified API.',
-  },
-  {
     id: 'inbox' as const,
     icon: Notification5Fill,
     title: "I'm adding notifications to my app",
     description:
       'Plug in <Inbox />, connect providers, and orchestrate workflows. Go from event → trigger → delivery with full control.',
+  },
+  {
+    id: 'agents' as const,
+    icon: Bot,
+    title: "I'm building an AI agent",
+    description:
+      'Connect your agent to Novu and Novu gives it voice. Distribute your agent across multiple channels with a unified API.',
   },
 ] as const;
 
@@ -267,14 +268,23 @@ type UsecaseId = 'agents' | 'inbox';
 
 function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect: (id: UsecaseId) => void }) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const appId = useMemo(() => getOnboardingAppId(searchParams), [searchParams]);
+  const telemetry = useTelemetry();
 
   const handleContinue = () => {
+    telemetry(TelemetryEvent.USECASE_SELECTED, { usecase: selected });
+
     if (selected === 'inbox') {
-      navigate(withAppId(ROUTES.INBOX_USECASE, appId));
-    } else if (selected === 'agents') {
-      navigate(withAppId(ROUTES.AGENTS_SETUP, appId));
+      // Restart the provisioning loader so it plays a full cycle (with the inbox/notification copy)
+      // while the destination page boots, instead of flickering off as soon as data resolves.
+      beginOnboardingProvisioning('platform');
+      void navigate(ROUTES.INBOX_USECASE);
+
+      return;
+    }
+
+    if (selected === 'agents') {
+      beginOnboardingProvisioning('agents');
+      void navigate(ROUTES.AGENTS_SETUP);
     }
   };
 
@@ -356,7 +366,7 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
 export function UsecaseSelectPage() {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const telemetry = useTelemetry();
-  const [selected, setSelected] = useState<UsecaseId>('agents');
+  const [selected, setSelected] = useState<UsecaseId>('inbox');
   const provisioningActive = useOnboardingProvisioningActive();
 
   useOnboardingProvisioningDismiss({
@@ -372,7 +382,8 @@ export function UsecaseSelectPage() {
     return null;
   }
 
-  if (!isAgentsEnabled) {
+  // Agents are hard-disabled in the EU region; skip the usecase picker entirely there.
+  if (IS_EU || !isAgentsEnabled) {
     return <Navigate to={ROUTES.INBOX_USECASE} replace />;
   }
 

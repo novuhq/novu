@@ -6,6 +6,8 @@ export * from './log.repository';
 export * from './request-log';
 export { StepRun, StepRunFinalStatus, StepRunNonFinalStatus, StepRunRepository, StepRunStatus } from './step-run';
 export {
+  BuildStepRunTraceFromJobParams,
+  buildStepRunTraceFromJob,
   EventType,
   mapEventTypeToTitle,
   RequestTraceInput,

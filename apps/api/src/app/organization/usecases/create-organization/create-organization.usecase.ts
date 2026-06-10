@@ -1,13 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { AnalyticsService } from '@novu/application-generic';
 import { OrganizationEntity, OrganizationRepository, UserRepository } from '@novu/dal';
-import {
-  ApiServiceLevelEnum,
-  EnvironmentEnum,
-  JobTitleEnum,
-  MemberRoleEnum,
-  OrganizationProductTypeEnum,
-} from '@novu/shared';
+import { ApiServiceLevelEnum, EnvironmentEnum, JobTitleEnum, MemberRoleEnum } from '@novu/shared';
 
 import { CreateEnvironmentCommand } from '../../../environments-v1/usecases/create-environment/create-environment.command';
 import { CreateEnvironment } from '../../../environments-v1/usecases/create-environment/create-environment.usecase';
@@ -43,7 +37,6 @@ export class CreateOrganization {
       apiServiceLevel: command.apiServiceLevel || defaultApiServiceLevel,
       domain: command.domain,
       language: command.language,
-      productType: OrganizationProductTypeEnum.PLATFORM,
     });
 
     if (command.jobTitle) {

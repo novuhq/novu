@@ -7,6 +7,7 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 import { OutboundGateway } from '../egress/outbound.gateway';
 import type { AgentRuntime } from './agent-runtime.port';
 import { type AgentExecutionParams, BridgeExecutorService, NoBridgeUrlError } from './bridge-executor.service';
+import { buildAgentPlatformContext, buildEmailPlatformContext } from './build-platform-context.util';
 import type { ConversationTurn } from './conversation-turn';
 import { applyPlatformThreadIdToThread } from './platform-thread.util';
 
@@ -70,11 +71,17 @@ export class BridgeRuntime implements AgentRuntime {
       subscriber: turn.subscriber,
       history: turn.history,
       message: turn.message,
-      platformContext: {
-        threadId: turn.platformThreadId,
+      platformContext: buildAgentPlatformContext({
+        platformThreadId: turn.platformThreadId,
         channelId: turn.thread.channelId,
         isDM: turn.thread.isDM,
-      },
+        message: turn.message,
+        email: buildEmailPlatformContext({
+          platform: turn.config.platform,
+          message: turn.message,
+          firstPlatformMessageId: this.conversationService.getPrimaryChannel(turn.conversation).firstPlatformMessageId,
+        }),
+      }),
       storedAttachments: turn.storedAttachments,
       action: turn.action,
       reaction: turn.reaction,

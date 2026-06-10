@@ -51,6 +51,8 @@ export interface ResolvedAgentConfig {
   connectionAccessToken?: string;
   environmentId: string;
   organizationId: string;
+  isKeyless: boolean;
+  isManaged: boolean;
   agentId: string;
   agentIdentifier: string;
   /** Human-readable display name; used in email-action confirmation UI. */
@@ -246,6 +248,8 @@ export class AgentConfigResolver {
       connectionAccessToken,
       environmentId,
       organizationId,
+      isKeyless: Boolean(process.env.KEYLESS_ORGANIZATION_ID && organizationId === process.env.KEYLESS_ORGANIZATION_ID),
+      isManaged: !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
       agentName: agent.name,

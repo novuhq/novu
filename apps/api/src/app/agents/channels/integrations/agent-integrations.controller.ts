@@ -30,6 +30,7 @@ import {
   ApiNotFoundResponse,
   ApiResponse,
 } from '../../../shared/framework/response.decorator';
+import { KeylessAccessible } from '../../../shared/framework/swagger/keyless.security';
 import { UserSession } from '../../../shared/framework/user.decorator';
 import { SendAgentWelcomeMessageCommand } from '../../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.command';
 import { SendAgentWelcomeMessage } from '../../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
@@ -100,6 +101,7 @@ export class AgentIntegrationsController {
 
   @Post('/:identifier/integrations')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @ApiResponse(AgentIntegrationResponseDto, 201)
   @ApiOperation({
     summary: 'Link integration to agent',
@@ -129,6 +131,7 @@ export class AgentIntegrationsController {
 
   @Get('/:identifier/integrations')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @ApiResponse(ListAgentIntegrationsResponseDto)
   @ApiOperation({
     summary: 'List agent integrations',
@@ -330,6 +333,7 @@ export class AgentIntegrationsController {
 
   @Post('/:identifier/welcome-message')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Send onboarding welcome message',
@@ -358,6 +362,7 @@ export class AgentIntegrationsController {
 
   @Post('/:identifier/integrations/:integrationId/telegram/configure')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(ConfigureTelegramWebhookResponseDto, 200)
   @ApiOperation({
@@ -388,6 +393,7 @@ export class AgentIntegrationsController {
 
   @Post('/:identifier/integrations/:integrationId/telegram/mobile-link')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueTelegramMobileLinkResponseDto, 200)
   @ApiOperation({
@@ -420,6 +426,7 @@ export class AgentIntegrationsController {
 
   @Post('/:identifier/integrations/:integrationId/telegram/subscriber-link')
   @ExternalApiAccessible()
+  @KeylessAccessible()
   @HttpCode(HttpStatus.OK)
   @ApiResponse(IssueTelegramSubscriberLinkResponseDto, 200)
   @ApiOperation({

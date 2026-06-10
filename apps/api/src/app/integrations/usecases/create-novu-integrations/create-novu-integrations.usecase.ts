@@ -118,7 +118,8 @@ export class CreateNovuIntegrations {
   }
 
   private async createManagedClaudeIntegration(command: CreateNovuIntegrationsCommand) {
-    if (!areNovuManagedClaudeCredentialsSet() || command.name !== EnvironmentEnum.DEVELOPMENT) {
+    const isDevelopmentEnvironment = command.name === EnvironmentEnum.DEVELOPMENT;
+    if (!areNovuManagedClaudeCredentialsSet() || (!isDevelopmentEnvironment && !command.includeManagedClaude)) {
       return;
     }
 

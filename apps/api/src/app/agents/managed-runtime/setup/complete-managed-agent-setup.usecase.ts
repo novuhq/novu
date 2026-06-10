@@ -13,12 +13,12 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { InboundAckService } from '../../conversation-runtime/ack/inbound-ack.service';
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { EnsureProviderManagedVault } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import type { McpOAuthState } from '../../mcp/oauth/generate-mcp-oauth-url/mcp-oauth-state';
-import { PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
 import { ManagedAgentService } from '../managed-agent.service';
 import { mergeToolTrustPatch } from '../tool-approval/tool-trust.helper';
 import { listOAuthMcps } from './list-oauth-mcps.helper';
@@ -45,6 +45,7 @@ export class CompleteManagedAgentSetup {
     private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly outboundGateway: OutboundGateway,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -449,6 +450,18 @@ export class CompleteManagedAgentSetup {
       logger: this.logger,
     });
 
+    const dispatchResult = await this.managedAgentService.replayParkedInboundTurn({
+      conversation,
+      config,
+      subscriber,
+      pendingPlatformMessageId: pending.pendingPlatformMessageId,
+      agent,
+    });
+
+    if (!dispatchResult) {
+      return;
+    }
+
     await this.conversationRepository.clearPendingManagedAgentSetup(
       config.environmentId,
       config.organizationId,
@@ -457,35 +470,22 @@ export class CompleteManagedAgentSetup {
 
     delete conversation.pendingManagedAgentSetup;
 
-    await this.showTypingBeforeSetupReplay(conversation, agent, config);
-
-    await this.managedAgentService.replayParkedInboundTurn({
-      conversation,
+    const channel = conversation.channels?.[0];
+    const ackParams = {
+      agentId: agent._id,
       config,
-      subscriber,
-      pendingPlatformMessageId: pending.pendingPlatformMessageId,
-      agent,
-    });
-  }
+      platformThreadId: channel?.platformThreadId,
+      platformMessageId: pending.pendingPlatformMessageId,
+    };
 
-  private async showTypingBeforeSetupReplay(
-    conversation: ConversationEntity,
-    agent: Pick<AgentEntity, '_id'>,
-    config: ResolvedAgentConfig
-  ): Promise<void> {
-    const platformThreadId = conversation.channels?.[0]?.platformThreadId;
-
-    if (!config.acknowledgeOnReceived || !PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform) || !platformThreadId) {
-      return;
-    }
-
-    try {
-      await this.outboundGateway.startTypingInConversation(agent._id, config.integrationIdentifier, platformThreadId);
-    } catch (err) {
-      this.logger.warn(
-        err,
-        `Failed to show typing before managed-agent setup replay for conversation ${conversation._id}`
-      );
+    if (dispatchResult.status === 'active') {
+      await this.inboundAck.showWorkingSignal({
+        ...ackParams,
+        isFirstMessage: channel?.firstPlatformMessageId === pending.pendingPlatformMessageId,
+      });
+      await this.inboundAck.showQueuedSignal(ackParams);
+    } else if (dispatchResult.status === 'queued') {
+      await this.inboundAck.showQueuedSignal(ackParams);
     }
   }
 }

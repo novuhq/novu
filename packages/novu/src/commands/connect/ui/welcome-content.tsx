@@ -81,7 +81,7 @@ export function WelcomeContent({ onContinue }: { onContinue: () => void }): Reac
       {revealComplete ? (
         <>
           <WelcomeAnimatedTagline />
-          <Text color="cyan">Press Enter to sign in or create an account →</Text>
+          <Text color="cyan">Press Enter to connect your first agent →</Text>
         </>
       ) : (
         // Hold the layout open while the headline finishes dithering so the

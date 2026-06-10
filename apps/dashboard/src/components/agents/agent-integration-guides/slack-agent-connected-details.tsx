@@ -11,9 +11,7 @@ import { Skeleton } from '@/components/primitives/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { API_HOSTNAME } from '@/config';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useCurrentApp } from '@/hooks/use-current-app';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
-import { APP_IDS } from '@/utils/apps';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
@@ -172,7 +170,6 @@ export function SlackAgentConnectedDetails({
 }: SlackAgentConnectedDetailsProps) {
   const navigate = useNavigate();
   const { currentEnvironment } = useEnvironment();
-  const currentApp = useCurrentApp();
   const { integrations, isLoading } = useFetchIntegrations();
 
   const integration = useMemo(
@@ -191,11 +188,10 @@ export function SlackAgentConnectedDetails({
   const viewActivityHref = useMemo(() => {
     if (!currentEnvironment?.slug) return undefined;
 
-    const route = currentApp === APP_IDS.CONNECT ? ROUTES.CONNECT_CONVERSATIONS : ROUTES.ACTIVITY_CONVERSATIONS;
-    const path = buildRoute(route, { environmentSlug: currentEnvironment.slug });
+    const path = buildRoute(ROUTES.ACTIVITY_CONVERSATIONS, { environmentSlug: currentEnvironment.slug });
 
     return `${path}?agentId=${encodeURIComponent(agent.identifier)}`;
-  }, [agent.identifier, currentApp, currentEnvironment?.slug]);
+  }, [agent.identifier, currentEnvironment?.slug]);
 
   const handleViewActivity = () => {
     if (viewActivityHref) {

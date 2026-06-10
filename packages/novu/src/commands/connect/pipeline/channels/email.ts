@@ -12,12 +12,13 @@ export async function connectEmailForAgent(
   client: ConnectApiClient,
   agent: AgentSummary,
   ui: ConnectUI,
-  track: (event: string, data?: Record<string, unknown>) => void
+  track: (event: string, data?: Record<string, unknown>) => void,
+  opts?: { sendFromEmail?: string; canGoBack?: boolean }
 ): Promise<{ connected: boolean; integration: IntegrationRecord }> {
   ui.addingEmailIntegration();
 
   const link = await addAgentEmailIntegration(client, agent.identifier);
-  const inboundAddress = link.integration?.sharedInboundAddress;
+  const inboundAddress = link.integration.sharedInboundAddress;
   if (!inboundAddress) {
     throw new Error(
       'The server did not return an inbound address for the email integration. ' +
@@ -26,12 +27,12 @@ export async function connectEmailForAgent(
   }
 
   const integration: IntegrationRecord = {
-    _id: link.integration?._id ?? link.integrationId,
-    identifier: link.integrationIdentifier,
-    name: link.integration?.name ?? 'Novu Email',
-    providerId: link.integration?.providerId ?? 'novu-email-agent',
+    _id: link.integration._id,
+    identifier: link.integration.identifier,
+    name: link.integration.name,
+    providerId: link.integration.providerId,
     channel: 'email',
-    active: link.integration?.active !== false,
+    active: link.integration.active !== false,
   };
 
   if (link.connectedAt) {
@@ -48,9 +49,14 @@ export async function connectEmailForAgent(
   const body = `Hey ${agent.name},\n\nThis is my first email — say hi back and tell me what you can do?\n\nThanks!`;
   const mailtoUrl = `mailto:${inboundAddress}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-  await ui.awaitEmailOpen({ inboundAddress, mailtoUrl });
+  await ui.awaitEmailOpen({
+    inboundAddress,
+    mailtoUrl,
+    sendFromEmail: opts?.sendFromEmail,
+    canGoBack: opts?.canGoBack,
+  });
   void open(mailtoUrl).catch(() => undefined);
-  ui.showEmailWaiting({ inboundAddress });
+  ui.showEmailWaiting({ inboundAddress, sendFromEmail: opts?.sendFromEmail });
 
   const connected = await pollForAgentLinkConnected(client, agent.identifier, integration.identifier, {
     intervalMs: CHANNEL_POLL_INTERVAL_MS,

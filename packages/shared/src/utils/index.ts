@@ -4,6 +4,7 @@ export * from './checkIsResponseError';
 export * from './connect-subscriber-id';
 export * from './data-filter';
 export * from './env';
+export * from './in-app-redirect-url';
 export * from './issues';
 export * from './locales';
 export * from './managed-integration-credentials';

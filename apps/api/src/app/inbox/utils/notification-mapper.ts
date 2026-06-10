@@ -1,5 +1,5 @@
 import type { MessageEntity } from '@novu/dal';
-import { ButtonTypeEnum, MessageActionStatusEnum, SeverityLevelEnum } from '@novu/shared';
+import { ButtonTypeEnum, MessageActionStatusEnum, sanitizeInAppRedirect, SeverityLevelEnum } from '@novu/shared';
 
 import { InboxNotificationDto, InboxSubscriberResponseDto } from '../dtos/inbox-notification.dto';
 
@@ -62,32 +62,17 @@ const mapSingleItem = ({
     primaryAction: primaryCta && {
       label: primaryCta.content,
       isCompleted: actionType === ButtonTypeEnum.PRIMARY && actionStatus === MessageActionStatusEnum.DONE,
-      redirect: primaryCta.url
-        ? {
-            url: primaryCta.url,
-            target: primaryCta.target,
-          }
-        : undefined,
+      redirect: sanitizeInAppRedirect(primaryCta.url, primaryCta.target),
     },
     secondaryAction: secondaryCta && {
       label: secondaryCta.content,
       isCompleted: actionType === ButtonTypeEnum.SECONDARY && actionStatus === MessageActionStatusEnum.DONE,
-      redirect: secondaryCta.url
-        ? {
-            url: secondaryCta.url,
-            target: secondaryCta.target,
-          }
-        : undefined,
+      redirect: sanitizeInAppRedirect(secondaryCta.url, secondaryCta.target),
     },
     channelType: channel,
     tags,
     severity: severity ?? SeverityLevelEnum.NONE,
-    redirect: cta.data?.url
-      ? {
-          url: cta.data.url,
-          target: cta.data.target,
-        }
-      : undefined,
+    redirect: sanitizeInAppRedirect(cta.data?.url, cta.data?.target),
     data,
     workflow: template
       ? {

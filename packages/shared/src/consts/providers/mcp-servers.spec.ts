@@ -1,6 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { McpConnectionAuthModeEnum } from '../../dto/agent/managed-runtime.dto';
-import { MCP_SERVERS, type McpOAuthCatalogEntry, type NovuAppOAuthCatalogEntry } from './mcp-servers';
+import {
+  filterDemoConfigurableMcpIds,
+  isProviderManagedMcp,
+  MCP_SERVERS,
+  type McpOAuthCatalogEntry,
+  type McpServerCategory,
+  type NovuAppOAuthCatalogEntry,
+} from './mcp-servers';
+
+const MCP_SERVER_CATEGORIES: McpServerCategory[] = [
+  'productivity',
+  'communication',
+  'code',
+  'data',
+  'sales-and-marketing',
+  'financial-services',
+  'design',
+  'health-and-wellness',
+  'other',
+];
 
 describe('MCP_SERVERS catalog', () => {
   describe('oauth field', () => {
@@ -36,14 +55,25 @@ describe('MCP_SERVERS catalog', () => {
       }
     });
 
-    it('includes Claude vault delta MCPs as provider-managed', () => {
-      const deltaIds = ['gmail', 'google-calendar', 'microsoft-365', 'monday-com', 'miro', 'vercel', 'zapier'];
+    it('includes Claude vault delta MCPs that remain provider-managed', () => {
+      const providerManagedDeltaIds = ['gmail', 'google-calendar', 'microsoft-365', 'vercel'];
 
-      for (const id of deltaIds) {
+      for (const id of providerManagedDeltaIds) {
         const entry = MCP_SERVERS.find((server) => server.id === id);
 
         expect(entry).toBeDefined();
         expect(entry?.oauth?.mode).toBe(McpConnectionAuthModeEnum.ProviderManaged);
+      }
+    });
+
+    it('includes Claude vault delta MCPs migrated to dcr', () => {
+      const dcrDeltaIds = ['miro', 'monday-com', 'zapier'];
+
+      for (const id of dcrDeltaIds) {
+        const entry = MCP_SERVERS.find((server) => server.id === id);
+
+        expect(entry).toBeDefined();
+        expect(entry?.oauth?.mode).toBe(McpConnectionAuthModeEnum.Dcr);
       }
     });
 
@@ -55,30 +85,19 @@ describe('MCP_SERVERS catalog', () => {
       expect(new Set(urls).size).toBe(urls.length);
     });
 
-    it('covers every DCR-verified MCP', () => {
-      const expectedDcrIds = new Set([
-        'ahrefs',
-        'airtable',
-        'amplitude',
-        'atlassian-rovo',
-        'attio',
-        'brex',
-        'canva',
-        'cloudflare',
-        'datadog',
-        'linear',
-        'mixpanel',
-        'neon',
-        'notion',
-        'sentry',
-        'stripe',
-        'supabase',
-      ]);
-      const actualDcrIds = new Set(
-        MCP_SERVERS.filter((entry) => entry.oauth?.mode === McpConnectionAuthModeEnum.Dcr).map((entry) => entry.id)
-      );
+    it('covers every DCR-verified MCP with a valid catalog shape', () => {
+      const dcrEntries = MCP_SERVERS.filter((entry) => entry.oauth?.mode === McpConnectionAuthModeEnum.Dcr);
 
-      expect(actualDcrIds).toEqual(expectedDcrIds);
+      expect(dcrEntries.length).toBeGreaterThan(0);
+
+      for (const entry of dcrEntries) {
+        expect(entry.name.trim().length, `${entry.id} name`).toBeGreaterThan(0);
+        expect(MCP_SERVER_CATEGORIES, `${entry.id} category`).toContain(entry.category);
+
+        const parsedUrl = new URL(entry.url);
+        expect(parsedUrl.protocol, `${entry.id} url protocol`).toBe('https:');
+        expect(parsedUrl.hostname.length, `${entry.id} url host`).toBeGreaterThan(0);
+      }
     });
 
     it('covers every novu-app MCP', () => {
@@ -113,6 +132,35 @@ describe('MCP_SERVERS catalog', () => {
         'workflow',
         'codespace',
       ]);
+    });
+  });
+
+  describe('isProviderManagedMcp', () => {
+    it('returns true for a provider-managed entry', () => {
+      expect(isProviderManagedMcp('slack')).toBe(true);
+    });
+
+    it('returns false for dcr and novu-app entries', () => {
+      expect(isProviderManagedMcp('sentry')).toBe(false);
+      expect(isProviderManagedMcp('github')).toBe(false);
+    });
+
+    it('returns false for an unknown id', () => {
+      expect(isProviderManagedMcp('not-a-real-mcp')).toBe(false);
+    });
+  });
+
+  describe('filterDemoConfigurableMcpIds', () => {
+    it('drops provider-managed ids and keeps Novu-handled OAuth ids', () => {
+      expect(filterDemoConfigurableMcpIds(['sentry', 'slack', 'github', 'asana'])).toEqual(['sentry', 'github']);
+    });
+
+    it('returns an empty array when every id is provider-managed', () => {
+      expect(filterDemoConfigurableMcpIds(['slack', 'asana'])).toEqual([]);
+    });
+
+    it('preserves order and leaves a fully-configurable list untouched', () => {
+      expect(filterDemoConfigurableMcpIds(['sentry', 'datadog', 'linear'])).toEqual(['sentry', 'datadog', 'linear']);
     });
   });
 

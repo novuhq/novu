@@ -1,4 +1,4 @@
-import { ApiServiceLevelEnum, IndustryEnum, OrganizationProductTypeEnum, ProductUseCases } from '../../types';
+import { ApiServiceLevelEnum, IndustryEnum, ProductUseCases } from '../../types';
 
 export type BrandEnrichmentStatus = 'pending' | 'completed' | 'failed' | 'not_available';
 export type OnboardingWorkflowsStatus = 'pending' | 'generating' | 'completed' | 'failed' | 'skipped';
@@ -54,6 +54,4 @@ export interface IOrganizationEntity {
   externalId?: string;
   stripeCustomerId?: string;
   createdBy?: string;
-  /** Which Novu product this organization belongs to. Missing value is treated as `platform`. */
-  productType?: OrganizationProductTypeEnum;
 }

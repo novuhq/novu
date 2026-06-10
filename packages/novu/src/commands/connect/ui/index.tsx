@@ -2,6 +2,7 @@ import { render } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
 import type { GeneratedAgentSpec } from '../api/agents';
+import { ConnectChannelBackError } from '../errors';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { type ConnectStore, createConnectStore } from './store';
@@ -34,6 +35,12 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
     {
       patchConsole: false,
       exitOnCtrlC: false,
+      /**
+       * Only re-emit terminal lines that changed between frames. Without this,
+       * the orb animation (~10 fps) redraws the whole screen and clears any
+       * active mouse selection on static URL lines (auth, Slack OAuth, etc.).
+       */
+      incrementalRendering: true,
       // No alternate-screen here: the connect flow is short and we want the
       // final success message to remain visible in scrollback after exit.
     }
@@ -171,13 +178,20 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     addingEmailIntegration() {
       store.phase.set({ kind: 'adding-email' });
     },
-    awaitEmailOpen({ inboundAddress, mailtoUrl }) {
-      return new Promise<void>((resolve) => {
-        store.phase.set({ kind: 'email-ready', inboundAddress, mailtoUrl, resolve });
+    awaitEmailOpen({ inboundAddress, mailtoUrl, sendFromEmail, canGoBack }) {
+      return new Promise<void>((resolve, reject) => {
+        store.phase.set({
+          kind: 'email-ready',
+          inboundAddress,
+          mailtoUrl,
+          sendFromEmail,
+          resolve,
+          onBack: canGoBack ? () => reject(new ConnectChannelBackError()) : undefined,
+        });
       });
     },
-    showEmailWaiting({ inboundAddress }) {
-      store.phase.set({ kind: 'email-waiting', inboundAddress });
+    showEmailWaiting({ inboundAddress, sendFromEmail }) {
+      store.phase.set({ kind: 'email-waiting', inboundAddress, sendFromEmail });
     },
     emailConnected() {
       // Transition handled by sendingWelcome / success.

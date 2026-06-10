@@ -6,7 +6,7 @@ import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResul
 export type Phase =
   | {
       kind: 'welcome';
-      /** Called when the user hits Enter to authorize. Pipeline awaits this before opening the browser. */
+      /** Called when the user hits Enter to begin. Pipeline awaits this before bootstrapping the session. */
       resolve: () => void;
     }
   | { kind: 'auth'; dashboardUrl: string | null; status: string }
@@ -77,12 +77,15 @@ export type Phase =
       inboundAddress: string;
       /** Pre-built mailto: URL with subject/body pre-filled; opening it launches the user's mail client. */
       mailtoUrl: string;
+      sendFromEmail?: string;
       /** Resolves when the user hits Enter — the pipeline then runs `open()`. */
       resolve: () => void;
+      onBack?: () => void;
     }
   | {
       kind: 'email-waiting';
       inboundAddress: string;
+      sendFromEmail?: string;
     }
   | { kind: 'adding-telegram' }
   | {

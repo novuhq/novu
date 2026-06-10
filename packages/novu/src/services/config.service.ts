@@ -3,7 +3,7 @@ import Configstore from 'configstore';
 import jwt_decode from 'jwt-decode';
 
 type OriginPort = number;
-type ConfigKey = 'token' | 'anonymousId' | `tunnelUrl-${OriginPort}`;
+type ConfigKey = 'token' | 'anonymousId' | 'connectKeylessApplicationIdentifier' | `tunnelUrl-${OriginPort}`;
 
 export class ConfigService {
   private _config: Configstore;

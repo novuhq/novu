@@ -21,14 +21,14 @@ export const useDisconnectStepResolver = (
       return disconnectStepResolver({ environment: currentEnvironment, ...args });
     },
     ...options,
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchWorkflow] }),
         queryClient.invalidateQueries({ queryKey: [QueryKeys.previewStep] }),
         queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] }),
         queryClient.invalidateQueries({ queryKey: [QueryKeys.stepResolversCount] }),
       ]);
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
   });
 

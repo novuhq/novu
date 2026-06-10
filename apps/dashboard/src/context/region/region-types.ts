@@ -5,8 +5,6 @@ export type Region = string;
 export type OrganizationMetadata = {
   region?: string; // AWS region like 'us-east-1', 'ap-southeast-1', 'eu-central-1', etc.
   externalOrgId?: string;
-  /** Identifies which Novu product owns this organization. Missing value = `platform`. */
-  productType?: 'platform' | 'connect';
   [key: string]: unknown;
 };
 

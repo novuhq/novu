@@ -667,7 +667,7 @@ describe('Create Integration - /integration (POST) #novu-v2', () => {
         .send(payload);
 
       expect(body.statusCode).to.equal(403);
-      expect(body.message).to.contain('API key authentication is scoped to a single environment');
+      expect(body.message).to.contain('is scoped to a single environment');
     });
 
     it('should allow creating without `_environmentId` (defaults to API key environment) via API key', async () => {

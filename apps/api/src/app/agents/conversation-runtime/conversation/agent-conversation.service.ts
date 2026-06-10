@@ -257,6 +257,10 @@ export class AgentConversationService {
     return this.activityRepository.findByConversation(environmentId, conversationId, limit);
   }
 
+  async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
+    return this.activityRepository.countAgentMessages(environmentId, conversationId);
+  }
+
   async getConversation(
     conversationId: string,
     environmentId: string,

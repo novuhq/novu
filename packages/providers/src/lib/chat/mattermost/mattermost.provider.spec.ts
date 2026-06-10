@@ -1,18 +1,11 @@
 import { ENDPOINT_TYPES } from '@novu/stateless';
-import axios from 'axios';
-import { expect, test, vi } from 'vitest';
+import { expect, test } from 'vitest';
+import { safeOutboundJsonSpy } from '../../../utils/test/spy-safe-outbound';
 import { MattermostProvider } from './mattermost.provider';
 
 test('should trigger mattermost library correctly, default channel', async () => {
-  const fakePostDefaultChannel = vi.fn((webhookUrl, payload) => {
-    expect(payload.channel).toBe(undefined);
-
-    return { headers: { 'x-request-id': 'default' } };
-  });
-  vi.spyOn(axios, 'create').mockImplementation(() => {
-    return {
-      post: fakePostDefaultChannel,
-    } as any;
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    headers: { 'x-request-id': 'default' },
   });
 
   const provider = new MattermostProvider();
@@ -28,23 +21,21 @@ test('should trigger mattermost library correctly, default channel', async () =>
     },
     content: testContent,
   });
-  expect(fakePostDefaultChannel).toHaveBeenCalled();
-  expect(fakePostDefaultChannel).toHaveBeenCalledWith(testWebhookUrl, {
-    text: 'Dummy content message',
+
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: undefined,
+    body: {
+      text: 'Dummy content message',
+    },
   });
   expect(result.id).toBe('default');
 });
 
 test('should trigger mattermost library correctly, override channel', async () => {
-  const fakePostUserChannel = vi.fn((webhookUrl, payload) => {
-    expect(payload.channel).toBe('@username');
-
-    return { headers: { 'x-request-id': 'username' } };
-  });
-  vi.spyOn(axios, 'create').mockImplementation(() => {
-    return {
-      post: fakePostUserChannel,
-    } as any;
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    headers: { 'x-request-id': 'username' },
   });
 
   const provider = new MattermostProvider();
@@ -61,24 +52,22 @@ test('should trigger mattermost library correctly, override channel', async () =
     },
     content: testContent,
   });
-  expect(fakePostUserChannel).toHaveBeenCalled();
-  expect(fakePostUserChannel).toHaveBeenCalledWith(testWebhookUrl, {
-    channel: '@username',
-    text: 'Dummy content message',
+
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: undefined,
+    body: {
+      channel: '@username',
+      text: 'Dummy content message',
+    },
   });
   expect(result.id).toBe('username');
 });
 
 test('should trigger mattermost library correctly, default channel with _passthrough', async () => {
-  const fakePostDefaultChannel = vi.fn((webhookUrl, payload) => {
-    expect(payload.channel).toBe(undefined);
-
-    return { headers: { 'x-request-id': 'default' } };
-  });
-  vi.spyOn(axios, 'create').mockImplementation(() => {
-    return {
-      post: fakePostDefaultChannel,
-    } as any;
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    headers: { 'x-request-id': 'default' },
   });
 
   const provider = new MattermostProvider();
@@ -103,9 +92,14 @@ test('should trigger mattermost library correctly, default channel with _passthr
       },
     }
   );
-  expect(fakePostDefaultChannel).toHaveBeenCalled();
-  expect(fakePostDefaultChannel).toHaveBeenCalledWith(testWebhookUrl, {
-    text: '_passthrough content message',
+
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: testWebhookUrl,
+    method: 'POST',
+    headers: undefined,
+    body: {
+      text: '_passthrough content message',
+    },
   });
   expect(result.id).toBe('default');
 });

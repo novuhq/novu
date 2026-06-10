@@ -144,7 +144,7 @@ program
   .option('-d, --dashboard-url <url>', 'Override the Novu Dashboard URL (default follows --region)')
   .option(
     '--connect-dashboard-url <url>',
-    'Override the Connect browser-auth URL (default follows --region, e.g. connect.novu.co)'
+    'Override the Connect browser-auth URL (default follows --region, e.g. dashboard.novu.co)'
   )
   .option('--region <region>', `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`, CloudRegionEnum.US)
   .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')

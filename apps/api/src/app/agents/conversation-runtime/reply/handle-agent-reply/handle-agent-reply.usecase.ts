@@ -16,10 +16,12 @@ import { trackAgentReplyProcessed } from '../../../shared/analytics/agent-analyt
 import type { EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
+import { InboundAckService } from '../../ack/inbound-ack.service';
 import type { MetadataOp } from '../../conversation/agent-conversation.service';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { OutboundGateway } from '../../egress/outbound.gateway';
 import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
+import { buildAgentPlatformContext, buildEmailPlatformContext } from '../../runtime/build-platform-context.util';
 import { HandleAgentReplyCommand } from './handle-agent-reply.command';
 
 @Injectable()
@@ -33,7 +35,8 @@ export class HandleAgentReply {
     private readonly logger: PinoLogger,
     private readonly parseEventRequest: ParseEventRequest,
     private readonly analyticsService: AnalyticsService,
-    private readonly outboundGateway: OutboundGateway
+    private readonly outboundGateway: OutboundGateway,
+    private readonly inboundAck: InboundAckService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -87,9 +90,14 @@ export class HandleAgentReply {
     if (command.reply) {
       replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
 
-      this.removeAckReaction(config!, conversation, channel).catch((err) => {
-        this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to remove ack reaction`);
-      });
+      if (!config!.isManaged) {
+        void this.inboundAck.onBridgeReplyDelivered({
+          agentId: conversation._agentId,
+          config: config!,
+          platformThreadId: channel.platformThreadId,
+          firstPlatformMessageId: channel.firstPlatformMessageId,
+        });
+      }
     }
 
     if (command.signals?.length) {
@@ -235,7 +243,8 @@ export class HandleAgentReply {
         channel.platform,
         channel.platformThreadId,
         plan.messageId,
-        plan.model
+        plan.model,
+        plan.phase
       );
 
       return { messageId: plan.messageId, platformThreadId: channel.platformThreadId };
@@ -246,7 +255,8 @@ export class HandleAgentReply {
       command.integrationIdentifier,
       channel.platform,
       channel.platformThreadId,
-      plan.model
+      plan.model,
+      plan.phase
     );
   }
 
@@ -408,24 +418,6 @@ export class HandleAgentReply {
     });
   }
 
-  private async removeAckReaction(
-    config: ResolvedAgentConfig,
-    conversation: ConversationEntity,
-    channel: ConversationChannel
-  ): Promise<void> {
-    const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId || !config.acknowledgeOnReceived) return;
-
-    await this.outboundGateway.removeReaction(
-      conversation._agentId,
-      config.integrationIdentifier,
-      channel.platform,
-      channel.platformThreadId,
-      firstMessageId,
-      'eyes'
-    );
-  }
-
   private async reactOnResolve(
     config: ResolvedAgentConfig,
     conversation: ConversationEntity,
@@ -467,11 +459,17 @@ export class HandleAgentReply {
       subscriber,
       history,
       message: null,
-      platformContext: {
-        threadId: channel.platformThreadId,
+      platformContext: buildAgentPlatformContext({
+        platformThreadId: channel.platformThreadId,
         channelId: '',
         isDM: false,
-      },
+        message: null,
+        email: buildEmailPlatformContext({
+          platform: config.platform,
+          message: null,
+          firstPlatformMessageId: channel.firstPlatformMessageId,
+        }),
+      }),
     });
   }
 }

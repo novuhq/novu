@@ -88,6 +88,7 @@ export const envValidators = {
   STEP_RESOLVER_CF_ACCOUNT_ID: str({ default: undefined }),
   STEP_RESOLVER_CF_API_TOKEN: str({ default: undefined }),
   STEP_RESOLVER_CF_DISPATCH_NAMESPACE: str({ default: undefined }),
+  STEP_RESOLVER_CF_PLACEMENT_REGION: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   THALAMUS_CF_API_KEY: str({ default: undefined }),
@@ -117,6 +118,9 @@ export const envValidators = {
       NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
       KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication', default: undefined }),
       KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication', default: undefined }),
+      KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY: num({ default: 15 }),
+      KEYLESS_GENERATE_CAP_PER_IP_PER_DAY: num({ default: 5 }),
+      KEYLESS_MAX_AGENTS_PER_ENV: num({ default: 2 }),
       // ClickHouse
       CLICK_HOUSE_URL: str({ default: '' }),
       CLICK_HOUSE_DATABASE: str({ default: '' }),

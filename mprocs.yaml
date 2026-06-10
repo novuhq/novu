@@ -1,6 +1,6 @@
 procs:
   api:
-    shell: pnpm --filter @novu/api-service start:portless
+    shell: pnpm --filter @novu/api-service ${API_PORTLESS_SCRIPT:-start:portless}
   dashboard:
     shell: pnpm --filter @novu/dashboard start:portless
   worker:
@@ -26,6 +26,13 @@ procs:
     autostart: false
   react:
     shell: pnpm --filter @novu/react build:watch
+    autostart: false
+
+  "------":
+    shell: sleep infinity
+    autostart: false
+  "DEV CONFIG":
+    shell: node scripts/novu-dev-config.mjs
     autostart: false
 
 scrollback: 100000

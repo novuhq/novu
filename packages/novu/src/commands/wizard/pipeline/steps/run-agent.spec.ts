@@ -92,7 +92,7 @@ describe('runAgentStep validate loop', () => {
 
   it("treats a fully-passing validation as 'clean' even when the result array is non-empty", async () => {
     const runValidate = vi
-      .fn<[], Promise<ValidationResult[]>>()
+      .fn<() => Promise<ValidationResult[]>>()
       .mockResolvedValueOnce([passing('@app/api', 'typecheck'), passing('@app/web', 'typecheck')]);
 
     vi.mocked(createAgentIterator).mockImplementationOnce(({ prompt }) => {
@@ -131,7 +131,7 @@ describe('runAgentStep validate loop', () => {
 
   it('pushes a fix prompt when failures are present and exits clean once they go away', async () => {
     const runValidate = vi
-      .fn<[], Promise<ValidationResult[]>>()
+      .fn<() => Promise<ValidationResult[]>>()
       .mockResolvedValueOnce([passing('@app/api', 'typecheck'), failing('@app/web', 'typecheck', 2)])
       .mockResolvedValueOnce([passing('@app/api', 'typecheck'), passing('@app/web', 'typecheck')]);
 
@@ -175,7 +175,7 @@ describe('runAgentStep validate loop', () => {
 
   it("exits with 'budget' only when real failures remain after exhausting the wall-clock", async () => {
     const runValidate = vi
-      .fn<[], Promise<ValidationResult[]>>()
+      .fn<() => Promise<ValidationResult[]>>()
       .mockResolvedValueOnce([failing('@app/web', 'typecheck', 2)])
       .mockResolvedValueOnce([failing('@app/web', 'typecheck', 2)]);
 
