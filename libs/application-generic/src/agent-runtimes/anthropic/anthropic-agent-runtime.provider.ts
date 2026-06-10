@@ -406,11 +406,11 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     for await (const event of iterator) {
       const stopReason = event?.stop_reason as { type?: string; event_ids?: string[] } | undefined;
 
-      if (stopReason?.type !== 'requires_action') {
-        return [];
+      if (stopReason?.type === 'requires_action') {
+        return (stopReason.event_ids ?? []).filter(
+          (toolUseId): toolUseId is string => typeof toolUseId === 'string' && toolUseId.length > 0
+        );
       }
-
-      return (stopReason.event_ids ?? []).filter(Boolean);
     }
 
     return [];
