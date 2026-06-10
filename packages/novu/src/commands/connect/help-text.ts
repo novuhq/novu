@@ -68,9 +68,12 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
     NOVU_CONNECT_MAILTO=<mailto-url>
     NOVU_CONNECT_SEND_FROM_EMAIL=<email>   (only when present)
 
-  Telegram:
+  Telegram (when --telegram-bot-token is supplied):
     NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=<url>
     NOVU_CONNECT_TELEGRAM_BOT_USERNAME=<name>
+
+  Telegram (when --telegram-bot-token is omitted — emitted before the CLI errors):
+    NOVU_CONNECT_TELEGRAM_BOTFATHER_URL=<url>
 
   Success:
     ✓ Your agent is live.

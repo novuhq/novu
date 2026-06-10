@@ -80,6 +80,10 @@ export async function connectTelegramForAgent(
     const botfatherQr = await renderQR(BOTFATHER_URL);
     await ui.showTelegramIntro({ botfatherQr, botfatherUrl: BOTFATHER_URL });
 
+    if (options.ci) {
+      ui.showTelegramLinkToken({ mobileQr: botfatherQr, mobileUrl: BOTFATHER_URL });
+    }
+
     const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
     const mobileQr = await renderQR(mobileLink.url);
     ui.showTelegramLinkToken({ mobileQr, mobileUrl: mobileLink.url });
