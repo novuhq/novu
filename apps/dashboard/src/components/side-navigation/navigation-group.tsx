@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { RiArrowDownSLine, RiArrowRightSLine } from 'react-icons/ri';
+import { RiArrowRightSLine } from 'react-icons/ri';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/primitives/collapsible';
 
 const STORAGE_KEY_PREFIX = 'nv_side_nav_group_collapsed:';
@@ -39,15 +39,15 @@ export function NavigationGroup({ children, label }: NavigationGroupProps) {
 
   return (
     <Collapsible open={isOpen} onOpenChange={handleOpenChange} className="flex flex-col last:mt-auto">
-      <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-1 px-2 py-1 focus-visible:outline-hidden">
+      <CollapsibleTrigger className="group flex w-full cursor-pointer items-center gap-1 px-2 py-1 focus-visible:outline-hidden">
         <span className="text-text-soft text-sm font-medium">{label}</span>
-        {isOpen ? (
-          <RiArrowDownSLine className="text-text-soft size-3.5" />
-        ) : (
-          <RiArrowRightSLine className="text-text-soft size-3.5" />
-        )}
+        <RiArrowRightSLine className="text-text-soft size-3.5 transition-transform duration-200 ease-out group-data-[state=open]:rotate-90" />
       </CollapsibleTrigger>
-      <CollapsibleContent className="flex flex-col">{children}</CollapsibleContent>
+      <CollapsibleContent className="group/content overflow-hidden data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down">
+        <div className="flex flex-col transition-opacity duration-200 ease-out group-data-[state=closed]/content:opacity-0">
+          {children}
+        </div>
+      </CollapsibleContent>
     </Collapsible>
   );
 }
