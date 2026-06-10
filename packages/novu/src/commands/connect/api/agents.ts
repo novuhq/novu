@@ -252,9 +252,8 @@ export interface ConsumeTelegramMobileLinkResult {
 /**
  * Public endpoint — the opaque setup token authenticates the request. Persists
  * the BotFather token onto the linked Telegram integration and registers the
- * webhook. This is what the dashboard mobile-setup page calls; the CLI calls
- * it directly when the user supplies `--telegram-bot-token`, so keyless users
- * (who cannot sign in to the dashboard) never need the mobile page.
+ * webhook. The dashboard setup page and the CLI (via `--telegram-bot-token`
+ * for headless CI) both call this endpoint.
  */
 export async function consumeTelegramMobileLink(
   client: ConnectApiClient,
@@ -267,6 +266,48 @@ export async function consumeTelegramMobileLink(
   const body = res.data;
 
   return 'data' in body && body.data ? body.data : (body as ConsumeTelegramMobileLinkResult);
+}
+
+export interface SlackSetupLinkResult {
+  token: string;
+  url: string;
+  expiresAt: string;
+}
+
+export interface SlackSetupLinkStatus {
+  valid: boolean;
+  reason?: 'expired' | 'used' | 'invalid';
+  agentName?: string;
+  providerName?: string;
+}
+
+export async function issueSlackSetupLink(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  integrationId: string
+): Promise<SlackSetupLinkResult> {
+  const res = await client.axios.post<{ data?: SlackSetupLinkResult } | SlackSetupLinkResult>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/slack/setup-link`,
+    {}
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as SlackSetupLinkResult);
+}
+
+/**
+ * Public endpoint — needs no auth header (the opaque setup token in the query string
+ * authenticates the request). Poll this to detect when the user has pasted their
+ * Slack App Configuration Token on the secure setup page.
+ */
+export async function getSlackSetupLinkStatus(client: ConnectApiClient, token: string): Promise<SlackSetupLinkStatus> {
+  const res = await client.axios.get<{ data?: SlackSetupLinkStatus } | SlackSetupLinkStatus>(
+    '/v1/agents/public/slack/setup/status',
+    { params: { token } }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as SlackSetupLinkStatus);
 }
 
 export async function issueTelegramSubscriberLink(

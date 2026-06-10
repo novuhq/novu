@@ -6,6 +6,7 @@ export function phaseHasCopyableUrl(phase: Phase): boolean {
     case 'auth':
       return Boolean(phase.dashboardUrl);
     case 'waiting-slack':
+    case 'slack-setup-link':
     case 'telegram-link-token':
     case 'telegram-test':
     case 'dashboard-channel-ready':

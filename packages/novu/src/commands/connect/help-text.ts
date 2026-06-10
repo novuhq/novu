@@ -4,8 +4,7 @@ Examples (non-interactive / agent / CI):
   Keyless Slack (default — no Novu account required):
     npx novu connect "A support assistant for Acme's customers that answers billing questions." \\
       --ci \\
-      --channel slack \\
-      --slack-config-token "xoxe.xoxp-…"
+      --channel slack
 
   Keyless Email:
     npx novu connect "An onboarding assistant for Acme's new members." \\
@@ -15,8 +14,7 @@ Examples (non-interactive / agent / CI):
   Keyless Telegram:
     npx novu connect "A concierge for Acme's shoppers that helps with orders." \\
       --ci \\
-      --channel telegram \\
-      --telegram-bot-token "123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+      --channel telegram
 
   Agent only (no channel):
     npx novu connect "An inventory assistant for Acme's ops staff." \\
@@ -33,8 +31,7 @@ Examples (non-interactive / agent / CI):
     npx novu connect "A support assistant for Acme's customers." \\
       --ci \\
       --secret-key "$NOVU_SECRET_KEY" \\
-      --channel slack \\
-      --slack-config-token "xoxe.xoxp-…"
+      --channel slack
 
 Non-interactive (agent / CI) contract:
 
@@ -43,10 +40,14 @@ Non-interactive (agent / CI) contract:
     - Pass --channel <slack|email|telegram|skip>.
 
   Channel-specific flags:
-    - --channel slack    → requires --slack-config-token (xoxe.xoxp-…)
-    - --channel telegram → requires --telegram-bot-token (from @BotFather)
+    - --channel slack    → no extra flags (CLI prints a secure setup link for the Slack config token)
+    - --channel telegram → no extra flags (CLI prints a secure setup link for the BotFather token)
     - --channel email    → no extra flags
     - --channel skip     → no extra flags (agent only, no channel)
+
+  Optional CI-only escape hatches (secrets injected via env — never paste in chat):
+    - --slack-config-token "xoxe.xoxp-…"    → skip the setup page; pass token directly
+    - --telegram-bot-token "123456:ABC-…"   → skip the setup page; pass token directly
 
   Defaults (do not pass unless needed):
     - Keyless mode: omit --secret-key (creates a temporary agent; user claims via in-channel sign-up link)
@@ -61,6 +62,7 @@ Non-interactive (agent / CI) contract:
 Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
 
   Slack:
+    NOVU_CONNECT_SLACK_SETUP_URL=<url>
     NOVU_CONNECT_SLACK_AUTHORIZE_URL=<url>
 
   Email:
@@ -69,6 +71,9 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
     NOVU_CONNECT_SEND_FROM_EMAIL=<email>   (only when present)
 
   Telegram:
+    NOVU_CONNECT_TELEGRAM_BOTFATHER_URL=<url>             (only when present)
+    NOVU_CONNECT_TELEGRAM_SETUP_URL=<url>
+    NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG=<absolute png path>  (only when present)
     NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=<url>
     NOVU_CONNECT_TELEGRAM_BOT_USERNAME=<name>
     NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=<absolute png path>   (only when present)

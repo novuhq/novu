@@ -8,9 +8,12 @@ import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import {
   logEmailHandoffEvents,
   logSlackHandoffEvents,
+  logSlackSetupLinkHandoffEvent,
   logTelegramBotfatherHandoffEvent,
   logTelegramDeepLinkHandoffEvents,
   logTelegramDeepLinkQrPngHandoffEvent,
+  logTelegramSetupLinkHandoffEvent,
+  logTelegramSetupLinkQrPngHandoffEvent,
 } from './handoff-events';
 import { renderQRPngFile } from './qr';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
@@ -199,11 +202,13 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.resolve();
     },
-    showTelegramLinkToken(_opts) {
+    showTelegramLinkToken({ mobileUrl }) {
       stop();
-      throw new Error(
-        'Telegram mobile-link setup is not available in CI mode. Pass --telegram-bot-token "<token>" so the CLI can configure Telegram without the dashboard mobile page.'
-      );
+      console.log(`${chalk.cyan('→')} Paste your BotFather token on this secure page: ${chalk.underline(mobileUrl)}`);
+      logTelegramSetupLinkHandoffEvent({ setupUrl: mobileUrl });
+      void renderQRPngFile(mobileUrl)
+        .then((setupQrPngPath) => logTelegramSetupLinkQrPngHandoffEvent({ setupQrPngPath }))
+        .catch(() => undefined);
     },
     savingTelegramBotToken() {
       start('Saving your Telegram bot token…');
@@ -222,12 +227,19 @@ export function createLoggingUI(): ConnectUI {
     addingSlackIntegration() {
       start('Linking Slack to your agent…');
     },
+    showSlackSetupLink({ setupUrl }) {
+      stop();
+      console.log(
+        `${chalk.cyan('→')} Paste your Slack App Configuration Token on this secure page: ${chalk.underline(setupUrl)}`
+      );
+      logSlackSetupLinkHandoffEvent({ setupUrl });
+    },
     promptForSlackConfigToken(_opts) {
       stop();
 
       return Promise.reject(
         new Error(
-          'Slack integration has no OAuth credentials. Pass --slack-config-token "xoxe.xoxp-…" to run the Slack quick-setup unattended, or run interactively to paste it.'
+          'Slack integration has no OAuth credentials. Omit --slack-config-token to use the secure setup page, or pass the token for headless CI.'
         )
       );
     },

@@ -54,9 +54,8 @@ export async function connectTelegramForAgent(
   let prefetchedSubscriberLink: TelegramSubscriberLinkResult | undefined;
 
   if (botToken) {
-    // The user already created the bot and pasted its token (e.g. collected
-    // by an AI agent in chat). Save it directly — keyless users cannot open
-    // the dashboard mobile-link page.
+    // Optional escape hatch for headless CI: the caller supplies the token
+    // directly instead of routing the user through the secure setup page.
     ui.savingTelegramBotToken();
     const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
     try {

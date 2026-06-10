@@ -48,6 +48,7 @@ import {
 } from '../../shared/dtos';
 import { ConfigureTelegramWebhookResponseDto } from '../../shared/dtos/configure-telegram-webhook-response.dto';
 import { ConfigureWhatsAppWebhookResponseDto } from '../../shared/dtos/configure-whatsapp-webhook-response.dto';
+import { IssueSlackSetupLinkResponseDto } from '../../shared/dtos/issue-slack-setup-link-response.dto';
 import { IssueTelegramMobileLinkRequestDto } from '../../shared/dtos/issue-telegram-mobile-link-request.dto';
 import { IssueTelegramMobileLinkResponseDto } from '../../shared/dtos/issue-telegram-mobile-link-response.dto';
 import { IssueTelegramSubscriberLinkRequestDto } from '../../shared/dtos/issue-telegram-subscriber-link-request.dto';
@@ -58,6 +59,8 @@ import {
   SendWhatsAppTestTemplateRequestDto,
   SendWhatsAppTestTemplateResponseDto,
 } from '../../shared/dtos/send-whatsapp-test-template.dto';
+import { IssueSlackSetupLinkCommand } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.command';
+import { IssueSlackSetupLink } from '../slack-linking/issue-slack-setup-link/issue-slack-setup-link.usecase';
 import { ConfigureTelegramAgentWebhookCommand } from '../telegram/configure-telegram-agent-webhook/configure-telegram-agent-webhook.command';
 import { ConfigureTelegramAgentWebhook } from '../telegram/configure-telegram-agent-webhook/configure-telegram-agent-webhook.usecase';
 import { IssueTelegramMobileLinkCommand } from '../telegram-linking/issue-telegram-mobile-link/issue-telegram-mobile-link.command';
@@ -95,6 +98,7 @@ export class AgentIntegrationsController {
     private readonly sendWhatsAppTestTemplateUsecase: SendWhatsAppTestTemplate,
     private readonly configureTelegramAgentWebhookUsecase: ConfigureTelegramAgentWebhook,
     private readonly issueTelegramMobileLinkUsecase: IssueTelegramMobileLink,
+    private readonly issueSlackSetupLinkUsecase: IssueSlackSetupLink,
     private readonly issueTelegramSubscriberLinkUsecase: IssueTelegramSubscriberLink,
     private readonly updateAgentInboxSharedUsecase: UpdateAgentInboxShared
   ) {}
@@ -420,6 +424,37 @@ export class AgentIntegrationsController {
         agentIdentifier: identifier,
         integrationId,
         subscriberId: body?.subscriberId,
+      })
+    );
+  }
+
+  @Post('/:identifier/integrations/:integrationId/slack/setup-link')
+  @ExternalApiAccessible()
+  @KeylessAccessible()
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(IssueSlackSetupLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Issue a short-lived Slack setup link',
+    description:
+      'Issues a signed, single-use link (TTL = 5 minutes) that can be opened to paste a Slack App ' +
+      'Configuration Token without re-authenticating. Slack-only.',
+  })
+  @ApiNotFoundResponse({
+    description: 'The agent, integration, or agent-integration link was not found.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_WRITE)
+  createSlackSetupLink(
+    @UserSession() user: UserSessionData,
+    @Param('identifier') identifier: string,
+    @Param('integrationId') integrationId: string
+  ): Promise<IssueSlackSetupLinkResponseDto> {
+    return this.issueSlackSetupLinkUsecase.execute(
+      IssueSlackSetupLinkCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        agentIdentifier: identifier,
+        integrationId,
       })
     );
   }

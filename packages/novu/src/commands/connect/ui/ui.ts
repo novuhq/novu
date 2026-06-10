@@ -102,7 +102,7 @@ export interface ConnectUI {
    */
   showTelegramIntro(opts: { botfatherQr: string; botfatherUrl: string }): Promise<void>;
   /**
-   * Step 2: render the mobile-link QR. Fire-and-forget — the pipeline owns
+   * Render the signed mobile-link QR. Fire-and-forget — the pipeline owns
    * the polling loop and transitions away from this phase when the bot token
    * lands on the integration.
    */
@@ -127,8 +127,16 @@ export interface ConnectUI {
    * because the chosen Slack integration has no OAuth client credentials
    * configured yet. `retry` is true when this prompt is following an earlier
    * failed quick-setup (so the UI can hint at the cause).
+   *
+   * @deprecated Prefer {@link showSlackSetupLink} — the secure setup page keeps
+   * tokens out of the terminal and agent chat.
    */
   promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
+  /**
+   * Show the signed Slack setup-link URL. Fire-and-forget — the pipeline
+   * polls until the user pastes their config token on the secure page.
+   */
+  showSlackSetupLink(opts: { setupUrl: string }): void;
   runningSlackQuickSetup(): void;
   /**
    * Consent gate before opening Slack OAuth. When `appCreated` is true, confirms

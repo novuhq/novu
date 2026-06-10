@@ -2,10 +2,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   logEmailHandoffEvents,
   logSlackHandoffEvents,
+  logSlackSetupLinkHandoffEvent,
   logTelegramBotfatherHandoffEvent,
   logTelegramDeepLinkHandoffEvents,
   logTelegramDeepLinkQrPngHandoffEvent,
-  logTelegramMobileLinkHandoffEvent,
+  logTelegramSetupLinkHandoffEvent,
+  logTelegramSetupLinkQrPngHandoffEvent,
 } from './handoff-events';
 
 describe('handoff-events', () => {
@@ -48,6 +50,16 @@ describe('handoff-events', () => {
     );
   });
 
+  it('logs slack setup link sentinel lines', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logSlackSetupLinkHandoffEvent({ setupUrl: 'https://dashboard.novu.co/agents/slack/connect/abc123' });
+
+    expect(log).toHaveBeenCalledWith(
+      'NOVU_CONNECT_SLACK_SETUP_URL=https://dashboard.novu.co/agents/slack/connect/abc123'
+    );
+  });
+
   it('logs telegram botfather sentinel line', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
@@ -56,14 +68,22 @@ describe('handoff-events', () => {
     expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_BOTFATHER_URL=https://t.me/botfather');
   });
 
-  it('logs telegram mobile link sentinel line', () => {
+  it('logs telegram setup link sentinel lines', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
 
-    logTelegramMobileLinkHandoffEvent({ mobileUrl: 'https://dashboard.novu.co/telegram/mobile/abc123' });
+    logTelegramSetupLinkHandoffEvent({ setupUrl: 'https://dashboard.novu.co/agents/telegram/connect/abc123' });
 
     expect(log).toHaveBeenCalledWith(
-      'NOVU_CONNECT_TELEGRAM_MOBILE_LINK_URL=https://dashboard.novu.co/telegram/mobile/abc123'
+      'NOVU_CONNECT_TELEGRAM_SETUP_URL=https://dashboard.novu.co/agents/telegram/connect/abc123'
     );
+  });
+
+  it('logs telegram setup QR png sentinel line', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logTelegramSetupLinkQrPngHandoffEvent({ setupQrPngPath: '/tmp/novu-connect-qr-abc123.png' });
+
+    expect(log).toHaveBeenCalledWith('NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG=/tmp/novu-connect-qr-abc123.png');
   });
 
   it('logs telegram deep link and bot username sentinel lines', () => {
