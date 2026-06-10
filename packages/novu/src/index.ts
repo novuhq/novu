@@ -234,6 +234,13 @@ program
         );
         process.exit(1);
       }
+
+      if (channel === 'whatsapp' || channel === 'teams') {
+        console.error(
+          'Non-interactive mode does not support --channel whatsapp or --channel teams. Use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
+        );
+        process.exit(1);
+      }
     }
 
     if (options.channel && !(CHANNEL_CHOICES as readonly string[]).includes(options.channel)) {
