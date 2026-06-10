@@ -13,6 +13,7 @@ import { AwsIcon } from '@/components/icons/aws';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { LogoCircle } from '../icons/logo-circle';
 import { AnthropicAsteriskIcon } from './agent-flow-illustration-shared';
+import { AgentUsecasePreviewIllustration } from './agent-usecase-preview-illustration';
 
 export type ManagedConnectorKind = 'anthropic' | 'aws';
 
@@ -133,6 +134,8 @@ export type AgentCardProps = {
   displayName: string;
   isPlaceholderName: boolean;
   description?: string;
+  /** Agent identifier, rendered under the description in the custom-code card variant. */
+  identifier?: string;
   instructions?: string;
   mcpServers: ReadonlyArray<string>;
   tools: ReadonlyArray<string>;
@@ -146,12 +149,14 @@ export function AgentCard({
   displayName,
   isPlaceholderName,
   description,
+  identifier,
   instructions,
   mcpServers,
   tools,
 }: AgentCardProps) {
   // Custom-code agents host MCPs/tools/instructions in the user's own code and have no managed
-  // connection status — the card collapses to the header + description with a "Custom code" footer.
+  // connection status — the card shows the description + identifier with a usecase illustration
+  // and a "Custom code" footer instead.
   const isCustomCode = connector === 'custom';
 
   return (
@@ -174,39 +179,52 @@ export function AgentCard({
           {!isCustomCode && <StatusBadge status={status} />}
         </div>
 
-        {isCustomCode && !description ? null : (
-          <div className="flex flex-col gap-5 px-2 pb-3 pt-2">
-            {description ? (
-              <AnimatedField enabled={agentCreated} signature={description}>
-                <p className="text-label-xs font-normal text-text-soft line-clamp-2 leading-4" title={description}>
-                  {description}
-                </p>
-              </AnimatedField>
-            ) : null}
+        <div className="flex flex-col gap-5 px-2 pb-3 pt-2">
+          {description ? (
+            <AnimatedField enabled={agentCreated} signature={description}>
+              <p className="text-label-xs font-normal text-text-soft line-clamp-2 leading-4" title={description}>
+                {description}
+              </p>
+            </AnimatedField>
+          ) : null}
 
-            {!isCustomCode && (
-              <>
-                <PreviewSection label="MCPs">
-                  <AnimatedField enabled={agentCreated} signature={mcpServers.join('|')}>
-                    {mcpServers.length > 0 ? <McpTagRow ids={mcpServers} /> : <NotConfiguredLabel />}
+          {isCustomCode ? (
+            <>
+              {identifier ? (
+                <PreviewSection label="Identifier">
+                  <AnimatedField enabled={agentCreated} signature={identifier}>
+                    <span className="text-text-sub font-mono text-[12px] leading-4" title={identifier}>
+                      {identifier}
+                    </span>
                   </AnimatedField>
                 </PreviewSection>
+              ) : null}
+              <div className="flex max-w-full justify-center overflow-hidden">
+                <AgentUsecasePreviewIllustration />
+              </div>
+            </>
+          ) : (
+            <>
+              <PreviewSection label="MCPs">
+                <AnimatedField enabled={agentCreated} signature={mcpServers.join('|')}>
+                  {mcpServers.length > 0 ? <McpTagRow ids={mcpServers} /> : <NotConfiguredLabel />}
+                </AnimatedField>
+              </PreviewSection>
 
-                <PreviewSection label="Tools">
-                  <AnimatedField enabled={agentCreated} signature={tools.join('|')}>
-                    {tools.length > 0 ? <ToolTagRow tools={tools} /> : <NotConfiguredLabel />}
-                  </AnimatedField>
-                </PreviewSection>
+              <PreviewSection label="Tools">
+                <AnimatedField enabled={agentCreated} signature={tools.join('|')}>
+                  {tools.length > 0 ? <ToolTagRow tools={tools} /> : <NotConfiguredLabel />}
+                </AnimatedField>
+              </PreviewSection>
 
-                <PreviewSection label="Instructions">
-                  <AnimatedField enabled={agentCreated} signature={instructions ?? ''}>
-                    {instructions?.trim() ? <InstructionsBlock value={instructions} /> : <NotConfiguredLabel />}
-                  </AnimatedField>
-                </PreviewSection>
-              </>
-            )}
-          </div>
-        )}
+              <PreviewSection label="Instructions">
+                <AnimatedField enabled={agentCreated} signature={instructions ?? ''}>
+                  {instructions?.trim() ? <InstructionsBlock value={instructions} /> : <NotConfiguredLabel />}
+                </AnimatedField>
+              </PreviewSection>
+            </>
+          )}
+        </div>
       </div>
 
       <ConnectorFooter connector={connector} isDemoCredential={isDemoCredential} />

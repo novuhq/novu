@@ -238,6 +238,7 @@ export function ManagedAgentRecap({
       displayName={agent.name}
       isPlaceholderName={false}
       description={agent.description}
+      identifier={agent.identifier}
       instructions={agent.managedRuntime?.systemPrompt ?? summary.instructions}
       mcpServers={serverMcpIds ?? summary.mcpServers ?? []}
       tools={serverToolIds ?? summary.tools ?? []}
