@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import {
   AnalyticsService,
+  areNovuManagedClaudeCredentialsSet,
   CreateOrUpdateSubscriberCommand,
   CreateOrUpdateSubscriberUseCase,
   encryptApiKey,
@@ -477,6 +478,24 @@ export class Session {
 
     if (!isKeylessEnabled) {
       throw new BadRequestException('Keyless environment creation is currently disabled.');
+    }
+
+    if (!areNovuManagedClaudeCredentialsSet()) {
+      throw new BadRequestException(
+        'Keyless Connect requires NOVU_MANAGED_CLAUDE_API_KEY to be configured on the API server.'
+      );
+    }
+
+    const isDemoManagedClaudeEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_DEMO_MANAGED_CLAUDE_ENABLED,
+      defaultValue: false,
+      organization,
+    });
+
+    if (!isDemoManagedClaudeEnabled) {
+      throw new BadRequestException(
+        'Keyless Connect requires the IS_DEMO_MANAGED_CLAUDE_ENABLED feature flag to be enabled on the API server.'
+      );
     }
 
     const user = await this.communityUserRepository.findByEmail(process.env.KEYLESS_USER_EMAIL!);

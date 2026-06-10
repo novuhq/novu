@@ -1,5 +1,5 @@
 import { createNovuAxios, extractNovuApiMessage } from '../../shared/novu-http';
-import { createConnectApiClient } from './client';
+import { createConnectApiClient, NovuApiError } from './client';
 import { findActiveDemoAgentIntegration } from './demo-agent-integration';
 import { listIntegrations } from './integrations';
 
@@ -30,8 +30,12 @@ export async function bootstrapKeylessSession(
     attemptedStoredSession = true;
     const restored = await requestKeylessSession(apiUrl, trimmedStored);
 
-    if (restored && (await isKeylessEnvironmentReadyForConnect(apiUrl, restored.applicationIdentifier))) {
-      return { ...restored, recoveredFromStaleSession: false };
+    if (restored) {
+      const readiness = await checkKeylessEnvironmentReadyForConnect(apiUrl, restored.applicationIdentifier);
+
+      if (readiness.ready) {
+        return { ...restored, recoveredFromStaleSession: false };
+      }
     }
   }
 
@@ -41,19 +45,16 @@ export async function bootstrapKeylessSession(
     throw new Error('Failed to start a keyless session.');
   }
 
-  if (!(await isKeylessEnvironmentReadyForConnect(apiUrl, fresh.applicationIdentifier))) {
-    throw new Error(
-      'Keyless mode is not available on this Novu deployment. Re-run with `--secret-key <key>` to use an existing environment.'
-    );
+  const readiness = await checkKeylessEnvironmentReadyForConnect(apiUrl, fresh.applicationIdentifier);
+
+  if (!readiness.ready) {
+    throw new Error(describeKeylessEnvironmentNotReady(fresh.applicationIdentifier, readiness, apiUrl));
   }
 
   return { ...fresh, recoveredFromStaleSession: attemptedStoredSession };
 }
 
-async function requestKeylessSession(
-  apiUrl: string,
-  applicationIdentifier?: string
-): Promise<KeylessSession | null> {
+async function requestKeylessSession(apiUrl: string, applicationIdentifier?: string): Promise<KeylessSession | null> {
   const axios = createNovuAxios({ apiUrl });
   const body = applicationIdentifier ? { applicationIdentifier } : {};
 
@@ -66,7 +67,7 @@ async function requestKeylessSession(
       return null;
     }
 
-    throw new Error(describeKeylessSessionFailure(res.status, res.data));
+    throw new Error(describeKeylessSessionFailure(res.status, res.data, apiUrl));
   }
 
   const responseBody = res.data;
@@ -93,29 +94,100 @@ function isRecoverableKeylessSessionFailure(status: number, body: unknown): bool
   return false;
 }
 
-function describeKeylessSessionFailure(status: number, body: unknown): string {
-  if (status === 400) {
-    const message = extractNovuApiMessage(body);
-
-    if (message?.includes('Keyless environment creation is currently disabled')) {
-      return message;
-    }
-
-    return 'Keyless mode is not available on this Novu deployment. Re-run with `--secret-key <key>` to use an existing environment.';
-  }
-
-  const message = extractNovuApiMessage(body);
-
-  return message ? `Failed to start a keyless session (${status}): ${message}` : `Failed to start a keyless session (${status}).`;
+interface KeylessEnvironmentReadiness {
+  ready: boolean;
+  reason: string;
+  integrationCount: number;
+  agentIntegrationCount: number;
 }
 
-async function isKeylessEnvironmentReadyForConnect(apiUrl: string, applicationIdentifier: string): Promise<boolean> {
-  const client = createConnectApiClient({ apiUrl, keylessApplicationIdentifier: applicationIdentifier });
-  const integrations = await listIntegrations(client);
+function describeKeylessSessionFailure(status: number, body: unknown, apiUrl: string): string {
+  const message = extractNovuApiMessage(body);
 
-  return findActiveDemoAgentIntegration(integrations) != null;
+  if (status === 400) {
+    if (message) {
+      return `${message} (POST ${apiUrl}/v1/inbox/session returned 400)`;
+    }
+
+    return `Failed to start a keyless session (POST ${apiUrl}/v1/inbox/session returned 400 with no error message). Re-run with \`--secret-key <key>\` to use an existing environment.`;
+  }
+
+  return message
+    ? `Failed to start a keyless session (${status} at ${apiUrl}/v1/inbox/session): ${message}`
+    : `Failed to start a keyless session (${status} at ${apiUrl}/v1/inbox/session).`;
+}
+
+function describeKeylessEnvironmentNotReady(
+  applicationIdentifier: string,
+  readiness: KeylessEnvironmentReadiness,
+  apiUrl: string
+): string {
+  const serverFix =
+    'On the API server, set NOVU_MANAGED_CLAUDE_API_KEY and enable IS_DEMO_MANAGED_CLAUDE_ENABLED, then restart the API.';
+  const bypass = 'Alternatively, re-run with `--secret-key <key>` to use an existing environment.';
+
+  return [
+    'Keyless session was created, but Connect could not find the demo agent integration required to create agents.',
+    readiness.reason,
+    serverFix,
+    bypass,
+    `Application identifier: ${applicationIdentifier}.`,
+    `Integrations found: ${readiness.integrationCount} total, ${readiness.agentIntegrationCount} agent.`,
+    `API: ${apiUrl}.`,
+  ].join('\n');
+}
+
+async function checkKeylessEnvironmentReadyForConnect(
+  apiUrl: string,
+  applicationIdentifier: string
+): Promise<KeylessEnvironmentReadiness> {
+  const client = createConnectApiClient({ apiUrl, keylessApplicationIdentifier: applicationIdentifier });
+  let integrations;
+
+  try {
+    integrations = await listIntegrations(client);
+  } catch (err) {
+    if (err instanceof NovuApiError && err.status === 401) {
+      return {
+        ready: false,
+        reason: 'The keyless session is no longer authorized for Connect.',
+        integrationCount: 0,
+        agentIntegrationCount: 0,
+      };
+    }
+
+    throw err;
+  }
+
+  const demoIntegration = findActiveDemoAgentIntegration(integrations);
+  const agentIntegrations = integrations.filter((integration) => integration.kind === 'agent');
+
+  if (demoIntegration) {
+    return {
+      ready: true,
+      reason: '',
+      integrationCount: integrations.length,
+      agentIntegrationCount: agentIntegrations.length,
+    };
+  }
+
+  let reason = 'The keyless environment is missing an active Novu Anthropic demo agent integration.';
+
+  if (integrations.length === 0) {
+    reason =
+      'The keyless environment has no integrations — the API likely omitted the demo agent integration during provisioning.';
+  } else if (agentIntegrations.length === 0) {
+    reason = 'The keyless environment has integrations, but none are agent integrations.';
+  }
+
+  return {
+    ready: false,
+    reason,
+    integrationCount: integrations.length,
+    agentIntegrationCount: agentIntegrations.length,
+  };
 }
 
 export function isKeylessIdentifier(value: string | undefined | null): boolean {
-  return Boolean(value && value.startsWith(KEYLESS_ENVIRONMENT_PREFIX));
+  return Boolean(value?.startsWith(KEYLESS_ENVIRONMENT_PREFIX));
 }
