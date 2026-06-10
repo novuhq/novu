@@ -1,7 +1,3 @@
-import { providers as novuProviders } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
-import { RiAddLine, RiArrowRightLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
-import { Link, useLocation } from 'react-router-dom';
 import {
   type AgentIntegrationLink,
   type AgentResponse,
@@ -14,6 +10,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { buildRoute } from '@/utils/routes';
+import { providers as novuProviders } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
+import { RiAddLine, RiArrowRightLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
+import { Link, useLocation } from 'react-router-dom';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 
 type ConnectedProvidersSectionProps = {

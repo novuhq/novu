@@ -1,6 +1,3 @@
-import { isClaudePlatformConsoleProvider, PermissionsEnum } from '@novu/shared';
-import { RiErrorWarningFill, RiMore2Fill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -16,6 +13,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives
 import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
+import { isClaudePlatformConsoleProvider, PermissionsEnum } from '@novu/shared';
+import { RiErrorWarningFill, RiMore2Fill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import { ClaudeIcon } from '../icons/claude';
 
 type AgentDetailsHeaderProps = {
