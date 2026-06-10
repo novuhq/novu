@@ -302,6 +302,8 @@ Extract the **agent identifier** and **Dashboard URL**, then tell the user:
 
 ## Command flag reference (the subset this flow uses)
 
+Run `novu connect --help` for copy-paste examples, the non-interactive (agent/CI) contract, machine-readable stdout markers, and exit-code semantics. Keep that help text in sync when changing connect flags or behavior.
+
 | Flag | Purpose |
 |---|---|
 | `connect "<description>"` | Positional agent description (required in `--ci`). |
