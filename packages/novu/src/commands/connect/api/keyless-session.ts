@@ -134,7 +134,7 @@ function describeKeylessEnvironmentNotReady(
     `Application identifier: ${applicationIdentifier}.`,
     `Integrations found: ${readiness.integrationCount} total, ${readiness.agentIntegrationCount} agent.`,
     `API: ${apiUrl}.`,
-  ].join(' ');
+  ].join('\n');
 }
 
 async function checkKeylessEnvironmentReadyForConnect(
