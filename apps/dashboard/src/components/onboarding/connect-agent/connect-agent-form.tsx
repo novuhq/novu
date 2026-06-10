@@ -264,62 +264,103 @@ export function ConnectAgentForm({
   submitSlot,
   simplifiedDemo,
 }: ConnectAgentFormProps) {
-  if (simplifiedDemo && aiGeneration) {
+  if (simplifiedDemo && (aiGeneration || isScratchRuntime)) {
     const demoSelectedConnector = getConnectorById(connectorId);
     const showDemoCredentialsSection =
       isClaudeSelected && credentialsPanelVisible && Boolean(demoSelectedConnector?.providerId);
     const isDemoCredentialSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+    // Custom-code connectors carry no credential to set up, so picking one completes the step.
+    const isConnectorStepCompleted = isScratchRuntime || Boolean(selectedIntegrationId);
+
+    const demoConnectorStep = (
+      <SetupStep
+        index={1}
+        status={isConnectorStepCompleted ? 'completed' : 'current'}
+        sectionLabel="2/7 SETUP AGENT BRAIN"
+        title="Choose your connector"
+        description="Your Connector is the LLM runtime where the agent is hosted and executed. Novu connects to your Connector to bring your agents to where you work"
+        fullWidthContent={
+          <div className="mt-1 flex w-full max-w-[500px] flex-col gap-2">
+            <ConnectorIntegrationDropdown
+              selectedConnectorId={connectorId}
+              selectedIntegrationId={selectedIntegrationId}
+              integrations={integrations}
+              status={dropdownStatus}
+              showStatusBadge={showSavedBadge}
+              disabled={disabled}
+              onSelectConnector={onConnectorChange}
+              onSelectIntegration={onSelectIntegration}
+              onRequestSetupCredentials={onRequestSetupCredentials}
+            />
+            <p className="text-text-soft text-label-xs flex items-center gap-1 font-normal leading-4">
+              <RiInformation2Line className="size-3.5" aria-hidden /> The platform that hosts and runs your agent.
+            </p>
+            {showDemoCredentialsSection && demoSelectedConnector?.providerId ? (
+              <ConfigureCredentialsSection
+                providerId={demoSelectedConnector.providerId as AgentRuntimeProviderIdEnum}
+                providerLabel={demoSelectedConnector.providerLabel ?? 'Provider'}
+                integrationName={integrationName}
+                apiKey={apiKey}
+                externalWorkspaceId={externalWorkspaceId}
+                region={region}
+                errors={errors}
+                disabled={disabled}
+                status={verifyStatus}
+                statusMessage={verifyMessage}
+                isSaving={isSavingIntegration}
+                expanded={credentialsPanelExpanded}
+                onExpandedChange={onCredentialsExpandedChange}
+                onIntegrationNameChange={onIntegrationNameChange}
+                onApiKeyChange={onApiKeyChange}
+                onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+                onRegionChange={onRegionChange}
+                onVerify={onVerify}
+                onSave={onSaveIntegration}
+              />
+            ) : null}
+          </div>
+        }
+      />
+    );
+
+    // Custom-code (scratch) connectors keep the same stepped layout: the connector step stays in
+    // place and the prompt step swaps for the manual agent form. The created agent then follows
+    // the regular custom-code flow (channel selection + bridge setup).
+    if (isScratchRuntime || !aiGeneration) {
+      return (
+        <>
+          {demoConnectorStep}
+          <SetupStep
+            index={2}
+            status="current"
+            title="Configure your agent"
+            description="Give your agent a name, identifier, and description. Wire up your own tools, MCPs, and integrations in code."
+            fullWidthContent={
+              <div className="mt-5 flex max-w-[500px] flex-col gap-3">
+                <ScratchAgentFields
+                  name={name}
+                  identifier={identifier}
+                  instructions={instructions}
+                  errors={errors}
+                  isIdentifierTouched={isIdentifierTouched}
+                  isClaudeSelected={false}
+                  disabled={disabled}
+                  onNameChange={onNameChange}
+                  onIdentifierChange={onIdentifierChange}
+                  onIdentifierTouched={onIdentifierTouched}
+                  onInstructionsChange={onInstructionsChange}
+                />
+                {submitSlot}
+              </div>
+            }
+          />
+        </>
+      );
+    }
 
     return (
       <>
-        <SetupStep
-          index={1}
-          status={selectedIntegrationId ? 'completed' : 'current'}
-          sectionLabel="2/7 SETUP AGENT BRAIN"
-          title="Choose your connector"
-          description="Your Connector is the LLM runtime where the agent is hosted and executed. Novu connects to your Connector to bring your agents to where you work"
-          fullWidthContent={
-            <div className="mt-1 flex w-full max-w-[500px] flex-col gap-2">
-              <ConnectorIntegrationDropdown
-                selectedConnectorId={connectorId}
-                selectedIntegrationId={selectedIntegrationId}
-                integrations={integrations}
-                status={dropdownStatus}
-                showStatusBadge={showSavedBadge}
-                disabled={disabled}
-                onSelectConnector={onConnectorChange}
-                onSelectIntegration={onSelectIntegration}
-                onRequestSetupCredentials={onRequestSetupCredentials}
-              />
-              <p className="text-text-soft text-label-xs flex items-center gap-1 font-normal leading-4">
-                <RiInformation2Line className="size-3.5" aria-hidden /> The platform that hosts and runs your agent.
-              </p>
-              {showDemoCredentialsSection && demoSelectedConnector?.providerId ? (
-                <ConfigureCredentialsSection
-                  providerId={demoSelectedConnector.providerId as AgentRuntimeProviderIdEnum}
-                  providerLabel={demoSelectedConnector.providerLabel ?? 'Provider'}
-                  integrationName={integrationName}
-                  apiKey={apiKey}
-                  externalWorkspaceId={externalWorkspaceId}
-                  region={region}
-                  errors={errors}
-                  disabled={disabled}
-                  status={verifyStatus}
-                  statusMessage={verifyMessage}
-                  isSaving={isSavingIntegration}
-                  expanded={credentialsPanelExpanded}
-                  onExpandedChange={onCredentialsExpandedChange}
-                  onIntegrationNameChange={onIntegrationNameChange}
-                  onApiKeyChange={onApiKeyChange}
-                  onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
-                  onRegionChange={onRegionChange}
-                  onVerify={onVerify}
-                  onSave={onSaveIntegration}
-                />
-              ) : null}
-            </div>
-          }
-        />
+        {demoConnectorStep}
         <SetupStep
           index={2}
           status="current"
