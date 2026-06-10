@@ -8,6 +8,7 @@ import {
   slugify,
 } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiLoopLeftLine } from 'react-icons/ri';
@@ -889,7 +890,7 @@ export function CreateAgentDialog({
                 </div>
 
                 {generationMode === 'prompt' && (
-                  <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex min-w-0 items-center">
                     <AgentSuggestionPills
                       className="min-w-0 flex-1"
                       suggestions={displayedAgentTemplates}
@@ -897,17 +898,30 @@ export function CreateAgentDialog({
                       disabled={isSubmitBusy}
                       isLoading={isFetchingAgentTemplates}
                     />
-                    <Button
-                      aria-label="Regenerate suggestions"
-                      title="Regenerate suggestions"
-                      className="h-6 shrink-0 [&_svg]:size-2.5"
-                      variant="secondary"
-                      mode="ghost"
-                      size="2xs"
-                      trailingIcon={RiLoopLeftLine}
-                      disabled={isSubmitBusy || isFetchingAgentTemplates}
-                      onClick={refreshAgentTemplates}
-                    />
+                    <AnimatePresence initial={false}>
+                      {!isFetchingAgentTemplates && (
+                        <motion.div
+                          key="regenerate-suggestions"
+                          initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                          exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                          className="shrink-0 overflow-hidden"
+                        >
+                          <Button
+                            aria-label="Regenerate suggestions"
+                            title="Regenerate suggestions"
+                            className="h-6 shrink-0 [&_svg]:size-2.5"
+                            variant="secondary"
+                            mode="ghost"
+                            size="2xs"
+                            trailingIcon={RiLoopLeftLine}
+                            disabled={isSubmitBusy}
+                            onClick={refreshAgentTemplates}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 )}
               </div>

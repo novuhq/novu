@@ -1,5 +1,5 @@
 import { AgentRuntimeProviderIdEnum, type IIntegration } from '@novu/shared';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiInformation2Line, RiLoopLeftLine } from 'react-icons/ri';
 import {
@@ -273,16 +273,21 @@ export function ConnectAgentForm({
         fullWidthContent={
           <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
             {aiGeneration.suggestions.length > 0 && (
-              <div className="flex min-w-0 items-center gap-2">
-                {/* Fades (not unmounts) while the shimmer is shown so the row geometry never shifts. */}
-                <span
-                  className={cn(
-                    'text-text-soft text-label-xs shrink-0 font-medium leading-4 transition-opacity duration-200',
-                    aiGeneration.isRegeneratingSuggestions && 'opacity-0'
+              <div className="flex min-w-0 items-center">
+                <AnimatePresence initial={false}>
+                  {!aiGeneration.isRegeneratingSuggestions && (
+                    <motion.span
+                      key="try-label"
+                      initial={{ opacity: 0, maxWidth: 0, marginRight: 0 }}
+                      animate={{ opacity: 1, maxWidth: 36, marginRight: 8 }}
+                      exit={{ opacity: 0, maxWidth: 0, marginRight: 0 }}
+                      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                      className="text-text-soft text-label-xs shrink-0 overflow-hidden font-medium leading-4 whitespace-nowrap"
+                    >
+                      Try:
+                    </motion.span>
                   )}
-                >
-                  Try:
-                </span>
+                </AnimatePresence>
                 <AgentSuggestionPills
                   className="min-w-0 flex-1"
                   suggestions={aiGeneration.suggestions}
@@ -291,21 +296,30 @@ export function ConnectAgentForm({
                   isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
                 />
                 {aiGeneration.onRegenerateSuggestions && (
-                  <Button
-                    aria-label="Regenerate suggestions"
-                    title="Regenerate suggestions"
-                    className="h-6 shrink-0 [&_svg]:size-2.5"
-                    variant="secondary"
-                    mode="ghost"
-                    size="2xs"
-                    trailingIcon={RiLoopLeftLine}
-                    disabled={
-                      disabled ||
-                      (aiGeneration.isGenerating ?? false) ||
-                      (aiGeneration.isRegeneratingSuggestions ?? false)
-                    }
-                    onClick={aiGeneration.onRegenerateSuggestions}
-                  />
+                  <AnimatePresence initial={false}>
+                    {!aiGeneration.isRegeneratingSuggestions && (
+                      <motion.div
+                        key="regenerate-suggestions"
+                        initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                        animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                        exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                        transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                        className="shrink-0 overflow-hidden"
+                      >
+                        <Button
+                          aria-label="Regenerate suggestions"
+                          title="Regenerate suggestions"
+                          className="h-6 shrink-0 [&_svg]:size-2.5"
+                          variant="secondary"
+                          mode="ghost"
+                          size="2xs"
+                          trailingIcon={RiLoopLeftLine}
+                          disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                          onClick={aiGeneration.onRegenerateSuggestions}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 )}
               </div>
             )}
@@ -731,7 +745,7 @@ function renderExtraContent({
 }: ExtraContentArgs) {
   if (usePromptUi && aiGeneration && aiMode === 'prompt') {
     return (
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center">
         <AgentSuggestionPills
           className="min-w-0 flex-1"
           suggestions={aiGeneration.suggestions}
@@ -740,15 +754,30 @@ function renderExtraContent({
           isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
         />
         {aiGeneration.onRegenerateSuggestions && (
-          <Button
-            className="h-6 shrink-0 [&_svg]:size-2.5"
-            variant="secondary"
-            mode="ghost"
-            size="2xs"
-            trailingIcon={RiLoopLeftLine}
-            disabled={disabled || (aiGeneration.isRegeneratingSuggestions ?? false)}
-            onClick={aiGeneration.onRegenerateSuggestions}
-          />
+          <AnimatePresence initial={false}>
+            {!aiGeneration.isRegeneratingSuggestions && (
+              <motion.div
+                key="regenerate-suggestions"
+                initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                className="shrink-0 overflow-hidden"
+              >
+                <Button
+                  aria-label="Regenerate suggestions"
+                  title="Regenerate suggestions"
+                  className="h-6 shrink-0 [&_svg]:size-2.5"
+                  variant="secondary"
+                  mode="ghost"
+                  size="2xs"
+                  trailingIcon={RiLoopLeftLine}
+                  disabled={disabled}
+                  onClick={aiGeneration.onRegenerateSuggestions}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
     );
