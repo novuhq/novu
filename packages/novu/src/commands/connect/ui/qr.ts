@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { chmod } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import QRCode from 'qrcode';
@@ -15,6 +16,7 @@ import QRCode from 'qrcode';
 export async function renderQRPngFile(text: string): Promise<string> {
   const filePath = join(tmpdir(), `novu-connect-qr-${randomBytes(6).toString('hex')}.png`);
   await QRCode.toFile(filePath, text, { type: 'png', width: 480, margin: 2 });
+  await chmod(filePath, 0o600);
 
   return filePath;
 }

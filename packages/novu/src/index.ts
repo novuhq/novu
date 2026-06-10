@@ -236,7 +236,7 @@ program
         process.exit(1);
       }
 
-      if (isDashboardOnlyChannel(channel as ChannelChoice)) {
+      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice)) {
         console.error(
           'Non-interactive mode does not support --channel whatsapp or --channel teams. Use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
