@@ -274,7 +274,15 @@ export function ConnectAgentForm({
           <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
             {aiGeneration.suggestions.length > 0 && (
               <div className="flex min-w-0 items-center gap-2">
-                <span className="text-text-soft text-label-xs shrink-0 font-medium leading-4">Try:</span>
+                {/* Fades (not unmounts) while the shimmer is shown so the row geometry never shifts. */}
+                <span
+                  className={cn(
+                    'text-text-soft text-label-xs shrink-0 font-medium leading-4 transition-opacity duration-200',
+                    aiGeneration.isRegeneratingSuggestions && 'opacity-0'
+                  )}
+                >
+                  Try:
+                </span>
                 <AgentSuggestionPills
                   className="min-w-0 flex-1"
                   suggestions={aiGeneration.suggestions}
