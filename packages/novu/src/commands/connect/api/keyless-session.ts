@@ -150,7 +150,7 @@ async function checkKeylessEnvironmentReadyForConnect(
     if (err instanceof NovuApiError && err.status === 401) {
       return {
         ready: false,
-        reason: 'The stored keyless session is no longer authorized for Connect.',
+        reason: 'The keyless session is no longer authorized for Connect.',
         integrationCount: 0,
         agentIntegrationCount: 0,
       };
