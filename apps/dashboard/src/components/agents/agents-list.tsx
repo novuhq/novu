@@ -1,6 +1,13 @@
-import { DirectionEnum, EnvironmentTypeEnum, PermissionsEnum } from '@novu/shared';
+import {
+  DirectionEnum,
+  EnvironmentTypeEnum,
+  filterDemoConfigurableMcpIds,
+  type IIntegration,
+  PermissionsEnum,
+  slugify,
+} from '@novu/shared';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine, RiRobot2Line } from 'react-icons/ri';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
@@ -11,12 +18,18 @@ import {
   listAgents,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
+import {
+  getPreferredClaudeManagedIntegration,
+  resolveClaudeManagedProviderId,
+} from '@/components/agents/connectors/claude-managed-integrations';
 import { CreateAgentDialog, CreateAgentForm } from '@/components/agents/create-agent-dialog';
-import { findAgentTemplateById } from '@/components/agents/create-agent-fields';
+import { type AgentTemplate, findAgentTemplateById } from '@/components/agents/create-agent-fields';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import { isDemoIntegration } from '@/components/integrations/components/utils/helpers';
 import { ListNoResults } from '@/components/list-no-results';
 import { Button } from '@/components/primitives/button';
 import { FacetedFormFilter } from '@/components/primitives/form/faceted-filter/facated-form-filter';
@@ -27,6 +40,7 @@ import { requireEnvironment, useEnvironment } from '@/context/environment/hooks'
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useAgentTemplates } from '@/hooks/use-agent-templates';
 import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
+import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { AGENTS_DOCS_PROVIDERS_URL } from '@/utils/agent-docs';
@@ -62,45 +76,15 @@ export function AgentsList() {
     prompt?: string;
   }>({});
   const [agentToDelete, setAgentToDelete] = useState<AgentResponse | null>(null);
+  // True while an agent is being provisioned directly from a deep-linked template (marketing
+  // website). Shows a preview skeleton until we navigate to the created agent's detail page.
+  const [isAutoProvisioningFromTemplate, setIsAutoProvisioningFromTemplate] = useState(false);
+  // Guards the deep-link template handling so it runs at most once per template id.
+  const appliedTemplateIdRef = useRef<string | undefined>(undefined);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { templates: agentTemplates } = useAgentTemplates();
-
-  // Allow external links (e.g. connect dashboard) to open the create dialog with prefilled values
-  // via `?create=1&name=...&description=...`, or a Sanity-backed template via `?agentTemplateId=...`
-  // (also picked up from sessionStorage when it survived the auth flow). Consume once and strip the
-  // params from the URL.
-  useEffect(() => {
-    const hasCreate = searchParams.get('create') === '1';
-    const templateId = readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM));
-
-    if (!hasCreate && !templateId) return;
-
-    let nextName = searchParams.get('name') ?? undefined;
-    let nextDescription = searchParams.get('description') ?? undefined;
-    let nextPrompt: string | undefined;
-
-    if (templateId) {
-      const template = findAgentTemplateById(agentTemplates, templateId);
-      // Templates may still be loading — wait for the match before consuming the id.
-      if (!template) return;
-
-      nextName = nextName ?? template.name;
-      nextDescription = nextDescription ?? template.instructions;
-      nextPrompt = template.instructions;
-      clearPersistedAgentTemplateId();
-    }
-
-    setInitialCreateValues({ name: nextName, description: nextDescription, prompt: nextPrompt });
-    setCreateOpen(true);
-
-    const nextParams = new URLSearchParams(searchParams);
-    nextParams.delete('create');
-    nextParams.delete('name');
-    nextParams.delete('description');
-    nextParams.delete(AGENT_TEMPLATE_ID_PARAM);
-    setSearchParams(nextParams, { replace: true });
-  }, [searchParams, setSearchParams, agentTemplates]);
+  const { integrations } = useFetchIntegrations();
 
   const handleCreateOpenChange = useCallback((next: boolean) => {
     setCreateOpen(next);
@@ -163,10 +147,7 @@ export function AgentsList() {
       setAgentToDelete(null);
       showSuccessToast('Agent deleted', 'The agent was removed.');
 
-      track(
-        TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD,
-        { agentIdentifier: identifier }
-      );
+      track(TelemetryEvent.AGENT_DELETED_FROM_DASHBOARD, { agentIdentifier: identifier });
 
       const environment = requireEnvironment(currentEnvironment, 'No environment selected');
       const listKey = getAgentsListQueryKey(environment._id, {
@@ -265,6 +246,120 @@ export function AgentsList() {
     },
     [submitCreateAgent, track, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
   );
+
+  // Provision an agent directly from a deep-linked Sanity template (no dialog, no LLM): apply the
+  // template's name, instructions, and MCP servers as managed-runtime overrides on an existing
+  // managed Claude integration, then navigate to the created agent's detail page (the "preview").
+  const handleAutoProvisionFromTemplate = useCallback(
+    async (template: AgentTemplate, integration: IIntegration) => {
+      setIsAutoProvisioningFromTemplate(true);
+
+      const providerId = resolveClaudeManagedProviderId(integration);
+      const isDemo = isDemoIntegration(integration.providerId);
+      const requestedMcpServers = isDemo
+        ? filterDemoConfigurableMcpIds([...template.suggestedMcpServers])
+        : template.suggestedMcpServers;
+
+      await submitCreateAgent(
+        {
+          name: template.name,
+          identifier: slugify(template.name),
+          description: template.instructions,
+          instructions: template.instructions,
+          apiKey: '',
+          runtime: 'claude',
+          isExistingMode: false,
+          providerId,
+          integrationId: integration._id,
+          managedOverrides: {
+            systemPrompt: template.instructions,
+            mcpServers: requestedMcpServers,
+          },
+        },
+        {
+          onSuccess: (createdAgent) => {
+            track(TelemetryEvent.AGENT_CREATED_FROM_DASHBOARD, {
+              agentIdentifier: createdAgent.identifier,
+              active: createdAgent.active,
+            });
+
+            const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+            const agentDetailsPath = `${buildRoute(agentRoutes.detailsTab, {
+              environmentSlug: environment.slug ?? '',
+              agentIdentifier: encodeURIComponent(createdAgent.identifier),
+              agentTab: AGENT_DETAILS_DEFAULT_TAB,
+            })}${location.search}`;
+
+            navigate(agentDetailsPath);
+          },
+          onError: (err) => {
+            setIsAutoProvisioningFromTemplate(false);
+            const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+            showErrorToast(message, 'Create failed');
+          },
+        }
+      );
+    },
+    [submitCreateAgent, track, currentEnvironment, agentRoutes.detailsTab, location.search, navigate]
+  );
+
+  // Allow external links (e.g. connect dashboard) to open the create dialog with prefilled values
+  // via `?create=1&name=...&description=...`, or a Sanity-backed template via `?agentTemplateId=...`
+  // (also picked up from sessionStorage when it survived the auth flow). When a template matches and a
+  // managed Claude integration exists, provision the agent directly; otherwise fall back to opening
+  // the prefilled dialog. Consume once and strip the params from the URL.
+  useEffect(() => {
+    const hasCreate = searchParams.get('create') === '1';
+    const templateId = readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM));
+
+    if (!hasCreate && !templateId) return;
+
+    const stripParams = () => {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('create');
+      nextParams.delete('name');
+      nextParams.delete('description');
+      nextParams.delete(AGENT_TEMPLATE_ID_PARAM);
+      setSearchParams(nextParams, { replace: true });
+    };
+
+    let nextName = searchParams.get('name') ?? undefined;
+    let nextDescription = searchParams.get('description') ?? undefined;
+    let nextPrompt: string | undefined;
+
+    if (templateId) {
+      if (appliedTemplateIdRef.current === templateId) return;
+
+      const template = findAgentTemplateById(agentTemplates, templateId);
+      // Templates may still be loading — wait for the match before consuming the id.
+      if (!template) return;
+
+      // Integrations may still be loading — wait before deciding between auto-provision and dialog.
+      if (integrations === undefined) return;
+
+      const integration = getPreferredClaudeManagedIntegration(integrations);
+      if (integration) {
+        appliedTemplateIdRef.current = templateId;
+        clearPersistedAgentTemplateId();
+        stripParams();
+        void handleAutoProvisionFromTemplate(template, integration);
+
+        return;
+      }
+
+      // No managed Claude integration available — fall back to the prefilled create dialog so the
+      // user can supply credentials.
+      appliedTemplateIdRef.current = templateId;
+      nextName = nextName ?? template.name;
+      nextDescription = nextDescription ?? template.instructions;
+      nextPrompt = template.instructions;
+      clearPersistedAgentTemplateId();
+    }
+
+    setInitialCreateValues({ name: nextName, description: nextDescription, prompt: nextPrompt });
+    setCreateOpen(true);
+    stripParams();
+  }, [searchParams, setSearchParams, agentTemplates, integrations, handleAutoProvisionFromTemplate]);
 
   if (!canReadAgents) {
     return (
@@ -382,6 +477,14 @@ export function AgentsList() {
       </div>
     );
   };
+
+  if (isAutoProvisioningFromTemplate) {
+    return (
+      <div className="relative py-6 pl-6">
+        <AgentPreviewSkeleton />
+      </div>
+    );
+  }
 
   return (
     <>

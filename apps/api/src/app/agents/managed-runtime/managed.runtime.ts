@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DEMO_QUOTA_EXHAUSTED_REPLY, DemoQuotaExhaustedError, PinoLogger } from '@novu/application-generic';
+import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { AgentConversationService } from '../conversation-runtime/conversation/agent-conversation.service';
 import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
 import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime.port';
@@ -8,7 +9,6 @@ import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/p
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
-import { showManagedInboundAck } from './managed-agent-inbound-ack';
 import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
 import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
 import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
@@ -23,6 +23,7 @@ export class ManagedRuntime implements AgentRuntime {
     private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -73,25 +74,30 @@ export class ManagedRuntime implements AgentRuntime {
           conversation: turn.conversation,
           subscriber: turn.subscriber,
           userMessageText: turn.message?.text ?? '',
+          platformThreadId: turn.platformThreadId,
+          platformMessageId: turn.message?.id,
         },
         turn.agent
       );
+
+      const ackParams = {
+        agentId: turn.agentId,
+        config: turn.config,
+        platformThreadId: turn.platformThreadId,
+        platformMessageId: turn.message?.id,
+      };
 
       if (status === 'active') {
         const channel = this.conversationService.getPrimaryChannel(turn.conversation);
         const isFirstMessage = !!turn.message?.id && channel.firstPlatformMessageId === turn.message.id;
 
-        await showManagedInboundAck({
-          outboundGateway: this.outboundGateway,
-          agentId: turn.agentId,
-          config: turn.config,
-          platformThreadId: turn.platformThreadId,
-          thread: turn.thread,
-          message: turn.message,
+        await this.inboundAck.showWorkingSignal({
+          ...ackParams,
           isFirstMessage,
-        }).catch((err) => {
-          this.logger.warn(err, `[agent:${turn.agentId}] Failed to show inbound ack after active dispatch`);
         });
+        await this.inboundAck.showQueuedSignal(ackParams);
+      } else if (status === 'queued') {
+        await this.inboundAck.showQueuedSignal(ackParams);
       }
     } catch (err) {
       if (err instanceof DemoQuotaExhaustedError) {

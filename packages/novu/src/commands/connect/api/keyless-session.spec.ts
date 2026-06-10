@@ -14,14 +14,20 @@ vi.mock('../../shared/novu-http', () => ({
   },
 }));
 
-vi.mock('./client', () => ({
-  createConnectApiClient: vi.fn(() => ({ axios: {} })),
-}));
+vi.mock('./client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./client')>();
+
+  return {
+    ...actual,
+    createConnectApiClient: vi.fn(() => ({ axios: {} })),
+  };
+});
 
 vi.mock('./integrations', () => ({
   listIntegrations: (...args: unknown[]) => listIntegrations(...args),
 }));
 
+import { NovuApiError } from './client';
 import { bootstrapKeylessSession } from './keyless-session';
 
 const apiUrl = 'http://localhost:3000';
@@ -115,11 +121,61 @@ describe('bootstrapKeylessSession', () => {
     expect(post.mock.calls[0][1]).toEqual({});
   });
 
+  it('starts a fresh session when the stored keyless session is no longer authorized', async () => {
+    post
+      .mockResolvedValueOnce(sessionResponse(storedIdentifier))
+      .mockResolvedValueOnce(sessionResponse(freshIdentifier));
+    listIntegrations
+      .mockRejectedValueOnce(new NovuApiError('Unauthorized', 401, 'GET /v1/integrations', {}))
+      .mockResolvedValueOnce([demoIntegration()]);
+
+    const result = await bootstrapKeylessSession(apiUrl, storedIdentifier);
+
+    expect(result).toEqual({
+      applicationIdentifier: freshIdentifier,
+      recoveredFromStaleSession: true,
+    });
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(post.mock.calls[1][1]).toEqual({});
+    expect(listIntegrations).toHaveBeenCalledTimes(2);
+  });
+
   it('propagates integration-list failures instead of treating them as stale sessions', async () => {
     post.mockResolvedValueOnce(sessionResponse(storedIdentifier));
     listIntegrations.mockRejectedValueOnce(new Error('network down'));
 
     await expect(bootstrapKeylessSession(apiUrl, storedIdentifier)).rejects.toThrow('network down');
     expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  it('explains when a fresh keyless session has no demo agent integration', async () => {
+    post.mockResolvedValueOnce(sessionResponse(freshIdentifier));
+    listIntegrations.mockResolvedValueOnce([]);
+
+    await expect(bootstrapKeylessSession(apiUrl)).rejects.toThrow(
+      'The keyless environment has no integrations — the API likely omitted the demo agent integration during provisioning.'
+    );
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(listIntegrations).toHaveBeenCalledTimes(1);
+  });
+
+  it('surfaces API errors from inbox session creation', async () => {
+    post.mockResolvedValueOnce({
+      status: 400,
+      data: { message: 'Keyless Connect requires NOVU_MANAGED_CLAUDE_API_KEY to be configured on the API server.' },
+    });
+
+    await expect(bootstrapKeylessSession(apiUrl)).rejects.toThrow('NOVU_MANAGED_CLAUDE_API_KEY');
+  });
+
+  it('surfaces community edition rejection from inbox session creation', async () => {
+    post.mockResolvedValueOnce({
+      status: 400,
+      data: { message: 'Keyless is not supported in community edition' },
+    });
+
+    await expect(bootstrapKeylessSession(apiUrl)).rejects.toThrow(
+      'Keyless is not supported in community edition (POST http://localhost:3000/v1/inbox/session returned 400)'
+    );
   });
 });

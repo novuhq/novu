@@ -221,7 +221,7 @@ export function AgentsSetupPage() {
       return;
     }
 
-    void navigate(ROUTES.WORKFLOWS);
+    void navigate(buildRoute(ROUTES.AGENTS, { environmentSlug: 'default' }));
   }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleNavigateToOverview = useCallback(() => {
@@ -275,7 +275,7 @@ export function AgentsSetupPage() {
   const leftContent = (
     <>
       <PageMeta title={pageTitle} />
-      <StepHeader current={1} onBack={handleBackStep} />
+      <StepHeader current={2} onBack={handleBackStep} />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">

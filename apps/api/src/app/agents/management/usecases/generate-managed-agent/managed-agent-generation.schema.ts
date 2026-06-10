@@ -24,23 +24,23 @@ export { MAX_GENERATED_MCP_SERVERS, MAX_GENERATED_SKILLS };
 export const managedAgentGenerationSchema = z.object({
   name: z
     .string()
-    .min(1)
+    .min(5)
     .max(MANAGED_AGENT_NAME_MAX_LENGTH)
     .describe('Human readable agent name. Title case, 2–4 words (e.g., "PR Security Reviewer").'),
   identifier: z
     .string()
-    .min(1)
+    .min(5)
     .max(MANAGED_AGENT_IDENTIFIER_MAX_LENGTH)
     .regex(/^[a-z0-9-]+$/, 'Identifier must be lowercase kebab-case')
     .describe('Stable kebab-case identifier derived from the name (e.g., "pr-security-reviewer").'),
   description: z
     .string()
-    .min(1)
+    .min(10)
     .max(140) // max length for the description field, enforced by provider specific limits, for example: Slack
     .describe("Agent description. A short, human-readable summary of the agent's purpose and capabilities."),
   systemPrompt: z
     .string()
-    .min(1)
+    .min(20)
     .max(MANAGED_AGENT_SYSTEM_PROMPT_MAX_LENGTH)
     .describe(
       'The full system prompt sent to Claude. Speak in second person to the agent ("You are…"). Describe role, scope, tone, and the workflow it should follow. Reference the available tools/MCPs/skills naturally without hard-coding them.'

@@ -22,14 +22,15 @@ import {
 import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
-import { KeylessModule } from '../keyless/keyless.module';
 import { EventsModule } from '../events/events.module';
+import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
 import { AgentIntegrationsController } from './channels/integrations/agent-integrations.controller';
 import { AgentsPublicController } from './channels/telegram-linking/agents-public.controller';
 import { TelegramMobileLinkTokenService } from './channels/telegram-linking/telegram-mobile-link-token.service';
 import { TelegramStartCodeService } from './channels/telegram-linking/telegram-start-code.service';
+import { InboundAckService } from './conversation-runtime/ack/inbound-ack.service';
 import { AgentActionTokenService } from './conversation-runtime/action-token/agent-action-token.service';
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
@@ -94,6 +95,7 @@ import { USE_CASES } from './usecases';
     AgentConfigResolver,
     AgentSubscriberResolver,
     AgentConversationService,
+    InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
     AgentInboundHandler,

@@ -13,13 +13,13 @@ import {
   SubscriberRepository,
 } from '@novu/dal';
 import { AgentConfigResolver, type ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
+import { InboundAckService } from '../../conversation-runtime/ack/inbound-ack.service';
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { EnsureProviderManagedVault } from '../../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import type { McpOAuthState } from '../../mcp/oauth/generate-mcp-oauth-url/mcp-oauth-state';
 import { ManagedAgentService } from '../managed-agent.service';
-import { showManagedInboundAck } from '../managed-agent-inbound-ack';
 import { mergeToolTrustPatch } from '../tool-approval/tool-trust.helper';
 import { listOAuthMcps } from './list-oauth-mcps.helper';
 import { ManagedAgentSetupCompleteCommand } from './managed-agent-setup-complete.command';
@@ -45,6 +45,7 @@ export class CompleteManagedAgentSetup {
     private readonly ensureProviderManagedVault: EnsureProviderManagedVault,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly outboundGateway: OutboundGateway,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -449,6 +450,18 @@ export class CompleteManagedAgentSetup {
       logger: this.logger,
     });
 
+    const dispatchResult = await this.managedAgentService.replayParkedInboundTurn({
+      conversation,
+      config,
+      subscriber,
+      pendingPlatformMessageId: pending.pendingPlatformMessageId,
+      agent,
+    });
+
+    if (!dispatchResult) {
+      return;
+    }
+
     await this.conversationRepository.clearPendingManagedAgentSetup(
       config.environmentId,
       config.organizationId,
@@ -457,28 +470,22 @@ export class CompleteManagedAgentSetup {
 
     delete conversation.pendingManagedAgentSetup;
 
-    try {
-      await showManagedInboundAck({
-        outboundGateway: this.outboundGateway,
-        agentId: agent._id,
-        config,
-        platformThreadId: conversation.channels?.[0]?.platformThreadId,
-        message: null,
-        isFirstMessage: false,
-      });
-    } catch (err) {
-      this.logger.warn(
-        err,
-        `Failed to show inbound ack before managed-agent setup replay for conversation ${conversation._id}`
-      );
-    }
-
-    await this.managedAgentService.replayParkedInboundTurn({
-      conversation,
+    const channel = conversation.channels?.[0];
+    const ackParams = {
+      agentId: agent._id,
       config,
-      subscriber,
-      pendingPlatformMessageId: pending.pendingPlatformMessageId,
-      agent,
-    });
+      platformThreadId: channel?.platformThreadId,
+      platformMessageId: pending.pendingPlatformMessageId,
+    };
+
+    if (dispatchResult.status === 'active') {
+      await this.inboundAck.showWorkingSignal({
+        ...ackParams,
+        isFirstMessage: channel?.firstPlatformMessageId === pending.pendingPlatformMessageId,
+      });
+      await this.inboundAck.showQueuedSignal(ackParams);
+    } else if (dispatchResult.status === 'queued') {
+      await this.inboundAck.showQueuedSignal(ackParams);
+    }
   }
 }

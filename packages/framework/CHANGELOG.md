@@ -1,3 +1,74 @@
+## v2.11.1 (2026-06-10)
+
+### 🚀 Features
+
+- **framework:** allow passing a custom logger to the client fixes NV-7963 ([#11440](https://github.com/novuhq/novu/pull/11440))
+- **api-service, framework:** expose email raw payload and resolved routing in agent context (fixes NV-7951) ([#11422](https://github.com/novuhq/novu/pull/11422))
+- **api-service:** agent card+files delivery and portless agent fixes fixes NV-7721 ([#11186](https://github.com/novuhq/novu/pull/11186))
+- **api-service, dashboard:** new telegram provider agents ([#11112](https://github.com/novuhq/novu/pull/11112))
+- **shared:** add ctx.metadata.delete(), clear(), get(), and current fixes NV-7501 ([#10971](https://github.com/novuhq/novu/pull/10971))
+- **framework:** improve agent framework DX and starter template fixes NV-7451 ([#11003](https://github.com/novuhq/novu/pull/11003))
+- **api:** implement Slack quick setup endpoint and related UI components ([#10967](https://github.com/novuhq/novu/pull/10967))
+- **js:** add discriminated AgentContext types per handler fixes NV-7509 ([#10974](https://github.com/novuhq/novu/pull/10974))
+- **framework:** expose sourceMessageId on action events (ctx.action.sourceMessageId) fixes NV-7500 ([#10973](https://github.com/novuhq/novu/pull/10973))
+- **framework:** promise reply syntax — return value as reply fixes NV-7384 ([#10887](https://github.com/novuhq/novu/pull/10887))
+- **framework:** add ctx.addReaction() to the agent SDK fixes NV-7411 ([#10882](https://github.com/novuhq/novu/pull/10882))
+- **api-service:** implement ctx.trigger() workflow execution fixes NV-7388 ([#10815](https://github.com/novuhq/novu/pull/10815))
+- **api-service,dashboard,dal,shared:** implement domain management ([#10793](https://github.com/novuhq/novu/pull/10793))
+- **dashboard,api:** onboarding workflow suggestions fixes NV-7394 ([#10805](https://github.com/novuhq/novu/pull/10805))
+- **novu:** print next-steps guide after init scaffolding ([#10776](https://github.com/novuhq/novu/pull/10776))
+- **api,framework:** replace ctx.update with replyHandle.edit ([#10773](https://github.com/novuhq/novu/pull/10773))
+- **api,shared,framework:** add WhatsApp support for agent conversations fixes NV-7374 ([#10751](https://github.com/novuhq/novu/pull/10751))
+- **dashboard,novu:** pin CLI framework version and use rc tag for pre-release ([#10747](https://github.com/novuhq/novu/pull/10747))
+- **api-service:** per-agent bridge URL with dev/production toggle fixes NV-7373 ([#10740](https://github.com/novuhq/novu/pull/10740))
+- **api-service,framework:** agent onReaction event fixes NV-7370 ([#10733](https://github.com/novuhq/novu/pull/10733))
+- **api-service,framework:** add rich content support and onAction handler for agent cards fixes NV-7363 ([#10727](https://github.com/novuhq/novu/pull/10727))
+- **framework:** add agent support to @novu/framework SDK fixes NV-7358 ([#10710](https://github.com/novuhq/novu/pull/10710))
+- **api-service:** integrate system environment variables fixes NV-7312 ([#10521](https://github.com/novuhq/novu/pull/10521))
+- **api-service,dashboard,novu,framework:** extend step resolver support to delay, digest, and throttle step types fixes NV-7268 ([#10507](https://github.com/novuhq/novu/pull/10507))
+- **api-service:** add env parameter to framework resources fixes NV-7281 ([#10489](https://github.com/novuhq/novu/pull/10489))
+- **api-service:** implement environment variables management fixes NV-7234 ([#10328](https://github.com/novuhq/novu/pull/10328))
+- **framework:** export param types fixes NV-7261 ([#10407](https://github.com/novuhq/novu/pull/10407))
+- **novu,framework:** align step resolver handlers with framework steps fixes NV-7235 ([#10286](https://github.com/novuhq/novu/pull/10286))
+- **api-service,dashboard,novu:** extend step resolver to all steps fixes NV-7187 ([#10271](https://github.com/novuhq/novu/pull/10271))
+- **api-service:** implement  HTTP destination step type fixes NV-7189 ([#10183](https://github.com/novuhq/novu/pull/10183))
+- **api-service,dashboard,framework:** align step resolver scaffolding with framework fixes NV-7116 ([#10136](https://github.com/novuhq/novu/pull/10136))
+- **api-service:** monthly usage digest email fixes NV-6933 ([#10042](https://github.com/novuhq/novu/pull/10042))
+- **api-service, worker, dashboard:** custom sender name in email step on new dashboard fixes NV-6950 ([#9962](https://github.com/novuhq/novu/pull/9962))
+
+### 🩹 Fixes
+
+- **api:** bump chat SDK to 4.30.0 and enable WhatsApp typing fixes NV-7977 ([#11473](https://github.com/novuhq/novu/pull/11473))
+- **shared:** Properly parse signed bridge request timestamp to enable replay protection fixes NV-7568 ([#11120](https://github.com/novuhq/novu/pull/11120))
+- **shared:** preserve JSON-stringified control values containing quotes fixes NV-7638 ([#11095](https://github.com/novuhq/novu/pull/11095))
+- **framework:** remove duplicate message from AgentMessageContext fixes NV-7544 ([#11010](https://github.com/novuhq/novu/pull/11010))
+- **api-service,dashboard,shared:** support agent file delivery fixes NV-7457 ([#10945](https://github.com/novuhq/novu/pull/10945))
+- **framework:** clean up AgentDeliveryError message to avoid logging raw response bodies ([#10907](https://github.com/novuhq/novu/pull/10907))
+- **root:** resolve high liquidjs and moderate postcss vulnerabilities ([#10874](https://github.com/novuhq/novu/pull/10874))
+- **framework:** unify text and markdown making markdown the default fixes NV-7392 ([#10880](https://github.com/novuhq/novu/pull/10880))
+- **api-service:** surface provider delivery errors in agents flow fixes NV-7410 ([#10877](https://github.com/novuhq/novu/pull/10877))
+- **root:** resolve high/moderate liquidjs and nodemailer vulnerabilities ([#10625](https://github.com/novuhq/novu/pull/10625))
+- **framework:** Add error handling to mockSchema call ([#10512](https://github.com/novuhq/novu/pull/10512))
+- **application-generic,framework,dashboard:** disable AJV strict mode for user schemas and remove noisy console.error ([#10426](https://github.com/novuhq/novu/pull/10426))
+- **root:** resolve moderate lodash, ajv, and express vulnerabilities ([#10360](https://github.com/novuhq/novu/pull/10360))
+- **root:** resolve high liquidjs vulnerability ([#10263](https://github.com/novuhq/novu/pull/10263))
+- **worker:** Normalize malformed closing tags ([#10251](https://github.com/novuhq/novu/pull/10251))
+- **worker:** Xss sanitization improvement ([#10137](https://github.com/novuhq/novu/pull/10137))
+- **worker:** optimizations for bridge handler usecase ([#9735](https://github.com/novuhq/novu/pull/9735))
+- **api-service:** add skipOutputEscape option to createLiquidEngine ([#9736](https://github.com/novuhq/novu/pull/9736))
+- **framework:** Liquid output escaping for special JSON characters including " ([#9730](https://github.com/novuhq/novu/pull/9730))
+- **framework:** repair invalid JSON strings in control data fixes NV-6904 ([#9632](https://github.com/novuhq/novu/pull/9632))
+- **framework, web:** novu framework flows are not showing in the local studio due CORS fixes NV-6945 ([#9626](https://github.com/novuhq/novu/pull/9626))
+
+### ❤️ Thank You
+
+- Adam Chmara @ChmaraX
+- Dima Grossman @scopsy
+- George Djabarov @djabarovgeorge
+- Nikita Grossman @nikitagrossman
+- Paweł Tymczuk @LetItRock
+- Rayan Salhab
+
 ## 2.10.0 (2026-03-27)
 
 ### 🚀 Features

@@ -10,7 +10,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiLoopLeftLine } from 'react-icons/ri';
 import type { GeneratedManagedAgent } from '@/api/agents';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Button } from '@/components/primitives/button';
@@ -23,7 +23,7 @@ import {
 } from '@/components/primitives/segmented-control';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useAgentTemplates } from '@/hooks/use-agent-templates';
+import { useAgentSuggestions } from '@/hooks/use-agent-suggestions';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -161,7 +161,11 @@ export function CreateAgentDialog({
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const { integrations } = useFetchIntegrations();
-  const { templates: agentTemplates } = useAgentTemplates();
+  const {
+    templates: agentTemplates,
+    isFetching: isFetchingAgentTemplates,
+    refresh: refreshAgentTemplates,
+  } = useAgentSuggestions();
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
@@ -885,11 +889,26 @@ export function CreateAgentDialog({
                 </div>
 
                 {generationMode === 'prompt' && (
-                  <AgentSuggestionPills
-                    suggestions={displayedAgentTemplates}
-                    onSelect={handleSelectAiSuggestion}
-                    disabled={isSubmitBusy}
-                  />
+                  <div className="flex min-w-0 items-center gap-2">
+                    <AgentSuggestionPills
+                      className="min-w-0 flex-1"
+                      suggestions={displayedAgentTemplates}
+                      onSelect={handleSelectAiSuggestion}
+                      disabled={isSubmitBusy}
+                      isLoading={isFetchingAgentTemplates}
+                    />
+                    <Button
+                      aria-label="Regenerate suggestions"
+                      title="Regenerate suggestions"
+                      className="h-6 shrink-0 [&_svg]:size-2.5"
+                      variant="secondary"
+                      mode="ghost"
+                      size="2xs"
+                      trailingIcon={RiLoopLeftLine}
+                      disabled={isSubmitBusy || isFetchingAgentTemplates}
+                      onClick={refreshAgentTemplates}
+                    />
+                  </div>
                 )}
               </div>
             ) : (

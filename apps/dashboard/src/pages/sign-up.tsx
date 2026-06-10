@@ -51,12 +51,12 @@ export const SignUpPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col md:max-w-[1120px] md:flex-row md:gap-36">
+    <div className="flex min-h-screen w-full flex-col md:max-w-[1120px] md:flex-row md:gap-10 xl:gap-36">
       <PageMeta title="Sign up for Novu" />
       <div className="w-full shrink-0 md:w-auto">
         <AuthSideBanner />
       </div>
-      <div className="flex flex-1 justify-end px-4 py-0 sm:py-0 md:items-center md:px-0">
+      <div className="flex flex-1 justify-center items-center px-4 py-0 sm:py-0 xl:justify-end md:px-0">
         <div className="flex w-full max-w-[400px] flex-col items-start justify-start gap-[18px]">
           <SignUpForm
             path={ROUTES.SIGN_UP}

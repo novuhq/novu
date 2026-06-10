@@ -3,11 +3,13 @@ import { useMemo } from 'react';
 import { type AgentTemplate, type McpServerPreview } from '@/components/agents/create-agent-fields';
 import { McpIcon } from '@/components/agents/mcp-icon';
 import { OrbIcon } from '@/components/icons/orb';
+import { Skeleton } from '@/components/primitives/skeleton';
 import { buildEdgeFadeMask, useHorizontalScrollEdges } from '@/hooks/use-horizontal-scroll-edges';
 import { cn } from '@/utils/ui';
 
 const VISIBLE_INTEGRATION_ICONS = 2;
 const PILL_FADE_WIDTH_PX = 24;
+const SKELETON_PILL_WIDTHS = ['w-28', 'w-36', 'w-24', 'w-32', 'w-20'];
 
 function resolveMcpName(server: McpServerPreview): string {
   return server.name ?? MCP_SERVERS.find((entry) => entry.id === server.id)?.name ?? server.id;
@@ -17,12 +19,30 @@ type AgentSuggestionPillsProps = {
   suggestions: AgentTemplate[];
   onSelect: (suggestion: AgentTemplate) => void;
   disabled?: boolean;
+  /** When true, render animated skeleton pills instead of the suggestions (loading / refreshing). */
+  isLoading?: boolean;
   className?: string;
 };
 
-export function AgentSuggestionPills({ suggestions, onSelect, disabled, className }: AgentSuggestionPillsProps) {
+export function AgentSuggestionPills({
+  suggestions,
+  onSelect,
+  disabled,
+  isLoading,
+  className,
+}: AgentSuggestionPillsProps) {
   const { ref: scrollRef, canScrollLeft, canScrollRight } = useHorizontalScrollEdges<HTMLDivElement>();
   const maskImage = buildEdgeFadeMask(canScrollLeft, canScrollRight, PILL_FADE_WIDTH_PX);
+
+  if (isLoading) {
+    return (
+      <div className={cn('flex min-w-0 items-center gap-2 overflow-hidden', className)}>
+        {SKELETON_PILL_WIDTHS.map((width) => (
+          <Skeleton key={width} className={cn('h-[26px] shrink-0 rounded-full', width)} />
+        ))}
+      </div>
+    );
+  }
 
   if (!suggestions.length) return null;
 

@@ -1,7 +1,7 @@
 import { AgentRuntimeProviderIdEnum, type IIntegration } from '@novu/shared';
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
-import { RiArrowRightSLine, RiCloseLine, RiInformation2Line } from 'react-icons/ri';
+import { RiArrowRightSLine, RiCloseLine, RiInformation2Line, RiLoopLeftLine } from 'react-icons/ri';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
@@ -36,6 +36,10 @@ export type AgentGenerationBindings = {
   promptError?: string;
   suggestions: AgentTemplate[];
   onSelectSuggestion: (suggestion: AgentTemplate) => void;
+  /** Regenerates the suggestion pills on the server. When omitted, the regenerate button is hidden. */
+  onRegenerateSuggestions?: () => void;
+  /** When true, the pills show a loading skeleton and the regenerate button is disabled. */
+  isRegeneratingSuggestions?: boolean;
   textareaRef?: React.Ref<HTMLTextAreaElement>;
   /**
    * When true, the prompt textarea becomes read-only and the rotating status animation +
@@ -276,7 +280,25 @@ export function ConnectAgentForm({
                   suggestions={aiGeneration.suggestions}
                   onSelect={aiGeneration.onSelectSuggestion}
                   disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                  isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
                 />
+                {aiGeneration.onRegenerateSuggestions && (
+                  <Button
+                    aria-label="Regenerate suggestions"
+                    title="Regenerate suggestions"
+                    className="h-6 shrink-0 [&_svg]:size-2.5"
+                    variant="secondary"
+                    mode="ghost"
+                    size="2xs"
+                    trailingIcon={RiLoopLeftLine}
+                    disabled={
+                      disabled ||
+                      (aiGeneration.isGenerating ?? false) ||
+                      (aiGeneration.isRegeneratingSuggestions ?? false)
+                    }
+                    onClick={aiGeneration.onRegenerateSuggestions}
+                  />
+                )}
               </div>
             )}
             {/*
@@ -701,11 +723,26 @@ function renderExtraContent({
 }: ExtraContentArgs) {
   if (usePromptUi && aiGeneration && aiMode === 'prompt') {
     return (
-      <AgentSuggestionPills
-        suggestions={aiGeneration.suggestions}
-        onSelect={aiGeneration.onSelectSuggestion}
-        disabled={disabled}
-      />
+      <div className="flex min-w-0 items-center gap-2">
+        <AgentSuggestionPills
+          className="min-w-0 flex-1"
+          suggestions={aiGeneration.suggestions}
+          onSelect={aiGeneration.onSelectSuggestion}
+          disabled={disabled}
+          isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
+        />
+        {aiGeneration.onRegenerateSuggestions && (
+          <Button
+            className="h-6 shrink-0 [&_svg]:size-2.5"
+            variant="secondary"
+            mode="ghost"
+            size="2xs"
+            trailingIcon={RiLoopLeftLine}
+            disabled={disabled || (aiGeneration.isRegeneratingSuggestions ?? false)}
+            onClick={aiGeneration.onRegenerateSuggestions}
+          />
+        )}
+      </div>
     );
   }
 
