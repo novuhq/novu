@@ -87,6 +87,33 @@ export type AgentResponse = {
   createdAt: string;
   updatedAt: string;
   integrations?: AgentIntegrationSummary[];
+  /**
+   * Cloud only. `true` when the agent falls outside the organization plan agent
+   * limit (by creation order) and won't respond to inbound messages.
+   */
+  exceedsPlanLimit?: boolean;
+};
+
+/** Organization-wide usage of a plan-limited resource (agents, active channels). */
+export type PlanUsage = {
+  used: number;
+  limit: number;
+};
+
+/**
+ * Which constraint produced an agent limit. `plan` limits are lifted by
+ * upgrading; `system` limits (platform cap or per-org override) require
+ * contacting the Novu team.
+ */
+export type AgentLimitSource = 'plan' | 'system';
+
+/** Agent plan usage, extended with the hard creation cap. */
+export type AgentPlanUsage = PlanUsage & {
+  /** Total agents in the organization, including inactive ones. */
+  totalCreated: number;
+  /** Hard cap on total agents the organization can create. */
+  creationLimit: number;
+  limitSource: AgentLimitSource;
 };
 
 export type ListAgentsResponse = {
@@ -95,6 +122,7 @@ export type ListAgentsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+  planUsage?: AgentPlanUsage;
 };
 
 type AgentSkillInputDto = {
@@ -374,6 +402,11 @@ export type AgentIntegrationLink = {
   connectedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Cloud only. `true` when this channel falls outside the organization plan
+   * active-channel limit (by connection order) — the agent won't respond on it.
+   */
+  exceedsPlanLimit?: boolean;
 };
 
 export type ListAgentIntegrationsResponse = {
@@ -382,6 +415,7 @@ export type ListAgentIntegrationsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+  planUsage?: PlanUsage;
 };
 
 export type ListAgentIntegrationsParams = {

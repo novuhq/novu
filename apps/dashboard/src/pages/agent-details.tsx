@@ -17,6 +17,7 @@ import { AgentDetailsHeader } from '@/components/agents/agent-details-header';
 import { AgentIntegrationsTab } from '@/components/agents/agent-integrations-tab';
 import { AgentOverviewTab } from '@/components/agents/agent-overview-tab';
 import { AgentSetupModal } from '@/components/agents/agent-setup-modal';
+import { AgentExceedsPlanBanner } from '@/components/agents/agents-plan-limit-banner';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { PageMeta } from '@/components/page-meta';
@@ -305,6 +306,12 @@ export function AgentDetailsPage() {
         {!error && !isLoading && agent ? (
           <>
             <AgentDetailsHeader agent={agent} isLoading={false} onRequestDelete={setAgentToDelete} />
+
+            {agent.exceedsPlanLimit ? (
+              <div className="px-4 pb-2 md:px-6">
+                <AgentExceedsPlanBanner />
+              </div>
+            ) : null}
 
             <Tabs value={currentTab} onValueChange={handleTabChange} className="-mx-2 w-full">
               <TabsList align="start" variant="regular" className="border-t-transparent px-4 py-0! md:px-6">

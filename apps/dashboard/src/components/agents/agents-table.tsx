@@ -1,6 +1,6 @@
 import { providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { ComponentProps } from 'react';
-import { RiCheckboxCircleFill, RiForbidFill, RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
+import { RiCheckboxCircleFill, RiErrorWarningFill, RiForbidFill, RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import { Link, useLocation } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
@@ -120,6 +120,43 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
   );
 }
 
+function AgentStatusCell({ agent }: { agent: AgentResponse }) {
+  if (agent.exceedsPlanLimit) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="relative z-10 inline-flex cursor-default">
+            <StatusBadge variant="light" status="pending">
+              <StatusBadgeIcon as={RiErrorWarningFill} />
+              Exceeds plan
+            </StatusBadge>
+          </span>
+        </TooltipTrigger>
+        <TooltipContent side="top" className="max-w-64">
+          This agent is over the number of active agents included in your plan and won&apos;t respond to messages.
+          Upgrade your plan or deactivate older agents to activate it.
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (agent.active) {
+    return (
+      <StatusBadge variant="light" status="completed">
+        <StatusBadgeIcon as={RiCheckboxCircleFill} />
+        Active
+      </StatusBadge>
+    );
+  }
+
+  return (
+    <StatusBadge variant="light" status="disabled">
+      <StatusBadgeIcon as={RiForbidFill} />
+      Inactive
+    </StatusBadge>
+  );
+}
+
 function AgentsTableSkeletonRow() {
   return (
     <TableRow>
@@ -201,17 +238,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                   </div>
                 </AgentNavTableCell>
                 <AgentNavTableCell to={agentDetailsPath} className="p-3 align-middle">
-                  {agent.active ? (
-                    <StatusBadge variant="light" status="completed">
-                      <StatusBadgeIcon as={RiCheckboxCircleFill} />
-                      Active
-                    </StatusBadge>
-                  ) : (
-                    <StatusBadge variant="light" status="disabled">
-                      <StatusBadgeIcon as={RiForbidFill} />
-                      Inactive
-                    </StatusBadge>
-                  )}
+                  <AgentStatusCell agent={agent} />
                 </AgentNavTableCell>
                 <AgentNavTableCell to={agentDetailsPath} className="p-3 align-middle">
                   <AgentIntegrationsCell agent={agent} />

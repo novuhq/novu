@@ -16,6 +16,34 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
     super(AgentIntegration, AgentIntegrationEntity);
   }
 
+  /**
+   * Distinct integration ids (channels) that are connected for the organization,
+   * ordered by the earliest time each channel became connected (stable, ascending).
+   *
+   * A "channel" is a distinct `_integrationId` — the same integration linked to
+   * multiple agents counts once. Used for active-channel plan-limit enforcement,
+   * where the first N channels (by connection order) are within the plan limit.
+   */
+  async listConnectedIntegrationIdsForOrganization(organizationId: string): Promise<string[]> {
+    const result = await this.aggregate([
+      {
+        $match: {
+          _organizationId: this.convertStringToObjectId(organizationId),
+          connectedAt: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: '$_integrationId',
+          firstConnectedAt: { $min: '$connectedAt' },
+        },
+      },
+      { $sort: { firstConnectedAt: 1, _id: 1 } },
+    ]);
+
+    return (result as Array<{ _id: unknown }>).map((row) => String(row._id));
+  }
+
   async findLinksForAgents({
     organizationId,
     environmentId,

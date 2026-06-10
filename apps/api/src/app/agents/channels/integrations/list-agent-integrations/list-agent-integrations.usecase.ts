@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { AgentEntitlementsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
 
@@ -13,6 +13,7 @@ export class ListAgentIntegrations {
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly agentEntitlementsService: AgentEntitlementsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -112,6 +113,14 @@ export class ListAgentIntegrations {
       );
     }
 
+    const channelUsage = await this.agentEntitlementsService.getChannelPlanUsage(command.organizationId);
+    const withinLimitIntegrationIds = channelUsage.withinLimitIntegrationIds
+      ? new Set(channelUsage.withinLimitIntegrationIds)
+      : null;
+    // Mirrors the runtime soft-block: when the org is at/over its limit, a channel
+    // that has not connected yet has no reserved slot and will also be blocked.
+    const blocksUnconnectedChannels = channelUsage.used >= channelUsage.limit;
+
     const data = pagination.links.reduce<ListAgentIntegrationsResponseDto['data']>((acc, link) => {
       const integration = idToIntegration.get(link._integrationId);
 
@@ -124,7 +133,12 @@ export class ListAgentIntegrations {
         return acc;
       }
 
-      acc.push(toAgentIntegrationResponse(link, integration, agent));
+      const response = toAgentIntegrationResponse(link, integration, agent);
+      const exceedsPlanLimit = link.connectedAt
+        ? withinLimitIntegrationIds !== null && !withinLimitIntegrationIds.has(link._integrationId)
+        : blocksUnconnectedChannels;
+
+      acc.push(exceedsPlanLimit ? { ...response, exceedsPlanLimit: true } : response);
 
       return acc;
     }, []);
@@ -135,6 +149,7 @@ export class ListAgentIntegrations {
       previous: pagination.previous,
       totalCount: pagination.totalCount,
       totalCountCapped: pagination.totalCountCapped,
+      planUsage: { used: channelUsage.used, limit: channelUsage.limit },
     };
   }
 }

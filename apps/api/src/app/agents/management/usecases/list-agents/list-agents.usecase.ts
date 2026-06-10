@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { InstrumentUsecase } from '@novu/application-generic';
+import { AgentEntitlementsService, InstrumentUsecase } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import type { AgentIntegrationSummaryDto } from '../../../shared/dtos/agent-integration-summary.dto';
@@ -12,7 +12,8 @@ export class ListAgents {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
-    private readonly integrationRepository: IntegrationRepository
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly agentEntitlementsService: AgentEntitlementsService
   ) {}
 
   @InstrumentUsecase()
@@ -33,21 +34,33 @@ export class ListAgents {
       identifier: command.identifier,
     });
 
-    const summariesByAgentId = await this.loadIntegrationsForAgents(
-      command.environmentId,
-      command.organizationId,
-      pagination.agents
-    );
+    const [summariesByAgentId, planUsage] = await Promise.all([
+      this.loadIntegrationsForAgents(command.environmentId, command.organizationId, pagination.agents),
+      this.agentEntitlementsService.getAgentPlanUsage(command.organizationId),
+    ]);
+
+    const withinLimitAgentIds = planUsage.withinLimitAgentIds ? new Set(planUsage.withinLimitAgentIds) : null;
 
     return {
       data: pagination.agents.map((agent) => ({
         ...toAgentResponse(agent),
         integrations: summariesByAgentId.get(agent._id) ?? [],
+        // Only active agents consume plan slots; inactive ones are just inactive, not over-limit.
+        ...(withinLimitAgentIds && agent.active && !withinLimitAgentIds.has(agent._id)
+          ? { exceedsPlanLimit: true }
+          : {}),
       })),
       next: pagination.next,
       previous: pagination.previous,
       totalCount: pagination.totalCount,
       totalCountCapped: pagination.totalCountCapped,
+      planUsage: {
+        used: planUsage.used,
+        limit: planUsage.limit,
+        totalCreated: planUsage.totalCreated,
+        creationLimit: planUsage.creationLimit,
+        limitSource: planUsage.limitSource,
+      },
     };
   }
 

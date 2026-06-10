@@ -1,6 +1,6 @@
 import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { ConversationChannel } from '@novu/dal';
+import { CommunityOrganizationRepository, ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
 import type { AdapterPostableMessage, EmojiValue, PlanModel, Thread } from 'chat';
 import { AgentConfigResolver } from '../../channels/agent-config-resolver.service';
@@ -23,6 +23,25 @@ import {
 } from './slack-native-delivery';
 
 export type { SlackNativeDelivery } from './slack-native-delivery';
+
+/** Free-plan branding appended as the last line of outbound agent messages. */
+const NOVU_AGENT_POWERED_URL = 'https://go.novu.co/agent-powered';
+
+/**
+ * Builds the "Powered by Novu" watermark with campaign attribution. The link is
+ * per-message so we can attribute traffic back to the originating agent/channel:
+ *   - utm_campaign: constant `agent-powered`
+ *   - utm_source:   the agent identifier
+ *   - utm_channel:  the delivery platform (slack | telegram | teams | …)
+ */
+function buildPoweredByWatermark(agentIdentifier: string, platform: string): string {
+  const url = new URL(NOVU_AGENT_POWERED_URL);
+  url.searchParams.set('utm_campaign', 'agent-powered');
+  url.searchParams.set('utm_source', agentIdentifier);
+  url.searchParams.set('utm_channel', platform);
+
+  return `_[Powered by Novu](${url.toString()})_`;
+}
 
 export interface ConversationTarget {
   agentId: string;
@@ -101,6 +120,7 @@ export class OutboundGateway {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly fileMaterializer: FileMaterializer,
     private readonly actionTokenService: AgentActionTokenService,
+    private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -232,8 +252,13 @@ export class OutboundGateway {
       deliveryContent,
       this.toActionTokenBinding(agentId, config)
     );
+    const brandedContent = await this.applyOutboundBranding(tokenizedContent, {
+      organizationId: config.organizationId,
+      agentIdentifier: config.agentIdentifier,
+      platform: config.platform,
+    });
 
-    const postArg = this.buildAdapterPostableMessage(tokenizedContent);
+    const postArg = this.buildAdapterPostableMessage(brandedContent);
 
     const sent = await thread.post(postArg).catch(toDeliveryError);
 
@@ -274,8 +299,13 @@ export class OutboundGateway {
       deliveryContent,
       this.toActionTokenBinding(agentId, config)
     );
+    const brandedContent = await this.applyOutboundBranding(tokenizedContent, {
+      organizationId: config.organizationId,
+      agentIdentifier: config.agentIdentifier,
+      platform: config.platform,
+    });
 
-    const postArg = this.buildAdapterPostableMessage(tokenizedContent);
+    const postArg = this.buildAdapterPostableMessage(brandedContent);
 
     const sent = await dmThread.post(postArg).catch(toDeliveryError);
 
@@ -488,6 +518,48 @@ export class OutboundGateway {
     }
 
     return resolved;
+  }
+
+  /**
+   * Appends the "Powered by Novu" watermark as the last line of outbound text
+   * messages for organizations that have not removed Novu branding (free plan).
+   * Pro and above can disable it via the existing `removeNovuBranding` org setting.
+   *
+   * Only plain markdown replies are branded — cards/action messages are left
+   * untouched. Lookups fail open to "branded" so a transient error never strips
+   * branding from a free-plan message.
+   */
+  private async applyOutboundBranding(
+    content: ChatSdkReplyContent,
+    context: { organizationId: string; agentIdentifier: string; platform: string }
+  ): Promise<ChatSdkReplyContent> {
+    if (content.card || !content.markdown || content.markdown.includes(NOVU_AGENT_POWERED_URL)) {
+      return content;
+    }
+
+    const removeNovuBranding = await this.resolveRemoveNovuBranding(context.organizationId);
+    if (removeNovuBranding) {
+      return content;
+    }
+
+    const watermark = buildPoweredByWatermark(context.agentIdentifier, context.platform);
+
+    return { ...content, markdown: `${content.markdown}\n\n${watermark}` };
+  }
+
+  private async resolveRemoveNovuBranding(organizationId: string): Promise<boolean> {
+    try {
+      const organization = await this.organizationRepository.findById(organizationId, '_id removeNovuBranding');
+
+      return organization?.removeNovuBranding === true;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), organizationId },
+        'Failed to resolve removeNovuBranding for outbound agent message; defaulting to branded'
+      );
+
+      return false;
+    }
   }
 
   private buildAdapterPostableMessage(deliveryContent: ChatSdkReplyContent): AdapterPostableMessage {

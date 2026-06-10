@@ -43,6 +43,8 @@ export const SYSTEM_LIMITS = {
   ENVIRONMENT_VARIABLES: 10,
   STEP_RESOLVERS: 1000,
   DOMAINS: 10,
+  AGENTS: 100,
+  CUSTOM_EMAIL_DOMAINS: 50,
 } as const;
 
 /* The threshold below which validation is skipped */

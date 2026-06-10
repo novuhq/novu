@@ -1,5 +1,10 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
-import { getSharedAgentDomain, isAgentSharedInboxEnabled, ResourceValidatorService } from '@novu/application-generic';
+import { BadRequestException, ConflictException, HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  AgentEntitlementsService,
+  getSharedAgentDomain,
+  isAgentSharedInboxEnabled,
+  ResourceValidatorService,
+} from '@novu/application-generic';
 import { DomainEntity, DomainRepository } from '@novu/dal';
 import { DomainStatusEnum } from '@novu/shared';
 
@@ -17,11 +22,13 @@ function isDuplicateKeyError(err: unknown): boolean {
 export class CreateDomain {
   constructor(
     private readonly domainRepository: DomainRepository,
-    private readonly resourceValidatorService: ResourceValidatorService
+    private readonly resourceValidatorService: ResourceValidatorService,
+    private readonly agentEntitlementsService: AgentEntitlementsService
   ) {}
 
   async execute(command: CreateDomainCommand): Promise<DomainResponseDto> {
     await this.resourceValidatorService.validateDomainsLimit(command.organizationId);
+    await this.validateCustomEmailDomainTierLimit(command.organizationId);
     const name = command.name.toLowerCase();
 
     if (isAgentSharedInboxEnabled() && name === getSharedAgentDomain()) {
@@ -62,5 +69,29 @@ export class CreateDomain {
       ...toDomainResponse(domain),
       expectedDnsRecords: buildExpectedDnsRecords(domain.name),
     };
+  }
+
+  /**
+   * Enforces the per-plan custom email domain count limit (Team = 1, Enterprise =
+   * unlimited with a LaunchDarkly soft cap). This complements the route-level
+   * `@ProductFeature(CUSTOM_DOMAINS)` gate, which already blocks Free/Pro entirely.
+   */
+  private async validateCustomEmailDomainTierLimit(organizationId: string): Promise<void> {
+    const limit = await this.agentEntitlementsService.getCustomEmailDomainLimit(organizationId);
+    const domainsCount = await this.domainRepository.count({ _organizationId: organizationId });
+
+    if (domainsCount >= limit) {
+      throw new HttpException(
+        {
+          error: 'Payment Required',
+          message: `Your plan includes ${limit} custom email domain${
+            limit === 1 ? '' : 's'
+          }. Please upgrade your plan to add more.`,
+          currentCount: domainsCount,
+          limit,
+        },
+        HttpStatus.PAYMENT_REQUIRED
+      );
+    }
   }
 }

@@ -1,5 +1,13 @@
-import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import {
+  BadRequestException,
+  ConflictException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import {
+  AgentEntitlementsService,
   AnalyticsService,
   isAgentSharedInboxEnabled,
   PinoLogger,
@@ -33,12 +41,15 @@ export class CreateAgent {
     private readonly environmentRepository: EnvironmentRepository,
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly logger: PinoLogger,
-    private readonly keylessAbuseGuard: KeylessAbuseGuardService
+    private readonly keylessAbuseGuard: KeylessAbuseGuardService,
+    private readonly agentEntitlementsService: AgentEntitlementsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
 
   async execute(command: CreateAgentCommand): Promise<AgentResponseDto> {
+    await this.assertCreationWithinLimit(command.organizationId);
+
     const isAdoptMode = command.runtime === 'managed' && !!command.managedRuntime?.externalAgentId;
     let identifier = command.identifier;
 
@@ -200,6 +211,34 @@ export class CreateAgent {
     const runtimeConfig = await this.loadRuntimeConfig(updatedAgent ?? agent, command);
 
     return toAgentResponse(updatedAgent ?? agent, undefined, runtimeConfig);
+  }
+
+  /**
+   * Hard creation cap. Unlike the runtime plan limit (which soft-blocks
+   * over-limit agents), this rejects the request outright:
+   *   - plan-limited orgs may create up to plan limit + grace buffer (402);
+   *   - the system limit (or a per-org LD override) is an absolute ceiling
+   *     that upgrading cannot lift (409 — contact the Novu team).
+   */
+  private async assertCreationWithinLimit(organizationId: string): Promise<void> {
+    const allowance = await this.agentEntitlementsService.canCreateAgent(organizationId);
+
+    if (allowance.allowed) {
+      return;
+    }
+
+    if (allowance.limitSource === 'system') {
+      throw new ConflictException(
+        `Your organization has reached the maximum number of agents (${allowance.creationLimit}). ` +
+          'Please reach out to the Novu team to increase this limit.'
+      );
+    }
+
+    throw new HttpException(
+      `You have reached the maximum number of agents that can be created on your plan (${allowance.creationLimit}). ` +
+        'Upgrade your plan to create more agents.',
+      HttpStatus.PAYMENT_REQUIRED
+    );
   }
 
   private async loadRuntimeConfig(

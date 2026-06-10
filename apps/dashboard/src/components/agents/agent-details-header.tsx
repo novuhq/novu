@@ -1,5 +1,5 @@
 import { isClaudePlatformConsoleProvider, PermissionsEnum } from '@novu/shared';
-import { RiMore2Fill } from 'react-icons/ri';
+import { RiErrorWarningFill, RiMore2Fill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { Badge } from '@/components/primitives/badge';
@@ -11,6 +11,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
+import { StatusBadge, StatusBadgeIcon } from '@/components/primitives/status-badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
@@ -54,6 +56,22 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
               <Badge variant="lighter" color="orange" size="sm">
                 LOCAL
               </Badge>
+            ) : null}
+            {agent.exceedsPlanLimit ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-default">
+                    <StatusBadge variant="light" status="pending">
+                      <StatusBadgeIcon as={RiErrorWarningFill} />
+                      Exceeds plan
+                    </StatusBadge>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-64">
+                  This agent is over the number of active agents included in your plan and won&apos;t respond to
+                  messages. Upgrade your plan or deactivate older agents to activate it.
+                </TooltipContent>
+              </Tooltip>
             ) : null}
           </div>
           <div className="flex min-w-0 items-center gap-1">

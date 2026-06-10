@@ -13,6 +13,56 @@ export class AgentRepository extends BaseRepositoryV2<AgentDBModel, AgentEntity,
   }
 
   /**
+   * Total number of active agents an organization has across all of its
+   * environments. Inactive agents do not consume plan-limit slots.
+   */
+  async countByOrganization(organizationId: string): Promise<number> {
+    return this.count({ _organizationId: organizationId, active: true });
+  }
+
+  /**
+   * Total number of agents an organization has across all of its environments,
+   * including inactive ones. Used for the hard creation cap — counting inactive
+   * agents too prevents bypassing the cap via create/deactivate loops.
+   */
+  async countTotalByOrganization(organizationId: string): Promise<number> {
+    return this.count({ _organizationId: organizationId });
+  }
+
+  /**
+   * Number of active agents in the organization created before the given agent,
+   * using `_id` (monotonic with creation time) as the ordering key. This is the
+   * agent's zero-based rank among active agents and is used for plan-limit
+   * enforcement; inactive agents do not consume slots.
+   */
+  async countOlderAgentsInOrganization(organizationId: string, agentId: string): Promise<number> {
+    return this.count({
+      _organizationId: organizationId,
+      active: true,
+      _id: { $lt: this.convertStringToObjectId(agentId) },
+    });
+  }
+
+  /**
+   * Ids of the oldest `limit` active agents in the organization, using `_id`
+   * (monotonic with creation time) as the ordering key. These are the agents
+   * that fall within the plan limit; any other active agent in the org is
+   * over-limit. Inactive agents do not consume slots.
+   */
+  async findOldestAgentIds(organizationId: string, limit: number): Promise<string[]> {
+    if (limit <= 0) {
+      return [];
+    }
+
+    const agents = await this.find({ _organizationId: organizationId, active: true }, ['_id'], {
+      sort: { _id: 1 },
+      limit,
+    });
+
+    return agents.map((agent) => agent._id);
+  }
+
+  /**
    * Unscoped lookup by _id — used exclusively for inbound webhook bootstrap
    * where _environmentId / _organizationId are not yet known.
    */

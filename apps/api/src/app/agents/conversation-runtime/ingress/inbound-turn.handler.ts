@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AgentEntitlementsService, AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ChannelEndpointRepository,
@@ -13,8 +13,8 @@ import type { AgentAction } from '@novu/framework';
 import { ENDPOINT_TYPES } from '@novu/shared';
 import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
-import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
+import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -88,6 +88,24 @@ const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
 const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 5);
 
+const NOVU_AGENTS_UPGRADE_URL = 'https://go.novu.co/agents-upgrade';
+
+/**
+ * Destination for the soft-block "Upgrade your plan" CTA, with campaign
+ * attribution so a click can be traced back to the originating agent/channel:
+ *   - utm_campaign: constant `agent-limits`
+ *   - utm_source:   the agent identifier
+ *   - utm_channel:  the delivery platform (slack | telegram | teams | …)
+ */
+function buildAgentUpgradeUrl(agentIdentifier: string, platform: string): string {
+  const url = new URL(NOVU_AGENTS_UPGRADE_URL);
+  url.searchParams.set('utm_campaign', 'agent-limits');
+  url.searchParams.set('utm_source', agentIdentifier);
+  url.searchParams.set('utm_channel', platform);
+
+  return url.toString();
+}
+
 function resolveConnectClaimBaseUrl(): string {
   for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
     const trimmed = candidate?.trim();
@@ -154,6 +172,44 @@ function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement 
             type: 'link-button',
             label: 'View Novu pricing',
             url: NOVU_PRICING_URL,
+            style: 'primary',
+          },
+        ],
+      },
+    ],
+  };
+}
+
+/** Which plan entitlement caused an over-limit agent/channel to be soft-blocked at runtime. */
+type PlanLimitBlockReason = 'agents' | 'channels';
+
+const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
+  agents:
+    "This agent isn't active on your current Novu plan — you've reached the number of agents included in your plan. Please upgrade your plan to activate it.",
+  channels:
+    "This channel isn't active on your current Novu plan — you've reached the number of active channels included in your plan. Please upgrade your plan to activate it.",
+};
+
+function buildUpgradeRequiredCard(
+  reason: PlanLimitBlockReason,
+  agentIdentifier: string,
+  platform: string
+): CardElement {
+  return {
+    type: 'card',
+    children: [
+      {
+        type: 'text',
+        content: PLAN_LIMIT_BLOCK_MESSAGES[reason],
+      },
+      { type: 'divider' },
+      {
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'Upgrade your plan',
+            url: buildAgentUpgradeUrl(agentIdentifier, platform),
             style: 'primary',
           },
         ],
@@ -289,7 +345,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly channelEndpointRepository: ChannelEndpointRepository,
     private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
-    private readonly keylessAbuseGuard: KeylessAbuseGuardService
+    private readonly keylessAbuseGuard: KeylessAbuseGuardService,
+    private readonly agentEntitlements: AgentEntitlementsService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -311,6 +368,13 @@ export class AgentInboundHandler implements OnModuleInit {
     event: AgentEventEnum
   ): Promise<void> {
     if (await this.consumeTelegramStartLink(agentId, config, thread, message)) {
+      return;
+    }
+
+    const planLimitBlock = await this.resolvePlanLimitBlock(agentId, config);
+    if (planLimitBlock) {
+      await this.postUpgradeRequiredReply(agentId, config, thread, planLimitBlock);
+
       return;
     }
 
@@ -774,6 +838,73 @@ export class AgentInboundHandler implements OnModuleInit {
     }
   }
 
+  /**
+   * Soft plan-limit enforcement for Connect. Agents/channels created beyond the
+   * organization's plan limit keep existing but stop functioning — inbound traffic
+   * gets an "upgrade your plan" reply instead of being dispatched to the runtime.
+   *
+   * Keyless/demo orgs are governed by their own caps (KeylessAbuseGuard) and are
+   * never gated here. Any lookup failure fails open so a transient error never
+   * silently disables a paying customer's agent.
+   */
+  private async resolvePlanLimitBlock(
+    agentId: string,
+    config: ResolvedAgentConfig
+  ): Promise<PlanLimitBlockReason | null> {
+    if (config.isKeyless) {
+      return null;
+    }
+
+    try {
+      const [agentWithinLimit, channelWithinLimit] = await Promise.all([
+        this.agentEntitlements.isAgentWithinLimit(config.organizationId, agentId),
+        this.agentEntitlements.isChannelWithinLimit(config.organizationId, config.integrationId),
+      ]);
+
+      if (!agentWithinLimit) {
+        return 'agents';
+      }
+
+      if (!channelWithinLimit) {
+        return 'channels';
+      }
+
+      return null;
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to evaluate plan limits; allowing inbound through`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'evaluate-plan-limits',
+        agentId,
+      });
+
+      return null;
+    }
+  }
+
+  private async postUpgradeRequiredReply(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    thread: Thread,
+    reason: PlanLimitBlockReason
+  ): Promise<void> {
+    try {
+      await this.outboundGateway.replyOnThread(thread, {
+        card: buildUpgradeRequiredCard(reason, config.agentIdentifier, config.platform) as unknown as Record<
+          string,
+          unknown
+        >,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to post plan-limit upgrade reply (${reason})`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'post-upgrade-required-reply',
+        agentId,
+      });
+    }
+  }
+
   private async isKeylessDemoCapReached(config: ResolvedAgentConfig, conversationId: string): Promise<boolean> {
     const agentReplies = await this.conversationService.countAgentMessages(config.environmentId, conversationId);
 
@@ -903,6 +1034,13 @@ export class AgentInboundHandler implements OnModuleInit {
     action: AgentAction,
     userId: string
   ): Promise<void> {
+    const planLimitBlock = await this.resolvePlanLimitBlock(agentId, config);
+    if (planLimitBlock) {
+      await this.postUpgradeRequiredReply(agentId, config, thread, planLimitBlock);
+
+      return;
+    }
+
     const subscriberId = await this.resolveSubscriberId(agentId, config, userId, 'resolve-subscriber-action');
 
     const participantId = subscriberId ?? `${config.platform}:${userId}`;

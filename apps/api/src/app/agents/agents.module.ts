@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import {
+  AgentEntitlementsService,
   CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
@@ -122,6 +123,7 @@ import { USE_CASES } from './usecases';
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,
     UpdateSubscriberChannel,
+    AgentEntitlementsService,
   ],
   exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway],
 })
