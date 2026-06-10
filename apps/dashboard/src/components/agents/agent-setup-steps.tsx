@@ -207,11 +207,49 @@ const BRAIN_STEP_TITLE = 'What should your agent do?';
 const BRAIN_STEP_DESCRIPTION =
   "We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials.";
 
-export function ManagedAgentRecap({ agent, summary }: { agent: AgentResponse; summary: ConnectSummary }) {
+export function ManagedAgentRecap({
+  agent,
+  summary,
+  hideHeader,
+}: {
+  agent: AgentResponse;
+  summary: ConnectSummary;
+  /**
+   * When true, the step title/description are omitted and only the agent preview card is rendered
+   * next to the completed-step indicator (onboarding "Agent preview" step).
+   */
+  hideHeader?: boolean;
+}) {
   const connector: ManagedConnectorKind =
     agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws ? 'aws' : 'anthropic';
   const serverMcpIds = agent.managedRuntime?.mcpServers?.map((m) => m.externalId);
   const serverToolIds = agent.managedRuntime?.tools?.map((t) => t.externalId);
+
+  const agentCard = (
+    <AgentCard
+      connector={connector}
+      isDemoCredential={agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic}
+      status="connected"
+      agentCreated
+      displayName={agent.name}
+      isPlaceholderName={false}
+      description={agent.description}
+      instructions={agent.managedRuntime?.systemPrompt ?? summary.instructions}
+      mcpServers={serverMcpIds ?? summary.mcpServers ?? []}
+      tools={serverToolIds ?? summary.tools ?? []}
+    />
+  );
+
+  if (hideHeader) {
+    return (
+      <div className="relative flex flex-col pl-6">
+        <div className="absolute -left-[20px] top-[3px] flex w-5 justify-center">
+          <CompletedStepIndicator />
+        </div>
+        {agentCard}
+      </div>
+    );
+  }
 
   return (
     <SetupStep
@@ -219,20 +257,7 @@ export function ManagedAgentRecap({ agent, summary }: { agent: AgentResponse; su
       status="completed"
       title={BRAIN_STEP_TITLE}
       description={BRAIN_STEP_DESCRIPTION}
-      fullWidthContent={
-        <AgentCard
-          connector={connector}
-          isDemoCredential={agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic}
-          status="connected"
-          agentCreated
-          displayName={agent.name}
-          isPlaceholderName={false}
-          description={agent.description}
-          instructions={agent.managedRuntime?.systemPrompt ?? summary.instructions}
-          mcpServers={serverMcpIds ?? summary.mcpServers ?? []}
-          tools={serverToolIds ?? summary.tools ?? []}
-        />
-      }
+      fullWidthContent={agentCard}
     />
   );
 }

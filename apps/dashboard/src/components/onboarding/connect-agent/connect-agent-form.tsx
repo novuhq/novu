@@ -2,6 +2,7 @@ import { AgentRuntimeProviderIdEnum, type IIntegration } from '@novu/shared';
 import { motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiInformation2Line, RiLoopLeftLine } from 'react-icons/ri';
+import { isDemoManagedClaudeIntegrationSelected } from '@/components/agents/connectors/claude-managed-integrations';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
@@ -264,13 +265,71 @@ export function ConnectAgentForm({
   simplifiedDemo,
 }: ConnectAgentFormProps) {
   if (simplifiedDemo && aiGeneration) {
+    const demoSelectedConnector = getConnectorById(connectorId);
+    const showDemoCredentialsSection =
+      isClaudeSelected && credentialsPanelVisible && Boolean(demoSelectedConnector?.providerId);
+    const isDemoCredentialSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+
     return (
-      <SetupStep
-        index={1}
-        status="current"
-        title="What should your agent do?"
-        description="We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials."
-        fullWidthContent={
+      <>
+        <SetupStep
+          index={1}
+          status={selectedIntegrationId ? 'completed' : 'current'}
+          sectionLabel="2/7 SETUP AGENT BRAIN"
+          title="Choose your connector"
+          description="Your Connector is the LLM runtime where the agent is hosted and executed. Novu connects to your Connector to bring your agents to where you work"
+          fullWidthContent={
+            <div className="mt-1 flex w-full max-w-[500px] flex-col gap-2">
+              <ConnectorIntegrationDropdown
+                selectedConnectorId={connectorId}
+                selectedIntegrationId={selectedIntegrationId}
+                integrations={integrations}
+                status={dropdownStatus}
+                showStatusBadge={showSavedBadge}
+                disabled={disabled}
+                onSelectConnector={onConnectorChange}
+                onSelectIntegration={onSelectIntegration}
+                onRequestSetupCredentials={onRequestSetupCredentials}
+              />
+              <p className="text-text-soft text-label-xs flex items-center gap-1 font-normal leading-4">
+                <RiInformation2Line className="size-3.5" aria-hidden /> The platform that hosts and runs your agent.
+              </p>
+              {showDemoCredentialsSection && demoSelectedConnector?.providerId ? (
+                <ConfigureCredentialsSection
+                  providerId={demoSelectedConnector.providerId as AgentRuntimeProviderIdEnum}
+                  providerLabel={demoSelectedConnector.providerLabel ?? 'Provider'}
+                  integrationName={integrationName}
+                  apiKey={apiKey}
+                  externalWorkspaceId={externalWorkspaceId}
+                  region={region}
+                  errors={errors}
+                  disabled={disabled}
+                  status={verifyStatus}
+                  statusMessage={verifyMessage}
+                  isSaving={isSavingIntegration}
+                  expanded={credentialsPanelExpanded}
+                  onExpandedChange={onCredentialsExpandedChange}
+                  onIntegrationNameChange={onIntegrationNameChange}
+                  onApiKeyChange={onApiKeyChange}
+                  onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+                  onRegionChange={onRegionChange}
+                  onVerify={onVerify}
+                  onSave={onSaveIntegration}
+                />
+              ) : null}
+            </div>
+          }
+        />
+        <SetupStep
+          index={2}
+          status="current"
+          title="What should your agent do?"
+          description={
+            isDemoCredentialSelected
+              ? "We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials."
+              : 'Describe what your agent should do — we configure the tools, MCPs, skills, and system prompt for you.'
+          }
+          fullWidthContent={
           <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
             {aiGeneration.suggestions.length > 0 && (
               <div className="flex min-w-0 items-center gap-2">
@@ -313,7 +372,11 @@ export function ConnectAgentForm({
               disabled={disabled || (aiGeneration.isGenerating ?? false)}
               errorMessage={aiGeneration.promptError}
               textareaRef={aiGeneration.textareaRef}
-              helperText="Using Demo credentials for Claude Managed Agents for onboarding"
+              helperText={
+                isDemoCredentialSelected
+                  ? 'Using Demo credentials for Claude Managed Agents for onboarding'
+                  : 'You can always edit the agent once created'
+              }
             />
             {/*
              * Render the cancel/submit toggle as different element types (button vs a wrapping
@@ -350,8 +413,9 @@ export function ConnectAgentForm({
               </motion.div>
             )}
           </div>
-        }
-      />
+          }
+        />
+      </>
     );
   }
 

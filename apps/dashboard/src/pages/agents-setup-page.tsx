@@ -5,10 +5,10 @@ import { RiArrowLeftSLine, RiArrowRightSLine, RiExpandUpDownLine } from 'react-i
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { AgentSetupSteps, ManagedAgentRecap } from '@/components/agents/agent-setup-steps';
-import { ProviderCards } from '@/components/agents/provider-cards';
-import { CompletedStepIndicator, SetupStep } from '@/components/agents/setup-guide-primitives';
+import { CompletedStepIndicator } from '@/components/agents/setup-guide-primitives';
 import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
 import { getConnectorById } from '@/components/onboarding/connect-agent/connector-options';
+import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
@@ -74,32 +74,6 @@ function SkipBanner({ onSkip }: SkipBannerProps) {
 }
 
 /**
- * Dimmed, non-interactive preview of the channel step shown during the connect phase, so the
- * user can see what comes next while still authoring the agent. Mirrors the
- * `AgentSetupSteps` channel step layout/rail; activates for real once the agent is created.
- */
-function ChannelStepPreview() {
-  return (
-    <div className="pointer-events-none relative flex select-none flex-col gap-10 pl-8 pr-3 opacity-60 md:pr-6">
-      <div
-        className="absolute bottom-0 left-[22px] top-0 w-px"
-        style={{
-          background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-        }}
-      />
-      <SetupStep
-        index={2}
-        status="upcoming"
-        dimmed
-        title="Choose where your agent can talk"
-        description="Connect a channel so users can message the agent and receive replies."
-        fullWidthContent={<ProviderCards agentIdentifier="" onSelect={() => {}} disabled dimmed />}
-      />
-    </div>
-  );
-}
-
-/**
  * Collapsed marker for the completed agent-brain + channel-selection steps. Toggling it reveals or
  * hides the agent preview and channel cards while the channel setup guide stays visible.
  */
@@ -158,7 +132,7 @@ export function AgentsSetupPage() {
     () => readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM)),
     [searchParams]
   );
-  const pageTitle = 'Connect your first agent';
+  const pageTitle = 'Connect your agent to where your users are';
 
   // Org bootstrap (poll Novu envs + reload Clerk after org creation) lives in EnvironmentProvider.
   // Here we only gate on Novu's org id + the resolved environment, like the inbox onboarding page.
@@ -279,9 +253,28 @@ export function AgentsSetupPage() {
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
-        Start with a Claude demo agent, connect channels, and see how conversations flow. You can bring your own agent
-        later.
+        Choose a starting point to see how your agent handles your users’ conversations. You can replace it with your
+        own agent and credentials later.
       </p>
+
+      {/* Pre-built prompt tip: only relevant while the user is authoring the agent brain. It
+       * collapses away once the agent is created and the page morphs into the agent preview. */}
+      <AnimatePresence initial={false}>
+        {!createdAgent ? (
+          <motion.div
+            key="prebuilt-prompt-banner"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="mt-6">
+              <PrebuiltPromptBanner />
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {/*
        * The user stays on one screen. Step 1 crossfades the brain form into the created-agent
@@ -289,7 +282,7 @@ export function AgentsSetupPage() {
        * interactive channel step in place. Keyed on `createdAgent` — the back arrow returns to the
        * brain form.
        */}
-      <div className="relative mt-12">
+      <div className="relative mt-8">
         {/* Single continuous rail line behind every step segment. Each segment also draws its own
          * gradient line, but those fade to transparent at their edges and pinch where segments meet;
          * this same-colored line sits underneath and fills those gaps so the toggle, brain step, and
@@ -355,7 +348,7 @@ export function AgentsSetupPage() {
                       'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
                   }}
                 />
-                <ManagedAgentRecap agent={createdAgent} summary={connectSummary} />
+                <ManagedAgentRecap agent={createdAgent} summary={connectSummary} hideHeader />
               </div>
             </motion.div>
           ) : (
@@ -386,9 +379,7 @@ export function AgentsSetupPage() {
             onChannelGuideActiveChange={setChannelGuideActive}
             connectSummary={connectSummary}
           />
-        ) : (
-          <ChannelStepPreview />
-        )}
+        ) : null}
       </div>
 
       {/* Footer actions live outside the rail so the continuous line ends at the last step. */}
