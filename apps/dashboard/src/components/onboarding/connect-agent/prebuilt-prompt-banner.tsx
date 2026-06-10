@@ -7,12 +7,7 @@ import { TelemetryEvent } from '@/utils/telemetry';
  * spin up from the "What should your agent do?" step, so copying it (or opening it in Cursor)
  * gets them to a working agent description without typing anything.
  */
-const PREBUILT_AGENT_PROMPT = `You are Support Agent, a docs-powered support agent that answers questions from your product documentation and knowledge base.
-
-For each inbound question:
-1. Search the product docs and knowledge base for an answer. Quote the relevant passage and link to the source — never paraphrase policy from memory.
-2. If the docs don't cover it, say so clearly and offer to escalate the conversation to a human.
-3. Keep replies short, friendly, and actionable.`;
+const PREBUILT_AGENT_PROMPT = `Add an agent to my app following instructions from this web page https://novu.co/agents.md`;
 
 function safeCursorEncode(text: string): string {
   return encodeURIComponent(text).replace(/[!'()*~]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
