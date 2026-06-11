@@ -12,12 +12,14 @@ import { TelemetryEvent } from '@/utils/telemetry';
  * a managed agent and connect a channel without the user typing anything.
  */
 const PREBUILT_AGENT_PROMPT = agentOnboardingPrompt.trim();
+// The URL has the length limitation thats why we tell to follow the instructions from the markdown file
+const CURSOR_AGENT_PROMPT = `Add an agent to my app following instructions from this markdown file: https://github.com/novuhq/novu/blob/next/packages/shared/docs/agent-onboarding.md`;
 
 function safeCursorEncode(text: string): string {
   return encodeURIComponent(text).replace(/[!'()*~]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
 }
 
-const CURSOR_DEEP_LINK = `https://cursor.com/link/prompt?text=${safeCursorEncode(PREBUILT_AGENT_PROMPT)}`;
+const CURSOR_DEEP_LINK = `https://cursor.com/link/prompt?text=${safeCursorEncode(CURSOR_AGENT_PROMPT)}`;
 
 /**
  * Inline tip rendered above the agent-brain steps during onboarding: a pre-built agent prompt the
