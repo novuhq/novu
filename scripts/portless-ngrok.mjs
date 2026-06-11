@@ -57,8 +57,8 @@ export function readRoutes() {
   }
 }
 
-export function findServiceRoute(serviceName = API_SERVICE) {
-  for (const route of readRoutes()) {
+export function findServiceRoute(serviceName = API_SERVICE, routes = readRoutes()) {
+  for (const route of routes) {
     if (!route?.hostname || !route?.port) {
       continue;
     }
@@ -71,8 +71,8 @@ export function findServiceRoute(serviceName = API_SERVICE) {
   return undefined;
 }
 
-export function findPortlessNgrokUrl(serviceName = API_SERVICE) {
-  for (const route of readRoutes()) {
+export function findPortlessNgrokUrl(serviceName = API_SERVICE, routes = readRoutes()) {
+  for (const route of routes) {
     if (!route?.ngrokUrl || !route?.hostname) {
       continue;
     }
@@ -214,14 +214,14 @@ function formatTunnelBanner(url) {
   ].join('\n');
 }
 
-function resolveTunnelUrl(serviceName) {
+export function resolveTunnelUrl(serviceName = API_SERVICE, routes = readRoutes()) {
   const reserved = normalizeNgrokDomain(process.env.PORTLESS_NGROK_DOMAIN);
 
-  if (reserved && findServiceRoute(serviceName)) {
+  if (reserved && findServiceRoute(serviceName, routes)) {
     return reserved;
   }
 
-  return findPortlessNgrokUrl(serviceName);
+  return findPortlessNgrokUrl(serviceName, routes);
 }
 
 function watchTunnel(serviceName) {

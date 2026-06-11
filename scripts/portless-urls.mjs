@@ -6,12 +6,10 @@
  */
 import { fileURLToPath } from 'node:url';
 import {
-  findPortlessNgrokUrl,
-  findServiceRoute,
   hostnameMatchesService,
   isNgrokMode,
-  normalizeNgrokDomain,
   readRoutes,
+  resolveTunnelUrl,
 } from './portless-ngrok.mjs';
 
 const API_SERVICE = 'api.novu';
@@ -47,18 +45,12 @@ function isNovuRoute(route) {
   return false;
 }
 
-function resolveApiPublicUrl() {
+function resolveApiPublicUrl(routes) {
   if (!isNgrokMode()) {
     return undefined;
   }
 
-  const reserved = normalizeNgrokDomain(process.env.PORTLESS_NGROK_DOMAIN);
-
-  if (reserved && findServiceRoute(API_SERVICE)) {
-    return reserved;
-  }
-
-  return findPortlessNgrokUrl(API_SERVICE);
+  return resolveTunnelUrl(API_SERVICE, routes);
 }
 
 function formatRouteLine(route) {
@@ -93,10 +85,20 @@ function formatBanner(routes, apiPublicUrl) {
   return lines.join('\n');
 }
 
-function collectNovuRoutes() {
-  const routes = readRoutes().filter(isNovuRoute);
+function serviceOrder(hostname) {
+  for (let index = 0; index < NOVU_SERVICES.length; index++) {
+    if (hostnameMatchesService(hostname, NOVU_SERVICES[index].name)) {
+      return index;
+    }
+  }
 
-  routes.sort((a, b) => serviceLabel(a.hostname).localeCompare(serviceLabel(b.hostname)));
+  return NOVU_SERVICES.length;
+}
+
+function collectNovuRoutes(allRoutes) {
+  const routes = allRoutes.filter(isNovuRoute);
+
+  routes.sort((a, b) => serviceOrder(a.hostname) - serviceOrder(b.hostname));
 
   return routes;
 }
@@ -107,8 +109,9 @@ function watchUrls() {
   let lastBanner = '';
 
   const tick = () => {
-    const routes = collectNovuRoutes();
-    const apiPublicUrl = resolveApiPublicUrl();
+    const allRoutes = readRoutes();
+    const routes = collectNovuRoutes(allRoutes);
+    const apiPublicUrl = resolveApiPublicUrl(allRoutes);
     const banner = formatBanner(routes, apiPublicUrl);
 
     if (banner !== lastBanner) {
