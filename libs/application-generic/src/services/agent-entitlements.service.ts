@@ -68,6 +68,11 @@ export interface CustomEmailDomainLimits {
   limitSource: AgentLimitSource;
 }
 
+export interface RuntimeLimitChecks {
+  agentWithinLimit: boolean;
+  channelWithinLimit: boolean;
+}
+
 export interface ChannelPlanUsage {
   /** Number of connected channels (distinct integrations) in the organization. */
   used: number;
@@ -120,12 +125,12 @@ export class AgentEntitlementsService {
    *   - `limitSource`: `plan` when upgrading lifts the cap, `system` when only
    *     the Novu team can (system cap / LD override).
    */
-  async getAgentLimits(organizationId: string): Promise<AgentLimits> {
+  async getAgentLimits(organizationId: string, knownApiServiceLevel?: ApiServiceLevelEnum): Promise<AgentLimits> {
     if (this.isSelfHosted) {
       return { planLimit: UNLIMITED_VALUE, creationLimit: UNLIMITED_VALUE, limitSource: 'system' };
     }
 
-    const apiServiceLevel = await this.getApiServiceLevel(organizationId);
+    const apiServiceLevel = knownApiServiceLevel ?? (await this.getApiServiceLevel(organizationId));
     const systemLimit = await this.featureFlagsService.getFlag({
       key: FeatureFlagsKeysEnum.MAX_AGENTS_LIMIT_NUMBER,
       defaultValue: SYSTEM_LIMITS.AGENTS,
@@ -172,12 +177,12 @@ export class AgentEntitlementsService {
     return { allowed: totalCreated < creationLimit, totalCreated, creationLimit, limitSource };
   }
 
-  async getActiveChannelLimit(organizationId: string): Promise<number> {
+  async getActiveChannelLimit(organizationId: string, knownApiServiceLevel?: ApiServiceLevelEnum): Promise<number> {
     if (this.isSelfHosted) {
       return UNLIMITED_VALUE;
     }
 
-    const apiServiceLevel = await this.getApiServiceLevel(organizationId);
+    const apiServiceLevel = knownApiServiceLevel ?? (await this.getApiServiceLevel(organizationId));
 
     return getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_ACTIVE_CHANNELS, apiServiceLevel);
   }
@@ -300,8 +305,12 @@ export class AgentEntitlementsService {
    * overrides) are enforced at creation only and never soft-block existing
    * agents — only plan limits do.
    */
-  async isAgentWithinLimit(organizationId: string, agentId: string): Promise<boolean> {
-    const { planLimit: limit, limitSource } = await this.getAgentLimits(organizationId);
+  async isAgentWithinLimit(
+    organizationId: string,
+    agentId: string,
+    knownApiServiceLevel?: ApiServiceLevelEnum
+  ): Promise<boolean> {
+    const { planLimit: limit, limitSource } = await this.getAgentLimits(organizationId, knownApiServiceLevel);
     if (limitSource === 'system' || limit >= UNLIMITED_VALUE) {
       return true;
     }
@@ -312,12 +321,39 @@ export class AgentEntitlementsService {
   }
 
   /**
+   * Combined agent + channel runtime limit check for the inbound hot path.
+   * Resolves the organization's service level once and shares it across both
+   * checks instead of each issuing its own organization lookup.
+   */
+  async checkRuntimeLimits(
+    organizationId: string,
+    agentId: string,
+    integrationId: string
+  ): Promise<RuntimeLimitChecks> {
+    if (this.isSelfHosted) {
+      return { agentWithinLimit: true, channelWithinLimit: true };
+    }
+
+    const apiServiceLevel = await this.getApiServiceLevel(organizationId);
+    const [agentWithinLimit, channelWithinLimit] = await Promise.all([
+      this.isAgentWithinLimit(organizationId, agentId, apiServiceLevel),
+      this.isChannelWithinLimit(organizationId, integrationId, apiServiceLevel),
+    ]);
+
+    return { agentWithinLimit, channelWithinLimit };
+  }
+
+  /**
    * Whether the given channel integration is within the organization's active
    * channel limit, by connection order. Channels connected beyond the limit are
    * soft-blocked at runtime.
    */
-  async isChannelWithinLimit(organizationId: string, integrationId: string): Promise<boolean> {
-    const limit = await this.getActiveChannelLimit(organizationId);
+  async isChannelWithinLimit(
+    organizationId: string,
+    integrationId: string,
+    knownApiServiceLevel?: ApiServiceLevelEnum
+  ): Promise<boolean> {
+    const limit = await this.getActiveChannelLimit(organizationId, knownApiServiceLevel);
     if (limit >= UNLIMITED_VALUE) {
       return true;
     }

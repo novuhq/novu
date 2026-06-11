@@ -788,10 +788,11 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     try {
-      const [agentWithinLimit, channelWithinLimit] = await Promise.all([
-        this.agentEntitlements.isAgentWithinLimit(config.organizationId, agentId),
-        this.agentEntitlements.isChannelWithinLimit(config.organizationId, config.integrationId),
-      ]);
+      const { agentWithinLimit, channelWithinLimit } = await this.agentEntitlements.checkRuntimeLimits(
+        config.organizationId,
+        agentId,
+        config.integrationId
+      );
 
       if (!agentWithinLimit) {
         return 'agents';

@@ -303,6 +303,30 @@ describe('AgentEntitlementsService', () => {
     });
   });
 
+  describe('checkRuntimeLimits', () => {
+    it('resolves the organization service level once for both checks', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.countOlderAgentsInOrganization.resolves(0);
+      stubs.listConnectedIntegrationIdsForOrganization.resolves(['int-1']);
+
+      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, 'agent-1', 'int-1');
+
+      expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
+      expect(stubs.findById.callCount).to.equal(1);
+    });
+
+    it('skips the organization lookup entirely for self-hosted deployments', async () => {
+      process.env.IS_SELF_HOSTED = 'true';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+
+      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, 'agent-1', 'int-1');
+
+      expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
+      expect(stubs.findById.called).to.equal(false);
+    });
+  });
+
   describe('isChannelWithinLimit', () => {
     it('allows channels connected within the limit by connection order', async () => {
       process.env.IS_SELF_HOSTED = 'false';
