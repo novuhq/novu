@@ -106,9 +106,6 @@ export default defineConfig(({ mode }) => {
               }
             : {}),
         '@': path.resolve(__dirname, './src'),
-        // Canonical agent-onboarding docs live in @novu/shared/docs (not part of the package's
-        // published `exports`), so alias the source directory to bundle the markdown via `?raw`.
-        '@shared-docs': path.resolve(__dirname, '../../packages/shared/docs'),
         // Explicitly map prettier imports to browser-compatible versions
         'prettier/standalone': path.resolve(__dirname, './node_modules/prettier/standalone.js'),
         'prettier/plugins/html': path.resolve(__dirname, './node_modules/prettier/plugins/html.js'),
