@@ -27,8 +27,8 @@ export class CreateDomain {
   ) {}
 
   async execute(command: CreateDomainCommand): Promise<DomainResponseDto> {
+    await this.validateCustomEmailDomainLimit(command.organizationId);
     await this.resourceValidatorService.validateDomainsLimit(command.organizationId);
-    await this.validateCustomEmailDomainTierLimit(command.organizationId);
     const name = command.name.toLowerCase();
 
     if (isAgentSharedInboxEnabled() && name === getSharedAgentDomain()) {
@@ -72,26 +72,42 @@ export class CreateDomain {
   }
 
   /**
-   * Enforces the per-plan custom email domain count limit (Team = 1, Enterprise =
-   * unlimited with a LaunchDarkly soft cap). This complements the route-level
-   * `@ProductFeature(CUSTOM_DOMAINS)` gate, which already blocks Free/Pro entirely.
+   * Enforces the custom email domain count limit. This complements the
+   * route-level `@ProductFeature(CUSTOM_DOMAINS)` gate, which already blocks
+   * Free/Pro entirely. Mirrors the agent creation cap messaging:
+   *   - plan limits are lifted by upgrading (402);
+   *   - system limits (Team/Enterprise are unlimited and bounded only by the
+   *     platform cap, or a per-org LD override) cannot be lifted by upgrading —
+   *     contact the Novu team (409).
    */
-  private async validateCustomEmailDomainTierLimit(organizationId: string): Promise<void> {
-    const limit = await this.agentEntitlementsService.getCustomEmailDomainLimit(organizationId);
+  private async validateCustomEmailDomainLimit(organizationId: string): Promise<void> {
+    const { limit, limitSource } = await this.agentEntitlementsService.getCustomEmailDomainLimits(organizationId);
     const domainsCount = await this.domainRepository.count({ _organizationId: organizationId });
 
-    if (domainsCount >= limit) {
-      throw new HttpException(
-        {
-          error: 'Payment Required',
-          message: `Your plan includes ${limit} custom email domain${
-            limit === 1 ? '' : 's'
-          }. Please upgrade your plan to add more.`,
-          currentCount: domainsCount,
-          limit,
-        },
-        HttpStatus.PAYMENT_REQUIRED
-      );
+    if (domainsCount < limit) {
+      return;
     }
+
+    if (limitSource === 'system') {
+      throw new ConflictException({
+        message:
+          `Your organization has reached the maximum number of custom email domains (${limit}). ` +
+          'Please reach out to the Novu team to increase this limit.',
+        currentCount: domainsCount,
+        limit,
+      });
+    }
+
+    throw new HttpException(
+      {
+        error: 'Payment Required',
+        message: `Your plan includes ${limit} custom email domain${
+          limit === 1 ? '' : 's'
+        }. Please upgrade your plan to add more.`,
+        currentCount: domainsCount,
+        limit,
+      },
+      HttpStatus.PAYMENT_REQUIRED
+    );
   }
 }

@@ -63,6 +63,11 @@ export interface AgentPlanUsage {
   limitSource: AgentLimitSource;
 }
 
+export interface CustomEmailDomainLimits {
+  limit: number;
+  limitSource: AgentLimitSource;
+}
+
 export interface ChannelPlanUsage {
   /** Number of connected channels (distinct integrations) in the organization. */
   used: number;
@@ -178,8 +183,21 @@ export class AgentEntitlementsService {
   }
 
   async getCustomEmailDomainLimit(organizationId: string): Promise<number> {
+    const { limit } = await this.getCustomEmailDomainLimits(organizationId);
+
+    return limit;
+  }
+
+  /**
+   * Resolves the organization's custom email domain limit together with its
+   * source. Mirrors `getAgentLimits`: `plan` limits are lifted by upgrading,
+   * `system` limits (the platform-wide cap, a per-org LaunchDarkly override,
+   * or an unlimited tier bounded only by the system cap) require contacting
+   * the Novu team.
+   */
+  async getCustomEmailDomainLimits(organizationId: string): Promise<CustomEmailDomainLimits> {
     if (this.isSelfHosted) {
-      return UNLIMITED_VALUE;
+      return { limit: UNLIMITED_VALUE, limitSource: 'system' };
     }
 
     const apiServiceLevel = await this.getApiServiceLevel(organizationId);
@@ -189,14 +207,21 @@ export class AgentEntitlementsService {
       organization: { _id: organizationId, apiServiceLevel },
     });
 
+    // A LaunchDarkly value differing from the system default is a deliberate
+    // per-org ceiling — only the Novu team can change it.
     const isSpecialLimit = systemLimit !== SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS;
     if (isSpecialLimit) {
-      return systemLimit;
+      return { limit: systemLimit, limitSource: 'system' };
     }
 
     const tierLimit = getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_CUSTOM_EMAIL_DOMAINS, apiServiceLevel);
 
-    return Math.min(systemLimit, tierLimit);
+    // Unlimited tiers (Team/Enterprise) are bounded only by the system cap.
+    if (tierLimit >= UNLIMITED_VALUE) {
+      return { limit: systemLimit, limitSource: 'system' };
+    }
+
+    return { limit: Math.min(systemLimit, tierLimit), limitSource: 'plan' };
   }
 
   async getAgentUsage(organizationId: string): Promise<AgentEntitlementUsage> {

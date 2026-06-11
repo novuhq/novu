@@ -178,6 +178,41 @@ describe('AgentEntitlementsService', () => {
     });
   });
 
+  describe('getCustomEmailDomainLimits', () => {
+    it('returns the plan source for tiers with a finite domain limit', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.getFlag.resolves(SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS);
+
+      const limits = await service.getCustomEmailDomainLimits(ORGANIZATION_ID);
+
+      expect(limits.limitSource).to.equal('plan');
+      expect(limits.limit).to.equal(0);
+    });
+
+    it('caps unlimited tiers at the system default with the system source', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.BUSINESS);
+      stubs.getFlag.resolves(SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS);
+
+      const limits = await service.getCustomEmailDomainLimits(ORGANIZATION_ID);
+
+      expect(limits.limitSource).to.equal('system');
+      expect(limits.limit).to.equal(SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS);
+    });
+
+    it('treats a LaunchDarkly per-org override as an exact system ceiling', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.BUSINESS);
+      stubs.getFlag.resolves(120);
+
+      const limits = await service.getCustomEmailDomainLimits(ORGANIZATION_ID);
+
+      expect(limits.limitSource).to.equal('system');
+      expect(limits.limit).to.equal(120);
+    });
+  });
+
   describe('getActiveChannelLimit', () => {
     it('uses the tier table only (no LaunchDarkly lookup)', async () => {
       process.env.IS_SELF_HOSTED = 'false';

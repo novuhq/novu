@@ -2,7 +2,7 @@ import { Cross2Icon } from '@radix-ui/react-icons';
 import type { ReactNode } from 'react';
 import { RiCustomerService2Line, RiInformationLine, RiLockStarLine, RiSparkling2Line } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import type { AgentPlanUsage, PlanUsage } from '@/api/agents';
+import type { AgentLimitSource, AgentPlanUsage, PlanUsage } from '@/api/agents';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
@@ -247,6 +247,62 @@ export function AgentCreationLimitDialog({ open, onOpenChange, planUsage }: Agen
       primaryCta="upgrade"
       telemetrySource="agents-creation-limit-dialog"
       utmCampaign="agents_creation_limit"
+    />
+  );
+}
+
+type DomainLimitDialogProps = {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  limit: number;
+  limitSource: AgentLimitSource;
+};
+
+/**
+ * Hard block for custom email domain creation. Team/Enterprise tiers offer
+ * unlimited domains, so hitting a limit there means the platform-wide cap (or
+ * a per-org override) — point those users to the Novu team instead of upselling.
+ */
+export function DomainLimitDialog({ open, onOpenChange, limit, limitSource }: DomainLimitDialogProps) {
+  if (limitSource === 'system') {
+    return (
+      <PlanLimitUpgradeDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        title="You've reached the maximum number of domains"
+        description={
+          <>
+            Your organization has reached the limit of{' '}
+            <span className="font-medium">
+              {limit} {limit === 1 ? 'domain' : 'domains'}
+            </span>
+            . Please reach out to the Novu team — we&apos;re happy to help raise this limit for your organization.
+          </>
+        }
+        primaryCta="contact-support"
+        telemetrySource="domains-system-limit-dialog"
+        utmCampaign="domains_system_limit"
+      />
+    );
+  }
+
+  return (
+    <PlanLimitUpgradeDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title="You can't add more domains on this plan"
+      description={
+        <>
+          Your plan includes{' '}
+          <span className="font-medium">
+            {limit} custom email {limit === 1 ? 'domain' : 'domains'}
+          </span>
+          . Upgrade your plan to add more.
+        </>
+      }
+      primaryCta="upgrade"
+      telemetrySource="domains-plan-limit-dialog"
+      utmCampaign="domains_plan_limit"
     />
   );
 }

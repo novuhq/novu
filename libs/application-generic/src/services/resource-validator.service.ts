@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import {
   CommunityOrganizationRepository,
   DomainRepository,
@@ -334,8 +334,12 @@ export class ResourceValidatorService {
     });
 
     if (domainsCount >= maxDomainsLimit) {
-      throw new BadRequestException({
-        message: `Domain limit exceeded. Maximum allowed domains is ${maxDomainsLimit}.`,
+      // System-side anti-abuse cap (raised per-org via LD by the Novu team) —
+      // upgrading does not lift it, so the copy points at support instead.
+      throw new ConflictException({
+        message:
+          `Your organization has reached the maximum number of domains (${maxDomainsLimit}). ` +
+          'Please reach out to the Novu team to increase this limit.',
         currentCount: domainsCount,
         limit: maxDomainsLimit,
       });

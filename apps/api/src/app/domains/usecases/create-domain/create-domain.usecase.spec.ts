@@ -15,11 +15,12 @@ describe('CreateDomain usecase', () => {
     userId: 'user-id',
   };
 
-  let domainRepositoryMock: { findByName: sinon.SinonStub; create: sinon.SinonStub };
+  let domainRepositoryMock: { findByName: sinon.SinonStub; create: sinon.SinonStub; count: sinon.SinonStub };
   let resourceValidatorMock: { validateDomainsLimit: sinon.SinonStub };
+  let agentEntitlementsMock: { getCustomEmailDomainLimits: sinon.SinonStub };
 
   function buildUsecase() {
-    return new CreateDomain(domainRepositoryMock as any, resourceValidatorMock as any);
+    return new CreateDomain(domainRepositoryMock as any, resourceValidatorMock as any, agentEntitlementsMock as any);
   }
 
   beforeEach(() => {
@@ -28,10 +29,15 @@ describe('CreateDomain usecase', () => {
     domainRepositoryMock = {
       findByName: stub().resolves(null),
       create: stub().callsFake((doc: Record<string, unknown>) => Promise.resolve({ _id: 'domain-id', ...doc })),
+      count: stub().resolves(0),
     };
 
     resourceValidatorMock = {
       validateDomainsLimit: stub().resolves(),
+    };
+
+    agentEntitlementsMock = {
+      getCustomEmailDomainLimits: stub().resolves({ limit: 50, limitSource: 'system' }),
     };
 
     stub(dnsProviderModule, 'detectDnsProvider').resolves(null);

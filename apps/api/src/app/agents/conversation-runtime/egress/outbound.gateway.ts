@@ -12,9 +12,9 @@ import { AgentConversationService } from '../conversation/agent-conversation.ser
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
 import type { ChatSdkFile, ChatSdkReplyContent } from './file-materializer.service';
 import { FileMaterializer } from './file-materializer.service';
+import { resolvePlanDeliveryMode } from './plan-live-delivery';
 import { renderPlanModelAsMarkdown } from './plan-model-to-markdown';
 import type { PlanPhase } from './plan-phase';
-import { resolvePlanDeliveryMode } from './plan-live-delivery';
 import {
   editSlackNativeBlocks,
   getSlackApiErrorCode,
@@ -40,7 +40,7 @@ function buildPoweredByWatermark(agentIdentifier: string, platform: string): str
   url.searchParams.set('utm_source', agentIdentifier);
   url.searchParams.set('utm_channel', platform);
 
-  return `_[Powered by Novu](${url.toString()})_`;
+  return `[Powered by Novu](${url.toString()})`;
 }
 
 export interface ConversationTarget {
@@ -447,14 +447,9 @@ export class OutboundGateway {
 
     const markdown = renderPlanModelAsMarkdown(model, phase);
 
-    await this.editInConversation(
-      agentId,
-      integrationIdentifier,
-      platform,
-      platformThreadId,
-      platformMessageId,
-      { markdown }
-    );
+    await this.editInConversation(agentId, integrationIdentifier, platform, platformThreadId, platformMessageId, {
+      markdown,
+    });
   }
 
   private async resolvePlanAdapter(agentId: string, integrationIdentifier: string, platform: string) {
