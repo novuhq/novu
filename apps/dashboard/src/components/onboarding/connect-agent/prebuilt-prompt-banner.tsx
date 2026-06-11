@@ -1,13 +1,17 @@
+// Bundled at build time from the canonical agent-onboarding guide in `@novu/shared/docs`
+// (see the `@shared-docs` alias in vite.config.ts). Keeping a single source of truth means the
+// banner prompt always matches the instructions we ship for the keyless `novu connect` flow.
+import agentOnboardingPrompt from '@shared-docs/agent-onboarding.md?raw';
 import { useState } from 'react';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 /**
- * Starter prompt surfaced in the onboarding banner. Mirrors the demo support-agent the user can
- * spin up from the "What should your agent do?" step, so copying it (or opening it in Cursor)
- * gets them to a working agent description without typing anything.
+ * Starter prompt surfaced in the onboarding banner. This is the full agent-onboarding guide, so
+ * copying it (or opening it in Cursor) hands the user's coding agent everything it needs to create
+ * a managed agent and connect a channel without the user typing anything.
  */
-const PREBUILT_AGENT_PROMPT = `Add an agent to my app following instructions from this web page https://novu.co/agents.md`;
+const PREBUILT_AGENT_PROMPT = agentOnboardingPrompt.trim();
 
 function safeCursorEncode(text: string): string {
   return encodeURIComponent(text).replace(/[!'()*~]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
