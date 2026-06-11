@@ -23,6 +23,10 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
    * A "channel" is a distinct `_integrationId` — the same integration linked to
    * multiple agents counts once. Used for active-channel plan-limit enforcement,
    * where the first N channels (by connection order) are within the plan limit.
+   *
+   * Links whose integration was (soft-)deleted from the integration store are
+   * excluded — a removed channel must not consume a plan slot, and stale links
+   * may exist for integrations deleted before link cleanup was introduced.
    */
   async listConnectedIntegrationIdsForOrganization(organizationId: string): Promise<string[]> {
     const result = await this.aggregate([
@@ -30,6 +34,19 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
         $match: {
           _organizationId: this.convertStringToObjectId(organizationId),
           connectedAt: { $ne: null },
+        },
+      },
+      {
+        $lookup: {
+          from: 'integrations',
+          localField: '_integrationId',
+          foreignField: '_id',
+          as: 'integration',
+        },
+      },
+      {
+        $match: {
+          integration: { $elemMatch: { deleted: { $ne: true } } },
         },
       },
       {

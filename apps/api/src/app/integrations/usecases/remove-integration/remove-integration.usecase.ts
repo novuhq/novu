@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { DalException, IntegrationEntity, IntegrationRepository } from '@novu/dal';
-import { CHANNELS_WITH_PRIMARY, ChannelTypeEnum, EmailProviderIdEnum, SmsProviderIdEnum } from '@novu/shared';
+import { AgentIntegrationRepository, DalException, IntegrationRepository } from '@novu/dal';
+import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
 import { RemoveIntegrationCommand } from './remove-integration.command';
 
@@ -8,7 +8,10 @@ import { RemoveIntegrationCommand } from './remove-integration.command';
   scope: Scope.REQUEST,
 })
 export class RemoveIntegration {
-  constructor(private integrationRepository: IntegrationRepository) {}
+  constructor(
+    private integrationRepository: IntegrationRepository,
+    private agentIntegrationRepository: AgentIntegrationRepository
+  ) {}
 
   async execute(command: RemoveIntegrationCommand) {
     try {
@@ -22,6 +25,14 @@ export class RemoveIntegration {
 
       await this.integrationRepository.delete({
         _id: existingIntegration._id,
+        _organizationId: existingIntegration._organizationId,
+      });
+
+      // Remove agent↔integration links so a deleted integration stops counting
+      // against the active-channel plan limit (and cannot be auto re-linked).
+      await this.agentIntegrationRepository.delete({
+        _integrationId: existingIntegration._id,
+        _environmentId: existingIntegration._environmentId,
         _organizationId: existingIntegration._organizationId,
       });
 
