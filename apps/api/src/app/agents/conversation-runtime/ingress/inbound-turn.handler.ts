@@ -15,6 +15,7 @@ import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
+import { buildConnectClaimUrl, buildKeylessSignupCard, toReplyCard } from '../../../keyless/keyless-signup.helpers';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -85,47 +86,7 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
-const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 5);
-
-function resolveConnectClaimBaseUrl(): string {
-  for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
-    const trimmed = candidate?.trim();
-
-    if (!trimmed || trimmed.startsWith('^')) {
-      continue;
-    }
-
-    return trimmed.replace(/\/$/, '');
-  }
-
-  return 'https://dashboard.novu.co';
-}
-
-function buildKeylessSignupCard(claimUrl: string): CardElement {
-  return {
-    type: 'card',
-    children: [
-      {
-        type: 'text',
-        content:
-          "You've reached the limit of this free demo. Sign up for a free Novu account to keep this agent — your " +
-          'conversation and setup carry over, and the agent picks up right where it left off.',
-      },
-      { type: 'divider' },
-      {
-        type: 'actions',
-        children: [
-          {
-            type: 'link-button',
-            label: 'Sign up & keep this agent',
-            url: claimUrl,
-            style: 'primary',
-          },
-        ],
-      },
-    ],
-  };
-}
+const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 3);
 
 /**
  * Workspace-label copy keyed by every platform in `AUTO_PROVISION_PLATFORMS`.
@@ -766,10 +727,10 @@ export class AgentInboundHandler implements OnModuleInit {
         env: config.environmentId,
         org: config.organizationId,
       });
-      const claimUrl = `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
+      const claimUrl = buildConnectClaimUrl(token);
 
       await this.outboundGateway.replyOnThread(thread, {
-        card: buildKeylessSignupCard(claimUrl) as unknown as Record<string, unknown>,
+        card: toReplyCard(buildKeylessSignupCard(claimUrl)),
       });
 
       await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);

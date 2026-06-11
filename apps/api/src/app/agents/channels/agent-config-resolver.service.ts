@@ -16,9 +16,11 @@ import {
 } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { trackAgentIntegrationFirstWebhook } from '../shared/analytics/agent-analytics';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
+import { AgentIntegrationDisconnectedException } from '../shared/errors/agent-integration-disconnected.exception';
 import { esmImport } from '../shared/util/esm-import';
 import { resolveAgentPlatform } from '../shared/util/provider-to-platform';
 
@@ -146,6 +148,29 @@ export class AgentConfigResolver {
       '*'
     );
     if (!agentIntegration) {
+      // A tombstoned link means the user deliberately disconnected this channel.
+      // Reject instead of consulting the heal, so a still-registered platform
+      // webhook cannot resurrect the link. The explicit `disconnectedAt`
+      // condition bypasses the schema-level tombstone exclusion.
+      const disconnectedLink = await this.agentIntegrationRepository.findOne(
+        {
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+          _agentId: agentId,
+          _integrationId: integration._id,
+          disconnectedAt: { $ne: null },
+        },
+        ['_id']
+      );
+
+      if (disconnectedLink) {
+        this.logger.info(
+          { agentId, integrationIdentifier },
+          'Rejecting resolve for an integration that was deliberately disconnected from the agent'
+        );
+        throw new AgentIntegrationDisconnectedException(agentId, integrationIdentifier);
+      }
+
       agentIntegration = await this.tryHealMissingAgentIntegrationLink({
         agentId,
         agentIdentifier: agent.identifier,
@@ -248,7 +273,7 @@ export class AgentConfigResolver {
       connectionAccessToken,
       environmentId,
       organizationId,
-      isKeyless: Boolean(process.env.KEYLESS_ORGANIZATION_ID && organizationId === process.env.KEYLESS_ORGANIZATION_ID),
+      isKeyless: isKeylessOrganization(organizationId),
       isManaged: !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,

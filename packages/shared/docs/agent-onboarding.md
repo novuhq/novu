@@ -217,6 +217,13 @@ Always required: the positional description (in `--ci` mode).
 
 **Always paste the literal URL — never a placeholder.** Every handoff link must be the full resolved value copied verbatim from the matching `NOVU_CONNECT_*` line (everything after the `=`). **Never** send a message that refers to "the secure link below", "the setup link", or "the link above" without the actual `https://…` URL in that same message. If you have not yet captured the URL from stdout, **Await** the matching pattern (e.g. `NOVU_CONNECT_SLACK_SETUP_URL=`) **before** sending any handoff message — do not announce the handoff until you have the real URL in hand.
 
+### Showing the QR code (host-aware)
+
+The Telegram QR PNGs (`NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG`, `NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG`) are a phone-scan convenience — the literal URL is the primary handoff and must appear in the same message regardless. **Never deliver a QR by only Read-ing the PNG file:** in most hosts a file-read tool call renders collapsed (e.g. Claude Code shows just "Read 1 file"), so the user never sees the QR. Pick the path that matches what your host can render:
+
+- **Chat UI that renders Markdown images inline (e.g. Cursor):** embed the PNG in your reply text with `![Scan the QR code with your phone](<absolute png path>)` — an image in your own message, not a tool call.
+- **Terminal host that cannot render images (e.g. Claude Code or other CLIs):** open the PNG in the OS image viewer — `open "<png path>"` (macOS), `xdg-open "<png path>"` (Linux), or `start "" "<png path>"` (Windows) — and tell the user a QR window just opened that they can scan with their phone. If the open command fails or the session is headless/remote, skip the QR entirely and present only the clickable URL — never leave the user hunting through collapsed tool output.
+
 Read Connect shell stdout (via **Await**, not log files) and act based on the chosen channel:
 
 - **slack** — the connect run defaulted to the secure path, so first **Await** the secure setup link line and copy its value:
@@ -270,7 +277,7 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
   - `secure` — **Secure setup page (recommended)** — paste the token on the page/QR the CLI printed; it never enters chat.
   - `in_chat` — **Paste token in chat (less secure)** — the token then lives in chat history.
 
-  **If they pick `secure` (or skip the choice):** open the **setup link** and paste the BotFather confirmation message there — **not in this chat**. **Embed the secure-setup QR PNG (`NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG`) inline when present** so the user can scan the secure link on their phone — do not just describe it. Always paste the literal `NOVU_CONNECT_TELEGRAM_SETUP_URL` value alongside the QR. The CLI polls until the bot token is saved (~5 min).
+  **If they pick `secure` (or skip the choice):** paste the literal `NOVU_CONNECT_TELEGRAM_SETUP_URL` value into chat as a clickable link and tell them to paste the BotFather confirmation message on that page — **not in this chat**. When `NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG` is present, also show the QR following [Showing the QR code (host-aware)](#showing-the-qr-code-host-aware) — never via a bare file read. The CLI polls until the bot token is saved (~5 min).
 
   **If they pick `in_chat`:** ask for the token in chat as free-text (not the picker), warn once that it will live in chat history, then **kill the first Connect shell** (the Step 3 process still polling the secure setup page) and **re-run the Step 3 connect command once with `--telegram-bot-token`** (set via an env var). That supersedes the secure setup page — the CLI skips the `NOVU_CONNECT_TELEGRAM_SETUP_URL`/QR handoff and goes straight to the deep-link step below.
 
@@ -282,7 +289,7 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
   NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=<absolute png path>   # only when present
   ```
 
-  Embed the QR PNG inline when present. Ask them to open the bot and tap **Start** on `@<botUsername>`. **Await** until the CLI poll finishes. Re-run on timeout with the same command.
+  When `NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG` is present, show the QR following [Showing the QR code (host-aware)](#showing-the-qr-code-host-aware). Ask them to open the bot and tap **Start** on `@<botUsername>`. **Await** until the CLI poll finishes. Re-run on timeout with the same command.
 
 - **skip** — nothing to hand off; the agent is created without a channel.
 

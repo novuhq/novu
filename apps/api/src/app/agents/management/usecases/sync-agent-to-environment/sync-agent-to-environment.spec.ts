@@ -76,7 +76,7 @@ describe('SyncAgentToEnvironment usecase', () => {
   };
   let agentIntegrationRepo: {
     find: sinon.SinonStub;
-    create: sinon.SinonStub;
+    createOrReviveLink: sinon.SinonStub;
     delete: sinon.SinonStub;
   };
   let integrationRepo: {
@@ -92,7 +92,7 @@ describe('SyncAgentToEnvironment usecase', () => {
 
   beforeEach(() => {
     agentRepo = { findOne: stub(), create: stub(), update: stub().resolves() };
-    agentIntegrationRepo = { find: stub(), create: stub().resolves(), delete: stub().resolves() };
+    agentIntegrationRepo = { find: stub(), createOrReviveLink: stub().resolves(), delete: stub().resolves() };
     integrationRepo = { find: stub(), findOne: stub(), create: stub(), delete: stub().resolves() };
   });
 
@@ -157,11 +157,11 @@ describe('SyncAgentToEnvironment usecase', () => {
       expect(stubArg._environmentId).to.equal(TARGET_ENV);
       expect(stubArg.active).to.equal(true);
 
-      expect(agentIntegrationRepo.create.calledOnce).to.equal(true);
-      const linkArg = agentIntegrationRepo.create.firstCall.args[0];
-      expect(linkArg._agentId).to.equal('target-agent-id');
-      expect(linkArg._integrationId).to.equal('stub-id');
-      expect(linkArg._environmentId).to.equal(TARGET_ENV);
+      expect(agentIntegrationRepo.createOrReviveLink.calledOnce).to.equal(true);
+      const linkArg = agentIntegrationRepo.createOrReviveLink.firstCall.args[0];
+      expect(linkArg.agentId).to.equal('target-agent-id');
+      expect(linkArg.integrationId).to.equal('stub-id');
+      expect(linkArg.environmentId).to.equal(TARGET_ENV);
     });
   });
 
@@ -213,7 +213,7 @@ describe('SyncAgentToEnvironment usecase', () => {
       await buildUsecase().execute(baseCommand());
 
       expect(integrationRepo.create.called).to.equal(false);
-      expect(agentIntegrationRepo.create.called).to.equal(false);
+      expect(agentIntegrationRepo.createOrReviveLink.called).to.equal(false);
     });
   });
 
