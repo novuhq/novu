@@ -1,4 +1,11 @@
-import { FeatureFlagsKeysEnum, MCP_SERVERS, McpConnectionAuthModeEnum, type McpServer } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  isProviderManagedMcp,
+  MCP_SERVERS,
+  McpConnectionAuthModeEnum,
+  type McpServer,
+} from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiAddLine, RiArrowRightUpLine, RiCloseLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
@@ -207,18 +214,30 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
     return false;
   }, [stagedIds, initialEnabledIds]);
 
+  // The demo (Novu-managed Claude / NovuAnthropic) integration exposes no
+  // provider vault, so provider-managed MCPs can never be configured on it —
+  // the API rejects them at connect time. Drop them from the picker so the
+  // catalog only advertises the Novu-handled OAuth modes (dcr / novu-app) the
+  // user can actually wire up, matching the onboarding + provision filters.
+  const isDemoProviderAgent = agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
+
+  const catalogMcps = useMemo(
+    () => (isDemoProviderAgent ? MCP_SERVERS.filter((entry) => !isProviderManagedMcp(entry.id)) : MCP_SERVERS),
+    [isDemoProviderAgent]
+  );
+
   const filteredMcps = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    if (!query) return MCP_SERVERS;
+    if (!query) return catalogMcps;
 
-    return MCP_SERVERS.filter(
+    return catalogMcps.filter(
       (entry) =>
         entry.name.toLowerCase().includes(query) ||
         entry.description.toLowerCase().includes(query) ||
         entry.id.toLowerCase().includes(query)
     );
-  }, [search]);
+  }, [search, catalogMcps]);
 
   const { enabledList, availableList } = useMemo(() => {
     const enabled: McpServer[] = [];
