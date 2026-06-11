@@ -44,7 +44,8 @@ export class GetAgent {
 
     return {
       ...toAgentResponse(agent, hydration, runtimeConfig),
-      ...(isWithinLimit ? {} : { exceedsPlanLimit: true }),
+      // `undefined` drops at JSON serialization, keeping the flag presence-only.
+      exceedsPlanLimit: !isWithinLimit || undefined,
     };
   }
 

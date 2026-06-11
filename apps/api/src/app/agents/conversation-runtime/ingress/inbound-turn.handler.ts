@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, type OnModuleInit } from '@nestjs/common';
-import { AgentEntitlementsService, AnalyticsService, PinoLogger } from '@novu/application-generic';
+import { AnalyticsService, PinoLogger } from '@novu/application-generic';
 import {
   AgentRepository,
   ChannelEndpointRepository,
@@ -15,7 +15,7 @@ import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
-import { buildConnectClaimUrl, buildKeylessSignupCard, toReplyCard } from '../../../keyless/keyless-signup.helpers';
+import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -42,6 +42,7 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
+import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
 
 /**
  * `/start <payload>` is Telegram's deep-link mechanism. Telegram delivers it as
@@ -55,13 +56,6 @@ function extractTelegramStartToken(text: string | undefined): string | null {
   if (!text) return null;
   const match = TELEGRAM_START_COMMAND.exec(text.trim());
   return match ? match[1] : null;
-}
-
-// Link buttons render with a `link-` prefixed action id. They open a URL client-side;
-// the SDK still emits an inbound action for the click, but there is nothing to do
-// server-side, so it is swallowed. Runtime-agnostic.
-function isLinkButtonActionId(id: string | undefined): boolean {
-  return typeof id === 'string' && id.startsWith('link-');
 }
 
 function extractTelegramChatId(thread: Thread): string | null {
@@ -87,24 +81,6 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
 const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 3);
-
-const NOVU_AGENTS_UPGRADE_URL = 'https://go.novu.co/agents-upgrade';
-
-/**
- * Destination for the soft-block "Upgrade your plan" CTA, with campaign
- * attribution so a click can be traced back to the originating agent/channel:
- *   - utm_campaign: constant `agent-limits`
- *   - utm_source:   the agent identifier
- *   - utm_channel:  the delivery platform (slack | telegram | teams | …)
- */
-function buildAgentUpgradeUrl(agentIdentifier: string, platform: string): string {
-  const url = new URL(NOVU_AGENTS_UPGRADE_URL);
-  url.searchParams.set('utm_campaign', 'agent-limits');
-  url.searchParams.set('utm_source', agentIdentifier);
-  url.searchParams.set('utm_channel', platform);
-
-  return url.toString();
-}
 
 /**
  * Workspace-label copy keyed by every platform in `AUTO_PROVISION_PLATFORMS`.
@@ -132,44 +108,6 @@ function buildCapacityReachedCard(platform: AutoProvisionPlatform): CardElement 
             type: 'link-button',
             label: 'View Novu pricing',
             url: NOVU_PRICING_URL,
-            style: 'primary',
-          },
-        ],
-      },
-    ],
-  };
-}
-
-/** Which plan entitlement caused an over-limit agent/channel to be soft-blocked at runtime. */
-type PlanLimitBlockReason = 'agents' | 'channels';
-
-const PLAN_LIMIT_BLOCK_MESSAGES: Record<PlanLimitBlockReason, string> = {
-  agents:
-    "This agent isn't active on your current Novu plan — you've reached the number of agents included in your plan. Please upgrade your plan to activate it.",
-  channels:
-    "This channel isn't active on your current Novu plan — you've reached the number of active channels included in your plan. Please upgrade your plan to activate it.",
-};
-
-function buildUpgradeRequiredCard(
-  reason: PlanLimitBlockReason,
-  agentIdentifier: string,
-  platform: string
-): CardElement {
-  return {
-    type: 'card',
-    children: [
-      {
-        type: 'text',
-        content: PLAN_LIMIT_BLOCK_MESSAGES[reason],
-      },
-      { type: 'divider' },
-      {
-        type: 'actions',
-        children: [
-          {
-            type: 'link-button',
-            label: 'Upgrade your plan',
-            url: buildAgentUpgradeUrl(agentIdentifier, platform),
             style: 'primary',
           },
         ],
@@ -306,7 +244,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
-    private readonly agentEntitlements: AgentEntitlementsService,
+    private readonly planLimitGate: PlanLimitGateService,
     private readonly inboundAck: InboundAckService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -332,10 +270,7 @@ export class AgentInboundHandler implements OnModuleInit {
       return;
     }
 
-    const planLimitBlock = await this.resolvePlanLimitBlock(agentId, config);
-    if (planLimitBlock) {
-      await this.postUpgradeRequiredReply(agentId, config, thread, planLimitBlock);
-
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
       return;
     }
 
@@ -753,9 +688,7 @@ export class AgentInboundHandler implements OnModuleInit {
     const platform = config.platform as AutoProvisionPlatform;
 
     try {
-      await this.outboundGateway.replyOnThread(thread, {
-        card: buildCapacityReachedCard(platform) as unknown as Record<string, unknown>,
-      });
+      await this.outboundGateway.replyOnThreadWithCard(thread, buildCapacityReachedCard(platform));
     } catch (err) {
       this.logger.warn(
         err,
@@ -766,75 +699,6 @@ export class AgentInboundHandler implements OnModuleInit {
         operation: 'post-capacity-reached-card',
         agentId,
         platform: config.platform,
-      });
-    }
-  }
-
-  /**
-   * Soft plan-limit enforcement for Connect. Agents/channels created beyond the
-   * organization's plan limit keep existing but stop functioning — inbound traffic
-   * gets an "upgrade your plan" reply instead of being dispatched to the runtime.
-   *
-   * Keyless/demo orgs are governed by their own caps (KeylessAbuseGuard) and are
-   * never gated here. Any lookup failure fails open so a transient error never
-   * silently disables a paying customer's agent.
-   */
-  private async resolvePlanLimitBlock(
-    agentId: string,
-    config: ResolvedAgentConfig
-  ): Promise<PlanLimitBlockReason | null> {
-    if (config.isKeyless) {
-      return null;
-    }
-
-    try {
-      const { agentWithinLimit, channelWithinLimit } = await this.agentEntitlements.checkRuntimeLimits(
-        config.organizationId,
-        config.environmentId,
-        agentId,
-        config.integrationId
-      );
-
-      if (!agentWithinLimit) {
-        return 'agents';
-      }
-
-      if (!channelWithinLimit) {
-        return 'channels';
-      }
-
-      return null;
-    } catch (err) {
-      this.logger.warn(err, `[agent:${agentId}] Failed to evaluate plan limits; allowing inbound through`);
-      captureAgentWarning(err, {
-        component: 'agent-inbound-handler',
-        operation: 'evaluate-plan-limits',
-        agentId,
-      });
-
-      return null;
-    }
-  }
-
-  private async postUpgradeRequiredReply(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    thread: Thread,
-    reason: PlanLimitBlockReason
-  ): Promise<void> {
-    try {
-      await this.outboundGateway.replyOnThread(thread, {
-        card: buildUpgradeRequiredCard(reason, config.agentIdentifier, config.platform) as unknown as Record<
-          string,
-          unknown
-        >,
-      });
-    } catch (err) {
-      this.logger.warn(err, `[agent:${agentId}] Failed to post plan-limit upgrade reply (${reason})`);
-      captureAgentWarning(err, {
-        component: 'agent-inbound-handler',
-        operation: 'post-upgrade-required-reply',
-        agentId,
       });
     }
   }
@@ -862,9 +726,7 @@ export class AgentInboundHandler implements OnModuleInit {
       });
       const claimUrl = buildConnectClaimUrl(token);
 
-      await this.outboundGateway.replyOnThread(thread, {
-        card: toReplyCard(buildKeylessSignupCard(claimUrl)),
-      });
+      await this.outboundGateway.replyOnThreadWithCard(thread, buildKeylessSignupCard(claimUrl));
 
       await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
     } catch (err) {
@@ -968,10 +830,9 @@ export class AgentInboundHandler implements OnModuleInit {
     action: AgentAction,
     userId: string
   ): Promise<void> {
-    const planLimitBlock = await this.resolvePlanLimitBlock(agentId, config);
-    if (planLimitBlock) {
-      await this.postUpgradeRequiredReply(agentId, config, thread, planLimitBlock);
-
+    // The gate suppresses its reply for link-button actions (e.g. the upgrade
+    // card's own CTA) so a blocked click can never spawn another card.
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread, action)) {
       return;
     }
 

@@ -2,7 +2,13 @@ import { AgentIntegrationRepository, AgentRepository, CommunityOrganizationRepos
 import { ApiServiceLevelEnum, UNLIMITED_VALUE } from '@novu/shared';
 import { expect } from 'chai';
 import sinon from 'sinon';
-import { AGENT_CREATION_GRACE, AgentEntitlementsService } from './agent-entitlements.service';
+import { PinoLogger } from '../logging';
+import {
+  AGENT_CREATION_GRACE,
+  AgentEntitlementsService,
+  isAgentOverPlanLimit,
+  isChannelOverPlanLimit,
+} from './agent-entitlements.service';
 import { FeatureFlagsService } from './feature-flags';
 import { SYSTEM_LIMITS } from './resource-validator.service';
 
@@ -39,12 +45,14 @@ function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEnt
   const agentIntegrationRepository = {
     listConnectedIntegrationIdsForEnvironment,
   } as unknown as AgentIntegrationRepository;
+  const logger = { setContext: sinon.stub(), warn: sinon.stub() } as unknown as PinoLogger;
 
   const service = new AgentEntitlementsService(
     featureFlagsService,
     organizationRepository,
     agentRepository,
-    agentIntegrationRepository
+    agentIntegrationRepository,
+    logger
   );
 
   return {
@@ -184,41 +192,6 @@ describe('AgentEntitlementsService', () => {
     });
   });
 
-  describe('getCustomEmailDomainLimits', () => {
-    it('returns the plan source for tiers with a finite domain limit', async () => {
-      process.env.IS_SELF_HOSTED = 'false';
-      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.getFlag.resolves(SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS);
-
-      const limits = await service.getCustomEmailDomainLimits(ORGANIZATION_ID);
-
-      expect(limits.limitSource).to.equal('plan');
-      expect(limits.limit).to.equal(0);
-    });
-
-    it('caps unlimited tiers at the system default with the system source', async () => {
-      process.env.IS_SELF_HOSTED = 'false';
-      const { service, stubs } = buildService(ApiServiceLevelEnum.BUSINESS);
-      stubs.getFlag.resolves(SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS);
-
-      const limits = await service.getCustomEmailDomainLimits(ORGANIZATION_ID);
-
-      expect(limits.limitSource).to.equal('system');
-      expect(limits.limit).to.equal(SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS);
-    });
-
-    it('treats a LaunchDarkly per-org override as an exact system ceiling', async () => {
-      process.env.IS_SELF_HOSTED = 'false';
-      const { service, stubs } = buildService(ApiServiceLevelEnum.BUSINESS);
-      stubs.getFlag.resolves(120);
-
-      const limits = await service.getCustomEmailDomainLimits(ORGANIZATION_ID);
-
-      expect(limits.limitSource).to.equal('system');
-      expect(limits.limit).to.equal(120);
-    });
-  });
-
   describe('getActiveChannelLimit', () => {
     it('uses the tier table only (no LaunchDarkly lookup)', async () => {
       process.env.IS_SELF_HOSTED = 'false';
@@ -328,6 +301,112 @@ describe('AgentEntitlementsService', () => {
 
       expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
       expect(stubs.findById.called).to.equal(false);
+    });
+
+    it('fails open (all within limit) when a lookup throws', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.findById.rejects(new Error('boom'));
+
+      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+
+      expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
+    });
+
+    it('serves repeated checks from the short-TTL cache without new lookups', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1']);
+
+      const first = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+      const second = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+
+      expect(second).to.deep.equal(first);
+      expect(stubs.findById.callCount).to.equal(1);
+      expect(stubs.listConnectedIntegrationIdsForEnvironment.callCount).to.equal(1);
+    });
+
+    it('does not cache fail-open results', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.findById.onFirstCall().rejects(new Error('boom'));
+
+      await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+      await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
+
+      expect(stubs.findById.callCount).to.equal(2);
+    });
+  });
+
+  describe('getChannelPlanUsage', () => {
+    it('reports headroom for unconnected channels while under the limit', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1']);
+
+      const usage = await service.getChannelPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
+
+      expect(usage.withinLimitIntegrationIds).to.equal(null);
+      expect(usage.blocksUnconnectedChannels).to.equal(false);
+    });
+
+    it('blocks unconnected channels once the environment is at its limit', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1', 'int-2']);
+
+      const usage = await service.getChannelPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
+
+      expect(usage.withinLimitIntegrationIds).to.equal(null);
+      expect(usage.blocksUnconnectedChannels).to.equal(true);
+    });
+
+    it('lists within-limit integrations when over the limit', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1', 'int-2', 'int-3']);
+
+      const usage = await service.getChannelPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
+
+      expect(usage.withinLimitIntegrationIds).to.deep.equal(['int-1', 'int-2']);
+      expect(usage.blocksUnconnectedChannels).to.equal(true);
+    });
+  });
+
+  describe('over-limit predicates', () => {
+    const baseAgentUsage = {
+      used: 3,
+      limit: 2,
+      totalCreated: 3,
+      creationLimit: 7,
+      limitSource: 'plan' as const,
+    };
+
+    it('flags only active agents outside the within-limit list', () => {
+      const usage = { ...baseAgentUsage, withinLimitAgentIds: ['agent-1', 'agent-2'] };
+
+      expect(isAgentOverPlanLimit(usage, { _id: 'agent-3', active: true })).to.equal(true);
+      expect(isAgentOverPlanLimit(usage, { _id: 'agent-3', active: false })).to.equal(false);
+      expect(isAgentOverPlanLimit(usage, { _id: 'agent-1', active: true })).to.equal(false);
+    });
+
+    it('never flags agents when the environment is within its limit', () => {
+      const usage = { ...baseAgentUsage, withinLimitAgentIds: null };
+
+      expect(isAgentOverPlanLimit(usage, { _id: 'agent-3', active: true })).to.equal(false);
+    });
+
+    it('flags connected channels outside the within-limit list and unconnected channels without headroom', () => {
+      const usage = {
+        used: 3,
+        limit: 2,
+        withinLimitIntegrationIds: ['int-1', 'int-2'],
+        blocksUnconnectedChannels: true,
+      };
+
+      expect(isChannelOverPlanLimit(usage, { integrationId: 'int-3', connected: true })).to.equal(true);
+      expect(isChannelOverPlanLimit(usage, { integrationId: 'int-1', connected: true })).to.equal(false);
+      expect(isChannelOverPlanLimit(usage, { integrationId: 'int-new', connected: false })).to.equal(true);
     });
   });
 

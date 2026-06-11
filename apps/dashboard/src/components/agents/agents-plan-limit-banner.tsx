@@ -1,30 +1,6 @@
-import type { AgentPlanUsage, PlanUsage } from '@/api/agents';
+import type { AgentPlanUsage, PlanUsage } from '@/api/agents-plan-usage';
+import { UPGRADE_CTA_LABEL, usePlanUpgradeClick } from '@/components/billing/use-plan-upgrade-click';
 import { InlineToast } from '@/components/primitives/inline-toast';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
-import { useTelemetry } from '@/hooks/use-telemetry';
-import { ROUTES } from '@/utils/routes';
-import { TelemetryEvent } from '@/utils/telemetry';
-import { openInNewTab } from '@/utils/url';
-import { useNavigate } from 'react-router-dom';
-
-function usePlanUpgradeClick(source: string, utmCampaign: string) {
-  const navigate = useNavigate();
-  const track = useTelemetry();
-
-  return () => {
-    track(TelemetryEvent.UPGRADE_TO_TEAM_TIER_CLICK, { source });
-
-    if (IS_SELF_HOSTED) {
-      openInNewTab(`${SELF_HOSTED_UPGRADE_REDIRECT_URL}?utm_campaign=${utmCampaign}`);
-
-      return;
-    }
-
-    navigate(`${ROUTES.SETTINGS_BILLING}?utm_campaign=${utmCampaign}`);
-  };
-}
-
-const UPGRADE_CTA_LABEL = IS_SELF_HOSTED ? 'Contact Sales' : 'Upgrade plan';
 
 type PlanLimitBannerProps = {
   planUsage: PlanUsage;

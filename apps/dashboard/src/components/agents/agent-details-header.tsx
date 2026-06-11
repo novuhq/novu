@@ -1,3 +1,6 @@
+import { isClaudePlatformConsoleProvider, PermissionsEnum } from '@novu/shared';
+import { RiMore2Fill } from 'react-icons/ri';
+import { Link } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { Badge } from '@/components/primitives/badge';
 import { Button } from '@/components/primitives/button';
@@ -8,15 +11,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/primitives/dropdown-menu';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { StatusBadge, StatusBadgeIcon } from '@/components/primitives/status-badge';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
-import { isClaudePlatformConsoleProvider, PermissionsEnum } from '@novu/shared';
-import { RiErrorWarningFill, RiMore2Fill } from 'react-icons/ri';
-import { Link } from 'react-router-dom';
 import { ClaudeIcon } from '../icons/claude';
+import { ExceedsPlanIndicator } from './exceeds-plan-indicator';
 
 type AgentDetailsHeaderProps = {
   agent: AgentResponse | undefined;
@@ -57,22 +56,7 @@ export function AgentDetailsHeader({ agent, isLoading, onRequestDelete }: AgentD
                 LOCAL
               </Badge>
             ) : null}
-            {agent.exceedsPlanLimit ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex cursor-default">
-                    <StatusBadge variant="light" status="pending">
-                      <StatusBadgeIcon as={RiErrorWarningFill} />
-                      Exceeds plan
-                    </StatusBadge>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-64">
-                  This agent is over the number of active agents included in your plan and won&apos;t respond to
-                  messages. Upgrade your plan or deactivate older agents to activate it.
-                </TooltipContent>
-              </Tooltip>
-            ) : null}
+            {agent.exceedsPlanLimit ? <ExceedsPlanIndicator resource="agent" /> : null}
           </div>
           <div className="flex min-w-0 items-center gap-1">
             <span className="text-text-soft font-mono text-label-xs leading-4 tracking-tight">Created</span>

@@ -26,6 +26,7 @@ import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
 import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
+import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 import { ChannelLimitUpgradeDialog } from './plan-limit-upgrade-dialog';
 import { ProviderDropdown } from './provider-dropdown';
@@ -535,8 +536,7 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                         <Tooltip key={link._id}>
                           <TooltipTrigger asChild>{row}</TooltipTrigger>
                           <TooltipContent side="right" className="max-w-[260px]">
-                            This channel exceeds your plan's active channel limit. The agent won't respond on it until
-                            you upgrade your plan or disconnect other channels.
+                            {getExceedsPlanTooltipCopy('channel')}
                           </TooltipContent>
                         </Tooltip>
                       );

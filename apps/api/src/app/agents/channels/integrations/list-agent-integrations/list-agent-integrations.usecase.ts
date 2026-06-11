@@ -1,5 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { AgentEntitlementsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  AgentEntitlementsService,
+  InstrumentUsecase,
+  isChannelOverPlanLimit,
+  PinoLogger,
+} from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
 
@@ -117,12 +122,6 @@ export class ListAgentIntegrations {
       command.organizationId,
       command.environmentId
     );
-    const withinLimitIntegrationIds = channelUsage.withinLimitIntegrationIds
-      ? new Set(channelUsage.withinLimitIntegrationIds)
-      : null;
-    // Mirrors the runtime soft-block: when the org is at/over its limit, a channel
-    // that has not connected yet has no reserved slot and will also be blocked.
-    const blocksUnconnectedChannels = channelUsage.used >= channelUsage.limit;
 
     const data = pagination.links.reduce<ListAgentIntegrationsResponseDto['data']>((acc, link) => {
       const integration = idToIntegration.get(link._integrationId);
@@ -136,12 +135,16 @@ export class ListAgentIntegrations {
         return acc;
       }
 
-      const response = toAgentIntegrationResponse(link, integration, agent);
-      const exceedsPlanLimit = link.connectedAt
-        ? withinLimitIntegrationIds !== null && !withinLimitIntegrationIds.has(link._integrationId)
-        : blocksUnconnectedChannels;
+      const exceedsPlanLimit = isChannelOverPlanLimit(channelUsage, {
+        integrationId: link._integrationId,
+        connected: Boolean(link.connectedAt),
+      });
 
-      acc.push(exceedsPlanLimit ? { ...response, exceedsPlanLimit: true } : response);
+      acc.push({
+        ...toAgentIntegrationResponse(link, integration, agent),
+        // `undefined` drops at JSON serialization, keeping the flag presence-only.
+        exceedsPlanLimit: exceedsPlanLimit || undefined,
+      });
 
       return acc;
     }, []);

@@ -1,8 +1,9 @@
 import { providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { ComponentProps } from 'react';
-import { RiCheckboxCircleFill, RiErrorWarningFill, RiForbidFill, RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
+import { RiCheckboxCircleFill, RiForbidFill, RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import { Link, useLocation } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
+import { ExceedsPlanIndicator } from '@/components/agents/exceeds-plan-indicator';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CompactButton } from '@/components/primitives/button-compact';
 import {
@@ -122,22 +123,7 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
 
 function AgentStatusCell({ agent }: { agent: AgentResponse }) {
   if (agent.exceedsPlanLimit) {
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="relative z-10 inline-flex cursor-default">
-            <StatusBadge variant="light" status="pending">
-              <StatusBadgeIcon as={RiErrorWarningFill} />
-              Exceeds plan
-            </StatusBadge>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="top" className="max-w-64">
-          This agent is over the number of active agents included in your plan and won&apos;t respond to messages.
-          Upgrade your plan or deactivate older agents to activate it.
-        </TooltipContent>
-      </Tooltip>
-    );
+    return <ExceedsPlanIndicator resource="agent" className="relative z-10" />;
   }
 
   if (agent.active) {

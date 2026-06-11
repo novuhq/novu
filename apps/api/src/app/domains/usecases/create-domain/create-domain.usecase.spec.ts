@@ -16,11 +16,13 @@ describe('CreateDomain usecase', () => {
   };
 
   let domainRepositoryMock: { findByName: sinon.SinonStub; create: sinon.SinonStub; count: sinon.SinonStub };
-  let resourceValidatorMock: { validateDomainsLimit: sinon.SinonStub };
-  let agentEntitlementsMock: { getCustomEmailDomainLimits: sinon.SinonStub };
+  let resourceValidatorMock: {
+    validateDomainsLimit: sinon.SinonStub;
+    validateCustomEmailDomainsLimit: sinon.SinonStub;
+  };
 
   function buildUsecase() {
-    return new CreateDomain(domainRepositoryMock as any, resourceValidatorMock as any, agentEntitlementsMock as any);
+    return new CreateDomain(domainRepositoryMock as any, resourceValidatorMock as any);
   }
 
   beforeEach(() => {
@@ -34,10 +36,7 @@ describe('CreateDomain usecase', () => {
 
     resourceValidatorMock = {
       validateDomainsLimit: stub().resolves(),
-    };
-
-    agentEntitlementsMock = {
-      getCustomEmailDomainLimits: stub().resolves({ limit: 50, limitSource: 'system' }),
+      validateCustomEmailDomainsLimit: stub().resolves(),
     };
 
     stub(dnsProviderModule, 'detectDnsProvider').resolves(null);
@@ -49,28 +48,10 @@ describe('CreateDomain usecase', () => {
   });
 
   describe('custom email domain limit', () => {
-    it('throws a conflict including counts when the count reaches a system limit', async () => {
-      agentEntitlementsMock.getCustomEmailDomainLimits.resolves({ limit: 50, limitSource: 'system' });
-      domainRepositoryMock.count.resolves(50);
-
-      const usecase = buildUsecase();
-
-      try {
-        await usecase.execute(baseCommand);
-        throw new Error('Expected execute to throw');
-      } catch (err) {
-        expect(err).to.be.instanceOf(ConflictException);
-        const response = (err as ConflictException).getResponse() as Record<string, unknown>;
-        expect(response.currentCount).to.equal(50);
-        expect(response.limit).to.equal(50);
-      }
-
-      expect(domainRepositoryMock.create.called).to.equal(false);
-    });
-
-    it('throws 402 Payment Required including counts when the count reaches a plan limit', async () => {
-      agentEntitlementsMock.getCustomEmailDomainLimits.resolves({ limit: 3, limitSource: 'plan' });
-      domainRepositoryMock.count.resolves(3);
+    it('propagates limit errors from the resource validator without creating the domain', async () => {
+      resourceValidatorMock.validateCustomEmailDomainsLimit.rejects(
+        new HttpException({ message: 'Upgrade your plan', currentCount: 3, limit: 3 }, HttpStatus.PAYMENT_REQUIRED)
+      );
 
       const usecase = buildUsecase();
 
@@ -80,27 +61,24 @@ describe('CreateDomain usecase', () => {
       } catch (err) {
         expect(err).to.be.instanceOf(HttpException);
         expect((err as HttpException).getStatus()).to.equal(HttpStatus.PAYMENT_REQUIRED);
-        const response = (err as HttpException).getResponse() as Record<string, unknown>;
-        expect(response.currentCount).to.equal(3);
-        expect(response.limit).to.equal(3);
       }
 
       expect(domainRepositoryMock.create.called).to.equal(false);
     });
 
-    it('allows creation below the limit and counts domains for the organization', async () => {
-      agentEntitlementsMock.getCustomEmailDomainLimits.resolves({ limit: 3, limitSource: 'plan' });
-      domainRepositoryMock.count.resolves(2);
-
+    it('validates the plan entitlement before the global anti-abuse cap', async () => {
       const usecase = buildUsecase();
 
-      const result = await usecase.execute(baseCommand);
+      await usecase.execute(baseCommand);
 
-      expect(result.name).to.equal('inbound.example.com');
-      expect(domainRepositoryMock.create.calledOnce).to.equal(true);
-      expect(domainRepositoryMock.count.calledOnceWith({ _organizationId: baseCommand.organizationId })).to.equal(
+      expect(resourceValidatorMock.validateCustomEmailDomainsLimit.calledOnceWith(baseCommand.organizationId)).to.equal(
         true
       );
+      expect(resourceValidatorMock.validateDomainsLimit.calledOnceWith(baseCommand.organizationId)).to.equal(true);
+      expect(
+        resourceValidatorMock.validateCustomEmailDomainsLimit.calledBefore(resourceValidatorMock.validateDomainsLimit)
+      ).to.equal(true);
+      expect(domainRepositoryMock.create.calledOnce).to.equal(true);
     });
   });
 

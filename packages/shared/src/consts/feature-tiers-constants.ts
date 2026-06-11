@@ -77,6 +77,16 @@ export enum FeatureNameEnum {
   AGENT_MAX_CUSTOM_EMAIL_DOMAINS = 'agentMaxCustomEmailDomains',
 }
 
+/**
+ * Which constraint produced a resource limit (agents, channels, custom email
+ * domains, …). Drives user-facing messaging and the API error contract:
+ * `plan` limits are lifted by upgrading (402); `system` limits (the
+ * platform-wide cap, or a per-organization override) require contacting the
+ * Novu team (409).
+ */
+export const RESOURCE_LIMIT_SOURCES = ['plan', 'system'] as const;
+export type ResourceLimitSource = (typeof RESOURCE_LIMIT_SOURCES)[number];
+
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
 
 class DetailedPriceListItem {

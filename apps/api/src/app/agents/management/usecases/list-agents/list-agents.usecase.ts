@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { AgentEntitlementsService, InstrumentUsecase } from '@novu/application-generic';
+import { AgentEntitlementsService, InstrumentUsecase, isAgentOverPlanLimit } from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum } from '@novu/shared';
 import type { AgentIntegrationSummaryDto } from '../../../shared/dtos/agent-integration-summary.dto';
@@ -39,16 +39,12 @@ export class ListAgents {
       this.agentEntitlementsService.getAgentPlanUsage(command.organizationId, command.environmentId),
     ]);
 
-    const withinLimitAgentIds = planUsage.withinLimitAgentIds ? new Set(planUsage.withinLimitAgentIds) : null;
-
     return {
       data: pagination.agents.map((agent) => ({
         ...toAgentResponse(agent),
         integrations: summariesByAgentId.get(agent._id) ?? [],
-        // Only active agents consume plan slots; inactive ones are just inactive, not over-limit.
-        ...(withinLimitAgentIds && agent.active && !withinLimitAgentIds.has(agent._id)
-          ? { exceedsPlanLimit: true }
-          : {}),
+        // `undefined` drops at JSON serialization, keeping the flag presence-only.
+        exceedsPlanLimit: isAgentOverPlanLimit(planUsage, agent) || undefined,
       })),
       next: pagination.next,
       previous: pagination.previous,

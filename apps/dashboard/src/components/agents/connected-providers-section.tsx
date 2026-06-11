@@ -1,3 +1,7 @@
+import { providers as novuProviders } from '@novu/shared';
+import { useQuery } from '@tanstack/react-query';
+import { RiAddLine, RiArrowRightLine, RiArrowRightSLine } from 'react-icons/ri';
+import { Link, useLocation } from 'react-router-dom';
 import {
   type AgentIntegrationLink,
   type AgentResponse,
@@ -6,14 +10,10 @@ import {
 } from '@/api/agents';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { Skeleton } from '@/components/primitives/skeleton';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { buildRoute } from '@/utils/routes';
-import { providers as novuProviders } from '@novu/shared';
-import { useQuery } from '@tanstack/react-query';
-import { RiAddLine, RiArrowRightLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
-import { Link, useLocation } from 'react-router-dom';
+import { ExceedsPlanIndicator } from './exceeds-plan-indicator';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
 
 type ConnectedProvidersSectionProps = {
@@ -44,25 +44,7 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
       </div>
       <span className="flex items-center gap-1">
         <span className="text-text-strong text-label-xs min-w-0 truncate font-medium leading-4">{displayName}</span>
-        {exceedsPlan && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                role="img"
-                aria-label="Exceeds plan limit"
-                // biome-ignore lint/a11y/noNoninteractiveTabindex: tooltip trigger must be focusable so keyboard users can open it; a button is invalid here as it's nested inside the card's Link
-                tabIndex={0}
-                className="flex shrink-0 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <RiErrorWarningFill className="text-warning-base size-3.5" />
-              </span>
-            </TooltipTrigger>
-            <TooltipContent className="max-w-[260px]">
-              This channel exceeds your plan's active channel limit. The agent won't respond on it until you upgrade
-              your plan or disconnect other channels.
-            </TooltipContent>
-          </Tooltip>
-        )}
+        {exceedsPlan && <ExceedsPlanIndicator resource="channel" variant="icon" />}
       </span>
     </Link>
   );

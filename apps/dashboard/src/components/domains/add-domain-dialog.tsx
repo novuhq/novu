@@ -1,10 +1,10 @@
+import type { ResourceLimitSource } from '@novu/shared';
 import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import type { AgentLimitSource } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
-import { DomainLimitDialog } from '@/components/agents/plan-limit-upgrade-dialog';
 import { ApexDomainMxWarning } from '@/components/domains/apex-domain-mx-warning';
+import { DomainLimitDialog } from '@/components/domains/domain-limit-dialog';
 import { Button } from '@/components/primitives/button';
 import {
   Dialog,
@@ -36,7 +36,7 @@ const DEFAULT_PLACEHOLDER = 'inbound.acme.com';
 
 type DomainLimitError = {
   limit: number;
-  limitSource: AgentLimitSource;
+  limitSource: ResourceLimitSource;
 };
 
 /**

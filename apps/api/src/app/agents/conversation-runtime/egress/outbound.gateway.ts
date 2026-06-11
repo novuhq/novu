@@ -1,12 +1,13 @@
 import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { CommunityOrganizationRepository, ConversationChannel } from '@novu/dal';
+import { ConversationChannel } from '@novu/dal';
 import type { SentMessageInfo } from '@novu/framework';
-import type { AdapterPostableMessage, EmojiValue, PlanModel, Thread } from 'chat';
-import { AgentConfigResolver } from '../../channels/agent-config-resolver.service';
+import type { AdapterPostableMessage, CardElement, EmojiValue, PlanModel, Thread } from 'chat';
+import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
+import { buildAttributedNovuUrl } from '../../shared/util/novu-attribution-url';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -27,21 +28,13 @@ export type { SlackNativeDelivery } from './slack-native-delivery';
 /** Free-plan branding appended as the last line of outbound agent messages. */
 const NOVU_AGENT_POWERED_URL = 'https://go.novu.co/agent-powered';
 
-/**
- * Builds the "Powered by Novu" watermark with campaign attribution. The link is
- * per-message so we can attribute traffic back to the originating agent/channel:
- *   - utm_campaign: constant `agent-powered`
- *   - utm_source:   the agent identifier
- *   - utm_channel:  the delivery platform (slack | telegram | teams | …)
- */
+/** "Powered by Novu" watermark with per-message campaign attribution. */
 function buildPoweredByWatermark(agentIdentifier: string, platform: string): string {
-  const url = new URL(NOVU_AGENT_POWERED_URL);
-  url.searchParams.set('utm_campaign', 'agent-powered');
-  url.searchParams.set('utm_source', agentIdentifier);
-  url.searchParams.set('utm_channel', platform);
-
-  return `[Powered by Novu](${url.toString()})`;
+  return `[Powered by Novu](${buildAttributedNovuUrl(NOVU_AGENT_POWERED_URL, 'agent-powered', agentIdentifier, platform)})`;
 }
+
+/** The subset of the resolved config that drives outbound watermarking. */
+type OutboundBrandingContext = Pick<ResolvedAgentConfig, 'removeNovuBranding' | 'agentIdentifier' | 'platform'>;
 
 export interface ConversationTarget {
   agentId: string;
@@ -120,7 +113,6 @@ export class OutboundGateway {
     private readonly agentConfigResolver: AgentConfigResolver,
     private readonly fileMaterializer: FileMaterializer,
     private readonly actionTokenService: AgentActionTokenService,
-    private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -175,6 +167,24 @@ export class OutboundGateway {
     });
 
     return sent;
+  }
+
+  /**
+   * Internal reply surface for server-built cards (capacity, plan-limit,
+   * keyless CTA). `OutboundMessage.card` is typed as the request-DTO validation
+   * shape (`Record<string, unknown>`), so the single DTO-boundary cast lives
+   * here instead of at every call site.
+   */
+  async replyOnThreadWithCard(
+    thread: Thread,
+    card: CardElement,
+    opts?: {
+      failSoft?: boolean;
+      persist?: ThreadReplyPersistContext;
+      actionTokenBinding?: AgentActionTokenBinding;
+    }
+  ): Promise<SentMessageInfo | null> {
+    return this.replyOnThread(thread, { card: card as unknown as Record<string, unknown> }, opts);
   }
 
   async replyOnThread(
@@ -252,13 +262,8 @@ export class OutboundGateway {
       deliveryContent,
       this.toActionTokenBinding(agentId, config)
     );
-    const brandedContent = await this.applyOutboundBranding(tokenizedContent, {
-      organizationId: config.organizationId,
-      agentIdentifier: config.agentIdentifier,
-      platform: config.platform,
-    });
 
-    const postArg = this.buildAdapterPostableMessage(brandedContent);
+    const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
 
     const sent = await thread.post(postArg).catch(toDeliveryError);
 
@@ -299,13 +304,8 @@ export class OutboundGateway {
       deliveryContent,
       this.toActionTokenBinding(agentId, config)
     );
-    const brandedContent = await this.applyOutboundBranding(tokenizedContent, {
-      organizationId: config.organizationId,
-      agentIdentifier: config.agentIdentifier,
-      platform: config.platform,
-    });
 
-    const postArg = this.buildAdapterPostableMessage(brandedContent);
+    const postArg = this.buildAdapterPostableMessage(tokenizedContent, config);
 
     const sent = await dmThread.post(postArg).catch(toDeliveryError);
 
@@ -360,7 +360,8 @@ export class OutboundGateway {
       this.toActionTokenBinding(agentId, config)
     );
 
-    const editPayload = this.buildAdapterPostableMessage(tokenizedContent);
+    // Edits re-brand so a post-then-edit delivery never strips the watermark.
+    const editPayload = this.buildAdapterPostableMessage(tokenizedContent, config);
 
     let editPromise: Promise<{ id: string; threadId: string }>;
     if (tokenizedContent.card) {
@@ -518,46 +519,36 @@ export class OutboundGateway {
   /**
    * Appends the "Powered by Novu" watermark as the last line of outbound text
    * messages for organizations that have not removed Novu branding (free plan).
-   * Pro and above can disable it via the existing `removeNovuBranding` org setting.
+   * Pro and above can disable it via the existing `removeNovuBranding` org
+   * setting, resolved once per delivery by `AgentConfigResolver`.
    *
    * Only plain markdown replies are branded — cards/action messages are left
-   * untouched. Lookups fail open to "branded" so a transient error never strips
-   * branding from a free-plan message.
+   * untouched.
    */
-  private async applyOutboundBranding(
-    content: ChatSdkReplyContent,
-    context: { organizationId: string; agentIdentifier: string; platform: string }
-  ): Promise<ChatSdkReplyContent> {
+  private applyOutboundBranding(content: ChatSdkReplyContent, branding: OutboundBrandingContext): ChatSdkReplyContent {
     if (content.card || !content.markdown || content.markdown.includes(NOVU_AGENT_POWERED_URL)) {
       return content;
     }
 
-    const removeNovuBranding = await this.resolveRemoveNovuBranding(context.organizationId);
-    if (removeNovuBranding) {
+    if (branding.removeNovuBranding) {
       return content;
     }
 
-    const watermark = buildPoweredByWatermark(context.agentIdentifier, context.platform);
+    const watermark = buildPoweredByWatermark(branding.agentIdentifier, branding.platform);
 
     return { ...content, markdown: `${content.markdown}\n\n${watermark}` };
   }
 
-  private async resolveRemoveNovuBranding(organizationId: string): Promise<boolean> {
-    try {
-      const organization = await this.organizationRepository.findById(organizationId, '_id removeNovuBranding');
+  /**
+   * Single payload-construction chokepoint for adapter deliveries (post, DM,
+   * edit). Branding is applied here so no delivery path can miss the watermark.
+   */
+  private buildAdapterPostableMessage(
+    content: ChatSdkReplyContent,
+    branding: OutboundBrandingContext
+  ): AdapterPostableMessage {
+    const deliveryContent = this.applyOutboundBranding(content, branding);
 
-      return organization?.removeNovuBranding === true;
-    } catch (err) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), organizationId },
-        'Failed to resolve removeNovuBranding for outbound agent message; defaulting to branded'
-      );
-
-      return false;
-    }
-  }
-
-  private buildAdapterPostableMessage(deliveryContent: ChatSdkReplyContent): AdapterPostableMessage {
     if (deliveryContent.card) {
       const payload: { card: unknown; files?: ChatSdkFile[] } = {
         card: deliveryContent.card,

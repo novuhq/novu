@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import type { AgentLimitSource } from '@novu/application-generic';
+import { RESOURCE_LIMIT_SOURCES, type ResourceLimitSource } from '@novu/shared';
 
 /**
  * Usage of a plan-limited Connect resource (agents, active channels) in the
@@ -31,7 +31,7 @@ export class AgentPlanUsageDto extends PlanUsageDto {
     description:
       'Which constraint produced the limits. `plan` limits are lifted by upgrading; `system` limits (platform cap ' +
       'or per-organization override) require contacting the Novu team.',
-    enum: ['plan', 'system'],
+    enum: [...RESOURCE_LIMIT_SOURCES],
   })
-  limitSource: AgentLimitSource;
+  limitSource: ResourceLimitSource;
 }

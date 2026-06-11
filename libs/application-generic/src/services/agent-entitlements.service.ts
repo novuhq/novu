@@ -5,17 +5,13 @@ import {
   FeatureFlagsKeysEnum,
   FeatureNameEnum,
   getFeatureForTierAsNumber,
+  ResourceLimitSource,
   UNLIMITED_VALUE,
 } from '@novu/shared';
+import { PinoLogger } from '../logging';
 import { FeatureFlagsService } from './feature-flags';
+import { resolveTierLimit } from './plan-limits';
 import { SYSTEM_LIMITS } from './resource-validator.service';
-
-/**
- * Which constraint produced an agent limit. Drives user-facing messaging:
- * `plan` limits are solved by upgrading; `system` limits (the platform-wide
- * cap, or a per-org LaunchDarkly override) require contacting the Novu team.
- */
-export type AgentLimitSource = 'plan' | 'system';
 
 /**
  * Grace slots beyond the plan limit that an organization may still create
@@ -24,12 +20,21 @@ export type AgentLimitSource = 'plan' | 'system';
  */
 export const AGENT_CREATION_GRACE = 5;
 
+/**
+ * How long a runtime limit-check result may be served from memory. The runtime
+ * gate is a soft block, so brief staleness after an upgrade/disconnect is
+ * acceptable in exchange for not paying org + flag + count + aggregation
+ * lookups on every inbound message.
+ */
+const RUNTIME_LIMIT_CACHE_TTL_MS = 30_000;
+const RUNTIME_LIMIT_CACHE_MAX_ENTRIES = 10_000;
+
 export interface AgentLimits {
   /** Active-agent limit for runtime responses (soft block). */
   planLimit: number;
   /** Hard cap on total agents (incl. inactive) the organization can create. */
   creationLimit: number;
-  limitSource: AgentLimitSource;
+  limitSource: ResourceLimitSource;
 }
 
 export interface AgentCreationAllowance {
@@ -37,7 +42,7 @@ export interface AgentCreationAllowance {
   /** Total agents in the environment, including inactive ones. */
   totalCreated: number;
   creationLimit: number;
-  limitSource: AgentLimitSource;
+  limitSource: ResourceLimitSource;
 }
 
 export interface AgentPlanUsage {
@@ -54,12 +59,7 @@ export interface AgentPlanUsage {
   totalCreated: number;
   /** Hard cap on total agents the organization can create. */
   creationLimit: number;
-  limitSource: AgentLimitSource;
-}
-
-export interface CustomEmailDomainLimits {
-  limit: number;
-  limitSource: AgentLimitSource;
+  limitSource: ResourceLimitSource;
 }
 
 export interface RuntimeLimitChecks {
@@ -77,15 +77,51 @@ export interface ChannelPlanUsage {
    * the limit is unlimited), meaning every connected channel is within limit.
    */
   withinLimitIntegrationIds: string[] | null;
+  /**
+   * Whether a channel that has not connected yet would be soft-blocked at
+   * runtime. Mirrors the `isChannelWithinLimit` rule: at/over the limit an
+   * unconnected channel has no reserved slot. Exposed here so consumers never
+   * re-derive runtime semantics.
+   */
+  blocksUnconnectedChannels: boolean;
+}
+
+/**
+ * Whether an agent is over the organization's plan limit (and therefore
+ * soft-blocked at runtime). Inactive agents never consume slots — they're just
+ * inactive, not over-limit.
+ */
+export function isAgentOverPlanLimit(usage: AgentPlanUsage, agent: { _id: string; active?: boolean }): boolean {
+  if (!usage.withinLimitAgentIds || !agent.active) {
+    return false;
+  }
+
+  return !usage.withinLimitAgentIds.includes(agent._id);
+}
+
+/**
+ * Whether a channel is over the organization's active-channel plan limit (and
+ * therefore soft-blocked at runtime). Unconnected channels have no reserved
+ * slot and are blocked whenever the environment is at/over its limit.
+ */
+export function isChannelOverPlanLimit(
+  usage: ChannelPlanUsage,
+  channel: { integrationId: string; connected: boolean }
+): boolean {
+  if (!channel.connected) {
+    return usage.blocksUnconnectedChannels;
+  }
+
+  return usage.withinLimitIntegrationIds !== null && !usage.withinLimitIntegrationIds.includes(channel.integrationId);
 }
 
 /**
  * Resolves per-organization entitlements for the Connect (Agents) product.
  *
- * Resolution follows the established platform pattern:
- *   - Agents & custom email domains: `SYSTEM_LIMITS` default + LaunchDarkly override
- *     combined with the plan tier limit via `Math.min`. A LaunchDarkly value that
- *     differs from the system default is treated as a per-org override and wins.
+ * Resolution follows the established platform pattern via `resolveTierLimit`:
+ *   - Agents: `SYSTEM_LIMITS` default + LaunchDarkly override combined with the
+ *     plan tier limit via `Math.min`. A LaunchDarkly value that differs from
+ *     the system default is treated as a per-org override and wins.
  *   - Active channels: tier-table only (Enterprise is genuinely unlimited, no LD cap).
  *
  * Limits resolve at the organization level, but usage is counted per
@@ -100,12 +136,17 @@ export interface ChannelPlanUsage {
  */
 @Injectable()
 export class AgentEntitlementsService {
+  private readonly runtimeLimitCache = new Map<string, { value: RuntimeLimitChecks; expiresAt: number }>();
+
   constructor(
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly agentRepository: AgentRepository,
-    private readonly agentIntegrationRepository: AgentIntegrationRepository
-  ) {}
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   private get isSelfHosted(): boolean {
     return process.env.IS_SELF_HOSTED === 'true';
@@ -132,32 +173,25 @@ export class AgentEntitlementsService {
     }
 
     const apiServiceLevel = knownApiServiceLevel ?? (await this.getApiServiceLevel(organizationId));
-    const systemLimit = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.MAX_AGENTS_LIMIT_NUMBER,
-      defaultValue: SYSTEM_LIMITS.AGENTS,
-      organization: { _id: organizationId, apiServiceLevel },
+    const { limit, systemLimit, limitSource } = await resolveTierLimit({
+      featureFlagsService: this.featureFlagsService,
+      flagKey: FeatureFlagsKeysEnum.MAX_AGENTS_LIMIT_NUMBER,
+      systemDefault: SYSTEM_LIMITS.AGENTS,
+      featureName: FeatureNameEnum.AGENT_MAX_AGENTS,
+      organizationId,
+      apiServiceLevel,
     });
 
-    // A LaunchDarkly value differing from the system default is a deliberate
-    // per-org ceiling — it replaces both the tier limit and the grace buffer.
-    const isSpecialLimit = systemLimit !== SYSTEM_LIMITS.AGENTS;
-    if (isSpecialLimit) {
-      return { planLimit: systemLimit, creationLimit: systemLimit, limitSource: 'system' };
+    // System-sourced limits (per-org LD override or unlimited tier bounded by
+    // the platform cap) are absolute — no grace buffer applies.
+    if (limitSource === 'system') {
+      return { planLimit: limit, creationLimit: limit, limitSource };
     }
-
-    const tierLimit = getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_AGENTS, apiServiceLevel);
-
-    // Unlimited tiers (Enterprise/Unlimited) are bounded only by the system cap.
-    if (tierLimit >= UNLIMITED_VALUE) {
-      return { planLimit: systemLimit, creationLimit: systemLimit, limitSource: 'system' };
-    }
-
-    const planLimit = Math.min(systemLimit, tierLimit);
 
     return {
-      planLimit,
-      creationLimit: Math.min(planLimit + AGENT_CREATION_GRACE, systemLimit),
-      limitSource: 'plan',
+      planLimit: limit,
+      creationLimit: Math.min(limit + AGENT_CREATION_GRACE, systemLimit),
+      limitSource,
     };
   }
 
@@ -188,48 +222,6 @@ export class AgentEntitlementsService {
     const apiServiceLevel = knownApiServiceLevel ?? (await this.getApiServiceLevel(organizationId));
 
     return getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_ACTIVE_CHANNELS, apiServiceLevel);
-  }
-
-  async getCustomEmailDomainLimit(organizationId: string): Promise<number> {
-    const { limit } = await this.getCustomEmailDomainLimits(organizationId);
-
-    return limit;
-  }
-
-  /**
-   * Resolves the organization's custom email domain limit together with its
-   * source. Mirrors `getAgentLimits`: `plan` limits are lifted by upgrading,
-   * `system` limits (the platform-wide cap, a per-org LaunchDarkly override,
-   * or an unlimited tier bounded only by the system cap) require contacting
-   * the Novu team.
-   */
-  async getCustomEmailDomainLimits(organizationId: string): Promise<CustomEmailDomainLimits> {
-    if (this.isSelfHosted) {
-      return { limit: UNLIMITED_VALUE, limitSource: 'system' };
-    }
-
-    const apiServiceLevel = await this.getApiServiceLevel(organizationId);
-    const systemLimit = await this.featureFlagsService.getFlag({
-      key: FeatureFlagsKeysEnum.MAX_CUSTOM_EMAIL_DOMAINS_NUMBER,
-      defaultValue: SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS,
-      organization: { _id: organizationId, apiServiceLevel },
-    });
-
-    // A LaunchDarkly value differing from the system default is a deliberate
-    // per-org ceiling — only the Novu team can change it.
-    const isSpecialLimit = systemLimit !== SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS;
-    if (isSpecialLimit) {
-      return { limit: systemLimit, limitSource: 'system' };
-    }
-
-    const tierLimit = getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_CUSTOM_EMAIL_DOMAINS, apiServiceLevel);
-
-    // Unlimited tiers (Team/Enterprise) are bounded only by the system cap.
-    if (tierLimit >= UNLIMITED_VALUE) {
-      return { limit: systemLimit, limitSource: 'system' };
-    }
-
-    return { limit: Math.min(systemLimit, tierLimit), limitSource: 'plan' };
   }
 
   /**
@@ -273,11 +265,22 @@ export class AgentEntitlementsService {
     ]);
     const used = connectedIntegrationIds.length;
 
-    if (limit >= UNLIMITED_VALUE || used <= limit) {
-      return { used, limit, withinLimitIntegrationIds: null };
+    if (limit >= UNLIMITED_VALUE) {
+      return { used, limit, withinLimitIntegrationIds: null, blocksUnconnectedChannels: false };
     }
 
-    return { used, limit, withinLimitIntegrationIds: connectedIntegrationIds.slice(0, limit) };
+    const blocksUnconnectedChannels = used >= limit;
+
+    if (used <= limit) {
+      return { used, limit, withinLimitIntegrationIds: null, blocksUnconnectedChannels };
+    }
+
+    return {
+      used,
+      limit,
+      withinLimitIntegrationIds: connectedIntegrationIds.slice(0, limit),
+      blocksUnconnectedChannels,
+    };
   }
 
   /**
@@ -313,6 +316,12 @@ export class AgentEntitlementsService {
    * Combined agent + channel runtime limit check for the inbound hot path.
    * Resolves the organization's service level once and shares it across both
    * checks instead of each issuing its own organization lookup.
+   *
+   * Contractually non-throwing: any lookup failure is logged and fails open
+   * (all-within-limit) so a transient error never silently disables a paying
+   * customer's agent. Results are cached for a short TTL — the runtime gate is
+   * a soft block, so brief staleness is acceptable and saves the org, flag and
+   * usage lookups on every inbound message.
    */
   async checkRuntimeLimits(
     organizationId: string,
@@ -324,13 +333,32 @@ export class AgentEntitlementsService {
       return { agentWithinLimit: true, channelWithinLimit: true };
     }
 
-    const apiServiceLevel = await this.getApiServiceLevel(organizationId);
-    const [agentWithinLimit, channelWithinLimit] = await Promise.all([
-      this.isAgentWithinLimit(organizationId, environmentId, agentId, apiServiceLevel),
-      this.isChannelWithinLimit(organizationId, environmentId, integrationId, apiServiceLevel),
-    ]);
+    const cacheKey = `${organizationId}:${environmentId}:${agentId}:${integrationId}`;
+    const cached = this.runtimeLimitCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.value;
+    }
 
-    return { agentWithinLimit, channelWithinLimit };
+    try {
+      const apiServiceLevel = await this.getApiServiceLevel(organizationId);
+      const [agentWithinLimit, channelWithinLimit] = await Promise.all([
+        this.isAgentWithinLimit(organizationId, environmentId, agentId, apiServiceLevel),
+        this.isChannelWithinLimit(organizationId, environmentId, integrationId, apiServiceLevel),
+      ]);
+      const value = { agentWithinLimit, channelWithinLimit };
+
+      this.setRuntimeLimitCacheEntry(cacheKey, value);
+
+      return value;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), organizationId, agentId, integrationId },
+        'Failed to evaluate runtime plan limits; failing open (all within limit)'
+      );
+
+      // Transient failures are not cached so the next message re-evaluates.
+      return { agentWithinLimit: true, channelWithinLimit: true };
+    }
   }
 
   /**
@@ -361,6 +389,17 @@ export class AgentEntitlementsService {
     }
 
     return rank < limit;
+  }
+
+  private setRuntimeLimitCacheEntry(cacheKey: string, value: RuntimeLimitChecks): void {
+    // Crude bound: the cache key space is per agent+integration, so an
+    // unbounded map could grow with tenant count. Dropping everything is fine —
+    // entries rebuild on the next message.
+    if (this.runtimeLimitCache.size >= RUNTIME_LIMIT_CACHE_MAX_ENTRIES) {
+      this.runtimeLimitCache.clear();
+    }
+
+    this.runtimeLimitCache.set(cacheKey, { value, expiresAt: Date.now() + RUNTIME_LIMIT_CACHE_TTL_MS });
   }
 
   private async getApiServiceLevel(organizationId: string): Promise<ApiServiceLevelEnum> {

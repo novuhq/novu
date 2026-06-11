@@ -10,6 +10,7 @@ import {
   AgentIntegrationRepository,
   AgentRepository,
   ChannelConnectionRepository,
+  CommunityOrganizationRepository,
   ICredentialsEntity,
   IntegrationEntity,
   IntegrationRepository,
@@ -61,6 +62,12 @@ export interface ResolvedAgentConfig {
   agentName: string;
   integrationIdentifier: string;
   integrationId: string;
+  /**
+   * Whether the organization removed Novu branding (Pro and above). Drives the
+   * "Powered by Novu" watermark applied by the outbound gateway on every
+   * delivery path.
+   */
+  removeNovuBranding: boolean;
   acknowledgeOnReceived: boolean;
   reactionOnResolved: WellKnownEmoji | null;
   bridgeUrl?: string;
@@ -99,6 +106,7 @@ export class AgentConfigResolver {
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly channelConnectionRepository: ChannelConnectionRepository,
+    private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly logger: PinoLogger,
     private readonly analyticsService: AnalyticsService
   ) {
@@ -280,6 +288,7 @@ export class AgentConfigResolver {
       agentName: agent.name,
       integrationIdentifier,
       integrationId: integration._id,
+      removeNovuBranding: await this.resolveRemoveNovuBranding(organizationId),
       acknowledgeOnReceived: agent.behavior?.acknowledgeOnReceived !== false,
       reactionOnResolved: await resolveReaction(
         agent.behavior?.reactionOnResolved,
@@ -290,6 +299,25 @@ export class AgentConfigResolver {
       devBridgeUrl: agent.devBridgeUrl,
       devBridgeActive: agent.devBridgeActive,
     };
+  }
+
+  /**
+   * Fails open to "branded" (`false`) so a transient organization-lookup error
+   * never strips the free-plan watermark — and never breaks delivery.
+   */
+  private async resolveRemoveNovuBranding(organizationId: string): Promise<boolean> {
+    try {
+      const organization = await this.organizationRepository.findById(organizationId, '_id removeNovuBranding');
+
+      return organization?.removeNovuBranding === true;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), organizationId },
+        'Failed to resolve removeNovuBranding; defaulting to branded'
+      );
+
+      return false;
+    }
   }
 
   /**

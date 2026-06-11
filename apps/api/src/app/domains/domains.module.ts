@@ -1,6 +1,6 @@
 import { HttpModule } from '@nestjs/axios';
 import { DynamicModule, Module } from '@nestjs/common';
-import { AgentEntitlementsService, ResourceValidatorService } from '@novu/application-generic';
+import { ResourceValidatorService } from '@novu/application-generic';
 
 import { AuthModule } from '../auth/auth.module';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
@@ -26,7 +26,7 @@ export const DomainsModule = {
       module: DomainsModuleDefinition,
       imports: [SharedModule, AuthModule, HttpModule, OutboundWebhooksModule.forRoot()],
       controllers: [DomainsController],
-      providers: [...USE_CASES, DomainConnectDiscoveryService, ResourceValidatorService, AgentEntitlementsService],
+      providers: [...USE_CASES, DomainConnectDiscoveryService, ResourceValidatorService],
       exports: [...USE_CASES],
     };
   },

@@ -6,6 +6,7 @@ import type {
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
+import type { AgentPlanUsage, PlanUsage } from '@/api/agents-plan-usage';
 import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
@@ -93,32 +94,6 @@ export type AgentResponse = {
    * limits produce this flag — system-capped organizations are never over-limit.
    */
   exceedsPlanLimit?: boolean;
-};
-
-/**
- * Per-environment usage of a plan-limited resource (agents, active channels)
- * against the organization plan limit. Promoted (synced) production copies do
- * not consume a second plan slot.
- */
-export type PlanUsage = {
-  used: number;
-  limit: number;
-};
-
-/**
- * Which constraint produced an agent limit. `plan` limits are lifted by
- * upgrading; `system` limits (platform cap or per-org override) require
- * contacting the Novu team.
- */
-export type AgentLimitSource = 'plan' | 'system';
-
-/** Agent plan usage, extended with the hard creation cap. */
-export type AgentPlanUsage = PlanUsage & {
-  /** Total agents in the environment, including inactive ones. */
-  totalCreated: number;
-  /** Hard cap on total agents the organization can create per environment. */
-  creationLimit: number;
-  limitSource: AgentLimitSource;
 };
 
 export type ListAgentsResponse = {

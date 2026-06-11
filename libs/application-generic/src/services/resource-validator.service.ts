@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   CommunityOrganizationRepository,
   DomainRepository,
@@ -21,6 +21,7 @@ import {
 } from '@novu/shared';
 import { NotificationStep } from '../value-objects/notification.step';
 import { FeatureFlagsService } from './feature-flags';
+import { resolveTierLimit, throwPlanLimitExceeded } from './plan-limits';
 
 export const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const DEMO_WORKFLOWS_IDENTIFIER = [
@@ -335,15 +336,54 @@ export class ResourceValidatorService {
 
     if (domainsCount >= maxDomainsLimit) {
       // System-side anti-abuse cap (raised per-org via LD by the Novu team) —
-      // upgrading does not lift it, so the copy points at support instead.
-      throw new ConflictException({
-        message:
-          `Your organization has reached the maximum number of domains (${maxDomainsLimit}). ` +
-          'Please reach out to the Novu team to increase this limit.',
-        currentCount: domainsCount,
+      // upgrading does not lift it, so the error points at support (409).
+      throwPlanLimitExceeded({
+        resource: 'domains',
+        limitSource: 'system',
         limit: maxDomainsLimit,
+        currentCount: domainsCount,
       });
     }
+  }
+
+  /**
+   * Enforces the custom email domain count limit (Connect product). This
+   * complements the route-level `@ProductFeature(CUSTOM_DOMAINS)` gate, which
+   * already blocks Free/Pro entirely:
+   *   - plan limits are lifted by upgrading (402);
+   *   - system limits (Team/Enterprise are unlimited and bounded only by the
+   *     platform cap, or a per-org LD override) cannot be lifted by upgrading —
+   *     contact the Novu team (409).
+   */
+  async validateCustomEmailDomainsLimit(organizationId: string): Promise<void> {
+    if (process.env.IS_SELF_HOSTED === 'true') {
+      return;
+    }
+
+    const organization = await this.getOrganization(organizationId);
+    const { limit, limitSource } = await resolveTierLimit({
+      featureFlagsService: this.featureFlagService,
+      flagKey: FeatureFlagsKeysEnum.MAX_CUSTOM_EMAIL_DOMAINS_NUMBER,
+      systemDefault: SYSTEM_LIMITS.CUSTOM_EMAIL_DOMAINS,
+      featureName: FeatureNameEnum.AGENT_MAX_CUSTOM_EMAIL_DOMAINS,
+      organizationId,
+      apiServiceLevel: organization.apiServiceLevel || ApiServiceLevelEnum.FREE,
+    });
+    const currentCount = await this.domainRepository.count({ _organizationId: organizationId });
+
+    if (currentCount < limit) {
+      return;
+    }
+
+    throwPlanLimitExceeded({
+      resource: 'custom email domains',
+      limitSource,
+      limit,
+      currentCount,
+      planMessage: `Your plan includes ${limit} custom email domain${
+        limit === 1 ? '' : 's'
+      }. Please upgrade your plan to add more.`,
+    });
   }
 
   private async getEnvironment(environmentId: string) {

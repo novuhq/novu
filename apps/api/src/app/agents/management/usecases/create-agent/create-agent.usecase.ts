@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  ConflictException,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  UnprocessableEntityException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, UnprocessableEntityException } from '@nestjs/common';
 import {
   AgentEntitlementsService,
   AnalyticsService,
@@ -13,6 +6,7 @@ import {
   PinoLogger,
   shortId,
   slugifyOrRandom,
+  throwPlanLimitExceeded,
 } from '@novu/application-generic';
 import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
@@ -227,27 +221,15 @@ export class CreateAgent {
       return;
     }
 
-    if (allowance.limitSource === 'system') {
-      throw new ConflictException({
-        message:
-          `Your organization has reached the maximum number of agents (${allowance.creationLimit}). ` +
-          'Please reach out to the Novu team to increase this limit.',
-        currentCount: allowance.totalCreated,
-        limit: allowance.creationLimit,
-      });
-    }
-
-    throw new HttpException(
-      {
-        error: 'Payment Required',
-        message:
-          `You have reached the maximum number of agents that can be created on your plan (${allowance.creationLimit}). ` +
-          'Upgrade your plan to create more agents.',
-        currentCount: allowance.totalCreated,
-        limit: allowance.creationLimit,
-      },
-      HttpStatus.PAYMENT_REQUIRED
-    );
+    throwPlanLimitExceeded({
+      resource: 'agents',
+      limitSource: allowance.limitSource,
+      limit: allowance.creationLimit,
+      currentCount: allowance.totalCreated,
+      planMessage:
+        `You have reached the maximum number of agents that can be created on your plan (${allowance.creationLimit}). ` +
+        'Upgrade your plan to create more agents.',
+    });
   }
 
   private async loadRuntimeConfig(
