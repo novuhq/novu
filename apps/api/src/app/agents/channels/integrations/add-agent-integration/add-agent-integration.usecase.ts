@@ -144,11 +144,13 @@ export class AddAgentIntegration {
       throw new ConflictException('This integration is already linked to the agent.');
     }
 
-    const link = await this.agentIntegrationRepository.create({
-      _agentId: agent._id,
-      _integrationId: integration._id,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
+    // Revives a tombstoned (disconnected) link when one exists for this pair —
+    // a plain create would violate the unique (_agentId, _integrationId) index.
+    const link = await this.agentIntegrationRepository.createOrReviveLink({
+      agentId: agent._id,
+      integrationId: integration._id,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
     });
 
     const response = toAgentIntegrationResponse(link, integration, agent);
