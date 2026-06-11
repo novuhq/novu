@@ -178,7 +178,7 @@ overrides:
   tsup@<8.3.5: ^8.3.5
   sanitize-html@<2.17.4: ^2.17.4
   samlify@<2.13.0: ^2.13.0
-  better-auth: 1.5.6
+  better-auth: 1.6.11
   shell-quote@<1.8.4: ^1.8.4
   vitest@<4.1.0: ^4.1.0
   js-cookie@<3.0.7: ^3.0.7
