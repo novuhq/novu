@@ -1,8 +1,24 @@
+import { randomBytes } from 'node:crypto';
+import { writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
 /** Machine-readable handoff lines for `--ci` / logging mode. Agents grep stdout for these. */
 const HANDOFF_PREFIX = 'NOVU_CONNECT_';
 
-export function logAuthUrlHandoffEvent(opts: { authUrl: string }): void {
-  console.log(`${HANDOFF_PREFIX}AUTH_URL=${opts.authUrl}`);
+/**
+ * Persist the dashboard auth URL in a short-lived temp file so `--ci` stdout
+ * never logs the `device_code` query param (a bearer-like poll secret).
+ */
+export async function writeAuthUrlHandoffFile(authUrl: string): Promise<string> {
+  const filePath = join(tmpdir(), `novu-connect-auth-url-${randomBytes(6).toString('hex')}.txt`);
+  await writeFile(filePath, authUrl, { encoding: 'utf8', mode: 0o600 });
+
+  return filePath;
+}
+
+export function logAuthUrlFileHandoffEvent(opts: { authUrlFile: string }): void {
+  console.log(`${HANDOFF_PREFIX}AUTH_URL_FILE=${opts.authUrlFile}`);
 }
 
 export function logEmailHandoffEvents(opts: {

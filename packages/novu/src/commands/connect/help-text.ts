@@ -76,7 +76,7 @@ Non-interactive (agent / CI) contract:
 Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
 
   Authentication (--login):
-    NOVU_CONNECT_AUTH_URL=<url>
+    NOVU_CONNECT_AUTH_URL_FILE=<absolute path to one-line auth URL file>
 
   Slack:
     NOVU_CONNECT_SLACK_SETUP_URL=<url>

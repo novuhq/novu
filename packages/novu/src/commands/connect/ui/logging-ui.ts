@@ -6,7 +6,7 @@ import { channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import {
-  logAuthUrlHandoffEvent,
+  logAuthUrlFileHandoffEvent,
   logEmailHandoffEvents,
   logSlackHandoffEvents,
   logSlackSetupLinkHandoffEvent,
@@ -15,6 +15,7 @@ import {
   logTelegramDeepLinkQrPngHandoffEvent,
   logTelegramSetupLinkHandoffEvent,
   logTelegramSetupLinkQrPngHandoffEvent,
+  writeAuthUrlHandoffFile,
 } from './handoff-events';
 import { renderQRPngFile } from './qr';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
@@ -55,10 +56,15 @@ export function createLoggingUI(): ConnectUI {
     authDashboardUrl(url) {
       if (url) {
         if (!authUrlLogged) {
-          logAuthUrlHandoffEvent({ authUrl: url });
           authUrlLogged = true;
+          void writeAuthUrlHandoffFile(url)
+            .then((authUrlFile) => logAuthUrlFileHandoffEvent({ authUrlFile }))
+            .catch(() => undefined);
         }
-        if (spinner) spinner.text = `Authorizing via the Novu Dashboard… ${chalk.gray('(')}${url}${chalk.gray(')')}`;
+        if (spinner) {
+          spinner.text =
+            'Authorizing via the Novu Dashboard… (read NOVU_CONNECT_AUTH_URL_FILE and deliver the URL to the user)';
+        }
       }
     },
     authStatus(message) {

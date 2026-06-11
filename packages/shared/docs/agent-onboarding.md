@@ -56,7 +56,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 | Term | Meaning |
 |---|---|
-| **Dashboard OAuth** | The `--login` auth path. CLI prints `NOVU_CONNECT_AUTH_URL=`; user approves in the Novu dashboard; CLI receives their Development environment API key. |
+| **Dashboard OAuth** | The `--login` auth path. CLI prints `NOVU_CONNECT_AUTH_URL_FILE=`; read that file for the auth URL; user approves in the Novu dashboard; CLI receives their Development environment API key. |
 | **Keyless mode** | No `--login`, no `--secret-key`. Creates a temporary agent with no Novu account. |
 | **Demo runtime** | Default — shared Claude runtime. In keyless mode, limited to ~5 free replies. |
 | **Handoff** | The channel-specific user action (authorize link, send email, or dashboard URL) that finishes connecting the channel. |
@@ -72,7 +72,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 1. **Channel** — ask which channel. Keyless + WhatsApp / MS Teams → dashboard redirect only (Steps 2–5 skipped). Authenticated (`--login`) supports all channels.
 2. **Purpose** — infer a 1–2 sentence agent description **for the product's end users** from the project; confirm with the user.
 3. **Run** — connect command from Step 3 (`--ci`, plus `--login` only when authenticated), streamed.
-4. **Handoff** — dashboard OAuth first when using `--login` (`NOVU_CONNECT_AUTH_URL=`), then channel-specific next steps. For Slack/Telegram, present the inline secure-page-vs-paste-in-chat token choice only when the token is actually needed. Let the CLI poll.
+4. **Handoff** — dashboard OAuth first when using `--login` (`NOVU_CONNECT_AUTH_URL_FILE=`), then channel-specific next steps. For Slack/Telegram, present the inline secure-page-vs-paste-in-chat token choice only when the token is actually needed. Let the CLI poll.
 5. **Report** — relay the CLI's success or error. Keyless: explain demo limit → claim. Authenticated: report agent identifier + dashboard URL only.
 
 ---
@@ -212,10 +212,10 @@ npx novu connect "$NOVU_AGENT_DESCRIPTION" \
 
 **How to run the Connect shell** — pick one path; never combine with log redirection or a second watch command:
 
-- **If using `--login`:** first **Await** `NOVU_CONNECT_AUTH_URL=`, deliver the URL to the user, then **Await** channel handoff markers and success.
+- **If using `--login`:** first **Await** `NOVU_CONNECT_AUTH_URL_FILE=`, **Read** that file for the auth URL, deliver the URL to the user, then **Await** channel handoff markers and success.
 - **If channel is `slack`, `email`, or `telegram`:** Shell with `block_until_ms: 0` (background). Use **Await** on that shell id (e.g. `NOVU_CONNECT_SLACK_SETUP_URL=`, `NOVU_CONNECT_INBOUND_ADDRESS=`, etc.). **Await** until `✓ Your agent is live` or `✗`. Do not use Monitor, `tail -f`, `grep`, Read on log files.
 - **If channel is `whatsapp` or `teams` (authenticated only):** background Shell; **Await** auth URL, then dashboard agent URL or success.
-- **If channel is `skip`:** foreground Shell is enough unless you need to capture `NOVU_CONNECT_AUTH_URL=` from a background run.
+- **If channel is `skip`:** foreground Shell is enough unless you need to capture `NOVU_CONNECT_AUTH_URL_FILE=` from a background run.
 
 Conditional flags:
 
@@ -252,10 +252,10 @@ npx novu connect "$NOVU_AGENT_DESCRIPTION" \
 Every `--login` run prints:
 
 ```text
-NOVU_CONNECT_AUTH_URL=<url>
+NOVU_CONNECT_AUTH_URL_FILE=<absolute path>
 ```
 
-Paste that exact `<url>` into chat. Tell the user to open it (they should already be signed in) and click **Authorize**. The CLI polls until approval (~5 min). On timeout or expiry, re-run Step 3.
+**Read** that file (do not paste the path itself) and deliver the one-line auth URL to the user. The file keeps the `device_code` out of CI stdout logs. Tell the user to open the URL (they should already be signed in) and click **Authorize**. The CLI polls until approval (~5 min). On timeout or expiry, re-run Step 3.
 
 ### Showing the QR code (host-aware)
 

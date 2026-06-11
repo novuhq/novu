@@ -222,7 +222,7 @@ program
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|skip>.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> with --login).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
