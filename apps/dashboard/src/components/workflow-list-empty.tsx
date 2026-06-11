@@ -1,5 +1,5 @@
 import { PermissionsEnum } from '@novu/shared';
-import { ComponentType, ReactNode } from 'react';
+import { ComponentType, ReactNode, SVGProps } from 'react';
 import {
   RiAddLine,
   RiArrowRightSLine,
@@ -89,7 +89,12 @@ type EmptyStateTag = {
 };
 
 const CHANNEL_TAGS: EmptyStateTag[] = [
-  { label: 'In-app', icon: Notification5Fill, className: 'border-stable/10 bg-stable/10 text-stable/60', rotate: 'rotate-1' },
+  {
+    label: 'In-app',
+    icon: Notification5Fill,
+    className: 'border-stable/10 bg-stable/10 text-stable/60',
+    rotate: 'rotate-1',
+  },
   {
     label: 'Email',
     icon: Mail3Fill,
@@ -149,26 +154,33 @@ const EmptyListRow = ({ children }: { children: ReactNode }) => (
   </div>
 );
 
+const WorkflowsIllustration = (props: SVGProps<SVGSVGElement>) => {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 136 125" {...props}>
+      <rect width="135" height="45" x=".5" y="79.5" stroke="#cacfd8" strokeDasharray="5 3" rx="7.5" />
+      <rect width="127" height="37" x="4.5" y="83.5" fill="#fff" rx="5.5" />
+      <rect width="127" height="37" x="4.5" y="83.5" stroke="#f2f5f8" rx="5.5" />
+      <path fill="#99a0ae" d="M67.625 101.625v-2.25h.75v2.25h2.25v.75h-2.25v2.25h-.75v-2.25h-2.25v-.75z" />
+      <rect width="135" height="45" x=".5" y=".5" stroke="#dd2450" rx="7.5" />
+      <rect width="128" height="38" x="4" y="4" fill="#fff" rx="6" />
+      <rect width="127" height="37" x="4.5" y="4.5" stroke="#fb3748" strokeOpacity=".24" rx="5.5" />
+      <path
+        fill="#d82651"
+        d="M63.2 24.802v-3.9a2.7 2.7 0 0 1 5.4 0v4.2a1.5 1.5 0 1 0 3 0V21.1a1.8 1.8 0 1 1 1.2 0v4.002a2.7 2.7 0 0 1-5.4 0v-4.2a1.5 1.5 0 1 0-3 0v3.9h1.8l-2.4 3-2.4-3z"
+      />
+      <path stroke="#cacfd8" strokeDasharray="5 3" strokeLinejoin="bevel" strokeWidth="1.33" d="M68 49.164v26.67" />
+    </svg>
+  );
+};
+
 const WorkflowListEmptyDev = () => {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center">
-      <div className="flex flex-col gap-12">
-        <div className="flex flex-col items-start">
-          <div className="flex h-[46px] w-[136px] flex-col rounded-lg border border-primary-base p-1">
-            <div className="bg-bg-white border-primary-alpha-24 flex flex-1 items-center justify-center rounded-md border p-3">
-              <RiRouteFill className="text-primary-base size-4" />
-            </div>
-          </div>
-          <div className="border-stroke-sub ml-[68px] h-[30px] border-l border-dashed" />
-          <div className="border-stroke-sub flex h-[46px] w-[136px] flex-col rounded-lg border border-dashed p-1">
-            <div className="bg-bg-white border-stroke-weak flex flex-1 items-center justify-center rounded-md border p-3">
-              <RiAddLine className="text-text-soft size-2.5" />
-            </div>
-          </div>
-        </div>
+    <div className="flex h-full w-full flex-col items-start justify-center">
+      <div className="flex flex-col gap-12 translate-x-1/4">
+        <WorkflowsIllustration className="w-34" />
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1">
