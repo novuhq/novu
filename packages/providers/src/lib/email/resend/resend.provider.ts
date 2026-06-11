@@ -12,7 +12,6 @@ import {
 import { CreateEmailOptions, Resend } from 'resend';
 import { Webhook } from 'svix';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { resolveProviderToRecipients } from '../../../utils/email-recipients.utils';
 import { WithPassthrough } from '../../../utils/types';
 
 export type EmailSentWebhook = {
@@ -94,15 +93,11 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
   ): Promise<ISendMessageSuccessResponse> {
     const senderName = options.senderName || this.config?.senderName;
     const fromAddress = options.from || this.config.from;
-    const { to, headers } = resolveProviderToRecipients({
-      ...options,
-      from: fromAddress,
-    });
 
     const response = await this.resendClient.emails.send(
       this.transform<CreateEmailOptions>(bridgeProviderData, {
         from: senderName ? `${senderName} <${fromAddress}>` : fromAddress,
-        to,
+        to: options.to,
         subject: options.subject,
         text: options.text,
         html: options.html,
@@ -114,7 +109,7 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
           contentId: attachment.cid,
         })),
         bcc: options.bcc,
-        headers,
+        headers: options.headers,
       } satisfies CreateEmailOptions).body
     );
 
@@ -132,15 +127,9 @@ export class ResendEmailProvider extends BaseProvider implements IEmailProvider 
 
   async checkIntegration(options: IEmailOptions): Promise<ICheckIntegrationResponse> {
     try {
-      const fromAddress = options.from || this.config.from;
-      const { to } = resolveProviderToRecipients({
-        ...options,
-        from: fromAddress,
-      });
-
       await this.resendClient.emails.send({
-        from: fromAddress,
-        to,
+        from: options.from || this.config.from,
+        to: options.to,
         subject: options.subject,
         text: options.text,
         html: options.html,

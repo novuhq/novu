@@ -14,7 +14,6 @@ import { Client } from '@sendgrid/client';
 import { EventWebhook } from '@sendgrid/eventwebhook';
 import { MailDataRequired, MailService } from '@sendgrid/mail';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
-import { resolveProviderToRecipients } from '../../../utils/email-recipients.utils';
 import { WithPassthrough } from '../../../utils/types';
 
 type AttachmentJSON = MailDataRequired['attachments'][0];
@@ -88,7 +87,6 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
   }
 
   private createMailData(options: IEmailOptions) {
-    const { to, headers } = resolveProviderToRecipients(options);
     const dynamicTemplateData = options.customData?.dynamicTemplateData;
     const templateId = options.customData?.templateId as unknown as string;
     /*
@@ -125,7 +123,7 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
         name: options.senderName || this.config.senderName,
       },
       ...this.getIpPoolObject(options),
-      to: to.map((email) => ({ email })),
+      to: options.to.map((email) => ({ email })),
       cc: options.cc?.map((ccItem) => ({ email: ccItem })),
       bcc: options.bcc?.map((ccItem) => ({ email: ccItem })),
       ...(content ? { content } : { html: options.html }),
@@ -143,14 +141,14 @@ export class SendgridEmailProvider extends BaseProvider implements IEmailProvide
       attachments,
       personalizations: [
         {
-          to: to.map((email) => ({ email })),
+          to: options.to.map((email) => ({ email })),
           cc: options.cc?.map((ccItem) => ({ email: ccItem })),
           bcc: options.bcc?.map((bccItem) => ({ email: bccItem })),
           dynamicTemplateData,
         },
       ],
       templateId,
-      headers,
+      headers: options.headers,
     };
 
     if (options.replyTo) {
