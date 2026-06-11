@@ -1,9 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
 import type { AgentLimitSource } from '@novu/application-generic';
 
-/** Organization-wide usage of a plan-limited Connect resource (agents, active channels). */
+/**
+ * Usage of a plan-limited Connect resource (agents, active channels) in the
+ * current environment, against the organization plan limit. Usage is counted
+ * per environment so a resource promoted (synced) to production does not
+ * consume a second plan slot.
+ */
 export class PlanUsageDto {
-  @ApiProperty({ description: 'Current usage count for the resource, organization-wide.' })
+  @ApiProperty({ description: 'Current usage count for the resource in this environment.' })
   used: number;
 
   @ApiProperty({ description: 'Amount included in the organization plan.' })
@@ -12,13 +17,13 @@ export class PlanUsageDto {
 
 /** Agent plan usage, extended with the hard creation cap. */
 export class AgentPlanUsageDto extends PlanUsageDto {
-  @ApiProperty({ description: 'Total agents in the organization, including inactive ones.' })
+  @ApiProperty({ description: 'Total agents in this environment, including inactive ones.' })
   totalCreated: number;
 
   @ApiProperty({
     description:
-      'Hard cap on total agents the organization can create. For plan-limited tiers this is the plan limit plus ' +
-      'a small grace buffer; for unlimited tiers it is the platform system limit.',
+      'Hard cap on total agents the organization can create per environment. For plan-limited tiers this is the ' +
+      'plan limit plus a small grace buffer; for unlimited tiers it is the platform system limit.',
   })
   creationLimit: number;
 

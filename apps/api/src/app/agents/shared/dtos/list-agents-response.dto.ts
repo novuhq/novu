@@ -9,8 +9,8 @@ export class ListAgentsResponseDto extends withCursorPagination(AgentResponseDto
   @ApiPropertyOptional({
     type: AgentPlanUsageDto,
     description:
-      'Cloud only. Organization-wide active agent usage against the plan limit. Agents created beyond the limit ' +
-      'are flagged with `exceedsPlanLimit` and will not respond to inbound messages.',
+      'Cloud only. Active agent usage in this environment against the organization plan limit. Agents created ' +
+      'beyond the limit are flagged with `exceedsPlanLimit` and will not respond to inbound messages.',
   })
   planUsage?: AgentPlanUsageDto;
 }

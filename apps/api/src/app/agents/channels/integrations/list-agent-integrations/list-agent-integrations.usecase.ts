@@ -113,7 +113,10 @@ export class ListAgentIntegrations {
       );
     }
 
-    const channelUsage = await this.agentEntitlementsService.getChannelPlanUsage(command.organizationId);
+    const channelUsage = await this.agentEntitlementsService.getChannelPlanUsage(
+      command.organizationId,
+      command.environmentId
+    );
     const withinLimitIntegrationIds = channelUsage.withinLimitIntegrationIds
       ? new Set(channelUsage.withinLimitIntegrationIds)
       : null;

@@ -37,7 +37,9 @@ export class GetAgent {
       this.loadManagedRuntimeHydration(agent, command.environmentId, command.organizationId),
       this.loadRuntimeConfig(agent, command),
       // Inactive agents don't consume plan slots and aren't over-limit — they're just inactive.
-      agent.active ? this.agentEntitlementsService.isAgentWithinLimit(command.organizationId, agent._id) : true,
+      agent.active
+        ? this.agentEntitlementsService.isAgentWithinLimit(command.organizationId, command.environmentId, agent._id)
+        : true,
     ]);
 
     return {

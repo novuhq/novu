@@ -790,6 +790,7 @@ export class AgentInboundHandler implements OnModuleInit {
     try {
       const { agentWithinLimit, channelWithinLimit } = await this.agentEntitlements.checkRuntimeLimits(
         config.organizationId,
+        config.environmentId,
         agentId,
         config.integrationId
       );

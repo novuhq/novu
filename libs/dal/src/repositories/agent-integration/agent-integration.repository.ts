@@ -18,12 +18,14 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
   }
 
   /**
-   * Distinct integration ids (channels) that are connected for the organization,
+   * Distinct integration ids (channels) that are connected in the environment,
    * ordered by the earliest time each channel became connected (stable, ascending).
    *
    * A "channel" is a distinct `_integrationId` — the same integration linked to
    * multiple agents counts once. Used for active-channel plan-limit enforcement,
    * where the first N channels (by connection order) are within the plan limit.
+   * Counting is per environment so a channel promoted (synced) to production
+   * does not consume a second plan slot for the same logical channel.
    *
    * Links whose integration was (soft-)deleted from the integration store are
    * excluded — a removed channel must not consume a plan slot, and stale links
@@ -31,11 +33,12 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
    * Tombstoned (disconnected) links are excluded explicitly: the schema-level
    * exclusion hook does not apply to aggregation pipelines.
    */
-  async listConnectedIntegrationIdsForOrganization(organizationId: string): Promise<string[]> {
+  async listConnectedIntegrationIdsForEnvironment(organizationId: string, environmentId: string): Promise<string[]> {
     const result = await this.aggregate([
       {
         $match: {
           _organizationId: this.convertStringToObjectId(organizationId),
+          _environmentId: this.convertStringToObjectId(environmentId),
           connectedAt: { $ne: null },
           disconnectedAt: null,
         },

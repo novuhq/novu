@@ -9,8 +9,8 @@ export class ListAgentIntegrationsResponseDto extends withCursorPagination(Agent
   @ApiPropertyOptional({
     type: PlanUsageDto,
     description:
-      'Cloud only. Organization-wide connected channel usage against the plan limit. Channels connected beyond ' +
-      'the limit are flagged with `exceedsPlanLimit` and will not respond to inbound messages.',
+      'Cloud only. Connected channel usage in this environment against the organization plan limit. Channels ' +
+      'connected beyond the limit are flagged with `exceedsPlanLimit` and will not respond to inbound messages.',
   })
   planUsage?: PlanUsageDto;
 }

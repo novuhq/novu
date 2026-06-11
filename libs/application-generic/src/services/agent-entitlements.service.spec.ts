@@ -7,36 +7,37 @@ import { FeatureFlagsService } from './feature-flags';
 import { SYSTEM_LIMITS } from './resource-validator.service';
 
 const ORGANIZATION_ID = 'org-123';
+const ENVIRONMENT_ID = 'env-456';
 
 interface Stubs {
   getFlag: sinon.SinonStub;
   findById: sinon.SinonStub;
-  countByOrganization: sinon.SinonStub;
-  countTotalByOrganization: sinon.SinonStub;
-  countOlderAgentsInOrganization: sinon.SinonStub;
+  countActiveInEnvironment: sinon.SinonStub;
+  countTotalInEnvironment: sinon.SinonStub;
+  countOlderAgentsInEnvironment: sinon.SinonStub;
   findOldestAgentIds: sinon.SinonStub;
-  listConnectedIntegrationIdsForOrganization: sinon.SinonStub;
+  listConnectedIntegrationIdsForEnvironment: sinon.SinonStub;
 }
 
 function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEntitlementsService; stubs: Stubs } {
   const getFlag = sinon.stub().resolves(SYSTEM_LIMITS.AGENTS);
   const findById = sinon.stub().resolves({ _id: ORGANIZATION_ID, apiServiceLevel });
-  const countByOrganization = sinon.stub().resolves(0);
-  const countTotalByOrganization = sinon.stub().resolves(0);
-  const countOlderAgentsInOrganization = sinon.stub().resolves(0);
+  const countActiveInEnvironment = sinon.stub().resolves(0);
+  const countTotalInEnvironment = sinon.stub().resolves(0);
+  const countOlderAgentsInEnvironment = sinon.stub().resolves(0);
   const findOldestAgentIds = sinon.stub().resolves([]);
-  const listConnectedIntegrationIdsForOrganization = sinon.stub().resolves([]);
+  const listConnectedIntegrationIdsForEnvironment = sinon.stub().resolves([]);
 
   const featureFlagsService = { getFlag } as unknown as FeatureFlagsService;
   const organizationRepository = { findById } as unknown as CommunityOrganizationRepository;
   const agentRepository = {
-    countByOrganization,
-    countTotalByOrganization,
-    countOlderAgentsInOrganization,
+    countActiveInEnvironment,
+    countTotalInEnvironment,
+    countOlderAgentsInEnvironment,
     findOldestAgentIds,
   } as unknown as AgentRepository;
   const agentIntegrationRepository = {
-    listConnectedIntegrationIdsForOrganization,
+    listConnectedIntegrationIdsForEnvironment,
   } as unknown as AgentIntegrationRepository;
 
   const service = new AgentEntitlementsService(
@@ -51,11 +52,11 @@ function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEnt
     stubs: {
       getFlag,
       findById,
-      countByOrganization,
-      countTotalByOrganization,
-      countOlderAgentsInOrganization,
+      countActiveInEnvironment,
+      countTotalInEnvironment,
+      countOlderAgentsInEnvironment,
       findOldestAgentIds,
-      listConnectedIntegrationIdsForOrganization,
+      listConnectedIntegrationIdsForEnvironment,
     },
   };
 }
@@ -151,22 +152,23 @@ describe('AgentEntitlementsService', () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
       stubs.getFlag.resolves(10);
-      stubs.countTotalByOrganization.resolves(10);
+      stubs.countTotalInEnvironment.resolves(10);
 
-      const allowance = await service.canCreateAgent(ORGANIZATION_ID);
+      const allowance = await service.canCreateAgent(ORGANIZATION_ID, ENVIRONMENT_ID);
 
       expect(allowance.allowed).to.equal(false);
       expect(allowance.creationLimit).to.equal(10);
       expect(allowance.limitSource).to.equal('system');
+      expect(stubs.countTotalInEnvironment.calledWith(ORGANIZATION_ID, ENVIRONMENT_ID)).to.equal(true);
     });
 
     it('allows creation while below the creation limit', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
       stubs.getFlag.resolves(10);
-      stubs.countTotalByOrganization.resolves(9);
+      stubs.countTotalInEnvironment.resolves(9);
 
-      const allowance = await service.canCreateAgent(ORGANIZATION_ID);
+      const allowance = await service.canCreateAgent(ORGANIZATION_ID, ENVIRONMENT_ID);
 
       expect(allowance.allowed).to.equal(true);
     });
@@ -175,10 +177,10 @@ describe('AgentEntitlementsService', () => {
       process.env.IS_SELF_HOSTED = 'true';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
 
-      const allowance = await service.canCreateAgent(ORGANIZATION_ID);
+      const allowance = await service.canCreateAgent(ORGANIZATION_ID, ENVIRONMENT_ID);
 
       expect(allowance.allowed).to.equal(true);
-      expect(stubs.countTotalByOrganization.called).to.equal(false);
+      expect(stubs.countTotalInEnvironment.called).to.equal(false);
     });
   });
 
@@ -233,19 +235,20 @@ describe('AgentEntitlementsService', () => {
     it('allows agents whose creation rank is below the limit', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.countOlderAgentsInOrganization.resolves(1);
+      stubs.countOlderAgentsInEnvironment.resolves(1);
 
-      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, 'agent-1');
+      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1');
 
       expect(withinLimit).to.equal(true);
+      expect(stubs.countOlderAgentsInEnvironment.calledWith(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1')).to.equal(true);
     });
 
     it('blocks agents whose creation rank is at or beyond the limit', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.countOlderAgentsInOrganization.resolves(3);
+      stubs.countOlderAgentsInEnvironment.resolves(3);
 
-      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, 'agent-4');
+      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-4');
 
       expect(withinLimit).to.equal(false);
     });
@@ -253,49 +256,50 @@ describe('AgentEntitlementsService', () => {
     it('never blocks agents for system-capped unlimited tiers', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.ENTERPRISE);
-      stubs.countOlderAgentsInOrganization.resolves(SYSTEM_LIMITS.AGENTS + 5);
+      stubs.countOlderAgentsInEnvironment.resolves(SYSTEM_LIMITS.AGENTS + 5);
 
-      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, 'agent-over');
+      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-over');
 
       expect(withinLimit).to.equal(true);
-      expect(stubs.countOlderAgentsInOrganization.called).to.equal(false);
+      expect(stubs.countOlderAgentsInEnvironment.called).to.equal(false);
     });
 
     it('never blocks agents under a LaunchDarkly per-org override, even when over it', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
       stubs.getFlag.resolves(10);
-      stubs.countOlderAgentsInOrganization.resolves(15);
+      stubs.countOlderAgentsInEnvironment.resolves(15);
 
-      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, 'agent-over');
+      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-over');
 
       expect(withinLimit).to.equal(true);
-      expect(stubs.countOlderAgentsInOrganization.called).to.equal(false);
+      expect(stubs.countOlderAgentsInEnvironment.called).to.equal(false);
     });
   });
 
   describe('getAgentPlanUsage', () => {
-    it('lists within-limit agent ids when a plan-limited org is over its limit', async () => {
+    it('lists within-limit agent ids when a plan-limited environment is over its limit', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.countByOrganization.resolves(3);
-      stubs.countTotalByOrganization.resolves(3);
+      stubs.countActiveInEnvironment.resolves(3);
+      stubs.countTotalInEnvironment.resolves(3);
       stubs.findOldestAgentIds.resolves(['agent-1', 'agent-2']);
 
-      const usage = await service.getAgentPlanUsage(ORGANIZATION_ID);
+      const usage = await service.getAgentPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
 
       expect(usage.limitSource).to.equal('plan');
       expect(usage.withinLimitAgentIds).to.deep.equal(['agent-1', 'agent-2']);
+      expect(stubs.findOldestAgentIds.calledWith(ORGANIZATION_ID, ENVIRONMENT_ID, 2)).to.equal(true);
     });
 
     it('does not flag agents as over-limit for system-capped organizations', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
       stubs.getFlag.resolves(10);
-      stubs.countByOrganization.resolves(15);
-      stubs.countTotalByOrganization.resolves(15);
+      stubs.countActiveInEnvironment.resolves(15);
+      stubs.countTotalInEnvironment.resolves(15);
 
-      const usage = await service.getAgentPlanUsage(ORGANIZATION_ID);
+      const usage = await service.getAgentPlanUsage(ORGANIZATION_ID, ENVIRONMENT_ID);
 
       expect(usage.limitSource).to.equal('system');
       expect(usage.withinLimitAgentIds).to.equal(null);
@@ -307,10 +311,10 @@ describe('AgentEntitlementsService', () => {
     it('resolves the organization service level once for both checks', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.countOlderAgentsInOrganization.resolves(0);
-      stubs.listConnectedIntegrationIdsForOrganization.resolves(['int-1']);
+      stubs.countOlderAgentsInEnvironment.resolves(0);
+      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1']);
 
-      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, 'agent-1', 'int-1');
+      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
 
       expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
       expect(stubs.findById.callCount).to.equal(1);
@@ -320,7 +324,7 @@ describe('AgentEntitlementsService', () => {
       process.env.IS_SELF_HOSTED = 'true';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
 
-      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, 'agent-1', 'int-1');
+      const checks = await service.checkRuntimeLimits(ORGANIZATION_ID, ENVIRONMENT_ID, 'agent-1', 'int-1');
 
       expect(checks).to.deep.equal({ agentWithinLimit: true, channelWithinLimit: true });
       expect(stubs.findById.called).to.equal(false);
@@ -331,19 +335,22 @@ describe('AgentEntitlementsService', () => {
     it('allows channels connected within the limit by connection order', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.listConnectedIntegrationIdsForOrganization.resolves(['int-1', 'int-2']);
+      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1', 'int-2']);
 
-      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, 'int-2');
+      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'int-2');
 
       expect(withinLimit).to.equal(true);
+      expect(stubs.listConnectedIntegrationIdsForEnvironment.calledWith(ORGANIZATION_ID, ENVIRONMENT_ID)).to.equal(
+        true
+      );
     });
 
     it('blocks channels connected beyond the limit by connection order', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.listConnectedIntegrationIdsForOrganization.resolves(['int-1', 'int-2', 'int-3']);
+      stubs.listConnectedIntegrationIdsForEnvironment.resolves(['int-1', 'int-2', 'int-3']);
 
-      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, 'int-3');
+      const withinLimit = await service.isChannelWithinLimit(ORGANIZATION_ID, ENVIRONMENT_ID, 'int-3');
 
       expect(withinLimit).to.equal(false);
     });

@@ -48,7 +48,7 @@ export class CreateAgent {
   }
 
   async execute(command: CreateAgentCommand): Promise<AgentResponseDto> {
-    await this.assertCreationWithinLimit(command.organizationId);
+    await this.assertCreationWithinLimit(command.organizationId, command.environmentId);
 
     const isAdoptMode = command.runtime === 'managed' && !!command.managedRuntime?.externalAgentId;
     let identifier = command.identifier;
@@ -220,8 +220,8 @@ export class CreateAgent {
    *   - the system limit (or a per-org LD override) is an absolute ceiling
    *     that upgrading cannot lift (409 — contact the Novu team).
    */
-  private async assertCreationWithinLimit(organizationId: string): Promise<void> {
-    const allowance = await this.agentEntitlementsService.canCreateAgent(organizationId);
+  private async assertCreationWithinLimit(organizationId: string, environmentId: string): Promise<void> {
+    const allowance = await this.agentEntitlementsService.canCreateAgent(organizationId, environmentId);
 
     if (allowance.allowed) {
       return;

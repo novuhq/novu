@@ -36,7 +36,7 @@ export class ListAgents {
 
     const [summariesByAgentId, planUsage] = await Promise.all([
       this.loadIntegrationsForAgents(command.environmentId, command.organizationId, pagination.agents),
-      this.agentEntitlementsService.getAgentPlanUsage(command.organizationId),
+      this.agentEntitlementsService.getAgentPlanUsage(command.organizationId, command.environmentId),
     ]);
 
     const withinLimitAgentIds = planUsage.withinLimitAgentIds ? new Set(planUsage.withinLimitAgentIds) : null;

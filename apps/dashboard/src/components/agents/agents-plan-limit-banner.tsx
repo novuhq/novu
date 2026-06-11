@@ -1,4 +1,3 @@
-import { useNavigate } from 'react-router-dom';
 import type { AgentPlanUsage, PlanUsage } from '@/api/agents';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
@@ -6,6 +5,7 @@ import { useTelemetry } from '@/hooks/use-telemetry';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { openInNewTab } from '@/utils/url';
+import { useNavigate } from 'react-router-dom';
 
 function usePlanUpgradeClick(source: string, utmCampaign: string) {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ function usePlanUpgradeClick(source: string, utmCampaign: string) {
       return;
     }
 
-    navigate(`${ROUTES.SETTINGS_BILLING}?utm_source=${utmCampaign}`);
+    navigate(`${ROUTES.SETTINGS_BILLING}?utm_campaign=${utmCampaign}`);
   };
 }
 
