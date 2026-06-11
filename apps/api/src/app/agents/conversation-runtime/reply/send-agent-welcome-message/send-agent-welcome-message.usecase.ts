@@ -6,27 +6,19 @@ import {
   ConversationParticipantTypeEnum,
   IntegrationRepository,
 } from '@novu/dal';
+import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
+import {
+  buildConnectClaimUrl,
+  buildKeylessWelcomeCard,
+  getKeylessWelcomeText,
+  isKeylessOrganization,
+} from '../../../../keyless/keyless-signup.helpers';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../../shared/util/platform-endpoint-config';
 import { resolveAgentPlatform } from '../../../shared/util/provider-to-platform';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { OutboundGateway } from '../../egress/outbound.gateway';
 import { SendAgentWelcomeMessageCommand } from './send-agent-welcome-message.command';
-
-function getWelcomeText(platform: AgentPlatformEnum): string {
-  switch (platform) {
-    case AgentPlatformEnum.SLACK:
-      return 'Your Slack app is connected! Send me a message to try it out.';
-    case AgentPlatformEnum.TEAMS:
-      return 'Your Teams app is connected! Send me a message to try it out.';
-    case AgentPlatformEnum.WHATSAPP:
-      return 'Connected! Send me a message to try it out.';
-    case AgentPlatformEnum.EMAIL:
-      return 'Connected! Reply to this email to try it out.';
-    default:
-      return 'Connected! Send me a message to try it out.';
-  }
-}
 
 @Injectable()
 export class SendAgentWelcomeMessage {
@@ -37,6 +29,7 @@ export class SendAgentWelcomeMessage {
     private readonly conversationService: AgentConversationService,
     private readonly analyticsService: AnalyticsService,
     private readonly outboundGateway: OutboundGateway,
+    private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -104,12 +97,13 @@ export class SendAgentWelcomeMessage {
     }
 
     try {
-      const welcomeText = getWelcomeText(platform);
+      const welcomeText = getKeylessWelcomeText(platform);
+      const keylessWelcome = await this.buildKeylessWelcomeDelivery(command, platform, welcomeText);
       const sent = await this.outboundGateway.sendDirectMessage(
         agent._id,
         command.integrationIdentifier,
         platformUserId,
-        { markdown: welcomeText }
+        keylessWelcome?.content ?? { markdown: welcomeText }
       );
 
       const { platformThreadId } = sent;
@@ -135,6 +129,7 @@ export class SendAgentWelcomeMessage {
         platformMessageId: sent.messageId,
         agentIdentifier: command.agentIdentifier,
         content: welcomeText,
+        richContent: keylessWelcome?.richContent,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       });
@@ -152,6 +147,37 @@ export class SendAgentWelcomeMessage {
       this.logger.warn(err, `Failed to send welcome message for agent "${command.agentIdentifier}"`);
 
       return { sent: false };
+    }
+  }
+
+  private async buildKeylessWelcomeDelivery(
+    command: SendAgentWelcomeMessageCommand,
+    platform: AgentPlatformEnum,
+    welcomeText: string
+  ): Promise<{ content: { card: Record<string, unknown> }; richContent: Record<string, unknown> } | null> {
+    if (!isKeylessOrganization(command.organizationId)) {
+      return null;
+    }
+
+    try {
+      const { token } = await this.connectClaimTokenService.issueOrGetForEnvironment({
+        env: command.environmentId,
+        org: command.organizationId,
+      });
+      const claimUrl = buildConnectClaimUrl(token);
+      const card = buildKeylessWelcomeCard(welcomeText, claimUrl);
+
+      return {
+        content: { card: card as unknown as Record<string, unknown> },
+        richContent: { card: card as unknown as Record<string, unknown> },
+      };
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `Failed to build keyless welcome signup link for agent "${command.agentIdentifier}" — sending plain welcome`
+      );
+
+      return null;
     }
   }
 
