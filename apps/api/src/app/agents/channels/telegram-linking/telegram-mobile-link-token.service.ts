@@ -55,7 +55,7 @@ redis.call('SET', KEYS[1], ARGV[1], 'EX', tonumber(ARGV[2]))
 redis.call('DEL', KEYS[2])
 `;
 
-export type TelegramMobileLinkKind = 'agent' | 'integration-store';
+export type TelegramMobileLinkKind = 'agent' | 'integration-store' | 'slack-agent-setup';
 
 export interface TelegramMobileLinkTokenPayload {
   kind: 'agent';
@@ -82,7 +82,20 @@ export interface IntegrationStoreTelegramMobileLinkPayload {
   org: string;
 }
 
-type StoredPayload = TelegramMobileLinkTokenPayload | IntegrationStoreTelegramMobileLinkPayload;
+export interface SlackAgentSetupLinkPayload {
+  kind: 'slack-agent-setup';
+  env: string;
+  org: string;
+  /** Agent external identifier. */
+  aid: string;
+  /** Integration id (internal Mongo `_id`). */
+  iid: string;
+}
+
+type StoredPayload =
+  | TelegramMobileLinkTokenPayload
+  | IntegrationStoreTelegramMobileLinkPayload
+  | SlackAgentSetupLinkPayload;
 
 interface StoredEntry {
   payload: StoredPayload;
@@ -158,6 +171,23 @@ export class TelegramMobileLinkTokenService {
     return this.mint(payload);
   }
 
+  async issueForSlackAgentSetup(params: {
+    environmentId: string;
+    organizationId: string;
+    agentIdentifier: string;
+    integrationId: string;
+  }): Promise<IssuedTelegramMobileLink> {
+    const payload: SlackAgentSetupLinkPayload = {
+      kind: 'slack-agent-setup',
+      env: params.environmentId,
+      org: params.organizationId,
+      aid: params.agentIdentifier,
+      iid: params.integrationId,
+    };
+
+    return this.mint(payload);
+  }
+
   /**
    * Reads the stored payload without consuming the token (safe for status/prefetch).
    */
@@ -167,6 +197,10 @@ export class TelegramMobileLinkTokenService {
 
   async verifyIntegrationStore(token: string): Promise<IntegrationStoreTelegramMobileLinkPayload> {
     return this.peek(token, 'integration-store') as Promise<IntegrationStoreTelegramMobileLinkPayload>;
+  }
+
+  async verifySlackAgentSetup(token: string): Promise<SlackAgentSetupLinkPayload> {
+    return this.peek(token, 'slack-agent-setup') as Promise<SlackAgentSetupLinkPayload>;
   }
 
   /** Returns whether a token was already consumed (used marker present). */
@@ -319,6 +353,11 @@ export class TelegramMobileLinkTokenService {
       if (!agentPayload.env || !agentPayload.org || !agentPayload.aid || !agentPayload.iid) {
         throw new InvalidTelegramMobileTokenError('invalid');
       }
+    } else if (entry.payload.kind === 'slack-agent-setup') {
+      const slackPayload = entry.payload;
+      if (!slackPayload.env || !slackPayload.org || !slackPayload.aid || !slackPayload.iid) {
+        throw new InvalidTelegramMobileTokenError('invalid');
+      }
     } else if (!entry.payload.env || !entry.payload.org) {
       throw new InvalidTelegramMobileTokenError('invalid');
     }
@@ -334,7 +373,7 @@ export class TelegramMobileLinkTokenService {
       }
 
       const payload = parsed.payload;
-      if (payload.kind !== 'agent' && payload.kind !== 'integration-store') {
+      if (payload.kind !== 'agent' && payload.kind !== 'integration-store' && payload.kind !== 'slack-agent-setup') {
         return null;
       }
 

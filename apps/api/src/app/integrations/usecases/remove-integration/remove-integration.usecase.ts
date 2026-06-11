@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException, Scope } from '@nest
 import { AgentIntegrationRepository, DalException, IntegrationRepository } from '@novu/dal';
 import { CHANNELS_WITH_PRIMARY } from '@novu/shared';
 
+import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { RemoveIntegrationCommand } from './remove-integration.command';
 
 @Injectable({
@@ -22,6 +23,13 @@ export class RemoveIntegration {
       if (!existingIntegration) {
         throw new NotFoundException(`Entity with id ${command.integrationId} not found`);
       }
+
+      assertIntegrationEnvironmentScope({
+        restrictToUserEnvironment: command.restrictToUserEnvironment,
+        userEnvironmentId: command.environmentId,
+        integrationEnvironmentId: existingIntegration._environmentId,
+        action: 'delete',
+      });
 
       await this.integrationRepository.delete({
         _id: existingIntegration._id,

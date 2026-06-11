@@ -1,4 +1,25 @@
+import { randomBytes } from 'node:crypto';
+import { chmod } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import QRCode from 'qrcode';
+
+/**
+ * Render a QR code to a PNG file in the OS temp directory and return its
+ * absolute path.
+ *
+ * Used in `--ci` / logging mode where the consumer is an AI agent driving a
+ * chat UI: ASCII QR art breaks there (code blocks add line-height gaps that
+ * slice the modules, and dark themes invert the polarity), while a PNG path
+ * can be embedded inline as a markdown image.
+ */
+export async function renderQRPngFile(text: string): Promise<string> {
+  const filePath = join(tmpdir(), `novu-connect-qr-${randomBytes(6).toString('hex')}.png`);
+  await QRCode.toFile(filePath, text, { type: 'png', width: 480, margin: 2 });
+  await chmod(filePath, 0o600);
+
+  return filePath;
+}
 
 /**
  * Half-block ASCII QR for terminal rendering.

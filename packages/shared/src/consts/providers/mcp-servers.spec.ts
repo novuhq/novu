@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { McpConnectionAuthModeEnum } from '../../dto/agent/managed-runtime.dto';
 import {
+  filterDemoConfigurableMcpIds,
+  isProviderManagedMcp,
   MCP_SERVERS,
   type McpOAuthCatalogEntry,
   type McpServerCategory,
@@ -130,6 +132,35 @@ describe('MCP_SERVERS catalog', () => {
         'workflow',
         'codespace',
       ]);
+    });
+  });
+
+  describe('isProviderManagedMcp', () => {
+    it('returns true for a provider-managed entry', () => {
+      expect(isProviderManagedMcp('slack')).toBe(true);
+    });
+
+    it('returns false for dcr and novu-app entries', () => {
+      expect(isProviderManagedMcp('sentry')).toBe(false);
+      expect(isProviderManagedMcp('github')).toBe(false);
+    });
+
+    it('returns false for an unknown id', () => {
+      expect(isProviderManagedMcp('not-a-real-mcp')).toBe(false);
+    });
+  });
+
+  describe('filterDemoConfigurableMcpIds', () => {
+    it('drops provider-managed ids and keeps Novu-handled OAuth ids', () => {
+      expect(filterDemoConfigurableMcpIds(['sentry', 'slack', 'github', 'asana'])).toEqual(['sentry', 'github']);
+    });
+
+    it('returns an empty array when every id is provider-managed', () => {
+      expect(filterDemoConfigurableMcpIds(['slack', 'asana'])).toEqual([]);
+    });
+
+    it('preserves order and leaves a fully-configurable list untouched', () => {
+      expect(filterDemoConfigurableMcpIds(['sentry', 'datadog', 'linear'])).toEqual(['sentry', 'datadog', 'linear']);
     });
   });
 

@@ -1,14 +1,17 @@
 import {
   AgentRuntimeProviderIdEnum,
   FeatureFlagsKeysEnum,
+  filterDemoConfigurableMcpIds,
   type IIntegration,
   IntegrationKindEnum,
+  isProviderManagedMcp,
   slugify,
 } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
+import { AnimatePresence, motion } from 'motion/react';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine } from 'react-icons/ri';
+import { RiArrowRightSLine, RiArrowRightUpLine, RiCloseLine, RiLoopLeftLine } from 'react-icons/ri';
 import type { GeneratedManagedAgent } from '@/api/agents';
 import { BroomSparkle } from '@/components/icons/broom-sparkle';
 import { Button } from '@/components/primitives/button';
@@ -21,7 +24,7 @@ import {
 } from '@/components/primitives/segmented-control';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
-import { useAgentTemplates } from '@/hooks/use-agent-templates';
+import { useAgentSuggestions } from '@/hooks/use-agent-suggestions';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
@@ -159,7 +162,11 @@ export function CreateAgentDialog({
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const { integrations } = useFetchIntegrations();
-  const { templates: agentTemplates } = useAgentTemplates();
+  const {
+    templates: agentTemplates,
+    isFetching: isFetchingAgentTemplates,
+    refresh: refreshAgentTemplates,
+  } = useAgentSuggestions();
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
@@ -227,6 +234,18 @@ export function CreateAgentDialog({
   // teams writing their own runtime see exactly the inputs they need to fill in.
   const useAiGeneration = isManagedClaudeConnector && isManagedEnabled;
   const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+  // The demo (Novu-managed Claude) integration exposes no provider vault, so provider-managed MCPs
+  // can never be configured on it. Drop them from the suggestion pills so the demo only advertises
+  // tools the user can actually wire up; the API enforces the same filter at provision time.
+  const displayedAgentTemplates = useMemo(() => {
+    if (!isDemoProviderSelected) return agentTemplates;
+
+    return agentTemplates.map((template) => ({
+      ...template,
+      suggestedMcpServers: filterDemoConfigurableMcpIds(template.suggestedMcpServers),
+      mcpServers: template.mcpServers?.filter((server) => !isProviderManagedMcp(server.id)),
+    }));
+  }, [agentTemplates, isDemoProviderSelected]);
   const scope: 'create' | 'existing' = generationMode === 'existing' ? 'existing' : 'create';
   const showScopeTabs = isManagedClaudeConnector && !isDemoProviderSelected;
   const showManagedOptions = isManagedEnabled;
@@ -570,7 +589,10 @@ export function CreateAgentDialog({
     let effectiveName = name;
     let effectiveIdentifier = identifier;
     let effectiveInstructions = instructions;
-    let effectiveDescription = instructions;
+    // In scratch mode the single textarea IS the description, so it maps to `description`. In
+    // managed manual mode that same textarea is the Claude system prompt and must NOT leak into the
+    // description. The prompt-generation path overrides this with `generated.description` below.
+    let effectiveDescription = runtime === 'scratch' ? instructions : '';
     let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
 
     if (isPromptGenerationMode) {
@@ -868,11 +890,39 @@ export function CreateAgentDialog({
                 </div>
 
                 {generationMode === 'prompt' && (
-                  <AgentSuggestionPills
-                    suggestions={agentTemplates}
-                    onSelect={handleSelectAiSuggestion}
-                    disabled={isSubmitBusy}
-                  />
+                  <div className="flex min-w-0 items-center">
+                    <AgentSuggestionPills
+                      className="min-w-0 flex-1"
+                      suggestions={displayedAgentTemplates}
+                      onSelect={handleSelectAiSuggestion}
+                      disabled={isSubmitBusy}
+                      isLoading={isFetchingAgentTemplates}
+                    />
+                    <AnimatePresence initial={false}>
+                      {!isFetchingAgentTemplates && (
+                        <motion.div
+                          key="regenerate-suggestions"
+                          initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                          exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                          className="shrink-0 overflow-hidden"
+                        >
+                          <Button
+                            aria-label="Regenerate suggestions"
+                            title="Regenerate suggestions"
+                            className="h-6 shrink-0 [&_svg]:size-2.5"
+                            variant="secondary"
+                            mode="ghost"
+                            size="2xs"
+                            trailingIcon={RiLoopLeftLine}
+                            disabled={isSubmitBusy}
+                            onClick={refreshAgentTemplates}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
             ) : (

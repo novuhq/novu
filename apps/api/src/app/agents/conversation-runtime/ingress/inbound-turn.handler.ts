@@ -25,9 +25,10 @@ import {
   trackAgentInboundReaction,
 } from '../../shared/analytics/agent-analytics';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
-import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../shared/enums/agent-platform.enum';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../shared/util/platform-endpoint-config';
+import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
 import {
@@ -81,8 +82,6 @@ const SUBSCRIBER_LINK_EXPIRED_REPLY =
   'This connection link has expired. Open a new link from your Novu dashboard and try again.';
 const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
   "This connection link wasn't issued for this bot. Open the link from your Novu dashboard again (or request a new one) and make sure you're messaging the same bot you configured.";
-
-const ACKNOWLEDGE_FALLBACK_EMOJI = 'eyes' as const;
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
@@ -346,7 +345,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
-    private readonly agentEntitlements: AgentEntitlementsService
+    private readonly agentEntitlements: AgentEntitlementsService,
+    private readonly inboundAck: InboundAckService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -472,10 +472,14 @@ export class AgentInboundHandler implements OnModuleInit {
       ]),
     ]);
 
-    const isManagedAgent = !!agent?.managedRuntime;
-
-    if (!isManagedAgent) {
-      await this.acknowledgeReceipt(agentId, config, thread, message, isFirstMessage);
+    if (!config.isManaged) {
+      await this.inboundAck.showWorkingSignal({
+        agentId,
+        config,
+        platformThreadId,
+        platformMessageId: message?.id,
+        isFirstMessage,
+      });
     }
 
     const runtime = this.runtimeResolver.resolve(agent);
@@ -639,39 +643,6 @@ export class AgentInboundHandler implements OnModuleInit {
           captureAgentWarning(err, {
             component: 'agent-inbound-handler',
             operation: 'store-first-platform-message-id',
-            agentId,
-          });
-        });
-    }
-  }
-
-  /** Optimistic receipt signal (typing indicator, or a reaction fallback on the first message). */
-  private async acknowledgeReceipt(
-    agentId: string,
-    config: ResolvedAgentConfig,
-    thread: Thread,
-    message: Message,
-    isFirstMessage: boolean
-  ): Promise<void> {
-    if (!config.acknowledgeOnReceived) {
-      return;
-    }
-
-    if (PLATFORMS_WITH_TYPING_INDICATOR.has(config.platform)) {
-      await thread.startTyping('Thinking...');
-
-      return;
-    }
-
-    if (isFirstMessage && message.id) {
-      thread
-        .createSentMessageFromMessage(message)
-        .addReaction(ACKNOWLEDGE_FALLBACK_EMOJI)
-        .catch((err) => {
-          this.logger.warn(err, `[agent:${agentId}] Failed to add ack reaction to first message`);
-          captureAgentWarning(err, {
-            component: 'agent-inbound-handler',
-            operation: 'add-ack-reaction',
             agentId,
           });
         });

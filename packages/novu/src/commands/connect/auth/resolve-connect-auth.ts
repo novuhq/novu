@@ -1,10 +1,7 @@
-import { ConfigService } from '../../../services';
-import { resolveAuth, type ResolveAuthOptions } from '../../wizard/auth/resolve-auth';
+import { type ResolveAuthOptions, resolveAuth } from '../../wizard/auth/resolve-auth';
 import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { bootstrapKeylessSession } from '../api/keyless-session';
 import type { ConnectCommandOptions } from '../types';
-
-const KEYLESS_CONFIG_KEY = 'connectKeylessApplicationIdentifier' as const;
 
 export interface ResolvedConnectAuth extends Omit<ResolvedAuth, 'source'> {
   source: ResolvedAuth['source'] | 'keyless';
@@ -27,20 +24,9 @@ export async function resolveConnectAuth(
     return { ...auth, isKeyless: false };
   }
 
-  const config = new ConfigService();
-  const stored = config.getValue(KEYLESS_CONFIG_KEY);
+  resolveOptions.onStatus?.('Setting up a temporary keyless workspace…');
 
-  resolveOptions.onStatus?.(
-    stored ? 'Restoring your keyless workspace…' : 'Setting up a temporary keyless workspace…'
-  );
-
-  const session = await bootstrapKeylessSession(options.apiUrl, stored);
-
-  if (session.recoveredFromStaleSession) {
-    resolveOptions.onStatus?.('Previous keyless session is no longer available. Starting a fresh workspace…');
-  }
-
-  config.setValue(KEYLESS_CONFIG_KEY, session.applicationIdentifier);
+  const session = await bootstrapKeylessSession(options.apiUrl);
 
   return {
     secretKey: '',

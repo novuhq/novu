@@ -3,7 +3,7 @@
 // and emit stray artifacts there. Vitest runs in Node and resolves the path
 // against the spec's __dirname.
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { SsrfBlockedError as SharedSsrfBlockedError, isPrivateIp as sharedIsPrivateIp } from './ssrf-url-validation';
 
 const inlinedPath = join(
@@ -18,9 +18,10 @@ const inlinedPath = join(
   'utils',
   'ssrf-url-validation.ts'
 );
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const inlined = require(inlinedPath) as {
+
+type InlinedSsrfModule = {
   isPrivateIp: (ip: string) => boolean;
+  normalizeHostnameForLookup: (hostname: string) => string;
   SsrfBlockedError: new (
     reason: string,
     message: string,
@@ -31,60 +32,31 @@ const inlined = require(inlinedPath) as {
     resolvedAddress?: string;
   };
 };
-const inlinedIsPrivateIp = inlined.isPrivateIp;
-const InlinedSsrfBlockedError = inlined.SsrfBlockedError;
+
+let inlinedIsPrivateIp: InlinedSsrfModule['isPrivateIp'];
+let inlinedNormalizeHostnameForLookup: InlinedSsrfModule['normalizeHostnameForLookup'];
+let InlinedSsrfBlockedError: InlinedSsrfModule['SsrfBlockedError'];
+
+beforeAll(async () => {
+  const inlined = (await import(inlinedPath)) as InlinedSsrfModule;
+  inlinedIsPrivateIp = inlined.isPrivateIp;
+  inlinedNormalizeHostnameForLookup = inlined.normalizeHostnameForLookup;
+  InlinedSsrfBlockedError = inlined.SsrfBlockedError;
+});
 
 /**
  * libs/application-generic carries an inlined copy of the SSRF primitives and
  * the safe outbound HTTP runner because its CommonJS module resolution cannot
- * honour `@novu/shared`'s subpath exports. The two implementations MUST stay
- * in lockstep — any divergence is a security regression rather than a
- * behavioural one.
- *
- * This suite asserts the two copies agree on every observable surface that a
- * caller can rely on. Drop or update the cases as primitives evolve, but
- * never delete the suite without removing the duplication.
+ * honour `@novu/shared`'s subpath exports. URL policy and DNS handling MUST stay
+ * in lockstep between the two copies. Private IP classification is delegated to
+ * `@novu/shared/utils/private-ip-classification` — this suite verifies that wiring
+ * and that the remaining mirrored surfaces have not drifted.
  */
 describe('safe outbound HTTP — shared vs application-generic drift check', () => {
-  it('isPrivateIp agrees on every documented IP class', () => {
-    const cases = [
-      // Loopback & unspecified
-      '0.0.0.0',
-      '127.0.0.1',
-      '127.255.255.254',
-      // RFC1918
-      '10.0.0.1',
-      '10.255.255.254',
-      '172.16.0.1',
-      '172.31.255.254',
-      '192.168.1.1',
-      // Link-local v4 / metadata
-      '169.254.169.254',
-      // RFC6598 shared address space (100.64.0.0/10)
-      '100.64.0.1',
-      '100.100.100.200',
-      '100.127.255.255',
-      // Public IPv4
-      '1.1.1.1',
-      '8.8.8.8',
-      '203.0.113.1',
-      // IPv6 loopback / link-local / ULA
-      '::1',
-      'fe80::1',
-      'fe80:abcd::1',
-      'fc00::1',
-      'fdff::1',
-      // IPv4-mapped IPv6 of private addresses
-      '::ffff:127.0.0.1',
-      '::ffff:10.0.0.1',
-      '::ffff:192.168.1.1',
-      '::ffff:169.254.1.1',
-      '::ffff:100.100.100.200',
-      // Public IPv6
-      '2001:4860:4860::8888',
-    ];
+  it('application-generic delegates isPrivateIp to shared classification', () => {
+    expect(inlinedNormalizeHostnameForLookup('[::1]')).toBe('::1');
 
-    for (const ip of cases) {
+    for (const ip of ['169.254.169.254', '::ffff:a9fe:a9fe', '64:ff9b::169.254.169.254']) {
       expect(inlinedIsPrivateIp(ip), `disagree on ${ip}`).toBe(sharedIsPrivateIp(ip));
     }
   });

@@ -3,6 +3,8 @@ import { useCallback, useMemo } from 'react';
 import { OrganizationPicker } from '@/components/auth/organization-picker';
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { resolvePendingCliAuthReturnUrl } from '@/utils/cli-auth-pending';
+import { resolvePendingConnectClaimReturnUrl } from '@/utils/connect-claim-pending';
+import { readPendingProductType } from '@/utils/product-type-pending';
 import { getPostOrgCreateRoute } from '../../utils/onboarding-redirect';
 import { ROUTES } from '../../utils/routes';
 import { UsecasePlaygroundHeader } from '../usecase-playground-header';
@@ -44,8 +46,11 @@ function OrganizationForm() {
   const clerk = useClerk();
 
   const pendingCliAuthReturnUrl = useMemo(() => resolvePendingCliAuthReturnUrl(), []);
-  const afterCreateUrl = pendingCliAuthReturnUrl ?? getPostOrgCreateRoute();
-  const afterSelectUrl = pendingCliAuthReturnUrl ?? ROUTES.ENV;
+  const pendingConnectClaimReturnUrl = useMemo(() => resolvePendingConnectClaimReturnUrl(), []);
+  const pendingProductType = useMemo(() => readPendingProductType(), []);
+  const afterCreateUrl =
+    pendingConnectClaimReturnUrl ?? pendingCliAuthReturnUrl ?? getPostOrgCreateRoute(pendingProductType);
+  const afterSelectUrl = pendingConnectClaimReturnUrl ?? pendingCliAuthReturnUrl ?? ROUTES.ENV;
 
   const handleSignOut = useCallback(async () => {
     const fallbackUrl = ROUTES.SIGN_IN;

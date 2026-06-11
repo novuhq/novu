@@ -16,6 +16,7 @@ export const ROUTES = {
   ROOT: '/',
   LOCAL_STUDIO_AUTH: '/local-studio/auth',
   CLI_AUTH: '/cli/auth',
+  CONNECT_CLAIM: '/connect/claim',
   ENV: '/env',
   SETTINGS: '/settings',
   SETTINGS_ACCOUNT: '/settings/account',
@@ -83,6 +84,7 @@ export const ROUTES = {
     '/env/:environmentSlug/agents/:agentIdentifier/integrations/:integrationIdentifier',
   AGENT_DETAILS_TAB: '/env/:environmentSlug/agents/:agentIdentifier/:agentTab',
   AGENT_TELEGRAM_MOBILE_SETUP: '/agents/telegram/connect/:token',
+  AGENT_SLACK_SETUP: '/agents/slack/connect/:token',
   INTEGRATION_TELEGRAM_MOBILE_SETUP: '/integrations/telegram/connect/:token',
 } as const;
 

@@ -1,14 +1,14 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
 import { AgentSetupSteps, ManagedAgentRecap } from '@/components/agents/agent-setup-steps';
-import { ProviderCards } from '@/components/agents/provider-cards';
-import { CompletedStepIndicator, SetupStep } from '@/components/agents/setup-guide-primitives';
+import { CompletedStepIndicator } from '@/components/agents/setup-guide-primitives';
 import { ConnectAgentStep, type ConnectSummary } from '@/components/onboarding/connect-agent/connect-agent-step';
 import { getConnectorById } from '@/components/onboarding/connect-agent/connector-options';
+import { PrebuiltPromptBanner } from '@/components/onboarding/connect-agent/prebuilt-prompt-banner';
 import { OnboardingLoader } from '@/components/onboarding/onboarding-loader';
 import { OnboardingShell } from '@/components/onboarding/onboarding-shell';
 import { PageMeta } from '@/components/page-meta';
@@ -20,11 +20,13 @@ import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
 import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { clearPendingProductType, readPendingProductType } from '@/utils/product-type-pending';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 function goToPostOnboardingRoute(target: string, navigate: (path: string) => void) {
@@ -69,32 +71,6 @@ function SkipBanner({ onSkip }: SkipBannerProps) {
           <RiArrowRightSLine className="size-4" />
         </button>
       </div>
-    </div>
-  );
-}
-
-/**
- * Dimmed, non-interactive preview of the channel step shown during the connect phase, so the
- * user can see what comes next while still authoring the agent. Mirrors the
- * `AgentSetupSteps` channel step layout/rail; activates for real once the agent is created.
- */
-function ChannelStepPreview() {
-  return (
-    <div className="pointer-events-none relative flex select-none flex-col gap-10 pl-8 pr-3 opacity-60 md:pr-6">
-      <div
-        className="absolute bottom-0 left-[22px] top-0 w-px"
-        style={{
-          background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
-        }}
-      />
-      <SetupStep
-        index={2}
-        status="upcoming"
-        dimmed
-        title="Choose where your agent can talk"
-        description="Connect a channel so users can message the agent and receive replies."
-        fullWidthContent={<ProviderCards agentIdentifier="" onSelect={() => {}} disabled dimmed />}
-      />
     </div>
   );
 }
@@ -152,13 +128,15 @@ export function AgentsSetupPage() {
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
+  const updateProductUseCases = useUpdateProductUseCases();
+  const productUseCasesPersistedRef = useRef(false);
 
   const [searchParams] = useSearchParams();
   const agentTemplateId = useMemo(
     () => readActiveAgentTemplateId(searchParams.get(AGENT_TEMPLATE_ID_PARAM)),
     [searchParams]
   );
-  const pageTitle = 'Connect your first agent';
+  const pageTitle = 'Connect your agent to where your users are';
 
   // Org bootstrap (poll Novu envs + reload Clerk after org creation) lives in EnvironmentProvider.
   // Here we only gate on Novu's org id + the resolved environment, like the inbox onboarding page.
@@ -174,6 +152,23 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.AGENTS_SETUP_PAGE_VIEWED);
     telemetry(TelemetryEvent.ONBOARDING_PHASE_VIEWED, { phase: 'connect' });
   }, [telemetry]);
+
+  // When the user arrives here via `?product_type=agents` (the usecase picker is skipped), persist the
+  // agents usecase on the org once it's resolved. Runs once; the usecase picker path persists itself.
+  // Skipped when agents are unavailable (EU/flag off) since the page redirects to the inbox path.
+  useEffect(() => {
+    if (productUseCasesPersistedRef.current || IS_EU || !isAgentsEnabled || !currentOrganization?._id) {
+      return;
+    }
+
+    if (readPendingProductType() !== 'agents') {
+      return;
+    }
+
+    productUseCasesPersistedRef.current = true;
+    updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
+    clearPendingProductType();
+  }, [currentOrganization?._id, isAgentsEnabled, updateProductUseCases]);
 
   const [createdAgent, setCreatedAgent] = useState<AgentResponse | null>(null);
   const [connectSummary, setConnectSummary] = useState<ConnectSummary | null>(null);
@@ -221,7 +216,7 @@ export function AgentsSetupPage() {
       return;
     }
 
-    void navigate(ROUTES.WORKFLOWS);
+    void navigate(buildRoute(ROUTES.AGENTS, { environmentSlug: 'default' }));
   }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleNavigateToOverview = useCallback(() => {
@@ -229,10 +224,26 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { from: 'complete' });
     clearPersistedCliOnboardingSessionId();
 
-    if (currentEnvironment?.slug) {
+    if (!currentEnvironment?.slug) return;
+
+    if (createdAgent) {
+      const agentPath = buildRoute(agentRoutes.detailsTab, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(createdAgent.identifier),
+        agentTab: AGENT_DETAILS_DEFAULT_TAB,
+      });
+      goToPostOnboardingRoute(agentPath, navigate);
+    } else {
       goToPostOnboardingRoute(getPostOnboardingRoute(currentEnvironment.slug), navigate);
     }
-  }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
+  }, [
+    agentRoutes.detailsTab,
+    buildOnboardingCompletionProps,
+    createdAgent,
+    currentEnvironment?.slug,
+    navigate,
+    telemetry,
+  ]);
 
   const handleSetupAnotherChannel = useCallback(() => {
     if (!currentEnvironment?.slug || !createdAgent) return;
@@ -275,13 +286,32 @@ export function AgentsSetupPage() {
   const leftContent = (
     <>
       <PageMeta title={pageTitle} />
-      <StepHeader current={1} onBack={handleBackStep} />
+      <StepHeader current={2} onBack={handleBackStep} />
 
       <h1 className="text-foreground text-lg font-medium tracking-[-0.27px]">{pageTitle}</h1>
       <p className="text-text-soft mt-1 text-xs font-normal leading-4 w-1/2">
-        Start with a Claude demo agent, connect channels, and see how conversations flow. You can bring your own agent
-        later.
+        Choose a starting point to see how your agent handles your users’ conversations. You can replace it with your
+        own agent and credentials later.
       </p>
+
+      {/* Pre-built prompt tip: only relevant while the user is authoring the agent brain. It
+       * collapses away once the agent is created and the page morphs into the agent preview. */}
+      <AnimatePresence initial={false}>
+        {!createdAgent ? (
+          <motion.div
+            key="prebuilt-prompt-banner"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div className="mt-6">
+              <PrebuiltPromptBanner />
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       {/*
        * The user stays on one screen. Step 1 crossfades the brain form into the created-agent
@@ -289,7 +319,7 @@ export function AgentsSetupPage() {
        * interactive channel step in place. Keyed on `createdAgent` — the back arrow returns to the
        * brain form.
        */}
-      <div className="relative mt-12">
+      <div className="relative mt-8">
         {/* Single continuous rail line behind every step segment. Each segment also draws its own
          * gradient line, but those fade to transparent at their edges and pinch where segments meet;
          * this same-colored line sits underneath and fills those gaps so the toggle, brain step, and
@@ -355,7 +385,7 @@ export function AgentsSetupPage() {
                       'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
                   }}
                 />
-                <ManagedAgentRecap agent={createdAgent} summary={connectSummary} />
+                <ManagedAgentRecap agent={createdAgent} summary={connectSummary} hideHeader />
               </div>
             </motion.div>
           ) : (
@@ -386,9 +416,7 @@ export function AgentsSetupPage() {
             onChannelGuideActiveChange={setChannelGuideActive}
             connectSummary={connectSummary}
           />
-        ) : (
-          <ChannelStepPreview />
-        )}
+        ) : null}
       </div>
 
       {/* Footer actions live outside the rail so the continuous line ends at the last step. */}

@@ -1,6 +1,6 @@
 {
   "name": "@novu/framework",
-  "version": "2.11.0",
+  "version": "2.11.1",
   "description": "The Code-First Notifications Workflow SDK.",
   "main": "./dist/cjs/index.cjs",
   "types": "./dist/cjs/index.d.cts",
@@ -274,7 +274,7 @@
     "zod-to-json-schema": "^3.23.3"
   },
   "dependencies": {
-    "chat": "4.28.1",
+    "chat": "4.30.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^2.1.1",
     "better-ajv-errors": "^1.2.0",

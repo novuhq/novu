@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev -p 4011",
-    "start:portless": "node ../../scripts/with-portless-env.mjs pnpm exec portless run next dev",
+    "start:portless": "node ../../scripts/portless-dev-env.mjs pnpm exec portless run next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

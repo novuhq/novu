@@ -39,11 +39,12 @@ import {
 } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
 import {
   AuthorizationServerMetadata,
+  buildTokenEndpointAuthMethodsToTry,
   DiscoveredProtectedResource,
+  isUnsupportedTokenEndpointAuthMethodError,
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
   type SupportedTokenEndpointAuthMethod,
-  selectTokenEndpointAuthMethod,
 } from '../mcp-oauth-discovery.service';
 import {
   canReusePendingOAuthSession,
@@ -646,51 +647,65 @@ export class GenerateMcpOAuthUrl {
     // (`application_type: 'web'`) always run server-side; only `native`
     // installs are eligible for the `none` auth method as a public client.
     const prefersConfidential = (oauthConfig.applicationType ?? 'web') === 'web';
-    const tokenEndpointAuthMethod = selectTokenEndpointAuthMethod(
+    const tokenEndpointAuthMethodsToTry = buildTokenEndpointAuthMethodsToTry(
       asMetadata.tokenEndpointAuthMethodsSupported,
       prefersConfidential
     );
 
-    try {
-      const registration = await this.discoveryService.registerClient(asMetadata, {
-        redirect_uris: [redirectUri],
-        client_name: NOVU_MCP_CLIENT_NAME,
-        application_type: oauthConfig.applicationType ?? 'web',
-        grant_types: ['authorization_code', 'refresh_token'],
-        response_types: ['code'],
-        token_endpoint_auth_method: tokenEndpointAuthMethod,
-        scope: scopes.length > 0 ? scopes.join(' ') : undefined,
-        client_uri: clientUri,
-        logo_uri: logoUri,
-        software_id: oauthConfig.softwareId ?? DEFAULT_SOFTWARE_ID,
-        software_version: SOFTWARE_VERSION,
-      });
+    let lastErr: unknown;
 
-      // Honor the AS-returned method when present (RFC 7591 §3.2.1). Some
-      // upstreams (e.g. Jotform) accept `client_secret_post` but register a
-      // public client and respond with `token_endpoint_auth_method: "none"`.
-      // Others (e.g. Postman) echo the requested confidential method but omit
-      // `client_secret` — treat that as an implicit public-client downgrade
-      // when the AS also advertises `none`.
-      let effectiveTokenEndpointAuthMethod = registration.tokenEndpointAuthMethod ?? tokenEndpointAuthMethod;
+    for (const [attemptIndex, tokenEndpointAuthMethod] of tokenEndpointAuthMethodsToTry.entries()) {
+      try {
+        const registration = await this.discoveryService.registerClient(asMetadata, {
+          redirect_uris: [redirectUri],
+          client_name: NOVU_MCP_CLIENT_NAME,
+          application_type: oauthConfig.applicationType ?? 'web',
+          grant_types: ['authorization_code', 'refresh_token'],
+          response_types: ['code'],
+          token_endpoint_auth_method: tokenEndpointAuthMethod,
+          scope: scopes.length > 0 ? scopes.join(' ') : undefined,
+          client_uri: clientUri,
+          logo_uri: logoUri,
+          software_id: oauthConfig.softwareId ?? DEFAULT_SOFTWARE_ID,
+          software_version: SOFTWARE_VERSION,
+        });
 
-      if (effectiveTokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
-        const asSupportsPublicClient = asMetadata.tokenEndpointAuthMethodsSupported?.includes('none') ?? false;
+        // Honor the AS-returned method when present (RFC 7591 §3.2.1). Some
+        // upstreams (e.g. Jotform) accept `client_secret_post` but register a
+        // public client and respond with `token_endpoint_auth_method: "none"`.
+        // Others (e.g. Postman) echo the requested confidential method but omit
+        // `client_secret` — treat that as an implicit public-client downgrade
+        // when the AS also advertises `none`.
+        let effectiveTokenEndpointAuthMethod = registration.tokenEndpointAuthMethod ?? tokenEndpointAuthMethod;
 
-        if (asSupportsPublicClient) {
-          effectiveTokenEndpointAuthMethod = 'none';
-        } else {
-          throw new McpOAuthDiscoveryError(
-            'mcp_registration_failed',
-            `Dynamic Client Registration returned no client_secret for "${effectiveTokenEndpointAuthMethod}".`
-          );
+        if (effectiveTokenEndpointAuthMethod !== 'none' && !registration.clientSecret) {
+          const asSupportsPublicClient = asMetadata.tokenEndpointAuthMethodsSupported?.includes('none') ?? false;
+
+          if (asSupportsPublicClient) {
+            effectiveTokenEndpointAuthMethod = 'none';
+          } else {
+            throw new McpOAuthDiscoveryError(
+              'mcp_registration_failed',
+              `Dynamic Client Registration returned no client_secret for "${effectiveTokenEndpointAuthMethod}".`
+            );
+          }
         }
-      }
 
-      return { ...registration, tokenEndpointAuthMethod: effectiveTokenEndpointAuthMethod };
-    } catch (err) {
-      throw mapDiscoveryError(err, `MCP authorization server "${asMetadata.issuer}"`);
+        return { ...registration, tokenEndpointAuthMethod: effectiveTokenEndpointAuthMethod };
+      } catch (err) {
+        lastErr = err;
+
+        const hasMoreMethods = attemptIndex < tokenEndpointAuthMethodsToTry.length - 1;
+
+        if (isUnsupportedTokenEndpointAuthMethodError(err) && hasMoreMethods) {
+          continue;
+        }
+
+        throw mapDiscoveryError(err, `MCP authorization server "${asMetadata.issuer}"`);
+      }
     }
+
+    throw mapDiscoveryError(lastErr, `MCP authorization server "${asMetadata.issuer}"`);
   }
 
   private async upsertPendingDcrConnection(args: {

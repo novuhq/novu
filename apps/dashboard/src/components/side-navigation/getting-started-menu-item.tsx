@@ -54,7 +54,7 @@ export function HomeMenuItem() {
         }
       >
         <RiQuestionLine className="size-4" />
-        <span>Getting started</span>
+        <span>Help and first steps</span>
 
         {!allStepsCompleted && (
           <Badge className="ml-auto" color="red" size="md" variant="lighter">

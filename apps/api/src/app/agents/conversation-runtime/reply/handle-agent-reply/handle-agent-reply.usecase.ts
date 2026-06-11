@@ -16,6 +16,7 @@ import { trackAgentReplyProcessed } from '../../../shared/analytics/agent-analyt
 import type { EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
+import { InboundAckService } from '../../ack/inbound-ack.service';
 import type { MetadataOp } from '../../conversation/agent-conversation.service';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { OutboundGateway } from '../../egress/outbound.gateway';
@@ -34,7 +35,8 @@ export class HandleAgentReply {
     private readonly logger: PinoLogger,
     private readonly parseEventRequest: ParseEventRequest,
     private readonly analyticsService: AnalyticsService,
-    private readonly outboundGateway: OutboundGateway
+    private readonly outboundGateway: OutboundGateway,
+    private readonly inboundAck: InboundAckService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -88,9 +90,14 @@ export class HandleAgentReply {
     if (command.reply) {
       replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
 
-      this.removeAckReaction(config!, conversation, channel).catch((err) => {
-        this.logger.warn(err, `[agent:${command.agentIdentifier}] Failed to remove ack reaction`);
-      });
+      if (!config!.isManaged) {
+        void this.inboundAck.onBridgeReplyDelivered({
+          agentId: conversation._agentId,
+          config: config!,
+          platformThreadId: channel.platformThreadId,
+          firstPlatformMessageId: channel.firstPlatformMessageId,
+        });
+      }
     }
 
     if (command.signals?.length) {
@@ -409,24 +416,6 @@ export class HandleAgentReply {
     this.fireOnResolveBridgeCall(command, config, conversation, channel).catch((err) => {
       this.logger.error(err, `[agent:${command.agentIdentifier}] Failed to fire onResolve bridge call`);
     });
-  }
-
-  private async removeAckReaction(
-    config: ResolvedAgentConfig,
-    conversation: ConversationEntity,
-    channel: ConversationChannel
-  ): Promise<void> {
-    const firstMessageId = channel.firstPlatformMessageId;
-    if (!firstMessageId || !config.acknowledgeOnReceived) return;
-
-    await this.outboundGateway.removeReaction(
-      conversation._agentId,
-      config.integrationIdentifier,
-      channel.platform,
-      channel.platformThreadId,
-      firstMessageId,
-      'eyes'
-    );
   }
 
   private async reactOnResolve(

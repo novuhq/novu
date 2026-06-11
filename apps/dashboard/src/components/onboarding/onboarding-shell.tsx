@@ -42,7 +42,7 @@ export function OnboardingShell({ left, right, maxLeftWidth = '480px', alignLeft
       {/* Left — content (~60%, or full width in single-column mode) */}
       <div
         className={`relative z-10 flex w-full flex-col items-center overflow-y-auto [scrollbar-gutter:stable] ${
-          isSingleColumn ? '' : 'bg-white md:w-[60%]'
+          isSingleColumn ? '' : 'bg-white md:w-[50%] xl:w-[60%]'
         } ${alignLeft === 'top' ? 'pt-16' : 'justify-center'}`}
       >
         <motion.div
@@ -59,11 +59,9 @@ export function OnboardingShell({ left, right, maxLeftWidth = '480px', alignLeft
 
       {/* Right — preview panel (~40%) */}
       {isSingleColumn ? null : (
-        <div className="relative hidden overflow-hidden bg-white md:flex md:w-[40%]">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-20"
-            style={{ backgroundImage: STRIPES_BACKGROUND }}
-          />
+        <div className="relative hidden overflow-hidden bg-white md:flex md:w-[50%] xl:w-[40%]">
+          <div className="absolute inset-0 opacity-60" style={{ background: GLOW_BACKGROUND }} />
+          <div className="absolute inset-0 opacity-15" style={{ backgroundImage: STRIPES_BACKGROUND }} />
           <div className="relative flex flex-1 flex-col items-center justify-center p-8">
             <motion.div
               key="right"

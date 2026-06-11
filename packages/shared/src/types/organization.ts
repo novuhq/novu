@@ -19,6 +19,7 @@ export enum ProductUseCasesEnum {
   DELAY = 'delay',
   TRANSLATION = 'translation',
   DIGEST = 'digest',
+  AGENTS = 'agents',
 }
 
 export type ProductUseCases = Partial<Record<ProductUseCasesEnum, boolean>>;

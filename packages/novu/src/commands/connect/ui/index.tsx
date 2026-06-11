@@ -199,13 +199,17 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     addingTelegramIntegration() {
       store.phase.set({ kind: 'adding-telegram' });
     },
-    showTelegramIntro({ botfatherQr }) {
+    showTelegramIntro({ botfatherQr, botfatherUrl: _botfatherUrl }) {
       return new Promise<void>((resolve) => {
         store.phase.set({ kind: 'telegram-intro', botfatherQr, resolve });
       });
     },
     showTelegramLinkToken({ mobileQr, mobileUrl }) {
       store.phase.set({ kind: 'telegram-link-token', mobileQr, mobileUrl });
+    },
+    savingTelegramBotToken() {
+      // Reuse the generic Telegram spinner phase — saving is near-instant.
+      store.phase.set({ kind: 'adding-telegram' });
     },
     showTelegramTest({ deepLinkQr, deepLinkUrl, botUsername }) {
       store.phase.set({ kind: 'telegram-test', deepLinkQr, deepLinkUrl, botUsername });
@@ -220,6 +224,9 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       return new Promise<string>((resolve, reject) => {
         store.phase.set({ kind: 'paste-slack-token', retry, resolve, reject });
       });
+    },
+    showSlackSetupLink({ setupUrl }) {
+      store.phase.set({ kind: 'slack-setup-link', setupUrl });
     },
     runningSlackQuickSetup() {
       store.phase.set({ kind: 'running-slack-quick-setup' });

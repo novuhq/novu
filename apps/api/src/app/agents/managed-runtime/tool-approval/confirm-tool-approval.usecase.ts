@@ -1,16 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import {
-  AgentMcpServerRepository,
-  ConversationRepository,
-  McpConnectionRepository,
-  SubscriberRepository,
-} from '@novu/dal';
+import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { ManagedAgentService } from '../managed-agent.service';
-import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
 import { type ParsedToolApprovalAction } from './approval-card.builder';
 import { ConfirmToolApprovalCommand } from './confirm-tool-approval.command';
 import { mergeToolTrustPatch, resolveTrustForPendingTool } from './tool-trust.helper';
@@ -21,8 +15,6 @@ export class ConfirmToolApproval {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
-    private readonly conversationRepository: ConversationRepository,
-    private readonly providerFactory: ManagedAgentProviderFactory,
     private readonly managedAgentService: ManagedAgentService,
     private readonly outboundGateway: OutboundGateway,
     private readonly handlePlanProgress: HandlePlanProgress,
@@ -36,8 +28,6 @@ export class ConfirmToolApproval {
 
     await this.persistTrustIfNeeded(command, parsed);
 
-    const toolUseIds = await this.resolveConfirmationToolUseIds(command, parsed);
-
     await this.managedAgentService.resumeWithToolResults({
       conversationId: command.conversationId,
       environmentId: command.environmentId,
@@ -46,7 +36,7 @@ export class ConfirmToolApproval {
       integrationIdentifier: command.integrationIdentifier,
       subscriberId: command.subscriberId,
       platform: command.platform,
-      toolUseIds,
+      toolUseIds: parsed.toolUseIds,
       approved: parsed.approved,
     });
 
@@ -101,61 +91,6 @@ export class ConfirmToolApproval {
         toolName,
       }),
     });
-  }
-
-  private async resolveConfirmationToolUseIds(
-    command: ConfirmToolApprovalCommand,
-    parsed: ParsedToolApprovalAction
-  ): Promise<string[]> {
-    if (parsed.persistScope !== 'server' || !parsed.mcpServerName) {
-      return parsed.toolUseIds;
-    }
-
-    const sessionId = await this.getExternalSessionId(command);
-
-    if (!sessionId) {
-      return parsed.toolUseIds;
-    }
-
-    const runtimeProvider = await this.providerFactory.tryGetByAgentIdentifier(
-      command.agentIdentifier,
-      command.environmentId
-    );
-
-    if (!runtimeProvider) {
-      return parsed.toolUseIds;
-    }
-
-    try {
-      const pendingTools = await runtimeProvider.getAllPendingToolApprovals(sessionId);
-      const mcpToolUseIds = pendingTools
-        .filter((tool) => tool.mcpServerName === parsed.mcpServerName)
-        .map((tool) => tool.toolUseId);
-
-      if (mcpToolUseIds.length > 0) {
-        return mcpToolUseIds;
-      }
-    } catch (err) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), conversationId: command.conversationId },
-        'getAllPendingToolApprovals failed; confirming clicked tool only'
-      );
-    }
-
-    return parsed.toolUseIds;
-  }
-
-  private async getExternalSessionId(command: ConfirmToolApprovalCommand): Promise<string | undefined> {
-    const conversation = await this.conversationRepository.findOne(
-      {
-        _id: command.conversationId,
-        _environmentId: command.environmentId,
-        _organizationId: command.organizationId,
-      },
-      ['externalSessionId']
-    );
-
-    return conversation?.externalSessionId;
   }
 
   private deleteApprovalCard(command: ConfirmToolApprovalCommand): void {

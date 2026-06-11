@@ -14,6 +14,7 @@ import {
   type StreamCallbacks,
   type Response as ThalamusResponse,
 } from '@novu/thalamus';
+import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { HandleAgentReplyCommand } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
@@ -50,6 +51,7 @@ export class ManagedAgentEventHandler {
     private readonly handlePlanProgress: HandlePlanProgress,
     private readonly handlePendingToolApprovals: HandlePendingToolApprovals,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -161,6 +163,7 @@ export class ManagedAgentEventHandler {
                 response: event.response,
               })
             );
+            await this.inboundAck.onManagedTurnComplete(metadata);
 
             return;
           }
@@ -171,6 +174,8 @@ export class ManagedAgentEventHandler {
               HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: replyMarkdown } })
             );
           }
+
+          await this.inboundAck.onManagedTurnComplete(metadata);
 
           await this.demoQuota.recordUsage(
             metadata.environmentId,
@@ -227,6 +232,7 @@ export class ManagedAgentEventHandler {
     if (error instanceof SessionExpiredError) {
       this.logger.warn(`Session ${sessionId} expired, clearing for next message`);
       await this.conversationRepository.clearExternalSessionId(metadata.environmentId, metadata.conversationId);
+      await this.inboundAck.onManagedTurnComplete(metadata);
 
       return;
     }
@@ -243,6 +249,8 @@ export class ManagedAgentEventHandler {
         : false;
 
     if (postedReconnectSetupCard) {
+      await this.inboundAck.onManagedTurnComplete(metadata);
+
       try {
         await this.handlePlanProgress.execute(
           HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
@@ -265,6 +273,7 @@ export class ManagedAgentEventHandler {
       await this.handleAgentReply.execute(
         HandleAgentReplyCommand.create({ ...baseCommand, reply: { markdown: message } })
       );
+      await this.inboundAck.onManagedTurnComplete(metadata);
       await this.handlePlanProgress.execute(
         HandlePlanProgressCommand.create({ ...baseCommand, toolProgress: { action: 'fail' } })
       );
