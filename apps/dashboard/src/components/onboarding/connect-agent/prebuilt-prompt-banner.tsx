@@ -7,7 +7,7 @@ import { TelemetryEvent } from '@/utils/telemetry';
  * spin up from the "What should your agent do?" step, so copying it (or opening it in Cursor)
  * gets them to a working agent description without typing anything.
  */
-const PREBUILT_AGENT_PROMPT = `Add an agent to my app following instructions from this web page https://novu.co/agents.md`;
+const PREBUILT_AGENT_PROMPT = `Add an agent to my app following instructions from this markdown file: https://github.com/novuhq/novu/blob/main/packages/shared/docs/agent-onboarding.md`;
 
 function safeCursorEncode(text: string): string {
   return encodeURIComponent(text).replace(/[!'()*~]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
