@@ -24,7 +24,7 @@ import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agen
 import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 function goToPostOnboardingRoute(target: string, navigate: (path: string) => void) {
@@ -203,10 +203,19 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { from: 'complete' });
     clearPersistedCliOnboardingSessionId();
 
-    if (currentEnvironment?.slug) {
+    if (!currentEnvironment?.slug) return;
+
+    if (createdAgent) {
+      const agentPath = buildRoute(agentRoutes.detailsTab, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(createdAgent.identifier),
+        agentTab: AGENT_DETAILS_DEFAULT_TAB,
+      });
+      goToPostOnboardingRoute(agentPath, navigate);
+    } else {
       goToPostOnboardingRoute(getPostOnboardingRoute(currentEnvironment.slug), navigate);
     }
-  }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
+  }, [agentRoutes.detailsTab, buildOnboardingCompletionProps, createdAgent, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleSetupAnotherChannel = useCallback(() => {
     if (!currentEnvironment?.slug || !createdAgent) return;
