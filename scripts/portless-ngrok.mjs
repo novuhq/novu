@@ -41,7 +41,7 @@ export function isNgrokMode() {
   return process.env.PORTLESS_NGROK === '1' || Boolean(normalizeNgrokDomain(process.env.PORTLESS_NGROK_DOMAIN));
 }
 
-function readRoutes() {
+export function readRoutes() {
   const routesPath = getRoutesPath();
 
   if (!existsSync(routesPath)) {

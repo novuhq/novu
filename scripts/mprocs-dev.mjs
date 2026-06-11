@@ -15,20 +15,15 @@ import { configExists, loadConfig, resolveNgrokEnv } from './novu-dev-local.mjs'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const baseConfigPath = join(root, 'mprocs.yaml');
 
-const NGROK_URL_PROC = `
-  "API PUBLIC URL":
-    shell: node scripts/portless-ngrok.mjs watch api.novu
+const PORTLESS_URLS_PROC = `
+  "PORTLESS URLS":
+    shell: node scripts/portless-urls.mjs watch
 `;
 
-function buildConfigPath(ngrokEnabled) {
+function buildConfigPath() {
   const base = readFileSync(baseConfigPath, 'utf8');
-
-  if (!ngrokEnabled) {
-    return baseConfigPath;
-  }
-
-  const merged = base.replace(/^scrollback:/m, `${NGROK_URL_PROC}scrollback:`);
-  const generatedPath = join(tmpdir(), 'novu-mprocs-ngrok.yaml');
+  const merged = base.replace(/^scrollback:/m, `${PORTLESS_URLS_PROC}scrollback:`);
+  const generatedPath = join(tmpdir(), 'novu-mprocs-portless.yaml');
 
   writeFileSync(generatedPath, merged);
 
@@ -57,11 +52,11 @@ async function main() {
   }
 
   const config = loadConfig();
-  const { enabled, resolved } = resolveNgrokEnv(config);
+  const { resolved } = resolveNgrokEnv(config);
 
   applyResolvedEnv(resolved);
 
-  const configPath = buildConfigPath(enabled);
+  const configPath = buildConfigPath();
   const child = spawn('pnpm', ['exec', 'mprocs', '-c', configPath], {
     cwd: root,
     stdio: 'inherit',
