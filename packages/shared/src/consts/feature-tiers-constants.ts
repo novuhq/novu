@@ -522,7 +522,7 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.AGENT_MAX_CUSTOM_EMAIL_DOMAINS]: {
     [ApiServiceLevelEnum.FREE]: { label: 'No custom email domains', value: 0 },
     [ApiServiceLevelEnum.PRO]: { label: 'No custom email domains', value: 0 },
-    [ApiServiceLevelEnum.BUSINESS]: { label: '1 custom email domain', value: 1 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
   },
