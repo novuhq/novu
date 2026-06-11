@@ -14,14 +14,12 @@ import {
   DialogPortal,
   DialogTitle,
 } from '@/components/primitives/dialog';
-import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL } from '@/config';
+import { IS_SELF_HOSTED, SELF_HOSTED_UPGRADE_REDIRECT_URL, SUPPORT_EMAIL } from '@/config';
 import { usePlainChat } from '@/hooks/use-plain-chat';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { openInNewTab } from '@/utils/url';
-
-const SUPPORT_EMAIL = 'support@novu.co';
 
 type PlanLimitUpgradeDialogProps = {
   open: boolean;
