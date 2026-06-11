@@ -1,10 +1,3 @@
-import type zod from 'zod';
-
-/**
- * A ZodSchema used to validate a JSON object.
- */
-export type ZodSchema = zod.ZodType<Record<string, unknown>, zod.ZodTypeDef, Record<string, unknown>>;
-
 /**
  * A minimal ZodSchema type.
  *
@@ -14,6 +7,16 @@ export type ZodSchema = zod.ZodType<Record<string, unknown>, zod.ZodTypeDef, Rec
  */
 export type ZodSchemaMinimal = {
   readonly safeParseAsync: unknown;
+};
+
+/**
+ * A ZodSchema used to validate a JSON object.
+ *
+ * Structurally typed for Zod 3 and 4 compatibility — avoids ZodTypeDef removed in Zod 4.
+ */
+export type ZodSchema = ZodSchemaMinimal & {
+  readonly _output: Record<string, unknown>;
+  readonly _input: Record<string, unknown>;
 };
 
 /**

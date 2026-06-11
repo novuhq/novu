@@ -39,6 +39,15 @@ type ResolveControls<T extends Schema | undefined> = T extends Schema ? FromSche
 
 type ResolveEnv<T extends Schema | undefined> = T extends Schema ? FromSchema<T> : Record<string, string>;
 
+/** Loose provider map for step factory signatures — avoids deep providerSchemas instantiation at call sites. */
+type StepResolverProvidersLoose = Record<
+  string,
+  (
+    step: { controls: Record<string, unknown>; outputs: Record<string, unknown> },
+    ctx: StepResolverContext
+  ) => Awaitable<WithPassthrough<Record<string, unknown>>>
+>;
+
 type StepResolverProviders<
   T_StepType extends keyof typeof providerSchemas,
   T_Controls,
@@ -66,20 +75,27 @@ type BaseStepResolverOptions<
   ) => Awaitable<boolean>;
 };
 
-type ChannelStepResolverOptions<
-  T_StepType extends keyof typeof providerSchemas,
+type BaseStepFactoryOptions<
   TControlSchema extends Schema | undefined,
   TPayloadSchema extends Schema | undefined,
-  T_Output extends Record<string, unknown>,
   TEnvSchema extends Schema | undefined = undefined,
-> = BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema> & {
-  providers?: StepResolverProviders<
-    T_StepType,
-    ResolveControls<TControlSchema>,
-    T_Output,
-    ResolveControls<TPayloadSchema>,
-    ResolveEnv<TEnvSchema>
-  >;
+> = {
+  controlSchema?: TControlSchema;
+  payloadSchema?: TPayloadSchema;
+  envSchema?: TEnvSchema;
+  skip?: (
+    controls: ResolveControls<TControlSchema>,
+    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
+  ) => Awaitable<boolean>;
+};
+
+/** Options accepted by channel step factory functions — schemas are inferred from here, not the resolve callback. */
+type ChannelStepFactoryOptions<
+  TControlSchema extends Schema | undefined,
+  TPayloadSchema extends Schema | undefined,
+  TEnvSchema extends Schema | undefined = undefined,
+> = BaseStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema> & {
+  providers?: StepResolverProvidersLoose;
   disableOutputSanitization?: boolean;
 };
 
@@ -275,11 +291,8 @@ function email<
   TEnvSchema extends Schema | undefined = undefined,
 >(
   stepId: string,
-  resolve: (
-    controls: ResolveControls<TControlSchema>,
-    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
-  ) => Promise<EmailOutputUnvalidated>,
-  options?: ChannelStepResolverOptions<'email', TControlSchema, TPayloadSchema, EmailOutputUnvalidated, TEnvSchema>
+  resolve: (controls: ResolveControls<TControlSchema>, ctx: StepResolverContext) => Promise<EmailOutputUnvalidated>,
+  options?: ChannelStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema>
 ): EmailStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
   return {
     type: 'email',
@@ -300,11 +313,8 @@ function sms<
   TEnvSchema extends Schema | undefined = undefined,
 >(
   stepId: string,
-  resolve: (
-    controls: ResolveControls<TControlSchema>,
-    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
-  ) => Promise<SmsOutputUnvalidated>,
-  options?: ChannelStepResolverOptions<'sms', TControlSchema, TPayloadSchema, SmsOutputUnvalidated, TEnvSchema>
+  resolve: (controls: ResolveControls<TControlSchema>, ctx: StepResolverContext) => Promise<SmsOutputUnvalidated>,
+  options?: ChannelStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema>
 ): SmsStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
   return {
     type: 'sms',
@@ -325,11 +335,8 @@ function chat<
   TEnvSchema extends Schema | undefined = undefined,
 >(
   stepId: string,
-  resolve: (
-    controls: ResolveControls<TControlSchema>,
-    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
-  ) => Promise<ChatOutputUnvalidated>,
-  options?: ChannelStepResolverOptions<'chat', TControlSchema, TPayloadSchema, ChatOutputUnvalidated, TEnvSchema>
+  resolve: (controls: ResolveControls<TControlSchema>, ctx: StepResolverContext) => Promise<ChatOutputUnvalidated>,
+  options?: ChannelStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema>
 ): ChatStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
   return {
     type: 'chat',
@@ -350,11 +357,8 @@ function push<
   TEnvSchema extends Schema | undefined = undefined,
 >(
   stepId: string,
-  resolve: (
-    controls: ResolveControls<TControlSchema>,
-    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
-  ) => Promise<PushOutputUnvalidated>,
-  options?: ChannelStepResolverOptions<'push', TControlSchema, TPayloadSchema, PushOutputUnvalidated, TEnvSchema>
+  resolve: (controls: ResolveControls<TControlSchema>, ctx: StepResolverContext) => Promise<PushOutputUnvalidated>,
+  options?: ChannelStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema>
 ): PushStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
   return {
     type: 'push',
@@ -375,11 +379,8 @@ function inApp<
   TEnvSchema extends Schema | undefined = undefined,
 >(
   stepId: string,
-  resolve: (
-    controls: ResolveControls<TControlSchema>,
-    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
-  ) => Promise<InAppOutputUnvalidated>,
-  options?: ChannelStepResolverOptions<'in_app', TControlSchema, TPayloadSchema, InAppOutputUnvalidated, TEnvSchema>
+  resolve: (controls: ResolveControls<TControlSchema>, ctx: StepResolverContext) => Promise<InAppOutputUnvalidated>,
+  options?: ChannelStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema>
 ): InAppStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
   return {
     type: 'in_app',
@@ -400,11 +401,8 @@ function delay<
   TEnvSchema extends Schema | undefined = undefined,
 >(
   stepId: string,
-  resolve: (
-    controls: ResolveControls<TControlSchema>,
-    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
-  ) => Promise<DelayOutputUnvalidated>,
-  options?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>
+  resolve: (controls: ResolveControls<TControlSchema>, ctx: StepResolverContext) => Promise<DelayOutputUnvalidated>,
+  options?: BaseStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema>
 ): DelayStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
   return {
     type: 'delay',
@@ -423,11 +421,8 @@ function digest<
   TEnvSchema extends Schema | undefined = undefined,
 >(
   stepId: string,
-  resolve: (
-    controls: ResolveControls<TControlSchema>,
-    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
-  ) => Promise<DigestOutputUnvalidated>,
-  options?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>
+  resolve: (controls: ResolveControls<TControlSchema>, ctx: StepResolverContext) => Promise<DigestOutputUnvalidated>,
+  options?: BaseStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema>
 ): DigestStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
   return {
     type: 'digest',
@@ -446,11 +441,8 @@ function throttle<
   TEnvSchema extends Schema | undefined = undefined,
 >(
   stepId: string,
-  resolve: (
-    controls: ResolveControls<TControlSchema>,
-    ctx: StepResolverContext<ResolveControls<TPayloadSchema>, ResolveEnv<TEnvSchema>>
-  ) => Promise<ThrottleOutputUnvalidated>,
-  options?: BaseStepResolverOptions<TControlSchema, TPayloadSchema, TEnvSchema>
+  resolve: (controls: ResolveControls<TControlSchema>, ctx: StepResolverContext) => Promise<ThrottleOutputUnvalidated>,
+  options?: BaseStepFactoryOptions<TControlSchema, TPayloadSchema, TEnvSchema>
 ): ThrottleStepResolver<TControlSchema, TPayloadSchema, TEnvSchema> {
   return {
     type: 'throttle',

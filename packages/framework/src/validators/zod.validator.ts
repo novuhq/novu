@@ -10,6 +10,15 @@ import type {
 import type { ValidateResult, Validator } from '../types/validator.types';
 import { checkDependencies } from '../utils/import.utils';
 
+type ZodParseIssue = { path: (string | number)[]; message: string };
+
+type ZodParseResult = { success: true; data: unknown } | { success: false; error: { errors: ZodParseIssue[] } };
+
+/** Runtime Zod schema shape used inside the validator — not exported. */
+type ZodSchemaRuntime = ZodSchemaMinimal & {
+  safeParseAsync: (data: unknown) => Promise<ZodParseResult>;
+};
+
 export class ZodValidator implements Validator<ZodSchema> {
   readonly requiredImports: readonly ImportRequirement[] = [
     {
@@ -39,24 +48,24 @@ export class ZodValidator implements Validator<ZodSchema> {
     T_Unvalidated = FromSchemaUnvalidated<T_Schema>,
     T_Validated = FromSchema<T_Schema>,
   >(data: T_Unvalidated, schema: T_Schema): Promise<ValidateResult<T_Validated>> {
-    const result = await schema.safeParseAsync(data);
+    const result = await (schema as ZodSchemaRuntime).safeParseAsync(data);
     if (result.success) {
       return { success: true, data: result.data as T_Validated };
-    } else {
-      return {
-        success: false,
-        errors: result.error.errors.map((err) => ({
-          path: `/${err.path.join('/')}`,
-          message: err.message,
-        })),
-      };
     }
+
+    return {
+      success: false,
+      errors: result.error.errors.map((err) => ({
+        path: `/${err.path.join('/')}`,
+        message: err.message,
+      })),
+    };
   }
 
   async transformToJsonSchema(schema: ZodSchema): Promise<JsonSchema> {
     const { zodToJsonSchema } = await import('zod-to-json-schema');
 
     // TODO: zod-to-json-schema is not using JSONSchema7
-    return zodToJsonSchema(schema) as JsonSchema;
+    return zodToJsonSchema(schema as Parameters<typeof zodToJsonSchema>[0]) as JsonSchema;
   }
 }
