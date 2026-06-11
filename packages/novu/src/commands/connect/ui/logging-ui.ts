@@ -6,6 +6,7 @@ import { channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import {
+  logAuthUrlHandoffEvent,
   logEmailHandoffEvents,
   logSlackHandoffEvents,
   logSlackSetupLinkHandoffEvent,
@@ -20,6 +21,7 @@ import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
   let spinner: Ora | undefined;
+  let authUrlLogged = false;
   const stop = () => {
     if (spinner?.isSpinning) spinner.stop();
     spinner = undefined;
@@ -52,6 +54,10 @@ export function createLoggingUI(): ConnectUI {
     },
     authDashboardUrl(url) {
       if (url) {
+        if (!authUrlLogged) {
+          logAuthUrlHandoffEvent({ authUrl: url });
+          authUrlLogged = true;
+        }
         if (spinner) spinner.text = `Authorizing via the Novu Dashboard… ${chalk.gray('(')}${url}${chalk.gray(')')}`;
       }
     },

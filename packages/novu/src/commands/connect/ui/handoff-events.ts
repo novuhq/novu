@@ -1,6 +1,10 @@
 /** Machine-readable handoff lines for `--ci` / logging mode. Agents grep stdout for these. */
 const HANDOFF_PREFIX = 'NOVU_CONNECT_';
 
+export function logAuthUrlHandoffEvent(opts: { authUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}AUTH_URL=${opts.authUrl}`);
+}
+
 export function logEmailHandoffEvents(opts: {
   inboundAddress: string;
   mailtoUrl: string;
