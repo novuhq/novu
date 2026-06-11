@@ -47,5 +47,5 @@ export function getPostOrgCreateRoute(productType?: ProductType | null): string 
 }
 
 export function getPostOnboardingRoute(environmentSlug: string): string {
-  return buildRoute(ROUTES.AGENTS, { environmentSlug });
+  return buildRoute(ROUTES.WELCOME, { environmentSlug });
 }

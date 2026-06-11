@@ -319,7 +319,7 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
 
     if (selected === 'inbox') {
       // Persist the picked usecase on the org (fire-and-forget — navigation continues regardless).
-      updateProductUseCases.mutate({ [ProductUseCasesEnum.IN_APP]: true });
+      updateProductUseCases.mutate({ [ProductUseCasesEnum.IN_APP]: true, [ProductUseCasesEnum.AGENTS]: false });
       // Restart the provisioning loader so it plays a full cycle (with the inbox/notification copy)
       // while the destination page boots, instead of flickering off as soon as data resolves.
       beginOnboardingProvisioning('platform');
@@ -329,7 +329,7 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
     }
 
     if (selected === 'agents') {
-      updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
+      updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true, [ProductUseCasesEnum.IN_APP]: false });
       beginOnboardingProvisioning('agents');
       void navigate(ROUTES.AGENTS_SETUP);
     }

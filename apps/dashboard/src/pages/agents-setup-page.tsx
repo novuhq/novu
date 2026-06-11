@@ -216,7 +216,7 @@ export function AgentsSetupPage() {
       return;
     }
 
-    void navigate(buildRoute(ROUTES.AGENTS, { environmentSlug: 'default' }));
+    void navigate(buildRoute(ROUTES.WELCOME, { environmentSlug: 'default' }));
   }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleNavigateToOverview = useCallback(() => {
