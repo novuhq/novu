@@ -1,11 +1,26 @@
 import { PermissionsEnum } from '@novu/shared';
-import { RiBookMarkedLine, RiRouteFill } from 'react-icons/ri';
+import { ComponentType, ReactNode } from 'react';
+import {
+  RiAddLine,
+  RiArrowRightSLine,
+  RiBookMarkedLine,
+  RiBuildingLine,
+  RiCellphoneFill,
+  RiChatThreadFill,
+  RiDiscussLine,
+  RiRouteFill,
+  RiTranslate2,
+} from 'react-icons/ri';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { VersionControlDev } from '@/components/icons/version-control-dev';
+import { LogoCircle } from '@/components/icons/logo-circle';
+import { Mail3Fill } from '@/components/icons/mail-3-fill';
+import { Notification5Fill } from '@/components/icons/notification-5-fill';
+import { Sms } from '@/components/icons/sms';
 import { VersionControlProd } from '@/components/icons/version-control-prod';
 import { Button } from '@/components/primitives/button';
 import { PermissionButton } from '@/components/primitives/permission-button';
 import { useEnvironment } from '@/context/environment/hooks';
+import { cn } from '@/utils/ui';
 import { buildRoute, ROUTES } from '../utils/routes';
 import { ListNoResults } from './list-no-results';
 import { LinkButton } from './primitives/button-link';
@@ -60,39 +75,155 @@ const WorkflowListEmptyProd = ({ switchToDev }: { switchToDev: () => void }) => 
   </div>
 );
 
+const CheckIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 9 6.5" fill="none" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M8.5 0.5L3 6L0.5 3.5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+type EmptyStateTag = {
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+  className?: string;
+  rotate?: string;
+};
+
+const CHANNEL_TAGS: EmptyStateTag[] = [
+  { label: 'In-app', icon: Notification5Fill, className: 'border-stable/10 bg-stable/10 text-stable/60', rotate: 'rotate-1' },
+  {
+    label: 'Email',
+    icon: Mail3Fill,
+    className: 'border-information/10 bg-information/10 text-information/60',
+    rotate: '-rotate-1',
+  },
+  { label: 'Chat', icon: RiChatThreadFill, className: 'border-feature/10 bg-feature/10 text-feature/60' },
+  {
+    label: 'Push',
+    icon: RiCellphoneFill,
+    className: 'border-verified/10 bg-verified/10 text-verified/60',
+    rotate: 'rotate-1',
+  },
+  {
+    label: 'SMS',
+    icon: Sms,
+    className: 'border-error-base/10 bg-error-base/10 text-error-base/60',
+    rotate: '-rotate-1',
+  },
+];
+
+const SCALE_TAGS: EmptyStateTag[] = [
+  { label: 'Translations', icon: RiTranslate2, rotate: 'rotate-1' },
+  { label: 'Contexts', icon: RiBuildingLine, rotate: 'rotate-1' },
+  { label: 'Topics', icon: RiDiscussLine, rotate: '-rotate-1' },
+];
+
+const ColoredTag = ({ label, icon: Icon, className, rotate }: EmptyStateTag) => (
+  <span
+    className={cn(
+      'inline-flex items-center gap-0.5 rounded border px-1 py-0.5 text-label-xs leading-4',
+      className,
+      rotate
+    )}
+  >
+    <Icon className="size-3.5 shrink-0" />
+    {label}
+  </span>
+);
+
+const NeutralTag = ({ label, icon: Icon, rotate }: EmptyStateTag) => (
+  <span
+    className={cn(
+      'inline-flex items-center gap-1 rounded border border-stroke-soft bg-bg-weak px-1 py-0.5 text-label-xs leading-4 text-text-strong',
+      rotate
+    )}
+  >
+    <Icon className="size-3.5 shrink-0 text-text-sub" />
+    {label}
+  </span>
+);
+
+const EmptyListRow = ({ children }: { children: ReactNode }) => (
+  <div className="flex min-h-6 items-center gap-1.5">
+    <CheckIcon className="size-3 shrink-0 text-text-soft" />
+    <div className="flex flex-wrap items-center gap-1 text-label-xs text-text-sub">{children}</div>
+  </div>
+);
+
 const WorkflowListEmptyDev = () => {
   const navigate = useNavigate();
   const { environmentSlug } = useParams();
 
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center gap-6">
-      <VersionControlDev />
-      <div className="flex flex-col items-center gap-2 text-center">
-        <span className="text-foreground-900 block font-medium">Create your first workflow to send notifications</span>
-        <p className="text-foreground-400 max-w-[60ch] text-sm">
-          Workflows handle notifications across multiple channels in a single, version-controlled flow, with the ability
-          to manage preference for each subscriber.
-        </p>
-      </div>
+    <div className="flex h-full w-full flex-col items-center justify-center">
+      <div className="flex flex-col gap-12">
+        <div className="flex flex-col items-start">
+          <div className="flex h-[46px] w-[136px] flex-col rounded-lg border border-primary-base p-1">
+            <div className="bg-bg-white border-primary-alpha-24 flex flex-1 items-center justify-center rounded-md border p-3">
+              <RiRouteFill className="text-primary-base size-4" />
+            </div>
+          </div>
+          <div className="border-stroke-sub ml-[68px] h-[30px] border-l border-dashed" />
+          <div className="border-stroke-sub flex h-[46px] w-[136px] flex-col rounded-lg border border-dashed p-1">
+            <div className="bg-bg-white border-stroke-weak flex flex-1 items-center justify-center rounded-md border p-3">
+              <RiAddLine className="text-text-soft size-2.5" />
+            </div>
+          </div>
+        </div>
 
-      <div className="flex items-center justify-center gap-6">
-        <Link to={'https://docs.novu.co/platform/concepts/workflows'} target="_blank">
-          <LinkButton variant="gray" trailingIcon={RiBookMarkedLine}>
-            View docs
-          </LinkButton>
-        </Link>
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1">
+            <p className="text-text-strong text-label-md font-medium">
+              Send transactional notifications with Workflows
+            </p>
+            <p className="text-text-soft max-w-[500px] text-label-sm font-medium">
+              Trigger product events, orchestrate delivery across channels, and optionally connect notifications to your
+              agents for follow-up conversations.
+            </p>
+          </div>
 
-        <PermissionButton
-          permission={PermissionsEnum.WORKFLOW_WRITE}
-          variant="primary"
-          leadingIcon={RiRouteFill}
-          className="gap-2"
-          onClick={() => {
-            navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
-          }}
-        >
-          Create workflow
-        </PermissionButton>
+          <div className="flex flex-col gap-1 py-3">
+            <EmptyListRow>
+              <span>Send notifications across</span>
+              {CHANNEL_TAGS.map((tag) => (
+                <ColoredTag key={tag.label} {...tag} />
+              ))}
+              <span>with one API</span>
+            </EmptyListRow>
+            <EmptyListRow>
+              <span>Orchestrate delivery with workflows (conditions, delays, digests, fallbacks)</span>
+            </EmptyListRow>
+            <EmptyListRow>
+              <span>Scale notifications with</span>
+              {SCALE_TAGS.map((tag) => (
+                <NeutralTag key={tag.label} {...tag} />
+              ))}
+              <span>and a lot more.</span>
+            </EmptyListRow>
+            <EmptyListRow>
+              <span>Embed</span>
+              <span className="border-stroke-soft bg-bg-weak text-text-strong inline-flex items-center gap-0.5 rounded border px-1 py-0.5 text-label-xs leading-4">
+                <LogoCircle className="size-4 shrink-0" />
+                {'<Inbox />'}
+              </span>
+              <span>with preferences, notification history, and agent handoff</span>
+            </EmptyListRow>
+          </div>
+
+          <div className="flex">
+            <PermissionButton
+              permission={PermissionsEnum.WORKFLOW_WRITE}
+              variant="secondary"
+              mode="gradient"
+              size="xs"
+              trailingIcon={RiArrowRightSLine}
+              onClick={() => {
+                navigate(buildRoute(ROUTES.WORKFLOWS_CREATE, { environmentSlug: environmentSlug || '' }));
+              }}
+            >
+              Create your first workflow
+            </PermissionButton>
+          </div>
+        </div>
       </div>
     </div>
   );
