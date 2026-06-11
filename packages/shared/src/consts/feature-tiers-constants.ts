@@ -511,7 +511,6 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited agents', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited agents', value: UNLIMITED_VALUE },
   },
-  //  Decrease values for testing locally
   [FeatureNameEnum.AGENT_MAX_ACTIVE_CHANNELS]: {
     [ApiServiceLevelEnum.FREE]: { label: '2 active channels', value: 2 },
     [ApiServiceLevelEnum.PRO]: { label: '5 active channels', value: 5 },
