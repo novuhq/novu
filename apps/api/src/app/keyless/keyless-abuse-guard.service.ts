@@ -9,6 +9,7 @@ import {
   KEYLESS_GENERATE_CAP_PER_IP_PER_DAY,
   KEYLESS_MAX_AGENTS_PER_ENV,
 } from './keyless-abuse.constants';
+import { isKeylessOrganization } from './keyless-organization.helpers';
 
 const ENV_CREATE_LIMIT_MESSAGE =
   'Daily keyless demo limit reached. Sign up for a free Novu account or try again tomorrow.';
@@ -45,7 +46,7 @@ export class KeylessAbuseGuardService {
   }
 
   async isKeylessAgentAiEnabled(organizationId: string): Promise<boolean> {
-    if (!this.isKeylessOrganization(organizationId)) {
+    if (!isKeylessOrganization(organizationId)) {
       return true;
     }
 
@@ -65,7 +66,7 @@ export class KeylessAbuseGuardService {
   }
 
   async assertManagedAgentCap(environmentId: string, organizationId: string): Promise<void> {
-    if (KEYLESS_MAX_AGENTS_PER_ENV === 0 || !this.isKeylessOrganization(organizationId)) {
+    if (KEYLESS_MAX_AGENTS_PER_ENV === 0 || !isKeylessOrganization(organizationId)) {
       return;
     }
 
@@ -98,12 +99,6 @@ export class KeylessAbuseGuardService {
     if (nextCount > cap) {
       throw new HttpException(limitMessage, HttpStatus.TOO_MANY_REQUESTS);
     }
-  }
-
-  private isKeylessOrganization(organizationId: string): boolean {
-    const keylessOrgId = process.env.KEYLESS_ORGANIZATION_ID;
-
-    return Boolean(keylessOrgId && organizationId === keylessOrgId);
   }
 
   private dailyCounterKey(kind: 'env_create' | 'generate', clientIp: string): string {

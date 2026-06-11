@@ -16,6 +16,7 @@ import {
 } from '@novu/dal';
 import { EmailProviderIdEnum } from '@novu/shared';
 import type { WellKnownEmoji } from 'chat';
+import { isKeylessOrganization } from '../../keyless/keyless-organization.helpers';
 import { trackAgentIntegrationFirstWebhook } from '../shared/analytics/agent-analytics';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { AgentInactiveException } from '../shared/errors/agent-inactive.exception';
@@ -248,7 +249,7 @@ export class AgentConfigResolver {
       connectionAccessToken,
       environmentId,
       organizationId,
-      isKeyless: Boolean(process.env.KEYLESS_ORGANIZATION_ID && organizationId === process.env.KEYLESS_ORGANIZATION_ID),
+      isKeyless: isKeylessOrganization(organizationId),
       isManaged: !!agent.managedRuntime,
       agentId: agent._id,
       agentIdentifier: agent.identifier,
