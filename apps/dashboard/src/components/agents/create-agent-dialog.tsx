@@ -804,7 +804,7 @@ export function CreateAgentDialog({
               >
                 <SegmentedControlList
                   className="rounded-[5px] bg-bg-muted p-1"
-                  floatingBgClassName="rounded-[4px]"
+                  floatingBgClassName="rounded-[1px]"
                 >
                   <SegmentedControlTrigger value="create" className="text-label-xs" disabled={isSubmitBusy}>
                     Create new agent
