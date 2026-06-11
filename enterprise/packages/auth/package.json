@@ -1,6 +1,6 @@
 {
   "name": "@novu/ee-auth",
-  "version": "2.0.14",
+  "version": "2.0.15",
   "private": true,
   "main": "dist/index.js",
   "scripts": {
@@ -45,8 +45,8 @@
     "typescript": "5.6.2"
   },
   "peerDependencies": {
-    "@nestjs/common": "11.1.21",
-    "@nestjs/core": "11.1.21",
+    "@nestjs/common": "11.1.24",
+    "@nestjs/core": "11.1.24",
     "@nestjs/jwt": "11.0.2",
     "@nestjs/passport": "11.0.5",
     "@nestjs/swagger": "7.4.0",

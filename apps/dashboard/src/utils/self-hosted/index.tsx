@@ -1,6 +1,7 @@
 import { IOrganizationEntity } from '@novu/shared';
 import React from 'react';
-import { AuthContextProvider, useAuth } from './auth.resource';
+import { AuthContextProvider } from './auth.resource';
+import { ClerkLoaded } from './clerk-loaded';
 import {
   OrganizationList,
   OrganizationProfile,
@@ -12,23 +13,37 @@ import {
   UserProfile,
 } from './components';
 import { getJwtToken, isJwtValid } from './jwt-manager';
-import { OrganizationSwitcher } from './organization-switcher';
 import { OrganizationContextProvider, useOrganization } from './organization.resource';
-import { UserButton } from './user-button';
+import { OrganizationSwitcher } from './organization-switcher';
+import { Show } from './show';
+import { useAuth } from './use-auth';
 import { UserContextProvider, useUser } from './user.resource';
+import { UserButton } from './user-button';
 
 export {
-  AuthContextProvider, OrganizationContextProvider, OrganizationList,
-  OrganizationProfile, OrganizationSwitcher, RedirectToSignIn,
+  AuthContextProvider,
+  ClerkLoaded,
+  OrganizationContextProvider,
+  OrganizationList,
+  OrganizationProfile,
+  OrganizationSwitcher,
+  RedirectToSignIn,
+  Show,
   SignedIn,
-  SignedOut, SignIn,
-  SignUp, UserButton, UserProfile
+  SignedOut,
+  SignIn,
+  SignUp,
+  UserButton,
+  UserProfile,
 };
 
-  export { useAuth, useOrganization, useUser };
+export { useAuth, useOrganization, useUser };
 
 export const useClerk = () => {
+  const { isLoaded } = useAuth();
+
   return {
+    loaded: isLoaded,
     setActive: async () => {
       console.warn('Clerk.setActive is not available in self-hosted mode');
     },

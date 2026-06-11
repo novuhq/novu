@@ -38,6 +38,13 @@ export interface ConversationTokenUsage {
   totalTokens: number;
 }
 
+export interface PendingManagedAgentSetup {
+  /** Platform message id for the user turn not yet dispatched to the managed agent */
+  pendingPlatformMessageId: string;
+  /** Platform message id of the in-thread setup card (for edit-in-place) */
+  setupMessageId?: string;
+}
+
 export class ConversationEntity {
   _id: string;
 
@@ -77,6 +84,19 @@ export class ConversationEntity {
    * be overwritten by customer metadata signals from the bridge.
    */
   managedSessionVaultId?: string;
+
+  /**
+   * Slack message ID of the currently active plan card.
+   * Set on first tool, cleared on finalize.
+   * Only one card is always active per conversation.
+   */
+  activePlanMessageId?: string;
+
+  /**
+   * Set while managed-agent setup blocks dispatch for this thread. Cleared after
+   * the parked inbound is replayed or the setup card is resolved without replay.
+   */
+  pendingManagedAgentSetup?: PendingManagedAgentSetup;
 
   tokenUsage?: ConversationTokenUsage;
 

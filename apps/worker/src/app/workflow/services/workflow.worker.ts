@@ -15,7 +15,6 @@ import {
   WorkflowInMemoryProviderService,
   WorkflowWorkerService,
 } from '@novu/application-generic';
-import { CommunityOrganizationRepository } from '@novu/dal';
 import { FeatureFlagsKeysEnum, ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 
 const nr = require('newrelic');
@@ -27,7 +26,6 @@ export class WorkflowWorker extends WorkflowWorkerService {
   constructor(
     private triggerEventUsecase: TriggerEvent,
     public workflowInMemoryProviderService: WorkflowInMemoryProviderService,
-    private organizationRepository: CommunityOrganizationRepository,
     sqsService: SqsService,
     protected logger: PinoLogger,
     private featureFlagsService: FeatureFlagsService
@@ -92,14 +90,6 @@ export class WorkflowWorker extends WorkflowWorkerService {
         return;
       }
 
-      const organizationExists = await this.organizationExist(data);
-
-      if (!organizationExists) {
-        this.logger.warn(`Organization not found for organizationId ${data.organizationId}. Skipping job.`);
-
-        return;
-      }
-
       return await new Promise((resolve, reject) => {
         const _this = this;
 
@@ -127,12 +117,5 @@ export class WorkflowWorker extends WorkflowWorkerService {
         );
       });
     };
-  }
-
-  private async organizationExist(data: IWorkflowDataDto): Promise<boolean> {
-    const { organizationId } = data;
-    const organization = await this.organizationRepository.findOne({ _id: organizationId });
-
-    return !!organization;
   }
 }

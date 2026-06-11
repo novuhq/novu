@@ -1,5 +1,6 @@
-export * from './data-retention';
 export * from './aws-claude-regions';
+export * from './connect-claim';
+export * from './data-retention';
 export * from './feature-tiers-constants';
 export * from './filters';
 export * from './handlebar-helpers';

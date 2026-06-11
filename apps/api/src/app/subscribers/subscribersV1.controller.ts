@@ -584,7 +584,8 @@ export class SubscribersV1Controller {
   @Get('/:subscriberId/notifications/feed')
   @ApiOperation({
     summary: 'Retrieve subscriber notifications',
-    description: `Retrieve subscriber in-app (inbox) notifications by its unique key identifier **subscriberId**.`,
+    description: `This API is deprecated, use v2 API instead. Retrieve subscriber in-app notifications by its unique key identifier **subscriberId**.`,
+    deprecated: true,
   })
   @ApiResponse(FeedResponseDto)
   @SdkGroupName('Subscribers.Notifications')
@@ -619,7 +620,8 @@ export class SubscribersV1Controller {
   @ApiResponse(UnseenCountResponse)
   @ApiOperation({
     summary: 'Retrieve unseen notifications count',
-    description: `Retrieve unseen in-app (inbox) notifications count for a subscriber by its unique key identifier **subscriberId**.`,
+    description: `This API is deprecated, use v2 API instead. Retrieve unseen in-app notifications count for a subscriber by its unique key identifier **subscriberId**.`,
+    deprecated: true,
   })
   @SdkGroupName('Subscribers.Notifications')
   @SdkMethodName('unseenCount')
@@ -658,7 +660,6 @@ export class SubscribersV1Controller {
     summary: 'Mark a subscriber feed messages as seen or as read',
     description: `Introducing '/:subscriberId/messages/mark-as endpoint for consistent read and seen message handling,
      deprecating old legacy endpoint.`,
-    deprecated: true,
   })
   @SdkGroupName('Subscribers.Messages')
   @SdkMethodName('markAs')
@@ -686,8 +687,9 @@ export class SubscribersV1Controller {
 
   @ApiOperation({
     summary: 'Update notifications state',
-    description: `Update subscriber's multiple in-app (inbox) notifications state such as seen, read, unseen or unread by **subscriberId**. 
-      **messageId** is of type mongodbId of notifications`,
+    description: `This API is deprecated, use v2 API instead. Update subscriber's multiple in-app notifications state such as seen, read, unseen or unread by **subscriberId**. 
+      **messageId** is of type mongodbId of notifications.`,
+    deprecated: true,
   })
   @ExternalApiAccessible()
   @RequireAuthentication()
@@ -720,7 +722,8 @@ export class SubscribersV1Controller {
   @Post('/:subscriberId/messages/mark-all')
   @ApiOperation({
     summary: 'Update all notifications state',
-    description: `Update all subscriber in-app (inbox) notifications state such as read, unread, seen or unseen by **subscriberId**.`,
+    description: `This API is deprecated, use v2 API instead. Update all subscriber in-app notifications state such as read, unread, seen or unseen by **subscriberId**.`,
+    deprecated: true,
   })
   @ApiCreatedResponse({
     type: Number,
@@ -750,8 +753,9 @@ export class SubscribersV1Controller {
   @Post('/:subscriberId/messages/:messageId/actions/:type')
   @ApiOperation({
     summary: 'Update notification action status',
-    description: `Update in-app (inbox) notification's action status by its unique key identifier **messageId** and type field **type**. 
+    description: `This API is deprecated, use v2 API instead. Update in-app notification's action status by its unique key identifier **messageId** and type field **type**. 
       **type** field can be **primary** or **secondary**`,
+    deprecated: true,
   })
   @ApiResponse(MessageResponseDto, 201)
   @SdkGroupName('Subscribers.Messages')

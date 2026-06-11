@@ -13,6 +13,7 @@ import { CreateChannelConnectionCommand } from '../../../../channel-connections/
 import { CreateChannelConnection } from '../../../../channel-connections/usecases/create-channel-connection/create-channel-connection.usecase';
 import { CreateChannelEndpointCommand } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.command';
 import { CreateChannelEndpoint } from '../../../../channel-endpoints/usecases/create-channel-endpoint/create-channel-endpoint.usecase';
+import { renderConnectionResultPage } from '../../../../shared/html/connection-result-page';
 import { peekOAuthStatePayload } from '../../generate-chat-oath-url/chat-oauth-state.util';
 import { GenerateMsTeamsOauthUrlCommand } from '../../generate-chat-oath-url/generate-msteams-oath-url/generate-msteams-oauth-url.command';
 import {
@@ -26,7 +27,6 @@ const MS_GRAPH_BASE_URL = 'https://graph.microsoft.com/v1.0';
 
 @Injectable()
 export class MsTeamsOauthCallback {
-  private readonly SCRIPT_CLOSE_TAB = '<script>window.close();</script>';
   private readonly MS_TEAMS_TOKEN_URL = 'https://login.microsoftonline.com';
 
   constructor(
@@ -110,7 +110,12 @@ export class MsTeamsOauthCallback {
 
     return {
       type: ResponseTypeEnum.HTML,
-      result: this.SCRIPT_CLOSE_TAB,
+      result: renderConnectionResultPage({
+        status: 'success',
+        title: 'Connection complete',
+        heading: "You're all set",
+        message: 'Microsoft Teams is connected and ready to use.',
+      }),
     };
   }
 
@@ -300,44 +305,25 @@ export class MsTeamsOauthCallback {
     }
   }
 
+  /**
+   * Bot-install failures during link_user OAuth. Uses the shared connection-result
+   * page (same card as MCP/Slack success paths) instead of bespoke HTML so terminal
+   * pages stay visually consistent. Permission-related errors keep the Azure
+   * propagation hint in `footerNote`.
+   */
   private buildErrorHtml(message: string): string {
-    const escaped = message
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-
     const isPermissionError =
       message.includes('TeamsAppInstallation.ReadWriteSelfForUser.All') || message.includes('AppCatalog.Read.All');
-    const cachingNote = isPermissionError
-      ? `
-  <div class="cache-note">
-    <strong>Azure permission changes may take time to propagate.</strong>
-    If you have already granted the required permissions, Azure AD can take up to <strong>60 minutes</strong> to apply the changes. Wait a few minutes and then try to <strong>Link Teams Identity</strong> again.
-  </div>`
-      : '';
 
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>MS Teams Setup Error</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; padding: 2rem; color: #1a1a1a; }
-    .error-box { background: #fff3f3; border: 1px solid #f5c6c6; border-radius: 8px; padding: 1.5rem; max-width: 560px; }
-    h2 { margin: 0 0 0.75rem; color: #c0392b; font-size: 1.1rem; }
-    p { margin: 0; line-height: 1.5; }
-    .cache-note { margin-top: 1rem; padding: 0.75rem 1rem; background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; font-size: 0.9rem; line-height: 1.5; color: #7a5c00; }
-  </style>
-</head>
-<body>
-  <div class="error-box">
-    <h2>MS Teams Bot Installation Failed</h2>
-    <p>${escaped}</p>${cachingNote}
-  </div>
-</body>
-</html>`;
+    return renderConnectionResultPage({
+      status: 'error',
+      title: 'Setup error',
+      heading: "We couldn't set up Microsoft Teams",
+      message,
+      footerNote: isPermissionError
+        ? 'Azure permission changes can take up to 60 minutes to take effect. If you just granted the required permissions, wait a few minutes and try again.'
+        : undefined,
+    });
   }
 
   private async exchangeCodeForAadObjectId(code: string, credentials: ICredentialsEntity): Promise<string> {

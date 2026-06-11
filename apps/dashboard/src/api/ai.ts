@@ -161,6 +161,29 @@ export async function fetchWorkflowSuggestions({
   return responseData;
 }
 
+export type AgentSuggestionResponse = {
+  id: string;
+  name: string;
+  prompt: string;
+};
+
+export async function fetchAgentSuggestions({
+  environment,
+  refresh,
+}: {
+  environment: IEnvironment;
+  refresh?: boolean;
+}): Promise<AgentSuggestionResponse[]> {
+  if (!IS_AI_FEATURES_ENABLED) return [];
+
+  const endpoint = refresh ? '/ai/agent-suggestions?refresh=true' : '/ai/agent-suggestions';
+  const { data: responseData } = await getV2<{ data: AgentSuggestionResponse[] }>(endpoint, {
+    environment,
+  });
+
+  return responseData;
+}
+
 export async function cancelStream({
   environment,
   chatId,

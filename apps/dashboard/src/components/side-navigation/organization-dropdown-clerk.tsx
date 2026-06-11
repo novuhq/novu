@@ -1,8 +1,5 @@
 import { useAuth, useClerk, useOrganization, useOrganizationList } from '@clerk/react';
 import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { isConnectWorkspace } from '@/utils/connect';
-import { isPlatformWorkspace } from '@/utils/platform-workspace';
-import { IS_NOVU_CONNECT } from '@/config';
 
 type OrganizationMembershipLike = {
   id: string;
@@ -28,7 +25,6 @@ import {
 import { showErrorToast } from '@/components/primitives/sonner-helpers';
 import { DEFAULT_REGION, getRegionCodeFromAws, useRegion } from '@/context/region';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { isManualOrgCreationAllowed } from '@/utils/connect';
 import { ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
 
@@ -177,11 +173,6 @@ export function OrganizationDropdown() {
     (membership: OrganizationMembershipLike) => {
       if (membership.organization.id === orgId) return false;
 
-      const metadata = membership.organization.publicMetadata;
-      const matchesProduct = IS_NOVU_CONNECT ? isConnectWorkspace(metadata) : isPlatformWorkspace(metadata);
-
-      if (!matchesProduct) return false;
-
       if (isRegionSelectorEnabled) {
         const orgAwsRegion = membership.organization.publicMetadata?.region as string | undefined;
 
@@ -255,20 +246,18 @@ export function OrganizationDropdown() {
           )}
         </div>
 
-        {isManualOrgCreationAllowed() && (
-          <DropdownMenuItem
-            className={cn(
-              'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-neutral-200 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
-              isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
-            )}
-            onSelect={() => {
-              navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
-            }}
-          >
-            <RiAddCircleLine className="size-4 text-text-sub" />
-            <span className="text-text-sub">Create organization</span>
-          </DropdownMenuItem>
-        )}
+        <DropdownMenuItem
+          className={cn(
+            'flex h-9 cursor-pointer items-center gap-2 rounded-none border-t border-neutral-200 px-2 text-sm transition-shadow focus:bg-accent hover:bg-accent',
+            isScrolled && 'shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]'
+          )}
+          onSelect={() => {
+            navigate(ROUTES.SIGNUP_ORGANIZATION_LIST);
+          }}
+        >
+          <RiAddCircleLine className="size-4 text-text-sub" />
+          <span className="text-text-sub">Create organization</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

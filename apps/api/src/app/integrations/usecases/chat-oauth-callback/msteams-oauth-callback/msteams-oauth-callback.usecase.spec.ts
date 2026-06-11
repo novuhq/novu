@@ -208,7 +208,7 @@ describe('MsTeamsOauthCallback', () => {
       const result = await usecase.execute(command);
 
       expect(generateMsTeamsOauthUrl.execute.called).to.be.false;
-      expect(result.result).to.include('window.close()');
+      expect(result.result).to.include('Microsoft Teams is connected');
     });
 
     it('should fall through to close-tab when autoLinkUser=false even if subscriberId is present', async () => {
@@ -232,7 +232,7 @@ describe('MsTeamsOauthCallback', () => {
       const result = await usecase.execute(command);
 
       expect(generateMsTeamsOauthUrl.execute.called).to.be.false;
-      expect(result.result).to.include('window.close()');
+      expect(result.result).to.include('Microsoft Teams is connected');
     });
 
     it('should fall through to close-tab when autoLinkUser is absent (raw API callers default to false)', async () => {
@@ -255,7 +255,7 @@ describe('MsTeamsOauthCallback', () => {
       const result = await usecase.execute(command);
 
       expect(generateMsTeamsOauthUrl.execute.called).to.be.false;
-      expect(result.result).to.include('window.close()');
+      expect(result.result).to.include('Microsoft Teams is connected');
     });
 
     it('should fall through to close-tab and not throw when link_user chaining fails', async () => {
@@ -279,7 +279,7 @@ describe('MsTeamsOauthCallback', () => {
 
       const result = await usecase.execute(command);
 
-      expect(result.result).to.include('window.close()');
+      expect(result.result).to.include('Microsoft Teams is connected');
     });
 
     it('should throw if tenant is missing', async () => {

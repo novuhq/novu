@@ -3,6 +3,7 @@ import { ComponentProps } from 'react';
 import { RiCheckboxCircleFill, RiForbidFill, RiMore2Fill, RiRobot2Line } from 'react-icons/ri';
 import { Link, useLocation } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
+import { ExceedsPlanIndicator } from '@/components/agents/exceeds-plan-indicator';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { CompactButton } from '@/components/primitives/button-compact';
 import {
@@ -120,6 +121,28 @@ function AgentIntegrationsCell({ agent }: { agent: AgentResponse }) {
   );
 }
 
+function AgentStatusCell({ agent }: { agent: AgentResponse }) {
+  if (agent.exceedsPlanLimit) {
+    return <ExceedsPlanIndicator resource="agent" className="relative z-10" />;
+  }
+
+  if (agent.active) {
+    return (
+      <StatusBadge variant="light" status="completed">
+        <StatusBadgeIcon as={RiCheckboxCircleFill} />
+        Active
+      </StatusBadge>
+    );
+  }
+
+  return (
+    <StatusBadge variant="light" status="disabled">
+      <StatusBadgeIcon as={RiForbidFill} />
+      Inactive
+    </StatusBadge>
+  );
+}
+
 function AgentsTableSkeletonRow() {
   return (
     <TableRow>
@@ -201,17 +224,7 @@ export function AgentsTable({ agents, isLoading, onRequestDelete, paginationProp
                   </div>
                 </AgentNavTableCell>
                 <AgentNavTableCell to={agentDetailsPath} className="p-3 align-middle">
-                  {agent.active ? (
-                    <StatusBadge variant="light" status="completed">
-                      <StatusBadgeIcon as={RiCheckboxCircleFill} />
-                      Active
-                    </StatusBadge>
-                  ) : (
-                    <StatusBadge variant="light" status="disabled">
-                      <StatusBadgeIcon as={RiForbidFill} />
-                      Inactive
-                    </StatusBadge>
-                  )}
+                  <AgentStatusCell agent={agent} />
                 </AgentNavTableCell>
                 <AgentNavTableCell to={agentDetailsPath} className="p-3 align-middle">
                   <AgentIntegrationsCell agent={agent} />

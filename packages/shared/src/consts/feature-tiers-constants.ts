@@ -72,7 +72,20 @@ export enum FeatureNameEnum {
 
   // Agent Features
   AGENT_EMAIL_INTEGRATION = 'agentEmailIntegration',
+  AGENT_MAX_AGENTS = 'agentMaxAgents',
+  AGENT_MAX_ACTIVE_CHANNELS = 'agentMaxActiveChannels',
+  AGENT_MAX_CUSTOM_EMAIL_DOMAINS = 'agentMaxCustomEmailDomains',
 }
+
+/**
+ * Which constraint produced a resource limit (agents, channels, custom email
+ * domains, …). Drives user-facing messaging and the API error contract:
+ * `plan` limits are lifted by upgrading (402); `system` limits (the
+ * platform-wide cap, or a per-organization override) require contacting the
+ * Novu team (409).
+ */
+export const RESOURCE_LIMIT_SOURCES = ['plan', 'system'] as const;
+export type ResourceLimitSource = (typeof RESOURCE_LIMIT_SOURCES)[number];
 
 export type FeatureValue = string | number | null | boolean | DetailedPriceListItem;
 
@@ -500,6 +513,27 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Agent email integration', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Agent email integration', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Agent email integration', value: true },
+  },
+  [FeatureNameEnum.AGENT_MAX_AGENTS]: {
+    [ApiServiceLevelEnum.FREE]: { label: '2 agents', value: 2 },
+    [ApiServiceLevelEnum.PRO]: { label: '5 agents', value: 5 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '10 agents', value: 10 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited agents', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited agents', value: UNLIMITED_VALUE },
+  },
+  [FeatureNameEnum.AGENT_MAX_ACTIVE_CHANNELS]: {
+    [ApiServiceLevelEnum.FREE]: { label: '2 active channels', value: 2 },
+    [ApiServiceLevelEnum.PRO]: { label: '5 active channels', value: 5 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'All active channels', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'All active channels', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'All active channels', value: UNLIMITED_VALUE },
+  },
+  [FeatureNameEnum.AGENT_MAX_CUSTOM_EMAIL_DOMAINS]: {
+    [ApiServiceLevelEnum.FREE]: { label: 'No custom email domains', value: 0 },
+    [ApiServiceLevelEnum.PRO]: { label: 'No custom email domains', value: 0 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
   },
 };
 

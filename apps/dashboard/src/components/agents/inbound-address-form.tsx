@@ -66,7 +66,7 @@ export function InboundAddressForm({ domains, onSubmit, isDisabled, isExistingAd
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex flex-wrap items-center gap-1">
       <div
         className={cn(
           'border-stroke-soft bg-bg-white flex h-8 items-center overflow-hidden rounded-lg border shadow-xs',

@@ -10,7 +10,7 @@ import { WhatsAppSetupGuide } from '@/components/agents/whatsapp-setup-guide';
 import { AgentIntegrationGuideHeader } from './agent-integration-guide-layout';
 import { EmailAgentIntegrationGuide } from './email-agent-integration-guide';
 import { GenericAgentIntegrationGuide } from './generic-agent-integration-guide';
-import { SlackAgentIntegrationGuide } from './slack-agent-integration-guide';
+import { SlackAgentConnectedDetails } from './slack-agent-connected-details';
 import { TeamsAgentIntegrationGuide } from './teams-agent-integration-guide';
 import { TelegramAgentIntegrationGuide } from './telegram-agent-integration-guide';
 import { WhatsAppAgentIntegrationGuide } from './whatsapp-agent-integration-guide';
@@ -127,9 +127,7 @@ export function ResolveAgentIntegrationGuide({
 
   if (providerId === ChatProviderIdEnum.Slack) {
     return (
-      <SlackAgentIntegrationGuide
-        embedded={embedded}
-        onBack={onBack}
+      <SlackAgentConnectedDetails
         agent={agent}
         integrationLink={integrationLink}
         canRemoveIntegration={canRemoveIntegration}

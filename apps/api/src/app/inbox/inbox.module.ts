@@ -11,6 +11,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { IntegrationModule } from '../integrations/integrations.module';
+import { KeylessModule } from '../keyless/keyless.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { OutboundWebhooksModule } from '../outbound-webhooks/outbound-webhooks.module';
 import { PreferencesModule } from '../preferences';
@@ -27,6 +28,7 @@ import { USE_CASES } from './usecases';
 
 @Module({
   imports: [
+    KeylessModule,
     SharedModule,
     SubscribersV1Module,
     AuthModule,

@@ -1,5 +1,5 @@
 import fs from 'node:fs';
-import { BullMqService } from '@novu/application-generic';
+import { BullMqService, buildEnvelopeRequestSource } from '@novu/application-generic';
 import { ObservabilityBackgroundTransactionEnum } from '@novu/shared';
 import Promise from 'bluebird';
 import dns from 'dns';
@@ -27,6 +27,13 @@ const mailUtilities = Promise.promisifyAll(require('./mailUtilities'));
 
 const inboundMailService = new InboundMailService();
 BullMqService.haveProInstalled();
+
+/**
+ * Exposed for tests so they can inject mock `requestLogger` / `tenantResolver`
+ * without standing up real ClickHouse / MongoDB. Production code should not
+ * read from this export.
+ */
+export const __testInboundMailService = inboundMailService;
 
 class Mailin extends events.EventEmitter {
   public configuration: IConfiguration;
@@ -207,7 +214,8 @@ class Mailin extends events.EventEmitter {
               `${connection.id} Processing message from ${connection.envelope.mailFrom.address}`
             );
 
-            return retrieveRawEmail(connection)
+            return logInboundMailAccepted(connection)
+              .then(() => retrieveRawEmail(connection))
               .then((rawEmail) =>
                 Promise.all([
                   rawEmail,
@@ -274,12 +282,18 @@ class Mailin extends events.EventEmitter {
               .then((finalizedMessage) =>
                 nr.startSegment('inbound-mail/upload-attachments', true, async () => {
                   if (Array.isArray(finalizedMessage.attachments) && finalizedMessage.attachments.length > 0) {
-                    const { uploaded, failedCount } = await uploadAttachmentsToS3(
+                    const { mode, uploaded, failedCount, retriableFailedCount } = await uploadAttachmentsToS3(
                       finalizedMessage.messageId,
                       finalizedMessage.attachments
                     );
 
                     finalizedMessage.attachments = uploaded;
+
+                    try {
+                      nr.addCustomAttributes({ 'mail.attachmentMode': mode });
+                    } catch {
+                      // instrumentation must never break the pipeline
+                    }
 
                     if (failedCount > 0) {
                       try {
@@ -289,20 +303,31 @@ class Mailin extends events.EventEmitter {
                       }
 
                       logger.warn(
-                        { context: LOG_CONTEXT, connectionId: connection.id, failedCount },
-                        `${connection.id} ${failedCount} attachment(s) failed to upload to S3 and were dropped`
+                        { context: LOG_CONTEXT, connectionId: connection.id, failedCount, mode },
+                        `${connection.id} ${failedCount} attachment(s) failed in ${mode} mode and were dropped`
                       );
 
                       /*
-                       * When INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true, signal a transient
-                       * SMTP failure (4xx) so the sending MTA retries delivery rather than
-                       * silently dropping attachments. Because buildStorageKey is deterministic
-                       * by (messageId, index, filename), retries idempotently overwrite the same S3
-                       * key on success.
+                       * When INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR=true and we were
+                       * uploading to S3, signal a transient SMTP failure (4xx) so the
+                       * sending MTA retries delivery rather than silently dropping
+                       * attachments. Because buildStorageKey is deterministic by
+                       * (messageId, index, filename), retries idempotently overwrite
+                       * the same S3 key on success.
+                       *
+                       * Gate on retriableFailedCount (transient S3 upload errors), NOT
+                       * the total failedCount: structural drops (no content, unsupported
+                       * shape, inline size-cap) would re-fail on every redelivery, so
+                       * retrying them would create an infinite 451 loop. Inline-mode
+                       * processing reports retriableFailedCount=0, so it is skipped too.
                        */
-                      if (process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true') {
+                      if (
+                        mode === 's3' &&
+                        retriableFailedCount > 0 &&
+                        process.env.INBOUND_FAIL_ON_ATTACHMENT_UPLOAD_ERROR === 'true'
+                      ) {
                         const error: Error & { responseCode?: number } = new Error(
-                          `Attachment upload failed: ${failedCount} attachment(s) could not be stored`
+                          `Attachment upload failed: ${retriableFailedCount} attachment(s) could not be stored`
                         );
                         error.responseCode = 451;
                         throw error;
@@ -318,6 +343,7 @@ class Mailin extends events.EventEmitter {
                 () => unlinkFile(connection).then(() => resolve()),
                 (processingError) => {
                   nr.noticeError(processingError);
+                  emitProcessingFailureTrace(connection, processingError);
                   logger.error(
                     { err: processingError, context: LOG_CONTEXT, connectionId: connection.id },
                     `${connection.id} Unable to finish processing message!!`
@@ -526,6 +552,53 @@ class Mailin extends events.EventEmitter {
       return parsedEmail;
     }
 
+    function logInboundMailAccepted(connection) {
+      return nr.startSegment('inbound-mail/log-received', true, async () => {
+        const requestLogger = inboundMailService.requestLogger;
+        const tenantResolver = inboundMailService.tenantResolver;
+
+        if (!requestLogger || !tenantResolver) {
+          return;
+        }
+
+        const toAddress = getEnvelopeToAddress(connection);
+
+        if (!toAddress) {
+          return;
+        }
+
+        try {
+          const tenant = await tenantResolver.resolve(toAddress, undefined);
+          const durationMs = connection.startTimeMs ? Date.now() - connection.startTimeMs : 0;
+
+          const requestLogId = await requestLogger.logReceived({
+            source: buildEnvelopeRequestSource(connection.envelope, {
+              remoteAddress: connection.remoteAddress,
+              clientHostname: connection.clientHostname,
+            }),
+            toAddress,
+            tenant,
+            durationMs,
+          });
+
+          if (requestLogId) {
+            connection.requestLogContext = {
+              requestLogId,
+              organizationId: tenant.organizationId,
+              environmentId: tenant.environmentId,
+              transactionId: tenant.transactionId,
+            };
+          }
+        } catch (error) {
+          // Observability writes must never block the SMTP pipeline.
+          logger.warn(
+            { err: error, context: LOG_CONTEXT, connectionId: connection.id },
+            `${connection.id} Failed to write inbound-mail request log — continuing`
+          );
+        }
+      });
+    }
+
     function postQueue(connection, finalizedMessage) {
       return nr.startSegment(
         'inbound-mail/post-queue',
@@ -541,6 +614,11 @@ class Mailin extends events.EventEmitter {
               { context: LOG_CONTEXT, connectionId: connection.id },
               `${connection.id} Adding mail to queue `
             );
+
+            const requestLogContext = connection.requestLogContext;
+            if (requestLogContext?.requestLogId) {
+              finalizedMessage.requestLogId = requestLogContext.requestLogId;
+            }
 
             const toAddress = getAddressTo(finalizedMessage);
             const parts: string[] = toAddress.split('@');
@@ -577,16 +655,62 @@ class Mailin extends events.EventEmitter {
                 data: finalizedMessage,
                 groupId,
               })
-              .then(() => resolve())
+              .then(() => {
+                emitQueueLifecycleTrace(connection, 'queued');
+                resolve();
+              })
               .catch((error) => {
                 logger.error(
                   { err: error, context: LOG_CONTEXT, connectionId: connection.id },
                   `${connection.id} Failed to add inbound mail to queue`
                 );
+                emitQueueLifecycleTrace(
+                  connection,
+                  'queue-failed',
+                  error instanceof Error ? error.message : 'Failed to enqueue inbound mail'
+                );
                 reject(error);
               });
           })
       );
+    }
+
+    function emitProcessingFailureTrace(connection, processingError) {
+      const requestLogger = inboundMailService.requestLogger;
+      const context = connection.requestLogContext;
+
+      if (!requestLogger || !context) {
+        return;
+      }
+
+      const message = processingError instanceof Error ? processingError.message : 'Inbound mail processing failed';
+
+      requestLogger.logProcessingFailed({ ...context, message }).catch((traceError) => {
+        logger.warn(
+          { err: traceError, context: LOG_CONTEXT, connectionId: connection.id },
+          `${connection.id} Failed to write inbound-mail processing-failure trace`
+        );
+      });
+    }
+
+    function emitQueueLifecycleTrace(connection, phase: 'queued' | 'queue-failed', message?: string) {
+      const requestLogger = inboundMailService.requestLogger;
+      const context = connection.requestLogContext;
+
+      if (!requestLogger || !context) {
+        return;
+      }
+
+      const promise =
+        phase === 'queued' ? requestLogger.logQueued(context) : requestLogger.logQueueFailed({ ...context, message });
+
+      promise.catch((traceError) => {
+        // Trace writes are best-effort; never fail the SMTP pipeline on them.
+        logger.warn(
+          { err: traceError, context: LOG_CONTEXT, connectionId: connection.id, phase },
+          `${connection.id} Failed to write inbound-mail ${phase} trace`
+        );
+      });
     }
     /*
      * Best-effort cleanup of the raw email temp file. Used on both success and
@@ -636,6 +760,7 @@ class Mailin extends events.EventEmitter {
           `${connection.id} Receiving message from ${connection.envelope.mailFrom.address}`
         );
 
+        connection.startTimeMs = Date.now();
         _this.emit('startMessage', connection);
 
         stream.pipe(fs.createWriteStream(mailPath));
@@ -772,6 +897,18 @@ class Mailin extends events.EventEmitter {
   public _convertHtmlToText(html) {
     return convert(html);
   }
+}
+
+function getEnvelopeToAddress(connection) {
+  const rcptTo = connection.envelope?.rcptTo;
+
+  if (!rcptTo) {
+    return '';
+  }
+
+  const toAddressObject = Array.isArray(rcptTo) ? rcptTo[0] : rcptTo;
+
+  return toAddressObject?.address ?? toAddressObject ?? '';
 }
 
 function getAddressTo(finalizedMessage) {

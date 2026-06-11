@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { ChannelFactory, GetDecryptedIntegrations, PinoLogger } from '@novu/application-generic';
 import { IntegrationRepository } from '@novu/dal';
 import { AutoConfigureIntegrationResponseDto } from '../../dtos/auto-configure-integration-response.dto';
+import { assertIntegrationEnvironmentScope } from '../../utils/assert-integration-environment-scope';
 import { AutoConfigureIntegrationCommand } from './auto-configure-integration.command';
 
 @Injectable()
@@ -25,6 +26,13 @@ export class AutoConfigureIntegration {
     if (!encryptedIntegration) {
       throw new NotFoundException(`Integration not found, id: ${command.integrationId}`);
     }
+
+    assertIntegrationEnvironmentScope({
+      restrictToUserEnvironment: command.restrictToUserEnvironment,
+      userEnvironmentId: command.environmentId,
+      integrationEnvironmentId: encryptedIntegration._environmentId,
+      action: 'auto-configure',
+    });
 
     const integration = GetDecryptedIntegrations.getDecryptedCredentials(encryptedIntegration);
 
@@ -56,11 +64,14 @@ export class AutoConfigureIntegration {
           }
         );
 
-        this.logger.trace({
-          integrationId: command.integrationId,
-          organizationId: command.organizationId,
-          webhookUrl,
-        }, 'Auto-configuration completed successfully');
+        this.logger.trace(
+          {
+            integrationId: command.integrationId,
+            organizationId: command.organizationId,
+            webhookUrl,
+          },
+          'Auto-configuration completed successfully'
+        );
 
         return {
           success: true,
@@ -68,11 +79,14 @@ export class AutoConfigureIntegration {
           integration: { ...encryptedIntegration, configurations: updatedConfigurations },
         };
       } else {
-        this.logger.warn({
-          integrationId: command.integrationId,
-          organizationId: command.organizationId,
-          message: result.message,
-        }, 'Auto-configuration failed');
+        this.logger.warn(
+          {
+            integrationId: command.integrationId,
+            organizationId: command.organizationId,
+            message: result.message,
+          },
+          'Auto-configuration failed'
+        );
 
         return {
           success: false,

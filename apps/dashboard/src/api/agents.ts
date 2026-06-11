@@ -6,7 +6,8 @@ import type {
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
-import { del, get, getApiBaseUrl, NovuApiError, patch, post } from '@/api/api.client';
+import type { AgentPlanUsage, PlanUsage } from '@/api/agents-plan-usage';
+import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
 export const AGENTS_LIST_QUERY_KEY = 'fetchAgents' as const;
@@ -65,6 +66,9 @@ export type ManagedRuntimeResponse = {
   externalEnvironmentId?: string;
   externalWorkspaceId?: string;
   consoleUrl?: string;
+  tools?: AgentTool[];
+  mcpServers?: AgentMcpServer[];
+  systemPrompt?: string;
 };
 
 export type AgentResponse = {
@@ -84,6 +88,12 @@ export type AgentResponse = {
   createdAt: string;
   updatedAt: string;
   integrations?: AgentIntegrationSummary[];
+  /**
+   * Cloud only. `true` when the agent falls outside the organization plan agent
+   * limit (by creation order) and won't respond to inbound messages. Only plan
+   * limits produce this flag — system-capped organizations are never over-limit.
+   */
+  exceedsPlanLimit?: boolean;
 };
 
 export type ListAgentsResponse = {
@@ -92,6 +102,7 @@ export type ListAgentsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+  planUsage?: AgentPlanUsage;
 };
 
 type AgentSkillInputDto = {
@@ -282,6 +293,7 @@ export type GeneratedManagedAgentSkill = {
 export type GeneratedManagedAgent = {
   name: string;
   identifier: string;
+  description: string;
   systemPrompt: string;
   tools: string[];
   mcpServers: string[];
@@ -323,8 +335,14 @@ export async function updateAgent(
   return response.data;
 }
 
-export function deleteAgent(environment: IEnvironment, identifier: string): Promise<void> {
-  return del(`/agents/${encodeURIComponent(identifier)}`, { environment });
+export function deleteAgent(
+  environment: IEnvironment,
+  identifier: string,
+  options?: { deleteFromProvider?: boolean }
+): Promise<void> {
+  const params = options?.deleteFromProvider ? '?deleteFromProvider=true' : '';
+
+  return del(`/agents/${encodeURIComponent(identifier)}${params}`, { environment });
 }
 
 /** Picked integration fields on an agent–integration link (matches API `integration`). */
@@ -364,6 +382,11 @@ export type AgentIntegrationLink = {
   connectedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Cloud only. `true` when this channel falls outside the organization plan
+   * active-channel limit (by connection order) — the agent won't respond on it.
+   */
+  exceedsPlanLimit?: boolean;
 };
 
 export type ListAgentIntegrationsResponse = {
@@ -372,6 +395,7 @@ export type ListAgentIntegrationsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+  planUsage?: PlanUsage;
 };
 
 export type ListAgentIntegrationsParams = {
@@ -548,6 +572,60 @@ export function disableAgentMcpServer(
   return del(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}`, {
     environment,
   });
+}
+
+export type SetAgentMcpServersFailure = {
+  mcpId: string;
+  operation: 'enable' | 'disable';
+  code: string;
+  message: string;
+};
+
+export type SetAgentMcpServersResponse = {
+  data: AgentMcpServerEnablement[];
+  failed: SetAgentMcpServersFailure[];
+};
+
+/**
+ * Bulk "set desired state" — replaces the agent's enabled MCP set with
+ * `mcpIds`. Returns the final enabled list plus a per-id `failed[]` array
+ * for any rows the server could not mutate (the rest still take effect).
+ */
+export async function setAgentMcpServers(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpIds: string[]
+): Promise<SetAgentMcpServersResponse> {
+  return put<SetAgentMcpServersResponse>(`/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers`, {
+    environment,
+    body: { mcpIds },
+  });
+}
+
+export type EnsureProviderManagedVaultResponse = {
+  /** Deep link the dashboard opens in a new tab so the user can finish connector OAuth in Claude. */
+  vaultUrl: string;
+  /** Provider-side vault container id (e.g. Anthropic `vlt_…`) Novu provisioned for the current subscriber + agent. */
+  externalVaultId: string;
+};
+
+/**
+ * Idempotent "ensure provider-managed enablement + vault" call. Used by the
+ * dashboard's "Add from Claude" flow for MCPs whose catalog
+ * `oauth.mode === 'provider-managed'`. Open `vaultUrl` in a new tab so the
+ * user can finish connector OAuth in the provider's vault UI.
+ */
+export async function ensureProviderManagedVault(
+  environment: IEnvironment,
+  agentIdentifier: string,
+  mcpId: string
+): Promise<EnsureProviderManagedVaultResponse> {
+  const response = await post<{ data: EnsureProviderManagedVaultResponse } | EnsureProviderManagedVaultResponse>(
+    `/agents/${encodeURIComponent(agentIdentifier)}/mcp-servers/${encodeURIComponent(mcpId)}/provider-vault`,
+    { environment }
+  );
+
+  return 'data' in response ? response.data : response;
 }
 
 type AgentIntegrationResponseEnvelope = { data: AgentIntegrationLink };
@@ -847,6 +925,68 @@ export async function submitTelegramMobileCredentials(
   }
 
   return unwrapEnvelope(data) as SubmitTelegramMobileCredentialsResult;
+}
+
+export type SlackSetupLinkStatus =
+  | { valid: true; agentName: string; providerName: string }
+  | { valid: false; reason: 'expired' | 'used' | 'invalid' };
+
+export async function getSlackSetupStatus(token: string, signal?: AbortSignal): Promise<SlackSetupLinkStatus> {
+  const url = `${getApiBaseUrl()}/v1/agents/public/slack/setup/status?token=${encodeURIComponent(token)}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+  });
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    throw new NovuApiError(extractErrorMessage(data) ?? 'Failed to load setup link', response.status, data);
+  }
+
+  return unwrapEnvelope(data) as SlackSetupLinkStatus;
+}
+
+export type SubmitSlackSetupCredentialsResult = {
+  success: true;
+};
+
+export type SubmitSlackSetupCredentialsError = {
+  code: 'token_invalid' | 'token_expired' | 'token_already_used' | 'unknown';
+  message: string;
+};
+
+export class SlackSetupSubmitError extends Error {
+  constructor(
+    public readonly code: SubmitSlackSetupCredentialsError['code'],
+    message: string,
+    public readonly status: number
+  ) {
+    super(message);
+  }
+}
+
+export async function submitSlackSetupCredentials(
+  token: string,
+  configToken: string
+): Promise<SubmitSlackSetupCredentialsResult> {
+  const url = `${getApiBaseUrl()}/v1/agents/public/slack/setup`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, configToken }),
+  });
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    const code = extractErrorCode(data) as SubmitSlackSetupCredentialsError['code'];
+    const message = extractErrorMessage(data) ?? 'Failed to configure Slack';
+    throw new SlackSetupSubmitError(code, message, response.status);
+  }
+
+  return unwrapEnvelope(data) as SubmitSlackSetupCredentialsResult;
 }
 
 async function safeJson(response: Response): Promise<unknown> {

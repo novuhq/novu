@@ -32,6 +32,7 @@ import type {
   Event,
   ExecuteOutput,
   HealthCheck,
+  Logger,
   Schema,
   Skip,
   State,
@@ -71,12 +72,15 @@ export class Client {
 
   public verbose: boolean;
 
+  public logger: Logger;
+
   constructor(options?: ClientOptions) {
     const builtOpts = this.buildOptions(options);
     this.apiUrl = builtOpts.apiUrl;
     this.secretKey = builtOpts.secretKey;
     this.strictAuthentication = builtOpts.strictAuthentication;
     this.verbose = builtOpts.verbose;
+    this.logger = builtOpts.logger;
     this.templateEngine = createLiquidEngine();
   }
 
@@ -86,6 +90,7 @@ export class Client {
       secretKey: resolveSecretKey(providedOptions?.secretKey),
       strictAuthentication: !isRuntimeInDevelopment(),
       verbose: isRuntimeInDevelopment(),
+      logger: console,
     };
 
     if (providedOptions?.strictAuthentication !== undefined) {
@@ -98,12 +103,16 @@ export class Client {
       builtConfiguration.verbose = providedOptions.verbose;
     }
 
+    if (providedOptions?.logger !== undefined) {
+      builtConfiguration.logger = providedOptions.logger;
+    }
+
     return builtConfiguration;
   }
 
   private log(...args: any[]): void {
     if (this.verbose) {
-      console.log(...args);
+      this.logger.info(...args);
     }
   }
 
@@ -147,7 +156,7 @@ export class Client {
   private async addWorkflow(workflow: Workflow): Promise<void> {
     try {
       const definition = await workflow.discover();
-      prettyPrintDiscovery(definition, this.verbose);
+      prettyPrintDiscovery(definition, this.verbose, this.logger);
       this.discoveredWorkflows.set(workflow.id, definition);
     } finally {
       this.discoverWorkflowPromises.delete(workflow.id);
@@ -217,7 +226,7 @@ export class Client {
     } catch (error) {
       // If JSONSchemaFaker fails, return an empty object as fallback
       // This prevents the preview from crashing on complex schemas
-      console.warn('Failed to mock schema, returning empty object:', error);
+      this.logger.warn('Failed to mock schema, returning empty object:', error);
       return {};
     }
   }
@@ -572,10 +581,12 @@ export class Client {
     const message = error ? 'Failed to execute' : actionMessage;
     const executionLog = error ? log.error : log.success;
     const logMessage = `${successPrefix} ${message} workflowId: '${event.workflowId}`;
-    console.log(`\n  ${log.bold(executionLog(logMessage))}'`);
-    console.log(`  ├ ${EMOJI.STEP} stepId: '${event.stepId}'`);
-    console.log(`  ├ ${EMOJI.ACTION} action: '${event.action}'`);
-    console.log(`  └ ${EMOJI.DURATION} duration: '${duration.toFixed(2)}ms'\n`);
+    this.logger.info(
+      `\n  ${log.bold(executionLog(logMessage))}'\n` +
+        `  ├ ${EMOJI.STEP} stepId: '${event.stepId}'\n` +
+        `  ├ ${EMOJI.ACTION} action: '${event.action}'\n` +
+        `  └ ${EMOJI.DURATION} duration: '${duration.toFixed(2)}ms'\n`
+    );
   }
 
   private async executeProviders(

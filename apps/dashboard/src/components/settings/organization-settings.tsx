@@ -13,7 +13,7 @@ import { ROUTES } from '@/utils/routes';
 import { NovuBrandingSwitch } from './novu-branding-switch';
 
 // After deleting (or leaving) an org, Clerk falls back to `<ClerkProvider signInUrl>` when this
-// prop is unset. On the Connect satellite that points to Platform's sign-in, which kicks the
+// prop is unset. On the Connect host that points to Platform's sign-in, which kicks the
 // user out of Connect entirely — they'd land on Platform's picker even when they still have
 // Connect work to do. Pinning it to the local `/auth/organization-list` keeps them on the
 // current product; `AuthProvider` then clears any cross-product org Clerk auto-activates and
@@ -79,7 +79,7 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
                 />
               </div>
               <p className="text-paragraph-sm text-text-soft mb-1">
-                When enabled, removes Novu branding from your notifications.
+                When enabled, removes Novu branding from your notifications and agent messages.
               </p>
             </div>
           </div>

@@ -114,13 +114,13 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       agentAddress ? this.threadResolver.trackAgentAddress(threadId, agentAddress) : Promise.resolve(),
     ]);
 
-    const message = this.parseMessage(this.toRawMessage(payload, threadId));
+    const message = this.parseMessage(this.toRawMessage(payload));
     this.chat.processMessage(this, threadId, message, options);
 
     return new Response(null, { status: 200 });
   }
 
-  private toRawMessage(payload: import('./types.js').EmailWebhookPayload, _threadId: string): NovuEmailRawMessage {
+  private toRawMessage(payload: import('./types.js').EmailWebhookPayload): NovuEmailRawMessage {
     return {
       id: payload.messageId,
       messageId: payload.messageId,
@@ -129,6 +129,11 @@ export class NovuEmailAdapterImpl implements Adapter<NovuEmailThreadId, NovuEmai
       subject: payload.subject,
       text: payload.text,
       html: payload.html,
+      inReplyTo: payload.inReplyTo,
+      references: payload.references,
+      headers: payload.headers,
+      domain: payload.domain,
+      route: payload.route,
       createdAt: payload.date,
       attachments: payload.attachments,
     };

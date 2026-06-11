@@ -10,6 +10,7 @@ export function validateManagedCredentialFields(fields: {
   const errors = validateCreateAgentForm({
     name: 'x',
     identifier: 'x',
+    description: '',
     instructions: '',
     apiKey: fields.apiKey,
     runtime: 'claude',

@@ -25,7 +25,7 @@
  */
 
 import getPort from 'get-port';
-import { esmImport } from '../../utils/esm-import';
+import { esmImport } from '../../shared/util/esm-import';
 
 interface EmulatorInstance {
   url: string;
@@ -216,11 +216,11 @@ export function resetEmulator(): void {
  * 1. **`module.exports.WebClient`** — wraps the constructor so any
  *    `new WebClient(token)` call constructed AFTER this patch (the typical
  *    case, since `@chat-adapter/slack` is lazy-imported in
- *    `chat-sdk.service.ts`) gets `slackApiUrl` injected.
+ *    `chat-instance.registry.ts`) gets `slackApiUrl` injected.
  * 2. **`WebClient.prototype.apiCall`** — mutates `slackApiUrl` and the
  *    underlying axios `baseURL` on every call. This catches WebClient
  *    instances that were constructed BEFORE the patch (e.g. cached on a
- *    `ChatSdkService.instances` entry surviving across test files), and is
+ *    `ChatInstanceRegistry.instances` entry surviving across test files), and is
  *    also our safety net if the constructor wrap somehow misses an instance.
  *
  * `WebClient` reads `slackApiUrl` once at construction to build axios's

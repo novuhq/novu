@@ -1,13 +1,11 @@
 import { ENDPOINT_TYPES } from '@novu/stateless';
 import { expect, test } from 'vitest';
-import { axiosSpy } from '../../../utils/test/spy-axios';
+import { safeOutboundJsonSpy } from '../../../utils/test/spy-safe-outbound';
 import { RyverChatProvider } from './ryver.provider';
 
 test('Should trigger ryver correctly', async () => {
-  const { mockPost } = axiosSpy({
-    data: {
-      status: 'test',
-    },
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    statusCode: 200,
   });
 
   const provider = new RyverChatProvider();
@@ -23,16 +21,19 @@ test('Should trigger ryver correctly', async () => {
     content: 'chat message',
   });
 
-  expect(mockPost).toHaveBeenCalledWith('https://google.com/', {
-    content: 'chat message',
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: 'https://google.com/',
+    method: 'POST',
+    headers: undefined,
+    body: {
+      content: 'chat message',
+    },
   });
 });
 
 test('Should trigger ryver correctly with _passthrough', async () => {
-  const { mockPost } = axiosSpy({
-    data: {
-      status: 'test',
-    },
+  const { mockSafeOutboundJsonRequest } = safeOutboundJsonSpy({
+    statusCode: 200,
   });
 
   const provider = new RyverChatProvider();
@@ -57,7 +58,12 @@ test('Should trigger ryver correctly with _passthrough', async () => {
     }
   );
 
-  expect(mockPost).toHaveBeenCalledWith('https://google.com/', {
-    content: 'chat message _passthrough',
+  expect(mockSafeOutboundJsonRequest).toHaveBeenCalledWith({
+    url: 'https://google.com/',
+    method: 'POST',
+    headers: undefined,
+    body: {
+      content: 'chat message _passthrough',
+    },
   });
 });

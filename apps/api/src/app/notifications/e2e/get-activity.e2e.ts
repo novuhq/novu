@@ -118,9 +118,9 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     expect(activity.jobs).to.be.an('array');
 
     const actualDetails = activity.jobs[0].executionDetails.map((detail) => detail.detail);
-    const expectedExecutionDetails = ['Step queued', 'Message created', 'Message sent', 'Message read'];
+    const expectedExecutionDetails = ['Step created', 'Step queued', 'Message created', 'Message sent', 'Message read'];
 
-    expect(actualDetails.length).to.be.equal(4);
+    expect(actualDetails.length).to.be.equal(5);
     expectedExecutionDetails.forEach((expectedDetail) => {
       expect(actualDetails).to.include(expectedDetail);
     });
@@ -162,9 +162,9 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     expect(activity.jobs).to.be.an('array');
 
     const actualDetails = activity.jobs[0].executionDetails.map((detail) => detail.detail);
-    const expectedExecutionDetails = ['Step queued', 'Message created', 'Message sent'];
+    const expectedExecutionDetails = ['Step created', 'Step queued', 'Message created', 'Message sent'];
 
-    expect(actualDetails.length).to.be.equal(3);
+    expect(actualDetails.length).to.be.equal(4);
     expectedExecutionDetails.forEach((expectedDetail) => {
       expect(actualDetails).to.include(
         expectedDetail,
@@ -219,9 +219,9 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     expect(activity.jobs).to.be.an('array');
 
     const actualDetails = activity.jobs[0].executionDetails.map((detail) => detail.detail);
-    const expectedExecutionDetails = ['Step queued', 'Message created', 'Message sent', 'Message read'];
+    const expectedExecutionDetails = ['Step created', 'Step queued', 'Message created', 'Message sent', 'Message read'];
 
-    expect(actualDetails.length).to.be.equal(4);
+    expect(actualDetails.length).to.be.equal(5);
     expectedExecutionDetails.forEach((expectedDetail) => {
       expect(actualDetails).to.include(
         expectedDetail,
@@ -348,9 +348,9 @@ describe('Get activity - /notifications/:notificationId (GET) #novu-v2', async (
     expect(activity.jobs).to.be.an('array');
 
     const actualDetails = activity.jobs[0].executionDetails.map((detail) => detail.detail);
-    const expectedExecutionDetails = ['Step queued', 'Message created', 'Message sent'];
+    const expectedExecutionDetails = ['Step created', 'Step queued', 'Message created', 'Message sent'];
 
-    expect(actualDetails.length).to.be.equal(3);
+    expect(actualDetails.length).to.be.equal(4);
     expectedExecutionDetails.forEach((expectedDetail) => {
       expect(actualDetails).to.include(
         expectedDetail,

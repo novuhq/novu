@@ -2,9 +2,6 @@ import { GetSubscriptionDto } from '@novu/shared';
 import { ComponentType } from 'react';
 import { RiArrowRightDoubleLine, RiInformationFill } from 'react-icons/ri';
 import { Link } from 'react-router-dom';
-import { ConnectLogo } from '@/components/icons/connect-logo';
-import { useCurrentApp } from '@/hooks/use-current-app';
-import { APP_IDS } from '@/utils/apps';
 import { ROUTES } from '@/utils/routes';
 import { LogoCircle } from '../icons';
 import { Button } from '../primitives/button';
@@ -88,9 +85,6 @@ const CardContent = ({
 export const FreeTrialCard = ({ subscription, daysLeft }: { subscription?: GetSubscriptionDto; daysLeft: number }) => {
   const daysTotal = subscription && subscription.trial.daysTotal > 0 ? subscription.trial.daysTotal : 100;
   const pluralizedDays = pluralizeDaysLeft(daysLeft);
-  const currentApp = useCurrentApp();
-  const isConnect = currentApp === APP_IDS.CONNECT;
-  const Logo: BrandLogo = isConnect ? ConnectLogo : LogoCircle;
 
   const cardClassName = 'bg-background group relative mb-2 flex cursor-pointer flex-col gap-2 rounded-lg p-3 shadow';
 
@@ -100,8 +94,8 @@ export const FreeTrialCard = ({ subscription, daysLeft }: { subscription?: GetSu
         pluralizedDays={pluralizedDays}
         daysTotal={daysTotal}
         daysLeft={daysLeft}
-        Logo={Logo}
-        showLogoBackground={!isConnect}
+        Logo={LogoCircle}
+        showLogoBackground
       />
     </Link>
   );

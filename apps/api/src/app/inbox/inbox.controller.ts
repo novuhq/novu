@@ -19,6 +19,8 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { MessageActionStatusEnum, PreferenceLevelEnum, UserSessionData } from '@novu/shared';
+import type { Request } from 'express';
+import { getClientIp } from 'request-ip';
 import { ListChannelConnectionsQueryDto } from '../channel-connections/dtos/list-channel-connections-query.dto';
 import { DeleteChannelConnectionCommand } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.command';
 import { DeleteChannelConnection } from '../channel-connections/usecases/delete-channel-connection/delete-channel-connection.usecase';
@@ -141,12 +143,14 @@ export class InboxController {
   @Post('/session')
   async sessionInitialize(
     @Body() body: SubscriberSessionRequestDto,
-    @Headers('origin') origin: string
+    @Headers('origin') origin: string,
+    @Req() request: Request
   ): Promise<SubscriberSessionResponseDto> {
     return await this.initializeSessionUsecase.execute(
       SessionCommand.create({
         requestData: body,
         origin,
+        clientIp: getClientIp(request) ?? undefined,
       })
     );
   }

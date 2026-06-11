@@ -4,6 +4,7 @@ import { RiArrowDownSLine, RiArrowRightSLine, RiCheckLine, RiCornerDownRightLine
 import { Badge } from '@/components/primitives/badge';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { EnvironmentBranchIcon } from '@/components/primitives/environment-branch-icon';
+import { HelpTooltipIndicator } from '@/components/primitives/help-tooltip-indicator';
 import { TableCell, TableRow } from '@/components/primitives/table';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { cn } from '@/utils/ui';
@@ -43,11 +44,12 @@ const SystemVariableSubRow = ({ environment, value }: SystemVariableSubRowProps)
 
 type SystemVariableRowProps = {
   variableKey: string;
+  description: string;
   resolve: (env: IEnvironment) => string;
   environments: IEnvironment[];
 };
 
-export const SystemVariableRow = ({ variableKey, resolve, environments }: SystemVariableRowProps) => {
+export const SystemVariableRow = ({ variableKey, description, resolve, environments }: SystemVariableRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const displayKey = variableKey.split('.').at(-1) ?? variableKey;
   const totalCount = environments.length;
@@ -82,6 +84,13 @@ export const SystemVariableRow = ({ variableKey, resolve, environments }: System
             <Badge variant="lighter" color="gray" size="sm">
               SYSTEM
             </Badge>
+            <span
+              className="inline-flex"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
+            >
+              <HelpTooltipIndicator text={description} size="3" className="text-text-soft" />
+            </span>
           </div>
         </SystemVariableCell>
         <SystemVariableCell>
