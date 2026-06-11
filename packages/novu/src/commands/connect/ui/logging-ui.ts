@@ -1,4 +1,5 @@
 import chalk from 'chalk';
+import { unlink } from 'node:fs/promises';
 import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
@@ -23,6 +24,7 @@ import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 export function createLoggingUI(): ConnectUI {
   let spinner: Ora | undefined;
   let authUrlLogged = false;
+  let authUrlFilePath: string | undefined;
   const stop = () => {
     if (spinner?.isSpinning) spinner.stop();
     spinner = undefined;
@@ -54,17 +56,27 @@ export function createLoggingUI(): ConnectUI {
       start('Authorizing via the Novu Dashboard…');
     },
     authDashboardUrl(url) {
-      if (url) {
-        if (!authUrlLogged) {
-          authUrlLogged = true;
-          void writeAuthUrlHandoffFile(url)
-            .then((authUrlFile) => logAuthUrlFileHandoffEvent({ authUrlFile }))
-            .catch(() => undefined);
+      if (!url) {
+        if (authUrlFilePath) {
+          void unlink(authUrlFilePath).catch(() => undefined);
+          authUrlFilePath = undefined;
         }
-        if (spinner) {
-          spinner.text =
-            'Authorizing via the Novu Dashboard… (read NOVU_CONNECT_AUTH_URL_FILE and deliver the URL to the user)';
-        }
+
+        return;
+      }
+
+      if (!authUrlLogged) {
+        authUrlLogged = true;
+        void writeAuthUrlHandoffFile(url)
+          .then((authUrlFile) => {
+            authUrlFilePath = authUrlFile;
+            logAuthUrlFileHandoffEvent({ authUrlFile });
+          })
+          .catch(() => undefined);
+      }
+      if (spinner) {
+        spinner.text =
+          'Authorizing via the Novu Dashboard… (read NOVU_CONNECT_AUTH_URL_FILE and deliver the URL to the user)';
       }
     },
     authStatus(message) {

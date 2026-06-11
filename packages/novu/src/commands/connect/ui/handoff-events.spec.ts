@@ -28,11 +28,20 @@ describe('handoff-events', () => {
   it('writes auth url to a mode-600 temp file', async () => {
     const authUrl = 'https://dashboard.novu.co/cli/auth?device_code=secret-code&name=novu-connect';
     const filePath = await writeAuthUrlHandoffFile(authUrl);
-    const { readFile, stat } = await import('node:fs/promises');
+    const { readFile, stat, unlink } = await import('node:fs/promises');
 
-    expect(filePath).toContain('novu-connect-auth-url-');
-    await expect(readFile(filePath, 'utf8')).resolves.toBe(authUrl);
-    await expect(stat(filePath)).resolves.toMatchObject({ mode: expect.any(Number) });
+    try {
+      expect(filePath).toContain('novu-connect-auth-url-');
+      await expect(readFile(filePath, 'utf8')).resolves.toBe(authUrl);
+
+      if (process.platform !== 'win32') {
+        const fileStats = await stat(filePath);
+
+        expect(fileStats.mode & 0o777).toBe(0o600);
+      }
+    } finally {
+      await unlink(filePath).catch(() => undefined);
+    }
   });
 
   it('logs email handoff sentinel lines', () => {
