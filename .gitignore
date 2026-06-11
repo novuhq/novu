@@ -129,3 +129,9 @@ demos/agent-chat-demo/tsconfig.tsbuildinfo
 demos/agent-chat-demo/next-env.d.ts
 
 .claude/worktrees
+
+# CF Worker
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+**/.wrangler/tmp/**

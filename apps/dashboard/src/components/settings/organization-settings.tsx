@@ -79,7 +79,7 @@ export function OrganizationSettings({ clerkAppearance }: { clerkAppearance: Cle
                 />
               </div>
               <p className="text-paragraph-sm text-text-soft mb-1">
-                When enabled, removes Novu branding from your notifications.
+                When enabled, removes Novu branding from your notifications and agent messages.
               </p>
             </div>
           </div>

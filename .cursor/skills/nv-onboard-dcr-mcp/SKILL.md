@@ -1,5 +1,5 @@
 ---
-name: onboard-dcr-mcp
+name: nv-onboard-dcr-mcp
 description: Onboard a new DCR OAuth MCP catalog entry with provider-doc vetting and curl probes. Use when adding or changing `mode: dcr` entries in MCP_SERVERS. Abort if the provider requires whitelist or manual approval.
 ---
 
@@ -32,7 +32,7 @@ Read [`mcp-servers.ts`](../../../packages/shared/src/consts/providers/mcp-server
 ```bash
 # Example: list provider-managed code MCPs not on the blocked list (adjust paths)
 rg "id: '" packages/shared/src/consts/providers/mcp-servers.ts -A6 | rg -B5 "ProviderManaged" | rg "category: 'code'"
-rg "^\| \`" .cursor/skills/onboard-dcr-mcp/blocked-mcp-servers.md
+rg "^\| \`" .cursor/skills/nv-onboard-dcr-mcp/blocked-mcp-servers.md
 ```
 
 ### When re-probing an existing `dcr` entry is allowed

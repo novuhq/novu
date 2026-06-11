@@ -33,7 +33,7 @@ describe('NovuEmailProvisioningService', () => {
   let agentIntegrationRepo: {
     find: sinon.SinonStub;
     findOne: sinon.SinonStub;
-    create: sinon.SinonStub;
+    createOrReviveLink: sinon.SinonStub;
     withTransaction: sinon.SinonStub;
   };
   let organizationRepo: {
@@ -73,7 +73,7 @@ describe('NovuEmailProvisioningService', () => {
     agentIntegrationRepo = {
       find: stub().resolves([]),
       findOne: stub().resolves(null),
-      create: stub().resolves({
+      createOrReviveLink: stub().resolves({
         _id: 'link-id',
         _agentId: AGENT_ID,
         _integrationId: 'novu-agent-int-id',

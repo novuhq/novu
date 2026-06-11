@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { decryptCredentials, PinoLogger } from '@novu/application-generic';
+import { AgentEntitlementsService, decryptCredentials, PinoLogger } from '@novu/application-generic';
 import { AgentRepository, IntegrationRepository } from '@novu/dal';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
 import { type ManagedRuntimeHydration, toAgentResponse } from '../../../shared/mappers/agent-response.mapper';
@@ -13,6 +13,7 @@ export class GetAgent {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly getAgentRuntimeConfigUsecase: GetAgentRuntimeConfig,
+    private readonly agentEntitlementsService: AgentEntitlementsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -32,12 +33,20 @@ export class GetAgent {
       throw new NotFoundException(`Agent with identifier "${command.identifier}" was not found.`);
     }
 
-    const [hydration, runtimeConfig] = await Promise.all([
+    const [hydration, runtimeConfig, isWithinLimit] = await Promise.all([
       this.loadManagedRuntimeHydration(agent, command.environmentId, command.organizationId),
       this.loadRuntimeConfig(agent, command),
+      // Inactive agents don't consume plan slots and aren't over-limit — they're just inactive.
+      agent.active
+        ? this.agentEntitlementsService.isAgentWithinLimit(command.organizationId, command.environmentId, agent._id)
+        : true,
     ]);
 
-    return toAgentResponse(agent, hydration, runtimeConfig);
+    return {
+      ...toAgentResponse(agent, hydration, runtimeConfig),
+      // `undefined` drops at JSON serialization, keeping the flag presence-only.
+      exceedsPlanLimit: !isWithinLimit || undefined,
+    };
   }
 
   private async loadRuntimeConfig(

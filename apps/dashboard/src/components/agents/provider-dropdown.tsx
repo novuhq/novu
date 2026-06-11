@@ -83,6 +83,9 @@ type ProviderDropdownProps = {
   excludeLinked?: boolean;
   /** Override the default trigger button. Receives `isBusy` so the caller can disable while linking. */
   renderTrigger?: (props: { isBusy: boolean }) => React.ReactNode;
+  /** Controlled open state — pass together with `onOpenChange` to gate opening (e.g. behind a plan-limit dialog). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 function buildDropdownItems(
@@ -146,8 +149,15 @@ export function ProviderDropdown({
   linkedIntegrationIds,
   excludeLinked = false,
   renderTrigger,
+  open: controlledOpen,
+  onOpenChange,
 }: ProviderDropdownProps) {
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = (next: boolean) => {
+    setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  };
   const [expandedProviderId, setExpandedProviderId] = useState<string | null>(null);
   const { integrations } = useFetchIntegrations();
   const navigate = useNavigate();

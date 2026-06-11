@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 import {
+  AgentEntitlementsService,
   CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
@@ -42,6 +43,7 @@ import { AgentInboundController } from './conversation-runtime/ingress/agent-inb
 import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
+import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
@@ -133,6 +135,8 @@ import { USE_CASES } from './usecases';
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,
     UpdateSubscriberChannel,
+    AgentEntitlementsService,
+    PlanLimitGateService,
   ],
   exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway],
 })

@@ -4,6 +4,7 @@ import { PinoLogger } from '@novu/application-generic';
 import { Request, Response } from 'express';
 import type { AgentConfigResolveSource } from '../../channels/agent-config-resolver.service';
 import { AgentInactiveException } from '../../shared/errors/agent-inactive.exception';
+import { AgentIntegrationDisconnectedException } from '../../shared/errors/agent-integration-disconnected.exception';
 import { InboundDispatcher } from './inbound.dispatcher';
 
 @Controller('/agents')
@@ -47,7 +48,7 @@ export class AgentInboundController {
     try {
       await this.inboundDispatcher.handleWebhook(agentId, integrationIdentifier, req, res, { source });
     } catch (err) {
-      if (err instanceof AgentInactiveException) {
+      if (err instanceof AgentInactiveException || err instanceof AgentIntegrationDisconnectedException) {
         // Return 200 to avoid retries by the delivery provider
         res.status(HttpStatus.OK).json({});
 

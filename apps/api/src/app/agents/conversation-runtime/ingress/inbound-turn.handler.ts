@@ -15,6 +15,7 @@ import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
+import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -41,6 +42,7 @@ import type { BridgeReaction } from '../runtime/bridge-executor.service';
 import type { ConversationTurn } from '../runtime/conversation-turn';
 import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { InboundDispatcher } from './inbound.dispatcher';
+import { isLinkButtonActionId, PlanLimitGateService } from './plan-limit-gate.service';
 
 /**
  * `/start <payload>` is Telegram's deep-link mechanism. Telegram delivers it as
@@ -54,13 +56,6 @@ function extractTelegramStartToken(text: string | undefined): string | null {
   if (!text) return null;
   const match = TELEGRAM_START_COMMAND.exec(text.trim());
   return match ? match[1] : null;
-}
-
-// Link buttons render with a `link-` prefixed action id. They open a URL client-side;
-// the SDK still emits an inbound action for the click, but there is nothing to do
-// server-side, so it is swallowed. Runtime-agnostic.
-function isLinkButtonActionId(id: string | undefined): boolean {
-  return typeof id === 'string' && id.startsWith('link-');
 }
 
 function extractTelegramChatId(thread: Thread): string | null {
@@ -85,47 +80,7 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
-const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 5);
-
-function resolveConnectClaimBaseUrl(): string {
-  for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
-    const trimmed = candidate?.trim();
-
-    if (!trimmed || trimmed.startsWith('^')) {
-      continue;
-    }
-
-    return trimmed.replace(/\/$/, '');
-  }
-
-  return 'https://dashboard.novu.co';
-}
-
-function buildKeylessSignupCard(claimUrl: string): CardElement {
-  return {
-    type: 'card',
-    children: [
-      {
-        type: 'text',
-        content:
-          "You've reached the limit of this free demo. Sign up for a free Novu account to keep this agent — your " +
-          'conversation and setup carry over, and the agent picks up right where it left off.',
-      },
-      { type: 'divider' },
-      {
-        type: 'actions',
-        children: [
-          {
-            type: 'link-button',
-            label: 'Sign up & keep this agent',
-            url: claimUrl,
-            style: 'primary',
-          },
-        ],
-      },
-    ],
-  };
-}
+const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 3);
 
 /**
  * Workspace-label copy keyed by every platform in `AUTO_PROVISION_PLATFORMS`.
@@ -289,6 +244,7 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly linkTelegramChatToSubscriber: LinkTelegramChatToSubscriber,
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
+    private readonly planLimitGate: PlanLimitGateService,
     private readonly inboundAck: InboundAckService
   ) {
     this.logger.setContext(this.constructor.name);
@@ -311,6 +267,10 @@ export class AgentInboundHandler implements OnModuleInit {
     event: AgentEventEnum
   ): Promise<void> {
     if (await this.consumeTelegramStartLink(agentId, config, thread, message)) {
+      return;
+    }
+
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread)) {
       return;
     }
 
@@ -728,9 +688,7 @@ export class AgentInboundHandler implements OnModuleInit {
     const platform = config.platform as AutoProvisionPlatform;
 
     try {
-      await this.outboundGateway.replyOnThread(thread, {
-        card: buildCapacityReachedCard(platform) as unknown as Record<string, unknown>,
-      });
+      await this.outboundGateway.replyOnThreadWithCard(thread, buildCapacityReachedCard(platform));
     } catch (err) {
       this.logger.warn(
         err,
@@ -766,11 +724,9 @@ export class AgentInboundHandler implements OnModuleInit {
         env: config.environmentId,
         org: config.organizationId,
       });
-      const claimUrl = `${resolveConnectClaimBaseUrl()}/connect/claim?token=${encodeURIComponent(token)}`;
+      const claimUrl = buildConnectClaimUrl(token);
 
-      await this.outboundGateway.replyOnThread(thread, {
-        card: buildKeylessSignupCard(claimUrl) as unknown as Record<string, unknown>,
-      });
+      await this.outboundGateway.replyOnThreadWithCard(thread, buildKeylessSignupCard(claimUrl));
 
       await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);
     } catch (err) {
@@ -874,6 +830,12 @@ export class AgentInboundHandler implements OnModuleInit {
     action: AgentAction,
     userId: string
   ): Promise<void> {
+    // The gate suppresses its reply for link-button actions (e.g. the upgrade
+    // card's own CTA) so a blocked click can never spawn another card.
+    if (await this.planLimitGate.maybeBlock(agentId, config, thread, action)) {
+      return;
+    }
+
     const subscriberId = await this.resolveSubscriberId(agentId, config, userId, 'resolve-subscriber-action');
 
     const participantId = subscriberId ?? `${config.platform}:${userId}`;

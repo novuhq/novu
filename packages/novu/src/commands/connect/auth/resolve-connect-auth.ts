@@ -1,3 +1,4 @@
+import { browserDeviceAuth } from '../../wizard/auth/device-auth';
 import { type ResolveAuthOptions, resolveAuth } from '../../wizard/auth/resolve-auth';
 import type { ResolvedAuth, WizardCommandOptions } from '../../wizard/types';
 import { bootstrapKeylessSession } from '../api/keyless-session';
@@ -16,7 +17,32 @@ export async function resolveConnectAuth(
   const cliFlagSecret = options.secretKey?.trim();
   const envSecret = process.env.NOVU_SECRET_KEY?.trim();
   const isInteractive = Boolean(process.stdin.isTTY && process.stdout.isTTY) && process.env.CI !== 'true';
-  const wantsAuthenticated = Boolean(cliFlagSecret || (envSecret && !isInteractive));
+  const wantsLogin = Boolean(options.login);
+  const wantsAuthenticated = Boolean(cliFlagSecret || (envSecret && !isInteractive) || wantsLogin);
+
+  if (wantsLogin) {
+    if (cliFlagSecret) {
+      throw new Error(
+        'Cannot use --login together with --secret-key. Omit --secret-key to authenticate via the dashboard.'
+      );
+    }
+
+    resolveOptions.onStatus?.('Authorizing via the Novu Dashboard…');
+
+    const auth = await browserDeviceAuth({
+      apiUrl: options.apiUrl,
+      dashboardUrl: resolveOptions.authDashboardUrl ?? options.connectDashboardUrl,
+      region: options.region,
+      onStatus: resolveOptions.onStatus,
+      onDashboardUrl: resolveOptions.onDashboardUrl,
+      name: resolveOptions.name ?? 'novu-connect',
+      onboardingSessionId: resolveOptions.onboardingSessionId,
+      onAuthStarted: resolveOptions.onAuthStarted,
+      onAuthFailed: resolveOptions.onAuthFailed,
+    });
+
+    return { ...auth, isKeyless: false };
+  }
 
   if (wantsAuthenticated) {
     const auth = await resolveAuth(toWizardAuthOptions(options), resolveOptions);

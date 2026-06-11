@@ -1,6 +1,6 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowLeftSLine, RiArrowRightSLine, RiExpandUpDownLine } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
 import type { AgentResponse } from '@/api/agents';
@@ -20,11 +20,13 @@ import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
 import { AGENT_TEMPLATE_ID_PARAM, readActiveAgentTemplateId } from '@/utils/agent-template-identity';
 import { isAbsoluteUrl } from '@/utils/apps';
 import { clearPersistedCliOnboardingSessionId } from '@/utils/cli-onboarding-identity';
 import { getPostOnboardingRoute, withOnboardingSource } from '@/utils/onboarding-redirect';
-import { buildRoute, ROUTES } from '@/utils/routes';
+import { clearPendingProductType, readPendingProductType } from '@/utils/product-type-pending';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 function goToPostOnboardingRoute(target: string, navigate: (path: string) => void) {
@@ -126,6 +128,8 @@ export function AgentsSetupPage() {
   const { currentOrganization } = useAuth();
   const { currentEnvironment } = useEnvironment();
   const agentRoutes = useAgentRoutes();
+  const updateProductUseCases = useUpdateProductUseCases();
+  const productUseCasesPersistedRef = useRef(false);
 
   const [searchParams] = useSearchParams();
   const agentTemplateId = useMemo(
@@ -148,6 +152,23 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.AGENTS_SETUP_PAGE_VIEWED);
     telemetry(TelemetryEvent.ONBOARDING_PHASE_VIEWED, { phase: 'connect' });
   }, [telemetry]);
+
+  // When the user arrives here via `?product_type=agents` (the usecase picker is skipped), persist the
+  // agents usecase on the org once it's resolved. Runs once; the usecase picker path persists itself.
+  // Skipped when agents are unavailable (EU/flag off) since the page redirects to the inbox path.
+  useEffect(() => {
+    if (productUseCasesPersistedRef.current || IS_EU || !isAgentsEnabled || !currentOrganization?._id) {
+      return;
+    }
+
+    if (readPendingProductType() !== 'agents') {
+      return;
+    }
+
+    productUseCasesPersistedRef.current = true;
+    updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
+    clearPendingProductType();
+  }, [currentOrganization?._id, isAgentsEnabled, updateProductUseCases]);
 
   const [createdAgent, setCreatedAgent] = useState<AgentResponse | null>(null);
   const [connectSummary, setConnectSummary] = useState<ConnectSummary | null>(null);
@@ -195,7 +216,7 @@ export function AgentsSetupPage() {
       return;
     }
 
-    void navigate(buildRoute(ROUTES.AGENTS, { environmentSlug: 'default' }));
+    void navigate(buildRoute(ROUTES.WELCOME, { environmentSlug: 'default' }));
   }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
 
   const handleNavigateToOverview = useCallback(() => {
@@ -203,10 +224,26 @@ export function AgentsSetupPage() {
     telemetry(TelemetryEvent.ONBOARDING_REDIRECT, { from: 'complete' });
     clearPersistedCliOnboardingSessionId();
 
-    if (currentEnvironment?.slug) {
+    if (!currentEnvironment?.slug) return;
+
+    if (createdAgent) {
+      const agentPath = buildRoute(agentRoutes.detailsTab, {
+        environmentSlug: currentEnvironment.slug,
+        agentIdentifier: encodeURIComponent(createdAgent.identifier),
+        agentTab: AGENT_DETAILS_DEFAULT_TAB,
+      });
+      goToPostOnboardingRoute(agentPath, navigate);
+    } else {
       goToPostOnboardingRoute(getPostOnboardingRoute(currentEnvironment.slug), navigate);
     }
-  }, [buildOnboardingCompletionProps, currentEnvironment?.slug, navigate, telemetry]);
+  }, [
+    agentRoutes.detailsTab,
+    buildOnboardingCompletionProps,
+    createdAgent,
+    currentEnvironment?.slug,
+    navigate,
+    telemetry,
+  ]);
 
   const handleSetupAnotherChannel = useCallback(() => {
     if (!currentEnvironment?.slug || !createdAgent) return;

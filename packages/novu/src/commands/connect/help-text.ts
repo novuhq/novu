@@ -33,11 +33,22 @@ Examples (non-interactive / agent / CI):
       --secret-key "$NOVU_SECRET_KEY" \\
       --channel slack
 
+  Dashboard user (OAuth via browser — no secret key):
+    npx novu connect "A support assistant for Acme's customers." \\
+      --ci \\
+      --login \\
+      --channel slack
+
 Non-interactive (agent / CI) contract:
 
   Required for --ci mode:
     - Pass the agent description as the positional <prompt> argument or --prompt.
-    - Pass --channel <slack|email|telegram|skip>.
+    - Pass --channel <slack|email|telegram|skip> (or whatsapp/teams with --login).
+
+  Authentication (pick one):
+    - Keyless (default): omit --secret-key and --login (temporary agent; user claims via in-channel sign-up link)
+    - Dashboard OAuth: pass --login (opens /cli/auth; user approves in the browser; agent is created in their Development environment)
+    - Existing account: pass --secret-key (or set NOVU_SECRET_KEY in non-interactive shells)
 
   Channel-specific flags:
     - --channel slack    → no extra flags (CLI prints a secure setup link for the Slack config token)
@@ -50,16 +61,22 @@ Non-interactive (agent / CI) contract:
     - --telegram-bot-token "123456:ABC-…"   → skip the setup page; pass token directly
 
   Defaults (do not pass unless needed):
-    - Keyless mode: omit --secret-key (creates a temporary agent; user claims via in-channel sign-up link)
-    - Demo runtime: omit --runtime (shared Claude runtime, ~5 free replies in keyless mode)
+    - Keyless mode: omit --secret-key and --login (creates a temporary agent; user claims via in-channel sign-up link)
+    - Demo runtime: omit --runtime (shared Claude runtime in keyless mode; authenticated environments need a demo integration)
     - US region: omit --region (use --region eu for EU Novu Cloud)
 
-  Not supported headlessly:
-    - whatsapp and teams → use the Novu dashboard instead; do not pass --channel whatsapp or --channel teams
+  Not supported headlessly without --login:
+    - whatsapp and teams → pass --login to create the agent, then finish channel setup in the dashboard
+
+  Not supported headlessly in keyless mode:
+    - whatsapp and teams → use the Novu dashboard instead; do not pass --channel whatsapp or --channel teams without --login
 
   One run = one new agent + one channel. Re-running creates another agent.
 
 Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
+
+  Authentication (--login):
+    NOVU_CONNECT_AUTH_URL_FILE=<absolute path to one-line auth URL file>
 
   Slack:
     NOVU_CONNECT_SLACK_SETUP_URL=<url>

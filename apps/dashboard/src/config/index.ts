@@ -73,6 +73,8 @@ if (!IS_SELF_HOSTED && EE_AUTH_PROVIDER === 'better-auth' && !BETTER_AUTH_BASE_U
 
 export const SELF_HOSTED_UPGRADE_REDIRECT_URL = 'https://go.novu.co/hosted-upgrade';
 
+export const SUPPORT_EMAIL = 'support@novu.co';
+
 /**
  * Helper function to get environment variable with window._env_ fallback
  * Used by the multi-region configuration system

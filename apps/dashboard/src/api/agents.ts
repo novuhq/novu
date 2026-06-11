@@ -6,6 +6,7 @@ import type {
   DirectionEnum,
   IEnvironment,
 } from '@novu/shared';
+import type { AgentPlanUsage, PlanUsage } from '@/api/agents-plan-usage';
 import { del, get, getApiBaseUrl, NovuApiError, patch, post, put } from '@/api/api.client';
 
 /** Root segment for TanStack Query keys; use with {@link getAgentsListQueryKey}. */
@@ -87,6 +88,12 @@ export type AgentResponse = {
   createdAt: string;
   updatedAt: string;
   integrations?: AgentIntegrationSummary[];
+  /**
+   * Cloud only. `true` when the agent falls outside the organization plan agent
+   * limit (by creation order) and won't respond to inbound messages. Only plan
+   * limits produce this flag — system-capped organizations are never over-limit.
+   */
+  exceedsPlanLimit?: boolean;
 };
 
 export type ListAgentsResponse = {
@@ -95,6 +102,7 @@ export type ListAgentsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+  planUsage?: AgentPlanUsage;
 };
 
 type AgentSkillInputDto = {
@@ -374,6 +382,11 @@ export type AgentIntegrationLink = {
   connectedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Cloud only. `true` when this channel falls outside the organization plan
+   * active-channel limit (by connection order) — the agent won't respond on it.
+   */
+  exceedsPlanLimit?: boolean;
 };
 
 export type ListAgentIntegrationsResponse = {
@@ -382,6 +395,7 @@ export type ListAgentIntegrationsResponse = {
   previous: string | null;
   totalCount: number;
   totalCountCapped: boolean;
+  planUsage?: PlanUsage;
 };
 
 export type ListAgentIntegrationsParams = {

@@ -802,7 +802,10 @@ export function CreateAgentDialog({
                 value={scope}
                 onValueChange={(v) => handleGenerationModeChange(v === 'existing' ? 'existing' : 'prompt')}
               >
-                <SegmentedControlList className="rounded-[5px] bg-bg-muted p-px">
+                <SegmentedControlList
+                  className="rounded-[5px] bg-bg-muted p-1"
+                  floatingBgClassName="rounded-[1px]"
+                >
                   <SegmentedControlTrigger value="create" className="text-label-xs" disabled={isSubmitBusy}>
                     Create new agent
                   </SegmentedControlTrigger>

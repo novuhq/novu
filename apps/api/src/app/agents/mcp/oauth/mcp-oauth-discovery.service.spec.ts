@@ -3,6 +3,8 @@ import { expect } from 'chai';
 import sinon from 'sinon';
 
 import {
+  buildTokenEndpointAuthMethodsToTry,
+  isUnsupportedTokenEndpointAuthMethodError,
   McpOAuthDiscoveryError,
   McpOAuthDiscoveryService,
   parseWwwAuthenticateHeader,
@@ -116,6 +118,47 @@ describe('McpOAuthDiscoveryService', () => {
       expect(selectTokenEndpointAuthMethod(['private_key_jwt', 'tls_client_auth'], true)).to.equal(
         'client_secret_basic'
       );
+    });
+  });
+
+  describe('buildTokenEndpointAuthMethodsToTry', () => {
+    it('orders fallbacks after the negotiated primary for Supermetrics-style metadata', () => {
+      expect(
+        buildTokenEndpointAuthMethodsToTry(['client_secret_post', 'client_secret_basic', 'none'], true)
+      ).to.deep.equal(['client_secret_basic', 'client_secret_post']);
+    });
+
+    it('returns only the primary when no other advertised methods remain', () => {
+      expect(buildTokenEndpointAuthMethodsToTry(['client_secret_post'], true)).to.deep.equal(['client_secret_post']);
+    });
+  });
+
+  describe('isUnsupportedTokenEndpointAuthMethodError', () => {
+    it('detects DCR rejections for unsupported token endpoint auth methods', () => {
+      const err = new McpOAuthDiscoveryError(
+        'mcp_registration_failed',
+        'Dynamic Client Registration with "https://api.supermetrics.com" failed: invalid_client_metadata — Unsupported token endpoint auth method: "client_secret_basic". Supported methods: none, client_secret_post'
+      );
+
+      expect(isUnsupportedTokenEndpointAuthMethodError(err)).to.equal(true);
+    });
+
+    it('detects unsupported auth method errors regardless of message casing', () => {
+      const err = new McpOAuthDiscoveryError(
+        'mcp_registration_failed',
+        'Dynamic Client Registration failed: unsupported TOKEN ENDPOINT AUTH METHOD: "client_secret_basic"'
+      );
+
+      expect(isUnsupportedTokenEndpointAuthMethodError(err)).to.equal(true);
+    });
+
+    it('returns false for unrelated registration failures', () => {
+      const err = new McpOAuthDiscoveryError(
+        'mcp_registration_failed',
+        'Dynamic Client Registration with "https://auth.example.com" failed: invalid_redirect_uri'
+      );
+
+      expect(isUnsupportedTokenEndpointAuthMethodError(err)).to.equal(false);
     });
   });
 

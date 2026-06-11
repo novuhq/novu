@@ -122,4 +122,14 @@ export class AgentResponseDto {
 
   @ApiPropertyOptional({ type: [AgentIntegrationSummaryDto] })
   integrations?: AgentIntegrationSummaryDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Cloud only. `true` when the agent falls outside the organization plan agent limit ' +
+      '(by creation order among active agents — inactive agents do not consume slots). ' +
+      'Only plan limits produce this flag — system-capped organizations (enterprise/unlimited tiers) are never ' +
+      'over-limit. Over-limit agents are still stored but will not respond to inbound messages until the plan is ' +
+      'upgraded or older agents are deactivated.',
+  })
+  exceedsPlanLimit?: boolean;
 }
