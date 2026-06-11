@@ -3,12 +3,20 @@ import mongoose, { FilterQuery, Query, Schema } from 'mongoose';
 import { schemaOptions } from '../schema-default.options';
 import { AgentIntegrationDBModel } from './agent-integration.entity';
 
-function referencesDisconnectedAt(filter: FilterQuery<AgentIntegrationDBModel>): boolean {
-  if ('disconnectedAt' in filter) return true;
+function referencesDisconnectedAt(filter: unknown): boolean {
+  if (!filter || typeof filter !== 'object') return false;
 
-  const nestedClauses = [...(filter.$and ?? []), ...(filter.$or ?? [])];
+  if (Array.isArray(filter)) {
+    return filter.some(referencesDisconnectedAt);
+  }
 
-  return nestedClauses.some((clause) => clause && typeof clause === 'object' && 'disconnectedAt' in clause);
+  const filterQuery = filter as FilterQuery<AgentIntegrationDBModel>;
+
+  if ('disconnectedAt' in filterQuery) return true;
+
+  const nestedClauses = [...(filterQuery.$and ?? []), ...(filterQuery.$or ?? []), ...(filterQuery.$nor ?? [])];
+
+  return nestedClauses.some(referencesDisconnectedAt);
 }
 
 function excludeDisconnected(this: Query<unknown, AgentIntegrationDBModel>) {

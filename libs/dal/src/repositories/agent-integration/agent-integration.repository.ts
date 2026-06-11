@@ -2,6 +2,7 @@ import { DirectionEnum } from '@novu/shared';
 import { ClientSession, FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
+import { isDuplicateKeyError } from '../../types/error.enum';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import { AgentIntegrationDBModel, AgentIntegrationEntity } from './agent-integration.entity';
@@ -82,15 +83,44 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
       return revived;
     }
 
-    return this.create(
-      {
-        _agentId: agentId,
-        _integrationId: integrationId,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      { session }
-    );
+    try {
+      return await this.create(
+        {
+          _agentId: agentId,
+          _integrationId: integrationId,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+        },
+        { session }
+      );
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+
+      /*
+       * Race loser against the (_agentId, _integrationId, _environmentId)
+       * unique index: a concurrent caller created the link between our revive
+       * lookup and the insert. Re-read the winner's active row (the schema
+       * pre-hook scopes findOne to disconnectedAt: null) and return it.
+       */
+      const existing = await this.findOne(
+        {
+          _agentId: agentId,
+          _integrationId: integrationId,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+        },
+        '*',
+        { session }
+      );
+
+      if (existing) {
+        return existing;
+      }
+
+      throw error;
+    }
   }
 
   async findLinksForAgents({
