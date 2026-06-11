@@ -6,8 +6,8 @@ import {
   RiDeleteBinLine,
   RiForbidFill,
   RiMore2Fill,
-  RiPlayCircleLine,
   RiPauseCircleLine,
+  RiPlayCircleLine,
   RiRobot2Line,
 } from 'react-icons/ri';
 import { SiAmazonwebservices, SiAnthropic } from 'react-icons/si';
@@ -41,6 +41,8 @@ import { useHasPermission } from '@/hooks/use-has-permission';
 import { formatDateSimple } from '@/utils/format-date';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { cn } from '@/utils/ui';
+import { AwsIcon } from '../icons/aws';
+import { ClaudeIcon } from '../icons/claude';
 
 type AgentsTableProps = {
   agents: AgentResponse[];
@@ -93,12 +95,12 @@ function AgentIcon({ agent }: { agent: AgentResponse }) {
   let icon = <RiRobot2Line className="size-3.5" aria-hidden />;
 
   if (managedProviderId === AgentRuntimeProviderIdEnum.AnthropicAws) {
-    icon = <SiAmazonwebservices className="size-3.5 text-[#FF9900]" aria-hidden />;
+    icon = <AwsIcon className="size-3.5" aria-hidden />;
   } else if (
     managedProviderId === AgentRuntimeProviderIdEnum.Anthropic ||
     managedProviderId === AgentRuntimeProviderIdEnum.NovuAnthropic
   ) {
-    icon = <SiAnthropic className="size-3.5 text-[#D97757]" aria-hidden />;
+    icon = <ClaudeIcon className="size-3.5" aria-hidden />;
   }
 
   return (
@@ -209,7 +211,7 @@ export function AgentsTable({
     <Table isLoading={isLoading} loadingRowsCount={5} loadingRow={<AgentsTableSkeletonRow />}>
       <TableHeader>
         <TableRow>
-          <TableHead className="h-11 px-3 py-2.5">Agent</TableHead>
+          <TableHead className="h-11 px-3 py-2.5">Agents</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Status</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Integrations</TableHead>
           <TableHead className="h-11 px-3 py-2.5">Last updated</TableHead>
