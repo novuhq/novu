@@ -85,7 +85,7 @@ const SUBSCRIBER_LINK_WRONG_BOT_REPLY =
 
 const NOVU_PRICING_URL = 'https://novu.co/pricing';
 
-const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 5);
+const KEYLESS_DEMO_REPLY_CAP = parsePositiveIntEnv(process.env.KEYLESS_DEMO_REPLY_CAP, 3);
 
 function resolveConnectClaimBaseUrl(): string {
   for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
