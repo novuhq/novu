@@ -225,6 +225,9 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'paste-slack-token', retry, resolve, reject });
       });
     },
+    showSlackSetupLink({ setupUrl }) {
+      store.phase.set({ kind: 'slack-setup-link', setupUrl });
+    },
     runningSlackQuickSetup() {
       store.phase.set({ kind: 'running-slack-quick-setup' });
     },

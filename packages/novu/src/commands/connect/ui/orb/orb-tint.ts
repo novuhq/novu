@@ -62,6 +62,7 @@ export function computeOrbTint(
       return hoveredChannel ? CHANNEL_TINTS[hoveredChannel] : DEFAULT_ORB_COLOR;
     case 'adding-slack':
     case 'paste-slack-token':
+    case 'slack-setup-link':
     case 'running-slack-quick-setup':
     case 'slack-oauth-ready':
     case 'waiting-slack':
@@ -105,6 +106,7 @@ export function computeOrbLabel(
       return hoveredChannel ? CHANNEL_LABELS[hoveredChannel] : undefined;
     case 'adding-slack':
     case 'paste-slack-token':
+    case 'slack-setup-link':
     case 'running-slack-quick-setup':
     case 'slack-oauth-ready':
     case 'waiting-slack':

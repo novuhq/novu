@@ -54,9 +54,8 @@ export async function connectTelegramForAgent(
   let prefetchedSubscriberLink: TelegramSubscriberLinkResult | undefined;
 
   if (botToken) {
-    // The user already created the bot and pasted its token (e.g. collected
-    // by an AI agent in chat). Save it directly — keyless users cannot open
-    // the dashboard mobile-link page.
+    // Optional escape hatch for headless CI: the caller supplies the token
+    // directly instead of routing the user through the secure setup page.
     ui.savingTelegramBotToken();
     const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
     try {
@@ -84,17 +83,37 @@ export async function connectTelegramForAgent(
     const mobileQr = await renderQR(mobileLink.url);
     ui.showTelegramLinkToken({ mobileQr, mobileUrl: mobileLink.url });
 
+    let setupLinkFailure: 'expired' | 'invalid' | undefined;
+
     const tokenSaved = await pollUntil(
       async () => {
         const status = await getTelegramMobileLinkStatus(client, mobileLink.token);
         if (!status.valid && status.reason === 'used') return 'done';
-        if (!status.valid) return 'failed';
+        if (!status.valid && status.reason === 'expired') {
+          setupLinkFailure = 'expired';
+
+          return 'failed';
+        }
+        if (!status.valid) {
+          setupLinkFailure = 'invalid';
+
+          return 'failed';
+        }
 
         return 'pending';
       },
       { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
     );
     if (!tokenSaved) {
+      if (setupLinkFailure === 'expired') {
+        throw new Error(
+          'The Telegram setup link expired before you could paste your bot token. Re-run `npx novu connect` to get a fresh link.'
+        );
+      }
+      if (setupLinkFailure === 'invalid') {
+        throw new Error('The Telegram setup link is no longer valid. Re-run `npx novu connect` to get a fresh link.');
+      }
+
       throw new Error(
         `The bot token wasn't saved within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
           'Re-run `npx novu connect` to get a fresh setup link.'

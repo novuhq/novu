@@ -21,8 +21,16 @@ export function logTelegramBotfatherHandoffEvent(opts: { botfatherUrl: string })
   console.log(`${HANDOFF_PREFIX}TELEGRAM_BOTFATHER_URL=${opts.botfatherUrl}`);
 }
 
-export function logTelegramMobileLinkHandoffEvent(opts: { mobileUrl: string }): void {
-  console.log(`${HANDOFF_PREFIX}TELEGRAM_MOBILE_LINK_URL=${opts.mobileUrl}`);
+export function logTelegramSetupLinkHandoffEvent(opts: { setupUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}TELEGRAM_SETUP_URL=${opts.setupUrl}`);
+}
+
+export function logTelegramSetupLinkQrPngHandoffEvent(opts: { setupQrPngPath: string }): void {
+  console.log(`${HANDOFF_PREFIX}TELEGRAM_SETUP_QR_PNG=${opts.setupQrPngPath}`);
+}
+
+export function logSlackSetupLinkHandoffEvent(opts: { setupUrl: string }): void {
+  console.log(`${HANDOFF_PREFIX}SLACK_SETUP_URL=${opts.setupUrl}`);
 }
 
 export function logTelegramDeepLinkHandoffEvents(opts: { deepLinkUrl: string; botUsername: string }): void {

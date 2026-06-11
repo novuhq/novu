@@ -913,6 +913,68 @@ export async function submitTelegramMobileCredentials(
   return unwrapEnvelope(data) as SubmitTelegramMobileCredentialsResult;
 }
 
+export type SlackSetupLinkStatus =
+  | { valid: true; agentName: string; providerName: string }
+  | { valid: false; reason: 'expired' | 'used' | 'invalid' };
+
+export async function getSlackSetupStatus(token: string, signal?: AbortSignal): Promise<SlackSetupLinkStatus> {
+  const url = `${getApiBaseUrl()}/v1/agents/public/slack/setup/status?token=${encodeURIComponent(token)}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+  });
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    throw new NovuApiError(extractErrorMessage(data) ?? 'Failed to load setup link', response.status, data);
+  }
+
+  return unwrapEnvelope(data) as SlackSetupLinkStatus;
+}
+
+export type SubmitSlackSetupCredentialsResult = {
+  success: true;
+};
+
+export type SubmitSlackSetupCredentialsError = {
+  code: 'token_invalid' | 'token_expired' | 'token_already_used' | 'unknown';
+  message: string;
+};
+
+export class SlackSetupSubmitError extends Error {
+  constructor(
+    public readonly code: SubmitSlackSetupCredentialsError['code'],
+    message: string,
+    public readonly status: number
+  ) {
+    super(message);
+  }
+}
+
+export async function submitSlackSetupCredentials(
+  token: string,
+  configToken: string
+): Promise<SubmitSlackSetupCredentialsResult> {
+  const url = `${getApiBaseUrl()}/v1/agents/public/slack/setup`;
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, configToken }),
+  });
+
+  const data = await safeJson(response);
+
+  if (!response.ok) {
+    const code = extractErrorCode(data) as SubmitSlackSetupCredentialsError['code'];
+    const message = extractErrorMessage(data) ?? 'Failed to configure Slack';
+    throw new SlackSetupSubmitError(code, message, response.status);
+  }
+
+  return unwrapEnvelope(data) as SubmitSlackSetupCredentialsResult;
+}
+
 async function safeJson(response: Response): Promise<unknown> {
   try {
     return await response.json();

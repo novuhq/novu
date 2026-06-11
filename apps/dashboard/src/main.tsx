@@ -43,6 +43,7 @@ import { ChannelPreferences } from './components/workflow-editor/channel-prefere
 import { IS_ENTERPRISE, IS_SELF_HOSTED } from './config';
 import { FeatureFlagsProvider } from './context/feature-flags-provider';
 import { AgentDetailsPage } from './pages/agent-details';
+import { AgentSlackSetupPage } from './pages/agent-slack-setup-page';
 import { AgentTelegramMobileSetupPage } from './pages/agent-telegram-mobile-setup-page';
 import { AgentsPage } from './pages/agents';
 import { AgentsSetupPage } from './pages/agents-setup-page';
@@ -108,6 +109,12 @@ const router = createBrowserRouter([
       {
         path: ROUTES.CONNECT_CLAIM,
         element: <ConnectClaimPage />,
+      },
+      {
+        // Public, unauthenticated setup page for Slack. Mounted outside
+        // AuthRoute so unauthenticated visitors are not redirected to sign-in.
+        path: ROUTES.AGENT_SLACK_SETUP,
+        element: <AgentSlackSetupPage />,
       },
       {
         // Public, unauthenticated mobile setup page for Telegram. Mounted outside

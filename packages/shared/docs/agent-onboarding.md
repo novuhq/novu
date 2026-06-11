@@ -13,7 +13,8 @@ Your job, end to end: collect a couple of inputs, infer the agent's purpose from
 These govern every step. When in doubt, follow these over any specific instruction below.
 
 - **One run, one outcome.** A single connect command creates one agent + connects one channel. Never run it more than once except for the explicit safe-retry cases listed in Step 5.
-- **Trust user intent; ask only when genuinely unclear.** Only the channel choice (Step 1), the purpose confirmation (Step 2), and — for `telegram` — the bot token (after Step 2) require the user. Default on everything else (region, runtime) unless the user raises it.
+- **Trust user intent; ask only when genuinely unclear.** Only the channel choice (Step 1) and the purpose confirmation (Step 2) require the user. Default on everything else (region, runtime) unless the user raises it.
+- **Never collect secrets in chat.** Slack App Configuration Tokens and Telegram bot tokens must **never** be pasted into the agent chat window. The CLI prints a secure one-time setup link; the user pastes the secret directly on that page.
 - **Confirm before you act.** Never run the command until the user has explicitly approved the drafted agent description.
 - **One Connect shell, no log watchers.** Run the Step 3 connect command in a single Shell session. Read stdout from that session (or **Await** its shell id). Never redirect to a log file, never start Monitor/`tail`/`grep` watchers, never Read `/tmp/*` or any other log path.
 - **The CLI validates handoffs.** For `slack`/`email`, that Shell blocks and polls until OAuth or inbound email completes. Do not call Novu/Slack APIs or use OAuth tools to verify completion.
@@ -32,7 +33,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 **Use the picker for:** Step 1 (channel) and Step 2 (approve / edit description).
 
-**Do not use the picker for:** free-text values (e.g. Slack config token, Telegram bot token, edited agent description prose) — ask in chat normally.
+**Do not use the picker for:** free-text values (e.g. edited agent description prose) — ask in chat normally. **Never** ask the user to paste Slack config tokens or Telegram bot tokens in chat — those go on the secure setup page the CLI prints.
 
 **If the tool is unavailable:** number options (`a1`, `a2`, …) and ask for a reply like `q1a2`.
 
@@ -54,10 +55,10 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 ## Flow overview
 
-1. **Channel** — ask which channel; collect channel-specific inputs. If the user picks WhatsApp / MS Teams, the flow ends here with a **dashboard redirect** — Steps 2–5 do not run.
-2. **Purpose** — infer a 1–2 sentence agent description **for the product's end users** from the project; confirm with the user. If channel is `telegram`, collect the bot token here (after approval) before running connect.
+1. **Channel** — ask which channel. If the user picks WhatsApp / MS Teams, the flow ends here with a **dashboard redirect** — Steps 2–5 do not run.
+2. **Purpose** — infer a 1–2 sentence agent description **for the product's end users** from the project; confirm with the user.
 3. **Run** — connect command from Step 3 (keyless, `--ci`), streamed.
-4. **Handoff** — read stdout; give the user the channel-specific next step; let the CLI poll (`slack`/`email`/`telegram`).
+4. **Handoff** — read stdout; give the user the channel-specific next step (secure setup link, OAuth link, email, or Telegram deep link); let the CLI poll (`slack`/`email`/`telegram`).
 5. **Report** — relay the CLI's success or error; explain the demo limit → claim.
 
 ---
@@ -70,9 +71,9 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 | Option id | Label | What the user must do |
 |---|---|---|
-| `slack` | Slack | Provide a **Slack App Configuration Token** (`xoxe.xoxp-…`), then click an OAuth link to approve the install. |
+| `slack` | Slack | Open the secure setup link the CLI prints to paste a Slack App Configuration Token, then click an OAuth link to approve the install. |
 | `email` | Email | Nothing up front. The CLI prints an inbound email address; the user sends one email to it. |
-| `telegram` | Telegram | After the description is approved, create a bot via @BotFather, paste the **bot token** in chat, then tap **Start** on the new bot in Telegram after connect. |
+| `telegram` | Telegram | Create a bot via @BotFather, paste the token on the secure setup link the CLI prints, then tap **Start** on the bot in Telegram. |
 | `dashboard` | WhatsApp / MS Teams | Not supported in the CLI — sign in to the Novu dashboard and continue onboarding there. |
 
 **If they pick `dashboard`:** stop — do **not** run connect and do **not** generate an agent. WhatsApp and Microsoft Teams are not supported in this CLI flow. Give the user the dashboard URL — **<https://dashboard.novu.co>** (or <https://eu.dashboard.novu.co> if they asked for the EU region) — and tell them to **sign in (or sign up) and continue the onboarding from the dashboard**, where they can set up WhatsApp or Microsoft Teams. Steps 2–5 do not apply; you are done once you've delivered the link.
@@ -81,9 +82,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 **Collect after they choose:**
 
-- **slack** → the **Slack App Configuration Token** (`xoxe.xoxp-…`, required). The CLI uses it once; it is never stored. The user generates it at <https://api.slack.com/apps> under **"Your App Configuration Tokens"** (see <https://api.slack.com/authentication/config-tokens>); copy the **access token** (`xoxe.xoxp-…`), which is short-lived (~12h).
-- **telegram** → no extra input here — the **bot token** is collected after Step 2 once the description is approved; see [Telegram bot token (after Step 2)](#telegram-bot-token-after-step-2).
-- **email / skip** → no extra input.
+- **slack / telegram / email / skip** → no extra input up front. Secrets and channel-specific actions happen on the secure setup page or via the CLI handoff links printed during Step 4.
 - **dashboard (WhatsApp / MS Teams)** → no extra input; the flow already ended with the dashboard redirect above.
 
 **Runtime:** always use the **demo runtime** — do not ask for an Anthropic API key and do not pass `--runtime` or `--anthropic-api-key`.
@@ -150,25 +149,6 @@ Show the draft and briefly note the inferred audience (e.g. "this agent will ser
 
 If they pick **edit**, ask for their revised text in chat (not the picker), update the draft, and ask again until they pick **approve**. If their revision drops a service name, warn once that the agent will lose that integration — but their wording wins. **Never run the command until they approve.**
 
-### Telegram bot token (after Step 2)
-
-**When:** channel is `telegram` and the user has approved the agent description. Do **not** run connect until you have the token.
-
-**Goal:** walk the user through creating a bot with @BotFather and pasting the HTTP API token in chat.
-
-Open with context — e.g. "**Telegram** is chosen and the description is approved." Then tell them you still need their **Telegram bot token** before you can run connect, and give these steps:
-
-1. Open Telegram (phone or desktop) and start a chat with **@BotFather** — <https://t.me/botfather>
-2. Send `/newbot`
-3. Follow BotFather's prompts: choose a **display name** for your bot (what users see in chats), then a **username** that ends in `bot` (e.g. `MyShopAssistantBot`)
-4. BotFather replies with a message that includes your bot's **HTTP API token** — a string like `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`
-5. **Copy** the full token from that BotFather message
-6. **Paste** it here in the chat
-
-Wait for the user to paste the token. Pass it to the CLI via `--telegram-bot-token`; the CLI stores it on the integration. Keyless users cannot use the dashboard mobile-link page, so the token must be collected here. After connect runs, they will also tap **Start** on the bot in Telegram (Step 4 handoff).
-
-**Do not** run Step 3 until the token is pasted.
-
 ---
 
 ## Step 3 — Run connect (keyless, non-interactive)
@@ -193,23 +173,20 @@ Never pass `--channel whatsapp` or `--channel teams` — those channels are hand
 
 ```bash
 export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
-export SLACK_CONFIG_TOKEN='<xoxe.xoxp-...>'
 
 npx novu connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
-  --channel slack \
-  --slack-config-token "$SLACK_CONFIG_TOKEN"
+  --channel slack
 ```
 
 **How to run the Connect shell** — pick one path; never combine with log redirection or a second watch command:
 
-- **If channel is `slack`, `email`, or `telegram`:** Shell with `block_until_ms: 0` (background). Use **Await** on that shell id to read output as it arrives (e.g. pattern `NOVU_CONNECT_SLACK_AUTHORIZE_URL=`, `NOVU_CONNECT_INBOUND_ADDRESS=`, or `NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=`). When the user finishes the handoff, **Await** again until `✓ Your agent is live` or a `✗` error. Do not use Monitor, `tail -f`, `grep`, Read on log files, or ask for permission to watch logs.
+- **If channel is `slack`, `email`, or `telegram`:** Shell with `block_until_ms: 0` (background). Use **Await** on that shell id to read output as it arrives (e.g. pattern `NOVU_CONNECT_SLACK_SETUP_URL=`, `NOVU_CONNECT_TELEGRAM_SETUP_URL=`, `NOVU_CONNECT_INBOUND_ADDRESS=`, or `NOVU_CONNECT_SLACK_AUTHORIZE_URL=` / `NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=`). When the user finishes the handoff, **Await** again until `✓ Your agent is live` or a `✗` error. Do not use Monitor, `tail -f`, `grep`, Read on log files, or ask for permission to watch logs.
 - **If channel is `skip`:** a normal foreground Shell is enough — the CLI exits quickly after printing the success block.
 
 Conditional flags — apply each only when its condition holds:
 
-- **If channel is `slack`:** also pass `--slack-config-token "$SLACK_CONFIG_TOKEN"` (set the token in the shell environment first).
-- **If channel is `telegram`:** also pass `--telegram-bot-token "$TELEGRAM_BOT_TOKEN"` (collected after Step 2 — see [Telegram bot token (after Step 2)](#telegram-bot-token-after-step-2)). `--ci` is required (no prompts, no TUI).
+- **Do not** pass `--slack-config-token` or `--telegram-bot-token` in the agent flow — the CLI issues secure setup links instead. Only use those flags for genuine headless CI where secrets are injected via environment variables.
 - **Runtime:** do not pass `--runtime` or `--anthropic-api-key` — the **demo runtime** is always used.
 - **Region:** pass `--region eu` only when the user explicitly asks; otherwise the default is **US** Novu Cloud.
 
@@ -225,15 +202,27 @@ Always required: the positional description (in `--ci` mode).
 
 **If channel is `slack`, `email`, or `telegram`:** deliver the handoff from the Connect shell stdout, then **Await** the same shell until the **CLI poll** finishes. Do not start a separate watch process, read log files, or validate OAuth/email/Telegram yourself.
 
+**Always paste the literal URL — never a placeholder.** Every handoff link must be the full resolved value copied verbatim from the matching `NOVU_CONNECT_*` line (everything after the `=`). **Never** send a message that refers to "the secure link below", "the setup link", or "the link above" without the actual `https://…` URL in that same message. If you have not yet captured the URL from stdout, **Await** the matching pattern (e.g. `NOVU_CONNECT_SLACK_SETUP_URL=`) **before** sending any handoff message — do not announce the handoff until you have the real URL in hand.
+
 Read Connect shell stdout (via **Await**, not log files) and act based on the chosen channel:
 
-- **slack** — connection can't be automated. Watch for the machine-readable line:
+- **slack** — two user actions. First, **Await** the secure setup link line and copy its value:
+
+  ```
+  NOVU_CONNECT_SLACK_SETUP_URL=<url>
+  ```
+
+  Paste that exact `<url>` into chat as a clickable link. Then tell them to:
+  1. Open <https://api.slack.com/apps> and generate an **App Configuration Token** (access token starting with `xoxe.xoxp-`)
+  2. Open the setup link and paste the token there — **not in this chat**
+
+  The CLI polls until the token is saved (~5 min). Then **Await** the OAuth handoff line and copy its value:
 
   ```
   NOVU_CONNECT_SLACK_AUTHORIZE_URL=<url>
   ```
 
-  Parse the URL after `=`. Give it to the user and ask them to approve the install **within 5 minutes**. Then wait for the CLI poll to finish — the process exits on its own once they authorize. If it times out (~5 min), it prints an error; **re-run the same command** (the Slack app is reused).
+  Paste that exact `<url>` into chat and ask them to approve the install within 5 minutes. **Await** until the CLI poll finishes. Re-run on timeout (the Slack app is reused).
 
 - **email** — watch for these machine-readable lines (plain stdout, no ANSI):
 
@@ -250,7 +239,17 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
 
   Then wait for the **CLI poll** — the process completes once the email arrives; on timeout, re-run after they've sent it.
 
-- **telegram** — the bot token was collected after Step 2 and passed via `--telegram-bot-token`, so the CLI saves it itself — there is no BotFather or mobile-link handoff here. Watch for these machine-readable lines (plain stdout, no ANSI):
+- **telegram** — two user actions. First, watch for the BotFather hint and secure setup link:
+
+  ```
+  NOVU_CONNECT_TELEGRAM_BOTFATHER_URL=<url>              # only when present
+  NOVU_CONNECT_TELEGRAM_SETUP_URL=<url>
+  NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG=<absolute png path>   # only when present
+  ```
+
+  Tell the user to create a bot with @BotFather (<https://t.me/botfather>, send `/newbot`), then open the **setup link** and paste the BotFather confirmation message there — **not in this chat**. The CLI polls until the bot token is saved (~5 min).
+
+  Then watch for the deep-link handoff:
 
   ```
   NOVU_CONNECT_TELEGRAM_DEEPLINK_URL=<url>
@@ -258,9 +257,7 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
   NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=<absolute png path>   # only when present
   ```
 
-  When they appear, embed the **QR code image** inline with Markdown — `![Scan with your phone](<absolute png path>)` using the path from `NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=` — so the user can scan it from their phone. Never render the QR as ASCII/Unicode art in a code block (chat Markdown breaks it and it won't scan). Also give the deep link as a clickable fallback. Ask them to open the bot and tap **Start** on `@<botUsername>` in Telegram. The CLI polls until `/start` is received (~5 min).
-
-  Then wait for the CLI poll to finish — the process exits on its own once they tap Start. If it times out (~5 min), **re-run the same command** with the same `--telegram-bot-token`.
+  Embed the QR PNG inline when present. Ask them to open the bot and tap **Start** on `@<botUsername>`. **Await** until the CLI poll finishes. Re-run on timeout with the same command.
 
 - **skip** — nothing to hand off; the agent is created without a channel.
 
@@ -291,12 +288,13 @@ Extract the **agent identifier** and **Dashboard URL**, then tell the user:
 | Symptom | Fix |
 |---|---|
 | `…requires --prompt "<agent description>"` | You didn't pass the positional description — re-run Step 3 with it. |
-| `…--slack-config-token "xoxe.xoxp-…"` | Ask the user for the Slack App Configuration Token (Step 1) and pass it. |
+| `The Slack App Configuration Token wasn't saved within … seconds` | User didn't paste the token on the setup page in time — re-run the same command for a fresh link. |
 | `Failed to create Slack app: …` (e.g. timeout) | Transient — Slack's app-create can be slow on a cold call. Silently re-run the same command once; only surface if it fails again. |
 | `Slack OAuth was not completed within … seconds` | User didn't approve in time — re-run the same command (the Slack app is reused). |
 | `We didn't see your email at … within …s` | User hasn't emailed the inbound address yet — re-run after they send it. |
-| `Telegram didn't accept the bot token: …` | The pasted token is wrong or revoked — ask the user to re-copy it from @BotFather (`/token`) and re-run with the new value. |
-| `We didn't see a /start message on @… within … seconds` | User didn't tap Start on the bot in time — re-run the same command (same `--telegram-bot-token`). |
+| `The bot token wasn't saved within … seconds` | User didn't paste the BotFather token on the setup page in time — re-run for a fresh link. |
+| `Telegram didn't accept the bot token: …` | Wrong or revoked token on the setup page — have the user re-copy from @BotFather and re-run. |
+| `We didn't see a /start message on @… within … seconds` | User didn't tap Start on the bot in time — re-run the same command. |
 | `Keyless environment creation is currently disabled` / no demo integration | Target API isn't configured for keyless/demo — confirm the right `--region`, or have the user provide `--secret-key` for their existing account. |
 
 ---
@@ -311,8 +309,8 @@ Run `novu connect --help` for copy-paste examples, the non-interactive (agent/CI
 | `--ci` | Non-interactive mode (required for all channels in this flow). |
 | `--region <us\|eu>` | Target Novu Cloud region (default: `us`). |
 | `--channel <slack\|email\|telegram\|skip>` | Which channel to connect. Never pass `whatsapp`/`teams` — those are handled by the dashboard redirect, not the CLI. |
-| `--slack-config-token <xoxe.xoxp-…>` | Create the Slack app headlessly (slack only). |
-| `--telegram-bot-token <123456:ABC…>` | Bot token from @BotFather; the CLI stores it on the integration (telegram only, required in this flow). |
+| `--slack-config-token <xoxe.xoxp-…>` | CI-only escape hatch: pass the Slack config token directly instead of using the secure setup page. |
+| `--telegram-bot-token <123456:ABC…>` | CI-only escape hatch: pass the BotFather token directly instead of using the secure setup page. |
 | `--secret-key <key>` | Optional — use an existing Novu account instead of keyless. |
 
 ---
@@ -320,7 +318,8 @@ Run `novu connect --help` for copy-paste examples, the non-interactive (agent/CI
 ## Limitations to keep in mind
 
 - **One run = one new agent + one channel.** Re-running `connect` creates another agent; there is no "add a channel to the existing agent" in this non-interactive flow yet.
-- **Channel support is uneven headlessly:** `slack` and `email` complete with one user action; `telegram` requires two user actions (create the bot + paste its token in chat after description approval, then tap Start after connect); `whatsapp` and `teams` are **not supported in the CLI** — the user signs in to the Novu dashboard and continues onboarding there (no agent is generated by this flow).
+- **Channel support is uneven headlessly:** `slack` and `telegram` each require two user actions (paste a secret on the secure setup page, then OAuth or tap Start); `email` completes with one user action; `whatsapp` and `teams` are **not supported in the CLI** — the user signs in to the Novu dashboard and continues onboarding there (no agent is generated by this flow).
+- **Never paste Slack or Telegram tokens in the agent chat.** The CLI prints one-time setup links (`NOVU_CONNECT_SLACK_SETUP_URL`, `NOVU_CONNECT_TELEGRAM_SETUP_URL`) that work without signing in to the dashboard — including in keyless mode.
 - Keyless data is temporary until the user claims it via the in-channel sign-up link.
 - The CLI stores keyless credentials **per API URL**, so switching `--region` between runs does not require clearing `~/.config/configstore/novu-cli.json`.
 
@@ -332,7 +331,7 @@ Run `novu connect --help` for copy-paste examples, the non-interactive (agent/CI
 
 You are done when:
 
-1. The user picked a channel and you collected its required inputs.
+1. The user picked a channel (no secrets collected in chat).
 2. The user confirmed the agent description.
 3. You delivered the handoff (link / address) — or noted `skip`.
 4. The Connect shell printed `✓ Your agent is live.` (exit `0`). You never used Monitor, log files, or a separate watch command; for `slack`/`email`/`telegram`, the **CLI poll** validated the handoff.

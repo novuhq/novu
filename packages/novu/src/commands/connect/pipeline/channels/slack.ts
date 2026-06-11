@@ -1,5 +1,6 @@
 import open from 'open';
 import { CONNECT_EVENTS } from '../../analytics/events';
+import { getSlackSetupLinkStatus, issueSlackSetupLink } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import { NovuApiError } from '../../api/client';
 import {
@@ -122,17 +123,60 @@ async function runSlackQuickSetup(
   slackIntegration: IntegrationRecord,
   ui: ConnectUI,
   options: ConnectCommandOptions,
-  flags: { retry: boolean }
+  _flags: { retry: boolean }
 ): Promise<void> {
-  const configToken = options.slackConfigToken?.trim()
-    ? options.slackConfigToken.trim()
-    : await ui.promptForSlackConfigToken({ retry: flags.retry });
+  const configToken = options.slackConfigToken?.trim();
 
-  ui.runningSlackQuickSetup();
-  await slackQuickSetup(client, slackIntegration._id, {
-    configToken,
-    agentId: agent.id,
-  });
+  if (configToken) {
+    // Optional escape hatch for headless CI: the caller supplies the token directly.
+    ui.runningSlackQuickSetup();
+    await slackQuickSetup(client, slackIntegration._id, {
+      configToken,
+      agentId: agent.id,
+    });
+
+    return;
+  }
+
+  const setupLink = await issueSlackSetupLink(client, agent.identifier, slackIntegration._id);
+  ui.showSlackSetupLink({ setupUrl: setupLink.url });
+
+  let setupLinkFailure: 'expired' | 'invalid' | undefined;
+
+  const tokenSaved = await pollUntil(
+    async () => {
+      const status = await getSlackSetupLinkStatus(client, setupLink.token);
+      if (!status.valid && status.reason === 'used') return 'done';
+      if (!status.valid && status.reason === 'expired') {
+        setupLinkFailure = 'expired';
+
+        return 'failed';
+      }
+      if (!status.valid) {
+        setupLinkFailure = 'invalid';
+
+        return 'failed';
+      }
+
+      return 'pending';
+    },
+    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+  );
+  if (!tokenSaved) {
+    if (setupLinkFailure === 'expired') {
+      throw new Error(
+        'The Slack setup link expired before you could paste your App Configuration Token. Re-run `npx novu connect` to get a fresh link.'
+      );
+    }
+    if (setupLinkFailure === 'invalid') {
+      throw new Error('The Slack setup link is no longer valid. Re-run `npx novu connect` to get a fresh link.');
+    }
+
+    throw new Error(
+      `The Slack App Configuration Token wasn't saved within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
+        'Re-run `npx novu connect` to get a fresh setup link.'
+    );
+  }
 }
 
 function isMissingSlackCredentialsError(err: unknown): boolean {

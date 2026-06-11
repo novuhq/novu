@@ -181,11 +181,11 @@ program
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(
     '--slack-config-token <token>',
-    'Slack App Configuration Token (xoxe.xoxp-…). Required with --channel slack in --ci mode'
+    'Slack App Configuration Token (xoxe.xoxp-…). CI-only escape hatch — omit to use the secure setup page'
   )
   .option(
     '--telegram-bot-token <token>',
-    'Telegram bot token from @BotFather (123456:ABC-…). Required with --channel telegram in --ci mode'
+    'Telegram bot token from @BotFather (123456:ABC-…). CI-only escape hatch — omit to use the secure setup page'
   )
   .option(
     '--ci',
@@ -218,20 +218,6 @@ program
       if (!channel) {
         console.error(
           'Non-interactive mode requires --channel <slack|email|telegram|skip>.\n(run `novu connect --help` for the non-interactive contract and examples)'
-        );
-        process.exit(1);
-      }
-
-      if (channel === 'slack' && !options.slackConfigToken?.trim()) {
-        console.error(
-          'Non-interactive mode with --channel slack requires --slack-config-token (xoxe.xoxp-…).\n(run `novu connect --help` for the non-interactive contract and examples)'
-        );
-        process.exit(1);
-      }
-
-      if (channel === 'telegram' && !options.telegramBotToken?.trim()) {
-        console.error(
-          'Non-interactive mode with --channel telegram requires --telegram-bot-token (from @BotFather).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
