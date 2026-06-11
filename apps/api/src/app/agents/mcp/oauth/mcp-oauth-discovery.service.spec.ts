@@ -143,6 +143,15 @@ describe('McpOAuthDiscoveryService', () => {
       expect(isUnsupportedTokenEndpointAuthMethodError(err)).to.equal(true);
     });
 
+    it('detects unsupported auth method errors regardless of message casing', () => {
+      const err = new McpOAuthDiscoveryError(
+        'mcp_registration_failed',
+        'Dynamic Client Registration failed: unsupported TOKEN ENDPOINT AUTH METHOD: "client_secret_basic"'
+      );
+
+      expect(isUnsupportedTokenEndpointAuthMethodError(err)).to.equal(true);
+    });
+
     it('returns false for unrelated registration failures', () => {
       const err = new McpOAuthDiscoveryError(
         'mcp_registration_failed',

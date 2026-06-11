@@ -726,7 +726,7 @@ export function isUnsupportedTokenEndpointAuthMethodError(err: unknown): boolean
     return false;
   }
 
-  return err.message.includes('Unsupported token endpoint auth method');
+  return /unsupported token endpoint auth method/i.test(err.message);
 }
 
 /**
