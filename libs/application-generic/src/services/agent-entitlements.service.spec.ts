@@ -72,7 +72,7 @@ describe('AgentEntitlementsService', () => {
 
       const limit = await service.getAgentLimit(ORGANIZATION_ID);
 
-      expect(limit).to.equal(3);
+      expect(limit).to.equal(2);
     });
 
     it('caps enterprise at the system default when no per-org override is set', async () => {
@@ -229,7 +229,7 @@ describe('AgentEntitlementsService', () => {
     it('allows agents whose creation rank is below the limit', async () => {
       process.env.IS_SELF_HOSTED = 'false';
       const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
-      stubs.countOlderAgentsInOrganization.resolves(2);
+      stubs.countOlderAgentsInOrganization.resolves(1);
 
       const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, 'agent-1');
 

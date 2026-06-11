@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException } from '@nestjs/common';
+import { BadRequestException, ConflictException, HttpException, HttpStatus } from '@nestjs/common';
 import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 
@@ -46,6 +46,62 @@ describe('CreateDomain usecase', () => {
   afterEach(() => {
     restore();
     process.env = { ...previousEnv };
+  });
+
+  describe('custom email domain limit', () => {
+    it('throws a conflict including counts when the count reaches a system limit', async () => {
+      agentEntitlementsMock.getCustomEmailDomainLimits.resolves({ limit: 50, limitSource: 'system' });
+      domainRepositoryMock.count.resolves(50);
+
+      const usecase = buildUsecase();
+
+      try {
+        await usecase.execute(baseCommand);
+        throw new Error('Expected execute to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(ConflictException);
+        const response = (err as ConflictException).getResponse() as Record<string, unknown>;
+        expect(response.currentCount).to.equal(50);
+        expect(response.limit).to.equal(50);
+      }
+
+      expect(domainRepositoryMock.create.called).to.equal(false);
+    });
+
+    it('throws 402 Payment Required including counts when the count reaches a plan limit', async () => {
+      agentEntitlementsMock.getCustomEmailDomainLimits.resolves({ limit: 3, limitSource: 'plan' });
+      domainRepositoryMock.count.resolves(3);
+
+      const usecase = buildUsecase();
+
+      try {
+        await usecase.execute(baseCommand);
+        throw new Error('Expected execute to throw');
+      } catch (err) {
+        expect(err).to.be.instanceOf(HttpException);
+        expect((err as HttpException).getStatus()).to.equal(HttpStatus.PAYMENT_REQUIRED);
+        const response = (err as HttpException).getResponse() as Record<string, unknown>;
+        expect(response.currentCount).to.equal(3);
+        expect(response.limit).to.equal(3);
+      }
+
+      expect(domainRepositoryMock.create.called).to.equal(false);
+    });
+
+    it('allows creation below the limit and counts domains for the organization', async () => {
+      agentEntitlementsMock.getCustomEmailDomainLimits.resolves({ limit: 3, limitSource: 'plan' });
+      domainRepositoryMock.count.resolves(2);
+
+      const usecase = buildUsecase();
+
+      const result = await usecase.execute(baseCommand);
+
+      expect(result.name).to.equal('inbound.example.com');
+      expect(domainRepositoryMock.create.calledOnce).to.equal(true);
+      expect(domainRepositoryMock.count.calledOnceWith({ _organizationId: baseCommand.organizationId })).to.equal(
+        true
+      );
+    });
   });
 
   describe('shared agent domain reservation', () => {

@@ -37,7 +37,7 @@ function useContactSupportClick() {
       return;
     }
 
-    window.open(`mailto:${SUPPORT_EMAIL}`, '_blank noopener noreferrer');
+    window.location.href = `mailto:${SUPPORT_EMAIL}`;
   };
 }
 

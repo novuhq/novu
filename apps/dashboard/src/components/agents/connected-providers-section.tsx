@@ -47,7 +47,13 @@ function ProviderCard({ link, to }: { link: AgentIntegrationLink; to: string }) 
         {exceedsPlan && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <span role="img" aria-label="Exceeds plan limit" className="flex shrink-0 items-center">
+              <span
+                role="img"
+                aria-label="Exceeds plan limit"
+                // biome-ignore lint/a11y/noNoninteractiveTabindex: tooltip trigger must be focusable so keyboard users can open it; a button is invalid here as it's nested inside the card's Link
+                tabIndex={0}
+                className="flex shrink-0 items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <RiErrorWarningFill className="text-warning-base size-3.5" />
               </span>
             </TooltipTrigger>
