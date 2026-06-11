@@ -74,7 +74,7 @@ export function WelcomePage(): ReactElement {
                     badgeIcon={RiChat3Line}
                     badgeColorClassName="text-[#7d52f4]"
                     badgeBackgroundClassName="bg-[rgba(125,82,244,0.1)]"
-                    title="Setup agents to let your users respond the notifications."
+                    title="Setup agents to let your users respond to the notifications."
                     description="Workflows can notify users when something happens, and with agents, your users can respond to those notifications and get a response back or take action."
                     ctaLabel="Setup agents"
                     onCtaClick={goToAgentsSetup}
