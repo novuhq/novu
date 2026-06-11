@@ -1,4 +1,5 @@
 import { isAbsoluteUrl } from './apps';
+import type { ProductType } from './product-type-pending';
 import { buildRoute, ROUTES } from './routes';
 
 // Query-param signal stamped on the onboarding -> product-home navigation. A query param is used
@@ -35,7 +36,13 @@ export function stripOnboardingSource(search: URLSearchParams): URLSearchParams 
   return next;
 }
 
-export function getPostOrgCreateRoute(): string {
+// `product_type=agents` skips the usecase picker and lands directly on the agents setup page. The
+// EU/feature-flag gating on the agents setup page still redirects to the inbox path when needed.
+export function getPostOrgCreateRoute(productType?: ProductType | null): string {
+  if (productType === 'agents') {
+    return ROUTES.AGENTS_SETUP;
+  }
+
   return ROUTES.USECASE_SELECT;
 }
 

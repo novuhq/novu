@@ -1,4 +1,4 @@
-import { FeatureFlagsKeysEnum } from '@novu/shared';
+import { FeatureFlagsKeysEnum, ProductUseCasesEnum } from '@novu/shared';
 import {
   Bot,
   CalendarDays,
@@ -6,7 +6,6 @@ import {
   ChevronRight,
   Mail,
   MessageCircle,
-  MessagesSquare,
   MoreHorizontal,
   Settings,
   Smartphone,
@@ -27,6 +26,7 @@ import { IS_EU } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useOnboardingProvisioningActive, useOnboardingProvisioningDismiss } from '@/hooks/use-onboarding-provisioning';
 import { useTelemetry } from '@/hooks/use-telemetry';
+import { useUpdateProductUseCases } from '@/hooks/use-update-product-use-cases';
 import { beginOnboardingProvisioning } from '@/utils/connect/onboarding-session';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
@@ -312,11 +312,14 @@ function UsecaseTag({ id }: { id: UsecaseId }) {
 function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect: (id: UsecaseId) => void }) {
   const navigate = useNavigate();
   const telemetry = useTelemetry();
+  const updateProductUseCases = useUpdateProductUseCases();
 
   const handleContinue = () => {
     telemetry(TelemetryEvent.USECASE_SELECTED, { usecase: selected });
 
     if (selected === 'inbox') {
+      // Persist the picked usecase on the org (fire-and-forget — navigation continues regardless).
+      updateProductUseCases.mutate({ [ProductUseCasesEnum.IN_APP]: true });
       // Restart the provisioning loader so it plays a full cycle (with the inbox/notification copy)
       // while the destination page boots, instead of flickering off as soon as data resolves.
       beginOnboardingProvisioning('platform');
@@ -326,6 +329,7 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
     }
 
     if (selected === 'agents') {
+      updateProductUseCases.mutate({ [ProductUseCasesEnum.AGENTS]: true });
       beginOnboardingProvisioning('agents');
       void navigate(ROUTES.AGENTS_SETUP);
     }

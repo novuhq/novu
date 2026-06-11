@@ -10,6 +10,7 @@ import { clerkSignupAppearance } from '@/utils/clerk-appearance';
 import { appendRedirectUrlParam, readCliAuthReturnUrl } from '@/utils/cli-auth-pending';
 import { storePendingConnectClaimFromRedirectUrl } from '@/utils/connect-claim-pending';
 import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
+import { capturePendingProductType } from '@/utils/product-type-pending';
 import { ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { getReferrer, getUtmParams } from '@/utils/tracking';
@@ -23,6 +24,7 @@ export const SignUpPage = () => {
   useEffect(() => {
     readCliAuthReturnUrl(searchParams);
     storePendingConnectClaimFromRedirectUrl(readClerkRedirectUrlParam(searchParams));
+    capturePendingProductType(searchParams);
   }, [searchParams]);
 
   useEffect(() => {
@@ -35,6 +37,8 @@ export const SignUpPage = () => {
     });
   }, []);
 
+  // The agents `product_type` choice rides on sessionStorage (captured above), not the Clerk link:
+  // Clerk's <SignUp> renders its sign-in link with hash routing and mangles any query we inject here.
   const signInUrlWithRedirect = useMemo(() => {
     const redirectUrl = readClerkRedirectUrlParam(searchParams);
 
