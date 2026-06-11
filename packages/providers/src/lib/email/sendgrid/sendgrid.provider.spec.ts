@@ -72,6 +72,32 @@ test('should trigger sendgrid correctly', async () => {
   });
 });
 
+test('should use from as to when to is empty and cc is provided', async () => {
+  const provider = new SendgridEmailProvider(mockConfig);
+  const spy = vi.spyOn(MailService.prototype, 'send').mockImplementation(async () => {
+    return {} as any;
+  });
+
+  await provider.sendMessage({
+    ...mockNovuMessage,
+    to: [],
+    cc: ['cc@example.com'],
+  });
+
+  expect(spy).toHaveBeenCalledWith(
+    expect.objectContaining({
+      to: [{ email: mockNovuMessage.from }],
+      cc: [{ email: 'cc@example.com' }],
+      personalizations: [
+        expect.objectContaining({
+          to: [{ email: mockNovuMessage.from }],
+          cc: [{ email: 'cc@example.com' }],
+        }),
+      ],
+    })
+  );
+});
+
 test('should trigger sendgrid correctly with _passthrough', async () => {
   const provider = new SendgridEmailProvider(mockConfig);
   const spy = vi.spyOn(MailService.prototype, 'send').mockImplementation(async () => {
