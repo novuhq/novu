@@ -27,7 +27,7 @@ Use the name as-is for the git branch. Use the sanitized name for the directory 
 1. **Preflight** — from the main repo root:
    - `git rev-parse --show-toplevel`
    - `git worktree list` — abort if the target path already exists
-   - `git status --porcelain` — warn if dirty; do not block unless the user is trying to branch from uncommitted work they care about
+   - `git status --porcelain` — if non-empty, warn that the working tree is dirty and ask the user whether to proceed before creating the worktree
 
 2. **Create** — always a **new** branch and worktree:
    ```bash
@@ -45,7 +45,7 @@ Use the name as-is for the git branch. Use the sanitized name for the directory 
 
 User: `/worktree branch=more-dcr-oauths`
 
-```
+```text
 Branch:     more-dcr-oauths
 Path:       ../more-dcr-oauths
 Command:    git worktree add -b more-dcr-oauths ../more-dcr-oauths

@@ -1768,7 +1768,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'otter-ai',
     name: 'Otter.ai',
-    description: 'Connect Otter.ai to your agent via the managed runtime provider.',
+    description: 'Search Otter.ai meeting transcripts and conversation data.',
     url: 'https://mcp.otter.ai/mcp',
     category: 'communication',
     popular: false,
@@ -2180,7 +2180,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://sprouts-mcp-server.kartikay-dhar.workers.dev',
     category: 'data',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
+    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
   },
   {
     id: 'stytch',
@@ -2284,7 +2284,7 @@ export const MCP_SERVERS: McpServer[] = [
   {
     id: 'three-js-3d-viewer',
     name: 'Three.js 3D Viewer',
-    description: 'View and interact with Three.js 3D scenes via the MCP reference server.',
+    description: 'View Three.js 3D scenes via the MCP reference server (example/demo only, not production SLA).',
     url: 'https://example-server.modelcontextprotocol.io/threejs/mcp',
     category: 'design',
     popular: false,

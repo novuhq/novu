@@ -17,7 +17,7 @@ End state: stale, merged, and missing worktrees are removed; their local branche
 ## Hard rules
 
 1. **Never `--force` remove a worktree without explicit user confirmation.** Dirty worktrees stay until the user says otherwise.
-2. **Never delete the main worktree** (the one at `git rev-parse --show-toplevel` of the primary checkout) or the worktree the agent is currently sitting in. Refuse and tell the user to move first via `move_agent_to_root`.
+2. **Never delete the main worktree** (the one at `git rev-parse --show-toplevel` of the primary checkout) or the worktree the agent is currently sitting in. Detect the agent's worktree by comparing `pwd` (or `git rev-parse --show-toplevel` from the current directory) against each path from `git worktree list`. If they match, refuse deletion and tell the user to move first via `move_agent_to_root`.
 3. **Confirm deletions in one batch** via `AskQuestion` with `allow_multiple: true`. Don't delete one-by-one without a single approval step.
 4. **Use `git branch -d` (safe delete) by default.** Only use `-D` for branches the user explicitly flags as okay to force-delete.
 
@@ -48,12 +48,12 @@ For each non-primary worktree, compute one of:
 |---|---|---|
 | **missing** | path does not exist on disk | prune only |
 | **merged-direct** | `git merge-base --is-ancestor <branch> origin/<base>` succeeds | remove + delete branch |
-| **merged-squash** | `gh pr list --state merged --head <branch> --json number` returns a PR (if `gh` is available) | remove + delete branch (with `-D` after confirm, since `-d` will refuse) |
+| **merged-squash** | `gh pr list --state merged --head <branch> --json number` returns a PR (requires GitHub CLI — if `gh` is missing, skip this classification and flag the branch as **active** with a note to install `gh` or verify merge manually) | remove + delete branch (with `-D` after confirm, since `-d` will refuse) |
 | **dirty** | `git -C <path> status --porcelain` is non-empty | flag, do not remove |
 | **unpushed** | branch has commits not on `origin/<branch>` and no merged PR | flag, do not remove |
 | **active** | none of the above | leave alone |
 
-Also flag any worktree that is **the current agent root** — mark it as such and exclude it from the removable set.
+Also flag any worktree that is **the current agent root** — compare `pwd` / `git rev-parse --show-toplevel` against each worktree path, mark matches as such, and exclude them from the removable set.
 
 ### 4. Present the summary and get one consolidated approval
 
@@ -73,7 +73,7 @@ For each confirmed worktree:
 git worktree remove <path>            # safe path
 git worktree remove --force <path>    # only if user opted in for dirty
 git branch -d <branch>                # safe delete (refuses if unmerged)
-git branch -D <branch>                # only if user opted in (squash-merged or force)
+git branch -D <branch>                # only if user opted in (squash-merged or force); squash-merges leave the branch ahead/unmerged in topology so `-d` refuses — confirm merge via `gh pr list` first
 ```
 
 For **missing** entries, skip `remove` and rely on prune in the next step.
