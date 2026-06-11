@@ -31,17 +31,29 @@ export class RemoveIntegration {
         action: 'delete',
       });
 
-      await this.integrationRepository.delete({
-        _id: existingIntegration._id,
-        _organizationId: existingIntegration._organizationId,
-      });
+      // Remove agent↔integration links together with the integration so a
+      // deleted integration stops counting against the active-channel plan
+      // limit (and cannot be auto re-linked). On standalone Mongo (no replica
+      // set) withTransaction degrades to plain sequential execution, so links
+      // are deleted first: a partial failure then leaves the integration
+      // intact and the delete retryable, instead of orphaning links.
+      await this.agentIntegrationRepository.withTransaction(async (session) => {
+        await this.agentIntegrationRepository.delete(
+          {
+            _integrationId: existingIntegration._id,
+            _environmentId: existingIntegration._environmentId,
+            _organizationId: existingIntegration._organizationId,
+          },
+          { session }
+        );
 
-      // Remove agent↔integration links so a deleted integration stops counting
-      // against the active-channel plan limit (and cannot be auto re-linked).
-      await this.agentIntegrationRepository.delete({
-        _integrationId: existingIntegration._id,
-        _environmentId: existingIntegration._environmentId,
-        _organizationId: existingIntegration._organizationId,
+        await this.integrationRepository.delete(
+          {
+            _id: existingIntegration._id,
+            _organizationId: existingIntegration._organizationId,
+          },
+          { session }
+        );
       });
 
       const { channel } = existingIntegration;

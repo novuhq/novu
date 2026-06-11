@@ -16,6 +16,7 @@ import {
 } from '@novu/application-generic';
 import { AgentRepository, CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { ApiServiceLevelEnum, EnvironmentTypeEnum, FeatureNameEnum, getFeatureForTierAsBoolean } from '@novu/shared';
+import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { NovuEmailProvisioningService } from '../../../email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
 import { trackAgentCreated } from '../../../shared/analytics/agent-analytics';
 import type { AgentResponseDto, AgentRuntimeConfigResponseDto } from '../../../shared/dtos';
@@ -24,7 +25,6 @@ import { GetAgentRuntimeConfigCommand } from '../get-agent-runtime-config/get-ag
 import { GetAgentRuntimeConfig } from '../get-agent-runtime-config/get-agent-runtime-config.usecase';
 import { ProvisionManagedAgentCommand } from '../provision-managed-agent/provision-managed-agent.command';
 import { ProvisionManagedAgent } from '../provision-managed-agent/provision-managed-agent.usecase';
-import { KeylessAbuseGuardService } from '../../../../keyless/keyless-abuse-guard.service';
 import { CreateAgentCommand } from './create-agent.command';
 
 /** Temporary placeholder used for the initial Mongo insert in adopt mode. */
@@ -228,15 +228,24 @@ export class CreateAgent {
     }
 
     if (allowance.limitSource === 'system') {
-      throw new ConflictException(
-        `Your organization has reached the maximum number of agents (${allowance.creationLimit}). ` +
-          'Please reach out to the Novu team to increase this limit.'
-      );
+      throw new ConflictException({
+        message:
+          `Your organization has reached the maximum number of agents (${allowance.creationLimit}). ` +
+          'Please reach out to the Novu team to increase this limit.',
+        currentCount: allowance.totalCreated,
+        limit: allowance.creationLimit,
+      });
     }
 
     throw new HttpException(
-      `You have reached the maximum number of agents that can be created on your plan (${allowance.creationLimit}). ` +
-        'Upgrade your plan to create more agents.',
+      {
+        error: 'Payment Required',
+        message:
+          `You have reached the maximum number of agents that can be created on your plan (${allowance.creationLimit}). ` +
+          'Upgrade your plan to create more agents.',
+        currentCount: allowance.totalCreated,
+        limit: allowance.creationLimit,
+      },
       HttpStatus.PAYMENT_REQUIRED
     );
   }
