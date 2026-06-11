@@ -301,15 +301,15 @@ export class NovuEmailProvisioningService {
       throw new ConflictException('This integration is already linked to the agent.');
     }
 
-    const link = await this.agentIntegrationRepository.create(
-      {
-        _agentId: agentId,
-        _integrationId: integration._id,
-        _environmentId: environmentId,
-        _organizationId: organizationId,
-      },
-      { session }
-    );
+    // Revives a tombstoned (disconnected) link when one exists for this pair —
+    // a plain create would violate the unique (_agentId, _integrationId) index.
+    const link = await this.agentIntegrationRepository.createOrReviveLink({
+      agentId,
+      integrationId: integration._id,
+      environmentId,
+      organizationId,
+      session,
+    });
 
     return toAgentIntegrationResponse(link, integration, agent);
   }

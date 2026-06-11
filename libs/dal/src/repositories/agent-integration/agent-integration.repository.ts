@@ -1,7 +1,8 @@
 import { DirectionEnum } from '@novu/shared';
-import { FilterQuery } from 'mongoose';
+import { ClientSession, FilterQuery } from 'mongoose';
 
 import type { EnforceEnvOrOrgIds } from '../../types';
+import { isDuplicateKeyError } from '../../types/error.enum';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
 import { AgentIntegrationDBModel, AgentIntegrationEntity } from './agent-integration.entity';
@@ -14,6 +15,112 @@ export class AgentIntegrationRepository extends BaseRepositoryV2<
 > {
   constructor() {
     super(AgentIntegration, AgentIntegrationEntity);
+  }
+
+  /**
+   * Tombstones an active link instead of deleting it, so the inbound-webhook
+   * heal can tell a deliberate disconnect apart from a never-linked orphan.
+   * Returns the link as it was before the update, or null when no active link matched.
+   */
+  async softDisconnect({
+    agentIntegrationId,
+    agentId,
+    environmentId,
+    organizationId,
+    session,
+  }: {
+    agentIntegrationId: string;
+    agentId: string;
+    environmentId: string;
+    organizationId: string;
+    session?: ClientSession | null;
+  }): Promise<AgentIntegrationEntity | null> {
+    return this.findOneAndUpdate(
+      {
+        _id: agentIntegrationId,
+        _agentId: agentId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        disconnectedAt: null,
+      },
+      { $set: { disconnectedAt: new Date() } },
+      { session }
+    );
+  }
+
+  /**
+   * Revives a tombstoned link for the same (agent, integration) pair when one
+   * exists — the unique index makes a plain create fail — otherwise creates a
+   * fresh link. `connectedAt` is reset on revival so the first inbound webhook
+   * after reconnecting marks the link as connected again.
+   */
+  async createOrReviveLink({
+    agentId,
+    integrationId,
+    environmentId,
+    organizationId,
+    session,
+  }: {
+    agentId: string;
+    integrationId: string;
+    environmentId: string;
+    organizationId: string;
+    session?: ClientSession | null;
+  }): Promise<AgentIntegrationEntity> {
+    const revived = await this.findOneAndUpdate(
+      {
+        _agentId: agentId,
+        _integrationId: integrationId,
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        disconnectedAt: { $ne: null },
+      },
+      { $set: { disconnectedAt: null, connectedAt: null } },
+      { new: true, session }
+    );
+
+    if (revived) {
+      return revived;
+    }
+
+    try {
+      return await this.create(
+        {
+          _agentId: agentId,
+          _integrationId: integrationId,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+        },
+        { session }
+      );
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+
+      /*
+       * Race loser against the (_agentId, _integrationId, _environmentId)
+       * unique index: a concurrent caller created the link between our revive
+       * lookup and the insert. Re-read the winner's active row (the schema
+       * pre-hook scopes findOne to disconnectedAt: null) and return it.
+       */
+      const existing = await this.findOne(
+        {
+          _agentId: agentId,
+          _integrationId: integrationId,
+          _environmentId: environmentId,
+          _organizationId: organizationId,
+        },
+        '*',
+        { session }
+      );
+
+      if (existing) {
+        return existing;
+      }
+
+      throw error;
+    }
   }
 
   async findLinksForAgents({

@@ -33,17 +33,18 @@ export class RemoveAgentIntegration {
     }
 
     await this.agentIntegrationRepository.withTransaction(async (session) => {
-      const deleted = await this.agentIntegrationRepository.findOneAndDelete(
-        {
-          _id: command.agentIntegrationId,
-          _agentId: agent._id,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        { session }
-      );
+      // Soft delete: the tombstoned link lets the inbound-webhook heal distinguish
+      // a deliberate disconnect from a never-linked orphan, so platform webhooks
+      // that still target this integration cannot resurrect the channel.
+      const disconnected = await this.agentIntegrationRepository.softDisconnect({
+        agentIntegrationId: command.agentIntegrationId,
+        agentId: agent._id,
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        session,
+      });
 
-      if (!deleted) {
+      if (!disconnected) {
         throw new NotFoundException(
           `Agent-integration link "${command.agentIntegrationId}" was not found for this agent.`
         );
@@ -51,7 +52,7 @@ export class RemoveAgentIntegration {
 
       await this.cleanupNovuEmail.cleanupForIntegration(
         agent._id,
-        deleted._integrationId,
+        disconnected._integrationId,
         command.environmentId,
         command.organizationId,
         session
