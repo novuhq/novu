@@ -63,6 +63,7 @@ describe('CreateDomain usecase', () => {
         expect((err as HttpException).getStatus()).to.equal(HttpStatus.PAYMENT_REQUIRED);
       }
 
+      expect(resourceValidatorMock.validateDomainsLimit.called).to.equal(false);
       expect(domainRepositoryMock.create.called).to.equal(false);
     });
 
