@@ -15,7 +15,7 @@ import type { CardElement, EmojiValue, Message, Thread } from 'chat';
 import { ConnectClaimTokenService } from '../../../connect/services/connect-claim-token.service';
 import { parsePositiveIntEnv } from '../../../keyless/keyless-abuse.constants';
 import { KeylessAbuseGuardService } from '../../../keyless/keyless-abuse-guard.service';
-import { buildConnectClaimUrl, buildKeylessSignupCard } from '../../../keyless/keyless-signup.helpers';
+import { buildConnectClaimUrl, buildKeylessSignupCard, toReplyCard } from '../../../keyless/keyless-signup.helpers';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { LinkTelegramChatToSubscriberCommand } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.command';
 import { LinkTelegramChatToSubscriber } from '../../channels/telegram-linking/link-telegram-chat-to-subscriber/link-telegram-chat-to-subscriber.usecase';
@@ -730,7 +730,7 @@ export class AgentInboundHandler implements OnModuleInit {
       const claimUrl = buildConnectClaimUrl(token);
 
       await this.outboundGateway.replyOnThread(thread, {
-        card: buildKeylessSignupCard(claimUrl) as unknown as Record<string, unknown>,
+        card: toReplyCard(buildKeylessSignupCard(claimUrl)),
       });
 
       await this.connectClaimTokenService.tryMarkSignupCtaPosted(conversationId);

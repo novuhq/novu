@@ -6,14 +6,15 @@ import {
   ConversationParticipantTypeEnum,
   IntegrationRepository,
 } from '@novu/dal';
+import type { CardElement } from 'chat';
 import { ConnectClaimTokenService } from '../../../../connect/services/connect-claim-token.service';
+import { isKeylessOrganization } from '../../../../keyless/keyless-organization.helpers';
 import {
   buildConnectClaimUrl,
   buildKeylessWelcomeCard,
-  getKeylessWelcomeText,
-  isKeylessOrganization,
+  toReplyCard,
 } from '../../../../keyless/keyless-signup.helpers';
-import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
+import { getWelcomeText } from '../../../shared/util/agent-welcome-text';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../../shared/util/platform-endpoint-config';
 import { resolveAgentPlatform } from '../../../shared/util/provider-to-platform';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
@@ -97,13 +98,15 @@ export class SendAgentWelcomeMessage {
     }
 
     try {
-      const welcomeText = getKeylessWelcomeText(platform);
-      const keylessWelcome = await this.buildKeylessWelcomeDelivery(command, platform, welcomeText);
+      const welcomeText = getWelcomeText(platform);
+      const keylessWelcomeCard = await this.resolveKeylessWelcomeCard(command, welcomeText);
+      const welcomeReplyCard = keylessWelcomeCard ? toReplyCard(keylessWelcomeCard) : undefined;
+      const welcomeContent = welcomeReplyCard ? { card: welcomeReplyCard } : { markdown: welcomeText };
       const sent = await this.outboundGateway.sendDirectMessage(
         agent._id,
         command.integrationIdentifier,
         platformUserId,
-        keylessWelcome?.content ?? { markdown: welcomeText }
+        welcomeContent
       );
 
       const { platformThreadId } = sent;
@@ -129,7 +132,7 @@ export class SendAgentWelcomeMessage {
         platformMessageId: sent.messageId,
         agentIdentifier: command.agentIdentifier,
         content: welcomeText,
-        richContent: keylessWelcome?.richContent,
+        richContent: welcomeReplyCard ? { card: welcomeReplyCard } : undefined,
         environmentId: command.environmentId,
         organizationId: command.organizationId,
       });
@@ -150,11 +153,10 @@ export class SendAgentWelcomeMessage {
     }
   }
 
-  private async buildKeylessWelcomeDelivery(
+  private async resolveKeylessWelcomeCard(
     command: SendAgentWelcomeMessageCommand,
-    platform: AgentPlatformEnum,
     welcomeText: string
-  ): Promise<{ content: { card: Record<string, unknown> }; richContent: Record<string, unknown> } | null> {
+  ): Promise<CardElement | null> {
     if (!isKeylessOrganization(command.organizationId)) {
       return null;
     }
@@ -165,12 +167,8 @@ export class SendAgentWelcomeMessage {
         org: command.organizationId,
       });
       const claimUrl = buildConnectClaimUrl(token);
-      const card = buildKeylessWelcomeCard(welcomeText, claimUrl);
 
-      return {
-        content: { card: card as unknown as Record<string, unknown> },
-        richContent: { card: card as unknown as Record<string, unknown> },
-      };
+      return buildKeylessWelcomeCard(welcomeText, claimUrl);
     } catch (err) {
       this.logger.warn(
         err,
