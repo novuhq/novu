@@ -554,13 +554,18 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
 
     expect(editRes.status, JSON.stringify(editRes.body)).to.equal(200);
 
-    await pollFor(async () => {
+    // Edits re-brand: plain markdown edits from free-plan orgs get the
+    // "Powered by Novu" watermark re-appended, so match on the leading text
+    // and assert the watermark survived the edit.
+    const editedMessage = await pollFor(async () => {
       const replies = await getThreadReplies(channel.id, threadTs);
       if (!replies.ok || !replies.messages) return null;
 
       const updated = replies.messages.find((m) => m.ts === initialMessage.ts);
 
-      return updated && updated.text === 'edited' ? updated : null;
+      return updated?.text?.startsWith('edited') ? updated : null;
     }, SLACK_POLL_TIMEOUT_MS);
+
+    expect(editedMessage.text, 'free-plan watermark re-applied on edit').to.contain('go.novu.co/agent-powered');
   });
 });
