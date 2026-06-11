@@ -11,7 +11,13 @@ import {
   resolveAgentRuntime,
 } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, type ICredentialsDto, MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  filterDemoConfigurableMcpIds,
+  type ICredentialsDto,
+  MCP_SERVERS,
+  McpConnectionScopeEnum,
+} from '@novu/shared';
 import type { ClientSession } from 'mongoose';
 import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
 import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/resolve-mcp-servers';
@@ -131,7 +137,15 @@ export class ProvisionManagedAgent {
       // ── Provision mode ────────────────────────────────────────────────────
       await runtimeProvider.validateCredentials(validateCredentialsInput);
 
-      const resolvedMcpServers = command.mcpServers ? resolveMcpServersById(command.mcpServers) : undefined;
+      // The Novu-managed demo integration exposes no provider vault, so provider-managed MCPs can
+      // never be connected on it. Drop them here so we mirror the dashboard's demo filtering and
+      // never wire a demo agent to a server the user could not finish authorizing.
+      const requestedMcpServers =
+        command.mcpServers && runtimeProviderId === AgentRuntimeProviderIdEnum.NovuAnthropic
+          ? filterDemoConfigurableMcpIds(command.mcpServers)
+          : command.mcpServers;
+
+      const resolvedMcpServers = requestedMcpServers ? resolveMcpServersById(requestedMcpServers) : undefined;
       const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
         featureFlagsService: this.featureFlagsService,
         environmentId: command.environmentId,
@@ -149,7 +163,7 @@ export class ProvisionManagedAgent {
       });
 
       externalAgentId = response.externalAgentId;
-      mcpIdsToPersist = command.mcpServers;
+      mcpIdsToPersist = requestedMcpServers;
     }
 
     // Snapshot the pre-update runtime fields so we can compensate when the

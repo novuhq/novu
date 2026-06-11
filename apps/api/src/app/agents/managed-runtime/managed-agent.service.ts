@@ -14,13 +14,12 @@ import {
 import { type Message, MessageRole, type SerializedRequestParams } from '@novu/thalamus';
 import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhook';
 import type { Request, Response } from 'express';
-import { AgentConfigResolver, type ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
-import { OutboundGateway } from '../conversation-runtime/egress/outbound.gateway';
+import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
+import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
 import { McpConnectionVaultService } from '../mcp/connections/mcp-connection-vault.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
-import { showManagedInboundAck } from './managed-agent-inbound-ack';
 import { ManagedAgentProviderFactory } from './managed-agent-provider-factory.service';
 
 export interface ManagedAgentContext {
@@ -28,17 +27,24 @@ export interface ManagedAgentContext {
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
   userMessageText: string;
+  platformThreadId?: string;
+  platformMessageId?: string;
 }
 
-type WebhookSessionMetadata = {
+interface WebhookSessionMetadata {
   conversationId: string;
   environmentId: string;
   organizationId: string;
   agentIdentifier: string;
   integrationIdentifier: string;
+  agentId?: string;
+  platformMessageId?: string;
   subscriberId?: string;
   platform?: AgentPlatformEnum;
-};
+  platformThreadId?: string;
+  firstPlatformMessageId?: string;
+  acknowledgeOnReceived?: boolean;
+}
 
 export type ManagedAgentDispatchStatus = 'active' | 'queued';
 
@@ -59,8 +65,7 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly subscriberRepository: SubscriberRepository,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
-    private readonly outboundGateway: OutboundGateway,
-    private readonly agentConfigResolver: AgentConfigResolver,
+    private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -101,8 +106,13 @@ export class ManagedAgentService implements OnModuleInit {
         organizationId: context.config.organizationId,
         agentIdentifier: context.config.agentIdentifier,
         integrationIdentifier: context.config.integrationIdentifier,
+        agentId: agent._id,
+        platformMessageId: context.platformMessageId,
         subscriberId: context.subscriber?.subscriberId,
         platform: context.config.platform,
+        platformThreadId: context.platformThreadId ?? context.conversation.channels?.[0]?.platformThreadId,
+        firstPlatformMessageId: context.conversation.channels?.[0]?.firstPlatformMessageId,
+        acknowledgeOnReceived: context.config.acknowledgeOnReceived,
       }),
     });
 
@@ -126,7 +136,7 @@ export class ManagedAgentService implements OnModuleInit {
     subscriber: SubscriberEntity;
     pendingPlatformMessageId: string;
     agent: Pick<AgentEntity, '_id' | 'managedRuntime'>;
-  }): Promise<void> {
+  }): Promise<ManagedAgentDispatchResult | null> {
     const activity = await this.conversationActivityRepository.findOne(
       {
         _conversationId: params.conversation._id,
@@ -142,15 +152,17 @@ export class ManagedAgentService implements OnModuleInit {
         'Managed agent setup completed but parked message was not found'
       );
 
-      return;
+      return null;
     }
 
-    await this.dispatch(
+    return this.dispatch(
       {
         config: params.config,
         conversation: params.conversation,
         subscriber: params.subscriber,
         userMessageText: activity.content,
+        platformThreadId: params.conversation.channels?.[0]?.platformThreadId,
+        platformMessageId: params.pendingPlatformMessageId,
       },
       params.agent
     );
@@ -327,56 +339,9 @@ export class ManagedAgentService implements OnModuleInit {
       return;
     }
 
-    await this.showInboundAckBeforeQueuedDispatch(metadata);
+    await this.inboundAck.onManagedQueueReady(metadata);
 
     await provider.dispatchQueued(params.sessionId, params.runId, params.turnId, params.request);
-  }
-
-  private async showInboundAckBeforeQueuedDispatch(metadata: Record<string, string>): Promise<void> {
-    const { conversationId, environmentId, organizationId, agentIdentifier, integrationIdentifier } = metadata;
-
-    if (!conversationId || !environmentId || !organizationId || !agentIdentifier || !integrationIdentifier) {
-      return;
-    }
-
-    const conversation = await this.conversationRepository.findOne(
-      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
-      ['channels']
-    );
-    const platformThreadId = conversation?.channels?.[0]?.platformThreadId;
-
-    const agent = await this.agentRepository.findOne({ identifier: agentIdentifier, _environmentId: environmentId }, [
-      '_id',
-    ]);
-
-    if (!agent || !platformThreadId) {
-      return;
-    }
-
-    let config: ResolvedAgentConfig;
-    try {
-      config = await this.agentConfigResolver.resolve(agent._id, integrationIdentifier);
-    } catch (err) {
-      this.logger.warn(err, `Failed to resolve agent config before queued turn ack for conversation ${conversationId}`);
-
-      return;
-    }
-
-    try {
-      await showManagedInboundAck({
-        outboundGateway: this.outboundGateway,
-        agentId: agent._id,
-        config,
-        platformThreadId,
-        message: null,
-        isFirstMessage: false,
-      });
-    } catch (err) {
-      this.logger.warn(
-        err,
-        `Failed to show inbound ack before queued turn dispatch for conversation ${conversationId}`
-      );
-    }
   }
 
   private async buildMessagesWithHistory(context: ManagedAgentContext): Promise<Message[]> {
@@ -426,12 +391,32 @@ export class ManagedAgentService implements OnModuleInit {
       integrationIdentifier: input.integrationIdentifier,
     };
 
+    if (input.acknowledgeOnReceived !== undefined) {
+      metadata.acknowledgeOnReceived = String(input.acknowledgeOnReceived);
+    }
+
     if (input.subscriberId) {
       metadata.subscriberId = input.subscriberId;
     }
 
     if (input.platform) {
       metadata.platform = input.platform;
+    }
+
+    if (input.agentId) {
+      metadata.agentId = input.agentId;
+    }
+
+    if (input.platformMessageId) {
+      metadata.platformMessageId = input.platformMessageId;
+    }
+
+    if (input.platformThreadId) {
+      metadata.platformThreadId = input.platformThreadId;
+    }
+
+    if (input.firstPlatformMessageId) {
+      metadata.firstPlatformMessageId = input.firstPlatformMessageId;
     }
 
     return metadata;

@@ -5,10 +5,22 @@ import { ApiRateLimitCategoryEnum } from '@novu/shared';
 import { ThrottlerCategory } from '../../../rate-limiting/guards';
 import { ApiCommonResponses, ApiResponse } from '../../../shared/framework/response.decorator';
 import {
+  ConsumeSlackSetupLinkRequestDto,
+  ConsumeSlackSetupLinkResponseDto,
+} from '../../shared/dtos/consume-slack-setup-link.dto';
+import {
   ConsumeTelegramMobileLinkRequestDto,
   ConsumeTelegramMobileLinkResponseDto,
 } from '../../shared/dtos/consume-telegram-mobile-link.dto';
+import { SlackSetupLinkStatusResponseDto } from '../../shared/dtos/slack-setup-link-status-response.dto';
 import { TelegramMobileLinkStatusResponseDto } from '../../shared/dtos/telegram-mobile-link-status-response.dto';
+import { ConsumeSlackSetupLinkCommand } from '../slack-linking/consume-slack-setup-link/consume-slack-setup-link.command';
+import { ConsumeSlackSetupLink } from '../slack-linking/consume-slack-setup-link/consume-slack-setup-link.usecase';
+import { GetSlackSetupLinkStatusCommand } from '../slack-linking/get-slack-setup-link-status/get-slack-setup-link-status.command';
+import {
+  GetSlackSetupLinkStatus,
+  type GetSlackSetupLinkStatusResult,
+} from '../slack-linking/get-slack-setup-link-status/get-slack-setup-link-status.usecase';
 import { ConsumeTelegramMobileLinkCommand } from './consume-telegram-mobile-link/consume-telegram-mobile-link.command';
 import { ConsumeTelegramMobileLink } from './consume-telegram-mobile-link/consume-telegram-mobile-link.usecase';
 import { GetTelegramMobileLinkStatusCommand } from './get-telegram-mobile-link-status/get-telegram-mobile-link-status.command';
@@ -19,7 +31,7 @@ import {
 
 /**
  * Public, unauthenticated agent endpoints (no session). Add provider-specific
- * route groups under this controller — today only Telegram mobile configure.
+ * route groups under this controller (Telegram mobile configure, Slack setup).
  *
  * Telegram: authorization is an opaque, single-use, short-lived token stored in
  * Redis; the dashboard issues it via authed
@@ -35,7 +47,9 @@ import {
 export class AgentsPublicController {
   constructor(
     private readonly getTelegramMobileLinkStatusUsecase: GetTelegramMobileLinkStatus,
-    private readonly consumeTelegramMobileLinkUsecase: ConsumeTelegramMobileLink
+    private readonly consumeTelegramMobileLinkUsecase: ConsumeTelegramMobileLink,
+    private readonly getSlackSetupLinkStatusUsecase: GetSlackSetupLinkStatus,
+    private readonly consumeSlackSetupLinkUsecase: ConsumeSlackSetupLink
   ) {}
 
   @Get('telegram/mobile-configure/status')
@@ -71,5 +85,36 @@ export class AgentsPublicController {
     );
 
     return result;
+  }
+
+  @Get('slack/setup/status')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(SlackSetupLinkStatusResponseDto, 200)
+  @ApiOperation({
+    summary: 'Check the status of a Slack setup link',
+    description:
+      'Returns whether a Slack setup token is still usable. Designed to be called from the ' +
+      'setup landing page before showing the credentials form.',
+  })
+  async getSlackSetupStatus(@Query('token') token: string): Promise<GetSlackSetupLinkStatusResult> {
+    return this.getSlackSetupLinkStatusUsecase.execute(GetSlackSetupLinkStatusCommand.create({ token: token ?? '' }));
+  }
+
+  @Post('slack/setup')
+  @HttpCode(HttpStatus.OK)
+  @ApiResponse(ConsumeSlackSetupLinkResponseDto, 200)
+  @ApiOperation({
+    summary: 'Consume a Slack setup link',
+    description:
+      'Validates the setup token, runs Slack quick-setup with the supplied App Configuration Token, ' +
+      'and creates the Slack app from the Novu manifest. The token becomes invalid after a successful call.',
+  })
+  async consumeSlackSetup(@Body() body: ConsumeSlackSetupLinkRequestDto): Promise<ConsumeSlackSetupLinkResponseDto> {
+    return this.consumeSlackSetupLinkUsecase.execute(
+      ConsumeSlackSetupLinkCommand.create({
+        token: body.token,
+        configToken: body.configToken,
+      })
+    );
   }
 }

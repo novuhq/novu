@@ -241,6 +241,21 @@ export function PhaseContent({
     case 'running-slack-quick-setup':
       return <Text color="cyan">Creating Slack app from manifest…</Text>;
 
+    case 'slack-setup-link':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold color="cyan">
+            Paste your Slack App Configuration Token
+          </Text>
+          <Text dimColor>
+            Open the link below to paste your token on a secure page. We'll create the Slack app from a manifest — the
+            token never passes through this terminal.
+          </Text>
+          <CopyableLink url={phase.setupUrl} hint="Open this link:" />
+          <Text dimColor>Waiting for your Slack App Configuration Token…</Text>
+        </Box>
+      );
+
     case 'slack-oauth-ready':
       return (
         <SlackOAuthReadyContent

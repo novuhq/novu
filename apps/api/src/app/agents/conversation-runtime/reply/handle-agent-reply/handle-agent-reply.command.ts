@@ -1,10 +1,10 @@
 import type { Signal } from '@novu/framework';
 import type { PlanModel } from 'chat';
-import type { PlanPhase } from '../../egress/plan-phase';
 import { Type } from 'class-transformer';
 import { IsArray, IsNotEmpty, IsObject, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../../shared/commands/project.command';
 import { AddReactionPayloadDto, EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
+import type { PlanPhase } from '../../egress/plan-phase';
 import type { SlackNativeDelivery } from '../../egress/slack-native-delivery';
 
 export class HandleAgentReplyCommand extends EnvironmentWithUserCommand {

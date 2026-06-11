@@ -42,7 +42,7 @@ function mapSanityTemplate(template: SanityAgentTemplate): AgentTemplate | null 
   return {
     templateId: template.id,
     label: template.name,
-    name: template.agentName || template.name,
+    name: template.name ?? template.agentName,
     instructions: template.systemPrompt || '',
     suggestedMcpServers: mcpServers.map((server) => server.id),
     mcpServers,
@@ -50,8 +50,10 @@ function mapSanityTemplate(template: SanityAgentTemplate): AgentTemplate | null 
 }
 
 /**
- * Fetches agent templates from Sanity for the onboarding/create-agent pills. Falls back to the
- * hardcoded `AGENT_TEMPLATES` when Sanity is unavailable or returns nothing.
+ * Fetches agent templates from Sanity. Used to resolve a deep-linked `agentTemplateId` (from the
+ * marketing website) into a concrete template — name, instructions, and MCP servers — so the agent
+ * can be provisioned directly. Falls back to the hardcoded `AGENT_TEMPLATES` when Sanity is
+ * unavailable or returns nothing.
  */
 export function useAgentTemplates() {
   const { data, isLoading } = useQuery({

@@ -40,5 +40,5 @@ export function getPostOrgCreateRoute(): string {
 }
 
 export function getPostOnboardingRoute(environmentSlug: string): string {
-  return buildRoute(ROUTES.WORKFLOWS, { environmentSlug });
+  return buildRoute(ROUTES.AGENTS, { environmentSlug });
 }

@@ -9,11 +9,11 @@
 // inlined copy so backend code has a single import path through
 // `@novu/application-generic`.
 //
-// Drift hazard: any change to the policy regexes, blocked hostname set,
-// SsrfBlockedError shape, redirect state machine, or DNS handling MUST land in
-// both files. A behavioural drift test in `packages/shared` exercises both
-// implementations against the same inputs to fail loudly if they ever
-// diverge — see `packages/shared/src/utils/safe-outbound-http-drift.spec.ts`.
+// Drift hazard: URL policy, redirect state machine, and DNS handling MUST stay
+// in lockstep between packages/shared and this mirror. Private IP classification
+// is canonical in @novu/shared/utils/private-ip-classification and re-exported here.
+// Runtime require() needs compiled dist output; nx build ordering (^build) builds
+// @novu/shared before application-generic.
 //
 // New code should prefer `safeOutboundRequest` / `safeOutboundJsonRequest`,
 // which enforce the policy at connect time and re-validate every redirect.
@@ -21,8 +21,17 @@
 import * as dns from 'node:dns';
 import * as http from 'node:http';
 import * as https from 'node:https';
+import { isIP } from 'node:net';
 import { Readable } from 'node:stream';
 import { LRUCache } from 'lru-cache';
+
+type PrivateIpClassificationModule = typeof import('@novu/shared/dist/cjs/utils/private-ip-classification');
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { isPrivateIp, normalizeHostnameForLookup } =
+  require('@novu/shared/utils/private-ip-classification') as PrivateIpClassificationModule;
+
+export { isPrivateIp, normalizeHostnameForLookup };
 
 export function normalizeOutboundHttpUrl(raw: string): string | null {
   const trimmed = raw.trim();
@@ -62,33 +71,6 @@ const DNS_CACHE = new LRUCache<string, dns.LookupAddress[]>({
   max: 500,
   ttl: 1000 * 60 * 5,
 });
-
-export function isPrivateIp(ip: string): boolean {
-  const sharedAddressSecondOctet = '(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])';
-  const privateRanges = [
-    /^0\.0\.0\.0$/i,
-    /^127\./,
-    /^10\./,
-    /^172\.(1[6-9]|2[0-9]|3[01])\./,
-    /^192\.168\./,
-    /^169\.254\./,
-    /* RFC6598 shared address space (100.64.0.0/10) — cloud metadata, CGNAT */
-    new RegExp(`^100\\.${sharedAddressSecondOctet}\\.`),
-    /^::ffff:127\./i,
-    /^::ffff:10\./i,
-    /^::ffff:172\.(1[6-9]|2[0-9]|3[01])\./i,
-    /^::ffff:192\.168\./i,
-    /^::ffff:169\.254\./i,
-    new RegExp(`^::ffff:100\\.${sharedAddressSecondOctet}\\.`, 'i'),
-    /^::1$/i,
-    /^f[cd][0-9a-f]{2}:/i,
-    /^::ffff:f[cd][0-9a-f]{2}:/i,
-    /^fe[89ab][0-9a-f]:/i,
-    /^::ffff:fe[89ab][0-9a-f]:/i,
-  ];
-
-  return privateRanges.some((range) => range.test(ip));
-}
 
 const BLOCKED_HOSTNAMES = new Set(['localhost', 'metadata.google.internal']);
 
@@ -148,22 +130,30 @@ export async function resolvePublicAddresses(
   hostname: string,
   options: { useCache?: boolean } = {}
 ): Promise<dns.LookupAddress[]> {
-  const lower = hostname.toLowerCase();
+  const normalized = normalizeHostnameForLookup(hostname);
   let addresses: dns.LookupAddress[] | undefined;
 
   if (options.useCache) {
-    addresses = DNS_CACHE.get(lower);
+    addresses = DNS_CACHE.get(normalized);
   }
 
   if (!addresses) {
-    try {
-      addresses = await dns.promises.lookup(lower, { all: true });
-    } catch {
-      throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${lower}".`, { hostname: lower });
+    const literalFamily = isIP(normalized);
+
+    if (literalFamily !== 0) {
+      addresses = [{ address: normalized, family: literalFamily }];
+    } else {
+      try {
+        addresses = await dns.promises.lookup(normalized, { all: true });
+      } catch {
+        throw new SsrfBlockedError('DNS_LOOKUP_FAILED', `Unable to resolve hostname "${normalized}".`, {
+          hostname: normalized,
+        });
+      }
     }
 
     if (options.useCache) {
-      DNS_CACHE.set(lower, addresses);
+      DNS_CACHE.set(normalized, addresses);
     }
   }
 
@@ -172,7 +162,7 @@ export async function resolvePublicAddresses(
       throw new SsrfBlockedError(
         'PRIVATE_IP',
         `Requests to private or reserved IP addresses are not allowed (resolved: ${address}).`,
-        { hostname: lower, resolvedAddress: address }
+        { hostname: normalized, resolvedAddress: address }
       );
     }
   }
