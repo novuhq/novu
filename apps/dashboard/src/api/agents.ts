@@ -89,7 +89,8 @@ export type AgentResponse = {
   integrations?: AgentIntegrationSummary[];
   /**
    * Cloud only. `true` when the agent falls outside the organization plan agent
-   * limit (by creation order) and won't respond to inbound messages.
+   * limit (by creation order) and won't respond to inbound messages. Only plan
+   * limits produce this flag — system-capped organizations are never over-limit.
    */
   exceedsPlanLimit?: boolean;
 };

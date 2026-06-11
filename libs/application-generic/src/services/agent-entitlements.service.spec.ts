@@ -14,6 +14,7 @@ interface Stubs {
   countByOrganization: sinon.SinonStub;
   countTotalByOrganization: sinon.SinonStub;
   countOlderAgentsInOrganization: sinon.SinonStub;
+  findOldestAgentIds: sinon.SinonStub;
   listConnectedIntegrationIdsForOrganization: sinon.SinonStub;
 }
 
@@ -23,6 +24,7 @@ function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEnt
   const countByOrganization = sinon.stub().resolves(0);
   const countTotalByOrganization = sinon.stub().resolves(0);
   const countOlderAgentsInOrganization = sinon.stub().resolves(0);
+  const findOldestAgentIds = sinon.stub().resolves([]);
   const listConnectedIntegrationIdsForOrganization = sinon.stub().resolves([]);
 
   const featureFlagsService = { getFlag } as unknown as FeatureFlagsService;
@@ -31,6 +33,7 @@ function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEnt
     countByOrganization,
     countTotalByOrganization,
     countOlderAgentsInOrganization,
+    findOldestAgentIds,
   } as unknown as AgentRepository;
   const agentIntegrationRepository = {
     listConnectedIntegrationIdsForOrganization,
@@ -51,6 +54,7 @@ function buildService(apiServiceLevel: ApiServiceLevelEnum): { service: AgentEnt
       countByOrganization,
       countTotalByOrganization,
       countOlderAgentsInOrganization,
+      findOldestAgentIds,
       listConnectedIntegrationIdsForOrganization,
     },
   };
@@ -244,6 +248,58 @@ describe('AgentEntitlementsService', () => {
       const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, 'agent-4');
 
       expect(withinLimit).to.equal(false);
+    });
+
+    it('never blocks agents for system-capped unlimited tiers', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.ENTERPRISE);
+      stubs.countOlderAgentsInOrganization.resolves(SYSTEM_LIMITS.AGENTS + 5);
+
+      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, 'agent-over');
+
+      expect(withinLimit).to.equal(true);
+      expect(stubs.countOlderAgentsInOrganization.called).to.equal(false);
+    });
+
+    it('never blocks agents under a LaunchDarkly per-org override, even when over it', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.getFlag.resolves(10);
+      stubs.countOlderAgentsInOrganization.resolves(15);
+
+      const withinLimit = await service.isAgentWithinLimit(ORGANIZATION_ID, 'agent-over');
+
+      expect(withinLimit).to.equal(true);
+      expect(stubs.countOlderAgentsInOrganization.called).to.equal(false);
+    });
+  });
+
+  describe('getAgentPlanUsage', () => {
+    it('lists within-limit agent ids when a plan-limited org is over its limit', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.countByOrganization.resolves(3);
+      stubs.countTotalByOrganization.resolves(3);
+      stubs.findOldestAgentIds.resolves(['agent-1', 'agent-2']);
+
+      const usage = await service.getAgentPlanUsage(ORGANIZATION_ID);
+
+      expect(usage.limitSource).to.equal('plan');
+      expect(usage.withinLimitAgentIds).to.deep.equal(['agent-1', 'agent-2']);
+    });
+
+    it('does not flag agents as over-limit for system-capped organizations', async () => {
+      process.env.IS_SELF_HOSTED = 'false';
+      const { service, stubs } = buildService(ApiServiceLevelEnum.FREE);
+      stubs.getFlag.resolves(10);
+      stubs.countByOrganization.resolves(15);
+      stubs.countTotalByOrganization.resolves(15);
+
+      const usage = await service.getAgentPlanUsage(ORGANIZATION_ID);
+
+      expect(usage.limitSource).to.equal('system');
+      expect(usage.withinLimitAgentIds).to.equal(null);
+      expect(stubs.findOldestAgentIds.called).to.equal(false);
     });
   });
 

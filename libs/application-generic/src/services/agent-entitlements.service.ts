@@ -257,7 +257,9 @@ export class AgentEntitlementsService {
     const { planLimit: limit, creationLimit, limitSource } = limits;
     const base = { used, limit, totalCreated, creationLimit, limitSource };
 
-    if (limit >= UNLIMITED_VALUE || used <= limit) {
+    // System caps are enforced at creation only — existing agents are never
+    // flagged as over-limit, even if the cap was lowered below current usage.
+    if (limitSource === 'system' || limit >= UNLIMITED_VALUE || used <= limit) {
       return { ...base, withinLimitAgentIds: null };
     }
 
@@ -293,10 +295,14 @@ export class AgentEntitlementsService {
    * creation time. Inactive agents do not consume slots, so deactivating an
    * older agent frees a slot for newer ones. Callers are expected to pass an
    * active agent — inactive agents don't respond regardless of plan limits.
+   *
+   * System caps (unlimited tiers bounded by the platform limit, or per-org
+   * overrides) are enforced at creation only and never soft-block existing
+   * agents — only plan limits do.
    */
   async isAgentWithinLimit(organizationId: string, agentId: string): Promise<boolean> {
-    const limit = await this.getAgentLimit(organizationId);
-    if (limit >= UNLIMITED_VALUE) {
+    const { planLimit: limit, limitSource } = await this.getAgentLimits(organizationId);
+    if (limitSource === 'system' || limit >= UNLIMITED_VALUE) {
       return true;
     }
 
