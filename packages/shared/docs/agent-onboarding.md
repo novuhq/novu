@@ -217,10 +217,12 @@ Always required: the positional description (in `--ci` mode).
 
 **Always paste the literal URL — never a placeholder.** Every handoff link must be the full resolved value copied verbatim from the matching `NOVU_CONNECT_*` line (everything after the `=`). **Never** send a message that refers to "the secure link below", "the setup link", or "the link above" without the actual `https://…` URL in that same message. If you have not yet captured the URL from stdout, **Await** the matching pattern (e.g. `NOVU_CONNECT_SLACK_SETUP_URL=`) **before** sending any handoff message — do not announce the handoff until you have the real URL in hand.
 
-**Showing the QR code (host-aware).** The Telegram QR PNGs (`NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG`, `NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG`) are a phone-scan convenience — the literal URL is the primary handoff and must appear in the same message regardless. **Never deliver a QR by only Read-ing the PNG file:** in most hosts a file-read tool call renders collapsed (e.g. Claude Code shows just "Read 1 file"), so the user never sees the QR. Pick the path that matches what your host can render:
+### Showing the QR code (host-aware)
 
-- **Chat UI that renders markdown images inline (e.g. Cursor):** embed the PNG in your reply text with `![Scan to open the secure setup page](<absolute png path>)` — an image in your own message, not a tool call.
-- **Terminal host that cannot render images (e.g. Claude Code or other CLIs):** open the PNG in the OS image viewer — `open "<png path>"` (macOS) or `xdg-open "<png path>"` (Linux) — and tell the user a QR window just opened that they can scan with their phone. If the open command fails or the session is headless/remote, skip the QR entirely and present only the clickable URL — never leave the user hunting through collapsed tool output.
+The Telegram QR PNGs (`NOVU_CONNECT_TELEGRAM_SETUP_QR_PNG`, `NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG`) are a phone-scan convenience — the literal URL is the primary handoff and must appear in the same message regardless. **Never deliver a QR by only Read-ing the PNG file:** in most hosts a file-read tool call renders collapsed (e.g. Claude Code shows just "Read 1 file"), so the user never sees the QR. Pick the path that matches what your host can render:
+
+- **Chat UI that renders Markdown images inline (e.g. Cursor):** embed the PNG in your reply text with `![Scan the QR code with your phone](<absolute png path>)` — an image in your own message, not a tool call.
+- **Terminal host that cannot render images (e.g. Claude Code or other CLIs):** open the PNG in the OS image viewer — `open "<png path>"` (macOS), `xdg-open "<png path>"` (Linux), or `start "" "<png path>"` (Windows) — and tell the user a QR window just opened that they can scan with their phone. If the open command fails or the session is headless/remote, skip the QR entirely and present only the clickable URL — never leave the user hunting through collapsed tool output.
 
 Read Connect shell stdout (via **Await**, not log files) and act based on the chosen channel:
 
