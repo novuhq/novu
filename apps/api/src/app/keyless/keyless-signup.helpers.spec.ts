@@ -56,15 +56,17 @@ describe('keyless-signup.helpers', () => {
     );
   });
 
-  it('buildKeylessWelcomeCard includes welcome text and a subtle signup link', () => {
+  it('buildKeylessWelcomeCard includes welcome text and a primary signup button', () => {
     const welcomeText = getWelcomeText(AgentPlatformEnum.SLACK);
     const card = buildKeylessWelcomeCard(welcomeText, 'https://example.com/claim');
+    const actions = card.children?.find((child) => child.type === 'actions');
 
     expect(card.children?.[0]).to.deep.equal({ type: 'text', content: welcomeText });
-    expect(card.children?.[2]).to.deep.equal({
-      type: 'link',
+    expect(actions?.children?.[0]).to.deep.equal({
+      type: 'link-button',
       label: 'Sign up free',
       url: 'https://example.com/claim',
+      style: 'primary',
     });
   });
 
