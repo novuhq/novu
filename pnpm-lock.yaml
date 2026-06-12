@@ -32,6 +32,7 @@ overrides:
   rollup@>=4.0.0 <4.59.0: ^4.59.0
   '@nestjs/common@>=10.0.0 <12.0.0': 11.1.24
   '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
+  joi@<18.2.1: ^18.2.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26
@@ -7715,18 +7716,12 @@ packages:
   '@hapi/hoek@11.0.7':
     resolution: {integrity: sha512-HV5undWkKzcB4RZUusqOpcgxOaq6VOAH7zhhIr2g3G8NF/MlFO75SjOr2NfuSx0Mh40+1FqCkagKLJRykUWoFQ==}
 
-  '@hapi/hoek@9.3.0':
-    resolution: {integrity: sha512-/c6rf4UJlmHlC9b5BaNvzAcFv7HZ2QHaV0D4/HNlBdvFnvQq8RI4kYdhyPCl7Xj+oWvTWQ8ujhqS53LIgAe6KQ==}
-
   '@hapi/pinpoint@2.0.1':
     resolution: {integrity: sha512-EKQmr16tM8s16vTT3cA5L0kZZcTMU5DUOZTuvpnY738m+jyP3JIUj+Mm1xc1rsLkGBQ/gVnfKYPwOmPg1tUR4Q==}
 
   '@hapi/tlds@1.1.6':
     resolution: {integrity: sha512-xdi7A/4NZokvV0ewovme3aUO5kQhW9pQ2YD1hRqZGhhSi5rBv4usHYidVocXSi9eihYsznZxLtAiEYYUL6VBGw==}
     engines: {node: '>=14.0.0'}
-
-  '@hapi/topo@5.1.0':
-    resolution: {integrity: sha512-foQZKJig7Ob0BMAYBfcJk8d77QtOe7Wo4ox7ff1lQYoNNAb6jwcY1ncdoy2e9wQZzvNy7ODZCYJkK8kzmcAnAg==}
 
   '@hapi/topo@6.0.2':
     resolution: {integrity: sha512-KR3rD5inZbGMrHmgPxsJ9dbi6zEK+C3ZwUwTa+eMwWLz7oijWUTWD2pMSNNYJAU6Qq+65NkxXjqHr/7LM2Xkqg==}
@@ -12650,15 +12645,6 @@ packages:
     resolution: {integrity: sha512-XRRnwfONrzjW8AY/l39szH9OgCCg5Xx61QxxdrC3BT2RAqo229jomjhCEszGIUJ5YZYq1ewdyBwbvUVTUSTcTg==}
     peerDependencies:
       prettier: ^2.0.0 || ^3.0.0
-
-  '@sideway/address@4.1.4':
-    resolution: {integrity: sha512-7vwq+rOHVWjyXxVlR76Agnvhy8I9rpzjosTESvmhNeXOXdZZB15Fl+TI9x1SiHZH5Jv2wTGduSxFDIaq0m3DUw==}
-
-  '@sideway/formula@3.0.1':
-    resolution: {integrity: sha512-/poHZJJVjx3L+zVD6g9KgHfYnb443oi7wLu/XKojDviHy6HOEOA6z1Trk5aR1dGcmPenJEgb2sK2I80LeS3MIg==}
-
-  '@sideway/pinpoint@2.0.0':
-    resolution: {integrity: sha512-RNiOoTPkptFtSVzQevY/yWtZwf/RxyVnPy/OcA9HBM3MlGDnBEYL5B41H0MTn0Uec8Hi+2qUtTfG2WWZBmMejQ==}
 
   '@sinclair/typebox@0.27.8':
     resolution: {integrity: sha512-+Fj43pSMwJs4KRrH/938Uf+uAELIgVBmQzg/q1YG10djyfA3TnrU8N8XzqCh/okZdszqBQTZf96idMfE5lnwTA==}
@@ -20974,11 +20960,8 @@ packages:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
 
-  joi@17.11.0:
-    resolution: {integrity: sha512-NgB+lZLNoqISVy1rZocE9PZI36bL/77ie924Ri43yEvi9GUUMPeyVIr8KdFTMUlby1p0PBYMk9spIxEUQYqrJQ==}
-
-  joi@18.0.2:
-    resolution: {integrity: sha512-RuCOQMIt78LWnktPoeBL0GErkNaJPTBGcYuyaBvUOQSpcpcLfWrHPPihYdOGbV5pam9VTWbeoF7TsGiHugcjGA==}
+  joi@18.2.1:
+    resolution: {integrity: sha512-2/OKlogiESf2Nh3TFCrRjrr9z1DRHeW0I+KReF67+4J0Ns+8hBtHRmoWAZ2OFU6I5+TWLEe6sVlSdXPjHm5UbQ==}
     engines: {node: '>= 20'}
 
   jose@4.15.5:
@@ -33503,15 +33486,9 @@ snapshots:
 
   '@hapi/hoek@11.0.7': {}
 
-  '@hapi/hoek@9.3.0': {}
-
   '@hapi/pinpoint@2.0.1': {}
 
   '@hapi/tlds@1.1.6': {}
-
-  '@hapi/topo@5.1.0':
-    dependencies:
-      '@hapi/hoek': 9.3.0
 
   '@hapi/topo@6.0.2':
     dependencies:
@@ -40579,14 +40556,6 @@ snapshots:
       html-styles: 1.0.0
       prettier: 3.3.3
 
-  '@sideway/address@4.1.4':
-    dependencies:
-      '@hapi/hoek': 9.3.0
-
-  '@sideway/formula@3.0.1': {}
-
-  '@sideway/pinpoint@2.0.0': {}
-
   '@sinclair/typebox@0.27.8': {}
 
   '@sinclair/typebox@0.34.38': {}
@@ -44929,7 +44898,7 @@ snapshots:
       axios: 1.17.0
       dotenv: 17.2.4
       google-libphonenumber: 3.2.44
-      joi: 18.0.2
+      joi: 18.2.1
       lodash: 4.18.1
     transitivePeerDependencies:
       - debug
@@ -51612,15 +51581,7 @@ snapshots:
 
   jiti@2.6.1: {}
 
-  joi@17.11.0:
-    dependencies:
-      '@hapi/hoek': 9.3.0
-      '@hapi/topo': 5.1.0
-      '@sideway/address': 4.1.4
-      '@sideway/formula': 3.0.1
-      '@sideway/pinpoint': 2.0.0
-
-  joi@18.0.2:
+  joi@18.2.1:
     dependencies:
       '@hapi/address': 5.1.1
       '@hapi/formula': 3.0.2
@@ -54918,7 +54879,7 @@ snapshots:
       build-url: 1.3.3
       form-data: 4.0.5
       https-proxy-agent: 5.0.1
-      joi: 17.11.0
+      joi: 18.2.1
       jsonwebtoken: 9.0.3
       lodash: 4.18.1
       querystring: 0.2.1
