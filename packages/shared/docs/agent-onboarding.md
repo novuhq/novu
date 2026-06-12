@@ -73,7 +73,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 2. **Purpose** — infer a 1–2 sentence agent description **for the product's end users** from the project; confirm with the user.
 3. **Run** — connect command from Step 3 (`--ci`, plus `--login` only when authenticated), streamed.
 4. **Handoff** — dashboard OAuth first when using `--login` (`NOVU_CONNECT_AUTH_URL_FILE=`), then channel-specific next steps. For Slack/Telegram, present the inline secure-page-vs-paste-in-chat token choice only when the token is actually needed. Let the CLI poll.
-5. **Report** — relay the CLI's success or error. Keyless: explain demo limit → claim. Authenticated: report agent identifier + dashboard URL only.
+5. **Report** — relay the CLI's success or error, give a 1–2 sentence "behind the scenes" recap of what onboarding built, and point the user to the dashboard to adjust the agent. Keyless: explain demo limit → claim. Authenticated: report agent identifier + dashboard URL.
 
 ---
 
@@ -345,7 +345,7 @@ Read Connect shell stdout (via **Await**, not log files) and act based on the ch
 
 ## Step 5 — Report the result
 
-**Goal:** relay what the CLI printed and point the user at the channel or dashboard.
+**Goal:** relay what the CLI printed, give a short "behind the scenes" recap of what onboarding built, and point the user at the channel and the dashboard (where they can refine the agent).
 
 On success the CLI exits `0` and prints:
 
@@ -356,9 +356,19 @@ On success the CLI exits `0` and prints:
   Dashboard: <dashboard url>
 ```
 
-**Authenticated:** tell the user their agent is live in their Development environment — message it on the connected channel or open the dashboard URL.
+**Always start with a 1–2 sentence "behind the scenes" recap**, then point the user to the dashboard to keep going. Before the channel/dashboard pointer, briefly explain what the onboarding just did so the result isn't a black box. Keep it to one or two sentences, in plain language, e.g.:
 
-**Keyless:** same as above, plus explain the **demo limit** (~5 free replies) and the in-channel **"Sign up & keep this agent"** claim link.
+> _"Behind the scenes, Novu turned your description into a hosted AI agent — generating its system prompt, picking the right tools and skills, wiring up the MCP servers for the services you named, and connecting it to &lt;channel&gt; so it can message your users."_
+
+Adapt the recap to what actually happened (drop the MCP clause when no integrations were named, name the channel that was connected, or say the agent was created without a channel for `skip`).
+
+**Then tell the user how to proceed.** The dashboard is where they refine what was just created — make this explicit:
+
+> _"From here, open the dashboard to adjust your agent — tweak its description and prompt, change its tools, skills, and MCP connections, manage channels, and watch its activity. You can iterate there as much as you like."_
+
+**Authenticated:** after the recap and dashboard pointer, tell the user their agent is live in their Development environment — they can message it on the connected channel or open the dashboard URL to refine it.
+
+**Keyless:** same as above, plus explain the **demo limit** (~5 free replies) and the in-channel **"Sign up & keep this agent"** claim link (which moves the agent into their own workspace so they can manage it from the dashboard).
 
 **On failure**, surface the error and matching fix:
 
@@ -412,4 +422,4 @@ You are done when:
 2. Dashboard OAuth completed (when using `--login`), or keyless bootstrap succeeded.
 3. You delivered channel handoffs (or noted `skip` / whatsapp-teams dashboard URL).
 4. Connect shell printed `✓ Your agent is live.` (exit `0`); CLI poll validated handoffs where applicable.
-5. You reported agent identifier + Dashboard URL (and keyless claim path if applicable).
+5. You reported agent identifier + Dashboard URL, gave a brief "behind the scenes" recap, and told the user they can refine the agent from the dashboard (and the keyless claim path if applicable).
