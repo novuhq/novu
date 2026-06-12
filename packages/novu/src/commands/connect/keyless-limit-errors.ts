@@ -9,7 +9,7 @@ export function isConnectInteractive(options: ConnectCommandOptions): boolean {
     return false;
   }
 
-  if (process.env.CI === 'true') {
+  if (process.env.CI) {
     return false;
   }
 

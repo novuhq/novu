@@ -36,9 +36,11 @@ export async function upgradeKeylessSessionToDashboardAuth(
 
   ui.authCompleted(auth.environmentName ?? null);
 
-  session.auth = auth;
-  session.client = createConnectApiClient({
+  const nextClient = createConnectApiClient({
     apiUrl: auth.apiUrl,
     secretKey: auth.secretKey,
   });
+
+  session.auth = auth;
+  session.client = nextClient;
 }
