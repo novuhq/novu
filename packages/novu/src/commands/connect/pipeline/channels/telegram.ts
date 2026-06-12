@@ -7,6 +7,7 @@ import {
   type TelegramSubscriberLinkResult,
 } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
+import { NovuApiError } from '../../api/client';
 import { createTelegramIntegration, type IntegrationRecord } from '../../api/integrations';
 import type { AgentSummary, ConnectCommandOptions } from '../../types';
 import { renderQR } from '../../ui/qr';
@@ -21,6 +22,7 @@ import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil } from '..
 const TELEGRAM_PROVIDER_ID = 'telegram';
 const TELEGRAM_CHANNEL = 'chat';
 const BOTFATHER_URL = 'https://t.me/botfather';
+const MAX_TELEGRAM_TOKEN_ATTEMPTS = 5;
 
 export async function connectTelegramForAgent(
   client: ConnectApiClient,
@@ -142,7 +144,7 @@ async function promptAndSaveTelegramBotToken(
 ): Promise<TelegramSubscriberLinkResult | undefined> {
   let verificationError: string | undefined;
 
-  while (true) {
+  for (let attempt = 1; attempt <= MAX_TELEGRAM_TOKEN_ATTEMPTS; attempt++) {
     const token = await ui.promptForSecretInput({
       title: 'Telegram bot token',
       placeholder: '123456:ABC-…',
@@ -153,9 +155,25 @@ async function promptAndSaveTelegramBotToken(
     try {
       return await saveTelegramBotTokenViaMobileLink(client, agent, integration, subscriberId, token.trim());
     } catch (err) {
+      if (!isRepromptableTelegramTokenError(err)) {
+        throw err;
+      }
+
       verificationError = err instanceof Error ? err.message : String(err);
     }
   }
+
+  throw new Error(
+    `Telegram didn't accept the bot token after ${MAX_TELEGRAM_TOKEN_ATTEMPTS} attempts. ` +
+      'Double-check the token from @BotFather and re-run `npx novu connect`.'
+  );
+}
+
+function isRepromptableTelegramTokenError(err: unknown): boolean {
+  if (!(err instanceof NovuApiError)) return false;
+  if (err.status === 0) return false;
+
+  return err.status >= 400 && err.status < 500;
 }
 
 async function waitForTelegramSetupPageToken(
