@@ -54,6 +54,8 @@ overrides:
   '@types/mocha': ^10.0.8
   rollup@>=4.0.0 <4.59.0: ^4.59.0
   '@nestjs/common@>=10.0.0 <12.0.0': 11.1.24
+  '@grpc/grpc-js@>=1.14.0 <1.14.4': ^1.14.4
+  joi@<18.2.1: ^18.2.1
   prosemirror-model: 1.22.3
   path-to-regexp@<0.1.13: ^0.1.13
   '@swc/core@>=1.0.0 <2.0.0': 1.7.26

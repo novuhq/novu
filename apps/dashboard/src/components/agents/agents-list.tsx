@@ -16,6 +16,7 @@ import {
   deleteAgent,
   getAgentsListQueryKey,
   listAgents,
+  updateAgent,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
@@ -192,6 +193,31 @@ export function AgentsList() {
       showErrorToast(message, 'Delete failed');
     },
   });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ identifier, active }: { identifier: string; active: boolean }) =>
+      updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, { active }),
+    onSuccess: async (updatedAgent) => {
+      showSuccessToast(
+        updatedAgent.active ? 'The agent is now active.' : 'The agent is now paused.',
+        updatedAgent.active ? 'Agent activated' : 'Agent paused'
+      );
+
+      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not update agent.';
+
+      showErrorToast(message, 'Update failed');
+    },
+  });
+
+  const handleToggleActive = useCallback(
+    (agent: AgentResponse) => {
+      toggleActiveMutation.mutate({ identifier: agent.identifier, active: !agent.active });
+    },
+    [toggleActiveMutation]
+  );
 
   const handleNextPage = useCallback(() => {
     const next = listQuery.data?.next;
@@ -483,6 +509,8 @@ export function AgentsList() {
             agents={agents}
             isLoading={isLoading}
             onRequestDelete={setAgentToDelete}
+            onToggleActive={handleToggleActive}
+            togglingAgentId={toggleActiveMutation.isPending ? toggleActiveMutation.variables?.identifier : null}
             paginationProps={{
               pageSize: limit,
               pageSizeOptions: PAGE_SIZE_OPTIONS,

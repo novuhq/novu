@@ -1,4 +1,11 @@
-import { FeatureFlagsKeysEnum, MCP_SERVERS, McpConnectionAuthModeEnum, type McpServer } from '@novu/shared';
+import {
+  AgentRuntimeProviderIdEnum,
+  FeatureFlagsKeysEnum,
+  isProviderManagedMcp,
+  MCP_SERVERS,
+  McpConnectionAuthModeEnum,
+  type McpServer,
+} from '@novu/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiAddLine, RiArrowRightUpLine, RiCloseLine, RiLoader4Line, RiSearchLine } from 'react-icons/ri';
@@ -153,6 +160,21 @@ function buildSaveMcpIds(stagedIds: Set<string>): string[] {
   return [...stagedIds];
 }
 
+/**
+ * Seed the staged enablement set from the server's enabled list. For demo
+ * (NovuAnthropic) agents we additionally drop provider-managed ids: they are
+ * already hidden from the catalog and can never be connected, so leaving a
+ * stale one in `stagedIds` would silently re-send it on the next Save and
+ * trigger an unrelated partial-failure toast.
+ */
+function seedStagedIds(servers: AgentMcpServerEnablement[], isDemoProviderAgent: boolean): Set<string> {
+  return new Set(
+    servers
+      .filter((server) => !isDemoProviderAgent || !isProviderManagedMcp(server.mcpId))
+      .map((server) => server.mcpId)
+  );
+}
+
 function formatPartialFailureMessage(failures: SetAgentMcpServersFailure[]): string {
   const labels = failures
     .map((f) => f.mcpId)
@@ -173,11 +195,16 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
   // never gets a chance to fire and 403.
   const providerManagedEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_MCP_PROVIDER_MANAGED_ENABLED);
   const badgeKindOptions = useMemo<McpBadgeKindOptions>(() => ({ providerManagedEnabled }), [providerManagedEnabled]);
+  // The demo (Novu-managed Claude / NovuAnthropic) integration exposes no
+  // provider vault, so provider-managed MCPs can never be configured on it —
+  // the API rejects them at connect time. We use this both to hide them from
+  // the catalog and to keep them out of the staged save set.
+  const isDemoProviderAgent = agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic;
   // Staged enablement set. Mirrors `enabledServers` whenever the sheet opens
   // and is then driven entirely by the in-sheet Add / Remove actions until
   // the user clicks "Save changes" (which commits the diff against the
   // initial snapshot) or discards via the Unsaved changes dialog.
-  const [stagedIds, setStagedIds] = useState<Set<string>>(() => new Set(enabledServers.map((s) => s.mcpId)));
+  const [stagedIds, setStagedIds] = useState<Set<string>>(() => seedStagedIds(enabledServers, isDemoProviderAgent));
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
 
   const initialEnabledIds = useMemo(() => new Set(enabledServers.map((server) => server.mcpId)), [enabledServers]);
@@ -191,11 +218,11 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
   useEffect(() => {
     if (isOpen && !wasOpenRef.current) {
       setSearch('');
-      setStagedIds(new Set(enabledServersRef.current.map((s) => s.mcpId)));
+      setStagedIds(seedStagedIds(enabledServersRef.current, isDemoProviderAgent));
       setShowUnsavedDialog(false);
     }
     wasOpenRef.current = isOpen;
-  }, [isOpen]);
+  }, [isOpen, isDemoProviderAgent]);
 
   const hasUnsavedChanges = useMemo(() => {
     if (stagedIds.size !== initialEnabledIds.size) return true;
@@ -207,18 +234,26 @@ export function McpsSheet({ agent, isOpen, onOpenChange, enabledServers, console
     return false;
   }, [stagedIds, initialEnabledIds]);
 
+  // Drop provider-managed entries from the picker for demo agents so the
+  // catalog only advertises the Novu-handled OAuth modes (dcr / novu-app) the
+  // user can actually wire up, matching the onboarding + provision filters.
+  const catalogMcps = useMemo(
+    () => (isDemoProviderAgent ? MCP_SERVERS.filter((entry) => !isProviderManagedMcp(entry.id)) : MCP_SERVERS),
+    [isDemoProviderAgent]
+  );
+
   const filteredMcps = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    if (!query) return MCP_SERVERS;
+    if (!query) return catalogMcps;
 
-    return MCP_SERVERS.filter(
+    return catalogMcps.filter(
       (entry) =>
         entry.name.toLowerCase().includes(query) ||
         entry.description.toLowerCase().includes(query) ||
         entry.id.toLowerCase().includes(query)
     );
-  }, [search]);
+  }, [search, catalogMcps]);
 
   const { enabledList, availableList } = useMemo(() => {
     const enabled: McpServer[] = [];
