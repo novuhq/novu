@@ -20,6 +20,7 @@ import {
   storePendingConnectClaimFromRedirectUrl,
 } from '@/utils/connect-claim-pending';
 import { readClerkRedirectUrlParam } from '@/utils/product-auth-urls';
+import { capturePendingProductType } from '@/utils/product-type-pending';
 import { buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { getReferrer, getUtmParams } from '@/utils/tracking';
@@ -48,6 +49,7 @@ export const SignInPage = () => {
     }
 
     storePendingConnectClaimFromRedirectUrl(readClerkRedirectUrlParam(searchParams));
+    capturePendingProductType(searchParams);
   }, [searchParams]);
 
   useEffect(() => {
@@ -85,6 +87,8 @@ export const SignInPage = () => {
     void navigate(buildRoute(ROUTES.WORKFLOWS, { environmentSlug: 'default' }), { replace: true });
   }, [isLoaded, isSignedIn, cliAuthReturnUrl, connectClaimReturnUrl, navigate]);
 
+  // The agents `product_type` choice rides on sessionStorage (captured above), not the Clerk link:
+  // Clerk's <SignIn> renders its sign-up link with hash routing and mangles any query we inject here.
   const signUpUrlWithRedirect = useMemo(() => {
     const redirectUrl = readClerkRedirectUrlParam(searchParams);
 

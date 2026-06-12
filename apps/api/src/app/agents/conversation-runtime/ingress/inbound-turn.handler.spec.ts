@@ -4,10 +4,8 @@ import { ManagedRuntime } from '../../managed-runtime/managed.runtime';
 import { AgentEventEnum } from '../../shared/enums/agent-event.enum';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { UNRESOLVED_SUBSCRIBER_ACCESS_REPLY } from '../../shared/util/agent-inbound-replies';
-import { OutboundGateway } from '../egress/outbound.gateway';
 import { BridgeRuntime } from '../runtime/bridge.runtime';
 import { NoBridgeUrlError } from '../runtime/bridge-executor.service';
-import { RuntimeResolver } from '../runtime/runtime-resolver.service';
 import { AgentInboundHandler } from './inbound-turn.handler';
 
 describe('AgentInboundHandler', () => {
@@ -96,6 +94,9 @@ describe('AgentInboundHandler', () => {
         return { messageId: result.id, platformThreadId: result.threadId };
       }),
     };
+    const inboundAck = {
+      showWorkingSignal: sinon.stub().resolves(undefined),
+    };
     const bridgeRuntime = new BridgeRuntime(
       bridgeExecutor as any,
       outboundGateway as any,
@@ -109,6 +110,7 @@ describe('AgentInboundHandler', () => {
       confirmToolApproval as any,
       outboundGateway as any,
       conversationService as any,
+      inboundAck as any,
       logger as any
     );
     const runtimeResolver = {
@@ -143,6 +145,9 @@ describe('AgentInboundHandler', () => {
       assertKeylessAiEnabled: sinon.stub().resolves(),
       assertManagedAgentCap: sinon.stub().resolves(),
     };
+    const planLimitGate = {
+      maybeBlock: sinon.stub().resolves(false),
+    };
     const handler = new AgentInboundHandler(
       logger as any,
       subscriberResolver as any,
@@ -158,7 +163,9 @@ describe('AgentInboundHandler', () => {
       channelEndpointRepository as any,
       linkTelegramChatToSubscriber as any,
       connectClaimTokenService as any,
-      keylessAbuseGuard as any
+      keylessAbuseGuard as any,
+      planLimitGate as any,
+      inboundAck as any
     );
 
     return {
@@ -175,6 +182,7 @@ describe('AgentInboundHandler', () => {
       agentRepository,
       subscriberRepository,
       outboundGateway,
+      inboundAck,
     };
   }
 
@@ -378,18 +386,7 @@ describe('AgentInboundHandler', () => {
 
     it('should show typing before managed-agent setup gate when acknowledgeOnReceived is enabled', async () => {
       const setupInbound = sinon.stub().resolves(true);
-      const logger = makeLogger();
-      const subscriberResolver = { resolve: sinon.stub().resolves('sub-1') };
-      const conversationService = {
-        createOrGetConversation: sinon.stub().resolves(conversation),
-        getPrimaryChannel: sinon.stub().callsFake((conv) => conv.channels[0]),
-        persistInboundMessage: sinon.stub().resolves({ _id: 'activity1' }),
-        persistAgentMessage: sinon.stub().resolves({ _id: 'agent-activity1' }),
-        setFirstPlatformMessageId: sinon.stub().resolves(undefined),
-        findByPlatformThread: sinon.stub().resolves(conversation),
-        getHistory: sinon.stub().resolves([]),
-      };
-      const { handler, handleManagedAgentSetupInbound, managedAgentService } = makeHandler({
+      const { handler, managedAgentService, inboundAck } = makeHandler({
         managedAgentSetupHandleInbound: setupInbound,
         subscriberResolve: sinon.stub().resolves('sub-1'),
         subscriberFindById: sinon.stub().resolves({ subscriberId: 'sub-1' }),
@@ -406,8 +403,9 @@ describe('AgentInboundHandler', () => {
 
       await handler.handle('agent1', slackConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
 
-      expect(thread.startTyping.calledOnceWith('Thinking...')).to.equal(true);
+      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
       expect(setupInbound.calledOnce).to.equal(true);
+      expect(inboundAck.showWorkingSignal.calledBefore(setupInbound)).to.equal(true);
       expect(managedAgentService.dispatch.called).to.equal(false);
     });
 

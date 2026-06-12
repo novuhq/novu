@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  logAuthUrlFileHandoffEvent,
   logEmailHandoffEvents,
   logSlackHandoffEvents,
   logSlackSetupLinkHandoffEvent,
@@ -8,11 +9,39 @@ import {
   logTelegramDeepLinkQrPngHandoffEvent,
   logTelegramSetupLinkHandoffEvent,
   logTelegramSetupLinkQrPngHandoffEvent,
+  writeAuthUrlHandoffFile,
 } from './handoff-events';
 
 describe('handoff-events', () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('logs auth url file sentinel line', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+
+    logAuthUrlFileHandoffEvent({ authUrlFile: '/tmp/novu-connect-auth-url-abc123.txt' });
+
+    expect(log).toHaveBeenCalledWith('NOVU_CONNECT_AUTH_URL_FILE=/tmp/novu-connect-auth-url-abc123.txt');
+  });
+
+  it('writes auth url to a mode-600 temp file', async () => {
+    const authUrl = 'https://dashboard.novu.co/cli/auth?device_code=secret-code&name=novu-connect';
+    const filePath = await writeAuthUrlHandoffFile(authUrl);
+    const { readFile, stat, unlink } = await import('node:fs/promises');
+
+    try {
+      expect(filePath).toContain('novu-connect-auth-url-');
+      await expect(readFile(filePath, 'utf8')).resolves.toBe(authUrl);
+
+      if (process.platform !== 'win32') {
+        const fileStats = await stat(filePath);
+
+        expect(fileStats.mode & 0o777).toBe(0o600);
+      }
+    } finally {
+      await unlink(filePath).catch(() => undefined);
+    }
   });
 
   it('logs email handoff sentinel lines', () => {

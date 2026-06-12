@@ -151,6 +151,11 @@ program
     '-s, --secret-key <secret-key>',
     'Use an existing Novu account instead of keyless mode (omit for keyless — the default)'
   )
+  .option(
+    '--login',
+    'Authenticate via the Novu dashboard instead of keyless mode (opens /cli/auth for approval)',
+    false
+  )
   .option('-a, --api-url <url>', 'Override the Novu API URL (default follows --region)')
   .option('-d, --dashboard-url <url>', 'Override the Novu Dashboard URL (default follows --region)')
   .option(
@@ -176,7 +181,7 @@ program
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
   .option(
     '--channel <name>',
-    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams are dashboard-only — do not pass them in --ci mode`
+    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require --login in --ci mode`
   )
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(
@@ -217,19 +222,25 @@ program
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|skip>.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> with --login).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
 
-      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice)) {
+      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && !options.login) {
         console.error(
-          'Non-interactive mode does not support --channel whatsapp or --channel teams. Use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode does not support --channel whatsapp or --channel teams without --login. Pass --login to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
     }
 
+    if (options.login && options.secretKey) {
+      console.error(
+        'Cannot use --login together with --secret-key. Omit --secret-key to authenticate via the dashboard.'
+      );
+      process.exit(1);
+    }
     if (options.channel && !(CHANNEL_CHOICES as readonly string[]).includes(options.channel)) {
       console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
       process.exit(1);

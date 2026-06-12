@@ -75,4 +75,12 @@ export class AgentIntegrationResponseDto {
 
   @ApiProperty()
   updatedAt: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Cloud only. `true` when this channel falls outside the organization plan active-channel limit ' +
+      '(by connection order). Over-limit channels keep their configuration but the agent will not respond ' +
+      'on them until the plan is upgraded or older channels are disconnected.',
+  })
+  exceedsPlanLimit?: boolean;
 }

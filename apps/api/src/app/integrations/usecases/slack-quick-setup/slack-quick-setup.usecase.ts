@@ -114,11 +114,13 @@ export class SlackQuickSetup {
       throw new ConflictException('Integration is already linked to a different agent');
     }
 
-    await this.agentIntegrationRepository.create({
-      _agentId: command.agentId,
-      _integrationId: command.integrationId,
-      _environmentId: command.environmentId,
-      _organizationId: command.organizationId,
+    // Revives a tombstoned (disconnected) link when one exists for this pair —
+    // a plain create would violate the unique (_agentId, _integrationId) index.
+    await this.agentIntegrationRepository.createOrReviveLink({
+      agentId: command.agentId,
+      integrationId: command.integrationId,
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
     });
   }
 

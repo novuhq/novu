@@ -696,6 +696,40 @@ export function selectTokenEndpointAuthMethod(
 }
 
 /**
+ * Ordered list of `token_endpoint_auth_method` values to attempt at DCR time.
+ * Starts with the negotiated primary (see `selectTokenEndpointAuthMethod`),
+ * then walks the remaining advertised methods in Novu priority order so we
+ * can recover when an AS advertises a method in metadata but rejects it at
+ * registration (e.g. Supermetrics lists `client_secret_basic` in RFC 8414
+ * metadata but only accepts `client_secret_post` at `/oauth/register`).
+ */
+export function buildTokenEndpointAuthMethodsToTry(
+  advertised: string[] | undefined,
+  prefersConfidential: boolean
+): McpTokenEndpointAuthMethod[] {
+  const primary = selectTokenEndpointAuthMethod(advertised, prefersConfidential);
+  const supported = advertised && advertised.length > 0 ? advertised : [DEFAULT_MCP_TOKEN_ENDPOINT_AUTH_METHOD];
+  const supportedSet = new Set(supported);
+  const fallbacks = TOKEN_ENDPOINT_AUTH_METHOD_PRIORITY.filter(
+    (method) => method !== primary && supportedSet.has(method) && !(method === 'none' && prefersConfidential)
+  );
+
+  return [primary, ...fallbacks];
+}
+
+export function isUnsupportedTokenEndpointAuthMethodError(err: unknown): boolean {
+  if (!(err instanceof McpOAuthDiscoveryError)) {
+    return false;
+  }
+
+  if (err.code !== 'mcp_registration_failed') {
+    return false;
+  }
+
+  return /unsupported token endpoint auth method/i.test(err.message);
+}
+
+/**
  * RFC 9728 §5.1 / RFC 6750 §3.1 — extract the `Bearer` challenge from a
  * `WWW-Authenticate` header and return the pieces relevant to MCP
  * authorization (`resource_metadata` PRM hint + advertised scopes).
