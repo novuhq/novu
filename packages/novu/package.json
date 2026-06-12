@@ -87,7 +87,7 @@
     "cross-spawn": "7.0.5",
     "diff": "9.0.0",
     "dotenv": "^16.6.1",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.1",
     "fast-glob": "3.3.1",
     "figures": "6.1.0",
     "form-data": "^4.0.5",
