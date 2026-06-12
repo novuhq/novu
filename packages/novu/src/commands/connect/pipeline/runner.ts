@@ -11,8 +11,10 @@ import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../
 import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
 import { type ResolvedConnectAuth, resolveConnectAuth } from '../auth/resolve-connect-auth';
+import { type ConnectSession, upgradeKeylessSessionToDashboardAuth } from '../auth/upgrade-keyless-session';
 import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
 import { ConnectChannelBackError } from '../errors';
+import { shouldUpgradeFromKeylessGenerateLimit } from '../keyless-limit-errors';
 import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
@@ -62,12 +64,18 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       input.onIdentityResolved?.(auth.user);
     }
 
-    const client = auth.isKeyless
-      ? createConnectApiClient({ apiUrl: auth.apiUrl, keylessApplicationIdentifier: auth.keylessApplicationIdentifier })
-      : createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey });
+    const session: ConnectSession = {
+      auth,
+      client: auth.isKeyless
+        ? createConnectApiClient({
+            apiUrl: auth.apiUrl,
+            keylessApplicationIdentifier: auth.keylessApplicationIdentifier,
+          })
+        : createConnectApiClient({ apiUrl: auth.apiUrl, secretKey: auth.secretKey }),
+    };
 
     ui.listingAgents();
-    const existingAgents = await listAgents(client);
+    const existingAgents = await listAgents(session.client);
     track(CONNECT_EVENTS.AGENT_LISTED, { count: existingAgents.length, ...sessionProps });
 
     let agent: AgentSummary;
@@ -80,12 +88,16 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         flow = 'reused';
         track(CONNECT_EVENTS.AGENT_REUSED, { identifier: agent.identifier, ...sessionProps });
       } else {
-        agent = await createAgentFlow(client, ui, options, auth.environmentId, track, sessionProps);
+        agent = await createAgentFlow(session, ui, options, track, sessionProps, onboardingSessionId, {
+          onIdentityResolved: input.onIdentityResolved,
+        });
         flow = 'created';
         track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier, ...sessionProps });
       }
     } else {
-      agent = await createAgentFlow(client, ui, options, auth.environmentId, track, sessionProps);
+      agent = await createAgentFlow(session, ui, options, track, sessionProps, onboardingSessionId, {
+        onIdentityResolved: input.onIdentityResolved,
+      });
       flow = 'created';
       track(CONNECT_EVENTS.AGENT_CREATED, { identifier: agent.identifier, ...sessionProps });
     }
@@ -119,13 +131,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             ui.slackSkipped();
             break;
           case 'slack': {
-            const subscriberId = await ensureSubscriberForUser(client, auth);
+            const subscriberId = await ensureSubscriberForUser(session.client, session.auth);
             const result = await connectSlackForAgent(
-              client,
+              session.client,
               agent,
               ui,
               options,
-              auth.environmentId,
+              session.auth.environmentId,
               subscriberId,
               track
             );
@@ -135,13 +147,13 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             break;
           }
           case 'telegram': {
-            const subscriberId = await ensureSubscriberForUser(client, auth);
+            const subscriberId = await ensureSubscriberForUser(session.client, session.auth);
             const result = await connectTelegramForAgent(
-              client,
+              session.client,
               agent,
               ui,
               options,
-              auth.environmentId,
+              session.auth.environmentId,
               subscriberId,
               track
             );
@@ -151,9 +163,9 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
             break;
           }
           case 'email': {
-            await ensureSubscriberForUser(client, auth);
-            const sendFromEmail = auth.user?.email?.trim() || undefined;
-            const result = await connectEmailForAgent(client, agent, ui, track, {
+            await ensureSubscriberForUser(session.client, session.auth);
+            const sendFromEmail = session.auth.user?.email?.trim() || undefined;
+            const result = await connectEmailForAgent(session.client, agent, ui, track, {
               sendFromEmail,
               canGoBack: allowChannelPickerBack,
             });
@@ -166,7 +178,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
           case 'teams': {
             const agentDetailsUrl = buildConnectAgentDetailsUrl({
               connectDashboardUrl: options.connectDashboardUrl,
-              environmentSlug: auth.environmentSlug,
+              environmentSlug: session.auth.environmentSlug,
               agentIdentifier: agent.identifier,
               tab: 'integrations',
             });
@@ -199,7 +211,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     if (channelConnected && connectedIntegration) {
       ui.sendingWelcome();
       try {
-        await sendAgentWelcomeMessage(client, agent.identifier, connectedIntegration.identifier);
+        await sendAgentWelcomeMessage(session.client, agent.identifier, connectedIntegration.identifier);
         track(CONNECT_EVENTS.WELCOME_SENT, { agent: agent.identifier, ...sessionProps });
       } catch (err) {
         ui.failure(`Could not send the welcome message: ${describeError(err)}`);
@@ -208,9 +220,9 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     ui.success({
       agent,
-      dashboardUrl: auth.dashboardUrl.replace(/\/$/, ''),
+      dashboardUrl: session.auth.dashboardUrl.replace(/\/$/, ''),
       connectDashboardUrl: options.connectDashboardUrl.replace(/\/$/, ''),
-      environmentSlug: auth.environmentSlug ?? null,
+      environmentSlug: session.auth.environmentSlug ?? null,
       connectedChannel,
       dashboardRedirectChannel,
     });
@@ -238,12 +250,15 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 }
 
 async function createAgentFlow(
-  client: ConnectApiClient,
+  session: ConnectSession,
   ui: ConnectUI,
   options: ConnectCommandOptions,
-  environmentId: string,
   track: (event: string, data?: Record<string, unknown>) => void,
-  sessionProps: Record<string, unknown>
+  sessionProps: Record<string, unknown>,
+  onboardingSessionId?: string,
+  callbacks?: {
+    onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
+  }
 ): Promise<AgentSummary> {
   const runtime =
     resolveRuntimeFromOptions(options) ??
@@ -258,15 +273,27 @@ async function createAgentFlow(
   }
 
   ui.loadingIntegrations();
-  const resolved = await resolveAgentRuntimeIntegration(client, ui, options, runtime, environmentId);
+  let resolved = await resolveAgentRuntimeIntegration(session.client, ui, options, runtime, session.auth.environmentId);
 
   const prompt = await ui.promptForDescription(options.prompt);
-  const generated = await generateAndPreviewAgent(client, ui, prompt.trim(), track, sessionProps);
+  const generated = await generateAndPreviewAgent(
+    session,
+    ui,
+    options,
+    prompt.trim(),
+    track,
+    sessionProps,
+    onboardingSessionId,
+    callbacks,
+    async () => {
+      resolved = await resolveAgentRuntimeIntegration(session.client, ui, options, runtime, session.auth.environmentId);
+    }
+  );
 
   ui.creatingAgent(generated.name);
 
   try {
-    const created = await createManagedAgent(client, {
+    const created = await createManagedAgent(session.client, {
       name: generated.name,
       identifier: generated.identifier,
       integrationId: resolved.integrationId,
@@ -281,7 +308,7 @@ async function createAgentFlow(
   } catch (err) {
     if (resolved.createdInThisFlow) {
       try {
-        await deleteIntegration(client, resolved.integrationId);
+        await deleteIntegration(session.client, resolved.integrationId);
       } catch {
         // Best-effort cleanup.
       }
@@ -291,12 +318,62 @@ async function createAgentFlow(
   }
 }
 
-async function generateAndPreviewAgent(
-  client: ConnectApiClient,
+async function withKeylessGenerateLimitFallback<T>(
+  session: ConnectSession,
+  options: ConnectCommandOptions,
   ui: ConnectUI,
+  onboardingSessionId: string | undefined,
+  track: (event: string, data?: Record<string, unknown>) => void,
+  sessionProps: Record<string, unknown>,
+  callbacks: { onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void } | undefined,
+  onUpgraded: () => Promise<void>,
+  run: () => Promise<T>
+): Promise<T> {
+  try {
+    return await run();
+  } catch (err) {
+    if (!shouldUpgradeFromKeylessGenerateLimit(err, session.client, options)) {
+      throw err;
+    }
+
+    track(CONNECT_EVENTS.KEYLESS_LIMIT_AUTH_UPGRADE_STARTED, sessionProps);
+
+    await upgradeKeylessSessionToDashboardAuth(session, options, ui, {
+      onboardingSessionId,
+      onAuthStarted: () => track(CONNECT_EVENTS.AUTH_STARTED, { ...sessionProps, source: 'keyless_limit_upgrade' }),
+      onAuthFailed: (message) =>
+        track(CONNECT_EVENTS.AUTH_FAILED, { ...sessionProps, source: 'keyless_limit_upgrade', message }),
+    });
+
+    track(CONNECT_EVENTS.AUTH_COMPLETED, {
+      source: 'keyless_limit_upgrade',
+      region: options.region,
+      keyless: false,
+      ...sessionProps,
+    });
+
+    if (session.auth.user?.id) {
+      callbacks?.onIdentityResolved?.(session.auth.user);
+    }
+
+    await onUpgraded();
+
+    return run();
+  }
+}
+
+async function generateAndPreviewAgent(
+  session: ConnectSession,
+  ui: ConnectUI,
+  options: ConnectCommandOptions,
   initialPrompt: string,
   track: (event: string, data?: Record<string, unknown>) => void,
-  sessionProps: Record<string, unknown>
+  sessionProps: Record<string, unknown>,
+  onboardingSessionId?: string,
+  callbacks?: {
+    onIdentityResolved?: (user: NonNullable<ResolvedConnectAuth['user']>) => void;
+  },
+  onSessionUpgraded?: () => Promise<void>
 ): Promise<Awaited<ReturnType<typeof generateAgent>>> {
   let prompt = initialPrompt;
 
@@ -306,7 +383,18 @@ async function generateAndPreviewAgent(
     }
 
     ui.generatingAgent();
-    const generated = await generateAgent(client, prompt.trim());
+
+    const generated = await withKeylessGenerateLimitFallback(
+      session,
+      options,
+      ui,
+      onboardingSessionId,
+      track,
+      sessionProps,
+      callbacks,
+      onSessionUpgraded ?? (async () => undefined),
+      () => generateAgent(session.client, prompt.trim())
+    );
     track(CONNECT_EVENTS.AGENT_PROMPT_GENERATED, {
       promptLength: prompt.trim().length,
       toolsCount: generated.tools.length,
