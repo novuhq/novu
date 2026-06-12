@@ -14,17 +14,17 @@ export function useCreateLayout(options?: UseMutationOptions<LayoutResponseDto, 
 
   const mutation = useMutation({
     mutationFn: async (layout: CreateLayoutDto) => createLayout({ environment: currentEnvironment!, layout }),
-    onSuccess: async (data, variables, ctx) => {
+    onSuccess: async (data, variables, onMutateResult, context) => {
       await queryClient.invalidateQueries({ queryKey: [QueryKeys.fetchLayouts, currentEnvironment?._id] });
 
       queryClient.invalidateQueries({ queryKey: [QueryKeys.diffEnvironments] });
 
-      options?.onSuccess?.(data, variables, ctx);
+      options?.onSuccess?.(data, variables, onMutateResult, context);
     },
 
-    onError: (error, variables, ctx) => {
+    onError: (error, variables, onMutateResult, context) => {
       showErrorToast(toastId, error);
-      options?.onError?.(error, variables, ctx);
+      options?.onError?.(error, variables, onMutateResult, context);
     },
   });
 

@@ -129,6 +129,7 @@ export const VariableList = () => {
               <SystemVariableRow
                 key={def.key}
                 variableKey={def.key}
+                description={def.description}
                 resolve={def.resolve}
                 environments={environments ?? []}
               />

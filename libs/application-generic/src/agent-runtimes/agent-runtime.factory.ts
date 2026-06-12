@@ -13,7 +13,9 @@ type ProviderFactory = (apiKey: string) => IAgentRuntimeProvider;
  * concrete class.
  */
 const PROVIDER_REGISTRY = new Map<AgentRuntimeProviderIdEnum, ProviderFactory>([
-  [AgentRuntimeProviderIdEnum.Anthropic, createAnthropicProvider],
+  [AgentRuntimeProviderIdEnum.Anthropic, (apiKey) => createAnthropicProvider(AgentRuntimeProviderIdEnum.Anthropic, { apiKey })],
+  [AgentRuntimeProviderIdEnum.NovuAnthropic, (apiKey) =>
+    createAnthropicProvider(AgentRuntimeProviderIdEnum.NovuAnthropic, { apiKey })],
 ]);
 
 /**

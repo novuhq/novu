@@ -1,4 +1,4 @@
-import { useUser } from '@clerk/clerk-react';
+import { useUser } from '@clerk/react';
 import { motion } from 'motion/react';
 import { RiCloseFill, RiQuestionLine, RiSparkling2Fill } from 'react-icons/ri';
 import { useEnvironment } from '@/context/environment/hooks';
@@ -54,7 +54,7 @@ export function HomeMenuItem() {
         }
       >
         <RiQuestionLine className="size-4" />
-        <span>Getting started</span>
+        <span>Help and first steps</span>
 
         {!allStepsCompleted && (
           <Badge className="ml-auto" color="red" size="md" variant="lighter">

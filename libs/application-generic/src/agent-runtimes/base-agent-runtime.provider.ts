@@ -3,11 +3,12 @@ import { UnsupportedCapabilityError } from './errors';
 import type {
   CreateAgentInput,
   CreateAgentResult,
+  CreateVaultInput,
+  CreateVaultResult,
   DeleteVaultCredentialInput,
   GetAgentResult,
   GetEnvironmentResult,
   IAgentRuntimeProvider,
-  ParsedMcpInitFailure,
   PendingToolApproval,
   ProvisionIntegrationInput,
   ProvisionIntegrationResult,
@@ -16,6 +17,7 @@ import type {
   UploadSkillResult,
   UpsertVaultCredentialInput,
   UpsertVaultCredentialResult,
+  ValidateCredentialsInput,
 } from './i-agent-runtime-provider';
 
 /**
@@ -25,17 +27,13 @@ import type {
  * non-abstract methods provide safe defaults for capability-bound features
  * so a provider that doesn't support `tokenVault` (etc.) gets a loud
  * runtime error if a caller forgets to gate on `capabilities.tokenVault`.
- *
- * `parseMcpInitFailure` returns `null` by default — providers that have a
- * recognisable MCP-init error shape override it. Returning `null` keeps the
- * lazy-OAuth code path inert until each provider opts in.
  */
 export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider {
   abstract readonly providerId: AgentRuntimeProviderIdEnum;
 
   abstract readonly capabilities: AgentRuntimeCapabilities;
 
-  abstract validateCredentials(apiKey: string): Promise<void>;
+  abstract validateCredentials(input: ValidateCredentialsInput): Promise<void>;
 
   abstract createAgent(input: CreateAgentInput): Promise<CreateAgentResult>;
 
@@ -53,12 +51,12 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
 
   abstract deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
 
-  parseMcpInitFailure(_err: unknown): ParsedMcpInitFailure | null {
-    return null;
+  getAllPendingToolApprovals(_sessionId: string): Promise<PendingToolApproval[]> {
+    return Promise.resolve([]);
   }
 
-  getPendingToolApproval(_sessionId: string): Promise<PendingToolApproval | null> {
-    return Promise.resolve(null);
+  createVault(_input: CreateVaultInput): Promise<CreateVaultResult> {
+    throw new UnsupportedCapabilityError('tokenVault', this.providerId);
   }
 
   upsertVaultCredential(_input: UpsertVaultCredentialInput): Promise<UpsertVaultCredentialResult> {

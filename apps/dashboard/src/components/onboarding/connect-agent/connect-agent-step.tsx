@@ -1,34 +1,54 @@
-import { type IIntegration, IntegrationKindEnum, slugify } from '@novu/shared';
+import {
+  filterDemoConfigurableMcpIds,
+  type IIntegration,
+  IntegrationKindEnum,
+  isProviderManagedMcp,
+  slugify,
+} from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import type { FormEvent } from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RiArrowRightSLine } from 'react-icons/ri';
 import type { AgentResponse, GeneratedManagedAgent } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
+import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
+import {
+  getClaudeManagedAgentIntegrations,
+  isDemoManagedClaudeIntegrationSelected,
+} from '@/components/agents/connectors/claude-managed-integrations';
 import { type ConnectorIntegrationStatus } from '@/components/agents/connectors/connector-integration-dropdown';
 import { type ConnectorOption } from '@/components/agents/connectors/connector-options';
 import {
-  AGENT_TEMPLATES,
   type AgentTemplate,
+  buildManagedIntegrationCredentials,
+  buildVerifyCredentialsPayload,
+  buildVerifyFingerprint,
   type CreateAgentForm,
   type CreateAgentFormErrors,
+  findAgentTemplateById,
+  hasCompleteManagedCredentials,
   hasFormErrors,
   type ManagedAgentRuntimeOverrides,
   type RuntimeType,
   type VerifyStatus,
   validateCreateAgentForm,
+  validateManagedCredentialFields,
 } from '@/components/agents/create-agent-fields';
 import { AGENT_TEMPLATES as DEFAULT_AGENT_TEMPLATES } from '@/components/connect/dashboard/agent-templates';
 import { ClaudeIcon } from '@/components/icons/claude';
 import { Button } from '@/components/primitives/button';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
+import { useAgentSuggestions } from '@/hooks/use-agent-suggestions';
+import { useAgentTemplates } from '@/hooks/use-agent-templates';
 import { useCreateAgentMutation } from '@/hooks/use-create-agent-mutation';
 import { useCreateIntegration } from '@/hooks/use-create-integration';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { GenerationCancelledError, useGenerateManagedAgent } from '@/hooks/use-generate-managed-agent';
+import { useManagedClaudeCredentialsFlow } from '@/hooks/use-managed-claude-credentials-flow';
 import { useTelemetry } from '@/hooks/use-telemetry';
 import { useVerifyManagedCredentials } from '@/hooks/use-verify-managed-credentials';
+import { clearPersistedAgentTemplateId } from '@/utils/agent-template-identity';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 import type { AgentGenerationMode } from './connect-agent-form';
@@ -73,22 +93,67 @@ function dropdownStatusFor(verify: VerifyStatus, hasIntegration: boolean): Conne
   return 'idle';
 }
 
+/**
+ * Snapshot of the connect-phase form values that drives the right-side preview illustration
+ * for managed Claude connectors. Includes everything the illustration needs to render the
+ * agent card without having to introspect any of the form's internal state.
+ */
+export type ConnectAgentPreview = {
+  connectorId: ConnectorId;
+  isClaudeSelected: boolean;
+  isDemoCredential: boolean;
+  isPending: boolean;
+  name?: string;
+  description?: string;
+  instructions?: string;
+  mcpServers: ReadonlyArray<string>;
+  tools: ReadonlyArray<string>;
+};
+
 type ConnectAgentStepProps = {
   onAgentCreated: (agent: AgentResponse, summary: ConnectSummary) => void;
   onRuntimeChange?: (runtime: RuntimeType) => void;
+  onPreviewChange?: (preview: ConnectAgentPreview) => void;
   isManagedEnabled: boolean;
+  /**
+   * Optional template id (Sanity `id.current`) coming from an external deep-link. When it matches a
+   * fetched template, the prompt + agent fields are prefilled once and the persisted id is cleared.
+   */
+  agentTemplateId?: string;
+  /**
+   * Onboarding "demo agent" mode: renders only the simplified brain step (prompt + suggestions +
+   * demo-credentials hint + full-width "Setup agent" CTA). The connector, template, and
+   * credentials surfaces are hidden — the agent is provisioned on the Novu demo Claude credentials.
+   */
+  simplifiedDemo?: boolean;
 };
 
 const DEFAULT_TEMPLATE = DEFAULT_AGENT_TEMPLATES[0];
 
 const MIN_PROMPT_LENGTH = 8;
 
-export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEnabled }: ConnectAgentStepProps) {
+export function ConnectAgentStep({
+  onAgentCreated,
+  onRuntimeChange,
+  onPreviewChange,
+  isManagedEnabled,
+  agentTemplateId,
+  simplifiedDemo,
+}: ConnectAgentStepProps) {
   const telemetry = useTelemetry();
   const queryClient = useQueryClient();
   const { currentEnvironment } = useEnvironment();
   const { submit, isPending } = useCreateAgentMutation();
   const { integrations } = useFetchIntegrations();
+  const {
+    templates: agentSuggestions,
+    isFetching: isFetchingAgentSuggestions,
+    refresh: refreshAgentSuggestions,
+  } = useAgentSuggestions();
+  // Sanity-backed templates are used only to resolve a deep-linked `agentTemplateId` (marketing
+  // website) into a concrete template for direct provisioning — kept separate from the AI
+  // suggestion pills above.
+  const { templates: sanityAgentTemplates, isLoading: isLoadingSanityTemplates } = useAgentTemplates();
   const verifyMutation = useVerifyManagedCredentials();
   const { mutateAsync: createIntegration, isPending: isSavingIntegration } = useCreateIntegration();
 
@@ -107,6 +172,15 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   // animation flickers off in between `isGenerating` and `isPending` and reveals the
   // submit button momentarily.
   const [isPromptSubmitInFlight, setIsPromptSubmitInFlight] = useState(false);
+  // True while an agent is being provisioned directly from a deep-linked template (marketing
+  // website). Swaps the brain form for a preview skeleton until `onAgentCreated` morphs the parent
+  // into the real agent preview.
+  const [isAutoProvisioningFromTemplate, setIsAutoProvisioningFromTemplate] = useState(false);
+  // Set when the user cancels generation, so the in-flight submit bails before creating the agent
+  // even if the aborted request's promise resolves (or settles late) instead of rejecting.
+  const generationCancelledRef = useRef(false);
+  // Guards the deep-link template prefill so it runs at most once per template id.
+  const appliedTemplateIdRef = useRef<string | undefined>(undefined);
 
   const {
     generate: generateManagedAgent,
@@ -117,8 +191,20 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const [name, setName] = useState(() => (isManagedEnabled ? '' : DEFAULT_TEMPLATE.name));
   const [identifier, setIdentifier] = useState(() => (isManagedEnabled ? '' : slugify(DEFAULT_TEMPLATE.name)));
   const [instructions, setInstructions] = useState(() => (isManagedEnabled ? '' : DEFAULT_TEMPLATE.instructions));
-  const [apiKey, setApiKey] = useState('');
-  const [externalWorkspaceId, setExternalWorkspaceId] = useState('');
+  const {
+    apiKey,
+    externalWorkspaceId,
+    region,
+    verifyStatus,
+    verifyMessage,
+    lastVerifiedKeyRef,
+    setApiKey,
+    setExternalWorkspaceId,
+    setRegion,
+    setVerifyStatus,
+    setVerifyMessage,
+    resetCredentials,
+  } = useManagedClaudeCredentialsFlow();
   const [externalAgentId, setExternalAgentId] = useState('');
   const [externalEnvironmentId, setExternalEnvironmentId] = useState('');
   const [isIdentifierTouched, setIsIdentifierTouched] = useState(false);
@@ -128,11 +214,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const [credentialsPanelVisible, setCredentialsPanelVisible] = useState(false);
   const [credentialsPanelExpanded, setCredentialsPanelExpanded] = useState(true);
   const [integrationName, setIntegrationName] = useState('');
-  const [verifyStatus, setVerifyStatus] = useState<VerifyStatus>('idle');
-  const [verifyMessage, setVerifyMessage] = useState<string | undefined>(undefined);
   const [showSavedBadge, setShowSavedBadge] = useState(false);
-  // Tracks the last apiKey we sent for verification so we can drop stale responses.
-  const lastVerifiedKeyRef = useRef<string | null>(null);
   const savedBadgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Holds the integration id from "Save integration" until it appears in the fetched list, so the
   // auto-select effect does not overwrite it or reopen the credentials section during refetch.
@@ -141,16 +223,33 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const runtime = useMemo(() => resolveRuntime(connectorId), [connectorId]);
   const isClaudeSelected = runtime === 'claude';
   const isScratchRuntime = runtime === 'scratch';
-  // The AI "Generate from prompt" surface is available for both managed Claude (when the
-  // managed-runtime flag is on) and for the self-hosted Custom Scaffold flow unconditionally.
-  // Custom Scaffold generation only produces name/identifier/systemPrompt — it does not touch
-  // any Anthropic-managed infrastructure — so it has no reason to depend on that flag.
-  const useAiGeneration = isClaudeSelected ? isManagedEnabled : isScratchRuntime;
+  // The AI "Generate from prompt" surface is reserved for managed Claude (when the
+  // managed-runtime flag is on). The Custom Scaffold flow always renders the manual
+  // ScratchAgentFields form so teams writing their own runtime see exactly the inputs they
+  // need to fill in.
+  const useAiGeneration = isClaudeSelected && isManagedEnabled;
+  const isDemoProviderSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+  // The demo (Novu-managed Claude) integration exposes no provider vault, so provider-managed MCPs
+  // can never be configured on it. Drop them from the suggestion pills so onboarding only advertises
+  // tools the user can actually wire up; the API enforces the same filter at provision time.
+  const displayedAgentTemplates = useMemo(() => {
+    if (!isDemoProviderSelected) return agentSuggestions;
+
+    return agentSuggestions.map((template) => ({
+      ...template,
+      suggestedMcpServers: filterDemoConfigurableMcpIds(template.suggestedMcpServers),
+      mcpServers: template.mcpServers?.filter((server) => !isProviderManagedMcp(server.id)),
+    }));
+  }, [agentSuggestions, isDemoProviderSelected]);
   const isExistingMode =
-    isClaudeSelected && (useAiGeneration ? generationMode === 'existing' : templateSelection.kind === 'existing');
+    isClaudeSelected &&
+    !isDemoProviderSelected &&
+    (useAiGeneration ? generationMode === 'existing' : templateSelection.kind === 'existing');
   const isScratchMode =
-    (useAiGeneration && generationMode === 'manual') || (!useAiGeneration && templateSelection.kind === 'scratch');
-  const showExistingOption = isClaudeSelected;
+    isScratchRuntime ||
+    (useAiGeneration && generationMode === 'manual') ||
+    (!useAiGeneration && templateSelection.kind === 'scratch');
+  const showExistingOption = isClaudeSelected && !isDemoProviderSelected;
   const existingOptionIcon = isClaudeSelected ? (
     <div className="bg-primary-base/10 text-primary-base flex size-4 items-center justify-center rounded-full">
       <ClaudeIcon className="size-3" />
@@ -162,14 +261,201 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   const matchingAnthropicIntegrations = useMemo(() => {
     if (!selectedConnector?.providerId) return [];
 
-    return (integrations ?? []).filter(
-      (i) => i.kind === IntegrationKindEnum.AGENT && i.providerId === selectedConnector.providerId
-    );
+    return getClaudeManagedAgentIntegrations(integrations, selectedConnector?.providerId);
   }, [integrations, selectedConnector?.providerId]);
 
   useEffect(() => {
     onRuntimeChange?.(runtime);
   }, [runtime, onRuntimeChange]);
+
+  const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
+  const isSubmitBusy = isPending || isGenerating || isPromptSubmitInFlight || isAutoProvisioningFromTemplate;
+
+  // Provision an agent directly from a deep-linked Sanity template — no LLM prompt step. The
+  // template's name, instructions, and MCP servers are applied as managed-runtime overrides so the
+  // agent is created with exactly what the marketing-site template advertised.
+  const provisionAgentFromTemplate = useCallback(
+    async (template: AgentTemplate) => {
+      setIsAutoProvisioningFromTemplate(true);
+
+      const effectiveName = template.name;
+      const effectiveIdentifier = slugify(template.name);
+      const effectiveInstructions = template.instructions;
+      const requestedMcpServers = isDemoProviderSelected
+        ? filterDemoConfigurableMcpIds([...template.suggestedMcpServers])
+        : template.suggestedMcpServers;
+
+      const managedOverrides: ManagedAgentRuntimeOverrides = {
+        systemPrompt: template.instructions,
+        mcpServers: requestedMcpServers,
+      };
+
+      const summary: ConnectSummary = {
+        connectorId,
+        templateSelection,
+        name: effectiveName,
+        identifier: effectiveIdentifier,
+        instructions: effectiveInstructions,
+        apiKey,
+        externalAgentId,
+        externalEnvironmentId,
+        externalWorkspaceId,
+        region: region.trim() || undefined,
+        selectedIntegrationId,
+        integrationName,
+        mcpServers: requestedMcpServers,
+        tools: [],
+      };
+
+      await submit(
+        {
+          name: effectiveName.trim(),
+          identifier: effectiveIdentifier.trim(),
+          instructions: effectiveInstructions.trim(),
+          description: effectiveInstructions.trim(),
+          apiKey: apiKey.trim(),
+          runtime,
+          isExistingMode: false,
+          providerId: selectedConnector?.providerId,
+          externalAgentId: externalAgentId.trim(),
+          externalEnvironmentId: externalEnvironmentId.trim(),
+          externalWorkspaceId: externalWorkspaceId.trim() || undefined,
+          region: region.trim() || undefined,
+          integrationId: selectedIntegrationId,
+          integrationName: integrationName.trim() || undefined,
+          managedOverrides,
+        },
+        {
+          onSuccess: (agent) => {
+            telemetry(TelemetryEvent.ONBOARDING_CONNECT_AGENT_CREATED, {
+              runtime,
+              connectorId,
+              mode: 'template',
+              templateKind: 'template',
+              agentIdentifier: agent.identifier,
+              isExistingMode: false,
+            });
+            onAgentCreated(agent, summary);
+          },
+          onError: (err) => {
+            setIsAutoProvisioningFromTemplate(false);
+            const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+            showErrorToast(message, 'Create failed');
+          },
+        }
+      );
+    },
+    [
+      connectorId,
+      templateSelection,
+      apiKey,
+      externalAgentId,
+      externalEnvironmentId,
+      externalWorkspaceId,
+      region,
+      selectedIntegrationId,
+      integrationName,
+      runtime,
+      selectedConnector?.providerId,
+      isDemoProviderSelected,
+      submit,
+      telemetry,
+      onAgentCreated,
+    ]
+  );
+
+  // Deep-link auto-provision: when an `agentTemplateId` matches a fetched Sanity template, create the
+  // agent straight from the template (name + instructions + MCPs) once the managed runtime and a
+  // credential are ready. Runs once per id, then clears the persisted id so a refresh doesn't re-run.
+  useEffect(() => {
+    if (!agentTemplateId) return;
+    if (appliedTemplateIdRef.current === agentTemplateId) return;
+    if (!currentEnvironment) return;
+    if (!isClaudeSelected || !isManagedEnabled) return;
+    if (!selectedIntegrationId) return;
+
+    const template = findAgentTemplateById(sanityAgentTemplates, agentTemplateId);
+    if (!template) return;
+
+    appliedTemplateIdRef.current = agentTemplateId;
+    clearPersistedAgentTemplateId();
+    void provisionAgentFromTemplate(template);
+  }, [
+    agentTemplateId,
+    sanityAgentTemplates,
+    currentEnvironment,
+    isClaudeSelected,
+    isManagedEnabled,
+    selectedIntegrationId,
+    provisionAgentFromTemplate,
+  ]);
+
+  // A deep-linked template (marketing website) bypasses the brain form entirely: show the agent
+  // preview skeleton from the first render — while integrations/templates load and the agent is
+  // provisioned — instead of briefly flashing the suggestion pills + prompt. Fall back to the form
+  // only once we can prove there's nothing to provision (managed runtime unavailable, or the id
+  // resolves to no known Sanity template), so the user is never stranded on the skeleton.
+  const deepLinkTemplateUnresolvable =
+    Boolean(agentTemplateId) &&
+    !isLoadingSanityTemplates &&
+    !findAgentTemplateById(sanityAgentTemplates, agentTemplateId ?? '');
+  const showTemplateProvisioningSkeleton =
+    isAutoProvisioningFromTemplate ||
+    (Boolean(agentTemplateId) && isManagedEnabled && isClaudeSelected && !deepLinkTemplateUnresolvable);
+
+  // Build a preview snapshot for the right-side illustration. Pulls instructions / MCPs from
+  // the active template (or the manual form fields when "Start from scratch" is picked) so the
+  // managed Claude card stays in sync with what the user is choosing before submission.
+  useEffect(() => {
+    if (!onPreviewChange) return;
+
+    const trimmedInstructions = instructions.trim();
+    const trimmedName = name.trim();
+    let previewName: string | undefined;
+    let previewInstructions: string | undefined;
+    let previewMcpServers: ReadonlyArray<string> = [];
+
+    if (useAiGeneration) {
+      // In the prompt flow, the connect-phase form doesn't carry a name/instructions yet — those
+      // only materialize after the LLM call inside handleSubmit. While in `manual` mode the
+      // textareas are bound to `name`/`instructions` directly, so surface those for the preview.
+      if (generationMode === 'manual') {
+        previewName = trimmedName || undefined;
+        previewInstructions = trimmedInstructions || undefined;
+      }
+    } else if (templateSelection.kind === 'template') {
+      previewName = templateSelection.template.name;
+      previewInstructions = templateSelection.template.instructions;
+      previewMcpServers = isDemoProviderSelected
+        ? filterDemoConfigurableMcpIds(templateSelection.template.suggestedMcpServers)
+        : templateSelection.template.suggestedMcpServers;
+    } else if (templateSelection.kind === 'scratch') {
+      previewName = trimmedName || undefined;
+      previewInstructions = trimmedInstructions || undefined;
+    }
+
+    onPreviewChange({
+      connectorId,
+      isClaudeSelected,
+      isDemoCredential: isDemoProviderSelected,
+      isPending: isSubmitBusy,
+      name: previewName,
+      instructions: previewInstructions,
+      mcpServers: previewMcpServers,
+      tools: [],
+    });
+  }, [
+    onPreviewChange,
+    connectorId,
+    isClaudeSelected,
+    isDemoProviderSelected,
+    isSubmitBusy,
+    useAiGeneration,
+    generationMode,
+    templateSelection,
+    name,
+    instructions,
+  ]);
 
   // When the connector changes away from a managed runtime, the "Use an existing agent" mode is
   // no longer reachable — collapse back to scratch so the form fields stay consistent.
@@ -178,6 +464,18 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       setTemplateSelection({ kind: 'scratch' });
     }
   }, [showExistingOption, templateSelection.kind]);
+
+  // Same idea for the AI flow: when the connector no longer supports linking an existing agent,
+  // collapse `'existing'` back to `'prompt'`. Otherwise the right-column form has no matching
+  // branch (existing-fields are gated on Claude, and the scope tabs that would let the user pick
+  // a new mode are hidden), so section 2 would render empty with no way to recover.
+  useEffect(() => {
+    if (!showExistingOption && generationMode === 'existing') {
+      setGenerationMode('prompt');
+      setExternalAgentId('');
+      setExternalEnvironmentId('');
+    }
+  }, [showExistingOption, generationMode]);
 
   // Auto-select the first existing integration of the chosen provider on mount / when the connector
   // changes / when integrations finish loading. If none exist, open the inline credentials section.
@@ -249,18 +547,19 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     };
   }, []);
 
-  const handleConnectorChange = useCallback((id: ConnectorId) => {
-    setConnectorId(id);
+  const handleConnectorChange = useCallback(
+    (id: ConnectorId) => {
+      setConnectorId(id);
 
-    const next = getConnectorById(id);
-    if (!next?.providerId) {
-      setSelectedIntegrationId(undefined);
-      setCredentialsPanelVisible(false);
-      setApiKey('');
-      setVerifyStatus('idle');
-      setVerifyMessage(undefined);
-    }
-  }, []);
+      const next = getConnectorById(id);
+      if (!next?.providerId) {
+        setSelectedIntegrationId(undefined);
+        setCredentialsPanelVisible(false);
+        resetCredentials();
+      }
+    },
+    [resetCredentials]
+  );
 
   const handlePromptChange = useCallback((next: string) => {
     setPrompt(next);
@@ -301,7 +600,9 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
   }, []);
 
   const handleCancelGeneration = useCallback(() => {
+    generationCancelledRef.current = true;
     cancelGeneration();
+    setIsPromptSubmitInFlight(false);
   }, [cancelGeneration]);
 
   const handleTemplateChange = (next: TemplateSelection) => {
@@ -332,14 +633,15 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     }
   };
 
-  const handleSelectIntegration = useCallback((integration: IIntegration) => {
-    setSelectedIntegrationId(integration._id);
-    setCredentialsPanelVisible(false);
-    setApiKey('');
-    setVerifyStatus('idle');
-    setVerifyMessage(undefined);
-    setErrors((prev) => ({ ...prev, apiKey: undefined, integrationName: undefined }));
-  }, []);
+  const handleSelectIntegration = useCallback(
+    (integration: IIntegration) => {
+      setSelectedIntegrationId(integration._id);
+      setCredentialsPanelVisible(false);
+      resetCredentials();
+      setErrors((prev) => ({ ...prev, apiKey: undefined, integrationName: undefined }));
+    },
+    [resetCredentials]
+  );
 
   const handleRequestSetupCredentials = useCallback(
     (option: ConnectorOption) => {
@@ -351,81 +653,79 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       lastVerifiedKeyRef.current = null;
 
       if (option.providerLabel && !integrationName.trim()) {
-        const nextIndex =
-          (integrations ?? []).filter((i) => i.kind === IntegrationKindEnum.AGENT && i.providerId === option.providerId)
-            .length + 1;
+        const nextIndex = getClaudeManagedAgentIntegrations(integrations, option.providerId).length + 1;
         setIntegrationName(`${option.providerLabel} ${nextIndex}`);
       }
     },
     [integrations, integrationName]
   );
 
-  const handleApiKeyChange = useCallback((next: string) => {
-    setApiKey(next);
-    setVerifyStatus('idle');
-    setVerifyMessage(undefined);
-    setErrors((prev) => ({ ...prev, apiKey: undefined }));
-  }, []);
-
-  const handleExternalWorkspaceIdChange = useCallback((next: string) => {
-    setExternalWorkspaceId(next);
-    setVerifyStatus('idle');
-    setVerifyMessage(undefined);
-    lastVerifiedKeyRef.current = null;
-  }, []);
-
-  const handleVerify = useCallback(
-    (keyToVerify: string) => {
-      if (!selectedConnector?.providerId) return;
-      if (verifyMutation.isPending) return;
-      if (lastVerifiedKeyRef.current === keyToVerify && verifyStatus === 'valid') return;
-
-      lastVerifiedKeyRef.current = keyToVerify;
-      setVerifyStatus('verifying');
-      setVerifyMessage(undefined);
-
-      verifyMutation.mutate(
-        {
-          providerId: selectedConnector.providerId,
-          apiKey: keyToVerify,
-          externalWorkspaceId: externalWorkspaceId || undefined,
-        },
-        {
-          onSuccess: () => {
-            if (lastVerifiedKeyRef.current !== keyToVerify) return;
-            setVerifyStatus('valid');
-            setVerifyMessage(undefined);
-            setErrors((prev) => ({ ...prev, apiKey: undefined }));
-          },
-          onError: (err) => {
-            if (lastVerifiedKeyRef.current !== keyToVerify) return;
-            setVerifyStatus('invalid');
-            setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
-          },
-        }
-      );
+  const handleApiKeyChange = useCallback(
+    (next: string) => {
+      setApiKey(next);
+      setErrors((prev) => ({ ...prev, apiKey: undefined }));
     },
-    [selectedConnector?.providerId, externalWorkspaceId, verifyMutation, verifyStatus]
+    [setApiKey]
   );
+
+  const handleExternalWorkspaceIdChange = useCallback(
+    (next: string) => {
+      setExternalWorkspaceId(next);
+      setErrors((prev) => ({ ...prev, externalWorkspaceId: undefined }));
+    },
+    [setExternalWorkspaceId]
+  );
+
+  const handleRegionChange = useCallback(
+    (next: string) => {
+      setRegion(next);
+      setErrors((prev) => ({ ...prev, region: undefined }));
+    },
+    [setRegion]
+  );
+
+  const handleVerify = useCallback(() => {
+    if (!selectedConnector?.providerId) return;
+    if (verifyMutation.isPending) return;
+
+    const fields = { apiKey, region, externalWorkspaceId };
+    const verifyKey = buildVerifyFingerprint(selectedConnector.providerId, fields);
+
+    if (lastVerifiedKeyRef.current === verifyKey && verifyStatus === 'valid') return;
+
+    lastVerifiedKeyRef.current = verifyKey;
+    setVerifyStatus('verifying');
+    setVerifyMessage(undefined);
+
+    verifyMutation.mutate(buildVerifyCredentialsPayload(selectedConnector.providerId, fields), {
+      onSuccess: () => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('valid');
+        setVerifyMessage(undefined);
+        setErrors((prev) => ({ ...prev, apiKey: undefined }));
+      },
+      onError: (err) => {
+        if (lastVerifiedKeyRef.current !== verifyKey) return;
+        setVerifyStatus('invalid');
+        setVerifyMessage(err instanceof Error ? err.message : 'Invalid');
+      },
+    });
+  }, [selectedConnector?.providerId, apiKey, externalWorkspaceId, region, verifyMutation, verifyStatus]);
 
   const handleSaveIntegration = useCallback(async () => {
     if (!selectedConnector?.providerId) return;
 
-    const trimmedApiKey = apiKey.trim();
     const trimmedName = integrationName.trim();
-    const trimmedWorkspaceId = externalWorkspaceId.trim();
+    const fields = { apiKey, region, externalWorkspaceId };
 
-    if (!trimmedApiKey || !trimmedName) return;
+    if (!trimmedName || !hasCompleteManagedCredentials(selectedConnector.providerId, fields)) return;
 
     try {
       const { data: integration } = await createIntegration({
         active: true,
         kind: IntegrationKindEnum.AGENT,
         providerId: selectedConnector.providerId,
-        credentials: {
-          apiKey: trimmedApiKey,
-          ...(trimmedWorkspaceId ? { externalWorkspaceId: trimmedWorkspaceId } : {}),
-        },
+        credentials: buildManagedIntegrationCredentials(selectedConnector.providerId, fields),
         name: trimmedName,
       });
 
@@ -443,11 +743,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       setCredentialsPanelVisible(true);
       setCredentialsPanelExpanded(false);
       setSelectedIntegrationId(integration._id);
-      setApiKey('');
-      setExternalWorkspaceId('');
-      setVerifyStatus('idle');
-      setVerifyMessage(undefined);
-      lastVerifiedKeyRef.current = null;
+      resetCredentials();
       setShowSavedBadge(true);
       if (savedBadgeTimerRef.current) clearTimeout(savedBadgeTimerRef.current);
       savedBadgeTimerRef.current = setTimeout(() => setShowSavedBadge(false), 2500);
@@ -461,9 +757,11 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     apiKey,
     integrationName,
     externalWorkspaceId,
+    region,
     createIntegration,
     currentEnvironment?._id,
     queryClient,
+    resetCredentials,
   ]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -475,6 +773,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     let effectiveName = name;
     let effectiveIdentifier = identifier;
     let effectiveInstructions = instructions;
+    let effectiveDescription = instructions;
     let managedOverrides: ManagedAgentRuntimeOverrides | undefined;
 
     if (isPromptGenerationMode) {
@@ -485,15 +784,22 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         return;
       }
 
-      // Anthropic API key is only required when we provision the agent on Claude's managed
-      // runtime. The Custom Scaffold flow generates name/identifier/systemPrompt only and the
-      // user runs the agent on their own runtime, so no provider credentials are needed.
-      if (isClaudeSelected && !selectedIntegrationId && !apiKey.trim()) {
-        setErrors((prev) => ({ ...prev, apiKey: 'Anthropic API key is required.' }));
+      if (isClaudeSelected && !selectedIntegrationId && selectedConnector?.providerId) {
+        const credentialErrors = validateManagedCredentialFields({
+          providerId: selectedConnector.providerId,
+          apiKey,
+          region,
+          externalWorkspaceId,
+        });
 
-        return;
+        if (credentialErrors.apiKey || credentialErrors.region || credentialErrors.externalWorkspaceId) {
+          setErrors((prev) => ({ ...prev, ...credentialErrors }));
+
+          return;
+        }
       }
 
+      generationCancelledRef.current = false;
       setIsPromptSubmitInFlight(true);
 
       try {
@@ -513,8 +819,17 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         return;
       }
 
+      // The user cancelled while the request was in flight — bail before creating the agent even
+      // if the aborted request still resolved.
+      if (generationCancelledRef.current) {
+        setIsPromptSubmitInFlight(false);
+
+        return;
+      }
+
       effectiveName = generated.name;
       effectiveIdentifier = generated.identifier;
+      effectiveDescription = generated.description;
       effectiveInstructions = generated.systemPrompt;
       managedOverrides = {
         systemPrompt: generated.systemPrompt,
@@ -537,13 +852,16 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     const form: CreateAgentForm = {
       name: effectiveName,
       identifier: effectiveIdentifier,
+      description: effectiveDescription,
       instructions: effectiveInstructions,
       apiKey,
       runtime,
       isExistingMode,
+      providerId: selectedConnector?.providerId,
       externalAgentId,
       externalEnvironmentId,
       externalWorkspaceId,
+      region,
       integrationId: selectedIntegrationId,
       integrationName,
     };
@@ -569,6 +887,20 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       promptLength: isPromptGenerationMode ? prompt.trim().length : undefined,
     });
 
+    // Surface the MCPs/tools captured for the just-created agent so downstream consumers (like
+    // the managed-Claude preview illustration) can show them. Prefer the LLM-generated payload
+    // — when absent (static template / scratch), fall back to the template's suggested MCPs so
+    // the preview keeps showing what the user picked.
+    const requestedSummaryMcpServers =
+      managedOverrides?.mcpServers ??
+      (templateSelection.kind === 'template' ? templateSelection.template.suggestedMcpServers : []);
+    // Mirror the API's demo provisioning filter so the summary reflects the MCPs that were actually
+    // wired up — provider-managed servers are dropped on the demo integration.
+    const summaryMcpServers = isDemoProviderSelected
+      ? filterDemoConfigurableMcpIds([...requestedSummaryMcpServers])
+      : requestedSummaryMcpServers;
+    const summaryTools = managedOverrides?.tools ?? [];
+
     const summary: ConnectSummary = {
       connectorId,
       templateSelection,
@@ -579,8 +911,11 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       externalAgentId,
       externalEnvironmentId,
       externalWorkspaceId,
+      region: region.trim() || undefined,
       selectedIntegrationId,
       integrationName,
+      mcpServers: summaryMcpServers,
+      tools: summaryTools,
     };
 
     await submit(
@@ -588,31 +923,58 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         name: effectiveName.trim(),
         identifier: effectiveIdentifier.trim(),
         instructions: effectiveInstructions.trim(),
+        description: effectiveDescription.trim(),
         apiKey: apiKey.trim(),
         runtime,
         isExistingMode,
+        providerId: selectedConnector?.providerId,
         externalAgentId: externalAgentId.trim(),
         externalEnvironmentId: externalEnvironmentId.trim(),
         externalWorkspaceId: externalWorkspaceId.trim() || undefined,
+        region: region.trim() || undefined,
         integrationId: selectedIntegrationId,
         integrationName: integrationName.trim() || undefined,
         managedOverrides,
       },
       {
-        onSuccess: (agent) => onAgentCreated(agent, summary),
+        onSuccess: (agent) => {
+          telemetry(TelemetryEvent.ONBOARDING_CONNECT_AGENT_CREATED, {
+            runtime,
+            connectorId,
+            mode: useAiGeneration ? generationMode : 'template',
+            templateKind: templateSelection.kind,
+            agentIdentifier: agent.identifier,
+            isExistingMode,
+          });
+          onAgentCreated(agent, summary);
+        },
         onError: (err) => {
           setIsPromptSubmitInFlight(false);
           const message = err instanceof NovuApiError ? err.message : 'Could not create agent.';
+          telemetry(TelemetryEvent.ONBOARDING_CONNECT_AGENT_CREATE_FAILED, {
+            runtime,
+            connectorId,
+            message,
+          });
           showErrorToast(message, 'Create failed');
         },
       }
     );
   };
 
-  const dropdownStatus = dropdownStatusFor(verifyStatus, Boolean(selectedIntegrationId));
-  const isSubmitBusy = isPending || isGenerating || isPromptSubmitInFlight;
-
-  const submitButton = (
+  const submitButton = simplifiedDemo ? (
+    <Button
+      type="submit"
+      variant="secondary"
+      mode="filled"
+      size="2xs"
+      className="mt-1 w-full justify-center gap-1"
+      isLoading={isSubmitBusy}
+      trailingIcon={RiArrowRightSLine}
+    >
+      Setup agent
+    </Button>
+  ) : (
     <Button
       type="submit"
       variant="secondary"
@@ -626,6 +988,20 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
     </Button>
   );
 
+  if (showTemplateProvisioningSkeleton) {
+    return (
+      <div className="relative flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
+        <div
+          className="absolute bottom-0 left-[22px] top-0 w-px"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, #E1E4EA 10%, #E1E4EA 90%, transparent 100%)',
+          }}
+        />
+        <AgentPreviewSkeleton />
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-10 py-6 pb-3 pl-8 pr-3 md:pr-6">
       <div
@@ -638,8 +1014,10 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
       <ConnectAgentForm
         connectorId={connectorId}
         isClaudeSelected={isClaudeSelected}
+        isScratchRuntime={isScratchRuntime}
         apiKey={apiKey}
         externalWorkspaceId={externalWorkspaceId}
+        region={region}
         templateSelection={templateSelection}
         isExistingMode={isExistingMode}
         isScratchMode={isScratchMode}
@@ -661,8 +1039,10 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
                 prompt,
                 onPromptChange: handlePromptChange,
                 promptError,
-                suggestions: AGENT_TEMPLATES,
+                suggestions: displayedAgentTemplates,
                 onSelectSuggestion: handleSelectSuggestion,
+                onRegenerateSuggestions: refreshAgentSuggestions,
+                isRegeneratingSuggestions: isFetchingAgentSuggestions,
                 textareaRef: promptTextareaRef,
                 isGenerating: isSubmitBusy,
                 generationSteps: GENERATION_STEPS,
@@ -671,7 +1051,6 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
                 // we are mid-provisioning at Anthropic and there is nothing to abort, so keep
                 // the button visible (avoids a layout shift) but disable it.
                 isCancelDisabled: !isGenerating,
-                isScratchRuntime,
               }
             : undefined
         }
@@ -689,6 +1068,7 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         onTemplateChange={handleTemplateChange}
         onApiKeyChange={handleApiKeyChange}
         onExternalWorkspaceIdChange={handleExternalWorkspaceIdChange}
+        onRegionChange={handleRegionChange}
         onNameChange={(next) => {
           setName(next);
           setErrors((prev) => ({ ...prev, name: undefined }));
@@ -716,10 +1096,11 @@ export function ConnectAgentStep({ onAgentCreated, onRuntimeChange, isManagedEna
         }}
         onVerify={handleVerify}
         onSaveIntegration={handleSaveIntegration}
-        submitSlot={useAiGeneration ? submitButton : undefined}
+        submitSlot={useAiGeneration || isScratchRuntime ? submitButton : undefined}
+        simplifiedDemo={simplifiedDemo}
       />
 
-      {!useAiGeneration && <div className="flex flex-col gap-2 pl-6">{submitButton}</div>}
+      {!useAiGeneration && !isScratchRuntime && <div className="flex flex-col gap-2 pl-6">{submitButton}</div>}
     </form>
   );
 }

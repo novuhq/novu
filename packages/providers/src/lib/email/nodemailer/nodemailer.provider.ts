@@ -133,7 +133,7 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
         address: options.from || this.config.from,
         name: options.senderName || this.config.senderName || '',
       },
-      to: options.to,
+      to: resolveNodemailerTo(options),
       subject: options.subject,
       html: options.html,
       text: options.text,
@@ -160,4 +160,20 @@ export class NodemailerProvider extends BaseProvider implements IEmailProvider {
 
     return sendMailOptions;
   }
+}
+
+const UNDISCLOSED_RECIPIENTS = 'undisclosed-recipients:;';
+
+function resolveNodemailerTo(options: Pick<IEmailOptions, 'to' | 'cc' | 'bcc'>): string | string[] {
+  if (options.to.length > 0) {
+    return options.to;
+  }
+
+  const hasCcOrBcc = Boolean(options.cc?.length) || Boolean(options.bcc?.length);
+
+  if (!hasCcOrBcc) {
+    return options.to;
+  }
+
+  return UNDISCLOSED_RECIPIENTS;
 }

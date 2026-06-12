@@ -1,4 +1,5 @@
 import {
+  AgentRuntimeProviderIdEnum,
   ChatProviderIdEnum,
   ConfigConfiguration,
   CredentialsKeyEnum,
@@ -11,8 +12,19 @@ export function isDemoIntegration(providerId: string) {
   return (
     providerId === EmailProviderIdEnum.Novu ||
     providerId === SmsProviderIdEnum.Novu ||
-    providerId === ChatProviderIdEnum.Novu
+    providerId === ChatProviderIdEnum.Novu ||
+    providerId === AgentRuntimeProviderIdEnum.NovuAnthropic
   );
+}
+
+export function getDemoIntegrationTooltipMessage(providerId: string, channel?: string): string {
+  if (providerId === AgentRuntimeProviderIdEnum.NovuAnthropic) {
+    return 'This is a demo Claude provider for testing only, capped at 10 conversations per month and 100k tokens per conversation. Not suitable for production use.';
+  }
+
+  const unit = channel === 'email' ? 'emails' : 'sms';
+
+  return `This is a demo provider for testing purposes only and capped at 300 ${unit} per month. Not suitable for production use.`;
 }
 
 export function configurationToCredential(config: ConfigConfiguration): IConfigCredential {

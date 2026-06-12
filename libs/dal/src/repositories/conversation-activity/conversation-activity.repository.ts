@@ -45,6 +45,15 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
+  async countAgentMessages(environmentId: string, conversationId: string): Promise<number> {
+    return this.count({
+      _environmentId: environmentId,
+      _conversationId: conversationId,
+      senderType: ConversationActivitySenderTypeEnum.AGENT,
+      type: ConversationActivityTypeEnum.MESSAGE,
+    });
+  }
+
   async createUserActivity(params: {
     identifier: string;
     conversationId: string;
@@ -141,10 +150,10 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
     });
   }
 
-  async findToolActivitiesByRunId(
+  async findToolActivitiesByPlanMessageId(
     environmentId: string,
     conversationId: string,
-    runId: string
+    planMessageId: string
   ): Promise<ConversationActivityEntity[]> {
     return this.find(
       {
@@ -152,7 +161,7 @@ export class ConversationActivityRepository extends BaseRepositoryV2<
         _conversationId: conversationId,
         type: ConversationActivityTypeEnum.SIGNAL,
         'signalData.type': 'tool-use',
-        'signalData.payload.runId': runId,
+        'signalData.payload.planMessageId': planMessageId,
       } as FilterQuery<ConversationActivityDBModel> & EnforceEnvOrOrgIds,
       '*',
       { sort: { createdAt: 1 } }

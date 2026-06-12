@@ -1,5 +1,5 @@
 import { ChannelTypeEnum, EnvironmentEnum, EnvironmentTypeEnum } from '@novu/shared';
-import { IsArray, IsEnum, IsOptional } from 'class-validator';
+import { IsArray, IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 
 export class CreateNovuIntegrationsCommand extends EnvironmentWithUserCommand {
@@ -9,6 +9,10 @@ export class CreateNovuIntegrationsCommand extends EnvironmentWithUserCommand {
   @IsArray()
   @IsEnum(ChannelTypeEnum, { each: true })
   readonly channels?: ChannelTypeEnum[];
+
+  @IsOptional()
+  @IsBoolean()
+  readonly includeManagedClaude?: boolean;
 
   /**
    * Type of the environment the integrations are being created for. Used to decide

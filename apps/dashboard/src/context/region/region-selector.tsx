@@ -1,11 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/primitives/select';
-import { IS_EU } from '@/config';
 import { useRegion } from '@/context/region';
-import { useFeatureFlag } from '@/hooks/use-feature-flag';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { useLDClient } from 'launchdarkly-react-client-sdk';
-import { useEffect, useState } from 'react';
 import { REGIONS } from './region-config';
+import { useShouldShowRegionSelector } from './use-should-show-region-selector';
 
 const REGION_OPTIONS = REGIONS.map((region) => ({
   value: region.code,
@@ -13,37 +9,12 @@ const REGION_OPTIONS = REGIONS.map((region) => ({
   flag: region.flag,
 }));
 
-function useLaunchDarklyReady() {
-  const ldClient = useLDClient();
-  const [isReady, setIsReady] = useState(!ldClient);
-
-  useEffect(() => {
-    if (!ldClient) {
-      setIsReady(true);
-      return;
-    }
-
-    const waitForReady = async () => {
-      try {
-        await ldClient.waitUntilReady?.();
-      } finally {
-        setIsReady(true);
-      }
-    };
-
-    waitForReady();
-  }, [ldClient]);
-
-  return isReady;
-}
-
 export function RegionSelector() {
   const { selectedRegion, setSelectedRegion } = useRegion();
-  const isLDReady = useLaunchDarklyReady();
-  const isRegionSelectorEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_REGION_SELECTOR_ENABLED, false);
+  const shouldShow = useShouldShowRegionSelector();
   const isInOrgCreation = window.location.pathname.includes('/auth/organization-list');
 
-  if (IS_EU || !isLDReady || !isRegionSelectorEnabled) {
+  if (!shouldShow) {
     return null;
   }
 

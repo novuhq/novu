@@ -7,15 +7,14 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
-import axios from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
+import { resolveSafeChatWebhookUrl, safeChatWebhookJsonRequest } from '../../../utils/safe-chat-webhook-request';
 import { WithPassthrough } from '../../../utils/types';
 
 export class DiscordProvider extends BaseProvider implements IChatProvider {
   protected casing = CasingEnum.CAMEL_CASE;
   channelType = ChannelTypeEnum.CHAT as ChannelTypeEnum.CHAT;
   public id = ChatProviderIdEnum.Discord;
-  private axiosInstance = axios.create();
 
   constructor(private config) {
     super();
@@ -32,20 +31,20 @@ export class DiscordProvider extends BaseProvider implements IChatProvider {
 
     const { endpoint } = data.channelData;
 
-    const url = new URL(endpoint.url);
-
+    const url = new URL(resolveSafeChatWebhookUrl(endpoint.url));
     url.searchParams.set('wait', 'true');
-    const response = await this.axiosInstance.post(
-      url.toString(),
-      this.transform(bridgeProviderData, {
+
+    const response = await safeChatWebhookJsonRequest<{ id: string; timestamp: string }>({
+      url: url.toString(),
+      body: this.transform(bridgeProviderData, {
         content: data.content,
         ...(data.customData || {}),
-      }).body
-    );
+      }).body,
+    });
 
     return {
-      id: response.data.id,
-      date: response.data.timestamp,
+      id: response.body.id,
+      date: response.body.timestamp,
     };
   }
 }

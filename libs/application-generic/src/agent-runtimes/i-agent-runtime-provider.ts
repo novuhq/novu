@@ -5,6 +5,7 @@ import type {
   AgentRuntimeProviderIdEnum,
   AgentSkillDto,
   AgentToolDto,
+  McpTokenEndpointAuthMethod,
 } from '@novu/shared';
 
 export type CreateAgentInput = {
@@ -17,6 +18,11 @@ export type CreateAgentInput = {
   mcpServers?: Array<{ name: string; url: string }>;
   /** Skills to attach to the agent at creation time. Maximum 20. */
   skills?: AgentSkillDto[];
+  /**
+   * When true, builtin and MCP toolsets are provisioned with `always_allow`
+   * permission policies instead of the default `always_ask`.
+   */
+  useAlwaysAllowToolPermissions?: boolean;
 };
 
 export type CreateAgentResult = {
@@ -39,11 +45,18 @@ export type UpdateAgentRuntimeConfigInput = {
   mcpServers?: AgentMcpServerDto[];
   tools?: AgentToolDto[];
   skills?: AgentSkillDto[];
+  /**
+   * When true, rebuilt toolset payloads use `always_allow` permission policies
+   * instead of the default `always_ask`.
+   */
+  useAlwaysAllowToolPermissions?: boolean;
 };
 
 export type ProvisionIntegrationInput = {
   /** Human-readable name for the integration; used as the environment/resource name on the provider. */
   integrationName: string;
+  /** Provider-side environment/vault name stem; defaults to integrationName. */
+  resourceName?: string;
 };
 
 export type ProvisionIntegrationResult = {
@@ -68,6 +81,14 @@ export interface VaultCredentialAuthOAuthClient {
   tokenEndpoint: string;
   /** RFC 8707 resource indicator replayed verbatim on refresh. */
   resource?: string;
+  /**
+   * `token_endpoint_auth_method` negotiated at DCR time (RFC 8414 §2). Drives
+   * how the runtime provider's vault authenticates refresh requests to the
+   * upstream token endpoint. Absent on legacy credentials registered before
+   * negotiation existed — callers default to `'client_secret_basic'` per
+   * RFC 8414.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
 }
 
 /**
@@ -86,13 +107,22 @@ export interface VaultCredentialAuth {
   oauthClient?: VaultCredentialAuthOAuthClient;
 }
 
+export interface CreateVaultInput {
+  displayName: string;
+}
+
+export interface CreateVaultResult {
+  externalVaultId: string;
+}
+
 export interface UpsertVaultCredentialInput {
   /**
-   * Decrypted integration credentials blob. The provider extracts whichever
-   * locator it needs (Anthropic: `externalVaultId`); keeping the input
-   * provider-agnostic prevents callers from leaking provider-specific keys.
+   * Decrypted integration credentials blob kept provider-agnostic for API-key
+   * access during vault operations.
    */
   integrationCredentials: Record<string, unknown>;
+  /** Scoped Anthropic vault container (`vlt_…`) that owns this credential. */
+  externalVaultId: string;
   /** Canonical MCP server URL the credential authorises. */
   mcpServerUrl: string;
   /** Human-readable label surfaced in the provider's vault UI. */
@@ -109,28 +139,14 @@ export interface UpsertVaultCredentialInput {
 export interface UpsertVaultCredentialResult {
   /** Stable identifier for subsequent `update` / `delete` calls. */
   vaultCredentialId: string;
-  /**
-   * Optional credential-field updates the caller must merge into the integration.
-   *
-   * Set when the provider had to lazy-provision integration-scoped resources
-   * during the upsert — e.g. a legacy Anthropic integration that pre-dates
-   * vault eager-provisioning will have a new `externalVaultId` created in
-   * flight and returned here so the OAuth callback can persist it.
-   *
-   * Semantically identical to `ProvisionIntegrationResult.credentialsUpdate`.
-   */
-  integrationCredentialsUpdate?: Record<string, unknown>;
 }
 
 export interface DeleteVaultCredentialInput {
   /** Decrypted integration credentials blob; see `UpsertVaultCredentialInput`. */
   integrationCredentials: Record<string, unknown>;
+  /** Scoped Anthropic vault container (`vlt_…`) that owns this credential. */
+  externalVaultId: string;
   vaultCredentialId: string;
-}
-
-export interface ParsedMcpInitFailure {
-  /** Catalog-side display name surfaced by the runtime (e.g. "Sentry"). */
-  mcpServerName: string;
 }
 
 /**
@@ -172,6 +188,12 @@ export type UploadSkillResult = {
   version: string | null;
 };
 
+export type ValidateCredentialsInput = {
+  apiKey?: string;
+  region?: string;
+  externalWorkspaceId?: string;
+};
+
 export interface IAgentRuntimeProvider {
   readonly providerId: AgentRuntimeProviderIdEnum;
   readonly capabilities: AgentRuntimeCapabilities;
@@ -180,7 +202,7 @@ export interface IAgentRuntimeProvider {
    * Validate the supplied credentials against the provider's API.
    * Throws AgentRuntimeUnauthorizedError / AgentRuntimeForbiddenError on failure.
    */
-  validateCredentials(apiKey: string): Promise<void>;
+  validateCredentials(input: ValidateCredentialsInput): Promise<void>;
 
   /**
    * Create a new agent on the provider side.
@@ -236,27 +258,20 @@ export interface IAgentRuntimeProvider {
   deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;
 
   /**
-   * Inspect an error surfaced by a streaming turn (or any provider-side call
-   * that goes through MCP server initialisation) and decide whether it is
-   * the "MCP X failed to initialize" shape that means the upstream credential
-   * vault is missing/expired and the caller should prompt the user to
-   * (re-)authorise the MCP.
-   *
-   * Returns `null` for anything else so the caller can fall through to its
-   * generic retry/fallback path. Each provider owns its own error shape;
-   * the abstraction never assumes a specific error class.
-   */
-  parseMcpInitFailure(err: unknown): ParsedMcpInitFailure | null;
-
-  /**
    * Inspect a session that ended in `requires-action` (or was rejected for
-   * "waiting on responses to events") and return the single oldest pending
-   * tool-confirmation request, or `null` if none can be located.
+   * "waiting on responses to events") and return every pending
+   * tool-confirmation request, oldest first.
    *
-   * Providers without a session-scoped event log return `null`; callers fall
+   * Providers without a session-scoped event log return `[]`; callers fall
    * back to a generic error reply.
    */
-  getPendingToolApproval(sessionId: string): Promise<PendingToolApproval | null>;
+  getAllPendingToolApprovals(sessionId: string): Promise<PendingToolApproval[]>;
+
+  /**
+   * Create an empty credential vault on the provider (Anthropic: `vlt_…`).
+   * Only callable when `capabilities.tokenVault === true`.
+   */
+  createVault(input: CreateVaultInput): Promise<CreateVaultResult>;
 
   /**
    * Push an OAuth credential to the provider's per-environment vault so the

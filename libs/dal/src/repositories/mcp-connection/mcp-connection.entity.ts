@@ -1,3 +1,5 @@
+import type { McpTokenEndpointAuthMethod } from '@novu/shared';
+
 import type { ChangePropsValueType } from '../../types/helpers';
 import type { EnvironmentId } from '../environment';
 import type { OrganizationId } from '../organization';
@@ -13,16 +15,25 @@ export type McpConnectionScope = 'environment' | 'agent' | 'subscriber';
  * OAuth mechanism the connection was established with. Mirrors the catalog
  * `mode` for the MCP — each MCP supports exactly one mechanism.
  *
- * - `dcr`      — Dynamic Client Registration (RFC 7591). A fresh OAuth client
- *                is registered per subscriber against the upstream AS.
- *                Encrypted access/refresh tokens live in the `auth` blob and
- *                the registered client lives in `oauthClient`.
- * - `novu-app` — Novu's single pre-registered OAuth application is used.
- *                `client_id` / `client_secret` come from server env vars.
- * - `user-app` — The Novu customer's own pre-registered OAuth application is
- *                used. Credentials come from a per-org credential table.
+ * - `dcr`              — Dynamic Client Registration (RFC 7591). A fresh
+ *                        OAuth client is registered per subscriber against
+ *                        the upstream AS. Encrypted access/refresh tokens
+ *                        live in the `auth` blob and the registered client
+ *                        lives in `oauthClient`.
+ * - `novu-app`         — Novu's single pre-registered OAuth application is
+ *                        used. `client_id` / `client_secret` come from
+ *                        server env vars.
+ * - `user-app`         — The Novu customer's own pre-registered OAuth
+ *                        application is used. Credentials come from a
+ *                        per-org credential table.
+ * - `provider-managed` — OAuth is owned by the managed agent runtime
+ *                        provider (e.g. Claude). Rows of this mode carry
+ *                        `auth.externalVaultId` only; `auth.accessToken`,
+ *                        `auth.refreshToken`, `oauthState`, and
+ *                        `oauthClient` are intentionally absent because Novu
+ *                        never speaks OAuth for these MCPs.
  */
-export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app';
+export type McpConnectionAuthMode = 'dcr' | 'novu-app' | 'user-app' | 'provider-managed';
 
 export type McpConnectionStatus = 'pending_oauth' | 'connected' | 'expired' | 'revoked' | 'error';
 
@@ -40,6 +51,14 @@ export interface McpConnectionAuth {
    * true`). Used to target the same credential on refresh / disable.
    */
   vaultCredentialId?: string;
+  /**
+   * Anthropic vault container (`vlt_…`) that owns this subscriber's MCP
+   * credentials for this agent. All subscriber-scoped rows for the same
+   * `(subscriber, agent)` share one vault id, propagated whenever a new MCP
+   * row is opened. v1 only writes subscriber-scope rows; agent-scope is
+   * reserved for a future shared-token flow.
+   */
+  externalVaultId?: string;
 }
 
 export interface McpConnectionOAuthState {
@@ -67,6 +86,21 @@ export interface McpConnectionOAuthState {
    * `callbackClaimedAt: { $exists: false }` filter and bail out.
    */
   callbackClaimedAt?: Date;
+  /**
+   * `novu-app` mode only: authorization-server `token_endpoint` copied from
+   * the catalog at authorize time so the callback can exchange the
+   * authorization code without re-consulting the catalog and without
+   * persisting a long-lived `oauthClient` row. Absent for DCR rows (the
+   * token endpoint lives on `oauthClient.tokenEndpoint`).
+   */
+  tokenEndpoint?: string;
+  /**
+   * `novu-app` mode only: authorization-server `authorization_endpoint`
+   * copied from the catalog at authorize time for parity with
+   * `tokenEndpoint`. Kept on the row so the callback can reconstruct an
+   * ephemeral `McpConnectionOAuthClient` for vault push.
+   */
+  authorizationEndpoint?: string;
 }
 
 /**
@@ -99,6 +133,17 @@ export interface McpConnectionOAuthClient {
   registrationEndpoint?: string;
   /** Scopes requested at registration time. */
   scopesGranted?: string[];
+  /**
+   * `token_endpoint_auth_method` negotiated with the upstream AS at DCR time
+   * (RFC 8414 §2 / RFC 7591 §2). Replayed verbatim at token-exchange and
+   * refresh time so Novu authenticates exactly the way the AS expects.
+   * Absent on legacy rows registered before negotiation existed — callers
+   * default to `'client_secret_basic'` per RFC 8414, which is what most
+   * ASes assume when nothing is registered.
+   */
+  tokenEndpointAuthMethod?: McpTokenEndpointAuthMethod;
+  /** Redirect URI registered with the upstream AS at DCR time (RFC 7591). */
+  redirectUri?: string;
   registeredAt: Date;
 }
 
@@ -107,6 +152,17 @@ export interface McpConnectionLastError {
   message: string;
   at: Date;
 }
+
+export type McpToolTrustPolicy = 'always_ask' | 'always_allow';
+
+export const DEFAULT_MCP_TOOL_TRUST_POLICY: McpToolTrustPolicy = 'always_ask';
+
+export type McpToolTrust = {
+  /** Applies to all tools from this MCP server for this subscriber. */
+  serverDefault?: McpToolTrustPolicy;
+  /** Per-tool overrides keyed by MCP tool name (e.g. "list_issues"). */
+  tools?: Record<string, McpToolTrustPolicy>;
+};
 
 /**
  * OAuth state for a (scope, mcp, owner) tuple.
@@ -119,6 +175,10 @@ export interface McpConnectionLastError {
  *  - `environment` : `_environmentId` only (future).
  *  - `agent`       : `_agentMcpServerId` (future).
  *  - `subscriber`  : `_agentMcpServerId` + `_subscriberId` (v1).
+ *
+ * For `authMode === 'novu-app'` rows, `auth.expiresAt` is advisory only —
+ * the Anthropic agent runtime vault is the source of truth for the bearer
+ * token's lifetime and the refresh schedule.
  */
 export class McpConnectionEntity {
   _id: string;
@@ -158,6 +218,9 @@ export class McpConnectionEntity {
   oauthClient?: McpConnectionOAuthClient;
 
   lastError?: McpConnectionLastError;
+
+  /** Subscriber-scoped auto-approve prefs for MCP tool calls. */
+  toolTrust?: McpToolTrust;
 
   connectedAt?: string;
 

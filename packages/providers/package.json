@@ -51,7 +51,7 @@
     "@vonage/auth": "^1.7.0",
     "@vonage/server-sdk": "^3.10.0",
     "africastalking": "^0.7.9",
-    "axios": "^1.16.1",
+    "axios": "^1.17.0",
     "braze-api": "^2.5.6",
     "cross-fetch": "^4.0.0",
     "date-fns": "2.29.3",
@@ -78,7 +78,7 @@
     "svix": "^1.29.0",
     "telnyx": "^1.23.0",
     "twilio": "^4.19.3",
-    "uuid": "^9.0.0"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.23.2",
@@ -96,7 +96,7 @@
     "ts-node": "~10.9.1",
     "typedoc": "^0.24.0",
     "typescript": "5.6.2",
-    "uuid": "^9.0.0",
+    "uuid": "^11.1.1",
     "vitest": "2.1.9"
   },
   "nx": {

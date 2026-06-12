@@ -20,6 +20,26 @@ function getFeatureFlagValidator(key: FeatureFlagsKeysEnum): ValidatorSpec<strin
   return str({ default: undefined });
 }
 
+// Managed-agent (Thalamus) config is a Novu Cloud concern. On self-hosted (or whenever the URL is
+// blank) we must not run envalid's `url()` validator, which rejects an empty string even with a
+// default — a blank `THALAMUS_CF_URL=` is common in self-hosted .env files and would block boot.
+function getThalamusValidators(): {
+  THALAMUS_CF_URL: ValidatorSpec<string>;
+  THALAMUS_WEBHOOK_SECRET: ValidatorSpec<string>;
+} {
+  if (processEnv.IS_SELF_HOSTED === 'true' || !processEnv.THALAMUS_CF_URL) {
+    return {
+      THALAMUS_CF_URL: str({ default: undefined }),
+      THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
+    };
+  }
+
+  return {
+    THALAMUS_CF_URL: url(),
+    THALAMUS_WEBHOOK_SECRET: str(),
+  };
+}
+
 export const envValidators = {
   TZ: str({ default: 'UTC' }),
   NODE_ENV: str({ choices: ['dev', 'test', 'production', 'ci', 'local'], default: 'local' }),
@@ -68,24 +88,20 @@ export const envValidators = {
   STEP_RESOLVER_CF_ACCOUNT_ID: str({ default: undefined }),
   STEP_RESOLVER_CF_API_TOKEN: str({ default: undefined }),
   STEP_RESOLVER_CF_DISPATCH_NAMESPACE: str({ default: undefined }),
+  STEP_RESOLVER_CF_PLACEMENT_REGION: str({ default: undefined }),
   STEP_RESOLVER_DISPATCH_URL: str({ default: undefined }),
   STEP_RESOLVER_HMAC_SECRET: str({ default: '' }),
   THALAMUS_CF_API_KEY: str({ default: undefined }),
-  ...(processEnv.THALAMUS_CF_URL
-    ? {
-        THALAMUS_CF_URL: url(),
-        THALAMUS_WEBHOOK_SECRET: str(),
-      }
-    : {
-        THALAMUS_CF_URL: url({ default: undefined }),
-        THALAMUS_WEBHOOK_SECRET: str({ default: undefined }),
-      }),
+  ...getThalamusValidators(),
   /**
    * Shared inbound domain for the agent default inbox feature, e.g. `agentconnect.sh`.
    * When unset the feature is disabled and the worker falls through to the existing
    * per-tenant Domain/DomainRoute lookup.
    */
   NOVU_AGENT_SHARED_INBOUND_DOMAIN: str({ default: undefined }),
+  NOVU_MANAGED_CLAUDE_API_KEY: str({ default: undefined }),
+  MAX_NOVU_MANAGED_CLAUDE_CONVERSATIONS: num({ default: 10 }),
+  MAX_NOVU_MANAGED_CLAUDE_TOKENS_PER_CONVERSATION: num({ default: 100_000 }),
   // Novu Cloud third party services
   ...(processEnv.IS_SELF_HOSTED !== 'true' &&
     processEnv.NOVU_ENTERPRISE === 'true' && {
@@ -102,6 +118,9 @@ export const envValidators = {
       NOVU_INTERNAL_SECRET_KEY: str({ default: '' }),
       KEYLESS_ORGANIZATION_ID: str({ desc: 'Required organizationId for Keyless authentication', default: undefined }),
       KEYLESS_USER_EMAIL: str({ desc: 'Required email for Keyless authentication', default: undefined }),
+      KEYLESS_ENV_CREATE_CAP_PER_IP_PER_DAY: num({ default: 15 }),
+      KEYLESS_GENERATE_CAP_PER_IP_PER_DAY: num({ default: 5 }),
+      KEYLESS_MAX_AGENTS_PER_ENV: num({ default: 2 }),
       // ClickHouse
       CLICK_HOUSE_URL: str({ default: '' }),
       CLICK_HOUSE_DATABASE: str({ default: '' }),

@@ -1,5 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { QueryBuilder, RequestLog, RequestLogRepository, Trace, TraceLogRepository } from '@novu/application-generic';
+import {
+  QueryBuilder,
+  RequestLog,
+  RequestLogRepository,
+  RequestLogSource,
+  Trace,
+  TraceLogRepository,
+} from '@novu/application-generic';
 import { subDays } from 'date-fns';
 import { GetRequestResponseDto, TraceResponseDto } from '../../dtos/get-request.response.dto';
 import { mapTraceToResponseDto } from '../../shared/mappers';
@@ -92,6 +99,7 @@ export class GetRequest {
         authType: request.data.auth_type,
         durationMs: request.data.duration_ms,
         transactionId: request.data.transaction_id,
+        source: request.data.source as RequestLogSource,
       },
       traces: mappedTraces,
     };

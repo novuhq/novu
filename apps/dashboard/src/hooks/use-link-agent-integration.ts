@@ -12,9 +12,7 @@ import { NovuApiError } from '@/api/api.client';
 import { createIntegration, deleteIntegration } from '@/api/integrations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
-import { useCurrentApp } from '@/hooks/use-current-app';
 import { useTelemetry } from '@/hooks/use-telemetry';
-import { APP_IDS } from '@/utils/apps';
 import { QueryKeys } from '@/utils/query-keys';
 import { TelemetryEvent } from '@/utils/telemetry';
 
@@ -74,8 +72,6 @@ export function useLinkAgentIntegration({
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
   const track = useTelemetry();
-  const currentApp = useCurrentApp();
-  const isConnectApp = currentApp === APP_IDS.CONNECT;
 
   const [pendingItemKey, setPendingItemKey] = useState<string | null>(null);
   /** Integrations created by this hook instance — safe to delete when switching providers. */
@@ -144,9 +140,7 @@ export function useLinkAgentIntegration({
         mode: 'novu_email' | 'existing_integration' | 'new_integration_then_link'
       ) => {
         track(
-          isConnectApp
-            ? TelemetryEvent.CONNECT_AGENT_INTEGRATION_LINKED_FROM_DASHBOARD
-            : TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
+          TelemetryEvent.AGENT_INTEGRATION_LINKED_FROM_DASHBOARD,
           {
             agentIdentifier,
             providerId,
@@ -157,15 +151,19 @@ export function useLinkAgentIntegration({
       };
 
       /**
-       * Removes every existing link that is not the freshly linked one. Runs only when
-       * `replaceExisting` is enabled. Only integrations provisioned by this hook are deleted;
-       * pre-existing integrations are unlinked but left intact. Failures are logged but never
-       * surfaced because the primary link succeeded.
+       * Removes other links for the *same provider* as the freshly linked one. Runs only when
+       * `replaceExisting` is enabled. Links for other providers (including the auto-provisioned
+       * NovuAgent email link) are always preserved — picking a Slack card replaces a previous
+       * Slack link, not MsTeams or NovuEmail. Only integrations provisioned by this hook are
+       * deleted; pre-existing integrations are unlinked but left intact. Failures are logged
+       * but never surfaced because the primary link succeeded.
        */
       const removePreviousLinks = async (keepIntegrationId: string | undefined) => {
         if (!replaceExisting || !existingLinks?.length) return;
 
-        const toRemove = existingLinks.filter((link) => link.integration._id !== keepIntegrationId);
+        const toRemove = existingLinks.filter(
+          (link) => link.integration._id !== keepIntegrationId && link.integration.providerId === item.providerId
+        );
 
         await Promise.all(
           toRemove.map(async (link) => {
@@ -285,7 +283,6 @@ export function useLinkAgentIntegration({
       createIntegrationMutation,
       currentEnvironment,
       existingLinks,
-      isConnectApp,
       linkedIntegrationIds,
       onLinked,
       queryClient,

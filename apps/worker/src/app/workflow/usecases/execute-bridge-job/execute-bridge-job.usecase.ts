@@ -68,11 +68,15 @@ export class ExecuteBridgeJob {
 
     let workflow: NotificationTemplateEntity | null = null;
     if (isStateful) {
-      if (
-        command.workflow &&
-        (command.workflow.type === ResourceTypeEnum.ECHO || command.workflow.type === ResourceTypeEnum.BRIDGE)
-      ) {
-        workflow = command.workflow;
+      if (command.workflow) {
+        /*
+         * The workflow was already loaded upstream (e.g. by run-job). The DB lookup below only
+         * returns a workflow whose type is ECHO or BRIDGE for the same `_id`, so when the workflow
+         * is already in memory its type fully determines the result — querying again is redundant.
+         */
+        const isBridgeWorkflow =
+          command.workflow.type === ResourceTypeEnum.ECHO || command.workflow.type === ResourceTypeEnum.BRIDGE;
+        workflow = isBridgeWorkflow ? command.workflow : null;
       } else {
         workflow = await this.notificationTemplateRepository.findOne(
           {
@@ -238,14 +242,11 @@ export class ExecuteBridgeJob {
       environmentId,
       organizationId,
       stepResolverHash,
-      // Stateless flow: the bridgeUrl was attached by the trigger caller and
-      // travelled with the queued job. Re-apply the DNS-pinned SSRF guard on
-      // every step's EXECUTE so the worker cannot be coerced into reaching
-      // internal hosts even if a job slips past the API-side validation
-      // (e.g. queued by an older API release before the guard landed).
-      // Stateful jobs (no `statelessBridgeUrl`) target the environment's
-      // configured bridge URL, which is validated when it is set.
-      enforceSsrfProtection: !!statelessBridgeUrl,
+      // Re-apply the DNS-pinned SSRF guard on every EXTERNAL bridge EXECUTE
+      // (stateless bridgeUrl on the job, or the environment's stored bridge
+      // URL). This blocks internal hosts even if a malicious URL was persisted
+      // before validation landed or queued by an older API release.
+      enforceSsrfProtection: !!statelessBridgeUrl || workflowOrigin === ResourceOriginEnum.EXTERNAL,
       processError: async (response) => {
         await this.createExecutionDetails.execute({
           ...CreateExecutionDetailsCommand.getDetailsFromJob(job),

@@ -18,6 +18,12 @@
       "sourceType": "github",
       "skillPath": "skills/linear-release-setup/SKILL.md",
       "computedHash": "f6e1b7c9779323210fd4800a10049b30c87bc34bf254acbae606d6dea3f4478d"
+    },
+    "testerarmy-cli": {
+      "source": "tester-army/cli",
+      "sourceType": "github",
+      "skillPath": "skills/testerarmy-cli/SKILL.md",
+      "computedHash": "25d81694661d78160561b54865cdc5a589ba3bd11bace6becaa392a0f9a9e2ff"
     }
   }
 }

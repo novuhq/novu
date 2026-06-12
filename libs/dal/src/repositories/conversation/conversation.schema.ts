@@ -81,6 +81,33 @@ const conversationSchema = new Schema<ConversationDBModel>(
     externalSessionId: {
       type: Schema.Types.String,
     },
+    managedSessionVaultId: {
+      type: Schema.Types.String,
+    },
+    activePlanMessageId: {
+      type: Schema.Types.String,
+    },
+    pendingManagedAgentSetup: {
+      type: new Schema(
+        {
+          pendingPlatformMessageId: { type: Schema.Types.String, required: true },
+          setupMessageId: { type: Schema.Types.String },
+        },
+        { _id: false }
+      ),
+    },
+    tokenUsage: {
+      type: new Schema(
+        {
+          inputTokens: { type: Schema.Types.Number },
+          outputTokens: { type: Schema.Types.Number },
+          cacheReadTokens: { type: Schema.Types.Number },
+          cacheCreationTokens: { type: Schema.Types.Number },
+          totalTokens: { type: Schema.Types.Number },
+        },
+        { _id: false }
+      ),
+    },
     lastActivityAt: {
       type: Schema.Types.String,
     },

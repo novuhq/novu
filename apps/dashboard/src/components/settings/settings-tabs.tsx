@@ -1,5 +1,5 @@
-import { UserProfile as ClerkUserProfile, OrganizationProfile } from '@clerk/clerk-react';
-import type { Appearance } from '@clerk/types';
+import { UserProfile as ClerkUserProfile, OrganizationProfile } from '@clerk/react';
+import type { ClerkAppearanceTheme } from '@clerk/shared/types';
 import {
   ApiServiceLevelEnum,
   FeatureFlagsKeysEnum,
@@ -22,6 +22,11 @@ import { useFetchSubscription } from '@/hooks/use-fetch-subscription';
 import { useHasPermission } from '@/hooks/use-has-permission';
 import { TeamMembers } from '@/utils/better-auth/components/team-members';
 import { UserProfile as BetterAuthUserProfile } from '@/utils/better-auth/index';
+import { ROUTES } from '@/utils/routes';
+
+// Pin Clerk's post-leave/delete redirect to the local `/auth/organization-list` so `AuthProvider`
+// can clear any org Clerk auto-activates and let the picker render the empty state.
+const AFTER_LEAVE_ORG_URL = ROUTES.SIGNUP_ORGANIZATION_LIST;
 
 const FADE_ANIMATION = {
   initial: { opacity: 0 },
@@ -45,7 +50,7 @@ type SettingsTabsProps = {
   rootRoute: string;
 };
 
-const getClerkComponentAppearance = (isRbacEnabled: boolean): Appearance => ({
+const getClerkComponentAppearance = (isRbacEnabled: boolean): ClerkAppearanceTheme => ({
   variables: {
     colorPrimary: 'hsl(var(--bg-surface))',
     colorText: 'rgba(82, 88, 102, 0.95)',
@@ -231,7 +236,7 @@ export function SettingsTabs({ routes, rootRoute }: SettingsTabsProps) {
                   />
                 )}
                 {EE_AUTH_PROVIDER === 'clerk' ? (
-                  <OrganizationProfile appearance={clerkAppearance}>
+                  <OrganizationProfile appearance={clerkAppearance} afterLeaveOrganizationUrl={AFTER_LEAVE_ORG_URL}>
                     <OrganizationProfile.Page label="general" />
                   </OrganizationProfile>
                 ) : (

@@ -9,14 +9,13 @@ export const OrganizationListPage = () => {
 
   useEffect(() => {
     if (IS_SELF_HOSTED && !IS_ENTERPRISE) {
-      navigate('/');
+      void navigate('/');
     }
   }, [navigate]);
 
   return (
     <>
       <PageMeta title="Select or create organization" />
-
       <OrganizationCreate />
     </>
   );
