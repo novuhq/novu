@@ -241,21 +241,6 @@ export function PhaseContent({
     case 'running-slack-quick-setup':
       return <Text color="cyan">Creating Slack app from manifest…</Text>;
 
-    case 'slack-setup-link':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold color="cyan">
-            Paste your Slack App Configuration Token
-          </Text>
-          <Text dimColor>
-            Open the link below to paste your token on a secure page. We'll create the Slack app from a manifest — the
-            token never passes through this terminal.
-          </Text>
-          <CopyableLink url={phase.setupUrl} hint="Open this link:" />
-          <Text dimColor>Waiting for your Slack App Configuration Token…</Text>
-        </Box>
-      );
-
     case 'slack-oauth-ready':
       return (
         <SlackOAuthReadyContent
@@ -311,6 +296,21 @@ export function PhaseContent({
 
     case 'telegram-intro':
       return <TelegramIntroContent botfatherQr={phase.botfatherQr} onContinue={phase.resolve} />;
+
+    case 'pick-telegram-token-delivery': {
+      const options = [
+        { label: 'Scan QR / open setup page', value: 'setup-page' as const },
+        { label: 'Paste the bot token here', value: 'terminal' as const },
+      ];
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>How do you want to save your bot token?</Text>
+          <Text dimColor>Scan the QR on your phone, or paste the token directly in this terminal.</Text>
+          <Select options={options} onChange={(value) => phase.resolve(value as 'setup-page' | 'terminal')} />
+        </Box>
+      );
+    }
 
     case 'telegram-link-token':
       return (

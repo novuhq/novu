@@ -54,20 +54,15 @@ export async function connectTelegramForAgent(
   let prefetchedSubscriberLink: TelegramSubscriberLinkResult | undefined;
 
   if (botToken) {
-    // Optional escape hatch for headless CI: the caller supplies the token
-    // directly instead of routing the user through the secure setup page.
     ui.savingTelegramBotToken();
-    const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
     try {
-      const consumeResult = await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
-
-      if (consumeResult.deepLinkUrl) {
-        prefetchedSubscriberLink = {
-          deepLinkUrl: consumeResult.deepLinkUrl,
-          botUsername: consumeResult.botUsername,
-          expiresAt: mobileLink.expiresAt,
-        };
-      }
+      prefetchedSubscriberLink = await saveTelegramBotTokenViaMobileLink(
+        client,
+        agent,
+        integration,
+        subscriberId,
+        botToken
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       throw new Error(
@@ -79,45 +74,10 @@ export async function connectTelegramForAgent(
     const botfatherQr = await renderQR(BOTFATHER_URL);
     await ui.showTelegramIntro({ botfatherQr, botfatherUrl: BOTFATHER_URL });
 
-    const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
-    const mobileQr = await renderQR(mobileLink.url);
-    ui.showTelegramLinkToken({ mobileQr, mobileUrl: mobileLink.url });
-
-    let setupLinkFailure: 'expired' | 'invalid' | undefined;
-
-    const tokenSaved = await pollUntil(
-      async () => {
-        const status = await getTelegramMobileLinkStatus(client, mobileLink.token);
-        if (!status.valid && status.reason === 'used') return 'done';
-        if (!status.valid && status.reason === 'expired') {
-          setupLinkFailure = 'expired';
-
-          return 'failed';
-        }
-        if (!status.valid) {
-          setupLinkFailure = 'invalid';
-
-          return 'failed';
-        }
-
-        return 'pending';
-      },
-      { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
-    );
-    if (!tokenSaved) {
-      if (setupLinkFailure === 'expired') {
-        throw new Error(
-          'The Telegram setup link expired before you could paste your bot token. Re-run `npx novu connect` to get a fresh link.'
-        );
-      }
-      if (setupLinkFailure === 'invalid') {
-        throw new Error('The Telegram setup link is no longer valid. Re-run `npx novu connect` to get a fresh link.');
-      }
-
-      throw new Error(
-        `The bot token wasn't saved within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
-          'Re-run `npx novu connect` to get a fresh setup link.'
-      );
+    if (ui.interactive && (await ui.pickTelegramTokenDelivery()) === 'terminal') {
+      prefetchedSubscriberLink = await promptAndSaveTelegramBotToken(client, agent, integration, subscriberId, ui);
+    } else {
+      await waitForTelegramSetupPageToken(client, agent, integration, subscriberId, ui);
     }
   }
 
@@ -150,4 +110,99 @@ export async function connectTelegramForAgent(
   });
 
   return { connected: true, integration };
+}
+
+async function saveTelegramBotTokenViaMobileLink(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  integration: IntegrationRecord,
+  subscriberId: string,
+  botToken: string
+): Promise<TelegramSubscriberLinkResult | undefined> {
+  const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
+  const consumeResult = await consumeTelegramMobileLink(client, { token: mobileLink.token, botToken });
+
+  if (consumeResult.deepLinkUrl) {
+    return {
+      deepLinkUrl: consumeResult.deepLinkUrl,
+      botUsername: consumeResult.botUsername,
+      expiresAt: mobileLink.expiresAt,
+    };
+  }
+
+  return undefined;
+}
+
+async function promptAndSaveTelegramBotToken(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  integration: IntegrationRecord,
+  subscriberId: string,
+  ui: ConnectUI
+): Promise<TelegramSubscriberLinkResult | undefined> {
+  let verificationError: string | undefined;
+
+  while (true) {
+    const token = await ui.promptForSecretInput({
+      title: 'Telegram bot token',
+      placeholder: '123456:ABC-…',
+      hint: 'Paste the token @BotFather sent you.',
+      verificationError,
+    });
+
+    try {
+      return await saveTelegramBotTokenViaMobileLink(client, agent, integration, subscriberId, token.trim());
+    } catch (err) {
+      verificationError = err instanceof Error ? err.message : String(err);
+    }
+  }
+}
+
+async function waitForTelegramSetupPageToken(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  integration: IntegrationRecord,
+  subscriberId: string,
+  ui: ConnectUI
+): Promise<void> {
+  const mobileLink = await issueTelegramMobileLink(client, agent.identifier, integration._id, subscriberId);
+  const mobileQr = await renderQR(mobileLink.url);
+  ui.showTelegramLinkToken({ mobileQr, mobileUrl: mobileLink.url });
+
+  let setupLinkFailure: 'expired' | 'invalid' | undefined;
+
+  const tokenSaved = await pollUntil(
+    async () => {
+      const status = await getTelegramMobileLinkStatus(client, mobileLink.token);
+      if (!status.valid && status.reason === 'used') return 'done';
+      if (!status.valid && status.reason === 'expired') {
+        setupLinkFailure = 'expired';
+
+        return 'failed';
+      }
+      if (!status.valid) {
+        setupLinkFailure = 'invalid';
+
+        return 'failed';
+      }
+
+      return 'pending';
+    },
+    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+  );
+  if (!tokenSaved) {
+    if (setupLinkFailure === 'expired') {
+      throw new Error(
+        'The Telegram setup link expired before you could paste your bot token. Re-run `npx novu connect` to get a fresh link.'
+      );
+    }
+    if (setupLinkFailure === 'invalid') {
+      throw new Error('The Telegram setup link is no longer valid. Re-run `npx novu connect` to get a fresh link.');
+    }
+
+    throw new Error(
+      `The bot token wasn't saved within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
+        'Re-run `npx novu connect` to get a fresh setup link.'
+    );
+  }
 }

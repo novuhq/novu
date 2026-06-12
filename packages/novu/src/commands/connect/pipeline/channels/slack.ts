@@ -123,15 +123,25 @@ async function runSlackQuickSetup(
   slackIntegration: IntegrationRecord,
   ui: ConnectUI,
   options: ConnectCommandOptions,
-  _flags: { retry: boolean }
+  flags: { retry: boolean }
 ): Promise<void> {
   const configToken = options.slackConfigToken?.trim();
 
   if (configToken) {
-    // Optional escape hatch for headless CI: the caller supplies the token directly.
     ui.runningSlackQuickSetup();
     await slackQuickSetup(client, slackIntegration._id, {
       configToken,
+      agentId: agent.id,
+    });
+
+    return;
+  }
+
+  if (ui.interactive) {
+    const token = await ui.promptForSlackConfigToken({ retry: flags.retry });
+    ui.runningSlackQuickSetup();
+    await slackQuickSetup(client, slackIntegration._id, {
+      configToken: token,
       agentId: agent.id,
     });
 

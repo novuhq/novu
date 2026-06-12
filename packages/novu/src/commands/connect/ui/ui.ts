@@ -7,7 +7,11 @@ export type GeneratedAgentPreviewResult = { action: 'confirm'; spec: GeneratedAg
 
 export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: string } | { kind: 'new' };
 
+export type TelegramTokenDelivery = 'setup-page' | 'terminal';
+
 export interface ConnectUI {
+  /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
+  readonly interactive: boolean;
   // Welcome screen
   /**
    * First screen the user sees. Renders a welcome message and waits for the
@@ -101,6 +105,8 @@ export interface ConnectUI {
    * Enter to advance.
    */
   showTelegramIntro(opts: { botfatherQr: string; botfatherUrl: string }): Promise<void>;
+  /** Interactive only: choose between the QR/setup page or pasting the token in the terminal. */
+  pickTelegramTokenDelivery(): Promise<TelegramTokenDelivery>;
   /**
    * Render the signed mobile-link QR. Fire-and-forget — the pipeline owns
    * the polling loop and transitions away from this phase when the bot token
@@ -127,9 +133,6 @@ export interface ConnectUI {
    * because the chosen Slack integration has no OAuth client credentials
    * configured yet. `retry` is true when this prompt is following an earlier
    * failed quick-setup (so the UI can hint at the cause).
-   *
-   * @deprecated Prefer {@link showSlackSetupLink} — the secure setup page keeps
-   * tokens out of the terminal and agent chat.
    */
   promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
   /**

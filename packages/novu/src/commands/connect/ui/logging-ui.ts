@@ -43,6 +43,7 @@ export function createLoggingUI(): ConnectUI {
   };
 
   return {
+    interactive: false,
     showWelcome() {
       // Non-interactive: skip the welcome prompt; the run is unattended by
       // definition (--ci or piped stdin) so there's nobody to press Enter.
@@ -229,6 +230,9 @@ export function createLoggingUI(): ConnectUI {
       logTelegramBotfatherHandoffEvent({ botfatherUrl });
 
       return Promise.resolve();
+    },
+    pickTelegramTokenDelivery() {
+      return Promise.resolve('setup-page');
     },
     showTelegramLinkToken({ mobileUrl }) {
       stop();

@@ -6,7 +6,7 @@ import { ConnectChannelBackError } from '../errors';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { type ConnectStore, createConnectStore } from './store';
-import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
+import type { ConnectUI, GeneratedAgentPreviewResult, PickResult, TelegramTokenDelivery } from './ui';
 
 export interface MountConnectUIParams {
   options: ConnectCommandOptions;
@@ -69,6 +69,7 @@ export function mountConnectUI(_params: MountConnectUIParams): MountConnectUIRes
 
 function createUiController(store: ConnectStore, shutdown: () => Promise<number>): ConnectUI {
   return {
+    interactive: true,
     showWelcome() {
       return new Promise<void>((resolve) => {
         store.phase.set({ kind: 'welcome', resolve });
@@ -204,6 +205,11 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'telegram-intro', botfatherQr, resolve });
       });
     },
+    pickTelegramTokenDelivery() {
+      return new Promise<TelegramTokenDelivery>((resolve) => {
+        store.phase.set({ kind: 'pick-telegram-token-delivery', resolve });
+      });
+    },
     showTelegramLinkToken({ mobileQr, mobileUrl }) {
       store.phase.set({ kind: 'telegram-link-token', mobileQr, mobileUrl });
     },
@@ -225,9 +231,7 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'paste-slack-token', retry, resolve, reject });
       });
     },
-    showSlackSetupLink({ setupUrl }) {
-      store.phase.set({ kind: 'slack-setup-link', setupUrl });
-    },
+    showSlackSetupLink(_opts) {},
     runningSlackQuickSetup() {
       store.phase.set({ kind: 'running-slack-quick-setup' });
     },
