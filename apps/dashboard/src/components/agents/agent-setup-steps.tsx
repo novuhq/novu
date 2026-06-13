@@ -431,6 +431,7 @@ export function AgentSetupSteps({
   const setupCompleteFiredRef = useRef(false);
   const channelConnectedTrackedRef = useRef(false);
   const integrationGuideTrackedRef = useRef<string | null>(null);
+  const emailWelcomeSentRef = useRef(false);
 
   const trackWelcomeSent = useCallback(
     (providerId: string) => {
@@ -443,6 +444,36 @@ export function AgentSetupSteps({
     },
     [agent.identifier, isOnboarding, telemetry]
   );
+
+  useEffect(() => {
+    if (
+      emailWelcomeSentRef.current ||
+      !skipProviderGuide ||
+      !channelReadyForBridge ||
+      !isEmailChannelSelected ||
+      !currentEnvironment ||
+      !integrationIdentifier
+    ) {
+      return;
+    }
+
+    emailWelcomeSentRef.current = true;
+    sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier)
+      .then(() => {
+        trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
+      })
+      .catch(() => {
+        emailWelcomeSentRef.current = false;
+      });
+  }, [
+    agent.identifier,
+    channelReadyForBridge,
+    currentEnvironment,
+    integrationIdentifier,
+    isEmailChannelSelected,
+    skipProviderGuide,
+    trackWelcomeSent,
+  ]);
 
   const handleProviderSelect = useCallback(
     (providerId: string, integration?: IIntegration) => {
