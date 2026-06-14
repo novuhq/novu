@@ -431,7 +431,6 @@ export function AgentSetupSteps({
   const setupCompleteFiredRef = useRef(false);
   const channelConnectedTrackedRef = useRef(false);
   const integrationGuideTrackedRef = useRef<string | null>(null);
-  const emailWelcomeSentRef = useRef(false);
 
   const trackWelcomeSent = useCallback(
     (providerId: string) => {
@@ -447,7 +446,6 @@ export function AgentSetupSteps({
 
   useEffect(() => {
     if (
-      emailWelcomeSentRef.current ||
       !skipProviderGuide ||
       !channelReadyForBridge ||
       !isEmailChannelSelected ||
@@ -457,14 +455,11 @@ export function AgentSetupSteps({
       return;
     }
 
-    emailWelcomeSentRef.current = true;
     sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier)
       .then(() => {
         trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
       })
-      .catch(() => {
-        emailWelcomeSentRef.current = false;
-      });
+      .catch(() => undefined);
   }, [
     agent.identifier,
     channelReadyForBridge,
@@ -494,8 +489,21 @@ export function AgentSetupSteps({
           onChannelGuideActiveChangeRef.current?.(true);
         }
       }
+
+      if (
+        isOnboarding &&
+        providerId === EmailProviderIdEnum.NovuAgent &&
+        integration?.identifier &&
+        currentEnvironment
+      ) {
+        sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integration.identifier)
+          .then(() => {
+            trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
+          })
+          .catch(() => undefined);
+      }
     },
-    [agent.identifier, isOnboarding, telemetry]
+    [agent.identifier, currentEnvironment, isOnboarding, telemetry, trackWelcomeSent]
   );
 
   useEffect(() => {
@@ -747,7 +755,7 @@ export function AgentSetupSteps({
               embedded={false}
               isOnboarding={isOnboarding}
               onStepsCompleted={handleProviderStepsCompleted}
-              onWelcomeSent={isOnboarding && guideProviderId ? () => trackWelcomeSent(guideProviderId) : undefined}
+              onWelcomeSent={isOnboarding && guideProviderId !== EmailProviderIdEnum.NovuAgent ? () => trackWelcomeSent(guideProviderId) : undefined}
               integrationLink={guideIntegrationLink}
             />
           </motion.div>

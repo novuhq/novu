@@ -20,7 +20,7 @@ import { getWelcomeText } from '../../../shared/util/agent-welcome-text';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { PLATFORM_ENDPOINT_CONFIG } from '../../../shared/util/platform-endpoint-config';
 import { resolveAgentPlatform } from '../../../shared/util/provider-to-platform';
-import { AgentConversationService } from '../../conversation/agent-conversation.service';
+import { AgentConversationService, getConversationTitle } from '../../conversation/agent-conversation.service';
 import { OutboundGateway } from '../../egress/outbound.gateway';
 import { SendAgentWelcomeMessageCommand } from './send-agent-welcome-message.command';
 
@@ -85,8 +85,22 @@ export class SendAgentWelcomeMessage {
       return { sent: false };
     }
 
+    const welcomeText = getWelcomeText(platform);
+    const existingWelcomeConversation = await this.findExistingWelcomeConversation({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentId: agent._id,
+      integrationId: integration._id,
+      platform,
+      platformUserId,
+      welcomeText,
+    });
+
+    if (existingWelcomeConversation) {
+      return { sent: true, conversationId: existingWelcomeConversation._id };
+    }
+
     try {
-      const welcomeText = getWelcomeText(platform);
       const keylessWelcomeCard = await this.resolveKeylessWelcomeCard(command, welcomeText);
       const welcomeReplyCard = keylessWelcomeCard ? toReplyCard(keylessWelcomeCard) : undefined;
       const welcomeContent = welcomeReplyCard ? { card: welcomeReplyCard } : { markdown: welcomeText };
@@ -192,6 +206,37 @@ export class SendAgentWelcomeMessage {
     }
 
     return email;
+  }
+
+  private async findExistingWelcomeConversation(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    integrationId: string;
+    platform: AgentPlatformEnum;
+    platformUserId: string;
+    welcomeText: string;
+  }) {
+    const participantId = `${params.platform}:${params.platformUserId}`;
+    const conversation = await this.conversationService.findByAgentIntegrationParticipant({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentId: params.agentId,
+      integrationId: params.integrationId,
+      participantId,
+      participantType: ConversationParticipantTypeEnum.PLATFORM_USER,
+    });
+
+    if (!conversation) {
+      return null;
+    }
+
+    const welcomeTitle = getConversationTitle(params.welcomeText);
+    if (conversation.title !== welcomeTitle) {
+      return null;
+    }
+
+    return conversation;
   }
 
   private async resolveKeylessWelcomeCard(

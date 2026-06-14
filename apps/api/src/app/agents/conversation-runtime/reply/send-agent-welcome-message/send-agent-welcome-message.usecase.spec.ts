@@ -30,6 +30,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
   let subscriberRepository: { findBySubscriberId: sinon.SinonStub };
   let conversationService: {
     createOrGetConversation: sinon.SinonStub;
+    findByAgentIntegrationParticipant: sinon.SinonStub;
     getPrimaryChannel: sinon.SinonStub;
     persistAgentMessage: sinon.SinonStub;
   };
@@ -76,6 +77,7 @@ describe('SendAgentWelcomeMessage usecase', () => {
         _id: 'conversation-id',
         channels: [{ platform: AgentPlatformEnum.EMAIL, platformThreadId: 'thread-1' }],
       }),
+      findByAgentIntegrationParticipant: stub().resolves(null),
       getPrimaryChannel: stub().returns({ platform: AgentPlatformEnum.EMAIL, platformThreadId: 'thread-1' }),
       persistAgentMessage: stub().resolves(undefined),
     };
@@ -112,6 +114,19 @@ describe('SendAgentWelcomeMessage usecase', () => {
         sinon.match({ markdown: 'Connected! Reply to this email to try it out.' })
       )
     ).to.equal(true);
+  });
+
+  it('returns sent:true without resending when a welcome conversation already exists', async () => {
+    conversationService.findByAgentIntegrationParticipant.resolves({
+      _id: 'existing-conversation-id',
+      title: 'Connected! Reply to this email to try it out.',
+    });
+
+    const result = await buildUsecase().execute(buildCommand());
+
+    expect(result).to.deep.equal({ sent: true, conversationId: 'existing-conversation-id' });
+    expect(outboundGateway.sendDirectMessage.called).to.equal(false);
+    expect(conversationService.createOrGetConversation.called).to.equal(false);
   });
 
   it('returns sent:false when the connect subscriber has no email', async () => {

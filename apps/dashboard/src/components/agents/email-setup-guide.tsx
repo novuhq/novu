@@ -1,8 +1,8 @@
 import { EmailProviderIdEnum } from '@novu/shared';
 import { useMutation } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { RiInformation2Fill, RiInformation2Line, RiKey2Line, RiLoader4Line, RiMailSendLine } from 'react-icons/ri';
-import { type AgentIntegrationLink, type AgentResponse, sendAgentTestEmail, sendAgentWelcomeMessage } from '@/api/agents';
+import { type AgentIntegrationLink, type AgentResponse, sendAgentTestEmail } from '@/api/agents';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
@@ -50,7 +50,6 @@ export type EmailSetupGuideProps = {
   integrationLink?: AgentIntegrationLink;
   /** Onboarding hides the custom-address add-form; the shared inbox is enough to get started. */
   isOnboarding?: boolean;
-  onWelcomeSent?: () => void;
 };
 
 export function EmailSetupGuide({
@@ -61,14 +60,12 @@ export function EmailSetupGuide({
   embedded = false,
   integrationLink,
   isOnboarding = false,
-  onWelcomeSent,
 }: EmailSetupGuideProps) {
   const { currentEnvironment } = useEnvironment();
   const { integrations } = useFetchIntegrations();
 
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [testConnected, setTestConnected] = useState(false);
-  const welcomeSentRef = useRef(false);
 
   const emailIntegration = useMemo(
     () => integrations?.find((i) => i._id === integrationId && i.providerId === EmailProviderIdEnum.NovuAgent),
@@ -123,30 +120,6 @@ export function EmailSetupGuide({
   // of the box on cloud; users can still add custom-domain routes for branded
   // delivery, but they're no longer a hard prerequisite.
   const hasAddresses = configuredAddresses.length > 0 || hasSharedInbox;
-
-  const sendWelcomeEmail = useCallback(() => {
-    if (welcomeSentRef.current || !currentEnvironment || !emailIntegration?.identifier) {
-      return;
-    }
-
-    welcomeSentRef.current = true;
-    sendAgentWelcomeMessage(currentEnvironment, agent.identifier, emailIntegration.identifier)
-      .then(() => {
-        onWelcomeSent?.();
-      })
-      .catch((err) => {
-        welcomeSentRef.current = false;
-        console.warn('Failed to send agent welcome email after email connection:', err);
-      });
-  }, [agent.identifier, currentEnvironment, emailIntegration?.identifier, onWelcomeSent]);
-
-  useEffect(() => {
-    if (!hasAddresses) {
-      return;
-    }
-
-    sendWelcomeEmail();
-  }, [hasAddresses, sendWelcomeEmail]);
 
   // The "Setup providers to send emails" step starts complete: the agent
   // already has the Novu demo sender selected by default, and choosing a real
@@ -284,7 +257,7 @@ export function EmailSetupGuide({
         setTestConnected(true);
         onStepsCompleted?.();
       }}
-      connectedMessage="Your email integration is connected — check your inbox for a welcome message from the agent!"
+      connectedMessage="Your email integration is connected. This agent is ready to receive emails."
       listeningMessage="Send a test email to verify the inbound pipeline reaches your agent."
     />
   );

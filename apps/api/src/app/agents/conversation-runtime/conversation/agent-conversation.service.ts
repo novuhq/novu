@@ -288,6 +288,24 @@ export class AgentConversationService {
     );
   }
 
+  async findByAgentIntegrationParticipant(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    integrationId: string;
+    participantId: string;
+    participantType?: ConversationParticipantTypeEnum;
+  }): Promise<ConversationEntity | null> {
+    return this.conversationRepository.findByAgentIntegrationParticipant(
+      params.environmentId,
+      params.organizationId,
+      params.agentId,
+      params.integrationId,
+      params.participantId,
+      params.participantType
+    );
+  }
+
   async setFirstPlatformMessageId(
     environmentId: string,
     organizationId: string,
