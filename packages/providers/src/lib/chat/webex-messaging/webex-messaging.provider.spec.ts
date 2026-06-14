@@ -389,7 +389,7 @@ describe('WebexMessagingProvider', () => {
           channelData: {
             type: ENDPOINT_TYPES.WEBEX_PERSON,
             identifier: 'person',
-            endpoint: { personId: 'person-id', personEmail: 'user@example.com' },
+            endpoint: { personId: 'person-id', personEmail: 'user@example.com' } as never,
           },
         },
         {}

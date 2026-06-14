@@ -79,11 +79,18 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
       personEmail: { type: 'string' as const },
     },
     required: [],
-    validate: (endpoint: Record<string, unknown>) =>
-      (typeof endpoint.personId === 'string' || typeof endpoint.personEmail === 'string') &&
-      (endpoint.personId === undefined || typeof endpoint.personId === 'string') &&
-      (endpoint.personEmail === undefined || typeof endpoint.personEmail === 'string') &&
-      Object.keys(endpoint).every((key) => ['personId', 'personEmail'].includes(key)),
+    validate: (endpoint: Record<string, unknown>) => {
+      const keys = Object.keys(endpoint);
+      const hasPersonId = Object.prototype.hasOwnProperty.call(endpoint, 'personId');
+      const hasPersonEmail = Object.prototype.hasOwnProperty.call(endpoint, 'personEmail');
+
+      return (
+        keys.every((key) => ['personId', 'personEmail'].includes(key)) &&
+        hasPersonId !== hasPersonEmail &&
+        (!hasPersonId || (typeof endpoint.personId === 'string' && endpoint.personId.length > 0)) &&
+        (!hasPersonEmail || (typeof endpoint.personEmail === 'string' && endpoint.personEmail.length > 0))
+      );
+    },
   },
 } as const;
 

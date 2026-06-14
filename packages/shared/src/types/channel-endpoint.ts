@@ -27,8 +27,8 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
   [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
   [ENDPOINT_TYPES.WEBEX_PERSON]:
-    | { personId: string; personEmail?: string }
-    | { personId?: string; personEmail: string };
+    | { personId: string; personEmail?: never }
+    | { personId?: never; personEmail: string };
 };
 
 export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType> = {

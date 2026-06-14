@@ -38,4 +38,30 @@ describe('ChannelEndpointSchema', () => {
       false
     );
   });
+
+  it('should validate Webex endpoints correctly', () => {
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, { roomId: 'room-id' })).toBe(true);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, { roomId: 'room-id', parentId: 'parent-id' })
+    ).toBe(true);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_PERSON, { personId: 'person-id' })).toBe(true);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_PERSON, { personEmail: 'user@example.com' })).toBe(
+      true
+    );
+
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, {})).toBe(false);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, { roomId: '' })).toBe(false);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, { roomId: 'room-id', extra: 'value' })).toBe(
+      false
+    );
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_PERSON, {})).toBe(false);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_PERSON, { personId: '' })).toBe(false);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_PERSON, { personEmail: '' })).toBe(false);
+    expect(
+      validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_PERSON, {
+        personId: 'person-id',
+        personEmail: 'user@example.com',
+      })
+    ).toBe(false);
+  });
 });
