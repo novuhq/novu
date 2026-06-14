@@ -327,11 +327,9 @@ export function createLoggingUI(): ConnectUI {
       } else {
         console.log(`  ${chalk.gray('No channel connected.')}`);
       }
-      if (result.isKeyless) {
-        if (result.claimUrl) {
-          console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
-          console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
-        }
+      if (result.isKeyless && result.claimUrl) {
+        console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
+        console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
       } else {
         console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
       }

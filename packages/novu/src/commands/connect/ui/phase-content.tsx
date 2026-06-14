@@ -715,12 +715,8 @@ function renderSuccessNextStep(input: {
   isKeyless: boolean;
   claimUrl: string | null;
   agentUrl: string;
-}): React.ReactElement | null {
-  if (input.isKeyless) {
-    if (!input.claimUrl) {
-      return null;
-    }
-
+}): React.ReactElement {
+  if (input.isKeyless && input.claimUrl) {
     return (
       <>
         <Text>

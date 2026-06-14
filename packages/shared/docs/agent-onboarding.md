@@ -363,7 +363,7 @@ On success the CLI exits `0` and prints:
   Claim your agent: <claim url>         # keyless only
 ```
 
-**Always start with a 1–2 sentence recap** of what onboarding set up. Before the channel/next-step pointer, briefly explain what the connect run built so the result isn't a black box. Keep it to one or two sentences, in plain language, e.g.:
+**After leading with the CLI's result, give a 1–2 sentence recap** of what onboarding set up — consistent with the conclusion-first operating principle. Before the channel/next-step pointer, briefly explain what the connect run built so the result isn't a black box. Keep it to one or two sentences, in plain language, e.g.:
 
 > _"Here's what Novu built from your description: a hosted AI agent — its system prompt, the right tools and skills, MCP servers for the services you named, and a connection to &lt;channel&gt; so it can message your users."_
 
