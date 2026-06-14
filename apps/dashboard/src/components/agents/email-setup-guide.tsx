@@ -241,8 +241,8 @@ export function EmailSetupGuide({
         title="Test connection"
         description={
           isManagedAgent
-            ? 'Send an email to the inbound address below. We will detect when it arrives.'
-            : 'Send an email to the inbound address below and verify it reaches your agent handler.'
+            ? 'Send an email to your configured inbound address. We will detect when it arrives.'
+            : 'Send an email to your configured inbound address and verify it reaches your agent handler.'
         }
         extraContent={
           <div className="flex w-full flex-col gap-4">
@@ -260,7 +260,7 @@ export function EmailSetupGuide({
               connectedMessage="Your email integration is connected. This agent is ready to receive emails."
               listeningMessage={
                 isManagedAgent
-                  ? 'Waiting for your email — send a message to the inbound address above.'
+                  ? 'Waiting for your email — send a message to your configured inbound address.'
                   : 'Send a test email to verify the inbound pipeline reaches your agent.'
               }
             />

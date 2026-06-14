@@ -254,28 +254,29 @@ type InboxRowProps = {
  * Minimal row: lighter visual weight than the previous bordered/shadowed
  * pill — relies on background tint + subtle stroke for separation.
  */
-function InboxRow({ address, badge, trailing }: InboxRowProps) {
+function buildInboxRowTrailing(badge?: string, trailing?: ReactNode) {
+  if (!trailing && !badge) {
+    return undefined;
+  }
+
+  const badgeNode = badge ? (
+    <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
+  ) : null;
+
+  if (!trailing) {
+    return badgeNode ?? undefined;
+  }
+
   return (
-    <div className="flex flex-col gap-1">
-      <CopyableEmailAddress
-        email={address}
-        trailing={
-          trailing ? (
-            <div className="flex items-center gap-1">
-              {badge ? (
-                <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
-              ) : null}
-              {trailing}
-            </div>
-          ) : (
-            badge ? (
-              <span className="text-text-soft text-[10px] font-medium uppercase leading-3 tracking-wide">{badge}</span>
-            ) : undefined
-          )
-        }
-      />
+    <div className="flex items-center gap-1">
+      {badgeNode}
+      {trailing}
     </div>
   );
+}
+
+function InboxRow({ address, badge, trailing }: InboxRowProps) {
+  return <CopyableEmailAddress email={address} trailing={buildInboxRowTrailing(badge, trailing)} />;
 }
 
 type SharedInboxRowProps = {
