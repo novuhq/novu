@@ -146,5 +146,6 @@ describe('SendAgentWelcomeMessage usecase', () => {
 
     expect(result).to.deep.equal({ sent: false });
     expect(outboundGateway.sendDirectMessage.called).to.equal(false);
+    expect(logger.warn.called).to.equal(false);
   });
 });

@@ -54,6 +54,7 @@ function resolveProviderSetupGuide(providerId: string) {
 }
 
 const SESSION_KEY = (agentIdentifier: string) => `agent-setup-integration:${agentIdentifier}`;
+const EMAIL_WELCOME_SESSION_KEY = (agentIdentifier: string) => `agent-email-welcome:${agentIdentifier}`;
 
 // The brain section is a single step in the onboarding flow — the created agent is shown as a
 // recap card (step 1) above this component's channel step.
@@ -444,6 +445,23 @@ export function AgentSetupSteps({
     [agent.identifier, isOnboarding, telemetry]
   );
 
+  const requestEmailWelcome = useCallback(() => {
+    if (!currentEnvironment || !integrationIdentifier) {
+      return;
+    }
+
+    if (sessionStorage.getItem(EMAIL_WELCOME_SESSION_KEY(agent.identifier))) {
+      return;
+    }
+
+    sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier)
+      .then(() => {
+        sessionStorage.setItem(EMAIL_WELCOME_SESSION_KEY(agent.identifier), '1');
+        trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
+      })
+      .catch(() => undefined);
+  }, [agent.identifier, currentEnvironment, integrationIdentifier, trackWelcomeSent]);
+
   useEffect(() => {
     if (
       !skipProviderGuide ||
@@ -455,19 +473,14 @@ export function AgentSetupSteps({
       return;
     }
 
-    sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier)
-      .then(() => {
-        trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
-      })
-      .catch(() => undefined);
+    requestEmailWelcome();
   }, [
-    agent.identifier,
     channelReadyForBridge,
     currentEnvironment,
     integrationIdentifier,
     isEmailChannelSelected,
+    requestEmailWelcome,
     skipProviderGuide,
-    trackWelcomeSent,
   ]);
 
   const handleProviderSelect = useCallback(
@@ -496,8 +509,13 @@ export function AgentSetupSteps({
         integration?.identifier &&
         currentEnvironment
       ) {
+        if (sessionStorage.getItem(EMAIL_WELCOME_SESSION_KEY(agent.identifier))) {
+          return;
+        }
+
         sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integration.identifier)
           .then(() => {
+            sessionStorage.setItem(EMAIL_WELCOME_SESSION_KEY(agent.identifier), '1');
             trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
           })
           .catch(() => undefined);
@@ -755,7 +773,11 @@ export function AgentSetupSteps({
               embedded={false}
               isOnboarding={isOnboarding}
               onStepsCompleted={handleProviderStepsCompleted}
-              onWelcomeSent={isOnboarding && guideProviderId !== EmailProviderIdEnum.NovuAgent ? () => trackWelcomeSent(guideProviderId) : undefined}
+              onWelcomeSent={
+                isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
+                  ? () => trackWelcomeSent(guideProviderId)
+                  : undefined
+              }
               integrationLink={guideIntegrationLink}
             />
           </motion.div>

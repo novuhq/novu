@@ -195,7 +195,12 @@ export class SendAgentWelcomeMessage {
   private async resolveEmailWelcomeRecipient(command: SendAgentWelcomeMessageCommand): Promise<string | undefined> {
     const subscriberId = buildConnectSubscriberId(command.userId);
     const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberId);
-    const email = subscriber?.email?.trim();
+
+    if (!subscriber) {
+      return undefined;
+    }
+
+    const email = subscriber.email?.trim();
 
     if (!email) {
       this.logger.warn(
