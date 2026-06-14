@@ -29,7 +29,7 @@ These govern every step. When in doubt, follow these over any specific instructi
 - **Trust user intent; ask only when genuinely unclear.** Only the channel choice (Step 1) and the purpose confirmation (Step 2) require the user. Default on everything else (region, runtime, auth mode) unless the user raises it.
 - **Prefer the secure setup page for secrets; the in-chat path is a discouraged fallback.** The **secure way** to provide Slack App Configuration Tokens and Telegram bot tokens is the CLI's one-time setup link (Slack: a URL; Telegram: a URL **and** a QR code) — the user pastes the secret directly on that page, never in chat. Always offer this first and recommend it. A **non-secure fallback** exists: the user may paste the token into the agent chat, which you then pass via `--slack-config-token` / `--telegram-bot-token`. Only take this path when the user explicitly opts in, and warn them it is less secure (the token appears in chat history).
 - **Confirm before you act.** Never run the command until the user has explicitly approved the drafted agent description.
-- **One Connect shell, no log watchers.** Run the Step 3 connect command in a single Shell session. Read stdout from that session (or **Await** its shell id). Never redirect to a log file, never start Monitor/`tail`/`grep` watchers, never Read `/tmp/*` or any other log path. **Never use timers** (`ScheduleWakeup`, `sleep`, or "check back in N minutes") to wait for handoffs — **Await** the Connect shell continuously until the next `NOVU_CONNECT_*` sentinel or `✓ Your agent is live` appears.
+- **One Connect shell, no log watchers.** Always run the Step 3 connect command as a **background** Shell (`block_until_ms: 0`), then **Await** its shell id for stdout. **Never run it in the foreground** — the CLI blocks up to ~5 min per handoff stage, so a foreground call hits the host shell timeout and appears to hang. Use a single Shell session only. Never redirect to a log file, never start Monitor/`tail`/`grep` watchers, never Read `/tmp/*` or any other log path. **Never use timers** (`ScheduleWakeup`, `sleep`, or "check back in N minutes") to wait for handoffs — **Await** the Connect shell continuously until the next `NOVU_CONNECT_*` sentinel or `✓ Your agent is live` appears. The only exception: `--channel skip` without `--login` may run in the foreground.
 - **The CLI validates handoffs.** For dashboard OAuth (`--login`), `slack`/`email`/`telegram`, that Shell blocks and polls until the handoff completes. Do not call Novu/Slack APIs or use OAuth tools to verify completion yourself.
 - **WhatsApp / MS Teams in keyless mode never reach the CLI.** If the user picks one and you are **not** using `--login`, do **not** run connect — redirect them to the Novu dashboard instead (Step 1). With **`--login`**, the CLI creates the agent and hands off a dashboard URL to finish channel setup.
 - **Report conclusion-first.** Lead with the CLI's result (live / failed), then the one action the user must take. Keep it terse.
@@ -61,8 +61,8 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 | **Demo runtime** | Default — shared Claude runtime. In keyless mode, limited to ~5 free replies. |
 | **Handoff** | The channel-specific user action (authorize link, send email, or dashboard URL) that finishes connecting the channel. |
 | **Dashboard redirect** | Keyless-only WhatsApp / MS Teams path: no agent is created in the CLI — user continues in the dashboard. |
-| **Connect shell** | The one Shell invocation that runs the Step 3 connect command. All connect output lives here — not in log files or separate watch commands. |
-| **CLI poll** | The Connect shell blocks up to ~5 min until OAuth, inbound email, or dashboard authorization completes. Success or timeout comes from its stdout only. |
+| **Connect shell** | The one background Shell invocation (`block_until_ms: 0`) that runs the Step 3 connect command. You **Await** its shell id for all stdout — not log files or separate watch commands. |
+| **CLI poll** | While the Connect shell runs in the background, the CLI process blocks up to ~5 min per handoff stage (OAuth, inbound email, dashboard authorization). You monitor progress by **Await**ing `NOVU_CONNECT_*` sentinels on that shell id. Success or timeout comes from its stdout only. |
 | **Claim** | Keyless only: user signs up via the in-channel link, migrating the temporary agent into their workspace. |
 
 ---
@@ -210,12 +210,16 @@ npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --channel slack
 ```
 
-**How to run the Connect shell** — pick one path; never combine with log redirection or a second watch command:
+**How to run the Connect shell** — never combine with log redirection or a second watch command:
 
-- **If using `--login`:** first **Await** `NOVU_CONNECT_AUTH_URL_FILE=`, **Read** that file for the auth URL, deliver the URL to the user, then **Await** channel handoff markers and success.
-- **If channel is `slack`, `email`, or `telegram`:** Shell with `block_until_ms: 0` (background). Use **Await** on that shell id (e.g. `NOVU_CONNECT_SLACK_SETUP_URL=`, `NOVU_CONNECT_INBOUND_ADDRESS=`, etc.). **Await** until `✓ Your agent is live` or `✗`. Do not use Monitor, `tail -f`, `grep`, Read on log files.
-- **If channel is `whatsapp` or `teams` (authenticated only):** background Shell; **Await** auth URL, then dashboard agent URL or success.
-- **If channel is `skip`:** foreground Shell is enough unless you need to capture `NOVU_CONNECT_AUTH_URL_FILE=` from a background run.
+Always start the Connect command as a **background** Shell (`block_until_ms: 0`), then **Await** its shell id for the markers below. This applies to every auth mode and channel. **Never run it in the foreground** — the CLI blocks up to ~5 min per handoff stage and a foreground call will hit the host shell timeout.
+
+Then follow the path that matches your flags:
+
+- **If using `--login`:** **Await** `NOVU_CONNECT_AUTH_URL_FILE=` on the background shell id, **Read** that file for the auth URL, deliver the URL to the user, then **Await** channel handoff markers and success on the same shell id.
+- **If channel is `slack`, `email`, or `telegram`:** **Await** on that shell id (e.g. `NOVU_CONNECT_SLACK_SETUP_URL=`, `NOVU_CONNECT_INBOUND_ADDRESS=`, etc.). **Await** until `✓ Your agent is live` or `✗`. Do not use Monitor, `tail -f`, `grep`, Read on log files.
+- **If channel is `whatsapp` or `teams` (authenticated only):** **Await** auth URL, then dashboard agent URL or success on the same shell id.
+- **If channel is `skip` without `--login`:** foreground Shell is allowed — the only exception to the background rule above.
 
 Conditional flags:
 
