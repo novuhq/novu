@@ -214,7 +214,7 @@ export function EmailSetupGuide({
         sectionLabel="SETUP RECEIVING EMAILS"
         title="Configure inbound address"
         description="You can talk to your agent via this mail address. Override the address to send from another email. Reply-To always routes back to the agent so replies stay in the thread."
-        rightContent={
+        extraContent={
           <InboundAddressConfig
             sharedInboundAddress={hasSharedInbox ? sharedInboundAddress : undefined}
             configuredAddresses={configuredAddresses}

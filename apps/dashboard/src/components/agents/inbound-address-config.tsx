@@ -40,7 +40,7 @@ export function InboundAddressConfig({
     : ROUTES.INTEGRATIONS;
 
   return (
-    <div className="flex flex-col gap-3 w-full">
+    <div className="flex w-full max-w-xl flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center gap-1">
           <span className="text-text-sub text-label-xs font-medium leading-4">Agent email address</span>
