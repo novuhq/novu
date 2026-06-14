@@ -1,5 +1,5 @@
-import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { CredentialsKeyEnum } from '../../../types';
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '../../aws-claude-regions';
 import { IConfigCredential } from '../provider.interface';
 
 const mailConfigBase: IConfigCredential[] = [

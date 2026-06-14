@@ -1,4 +1,3 @@
-import axios, { AxiosInstance } from 'axios';
 import { ChatProviderIdEnum } from '@novu/shared';
 import {
   ChannelTypeEnum,
@@ -8,6 +7,7 @@ import {
   ISendMessageSuccessResponse,
   isChannelDataOfType,
 } from '@novu/stateless';
+import axios, { AxiosInstance } from 'axios';
 import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 

@@ -1,6 +1,6 @@
-import axios from 'axios';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/stateless';
+import axios from 'axios';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { WebexMessagingProvider } from './webex-messaging.provider';
 

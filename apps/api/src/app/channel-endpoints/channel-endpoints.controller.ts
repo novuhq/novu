@@ -14,7 +14,14 @@ import {
 
 import { ApiBody, ApiExtraModels, ApiOperation, ApiParam, ApiTags, getSchemaPath } from '@nestjs/swagger';
 import { ExternalApiAccessible, RequirePermissions } from '@novu/application-generic';
-import { ApiRateLimitCategoryEnum, ENDPOINT_TYPES, PermissionsEnum, UserSessionData } from '@novu/shared';
+import {
+  ApiRateLimitCategoryEnum,
+  ChannelEndpointByType,
+  ChannelEndpointType,
+  ENDPOINT_TYPES,
+  PermissionsEnum,
+  UserSessionData,
+} from '@novu/shared';
 
 import { RequireAuthentication } from '../auth/framework/auth.decorator';
 import { ThrottlerCategory } from '../rate-limiting/guards/throttler.decorator';
@@ -215,7 +222,7 @@ export class ChannelEndpointsController {
         subscriberId: body.subscriberId,
         context: body.context,
         type: body.type,
-        endpoint: body.endpoint,
+        endpoint: body.endpoint as ChannelEndpointByType[typeof body.type],
       })
     );
 
@@ -242,7 +249,7 @@ export class ChannelEndpointsController {
         environmentId: user.environmentId,
         organizationId: user.organizationId,
         identifier,
-        endpoint: body.endpoint,
+        endpoint: body.endpoint as ChannelEndpointByType[ChannelEndpointType],
       })
     );
 

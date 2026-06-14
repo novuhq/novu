@@ -32,9 +32,7 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.MS_TEAMS_USER]: { userId: string };
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
   [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
-  [ENDPOINT_TYPES.WEBEX_PERSON]:
-    | { personId: string; personEmail?: never }
-    | { personId?: never; personEmail: string };
+  [ENDPOINT_TYPES.WEBEX_PERSON]: { personId: string; personEmail?: never } | { personId?: never; personEmail: string };
 };
 
 export type SlackChannelData = {
