@@ -1,4 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { areStringsEqual } from '../../shared/helpers/is-valid-hmac';
 
 @Injectable()
 export class InternalCallbackGuard implements CanActivate {
@@ -17,7 +18,7 @@ export class InternalCallbackGuard implements CanActivate {
       throw new UnauthorizedException('INTERNAL_CALLBACK_API_KEY is not configured');
     }
 
-    if (token !== expectedApiKey) {
+    if (!areStringsEqual(expectedApiKey, token)) {
       throw new UnauthorizedException('Invalid internal callback API key');
     }
 
