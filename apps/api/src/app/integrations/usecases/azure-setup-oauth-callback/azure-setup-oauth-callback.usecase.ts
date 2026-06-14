@@ -7,6 +7,7 @@ import {
   AzureSetupStateData,
   GenerateAzureSetupOauthUrl,
 } from '../generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.usecase';
+import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { splitOAuthState } from '../generate-chat-oath-url/chat-oauth-state.util';
 import { AzureSetupOauthCallbackCommand } from './azure-setup-oauth-callback.command';
 
@@ -142,7 +143,7 @@ export class AzureSetupOauthCallback {
     try {
       const expectedSignature = createHash(signingKey, payload);
 
-      if (signature !== expectedSignature) {
+      if (!areHexDigestsEqual(expectedSignature, signature)) {
         throw new Error('Signature mismatch');
       }
 

@@ -28,6 +28,7 @@ import {
   type McpTokenEndpointAuthMethod,
   resolvePersistedMcpTokenEndpointAuthMethod,
 } from '@novu/shared';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CompleteManagedAgentSetup } from '../../../managed-runtime/setup/complete-managed-agent-setup.usecase';
 import { ManagedAgentSetupCompleteCommand } from '../../../managed-runtime/setup/managed-agent-setup-complete.command';
 import { trackAgentMcpOAuthCompleted, trackAgentMcpOAuthFailed } from '../../../shared/analytics/agent-analytics';
@@ -854,7 +855,7 @@ export class McpOAuthCallback {
     const apiKey = environment.apiKeys[0].key;
     const expected = createHash(apiKey, parts.payload);
 
-    if (parts.signature !== expected) {
+    if (!areHexDigestsEqual(expected, parts.signature)) {
       throw new BadRequestException('OAuth state signature mismatch.');
     }
 

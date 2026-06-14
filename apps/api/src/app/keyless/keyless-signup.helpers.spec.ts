@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { getWelcomeText } from '../agents/shared/util/agent-welcome-text';
 import { AgentPlatformEnum } from '../agents/shared/enums/agent-platform.enum';
+import { getWelcomeText } from '../agents/shared/util/agent-welcome-text';
 import {
   buildConnectClaimUrl,
   buildKeylessSignupCard,
@@ -51,20 +51,20 @@ describe('keyless-signup.helpers', () => {
     process.env.DASHBOARD_URL = 'https://dashboard.example.com';
     delete process.env.FRONT_BASE_URL;
 
-    expect(buildConnectClaimUrl('abc+token')).to.equal(
-      'https://dashboard.example.com/connect/claim?token=abc%2Btoken'
-    );
+    expect(buildConnectClaimUrl('abc+token')).to.equal('https://dashboard.example.com/connect/claim?token=abc%2Btoken');
   });
 
-  it('buildKeylessWelcomeCard includes welcome text and a subtle signup link', () => {
+  it('buildKeylessWelcomeCard includes welcome text and a primary signup button', () => {
     const welcomeText = getWelcomeText(AgentPlatformEnum.SLACK);
     const card = buildKeylessWelcomeCard(welcomeText, 'https://example.com/claim');
+    const actions = card.children?.find((child) => child.type === 'actions');
 
     expect(card.children?.[0]).to.deep.equal({ type: 'text', content: welcomeText });
-    expect(card.children?.[2]).to.deep.equal({
-      type: 'link',
+    expect(actions?.children?.[0]).to.deep.equal({
+      type: 'link-button',
       label: 'Sign up free',
       url: 'https://example.com/claim',
+      style: 'primary',
     });
   });
 

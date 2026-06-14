@@ -34,7 +34,7 @@ type AgentSuggestionPillsProps = {
   suggestions: AgentTemplate[];
   onSelect: (suggestion: AgentTemplate) => void;
   disabled?: boolean;
-  /** When true, render the "Personalizing suggestions" shimmer instead of the pills (loading / refreshing). */
+  /** When true, render the "Generating personal suggestions for you..." shimmer instead of the pills (loading / refreshing). */
   isLoading?: boolean;
   className?: string;
 };
@@ -64,7 +64,7 @@ export function AgentSuggestionPills({
             className={cn(ROW_HEIGHT_CLASS, 'flex min-w-0 items-center gap-1')}
           >
             <Broom fill="#525866" className="text-text-sub h-3 w-3 shrink-0 animate-pulse" />
-            <Shimmer className="text-label-xs">Personalizing suggestions</Shimmer>
+            <Shimmer className="text-label-xs">Generating personal suggestions for you...</Shimmer>
           </motion.div>
         ) : (
           <motion.div

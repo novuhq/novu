@@ -67,6 +67,32 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  async findByAgentIntegrationParticipant(
+    environmentId: string,
+    organizationId: string,
+    agentId: string,
+    integrationId: string,
+    participantId: string,
+    participantType: ConversationParticipantTypeEnum = ConversationParticipantTypeEnum.PLATFORM_USER,
+    title?: string
+  ): Promise<ConversationEntity | null> {
+    return this.findOne(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        _agentId: agentId,
+        channels: {
+          $elemMatch: {
+            _integrationId: new Types.ObjectId(integrationId),
+          },
+        },
+        participants: { $elemMatch: { id: participantId, type: participantType } },
+        ...(title ? { title } : {}),
+      },
+      '*'
+    );
+  }
+
   async findActiveByParticipant(
     environmentId: string,
     organizationId: string,

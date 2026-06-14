@@ -1,21 +1,6 @@
-import { timingSafeEqual } from 'node:crypto';
 import { createContextHash, createHash, decryptApiKey } from '@novu/application-generic';
 import { ContextPayload } from '@novu/shared';
-
-export function areHexDigestsEqual(expected: string, provided: string): boolean {
-  if (expected.length !== provided.length) {
-    return false;
-  }
-
-  const expectedBuffer = Buffer.from(expected, 'hex');
-  const providedBuffer = Buffer.from(provided, 'hex');
-
-  if (expectedBuffer.length !== providedBuffer.length) {
-    return false;
-  }
-
-  return timingSafeEqual(expectedBuffer, providedBuffer);
-}
+import { areHexDigestsEqual } from './timing-safe-equal';
 
 export function isHmacValid(secretKey: string, subscriberId: string, hmacHash: string | undefined) {
   if (!hmacHash) {

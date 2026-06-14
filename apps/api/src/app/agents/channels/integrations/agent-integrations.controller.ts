@@ -342,8 +342,9 @@ export class AgentIntegrationsController {
   @ApiOperation({
     summary: 'Send onboarding welcome message',
     description:
-      'Sends a proactive DM to the agent installer after Slack OAuth, or posts a bridge-connected ' +
-      'follow-up message into an existing conversation thread when conversationId is supplied.',
+      'Sends a proactive DM to the agent installer after Slack OAuth, a welcome email after email ' +
+      'connection, or posts a bridge-connected follow-up message into an existing conversation thread ' +
+      'when conversationId is supplied.',
   })
   @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
@@ -351,7 +352,7 @@ export class AgentIntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
     @Body() body: SendAgentWelcomeMessageRequestDto
-  ): Promise<{ sent: boolean; conversationId?: string }> {
+  ): Promise<{ sent: boolean; conversationId?: string; claimToken?: string }> {
     return this.sendAgentWelcomeMessageUsecase.execute(
       SendAgentWelcomeMessageCommand.create({
         userId: user._id,

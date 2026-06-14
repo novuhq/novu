@@ -54,6 +54,7 @@ function resolveProviderSetupGuide(providerId: string) {
 }
 
 const SESSION_KEY = (agentIdentifier: string) => `agent-setup-integration:${agentIdentifier}`;
+const EMAIL_WELCOME_SESSION_KEY = (agentIdentifier: string) => `agent-email-welcome:${agentIdentifier}`;
 
 // The brain section is a single step in the onboarding flow — the created agent is shown as a
 // recap card (step 1) above this component's channel step.
@@ -444,6 +445,55 @@ export function AgentSetupSteps({
     [agent.identifier, isOnboarding, telemetry]
   );
 
+  const requestEmailWelcome = useCallback(
+    (integrationIdentifierOverride?: string) => {
+      const targetIntegrationIdentifier = integrationIdentifierOverride ?? integrationIdentifier;
+
+      if (!currentEnvironment || !targetIntegrationIdentifier) {
+        return;
+      }
+
+      const storageKey = EMAIL_WELCOME_SESSION_KEY(agent.identifier);
+      if (sessionStorage.getItem(storageKey)) {
+        return;
+      }
+
+      sessionStorage.setItem(storageKey, '1');
+
+      sendAgentWelcomeMessage(currentEnvironment, agent.identifier, targetIntegrationIdentifier)
+        .then(() => {
+          trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
+        })
+        .catch(() => {
+          sessionStorage.removeItem(storageKey);
+        });
+    },
+    [agent.identifier, currentEnvironment, integrationIdentifier, trackWelcomeSent]
+  );
+
+  useEffect(() => {
+    if (
+      !isOnboarding ||
+      !skipProviderGuide ||
+      !channelReadyForBridge ||
+      !isEmailChannelSelected ||
+      !currentEnvironment ||
+      !integrationIdentifier
+    ) {
+      return;
+    }
+
+    requestEmailWelcome();
+  }, [
+    channelReadyForBridge,
+    currentEnvironment,
+    integrationIdentifier,
+    isEmailChannelSelected,
+    isOnboarding,
+    requestEmailWelcome,
+    skipProviderGuide,
+  ]);
+
   const handleProviderSelect = useCallback(
     (providerId: string, integration?: IIntegration) => {
       if (isOnboarding) {
@@ -463,8 +513,12 @@ export function AgentSetupSteps({
           onChannelGuideActiveChangeRef.current?.(true);
         }
       }
+
+      if (isOnboarding && providerId === EmailProviderIdEnum.NovuAgent && integration?.identifier) {
+        requestEmailWelcome(integration.identifier);
+      }
     },
-    [agent.identifier, isOnboarding, telemetry]
+    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
   );
 
   useEffect(() => {
@@ -716,7 +770,11 @@ export function AgentSetupSteps({
               embedded={false}
               isOnboarding={isOnboarding}
               onStepsCompleted={handleProviderStepsCompleted}
-              onWelcomeSent={isOnboarding && guideProviderId ? () => trackWelcomeSent(guideProviderId) : undefined}
+              onWelcomeSent={
+                isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
+                  ? () => trackWelcomeSent(guideProviderId)
+                  : undefined
+              }
               integrationLink={guideIntegrationLink}
             />
           </motion.div>

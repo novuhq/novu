@@ -2,6 +2,12 @@ import type { ChannelChoice } from './types';
 
 export const DASHBOARD_ONLY_CHANNELS: ReadonlyArray<ChannelChoice> = ['whatsapp', 'teams'];
 
+export function buildConnectClaimUrl(input: { connectDashboardUrl: string; token: string }): string {
+  const base = input.connectDashboardUrl.replace(/\/$/, '');
+
+  return `${base}/connect/claim?token=${encodeURIComponent(input.token)}`;
+}
+
 export function buildConnectAgentDetailsUrl(input: {
   connectDashboardUrl: string;
   environmentSlug: string | null;
