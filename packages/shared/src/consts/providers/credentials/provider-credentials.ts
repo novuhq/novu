@@ -1468,6 +1468,26 @@ export const telegramConfig: IConfigCredential[] = [
   },
 ];
 
+export const webexMessagingConfig: IConfigCredential[] = [
+  {
+    key: CredentialsKeyEnum.Token,
+    displayName: 'Access token',
+    description: 'Webex bot or service access token used to call the Webex Messages API.',
+    placeholder: 'Bearer token value',
+    type: 'text',
+    required: true,
+    links: [{ text: 'Webex bots', url: 'https://developer.webex.com/messaging/docs/bots' }],
+  },
+  {
+    key: CredentialsKeyEnum.BaseUrl,
+    displayName: 'Base URL',
+    description: 'Optional Webex API base URL. Leave empty to use https://webexapis.com/v1.',
+    placeholder: 'https://webexapis.com/v1',
+    type: 'text',
+    required: false,
+  },
+];
+
 // ─── Agent Runtime Providers ─────────────────────────────────────────────────
 
 export const anthropicAgentConfig: IConfigCredential[] = [

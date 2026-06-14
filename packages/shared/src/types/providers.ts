@@ -135,6 +135,7 @@ export enum ChatProviderIdEnum {
   Slack = 'slack',
   Discord = 'discord',
   MsTeams = 'msteams',
+  WebexMessaging = 'webex-messaging',
   Mattermost = 'mattermost',
   Ryver = 'ryver',
   Zulip = 'zulip',
