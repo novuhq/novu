@@ -60,6 +60,31 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.chatId === 'string' && Object.keys(endpoint).length === 1,
   },
+  [ENDPOINT_TYPES.WEBEX_ROOM]: {
+    description: 'Webex Room Endpoint',
+    properties: {
+      roomId: { type: 'string' as const },
+      parentId: { type: 'string' as const },
+    },
+    required: ['roomId'],
+    validate: (endpoint: Record<string, unknown>) =>
+      typeof endpoint.roomId === 'string' &&
+      (endpoint.parentId === undefined || typeof endpoint.parentId === 'string') &&
+      Object.keys(endpoint).every((key) => ['roomId', 'parentId'].includes(key)),
+  },
+  [ENDPOINT_TYPES.WEBEX_PERSON]: {
+    description: 'Webex Person Endpoint',
+    properties: {
+      personId: { type: 'string' as const },
+      personEmail: { type: 'string' as const },
+    },
+    required: [],
+    validate: (endpoint: Record<string, unknown>) =>
+      (typeof endpoint.personId === 'string' || typeof endpoint.personEmail === 'string') &&
+      (endpoint.personId === undefined || typeof endpoint.personId === 'string') &&
+      (endpoint.personEmail === undefined || typeof endpoint.personEmail === 'string') &&
+      Object.keys(endpoint).every((key) => ['personId', 'personEmail'].includes(key)),
+  },
 } as const;
 
 // Generate API property examples automatically

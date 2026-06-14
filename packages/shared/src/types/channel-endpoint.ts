@@ -11,6 +11,8 @@ export const ENDPOINT_TYPES = {
   MS_TEAMS_CHANNEL: 'ms_teams_channel',
   MS_TEAMS_USER: 'ms_teams_user',
   TELEGRAM_CHAT: 'telegram_chat',
+  WEBEX_ROOM: 'webex_room',
+  WEBEX_PERSON: 'webex_person',
 } as const;
 
 export type ChannelEndpointType = (typeof ENDPOINT_TYPES)[keyof typeof ENDPOINT_TYPES];
@@ -23,6 +25,10 @@ export type ChannelEndpointByType = {
   [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: { teamId: string; channelId: string };
   [ENDPOINT_TYPES.MS_TEAMS_USER]: { userId: string };
   [ENDPOINT_TYPES.TELEGRAM_CHAT]: { chatId: string };
+  [ENDPOINT_TYPES.WEBEX_ROOM]: { roomId: string; parentId?: string };
+  [ENDPOINT_TYPES.WEBEX_PERSON]:
+    | { personId: string; personEmail?: string }
+    | { personId?: string; personEmail: string };
 };
 
 export type ChannelEndpoint<T extends ChannelEndpointType = ChannelEndpointType> = {
