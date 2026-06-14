@@ -74,7 +74,7 @@ export function ExistingAgentFields({
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-px">
           <label htmlFor={environmentIdInputId} className="text-text-strong text-label-xs font-medium">
-            Claude Environment ID
+            Claude Environment ID <span className="text-text-soft">(Optional)</span>
           </label>
           <Tooltip>
             <TooltipTrigger asChild>

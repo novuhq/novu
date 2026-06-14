@@ -181,7 +181,7 @@ Set the agent description in an environment variable first — do **not** paste 
 ```bash
 export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 
-npx novu connect "$NOVU_AGENT_DESCRIPTION" \
+npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
   --login \
   --channel <slack|email|telegram|whatsapp|teams|skip>
@@ -192,7 +192,7 @@ npx novu connect "$NOVU_AGENT_DESCRIPTION" \
 ```bash
 export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 
-npx novu connect "$NOVU_AGENT_DESCRIPTION" \
+npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
   --channel <slack|email|telegram|skip>
 ```
@@ -204,7 +204,7 @@ Never pass `--channel whatsapp` or `--channel teams` in keyless mode — those r
 ```bash
 export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 
-npx novu connect "$NOVU_AGENT_DESCRIPTION" \
+npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
   --login \
   --channel slack
@@ -230,7 +230,7 @@ Conditional flags:
 export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 export SLACK_CONFIG_TOKEN='<xoxe.xoxp-...>'
 
-npx novu connect "$NOVU_AGENT_DESCRIPTION" \
+npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
   --login \
   --channel slack \
@@ -393,7 +393,7 @@ Adapt the recap to what actually happened (drop the MCP clause when no integrati
 
 ## Command flag reference
 
-Run `novu connect --help` for the full contract. Keep help text in sync when changing connect flags.
+Run `novu@latest connect --help` for the full contract. Keep help text in sync when changing connect flags.
 
 | Flag | Purpose |
 |---|---|
