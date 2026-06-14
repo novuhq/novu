@@ -225,7 +225,7 @@ Expand a channel below to browse supported providers.
 </details>
 
 <details>
-<summary><strong>💬 Chat</strong> (12 providers)</summary>
+<summary><strong>💬 Chat</strong> (13 providers)</summary>
 
 | Provider |
 | --- |
@@ -239,6 +239,7 @@ Expand a channel below to browse supported providers.
 | [Ryver](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/ryver) |
 | [Slack](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/slack) |
 | [Telegram](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/telegram) |
+| [Webex Messaging](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/webex-messaging) |
 | [WhatsApp Business](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/whatsapp-business) |
 | [Zulip](https://github.com/novuhq/novu/tree/next/packages/providers/src/lib/chat/zulip) |
 
