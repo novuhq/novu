@@ -14,7 +14,9 @@ export function areStringsEqual(
   const paddedExpected = Buffer.concat([expectedBuffer, Buffer.alloc(maxLen - expectedBuffer.length)]);
   const paddedProvided = Buffer.concat([providedBuffer, Buffer.alloc(maxLen - providedBuffer.length)]);
 
-  return expectedBuffer.length === providedBuffer.length && timingSafeEqual(paddedExpected, paddedProvided);
+  const timingResult = timingSafeEqual(paddedExpected, paddedProvided);
+
+  return timingResult && expectedBuffer.length === providedBuffer.length;
 }
 
 export function areHexDigestsEqual(
