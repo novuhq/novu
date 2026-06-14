@@ -1,20 +1,11 @@
 import { createHash } from 'node:crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { buildSlug } from '@novu/application-generic';
+import { buildSlug, shortenEnvironmentName } from '@novu/application-generic';
 import { EnvironmentRepository } from '@novu/dal';
-import { EnvironmentEnum, ShortIsPrefixEnum } from '@novu/shared';
+import { ShortIsPrefixEnum } from '@novu/shared';
 
 import { CliDeviceSessionNotFoundError, CliDeviceSessionService } from '../../services/cli-device-session.service';
 import { ApproveCliDeviceSessionCommand } from './approve-cli-device-session.command';
-
-function shortenEnvironmentName(name: string): string {
-  const mapToShortEnvName: Record<EnvironmentEnum, string> = {
-    [EnvironmentEnum.PRODUCTION]: 'prod',
-    [EnvironmentEnum.DEVELOPMENT]: 'dev',
-  };
-
-  return mapToShortEnvName[name] || name;
-}
 
 @Injectable()
 export class ApproveCliDeviceSession {
