@@ -1,8 +1,6 @@
 import { EnvironmentEnum } from '@novu/shared';
 
-export type ShortEnvironmentName = 'prod' | 'dev';
-
-export function shortenEnvironmentName(name: string): ShortEnvironmentName {
+export function shortenEnvironmentName(name: string): string {
   if (name === EnvironmentEnum.PRODUCTION) {
     return 'prod';
   }
@@ -11,5 +9,5 @@ export function shortenEnvironmentName(name: string): ShortEnvironmentName {
     return 'dev';
   }
 
-  throw new Error(`Unsupported environment name: ${name}`);
+  return name;
 }
