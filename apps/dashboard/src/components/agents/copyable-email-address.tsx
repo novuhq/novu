@@ -12,13 +12,15 @@ export function CopyableEmailAddress({ email, className, trailing }: CopyableEma
   return (
     <div
       className={cn(
-        'border-stroke-soft bg-bg-white flex items-start gap-2 rounded-lg border px-2.5 py-2 shadow-xs',
+        'border-stroke-soft bg-bg-white flex min-h-8 items-stretch overflow-hidden rounded-lg border shadow-xs',
         className
       )}
     >
-      <span className="text-text-sub text-paragraph-xs min-w-0 flex-1 break-all font-mono leading-5">{email}</span>
-      <div className="flex shrink-0 items-start gap-1">
-        <CopyButton size="2xs" valueToCopy={email} className="size-6 shrink-0 justify-center" />
+      <span className="text-text-sub text-paragraph-xs flex min-w-0 flex-1 items-center break-all px-2 py-1 font-mono leading-4">
+        {email}
+      </span>
+      <div className="border-stroke-soft flex shrink-0 items-center self-stretch border-l">
+        <CopyButton size="2xs" valueToCopy={email} className="size-8 shrink-0 justify-center rounded-none" />
         {trailing}
       </div>
     </div>
