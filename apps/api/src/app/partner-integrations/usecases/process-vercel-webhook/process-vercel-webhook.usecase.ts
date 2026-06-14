@@ -8,7 +8,7 @@ import {
   EnvironmentRepository,
   MemberRepository,
 } from '@novu/dal';
-import { areHexDigestsEqual } from '../../../shared/helpers/is-valid-hmac';
+import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { Sync } from '../../../bridge/usecases/sync';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 

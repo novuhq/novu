@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
-import { areStringsEqual } from '../../shared/helpers/is-valid-hmac';
+import { areStringsEqual } from '../../shared/helpers/timing-safe-equal';
 
 @Injectable()
 export class InternalCallbackGuard implements CanActivate {

@@ -3,7 +3,7 @@ import { createHash, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, McpConnectionRepository } from '@novu/dal';
 import { buildClaudePlatformVaultUrl, McpConnectionScopeEnum, McpConnectionStatusEnum } from '@novu/shared';
 
-import { areHexDigestsEqual } from '../../../../shared/helpers/is-valid-hmac';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CompleteManagedAgentSetup } from '../../../managed-runtime/setup/complete-managed-agent-setup.usecase';
 import { ManagedAgentSetupCompleteCommand } from '../../../managed-runtime/setup/managed-agent-setup-complete.command';
 import type { McpOAuthState } from '../../oauth/generate-mcp-oauth-url/mcp-oauth-state';

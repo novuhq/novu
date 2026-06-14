@@ -20,7 +20,7 @@ import {
   ContextPayload,
   SLACK_AGENT_OAUTH_SCOPES,
 } from '@novu/shared';
-import { areHexDigestsEqual } from '../../../../shared/helpers/is-valid-hmac';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { ensureConnectDashboardSubscriber } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';

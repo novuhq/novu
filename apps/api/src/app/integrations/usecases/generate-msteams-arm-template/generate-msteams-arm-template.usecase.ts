@@ -3,7 +3,7 @@ import { GetDecryptedIntegrations } from '@novu/application-generic';
 import { EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum } from '@novu/shared';
 import { createHmac } from 'crypto';
-import { areHexDigestsEqual } from '../../../shared/helpers/is-valid-hmac';
+import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { GenerateMsTeamsArmTemplateCommand } from './generate-msteams-arm-template.command';
 
 const ARM_TEMPLATE_EXPIRY_MS = 15 * 60 * 1000; // 15 minutes
