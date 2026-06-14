@@ -305,6 +305,81 @@ describe('WebexMessagingProvider', () => {
     expect(post).not.toHaveBeenCalled();
   });
 
+  it('rejects passthrough that changes the message destination', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: { roomId: 'room-id' },
+          },
+        },
+        {
+          _passthrough: {
+            body: { roomId: 'other-room-id' },
+          },
+        }
+      )
+    ).rejects.toThrow('Webex passthrough cannot override message destination');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('rejects passthrough that changes the thread destination', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: { roomId: 'room-id', parentId: 'parent-id' },
+          },
+        },
+        {
+          _passthrough: {
+            body: { parentId: 'other-parent-id' },
+          },
+        }
+      )
+    ).rejects.toThrow('Webex passthrough cannot override message destination');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('rejects passthrough that adds a thread destination', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: { roomId: 'room-id' },
+          },
+        },
+        {
+          _passthrough: {
+            body: { parentId: 'parent-id' },
+          },
+        }
+      )
+    ).rejects.toThrow('Webex passthrough cannot override message destination');
+    expect(post).not.toHaveBeenCalled();
+  });
+
   it('requires channel data', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
@@ -333,6 +408,27 @@ describe('WebexMessagingProvider', () => {
         {}
       )
     ).rejects.toThrow('Webex room messages require roomId');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('requires a non-empty parentId for threaded room messages', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: { roomId: 'room-id', parentId: '' },
+          },
+        },
+        {}
+      )
+    ).rejects.toThrow('Webex threaded room messages require parentId');
     expect(post).not.toHaveBeenCalled();
   });
 
@@ -390,6 +486,27 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_PERSON,
             identifier: 'person',
             endpoint: { personId: 'person-id', personEmail: 'user@example.com' } as never,
+          },
+        },
+        {}
+      )
+    ).rejects.toThrow('Webex person messages require either personId or personEmail, not both');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('rejects direct messages with both person endpoint keys even when one value is empty', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_PERSON,
+            identifier: 'person',
+            endpoint: { personId: '', personEmail: 'user@example.com' } as never,
           },
         },
         {}

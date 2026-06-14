@@ -69,7 +69,8 @@ export const CHANNEL_ENDPOINT_SCHEMAS = {
     required: ['roomId'],
     validate: (endpoint: Record<string, unknown>) =>
       typeof endpoint.roomId === 'string' &&
-      (endpoint.parentId === undefined || typeof endpoint.parentId === 'string') &&
+      endpoint.roomId.length > 0 &&
+      (endpoint.parentId === undefined || (typeof endpoint.parentId === 'string' && endpoint.parentId.length > 0)) &&
       Object.keys(endpoint).every((key) => ['roomId', 'parentId'].includes(key)),
   },
   [ENDPOINT_TYPES.WEBEX_PERSON]: {

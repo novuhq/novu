@@ -35,6 +35,14 @@ import {
   WebhookEndpointDto,
   WebhookEndpointDto$inboundSchema,
 } from "./webhookendpointdto.js";
+import {
+  WebexPersonEndpointDto,
+  WebexPersonEndpointDto$inboundSchema,
+} from "./webexpersonendpointdto.js";
+import {
+  WebexRoomEndpointDto,
+  WebexRoomEndpointDto$inboundSchema,
+} from "./webexroomendpointdto.js";
 
 /**
  * The channel type (email, sms, push, chat, etc.).
@@ -138,6 +146,7 @@ export const GetChannelEndpointResponseDtoProviderId = {
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",
+  WebexMessaging: "webex-messaging",
   Anthropic: "anthropic",
 } as const;
 /**
@@ -158,6 +167,8 @@ export const GetChannelEndpointResponseDtoType = {
   MsTeamsChannel: "ms_teams_channel",
   MsTeamsUser: "ms_teams_user",
   TelegramChat: "telegram_chat",
+  WebexRoom: "webex_room",
+  WebexPerson: "webex_person",
 } as const;
 /**
  * Type of channel endpoint
@@ -176,7 +187,9 @@ export type Endpoint =
   | WebhookEndpointDto
   | PhoneEndpointDto
   | MsTeamsUserEndpointDto
-  | TelegramChatEndpointDto;
+  | TelegramChatEndpointDto
+  | WebexRoomEndpointDto
+  | WebexPersonEndpointDto;
 
 export type GetChannelEndpointResponseDto = {
   /**
@@ -221,7 +234,9 @@ export type GetChannelEndpointResponseDto = {
     | WebhookEndpointDto
     | PhoneEndpointDto
     | MsTeamsUserEndpointDto
-    | TelegramChatEndpointDto;
+    | TelegramChatEndpointDto
+    | WebexRoomEndpointDto
+    | WebexPersonEndpointDto;
   /**
    * The timestamp indicating when the channel endpoint was created, in ISO 8601 format.
    */
@@ -261,6 +276,8 @@ export const Endpoint$inboundSchema: z.ZodType<
   PhoneEndpointDto$inboundSchema,
   MsTeamsUserEndpointDto$inboundSchema,
   TelegramChatEndpointDto$inboundSchema,
+  WebexRoomEndpointDto$inboundSchema,
+  WebexPersonEndpointDto$inboundSchema,
 ]);
 
 export function endpointFromJSON(
@@ -295,6 +312,8 @@ export const GetChannelEndpointResponseDto$inboundSchema: z.ZodType<
     PhoneEndpointDto$inboundSchema,
     MsTeamsUserEndpointDto$inboundSchema,
     TelegramChatEndpointDto$inboundSchema,
+    WebexRoomEndpointDto$inboundSchema,
+    WebexPersonEndpointDto$inboundSchema,
   ]),
   createdAt: z.string(),
   updatedAt: z.string(),

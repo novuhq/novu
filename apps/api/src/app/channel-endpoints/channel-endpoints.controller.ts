@@ -29,6 +29,8 @@ import {
   CreateSlackChannelEndpointDto,
   CreateSlackUserEndpointDto,
   CreateTelegramChatEndpointDto,
+  CreateWebexPersonEndpointDto,
+  CreateWebexRoomEndpointDto,
   CreateWebhookEndpointDto,
 } from './dtos/create-channel-endpoint-variants.dto';
 import { mapChannelEndpointEntityToDto } from './dtos/dto.mapper';
@@ -39,6 +41,8 @@ import {
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   TelegramChatEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto,
   WebhookEndpointDto,
 } from './dtos/endpoint-types.dto';
 import { GetChannelEndpointResponseDto } from './dtos/get-channel-endpoint-response.dto';
@@ -67,13 +71,17 @@ import { UpdateChannelEndpoint } from './usecases/update-channel-endpoint/update
   CreateMsTeamsChannelEndpointDto,
   CreateMsTeamsUserEndpointDto,
   CreateTelegramChatEndpointDto,
+  CreateWebexPersonEndpointDto,
+  CreateWebexRoomEndpointDto,
   SlackChannelEndpointDto,
   SlackUserEndpointDto,
   WebhookEndpointDto,
   PhoneEndpointDto,
   MsTeamsChannelEndpointDto,
   MsTeamsUserEndpointDto,
-  TelegramChatEndpointDto
+  TelegramChatEndpointDto,
+  WebexPersonEndpointDto,
+  WebexRoomEndpointDto
 )
 @ExternalApiAccessible()
 @RequireAuthentication()
@@ -170,6 +178,8 @@ export class ChannelEndpointsController {
         { $ref: getSchemaPath(CreateMsTeamsChannelEndpointDto) },
         { $ref: getSchemaPath(CreateMsTeamsUserEndpointDto) },
         { $ref: getSchemaPath(CreateTelegramChatEndpointDto) },
+        { $ref: getSchemaPath(CreateWebexRoomEndpointDto) },
+        { $ref: getSchemaPath(CreateWebexPersonEndpointDto) },
       ],
       discriminator: {
         propertyName: 'type',
@@ -181,6 +191,8 @@ export class ChannelEndpointsController {
           [ENDPOINT_TYPES.MS_TEAMS_CHANNEL]: getSchemaPath(CreateMsTeamsChannelEndpointDto),
           [ENDPOINT_TYPES.MS_TEAMS_USER]: getSchemaPath(CreateMsTeamsUserEndpointDto),
           [ENDPOINT_TYPES.TELEGRAM_CHAT]: getSchemaPath(CreateTelegramChatEndpointDto),
+          [ENDPOINT_TYPES.WEBEX_ROOM]: getSchemaPath(CreateWebexRoomEndpointDto),
+          [ENDPOINT_TYPES.WEBEX_PERSON]: getSchemaPath(CreateWebexPersonEndpointDto),
         },
       },
     },

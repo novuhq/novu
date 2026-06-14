@@ -27,6 +27,7 @@ export const SubscriberChannelDtoProviderId = {
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",
+  WebexMessaging: "webex-messaging",
   Fcm: "fcm",
   Apns: "apns",
   Expo: "expo",

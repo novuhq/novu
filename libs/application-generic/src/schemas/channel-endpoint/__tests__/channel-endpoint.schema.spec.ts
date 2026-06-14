@@ -51,6 +51,9 @@ describe('ChannelEndpointSchema', () => {
 
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, {})).toBe(false);
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, { roomId: '' })).toBe(false);
+    expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, { roomId: 'room-id', parentId: '' })).toBe(
+      false
+    );
     expect(validateEndpointForTypeFromSchema(ENDPOINT_TYPES.WEBEX_ROOM, { roomId: 'room-id', extra: 'value' })).toBe(
       false
     );

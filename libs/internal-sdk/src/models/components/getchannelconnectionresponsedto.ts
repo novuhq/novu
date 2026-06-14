@@ -110,6 +110,7 @@ export const ProviderId = {
   ChatWebhook: "chat-webhook",
   NovuSlack: "novu-slack",
   Telegram: "telegram",
+  WebexMessaging: "webex-messaging",
   Anthropic: "anthropic",
 } as const;
 /**

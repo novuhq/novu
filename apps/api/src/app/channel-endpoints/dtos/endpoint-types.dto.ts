@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsOptional, IsString } from 'class-validator';
 
 export class SlackChannelEndpointDto {
   @ApiProperty({
@@ -84,4 +84,43 @@ export class TelegramChatEndpointDto {
   })
   @IsString()
   chatId: string;
+}
+
+export class WebexRoomEndpointDto {
+  @ApiProperty({
+    description: 'Webex room ID',
+    example: 'Y2lzY29zcGFyazovL3VzL1JPT00v...',
+    type: String,
+  })
+  @IsString()
+  roomId: string;
+
+  @ApiPropertyOptional({
+    description: 'Optional Webex parent message ID for threaded replies',
+    example: 'Y2lzY29zcGFyazovL3VzL01FU1NBR0Uv...',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  parentId?: string;
+}
+
+export class WebexPersonEndpointDto {
+  @ApiPropertyOptional({
+    description: 'Webex person ID. Provide exactly one of personId or personEmail.',
+    example: 'Y2lzY29zcGFyazovL3VzL1BFT1BMRS8...',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  personId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Webex person email. Provide exactly one of personId or personEmail.',
+    example: 'user@example.com',
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  personEmail?: string;
 }

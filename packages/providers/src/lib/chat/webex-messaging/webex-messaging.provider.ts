@@ -65,12 +65,14 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
       throw new Error('Webex Messaging channel data is required');
     }
 
+    const basePayload = this.buildPayload(options);
     const payload = this.transform<Record<string, unknown>, Record<string, unknown>, WebexMessagePayload>(
       bridgeProviderData,
-      this.buildPayload(options)
+      basePayload
     ).body;
 
     this.validateDestination(payload);
+    this.validateDestinationUnchanged(basePayload, payload);
 
     try {
       const response = await this.axiosInstance.post<WebexMessageResponse>('/messages', payload, {
@@ -103,8 +105,12 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
     if (isChannelDataOfType(channelData, ENDPOINT_TYPES.WEBEX_ROOM)) {
       const { roomId, parentId } = channelData.endpoint;
 
-      if (!roomId) {
+      if (typeof roomId !== 'string' || roomId.length === 0) {
         throw new Error('Webex room messages require roomId');
+      }
+
+      if (parentId !== undefined && (typeof parentId !== 'string' || parentId.length === 0)) {
+        throw new Error('Webex threaded room messages require parentId');
       }
 
       return {
@@ -115,19 +121,31 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
     }
 
     if (isChannelDataOfType(channelData, ENDPOINT_TYPES.WEBEX_PERSON)) {
-      const { personId, personEmail } = channelData.endpoint;
+      const endpoint = channelData.endpoint as Record<string, unknown>;
+      const hasPersonId = Object.prototype.hasOwnProperty.call(endpoint, 'personId');
+      const hasPersonEmail = Object.prototype.hasOwnProperty.call(endpoint, 'personEmail');
 
-      if (personId && personEmail) {
+      if (hasPersonId && hasPersonEmail) {
         throw new Error('Webex person messages require either personId or personEmail, not both');
       }
 
-      if (!personId && !personEmail) {
+      if (!hasPersonId && !hasPersonEmail) {
+        throw new Error('Webex person messages require personId or personEmail');
+      }
+
+      const personId = endpoint.personId;
+      const personEmail = endpoint.personEmail;
+
+      if (
+        (hasPersonId && (typeof personId !== 'string' || personId.length === 0)) ||
+        (hasPersonEmail && (typeof personEmail !== 'string' || personEmail.length === 0))
+      ) {
         throw new Error('Webex person messages require personId or personEmail');
       }
 
       return {
-        ...(personId ? { toPersonId: personId } : {}),
-        ...(personEmail ? { toPersonEmail: personEmail } : {}),
+        ...(hasPersonId ? { toPersonId: personId as string } : {}),
+        ...(hasPersonEmail ? { toPersonEmail: personEmail as string } : {}),
         text: content,
       };
     }
@@ -148,6 +166,20 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
 
     if (!hasExactlyOneDestination) {
       throw new Error('Webex messages require exactly one destination');
+    }
+  }
+
+  private validateDestinationUnchanged(sourcePayload: WebexMessagePayload, payload: Record<string, unknown>): void {
+    const destinationKeys = ['roomId', 'parentId', 'toPersonId', 'toPersonEmail'] as const;
+    const changedDestinationKey = destinationKeys.find((key) => {
+      const sourceHasKey = Object.prototype.hasOwnProperty.call(sourcePayload, key);
+      const payloadHasKey = Object.prototype.hasOwnProperty.call(payload, key);
+
+      return sourceHasKey !== payloadHasKey || payload[key] !== sourcePayload[key];
+    });
+
+    if (changedDestinationKey !== undefined) {
+      throw new Error('Webex passthrough cannot override message destination');
     }
   }
 
