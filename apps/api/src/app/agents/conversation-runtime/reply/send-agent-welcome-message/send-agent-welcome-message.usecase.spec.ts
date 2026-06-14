@@ -125,6 +125,14 @@ describe('SendAgentWelcomeMessage usecase', () => {
     const result = await buildUsecase().execute(buildCommand());
 
     expect(result).to.deep.equal({ sent: true, conversationId: 'existing-conversation-id' });
+    expect(
+      conversationService.findByAgentIntegrationParticipant.calledOnceWith(
+        sinon.match({
+          participantId: `email:user@example.com`,
+          title: 'Connected! Reply to this email to try it out.',
+        })
+      )
+    ).to.equal(true);
     expect(outboundGateway.sendDirectMessage.called).to.equal(false);
     expect(conversationService.createOrGetConversation.called).to.equal(false);
   });

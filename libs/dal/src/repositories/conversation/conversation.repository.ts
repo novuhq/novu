@@ -73,7 +73,8 @@ export class ConversationRepository extends BaseRepositoryV2<
     agentId: string,
     integrationId: string,
     participantId: string,
-    participantType: ConversationParticipantTypeEnum = ConversationParticipantTypeEnum.PLATFORM_USER
+    participantType: ConversationParticipantTypeEnum = ConversationParticipantTypeEnum.PLATFORM_USER,
+    title?: string
   ): Promise<ConversationEntity | null> {
     return this.findOne(
       {
@@ -86,6 +87,7 @@ export class ConversationRepository extends BaseRepositoryV2<
           },
         },
         participants: { $elemMatch: { id: participantId, type: participantType } },
+        ...(title ? { title } : {}),
       },
       '*'
     );

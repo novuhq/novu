@@ -223,25 +223,17 @@ export class SendAgentWelcomeMessage {
     welcomeText: string;
   }) {
     const participantId = `${params.platform}:${params.platformUserId}`;
-    const conversation = await this.conversationService.findByAgentIntegrationParticipant({
+    const welcomeTitle = getConversationTitle(params.welcomeText);
+
+    return this.conversationService.findByAgentIntegrationParticipant({
       environmentId: params.environmentId,
       organizationId: params.organizationId,
       agentId: params.agentId,
       integrationId: params.integrationId,
       participantId,
       participantType: ConversationParticipantTypeEnum.PLATFORM_USER,
+      title: welcomeTitle,
     });
-
-    if (!conversation) {
-      return null;
-    }
-
-    const welcomeTitle = getConversationTitle(params.welcomeText);
-    if (conversation.title !== welcomeTitle) {
-      return null;
-    }
-
-    return conversation;
   }
 
   private async resolveKeylessWelcomeCard(
