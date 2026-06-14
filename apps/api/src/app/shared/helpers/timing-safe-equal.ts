@@ -1,17 +1,30 @@
 import { timingSafeEqual } from 'node:crypto';
 
-export function areStringsEqual(expected: string, provided: string): boolean {
-  const expectedBuffer = Buffer.from(expected);
-  const providedBuffer = Buffer.from(provided);
-
-  if (expectedBuffer.length !== providedBuffer.length) {
+export function areStringsEqual(
+  expected: string | null | undefined,
+  provided: string | null | undefined
+): boolean {
+  if (typeof expected !== 'string' || typeof provided !== 'string') {
     return false;
   }
 
-  return timingSafeEqual(expectedBuffer, providedBuffer);
+  const expectedBuffer = Buffer.from(expected);
+  const providedBuffer = Buffer.from(provided);
+  const maxLen = Math.max(expectedBuffer.length, providedBuffer.length);
+  const paddedExpected = Buffer.concat([expectedBuffer, Buffer.alloc(maxLen - expectedBuffer.length)]);
+  const paddedProvided = Buffer.concat([providedBuffer, Buffer.alloc(maxLen - providedBuffer.length)]);
+
+  return expectedBuffer.length === providedBuffer.length && timingSafeEqual(paddedExpected, paddedProvided);
 }
 
-export function areHexDigestsEqual(expected: string, provided: string): boolean {
+export function areHexDigestsEqual(
+  expected: string | null | undefined,
+  provided: string | null | undefined
+): boolean {
+  if (typeof expected !== 'string' || typeof provided !== 'string') {
+    return false;
+  }
+
   if (expected.length !== provided.length) {
     return false;
   }
