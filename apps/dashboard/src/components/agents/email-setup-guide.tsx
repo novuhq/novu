@@ -10,6 +10,7 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { InboundAddressConfig } from './inbound-address-config';
 import { OutboundProviderSelect } from './outbound-provider-select';
+import { SharedInboundAddressField } from './shared-inbound-address-field';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
 import { type ConfiguredAddress, useEmailSetupCredentials } from './use-email-setup-credentials';
@@ -143,6 +144,8 @@ export function EmailSetupGuide({
     testConnected,
   ]);
 
+  const showInboundAddressOnTestStep = isOnboarding && hasSharedInbox && sharedInboundAddress;
+
   const stepsColumn = (
     <>
       <SetupStep
@@ -213,16 +216,22 @@ export function EmailSetupGuide({
         status={deriveStepStatus(inboundStepIndex, firstIncompleteStep)}
         sectionLabel="SETUP RECEIVING EMAILS"
         title="Configure inbound address"
-        description="You can talk to your agent via this mail address. Override the address to send from another email. Reply-To always routes back to the agent so replies stay in the thread."
+        description={
+          showInboundAddressOnTestStep
+            ? 'Your agent receives email on a dedicated inbound address. Custom domains and providers can be configured later.'
+            : 'You can talk to your agent via this mail address. Override the address to send from another email. Reply-To always routes back to the agent so replies stay in the thread.'
+        }
         extraContent={
-          <InboundAddressConfig
-            sharedInboundAddress={hasSharedInbox ? sharedInboundAddress : undefined}
-            configuredAddresses={configuredAddresses}
-            domains={domains}
-            onAddAddress={addAddress}
-            onRemoveAddress={removeAddress}
-            hideCustomAddressForm={isOnboarding}
-          />
+          showInboundAddressOnTestStep ? undefined : (
+            <InboundAddressConfig
+              sharedInboundAddress={hasSharedInbox ? sharedInboundAddress : undefined}
+              configuredAddresses={configuredAddresses}
+              domains={domains}
+              onAddAddress={addAddress}
+              onRemoveAddress={removeAddress}
+              hideCustomAddressForm={isOnboarding}
+            />
+          )
         }
       />
 
@@ -232,8 +241,30 @@ export function EmailSetupGuide({
         title="Test connection"
         description={
           isManagedAgent
-            ? 'Send an email to the inbound address above. We will detect when it arrives.'
-            : 'Send an email to the inbound address and verify it reaches your agent handler.'
+            ? 'Send an email to the inbound address below. We will detect when it arrives.'
+            : 'Send an email to the inbound address below and verify it reaches your agent handler.'
+        }
+        extraContent={
+          <div className="flex w-full flex-col gap-4">
+            {showInboundAddressOnTestStep ? (
+              <SharedInboundAddressField sharedInboundAddress={sharedInboundAddress} />
+            ) : null}
+            <ListeningStatus
+              inline
+              agentIdentifier={agent.identifier}
+              watchedIntegrationId={integrationId}
+              onConnected={() => {
+                setTestConnected(true);
+                onStepsCompleted?.();
+              }}
+              connectedMessage="Your email integration is connected. This agent is ready to receive emails."
+              listeningMessage={
+                isManagedAgent
+                  ? 'Waiting for your email — send a message to the inbound address above.'
+                  : 'Send a test email to verify the inbound pipeline reaches your agent.'
+              }
+            />
+          </div>
         }
         rightContent={
           isManagedAgent ? undefined : (
@@ -254,23 +285,6 @@ export function EmailSetupGuide({
         }
       />
     </>
-  );
-
-  const listening = (
-    <ListeningStatus
-      agentIdentifier={agent.identifier}
-      watchedIntegrationId={integrationId}
-      onConnected={() => {
-        setTestConnected(true);
-        onStepsCompleted?.();
-      }}
-      connectedMessage="Your email integration is connected. This agent is ready to receive emails."
-      listeningMessage={
-        isManagedAgent
-          ? 'Waiting for your email — send a message to the inbound address above.'
-          : 'Send a test email to verify the inbound pipeline reaches your agent.'
-      }
-    />
   );
 
   const credentialsSidebar =
@@ -295,7 +309,6 @@ export function EmailSetupGuide({
           />
           {stepsColumn}
         </div>
-        {listening}
         {credentialsSidebar}
       </div>
     );
@@ -304,7 +317,6 @@ export function EmailSetupGuide({
   return (
     <>
       {stepsColumn}
-      {listening}
       {credentialsSidebar}
     </>
   );
