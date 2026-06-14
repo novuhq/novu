@@ -445,25 +445,35 @@ export function AgentSetupSteps({
     [agent.identifier, isOnboarding, telemetry]
   );
 
-  const requestEmailWelcome = useCallback(() => {
-    if (!currentEnvironment || !integrationIdentifier) {
-      return;
-    }
+  const requestEmailWelcome = useCallback(
+    (integrationIdentifierOverride?: string) => {
+      const targetIntegrationIdentifier = integrationIdentifierOverride ?? integrationIdentifier;
 
-    if (sessionStorage.getItem(EMAIL_WELCOME_SESSION_KEY(agent.identifier))) {
-      return;
-    }
+      if (!currentEnvironment || !targetIntegrationIdentifier) {
+        return;
+      }
 
-    sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integrationIdentifier)
-      .then(() => {
-        sessionStorage.setItem(EMAIL_WELCOME_SESSION_KEY(agent.identifier), '1');
-        trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
-      })
-      .catch(() => undefined);
-  }, [agent.identifier, currentEnvironment, integrationIdentifier, trackWelcomeSent]);
+      const storageKey = EMAIL_WELCOME_SESSION_KEY(agent.identifier);
+      if (sessionStorage.getItem(storageKey)) {
+        return;
+      }
+
+      sessionStorage.setItem(storageKey, '1');
+
+      sendAgentWelcomeMessage(currentEnvironment, agent.identifier, targetIntegrationIdentifier)
+        .then(() => {
+          trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
+        })
+        .catch(() => {
+          sessionStorage.removeItem(storageKey);
+        });
+    },
+    [agent.identifier, currentEnvironment, integrationIdentifier, trackWelcomeSent]
+  );
 
   useEffect(() => {
     if (
+      !isOnboarding ||
       !skipProviderGuide ||
       !channelReadyForBridge ||
       !isEmailChannelSelected ||
@@ -479,6 +489,7 @@ export function AgentSetupSteps({
     currentEnvironment,
     integrationIdentifier,
     isEmailChannelSelected,
+    isOnboarding,
     requestEmailWelcome,
     skipProviderGuide,
   ]);
@@ -503,25 +514,11 @@ export function AgentSetupSteps({
         }
       }
 
-      if (
-        isOnboarding &&
-        providerId === EmailProviderIdEnum.NovuAgent &&
-        integration?.identifier &&
-        currentEnvironment
-      ) {
-        if (sessionStorage.getItem(EMAIL_WELCOME_SESSION_KEY(agent.identifier))) {
-          return;
-        }
-
-        sendAgentWelcomeMessage(currentEnvironment, agent.identifier, integration.identifier)
-          .then(() => {
-            sessionStorage.setItem(EMAIL_WELCOME_SESSION_KEY(agent.identifier), '1');
-            trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
-          })
-          .catch(() => undefined);
+      if (isOnboarding && providerId === EmailProviderIdEnum.NovuAgent && integration?.identifier) {
+        requestEmailWelcome(integration.identifier);
       }
     },
-    [agent.identifier, currentEnvironment, isOnboarding, telemetry, trackWelcomeSent]
+    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
   );
 
   useEffect(() => {
