@@ -52,7 +52,7 @@ import {
   clearPersistedAgentTemplateId,
   readActiveAgentTemplateId,
 } from '@/utils/agent-template-identity';
-import { AGENT_DETAILS_DEFAULT_TAB, buildRoute } from '@/utils/routes';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 
 const PAGE_SIZE_OPTIONS = [10, 12, 20, 50];
@@ -86,6 +86,7 @@ export function AgentsList() {
   const [isAutoProvisioningFromTemplate, setIsAutoProvisioningFromTemplate] = useState(false);
   // Guards the deep-link template handling so it runs at most once per template id.
   const appliedTemplateIdRef = useRef<string | undefined>(undefined);
+  const pendingAfterLimitRef = useRef<'create-dialog' | 'onboarding'>('create-dialog');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { templates: agentTemplates } = useAgentTemplates();
@@ -247,6 +248,10 @@ export function AgentsList() {
     setBefore(undefined);
   }, []);
 
+  const goToAgentsSetup = useCallback(() => {
+    void navigate(ROUTES.AGENTS_SETUP);
+  }, [navigate]);
+
   const handleAddAgentClick = useCallback(() => {
     // Hard cap first — the API rejects creation outright at this point.
     if (isAtCreationLimit) {
@@ -256,6 +261,7 @@ export function AgentsList() {
     }
 
     if (isAtAgentLimit) {
+      pendingAfterLimitRef.current = 'create-dialog';
       setLimitDialogOpen(true);
 
       return;
@@ -263,6 +269,33 @@ export function AgentsList() {
 
     setCreateOpen(true);
   }, [isAtAgentLimit, isAtCreationLimit]);
+
+  const handleEmptyStateSetupClick = useCallback(() => {
+    if (isAtCreationLimit) {
+      setCreationLimitDialogOpen(true);
+
+      return;
+    }
+
+    if (isAtAgentLimit) {
+      pendingAfterLimitRef.current = 'onboarding';
+      setLimitDialogOpen(true);
+
+      return;
+    }
+
+    goToAgentsSetup();
+  }, [goToAgentsSetup, isAtAgentLimit, isAtCreationLimit]);
+
+  const handleContinuePastAgentLimit = useCallback(() => {
+    if (pendingAfterLimitRef.current === 'onboarding') {
+      goToAgentsSetup();
+
+      return;
+    }
+
+    setCreateOpen(true);
+  }, [goToAgentsSetup]);
 
   const handleCreateSubmit = useCallback(
     async (form: CreateAgentForm) => {
@@ -441,7 +474,7 @@ export function AgentsList() {
               variant="secondary"
               mode="gradient"
               trailingIcon={RiArrowRightSLine}
-              onClick={handleAddAgentClick}
+              onClick={handleEmptyStateSetupClick}
             >
               Setup an agent
             </PermissionButton>
@@ -557,7 +590,7 @@ export function AgentsList() {
             open={limitDialogOpen}
             onOpenChange={setLimitDialogOpen}
             planUsage={planUsage}
-            onContinueAnyway={() => setCreateOpen(true)}
+            onContinueAnyway={handleContinuePastAgentLimit}
           />
           <AgentCreationLimitDialog
             open={creationLimitDialogOpen}
