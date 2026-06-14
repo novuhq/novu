@@ -6,7 +6,7 @@ import {
   issueTelegramSubscriberLink,
   type TelegramSubscriberLinkResult,
 } from '../../api/agents';
-import type { ConnectApiClient } from '../../api/client';
+import { type ConnectApiClient, NovuApiError } from '../../api/client';
 import { createTelegramIntegration, type IntegrationRecord } from '../../api/integrations';
 import type { AgentSummary, ConnectCommandOptions } from '../../types';
 import { renderQR } from '../../ui/qr';
@@ -16,11 +16,20 @@ import {
   pollForAgentLinkConnected,
   resolveIntegrationForAgent,
 } from '../integration-helpers';
-import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil } from '../poll-until';
+import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil, sleep } from '../poll-until';
 
 const TELEGRAM_PROVIDER_ID = 'telegram';
 const TELEGRAM_CHANNEL = 'chat';
 const BOTFATHER_URL = 'https://t.me/botfather';
+
+/**
+ * After the secure setup page saves the BotFather token, the credentials can
+ * take a moment to become readable. The subscriber-link build is retried over
+ * this window so a transient "bot token missing" right after save doesn't abort
+ * the whole run when the user just needs the token to propagate.
+ */
+const TELEGRAM_CREDENTIAL_PROPAGATION_TIMEOUT_MS = 30_000;
+const TELEGRAM_CREDENTIAL_PROPAGATION_INTERVAL_MS = 2_000;
 
 export async function connectTelegramForAgent(
   client: ConnectApiClient,
@@ -123,7 +132,7 @@ export async function connectTelegramForAgent(
 
   const subscriberLink =
     prefetchedSubscriberLink ??
-    (await issueTelegramSubscriberLink(client, agent.identifier, integration._id, subscriberId));
+    (await issueSubscriberLinkWithCredentialRetry(client, agent.identifier, integration._id, subscriberId));
   const deepLinkQr = await renderQR(subscriberLink.deepLinkUrl);
   ui.showTelegramTest({
     deepLinkQr,
@@ -150,4 +159,32 @@ export async function connectTelegramForAgent(
   });
 
   return { connected: true, integration };
+}
+
+async function issueSubscriberLinkWithCredentialRetry(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  integrationId: string,
+  subscriberId: string
+): Promise<TelegramSubscriberLinkResult> {
+  const deadline = Date.now() + TELEGRAM_CREDENTIAL_PROPAGATION_TIMEOUT_MS;
+
+  while (true) {
+    try {
+      return await issueTelegramSubscriberLink(client, agentIdentifier, integrationId, subscriberId);
+    } catch (err) {
+      if (!isMissingBotTokenError(err) || Date.now() >= deadline) {
+        throw err;
+      }
+
+      await sleep(TELEGRAM_CREDENTIAL_PROPAGATION_INTERVAL_MS);
+    }
+  }
+}
+
+function isMissingBotTokenError(err: unknown): boolean {
+  if (!(err instanceof NovuApiError)) return false;
+  if (err.status !== 422) return false;
+
+  return /bot token is missing/i.test(err.message);
 }

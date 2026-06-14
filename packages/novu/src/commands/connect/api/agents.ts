@@ -145,14 +145,25 @@ export async function listAgentIntegrations(
   return Array.isArray(body) ? body : (body.data ?? []);
 }
 
+export interface SendAgentWelcomeMessageResult {
+  sent: boolean;
+  conversationId?: string;
+  /** Present only for keyless sessions — opaque token for building the claim/sign-up link. */
+  claimToken?: string;
+}
+
 export async function sendAgentWelcomeMessage(
   client: ConnectApiClient,
   agentIdentifier: string,
   integrationIdentifier: string
-): Promise<void> {
-  await client.axios.post(`/v1/agents/${encodeURIComponent(agentIdentifier)}/welcome-message`, {
-    integrationIdentifier,
-  });
+): Promise<SendAgentWelcomeMessageResult> {
+  const res = await client.axios.post<{ data?: SendAgentWelcomeMessageResult } | SendAgentWelcomeMessageResult>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/welcome-message`,
+    { integrationIdentifier }
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as SendAgentWelcomeMessageResult);
 }
 
 // ---- Telegram --------------------------------------------------------------

@@ -257,6 +257,8 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         environmentSlug: result.environmentSlug,
         connectedChannel: result.connectedChannel,
         dashboardRedirectChannel: result.dashboardRedirectChannel,
+        isKeyless: result.isKeyless,
+        claimUrl: result.claimUrl,
       });
     },
     failure(message) {

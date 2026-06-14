@@ -351,7 +351,7 @@ export class AgentIntegrationsController {
     @UserSession() user: UserSessionData,
     @Param('identifier') identifier: string,
     @Body() body: SendAgentWelcomeMessageRequestDto
-  ): Promise<{ sent: boolean; conversationId?: string }> {
+  ): Promise<{ sent: boolean; conversationId?: string; claimToken?: string }> {
     return this.sendAgentWelcomeMessageUsecase.execute(
       SendAgentWelcomeMessageCommand.create({
         userId: user._id,

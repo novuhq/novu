@@ -11,7 +11,7 @@ import { type ConnectApiClient, createConnectApiClient, NovuApiError } from '../
 import { deleteIntegration, type IntegrationRecord } from '../api/integrations';
 import { upsertSubscriber } from '../api/subscribers';
 import { type ResolvedConnectAuth, resolveConnectAuth } from '../auth/resolve-connect-auth';
-import { buildConnectAgentDetailsUrl, channelDisplayName } from '../dashboard-urls';
+import { buildConnectAgentDetailsUrl, buildConnectClaimUrl, channelDisplayName } from '../dashboard-urls';
 import { ConnectChannelBackError } from '../errors';
 import type { AgentSummary, ChannelChoice, ConnectCommandOptions } from '../types';
 import type { ConnectUI } from '../ui/ui';
@@ -196,15 +196,26 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       }
     }
 
+    let claimToken: string | null = null;
+
     if (channelConnected && connectedIntegration) {
       ui.sendingWelcome();
       try {
-        await sendAgentWelcomeMessage(client, agent.identifier, connectedIntegration.identifier);
+        const welcome = await sendAgentWelcomeMessage(client, agent.identifier, connectedIntegration.identifier);
+        claimToken = welcome.claimToken ?? null;
         track(CONNECT_EVENTS.WELCOME_SENT, { agent: agent.identifier, ...sessionProps });
       } catch (err) {
         ui.failure(`Could not send the welcome message: ${describeError(err)}`);
       }
     }
+
+    const claimUrl =
+      auth.isKeyless && claimToken
+        ? buildConnectClaimUrl({
+            connectDashboardUrl: options.connectDashboardUrl.replace(/\/$/, ''),
+            token: claimToken,
+          })
+        : null;
 
     ui.success({
       agent,
@@ -213,6 +224,8 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       environmentSlug: auth.environmentSlug ?? null,
       connectedChannel,
       dashboardRedirectChannel,
+      isKeyless: auth.isKeyless,
+      claimUrl,
     });
 
     track(CONNECT_EVENTS.COMPLETED, {

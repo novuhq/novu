@@ -80,6 +80,7 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
 
   Slack:
     NOVU_CONNECT_SLACK_SETUP_URL=<url>
+    NOVU_CONNECT_SLACK_CONFIG_TOKEN_SAVED=1
     NOVU_CONNECT_SLACK_AUTHORIZE_URL=<url>
 
   Email:

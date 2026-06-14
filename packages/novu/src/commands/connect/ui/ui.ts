@@ -163,6 +163,8 @@ export interface ConnectUI {
     environmentSlug: string | null;
     connectedChannel: ChannelChoice | null;
     dashboardRedirectChannel: ChannelChoice | null;
+    isKeyless: boolean;
+    claimUrl: string | null;
   }): void;
   failure(message: string): void;
 

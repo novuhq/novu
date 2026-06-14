@@ -57,6 +57,10 @@ export function logSlackSetupLinkHandoffEvent(opts: { setupUrl: string }): void 
   console.log(`${HANDOFF_PREFIX}SLACK_SETUP_URL=${opts.setupUrl}`);
 }
 
+export function logSlackConfigTokenSavedHandoffEvent(): void {
+  console.log(`${HANDOFF_PREFIX}SLACK_CONFIG_TOKEN_SAVED=1`);
+}
+
 export function logTelegramDeepLinkHandoffEvents(opts: { deepLinkUrl: string; botUsername: string }): void {
   console.log(`${HANDOFF_PREFIX}TELEGRAM_DEEPLINK_URL=${opts.deepLinkUrl}`);
   console.log(`${HANDOFF_PREFIX}TELEGRAM_BOT_USERNAME=${opts.botUsername}`);

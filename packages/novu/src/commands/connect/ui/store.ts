@@ -122,6 +122,8 @@ export type Phase =
       connectedChannel: ChannelChoice | null;
       /** Channel the user picked that continues in the Connect dashboard instead of the CLI. */
       dashboardRedirectChannel: ChannelChoice | null;
+      isKeyless: boolean;
+      claimUrl: string | null;
     }
   | { kind: 'error'; message: string };
 

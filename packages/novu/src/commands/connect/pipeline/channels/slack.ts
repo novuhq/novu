@@ -11,11 +11,22 @@ import {
   slackQuickSetup,
 } from '../../api/integrations';
 import type { AgentSummary, ConnectCommandOptions } from '../../types';
+import { logSlackConfigTokenSavedHandoffEvent } from '../../ui/handoff-events';
 import type { ConnectUI } from '../../ui/ui';
 import { ensureAgentIntegrationLinked, resolveIntegrationForAgent } from '../integration-helpers';
-import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil } from '../poll-until';
+import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil, sleep } from '../poll-until';
 
 const SLACK_PROVIDER_ID = 'slack';
+
+/**
+ * After the secure setup page saves the App Configuration Token, the server
+ * creates the Slack app and persists its OAuth credentials. Those credentials
+ * can take a moment to become readable, so the OAuth URL build is retried over
+ * this window before giving up — re-issuing a fresh setup link instead would
+ * strand any agent that's already waiting for the authorize URL handoff.
+ */
+const SLACK_CREDENTIAL_PROPAGATION_TIMEOUT_MS = 30_000;
+const SLACK_CREDENTIAL_PROPAGATION_INTERVAL_MS = 2_000;
 
 export async function connectSlackForAgent(
   client: ConnectApiClient,
@@ -99,20 +110,30 @@ async function getAuthorizeUrlWithQuickSetupFallback(
   } catch (err) {
     if (!isMissingSlackCredentialsError(err)) throw err;
 
-    await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: false });
+    await runSlackQuickSetup(client, agent, slackIntegration, ui, options);
 
+    // The token was saved and the Slack app created, so the credentials exist —
+    // retry the URL build until they become readable rather than re-issuing a
+    // setup link (which would leave a waiting agent hanging on the authorize
+    // URL it never receives).
+    const authorizeUrl = await buildAuthorizeUrlWithCredentialRetry(buildUrl);
+
+    return { authorizeUrl, appCreated: true };
+  }
+}
+
+async function buildAuthorizeUrlWithCredentialRetry(buildUrl: () => Promise<string>): Promise<string> {
+  const deadline = Date.now() + SLACK_CREDENTIAL_PROPAGATION_TIMEOUT_MS;
+
+  while (true) {
     try {
-      const authorizeUrl = await buildUrl();
+      return await buildUrl();
+    } catch (err) {
+      if (!isMissingSlackCredentialsError(err) || Date.now() >= deadline) {
+        throw err;
+      }
 
-      return { authorizeUrl, appCreated: true };
-    } catch (retryErr) {
-      if (!isMissingSlackCredentialsError(retryErr)) throw retryErr;
-
-      await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: true });
-
-      const authorizeUrl = await buildUrl();
-
-      return { authorizeUrl, appCreated: true };
+      await sleep(SLACK_CREDENTIAL_PROPAGATION_INTERVAL_MS);
     }
   }
 }
@@ -122,8 +143,7 @@ async function runSlackQuickSetup(
   agent: AgentSummary,
   slackIntegration: IntegrationRecord,
   ui: ConnectUI,
-  options: ConnectCommandOptions,
-  _flags: { retry: boolean }
+  options: ConnectCommandOptions
 ): Promise<void> {
   const configToken = options.slackConfigToken?.trim();
 
@@ -162,6 +182,9 @@ async function runSlackQuickSetup(
     },
     { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
   );
+  if (tokenSaved) {
+    logSlackConfigTokenSavedHandoffEvent();
+  }
   if (!tokenSaved) {
     if (setupLinkFailure === 'expired') {
       throw new Error(

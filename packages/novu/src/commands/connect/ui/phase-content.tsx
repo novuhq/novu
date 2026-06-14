@@ -675,7 +675,15 @@ function SuccessView({
 }: {
   phase: Extract<ReturnType<ConnectStore['phase']['get']>, { kind: 'success' }>;
 }): React.ReactElement {
-  const { agent, connectDashboardUrl, environmentSlug, connectedChannel, dashboardRedirectChannel } = phase;
+  const {
+    agent,
+    connectDashboardUrl,
+    environmentSlug,
+    connectedChannel,
+    dashboardRedirectChannel,
+    isKeyless,
+    claimUrl,
+  } = phase;
   const agentUrl = environmentSlug
     ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
     : `${connectDashboardUrl}/connect/agents/${encodeURIComponent(agent.identifier)}`;
@@ -697,11 +705,36 @@ function SuccessView({
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
-        <Text>
-          <Text bold>Dashboard:</Text> {agentUrl}
-        </Text>
+        {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
       </Box>
     </Box>
+  );
+}
+
+function renderSuccessNextStep(input: {
+  isKeyless: boolean;
+  claimUrl: string | null;
+  agentUrl: string;
+}): React.ReactElement | null {
+  if (input.isKeyless) {
+    if (!input.claimUrl) {
+      return null;
+    }
+
+    return (
+      <>
+        <Text>
+          <Text bold>Claim your agent:</Text> {input.claimUrl}
+        </Text>
+        <Text dimColor>Sign up to move your agent and conversation into your own account.</Text>
+      </>
+    );
+  }
+
+  return (
+    <Text>
+      <Text bold>Dashboard:</Text> {input.agentUrl}
+    </Text>
   );
 }
 
