@@ -227,6 +227,84 @@ describe('WebexMessagingProvider', () => {
     );
   });
 
+  it('rejects passthrough that adds another destination to a room message', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: { roomId: 'room-id' },
+          },
+        },
+        {
+          _passthrough: {
+            body: { toPersonEmail: 'user@example.com' },
+          },
+        }
+      )
+    ).rejects.toThrow('Webex messages require exactly one destination');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it.each([null, 123, ''])(
+    'rejects passthrough with invalid secondary destination value: %s',
+    async (toPersonEmail) => {
+      vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+      const provider = new WebexMessagingProvider({ token: 'token' });
+
+      await expect(
+        provider.sendMessage(
+          {
+            content: 'Hello',
+            channelData: {
+              type: ENDPOINT_TYPES.WEBEX_ROOM,
+              identifier: 'room',
+              endpoint: { roomId: 'room-id' },
+            },
+          },
+          {
+            _passthrough: {
+              body: { toPersonEmail },
+            },
+          }
+        )
+      ).rejects.toThrow('Webex messages require exactly one destination');
+      expect(post).not.toHaveBeenCalled();
+    }
+  );
+
+  it('rejects passthrough that removes the message destination', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: { roomId: 'room-id' },
+          },
+        },
+        {
+          _passthrough: {
+            body: { roomId: undefined },
+          },
+        }
+      )
+    ).rejects.toThrow('Webex messages require exactly one destination');
+    expect(post).not.toHaveBeenCalled();
+  });
+
   it('requires channel data', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
@@ -235,6 +313,27 @@ describe('WebexMessagingProvider', () => {
     await expect(provider.sendMessage({ content: 'Hello' }, {})).rejects.toThrow(
       'Webex Messaging channel data is required'
     );
+  });
+
+  it('requires roomId for room messages', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: {} as never,
+          },
+        },
+        {}
+      )
+    ).rejects.toThrow('Webex room messages require roomId');
+    expect(post).not.toHaveBeenCalled();
   });
 
   it('rejects unsupported channel data types', async () => {
@@ -276,6 +375,27 @@ describe('WebexMessagingProvider', () => {
         {}
       )
     ).rejects.toThrow('Webex person messages require personId or personEmail');
+  });
+
+  it('rejects direct messages with both personId and personEmail', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_PERSON,
+            identifier: 'person',
+            endpoint: { personId: 'person-id', personEmail: 'user@example.com' },
+          },
+        },
+        {}
+      )
+    ).rejects.toThrow('Webex person messages require either personId or personEmail, not both');
+    expect(post).not.toHaveBeenCalled();
   });
 
   it('requires an access token', async () => {

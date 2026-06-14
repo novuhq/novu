@@ -8,5 +8,6 @@ export * from './rocket-chat/rocket-chat.provider';
 export * from './ryver/ryver.provider';
 export * from './slack/slack.provider';
 export * from './telegram/telegram.provider';
+export * from './webex-messaging/webex-messaging.provider';
 export * from './whatsapp-business/whatsapp-business.provider';
 export * from './zulip/zulip.provider';
