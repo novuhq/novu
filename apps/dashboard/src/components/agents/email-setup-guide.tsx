@@ -94,6 +94,7 @@ export function EmailSetupGuide({
   const sharedInboundAddress = integrationLink?.integration?.sharedInboundAddress;
   const sharedInboxDisabled = Boolean(integrationLink?.integration?.sharedInboxDisabled);
   const hasSharedInbox = Boolean(sharedInboundAddress) && !sharedInboxDisabled;
+  const isManagedAgent = agent.runtime === 'managed';
 
   const testEmailMutation = useMutation({
     mutationFn: async () => {
@@ -229,21 +230,27 @@ export function EmailSetupGuide({
         index={testStepIndex}
         status={deriveStepStatus(testStepIndex, firstIncompleteStep)}
         title="Test connection"
-        description="Send an email to the inbound address and verify it reaches your agent handler."
+        description={
+          isManagedAgent
+            ? 'Send an email to the inbound address above. We will detect when it arrives.'
+            : 'Send an email to the inbound address and verify it reaches your agent handler.'
+        }
         rightContent={
-          <SetupButton
-            leadingIcon={
-              testEmailMutation.isPending ? (
-                <RiLoader4Line className="size-3.5 animate-spin" />
-              ) : (
-                <RiMailSendLine className="size-3.5" />
-              )
-            }
-            disabled={firstIncompleteStep < testStepIndex || testEmailMutation.isPending}
-            onClick={() => testEmailMutation.mutate()}
-          >
-            {testEmailMutation.isPending ? 'Sending...' : 'Send test email'}
-          </SetupButton>
+          isManagedAgent ? undefined : (
+            <SetupButton
+              leadingIcon={
+                testEmailMutation.isPending ? (
+                  <RiLoader4Line className="size-3.5 animate-spin" />
+                ) : (
+                  <RiMailSendLine className="size-3.5" />
+                )
+              }
+              disabled={firstIncompleteStep < testStepIndex || testEmailMutation.isPending}
+              onClick={() => testEmailMutation.mutate()}
+            >
+              {testEmailMutation.isPending ? 'Sending...' : 'Send test email'}
+            </SetupButton>
+          )
         }
       />
     </>
@@ -258,7 +265,11 @@ export function EmailSetupGuide({
         onStepsCompleted?.();
       }}
       connectedMessage="Your email integration is connected. This agent is ready to receive emails."
-      listeningMessage="Send a test email to verify the inbound pipeline reaches your agent."
+      listeningMessage={
+        isManagedAgent
+          ? 'Waiting for your email — send a message to the inbound address above.'
+          : 'Send a test email to verify the inbound pipeline reaches your agent.'
+      }
     />
   );
 
