@@ -1,0 +1,330 @@
+import axios from 'axios';
+import { ChatProviderIdEnum } from '@novu/shared';
+import { ChannelTypeEnum, ENDPOINT_TYPES } from '@novu/stateless';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { WebexMessagingProvider } from './webex-messaging.provider';
+
+vi.mock('axios');
+
+describe('WebexMessagingProvider', () => {
+  const post = vi.fn();
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  it('identifies as a Webex chat provider', () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    expect(provider.id).toBe(ChatProviderIdEnum.WebexMessaging);
+    expect(provider.channelType).toBe(ChannelTypeEnum.CHAT);
+  });
+
+  it('uses the default Webex API base URL', () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    new WebexMessagingProvider({ token: 'token' });
+
+    expect(axios.create).toHaveBeenCalledWith({
+      baseURL: 'https://webexapis.com/v1',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  });
+
+  it('normalizes a custom Webex API base URL', () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    new WebexMessagingProvider({ token: 'token', baseUrl: 'https://webexapis.com/custom/' });
+
+    expect(axios.create).toHaveBeenCalledWith({
+      baseURL: 'https://webexapis.com/custom',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  });
+
+  it('sends a room message', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+    post.mockResolvedValue({
+      data: {
+        id: 'message-id',
+        created: '2026-06-14T00:00:00.000Z',
+      },
+    });
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    const result = await provider.sendMessage(
+      {
+        content: 'Build finished',
+        channelData: {
+          type: ENDPOINT_TYPES.WEBEX_ROOM,
+          identifier: 'build-room',
+          endpoint: { roomId: 'room-id' },
+        },
+      },
+      {}
+    );
+
+    expect(post).toHaveBeenCalledWith(
+      '/messages',
+      {
+        roomId: 'room-id',
+        text: 'Build finished',
+      },
+      {
+        headers: {
+          Authorization: 'Bearer token',
+        },
+      }
+    );
+    expect(result).toEqual({
+      id: 'message-id',
+      date: '2026-06-14T00:00:00.000Z',
+    });
+  });
+
+  it('sends a threaded room message when parentId is present', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+    post.mockResolvedValue({ data: { id: 'message-id' } });
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await provider.sendMessage(
+      {
+        content: 'Thread reply',
+        channelData: {
+          type: ENDPOINT_TYPES.WEBEX_ROOM,
+          identifier: 'build-room',
+          endpoint: { roomId: 'room-id', parentId: 'parent-id' },
+        },
+      },
+      {}
+    );
+
+    expect(post).toHaveBeenCalledWith(
+      '/messages',
+      {
+        roomId: 'room-id',
+        parentId: 'parent-id',
+        text: 'Thread reply',
+      },
+      {
+        headers: {
+          Authorization: 'Bearer token',
+        },
+      }
+    );
+  });
+
+  it('sends a direct message by person email', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+    post.mockResolvedValue({ data: { id: 'message-id' } });
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await provider.sendMessage(
+      {
+        content: 'Hello',
+        channelData: {
+          type: ENDPOINT_TYPES.WEBEX_PERSON,
+          identifier: 'person',
+          endpoint: { personEmail: 'user@example.com' },
+        },
+      },
+      {}
+    );
+
+    expect(post).toHaveBeenCalledWith(
+      '/messages',
+      {
+        toPersonEmail: 'user@example.com',
+        text: 'Hello',
+      },
+      {
+        headers: {
+          Authorization: 'Bearer token',
+        },
+      }
+    );
+  });
+
+  it('sends a direct message by person id', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+    post.mockResolvedValue({ data: { id: 'message-id' } });
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await provider.sendMessage(
+      {
+        content: 'Hello by id',
+        channelData: {
+          type: ENDPOINT_TYPES.WEBEX_PERSON,
+          identifier: 'person',
+          endpoint: { personId: 'person-id' },
+        },
+      },
+      {}
+    );
+
+    expect(post).toHaveBeenCalledWith(
+      '/messages',
+      {
+        toPersonId: 'person-id',
+        text: 'Hello by id',
+      },
+      {
+        headers: {
+          Authorization: 'Bearer token',
+        },
+      }
+    );
+  });
+
+  it('merges Webex passthrough fields into the payload', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+    post.mockResolvedValue({ data: { id: 'message-id' } });
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await provider.sendMessage(
+      {
+        content: 'Build finished',
+        channelData: {
+          type: ENDPOINT_TYPES.WEBEX_ROOM,
+          identifier: 'room',
+          endpoint: { roomId: 'room-id' },
+        },
+      },
+      {
+        _passthrough: {
+          body: {
+            markdown: '**Build finished**',
+            files: ['https://example.com/build.txt'],
+          },
+        },
+      }
+    );
+
+    expect(post).toHaveBeenCalledWith(
+      '/messages',
+      {
+        roomId: 'room-id',
+        text: 'Build finished',
+        markdown: '**Build finished**',
+        files: ['https://example.com/build.txt'],
+      },
+      {
+        headers: {
+          Authorization: 'Bearer token',
+        },
+      }
+    );
+  });
+
+  it('requires channel data', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(provider.sendMessage({ content: 'Hello' }, {})).rejects.toThrow(
+      'Webex Messaging channel data is required'
+    );
+  });
+
+  it('rejects unsupported channel data types', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBHOOK,
+            identifier: 'webhook',
+            endpoint: { url: 'https://example.com/webhook' },
+          },
+        },
+        {}
+      )
+    ).rejects.toThrow('Invalid channel data type for Webex Messaging provider: webhook');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('requires personId or personEmail for direct messages', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_PERSON,
+            identifier: 'person',
+            endpoint: {} as never,
+          },
+        },
+        {}
+      )
+    ).rejects.toThrow('Webex person messages require personId or personEmail');
+  });
+
+  it('requires an access token', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+
+    const provider = new WebexMessagingProvider();
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: { roomId: 'room-id' },
+          },
+        },
+        {}
+      )
+    ).rejects.toThrow('Webex Messaging access token is required');
+  });
+
+  it('maps Webex 429 errors with retry context', async () => {
+    vi.mocked(axios.create).mockReturnValue({ post } as never);
+    const rateLimitError = {
+      isAxiosError: true,
+      response: {
+        status: 429,
+        headers: { 'retry-after': '30' },
+        data: { message: 'Rate limit exceeded' },
+      },
+    };
+    post.mockRejectedValue(rateLimitError);
+    vi.mocked(axios.isAxiosError).mockImplementation((error) => error === rateLimitError);
+
+    const provider = new WebexMessagingProvider({ token: 'token' });
+
+    await expect(
+      provider.sendMessage(
+        {
+          content: 'Hello',
+          channelData: {
+            type: ENDPOINT_TYPES.WEBEX_ROOM,
+            identifier: 'room',
+            endpoint: { roomId: 'room-id' },
+          },
+        },
+        {}
+      )
+    ).rejects.toThrow('WEBEX_RATE_LIMITED: retry after 30 seconds');
+  });
+});
