@@ -11,6 +11,7 @@ import { SubscribersService, UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { initNovuClassSdk } from '../../shared/helpers/e2e/sdk/e2e-sdk.helper';
 import { pollForJobStatusChange } from './utils/poll-for-job-status-change.util';
+import { sleep } from './utils/sleep.util';
 
 describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #novu-v2', () => {
   let session: UserSession;
@@ -1016,13 +1017,22 @@ describe('Trigger event - Digest triggered events - /v1/events/trigger (POST) #n
 
     await session.waitForWorkflowQueueCompletion();
     await session.waitForSubscriberQueueCompletion();
-    await session.waitForStandardQueueCompletion();
 
-    const jobs = await jobRepository.find({
+    const digestQuery = {
       _environmentId: session.environment._id,
       _templateId: template._id,
       type: StepTypeEnum.DIGEST,
-    });
+    };
+
+    const startTime = Date.now();
+    let jobs = await jobRepository.find(digestQuery);
+    while (
+      (jobs.length !== 10 || jobs.some((job) => job.status === JobStatusEnum.PENDING)) &&
+      Date.now() - startTime < 10000
+    ) {
+      await sleep(100);
+      jobs = await jobRepository.find(digestQuery);
+    }
 
     expect(jobs && jobs.length).to.eql(10);
 
