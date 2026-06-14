@@ -110,15 +110,28 @@ async function getAuthorizeUrlWithQuickSetupFallback(
   } catch (err) {
     if (!isMissingSlackCredentialsError(err)) throw err;
 
-    await runSlackQuickSetup(client, agent, slackIntegration, ui, options);
+    await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: false });
 
     // The token was saved and the Slack app created, so the credentials exist —
     // retry the URL build until they become readable rather than re-issuing a
     // setup link (which would leave a waiting agent hanging on the authorize
     // URL it never receives).
-    const authorizeUrl = await buildAuthorizeUrlWithCredentialRetry(buildUrl);
+    try {
+      const authorizeUrl = await buildAuthorizeUrlWithCredentialRetry(buildUrl);
 
-    return { authorizeUrl, appCreated: true };
+      return { authorizeUrl, appCreated: true };
+    } catch (retryErr) {
+      if (!isMissingSlackCredentialsError(retryErr)) throw retryErr;
+
+      // Credentials never became readable within the window — the saved token was
+      // likely invalid, so re-run quick setup (re-prompting where interactive)
+      // before one final attempt.
+      await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: true });
+
+      const authorizeUrl = await buildAuthorizeUrlWithCredentialRetry(buildUrl);
+
+      return { authorizeUrl, appCreated: true };
+    }
   }
 }
 
@@ -143,15 +156,26 @@ async function runSlackQuickSetup(
   agent: AgentSummary,
   slackIntegration: IntegrationRecord,
   ui: ConnectUI,
-  options: ConnectCommandOptions
+  options: ConnectCommandOptions,
+  flags: { retry: boolean }
 ): Promise<void> {
   const configToken = options.slackConfigToken?.trim();
 
   if (configToken) {
-    // Optional escape hatch for headless CI: the caller supplies the token directly.
     ui.runningSlackQuickSetup();
     await slackQuickSetup(client, slackIntegration._id, {
       configToken,
+      agentId: agent.id,
+    });
+
+    return;
+  }
+
+  if (ui.interactive) {
+    const token = await ui.promptForSlackConfigToken({ retry: flags.retry });
+    ui.runningSlackQuickSetup();
+    await slackQuickSetup(client, slackIntegration._id, {
+      configToken: token,
       agentId: agent.id,
     });
 

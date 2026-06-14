@@ -60,10 +60,6 @@ export type Phase =
       resolve: (token: string) => void;
       reject: (reason: Error) => void;
     }
-  | {
-      kind: 'slack-setup-link';
-      setupUrl: string;
-    }
   | { kind: 'running-slack-quick-setup' }
   | {
       kind: 'slack-oauth-ready';
@@ -97,6 +93,10 @@ export type Phase =
       /** Pre-rendered ASCII QR for `t.me/botfather`. */
       botfatherQr: string;
       resolve: () => void;
+    }
+  | {
+      kind: 'pick-telegram-token-delivery';
+      resolve: (delivery: 'setup-page' | 'terminal') => void;
     }
   | {
       kind: 'telegram-link-token';

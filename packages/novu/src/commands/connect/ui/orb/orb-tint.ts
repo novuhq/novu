@@ -62,13 +62,13 @@ export function computeOrbTint(
       return hoveredChannel ? CHANNEL_TINTS[hoveredChannel] : DEFAULT_ORB_COLOR;
     case 'adding-slack':
     case 'paste-slack-token':
-    case 'slack-setup-link':
     case 'running-slack-quick-setup':
     case 'slack-oauth-ready':
     case 'waiting-slack':
       return CHANNEL_TINTS.slack;
     case 'adding-telegram':
     case 'telegram-intro':
+    case 'pick-telegram-token-delivery':
     case 'telegram-link-token':
     case 'telegram-test':
       return CHANNEL_TINTS.telegram;
@@ -106,13 +106,13 @@ export function computeOrbLabel(
       return hoveredChannel ? CHANNEL_LABELS[hoveredChannel] : undefined;
     case 'adding-slack':
     case 'paste-slack-token':
-    case 'slack-setup-link':
     case 'running-slack-quick-setup':
     case 'slack-oauth-ready':
     case 'waiting-slack':
       return CHANNEL_LABELS.slack;
     case 'adding-telegram':
     case 'telegram-intro':
+    case 'pick-telegram-token-delivery':
     case 'telegram-link-token':
     case 'telegram-test':
       return CHANNEL_LABELS.telegram;

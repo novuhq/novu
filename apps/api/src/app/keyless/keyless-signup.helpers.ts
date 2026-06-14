@@ -33,9 +33,15 @@ export function buildKeylessWelcomeCard(welcomeText: string, claimUrl: string): 
         content: 'This is a free demo — sign up anytime to keep this agent and your conversation.',
       },
       {
-        type: 'link',
-        label: 'Sign up free',
-        url: claimUrl,
+        type: 'actions',
+        children: [
+          {
+            type: 'link-button',
+            label: 'Sign up free',
+            url: claimUrl,
+            style: 'primary',
+          },
+        ],
       },
     ],
   };

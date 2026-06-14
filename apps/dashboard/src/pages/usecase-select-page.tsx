@@ -270,16 +270,14 @@ function InboxFeatureList() {
 
 const USECASE_OPTIONS = [
   {
-    id: 'agents' as const,
-    title: 'Set up agents wherever your users are',
-    description:
-      'Agent communication infrastructure for your users. Connect your agents to Slack, Teams, WhatsApp and more.',
+    id: 'inbox' as const,
+    title: 'Implement notifications for your product',
+    description: 'Notification infrastructure. Embed <Inbox /> and send transactional notifications with workflows.',
   },
   {
-    id: 'inbox' as const,
-    title: 'Implement notifications for your platform',
-    description:
-      "Notification infrastructure for your product's users. Embed <Inbox /> and send transactional notifications with workflows.",
+    id: 'agents' as const,
+    title: 'Connect your agent',
+    description: 'Agent communication infrastructure. Connect your agents to Slack, Teams, WhatsApp and more.',
   },
 ] as const;
 
@@ -417,7 +415,7 @@ function UsecaseSelector({ selected, onSelect }: { selected: UsecaseId; onSelect
 export function UsecaseSelectPage() {
   const isAgentsEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_CONVERSATIONAL_AGENTS_ENABLED, false);
   const telemetry = useTelemetry();
-  const [selected, setSelected] = useState<UsecaseId>('agents');
+  const [selected, setSelected] = useState<UsecaseId>('inbox');
   const provisioningActive = useOnboardingProvisioningActive();
 
   useOnboardingProvisioningDismiss({
