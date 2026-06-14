@@ -68,7 +68,7 @@ export function PrebuiltPromptBanner() {
                 : 'linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 100%), linear-gradient(90deg, #0e121b 0%, #0e121b 100%)',
             }}
           >
-            <span className="px-1">{copied ? 'Copied!' : 'Copy prompt'}</span>
+            <span className="px-1">{copied ? 'Copied - paste in your project' : 'Copy prompt'}</span>
           </button>
         </div>
       </div>
