@@ -526,7 +526,7 @@ export class McpOAuthCallback {
       );
     }
 
-    if (stateData.toolUseId && stateData.conversationId) {
+    if (stateData.toolUseId && stateData.conversationId && stateData.platform && stateData.platformThreadId) {
       await this.resumeSessionAfterConnect(stateData, connection);
     }
   }
@@ -559,8 +559,8 @@ export class McpOAuthCallback {
       toolUseId: stateData.toolUseId!,
       content: 'OK',
       followUpMessage: `${stateData.mcpId ?? 'Integration'} is now connected and ready. Resume the user's original request. Use the available tools directly. Do not output any preamble or mention the connection — go straight to action.`,
-      platform: (stateData.platform as AgentPlatformEnum) ?? AgentPlatformEnum.SLACK,
-      platformThreadId: stateData.platformThreadId ?? '',
+      platform: stateData.platform as AgentPlatformEnum,
+      platformThreadId: stateData.platformThreadId!,
       suppressReply: true,
     });
   }
