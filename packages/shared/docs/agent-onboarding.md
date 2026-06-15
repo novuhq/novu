@@ -12,12 +12,14 @@ Your job, end to end: collect a couple of inputs, infer the agent's purpose from
 
 | Mode | When to use | CLI flag |
 |---|---|---|
-| **Keyless** (default) | User is trying Novu from their codebase with no explicit dashboard signal | Omit `--login` and `--secret-key` — temporary agent; user claims via in-channel sign-up link |
-| **Authenticated** | User came from the Novu dashboard, is already signed in, mentions an existing account, or asks to log in | **`--login`** — dashboard OAuth; agent is created in their Development environment |
+| **Keyless** (default) | User is trying Novu from their codebase with no explicit dashboard signal | **`--keyless`** — temporary agent; user claims via in-channel sign-up link |
+| **Dashboard OAuth** | User came from the Novu dashboard, is already signed in, mentions an existing account, or asks to log in | Omit `--keyless` and `--secret-key` — dashboard OAuth (the CLI default); agent is created in their Development environment |
 
-**Default to keyless** — omit `--login` and `--secret-key` unless one of the authenticated triggers below applies. Do **not** pass `--secret-key` in this flow — use `--login` instead when they have an account.
+**Default to keyless** — always pass **`--keyless`** unless one of the dashboard-signal triggers below applies. Do **not** pass `--secret-key` in this flow — use dashboard OAuth (omit `--keyless`) instead when they have an account.
 
-**Dashboard prompt rule (mandatory):** If the user's prompt contains the sentence **"I'm signed in to the Novu dashboard"** (or otherwise states they came from the Novu dashboard), you **MUST** pass `--login`. Never run keyless in that case.
+> The CLI's own default (no flag) is dashboard OAuth. This guided flow deliberately overrides that by passing `--keyless` for anonymous users; you only omit `--keyless` when a dashboard signal applies.
+
+**Dashboard prompt rule (mandatory):** If the user's prompt contains the sentence **"I'm signed in to the Novu dashboard"** (or otherwise states they came from the Novu dashboard), you **MUST** use dashboard OAuth — omit `--keyless`. Never pass `--keyless` in that case.
 
 ---
 
@@ -29,9 +31,9 @@ These govern every step. When in doubt, follow these over any specific instructi
 - **Trust user intent; ask only when genuinely unclear.** Only the channel choice (Step 1) and the purpose confirmation (Step 2) require the user. Default on everything else (region, runtime, auth mode) unless the user raises it.
 - **Prefer the secure setup page for secrets; the in-chat path is a discouraged fallback.** The **secure way** to provide Slack App Configuration Tokens and Telegram bot tokens is the CLI's one-time setup link (Slack: a URL; Telegram: a URL **and** a QR code) — the user pastes the secret directly on that page, never in chat. Always offer this first and recommend it. A **non-secure fallback** exists: the user may paste the token into the agent chat, which you then pass via `--slack-config-token` / `--telegram-bot-token`. Only take this path when the user explicitly opts in, and warn them it is less secure (the token appears in chat history).
 - **Confirm before you act.** Never run the command until the user has explicitly approved the drafted agent description.
-- **One Connect shell, no log watchers.** Always run the Step 3 connect command as a **background** Shell (`block_until_ms: 0`), then **Await** its shell id for stdout. **Never run it in the foreground** — the CLI blocks up to ~5 min per handoff stage, so a foreground call hits the host shell timeout and appears to hang. Use a single Shell session only. Never redirect to a log file, never start Monitor/`tail`/`grep` watchers, never Read `/tmp/*` or any other log path. **Never use timers** (`ScheduleWakeup`, `sleep`, or "check back in N minutes") to wait for handoffs — **Await** the Connect shell continuously until the next `NOVU_CONNECT_*` sentinel or `✓ Your agent is live` appears. The only exception: `--channel skip` without `--login` may run in the foreground.
-- **The CLI validates handoffs.** For dashboard OAuth (`--login`), `slack`/`email`/`telegram`, that Shell blocks and polls until the handoff completes. Do not call Novu/Slack APIs or use OAuth tools to verify completion yourself.
-- **WhatsApp / MS Teams in keyless mode never reach the CLI.** If the user picks one and you are **not** using `--login`, do **not** run connect — redirect them to the Novu dashboard instead (Step 1). With **`--login`**, the CLI creates the agent and hands off a dashboard URL to finish channel setup.
+- **One Connect shell, no log watchers.** Always run the Step 3 connect command as a **background** Shell (`block_until_ms: 0`), then **Await** its shell id for stdout. **Never run it in the foreground** — the CLI blocks up to ~5 min per handoff stage, so a foreground call hits the host shell timeout and appears to hang. Use a single Shell session only. Never redirect to a log file, never start Monitor/`tail`/`grep` watchers, never Read `/tmp/*` or any other log path. **Never use timers** (`ScheduleWakeup`, `sleep`, or "check back in N minutes") to wait for handoffs — **Await** the Connect shell continuously until the next `NOVU_CONNECT_*` sentinel or `✓ Your agent is live` appears. The only exception: `--channel skip` in keyless mode may run in the foreground.
+- **The CLI validates handoffs.** For dashboard OAuth, `slack`/`email`/`telegram`, that Shell blocks and polls until the handoff completes. Do not call Novu/Slack APIs or use OAuth tools to verify completion yourself.
+- **WhatsApp / MS Teams in keyless mode never reach the CLI.** If the user picks one and you are using **`--keyless`** (the default), do **not** run connect — redirect them to the Novu dashboard instead (Step 1). With **dashboard OAuth** (omit `--keyless`), the CLI creates the agent and hands off a dashboard URL to finish channel setup.
 - **Report conclusion-first.** Lead with the CLI's result (live / failed), then the one action the user must take. Keep it terse.
 - **Use the option picker for decisions.** When the user must choose between fixed options, call the structured question tool — never ask decision questions as plain chat text. See [User decisions (option picker)](#user-decisions-option-picker).
 
@@ -56,8 +58,8 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 | Term | Meaning |
 |---|---|
-| **Dashboard OAuth** | The `--login` auth path. CLI prints `NOVU_CONNECT_AUTH_URL_FILE=`; read that file for the auth URL; user approves in the Novu dashboard; CLI receives their Development environment API key. |
-| **Keyless mode** | No `--login`, no `--secret-key`. Creates a temporary agent with no Novu account. |
+| **Keyless mode** | The default for this flow — pass `--keyless` (no `--secret-key`). Creates a temporary agent with no Novu account. |
+| **Dashboard OAuth** | The dashboard-signal auth path — omit `--keyless`. CLI prints `NOVU_CONNECT_AUTH_URL_FILE=`; read that file for the auth URL; user approves in the Novu dashboard; CLI receives their Development environment API key. |
 | **Demo runtime** | Default — shared Claude runtime. In keyless mode, limited to ~5 free replies. |
 | **Handoff** | The channel-specific user action (authorize link, send email, or dashboard URL) that finishes connecting the channel. |
 | **Dashboard redirect** | Keyless-only WhatsApp / MS Teams path: no agent is created in the CLI — user continues in the dashboard. |
@@ -69,10 +71,10 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 ## Flow overview
 
-1. **Channel** — ask which channel. Keyless + WhatsApp / MS Teams → dashboard redirect only (Steps 2–5 skipped). Authenticated (`--login`) supports all channels.
+1. **Channel** — ask which channel. Keyless + WhatsApp / MS Teams → dashboard redirect only (Steps 2–5 skipped). Dashboard OAuth supports all channels.
 2. **Purpose** — infer a 1–2 sentence agent description **for the product's end users** from the project; confirm with the user.
-3. **Run** — connect command from Step 3 (`--ci`, plus `--login` only when authenticated), streamed.
-4. **Handoff** — dashboard OAuth first when using `--login` (`NOVU_CONNECT_AUTH_URL_FILE=`), then channel-specific next steps. For Slack/Telegram, present the inline secure-page-vs-paste-in-chat token choice only when the token is actually needed. Let the CLI poll.
+3. **Run** — connect command from Step 3 (`--ci`, plus `--keyless` for the default keyless mode), streamed.
+4. **Handoff** — dashboard OAuth first when omitting `--keyless` (`NOVU_CONNECT_AUTH_URL_FILE=`), then channel-specific next steps. For Slack/Telegram, present the inline secure-page-vs-paste-in-chat token choice only when the token is actually needed. Let the CLI poll.
 5. **Report** — relay the CLI's success or error, give a 1–2 sentence recap of what onboarding set up, and point the user to the next step. Keyless: explain demo limit → claim link. Authenticated: report agent identifier + dashboard URL.
 
 ---
@@ -88,11 +90,11 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 | `slack` | Slack | **Recommended (secure):** open the setup link the CLI prints and paste a Slack App Configuration Token there, then click an OAuth link to approve the install. **Non-secure fallback:** paste the token in chat instead and you pass it via `--slack-config-token`. |
 | `email` | Email | Nothing up front. The CLI prints an inbound email address; the user sends one email to it. |
 | `telegram` | Telegram | Create a bot via @BotFather. **Recommended (secure):** open the setup link/QR the CLI prints and paste the token there. **Non-secure fallback:** paste the token in chat instead and you pass it via `--telegram-bot-token`. Then tap **Start** on the bot in Telegram. |
-| `dashboard` | WhatsApp / MS Teams | **Keyless:** sign in to the Novu dashboard and continue there (no CLI run). **Authenticated (`--login`):** CLI creates the agent, then opens the dashboard to finish channel setup. |
+| `dashboard` | WhatsApp / MS Teams | **Keyless (`--keyless`, default):** sign in to the Novu dashboard and continue there (no CLI run). **Dashboard OAuth (omit `--keyless`):** CLI creates the agent, then opens the dashboard to finish channel setup. |
 
-**If they pick `dashboard` and you are using keyless (no `--login`):** stop — do **not** run connect and do **not** generate an agent. Give the user the dashboard URL — **<https://dashboard.novu.co>** (or <https://eu.dashboard.novu.co> if they asked for the EU region) — and tell them to **sign in (or sign up) and continue the onboarding from the dashboard**. Steps 2–5 do not apply.
+**If they pick `dashboard` and you are using keyless (`--keyless`, the default):** stop — do **not** run connect and do **not** generate an agent. Give the user the dashboard URL — **<https://dashboard.novu.co>** (or <https://eu.dashboard.novu.co> if they asked for the EU region) — and tell them to **sign in (or sign up) and continue the onboarding from the dashboard**. Steps 2–5 do not apply.
 
-**If they pick `dashboard` and you are using `--login`:** ask WhatsApp or MS Teams if unclear; use `--channel whatsapp` or `--channel teams` in Step 3.
+**If they pick `dashboard` and you are using dashboard OAuth (omit `--keyless`):** ask WhatsApp or MS Teams if unclear; use `--channel whatsapp` or `--channel teams` in Step 3.
 
 **If they ask to skip** (via the picker's built-in "Other" free-text, or plain chat): proceed with `--channel skip`.
 
@@ -100,7 +102,7 @@ When the user must pick from a **fixed set** of options (channel, approve/reject
 
 - **slack / telegram** → collect **nothing** up front. Default Step 3 to the **secure path** (omit token flags). Token-delivery choice is **inline in Step 4**.
 - **email / skip** → no extra input up front.
-- **dashboard (WhatsApp / MS Teams)** → keyless: flow ends with dashboard redirect; authenticated: `--channel whatsapp` or `--channel teams`.
+- **dashboard (WhatsApp / MS Teams)** → keyless (default): flow ends with dashboard redirect; dashboard OAuth: `--channel whatsapp` or `--channel teams`.
 
 **Runtime:** always use the **demo runtime** — do not ask for an Anthropic API key and do not pass `--runtime` or `--anthropic-api-key`.
 
@@ -170,43 +172,43 @@ If they pick **edit**, ask for their revised text in chat (not the picker), upda
 
 ## Step 3 — Run connect (non-interactive)
 
-**Goal:** authenticate (when using `--login`), create the agent, and start the channel connection in one Connect shell.
+**Goal:** create the agent (keyless by default) and start the channel connection in one Connect shell.
 
 Substitute the channel the user picked. Run the command **exactly as written** — no `>`, `tee`, or log file.
 
 Set the agent description in an environment variable first — do **not** paste user-provided prose directly into a double-quoted shell argument (command substitution would execute inside `"…"`).
 
-**Authenticated (user has Novu account — include `--login`):**
+**Keyless (default — pass `--keyless`):**
 
 ```bash
 export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 
 npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
-  --login \
-  --channel <slack|email|telegram|whatsapp|teams|skip>
-```
-
-**Keyless (no account — omit `--login` and `--secret-key`):**
-
-```bash
-export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
-
-npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
-  --ci \
+  --keyless \
   --channel <slack|email|telegram|skip>
 ```
 
-Never pass `--channel whatsapp` or `--channel teams` in keyless mode — those require `--login`.
-
-**Canonical example (authenticated, slack):**
+**Dashboard OAuth (dashboard signal — omit `--keyless`):**
 
 ```bash
 export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
 
 npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
-  --login \
+  --channel <slack|email|telegram|whatsapp|teams|skip>
+```
+
+Never pass `--channel whatsapp` or `--channel teams` with `--keyless` — those require dashboard OAuth (omit `--keyless`).
+
+**Canonical example (keyless, slack):**
+
+```bash
+export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
+
+npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
+  --ci \
+  --keyless \
   --channel slack
 ```
 
@@ -216,19 +218,19 @@ Always start the Connect command as a **background** Shell (`block_until_ms: 0`)
 
 Then follow the path that matches your flags:
 
-- **If using `--login`:** **Await** `NOVU_CONNECT_AUTH_URL_FILE=` on the background shell id, **Read** that file for the auth URL, deliver the URL to the user, then **Await** channel handoff markers and success on the same shell id.
+- **If using dashboard OAuth (omitting `--keyless`):** **Await** `NOVU_CONNECT_AUTH_URL_FILE=` on the background shell id, **Read** that file for the auth URL, deliver the URL to the user, then **Await** channel handoff markers and success on the same shell id.
 - **If channel is `slack`, `email`, or `telegram`:** **Await** on that shell id (e.g. `NOVU_CONNECT_SLACK_SETUP_URL=`, `NOVU_CONNECT_INBOUND_ADDRESS=`, etc.). **Await** until `✓ Your agent is live` or `✗`. Do not use Monitor, `tail -f`, `grep`, Read on log files.
-- **If channel is `whatsapp` or `teams` (authenticated only):** **Await** auth URL, then dashboard agent URL or success on the same shell id.
-- **If channel is `skip` without `--login`:** foreground Shell is allowed — the only exception to the background rule above.
+- **If channel is `whatsapp` or `teams` (dashboard OAuth only):** **Await** auth URL, then dashboard agent URL or success on the same shell id.
+- **If channel is `skip` in keyless mode:** foreground Shell is allowed — the only exception to the background rule above.
 
 Conditional flags:
 
-- **`--login`:** required when the dashboard prompt rule applies, or the user has a Novu account / asks to log in. Ignores `NOVU_SECRET_KEY`. Cannot combine with `--secret-key`.
+- **`--keyless`:** the default for this flow — pass it for anonymous users. Omit it only when a dashboard signal applies (dashboard OAuth). Cannot combine with `--secret-key`.
 - **Prefer secure setup links** over `--slack-config-token` / `--telegram-bot-token` on the first run.
 - **Runtime:** do not pass `--runtime` or `--anthropic-api-key` — demo runtime is always used.
 - **Region:** pass `--region eu` only when the user explicitly asks; otherwise default is **US** Novu Cloud.
 
-**Example — Step 4 Slack re-run (`in_chat` path, authenticated):**
+**Example — Step 4 Slack re-run (`in_chat` path, keyless default):**
 
 ```bash
 export NOVU_AGENT_DESCRIPTION='<confirmed agent description>'
@@ -236,10 +238,12 @@ export SLACK_CONFIG_TOKEN='<xoxe.xoxp-...>'
 
 npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
   --ci \
-  --login \
+  --keyless \
   --channel slack \
   --slack-config-token "$SLACK_CONFIG_TOKEN"
 ```
+
+(Drop `--keyless` on the re-run if the original run used dashboard OAuth.)
 
 **Safe retry — Slack only:** silently re-run once on `Failed to create Slack app: …` before reporting.
 
@@ -251,9 +255,9 @@ npx novu@latest connect "$NOVU_AGENT_DESCRIPTION" \
 
 **Always paste the literal URL — never a placeholder.** Every handoff link must be the full resolved value from the matching `NOVU_CONNECT_*` line. **Await** the pattern before sending any handoff message.
 
-### Dashboard OAuth (when using `--login`)
+### Dashboard OAuth (when omitting `--keyless`)
 
-Every `--login` run prints:
+Every dashboard OAuth run prints:
 
 ```text
 NOVU_CONNECT_AUTH_URL_FILE=<absolute path>
@@ -391,7 +395,7 @@ Adapt the recap to what actually happened (drop the MCP clause when no integrati
 | `Slack OAuth was not completed within … seconds` | Re-run the same command. |
 | `We didn't see your email at … within …s` | Re-run after they send the email. |
 | Telegram token / `/start` timeouts | Re-run the same command. |
-| `Keyless environment creation is currently disabled` | Wrong API/region, or use `--login` / `--secret-key` for an existing account. |
+| `Keyless environment creation is currently disabled` | Wrong API/region, or omit `--keyless` and use dashboard OAuth / `--secret-key` for an existing account. |
 
 ---
 
@@ -403,21 +407,21 @@ Run `novu@latest connect --help` for the full contract. Keep help text in sync w
 |---|---|
 | `connect "<description>"` | Positional agent description (required in `--ci`). |
 | `--ci` | Non-interactive mode (required). |
-| `--login` | Dashboard OAuth — use when the user has a Novu account or the dashboard prompt rule applies. |
+| `--keyless` | Temporary demo agent with no Novu account — **the default for this guided flow.** |
 | `--region <us\|eu>` | Target Novu Cloud region (default: `us`). |
-| `--channel <slack\|email\|telegram\|whatsapp\|teams\|skip>` | Channel to connect. `whatsapp`/`teams` require `--login`. |
+| `--channel <slack\|email\|telegram\|whatsapp\|teams\|skip>` | Channel to connect. `whatsapp`/`teams` require dashboard OAuth (omit `--keyless`). |
 | `--slack-config-token` / `--telegram-bot-token` | Non-secure CI escape hatches when user opts in. |
-| *(omit both)* | Keyless mode — temporary agent, no account. Do not pass `--secret-key` in this guided flow. |
+| *(omit `--keyless`)* | Dashboard OAuth — the CLI's own default; use only when a dashboard signal applies. Agent created in the user's Development environment. Do not pass `--secret-key` in this guided flow. |
 
 ---
 
 ## Limitations to keep in mind
 
 - **One run = one new agent + one channel.** Re-running creates another agent.
-- **Channel support is uneven headlessly:** `slack` and `telegram` need two user actions after auth; `email` one; `whatsapp`/`teams` need `--login` and finish in the dashboard.
+- **Channel support is uneven headlessly:** `slack` and `telegram` need two user actions after auth; `email` one; `whatsapp`/`teams` need dashboard OAuth and finish in the dashboard.
 - **Prefer secure setup pages for Slack/Telegram tokens.**
 - **Keyless data is temporary** until claimed via the in-channel sign-up link.
-- **`--login` ignores `NOVU_SECRET_KEY`** — dashboard OAuth always wins when the flag is set.
+- **Keyless is the default for this flow** — always pass `--keyless` unless a dashboard signal applies (then omit it for dashboard OAuth).
 
 ---
 
@@ -428,7 +432,7 @@ Run `novu@latest connect --help` for the full contract. Keep help text in sync w
 You are done when:
 
 1. The user picked a channel and confirmed the agent description.
-2. Dashboard OAuth completed (when using `--login`), or keyless bootstrap succeeded.
+2. Keyless bootstrap succeeded (default, with `--keyless`), or dashboard OAuth completed (when omitting `--keyless`).
 3. You delivered channel handoffs (or noted `skip` / whatsapp-teams dashboard URL).
 4. Connect shell printed `✓ Your agent is live.` (exit `0`); CLI poll validated handoffs where applicable.
 5. You reported agent identifier + next step (claim link for keyless, dashboard URL for authenticated), gave a brief recap of what onboarding set up, and explained how the user can keep going.
