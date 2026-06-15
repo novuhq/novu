@@ -9,8 +9,6 @@ import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/p
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
 import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
-import { HandleManagedAgentSetupInbound } from './setup/handle-managed-agent-setup-inbound.usecase';
-import { ManagedAgentSetupInboundCommand } from './setup/managed-agent-setup-inbound.command';
 import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
 import { ConfirmToolApprovalCommand } from './tool-approval/confirm-tool-approval.command';
 import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.usecase';
@@ -19,7 +17,6 @@ import { ConfirmToolApproval } from './tool-approval/confirm-tool-approval.useca
 export class ManagedRuntime implements AgentRuntime {
   constructor(
     private readonly managedAgentService: ManagedAgentService,
-    private readonly handleManagedAgentSetupInbound: HandleManagedAgentSetupInbound,
     private readonly confirmToolApproval: ConfirmToolApproval,
     private readonly outboundGateway: OutboundGateway,
     private readonly conversationService: AgentConversationService,
@@ -45,26 +42,6 @@ export class ManagedRuntime implements AgentRuntime {
       await this.replyUnresolvedSubscriberAccess(turn);
 
       return;
-    }
-
-    if (turn.message?.id) {
-      const parked = await this.handleManagedAgentSetupInbound.execute(
-        ManagedAgentSetupInboundCommand.create({
-          userId: turn.config.organizationId,
-          environmentId: turn.config.environmentId,
-          organizationId: turn.config.organizationId,
-          conversationId: turn.conversation._id,
-          agentId: turn.agent._id,
-          subscriberId: turn.subscriber.subscriberId,
-          agentIdentifier: turn.config.agentIdentifier,
-          integrationIdentifier: turn.config.integrationIdentifier,
-          platformMessageId: turn.message.id,
-        })
-      );
-
-      if (parked) {
-        return;
-      }
     }
 
     try {

@@ -37,11 +37,13 @@ export interface ProviderManagedRedirectState {
   externalVaultId: string;
   /** Optional Anthropic workspace id; falls back to the default workspace. */
   externalWorkspaceId?: string;
-  /**
-   * Conversation that originated the setup card. Round-tripped so the redirect
-   * handler can drive `CompleteManagedAgentSetup` and replay the parked turn.
-   */
   conversationId?: string;
+  /** custom_tool_use ID — set when the redirect originated from novu_tools. */
+  toolUseId?: string;
+  agentIdentifier?: string;
+  integrationIdentifier?: string;
+  platform?: string;
+  platformThreadId?: string;
   /** Issuance timestamp; verified against `PROVIDER_MANAGED_REDIRECT_TTL_MS`. */
   timestamp: number;
 }
