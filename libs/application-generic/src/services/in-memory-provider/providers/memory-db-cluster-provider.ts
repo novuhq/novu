@@ -91,10 +91,13 @@ export const getMemoryDbClusterProviderConfig = (): IMemoryDbClusterProviderConf
 export const getMemoryDbCluster = (enableAutoPipelining?: boolean): Cluster | undefined => {
   const { instances, password, username, tls, connectTimeout } = getMemoryDbClusterProviderConfig();
 
+  const skipVersionCheck = process.env.REDIS_SKIP_VERSION_CHECK === 'true';
+
   const redisOptions: any = {
     maxRetriesPerRequest: null,
     tls,
     connectTimeout,
+    skipVersionCheck,
   };
 
   if (username && password) {
