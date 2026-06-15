@@ -58,7 +58,7 @@
     "emailjs": "^4.0.3",
     "expo-server-sdk": "^3.6.0",
     "firebase-admin": "^13.3.0",
-    "form-data": "^4.0.5",
+    "form-data": "^4.0.6",
     "mailersend": "^2.6.0",
     "mailgun.js": "^8.0.1",
     "mailtrap": "^3.1.1",
