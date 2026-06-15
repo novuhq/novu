@@ -6,9 +6,9 @@ export type ClaimKeylessConnectResponse = {
 };
 
 export async function claimKeylessConnect(token: string): Promise<ClaimKeylessConnectResponse> {
-  const response = await post<{ data: ClaimKeylessConnectResponse } | ClaimKeylessConnectResponse>('/connect/claim', {
+  const response = await post<{ data: ClaimKeylessConnectResponse }>('/connect/claim', {
     body: { token },
   });
 
-  return 'data' in response ? response.data : response;
+  return response.data;
 }
