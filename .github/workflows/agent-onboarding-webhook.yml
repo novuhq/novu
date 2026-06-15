@@ -22,21 +22,21 @@ jobs:
     steps:
       - name: Send webhook to Cursor automation
         env:
-          CURSOR_WEBHOOK_URL: ${{ secrets.CURSOR_WEBHOOK_URL }}
-          CURSOR_WEBHOOK_TOKEN: ${{ secrets.CURSOR_WEBHOOK_TOKEN }}
+          CURSOR_AGENT_ONBOARDING_WEBHOOK_URL: ${{ secrets.CURSOR_AGENT_ONBOARDING_WEBHOOK_URL }}
+          CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN: ${{ secrets.CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN }}
           REPOSITORY: ${{ github.repository }}
           REF: ${{ github.ref }}
           SHA: ${{ github.sha }}
           ACTOR: ${{ github.actor }}
           CHANGED_FILE: packages/shared/docs/agent-onboarding.md
         run: |
-          if [ -z "$CURSOR_WEBHOOK_URL" ]; then
-            echo "::error::CURSOR_WEBHOOK_URL secret is not set"
+          if [ -z "$CURSOR_AGENT_ONBOARDING_WEBHOOK_URL" ]; then
+            echo "::error::CURSOR_AGENT_ONBOARDING_WEBHOOK_URL secret is not set"
             exit 1
           fi
 
-          if [ -z "$CURSOR_WEBHOOK_TOKEN" ]; then
-            echo "::error::CURSOR_WEBHOOK_TOKEN secret is not set"
+          if [ -z "$CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN" ]; then
+            echo "::error::CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN secret is not set"
             exit 1
           fi
 
@@ -53,9 +53,9 @@ jobs:
             --max-time 30 \
             --retry 3 --retry-connrefused --retry-all-errors \
             --output /dev/null --write-out "%{http_code}" \
-            --request POST "$CURSOR_WEBHOOK_URL" \
+            --request POST "$CURSOR_AGENT_ONBOARDING_WEBHOOK_URL" \
             --header "Content-Type: application/json" \
-            --header "Authorization: Bearer $CURSOR_WEBHOOK_TOKEN" \
+            --header "Authorization: Bearer $CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN" \
             --data "$payload")
 
           echo "Webhook responded with HTTP $http_code"
