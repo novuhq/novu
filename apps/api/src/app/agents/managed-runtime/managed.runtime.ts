@@ -41,13 +41,15 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    if (!turn.subscriber) {
+    // Keyless demo agents bypass the subscriber gate: the ephemeral env has no
+    // subscribers, and abuse is bounded by the per-conversation demo cap + claim CTA.
+    if (!turn.subscriber && !turn.config.isKeyless) {
       await this.replyUnresolvedSubscriberAccess(turn);
 
       return;
     }
 
-    if (turn.message?.id) {
+    if (turn.message?.id && turn.subscriber) {
       const parked = await this.handleManagedAgentSetupInbound.execute(
         ManagedAgentSetupInboundCommand.create({
           userId: turn.config.organizationId,

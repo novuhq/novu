@@ -62,6 +62,7 @@ describe('AgentInboundHandler', () => {
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
+      countAgentMessages: sinon.stub().resolves(0),
     };
     const bridgeExecutor = {
       execute: overrides.bridgeError ? sinon.stub().rejects(overrides.bridgeError) : sinon.stub().resolves(undefined),
@@ -70,7 +71,7 @@ describe('AgentInboundHandler', () => {
       findBySubscriberId: overrides.subscriberFindById ?? sinon.stub(),
     };
     const managedAgentService = {
-      dispatch: sinon.stub().resolves(undefined),
+      dispatch: sinon.stub().resolves({ status: 'active' }),
     };
     const handleManagedAgentSetupInbound = {
       execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
@@ -96,6 +97,7 @@ describe('AgentInboundHandler', () => {
     };
     const inboundAck = {
       showWorkingSignal: sinon.stub().resolves(undefined),
+      showQueuedSignal: sinon.stub().resolves(undefined),
     };
     const bridgeRuntime = new BridgeRuntime(
       bridgeExecutor as any,
@@ -448,6 +450,29 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
+    });
+
+    it('should dispatch keyless managed agent even when subscriber is unresolved (email)', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+        isManaged: true,
+      };
+      const senderEmail = 'tester@example.com';
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
     });
   });
 
