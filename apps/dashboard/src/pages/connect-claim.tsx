@@ -4,7 +4,7 @@ import { EnvironmentTypeEnum } from '@novu/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { RiCheckLine, RiLoader4Line } from 'react-icons/ri';
 import { Navigate, useNavigate, useSearchParams } from 'react-router-dom';
-import { claimKeylessConnect } from '@/api/connect';
+import { type ClaimKeylessConnectResponse, claimKeylessConnect } from '@/api/connect';
 import { AuthLayout } from '@/components/auth-layout';
 import { PageMeta } from '@/components/page-meta';
 import { Button } from '@/components/primitives/button';
@@ -21,7 +21,7 @@ import {
   readPendingConnectClaim,
   storePendingConnectClaim,
 } from '@/utils/connect-claim-pending';
-import { ROUTES } from '@/utils/routes';
+import { AGENT_DETAILS_DEFAULT_TAB, buildRoute, ROUTES } from '@/utils/routes';
 
 const CLAIM_FAILED_MESSAGE = 'Unable to claim this agent. Please try again or reopen the link from your chat.';
 const ENV_READY_TIMEOUT_MS = 60_000;
@@ -63,14 +63,14 @@ export const ConnectClaimPage = () => {
   );
 };
 
-function hasClaimableDevelopmentEnvironment(environments?: IEnvironment[]): boolean {
+function getClaimableDevelopmentEnvironment(environments?: IEnvironment[]): IEnvironment | undefined {
   if (!environments?.length) {
-    return false;
+    return undefined;
   }
 
-  return Boolean(
+  return (
     environments.find((env) => env.type === EnvironmentTypeEnum.DEV && !env._parentId) ??
-      environments.find((env) => !env._parentId)
+    environments.find((env) => !env._parentId)
   );
 }
 
@@ -87,7 +87,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
   });
 
   useEffect(() => {
-    if (hasClaimableDevelopmentEnvironment(environments)) {
+    if (getClaimableDevelopmentEnvironment(environments)) {
       setIsEnvironmentReady(true);
       setEnvironmentSetupError(null);
     }
@@ -110,6 +110,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
   }, [isEnvironmentReady, environmentSetupError]);
   const [isClaiming, setIsClaiming] = useState(false);
   const [didClaim, setDidClaim] = useState(false);
+  const [claimResult, setClaimResult] = useState<ClaimKeylessConnectResponse | null>(null);
   const [claimError, setClaimError] = useState<string | null>(null);
   const hasAttemptedRef = useRef(false);
 
@@ -124,8 +125,9 @@ function ConnectClaimContent({ token }: { token: string | null }) {
     setIsClaiming(true);
     setClaimError(null);
     try {
-      await claimKeylessConnect(token);
+      const result = await claimKeylessConnect(token);
       clearPendingConnectClaim();
+      setClaimResult(result);
       setDidClaim(true);
     } catch (error) {
       console.error('Connect claim failed', error);
@@ -141,6 +143,33 @@ function ConnectClaimContent({ token }: { token: string | null }) {
     setClaimError(null);
     void handleClaim();
   };
+
+  const handleVisitDashboard = useCallback(() => {
+    const devEnvironment =
+      environments?.find((env) => env._id === claimResult?.environmentId) ??
+      getClaimableDevelopmentEnvironment(environments);
+    const environmentSlug = devEnvironment?.slug;
+
+    if (!environmentSlug) {
+      navigate(ROUTES.ROOT);
+
+      return;
+    }
+
+    if (claimResult?.agentIdentifier) {
+      navigate(
+        buildRoute(ROUTES.AGENT_DETAILS_TAB, {
+          environmentSlug,
+          agentIdentifier: encodeURIComponent(claimResult.agentIdentifier),
+          agentTab: AGENT_DETAILS_DEFAULT_TAB,
+        })
+      );
+
+      return;
+    }
+
+    navigate(buildRoute(ROUTES.AGENTS, { environmentSlug }));
+  }, [claimResult, environments, navigate]);
 
   const reason = tokenOk ? null : 'This page must be opened from the link in your chat.';
   const setupError = environmentSetupError;
@@ -202,7 +231,7 @@ function ConnectClaimContent({ token }: { token: string | null }) {
                 mode="ghost"
                 size="xs"
                 className="w-full"
-                onClick={() => navigate(ROUTES.ROOT)}
+                onClick={handleVisitDashboard}
               >
                 Visit Dashboard
               </Button>

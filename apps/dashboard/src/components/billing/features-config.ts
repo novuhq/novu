@@ -37,6 +37,14 @@ export const FEATURE_SECTIONS: FeatureSectionConfig[] = [
     ],
   },
   {
+    title: 'Agents',
+    features: [
+      FeatureNameEnum.AGENT_MAX_AGENTS,
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CHANNELS,
+      FeatureNameEnum.AGENT_MAX_CUSTOM_EMAIL_DOMAINS,
+    ],
+  },
+  {
     title: 'Retention',
     features: [
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,

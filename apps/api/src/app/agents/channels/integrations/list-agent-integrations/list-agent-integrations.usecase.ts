@@ -1,5 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
-import { InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import {
+  AgentEntitlementsService,
+  InstrumentUsecase,
+  isChannelOverPlanLimit,
+  PinoLogger,
+} from '@novu/application-generic';
 import { AgentIntegrationRepository, AgentRepository, IntegrationEntity, IntegrationRepository } from '@novu/dal';
 import { DirectionEnum, EmailProviderIdEnum } from '@novu/shared';
 
@@ -13,6 +18,7 @@ export class ListAgentIntegrations {
     private readonly agentRepository: AgentRepository,
     private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
+    private readonly agentEntitlementsService: AgentEntitlementsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -112,6 +118,11 @@ export class ListAgentIntegrations {
       );
     }
 
+    const channelUsage = await this.agentEntitlementsService.getChannelPlanUsage(
+      command.organizationId,
+      command.environmentId
+    );
+
     const data = pagination.links.reduce<ListAgentIntegrationsResponseDto['data']>((acc, link) => {
       const integration = idToIntegration.get(link._integrationId);
 
@@ -124,7 +135,16 @@ export class ListAgentIntegrations {
         return acc;
       }
 
-      acc.push(toAgentIntegrationResponse(link, integration, agent));
+      const exceedsPlanLimit = isChannelOverPlanLimit(channelUsage, {
+        integrationId: link._integrationId,
+        connected: Boolean(link.connectedAt),
+      });
+
+      acc.push({
+        ...toAgentIntegrationResponse(link, integration, agent),
+        // `undefined` drops at JSON serialization, keeping the flag presence-only.
+        exceedsPlanLimit: exceedsPlanLimit || undefined,
+      });
 
       return acc;
     }, []);
@@ -135,6 +155,7 @@ export class ListAgentIntegrations {
       previous: pagination.previous,
       totalCount: pagination.totalCount,
       totalCountCapped: pagination.totalCountCapped,
+      planUsage: { used: channelUsage.used, limit: channelUsage.limit },
     };
   }
 }

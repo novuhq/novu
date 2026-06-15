@@ -127,12 +127,14 @@ export class SyncAgentToEnvironment {
         });
       }
 
-      await this.agentIntegrationRepository.create({
-        _agentId: targetAgent._id,
-        _integrationId: stubIntegration._id,
-        connectedAt: null,
-        _environmentId: targetEnvironmentId,
-        _organizationId: organizationId,
+      // Revives a tombstoned (disconnected) target link when one exists for this
+      // pair — a plain create would violate the unique (_agentId, _integrationId)
+      // index. Both paths leave connectedAt as null.
+      await this.agentIntegrationRepository.createOrReviveLink({
+        agentId: targetAgent._id,
+        integrationId: stubIntegration._id,
+        environmentId: targetEnvironmentId,
+        organizationId,
       });
     }
 

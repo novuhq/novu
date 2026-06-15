@@ -127,6 +127,16 @@ export default defineConfig(({ mode }) => {
     optimizeDeps: {
       include: ['@novu/api'],
     },
+    esbuild: {
+      // Workaround for https://github.com/evanw/esbuild/issues/4436
+      // esbuild 0.27.7+ treats Safari <14.1 / iOS <14.5 as not supporting
+      // destructuring (due to a JS engine bug) but cannot lower destructuring,
+      // so it errors instead of generating fallback code. Vite 7.3.3+ applies
+      // this same workaround automatically; backport here while we're on Vite 6.
+      supported: {
+        destructuring: true,
+      },
+    },
     build: {
       sourcemap: true,
       chunkSizeWarningLimit: 12000,

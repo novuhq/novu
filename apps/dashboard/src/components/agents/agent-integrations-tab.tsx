@@ -1,6 +1,6 @@
 import { ChannelTypeEnum, type IIntegration, providers as novuProviders, PermissionsEnum } from '@novu/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type ReactNode, useEffect, useMemo } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { RiAddLine, RiArrowRightSLine, RiErrorWarningFill } from 'react-icons/ri';
 import { useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -16,6 +16,7 @@ import { ProviderIcon } from '@/components/integrations/components/provider-icon
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/primitives/tooltip';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useAgentRoutes } from '@/hooks/use-agent-routes';
 import { useHasPermission } from '@/hooks/use-has-permission';
@@ -24,7 +25,10 @@ import { buildRoute } from '@/utils/routes';
 import { TelemetryEvent } from '@/utils/telemetry';
 import { cn } from '@/utils/ui';
 import { ResolveAgentIntegrationGuide } from './agent-integration-guides/resolve-agent-integration-guide';
+import { ChannelsPlanLimitBanner } from './agents-plan-limit-banner';
+import { getExceedsPlanTooltipCopy } from './exceeds-plan-indicator';
 import { isAgentIntegrationConnected } from './is-agent-integration-connected';
+import { ChannelLimitUpgradeDialog } from './plan-limit-upgrade-dialog';
 import { ProviderDropdown } from './provider-dropdown';
 
 type AgentIntegrationsTabProps = {
@@ -260,6 +264,28 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
   });
 
   const linkedRows = listQuery.data?.data;
+  const planUsage = listQuery.data?.planUsage;
+  const isOverChannelLimit = Boolean(planUsage && planUsage.used > planUsage.limit);
+  const isAtChannelLimit = Boolean(planUsage && planUsage.used >= planUsage.limit);
+
+  const [providerDropdownOpen, setProviderDropdownOpen] = useState(false);
+  const [channelLimitDialogOpen, setChannelLimitDialogOpen] = useState(false);
+  const [channelLimitAcknowledged, setChannelLimitAcknowledged] = useState(false);
+
+  const handleProviderDropdownOpenChange = (next: boolean) => {
+    if (next && isAtChannelLimit && !channelLimitAcknowledged) {
+      setChannelLimitDialogOpen(true);
+
+      return;
+    }
+
+    setProviderDropdownOpen(next);
+  };
+
+  const handleChannelLimitContinue = () => {
+    setChannelLimitAcknowledged(true);
+    setProviderDropdownOpen(true);
+  };
 
   useEffect(() => {
     if (integrationIdentifier != null) {
@@ -404,6 +430,12 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
     <div className="flex min-w-0 w-full flex-col gap-4 px-4 pt-4 pb-6 md:flex-row md:gap-6 md:px-6 md:pb-0">
       <aside className="w-full md:w-[300px] md:shrink-0">
         <div className="flex flex-col gap-2.5">
+          {/* When the agent itself is over the agent limit it won't respond on any
+              channel — the agent-level banner above already says so, and stacking
+              the channel-limit banner here would just be duplicate warning noise. */}
+          {isOverChannelLimit && planUsage && !agent.exceedsPlanLimit && (
+            <ChannelsPlanLimitBanner planUsage={planUsage} />
+          )}
           {readOnly && (
             <InlineToast
               variant="soft-warning"
@@ -447,11 +479,21 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                       const int = link.integration;
                       const providerMeta = novuProviders.find((p) => p.id === int.providerId);
                       const isSelected = integrationIdentifier === int.identifier;
-                      const showActionNeeded = !isAgentIntegrationConnected(link);
+                      const isConnected = isAgentIntegrationConnected(link);
+                      // Setup ("Action needed") takes precedence — the plan limit only
+                      // becomes the blocking issue once the channel is actually connected.
+                      const exceedsPlan = Boolean(link.exceedsPlanLimit) && isConnected;
+                      const showActionNeeded = !isConnected;
 
-                      const statusLabel = showActionNeeded ? 'Action needed' : 'Active';
+                      let statusLabel = 'Active';
 
-                      return (
+                      if (exceedsPlan) {
+                        statusLabel = 'Exceeds plan';
+                      } else if (showActionNeeded) {
+                        statusLabel = 'Action needed';
+                      }
+
+                      const row = (
                         <button
                           key={link._id}
                           type="button"
@@ -473,7 +515,10 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                             </span>
                           </span>
                           <span className="flex shrink-0 items-center gap-1" aria-hidden>
-                            {showActionNeeded ? (
+                            {exceedsPlan && (
+                              <span className="text-warning-base text-[10px] font-medium leading-4">Exceeds plan</span>
+                            )}
+                            {exceedsPlan || showActionNeeded ? (
                               <RiErrorWarningFill className="text-warning-base size-3 shrink-0" />
                             ) : (
                               <div className="bg-success-base size-1.5 shrink-0 rounded-full" />
@@ -481,6 +526,19 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                             <RiArrowRightSLine className="text-text-soft size-4 shrink-0" />
                           </span>
                         </button>
+                      );
+
+                      if (!exceedsPlan) {
+                        return row;
+                      }
+
+                      return (
+                        <Tooltip key={link._id}>
+                          <TooltipTrigger asChild>{row}</TooltipTrigger>
+                          <TooltipContent side="right" className="max-w-[260px]">
+                            {getExceedsPlanTooltipCopy('channel')}
+                          </TooltipContent>
+                        </Tooltip>
                       );
                     })}
                   </div>
@@ -495,6 +553,8 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
                     selectedIntegrationId={selectedIntegration?.integration._id}
                     linkedIntegrationIds={linkedIntegrationIdSet}
                     excludeLinked
+                    open={providerDropdownOpen}
+                    onOpenChange={handleProviderDropdownOpenChange}
                     onSelect={handleProviderDropdownSelect}
                     renderTrigger={({ isBusy }) => (
                       <button
@@ -525,6 +585,15 @@ export function AgentIntegrationsTab({ agent, integrationIdentifier }: AgentInte
       <div className="min-w-0 flex-1 mt-10 md:mt-0 border-t border-stroke-weak md:border-t-0 pt-4 md:pt-0">
         {mainPanel}
       </div>
+
+      {planUsage && (
+        <ChannelLimitUpgradeDialog
+          open={channelLimitDialogOpen}
+          onOpenChange={setChannelLimitDialogOpen}
+          planUsage={planUsage}
+          onContinueAnyway={handleChannelLimitContinue}
+        />
+      )}
     </div>
   );
 }

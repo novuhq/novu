@@ -3,6 +3,7 @@ import { createHash, PinoLogger } from '@novu/application-generic';
 import { EnvironmentRepository, McpConnectionRepository } from '@novu/dal';
 import { buildClaudePlatformVaultUrl, McpConnectionStatusEnum } from '@novu/shared';
 
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { ManagedAgentService } from '../../../managed-runtime/managed-agent.service';
 import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import {
@@ -54,7 +55,9 @@ export class CompleteProviderManagedRedirect {
       throw new NotFoundException('Environment for redirect state not found or has no API keys.');
     }
 
-    const isValidSignature = environment.apiKeys.some(({ key }) => createHash(key, rawPayload) === signature);
+    const isValidSignature = environment.apiKeys.some(({ key }) =>
+      areHexDigestsEqual(createHash(key, rawPayload), signature)
+    );
     if (!isValidSignature) {
       throw new BadRequestException('Provider-managed redirect signature mismatch.');
     }

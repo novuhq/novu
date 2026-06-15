@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { buildZip, createHash, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import axios, { AxiosError } from 'axios';
+import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import {
   AZURE_SETUP_OAUTH_SCOPES,
   AzureSetupStateData,
@@ -142,7 +143,7 @@ export class AzureSetupOauthCallback {
     try {
       const expectedSignature = createHash(signingKey, payload);
 
-      if (signature !== expectedSignature) {
+      if (!areHexDigestsEqual(expectedSignature, signature)) {
         throw new Error('Signature mismatch');
       }
 

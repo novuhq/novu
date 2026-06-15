@@ -1,7 +1,8 @@
 import { AgentRuntimeProviderIdEnum, type IIntegration } from '@novu/shared';
-import { motion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
 import type { ReactNode } from 'react';
 import { RiArrowRightSLine, RiCloseLine, RiInformation2Line, RiLoopLeftLine } from 'react-icons/ri';
+import { isDemoManagedClaudeIntegrationSelected } from '@/components/agents/connectors/claude-managed-integrations';
 import {
   ConnectorIntegrationDropdown,
   type ConnectorIntegrationStatus,
@@ -263,95 +264,221 @@ export function ConnectAgentForm({
   submitSlot,
   simplifiedDemo,
 }: ConnectAgentFormProps) {
-  if (simplifiedDemo && aiGeneration) {
-    return (
+  if (simplifiedDemo && (aiGeneration || isScratchRuntime)) {
+    const demoSelectedConnector = getConnectorById(connectorId);
+    const showDemoCredentialsSection =
+      isClaudeSelected && credentialsPanelVisible && Boolean(demoSelectedConnector?.providerId);
+    const isDemoCredentialSelected = isDemoManagedClaudeIntegrationSelected(integrations, selectedIntegrationId);
+    // Custom-code connectors carry no credential to set up, so picking one completes the step.
+    const isConnectorStepCompleted = isScratchRuntime || Boolean(selectedIntegrationId);
+
+    const demoConnectorStep = (
       <SetupStep
         index={1}
-        status="current"
-        title="What should your agent do?"
-        description="We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials."
+        status={isConnectorStepCompleted ? 'completed' : 'current'}
+        sectionLabel="2/7 SETUP AGENT BRAIN"
+        title="Choose your connector"
+        description="Your Connector is the LLM runtime where the agent is hosted and executed. Novu connects to your Connector to bring your agents to where you work"
         fullWidthContent={
-          <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
-            {aiGeneration.suggestions.length > 0 && (
-              <div className="flex min-w-0 items-center gap-2">
-                <span className="text-text-soft text-label-xs shrink-0 font-medium leading-4">Try:</span>
-                <AgentSuggestionPills
-                  className="min-w-0 flex-1"
-                  suggestions={aiGeneration.suggestions}
-                  onSelect={aiGeneration.onSelectSuggestion}
-                  disabled={disabled || (aiGeneration.isGenerating ?? false)}
-                  isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
-                />
-                {aiGeneration.onRegenerateSuggestions && (
-                  <Button
-                    aria-label="Regenerate suggestions"
-                    title="Regenerate suggestions"
-                    className="h-6 shrink-0 [&_svg]:size-2.5"
-                    variant="secondary"
-                    mode="ghost"
-                    size="2xs"
-                    trailingIcon={RiLoopLeftLine}
-                    disabled={
-                      disabled ||
-                      (aiGeneration.isGenerating ?? false) ||
-                      (aiGeneration.isRegeneratingSuggestions ?? false)
-                    }
-                    onClick={aiGeneration.onRegenerateSuggestions}
-                  />
-                )}
-              </div>
-            )}
-            {/*
-             * Keep the prompt + helper text mounted while generating — pass `isGenerating={false}`
-             * so `PromptInput` does not swap in its own cancel/status UI (we render those below the
-             * button instead) and keeps the helper text visible. `disabled` makes the textarea
-             * read-only during generation.
-             */}
-            <PromptInput
-              value={aiGeneration.prompt}
-              onChange={aiGeneration.onPromptChange}
-              disabled={disabled || (aiGeneration.isGenerating ?? false)}
-              errorMessage={aiGeneration.promptError}
-              textareaRef={aiGeneration.textareaRef}
-              helperText="Using Demo credentials for Claude Managed Agents for onboarding"
+          <div className="mt-1 flex w-full max-w-[500px] flex-col gap-2">
+            <ConnectorIntegrationDropdown
+              selectedConnectorId={connectorId}
+              selectedIntegrationId={selectedIntegrationId}
+              integrations={integrations}
+              status={dropdownStatus}
+              showStatusBadge={showSavedBadge}
+              disabled={disabled}
+              onSelectConnector={onConnectorChange}
+              onSelectIntegration={onSelectIntegration}
+              onRequestSetupCredentials={onRequestSetupCredentials}
             />
-            {/*
-             * Render the cancel/submit toggle as different element types (button vs a wrapping
-             * div) so React never reuses the same DOM <button> and silently flips its `type` from
-             * "button" to "submit" mid-click — which would let the browser submit the form on the
-             * very click that was meant to cancel, firing a brand-new generation request.
-             */}
-            {aiGeneration.isGenerating ? (
-              <Button
-                key="brain-step-cancel"
-                type="button"
-                variant="secondary"
-                mode="outline"
-                size="2xs"
-                className="mt-1 w-full justify-center gap-1"
-                onClick={aiGeneration.onCancelGeneration}
-                disabled={aiGeneration.isCancelDisabled}
-                trailingIcon={RiCloseLine}
-              >
-                Cancel
-              </Button>
-            ) : (
-              <div key="brain-step-submit" className="contents">
-                {submitSlot}
-              </div>
-            )}
-            {aiGeneration.isGenerating && aiGeneration.generationSteps && aiGeneration.generationSteps.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <GenerationStatus steps={aiGeneration.generationSteps} />
-              </motion.div>
-            )}
+            <p className="text-text-soft text-label-xs flex items-center gap-1 font-normal leading-4">
+              <RiInformation2Line className="size-3.5" aria-hidden /> The platform that hosts and runs your agent.
+            </p>
+            {showDemoCredentialsSection && demoSelectedConnector?.providerId ? (
+              <ConfigureCredentialsSection
+                providerId={demoSelectedConnector.providerId as AgentRuntimeProviderIdEnum}
+                providerLabel={demoSelectedConnector.providerLabel ?? 'Provider'}
+                integrationName={integrationName}
+                apiKey={apiKey}
+                externalWorkspaceId={externalWorkspaceId}
+                region={region}
+                errors={errors}
+                disabled={disabled}
+                status={verifyStatus}
+                statusMessage={verifyMessage}
+                isSaving={isSavingIntegration}
+                expanded={credentialsPanelExpanded}
+                onExpandedChange={onCredentialsExpandedChange}
+                onIntegrationNameChange={onIntegrationNameChange}
+                onApiKeyChange={onApiKeyChange}
+                onExternalWorkspaceIdChange={onExternalWorkspaceIdChange}
+                onRegionChange={onRegionChange}
+                onVerify={onVerify}
+                onSave={onSaveIntegration}
+              />
+            ) : null}
           </div>
         }
       />
+    );
+
+    // Custom-code (scratch) connectors keep the same stepped layout: the connector step stays in
+    // place and the prompt step swaps for the manual agent form. The created agent then follows
+    // the regular custom-code flow (channel selection + bridge setup).
+    if (isScratchRuntime || !aiGeneration) {
+      return (
+        <>
+          {demoConnectorStep}
+          <SetupStep
+            index={2}
+            status="current"
+            title="Configure your agent"
+            description="Give your agent a name, identifier, and description. Wire up your own tools, MCPs, and integrations in code."
+            fullWidthContent={
+              <div className="mt-5 flex max-w-[500px] flex-col gap-3">
+                <ScratchAgentFields
+                  name={name}
+                  identifier={identifier}
+                  instructions={instructions}
+                  errors={errors}
+                  isIdentifierTouched={isIdentifierTouched}
+                  isClaudeSelected={false}
+                  disabled={disabled}
+                  onNameChange={onNameChange}
+                  onIdentifierChange={onIdentifierChange}
+                  onIdentifierTouched={onIdentifierTouched}
+                  onInstructionsChange={onInstructionsChange}
+                />
+                {submitSlot}
+              </div>
+            }
+          />
+        </>
+      );
+    }
+
+    return (
+      <>
+        {demoConnectorStep}
+        <SetupStep
+          index={2}
+          status="current"
+          title="What should your agent do?"
+          description={
+            isDemoCredentialSelected
+              ? "We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials."
+              : 'Describe what your agent should do — we configure the tools, MCPs, skills, and system prompt for you.'
+          }
+          fullWidthContent={
+            <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
+              {aiGeneration.suggestions.length > 0 && (
+                <div className="flex min-w-0 items-center">
+                  <AnimatePresence initial={false}>
+                    {!aiGeneration.isRegeneratingSuggestions && (
+                      <motion.span
+                        key="try-label"
+                        initial={{ opacity: 0, maxWidth: 0, marginRight: 0 }}
+                        animate={{ opacity: 1, maxWidth: 36, marginRight: 8 }}
+                        exit={{ opacity: 0, maxWidth: 0, marginRight: 0 }}
+                        transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                        className="text-text-soft text-label-xs shrink-0 overflow-hidden font-medium leading-4 whitespace-nowrap"
+                      >
+                        Try:
+                      </motion.span>
+                    )}
+                  </AnimatePresence>
+                  <AgentSuggestionPills
+                    className="min-w-0 flex-1"
+                    suggestions={aiGeneration.suggestions}
+                    onSelect={aiGeneration.onSelectSuggestion}
+                    disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                    isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
+                  />
+                  {aiGeneration.onRegenerateSuggestions && (
+                    <AnimatePresence initial={false}>
+                      {!aiGeneration.isRegeneratingSuggestions && (
+                        <motion.div
+                          key="regenerate-suggestions"
+                          initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                          exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                          className="shrink-0 overflow-hidden"
+                        >
+                          <Button
+                            aria-label="Regenerate suggestions"
+                            title="Regenerate suggestions"
+                            className="h-6 shrink-0 [&_svg]:size-2.5"
+                            variant="secondary"
+                            mode="ghost"
+                            size="2xs"
+                            trailingIcon={RiLoopLeftLine}
+                            disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                            onClick={aiGeneration.onRegenerateSuggestions}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  )}
+                </div>
+              )}
+              {/*
+               * Keep the prompt + helper text mounted while generating — pass `isGenerating={false}`
+               * so `PromptInput` does not swap in its own cancel/status UI (we render those below the
+               * button instead) and keeps the helper text visible. `disabled` makes the textarea
+               * read-only during generation.
+               */}
+              <PromptInput
+                value={aiGeneration.prompt}
+                onChange={aiGeneration.onPromptChange}
+                disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                errorMessage={aiGeneration.promptError}
+                textareaRef={aiGeneration.textareaRef}
+                helperText={
+                  isDemoCredentialSelected
+                    ? 'Using Demo credentials for Claude Managed Agents for onboarding'
+                    : 'You can always edit the agent once created'
+                }
+              />
+              {/*
+               * Render the cancel/submit toggle as different element types (button vs a wrapping
+               * div) so React never reuses the same DOM <button> and silently flips its `type` from
+               * "button" to "submit" mid-click — which would let the browser submit the form on the
+               * very click that was meant to cancel, firing a brand-new generation request.
+               */}
+              {aiGeneration.isGenerating ? (
+                <Button
+                  key="brain-step-cancel"
+                  type="button"
+                  variant="secondary"
+                  mode="outline"
+                  size="2xs"
+                  className="mt-1 w-full justify-center gap-1"
+                  onClick={aiGeneration.onCancelGeneration}
+                  disabled={aiGeneration.isCancelDisabled}
+                  trailingIcon={RiCloseLine}
+                >
+                  Cancel
+                </Button>
+              ) : (
+                <div key="brain-step-submit" className="contents">
+                  {submitSlot}
+                </div>
+              )}
+              {aiGeneration.isGenerating && aiGeneration.generationSteps && aiGeneration.generationSteps.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <GenerationStatus steps={aiGeneration.generationSteps} />
+                </motion.div>
+              )}
+            </div>
+          }
+        />
+      </>
     );
   }
 
@@ -723,7 +850,7 @@ function renderExtraContent({
 }: ExtraContentArgs) {
   if (usePromptUi && aiGeneration && aiMode === 'prompt') {
     return (
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 items-center">
         <AgentSuggestionPills
           className="min-w-0 flex-1"
           suggestions={aiGeneration.suggestions}
@@ -732,15 +859,30 @@ function renderExtraContent({
           isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
         />
         {aiGeneration.onRegenerateSuggestions && (
-          <Button
-            className="h-6 shrink-0 [&_svg]:size-2.5"
-            variant="secondary"
-            mode="ghost"
-            size="2xs"
-            trailingIcon={RiLoopLeftLine}
-            disabled={disabled || (aiGeneration.isRegeneratingSuggestions ?? false)}
-            onClick={aiGeneration.onRegenerateSuggestions}
-          />
+          <AnimatePresence initial={false}>
+            {!aiGeneration.isRegeneratingSuggestions && (
+              <motion.div
+                key="regenerate-suggestions"
+                initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                className="shrink-0 overflow-hidden"
+              >
+                <Button
+                  aria-label="Regenerate suggestions"
+                  title="Regenerate suggestions"
+                  className="h-6 shrink-0 [&_svg]:size-2.5"
+                  variant="secondary"
+                  mode="ghost"
+                  size="2xs"
+                  trailingIcon={RiLoopLeftLine}
+                  disabled={disabled}
+                  onClick={aiGeneration.onRegenerateSuggestions}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         )}
       </div>
     );

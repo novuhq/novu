@@ -297,6 +297,21 @@ export function PhaseContent({
     case 'telegram-intro':
       return <TelegramIntroContent botfatherQr={phase.botfatherQr} onContinue={phase.resolve} />;
 
+    case 'pick-telegram-token-delivery': {
+      const options = [
+        { label: 'Scan QR / open setup page', value: 'setup-page' as const },
+        { label: 'Paste the bot token here', value: 'terminal' as const },
+      ];
+
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>How do you want to save your bot token?</Text>
+          <Text dimColor>Scan the QR on your phone, or paste the token directly in this terminal.</Text>
+          <Select options={options} onChange={(value) => phase.resolve(value as 'setup-page' | 'terminal')} />
+        </Box>
+      );
+    }
+
     case 'telegram-link-token':
       return (
         <Box flexDirection="column" gap={1}>
@@ -660,7 +675,15 @@ function SuccessView({
 }: {
   phase: Extract<ReturnType<ConnectStore['phase']['get']>, { kind: 'success' }>;
 }): React.ReactElement {
-  const { agent, connectDashboardUrl, environmentSlug, connectedChannel, dashboardRedirectChannel } = phase;
+  const {
+    agent,
+    connectDashboardUrl,
+    environmentSlug,
+    connectedChannel,
+    dashboardRedirectChannel,
+    isKeyless,
+    claimUrl,
+  } = phase;
   const agentUrl = environmentSlug
     ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
     : `${connectDashboardUrl}/connect/agents/${encodeURIComponent(agent.identifier)}`;
@@ -682,11 +705,32 @@ function SuccessView({
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
-        <Text>
-          <Text bold>Dashboard:</Text> {agentUrl}
-        </Text>
+        {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
       </Box>
     </Box>
+  );
+}
+
+function renderSuccessNextStep(input: {
+  isKeyless: boolean;
+  claimUrl: string | null;
+  agentUrl: string;
+}): React.ReactElement {
+  if (input.isKeyless && input.claimUrl) {
+    return (
+      <>
+        <Text>
+          <Text bold>Claim your agent:</Text> {input.claimUrl}
+        </Text>
+        <Text dimColor>Sign up to move your agent and conversation into your own account.</Text>
+      </>
+    );
+  }
+
+  return (
+    <Text>
+      <Text bold>Dashboard:</Text> {input.agentUrl}
+    </Text>
   );
 }
 

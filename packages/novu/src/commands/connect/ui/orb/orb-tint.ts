@@ -68,6 +68,7 @@ export function computeOrbTint(
       return CHANNEL_TINTS.slack;
     case 'adding-telegram':
     case 'telegram-intro':
+    case 'pick-telegram-token-delivery':
     case 'telegram-link-token':
     case 'telegram-test':
       return CHANNEL_TINTS.telegram;
@@ -111,6 +112,7 @@ export function computeOrbLabel(
       return CHANNEL_LABELS.slack;
     case 'adding-telegram':
     case 'telegram-intro':
+    case 'pick-telegram-token-delivery':
     case 'telegram-link-token':
     case 'telegram-test':
       return CHANNEL_LABELS.telegram;

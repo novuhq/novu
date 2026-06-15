@@ -5,6 +5,7 @@ export const CONNECT_EVENTS = {
   AUTH_STARTED: 'Connect Auth Started',
   AUTH_COMPLETED: 'Connect Auth Completed',
   AUTH_FAILED: 'Connect Auth Failed',
+  KEYLESS_LIMIT_AUTH_UPGRADE_STARTED: 'Connect Keyless Limit Auth Upgrade Started',
   AGENT_LISTED: 'Connect Agents Listed',
   AGENT_CREATED: 'Connect Agent Created',
   AGENT_REUSED: 'Connect Agent Reused',

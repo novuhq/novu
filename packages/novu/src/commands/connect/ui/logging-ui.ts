@@ -1,3 +1,4 @@
+import { unlink } from 'node:fs/promises';
 import chalk from 'chalk';
 import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
@@ -5,10 +6,25 @@ import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
+import {
+  logAuthUrlFileHandoffEvent,
+  logEmailHandoffEvents,
+  logSlackHandoffEvents,
+  logSlackSetupLinkHandoffEvent,
+  logTelegramBotfatherHandoffEvent,
+  logTelegramDeepLinkHandoffEvents,
+  logTelegramDeepLinkQrPngHandoffEvent,
+  logTelegramSetupLinkHandoffEvent,
+  logTelegramSetupLinkQrPngHandoffEvent,
+  writeAuthUrlHandoffFile,
+} from './handoff-events';
+import { renderQRPngFile } from './qr';
 import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
 
 export function createLoggingUI(): ConnectUI {
   let spinner: Ora | undefined;
+  let authUrlLogged = false;
+  let authUrlFilePromise: Promise<string | undefined> | undefined;
   const stop = () => {
     if (spinner?.isSpinning) spinner.stop();
     spinner = undefined;
@@ -27,6 +43,7 @@ export function createLoggingUI(): ConnectUI {
   };
 
   return {
+    interactive: false,
     showWelcome() {
       // Non-interactive: skip the welcome prompt; the run is unattended by
       // definition (--ci or piped stdin) so there's nobody to press Enter.
@@ -40,8 +57,31 @@ export function createLoggingUI(): ConnectUI {
       start('Authorizing via the Novu Dashboard…');
     },
     authDashboardUrl(url) {
-      if (url) {
-        if (spinner) spinner.text = `Authorizing via the Novu Dashboard… ${chalk.gray('(')}${url}${chalk.gray(')')}`;
+      if (!url) {
+        if (authUrlFilePromise) {
+          void authUrlFilePromise.then((filePath) => {
+            if (filePath) void unlink(filePath).catch(() => undefined);
+          });
+          authUrlFilePromise = undefined;
+        }
+
+        return;
+      }
+
+      if (!authUrlLogged) {
+        authUrlLogged = true;
+        authUrlFilePromise = writeAuthUrlHandoffFile(url)
+          .then((authUrlFile) => {
+            logAuthUrlFileHandoffEvent({ authUrlFile });
+
+            return authUrlFile;
+          })
+          .catch(() => undefined);
+      }
+
+      if (spinner) {
+        spinner.text =
+          'Authorizing via the Novu Dashboard… (read NOVU_CONNECT_AUTH_URL_FILE and deliver the URL to the user)';
       }
     },
     authStatus(message) {
@@ -169,6 +209,7 @@ export function createLoggingUI(): ConnectUI {
         console.log(`${chalk.cyan('→')} ${SEND_FROM_ACCOUNT_LABEL} ${chalk.bold(sendFromEmail)}`);
       }
       console.log(`${chalk.cyan('→')} Open in your mail client: ${chalk.underline(mailtoUrl)}`);
+      logEmailHandoffEvents({ inboundAddress, mailtoUrl, sendFromEmail });
       // Non-interactive: nothing to await — the user will copy/paste the
       // address themselves. Resolve immediately so the pipeline can move on
       // to polling.
@@ -183,22 +224,34 @@ export function createLoggingUI(): ConnectUI {
     addingTelegramIntegration() {
       start('Linking Telegram to your agent…');
     },
-    showTelegramIntro(_opts) {
+    showTelegramIntro({ botfatherUrl }) {
       stop();
+      console.log(`${chalk.cyan('→')} Create a bot with @BotFather: ${chalk.underline(botfatherUrl)}`);
+      logTelegramBotfatherHandoffEvent({ botfatherUrl });
 
-      return Promise.reject(
-        new Error(
-          'Telegram setup is interactive only (3 QR scans). Run `npx novu connect` without --ci to walk through it.'
-        )
-      );
+      return Promise.resolve();
+    },
+    pickTelegramTokenDelivery() {
+      return Promise.resolve('setup-page');
     },
     showTelegramLinkToken({ mobileUrl }) {
       stop();
-      console.log(`${chalk.cyan('→')} Open on your phone to paste the bot token: ${chalk.underline(mobileUrl)}`);
+      console.log(`${chalk.cyan('→')} Paste your BotFather token on this secure page: ${chalk.underline(mobileUrl)}`);
+      logTelegramSetupLinkHandoffEvent({ setupUrl: mobileUrl });
+      void renderQRPngFile(mobileUrl)
+        .then((setupQrPngPath) => logTelegramSetupLinkQrPngHandoffEvent({ setupQrPngPath }))
+        .catch(() => undefined);
+    },
+    savingTelegramBotToken() {
+      start('Saving your Telegram bot token…');
     },
     showTelegramTest({ deepLinkUrl, botUsername }) {
       stop();
       console.log(`${chalk.cyan('→')} Open Telegram and tap Start on @${botUsername}: ${chalk.underline(deepLinkUrl)}`);
+      logTelegramDeepLinkHandoffEvents({ deepLinkUrl, botUsername });
+      void renderQRPngFile(deepLinkUrl)
+        .then((deepLinkQrPngPath) => logTelegramDeepLinkQrPngHandoffEvent({ deepLinkQrPngPath }))
+        .catch(() => undefined);
     },
     telegramConnected() {
       succeed('Telegram connected');
@@ -206,12 +259,19 @@ export function createLoggingUI(): ConnectUI {
     addingSlackIntegration() {
       start('Linking Slack to your agent…');
     },
+    showSlackSetupLink({ setupUrl }) {
+      stop();
+      console.log(
+        `${chalk.cyan('→')} Paste your Slack App Configuration Token on this secure page: ${chalk.underline(setupUrl)}`
+      );
+      logSlackSetupLinkHandoffEvent({ setupUrl });
+    },
     promptForSlackConfigToken(_opts) {
       stop();
 
       return Promise.reject(
         new Error(
-          'Slack integration has no OAuth credentials. Pass --slack-config-token "xoxe.xoxp-…" to run the Slack quick-setup unattended, or run interactively to paste it.'
+          'Slack integration has no OAuth credentials. Omit --slack-config-token to use the secure setup page, or pass the token for headless CI.'
         )
       );
     },
@@ -224,6 +284,7 @@ export function createLoggingUI(): ConnectUI {
         console.log(`${chalk.green('✓')} Slack app created successfully.`);
       }
       console.log(`${chalk.cyan('→')} Authorize Slack here: ${chalk.underline(authorizeUrl)}`);
+      logSlackHandoffEvents({ authorizeUrl });
 
       return Promise.resolve();
     },
@@ -266,7 +327,12 @@ export function createLoggingUI(): ConnectUI {
       } else {
         console.log(`  ${chalk.gray('No channel connected.')}`);
       }
-      console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
+      if (result.isKeyless && result.claimUrl) {
+        console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
+        console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
+      } else {
+        console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
+      }
     },
     failure(message) {
       stop();

@@ -249,15 +249,19 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
 
     expect(bridgeStub.calls.length, 'bridge executor invoked').to.be.gte(1);
 
+    // Plain markdown replies from orgs without `removeNovuBranding` get the
+    // free-plan "Powered by Novu" watermark appended as the last line, so the
+    // delivered text is no longer exactly the bridge reply.
     const replyMessage = await pollFor(async () => {
       const replies = await getThreadReplies(channel.id, threadTs);
       if (!replies.ok || !replies.messages) return null;
 
-      return replies.messages.find((m) => m.text === 'pong') ?? null;
+      return replies.messages.find((m) => m.text?.startsWith('pong')) ?? null;
     }, SLACK_POLL_TIMEOUT_MS);
 
     expect(replyMessage.thread_ts, 'reply posted under inbound thread_ts').to.equal(threadTs);
     expect(replyMessage.bot_id ?? replyMessage.user, 'reply originated from a bot').to.exist;
+    expect(replyMessage.text, 'free-plan watermark appended to outbound text').to.contain('go.novu.co/agent-powered');
 
     const conversation = await conversationRepository.findByPlatformThread(
       ctx.session.environment._id,
@@ -321,7 +325,7 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
       const replies = await getThreadReplies(channel.id, ts);
       if (!replies.ok || !replies.messages) return null;
 
-      return replies.messages.find((m) => m.text === 'reply-in-channel') ?? null;
+      return replies.messages.find((m) => m.text?.startsWith('reply-in-channel')) ?? null;
     }, SLACK_POLL_TIMEOUT_MS);
 
     expect(reply.thread_ts).to.equal(ts);
@@ -333,7 +337,7 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
     // We assert the reply is present in either history or replies.
     const history = await getChannelHistory(channel.id);
     const allMessages = [...(history.messages ?? [])];
-    const replyInHistory = allMessages.find((m) => m.text === 'reply-in-channel');
+    const replyInHistory = allMessages.find((m) => m.text?.startsWith('reply-in-channel'));
 
     // The reply may surface in either history or thread replies depending on
     // emulator behavior; we already confirmed it's in replies above.
@@ -527,7 +531,7 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
       const replies = await getThreadReplies(channel.id, threadTs);
       if (!replies.ok || !replies.messages) return null;
 
-      return replies.messages.find((m) => m.text === 'initial') ?? null;
+      return replies.messages.find((m) => m.text?.startsWith('initial')) ?? null;
     }, SLACK_POLL_TIMEOUT_MS);
 
     const conversation = await conversationRepository.findByPlatformThread(
@@ -550,13 +554,18 @@ describe('Agent Slack Roundtrip - emulate.dev #novu-v2', () => {
 
     expect(editRes.status, JSON.stringify(editRes.body)).to.equal(200);
 
-    await pollFor(async () => {
+    // Edits re-brand: plain markdown edits from free-plan orgs get the
+    // "Powered by Novu" watermark re-appended, so match on the leading text
+    // and assert the watermark survived the edit.
+    const editedMessage = await pollFor(async () => {
       const replies = await getThreadReplies(channel.id, threadTs);
       if (!replies.ok || !replies.messages) return null;
 
       const updated = replies.messages.find((m) => m.ts === initialMessage.ts);
 
-      return updated && updated.text === 'edited' ? updated : null;
+      return updated?.text?.startsWith('edited') ? updated : null;
     }, SLACK_POLL_TIMEOUT_MS);
+
+    expect(editedMessage.text, 'free-plan watermark re-applied on edit').to.contain('go.novu.co/agent-powered');
   });
 });

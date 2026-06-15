@@ -204,12 +204,14 @@ export function ListeningStatus({
   onConnected,
   connectedMessage,
   listeningMessage,
+  inline = false,
 }: {
   agentIdentifier: string;
   watchedIntegrationId: string | undefined;
   onConnected?: () => void;
   connectedMessage: string;
   listeningMessage: string;
+  inline?: boolean;
 }) {
   const { currentEnvironment } = useEnvironment();
   const queryClient = useQueryClient();
@@ -314,7 +316,7 @@ export function ListeningStatus({
           />,
           document.body
         )}
-      <div className="flex flex-col gap-2 py-4 pl-6">
+      <div className={cn('flex flex-col gap-2', !inline && 'py-4 pl-6')}>
         <div className="flex flex-col gap-3">
           {connectedAt ? (
             <div className="flex items-center gap-1">

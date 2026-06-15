@@ -4,6 +4,8 @@ import { Command } from 'commander';
 import { v4 as uuidv4 } from 'uuid';
 import { DevCommandOptions, devCommand } from './commands';
 import { connectCommand } from './commands/connect';
+import { isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
+import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
 import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
 import {
@@ -137,9 +139,23 @@ program
 
 program
   .command('connect')
-  .description('Create a managed agent and connect it to Slack from the CLI')
-  .argument('[prompt]', 'Agent description. When provided, skips the picker and creates a new agent from this prompt.')
-  .option('-s, --secret-key <secret-key>', 'Skip browser auth and use this Novu Secret Key')
+  .description(
+    `Create a managed agent and connect it to a channel (keyless by default; use --ci for non-interactive agent/CI runs)`
+  )
+  .usage('[prompt] [--ci] [--channel <name>] [options]')
+  .argument(
+    '[prompt]',
+    'Agent description. Required in --ci mode. When provided, skips the picker and creates a new agent from this prompt.'
+  )
+  .option(
+    '-s, --secret-key <secret-key>',
+    'Use an existing Novu account instead of keyless mode (omit for keyless — the default)'
+  )
+  .option(
+    '--login',
+    'Authenticate via the Novu dashboard instead of keyless mode (opens /cli/auth for approval)',
+    false
+  )
   .option('-a, --api-url <url>', 'Override the Novu API URL (default follows --region)')
   .option('-d, --dashboard-url <url>', 'Override the Novu Dashboard URL (default follows --region)')
   .option(
@@ -147,10 +163,13 @@ program
     'Override the Connect browser-auth URL (default follows --region, e.g. dashboard.novu.co)'
   )
   .option('--region <region>', `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`, CloudRegionEnum.US)
-  .option('--prompt <text>', 'Pre-fill the agent description (skips the input screen)')
+  .option(
+    '--prompt <text>',
+    'Pre-fill the agent description (alternative to positional <prompt>; positional wins when both are set)'
+  )
   .option(
     '--runtime <runtime>',
-    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo in interactive mode.`
+    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo — omit in --ci keyless runs`
   )
   .option(
     '--agent-integration-id <id>',
@@ -162,14 +181,24 @@ program
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
   .option(
     '--channel <name>',
-    `Channel to connect (skips the picker). One of: ${CHANNEL_CHOICES.join(', ')}. "slack" and "telegram" are implemented today.`
+    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require --login in --ci mode`
   )
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(
     '--slack-config-token <token>',
-    'Slack App Configuration Token (xoxe.xoxp-…) used to provision Slack OAuth credentials non-interactively'
+    'Slack App Configuration Token (xoxe.xoxp-…). CI-only escape hatch — omit to use the secure setup page'
   )
-  .option('--ci', 'Force non-interactive logging mode (no Ink TUI)', false)
+  .option(
+    '--telegram-bot-token <token>',
+    'Telegram bot token from @BotFather (123456:ABC-…). CI-only escape hatch — omit to use the secure setup page'
+  )
+  .option(
+    '--ci',
+    'Non-interactive mode (no Ink TUI). Requires a prompt (positional <prompt> or --prompt) and --channel; see examples below',
+    false
+  )
+  .addHelpText('after', CONNECT_HELP_TEXT)
+  .showHelpAfterError('(run `novu connect --help` for the non-interactive contract and examples)')
   .action(async (positionalPrompt: string | undefined, options: ConnectCommandInput) => {
     analytics.track({
       identity: {
@@ -180,6 +209,38 @@ program
     });
     // Positional `prompt` wins over `--prompt` (the positional form is the
     // primary surface; the flag exists for parity with `--ci` workflows).
+    if (options.ci) {
+      const prompt = (positionalPrompt ?? options.prompt)?.trim();
+      const channel = options.skipSlack ? 'skip' : options.channel;
+
+      if (!prompt) {
+        console.error(
+          'Non-interactive mode requires a prompt (positional <prompt> or --prompt).\n(run `novu connect --help` for the non-interactive contract and examples)'
+        );
+        process.exit(1);
+      }
+
+      if (!channel) {
+        console.error(
+          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> with --login).\n(run `novu connect --help` for the non-interactive contract and examples)'
+        );
+        process.exit(1);
+      }
+
+      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && !options.login) {
+        console.error(
+          'Non-interactive mode does not support --channel whatsapp or --channel teams without --login. Pass --login to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
+        );
+        process.exit(1);
+      }
+    }
+
+    if (options.login && options.secretKey) {
+      console.error(
+        'Cannot use --login together with --secret-key. Omit --secret-key to authenticate via the dashboard.'
+      );
+      process.exit(1);
+    }
     if (options.channel && !(CHANNEL_CHOICES as readonly string[]).includes(options.channel)) {
       console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
       process.exit(1);

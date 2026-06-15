@@ -1,5 +1,6 @@
 import open from 'open';
 import { CONNECT_EVENTS } from '../../analytics/events';
+import { getSlackSetupLinkStatus, issueSlackSetupLink } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import { NovuApiError } from '../../api/client';
 import {
@@ -10,11 +11,22 @@ import {
   slackQuickSetup,
 } from '../../api/integrations';
 import type { AgentSummary, ConnectCommandOptions } from '../../types';
+import { logSlackConfigTokenSavedHandoffEvent } from '../../ui/handoff-events';
 import type { ConnectUI } from '../../ui/ui';
 import { ensureAgentIntegrationLinked, resolveIntegrationForAgent } from '../integration-helpers';
-import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil } from '../poll-until';
+import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil, sleep } from '../poll-until';
 
 const SLACK_PROVIDER_ID = 'slack';
+
+/**
+ * After the secure setup page saves the App Configuration Token, the server
+ * creates the Slack app and persists its OAuth credentials. Those credentials
+ * can take a moment to become readable, so the OAuth URL build is retried over
+ * this window before giving up — re-issuing a fresh setup link instead would
+ * strand any agent that's already waiting for the authorize URL handoff.
+ */
+const SLACK_CREDENTIAL_PROPAGATION_TIMEOUT_MS = 30_000;
+const SLACK_CREDENTIAL_PROPAGATION_INTERVAL_MS = 2_000;
 
 export async function connectSlackForAgent(
   client: ConnectApiClient,
@@ -100,18 +112,41 @@ async function getAuthorizeUrlWithQuickSetupFallback(
 
     await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: false });
 
+    // The token was saved and the Slack app created, so the credentials exist —
+    // retry the URL build until they become readable rather than re-issuing a
+    // setup link (which would leave a waiting agent hanging on the authorize
+    // URL it never receives).
     try {
-      const authorizeUrl = await buildUrl();
+      const authorizeUrl = await buildAuthorizeUrlWithCredentialRetry(buildUrl);
 
       return { authorizeUrl, appCreated: true };
     } catch (retryErr) {
       if (!isMissingSlackCredentialsError(retryErr)) throw retryErr;
 
+      // Credentials never became readable within the window — the saved token was
+      // likely invalid, so re-run quick setup (re-prompting where interactive)
+      // before one final attempt.
       await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: true });
 
-      const authorizeUrl = await buildUrl();
+      const authorizeUrl = await buildAuthorizeUrlWithCredentialRetry(buildUrl);
 
       return { authorizeUrl, appCreated: true };
+    }
+  }
+}
+
+async function buildAuthorizeUrlWithCredentialRetry(buildUrl: () => Promise<string>): Promise<string> {
+  const deadline = Date.now() + SLACK_CREDENTIAL_PROPAGATION_TIMEOUT_MS;
+
+  while (true) {
+    try {
+      return await buildUrl();
+    } catch (err) {
+      if (!isMissingSlackCredentialsError(err) || Date.now() >= deadline) {
+        throw err;
+      }
+
+      await sleep(SLACK_CREDENTIAL_PROPAGATION_INTERVAL_MS);
     }
   }
 }
@@ -124,15 +159,71 @@ async function runSlackQuickSetup(
   options: ConnectCommandOptions,
   flags: { retry: boolean }
 ): Promise<void> {
-  const configToken = options.slackConfigToken?.trim()
-    ? options.slackConfigToken.trim()
-    : await ui.promptForSlackConfigToken({ retry: flags.retry });
+  const configToken = options.slackConfigToken?.trim();
 
-  ui.runningSlackQuickSetup();
-  await slackQuickSetup(client, slackIntegration._id, {
-    configToken,
-    agentId: agent.id,
-  });
+  if (configToken) {
+    ui.runningSlackQuickSetup();
+    await slackQuickSetup(client, slackIntegration._id, {
+      configToken,
+      agentId: agent.id,
+    });
+
+    return;
+  }
+
+  if (ui.interactive) {
+    const token = await ui.promptForSlackConfigToken({ retry: flags.retry });
+    ui.runningSlackQuickSetup();
+    await slackQuickSetup(client, slackIntegration._id, {
+      configToken: token,
+      agentId: agent.id,
+    });
+
+    return;
+  }
+
+  const setupLink = await issueSlackSetupLink(client, agent.identifier, slackIntegration._id);
+  ui.showSlackSetupLink({ setupUrl: setupLink.url });
+
+  let setupLinkFailure: 'expired' | 'invalid' | undefined;
+
+  const tokenSaved = await pollUntil(
+    async () => {
+      const status = await getSlackSetupLinkStatus(client, setupLink.token);
+      if (!status.valid && status.reason === 'used') return 'done';
+      if (!status.valid && status.reason === 'expired') {
+        setupLinkFailure = 'expired';
+
+        return 'failed';
+      }
+      if (!status.valid) {
+        setupLinkFailure = 'invalid';
+
+        return 'failed';
+      }
+
+      return 'pending';
+    },
+    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+  );
+  if (tokenSaved) {
+    logSlackConfigTokenSavedHandoffEvent();
+  }
+  if (!tokenSaved) {
+    if (setupLinkFailure === 'expired') {
+      throw new Error(
+        'The Slack setup link expired before you could paste your App Configuration Token. Re-run `npx novu connect` to get a fresh link.'
+      );
+    }
+    if (setupLinkFailure === 'invalid') {
+      throw new Error('The Slack setup link is no longer valid. Re-run `npx novu connect` to get a fresh link.');
+    }
+
+    throw new Error(
+      `The Slack App Configuration Token wasn't saved within ${Math.round(CHANNEL_POLL_TIMEOUT_MS / 1000)} seconds. ` +
+        'Re-run `npx novu connect` to get a fresh setup link.'
+    );
+  }
 }
 
 function isMissingSlackCredentialsError(err: unknown): boolean {

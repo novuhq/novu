@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import {
+  AgentEntitlementsService,
   CalculateDemoClaudeQuota,
   CalculateLimitNovuIntegration,
   CreateOrUpdateSubscriberUseCase,
@@ -23,6 +24,7 @@ import { AuthModule } from '../auth/auth.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
 import { ConnectModule } from '../connect/connect.module';
 import { EventsModule } from '../events/events.module';
+import { IntegrationModule } from '../integrations/integrations.module';
 import { KeylessModule } from '../keyless/keyless.module';
 import { SharedModule } from '../shared/shared.module';
 import { AgentConfigResolver } from './channels/agent-config-resolver.service';
@@ -41,6 +43,7 @@ import { AgentInboundController } from './conversation-runtime/ingress/agent-inb
 import { ChatInstanceRegistry } from './conversation-runtime/ingress/chat-instance.registry';
 import { InboundDispatcher } from './conversation-runtime/ingress/inbound.dispatcher';
 import { AgentInboundHandler } from './conversation-runtime/ingress/inbound-turn.handler';
+import { PlanLimitGateService } from './conversation-runtime/ingress/plan-limit-gate.service';
 import { AgentReplyController } from './conversation-runtime/reply/agent-reply.controller';
 import { BridgeRuntime } from './conversation-runtime/runtime/bridge.runtime';
 import { BridgeExecutorService } from './conversation-runtime/runtime/bridge-executor.service';
@@ -66,7 +69,15 @@ import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.fi
 import { USE_CASES } from './usecases';
 
 @Module({
-  imports: [SharedModule, AuthModule, EventsModule, ChannelEndpointsModule, ConnectModule, KeylessModule],
+  imports: [
+    SharedModule,
+    AuthModule,
+    EventsModule,
+    ChannelEndpointsModule,
+    ConnectModule,
+    KeylessModule,
+    forwardRef(() => IntegrationModule),
+  ],
   controllers: [
     AgentsController,
     AgentIntegrationsController,
@@ -124,6 +135,8 @@ import { USE_CASES } from './usecases';
     CreateOrUpdateSubscriberUseCase,
     UpdateSubscriber,
     UpdateSubscriberChannel,
+    AgentEntitlementsService,
+    PlanLimitGateService,
   ],
   exports: [...USE_CASES, ChatInstanceRegistry, InboundDispatcher, OutboundGateway],
 })

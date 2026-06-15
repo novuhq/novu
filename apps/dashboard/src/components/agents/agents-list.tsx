@@ -16,10 +16,12 @@ import {
   deleteAgent,
   getAgentsListQueryKey,
   listAgents,
+  updateAgent,
 } from '@/api/agents';
 import { NovuApiError } from '@/api/api.client';
 import { AgentPreviewSkeleton } from '@/components/agents/agent-preview-skeleton';
 import { AgentsEmptyTeaser } from '@/components/agents/agents-empty-teaser';
+import { AgentsPlanLimitBanner } from '@/components/agents/agents-plan-limit-banner';
 import { AgentsProductionEmptyState } from '@/components/agents/agents-production-empty-state';
 import { AgentsTable } from '@/components/agents/agents-table';
 import {
@@ -29,6 +31,7 @@ import {
 import { CreateAgentDialog, CreateAgentForm } from '@/components/agents/create-agent-dialog';
 import { type AgentTemplate, findAgentTemplateById } from '@/components/agents/create-agent-fields';
 import { DeleteAgentDialog } from '@/components/agents/delete-agent-dialog';
+import { AgentCreationLimitDialog, AgentLimitUpgradeDialog } from '@/components/agents/plan-limit-upgrade-dialog';
 import { isDemoIntegration } from '@/components/integrations/components/utils/helpers';
 import { ListNoResults } from '@/components/list-no-results';
 import { Button } from '@/components/primitives/button';
@@ -70,6 +73,8 @@ export function AgentsList() {
   const [before, setBefore] = useState<string | undefined>();
   const [limit, setLimit] = useState(12);
   const [createOpen, setCreateOpen] = useState(false);
+  const [limitDialogOpen, setLimitDialogOpen] = useState(false);
+  const [creationLimitDialogOpen, setCreationLimitDialogOpen] = useState(false);
   const [initialCreateValues, setInitialCreateValues] = useState<{
     name?: string;
     description?: string;
@@ -81,6 +86,7 @@ export function AgentsList() {
   const [isAutoProvisioningFromTemplate, setIsAutoProvisioningFromTemplate] = useState(false);
   // Guards the deep-link template handling so it runs at most once per template id.
   const appliedTemplateIdRef = useRef<string | undefined>(undefined);
+  const pendingAfterLimitRef = useRef<'create-dialog' | 'onboarding'>('create-dialog');
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { templates: agentTemplates } = useAgentTemplates();
@@ -136,6 +142,10 @@ export function AgentsList() {
     placeholderData: keepPreviousData,
   });
 
+  const planUsage = listQuery.data?.planUsage;
+  const isAtAgentLimit = Boolean(planUsage && planUsage.used >= planUsage.limit);
+  const isAtCreationLimit = Boolean(planUsage && planUsage.totalCreated >= planUsage.creationLimit);
+
   const { submit: submitCreateAgent, isPending: isCreatingAgent } = useCreateAgentMutation();
 
   const deleteMutation = useMutation({
@@ -185,6 +195,31 @@ export function AgentsList() {
     },
   });
 
+  const toggleActiveMutation = useMutation({
+    mutationFn: ({ identifier, active }: { identifier: string; active: boolean }) =>
+      updateAgent(requireEnvironment(currentEnvironment, 'No environment selected'), identifier, { active }),
+    onSuccess: async (updatedAgent) => {
+      showSuccessToast(
+        updatedAgent.active ? 'The agent is now active.' : 'The agent is now paused.',
+        updatedAgent.active ? 'Agent activated' : 'Agent paused'
+      );
+
+      await queryClient.invalidateQueries({ queryKey: [AGENTS_LIST_QUERY_KEY] });
+    },
+    onError: (err: Error) => {
+      const message = err instanceof NovuApiError ? err.message : 'Could not update agent.';
+
+      showErrorToast(message, 'Update failed');
+    },
+  });
+
+  const handleToggleActive = useCallback(
+    (agent: AgentResponse) => {
+      toggleActiveMutation.mutate({ identifier: agent.identifier, active: !agent.active });
+    },
+    [toggleActiveMutation]
+  );
+
   const handleNextPage = useCallback(() => {
     const next = listQuery.data?.next;
 
@@ -213,9 +248,54 @@ export function AgentsList() {
     setBefore(undefined);
   }, []);
 
-  const goToFirstAgentSetup = useCallback(() => {
-    navigate(ROUTES.AGENTS_SETUP);
+  const goToAgentsSetup = useCallback(() => {
+    void navigate(ROUTES.AGENTS_SETUP);
   }, [navigate]);
+
+  const handleAddAgentClick = useCallback(() => {
+    // Hard cap first — the API rejects creation outright at this point.
+    if (isAtCreationLimit) {
+      setCreationLimitDialogOpen(true);
+
+      return;
+    }
+
+    if (isAtAgentLimit) {
+      pendingAfterLimitRef.current = 'create-dialog';
+      setLimitDialogOpen(true);
+
+      return;
+    }
+
+    setCreateOpen(true);
+  }, [isAtAgentLimit, isAtCreationLimit]);
+
+  const handleEmptyStateSetupClick = useCallback(() => {
+    if (isAtCreationLimit) {
+      setCreationLimitDialogOpen(true);
+
+      return;
+    }
+
+    if (isAtAgentLimit) {
+      pendingAfterLimitRef.current = 'onboarding';
+      setLimitDialogOpen(true);
+
+      return;
+    }
+
+    goToAgentsSetup();
+  }, [goToAgentsSetup, isAtAgentLimit, isAtCreationLimit]);
+
+  const handleContinuePastAgentLimit = useCallback(() => {
+    if (pendingAfterLimitRef.current === 'onboarding') {
+      goToAgentsSetup();
+
+      return;
+    }
+
+    setCreateOpen(true);
+  }, [goToAgentsSetup]);
 
   const handleCreateSubmit = useCallback(
     async (form: CreateAgentForm) => {
@@ -394,7 +474,7 @@ export function AgentsList() {
               variant="secondary"
               mode="gradient"
               trailingIcon={RiArrowRightSLine}
-              onClick={goToFirstAgentSetup}
+              onClick={handleEmptyStateSetupClick}
             >
               Setup an agent
             </PermissionButton>
@@ -405,6 +485,8 @@ export function AgentsList() {
 
     return (
       <div className="flex flex-col gap-2 py-2">
+        {planUsage && planUsage.used > planUsage.limit ? <AgentsPlanLimitBanner planUsage={planUsage} /> : null}
+
         <div className="flex flex-wrap items-center justify-between gap-3">
           <FacetedFormFilter
             type="text"
@@ -436,7 +518,7 @@ export function AgentsList() {
               mode="gradient"
               className="gap-1.5"
               leadingIcon={RiRobot2Line}
-              onClick={() => setCreateOpen(true)}
+              onClick={handleAddAgentClick}
             >
               Add Agent
             </PermissionButton>
@@ -460,6 +542,8 @@ export function AgentsList() {
             agents={agents}
             isLoading={isLoading}
             onRequestDelete={setAgentToDelete}
+            onToggleActive={handleToggleActive}
+            togglingAgentId={toggleActiveMutation.isPending ? toggleActiveMutation.variables?.identifier : null}
             paginationProps={{
               pageSize: limit,
               pageSizeOptions: PAGE_SIZE_OPTIONS,
@@ -499,6 +583,22 @@ export function AgentsList() {
         initialInstructions={memoizedInitialDescription}
         initialPrompt={memoizedInitialPrompt}
       />
+
+      {planUsage ? (
+        <>
+          <AgentLimitUpgradeDialog
+            open={limitDialogOpen}
+            onOpenChange={setLimitDialogOpen}
+            planUsage={planUsage}
+            onContinueAnyway={handleContinuePastAgentLimit}
+          />
+          <AgentCreationLimitDialog
+            open={creationLimitDialogOpen}
+            onOpenChange={setCreationLimitDialogOpen}
+            planUsage={planUsage}
+          />
+        </>
+      ) : null}
 
       <DeleteAgentDialog
         open={Boolean(agentToDelete)}

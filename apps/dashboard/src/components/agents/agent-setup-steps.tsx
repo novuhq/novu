@@ -10,7 +10,7 @@ import {
   listAgentIntegrations,
   sendAgentWelcomeMessage,
 } from '@/api/agents';
-import { AgentCard, type ManagedConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
+import { AgentCard, type AgentCardConnectorKind } from '@/components/onboarding/claude-agent-preview-illustration';
 import { ConnectAgentForm } from '@/components/onboarding/connect-agent/connect-agent-form';
 import {
   type ConnectSummary,
@@ -54,6 +54,7 @@ function resolveProviderSetupGuide(providerId: string) {
 }
 
 const SESSION_KEY = (agentIdentifier: string) => `agent-setup-integration:${agentIdentifier}`;
+const EMAIL_WELCOME_SESSION_KEY = (agentIdentifier: string) => `agent-email-welcome:${agentIdentifier}`;
 
 // The brain section is a single step in the onboarding flow — the created agent is shown as a
 // recap card (step 1) above this component's channel step.
@@ -207,11 +208,54 @@ const BRAIN_STEP_TITLE = 'What should your agent do?';
 const BRAIN_STEP_DESCRIPTION =
   "We'll provide demo Claude credentials so you can set up an agent without bringing your own keys. Later, you can replace it with your own agent and credentials.";
 
-export function ManagedAgentRecap({ agent, summary }: { agent: AgentResponse; summary: ConnectSummary }) {
-  const connector: ManagedConnectorKind =
+export function ManagedAgentRecap({
+  agent,
+  summary,
+  hideHeader,
+}: {
+  agent: AgentResponse;
+  summary: ConnectSummary;
+  /**
+   * When true, the step title/description are omitted and only the agent preview card is rendered
+   * next to the completed-step indicator (onboarding "Agent preview" step).
+   */
+  hideHeader?: boolean;
+}) {
+  const isManagedAgent = agent.runtime === 'managed';
+  const managedConnector: AgentCardConnectorKind =
     agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.AnthropicAws ? 'aws' : 'anthropic';
+  // Custom-code (self-hosted) agents render the trimmed card variant: custom-code icon + footer,
+  // no status badge, and no MCPs/tools/instructions (those live in the user's own code).
+  const connector: AgentCardConnectorKind = isManagedAgent ? managedConnector : 'custom';
   const serverMcpIds = agent.managedRuntime?.mcpServers?.map((m) => m.externalId);
   const serverToolIds = agent.managedRuntime?.tools?.map((t) => t.externalId);
+
+  const agentCard = (
+    <AgentCard
+      connector={connector}
+      isDemoCredential={agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic}
+      status="connected"
+      agentCreated
+      displayName={agent.name}
+      isPlaceholderName={false}
+      description={agent.description}
+      identifier={agent.identifier}
+      instructions={agent.managedRuntime?.systemPrompt ?? summary.instructions}
+      mcpServers={serverMcpIds ?? summary.mcpServers ?? []}
+      tools={serverToolIds ?? summary.tools ?? []}
+    />
+  );
+
+  if (hideHeader) {
+    return (
+      <div className="relative flex flex-col pl-6">
+        <div className="absolute -left-[20px] top-[3px] flex w-5 justify-center">
+          <CompletedStepIndicator />
+        </div>
+        {agentCard}
+      </div>
+    );
+  }
 
   return (
     <SetupStep
@@ -219,20 +263,7 @@ export function ManagedAgentRecap({ agent, summary }: { agent: AgentResponse; su
       status="completed"
       title={BRAIN_STEP_TITLE}
       description={BRAIN_STEP_DESCRIPTION}
-      fullWidthContent={
-        <AgentCard
-          connector={connector}
-          isDemoCredential={agent.managedRuntime?.providerId === AgentRuntimeProviderIdEnum.NovuAnthropic}
-          status="connected"
-          agentCreated
-          displayName={agent.name}
-          isPlaceholderName={false}
-          description={agent.description}
-          instructions={agent.managedRuntime?.systemPrompt ?? summary.instructions}
-          mcpServers={serverMcpIds ?? summary.mcpServers ?? []}
-          tools={serverToolIds ?? summary.tools ?? []}
-        />
-      }
+      fullWidthContent={agentCard}
     />
   );
 }
@@ -414,6 +445,55 @@ export function AgentSetupSteps({
     [agent.identifier, isOnboarding, telemetry]
   );
 
+  const requestEmailWelcome = useCallback(
+    (integrationIdentifierOverride?: string) => {
+      const targetIntegrationIdentifier = integrationIdentifierOverride ?? integrationIdentifier;
+
+      if (!currentEnvironment || !targetIntegrationIdentifier) {
+        return;
+      }
+
+      const storageKey = EMAIL_WELCOME_SESSION_KEY(agent.identifier);
+      if (sessionStorage.getItem(storageKey)) {
+        return;
+      }
+
+      sessionStorage.setItem(storageKey, '1');
+
+      sendAgentWelcomeMessage(currentEnvironment, agent.identifier, targetIntegrationIdentifier)
+        .then(() => {
+          trackWelcomeSent(EmailProviderIdEnum.NovuAgent);
+        })
+        .catch(() => {
+          sessionStorage.removeItem(storageKey);
+        });
+    },
+    [agent.identifier, currentEnvironment, integrationIdentifier, trackWelcomeSent]
+  );
+
+  useEffect(() => {
+    if (
+      !isOnboarding ||
+      !skipProviderGuide ||
+      !channelReadyForBridge ||
+      !isEmailChannelSelected ||
+      !currentEnvironment ||
+      !integrationIdentifier
+    ) {
+      return;
+    }
+
+    requestEmailWelcome();
+  }, [
+    channelReadyForBridge,
+    currentEnvironment,
+    integrationIdentifier,
+    isEmailChannelSelected,
+    isOnboarding,
+    requestEmailWelcome,
+    skipProviderGuide,
+  ]);
+
   const handleProviderSelect = useCallback(
     (providerId: string, integration?: IIntegration) => {
       if (isOnboarding) {
@@ -433,8 +513,12 @@ export function AgentSetupSteps({
           onChannelGuideActiveChangeRef.current?.(true);
         }
       }
+
+      if (isOnboarding && providerId === EmailProviderIdEnum.NovuAgent && integration?.identifier) {
+        requestEmailWelcome(integration.identifier);
+      }
     },
-    [agent.identifier, isOnboarding, telemetry]
+    [agent.identifier, isOnboarding, requestEmailWelcome, telemetry]
   );
 
   useEffect(() => {
@@ -686,7 +770,11 @@ export function AgentSetupSteps({
               embedded={false}
               isOnboarding={isOnboarding}
               onStepsCompleted={handleProviderStepsCompleted}
-              onWelcomeSent={isOnboarding && guideProviderId ? () => trackWelcomeSent(guideProviderId) : undefined}
+              onWelcomeSent={
+                isOnboarding && guideProviderId && guideProviderId !== EmailProviderIdEnum.NovuAgent
+                  ? () => trackWelcomeSent(guideProviderId)
+                  : undefined
+              }
               integrationLink={guideIntegrationLink}
             />
           </motion.div>

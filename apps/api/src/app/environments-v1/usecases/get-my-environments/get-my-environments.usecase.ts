@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, Scope } from '@nestjs/common';
-import { buildSlug, decryptApiKey, PinoLogger } from '@novu/application-generic';
+import { buildSlug, decryptApiKey, PinoLogger, shortenEnvironmentName } from '@novu/application-generic';
 import { EnvironmentEntity, EnvironmentRepository } from '@novu/dal';
-import { EnvironmentEnum, ShortIsPrefixEnum } from '@novu/shared';
+import { ShortIsPrefixEnum } from '@novu/shared';
 import { EnvironmentResponseDto } from '../../dtos/environment-response.dto';
 import { GetMyEnvironmentsCommand } from './get-my-environments.command';
 
@@ -49,13 +49,4 @@ export class GetMyEnvironments {
       key: decryptApiKey(apiKey.key),
     }));
   }
-}
-
-function shortenEnvironmentName(name: string): string {
-  const mapToShotEnvName: Record<EnvironmentEnum, string> = {
-    [EnvironmentEnum.PRODUCTION]: 'prod',
-    [EnvironmentEnum.DEVELOPMENT]: 'dev',
-  };
-
-  return mapToShotEnvName[name] || name;
 }

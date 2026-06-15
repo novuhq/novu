@@ -7,7 +7,11 @@ export type GeneratedAgentPreviewResult = { action: 'confirm'; spec: GeneratedAg
 
 export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: string } | { kind: 'new' };
 
+export type TelegramTokenDelivery = 'setup-page' | 'terminal';
+
 export interface ConnectUI {
+  /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
+  readonly interactive: boolean;
   // Welcome screen
   /**
    * First screen the user sees. Renders a welcome message and waits for the
@@ -100,13 +104,21 @@ export interface ConnectUI {
    * scannable QR pointing at `t.me/botfather`. Resolves when the user hits
    * Enter to advance.
    */
-  showTelegramIntro(opts: { botfatherQr: string }): Promise<void>;
+  showTelegramIntro(opts: { botfatherQr: string; botfatherUrl: string }): Promise<void>;
+  /** Interactive only: choose between the QR/setup page or pasting the token in the terminal. */
+  pickTelegramTokenDelivery(): Promise<TelegramTokenDelivery>;
   /**
-   * Step 2: render the mobile-link QR. Fire-and-forget — the pipeline owns
+   * Render the signed mobile-link QR. Fire-and-forget — the pipeline owns
    * the polling loop and transitions away from this phase when the bot token
    * lands on the integration.
    */
   showTelegramLinkToken(opts: { mobileQr: string; mobileUrl: string }): void;
+  /**
+   * Alternative to steps 1–2: the bot token was supplied up front via
+   * `--telegram-bot-token`, so the CLI saves it directly instead of waiting
+   * for the mobile-link page. Renders a short progress state.
+   */
+  savingTelegramBotToken(): void;
   /**
    * Step 3: render the `t.me/<bot>?start=<code>` deep-link QR. Pipeline polls
    * the agent's Telegram integration link for `connectedAt`.
@@ -123,6 +135,11 @@ export interface ConnectUI {
    * failed quick-setup (so the UI can hint at the cause).
    */
   promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
+  /**
+   * Show the signed Slack setup-link URL. Fire-and-forget — the pipeline
+   * polls until the user pastes their config token on the secure page.
+   */
+  showSlackSetupLink(opts: { setupUrl: string }): void;
   runningSlackQuickSetup(): void;
   /**
    * Consent gate before opening Slack OAuth. When `appCreated` is true, confirms
@@ -149,6 +166,8 @@ export interface ConnectUI {
     environmentSlug: string | null;
     connectedChannel: ChannelChoice | null;
     dashboardRedirectChannel: ChannelChoice | null;
+    isKeyless: boolean;
+    claimUrl: string | null;
   }): void;
   failure(message: string): void;
 

@@ -7,13 +7,22 @@ import {
   getMcpIconPath,
 } from '@novu/shared';
 import { AnimatePresence, motion } from 'motion/react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { RiFileCodeLine } from 'react-icons/ri';
 import { AwsIcon } from '@/components/icons/aws';
 import { ProviderIcon } from '@/components/integrations/components/provider-icon';
 import { LogoCircle } from '../icons/logo-circle';
 import { AnthropicAsteriskIcon } from './agent-flow-illustration-shared';
+import { AgentUsecasePreviewIllustration } from './agent-usecase-preview-illustration';
 
 export type ManagedConnectorKind = 'anthropic' | 'aws';
+
+/**
+ * Connector kinds renderable by {@link AgentCard}. Custom-code (self-hosted) agents reuse the
+ * card with a trimmed-down look: no status badge and no MCPs/Tools/Instructions sections, since
+ * those are wired up in the user's own code rather than a managed runtime.
+ */
+export type AgentCardConnectorKind = ManagedConnectorKind | 'custom';
 
 export type ManagedAgentPreviewStatus = 'idle' | 'connecting' | 'connected';
 
@@ -112,7 +121,7 @@ function ClaudeAgentPreviewIllustration({
 }
 
 export type AgentCardProps = {
-  connector: ManagedConnectorKind;
+  connector: AgentCardConnectorKind;
   isDemoCredential: boolean;
   status: ManagedAgentPreviewStatus;
   /**
@@ -125,6 +134,8 @@ export type AgentCardProps = {
   displayName: string;
   isPlaceholderName: boolean;
   description?: string;
+  /** Agent identifier, rendered under the description in the custom-code card variant. */
+  identifier?: string;
   instructions?: string;
   mcpServers: ReadonlyArray<string>;
   tools: ReadonlyArray<string>;
@@ -138,10 +149,16 @@ export function AgentCard({
   displayName,
   isPlaceholderName,
   description,
+  identifier,
   instructions,
   mcpServers,
   tools,
 }: AgentCardProps) {
+  // Custom-code agents host MCPs/tools/instructions in the user's own code and have no managed
+  // connection status — the card shows the description + identifier with a usecase illustration
+  // and a "Custom code" footer instead.
+  const isCustomCode = connector === 'custom';
+
   return (
     <div className="flex flex-col gap-1 p-1 bg-bg-weak rounded-[8px] border border-stroke-weak">
       <div className="border-stroke-soft bg-bg-white relative overflow-hidden rounded-lg border shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
@@ -159,7 +176,7 @@ export function AgentCard({
               </span>
             </AnimatedField>
           </div>
-          <StatusBadge status={status} />
+          {!isCustomCode && <StatusBadge status={status} />}
         </div>
 
         <div className="flex flex-col gap-5 px-2 pb-3 pt-2">
@@ -171,23 +188,35 @@ export function AgentCard({
             </AnimatedField>
           ) : null}
 
-          <PreviewSection label="MCPs">
-            <AnimatedField enabled={agentCreated} signature={mcpServers.join('|')}>
-              {mcpServers.length > 0 ? <McpTagRow ids={mcpServers} /> : <NotConfiguredLabel />}
-            </AnimatedField>
-          </PreviewSection>
+          {isCustomCode ? (
+            identifier && (
+              <PreviewSection label="Identifier">
+                <span className="text-text-sub font-mono text-[12px] leading-4" title={identifier}>
+                  {identifier}
+                </span>
+              </PreviewSection>
+            )
+          ) : (
+            <>
+              <PreviewSection label="MCPs">
+                <AnimatedField enabled={agentCreated} signature={mcpServers.join('|')}>
+                  {mcpServers.length > 0 ? <McpTagRow ids={mcpServers} /> : <NotConfiguredLabel />}
+                </AnimatedField>
+              </PreviewSection>
 
-          <PreviewSection label="Tools">
-            <AnimatedField enabled={agentCreated} signature={tools.join('|')}>
-              {tools.length > 0 ? <ToolTagRow tools={tools} /> : <NotConfiguredLabel />}
-            </AnimatedField>
-          </PreviewSection>
+              <PreviewSection label="Tools">
+                <AnimatedField enabled={agentCreated} signature={tools.join('|')}>
+                  {tools.length > 0 ? <ToolTagRow tools={tools} /> : <NotConfiguredLabel />}
+                </AnimatedField>
+              </PreviewSection>
 
-          <PreviewSection label="Instructions">
-            <AnimatedField enabled={agentCreated} signature={instructions ?? ''}>
-              {instructions?.trim() ? <InstructionsBlock value={instructions} /> : <NotConfiguredLabel />}
-            </AnimatedField>
-          </PreviewSection>
+              <PreviewSection label="Instructions">
+                <AnimatedField enabled={agentCreated} signature={instructions ?? ''}>
+                  {instructions?.trim() ? <InstructionsBlock value={instructions} /> : <NotConfiguredLabel />}
+                </AnimatedField>
+              </PreviewSection>
+            </>
+          )}
         </div>
       </div>
 
@@ -253,13 +282,21 @@ function AnimatedField({ enabled, signature, as = 'div', children }: AnimatedFie
 }
 
 type ConnectorBrandIconProps = {
-  connector: ManagedConnectorKind;
+  connector: AgentCardConnectorKind;
   className?: string;
 };
 
 function ConnectorBrandIcon({ connector, className }: ConnectorBrandIconProps) {
   if (connector === 'aws') {
     return <AwsIcon className={className} />;
+  }
+
+  if (connector === 'custom') {
+    return (
+      <span className={`bg-bg-weak text-text-sub flex items-center justify-center rounded-full ${className ?? ''}`}>
+        <RiFileCodeLine className="size-3" />
+      </span>
+    );
   }
 
   return <AnthropicAsteriskIcon className={className} />;
@@ -413,10 +450,13 @@ type McpTagProps = {
 function McpTag({ id }: McpTagProps) {
   const iconPath = getMcpIconPath(id);
   const label = formatMcpLabel(id);
+  const [hasIconError, setHasIconError] = useState(false);
 
   return (
     <span className="border border-stroke-soft bg-bg-weak inline-flex h-5 items-center gap-1 rounded px-1 py-0.5">
-      {iconPath ? <img src={iconPath} alt={label} className="size-3.5" aria-hidden /> : null}
+      {iconPath && !hasIconError ? (
+        <img src={iconPath} alt={label} className="size-3.5" aria-hidden onError={() => setHasIconError(true)} />
+      ) : null}
       <span className="text-text-sub text-[12px] font-medium leading-4">{label}</span>
     </span>
   );
@@ -499,12 +539,18 @@ function InstructionsBlock({ value }: InstructionsBlockProps) {
 }
 
 type ConnectorFooterProps = {
-  connector: ManagedConnectorKind;
+  connector: AgentCardConnectorKind;
   isDemoCredential: boolean;
 };
 
+const CONNECTOR_FOOTER_LABELS: Record<AgentCardConnectorKind, string> = {
+  anthropic: 'Claude Managed',
+  aws: 'AWS Claude Managed',
+  custom: 'Custom code',
+};
+
 function ConnectorFooter({ connector, isDemoCredential }: ConnectorFooterProps) {
-  const label = connector === 'aws' ? 'AWS Claude Managed' : 'Claude Managed';
+  const label = CONNECTOR_FOOTER_LABELS[connector];
 
   return (
     <div className="flex h-7 items-center gap-1 px-1">

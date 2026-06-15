@@ -1,5 +1,5 @@
 import { ApiServiceLevelEnum, FeatureFlagsKeysEnum, GetSubscriptionDto, PermissionsEnum } from '@novu/shared';
-import { ReactNode, SVGProps } from 'react';
+import { SVGProps } from 'react';
 import {
   RiBarChartBoxLine,
   RiBuildingLine,
@@ -18,7 +18,6 @@ import {
   RiTranslate2,
   RiUserAddLine,
 } from 'react-icons/ri';
-import { Badge } from '@/components/primitives/badge';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
@@ -30,18 +29,10 @@ import { ChangelogStack } from './changelog-cards';
 import { EnvironmentDropdown } from './environment-dropdown';
 import { FreeTrialCard } from './free-trial-card';
 import { HomeMenuItem } from './getting-started-menu-item';
+import { NavigationGroup } from './navigation-group';
 import { NavigationLink } from './navigation-link';
 import { OrganizationDropdown } from './organization-dropdown';
 import { UsageCard } from './usage-card';
-
-const NavigationGroup = ({ children, label }: { children: ReactNode; label?: string }) => {
-  return (
-    <div className="flex flex-col last:mt-auto">
-      {!!label && <span className="text-foreground-400 px-2 py-1 text-sm">{label}</span>}
-      {children}
-    </div>
-  );
-};
 
 function MailAiLineIcon(props: SVGProps<SVGSVGElement>) {
   return (
@@ -113,7 +104,7 @@ export const LegacySideNavigation = () => {
   };
 
   return (
-    <aside className="relative flex h-full w-[225px] shrink-0 flex-col">
+    <aside className="relative flex h-full w-[275px] shrink-0 flex-col">
       <SidebarContent className="h-full">
         <OrganizationDropdown />
         <EnvironmentDropdown
@@ -123,7 +114,22 @@ export const LegacySideNavigation = () => {
         />
         <nav className="flex h-full flex-1 flex-col overflow-auto">
           <div className="flex flex-col gap-4">
-            <NavigationGroup>
+            {showAgents && (
+              <NavigationGroup label="Agents">
+                <NavigationLink
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.AGENTS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
+                >
+                  <RiRobot2Line className="size-4" />
+                  <span>Agents</span>
+                </NavigationLink>
+              </NavigationGroup>
+            )}
+
+            <NavigationGroup label="Notifications">
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                 <NavigationLink
                   to={
@@ -136,27 +142,6 @@ export const LegacySideNavigation = () => {
                   <span>Workflows</span>
                 </NavigationLink>
               </Protect>
-
-              {showAgents && (
-                <NavigationLink
-                  to={
-                    currentEnvironment?.slug
-                      ? buildRoute(ROUTES.AGENTS, { environmentSlug: currentEnvironment?.slug ?? '' })
-                      : undefined
-                  }
-                >
-                  <RiRobot2Line className="size-4" />
-                  <span>
-                    Agents{' '}
-                    <Badge variant="lighter" className="text-xs">
-                      BETA
-                    </Badge>
-                  </span>
-                </NavigationLink>
-              )}
-            </NavigationGroup>
-
-            <NavigationGroup label="Content">
               <Protect permission={PermissionsEnum.WORKFLOW_READ}>
                 <NavigationLink
                   to={
@@ -166,10 +151,9 @@ export const LegacySideNavigation = () => {
                   }
                 >
                   <RiLayout5Line className="size-4" />
-                  <span>Email Layouts</span>
+                  <span>Layouts</span>
                 </NavigationLink>
               </Protect>
-
               <NavigationLink
                 to={
                   currentEnvironment?.slug
@@ -194,6 +178,18 @@ export const LegacySideNavigation = () => {
                   <span>Subscribers</span>
                 </NavigationLink>
               </Protect>
+              <Protect permission={PermissionsEnum.WORKFLOW_READ}>
+                <NavigationLink
+                  to={
+                    currentEnvironment?.slug
+                      ? buildRoute(ROUTES.CONTEXTS, { environmentSlug: currentEnvironment?.slug ?? '' })
+                      : undefined
+                  }
+                >
+                  <RiBuildingLine className="size-4" />
+                  <span>Contexts</span>
+                </NavigationLink>
+              </Protect>
               <Protect permission={PermissionsEnum.TOPIC_READ}>
                 <NavigationLink
                   to={
@@ -204,23 +200,6 @@ export const LegacySideNavigation = () => {
                 >
                   <RiDiscussLine className="size-4" />
                   <span>Topics</span>
-                </NavigationLink>
-              </Protect>
-              <Protect permission={PermissionsEnum.WORKFLOW_READ}>
-                <NavigationLink
-                  to={
-                    currentEnvironment?.slug
-                      ? buildRoute(ROUTES.CONTEXTS, { environmentSlug: currentEnvironment?.slug ?? '' })
-                      : undefined
-                  }
-                >
-                  <RiBuildingLine className="size-4" />
-                  <span>
-                    Contexts{' '}
-                    <Badge variant="lighter" className="text-xs">
-                      BETA
-                    </Badge>
-                  </span>
                 </NavigationLink>
               </Protect>
             </NavigationGroup>
@@ -247,7 +226,7 @@ export const LegacySideNavigation = () => {
                     }
                   >
                     <RiBarChartBoxLine className="size-4" />
-                    <span>Activity Feed</span>
+                    <span>Activity</span>
                   </NavigationLink>
                 </Protect>
                 {isAnalyticsPageEnabled && (
@@ -269,7 +248,6 @@ export const LegacySideNavigation = () => {
             <Protect
               condition={(has) =>
                 has({ permission: PermissionsEnum.API_KEY_READ }) ||
-                has({ permission: PermissionsEnum.INTEGRATION_READ }) ||
                 has({ permission: PermissionsEnum.WEBHOOK_READ }) ||
                 has({ permission: PermissionsEnum.WEBHOOK_WRITE })
               }
@@ -338,6 +316,14 @@ export const LegacySideNavigation = () => {
                   <RiCodeSSlashLine className="size-4" />
                   <span>Variables</span>
                 </NavigationLink>
+              </NavigationGroup>
+            </Protect>
+            <Protect
+              condition={(has) =>
+                has({ permission: PermissionsEnum.INTEGRATION_READ }) || !IS_SELF_HOSTED || IS_ENTERPRISE
+              }
+            >
+              <NavigationGroup label="Platform">
                 <Protect permission={PermissionsEnum.INTEGRATION_READ}>
                   <NavigationLink
                     to={
@@ -350,16 +336,14 @@ export const LegacySideNavigation = () => {
                     <span>Integration Store</span>
                   </NavigationLink>
                 </Protect>
+                {(!IS_SELF_HOSTED || IS_ENTERPRISE) && (
+                  <NavigationLink to={ROUTES.SETTINGS}>
+                    <RiSettings4Line className="size-4" />
+                    <span>Settings</span>
+                  </NavigationLink>
+                )}
               </NavigationGroup>
             </Protect>
-            {!IS_SELF_HOSTED || IS_ENTERPRISE ? (
-              <NavigationGroup label="Application">
-                <NavigationLink to={ROUTES.SETTINGS}>
-                  <RiSettings4Line className="size-4" />
-                  <span>Settings</span>
-                </NavigationLink>
-              </NavigationGroup>
-            ) : null}
           </div>
 
           <BottomSection

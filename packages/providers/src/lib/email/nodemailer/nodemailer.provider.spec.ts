@@ -258,6 +258,24 @@ describe('NodemailerProvider header forwarding', () => {
     );
   });
 
+  test('should use undisclosed recipients when to is empty and cc is provided', async () => {
+    const provider = new NodemailerProvider(mockConfig);
+    const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);
+
+    await provider.sendMessage({
+      ...mockNovuMessage,
+      to: [],
+      cc: ['cc@example.com'],
+    });
+
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: 'undisclosed-recipients:;',
+        cc: ['cc@example.com'],
+      })
+    );
+  });
+
   test('should not include headers field when no custom headers provided', async () => {
     const provider = new NodemailerProvider(mockConfig);
     const spy = vi.spyOn(provider['transports'], 'sendMail').mockResolvedValue({ messageId: 'test-id' } as any);

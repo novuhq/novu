@@ -95,6 +95,10 @@ export type Phase =
       resolve: () => void;
     }
   | {
+      kind: 'pick-telegram-token-delivery';
+      resolve: (delivery: 'setup-page' | 'terminal') => void;
+    }
+  | {
       kind: 'telegram-link-token';
       /** Pre-rendered ASCII QR for the signed mobile-link URL. */
       mobileQr: string;
@@ -118,6 +122,8 @@ export type Phase =
       connectedChannel: ChannelChoice | null;
       /** Channel the user picked that continues in the Connect dashboard instead of the CLI. */
       dashboardRedirectChannel: ChannelChoice | null;
+      isKeyless: boolean;
+      claimUrl: string | null;
     }
   | { kind: 'error'; message: string };
 

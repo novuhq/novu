@@ -9,6 +9,7 @@ import {
   MemberRepository,
 } from '@novu/dal';
 import { Sync } from '../../../bridge/usecases/sync';
+import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 
 @Injectable()
@@ -138,7 +139,7 @@ export class ProcessVercelWebhook {
 
     const computedSignature = crypto.createHmac('sha1', secret).update(JSON.stringify(body)).digest('hex');
 
-    if (signature !== computedSignature) {
+    if (!areHexDigestsEqual(computedSignature, signature)) {
       throw new BadRequestException('Invalid signature');
     }
   }
