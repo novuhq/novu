@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: "${{ github.workflow }}-${{ github.ref }}"
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   trigger-cursor-webhook:
@@ -50,7 +50,8 @@ jobs:
             '{event: $event, repository: $repository, ref: $ref, sha: $sha, actor: $actor, file: $file}')
 
           http_code=$(curl --silent --show-error --location \
-            --retry 3 --retry-connrefused \
+            --max-time 30 \
+            --retry 3 --retry-connrefused --retry-all-errors \
             --output /dev/null --write-out "%{http_code}" \
             --request POST "$CURSOR_WEBHOOK_URL" \
             --header "Content-Type: application/json" \
