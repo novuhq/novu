@@ -25,9 +25,6 @@ export const NOVU_TOOLS_SCHEMA = {
   },
 } as const;
 
-export const NOVU_TOOLS_SYSTEM_PROMPT_ADDITION =
-  "You have access to the novu_tools tool. If a user asks for something that requires a service you don't currently have tools for, call list_available to see what tools can be connected, then use request_connect to help the user set it up.";
-
 export const NOVU_TOOLS_TOOL_NAME = NOVU_TOOLS_SCHEMA.name;
 
 export const NOVU_INTERNAL_TOOLS: readonly string[] = [NOVU_TOOLS_TOOL_NAME];

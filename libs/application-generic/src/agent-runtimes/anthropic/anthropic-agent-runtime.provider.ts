@@ -5,7 +5,6 @@ import {
   AgentRuntimeCapabilities,
   AgentRuntimeProviderIdEnum,
   isAnthropicAwsProvider,
-  NOVU_TOOLS_SYSTEM_PROMPT_ADDITION,
 } from '@novu/shared';
 import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
@@ -183,12 +182,10 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     try {
       const permissionConfig = resolveManagedAgentPermissionConfig(input.useAlwaysAllowToolPermissions);
       const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, permissionConfig);
-      const systemPrompt = appendNovuToolsPrompt(input.systemPrompt);
-
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
-        ...(systemPrompt ? { system: systemPrompt } : {}),
+        ...(input.systemPrompt ? { system: input.systemPrompt } : {}),
         ...(input.mcpServers && input.mcpServers.length > 0
           ? { mcp_servers: input.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url })) }
           : {}),
@@ -280,7 +277,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
 
         if (patch.model !== undefined) updatePayload.model = patch.model;
         if (patch.systemPrompt !== undefined) {
-          updatePayload.system = appendNovuToolsPrompt(patch.systemPrompt);
+          updatePayload.system = patch.systemPrompt;
         }
         if (patch.mcpServers !== undefined) {
           updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
@@ -808,11 +805,4 @@ export function createAnthropicProvider(
   }
 
   return new AnthropicAgentRuntimeProvider(init);
-}
-
-/** Strip-then-append so repeated dashboard saves don't duplicate the novu_tools instruction. */
-function appendNovuToolsPrompt(prompt: string | undefined): string {
-  const base = prompt?.replace(NOVU_TOOLS_SYSTEM_PROMPT_ADDITION, '').trim() ?? '';
-
-  return [base, NOVU_TOOLS_SYSTEM_PROMPT_ADDITION].filter(Boolean).join('\n\n');
 }
