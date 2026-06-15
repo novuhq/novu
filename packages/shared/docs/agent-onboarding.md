@@ -432,5 +432,3 @@ You are done when:
 3. You delivered channel handoffs (or noted `skip` / whatsapp-teams dashboard URL).
 4. Connect shell printed `✓ Your agent is live.` (exit `0`); CLI poll validated handoffs where applicable.
 5. You reported agent identifier + next step (claim link for keyless, dashboard URL for authenticated), gave a brief recap of what onboarding set up, and explained how the user can keep going.
-
-<!-- maintenance: automation webhook sync test (2026-06-15) -->
