@@ -155,7 +155,7 @@ overrides:
   # required at build/test time. Strip the transitive aws-sdk to remove the
   # advisory from our dependency graph.
   aws-lambda>aws-sdk: '-'
-  esbuild@<0.25.0: ^0.25.0
+  esbuild@<0.28.1: ^0.28.1
   follow-redirects@<=1.15.11: ^1.16.0
   hono@<4.12.21: ^4.12.21
   '@clerk/shared@>=2.20.17 <2.22.1': ^2.22.1
