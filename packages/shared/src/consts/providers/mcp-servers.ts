@@ -508,7 +508,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://adisinsight-mcp.springer.com/mcp',
     category: 'health-and-wellness',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid'],
+    },
   },
   {
     id: 'adobe-for-creativity',
@@ -571,7 +574,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.alma.food',
     category: 'other',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['alma:read'],
+    },
   },
   {
     id: 'apollo-io',
@@ -589,7 +595,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.auraintelligence.com/mcp',
     category: 'sales-and-marketing',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'aurora',
@@ -598,7 +604,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.ai.consilio.com',
     category: 'other',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid', 'offline_access', 'mcp:access', 'matters:read', 'documents:read', 'tickets:read'],
+    },
   },
   {
     id: 'axiom',
@@ -664,7 +673,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.calendly.com',
     category: 'productivity',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['mcp:scheduling:read', 'mcp:scheduling:write'],
+    },
   },
   {
     id: 'campfire',
@@ -673,7 +685,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://api.meetcampfire.com/mcp',
     category: 'communication',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid', 'email', 'profile'],
+    },
   },
   {
     id: 'candid',
@@ -682,7 +697,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.candid.org/mcp',
     category: 'other',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid', 'profile', 'email', 'claudeai'],
+    },
   },
   {
     id: 'carta',
@@ -691,7 +709,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.app.carta.com/mcp',
     category: 'financial-services',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'cb-insights',
@@ -727,7 +745,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://circleback.ai/api/mcp',
     category: 'communication',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['user'],
+    },
   },
   {
     id: 'clarify',
@@ -799,7 +820,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.coindesk.com/mcp',
     category: 'financial-services',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'common-room',
@@ -808,7 +829,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.commonroom.io/mcp',
     category: 'sales-and-marketing',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid', 'profile', 'email', 'offline_access'],
+    },
   },
   {
     id: 'consensus',
@@ -853,7 +877,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.courtlistener.com/',
     category: 'other',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid', 'api'],
+    },
   },
   {
     id: 'craft',
@@ -871,7 +898,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.crossbeam.com',
     category: 'sales-and-marketing',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid', 'profile', 'email', 'offline_access'],
+    },
   },
   {
     id: 'd-b-risk-analytics',
@@ -889,7 +919,7 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.daloopa.com/server/mcp',
     category: 'financial-services',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: { mode: McpConnectionAuthModeEnum.Dcr },
   },
   {
     id: 'datasite',
@@ -916,7 +946,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.app.definely.com',
     category: 'other',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid', 'offline_access', 'definely'],
+    },
   },
   {
     id: 'descript',
@@ -934,7 +967,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.descrybe.com/mcp',
     category: 'other',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['connect:mcp:read'],
+    },
   },
   {
     id: 'devrev',
@@ -1051,7 +1087,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://mcp.factset.com/content/v1',
     category: 'financial-services',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid', 'mcp', 'email'],
+    },
   },
   {
     id: 'fathom',
@@ -1060,7 +1099,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://api.fathom.ai/mcp',
     category: 'communication',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['mcp'],
+    },
   },
   {
     id: 'fellow-ai',
@@ -1069,7 +1111,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://fellow.app/mcp',
     category: 'communication',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['read_calendar', 'read_meeting_content', 'read_action_items', 'read_channels'],
+    },
   },
   {
     id: 'fever-event-discovery',
@@ -1078,7 +1123,10 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://data-search.apigw.feverup.com/mcp',
     category: 'other',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: ['openid'],
+    },
   },
   {
     id: 'fireflies',
@@ -1096,7 +1144,19 @@ export const MCP_SERVERS: McpServer[] = [
     url: 'https://api.fiscal.ai/mcp/sse',
     category: 'financial-services',
     popular: false,
-    oauth: { mode: McpConnectionAuthModeEnum.ProviderManaged },
+    oauth: {
+      mode: McpConnectionAuthModeEnum.Dcr,
+      scopes: [
+        'financials',
+        'financials_sourcing',
+        'segments_and_kpis',
+        'stock_quotes',
+        'filings',
+        'adjusted_numbers',
+        'news',
+        'ownership',
+      ],
+    },
   },
   {
     id: 'fmp',
