@@ -4,16 +4,36 @@ The Webex Messaging provider sends Novu Chat notifications through the Webex Mes
 
 ## Prerequisites
 
-- A Webex bot or service access token.
+- A Webex Integration configured for OAuth.
 - A Webex room ID for room notifications, or a Webex person ID/email for direct notifications.
-- The bot must be a member of each Webex room that receives room notifications.
+- A Novu channel connection created through the chat OAuth flow. Webex room and person endpoints must reference this connection with `connectionIdentifier`.
 
 ## Credentials
 
 | Credential | Required | Description |
 | --- | --- | --- |
-| Access token | Yes | Webex bot or service token used to call the Webex Messages API. |
+| Client ID | Yes | Webex Integration client ID used to generate OAuth authorization URLs. |
+| Client Secret | Yes | Webex Integration client secret used to exchange authorization codes. |
+| Redirect URL | No | Optional URL to redirect to after OAuth finishes. If omitted, Novu shows a success page. |
 | Base URL | No | Optional Webex API base URL. Defaults to `https://webexapis.com/v1`. |
+
+The Webex application redirect URI must match Novu's chat OAuth callback URL:
+
+```text
+https://api.novu.co/v1/integrations/chat/oauth/callback
+```
+
+For EU deployments, use:
+
+```text
+https://api.eu.novu.co/v1/integrations/chat/oauth/callback
+```
+
+Default OAuth scopes:
+
+```text
+spark:messages_write spark:rooms_read spark:people_read spark:memberships_read spark:kms
+```
 
 ## Channel Data
 
@@ -23,6 +43,7 @@ Room message:
 {
   "type": "webex_room",
   "identifier": "incident-room",
+  "token": "access-token-from-channel-connection",
   "endpoint": {
     "roomId": "room-id"
   }
@@ -35,6 +56,7 @@ Threaded room message:
 {
   "type": "webex_room",
   "identifier": "incident-room-thread",
+  "token": "access-token-from-channel-connection",
   "endpoint": {
     "roomId": "room-id",
     "parentId": "parent-message-id"
@@ -48,6 +70,7 @@ Direct message:
 {
   "type": "webex_person",
   "identifier": "on-call-user",
+  "token": "access-token-from-channel-connection",
   "endpoint": {
     "personEmail": "user@example.com"
   }
@@ -65,5 +88,5 @@ Routing fields are reserved. Passthrough must not add, remove, or override `room
 ## Sources
 
 - Webex Create a Message API: https://developer.webex.com/messaging/docs/api/v1/messages/create-a-message
-- Webex Bots: https://developer.webex.com/messaging/docs/bots
+- Webex Integrations: https://developer.webex.com/docs/integrations
 - Webex Messaging REST basics: https://developer.webex.com/messaging/docs/basics

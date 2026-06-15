@@ -12,7 +12,6 @@ import { BaseProvider, CasingEnum } from '../../../base.provider';
 import { WithPassthrough } from '../../../utils/types';
 
 type WebexMessagingProviderConfig = {
-  token?: string;
   baseUrl?: string;
 };
 
@@ -37,7 +36,7 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
   private static readonly DEFAULT_BASE_URL = 'https://webexapis.com/v1';
   private axiosInstance: AxiosInstance;
 
-  constructor(private config: WebexMessagingProviderConfig = {}) {
+  constructor(config: WebexMessagingProviderConfig = {}) {
     super();
 
     const normalizedBaseUrl = this.normalizeBaseUrl(config.baseUrl);
@@ -55,11 +54,6 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
     bridgeProviderData: WithPassthrough<Record<string, unknown>> = {}
   ): Promise<ISendMessageSuccessResponse> {
     const { channelData } = options;
-    const { token } = this.config;
-
-    if (!token) {
-      throw new Error('Webex Messaging access token is required');
-    }
 
     if (!channelData) {
       throw new Error('Webex Messaging channel data is required');
@@ -73,6 +67,8 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
 
     this.validateDestination(payload);
     this.validateDestinationUnchanged(basePayload, payload);
+
+    const token = this.getAccessToken(channelData);
 
     try {
       const response = await this.axiosInstance.post<WebexMessageResponse>('/messages', payload, {
@@ -93,6 +89,14 @@ export class WebexMessagingProvider extends BaseProvider implements IChatProvide
 
   private normalizeBaseUrl(baseUrl?: string): string {
     return (baseUrl || WebexMessagingProvider.DEFAULT_BASE_URL).replace(/\/+$/, '');
+  }
+
+  private getAccessToken(channelData: IChatOptions['channelData']): string {
+    if (!channelData || !('token' in channelData) || typeof channelData.token !== 'string' || !channelData.token) {
+      throw new Error('Webex Messaging channel connection access token is required');
+    }
+
+    return channelData.token;
   }
 
   private buildPayload(options: IChatOptions): WebexMessagePayload {

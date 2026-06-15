@@ -16,7 +16,7 @@ describe('WebexMessagingProvider', () => {
   it('identifies as a Webex chat provider', () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     expect(provider.id).toBe(ChatProviderIdEnum.WebexMessaging);
     expect(provider.channelType).toBe(ChannelTypeEnum.CHAT);
@@ -25,7 +25,7 @@ describe('WebexMessagingProvider', () => {
   it('uses the default Webex API base URL', () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    new WebexMessagingProvider({ token: 'token' });
+    new WebexMessagingProvider();
 
     expect(axios.create).toHaveBeenCalledWith({
       baseURL: 'https://webexapis.com/v1',
@@ -38,7 +38,7 @@ describe('WebexMessagingProvider', () => {
   it('normalizes a custom Webex API base URL', () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    new WebexMessagingProvider({ token: 'token', baseUrl: 'https://webexapis.com/custom/' });
+    new WebexMessagingProvider({ baseUrl: 'https://webexapis.com/custom/' });
 
     expect(axios.create).toHaveBeenCalledWith({
       baseURL: 'https://webexapis.com/custom',
@@ -57,7 +57,7 @@ describe('WebexMessagingProvider', () => {
       },
     });
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     const result = await provider.sendMessage(
       {
@@ -66,6 +66,7 @@ describe('WebexMessagingProvider', () => {
           type: ENDPOINT_TYPES.WEBEX_ROOM,
           identifier: 'build-room',
           endpoint: { roomId: 'room-id' },
+          token: 'token',
         },
       },
       {}
@@ -93,7 +94,7 @@ describe('WebexMessagingProvider', () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
     post.mockResolvedValue({ data: { id: 'message-id' } });
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await provider.sendMessage(
       {
@@ -102,6 +103,7 @@ describe('WebexMessagingProvider', () => {
           type: ENDPOINT_TYPES.WEBEX_ROOM,
           identifier: 'build-room',
           endpoint: { roomId: 'room-id', parentId: 'parent-id' },
+          token: 'token',
         },
       },
       {}
@@ -126,7 +128,7 @@ describe('WebexMessagingProvider', () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
     post.mockResolvedValue({ data: { id: 'message-id' } });
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await provider.sendMessage(
       {
@@ -135,6 +137,7 @@ describe('WebexMessagingProvider', () => {
           type: ENDPOINT_TYPES.WEBEX_PERSON,
           identifier: 'person',
           endpoint: { personEmail: 'user@example.com' },
+          token: 'token',
         },
       },
       {}
@@ -158,7 +161,7 @@ describe('WebexMessagingProvider', () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
     post.mockResolvedValue({ data: { id: 'message-id' } });
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await provider.sendMessage(
       {
@@ -167,6 +170,7 @@ describe('WebexMessagingProvider', () => {
           type: ENDPOINT_TYPES.WEBEX_PERSON,
           identifier: 'person',
           endpoint: { personId: 'person-id' },
+          token: 'token',
         },
       },
       {}
@@ -190,7 +194,7 @@ describe('WebexMessagingProvider', () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
     post.mockResolvedValue({ data: { id: 'message-id' } });
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await provider.sendMessage(
       {
@@ -199,6 +203,7 @@ describe('WebexMessagingProvider', () => {
           type: ENDPOINT_TYPES.WEBEX_ROOM,
           identifier: 'room',
           endpoint: { roomId: 'room-id' },
+          token: 'token',
         },
       },
       {
@@ -230,7 +235,7 @@ describe('WebexMessagingProvider', () => {
   it('rejects passthrough that adds another destination to a room message', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -240,6 +245,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: { roomId: 'room-id' },
+            token: 'token',
           },
         },
         {
@@ -257,7 +263,7 @@ describe('WebexMessagingProvider', () => {
     async (toPersonEmail) => {
       vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-      const provider = new WebexMessagingProvider({ token: 'token' });
+      const provider = new WebexMessagingProvider();
 
       await expect(
         provider.sendMessage(
@@ -267,6 +273,7 @@ describe('WebexMessagingProvider', () => {
               type: ENDPOINT_TYPES.WEBEX_ROOM,
               identifier: 'room',
               endpoint: { roomId: 'room-id' },
+              token: 'token',
             },
           },
           {
@@ -283,7 +290,7 @@ describe('WebexMessagingProvider', () => {
   it('rejects passthrough that removes the message destination', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -293,6 +300,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: { roomId: 'room-id' },
+            token: 'token',
           },
         },
         {
@@ -308,7 +316,7 @@ describe('WebexMessagingProvider', () => {
   it('rejects passthrough that changes the message destination', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -318,6 +326,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: { roomId: 'room-id' },
+            token: 'token',
           },
         },
         {
@@ -333,7 +342,7 @@ describe('WebexMessagingProvider', () => {
   it('rejects passthrough that changes the thread destination', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -343,6 +352,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: { roomId: 'room-id', parentId: 'parent-id' },
+            token: 'token',
           },
         },
         {
@@ -358,7 +368,7 @@ describe('WebexMessagingProvider', () => {
   it('rejects passthrough that adds a thread destination', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -368,6 +378,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: { roomId: 'room-id' },
+            token: 'token',
           },
         },
         {
@@ -383,7 +394,7 @@ describe('WebexMessagingProvider', () => {
   it('requires channel data', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(provider.sendMessage({ content: 'Hello' }, {})).rejects.toThrow(
       'Webex Messaging channel data is required'
@@ -393,7 +404,7 @@ describe('WebexMessagingProvider', () => {
   it('requires roomId for room messages', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -403,6 +414,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: {} as never,
+            token: 'token',
           },
         },
         {}
@@ -414,7 +426,7 @@ describe('WebexMessagingProvider', () => {
   it('requires a non-empty parentId for threaded room messages', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -424,6 +436,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: { roomId: 'room-id', parentId: '' },
+            token: 'token',
           },
         },
         {}
@@ -435,7 +448,7 @@ describe('WebexMessagingProvider', () => {
   it('rejects unsupported channel data types', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -456,7 +469,7 @@ describe('WebexMessagingProvider', () => {
   it('requires personId or personEmail for direct messages', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -466,6 +479,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_PERSON,
             identifier: 'person',
             endpoint: {} as never,
+            token: 'token',
           },
         },
         {}
@@ -476,7 +490,7 @@ describe('WebexMessagingProvider', () => {
   it('rejects direct messages with both personId and personEmail', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -486,6 +500,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_PERSON,
             identifier: 'person',
             endpoint: { personId: 'person-id', personEmail: 'user@example.com' } as never,
+            token: 'token',
           },
         },
         {}
@@ -497,7 +512,7 @@ describe('WebexMessagingProvider', () => {
   it('rejects direct messages with both person endpoint keys even when one value is empty', async () => {
     vi.mocked(axios.create).mockReturnValue({ post } as never);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -507,6 +522,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_PERSON,
             identifier: 'person',
             endpoint: { personId: '', personEmail: 'user@example.com' } as never,
+            token: 'token',
           },
         },
         {}
@@ -528,11 +544,11 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: { roomId: 'room-id' },
-          },
+          } as never,
         },
         {}
       )
-    ).rejects.toThrow('Webex Messaging access token is required');
+    ).rejects.toThrow('Webex Messaging channel connection access token is required');
   });
 
   it('maps Webex 429 errors with retry context', async () => {
@@ -548,7 +564,7 @@ describe('WebexMessagingProvider', () => {
     post.mockRejectedValue(rateLimitError);
     vi.mocked(axios.isAxiosError).mockImplementation((error) => error === rateLimitError);
 
-    const provider = new WebexMessagingProvider({ token: 'token' });
+    const provider = new WebexMessagingProvider();
 
     await expect(
       provider.sendMessage(
@@ -558,6 +574,7 @@ describe('WebexMessagingProvider', () => {
             type: ENDPOINT_TYPES.WEBEX_ROOM,
             identifier: 'room',
             endpoint: { roomId: 'room-id' },
+            token: 'token',
           },
         },
         {}

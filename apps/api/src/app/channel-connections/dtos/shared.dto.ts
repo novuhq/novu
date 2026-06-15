@@ -18,4 +18,19 @@ export class AuthDto {
   @IsDefined()
   @IsString()
   accessToken: string;
+
+  @ApiPropertyOptional({ example: 'Workspace refresh token' })
+  @IsOptional()
+  @IsString()
+  refreshToken?: string;
+
+  @ApiPropertyOptional({ example: '2026-06-15T12:00:00.000Z' })
+  @IsOptional()
+  @IsString()
+  expiresAt?: string;
+
+  @ApiPropertyOptional({ example: '2026-09-15T12:00:00.000Z' })
+  @IsOptional()
+  @IsString()
+  refreshTokenExpiresAt?: string;
 }

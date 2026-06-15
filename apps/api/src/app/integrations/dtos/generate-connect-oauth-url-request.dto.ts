@@ -3,6 +3,7 @@ import { ApiContextPayload, IsValidContextPayload } from '@novu/application-gene
 import { ConnectionMode, ContextPayload } from '@novu/shared';
 import { IsArray, IsBoolean, IsDefined, IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { SLACK_DEFAULT_OAUTH_SCOPES } from '../usecases/generate-chat-oath-url/generate-slack-oath-url/generate-slack-oauth-url.usecase';
+import { WEBEX_DEFAULT_OAUTH_SCOPES } from '../usecases/generate-chat-oath-url/generate-webex-oath-url/generate-webex-oauth-url.usecase';
 
 export class GenerateConnectOauthUrlRequestDto {
   @ApiPropertyOptional({
@@ -10,6 +11,7 @@ export class GenerateConnectOauthUrlRequestDto {
     description:
       'The subscriber ID to associate with the channel connection. ' +
       'For Slack: optional for workspace connections (required only for incoming-webhook scope). ' +
+      'For Webex: optional for workspace connections. ' +
       'For MS Teams: optional. Admin consent is tenant-wide.',
     example: 'subscriber-123',
   })
@@ -45,6 +47,7 @@ export class GenerateConnectOauthUrlRequestDto {
     description:
       `**Slack only**: OAuth scopes to request during authorization. ` +
       `If not specified, default scopes will be used: ${SLACK_DEFAULT_OAUTH_SCOPES.join(', ')}. ` +
+      `**Webex**: OAuth scopes to request during authorization. Defaults to: ${WEBEX_DEFAULT_OAUTH_SCOPES.join(', ')}. ` +
       `**MS Teams**: ignored — uses admin consent with pre-configured Azure AD permissions.`,
     example: ['chat:write', 'chat:write.public', 'channels:read'],
   })
@@ -73,6 +76,7 @@ export class GenerateConnectOauthUrlRequestDto {
       'When true (default when connectionMode is "subscriber"), after the workspace/tenant connection is created ' +
       'the OAuth flow also links the subscriber who clicked "Connect" as a personal endpoint. ' +
       'For Slack, uses the authed_user.id returned by oauth.v2.access — no extra redirect. ' +
+      'For Webex, uses the authenticated Webex person returned by people/me — no extra redirect. ' +
       'For MS Teams, triggers a second OAuth redirect for delegated user-identity consent. ' +
       'Set to false to only create the workspace connection without linking the individual user.',
     example: true,

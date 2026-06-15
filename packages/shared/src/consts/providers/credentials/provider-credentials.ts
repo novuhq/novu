@@ -1470,13 +1470,26 @@ export const telegramConfig: IConfigCredential[] = [
 
 export const webexMessagingConfig: IConfigCredential[] = [
   {
-    key: CredentialsKeyEnum.Token,
-    displayName: 'Access token',
-    description: 'Webex bot or service access token used to call the Webex Messages API.',
-    placeholder: 'Bearer token value',
-    type: 'text',
+    key: CredentialsKeyEnum.ClientId,
+    displayName: 'Client ID',
+    description: 'Webex integration client ID used for OAuth authorization.',
+    type: 'string',
     required: true,
-    links: [{ text: 'Webex bots', url: 'https://developer.webex.com/messaging/docs/bots' }],
+    links: [{ text: 'Webex integrations', url: 'https://developer.webex.com/docs/integrations' }],
+  },
+  {
+    key: CredentialsKeyEnum.SecretKey,
+    displayName: 'Client Secret',
+    description: 'Webex integration client secret used to exchange OAuth authorization codes.',
+    type: 'string',
+    required: true,
+  },
+  {
+    key: CredentialsKeyEnum.RedirectUrl,
+    displayName: 'Redirect URL',
+    description: 'Redirect after the Webex OAuth flow finishes. If omitted, Novu shows a success page.',
+    type: 'string',
+    required: false,
   },
   {
     key: CredentialsKeyEnum.BaseUrl,

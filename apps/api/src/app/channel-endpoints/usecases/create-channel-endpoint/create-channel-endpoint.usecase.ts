@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InstrumentUsecase, shortId } from '@novu/application-generic';
 import {
   ChannelConnectionEntity,
@@ -10,7 +10,7 @@ import {
   IntegrationRepository,
   SubscriberRepository,
 } from '@novu/dal';
-import { ChannelEndpointType } from '@novu/shared';
+import { ChannelEndpointType, ENDPOINT_TYPES } from '@novu/shared';
 import { CreateChannelEndpointCommand } from './create-channel-endpoint.command';
 
 @Injectable()
@@ -46,6 +46,10 @@ export class CreateChannelEndpoint {
     }
 
     let connection: ChannelConnectionEntity | null = null;
+
+    if (this.requiresChannelConnection(command.type) && !command.connectionIdentifier) {
+      throw new BadRequestException(`Channel endpoint type "${command.type}" requires a connectionIdentifier`);
+    }
 
     if (command.connectionIdentifier) {
       connection = await this.findChannelConnection(command);
@@ -128,6 +132,7 @@ export class CreateChannelEndpoint {
     const connection = await this.channelConnectionRepository.findOne({
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
+      integrationIdentifier: command.integrationIdentifier,
       identifier: command.connectionIdentifier,
     });
 
@@ -136,6 +141,10 @@ export class CreateChannelEndpoint {
     }
 
     return connection;
+  }
+
+  private requiresChannelConnection(type: ChannelEndpointType): boolean {
+    return type === ENDPOINT_TYPES.WEBEX_ROOM || type === ENDPOINT_TYPES.WEBEX_PERSON;
   }
 
   private generateIdentifier(): string {

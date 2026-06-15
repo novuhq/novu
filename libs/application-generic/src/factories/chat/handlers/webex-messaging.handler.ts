@@ -8,12 +8,7 @@ export class WebexMessagingHandler extends BaseChatHandler {
   }
 
   buildProvider(credentials: ICredentials) {
-    if (!credentials.token) {
-      throw Error('Invalid credentials');
-    }
-
     this.provider = new WebexMessagingProvider({
-      token: credentials.token,
       baseUrl: credentials.baseUrl,
     });
   }

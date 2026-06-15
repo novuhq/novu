@@ -59,7 +59,7 @@ export const chatProviders: IProviderConfig[] = [
     displayName: 'Webex Messaging',
     channel: ChannelTypeEnum.CHAT,
     credentials: webexMessagingConfig,
-    docReference: 'https://developer.webex.com/messaging/docs/api/v1/messages/create-a-message',
+    docReference: 'https://developer.webex.com/docs/integrations',
     logoFileName: { light: 'webex-messaging.svg', dark: 'webex-messaging.svg' },
   },
   {

@@ -70,12 +70,14 @@ export type TelegramChatData = {
 export type WebexRoomData = {
   type: typeof ENDPOINT_TYPES.WEBEX_ROOM;
   endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.WEBEX_ROOM];
+  token: string;
   identifier: string;
 };
 
 export type WebexPersonData = {
   type: typeof ENDPOINT_TYPES.WEBEX_PERSON;
   endpoint: ChannelEndpointByType[typeof ENDPOINT_TYPES.WEBEX_PERSON];
+  token: string;
   identifier: string;
 };
 
@@ -108,4 +110,6 @@ export const ENDPOINT_TYPES_REQUIRING_TOKEN = [
   ENDPOINT_TYPES.SLACK_USER,
   ENDPOINT_TYPES.MS_TEAMS_CHANNEL,
   ENDPOINT_TYPES.MS_TEAMS_USER,
+  ENDPOINT_TYPES.WEBEX_ROOM,
+  ENDPOINT_TYPES.WEBEX_PERSON,
 ] as const;

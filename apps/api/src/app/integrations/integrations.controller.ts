@@ -48,11 +48,11 @@ import {
   ApiOkResponse,
   ApiResponse,
 } from '../shared/framework/response.decorator';
-import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { KeylessAccessible } from '../shared/framework/swagger/keyless.security';
 import { SdkGroupName, SdkMethodName } from '../shared/framework/swagger/sdk.decorators';
 import { UserSession } from '../shared/framework/user.decorator';
 import { CONNECTION_RESULT_CSP } from '../shared/html/connection-result-page';
+import { isEnvironmentScopedAuthScheme } from '../shared/utils/auth.utils';
 import { AutoConfigureIntegrationResponseDto } from './dtos/auto-configure-integration-response.dto';
 import { CreateIntegrationRequestDto } from './dtos/create-integration-request.dto';
 import { GenerateChatOauthUrlRequestDto } from './dtos/generate-chat-oauth-url.dto';
@@ -657,7 +657,7 @@ export class IntegrationsController {
   @ApiOperation({
     summary: 'Generate chat OAuth URL',
     description: `**Deprecated** — use \`POST /integrations/channel-connections/oauth\` (connect) or \`POST /integrations/channel-endpoints/oauth\` (link_user) instead.
-    Generate an OAuth URL for chat integrations like Slack and MS Teams. 
+    Generate an OAuth URL for chat integrations like Slack, MS Teams, and Webex.
     This URL allows subscribers to authorize the integration, enabling the system to send messages 
     through their chat workspace. The generated URL expires after 5 minutes.`,
     deprecated: true,
@@ -693,7 +693,7 @@ export class IntegrationsController {
   @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
   @ApiOperation({
     summary: 'Generate OAuth URL for a workspace/tenant connection',
-    description: `Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install or MS Teams admin consent). 
+    description: `Generate an OAuth URL that creates a workspace or tenant-level channel connection (Slack workspace install, MS Teams admin consent, or Webex integration authorization).
     The generated URL expires after 5 minutes.`,
   })
   @SdkMethodName('generateConnectOAuthUrl')
@@ -726,7 +726,7 @@ export class IntegrationsController {
   @ApiResponse(GenerateChatOAuthUrlResponseDto, 201)
   @ApiOperation({
     summary: 'Generate OAuth URL to link a subscriber user identity',
-    description: `Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID or MS Teams user OID). 
+    description: `Generate an OAuth URL that links a specific subscriber to their chat identity (Slack user ID, MS Teams user OID, or Webex person).
     The generated URL expires after 5 minutes.`,
   })
   @SdkMethodName('generateLinkUserOAuthUrl')
@@ -755,7 +755,7 @@ export class IntegrationsController {
   @Get('/chat/oauth/callback')
   @ApiOperation({
     summary: 'Handle chat OAuth callback',
-    description: `Generic OAuth callback handler for all chat integrations (Slack, Teams, Discord, etc.). 
+    description: `Generic OAuth callback handler for all chat integrations (Slack, Teams, Webex, etc.).
     This endpoint processes the authorization code and stores the connection for any supported chat provider.`,
   })
   @ApiExcludeEndpoint()

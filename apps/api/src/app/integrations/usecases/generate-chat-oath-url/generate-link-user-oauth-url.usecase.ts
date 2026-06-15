@@ -6,12 +6,15 @@ import { GenerateMsTeamsOauthUrlCommand } from './generate-msteams-oath-url/gene
 import { GenerateMsTeamsOauthUrl } from './generate-msteams-oath-url/generate-msteams-oauth-url.usecase';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oath-url/generate-slack-oauth-url.command';
 import { GenerateSlackOauthUrl } from './generate-slack-oath-url/generate-slack-oauth-url.usecase';
+import { GenerateWebexOauthUrlCommand } from './generate-webex-oath-url/generate-webex-oauth-url.command';
+import { GenerateWebexOauthUrl } from './generate-webex-oath-url/generate-webex-oauth-url.usecase';
 
 @Injectable()
 export class GenerateLinkUserOauthUrl {
   constructor(
     private generateSlackOAuthUrl: GenerateSlackOauthUrl,
     private generateMsTeamsOAuthUrl: GenerateMsTeamsOauthUrl,
+    private generateWebexOAuthUrl: GenerateWebexOauthUrl,
     private integrationRepository: IntegrationRepository
   ) {}
 
@@ -47,6 +50,20 @@ export class GenerateLinkUserOauthUrl {
           })
         );
 
+      case ChatProviderIdEnum.WebexMessaging:
+        return this.generateWebexOAuthUrl.execute(
+          GenerateWebexOauthUrlCommand.create({
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            connectionIdentifier: command.connectionIdentifier,
+            subscriberId: command.subscriberId,
+            integration,
+            context: command.context,
+            userScope: command.userScope,
+            mode: 'link_user',
+          })
+        );
+
       default:
         throw new BadRequestException(`OAuth not supported for provider: ${integration.providerId}`);
     }
@@ -57,7 +74,14 @@ export class GenerateLinkUserOauthUrl {
       _environmentId: command.environmentId,
       _organizationId: command.organizationId,
       channel: ChannelTypeEnum.CHAT,
-      providerId: { $in: [ChatProviderIdEnum.Slack, ChatProviderIdEnum.Novu, ChatProviderIdEnum.MsTeams] },
+      providerId: {
+        $in: [
+          ChatProviderIdEnum.Slack,
+          ChatProviderIdEnum.Novu,
+          ChatProviderIdEnum.MsTeams,
+          ChatProviderIdEnum.WebexMessaging,
+        ],
+      },
       identifier: command.integrationIdentifier,
     });
 
