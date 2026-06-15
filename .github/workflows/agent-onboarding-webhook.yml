@@ -2,6 +2,8 @@ name: Notify Cursor Automation on Agent Onboarding Change
 
 on:
   push:
+    branches:
+      - next
     paths:
       - "packages/shared/docs/agent-onboarding.md"
 
