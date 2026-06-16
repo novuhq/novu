@@ -30,6 +30,7 @@ describe('AgentSubscriberResolver', () => {
       findByPlatformIdentity?: sinon.SinonStub;
       findByPhone?: sinon.SinonStub;
       findByEmail?: sinon.SinonStub;
+      find?: sinon.SinonStub;
       createOrUpdateSubscriberExecute?: sinon.SinonStub;
       createChannelEndpointExecute?: sinon.SinonStub;
       subscriberDelete?: sinon.SinonStub;
@@ -42,6 +43,7 @@ describe('AgentSubscriberResolver', () => {
     const subscriberRepository = {
       findByPhone: overrides.findByPhone ?? sinon.stub().resolves([]),
       findByEmail: overrides.findByEmail ?? sinon.stub().resolves([]),
+      find: overrides.find ?? sinon.stub().resolves([]),
       delete: overrides.subscriberDelete ?? sinon.stub().resolves(undefined),
     };
     const createOrUpdateSubscriber = {
@@ -181,6 +183,127 @@ describe('AgentSubscriberResolver', () => {
 
       expect(result).to.equal(null);
       expect(subscriberRepository.findByEmail.called).to.equal(false);
+    });
+  });
+
+  describe('provisionEmailSubscriber — lazy keyless demo provisioning', () => {
+    it('creates a Subscriber with email + provenance and no ChannelEndpoint on a miss', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const trackAnalytics = sinon.stub();
+      const { resolver, createChannelEndpoint } = makeResolver({
+        find: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute,
+        trackAnalytics,
+      });
+
+      const result = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'User@Example.com',
+      });
+
+      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
+
+      const command = createOrUpdateSubscriberExecute.firstCall.args[0];
+      expect(command.email).to.equal('user@example.com');
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.source]).to.equal(AGENT_PLATFORM_PROVISION_SOURCE);
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.platform]).to.equal(AgentPlatformEnum.EMAIL);
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.platformUserId]).to.equal('user@example.com');
+
+      // Email identity lives on Subscriber.email — no ChannelEndpoint is written.
+      expect(createChannelEndpoint.execute.called).to.equal(false);
+      expect(trackAnalytics.calledOnce).to.equal(true);
+    });
+
+    it('returns an existing agent-provisioned subscriber without creating a new row', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const find = sinon.stub().resolves([{ subscriberId: 'sub-existing' }]);
+      const { resolver } = makeResolver({
+        find,
+        createOrUpdateSubscriberExecute,
+      });
+
+      const result = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'existing@example.com',
+      });
+
+      expect(result).to.equal('sub-existing');
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
+      expect(find.calledOnce).to.equal(true);
+    });
+
+    it('does not reuse a non-agent-provisioned subscriber with the same email', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        find: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute,
+      });
+
+      const result = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'customer@example.com',
+      });
+
+      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
+    });
+
+    it('reuses an agent-provisioned subscriber with a mixed-case stored email', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const find = sinon.stub().resolves([{ subscriberId: 'sub-mixed-case' }]);
+      const { resolver } = makeResolver({
+        find,
+        createOrUpdateSubscriberExecute,
+      });
+
+      const result = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'user@example.com',
+      });
+
+      expect(result).to.equal('sub-mixed-case');
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
+
+      const query = find.firstCall.args[0];
+      expect(query.email.$regex).to.be.instanceOf(RegExp);
+      expect(query[`data.${AGENT_PROVISION_DATA_KEYS.source}`]).to.equal(AGENT_PLATFORM_PROVISION_SOURCE);
+    });
+
+    it('is idempotent — the same email yields the same deterministic subscriberId', async () => {
+      const { resolver } = makeResolver({ find: sinon.stub().resolves([]) });
+
+      const first = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'user@example.com',
+      });
+      const second = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'USER@example.com',
+      });
+
+      expect(first).to.equal(second);
+    });
+
+    it('returns null for an invalid address without writing anything', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const { resolver, subscriberRepository } = makeResolver({ createOrUpdateSubscriberExecute });
+
+      const result = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'not-an-email',
+      });
+
+      expect(result).to.equal(null);
+      expect(subscriberRepository.findByEmail.called).to.equal(false);
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
     });
   });
 
