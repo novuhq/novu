@@ -49,11 +49,11 @@ export type ManagedCardDelivery = {
 };
 
 // Slack button clicks include action.id (parsed below) and action.value (label text only).
-// Id: mcp-approval:{approve|deny}:{toolUseIds}
-// "Always allow" buttons: mcp-approval:{approve-tool|approve-server}:{toolUseIds}:{toolName}:{mcpServerName}
+// Id: mcp-approval:{approve|deny}:{toolUseId}
+// "Always allow" buttons: mcp-approval:{approve-tool|approve-server}:{toolUseId}:{toolName}:{mcpServerName}
 export type ParsedToolApprovalAction = {
   approved: boolean;
-  toolUseIds: string[];
+  toolUseId: string;
   persistScope?: 'tool' | 'server';
   toolName?: string;
   mcpServerName?: string;
@@ -66,18 +66,15 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
   if (parts.length !== 3 && parts.length !== 5) return null;
 
   const verdict = parts[1];
-  const toolUseIdsPart = parts[2];
+  const toolUseId = parts[2];
   const isApprove = verdict === 'approve' || verdict === 'approve-tool' || verdict === 'approve-server';
   const isDeny = verdict === 'deny';
 
-  if ((!isApprove && !isDeny) || !toolUseIdsPart) return null;
-
-  const toolUseIds = toolUseIdsPart.split(',').filter(Boolean);
-  if (toolUseIds.length === 0) return null;
+  if ((!isApprove && !isDeny) || !toolUseId) return null;
 
   const parsed: ParsedToolApprovalAction = {
     approved: isApprove,
-    toolUseIds,
+    toolUseId,
   };
 
   if (verdict === 'approve-tool') {

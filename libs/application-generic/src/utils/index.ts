@@ -31,6 +31,7 @@ export * from './object';
 export * from './parse-payload-schema';
 export * from './parse-step-variables';
 export * from './sanitize-control-values';
+export * from './shorten-environment-name';
 export * from './slugify-or-random';
 export * from './ssrf-url-validation';
 export * from './step-resolver-control-state';

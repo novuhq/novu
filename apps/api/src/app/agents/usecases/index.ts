@@ -17,10 +17,9 @@ import { HandleAgentReply } from '../conversation-runtime/reply/handle-agent-rep
 import { HandlePlanProgress } from '../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { SendAgentWelcomeMessage } from '../conversation-runtime/reply/send-agent-welcome-message/send-agent-welcome-message.usecase';
 import { SendAgentTestEmail } from '../email/send-agent-test-email/send-agent-test-email.usecase';
-import { CompleteManagedAgentSetup } from '../managed-runtime/setup/complete-managed-agent-setup.usecase';
-import { HandleManagedAgentSetupInbound } from '../managed-runtime/setup/handle-managed-agent-setup-inbound.usecase';
 import { ConfirmToolApproval } from '../managed-runtime/tool-approval/confirm-tool-approval.usecase';
 import { HandlePendingToolApprovals } from '../managed-runtime/tool-approval/handle-pending-tool-approvals.usecase';
+import { HandleNovuTools } from '../managed-runtime/tool-connect/handle-novu-tools.usecase';
 import { CreateAgent } from '../management/usecases/create-agent/create-agent.usecase';
 import { DeleteAgent } from '../management/usecases/delete-agent/delete-agent.usecase';
 import { GenerateManagedAgent } from '../management/usecases/generate-managed-agent/generate-managed-agent.usecase';
@@ -103,11 +102,10 @@ export const USE_CASES = [
   GenerateMcpOAuthUrl,
   EnsureProviderManagedVault,
   CompleteProviderManagedRedirect,
-  HandleManagedAgentSetupInbound,
-  CompleteManagedAgentSetup,
   McpOAuthCallback,
   GetMcpConnectionStatus,
   VerifyManagedCredentials,
   HandlePendingToolApprovals,
   ConfirmToolApproval,
+  HandleNovuTools,
 ];

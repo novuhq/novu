@@ -1,0 +1,66 @@
+name: Notify Cursor Automation on Agent Onboarding Change
+
+on:
+  push:
+    branches:
+      - next
+    paths:
+      - "packages/shared/docs/agent-onboarding.md"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "${{ github.workflow }}-${{ github.ref }}"
+  cancel-in-progress: false
+
+jobs:
+  trigger-cursor-webhook:
+    name: Trigger Cursor automation webhook
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send webhook to Cursor automation
+        env:
+          CURSOR_AGENT_ONBOARDING_WEBHOOK_URL: ${{ secrets.CURSOR_AGENT_ONBOARDING_WEBHOOK_URL }}
+          CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN: ${{ secrets.CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+          REF: ${{ github.ref }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          CHANGED_FILE: packages/shared/docs/agent-onboarding.md
+        run: |
+          if [ -z "$CURSOR_AGENT_ONBOARDING_WEBHOOK_URL" ]; then
+            echo "::error::CURSOR_AGENT_ONBOARDING_WEBHOOK_URL secret is not set"
+            exit 1
+          fi
+
+          if [ -z "$CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN" ]; then
+            echo "::error::CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN secret is not set"
+            exit 1
+          fi
+
+          payload=$(jq -n \
+            --arg event "agent-onboarding-changed" \
+            --arg repository "$REPOSITORY" \
+            --arg ref "$REF" \
+            --arg sha "$SHA" \
+            --arg actor "$ACTOR" \
+            --arg file "$CHANGED_FILE" \
+            '{event: $event, repository: $repository, ref: $ref, sha: $sha, actor: $actor, file: $file}')
+
+          http_code=$(curl --silent --show-error --location \
+            --max-time 30 \
+            --retry 3 --retry-connrefused --retry-all-errors \
+            --output /dev/null --write-out "%{http_code}" \
+            --request POST "$CURSOR_AGENT_ONBOARDING_WEBHOOK_URL" \
+            --header "Content-Type: application/json" \
+            --header "Authorization: Bearer $CURSOR_AGENT_ONBOARDING_WEBHOOK_TOKEN" \
+            --data "$payload")
+
+          echo "Webhook responded with HTTP $http_code"
+
+          if [ "$http_code" -lt 200 ] || [ "$http_code" -ge 300 ]; then
+            echo "::error::Cursor automation webhook failed with HTTP $http_code"
+            exit 1
+          fi

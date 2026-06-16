@@ -20,9 +20,9 @@ import {
   ContextPayload,
   SLACK_AGENT_OAUTH_SCOPES,
 } from '@novu/shared';
-import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { validateConnectionMode } from '../../../../channel-connections/usecases/channel-connection.utils';
 import { ensureConnectDashboardSubscriber } from '../../../../channel-connections/usecases/ensure-connect-dashboard-subscriber';
+import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
 import { CHAT_OAUTH_CALLBACK_PATH } from '../chat-oauth.constants';
 import { encodeOAuthState, splitOAuthState } from '../chat-oauth-state.util';
 import { GenerateSlackOauthUrlCommand } from './generate-slack-oauth-url.command';
