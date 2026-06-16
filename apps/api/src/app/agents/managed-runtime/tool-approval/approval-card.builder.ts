@@ -8,6 +8,10 @@ import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 
 export const TOOL_APPROVAL_ACTION_PREFIX = 'mcp-approval' as const;
 
+/** WhatsApp Cloud API + @chat-adapter/whatsapp reply-button limits. */
+const WHATSAPP_MAX_REPLY_BUTTONS = 3;
+const WHATSAPP_MAX_BUTTON_TITLE_LENGTH = 20;
+
 function resolveDashboardBaseUrl(): string {
   for (const candidate of [process.env.DASHBOARD_URL, process.env.FRONT_BASE_URL]) {
     const trimmed = candidate?.trim();
@@ -127,6 +131,65 @@ export function formatToolLabelForApproval(tool: PendingToolApproval): string {
   return `${tool.toolName}${input}`;
 }
 
+function buildApprovalButton(
+  tool: PendingToolApproval,
+  params: { id: string; label: string; style?: 'default' | 'primary' }
+): Record<string, unknown> {
+  const toolLabel = formatToolLabelForApproval(tool);
+
+  return {
+    type: 'button',
+    id: params.id,
+    label: params.label,
+    style: params.style ?? 'default',
+    value: toolLabel,
+  };
+}
+
+function truncateWhatsAppButtonLabel(label: string): string {
+  if (label.length <= WHATSAPP_MAX_BUTTON_TITLE_LENGTH) {
+    return label;
+  }
+
+  return `${label.slice(0, WHATSAPP_MAX_BUTTON_TITLE_LENGTH - 1)}…`;
+}
+
+/**
+ * WhatsApp reads only the first card `actions` block and supports at most three
+ * reply buttons. Flatten approve/deny + one persist option into a single block.
+ */
+export function buildToolApprovalWhatsAppCard(tool: PendingToolApproval): Record<string, unknown> {
+  const toolLabel = formatToolLabelForApproval(tool);
+
+  const buttons = [
+    buildApprovalButton(tool, {
+      id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}`,
+      label: 'Deny',
+    }),
+    buildApprovalButton(tool, {
+      id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}`,
+      label: 'Approve once',
+      style: 'primary',
+    }),
+    buildApprovalButton(tool, {
+      id: buildToolApprovalPersistActionId('approve-tool', tool),
+      label: truncateWhatsAppButtonLabel('Always allow tool'),
+    }),
+  ].slice(0, WHATSAPP_MAX_REPLY_BUTTONS);
+
+  return {
+    type: 'card',
+    title: 'Tool approval required',
+    subtitle: toolLabel,
+    children: [
+      {
+        type: 'actions',
+        children: buttons,
+      },
+    ],
+  };
+}
+
 export function buildToolApprovalCard(tool: PendingToolApproval): Record<string, unknown> {
   const toolLabel = formatToolLabelForApproval(tool);
 
@@ -134,40 +197,29 @@ export function buildToolApprovalCard(tool: PendingToolApproval): Record<string,
     {
       type: 'actions',
       children: [
-        {
-          type: 'button',
+        buildApprovalButton(tool, {
           id: `${TOOL_APPROVAL_ACTION_PREFIX}:deny:${tool.toolUseId}`,
           label: 'Deny',
-          style: 'default',
-          value: toolLabel,
-        },
-        {
-          type: 'button',
+        }),
+        buildApprovalButton(tool, {
           id: `${TOOL_APPROVAL_ACTION_PREFIX}:approve:${tool.toolUseId}`,
           label: 'Approve once',
           style: 'primary',
-          value: toolLabel,
-        },
+        }),
       ],
     },
     { type: 'divider' },
     {
       type: 'actions',
       children: [
-        {
-          type: 'button',
+        buildApprovalButton(tool, {
           id: buildToolApprovalPersistActionId('approve-tool', tool),
           label: 'Always allow this tool',
-          style: 'default',
-          value: toolLabel,
-        },
-        {
-          type: 'button',
+        }),
+        buildApprovalButton(tool, {
           id: buildToolApprovalPersistActionId('approve-server', tool),
           label: `Always allow ${tool.mcpServerName ?? 'MCP'}`,
-          style: 'default',
-          value: toolLabel,
-        },
+        }),
       ],
     },
   ];
@@ -276,7 +328,10 @@ export function getToolApprovalCard(params: {
   tool: PendingToolApproval;
   pendingQueueTotal?: number;
 }): ManagedCardDelivery {
-  const card = buildToolApprovalCard(params.tool);
+  const card =
+    params.platform === AgentPlatformEnum.WHATSAPP
+      ? buildToolApprovalWhatsAppCard(params.tool)
+      : buildToolApprovalCard(params.tool);
   const content: ReplyContentDto = { card };
 
   if (params.platform === AgentPlatformEnum.SLACK) {
