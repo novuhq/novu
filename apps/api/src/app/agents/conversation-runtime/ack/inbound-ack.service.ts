@@ -6,7 +6,7 @@ import { type AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../s
 import { OutboundGateway } from '../egress/outbound.gateway';
 
 export const INBOUND_ACK_EMOJI = {
-  /** Persistent processing signal for managed turns (active and queued). */
+  /** Persistent signal while a managed turn waits in the dispatch queue. */
   queued: 'hourglass',
   /** Receipt signal for non-typing platforms (first message only). */
   receipt: 'eyes',
@@ -94,7 +94,7 @@ export class InboundAckService {
     );
   }
 
-  /** Managed turn: persistent `hourglass` on the user message (all platforms). */
+  /** Managed turn queued behind an active turn: `hourglass` on the user message (all platforms). */
   async showQueuedSignal(params: QueuedSignalParams): Promise<void> {
     const { agentId, config, platformThreadId, platformMessageId } = params;
 
