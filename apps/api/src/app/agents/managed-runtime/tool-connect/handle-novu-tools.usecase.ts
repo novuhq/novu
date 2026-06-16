@@ -6,8 +6,9 @@ import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { GenerateMcpOAuthUrlCommand } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
+import { McpConnectRedirectService } from '../../mcp/connections/mcp-connect-redirect.service';
 import { ManagedAgentService } from '../managed-agent.service';
-import { buildConnectCard } from './connect-card.builder';
+import { buildConnectCardDelivery } from './connect-card.builder';
 import { HandleNovuToolsCommand, NovuToolsActionEnum } from './handle-novu-tools.command';
 import { listOAuthMcps } from './list-oauth-mcps.helper';
 
@@ -18,6 +19,7 @@ export class HandleNovuTools {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly mcpConnectRedirect: McpConnectRedirectService,
     private readonly handleAgentReply: HandleAgentReply,
     @Inject(forwardRef(() => ManagedAgentService))
     private readonly managedAgentService: ManagedAgentService,
@@ -111,13 +113,16 @@ export class HandleNovuTools {
     const mcp = MCP_SERVERS.find((s) => s.id === command.mcpId);
     const mcpName = mcp?.name ?? command.mcpId;
 
-    const delivery = buildConnectCard({
-      platform: command.platform,
-      mcpId: command.mcpId,
-      mcpName,
-      authorizeUrl: oauthUrls.authorizeUrl,
-      authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
-    });
+    const delivery = await buildConnectCardDelivery(
+      {
+        platform: command.platform,
+        mcpId: command.mcpId,
+        mcpName,
+        authorizeUrl: oauthUrls.authorizeUrl,
+        authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
+      },
+      { connectRedirect: this.mcpConnectRedirect }
+    );
 
     const sent = await this.handleAgentReply.execute(
       HandleAgentReplyCommand.create({

@@ -147,7 +147,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
   }
 
   describe('POST /v1/agents/:identifier/mcp-servers', () => {
-    it('writes an enablement row and projects the new set onto the provider', async () => {
+    it('writes an enablement row and reconciles the shared agent without subscriber OAuth MCPs', async () => {
       const { identifier, agentId } = await createManagedAgent();
 
       const res = await session.testAgent
@@ -167,15 +167,11 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       });
       expect(row, 'agent_mcp_server row should be created').to.exist;
       expect(row!.status).to.equal('active');
+      expect(row!.externalProjection, 'subscriber OAuth rows are session-only').to.equal(undefined);
 
-      // Provider sync called with the resolved catalog projection.
       const updateConfigCall = mockProvider.updateConfig.firstCall;
       expect(mockProvider.updateConfig.calledOnce, 'updateConfig should be called once').to.be.true;
-      expect(updateConfigCall.args[1].mcpServers).to.deep.include({
-        externalId: 'linear',
-        name: 'Linear',
-        url: 'https://mcp.linear.app/mcp',
-      });
+      expect(updateConfigCall.args[1].mcpServers).to.deep.equal([]);
     });
 
     it('returns 409 when the same MCP is already enabled and healthy', async () => {
@@ -202,7 +198,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(res.status).to.equal(400);
     });
 
-    it('marks the row as error when provider sync fails, and allows retry', async () => {
+    it('leaves the row syncing when provider reconcile fails for a session-only MCP, and allows retry', async () => {
       const { identifier, agentId } = await createManagedAgent();
       mockProvider.updateConfig.rejects(new Error('Provider is unavailable'));
 
@@ -211,17 +207,16 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
         .send({ mcpId: 'linear' });
       expect(failed.status).to.be.oneOf([400, 422, 500, 503]);
 
-      const errored = await agentMcpServerRepository.findByAgentAndMcpId({
+      const stuck = await agentMcpServerRepository.findByAgentAndMcpId({
         organizationId: session.organization._id,
         environmentId: session.environment._id,
         agentId,
         mcpId: 'linear',
       });
-      expect(errored, 'enablement row should still exist after failed sync').to.exist;
-      expect(errored!.status).to.equal('error');
-      expect(errored!.lastError, 'lastError should be populated on sync failure').to.exist;
+      expect(stuck, 'enablement row should still exist after failed reconcile').to.exist;
+      expect(stuck!.status).to.equal('syncing');
+      expect(stuck!.lastError, 'session-only rows are not marked error on reconcile failure').to.equal(undefined);
 
-      // Retry — provider works this time. Should reuse the existing row.
       mockProvider.updateConfig.resetBehavior();
       mockProvider.updateConfig.resolves({
         model: 'claude-3-5-sonnet-20241022',
@@ -233,7 +228,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       const retry = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
         .send({ mcpId: 'linear' });
-      expect(retry.status, 'retry on errored row should succeed').to.equal(201);
+      expect(retry.status, 'retry on syncing row should succeed').to.equal(201);
 
       const recovered = await agentMcpServerRepository.findByAgentAndMcpId({
         organizationId: session.organization._id,
@@ -306,7 +301,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       // least once.
       expect(mockProvider.updateConfig.callCount, 'updateConfig should run for each enable').to.be.greaterThan(0);
       const lastCallProjection = mockProvider.updateConfig.lastCall.args[1].mcpServers as Array<{ externalId: string }>;
-      expect(lastCallProjection.map((p) => p.externalId).sort()).to.deep.equal(['linear', 'sentry']);
+      expect(lastCallProjection).to.deep.equal([]);
     });
 
     it('disables every currently-enabled id when the desired set is empty', async () => {
@@ -409,24 +404,14 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       expect(body.failed[0].code).to.be.a('string').that.is.not.empty;
       expect(body.failed[0].message).to.be.a('string').that.is.not.empty;
 
-      // `data` mirrors the persisted state, same shape as GET
-      // /mcp-servers: both rows are `enabled: true` so both are returned.
-      // The fact that something didn't take healthily is communicated
-      // through `failed[]`, not by omission from `data`.
-      //
-      // Note on linear's status: SyncAgentMcpServers marks *every*
-      // currently-enabled row as `error` when the upstream projection
-      // call fails (it's a batch projection, not per-row). So sentry's
-      // failed sync flips linear's status from `active` back to `error`
-      // too. This is a known behaviour of the per-row sync model — pin
-      // it here so any future "skip the batch on sentry failure" or
-      // "per-row sync isolation" refactor has to consciously update
-      // this expectation.
+      // `data` mirrors the persisted state. Linear was enabled before sentry's
+      // reconcile failed; session-only rows are not marked error when the
+      // shared-agent projection call fails.
       expect(body.data.map((r) => r.mcpId).sort()).to.deep.equal(['linear', 'sentry']);
       const linearRow = body.data.find((r) => r.mcpId === 'linear');
       const sentryRow = body.data.find((r) => r.mcpId === 'sentry');
-      expect(linearRow?.status).to.equal('error');
-      expect(sentryRow?.status).to.equal('error');
+      expect(linearRow?.status).to.equal('active');
+      expect(sentryRow?.status).to.equal('syncing');
 
       expect(await findEnabledIds(agentId)).to.deep.equal(['linear', 'sentry']);
 
@@ -436,9 +421,11 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
         agentId,
         mcpId: 'sentry',
       });
-      expect(erroredSentry, 'sentry row should still exist in error state').to.exist;
-      expect(erroredSentry!.status).to.equal('error');
-      expect(erroredSentry!.lastError, 'lastError should be populated on sync failure').to.exist;
+      expect(erroredSentry, 'sentry row should still exist after failed enable').to.exist;
+      expect(erroredSentry!.status).to.equal('syncing');
+      expect(erroredSentry!.lastError, 'session-only rows are not marked error on reconcile failure').to.equal(
+        undefined
+      );
     });
   });
 
@@ -997,6 +984,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
     it('callback happy path → status=connected, authMode=novu-app, vault upsert called, no oauthClient on row', async () => {
       const { agentId, state } = await authorizeAndCaptureState();
+      const updateConfigCallsBeforeCallback = mockProvider.updateConfig.callCount;
 
       routeJsonStub({
         tokenEndpoint: {
@@ -1034,6 +1022,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       // (client_id from env, tokenEndpoint from oauthState) and the resource
       // mirrored from the catalog URL.
       expect(mockProvider.upsertVaultCredential.calledOnce, 'upsertVaultCredential should be called once').to.be.true;
+      expect(
+        mockProvider.updateConfig.callCount,
+        'OAuth callback must not reconcile the shared agent definition'
+      ).to.equal(updateConfigCallsBeforeCallback);
       const vaultCall = mockProvider.upsertVaultCredential.firstCall.args[0];
       expect(vaultCall.mcpServerUrl).to.equal('https://api.githubcopilot.com/mcp/');
       expect(vaultCall.displayName).to.equal('GitHub');

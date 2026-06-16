@@ -19,9 +19,10 @@ import {
   McpConnectionScopeEnum,
 } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
-import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/resolve-mcp-servers';
-import { sanitizeUrlForLogging } from '../../../mcp/sanitize-url-for-logging';
+import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
+import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/shared/resolve-managed-agent-always-allow-tool-permissions';
+import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/shared/resolve-mcp-servers';
+import { sanitizeUrlForLogging } from '../../../mcp/shared/sanitize-url-for-logging';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
 export type ProvisionManagedAgentOptions = {
@@ -43,6 +44,7 @@ export class ProvisionManagedAgent {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
     private readonly logger: PinoLogger
   ) {}
 
@@ -145,7 +147,17 @@ export class ProvisionManagedAgent {
           ? filterDemoConfigurableMcpIds(command.mcpServers)
           : command.mcpServers;
 
-      const resolvedMcpServers = requestedMcpServers ? resolveMcpServersById(requestedMcpServers) : undefined;
+      if (requestedMcpServers?.length) {
+        resolveMcpServersById(requestedMcpServers);
+      }
+
+      const agentDefinitionMcpIds = requestedMcpServers
+        ? this.agentMcpDefinitionService.filterIdsForProvision(requestedMcpServers, McpConnectionScopeEnum.Subscriber)
+        : undefined;
+      // Shared agent only at create time; Mongo still stores every requested MCP below.
+      const resolvedMcpServers = agentDefinitionMcpIds?.length
+        ? resolveMcpServersById(agentDefinitionMcpIds)
+        : undefined;
       const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
         featureFlagsService: this.featureFlagsService,
         environmentId: command.environmentId,
@@ -369,6 +381,10 @@ export class ProvisionManagedAgent {
         continue;
       }
 
+      const onAgentDefinition = this.agentMcpDefinitionService
+        .filterIdsForProvision([mcpId], McpConnectionScopeEnum.Subscriber)
+        .includes(mcpId);
+
       await this.agentMcpServerRepository.create(
         {
           _organizationId: command.organizationId,
@@ -379,11 +395,15 @@ export class ProvisionManagedAgent {
           defaultScope: McpConnectionScopeEnum.Subscriber,
           defaultAuthMode: catalog.oauth.mode,
           status: 'active',
-          externalProjection: {
-            providerId: command.providerId,
-            mcpServerName: catalog.name,
-            syncedAt,
-          },
+          ...(onAgentDefinition
+            ? {
+                externalProjection: {
+                  providerId: command.providerId,
+                  mcpServerName: catalog.name,
+                  syncedAt,
+                },
+              }
+            : {}),
         },
         writeOptions
       );

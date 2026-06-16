@@ -36,8 +36,6 @@ import { trackAgentMcpOAuthCompleted, trackAgentMcpOAuthFailed } from '../../../
 import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../../shared/enums/agent-platform.enum';
 import { McpNovuAppCredentialsService } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
 import { McpConnectionVaultService } from '../../connections/mcp-connection-vault.service';
-import { SyncAgentMcpServersCommand } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.command';
-import { SyncAgentMcpServers } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { MCP_OAUTH_STATE_TTL_MS } from '../generate-mcp-oauth-url/mcp-oauth.constants';
 import { buildMcpOAuthRedirectUri, type McpOAuthState } from '../generate-mcp-oauth-url/mcp-oauth-state';
 import {
@@ -92,7 +90,6 @@ export class McpOAuthCallback {
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly discoveryService: McpOAuthDiscoveryService,
-    private readonly syncAgentMcpServers: SyncAgentMcpServers,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
     private readonly managedAgentService: ManagedAgentService,
     private readonly outboundGateway: OutboundGateway,
@@ -440,13 +437,12 @@ export class McpOAuthCallback {
    *   1. Push the credential to the runtime provider's vault when the
    *      provider exposes one (`capabilities.tokenVault === true`). Persists
    *      the returned `vaultCredentialId` so disable/refresh can target it.
-   *   2. Re-run `SyncAgentMcpServers` so the upstream `agent.mcp_servers`
-   *      projection is fresh (idempotent; cheap).
+   *
+   * Does not update Anthropic's shared agent MCP list. The connected MCP is
+   * attached on the next message send for that subscriber's conversation.
    *
    * Throws on vault-push failure so the caller can mark the connection
-   * `error` — the user retries by clicking the Connect button again. Sync
-   * failures are logged but never block the connection from landing in
-   * `Connected`.
+   * `error` — the user retries by clicking the Connect button again.
    */
   private async runPostConnectActions(args: {
     connection: McpConnectionEntity;
@@ -508,21 +504,6 @@ export class McpOAuthCallback {
             'auth.externalVaultId': externalVaultId,
           },
         }
-      );
-    }
-
-    try {
-      await this.syncAgentMcpServers.execute(
-        SyncAgentMcpServersCommand.create({
-          environmentId: stateData.environmentId,
-          organizationId: stateData.organizationId,
-          agentId: stateData.agentId,
-        })
-      );
-    } catch (err) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), agentId: stateData.agentId },
-        'SyncAgentMcpServers after OAuth callback failed (non-fatal)'
       );
     }
 

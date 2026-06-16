@@ -38,13 +38,12 @@ import { VerifyManagedCredentials } from '../management/usecases/verify-managed-
 import { CompleteProviderManagedRedirect } from '../mcp/connections/ensure-provider-managed-vault/complete-provider-managed-redirect.usecase';
 import { EnsureProviderManagedVault } from '../mcp/connections/ensure-provider-managed-vault/ensure-provider-managed-vault.usecase';
 import { GetMcpConnectionStatus } from '../mcp/connections/get-mcp-connection-status/get-mcp-connection-status.usecase';
+import { DisableAgentMcpServer } from '../mcp/enablement/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
+import { EnableAgentMcpServer } from '../mcp/enablement/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
+import { ListAgentMcpServers } from '../mcp/enablement/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
+import { SetAgentMcpServers } from '../mcp/enablement/set-agent-mcp-servers/set-agent-mcp-servers.usecase';
 import { GenerateMcpOAuthUrl } from '../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { McpOAuthCallback } from '../mcp/oauth/mcp-oauth-callback/mcp-oauth-callback.usecase';
-import { DisableAgentMcpServer } from '../mcp/servers/disable-agent-mcp-server/disable-agent-mcp-server.usecase';
-import { EnableAgentMcpServer } from '../mcp/servers/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
-import { ListAgentMcpServers } from '../mcp/servers/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
-import { SetAgentMcpServers } from '../mcp/servers/set-agent-mcp-servers/set-agent-mcp-servers.usecase';
-import { SyncAgentMcpServers } from '../mcp/servers/sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 
 export {
@@ -94,7 +93,6 @@ export const USE_CASES = [
   SendAgentWelcomeMessage,
   SendWhatsAppTestTemplate,
   SyncAgentToEnvironment,
-  SyncAgentMcpServers,
   EnableAgentMcpServer,
   DisableAgentMcpServer,
   SetAgentMcpServers,

@@ -16,7 +16,7 @@ import { createWebhookHandler, type WebhookHandler } from '@novu/thalamus/webhoo
 import type { Request, Response } from 'express';
 import type { ResolvedAgentConfig } from '../channels/agent-config-resolver.service';
 import { InboundAckService } from '../conversation-runtime/ack/inbound-ack.service';
-import { McpConnectionVaultService } from '../mcp/connections/mcp-connection-vault.service';
+import { AgentMcpSessionService } from '../mcp/runtime/agent-mcp-session.service';
 import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { DemoClaudeQuotaPolicy } from './demo-claude-quota-policy.service';
 import { ManagedAgentEventHandler } from './managed-agent-event-handler.service';
@@ -64,7 +64,7 @@ export class ManagedAgentService implements OnModuleInit {
     private readonly conversationRepository: ConversationRepository,
     private readonly conversationActivityRepository: ConversationActivityRepository,
     private readonly subscriberRepository: SubscriberRepository,
-    private readonly mcpConnectionVaultService: McpConnectionVaultService,
+    private readonly agentMcpSessionService: AgentMcpSessionService,
     private readonly demoQuota: DemoClaudeQuotaPolicy,
     private readonly inboundAck: InboundAckService,
     private readonly logger: PinoLogger
@@ -93,7 +93,7 @@ export class ManagedAgentService implements OnModuleInit {
     const existingSessionId = context.conversation.externalSessionId ?? undefined;
     const sessionId = await this.reconcileSessionIdForVaultBinding(context, vaultIds, existingSessionId);
 
-    const connectedMcpServers = await this.mcpConnectionVaultService.resolveSubscriberConnectedMcps({
+    const connectedMcpServers = await this.agentMcpSessionService.resolveConnectedMcps({
       agentId: agent._id,
       environmentId: context.config.environmentId,
       organizationId: context.config.organizationId,
@@ -242,7 +242,7 @@ export class ManagedAgentService implements OnModuleInit {
     const isToolApproval = params.approved !== undefined;
     const connectedMcpServers = isToolApproval
       ? undefined
-      : await this.mcpConnectionVaultService.resolveSubscriberConnectedMcps({
+      : await this.agentMcpSessionService.resolveConnectedMcps({
           agentId: agent._id,
           environmentId: params.environmentId,
           organizationId: params.organizationId,
@@ -284,6 +284,7 @@ export class ManagedAgentService implements OnModuleInit {
         messages: [{ role: MessageRole.USER, content: params.followUpMessage }],
         sessionId,
         vaultIds,
+        ...(connectedMcpServers ? { agent: { mcpServers: connectedMcpServers } } : {}),
         webhookMetadata: followUpMetadata,
       });
     }
@@ -418,7 +419,7 @@ export class ManagedAgentService implements OnModuleInit {
       return [];
     }
 
-    return this.mcpConnectionVaultService.resolveVaultIds({
+    return this.agentMcpSessionService.resolveVaultIds({
       agentId: agent._id,
       environmentId,
       organizationId,
