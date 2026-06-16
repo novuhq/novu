@@ -142,13 +142,10 @@ export class AgentMcpDefinitionService {
         'Failed to push shared-agent MCP list to Anthropic'
       );
 
-      // Mark every enabled row we attempted to reconcile, not only the ones
-      // that project onto the shared agent. A session-only MCP (e.g. an
-      // unconnected subscriber-OAuth entry) still goes through this reconcile
-      // on enable; if the empty-list `updateConfig` fails it must not be left
-      // stuck in `syncing` with no `lastError` for the dashboard to surface.
+      const projectedRows = enabled.filter(belongsOnAgentDefinition);
+
       await Promise.allSettled(
-        enabled.map((row) =>
+        projectedRows.map((row) =>
           this.agentMcpServerRepository.update(
             {
               _id: row._id,
