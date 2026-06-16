@@ -1,0 +1,56 @@
+name: Agent evals
+
+on:
+  push:
+    branches:
+      - next
+    paths:
+      - packages/shared/docs/agent-onboarding.md
+      - libs/agent-evals/**
+  pull_request:
+    paths:
+      - packages/shared/docs/agent-onboarding.md
+      - libs/agent-evals/**
+  schedule:
+    - cron: '0 4 * * *'
+  workflow_dispatch:
+    inputs:
+      enable_judge:
+        description: Enable LLM judge graders
+        type: boolean
+        default: true
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.0.9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run agent evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          JUDGE_FLAG=""
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ "${{ github.event_name }}" != "workflow_dispatch" || "${{ inputs.enable_judge }}" == "true" ]]; then
+              JUDGE_FLAG="--judge"
+            fi
+          fi
+
+          pnpm --filter @novu/agent-evals start -- --suite agent-onboarding --fail-under 80 ${JUDGE_FLAG}

@@ -2465,6 +2465,31 @@ importers:
         specifier: ^4.49.0
         version: 4.68.1
 
+  libs/agent-evals:
+    dependencies:
+      '@ai-sdk/anthropic':
+        specifier: ^3.0.10
+        version: 3.0.13(zod@3.25.76)
+      ai:
+        specifier: 6.0.50
+        version: 6.0.50(zod@3.25.76)
+      dotenv:
+        specifier: ^16.6.1
+        version: 16.6.1
+      zod:
+        specifier: ^3.23.8
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^22.0.0
+        version: 22.15.13
+      tsx:
+        specifier: 4.16.2
+        version: 4.16.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+
   libs/application-generic:
     dependencies:
       '@anthropic-ai/aws-sdk':
@@ -19242,9 +19267,6 @@ packages:
     resolution: {integrity: sha512-g0QYk1dZBxGwk+Ngc+ltRH2IBp2f7zBkBMBJZCDerh6EhlhSR6+9irMCuT/09zD6qkarHUSn529sK/yL4S27mg==}
     engines: {node: '>= 0.4'}
 
-  get-tsconfig@4.7.5:
-    resolution: {integrity: sha512-ZCuZCnlqNzjb4QprAzXKdpp/gh6KTxSJuw3IBsPnV/7fV4NxC9ckB+vPTt8w7fJA0TaSD7c55BR47JD6MEDyDw==}
-
   get-tsconfig@4.8.0:
     resolution: {integrity: sha512-Pgba6TExTZ0FJAn1qkJAjIeKoDJ3CsI2ChuLohJnZl/tTU8MVrq3b+2t5UOPfRa4RMsorClBjJALkJUMjG1PAw==}
 
@@ -27830,6 +27852,12 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.6(zod@3.25.20)
       zod: 3.25.20
 
+  '@ai-sdk/anthropic@3.0.13(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.3
+      '@ai-sdk/provider-utils': 4.0.6(zod@3.25.76)
+      zod: 3.25.76
+
   '@ai-sdk/gateway@3.0.14(zod@4.3.5)':
     dependencies:
       '@ai-sdk/provider': 3.0.3
@@ -27850,6 +27878,13 @@ snapshots:
       '@ai-sdk/provider-utils': 4.0.9(zod@3.25.20)
       '@vercel/oidc': 3.1.0
       zod: 3.25.20
+
+  '@ai-sdk/gateway@3.0.23(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.5
+      '@ai-sdk/provider-utils': 4.0.9(zod@3.25.76)
+      '@vercel/oidc': 3.1.0
+      zod: 3.25.76
 
   '@ai-sdk/gateway@3.0.23(zod@4.3.5)':
     dependencies:
@@ -27900,6 +27935,13 @@ snapshots:
       eventsource-parser: 3.0.6
       zod: 3.25.20
 
+  '@ai-sdk/provider-utils@4.0.6(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.3
+      '@standard-schema/spec': 1.1.0
+      eventsource-parser: 3.0.6
+      zod: 3.25.76
+
   '@ai-sdk/provider-utils@4.0.6(zod@4.3.5)':
     dependencies:
       '@ai-sdk/provider': 3.0.3
@@ -27913,6 +27955,13 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       eventsource-parser: 3.0.6
       zod: 3.25.20
+
+  '@ai-sdk/provider-utils@4.0.9(zod@3.25.76)':
+    dependencies:
+      '@ai-sdk/provider': 3.0.5
+      '@standard-schema/spec': 1.1.0
+      eventsource-parser: 3.0.6
+      zod: 3.25.76
 
   '@ai-sdk/provider-utils@4.0.9(zod@4.3.5)':
     dependencies:
@@ -31657,7 +31706,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.39.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.2(zod@4.3.5)
+      better-call: 1.3.2(zod@4.3.6)
       jose: 6.1.3
       kysely: 0.28.17
       nanostores: 1.2.0
@@ -31699,7 +31748,7 @@ snapshots:
       fast-xml-parser: 5.7.3
       jose: 6.1.3
       samlify: 2.13.1
-      zod: 4.3.5
+      zod: 4.3.6
 
   '@better-auth/sso@1.5.6(@better-auth/core@1.5.6(@better-auth/utils@0.3.1)(@better-fetch/fetch@1.1.21)(@opentelemetry/api@1.9.0)(better-call@1.3.2(zod@4.3.6))(jose@6.1.3)(kysely@0.28.17)(nanostores@1.2.0))(@better-auth/utils@0.3.1)(better-auth@1.5.6(d9d7da76424e2ace7367f5b90edcc4b7))(better-call@1.3.2(zod@4.3.6))':
     dependencies:
@@ -44701,6 +44750,14 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 3.25.20
 
+  ai@6.0.50(zod@3.25.76):
+    dependencies:
+      '@ai-sdk/gateway': 3.0.23(zod@3.25.76)
+      '@ai-sdk/provider': 3.0.5
+      '@ai-sdk/provider-utils': 4.0.9(zod@3.25.76)
+      '@opentelemetry/api': 1.9.0
+      zod: 3.25.76
+
   ai@6.0.50(zod@4.3.5):
     dependencies:
       '@ai-sdk/gateway': 3.0.23(zod@4.3.5)
@@ -45481,7 +45538,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
-      better-call: 1.3.2(zod@4.3.5)
+      better-call: 1.3.2(zod@4.3.6)
       defu: 6.1.6
       jose: 6.1.3
       kysely: 0.28.17
@@ -45499,15 +45556,6 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
-
-  better-call@1.3.2(zod@4.3.5):
-    dependencies:
-      '@better-auth/utils': 0.3.1
-      '@better-fetch/fetch': 1.1.21
-      rou3: 0.7.12
-      set-cookie-parser: 3.1.0
-    optionalDependencies:
-      zod: 4.3.5
 
   better-call@1.3.2(zod@4.3.6):
     dependencies:
@@ -48881,10 +48929,6 @@ snapshots:
       call-bind: 1.0.7
       es-errors: 1.3.0
       get-intrinsic: 1.3.0
-
-  get-tsconfig@4.7.5:
-    dependencies:
-      resolve-pkg-maps: 1.0.0
 
   get-tsconfig@4.8.0:
     dependencies:
@@ -58389,7 +58433,7 @@ snapshots:
   tsx@4.16.2:
     dependencies:
       esbuild: 0.28.1
-      get-tsconfig: 4.7.5
+      get-tsconfig: 4.8.0
     optionalDependencies:
       fsevents: 2.3.3
 
