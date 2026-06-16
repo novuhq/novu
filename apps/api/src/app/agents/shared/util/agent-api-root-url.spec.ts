@@ -39,6 +39,13 @@ describe('buildAgentApiRootUrl', () => {
     expect(buildAgentApiRootUrl()).to.equal('https://api.example.com');
   });
 
+  it('strips multiple trailing slashes from the resolved root URL', () => {
+    process.env.API_ROOT_URL = 'https://api.example.com///';
+    delete process.env.AGENT_API_HOSTNAME;
+
+    expect(buildAgentApiRootUrl()).to.equal('https://api.example.com');
+  });
+
   it('throws when neither env var is set', () => {
     delete process.env.API_ROOT_URL;
     delete process.env.AGENT_API_HOSTNAME;

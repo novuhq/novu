@@ -5,22 +5,25 @@ export const NOVU_AGENT_POWERED_URL = 'https://go.novu.co/agent-powered';
 
 export const NOVU_AGENT_POWERED_WATERMARK_TEXT = 'Powered by Novu';
 
+const NOVU_POWERED_WATERMARK_MARKER = '\u200B';
+
+const ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX = `[${NOVU_AGENT_POWERED_WATERMARK_TEXT}](${NOVU_AGENT_POWERED_URL}`;
+
 export function buildPoweredByWatermark(agentIdentifier: string, platform: string): string {
   if (!supportsMarkdownLinks(platform)) {
-    return NOVU_AGENT_POWERED_WATERMARK_TEXT;
+    return `${NOVU_AGENT_POWERED_WATERMARK_TEXT}${NOVU_POWERED_WATERMARK_MARKER}`;
   }
 
   return `[Powered by Novu](${buildAttributedNovuUrl(NOVU_AGENT_POWERED_URL, 'agent-powered', agentIdentifier, platform)})`;
 }
 
 export function contentHasPoweredByWatermark(markdown: string): boolean {
-  if (markdown.includes(NOVU_AGENT_POWERED_URL)) {
+  if (markdown.includes(ATTRIBUTED_POWERED_BY_WATERMARK_PREFIX)) {
     return true;
   }
 
+  const linklessWatermark = `${NOVU_AGENT_POWERED_WATERMARK_TEXT}${NOVU_POWERED_WATERMARK_MARKER}`;
   const trimmed = markdown.trimEnd();
 
-  return (
-    trimmed === NOVU_AGENT_POWERED_WATERMARK_TEXT || trimmed.endsWith(`\n\n${NOVU_AGENT_POWERED_WATERMARK_TEXT}`)
-  );
+  return trimmed === linklessWatermark || trimmed.endsWith(`\n\n${linklessWatermark}`);
 }

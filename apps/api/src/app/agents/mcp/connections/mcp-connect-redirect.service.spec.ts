@@ -80,6 +80,25 @@ describe('McpConnectRedirectService', () => {
     expect(resolved).to.equal(null);
   });
 
+  it('falls back to the full authorize URL when cache write fails', async () => {
+    const cacheService = {
+      cacheEnabled: () => true,
+      set: sinon.stub().rejects(new Error('redis unavailable')),
+      get: sinon.stub(),
+    };
+    const logger = {
+      setContext: sinon.stub(),
+      warn: sinon.stub(),
+    };
+    const service = new McpConnectRedirectService(cacheService as any, logger as any);
+    const authorizeUrl = 'https://provider.example/oauth/authorize?state=xyz';
+
+    const redirectUrl = await service.issue(authorizeUrl);
+
+    expect(redirectUrl).to.equal(authorizeUrl);
+    expect(logger.warn.calledOnce).to.equal(true);
+  });
+
   it('falls back to the full authorize URL when cache is disabled', async () => {
     const cacheService = {
       cacheEnabled: () => false,

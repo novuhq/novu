@@ -10,9 +10,10 @@ import {
 
 describe('novu-powered-by-watermark', () => {
   it('returns link-less text on WhatsApp', () => {
-    expect(buildPoweredByWatermark('my-agent', AgentPlatformEnum.WHATSAPP)).to.equal(
-      NOVU_AGENT_POWERED_WATERMARK_TEXT
-    );
+    const watermark = buildPoweredByWatermark('my-agent', AgentPlatformEnum.WHATSAPP);
+
+    expect(watermark.startsWith(NOVU_AGENT_POWERED_WATERMARK_TEXT)).to.equal(true);
+    expect(watermark.length).to.be.greaterThan(NOVU_AGENT_POWERED_WATERMARK_TEXT.length);
   });
 
   it('returns attributed markdown link on Slack', () => {
@@ -31,9 +32,14 @@ describe('novu-powered-by-watermark', () => {
   });
 
   it('detects link-less watermark in markdown', () => {
-    const markdown = `Hello\n\n${NOVU_AGENT_POWERED_WATERMARK_TEXT}`;
+    const watermark = buildPoweredByWatermark('my-agent', AgentPlatformEnum.WHATSAPP);
+    const markdown = `Hello\n\n${watermark}`;
 
     expect(contentHasPoweredByWatermark(markdown)).to.equal(true);
+  });
+
+  it('does not treat plain Powered by Novu text as watermarked', () => {
+    expect(contentHasPoweredByWatermark(`Hello\n\n${NOVU_AGENT_POWERED_WATERMARK_TEXT}`)).to.equal(false);
   });
 
   it('does not treat unrelated body text as watermarked', () => {

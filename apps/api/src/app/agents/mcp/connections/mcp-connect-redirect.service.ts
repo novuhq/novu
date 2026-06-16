@@ -32,9 +32,15 @@ export class McpConnectRedirectService {
 
     const token = randomBytes(16).toString('base64url');
 
-    await this.cacheService.set(this.cacheKey(token), authorizeUrl, {
-      ttl: MCP_CONNECT_REDIRECT_TTL_SECONDS,
-    });
+    try {
+      await this.cacheService.set(this.cacheKey(token), authorizeUrl, {
+        ttl: MCP_CONNECT_REDIRECT_TTL_SECONDS,
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to store MCP connect redirect token: ${(err as Error).message}`);
+
+      return authorizeUrl;
+    }
 
     return buildMcpConnectRedirectUrl(token);
   }
