@@ -544,7 +544,7 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom active conversations', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom active conversations', value: UNLIMITED_VALUE },
   },
-  // TODO: Product is in beta phase, Backend is not yet implemented. 
+  // TODO: Product is in beta phase, Backend is not yet implemented for overage pricing.
   [FeatureNameEnum.AGENT_COST_PER_ADDITIONAL_CONVERSATION]: {
     [ApiServiceLevelEnum.FREE]: { label: 'No additional conversations', value: null },
     [ApiServiceLevelEnum.PRO]: { label: '$0.03 per extra conversation', value: 0.03 },

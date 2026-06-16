@@ -33,7 +33,7 @@ describe('billing-activation-rules #novu-v2', () => {
       return value !== condition.$ne;
     }
     if ('$lt' in condition) {
-      return value !== undefined && (value as string) < (condition.$lt as string);
+      return typeof value === 'string' && value < (condition.$lt as string);
     }
 
     throw new Error(`Unsupported operator in fragment: ${JSON.stringify(condition)}`);
