@@ -67,7 +67,7 @@ Path:       ../more-dcr-oauths
 Command:    git worktree add -b more-dcr-oauths ../more-dcr-oauths
 ```
 
-Then copy `.env*`, init `.source` + `pnpm symlink:submodules`, `move_agent_to_root`.
+Then copy `.env*`, wire `.source` (link or submodule init) + `pnpm symlink:submodules`, `move_agent_to_root`.
 
 ## Do not
 
