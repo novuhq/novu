@@ -3,7 +3,7 @@ import { FeatureFlagsService, PinoLogger, resolveAgentRuntime } from '@novu/appl
 import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
 
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../resolve-managed-agent-always-allow-tool-permissions';
+import { resolveManagedAgentAlwaysAllowToolPermissions } from '../shared/resolve-managed-agent-always-allow-tool-permissions';
 
 export type CatalogProjection = { externalId: string; name: string; url: string };
 

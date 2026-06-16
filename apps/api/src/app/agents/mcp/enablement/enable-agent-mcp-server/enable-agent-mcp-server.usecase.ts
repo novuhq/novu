@@ -4,9 +4,9 @@ import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository } from 
 import { MCP_SERVERS, McpConnectionAuthModeEnum, McpConnectionScopeEnum } from '@novu/shared';
 import { trackAgentMcpServerEnabled } from '../../../shared/analytics/agent-analytics';
 import { AgentMcpServerEnablementResponseDto } from '../../../shared/dtos/mcp-server.dto';
-import { assertMcpNovuAppFlagEnabled } from '../../assert-mcp-novu-app-flag-enabled';
-import { assertMcpProviderManagedFlagEnabled } from '../../assert-mcp-provider-managed-flag-enabled';
 import { AgentMcpDefinitionService } from '../../runtime/agent-mcp-definition.service';
+import { assertMcpNovuAppFlagEnabled } from '../../shared/assert-mcp-novu-app-flag-enabled';
+import { assertMcpProviderManagedFlagEnabled } from '../../shared/assert-mcp-provider-managed-flag-enabled';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';
 
 interface MongoDuplicateKeyError extends Error {

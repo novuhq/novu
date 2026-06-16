@@ -19,10 +19,10 @@ import {
   McpConnectionScopeEnum,
 } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
-import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/resolve-mcp-servers';
 import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
-import { sanitizeUrlForLogging } from '../../../mcp/sanitize-url-for-logging';
+import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/shared/resolve-managed-agent-always-allow-tool-permissions';
+import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/shared/resolve-mcp-servers';
+import { sanitizeUrlForLogging } from '../../../mcp/shared/sanitize-url-for-logging';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
 export type ProvisionManagedAgentOptions = {

@@ -2,8 +2,8 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { FeatureFlagsService, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
 import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
+import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/shared/resolve-managed-agent-always-allow-tool-permissions';
 import type {
   AgentRuntimeCapabilitiesDto,
   AgentRuntimeConfigResponseDto,

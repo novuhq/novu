@@ -9,7 +9,7 @@ import {
 } from '@novu/application-generic';
 import { AgentRepository, ConversationRepository, IntegrationRepository } from '@novu/dal';
 import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
+import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/shared/resolve-managed-agent-always-allow-tool-permissions';
 import { MigrateAgentRuntimeCommand } from './migrate-agent-runtime.command';
 
 @Injectable()
