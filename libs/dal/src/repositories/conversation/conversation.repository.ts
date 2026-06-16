@@ -298,6 +298,87 @@ export class ConversationRepository extends BaseRepositoryV2<
     );
   }
 
+  /**
+   * Atomically claims a new active-conversation activation for this billing
+   * period. Returns `true` only for the single caller that wins the race —
+   * MongoDB serializes `findOneAndUpdate`, so a concurrent engagement that
+   * arrives after the winner stamps the billing state re-evaluates the `$or`
+   * against the updated document and matches nothing.
+   *
+   * An engagement starts a new activation when any of the following hold:
+   *   - the conversation has never been counted (`lastCountedPeriodKey` absent);
+   *   - it was resolved since it was last counted (`resolvedAt` present) — reopen;
+   *   - it was last counted in a different billing period — new cycle;
+   *   - the rolling inactivity window has lapsed since the last engagement.
+   */
+  async startActivationIfNeeded(params: {
+    environmentId: string;
+    organizationId: string;
+    conversationId: string;
+    periodKey: string;
+    /** ISO timestamp; engagements older than this are window-expired. */
+    windowThresholdIso: string;
+    nowIso: string;
+  }): Promise<boolean> {
+    const updated = await this.findOneAndUpdate(
+      {
+        _id: params.conversationId,
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        $or: [
+          { 'billing.lastCountedPeriodKey': { $exists: false } },
+          { 'billing.resolvedAt': { $exists: true } },
+          { 'billing.lastCountedPeriodKey': { $ne: params.periodKey } },
+          { 'billing.lastEngagementAt': { $lt: params.windowThresholdIso } },
+        ],
+      },
+      {
+        $set: {
+          'billing.lastCountedPeriodKey': params.periodKey,
+          'billing.lastEngagementAt': params.nowIso,
+          'billing.activationStartedAt': params.nowIso,
+        },
+        $unset: { 'billing.resolvedAt': '' },
+      }
+    );
+
+    return updated !== null;
+  }
+
+  /**
+   * Slides the rolling inactivity window forward without counting a new
+   * activation. Called for every engagement that did not start a new
+   * activation so a continuous thread keeps its window fresh.
+   */
+  async bumpLastEngagement(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    nowIso: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { 'billing.lastEngagementAt': nowIso } }
+    );
+  }
+
+  /**
+   * Marks the conversation resolved for billing so the next agent engagement is
+   * counted as a reopen activation. Paired with the status flip in
+   * `resolveConversation`.
+   */
+  async markBillingResolved(
+    environmentId: string,
+    organizationId: string,
+    conversationId: string,
+    nowIso: string
+  ): Promise<void> {
+    await this.update(
+      { _id: conversationId, _environmentId: environmentId, _organizationId: organizationId },
+      { $set: { 'billing.resolvedAt': nowIso } }
+    );
+  }
+
   async incrementTokenUsage(
     environmentId: string,
     organizationId: string,

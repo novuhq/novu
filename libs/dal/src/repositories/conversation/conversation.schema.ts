@@ -108,6 +108,17 @@ const conversationSchema = new Schema<ConversationDBModel>(
         { _id: false }
       ),
     },
+    billing: {
+      type: new Schema(
+        {
+          lastCountedPeriodKey: { type: Schema.Types.String },
+          lastEngagementAt: { type: Schema.Types.String },
+          activationStartedAt: { type: Schema.Types.String },
+          resolvedAt: { type: Schema.Types.String },
+        },
+        { _id: false }
+      ),
+    },
     lastActivityAt: {
       type: Schema.Types.String,
     },

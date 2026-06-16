@@ -32,6 +32,7 @@ import { type AutoProvisionPlatform, isAutoProvisionPlatform } from '../../share
 import { InboundAckService } from '../ack/inbound-ack.service';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
 import { AgentConversationService, getInboundActivityPreview } from '../conversation/agent-conversation.service';
+import { ConversationActivationService } from '../conversation/conversation-activation.service';
 import {
   AgentSubscriberResolver,
   BotAuthorSkippedError,
@@ -245,7 +246,8 @@ export class AgentInboundHandler implements OnModuleInit {
     private readonly connectClaimTokenService: ConnectClaimTokenService,
     private readonly keylessAbuseGuard: KeylessAbuseGuardService,
     private readonly planLimitGate: PlanLimitGateService,
-    private readonly inboundAck: InboundAckService
+    private readonly inboundAck: InboundAckService,
+    private readonly conversationActivation: ConversationActivationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -345,6 +347,13 @@ export class AgentInboundHandler implements OnModuleInit {
       }
     }
 
+    // Free-tier active-conversations short-circuit: block engagements that would
+    // start a *new* active conversation once the included limit is reached.
+    // Existing (already-counted) conversations keep working.
+    if (await this.planLimitGate.maybeBlockConversation(agentId, config, thread, conversation)) {
+      return;
+    }
+
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
     const isFirstMessage = !this.conversationService.getPrimaryChannel(conversation).firstPlatformMessageId;
 
@@ -394,6 +403,39 @@ export class AgentInboundHandler implements OnModuleInit {
     };
 
     await runtime.dispatch(turn);
+
+    await this.registerConversationEngagement(agentId, config, conversation, thread.isDM);
+  }
+
+  /**
+   * Counts the active conversation once the agent has actually engaged
+   * (dispatch succeeded). Idempotent per activation — repeated engagements
+   * inside the same window/period only slide the rolling window. Fail-soft:
+   * billing accounting must never crash the inbound webhook.
+   */
+  private async registerConversationEngagement(
+    agentId: string,
+    config: ResolvedAgentConfig,
+    conversation: ConversationEntity,
+    isDirectMessage: boolean
+  ): Promise<void> {
+    try {
+      await this.conversationActivation.registerEngagement({
+        conversation,
+        platform: config.platform,
+        organizationId: config.organizationId,
+        environmentId: config.environmentId,
+        agentId,
+        isDirectMessage,
+      });
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentId}] Failed to register active-conversation engagement`);
+      captureAgentWarning(err, {
+        component: 'agent-inbound-handler',
+        operation: 'register-conversation-engagement',
+        agentId,
+      });
+    }
   }
 
   /** Telegram `/start <code>` is control input; when present it is always consumed here. */

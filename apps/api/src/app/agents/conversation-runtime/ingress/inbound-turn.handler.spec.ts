@@ -147,6 +147,10 @@ describe('AgentInboundHandler', () => {
     };
     const planLimitGate = {
       maybeBlock: sinon.stub().resolves(false),
+      maybeBlockConversation: sinon.stub().resolves(false),
+    };
+    const conversationActivation = {
+      registerEngagement: sinon.stub().resolves(false),
     };
     const handler = new AgentInboundHandler(
       logger as any,
@@ -165,7 +169,8 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService as any,
       keylessAbuseGuard as any,
       planLimitGate as any,
-      inboundAck as any
+      inboundAck as any,
+      conversationActivation as any
     );
 
     return {

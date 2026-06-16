@@ -31,12 +31,14 @@ import { UserSession } from '../../shared/framework/user.decorator';
 import { AgentRuntimeExceptionFilter } from '../shared/agent-runtime-exception.filter';
 import {
   AgentResponseDto,
+  ConversationUsageResponseDto,
   CreateAgentRequestDto,
   ListAgentsQueryDto,
   ListAgentsResponseDto,
   UpdateAgentBridgeRequestDto,
   UpdateAgentRequestDto,
 } from '../shared/dtos';
+import { ConversationActivationService } from '../conversation-runtime/conversation/conversation-activation.service';
 import { type AgentEmojiEntry, ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 import { CreateAgentCommand } from './usecases/create-agent/create-agent.command';
 import { CreateAgent } from './usecases/create-agent/create-agent.usecase';
@@ -62,8 +64,29 @@ export class AgentsController {
     private readonly getAgentUsecase: GetAgent,
     private readonly updateAgentUsecase: UpdateAgent,
     private readonly deleteAgentUsecase: DeleteAgent,
-    private readonly listAgentEmojiUsecase: ListAgentEmoji
+    private readonly listAgentEmojiUsecase: ListAgentEmoji,
+    private readonly conversationActivation: ConversationActivationService
   ) {}
+
+  @Get('/usage/conversations')
+  @ApiResponse(ConversationUsageResponseDto)
+  @ApiOperation({
+    summary: 'Get active-conversations usage',
+    description:
+      'Returns the number of active conversations counted for the organization in the current billing period, ' +
+      'the amount included in the plan (`null` when unlimited), and the period bounds.',
+  })
+  @RequirePermissions(PermissionsEnum.AGENT_READ)
+  async getConversationUsage(@UserSession() user: UserSessionData): Promise<ConversationUsageResponseDto> {
+    const usage = await this.conversationActivation.getUsage(user.organizationId);
+
+    return {
+      current: usage.current,
+      included: usage.included,
+      periodStart: usage.periodStart.toISOString(),
+      periodEnd: usage.periodEnd.toISOString(),
+    };
+  }
 
   @Get('/emoji')
   @ApiOperation({

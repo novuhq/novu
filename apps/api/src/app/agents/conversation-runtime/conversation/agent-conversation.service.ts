@@ -402,6 +402,14 @@ export class AgentConversationService {
         params.conversationId,
         ConversationStatusEnum.RESOLVED
       ),
+      // Mark for billing so the next agent engagement is counted as a reopen
+      // activation (a closed thread ends the active conversation episode).
+      this.conversationRepository.markBillingResolved(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        new Date().toISOString()
+      ),
       this.conversationRepository.clearExternalSessionId(params.environmentId, params.conversationId),
       this.activityRepository.createSignalActivity({
         identifier: `act_${shortId(12)}`,

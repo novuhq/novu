@@ -75,6 +75,7 @@ export enum FeatureNameEnum {
   AGENT_MAX_AGENTS = 'agentMaxAgents',
   AGENT_MAX_ACTIVE_CHANNELS = 'agentMaxActiveChannels',
   AGENT_MAX_CUSTOM_EMAIL_DOMAINS = 'agentMaxCustomEmailDomains',
+  AGENT_MAX_ACTIVE_CONVERSATIONS = 'agentMaxActiveConversations',
 }
 
 /**
@@ -534,6 +535,13 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
+  },
+  [FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS]: {
+    [ApiServiceLevelEnum.FREE]: { label: '100 active conversations / month', value: 5 },
+    [ApiServiceLevelEnum.PRO]: { label: '1,000 active conversations / month', value: 1000 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '5,000 active conversations / month', value: 5000 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited active conversations', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited active conversations', value: UNLIMITED_VALUE },
   },
 };
 

@@ -5,6 +5,7 @@ export * from './agent-integration-response.dto';
 export * from './agent-integration-summary.dto';
 export * from './agent-response.dto';
 export * from './agent-runtime-config.dto';
+export * from './conversation-usage-response.dto';
 export * from './create-agent-request.dto';
 export * from './generate-managed-agent.dto';
 export * from './list-agent-integrations-query.dto';
