@@ -32,7 +32,7 @@
     "ai": "6.0.50",
     "async-mutex": "^0.5.0",
     "class-transformer": "0.5.1",
-    "class-validator": "0.14.1",
+    "class-validator": "0.15.1",
     "express": "^5.0.1",
     "langchain": "^1.2.16",
     "zod": "^3.23.8",

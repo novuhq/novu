@@ -35,7 +35,7 @@
     "fs-extra": "^9.0.0",
     "googleapis": "^60.0.1",
     "jsonfile": "^6.0.1",
-    "mongoose": "^8.9.5",
+    "mongoose": "^8.22.1",
     "mongoose-delete": "^1.0.7",
     "reflect-metadata": "0.2.2",
     "superagent-defaults": "^0.1.14",
