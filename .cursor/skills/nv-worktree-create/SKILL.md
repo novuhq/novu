@@ -2,8 +2,9 @@
 name: nv-worktree-create
 description: >-
   Create a sibling git worktree and a new branch with the same name, copy local
-  `.env*` files, and move the agent into the worktree. Use when the user asks
-  for a worktree, parallel branch checkout, or `/worktree` with a branch name.
+  `.env*` files, initialize the enterprise submodule, wire enterprise symlinks,
+  and move the agent into the worktree. Use when the user asks for a worktree,
+  parallel branch checkout, or `/worktree` with a branch name.
 disable-model-invocation: true
 ---
 
@@ -37,9 +38,24 @@ Use the name as-is for the git branch. Use the sanitized name for the directory 
 
 3. **Copy local env files** — from the main checkout into the worktree (gitignored secrets only; not `.env.example`). Use the `rsync` recipe in `nv-worktree-commands`. Report what was copied. Do **not** run `setup-env-files.js` — it regenerates encryption keys.
 
-4. **Hand off** — `move_agent_to_root` with the absolute worktree path. Not `move_agent_to_cloned_root`.
+4. **Enterprise submodule** — from the worktree root (best-effort; do not block handoff):
+   - Skip if `.source` already exists or is linked.
+   - Prefer linking an existing `packages-enterprise` clone before submodule init — same candidates as `.cursor/scripts/install.sh` (sibling `../packages-enterprise`, parent checkout `.source`, `/agent/repos/packages-enterprise`, etc.).
+   - Else configure HTTPS git fallback when SSH is unavailable, then shallow-init `.source` (matches `install.sh`):
+     ```bash
+     git config --global url."https://github.com/".insteadOf "git@github.com:"
+     gh auth setup-git
+     git submodule update --init --depth 1 .source
+     ```
+   - If `.source` is available, refresh symlinks (warn-only on failure):
+     ```bash
+     pnpm symlink:submodules || echo "WARN: symlink:submodules failed; continuing in OSS mode"
+     ```
+   - If enterprise setup fails, warn and continue in OSS mode — do not block the worktree. For troubleshooting, read `enterprise-submodule`.
 
-5. **Confirm** — branch name, worktree path, base ref, copied env files.
+5. **Hand off** — `move_agent_to_root` with the absolute worktree path. Not `move_agent_to_cloned_root`.
+
+6. **Confirm** — branch name, worktree path, base ref, copied env files, enterprise submodule status.
 
 ## Example
 
@@ -51,7 +67,7 @@ Path:       ../more-dcr-oauths
 Command:    git worktree add -b more-dcr-oauths ../more-dcr-oauths
 ```
 
-Then copy `.env*`, `move_agent_to_root`.
+Then copy `.env*`, wire `.source` (link or submodule init) + `pnpm symlink:submodules`, `move_agent_to_root`.
 
 ## Do not
 

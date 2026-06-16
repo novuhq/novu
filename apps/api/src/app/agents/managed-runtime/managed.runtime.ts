@@ -7,6 +7,7 @@ import type { AgentRuntime } from '../conversation-runtime/runtime/agent-runtime
 import type { ConversationTurn } from '../conversation-runtime/runtime/conversation-turn';
 import { applyPlatformThreadIdToThread } from '../conversation-runtime/runtime/platform-thread.util';
 import { AgentEventEnum } from '../shared/enums/agent-event.enum';
+import { AgentPlatformEnum } from '../shared/enums/agent-platform.enum';
 import { buildUnresolvedSubscriberAccessReply } from '../shared/util/agent-inbound-replies';
 import { ManagedAgentService } from './managed-agent.service';
 import { parseToolApprovalActionId } from './tool-approval/approval-card.builder';
@@ -38,7 +39,11 @@ export class ManagedRuntime implements AgentRuntime {
       return;
     }
 
-    if (!turn.subscriber) {
+    // Keyless email demo agents bypass the subscriber gate: the ephemeral env has no
+    // subscribers, and abuse is bounded by the per-conversation demo cap + claim CTA.
+    const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
+
+    if (!turn.subscriber && !isKeylessEmailDemo) {
       await this.replyUnresolvedSubscriberAccess(turn);
 
       return;
@@ -72,7 +77,6 @@ export class ManagedRuntime implements AgentRuntime {
           ...ackParams,
           isFirstMessage,
         });
-        await this.inboundAck.showQueuedSignal(ackParams);
       } else if (status === 'queued') {
         await this.inboundAck.showQueuedSignal(ackParams);
       }
