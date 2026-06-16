@@ -284,6 +284,7 @@ export class ManagedAgentService implements OnModuleInit {
         messages: [{ role: MessageRole.USER, content: params.followUpMessage }],
         sessionId,
         vaultIds,
+        ...(connectedMcpServers ? { agent: { mcpServers: connectedMcpServers } } : {}),
         webhookMetadata: followUpMetadata,
       });
     }

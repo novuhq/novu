@@ -142,8 +142,10 @@ export class AgentMcpDefinitionService {
         'Failed to push shared-agent MCP list to Anthropic'
       );
 
+      const projectedRows = enabled.filter(belongsOnAgentDefinition);
+
       await Promise.allSettled(
-        enabled.map((row) =>
+        projectedRows.map((row) =>
           this.agentMcpServerRepository.update(
             {
               _id: row._id,
@@ -159,27 +161,42 @@ export class AgentMcpDefinitionService {
     }
 
     const syncedAt = new Date();
+
     await Promise.all(
-      enabled.map((row) =>
-        this.agentMcpServerRepository.update(
+      enabled.map((row) => {
+        if (belongsOnAgentDefinition(row)) {
+          return this.agentMcpServerRepository.update(
+            {
+              _id: row._id,
+              _environmentId: params.environmentId,
+              _organizationId: params.organizationId,
+            },
+            {
+              $set: {
+                externalProjection: {
+                  providerId,
+                  mcpServerName: MCP_SERVERS.find((c) => c.id === row.mcpId)?.name ?? row.mcpId,
+                  syncedAt,
+                },
+                status: 'active',
+              },
+              $unset: { lastError: 1 },
+            }
+          );
+        }
+
+        return this.agentMcpServerRepository.update(
           {
             _id: row._id,
             _environmentId: params.environmentId,
             _organizationId: params.organizationId,
           },
           {
-            $set: {
-              externalProjection: {
-                providerId,
-                mcpServerName: MCP_SERVERS.find((c) => c.id === row.mcpId)?.name ?? row.mcpId,
-                syncedAt,
-              },
-              status: 'active',
-            },
-            $unset: { lastError: 1 },
+            $set: { status: 'active' },
+            $unset: { externalProjection: 1, lastError: 1 },
           }
-        )
-      )
+        );
+      })
     );
   }
 

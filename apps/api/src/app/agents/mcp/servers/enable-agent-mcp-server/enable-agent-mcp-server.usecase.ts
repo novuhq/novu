@@ -17,10 +17,9 @@ interface MongoDuplicateKeyError extends Error {
  * Enable a catalog MCP on an agent. Writes Mongo first, then updates Anthropic's
  * shared agent MCP list (per-subscriber OAuth MCPs are not added there).
  *
- * Re-enable semantics: if a row exists with `status: 'error'` (left over
- * from a failed previous sync) the row is reused so callers can retry. A
- * row with `enabled: true` AND `status` in the healthy set returns 409 to
- * make the no-op explicit.
+ * Re-enable semantics: if a row exists with `status: 'error'` or `syncing`
+ * (left over from a failed previous reconcile) the row is reused so callers
+ * can retry. A row with `enabled: true` and `status: 'active'` returns 409.
  */
 @Injectable()
 export class EnableAgentMcpServer {
@@ -60,9 +59,9 @@ export class EnableAgentMcpServer {
     });
 
     // Already-enabled-and-healthy rows are idempotent no-ops: return 409 so
-    // the caller can decide whether to disable+re-enable. Rows in `error`
-    // status are reused so callers can retry a failed sync.
-    if (existing && existing.enabled && existing.status !== 'error') {
+    // the caller can decide whether to disable+re-enable. Rows in `error` or
+    // `syncing` are reused so callers can retry a failed reconcile.
+    if (existing && existing.enabled && existing.status === 'active') {
       throw new ConflictException(`MCP "${command.mcpId}" is already enabled on this agent.`);
     }
 
