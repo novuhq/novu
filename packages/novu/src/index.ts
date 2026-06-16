@@ -140,7 +140,7 @@ program
 program
   .command('connect')
   .description(
-    `Create a managed agent and connect it to a channel (keyless by default; use --ci for non-interactive agent/CI runs)`
+    `Create a managed agent and connect it to a channel (dashboard OAuth by default; use --ci for non-interactive agent/CI runs)`
   )
   .usage('[prompt] [--ci] [--channel <name>] [options]')
   .argument(
@@ -149,11 +149,11 @@ program
   )
   .option(
     '-s, --secret-key <secret-key>',
-    'Use an existing Novu account instead of keyless mode (omit for keyless — the default)'
+    'Use an existing Novu account via secret key instead of dashboard OAuth (the default)'
   )
   .option(
-    '--login',
-    'Authenticate via the Novu dashboard instead of keyless mode (opens /cli/auth for approval)',
+    '--keyless',
+    'Use a temporary keyless workspace instead of dashboard OAuth (creates a demo agent the user can claim later)',
     false
   )
   .option('-a, --api-url <url>', 'Override the Novu API URL (default follows --region)')
@@ -169,7 +169,7 @@ program
   )
   .option(
     '--runtime <runtime>',
-    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo — omit in --ci keyless runs`
+    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo — omit in --ci authenticated runs`
   )
   .option(
     '--agent-integration-id <id>',
@@ -181,7 +181,7 @@ program
   .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
   .option(
     '--channel <name>',
-    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require --login in --ci mode`
+    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require dashboard OAuth (omit --keyless)`
   )
   .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
   .option(
@@ -222,22 +222,22 @@ program
 
       if (!channel) {
         console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> with --login).\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
 
-      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && !options.login) {
+      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && options.keyless) {
         console.error(
-          'Non-interactive mode does not support --channel whatsapp or --channel teams without --login. Pass --login to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
+          'Non-interactive mode does not support --channel whatsapp or --channel teams with --keyless. Omit --keyless to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
         );
         process.exit(1);
       }
     }
 
-    if (options.login && options.secretKey) {
+    if (options.keyless && options.secretKey) {
       console.error(
-        'Cannot use --login together with --secret-key. Omit --secret-key to authenticate via the dashboard.'
+        'Cannot use --keyless together with --secret-key. Omit --secret-key for keyless mode, or omit --keyless to authenticate with your account.'
       );
       process.exit(1);
     }
