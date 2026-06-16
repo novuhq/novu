@@ -325,7 +325,14 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
-    const conversation = await this.openConversation(agentId, config, message, subscriberId, platformThreadId);
+    const conversation = await this.openConversation(
+      agentId,
+      config,
+      message,
+      subscriberId,
+      platformThreadId,
+      thread.isDM
+    );
 
     if (config.isKeyless) {
       const aiEnabled = await this.keylessAbuseGuard.isKeylessAgentAiEnabled(config.organizationId);
@@ -462,7 +469,8 @@ export class AgentInboundHandler implements OnModuleInit {
     config: ResolvedAgentConfig,
     message: Message,
     subscriberId: string | null,
-    platformThreadId: string
+    platformThreadId: string,
+    isDirectMessage: boolean
   ): Promise<ConversationEntity> {
     const participantId = subscriberId ?? `${config.platform}:${message.author.userId}`;
     const participantType = subscriberId
@@ -480,6 +488,7 @@ export class AgentInboundHandler implements OnModuleInit {
       participantType,
       platformUserId: message.author.userId,
       firstMessageText: resolveInboundFirstMessageText(config.platform, message),
+      isDirectMessage,
     });
   }
 
@@ -896,6 +905,7 @@ export class AgentInboundHandler implements OnModuleInit {
       participantType,
       platformUserId: userId,
       firstMessageText: `[action:${action.id}]`,
+      isDirectMessage: thread.isDM,
     });
 
     trackAgentInboundAction(this.analyticsService, {

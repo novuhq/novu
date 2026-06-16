@@ -422,7 +422,7 @@ export class AgentEntitlementsService {
     this.runtimeLimitCache.set(cacheKey, { value, expiresAt: Date.now() + RUNTIME_LIMIT_CACHE_TTL_MS });
   }
 
-  private async getApiServiceLevel(organizationId: string): Promise<ApiServiceLevelEnum> {
+  async getApiServiceLevel(organizationId: string): Promise<ApiServiceLevelEnum> {
     const organization = await this.organizationRepository.findById(organizationId, '_id apiServiceLevel');
 
     return organization?.apiServiceLevel || ApiServiceLevelEnum.FREE;

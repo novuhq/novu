@@ -149,14 +149,14 @@ export class PlanLimitGateService {
       return false;
     }
 
-    const shouldBlock = await this.conversationActivation.shouldBlockFreeTier({
+    const { blocked } = await this.conversationActivation.shouldBlockFreeTier({
       conversation,
       platform: config.platform,
       organizationId: config.organizationId,
       isDirectMessage: thread.isDM,
     });
 
-    if (!shouldBlock) {
+    if (!blocked) {
       return false;
     }
 

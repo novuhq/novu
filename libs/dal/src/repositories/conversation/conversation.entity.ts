@@ -125,6 +125,13 @@ export class ConversationEntity {
   /** Active-conversations billing/metering state — see `ConversationBillingState`. */
   billing?: ConversationBillingState;
 
+  /**
+   * Whether the primary channel thread is a direct message (vs a group/channel),
+   * captured from the platform at creation. Drives the rolling-window selection
+   * for active-conversation counting on paths without a live thread (outbound).
+   */
+  isDirectMessage?: boolean;
+
   _environmentId: EnvironmentId;
 
   _organizationId: OrganizationId;

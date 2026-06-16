@@ -57,6 +57,8 @@ export interface CreateOrGetConversationParams {
   participantType: ConversationParticipantTypeEnum;
   platformUserId: string;
   firstMessageText: string;
+  /** Whether the thread is a direct message — persisted for active-conversation window selection. */
+  isDirectMessage?: boolean;
 }
 
 export interface PersistInboundMessageParams {
@@ -175,6 +177,7 @@ export class AgentConversationService {
       status: ConversationStatusEnum.ACTIVE,
       title: getConversationTitle(params.firstMessageText),
       metadata: {},
+      isDirectMessage: params.isDirectMessage,
       _environmentId: environmentId,
       _organizationId: organizationId,
       lastActivityAt: new Date().toISOString(),

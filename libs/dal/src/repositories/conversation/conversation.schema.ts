@@ -119,6 +119,9 @@ const conversationSchema = new Schema<ConversationDBModel>(
         { _id: false }
       ),
     },
+    isDirectMessage: {
+      type: Schema.Types.Boolean,
+    },
     lastActivityAt: {
       type: Schema.Types.String,
     },

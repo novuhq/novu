@@ -9,7 +9,8 @@ export const useFetchConversationUsage = () => {
   const { currentEnvironment } = useEnvironment();
 
   const { data: conversationUsage, isLoading } = useQuery<ConversationUsage>({
-    queryKey: [QueryKeys.fetchConversationUsage, currentOrganization?._id, currentEnvironment?._id],
+    // Org-scoped data (counts org-wide) — environment is not part of the identity.
+    queryKey: [QueryKeys.fetchConversationUsage, currentOrganization?._id],
     queryFn: ({ signal }) => getConversationUsage(currentEnvironment!, signal),
     enabled: !!currentOrganization && !!currentEnvironment,
     meta: {

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
 import { AgentEntitlementsService, AnalyticsService, PinoLogger, throwPlanLimitExceeded } from '@novu/application-generic';
 import {
+  classifyActivationReason,
   CommunityOrganizationRepository,
   ConversationActivationReasonEnum,
   ConversationActivationRepository,
@@ -39,11 +40,11 @@ export const ACTIVATION_WINDOW_MS = {
 } as const;
 
 export interface BillingPeriod {
-  /** YYYY-MM (UTC) — the key activations are counted against. */
+  /** Month-anchored key (YYYY-MM, UTC) derived from `periodStart` — the identity activations are counted against. */
   periodKey: string;
-  /** Inclusive UTC start of the period. */
+  /** Inclusive UTC start of the period (Stripe period start for billed orgs, month start otherwise). */
   periodStart: Date;
-  /** Exclusive UTC end of the period (start of next month). */
+  /** Exclusive UTC end of the period. */
   periodEnd: Date;
 }
 
@@ -55,13 +56,32 @@ export interface ConversationActivationUsage {
   periodEnd: Date;
 }
 
+/** Outcome of the Free-tier gate; carries the resolved limit so callers don't re-fetch it. */
+interface FreeTierBlockDecision {
+  blocked: boolean;
+  limit?: number;
+  apiServiceLevel?: ApiServiceLevelEnum;
+}
+
 interface EngagementContext {
   conversation: ConversationEntity;
-  platform: string;
+  platform: AgentPlatformEnum;
   organizationId: string;
   environmentId: string;
   agentId: string;
-  /** Authoritative DM flag from the live thread when available (inbound path). */
+  /**
+   * DM flag for window classification: the live `thread.isDM` (inbound) or the
+   * persisted `conversation.isDirectMessage` (outbound). When absent the window
+   * defaults to DIRECT (undercount-safe).
+   */
+  isDirectMessage?: boolean;
+  now?: Date;
+}
+
+interface LimitCheckContext {
+  conversation: ConversationEntity;
+  platform: AgentPlatformEnum;
+  organizationId: string;
   isDirectMessage?: boolean;
   now?: Date;
 }
@@ -73,9 +93,10 @@ interface EngagementContext {
  * and again whenever a new billing period begins. Closing a thread ends the
  * activation; reopening it starts a new one.
  *
- * Counting is per organization (summed across environments) and anchored to the
- * UTC calendar month. Nothing is reported to Stripe — this is a usage meter and
- * a Free-tier short-circuit only.
+ * Counting is per organization (summed across environments), anchored to the
+ * org's Stripe billing period (calendar month for self-hosted/unbilled orgs).
+ * Nothing is reported to Stripe — this is a usage meter and a Free-tier
+ * short-circuit only.
  */
 @Injectable()
 export class ConversationActivationService {
@@ -101,14 +122,20 @@ export class ConversationActivationService {
     return process.env.NOVU_ENTERPRISE === 'true' || process.env.CI_EE_TEST === 'true';
   }
 
-  /** UTC calendar-month period — the anchor for community, self-hosted, and unbilled orgs. */
+  /** Month-anchored period key (YYYY-MM, UTC). Stable across a Stripe cycle and a calendar fallback in the same month. */
+  private monthKey(date: Date): string {
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}`;
+  }
+
+  /** UTC calendar-month period — the anchor for self-hosted and unbilled orgs. */
   resolveCalendarPeriod(now: Date = new Date()): BillingPeriod {
     const year = now.getUTCFullYear();
     const month = now.getUTCMonth();
+    const periodStart = new Date(Date.UTC(year, month, 1));
 
     return {
-      periodKey: `${year}-${String(month + 1).padStart(2, '0')}`,
-      periodStart: new Date(Date.UTC(year, month, 1)),
+      periodKey: this.monthKey(periodStart),
+      periodStart,
       periodEnd: new Date(Date.UTC(year, month + 1, 1)),
     };
   }
@@ -116,11 +143,12 @@ export class ConversationActivationService {
   /**
    * Resolves the billing period an active conversation is counted against.
    *
-   *   - Cloud + EE billing + the org already has a Stripe customer → the Stripe
-   *     metered subscription's `current_period_start/end` (aligns counting to the
-   *     invoice cycle).
-   *   - Self-hosted, community builds, unbilled/free orgs (no Stripe customer),
-   *     or any resolution failure → UTC calendar month.
+   *   - Cloud + EE billing + the org has a Stripe customer → the Stripe metered
+   *     subscription's `current_period_start/end`.
+   *   - Self-hosted / community / unbilled orgs → UTC calendar month.
+   *   - Transient Stripe failure for a billed org → the last known period
+   *     (sticky) rather than the calendar key, so a hiccup never manufactures a
+   *     spurious new cycle and double-counts the meter.
    *
    * Free/unbilled orgs deliberately never trigger the EE `GetSubscription` path:
    * it would create a Stripe customer as a side effect. Resolved periods are
@@ -148,16 +176,31 @@ export class ConversationActivationService {
     }
 
     const stripePeriod = await this.fetchStripeBillingPeriod(organizationId);
-    const value = stripePeriod ?? calendar;
-    this.setPeriodCache(organizationId, value, now);
+    if (stripePeriod) {
+      this.setPeriodCache(organizationId, stripePeriod, now);
 
-    return value;
+      return stripePeriod;
+    }
+
+    // Billed org but the Stripe lookup failed transiently. Reuse the last known
+    // period (sticky) instead of flipping to a calendar key — flipping would be
+    // a different periodKey and would be read as a new billing cycle.
+    if (cached) {
+      this.setPeriodCache(organizationId, cached.value, now);
+
+      return cached.value;
+    }
+
+    // Cold start with no cached period (rare) — fall back to calendar without
+    // caching, so the next engagement retries Stripe. The month-anchored key
+    // keeps this consistent with a same-month Stripe period.
+    return calendar;
   }
 
   /**
    * Reads the current Stripe billing period via the optional EE billing use
-   * case. Returns `null` (caller falls back to calendar month) when the billing
-   * module is absent, the subscription has no period, or anything fails.
+   * case. Returns `null` (caller falls back per the sticky rules) when the
+   * billing module is absent, the subscription has no period, or anything fails.
    * Isolated so it can be stubbed in tests with dummy period data.
    */
   protected async fetchStripeBillingPeriod(organizationId: string): Promise<BillingPeriod | null> {
@@ -180,11 +223,11 @@ export class ConversationActivationService {
       const periodStart = new Date(subscription.currentPeriodStart);
       const periodEnd = new Date(subscription.currentPeriodEnd);
 
-      return { periodKey: `stripe:${periodStart.toISOString()}`, periodStart, periodEnd };
+      return { periodKey: this.monthKey(periodStart), periodStart, periodEnd };
     } catch (err) {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err), organizationId },
-        'Failed to resolve Stripe billing period; falling back to calendar month'
+        'Failed to resolve Stripe billing period; falling back per sticky rules'
       );
 
       return null;
@@ -209,26 +252,21 @@ export class ConversationActivationService {
     this.periodCache.set(organizationId, { value, expiresAt: now.getTime() + PERIOD_CACHE_TTL_MS });
   }
 
-  deriveThreadKind(
-    platform: string,
-    platformThreadId: string,
-    isDirectMessageHint?: boolean
-  ): ConversationThreadKindEnum {
-    if (isDirectMessageHint !== undefined) {
-      return isDirectMessageHint ? ConversationThreadKindEnum.DIRECT : ConversationThreadKindEnum.GROUP;
+  /**
+   * Classifies a thread as DM or group for window selection. Prefers the
+   * authoritative `isDirectMessage` (live thread inbound, or persisted on the
+   * conversation). When absent (legacy conversation on the outbound path),
+   * defaults to DIRECT — the wider 30d window is undercount-safe.
+   */
+  deriveThreadKind(isDirectMessage?: boolean): ConversationThreadKindEnum {
+    if (isDirectMessage === undefined) {
+      return ConversationThreadKindEnum.DIRECT;
     }
 
-    // No live thread hint (outbound path): infer for Slack/Teams from the thread
-    // id. Slack DM channel ids start with `D` (e.g. `slack:D08…`). Other
-    // platforms are 1:1 and treated as direct (their window is DM-independent).
-    if (platform === AgentPlatformEnum.SLACK || platform === AgentPlatformEnum.TEAMS) {
-      return /:D[^:]/i.test(platformThreadId) ? ConversationThreadKindEnum.DIRECT : ConversationThreadKindEnum.GROUP;
-    }
-
-    return ConversationThreadKindEnum.DIRECT;
+    return isDirectMessage ? ConversationThreadKindEnum.DIRECT : ConversationThreadKindEnum.GROUP;
   }
 
-  resolveWindowMs(platform: string, threadKind: ConversationThreadKindEnum): number {
+  resolveWindowMs(platform: AgentPlatformEnum, threadKind: ConversationThreadKindEnum): number {
     switch (platform) {
       case AgentPlatformEnum.WHATSAPP:
       case AgentPlatformEnum.TELEGRAM:
@@ -241,8 +279,19 @@ export class ConversationActivationService {
       case AgentPlatformEnum.EMAIL:
         return ACTIVATION_WINDOW_MS.MONTH_30;
       default:
-        return ACTIVATION_WINDOW_MS.MONTH_30;
+        return this.unhandledPlatformWindow(platform);
     }
+  }
+
+  /**
+   * Compile-time exhaustiveness guard: adding an `AgentPlatformEnum` member
+   * without a window mapping fails the build here. Defensive at runtime
+   * (returns the safe 30d default) in case a non-enum value is ever cast in.
+   */
+  private unhandledPlatformWindow(platform: never): number {
+    this.logger.warn({ platform }, 'Unhandled agent platform for activation window; defaulting to 30 days');
+
+    return ACTIVATION_WINDOW_MS.MONTH_30;
   }
 
   /**
@@ -250,37 +299,20 @@ export class ConversationActivationService {
    * start a new activation (and which reason), evaluated against the supplied
    * billing period. Returns `null` when it would fall inside the current
    * activation. Used by the Free-tier gate before dispatch — never mutates.
+   * Delegates the decision to the shared `classifyActivationReason` rules.
    */
   classifyActivation(
     conversation: ConversationEntity,
-    platform: string,
+    platform: AgentPlatformEnum,
     periodKey: string,
     options: { isDirectMessage?: boolean; now?: Date } = {}
   ): ConversationActivationReasonEnum | null {
     const now = options.now ?? new Date();
-    const threadKind = this.deriveThreadKind(platform, this.primaryThreadId(conversation), options.isDirectMessage);
-    const windowMs = this.resolveWindowMs(platform, threadKind);
-    const windowThreshold = new Date(now.getTime() - windowMs);
+    const isDirectMessage = this.resolveIsDirectMessage(conversation, options.isDirectMessage);
+    const windowMs = this.resolveWindowMs(platform, this.deriveThreadKind(isDirectMessage));
+    const windowThresholdIso = new Date(now.getTime() - windowMs).toISOString();
 
-    const billing = conversation.billing;
-
-    if (!billing?.lastCountedPeriodKey) {
-      return ConversationActivationReasonEnum.NEW;
-    }
-
-    if (billing.resolvedAt) {
-      return ConversationActivationReasonEnum.REOPEN;
-    }
-
-    if (billing.lastCountedPeriodKey !== periodKey) {
-      return ConversationActivationReasonEnum.NEW_CYCLE;
-    }
-
-    if (billing.lastEngagementAt && new Date(billing.lastEngagementAt) < windowThreshold) {
-      return ConversationActivationReasonEnum.WINDOW_EXPIRED;
-    }
-
-    return null;
+    return classifyActivationReason(conversation.billing, { periodKey, windowThresholdIso });
   }
 
   /**
@@ -293,19 +325,13 @@ export class ConversationActivationService {
   async registerEngagement(context: EngagementContext): Promise<boolean> {
     const now = context.now ?? new Date();
     const { periodKey } = await this.resolveBillingPeriod(context.organizationId, now);
-    const threadKind = this.deriveThreadKind(
-      context.platform,
-      this.primaryThreadId(context.conversation),
-      context.isDirectMessage
-    );
+    const isDirectMessage = this.resolveIsDirectMessage(context.conversation, context.isDirectMessage);
+    const threadKind = this.deriveThreadKind(isDirectMessage);
     const windowMs = this.resolveWindowMs(context.platform, threadKind);
     const nowIso = now.toISOString();
     const windowThresholdIso = new Date(now.getTime() - windowMs).toISOString();
 
-    const reason = this.classifyActivation(context.conversation, context.platform, periodKey, {
-      isDirectMessage: context.isDirectMessage,
-      now,
-    });
+    const reason = classifyActivationReason(context.conversation.billing, { periodKey, windowThresholdIso });
 
     if (!reason) {
       await this.slideWindow(context, nowIso);
@@ -360,7 +386,7 @@ export class ConversationActivationService {
     periodKey: string
   ): Promise<void> {
     try {
-      const apiServiceLevel = await this.getApiServiceLevel(context.organizationId);
+      const apiServiceLevel = await this.agentEntitlements.getApiServiceLevel(context.organizationId);
 
       trackAgentActiveConversationCounted(this.analyticsService, {
         organizationId: context.organizationId,
@@ -402,27 +428,16 @@ export class ConversationActivationService {
     }
   }
 
-  private async getApiServiceLevel(organizationId: string): Promise<ApiServiceLevelEnum> {
-    const organization = await this.organizationRepository.findById(organizationId, '_id apiServiceLevel');
-
-    return organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
-  }
-
   /**
    * Whether a Free-tier organization (not on trial) must be blocked from
    * starting a *new* activation because it has reached its included limit.
    * Existing activations within their window/period keep working — only new
    * conversations are short-circuited. Paid tiers and trials are never blocked
    * (counting only). Fails open on any error so a transient failure never
-   * silently disables a customer's agent.
+   * silently disables a customer's agent. Returns the resolved limit/level so
+   * callers (e.g. the outbound 402) don't re-fetch them.
    */
-  async shouldBlockFreeTier(context: {
-    conversation: ConversationEntity;
-    platform: string;
-    organizationId: string;
-    isDirectMessage?: boolean;
-    now?: Date;
-  }): Promise<boolean> {
+  async shouldBlockFreeTier(context: LimitCheckContext): Promise<FreeTierBlockDecision> {
     try {
       const organization = await this.organizationRepository.findById(
         context.organizationId,
@@ -432,7 +447,7 @@ export class ConversationActivationService {
       const apiServiceLevel = organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
       const isBlockableFreeTier = apiServiceLevel === ApiServiceLevelEnum.FREE && !organization?.isTrial;
       if (!isBlockableFreeTier) {
-        return false;
+        return { blocked: false, apiServiceLevel };
       }
 
       const now = context.now ?? new Date();
@@ -443,12 +458,12 @@ export class ConversationActivationService {
         now,
       });
       if (!reason) {
-        return false;
+        return { blocked: false, apiServiceLevel };
       }
 
       const limit = await this.agentEntitlements.getActiveConversationsLimit(context.organizationId, apiServiceLevel);
       if (limit >= UNLIMITED_VALUE) {
-        return false;
+        return { blocked: false, limit, apiServiceLevel };
       }
 
       const current = await this.activationRepository.countForOrganizationPeriod(
@@ -478,14 +493,14 @@ export class ConversationActivationService {
         }
       }
 
-      return willBlock;
+      return { blocked: willBlock, limit, apiServiceLevel };
     } catch (err) {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err), organizationId: context.organizationId },
         'Failed to evaluate active-conversation limit; failing open (not blocking)'
       );
 
-      return false;
+      return { blocked: false };
     }
   }
 
@@ -493,21 +508,15 @@ export class ConversationActivationService {
    * Hard-stops an agent-initiated (outbound) message that would start a new
    * active conversation for a Free-tier organization at its limit, throwing the
    * shared 402 plan-limit error. Existing conversations and paid tiers pass
-   * through untouched.
+   * through untouched. Reuses the limit resolved by the gate.
    */
-  async assertOutboundWithinLimit(context: {
-    conversation: ConversationEntity;
-    platform: string;
-    organizationId: string;
-    isDirectMessage?: boolean;
-    now?: Date;
-  }): Promise<void> {
-    const blocked = await this.shouldBlockFreeTier(context);
-    if (!blocked) {
+  async assertOutboundWithinLimit(context: LimitCheckContext): Promise<void> {
+    const decision = await this.shouldBlockFreeTier(context);
+    if (!decision.blocked) {
       return;
     }
 
-    const limit = await this.agentEntitlements.getActiveConversationsLimit(context.organizationId);
+    const limit = decision.limit ?? (await this.agentEntitlements.getActiveConversationsLimit(context.organizationId));
 
     throwPlanLimitExceeded({
       resource: 'active conversations',
@@ -550,7 +559,8 @@ export class ConversationActivationService {
     );
   }
 
-  private primaryThreadId(conversation: ConversationEntity): string {
-    return conversation.channels?.[0]?.platformThreadId ?? '';
+  /** Live hint takes precedence; otherwise the value persisted on the conversation. */
+  private resolveIsDirectMessage(conversation: ConversationEntity, hint?: boolean): boolean | undefined {
+    return hint ?? conversation.isDirectMessage;
   }
 }

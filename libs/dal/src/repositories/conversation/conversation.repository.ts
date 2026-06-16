@@ -4,6 +4,7 @@ import { type ClientSession, FilterQuery, Types } from 'mongoose';
 import { EnforceEnvOrOrgIds } from '../../types';
 import { SortOrder } from '../../types/sort-order';
 import { BaseRepositoryV2 } from '../base-repository-v2';
+import { buildActivationOrConditions } from './billing-activation-rules';
 import {
   ConversationDBModel,
   ConversationEntity,
@@ -325,12 +326,11 @@ export class ConversationRepository extends BaseRepositoryV2<
         _id: params.conversationId,
         _environmentId: params.environmentId,
         _organizationId: params.organizationId,
-        $or: [
-          { 'billing.lastCountedPeriodKey': { $exists: false } },
-          { 'billing.resolvedAt': { $exists: true } },
-          { 'billing.lastCountedPeriodKey': { $ne: params.periodKey } },
-          { 'billing.lastEngagementAt': { $lt: params.windowThresholdIso } },
-        ],
+        // Single source of truth shared with `classifyActivationReason` — see billing-activation-rules.ts.
+        $or: buildActivationOrConditions({
+          periodKey: params.periodKey,
+          windowThresholdIso: params.windowThresholdIso,
+        }) as FilterQuery<ConversationDBModel>[],
       },
       {
         $set: {

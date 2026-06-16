@@ -16,6 +16,7 @@ import { trackAgentReplyProcessed } from '../../../shared/analytics/agent-analyt
 import type { EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
+import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { InboundAckService } from '../../ack/inbound-ack.service';
 import type { MetadataOp } from '../../conversation/agent-conversation.service';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
@@ -96,7 +97,7 @@ export class HandleAgentReply {
       // conversation pass through.
       await this.conversationActivation.assertOutboundWithinLimit({
         conversation,
-        platform: channel.platform,
+        platform: channel.platform as AgentPlatformEnum,
         organizationId: command.organizationId,
       });
 
@@ -203,7 +204,7 @@ export class HandleAgentReply {
     try {
       await this.conversationActivation.registerEngagement({
         conversation,
-        platform: channel.platform,
+        platform: channel.platform as AgentPlatformEnum,
         organizationId: command.organizationId,
         environmentId: command.environmentId,
         agentId: conversation._agentId,
