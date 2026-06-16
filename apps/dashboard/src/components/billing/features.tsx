@@ -34,6 +34,21 @@ function getFeatureDisplay(featureName: FeatureNameEnum, plan: ApiServiceLevelEn
 function FeatureItem({ featureName, plan }: { featureName: FeatureNameEnum; plan: ApiServiceLevelEnum }) {
   const { content, disabled } = getFeatureDisplay(featureName, plan);
 
+  // Conversation overage is shown for transparency but not charged yet — concrete
+  // prices (Pro/Business) render struck-through with a "Free for now" note. Free
+  // ("No additional conversations") and Enterprise ("Custom …") fall through to
+  // normal rendering.
+  const isOverage = featureName === FeatureNameEnum.AGENT_COST_PER_ADDITIONAL_CONVERSATION;
+  if (isOverage && typeof content === 'string' && content.startsWith('$')) {
+    return (
+      <div className="flex items-center gap-2 text-label-xs text-text-sub">
+        <Check className="h-3 w-3" />
+        <span className="text-text-soft line-through">{content}</span>
+        <span className="text-text-sub">Free for now</span>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex items-center gap-2 text-label-xs ${disabled ? 'text-text-disabled' : 'text-text-sub'}`}>
       {typeof content === 'string' ? (
