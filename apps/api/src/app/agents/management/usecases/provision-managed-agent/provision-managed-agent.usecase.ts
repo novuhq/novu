@@ -147,6 +147,10 @@ export class ProvisionManagedAgent {
           ? filterDemoConfigurableMcpIds(command.mcpServers)
           : command.mcpServers;
 
+      if (requestedMcpServers?.length) {
+        resolveMcpServersById(requestedMcpServers);
+      }
+
       const agentDefinitionMcpIds = requestedMcpServers
         ? this.agentMcpDefinitionService.filterIdsForProvision(requestedMcpServers, McpConnectionScopeEnum.Subscriber)
         : undefined;
@@ -377,6 +381,10 @@ export class ProvisionManagedAgent {
         continue;
       }
 
+      const onAgentDefinition = this.agentMcpDefinitionService
+        .filterIdsForProvision([mcpId], McpConnectionScopeEnum.Subscriber)
+        .includes(mcpId);
+
       await this.agentMcpServerRepository.create(
         {
           _organizationId: command.organizationId,
@@ -387,11 +395,15 @@ export class ProvisionManagedAgent {
           defaultScope: McpConnectionScopeEnum.Subscriber,
           defaultAuthMode: catalog.oauth.mode,
           status: 'active',
-          externalProjection: {
-            providerId: command.providerId,
-            mcpServerName: catalog.name,
-            syncedAt,
-          },
+          ...(onAgentDefinition
+            ? {
+                externalProjection: {
+                  providerId: command.providerId,
+                  mcpServerName: catalog.name,
+                  syncedAt,
+                },
+              }
+            : {}),
         },
         writeOptions
       );

@@ -984,6 +984,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
 
     it('callback happy path → status=connected, authMode=novu-app, vault upsert called, no oauthClient on row', async () => {
       const { agentId, state } = await authorizeAndCaptureState();
+      const updateConfigCallsBeforeCallback = mockProvider.updateConfig.callCount;
 
       routeJsonStub({
         tokenEndpoint: {
@@ -1021,6 +1022,10 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       // (client_id from env, tokenEndpoint from oauthState) and the resource
       // mirrored from the catalog URL.
       expect(mockProvider.upsertVaultCredential.calledOnce, 'upsertVaultCredential should be called once').to.be.true;
+      expect(
+        mockProvider.updateConfig.callCount,
+        'OAuth callback must not reconcile the shared agent definition'
+      ).to.equal(updateConfigCallsBeforeCallback);
       const vaultCall = mockProvider.upsertVaultCredential.firstCall.args[0];
       expect(vaultCall.mcpServerUrl).to.equal('https://api.githubcopilot.com/mcp/');
       expect(vaultCall.displayName).to.equal('GitHub');
