@@ -5,11 +5,9 @@ import { registerControllerDecorators } from './nest.register-controller-decorat
 describe('registerControllerDecorators', () => {
   it('should apply controller decorators from async module options', () => {
     const metadataKey = Symbol('novu-test-controller-decorator');
-    const testDecorator =
-      (): ClassDecorator =>
-      (target) => {
-        Reflect.defineMetadata(metadataKey, true, target);
-      };
+    const testDecorator = (): ClassDecorator => (target) => {
+      Reflect.defineMetadata(metadataKey, true, target);
+    };
 
     registerControllerDecorators.useFactory({
       apiPath: '/novu/bridge',
@@ -23,18 +21,14 @@ describe('registerControllerDecorators', () => {
   it('should chain decorator return values onto NovuController', () => {
     const firstKey = Symbol('novu-async-first-decorator');
     const secondKey = Symbol('novu-async-second-decorator');
-    const firstDecorator =
-      (): ClassDecorator =>
-      (target) => {
-        Reflect.defineMetadata(firstKey, 'first', target);
+    const firstDecorator = (): ClassDecorator => (target) => {
+      Reflect.defineMetadata(firstKey, 'first', target);
 
-        return class extends (target as typeof NovuController) {};
-      };
-    const secondDecorator =
-      (): ClassDecorator =>
-      (target) => {
-        Reflect.defineMetadata(secondKey, 'second', target);
-      };
+      return class extends (target as typeof NovuController) {};
+    };
+    const secondDecorator = (): ClassDecorator => (target) => {
+      Reflect.defineMetadata(secondKey, 'second', target);
+    };
 
     registerControllerDecorators.useFactory({
       apiPath: '/novu/bridge',

@@ -10,9 +10,9 @@ import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
 import { InboundAddressConfig } from './inbound-address-config';
 import { OutboundProviderSelect } from './outbound-provider-select';
-import { SharedInboundAddressField } from './shared-inbound-address-field';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus } from './setup-guide-step-utils';
+import { SharedInboundAddressField } from './shared-inbound-address-field';
 import { type ConfiguredAddress, useEmailSetupCredentials } from './use-email-setup-credentials';
 
 function resolveTestEmailTarget(

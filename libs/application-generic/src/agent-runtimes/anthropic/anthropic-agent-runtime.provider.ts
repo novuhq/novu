@@ -1,5 +1,5 @@
 import { APIConnectionError, APIConnectionTimeoutError, APIError, toFile } from '@anthropic-ai/sdk';
-import type { AgentMcpServerDto, AgentRuntimeConfigDto, AgentSkillDto, AgentToolDto } from '@novu/shared';
+import type { AgentRuntimeConfigDto } from '@novu/shared';
 import {
   AGENT_RUNTIME_PROVIDERS,
   AgentRuntimeCapabilities,
@@ -182,7 +182,6 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     try {
       const permissionConfig = resolveManagedAgentPermissionConfig(input.useAlwaysAllowToolPermissions);
       const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, permissionConfig);
-
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
@@ -277,7 +276,9 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
         };
 
         if (patch.model !== undefined) updatePayload.model = patch.model;
-        if (patch.systemPrompt !== undefined) updatePayload.system = patch.systemPrompt;
+        if (patch.systemPrompt !== undefined) {
+          updatePayload.system = patch.systemPrompt;
+        }
         if (patch.mcpServers !== undefined) {
           updatePayload.mcp_servers = patch.mcpServers.map((s) => ({ name: s.name, type: 'url', url: s.url }));
         }

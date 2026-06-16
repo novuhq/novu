@@ -43,7 +43,6 @@ describe('AgentInboundHandler', () => {
       startCodeConsume?: sinon.SinonStub;
       findTelegramEndpointByIdentity?: sinon.SinonStub;
       agentFindOne?: sinon.SinonStub;
-      managedAgentSetupHandleInbound?: sinon.SinonStub;
       subscriberFindById?: sinon.SinonStub;
       subscriberResolve?: sinon.SinonStub;
     } = {}
@@ -72,9 +71,6 @@ describe('AgentInboundHandler', () => {
     };
     const managedAgentService = {
       dispatch: sinon.stub().resolves({ status: 'active' }),
-    };
-    const handleManagedAgentSetupInbound = {
-      execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
     };
     const confirmToolApproval = {
       execute: sinon.stub().resolves(undefined),
@@ -108,7 +104,6 @@ describe('AgentInboundHandler', () => {
     );
     const managedRuntime = new ManagedRuntime(
       managedAgentService as any,
-      handleManagedAgentSetupInbound as any,
       confirmToolApproval as any,
       outboundGateway as any,
       conversationService as any,
@@ -179,7 +174,6 @@ describe('AgentInboundHandler', () => {
       subscriberResolver,
       startCodeService,
       channelEndpointRepository,
-      handleManagedAgentSetupInbound,
       managedAgentService,
       agentRepository,
       subscriberRepository,
@@ -384,31 +378,6 @@ describe('AgentInboundHandler', () => {
         ],
       });
       expect(bridgeExecutor.execute.firstCall.args[0].storedAttachments).to.deep.equal(storedAttachments);
-    });
-
-    it('should show typing before managed-agent setup gate when acknowledgeOnReceived is enabled', async () => {
-      const setupInbound = sinon.stub().resolves(true);
-      const { handler, managedAgentService, inboundAck } = makeHandler({
-        managedAgentSetupHandleInbound: setupInbound,
-        subscriberResolve: sinon.stub().resolves('sub-1'),
-        subscriberFindById: sinon.stub().resolves({ subscriberId: 'sub-1' }),
-        agentFindOne: sinon.stub().resolves({
-          _id: 'agent1',
-          runtime: 'managed',
-          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
-        }),
-      });
-
-      const thread = makeSlackDmThread();
-      const message = makeSlackDmMessage();
-      const slackConfig = { ...config, acknowledgeOnReceived: true };
-
-      await handler.handle('agent1', slackConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
-      expect(setupInbound.calledOnce).to.equal(true);
-      expect(inboundAck.showWorkingSignal.calledBefore(setupInbound)).to.equal(true);
-      expect(managedAgentService.dispatch.called).to.equal(false);
     });
 
     it('should reply with no-access message for managed agents when subscriber is unresolved', async () => {

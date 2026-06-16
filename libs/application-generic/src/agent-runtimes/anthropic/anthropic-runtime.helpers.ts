@@ -1,6 +1,6 @@
 import { APIError } from '@anthropic-ai/sdk';
 import type { AgentMcpServerDto, AgentSkillDto, AgentToolDto, McpTokenEndpointAuthMethod } from '@novu/shared';
-import { CLAUDE_BUILTIN_TOOLS, resolvePersistedMcpTokenEndpointAuthMethod } from '@novu/shared';
+import { CLAUDE_BUILTIN_TOOLS, NOVU_TOOLS_SCHEMA, resolvePersistedMcpTokenEndpointAuthMethod } from '@novu/shared';
 import {
   AgentRuntimeNetworkError,
   AgentRuntimeOverloadedError,
@@ -300,6 +300,8 @@ export function buildToolsPayload(
       });
     }
   }
+
+  payload.push({ type: 'custom', ...NOVU_TOOLS_SCHEMA });
 
   return payload;
 }

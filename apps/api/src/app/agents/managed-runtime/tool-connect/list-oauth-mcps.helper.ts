@@ -11,7 +11,7 @@ export type ListOAuthMcpsDeps = {
 
 /**
  * List every OAuth-capable MCP enabled on an agent and project each row's
- * connection status onto the `OAuthMcp` shape consumed by the setup-card UX.
+ * connection status onto the `OAuthMcp` shape.
  */
 export async function listOAuthMcps(
   deps: ListOAuthMcpsDeps,

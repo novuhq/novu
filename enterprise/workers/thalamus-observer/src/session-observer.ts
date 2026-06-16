@@ -332,6 +332,10 @@ export class SessionObserver extends Agent<Env, State> {
       return [];
     }
 
+    if (isMcpInitFailure(parsed)) {
+      return [];
+    }
+
     const parts: StreamPart[] = [];
     try {
       for (const part of parser.mapEvent(parsed, acc)) {
@@ -588,4 +592,15 @@ export class SessionObserver extends Agent<Env, State> {
   private updateObservation(obs: (ObservationParams & { status: ObservationStatus }) | null): void {
     this.setState({ ...this.state, observation: obs });
   }
+}
+
+function isMcpInitFailure(parsed: unknown): boolean {
+  if (typeof parsed !== 'object' || parsed === null) return false;
+  const obj = parsed as { type?: string; error?: { type?: string; message?: string } };
+
+  return (
+    obj.type === 'session.error' &&
+    (obj.error?.type === 'mcp_authentication_failed_error' ||
+      /MCP server .+ initialize failed/i.test(obj.error?.message ?? ''))
+  );
 }

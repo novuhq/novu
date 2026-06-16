@@ -49,8 +49,8 @@ export interface ConnectCommandOptions {
   telegramBotToken?: string;
   /** Force the non-interactive logging UI (no Ink TUI). Used in CI / piped-stdin shells. */
   ci?: boolean;
-  /** Authenticate via the Novu dashboard (device auth) instead of keyless mode. */
-  login?: boolean;
+  /** Use a temporary keyless workspace instead of dashboard OAuth (the default). */
+  keyless?: boolean;
 }
 
 export interface AgentSummary {

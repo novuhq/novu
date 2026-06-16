@@ -856,6 +856,11 @@ export class GenerateMcpOAuthUrl {
       source: command.source ?? 'api',
       ...(command.conversationId ? { conversationId: command.conversationId } : {}),
       ...(command.trustToolsOnConnect ? { trustToolsOnConnect: true } : {}),
+      ...(command.toolUseId ? { toolUseId: command.toolUseId } : {}),
+      ...(command.agentIdentifier ? { agentIdentifier: command.agentIdentifier } : {}),
+      ...(command.integrationIdentifier ? { integrationIdentifier: command.integrationIdentifier } : {}),
+      ...(command.platform ? { platform: command.platform } : {}),
+      ...(command.platformThreadId ? { platformThreadId: command.platformThreadId } : {}),
     };
 
     const payload = JSON.stringify(stateData);
