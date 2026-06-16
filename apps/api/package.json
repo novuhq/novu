@@ -74,7 +74,7 @@
     "@novu/notifications": "workspace:*",
     "@novu/shared": "workspace:*",
     "@novu/stateless": "workspace:*",
-    "@novu/thalamus": "0.1.0-alpha.13",
+    "@novu/thalamus": "0.1.0-alpha.14",
     "@novu/testing": "workspace:*",
     "@sendgrid/mail": "^8.1.6",
     "@slack/types": "2.20.1",

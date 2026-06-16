@@ -72,7 +72,6 @@ export class ManagedRuntime implements AgentRuntime {
           ...ackParams,
           isFirstMessage,
         });
-        await this.inboundAck.showQueuedSignal(ackParams);
       } else if (status === 'queued') {
         await this.inboundAck.showQueuedSignal(ackParams);
       }
