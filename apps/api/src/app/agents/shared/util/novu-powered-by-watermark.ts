@@ -19,9 +19,8 @@ export function contentHasPoweredByWatermark(markdown: string): boolean {
   }
 
   const trimmed = markdown.trimEnd();
-  if (trimmed === NOVU_AGENT_POWERED_WATERMARK_TEXT) {
-    return true;
-  }
 
-  return trimmed.endsWith(`\n\n${NOVU_AGENT_POWERED_WATERMARK_TEXT}`);
+  return (
+    trimmed === NOVU_AGENT_POWERED_WATERMARK_TEXT || trimmed.endsWith(`\n\n${NOVU_AGENT_POWERED_WATERMARK_TEXT}`)
+  );
 }

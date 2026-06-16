@@ -30,7 +30,7 @@ type ConnectRedirectIssuer = {
   issue(authorizeUrl: string): Promise<string>;
 };
 
-export type BuildConnectCardParams = {
+type BuildConnectCardParams = {
   platform: AgentPlatformEnum;
   mcpId: string;
   mcpName: string;
@@ -153,13 +153,10 @@ export async function buildConnectCardDelivery(
   params: BuildConnectCardParams,
   deps: { connectRedirect: ConnectRedirectIssuer }
 ): Promise<ConnectCardDelivery> {
-  let authorizeUrl = params.authorizeUrl;
-  if (requiresShortConnectUrl(params.platform)) {
-    authorizeUrl = await deps.connectRedirect.issue(authorizeUrl);
-  }
-
   return buildConnectCard({
     ...params,
-    authorizeUrl,
+    authorizeUrl: requiresShortConnectUrl(params.platform)
+      ? await deps.connectRedirect.issue(params.authorizeUrl)
+      : params.authorizeUrl,
   });
 }

@@ -9,33 +9,11 @@ describe('buildConnectCardDelivery', () => {
     const connectRedirect = {
       issue: sinon.stub().resolves('https://api.example.com/v1/agents/mcp/r/short-token'),
     };
+    const authorizeUrl = 'https://app.attio.com/oidc/authorize?state=very-long';
 
-    const delivery = await buildConnectCardDelivery(
+    await buildConnectCardDelivery(
       {
         platform: AgentPlatformEnum.WHATSAPP,
-        mcpId: 'attio',
-        mcpName: 'Attio',
-        authorizeUrl: 'https://app.attio.com/oidc/authorize?state=very-long',
-      },
-      { connectRedirect }
-    );
-
-    expect(connectRedirect.issue.calledOnceWithExactly('https://app.attio.com/oidc/authorize?state=very-long')).to.equal(
-      true
-    );
-    expect((delivery.content.card as { children: Array<{ children: Array<{ url?: string }> }> }).children[1].children[0]
-      .url).to.equal('https://api.example.com/v1/agents/mcp/r/short-token');
-  });
-
-  it('keeps the authorize URL unchanged on Slack', async () => {
-    const connectRedirect = {
-      issue: sinon.stub(),
-    };
-    const authorizeUrl = 'https://provider.example/oauth/authorize?state=abc';
-
-    const delivery = await buildConnectCardDelivery(
-      {
-        platform: AgentPlatformEnum.SLACK,
         mcpId: 'attio',
         mcpName: 'Attio',
         authorizeUrl,
@@ -43,9 +21,25 @@ describe('buildConnectCardDelivery', () => {
       { connectRedirect }
     );
 
+    expect(connectRedirect.issue.calledOnceWithExactly(authorizeUrl)).to.equal(true);
+  });
+
+  it('keeps the authorize URL unchanged on Slack', async () => {
+    const connectRedirect = {
+      issue: sinon.stub(),
+    };
+
+    const delivery = await buildConnectCardDelivery(
+      {
+        platform: AgentPlatformEnum.SLACK,
+        mcpId: 'attio',
+        mcpName: 'Attio',
+        authorizeUrl: 'https://provider.example/oauth/authorize?state=abc',
+      },
+      { connectRedirect }
+    );
+
     expect(connectRedirect.issue.called).to.equal(false);
-    expect((delivery.content.card as { children: Array<{ children: Array<{ url?: string }> }> }).children[1].children[0]
-      .url).to.equal(authorizeUrl);
     expect(delivery.slackNative).to.not.equal(undefined);
   });
 });

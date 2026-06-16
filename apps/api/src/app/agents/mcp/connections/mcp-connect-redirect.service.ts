@@ -23,10 +23,6 @@ export class McpConnectRedirectService {
     this.logger.setContext(this.constructor.name);
   }
 
-  /**
-   * Store a long OAuth authorize URL under a short opaque token and return the
-   * public redirect URL. Falls back to the original URL when Redis is unavailable.
-   */
   async issue(authorizeUrl: string): Promise<string> {
     if (!this.cacheService.cacheEnabled()) {
       this.logger.warn('Cache unavailable — returning full MCP authorize URL for connect redirect');

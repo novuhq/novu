@@ -13,7 +13,7 @@ export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.TELEGRAM,
 ]);
 
-export type PlatformEgressCapabilities = {
+type PlatformEgressCapabilities = {
   markdownLinks: boolean;
   nativeUrlButtons: boolean;
 };
@@ -23,7 +23,7 @@ const DEFAULT_EGRESS_CAPABILITIES: PlatformEgressCapabilities = {
   nativeUrlButtons: true,
 };
 
-export const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapabilities> = {
+const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapabilities> = {
   [AgentPlatformEnum.SLACK]: DEFAULT_EGRESS_CAPABILITIES,
   [AgentPlatformEnum.TEAMS]: DEFAULT_EGRESS_CAPABILITIES,
   [AgentPlatformEnum.TELEGRAM]: DEFAULT_EGRESS_CAPABILITIES,

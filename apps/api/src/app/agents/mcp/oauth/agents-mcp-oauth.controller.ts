@@ -146,8 +146,6 @@ export class AgentsMcpOAuthController {
 
   /**
    * Resolve a short MCP connect redirect token to the full OAuth authorize URL.
-   * Used by WhatsApp (and future text-only adapters) where long authorize URLs
-   * cannot be rendered as native link buttons.
    */
   @Get('/r/:token')
   @ApiOperation({
