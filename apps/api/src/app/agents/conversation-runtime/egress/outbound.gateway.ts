@@ -7,7 +7,10 @@ import { AgentConfigResolver, ResolvedAgentConfig } from '../../channels/agent-c
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { esmImport } from '../../shared/util/esm-import';
-import { buildAttributedNovuUrl } from '../../shared/util/novu-attribution-url';
+import {
+  buildPoweredByWatermark,
+  contentHasPoweredByWatermark,
+} from '../../shared/util/novu-powered-by-watermark';
 import { type AgentActionTokenBinding, AgentActionTokenService } from '../action-token/agent-action-token.service';
 import { AgentConversationService } from '../conversation/agent-conversation.service';
 import { ChatInstanceRegistry } from '../ingress/chat-instance.registry';
@@ -24,14 +27,6 @@ import {
 } from './slack-native-delivery';
 
 export type { SlackNativeDelivery } from './slack-native-delivery';
-
-/** Free-plan branding appended as the last line of outbound agent messages. */
-const NOVU_AGENT_POWERED_URL = 'https://go.novu.co/agent-powered';
-
-/** "Powered by Novu" watermark with per-message campaign attribution. */
-function buildPoweredByWatermark(agentIdentifier: string, platform: string): string {
-  return `[Powered by Novu](${buildAttributedNovuUrl(NOVU_AGENT_POWERED_URL, 'agent-powered', agentIdentifier, platform)})`;
-}
 
 /** The subset of the resolved config that drives outbound watermarking. */
 type OutboundBrandingContext = Pick<ResolvedAgentConfig, 'removeNovuBranding' | 'agentIdentifier' | 'platform'>;
@@ -526,7 +521,7 @@ export class OutboundGateway {
    * untouched.
    */
   private applyOutboundBranding(content: ChatSdkReplyContent, branding: OutboundBrandingContext): ChatSdkReplyContent {
-    if (content.card || !content.markdown || content.markdown.includes(NOVU_AGENT_POWERED_URL)) {
+    if (content.card || !content.markdown || contentHasPoweredByWatermark(content.markdown)) {
       return content;
     }
 

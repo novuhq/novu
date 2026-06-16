@@ -6,6 +6,8 @@ import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { GenerateMcpOAuthUrlCommand } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
+import { McpConnectRedirectService } from '../../mcp/connections/mcp-connect-redirect.service';
+import { requiresShortConnectUrl } from '../../shared/enums/agent-platform.enum';
 import { ManagedAgentService } from '../managed-agent.service';
 import { buildConnectCard } from './connect-card.builder';
 import { HandleNovuToolsCommand, NovuToolsActionEnum } from './handle-novu-tools.command';
@@ -18,6 +20,7 @@ export class HandleNovuTools {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly generateMcpOAuthUrl: GenerateMcpOAuthUrl,
+    private readonly mcpConnectRedirect: McpConnectRedirectService,
     private readonly handleAgentReply: HandleAgentReply,
     @Inject(forwardRef(() => ManagedAgentService))
     private readonly managedAgentService: ManagedAgentService,
@@ -111,11 +114,16 @@ export class HandleNovuTools {
     const mcp = MCP_SERVERS.find((s) => s.id === command.mcpId);
     const mcpName = mcp?.name ?? command.mcpId;
 
+    let authorizeUrl = oauthUrls.authorizeUrl;
+    if (requiresShortConnectUrl(command.platform)) {
+      authorizeUrl = await this.mcpConnectRedirect.issue(authorizeUrl);
+    }
+
     const delivery = buildConnectCard({
       platform: command.platform,
       mcpId: command.mcpId,
       mcpName,
-      authorizeUrl: oauthUrls.authorizeUrl,
+      authorizeUrl,
       authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
     });
 
