@@ -201,6 +201,77 @@ export class AgentSubscriberResolver {
     return this.provisionSubscriberAndEndpoint(params);
   }
 
+  /**
+   * Lazily provision a Subscriber for a keyless email demo sender at the moment
+   * an MCP connection is first needed. Email identity lives on `Subscriber.email`
+   * (matched by `findByEmail` on subsequent turns) rather than a ChannelEndpoint,
+   * so — unlike Slack/Teams — this creates only the Subscriber row, with the same
+   * auto-provision provenance markers. Idempotent via the deterministic
+   * subscriberId. Returns `null` when the address is unusable.
+   */
+  async provisionEmailSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    integrationIdentifier: string;
+    agentIdentifier: string;
+    email: string;
+  }): Promise<string | null> {
+    const email = normalizeEmailForLookup(params.email);
+
+    if (!isValidEmailForLookup(email)) {
+      this.logger.debug(`Skipping email subscriber provision for invalid address "${params.email}"`);
+
+      return null;
+    }
+
+    const existing = await this.resolveEmailSubscriber({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      platformUserId: email,
+    });
+
+    if (existing) {
+      return existing;
+    }
+
+    const subscriberId = buildPlatformSubscriberId({
+      organizationId: params.organizationId,
+      integrationIdentifier: params.integrationIdentifier,
+      platform: AgentPlatformEnum.EMAIL,
+      platformUserId: email,
+    });
+
+    await this.createOrUpdateSubscriber.execute(
+      CreateOrUpdateSubscriberCommand.create({
+        environmentId: params.environmentId,
+        organizationId: params.organizationId,
+        subscriberId,
+        email,
+        data: {
+          [AGENT_PROVISION_DATA_KEYS.source]: AGENT_PLATFORM_PROVISION_SOURCE,
+          [AGENT_PROVISION_DATA_KEYS.platform]: AgentPlatformEnum.EMAIL,
+          [AGENT_PROVISION_DATA_KEYS.platformUserId]: email,
+          [AGENT_PROVISION_DATA_KEYS.agentIdentifier]: params.agentIdentifier,
+          [AGENT_PROVISION_DATA_KEYS.firstSeenAt]: new Date().toISOString(),
+        },
+      })
+    );
+
+    this.analyticsService.track('[Agent Platform] - Subscriber auto-provisioned', params.organizationId, {
+      _organization: params.organizationId,
+      environmentId: params.environmentId,
+      platform: AgentPlatformEnum.EMAIL,
+      agentIdentifier: params.agentIdentifier,
+      subscriberId,
+    });
+
+    this.logger.debug(
+      `Lazily provisioned email subscriber ${subscriberId} for ${email} in org ${params.organizationId}`
+    );
+
+    return subscriberId;
+  }
+
   private async resolveWhatsAppSubscriber(params: {
     environmentId: string;
     organizationId: string;

@@ -184,6 +184,86 @@ describe('AgentSubscriberResolver', () => {
     });
   });
 
+  describe('provisionEmailSubscriber — lazy keyless demo provisioning', () => {
+    it('creates a Subscriber with email + provenance and no ChannelEndpoint on a miss', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const trackAnalytics = sinon.stub();
+      const { resolver, createChannelEndpoint } = makeResolver({
+        findByEmail: sinon.stub().resolves([]),
+        createOrUpdateSubscriberExecute,
+        trackAnalytics,
+      });
+
+      const result = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'User@Example.com',
+      });
+
+      expect(result).to.be.a('string').and.to.match(/^sub_/);
+      expect(createOrUpdateSubscriberExecute.calledOnce).to.equal(true);
+
+      const command = createOrUpdateSubscriberExecute.firstCall.args[0];
+      expect(command.email).to.equal('user@example.com');
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.source]).to.equal(AGENT_PLATFORM_PROVISION_SOURCE);
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.platform]).to.equal(AgentPlatformEnum.EMAIL);
+      expect(command.data[AGENT_PROVISION_DATA_KEYS.platformUserId]).to.equal('user@example.com');
+
+      // Email identity lives on Subscriber.email — no ChannelEndpoint is written.
+      expect(createChannelEndpoint.execute.called).to.equal(false);
+      expect(trackAnalytics.calledOnce).to.equal(true);
+    });
+
+    it('returns the existing subscriber without creating a new row when one already matches the email', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const { resolver } = makeResolver({
+        findByEmail: sinon.stub().resolves([{ subscriberId: 'sub-existing' }]),
+        createOrUpdateSubscriberExecute,
+      });
+
+      const result = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'existing@example.com',
+      });
+
+      expect(result).to.equal('sub-existing');
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
+    });
+
+    it('is idempotent — the same email yields the same deterministic subscriberId', async () => {
+      const { resolver } = makeResolver({ findByEmail: sinon.stub().resolves([]) });
+
+      const first = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'user@example.com',
+      });
+      const second = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'USER@example.com',
+      });
+
+      expect(first).to.equal(second);
+    });
+
+    it('returns null for an invalid address without writing anything', async () => {
+      const createOrUpdateSubscriberExecute = sinon.stub().resolves(undefined);
+      const { resolver, subscriberRepository } = makeResolver({ createOrUpdateSubscriberExecute });
+
+      const result = await resolver.provisionEmailSubscriber({
+        ...baseLookupParams,
+        agentIdentifier: 'agent-test',
+        email: 'not-an-email',
+      });
+
+      expect(result).to.equal(null);
+      expect(subscriberRepository.findByEmail.called).to.equal(false);
+      expect(createOrUpdateSubscriberExecute.called).to.equal(false);
+    });
+  });
+
   describe('resolveOnly — channel endpoint resolution', () => {
     it('resolves Slack via channel endpoints', async () => {
       const { resolver, channelEndpointRepository } = makeResolver({

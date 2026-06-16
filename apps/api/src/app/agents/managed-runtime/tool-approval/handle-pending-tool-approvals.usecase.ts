@@ -3,15 +3,19 @@ import type { IAgentRuntimeProvider, PendingToolApproval } from '@novu/applicati
 import { PinoLogger } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
+  ConversationParticipant,
+  ConversationParticipantTypeEnum,
   ConversationRepository,
   McpConnectionRepository,
   SubscriberRepository,
 } from '@novu/dal';
 import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
+import { AgentSubscriberResolver } from '../../conversation-runtime/conversation/agent-subscriber-resolver.service';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
 import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
+import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { ManagedAgentService } from '../managed-agent.service';
 import { ManagedAgentProviderFactory } from '../managed-agent-provider-factory.service';
@@ -31,6 +35,7 @@ export class HandlePendingToolApprovals {
     private readonly mcpConnectionRepository: McpConnectionRepository,
     @Inject(forwardRef(() => ManagedAgentService))
     private readonly managedAgentService: ManagedAgentService,
+    private readonly subscriberResolver: AgentSubscriberResolver,
     private readonly handleNovuTools: HandleNovuTools,
     private readonly handleAgentReply: HandleAgentReply,
     private readonly handlePlanProgress: HandlePlanProgress,
@@ -271,10 +276,19 @@ export class HandlePendingToolApprovals {
         _environmentId: command.environmentId,
         _organizationId: command.organizationId,
       },
-      ['_agentId']
+      ['_agentId', 'participants']
     );
 
     if (!conversation?._agentId) return;
+
+    const subscriberId =
+      command.subscriberId || (await this.provisionDemoSubscriber(command, conversation.participants));
+
+    if (!subscriberId) {
+      await this.resolveInternalToolsWithoutSubscriber(command, tools);
+
+      return;
+    }
 
     for (const tool of tools) {
       await this.handleNovuTools.execute(
@@ -288,12 +302,92 @@ export class HandlePendingToolApprovals {
           agentId: conversation._agentId,
           agentIdentifier: command.agentIdentifier,
           integrationIdentifier: command.integrationIdentifier,
-          subscriberId: command.subscriberId ?? '',
+          subscriberId,
           sessionId: command.sessionId,
           platform: command.platform,
           platformThreadId: command.platformThreadId,
         })
       );
+    }
+  }
+
+  private async provisionDemoSubscriber(
+    command: HandlePendingToolApprovalsCommand,
+    participants: ConversationParticipant[]
+  ): Promise<string | undefined> {
+    if (command.platform !== AgentPlatformEnum.EMAIL) {
+      return undefined;
+    }
+
+    const email = recoverEmailFromParticipants(participants, command.platform);
+
+    if (!email) {
+      return undefined;
+    }
+
+    try {
+      const subscriberId = await this.subscriberResolver.provisionEmailSubscriber({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        integrationIdentifier: command.integrationIdentifier,
+        agentIdentifier: command.agentIdentifier,
+        email,
+      });
+
+      return subscriberId ?? undefined;
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), sessionId: command.sessionId },
+        'Lazy email subscriber provisioning failed; falling back to degraded tool result'
+      );
+      captureAgentWarning(err, {
+        component: 'handle-pending-tool-approvals',
+        operation: 'provision-demo-subscriber',
+        sessionId: command.sessionId,
+      });
+
+      return undefined;
+    }
+  }
+
+  private async resolveInternalToolsWithoutSubscriber(
+    command: HandlePendingToolApprovalsCommand,
+    tools: PendingToolApproval[]
+  ): Promise<void> {
+    const content = JSON.stringify({
+      available: [],
+      instruction:
+        'Connecting integrations is not available in this demo. Tell the user they need to claim this agent before they can connect MCP integrations, then continue helping with anything else.',
+    });
+
+    for (const tool of tools) {
+      try {
+        await this.managedAgentService.sendToolResult({
+          conversationId: command.conversationId,
+          environmentId: command.environmentId,
+          organizationId: command.organizationId,
+          agentIdentifier: command.agentIdentifier,
+          integrationIdentifier: command.integrationIdentifier,
+          toolUseId: tool.toolUseId,
+          content,
+          platform: command.platform,
+          platformThreadId: command.platformThreadId,
+        });
+      } catch (err) {
+        this.logger.warn(
+          {
+            err: err instanceof Error ? err.message : String(err),
+            sessionId: command.sessionId,
+            toolUseId: tool.toolUseId,
+          },
+          'Failed to resolve internal tool without a subscriber'
+        );
+        captureAgentWarning(err, {
+          component: 'handle-pending-tool-approvals',
+          operation: 'resolve-internal-tools-without-subscriber',
+          sessionId: command.sessionId,
+        });
+      }
     }
   }
 
@@ -344,4 +438,22 @@ export class HandlePendingToolApprovals {
       })
     );
   }
+}
+
+function recoverEmailFromParticipants(
+  participants: ConversationParticipant[],
+  platform: AgentPlatformEnum
+): string | null {
+  const prefix = `${platform}:`;
+  const participant = participants.find(
+    (entry) => entry.type === ConversationParticipantTypeEnum.PLATFORM_USER && entry.id.startsWith(prefix)
+  );
+
+  if (!participant) {
+    return null;
+  }
+
+  const email = participant.id.slice(prefix.length).trim();
+
+  return email || null;
 }
