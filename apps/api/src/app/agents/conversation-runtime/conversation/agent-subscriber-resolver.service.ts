@@ -224,10 +224,10 @@ export class AgentSubscriberResolver {
       return null;
     }
 
-    const existing = await this.resolveEmailSubscriber({
+    const existing = await this.resolveAgentProvisionedEmailSubscriber({
       environmentId: params.environmentId,
       organizationId: params.organizationId,
-      platformUserId: email,
+      email,
     });
 
     if (existing) {
@@ -296,6 +296,43 @@ export class AgentSubscriberResolver {
     }
 
     this.logger.debug(`No subscriber found for WhatsApp phone ${platformUserId}`);
+
+    return null;
+  }
+
+  private async resolveAgentProvisionedEmailSubscriber(params: {
+    environmentId: string;
+    organizationId: string;
+    email: string;
+  }): Promise<string | null> {
+    const { environmentId, organizationId, email } = params;
+
+    const matches = await this.subscriberRepository.find(
+      {
+        _environmentId: environmentId,
+        _organizationId: organizationId,
+        email: { $regex: new RegExp(`^${escapeRegExp(email)}$`, 'i') },
+        [`data.${AGENT_PROVISION_DATA_KEYS.source}`]: AGENT_PLATFORM_PROVISION_SOURCE,
+      },
+      'subscriberId',
+      { limit: 2 }
+    );
+
+    if (matches.length > 1) {
+      this.logger.warn(
+        `Multiple agent-provisioned subscribers (${matches.length}) share email ${email} in environment ${environmentId} — using first match`
+      );
+    }
+
+    const subscriber = matches[0];
+
+    if (subscriber) {
+      this.logger.debug(`Resolved agent-provisioned email ${email} → subscriber ${subscriber.subscriberId}`);
+
+      return subscriber.subscriberId;
+    }
+
+    this.logger.debug(`No agent-provisioned subscriber found for email ${email}`);
 
     return null;
   }
@@ -468,6 +505,10 @@ export class AgentSubscriberResolver {
  * logs and dashboard URLs. Deterministic so retries against the same tuple
  * resolve to the same `Subscriber` row.
  */
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function buildPlatformSubscriberId(params: {
   organizationId: string;
   integrationIdentifier: string;

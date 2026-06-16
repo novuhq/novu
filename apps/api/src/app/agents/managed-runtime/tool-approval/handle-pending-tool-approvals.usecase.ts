@@ -4,7 +4,6 @@ import { PinoLogger } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
   ConversationParticipant,
-  ConversationParticipantTypeEnum,
   ConversationRepository,
   McpConnectionRepository,
   SubscriberRepository,
@@ -23,6 +22,7 @@ import { HandleNovuToolsCommand, NovuToolsActionEnum } from '../tool-connect/han
 import { HandleNovuTools } from '../tool-connect/handle-novu-tools.usecase';
 import { extractPendingToolApprovals, getToolApprovalCard } from './approval-card.builder';
 import { HandlePendingToolApprovalsCommand } from './handle-pending-tool-approvals.command';
+import { recoverEmailFromParticipants, recoverSubscriberParticipantId } from './handle-pending-tool-approvals.helpers';
 import { resolveTrustForPendingTool } from './tool-trust.helper';
 
 @Injectable()
@@ -282,7 +282,7 @@ export class HandlePendingToolApprovals {
     if (!conversation?._agentId) return;
 
     const subscriberId =
-      command.subscriberId || (await this.provisionDemoSubscriber(command, conversation.participants));
+      command.subscriberId || (await this.provisionDemoSubscriber(command, conversation.participants ?? []));
 
     if (!subscriberId) {
       await this.resolveInternalToolsWithoutSubscriber(command, tools);
@@ -317,6 +317,12 @@ export class HandlePendingToolApprovals {
   ): Promise<string | undefined> {
     if (command.platform !== AgentPlatformEnum.EMAIL) {
       return undefined;
+    }
+
+    const upgradedSubscriberId = recoverSubscriberParticipantId(participants);
+
+    if (upgradedSubscriberId) {
+      return upgradedSubscriberId;
     }
 
     const email = recoverEmailFromParticipants(participants, command.platform);
@@ -360,6 +366,8 @@ export class HandlePendingToolApprovals {
         'Connecting integrations is not available in this demo. Tell the user they need to claim this agent before they can connect MCP integrations, then continue helping with anything else.',
     });
 
+    let lastError: unknown;
+
     for (const tool of tools) {
       try {
         await this.managedAgentService.sendToolResult({
@@ -387,7 +395,12 @@ export class HandlePendingToolApprovals {
           operation: 'resolve-internal-tools-without-subscriber',
           sessionId: command.sessionId,
         });
+        lastError = err;
       }
+    }
+
+    if (lastError) {
+      throw lastError;
     }
   }
 
@@ -438,22 +451,4 @@ export class HandlePendingToolApprovals {
       })
     );
   }
-}
-
-function recoverEmailFromParticipants(
-  participants: ConversationParticipant[],
-  platform: AgentPlatformEnum
-): string | null {
-  const prefix = `${platform}:`;
-  const participant = participants.find(
-    (entry) => entry.type === ConversationParticipantTypeEnum.PLATFORM_USER && entry.id.startsWith(prefix)
-  );
-
-  if (!participant) {
-    return null;
-  }
-
-  const email = participant.id.slice(prefix.length).trim();
-
-  return email || null;
 }
