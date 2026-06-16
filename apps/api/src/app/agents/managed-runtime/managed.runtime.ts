@@ -41,7 +41,6 @@ export class ManagedRuntime implements AgentRuntime {
 
     // Keyless email demo agents bypass the subscriber gate: the ephemeral env has no
     // subscribers, and abuse is bounded by the per-conversation demo cap + claim CTA.
-    // Other platforms (Slack/WhatsApp/Teams/Telegram) still require a resolved subscriber.
     const isKeylessEmailDemo = turn.config.isKeyless && turn.config.platform === AgentPlatformEnum.EMAIL;
 
     if (!turn.subscriber && !isKeylessEmailDemo) {
