@@ -6,8 +6,7 @@ import { trackAgentMcpServerEnabled } from '../../../shared/analytics/agent-anal
 import { AgentMcpServerEnablementResponseDto } from '../../../shared/dtos/mcp-server.dto';
 import { assertMcpNovuAppFlagEnabled } from '../../assert-mcp-novu-app-flag-enabled';
 import { assertMcpProviderManagedFlagEnabled } from '../../assert-mcp-provider-managed-flag-enabled';
-import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
-import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
+import { AgentMcpDefinitionService } from '../../runtime/agent-mcp-definition.service';
 import { EnableAgentMcpServerCommand } from './enable-agent-mcp-server.command';
 
 interface MongoDuplicateKeyError extends Error {
@@ -15,9 +14,8 @@ interface MongoDuplicateKeyError extends Error {
 }
 
 /**
- * Enable a catalog MCP on an agent (Mongo-authoritative). After writing the
- * `agent_mcp_server` row this reconciles the agent-definition MCP set onto
- * the runtime provider's `agent.mcp_servers` (subscriber OAuth excluded).
+ * Enable a catalog MCP on an agent. Writes Mongo first, then updates Anthropic's
+ * shared agent MCP list (per-subscriber OAuth MCPs are not added there).
  *
  * Re-enable semantics: if a row exists with `status: 'error'` (left over
  * from a failed previous sync) the row is reused so callers can retry. A
@@ -29,7 +27,7 @@ export class EnableAgentMcpServer {
   constructor(
     private readonly agentRepository: AgentRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly syncAgentMcpServers: SyncAgentMcpServers,
+    private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
     private readonly analyticsService: AnalyticsService,
     private readonly featureFlagsService: FeatureFlagsService
   ) {}
@@ -111,13 +109,12 @@ export class EnableAgentMcpServer {
       ? await this.reEnableExistingRow(existing, command, defaultScope, defaultAuthMode)
       : await this.createNewRow(agent._id, command, defaultScope, defaultAuthMode);
 
-    await this.syncAgentMcpServers.execute(
-      SyncAgentMcpServersCommand.create({
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-        agentId: agent._id,
-      })
-    );
+    // Row is in Mongo; refresh Anthropic's shared agent (not per-subscriber session MCPs).
+    await this.agentMcpDefinitionService.reconcile({
+      environmentId: command.environmentId,
+      organizationId: command.organizationId,
+      agentId: agent._id,
+    });
 
     trackAgentMcpServerEnabled(this.analyticsService, {
       userId: command.userId,

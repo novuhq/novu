@@ -19,9 +19,9 @@ import {
   McpConnectionScopeEnum,
 } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
-import { belongsOnAgentDefinition } from '../../../mcp/project-mcp-servers';
 import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
 import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/resolve-mcp-servers';
+import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
 import { sanitizeUrlForLogging } from '../../../mcp/sanitize-url-for-logging';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
 
@@ -44,6 +44,7 @@ export class ProvisionManagedAgent {
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
     private readonly logger: PinoLogger
   ) {}
 
@@ -146,9 +147,10 @@ export class ProvisionManagedAgent {
           ? filterDemoConfigurableMcpIds(command.mcpServers)
           : command.mcpServers;
 
-      const agentDefinitionMcpIds = requestedMcpServers?.filter((mcpId) =>
-        belongsOnAgentDefinition({ mcpId, defaultScope: McpConnectionScopeEnum.Subscriber })
-      );
+      const agentDefinitionMcpIds = requestedMcpServers
+        ? this.agentMcpDefinitionService.filterIdsForProvision(requestedMcpServers, McpConnectionScopeEnum.Subscriber)
+        : undefined;
+      // Shared agent only at create time; Mongo still stores every requested MCP below.
       const resolvedMcpServers = agentDefinitionMcpIds?.length
         ? resolveMcpServersById(agentDefinitionMcpIds)
         : undefined;

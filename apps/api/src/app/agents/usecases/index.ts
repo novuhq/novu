@@ -44,7 +44,6 @@ import { DisableAgentMcpServer } from '../mcp/servers/disable-agent-mcp-server/d
 import { EnableAgentMcpServer } from '../mcp/servers/enable-agent-mcp-server/enable-agent-mcp-server.usecase';
 import { ListAgentMcpServers } from '../mcp/servers/list-agent-mcp-servers/list-agent-mcp-servers.usecase';
 import { SetAgentMcpServers } from '../mcp/servers/set-agent-mcp-servers/set-agent-mcp-servers.usecase';
-import { SyncAgentMcpServers } from '../mcp/servers/sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
 import { ListAgentEmoji } from '../shared/emoji/list-agent-emoji/list-agent-emoji.usecase';
 
 export {
@@ -94,7 +93,6 @@ export const USE_CASES = [
   SendAgentWelcomeMessage,
   SendWhatsAppTestTemplate,
   SyncAgentToEnvironment,
-  SyncAgentMcpServers,
   EnableAgentMcpServer,
   DisableAgentMcpServer,
   SetAgentMcpServers,

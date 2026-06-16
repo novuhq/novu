@@ -414,7 +414,7 @@ describe('Agent MCP Server endpoints #novu-v2', () => {
       // The fact that something didn't take healthily is communicated
       // through `failed[]`, not by omission from `data`.
       //
-      // Note on linear's status: SyncAgentMcpServers marks *every*
+      // Note on linear's status: agent-definition reconcile marks *every*
       // currently-enabled row as `error` when the upstream projection
       // call fails (it's a batch projection, not per-row). So sentry's
       // failed sync flips linear's status from `active` back to `error`

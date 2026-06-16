@@ -65,6 +65,7 @@ import { McpNovuAppCredentialsService } from './mcp/connections/get-mcp-novu-app
 import { McpConnectionVaultService } from './mcp/connections/mcp-connection-vault.service';
 import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controller';
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
+import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
 import { USE_CASES } from './usecases';
 
@@ -118,6 +119,7 @@ import { USE_CASES } from './usecases';
     ManagedAgentEventHandler,
     ManagedAgentService,
     McpConnectionVaultService,
+    AgentMcpDefinitionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
     McpNovuAppCredentialsService,
