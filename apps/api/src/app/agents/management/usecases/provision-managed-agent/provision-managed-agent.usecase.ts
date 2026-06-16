@@ -19,6 +19,7 @@ import {
   McpConnectionScopeEnum,
 } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
+import { belongsOnAgentDefinition } from '../../../mcp/project-mcp-servers';
 import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
 import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/resolve-mcp-servers';
 import { sanitizeUrlForLogging } from '../../../mcp/sanitize-url-for-logging';
@@ -145,7 +146,12 @@ export class ProvisionManagedAgent {
           ? filterDemoConfigurableMcpIds(command.mcpServers)
           : command.mcpServers;
 
-      const resolvedMcpServers = requestedMcpServers ? resolveMcpServersById(requestedMcpServers) : undefined;
+      const agentDefinitionMcpIds = requestedMcpServers?.filter((mcpId) =>
+        belongsOnAgentDefinition({ mcpId, defaultScope: McpConnectionScopeEnum.Subscriber })
+      );
+      const resolvedMcpServers = agentDefinitionMcpIds?.length
+        ? resolveMcpServersById(agentDefinitionMcpIds)
+        : undefined;
       const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
         featureFlagsService: this.featureFlagsService,
         environmentId: command.environmentId,

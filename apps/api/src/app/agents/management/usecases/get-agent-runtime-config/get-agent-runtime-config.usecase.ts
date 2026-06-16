@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
-import { projectMcpRowsToCatalog } from '../../../mcp/project-mcp-servers';
+import { belongsOnAgentDefinition, projectMcpRowsToCatalog } from '../../../mcp/project-mcp-servers';
 import type {
   AgentRuntimeCapabilitiesDto,
   AgentRuntimeConfigResponseDto,
@@ -63,8 +63,8 @@ export class GetAgentRuntimeConfig {
 
     const runtimeProvider = resolved.provider;
 
-    // Mongo is authoritative for the agent's MCP list. Other runtime fields
-    // (model, system prompt, tools, skills) still come live from the provider.
+    // Mongo is authoritative for agent-definition MCPs (excludes subscriber
+    // OAuth). Other runtime fields still come live from the provider.
     const [config, mcpRows] = await Promise.all([
       runtimeProvider.getConfig(externalAgentId),
       this.agentMcpServerRepository.findByAgent({
@@ -75,7 +75,7 @@ export class GetAgentRuntimeConfig {
       }),
     ]);
 
-    const mcpServers = projectMcpRowsToCatalog(mcpRows, this.logger, {
+    const mcpServers = projectMcpRowsToCatalog(mcpRows.filter(belongsOnAgentDefinition), this.logger, {
       agentId: agent._id,
       useCase: GetAgentRuntimeConfig.name,
     });

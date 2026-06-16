@@ -16,8 +16,8 @@ interface MongoDuplicateKeyError extends Error {
 
 /**
  * Enable a catalog MCP on an agent (Mongo-authoritative). After writing the
- * `agent_mcp_server` row this triggers SyncAgentMcpServers to project the
- * full enabled set onto the runtime provider's `agent.mcp_servers`.
+ * `agent_mcp_server` row this reconciles the agent-definition MCP set onto
+ * the runtime provider's `agent.mcp_servers` (subscriber OAuth excluded).
  *
  * Re-enable semantics: if a row exists with `status: 'error'` (left over
  * from a failed previous sync) the row is reused so callers can retry. A

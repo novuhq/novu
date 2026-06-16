@@ -1,3 +1,4 @@
+import type { AgentMcpServerEntity } from '@novu/dal';
 import { MCP_SERVERS } from '@novu/shared';
 
 export type CatalogProjection = { externalId: string; name: string; url: string };
@@ -13,6 +14,19 @@ export type ProjectableMcpRow = {
  * payload as the first argument and an optional message as the second).
  */
 type Warner = { warn: (obj: object, msg?: string) => void };
+
+/** Shared Anthropic agent definition — not per-subscriber OAuth. */
+export function belongsOnAgentDefinition(row: Pick<AgentMcpServerEntity, 'mcpId' | 'defaultScope'>): boolean {
+  const catalog = MCP_SERVERS.find((entry) => entry.id === row.mcpId);
+
+  if (!catalog?.oauth) {
+    return !!catalog;
+  }
+
+  // v1: subscriber OAuth is session-attached only
+
+  return row.defaultScope !== 'subscriber';
+}
 
 /**
  * Project a list of `agent_mcp_server` rows onto the `{ externalId, name, url }`

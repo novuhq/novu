@@ -21,10 +21,9 @@ import { DisableAgentMcpServerCommand } from './disable-agent-mcp-server.command
  *   2. Soft-disable the enablement row by flipping `enabled: false` +
  *      `status: 'syncing'`. The row is intentionally kept so a failed sync
  *      can be retried without losing the enablement record.
- *   3. Project the new (smaller) enabled set onto the runtime provider via
- *      `SyncAgentMcpServers`. The soft-disabled row is excluded from the
- *      projection (`findByAgent({ enabledOnly: true })`), so the upstream
- *      `agent.mcp_servers` set converges to the desired state.
+ *   3. Reconcile the agent-definition MCP set onto the runtime provider.
+ *      The soft-disabled row is excluded from the projection (`enabledOnly:
+ *      true`), so subscriber OAuth and other removed MCPs drop off upstream.
  *   4. Only after the sync succeeds: cascade-delete connections and the
  *      enablement row. If step 3 throws, the disabled row + its connections
  *      are left in place — a retry of this same endpoint will pick up where

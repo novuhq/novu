@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, UnprocessableEntityException } from '@ne
 import { FeatureFlagsService, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
-import { projectMcpRowsToCatalog } from '../../../mcp/project-mcp-servers';
+import { belongsOnAgentDefinition, projectMcpRowsToCatalog } from '../../../mcp/project-mcp-servers';
 import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/resolve-managed-agent-always-allow-tool-permissions';
 import type {
   AgentRuntimeCapabilitiesDto,
@@ -85,7 +85,7 @@ export class UpdateAgentRuntimeConfig {
       enabledOnly: true,
     });
 
-    const mcpServers = projectMcpRowsToCatalog(mcpRows, this.logger, {
+    const mcpServers = projectMcpRowsToCatalog(mcpRows.filter(belongsOnAgentDefinition), this.logger, {
       agentId: agent._id,
       useCase: UpdateAgentRuntimeConfig.name,
     });

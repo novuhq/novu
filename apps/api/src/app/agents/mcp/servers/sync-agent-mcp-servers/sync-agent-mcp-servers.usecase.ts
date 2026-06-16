@@ -3,14 +3,14 @@ import { FeatureFlagsService, PinoLogger, resolveAgentRuntime } from '@novu/appl
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { MCP_SERVERS } from '@novu/shared';
 
-import { projectMcpRowsToCatalog } from '../../project-mcp-servers';
+import { belongsOnAgentDefinition, projectMcpRowsToCatalog } from '../../project-mcp-servers';
 import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../resolve-managed-agent-always-allow-tool-permissions';
 import { SyncAgentMcpServersCommand } from './sync-agent-mcp-servers.command';
 
 /**
- * Push the current Mongo-side enablement list (agent_mcp_server rows) to the
- * runtime provider as `agent.mcp_servers`. Mongo is authoritative — the
- * provider's view becomes a downstream projection.
+ * Reconcile Mongo enablement intent onto the Anthropic agent definition as
+ * `agent.mcp_servers`. Only rows that belong on the shared agent definition
+ * are projected — subscriber-scoped OAuth MCPs are excluded (session-attached).
  *
  * Called by EnableAgentMcpServer / DisableAgentMcpServer after every
  * mutating Mongo write so the projection stays aligned.
@@ -82,7 +82,7 @@ export class SyncAgentMcpServers {
       enabledOnly: true,
     });
 
-    const projection = projectMcpRowsToCatalog(enabled, this.logger, {
+    const projection = projectMcpRowsToCatalog(enabled.filter(belongsOnAgentDefinition), this.logger, {
       agentId: command.agentId,
       useCase: SyncAgentMcpServers.name,
     });
