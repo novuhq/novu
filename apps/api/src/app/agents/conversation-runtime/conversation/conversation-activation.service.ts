@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ModuleRef } from '@nestjs/core';
-import { AgentEntitlementsService, PinoLogger, throwPlanLimitExceeded } from '@novu/application-generic';
+import { AgentEntitlementsService, AnalyticsService, PinoLogger, throwPlanLimitExceeded } from '@novu/application-generic';
 import {
   CommunityOrganizationRepository,
   ConversationActivationReasonEnum,
@@ -10,6 +10,10 @@ import {
   ConversationThreadKindEnum,
 } from '@novu/dal';
 import { ApiServiceLevelEnum, UNLIMITED_VALUE } from '@novu/shared';
+import {
+  trackAgentActiveConversationCounted,
+  trackAgentActiveConversationLimitReached,
+} from '../../shared/analytics/agent-analytics';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
 
 const HOUR_MS = 60 * 60 * 1000;
@@ -19,6 +23,7 @@ const DAY_MS = 24 * HOUR_MS;
  * How long a resolved billing period is served from memory. Periods change at
  * most monthly, so a short TTL keeps the inbound hot path off the EE billing
  * use case (itself Redis-cached for 24h) while staying fresh near boundaries.
+ * TODO: Move to Redis Cache when we have enough traffic on this service
  */
 const PERIOD_CACHE_TTL_MS = 60_000;
 const PERIOD_CACHE_MAX_ENTRIES = 10_000;
@@ -82,6 +87,7 @@ export class ConversationActivationService {
     private readonly organizationRepository: CommunityOrganizationRepository,
     private readonly agentEntitlements: AgentEntitlementsService,
     private readonly moduleRef: ModuleRef,
+    private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -166,9 +172,7 @@ export class ConversationActivationService {
         return null;
       }
 
-      const subscription = await getSubscription.execute(
-        billing.GetSubscriptionCommand.create({ organizationId })
-      );
+      const subscription = await getSubscription.execute(billing.GetSubscriptionCommand.create({ organizationId }));
       if (!subscription?.currentPeriodStart || !subscription?.currentPeriodEnd) {
         return null;
       }
@@ -205,7 +209,11 @@ export class ConversationActivationService {
     this.periodCache.set(organizationId, { value, expiresAt: now.getTime() + PERIOD_CACHE_TTL_MS });
   }
 
-  deriveThreadKind(platform: string, platformThreadId: string, isDirectMessageHint?: boolean): ConversationThreadKindEnum {
+  deriveThreadKind(
+    platform: string,
+    platformThreadId: string,
+    isDirectMessageHint?: boolean
+  ): ConversationThreadKindEnum {
     if (isDirectMessageHint !== undefined) {
       return isDirectMessageHint ? ConversationThreadKindEnum.DIRECT : ConversationThreadKindEnum.GROUP;
     }
@@ -333,7 +341,71 @@ export class ConversationActivationService {
       periodKey,
     });
 
+    await this.emitCountedAnalytics(context, threadKind, reason, periodKey);
+
     return true;
+  }
+
+  /**
+   * Fire-and-forget analytics for a counted activation. Always emits the
+   * "counted" event; additionally emits "limit reached" (blocked=false) for
+   * finite tiers once usage is at/over the included limit, so paid overage is
+   * measured per extra conversation. Fully isolated — analytics must never
+   * affect counting.
+   */
+  private async emitCountedAnalytics(
+    context: EngagementContext,
+    threadKind: ConversationThreadKindEnum,
+    reason: ConversationActivationReasonEnum,
+    periodKey: string
+  ): Promise<void> {
+    try {
+      const apiServiceLevel = await this.getApiServiceLevel(context.organizationId);
+
+      trackAgentActiveConversationCounted(this.analyticsService, {
+        organizationId: context.organizationId,
+        environmentId: context.environmentId,
+        agentId: context.agentId,
+        conversationId: context.conversation._id,
+        platform: context.platform,
+        threadKind,
+        reason,
+        periodKey,
+        apiServiceLevel,
+      });
+
+      const limit = await this.agentEntitlements.getActiveConversationsLimit(context.organizationId, apiServiceLevel);
+      if (limit >= UNLIMITED_VALUE) {
+        return;
+      }
+
+      const currentCount = await this.activationRepository.countForOrganizationPeriod(context.organizationId, periodKey);
+      if (currentCount >= limit) {
+        trackAgentActiveConversationLimitReached(this.analyticsService, {
+          organizationId: context.organizationId,
+          environmentId: context.environmentId,
+          agentId: context.agentId,
+          conversationId: context.conversation._id,
+          platform: context.platform,
+          apiServiceLevel,
+          limit,
+          currentCount,
+          overage: Math.max(0, currentCount - limit),
+          blocked: false,
+        });
+      }
+    } catch (err) {
+      this.logger.warn(
+        { err: err instanceof Error ? err.message : String(err), organizationId: context.organizationId },
+        'Failed to emit active-conversation analytics'
+      );
+    }
+  }
+
+  private async getApiServiceLevel(organizationId: string): Promise<ApiServiceLevelEnum> {
+    const organization = await this.organizationRepository.findById(organizationId, '_id apiServiceLevel');
+
+    return organization?.apiServiceLevel ?? ApiServiceLevelEnum.FREE;
   }
 
   /**
@@ -384,8 +456,29 @@ export class ConversationActivationService {
         periodKey,
         limit + 1
       );
+      const willBlock = current >= limit;
 
-      return current >= limit;
+      if (willBlock) {
+        // Isolated so an analytics failure can never flip the block decision.
+        try {
+          trackAgentActiveConversationLimitReached(this.analyticsService, {
+            organizationId: context.organizationId,
+            environmentId: context.conversation._environmentId,
+            agentId: context.conversation._agentId,
+            conversationId: context.conversation._id,
+            platform: context.platform,
+            apiServiceLevel,
+            limit,
+            currentCount: current,
+            overage: Math.max(0, current - limit),
+            blocked: true,
+          });
+        } catch {
+          // Swallow — never let analytics affect gating.
+        }
+      }
+
+      return willBlock;
     } catch (err) {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err), organizationId: context.organizationId },
