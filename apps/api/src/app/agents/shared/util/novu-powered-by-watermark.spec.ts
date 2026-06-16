@@ -38,5 +38,7 @@ describe('novu-powered-by-watermark', () => {
 
   it('does not treat unrelated body text as watermarked', () => {
     expect(contentHasPoweredByWatermark('Hello there')).to.equal(false);
+    expect(contentHasPoweredByWatermark('Powered by Novu is a great product')).to.equal(false);
+    expect(contentHasPoweredByWatermark('Hello\n\nPowered by Novu is great')).to.equal(false);
   });
 });

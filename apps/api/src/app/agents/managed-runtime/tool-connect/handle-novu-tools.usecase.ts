@@ -7,9 +7,8 @@ import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-
 import { GenerateMcpOAuthUrlCommand } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
 import { McpConnectRedirectService } from '../../mcp/connections/mcp-connect-redirect.service';
-import { requiresShortConnectUrl } from '../../shared/enums/agent-platform.enum';
 import { ManagedAgentService } from '../managed-agent.service';
-import { buildConnectCard } from './connect-card.builder';
+import { buildConnectCardDelivery } from './connect-card.builder';
 import { HandleNovuToolsCommand, NovuToolsActionEnum } from './handle-novu-tools.command';
 import { listOAuthMcps } from './list-oauth-mcps.helper';
 
@@ -114,18 +113,16 @@ export class HandleNovuTools {
     const mcp = MCP_SERVERS.find((s) => s.id === command.mcpId);
     const mcpName = mcp?.name ?? command.mcpId;
 
-    let authorizeUrl = oauthUrls.authorizeUrl;
-    if (requiresShortConnectUrl(command.platform)) {
-      authorizeUrl = await this.mcpConnectRedirect.issue(authorizeUrl);
-    }
-
-    const delivery = buildConnectCard({
-      platform: command.platform,
-      mcpId: command.mcpId,
-      mcpName,
-      authorizeUrl,
-      authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
-    });
+    const delivery = await buildConnectCardDelivery(
+      {
+        platform: command.platform,
+        mcpId: command.mcpId,
+        mcpName,
+        authorizeUrl: oauthUrls.authorizeUrl,
+        authorizeUrlWithAutoApprove: oauthUrls.authorizeUrlWithAutoApprove,
+      },
+      { connectRedirect: this.mcpConnectRedirect }
+    );
 
     const sent = await this.handleAgentReply.execute(
       HandleAgentReplyCommand.create({

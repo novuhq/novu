@@ -13,16 +13,35 @@ export const PLATFORMS_WITH_TYPING_INDICATOR = new Set<AgentPlatformEnum>([
   AgentPlatformEnum.TELEGRAM,
 ]);
 
-/** Platforms where `[label](url)` markdown links do not render (e.g. WhatsApp). */
-export const PLATFORMS_WITHOUT_MARKDOWN_LINKS = new Set<AgentPlatformEnum>([AgentPlatformEnum.WHATSAPP]);
+export type PlatformEgressCapabilities = {
+  markdownLinks: boolean;
+  nativeUrlButtons: boolean;
+};
 
-/** Platforms where card link-buttons fall back to visible URL text (e.g. WhatsApp). */
-export const PLATFORMS_WITHOUT_NATIVE_URL_BUTTONS = new Set<AgentPlatformEnum>([AgentPlatformEnum.WHATSAPP]);
+const DEFAULT_EGRESS_CAPABILITIES: PlatformEgressCapabilities = {
+  markdownLinks: true,
+  nativeUrlButtons: true,
+};
+
+export const PLATFORM_EGRESS_CAPABILITIES: Record<AgentPlatformEnum, PlatformEgressCapabilities> = {
+  [AgentPlatformEnum.SLACK]: DEFAULT_EGRESS_CAPABILITIES,
+  [AgentPlatformEnum.TEAMS]: DEFAULT_EGRESS_CAPABILITIES,
+  [AgentPlatformEnum.TELEGRAM]: DEFAULT_EGRESS_CAPABILITIES,
+  [AgentPlatformEnum.EMAIL]: DEFAULT_EGRESS_CAPABILITIES,
+  [AgentPlatformEnum.WHATSAPP]: {
+    markdownLinks: false,
+    nativeUrlButtons: false,
+  },
+};
+
+function resolvePlatformEgressCapabilities(platform: string): PlatformEgressCapabilities {
+  return PLATFORM_EGRESS_CAPABILITIES[platform as AgentPlatformEnum] ?? DEFAULT_EGRESS_CAPABILITIES;
+}
 
 export function supportsMarkdownLinks(platform: string): boolean {
-  return !PLATFORMS_WITHOUT_MARKDOWN_LINKS.has(platform as AgentPlatformEnum);
+  return resolvePlatformEgressCapabilities(platform).markdownLinks;
 }
 
 export function requiresShortConnectUrl(platform: string): boolean {
-  return PLATFORMS_WITHOUT_NATIVE_URL_BUTTONS.has(platform as AgentPlatformEnum);
+  return !resolvePlatformEgressCapabilities(platform).nativeUrlButtons;
 }

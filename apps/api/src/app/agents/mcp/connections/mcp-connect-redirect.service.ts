@@ -2,20 +2,13 @@ import { randomBytes } from 'node:crypto';
 import { Injectable } from '@nestjs/common';
 import { CacheService, PinoLogger } from '@novu/application-generic';
 
+import { buildAgentApiRootUrl } from '../../shared/util/agent-api-root-url';
+
 export const MCP_CONNECT_REDIRECT_PATH = '/v1/agents/mcp/r';
 
 export const MCP_CONNECT_REDIRECT_TTL_SECONDS = 24 * 60 * 60;
 
 const CACHE_KEY_PREFIX = 'mcp-connect-redirect:';
-
-export function buildAgentApiRootUrl(): string {
-  const rootUrl = process.env.AGENT_API_HOSTNAME?.trim() || process.env.API_ROOT_URL?.trim();
-  if (!rootUrl) {
-    throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
-  }
-
-  return rootUrl.replace(/\/$/, '');
-}
 
 export function buildMcpConnectRedirectUrl(token: string): string {
   return `${buildAgentApiRootUrl()}${MCP_CONNECT_REDIRECT_PATH}/${token}`;

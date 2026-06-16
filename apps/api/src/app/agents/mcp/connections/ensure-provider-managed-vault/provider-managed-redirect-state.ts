@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { createHash, encodeOAuthState, splitOAuthState } from '@novu/application-generic';
 
+import { buildAgentApiRootUrl } from '../../../shared/util/agent-api-root-url';
+
 /**
  * Public path mounted under `AgentsMcpOAuthController`. Receives the click on
  * the in-channel "Connect from provider" link, marks the connection row as
@@ -99,12 +101,5 @@ export function decodeProviderManagedRedirectState(state: string): {
 }
 
 export function buildProviderManagedRedirectUrl(signedState: string): string {
-  const rootUrl = process.env.AGENT_API_HOSTNAME?.trim() || process.env.API_ROOT_URL?.trim();
-  if (!rootUrl) {
-    throw new Error('AGENT_API_HOSTNAME or API_ROOT_URL environment variable is required');
-  }
-
-  const baseUrl = rootUrl.replace(/\/$/, '');
-
-  return `${baseUrl}${PROVIDER_MANAGED_REDIRECT_PATH}?state=${encodeURIComponent(signedState)}`;
+  return `${buildAgentApiRootUrl()}${PROVIDER_MANAGED_REDIRECT_PATH}?state=${encodeURIComponent(signedState)}`;
 }
