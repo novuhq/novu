@@ -6,6 +6,7 @@ import {
   type ConversationChannel,
   ConversationRepository,
 } from '@novu/dal';
+import { NOVU_TOOLS_TOOL_NAME } from '@novu/shared';
 import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleForPhase } from '../../egress/plan-phase';
@@ -34,6 +35,10 @@ export class HandlePlanProgress {
   }
 
   async execute(command: HandlePlanProgressCommand): Promise<void> {
+    if (this.isInternalToolEvent(command)) {
+      return;
+    }
+
     const conversation = await this.conversationService.getConversation(
       command.conversationId,
       command.environmentId,
@@ -76,6 +81,11 @@ export class HandlePlanProgress {
     if (toolProgress.action === 'complete' || toolProgress.action === 'fail') {
       await this.handleFinalize(command, toolProgress, existingActivities, activePlanMessageId);
     }
+  }
+
+  private isInternalToolEvent(command: HandlePlanProgressCommand): boolean {
+    // dont show internal tool events in the plan card
+    return command.toolProgress?.toolName === NOVU_TOOLS_TOOL_NAME;
   }
 
   private async handleToolUse(

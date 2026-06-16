@@ -43,7 +43,6 @@ describe('AgentInboundHandler', () => {
       startCodeConsume?: sinon.SinonStub;
       findTelegramEndpointByIdentity?: sinon.SinonStub;
       agentFindOne?: sinon.SinonStub;
-      managedAgentSetupHandleInbound?: sinon.SinonStub;
       subscriberFindById?: sinon.SinonStub;
       subscriberResolve?: sinon.SinonStub;
     } = {}
@@ -62,6 +61,7 @@ describe('AgentInboundHandler', () => {
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
+      countAgentMessages: sinon.stub().resolves(0),
     };
     const bridgeExecutor = {
       execute: overrides.bridgeError ? sinon.stub().rejects(overrides.bridgeError) : sinon.stub().resolves(undefined),
@@ -70,10 +70,7 @@ describe('AgentInboundHandler', () => {
       findBySubscriberId: overrides.subscriberFindById ?? sinon.stub(),
     };
     const managedAgentService = {
-      dispatch: sinon.stub().resolves(undefined),
-    };
-    const handleManagedAgentSetupInbound = {
-      execute: overrides.managedAgentSetupHandleInbound ?? sinon.stub().resolves(false),
+      dispatch: sinon.stub().resolves({ status: 'active' }),
     };
     const confirmToolApproval = {
       execute: sinon.stub().resolves(undefined),
@@ -96,6 +93,7 @@ describe('AgentInboundHandler', () => {
     };
     const inboundAck = {
       showWorkingSignal: sinon.stub().resolves(undefined),
+      showQueuedSignal: sinon.stub().resolves(undefined),
     };
     const bridgeRuntime = new BridgeRuntime(
       bridgeExecutor as any,
@@ -106,7 +104,6 @@ describe('AgentInboundHandler', () => {
     );
     const managedRuntime = new ManagedRuntime(
       managedAgentService as any,
-      handleManagedAgentSetupInbound as any,
       confirmToolApproval as any,
       outboundGateway as any,
       conversationService as any,
@@ -177,7 +174,6 @@ describe('AgentInboundHandler', () => {
       subscriberResolver,
       startCodeService,
       channelEndpointRepository,
-      handleManagedAgentSetupInbound,
       managedAgentService,
       agentRepository,
       subscriberRepository,
@@ -384,31 +380,6 @@ describe('AgentInboundHandler', () => {
       expect(bridgeExecutor.execute.firstCall.args[0].storedAttachments).to.deep.equal(storedAttachments);
     });
 
-    it('should show typing before managed-agent setup gate when acknowledgeOnReceived is enabled', async () => {
-      const setupInbound = sinon.stub().resolves(true);
-      const { handler, managedAgentService, inboundAck } = makeHandler({
-        managedAgentSetupHandleInbound: setupInbound,
-        subscriberResolve: sinon.stub().resolves('sub-1'),
-        subscriberFindById: sinon.stub().resolves({ subscriberId: 'sub-1' }),
-        agentFindOne: sinon.stub().resolves({
-          _id: 'agent1',
-          runtime: 'managed',
-          managedRuntime: { providerId: 'anthropic', _integrationId: 'int1', externalAgentId: 'ext1' },
-        }),
-      });
-
-      const thread = makeSlackDmThread();
-      const message = makeSlackDmMessage();
-      const slackConfig = { ...config, acknowledgeOnReceived: true };
-
-      await handler.handle('agent1', slackConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
-
-      expect(inboundAck.showWorkingSignal.calledOnce).to.equal(true);
-      expect(setupInbound.calledOnce).to.equal(true);
-      expect(inboundAck.showWorkingSignal.calledBefore(setupInbound)).to.equal(true);
-      expect(managedAgentService.dispatch.called).to.equal(false);
-    });
-
     it('should reply with no-access message for managed agents when subscriber is unresolved', async () => {
       const { handler, managedAgentService, outboundGateway } = makeHandler({
         subscriberResolve: sinon.stub().resolves(null),
@@ -448,6 +419,59 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include(senderEmail);
       expect(outboundGateway.replyOnThread.firstCall.args[1].markdown).to.include('Novu account');
+    });
+
+    it('should dispatch keyless managed agent even when subscriber is unresolved (email)', async () => {
+      const emailConfig = {
+        ...config,
+        platform: AgentPlatformEnum.EMAIL,
+        integrationIdentifier: 'email-main',
+        isKeyless: true,
+        isManaged: true,
+      };
+      const senderEmail = 'tester@example.com';
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeEmailDmThread();
+      const message = makeEmailDmMessage(senderEmail);
+
+      await handler.handle('agent1', emailConfig as any, thread as any, message as any, AgentEventEnum.ON_MESSAGE);
+
+      expect(outboundGateway.replyOnThread.called).to.equal(false);
+      expect(managedAgentService.dispatch.calledOnce).to.equal(true);
+    });
+
+    it('should still gate keyless managed agents on non-email platforms when subscriber is unresolved', async () => {
+      const keylessSlackConfig = {
+        ...config,
+        platform: AgentPlatformEnum.SLACK,
+        isKeyless: true,
+        isManaged: true,
+      };
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle(
+        'agent1',
+        keylessSlackConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
     });
   });
 

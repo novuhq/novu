@@ -23,9 +23,19 @@ export interface McpOAuthState {
   /** Dashboard/API user or organization id that initiated the flow. */
   userId?: string;
   /** Where the OAuth URL was generated — round-trips for consistent callback attribution. */
-  source?: 'api' | 'setup_card';
+  source?: 'api' | 'user_chat';
   /** When set, persist server-wide tool auto-approve on the connection after OAuth succeeds. */
   trustToolsOnConnect?: boolean;
+
+  // ── Session resume fields (source: 'user_chat') ──────────────────────
+  // Carried through the OAuth redirect so the callback can resume the
+  // waiting session without additional DB lookups.
+  /** custom_tool_use ID — the callback sends a tool result for this ID to resume the session. */
+  toolUseId?: string;
+  agentIdentifier?: string;
+  integrationIdentifier?: string;
+  platform?: string;
+  platformThreadId?: string;
 }
 
 export function buildMcpOAuthRedirectUri(): string {

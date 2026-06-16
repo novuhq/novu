@@ -371,111 +371,111 @@ export function ConnectAgentForm({
               : 'Describe what your agent should do — we configure the tools, MCPs, skills, and system prompt for you.'
           }
           fullWidthContent={
-          <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
-            {aiGeneration.suggestions.length > 0 && (
-              <div className="flex min-w-0 items-center">
-                <AnimatePresence initial={false}>
-                  {!aiGeneration.isRegeneratingSuggestions && (
-                    <motion.span
-                      key="try-label"
-                      initial={{ opacity: 0, maxWidth: 0, marginRight: 0 }}
-                      animate={{ opacity: 1, maxWidth: 36, marginRight: 8 }}
-                      exit={{ opacity: 0, maxWidth: 0, marginRight: 0 }}
-                      transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                      className="text-text-soft text-label-xs shrink-0 overflow-hidden font-medium leading-4 whitespace-nowrap"
-                    >
-                      Try:
-                    </motion.span>
-                  )}
-                </AnimatePresence>
-                <AgentSuggestionPills
-                  className="min-w-0 flex-1"
-                  suggestions={aiGeneration.suggestions}
-                  onSelect={aiGeneration.onSelectSuggestion}
-                  disabled={disabled || (aiGeneration.isGenerating ?? false)}
-                  isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
-                />
-                {aiGeneration.onRegenerateSuggestions && (
+            <div className="flex flex-col gap-3 mt-5 max-w-[500px]">
+              {aiGeneration.suggestions.length > 0 && (
+                <div className="flex min-w-0 items-center">
                   <AnimatePresence initial={false}>
                     {!aiGeneration.isRegeneratingSuggestions && (
-                      <motion.div
-                        key="regenerate-suggestions"
-                        initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
-                        animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
-                        exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                      <motion.span
+                        key="try-label"
+                        initial={{ opacity: 0, maxWidth: 0, marginRight: 0 }}
+                        animate={{ opacity: 1, maxWidth: 36, marginRight: 8 }}
+                        exit={{ opacity: 0, maxWidth: 0, marginRight: 0 }}
                         transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
-                        className="shrink-0 overflow-hidden"
+                        className="text-text-soft text-label-xs shrink-0 overflow-hidden font-medium leading-4 whitespace-nowrap"
                       >
-                        <Button
-                          aria-label="Regenerate suggestions"
-                          title="Regenerate suggestions"
-                          className="h-6 shrink-0 [&_svg]:size-2.5"
-                          variant="secondary"
-                          mode="ghost"
-                          size="2xs"
-                          trailingIcon={RiLoopLeftLine}
-                          disabled={disabled || (aiGeneration.isGenerating ?? false)}
-                          onClick={aiGeneration.onRegenerateSuggestions}
-                        />
-                      </motion.div>
+                        Try:
+                      </motion.span>
                     )}
                   </AnimatePresence>
-                )}
-              </div>
-            )}
-            {/*
-             * Keep the prompt + helper text mounted while generating — pass `isGenerating={false}`
-             * so `PromptInput` does not swap in its own cancel/status UI (we render those below the
-             * button instead) and keeps the helper text visible. `disabled` makes the textarea
-             * read-only during generation.
-             */}
-            <PromptInput
-              value={aiGeneration.prompt}
-              onChange={aiGeneration.onPromptChange}
-              disabled={disabled || (aiGeneration.isGenerating ?? false)}
-              errorMessage={aiGeneration.promptError}
-              textareaRef={aiGeneration.textareaRef}
-              helperText={
-                isDemoCredentialSelected
-                  ? 'Using Demo credentials for Claude Managed Agents for onboarding'
-                  : 'You can always edit the agent once created'
-              }
-            />
-            {/*
-             * Render the cancel/submit toggle as different element types (button vs a wrapping
-             * div) so React never reuses the same DOM <button> and silently flips its `type` from
-             * "button" to "submit" mid-click — which would let the browser submit the form on the
-             * very click that was meant to cancel, firing a brand-new generation request.
-             */}
-            {aiGeneration.isGenerating ? (
-              <Button
-                key="brain-step-cancel"
-                type="button"
-                variant="secondary"
-                mode="outline"
-                size="2xs"
-                className="mt-1 w-full justify-center gap-1"
-                onClick={aiGeneration.onCancelGeneration}
-                disabled={aiGeneration.isCancelDisabled}
-                trailingIcon={RiCloseLine}
-              >
-                Cancel
-              </Button>
-            ) : (
-              <div key="brain-step-submit" className="contents">
-                {submitSlot}
-              </div>
-            )}
-            {aiGeneration.isGenerating && aiGeneration.generationSteps && aiGeneration.generationSteps.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <GenerationStatus steps={aiGeneration.generationSteps} />
-              </motion.div>
-            )}
-          </div>
+                  <AgentSuggestionPills
+                    className="min-w-0 flex-1"
+                    suggestions={aiGeneration.suggestions}
+                    onSelect={aiGeneration.onSelectSuggestion}
+                    disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                    isLoading={aiGeneration.isRegeneratingSuggestions ?? false}
+                  />
+                  {aiGeneration.onRegenerateSuggestions && (
+                    <AnimatePresence initial={false}>
+                      {!aiGeneration.isRegeneratingSuggestions && (
+                        <motion.div
+                          key="regenerate-suggestions"
+                          initial={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          animate={{ opacity: 1, maxWidth: 24, marginLeft: 8 }}
+                          exit={{ opacity: 0, maxWidth: 0, marginLeft: 0 }}
+                          transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
+                          className="shrink-0 overflow-hidden"
+                        >
+                          <Button
+                            aria-label="Regenerate suggestions"
+                            title="Regenerate suggestions"
+                            className="h-6 shrink-0 [&_svg]:size-2.5"
+                            variant="secondary"
+                            mode="ghost"
+                            size="2xs"
+                            trailingIcon={RiLoopLeftLine}
+                            disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                            onClick={aiGeneration.onRegenerateSuggestions}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  )}
+                </div>
+              )}
+              {/*
+               * Keep the prompt + helper text mounted while generating — pass `isGenerating={false}`
+               * so `PromptInput` does not swap in its own cancel/status UI (we render those below the
+               * button instead) and keeps the helper text visible. `disabled` makes the textarea
+               * read-only during generation.
+               */}
+              <PromptInput
+                value={aiGeneration.prompt}
+                onChange={aiGeneration.onPromptChange}
+                disabled={disabled || (aiGeneration.isGenerating ?? false)}
+                errorMessage={aiGeneration.promptError}
+                textareaRef={aiGeneration.textareaRef}
+                helperText={
+                  isDemoCredentialSelected
+                    ? 'Using Demo credentials for Claude Managed Agents for onboarding'
+                    : 'You can always edit the agent once created'
+                }
+              />
+              {/*
+               * Render the cancel/submit toggle as different element types (button vs a wrapping
+               * div) so React never reuses the same DOM <button> and silently flips its `type` from
+               * "button" to "submit" mid-click — which would let the browser submit the form on the
+               * very click that was meant to cancel, firing a brand-new generation request.
+               */}
+              {aiGeneration.isGenerating ? (
+                <Button
+                  key="brain-step-cancel"
+                  type="button"
+                  variant="secondary"
+                  mode="outline"
+                  size="2xs"
+                  className="mt-1 w-full justify-center gap-1"
+                  onClick={aiGeneration.onCancelGeneration}
+                  disabled={aiGeneration.isCancelDisabled}
+                  trailingIcon={RiCloseLine}
+                >
+                  Cancel
+                </Button>
+              ) : (
+                <div key="brain-step-submit" className="contents">
+                  {submitSlot}
+                </div>
+              )}
+              {aiGeneration.isGenerating && aiGeneration.generationSteps && aiGeneration.generationSteps.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <GenerationStatus steps={aiGeneration.generationSteps} />
+                </motion.div>
+              )}
+            </div>
           }
         />
       </>

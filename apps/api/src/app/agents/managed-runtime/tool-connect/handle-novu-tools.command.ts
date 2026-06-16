@@ -1,13 +1,31 @@
+import { EnvironmentCommand } from '@novu/application-generic';
 import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-
-import { EnvironmentWithUserCommand } from '../../../shared/commands/project.command';
 import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
-import type { ParsedToolApprovalAction } from './approval-card.builder';
 
-export class ConfirmToolApprovalCommand extends EnvironmentWithUserCommand {
+export enum NovuToolsActionEnum {
+  ListAvailable = 'list_available',
+  RequestConnect = 'request_connect',
+}
+
+export class HandleNovuToolsCommand extends EnvironmentCommand {
+  @IsString()
+  @IsNotEmpty()
+  toolUseId: string;
+
+  @IsEnum(NovuToolsActionEnum)
+  action: NovuToolsActionEnum;
+
+  @IsString()
+  @IsOptional()
+  mcpId?: string;
+
   @IsString()
   @IsNotEmpty()
   conversationId: string;
+
+  @IsString()
+  @IsNotEmpty()
+  agentId: string;
 
   @IsString()
   @IsNotEmpty()
@@ -19,27 +37,17 @@ export class ConfirmToolApprovalCommand extends EnvironmentWithUserCommand {
 
   @IsString()
   @IsNotEmpty()
-  agentId: string;
+  subscriberId: string;
 
   @IsString()
-  @IsOptional()
-  subscriberId?: string;
+  @IsNotEmpty()
+  sessionId: string;
 
   @IsEnum(AgentPlatformEnum)
   @IsNotEmpty()
   platform: AgentPlatformEnum;
 
-  parsed: ParsedToolApprovalAction;
-
-  @IsString()
-  @IsOptional()
-  sourceMessageId?: string;
-
   @IsString()
   @IsNotEmpty()
   platformThreadId: string;
-
-  @IsString()
-  @IsOptional()
-  actionValue?: string;
 }

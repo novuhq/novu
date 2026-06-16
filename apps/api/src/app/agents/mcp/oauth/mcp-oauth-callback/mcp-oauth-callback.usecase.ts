@@ -19,6 +19,7 @@ import {
   McpConnectionEntity,
   McpConnectionOAuthClient,
   McpConnectionRepository,
+  SubscriberRepository,
 } from '@novu/dal';
 import {
   MCP_SERVERS,
@@ -29,9 +30,10 @@ import {
   resolvePersistedMcpTokenEndpointAuthMethod,
 } from '@novu/shared';
 import { areHexDigestsEqual } from '../../../../shared/helpers/timing-safe-equal';
-import { CompleteManagedAgentSetup } from '../../../managed-runtime/setup/complete-managed-agent-setup.usecase';
-import { ManagedAgentSetupCompleteCommand } from '../../../managed-runtime/setup/managed-agent-setup-complete.command';
+import { OutboundGateway } from '../../../conversation-runtime/egress/outbound.gateway';
+import { ManagedAgentService } from '../../../managed-runtime/managed-agent.service';
 import { trackAgentMcpOAuthCompleted, trackAgentMcpOAuthFailed } from '../../../shared/analytics/agent-analytics';
+import { AgentPlatformEnum, PLATFORMS_WITH_TYPING_INDICATOR } from '../../../shared/enums/agent-platform.enum';
 import { McpNovuAppCredentialsService } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
 import { McpConnectionVaultService } from '../../connections/mcp-connection-vault.service';
 import { SyncAgentMcpServersCommand } from '../../servers/sync-agent-mcp-servers/sync-agent-mcp-servers.command';
@@ -47,6 +49,10 @@ import { McpOAuthCallbackCommand, type McpOAuthCallbackResult } from './mcp-oaut
 import { type DcrTokenExchangeOutcome, resolveDcrTokenExchangeOutcome } from './token-exchange-outcome';
 
 const MAX_ERROR_MESSAGE_LEN = 256;
+
+class AlreadyConnectedBailout extends Error {
+  readonly status = 'connected' as const;
+}
 
 interface TokenResponse {
   access_token: string;
@@ -84,10 +90,12 @@ export class McpOAuthCallback {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
+    private readonly subscriberRepository: SubscriberRepository,
     private readonly discoveryService: McpOAuthDiscoveryService,
     private readonly syncAgentMcpServers: SyncAgentMcpServers,
     private readonly mcpConnectionVaultService: McpConnectionVaultService,
-    private readonly completeManagedAgentSetup: CompleteManagedAgentSetup,
+    private readonly managedAgentService: ManagedAgentService,
+    private readonly outboundGateway: OutboundGateway,
     private readonly getNovuAppCredentials: McpNovuAppCredentialsService,
     private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
@@ -99,36 +107,75 @@ export class McpOAuthCallback {
     const stateData = await this.decodeAndValidateState(command.state);
 
     if (command.error) {
-      // OAuth 2 §4.1.2.1 — the AS-returned `error` param is attacker-influenced
-      // up to a short token. Map the standard `access_denied` to our
-      // specific `mcp_user_denied` code so the dashboard can render
-      // "You cancelled the consent" copy instead of generic failure.
-      //
-      // The controller concatenates `error` and `error_description` into a
-      // single string (e.g. "access_denied - The user cancelled"), so we
-      // pick off the OAuth error token from the head of the string before
-      // matching against the well-known codes.
-      const safeMessage = sanitizeErrorMessage(command.error);
-      const errorToken = parseUpstreamErrorToken(command.error);
-      const errorCode: McpOAuthErrorCode | 'oauth_callback_error' = mapUpstreamCallbackErrorCode(errorToken);
-      await this.markConnectionError(stateData, errorCode, safeMessage);
-      this.trackOAuthFailed(stateData, errorCode);
-
-      return { status: 'error', message: safeMessage };
+      return this.handleUpstreamError(stateData, command.error);
     }
 
     if (!command.providerCode) {
       throw new BadRequestException('Missing required OAuth parameter: code');
     }
 
-    const catalog = MCP_SERVERS.find((entry) => entry.id === stateData.mcpId);
+    const oauthConfig = this.resolveCatalogOAuthConfig(stateData.mcpId);
+    await this.validateEnablement(stateData);
+
+    let claimed: McpConnectionEntity;
+    try {
+      claimed = await this.claimPendingConnection(stateData, oauthConfig);
+    } catch (err) {
+      if (err instanceof AlreadyConnectedBailout) {
+        return { status: 'connected' };
+      }
+
+      throw err;
+    }
+
+    const oauthClient = await this.resolveOAuthClientSafe(claimed, oauthConfig, stateData);
+
+    // RFC 9207 §2.4 — validate the `iss` callback parameter against the
+    // recorded expected issuer before the code touches any token endpoint.
+    await this.validateIssuer(command.iss, claimed, stateData, oauthConfig.mode);
+
+    const tokenResponse = await this.exchangeCode({
+      claimed,
+      oauthClient,
+      code: command.providerCode,
+      pkceVerifier: claimed.oauthState?.pkceVerifier,
+      resource: claimed.oauthState?.resource,
+      stateData,
+    });
+
+    const plainAuth = this.buildPlainAuth(tokenResponse);
+    await this.persistConnectedStatus(claimed, stateData, oauthConfig, plainAuth);
+
+    return this.runPostConnectSafe(claimed, stateData, oauthConfig, plainAuth, oauthClient);
+  }
+
+  // ── execute sub-steps ─────────────────────────────────────────────────
+
+  /**
+   * OAuth 2 §4.1.2.1 — the AS-returned `error` param is attacker-influenced
+   * up to a short token. Map the standard `access_denied` to our
+   * specific `mcp_user_denied` code so the dashboard can render
+   * "You cancelled the consent" copy instead of generic failure.
+   */
+  private async handleUpstreamError(stateData: McpOAuthState, error: string): Promise<McpOAuthCallbackResult> {
+    const safeMessage = sanitizeErrorMessage(error);
+    const errorToken = parseUpstreamErrorToken(error);
+    const errorCode: McpOAuthErrorCode | 'oauth_callback_error' = mapUpstreamCallbackErrorCode(errorToken);
+    await this.markConnectionError(stateData, errorCode, safeMessage);
+    this.trackOAuthFailed(stateData, errorCode);
+
+    return { status: 'error', message: safeMessage };
+  }
+
+  private resolveCatalogOAuthConfig(mcpId: string): McpOAuthCatalogEntry {
+    const catalog = MCP_SERVERS.find((entry) => entry.id === mcpId);
 
     if (!catalog) {
-      throw new BadRequestException(`Unknown MCP "${stateData.mcpId}".`);
+      throw new BadRequestException(`Unknown MCP "${mcpId}".`);
     }
 
     if (!catalog.oauth) {
-      throw new BadRequestException(`MCP "${stateData.mcpId}" does not have OAuth connectivity configured.`);
+      throw new BadRequestException(`MCP "${mcpId}" does not have OAuth connectivity configured.`);
     }
 
     const oauthConfig: McpOAuthCatalogEntry = catalog.oauth;
@@ -138,16 +185,14 @@ export class McpOAuthCallback {
       case McpConnectionAuthModeEnum.NovuApp:
         break;
       case McpConnectionAuthModeEnum.UserApp:
-        throw new BadRequestException(`MCP "${stateData.mcpId}" auth mode "${oauthConfig.mode}" is not yet supported.`);
+        throw new BadRequestException(`MCP "${mcpId}" auth mode "${oauthConfig.mode}" is not yet supported.`);
       case McpConnectionAuthModeEnum.ProviderManaged:
         // Provider-managed MCPs never produce a Novu OAuth callback because
         // Novu doesn't build the authorize URL for them. Reaching this
         // branch implies a signed-state replay from a different mode or a
         // catalog mode flip mid-flight; reject explicitly so the row stays
         // intact for the provider-vault flow.
-        throw new BadRequestException(
-          `MCP "${stateData.mcpId}" is provider-managed and does not use the Novu OAuth callback.`
-        );
+        throw new BadRequestException(`MCP "${mcpId}" is provider-managed and does not use the Novu OAuth callback.`);
       default: {
         const _exhaustive: never = oauthConfig;
 
@@ -155,6 +200,10 @@ export class McpOAuthCallback {
       }
     }
 
+    return oauthConfig;
+  }
+
+  private async validateEnablement(stateData: McpOAuthState): Promise<void> {
     const enablement = await this.agentMcpServerRepository.findOne(
       {
         _id: stateData.agentMcpServerId,
@@ -171,15 +220,19 @@ export class McpOAuthCallback {
     if (enablement._agentId !== stateData.agentId) {
       throw new BadRequestException('OAuth state agent does not match enablement record.');
     }
+  }
 
-    // Atomically claim the pending row before talking to the OAuth provider.
-    // The filter requires `oauthState.callbackClaimedAt` to be ABSENT and the
-    // update sets it to `now()`, so MongoDB only matches the row for the
-    // first arriving callback; concurrent callbacks for the same signed
-    // state see no match and bail out below. This closes the race where two
-    // requests could both pass a non-mutating gate and each exchange the
-    // authorization code (RFC 6749 §4.1.2 forbids reusing the code).
-    const callbackClaimedAt = new Date();
+  /**
+   * Atomically claim the pending row before talking to the OAuth provider.
+   * MongoDB only matches the row for the first arriving callback; concurrent
+   * callbacks for the same signed state see no match and bail out.
+   * This closes the race where two requests could both exchange the
+   * authorization code (RFC 6749 §4.1.2 forbids reusing the code).
+   */
+  private async claimPendingConnection(
+    stateData: McpOAuthState,
+    oauthConfig: McpOAuthCatalogEntry
+  ): Promise<McpConnectionEntity> {
     const claimed = await this.mcpConnectionRepository.findOneAndUpdate(
       {
         _environmentId: stateData.environmentId,
@@ -191,45 +244,49 @@ export class McpOAuthCallback {
         'oauthState.callbackClaimedAt': { $exists: false },
       },
       {
-        $set: { 'oauthState.callbackClaimedAt': callbackClaimedAt },
+        $set: { 'oauthState.callbackClaimedAt': new Date() },
         $unset: { lastError: 1 },
       },
       { new: true }
     );
 
-    if (!claimed) {
-      const existing = await this.mcpConnectionRepository.findSubscriberConnection({
-        organizationId: stateData.organizationId,
-        environmentId: stateData.environmentId,
-        agentMcpServerId: stateData.agentMcpServerId,
-        subscriberId: stateData.subscriberId,
-      });
-
-      if (existing?.status === McpConnectionStatusEnum.Connected) {
-        this.trackOAuthCompleted(stateData, existing._id, oauthConfig.mode);
-
-        return { status: 'connected' };
-      }
-
-      await this.refreshSetupCardsIfApplicable(stateData);
-
-      throw new BadRequestException(
-        'OAuth callback rejected: connection is not awaiting authorisation, or has already been claimed by a concurrent callback. Close this tab and click Connect again from the setup card in Slack.'
-      );
+    if (claimed) {
+      return claimed;
     }
 
-    let oauthClient: McpConnectionOAuthClient;
+    // Another callback already claimed this row, or the connection moved
+    // out of PendingOAuth. Check if it landed in Connected (idempotent).
+    const existing = await this.mcpConnectionRepository.findSubscriberConnection({
+      organizationId: stateData.organizationId,
+      environmentId: stateData.environmentId,
+      agentMcpServerId: stateData.agentMcpServerId,
+      subscriberId: stateData.subscriberId,
+    });
+
+    if (existing?.status === McpConnectionStatusEnum.Connected) {
+      this.trackOAuthCompleted(stateData, existing._id, oauthConfig.mode);
+
+      throw new AlreadyConnectedBailout();
+    }
+
+    throw new BadRequestException(
+      'OAuth callback rejected: connection is not awaiting authorisation, or has already been claimed by a concurrent callback.'
+    );
+  }
+
+  /**
+   * Resolve the OAuth client for the token exchange, mapping credential-
+   * resolution failures to user-facing BadRequestException.
+   */
+  private async resolveOAuthClientSafe(
+    claimed: McpConnectionEntity,
+    oauthConfig: McpOAuthCatalogEntry,
+    stateData: McpOAuthState
+  ): Promise<McpConnectionOAuthClient> {
     try {
-      oauthClient = this.resolveOAuthClientForExchange(claimed, oauthConfig, stateData);
+      return this.resolveOAuthClientForExchange(claimed, oauthConfig, stateData);
     } catch (err) {
       if (err instanceof McpOAuthDiscoveryError) {
-        // The credential resolver raises a `McpOAuthDiscoveryError` when
-        // env vars vanished between authorize and callback. We mark the
-        // row, then re-throw as `BadRequestException` so the controller's
-        // standard redirect/fallback page kicks in instead of bubbling a
-        // 500 to the browser. The structured body carries the typed
-        // error code so the dashboard can render specific copy once
-        // `McpConnectionResponseDto` exposes `lastError`.
         await this.markConnectionError(stateData, err.code, err.message);
 
         throw new BadRequestException({
@@ -241,39 +298,44 @@ export class McpOAuthCallback {
 
       throw err;
     }
+  }
 
-    // RFC 9207 §2.4 — validate the `iss` callback parameter against the
-    // recorded expected issuer before the code touches any token endpoint.
-    // For novu-app the catalog already declares the upstream publishes no
-    // AS metadata, so we pass the mode and skip the well-known probe.
-    await this.validateIssuer(command.iss, claimed, stateData, oauthConfig.mode);
-
-    const tokenResponse = await this.exchangeCode({
-      claimed,
-      oauthClient,
-      code: command.providerCode,
-      pkceVerifier: claimed.oauthState?.pkceVerifier,
-      resource: claimed.oauthState?.resource,
-      stateData,
-    });
-
+  private buildPlainAuth(tokenResponse: TokenResponse) {
     const expiresAt = tokenResponse.expires_in ? new Date(Date.now() + tokenResponse.expires_in * 1000) : undefined;
 
-    const plainAuth = {
+    return {
       accessToken: tokenResponse.access_token,
       refreshToken: tokenResponse.refresh_token,
       expiresAt: expiresAt?.toISOString(),
       tokenType: tokenResponse.token_type,
       scopes: tokenResponse.scope ? tokenResponse.scope.split(/\s+/).filter(Boolean) : undefined,
     } as const;
+  }
 
+  private async persistConnectedStatus(
+    claimed: McpConnectionEntity,
+    stateData: McpOAuthState,
+    oauthConfig: McpOAuthCatalogEntry,
+    plainAuth: ReturnType<typeof this.buildPlainAuth>
+  ): Promise<void> {
     const auth = encryptMcpConnectionAuth({
       accessToken: plainAuth.accessToken,
       refreshToken: plainAuth.refreshToken,
-      expiresAt,
+      expiresAt: plainAuth.expiresAt ? new Date(plainAuth.expiresAt) : undefined,
       tokenType: plainAuth.tokenType,
       scopes: plainAuth.scopes,
     });
+
+    const $set: Record<string, unknown> = {
+      authMode: oauthConfig.mode,
+      status: McpConnectionStatusEnum.Connected,
+      auth,
+      connectedAt: new Date(),
+    };
+
+    if (stateData.trustToolsOnConnect) {
+      $set['toolTrust.serverDefault'] = 'always_allow';
+    }
 
     await this.mcpConnectionRepository.update(
       {
@@ -282,15 +344,20 @@ export class McpOAuthCallback {
         _organizationId: stateData.organizationId,
       },
       {
-        $set: {
-          authMode: oauthConfig.mode,
-          status: McpConnectionStatusEnum.Connected,
-          auth,
-          connectedAt: new Date(),
-        },
+        $set,
         $unset: { oauthState: 1, lastError: 1 },
       }
     );
+  }
+
+  private async runPostConnectSafe(
+    claimed: McpConnectionEntity,
+    stateData: McpOAuthState,
+    oauthConfig: McpOAuthCatalogEntry,
+    plainAuth: ReturnType<typeof this.buildPlainAuth>,
+    oauthClient: McpConnectionOAuthClient
+  ): Promise<McpOAuthCallbackResult> {
+    const catalog = MCP_SERVERS.find((entry) => entry.id === stateData.mcpId)!;
 
     try {
       await this.runPostConnectActions({
@@ -459,15 +526,79 @@ export class McpOAuthCallback {
       );
     }
 
-    try {
-      // update the agent setup/onboarding card to show the connected MCP
-      await this.completeManagedAgentSetup.execute(ManagedAgentSetupCompleteCommand.create({ stateData }));
-    } catch (err) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), conversationId: stateData.conversationId },
-        'Managed agent setup completion after OAuth callback failed (non-fatal)'
-      );
+    if (stateData.toolUseId && stateData.conversationId && stateData.platform && stateData.platformThreadId) {
+      await this.resumeSessionAfterConnect(stateData, connection);
     }
+  }
+
+  private async resumeSessionAfterConnect(stateData: McpOAuthState, connection: McpConnectionEntity): Promise<void> {
+    const subscriber = await this.subscriberRepository.findOne(
+      { _id: stateData.subscriberId, _environmentId: stateData.environmentId },
+      'subscriberId'
+    );
+
+    if (!subscriber) {
+      this.logger.warn(
+        { subscriberMongoId: stateData.subscriberId, environmentId: stateData.environmentId },
+        'resumeSessionAfterConnect: subscriber not found, skipping session resume'
+      );
+
+      return;
+    }
+
+    this.deleteConnectCard(stateData, connection);
+    this.showTypingIndicator(stateData);
+
+    await this.managedAgentService.sendToolResult({
+      conversationId: stateData.conversationId!,
+      environmentId: stateData.environmentId,
+      organizationId: stateData.organizationId,
+      agentIdentifier: stateData.agentIdentifier ?? '',
+      integrationIdentifier: stateData.integrationIdentifier ?? '',
+      subscriberId: subscriber.subscriberId,
+      toolUseId: stateData.toolUseId!,
+      content: 'OK',
+      followUpMessage: `${stateData.mcpId ?? 'Integration'} is now connected and ready. Resume the user's original request. Use the available tools directly. Do not output any preamble or mention the connection — go straight to action.`,
+      platform: stateData.platform as AgentPlatformEnum,
+      platformThreadId: stateData.platformThreadId!,
+      suppressReply: true,
+    });
+  }
+
+  private deleteConnectCard(stateData: McpOAuthState, connection: McpConnectionEntity): void {
+    const connectCardMessageId = connection.oauthState?.connectCardMessageId;
+    const connectCardPlatform = connection.oauthState?.connectCardPlatform;
+    const connectCardThreadId = connection.oauthState?.connectCardThreadId;
+
+    if (!connectCardMessageId || !connectCardPlatform || !connectCardThreadId) {
+      return;
+    }
+
+    this.outboundGateway
+      .deleteInConversation(
+        stateData.agentId,
+        stateData.integrationIdentifier ?? '',
+        connectCardPlatform,
+        connectCardThreadId,
+        connectCardMessageId
+      )
+      .catch((err) => {
+        this.logger.warn(err, 'Failed to delete connect card after OAuth');
+      });
+  }
+
+  private showTypingIndicator(stateData: McpOAuthState): void {
+    const platform = stateData.platform as AgentPlatformEnum | undefined;
+
+    if (!platform || !stateData.platformThreadId || !PLATFORMS_WITH_TYPING_INDICATOR.has(platform)) {
+      return;
+    }
+
+    this.outboundGateway
+      .startTypingInConversation(stateData.agentId, stateData.integrationIdentifier ?? '', stateData.platformThreadId)
+      .catch((err) => {
+        this.logger.warn(err, 'Failed to show typing indicator after OAuth connect');
+      });
   }
 
   private async resolveRuntime(stateData: McpOAuthState): Promise<{
@@ -684,23 +815,6 @@ export class McpOAuthCallback {
         $unset: { oauthState: 1 },
       }
     );
-
-    await this.refreshSetupCardsIfApplicable(stateData);
-  }
-
-  private async refreshSetupCardsIfApplicable(stateData: McpOAuthState): Promise<void> {
-    if (stateData.source !== 'setup_card') {
-      return;
-    }
-
-    try {
-      await this.completeManagedAgentSetup.refreshPendingSetupCardsFromOAuthState(stateData);
-    } catch (err) {
-      this.logger.warn(
-        { err: err instanceof Error ? err.message : String(err), conversationId: stateData.conversationId },
-        'Failed to refresh managed-agent setup cards after OAuth error'
-      );
-    }
   }
 
   private async handleTokenExchangeErrorOutcome(args: {
@@ -978,12 +1092,8 @@ export function mapUpstreamCallbackErrorCode(
   return 'oauth_callback_error';
 }
 
-function resolveMcpOAuthAnalyticsSource(stateData: McpOAuthState): 'api' | 'setup_card' {
-  if (stateData.source) {
-    return stateData.source;
-  }
-
-  return stateData.conversationId ? 'setup_card' : 'api';
+function resolveMcpOAuthAnalyticsSource(stateData: McpOAuthState): McpOAuthState['source'] {
+  return stateData.source ?? (stateData.conversationId ? 'user_chat' : 'api');
 }
 
 function resolveMcpOAuthAnalyticsUserId(stateData: McpOAuthState): string {

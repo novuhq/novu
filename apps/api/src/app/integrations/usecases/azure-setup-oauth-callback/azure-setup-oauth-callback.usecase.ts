@@ -2,12 +2,12 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { buildZip, createHash, encryptCredentials, PinoLogger } from '@novu/application-generic';
 import { AgentIntegrationRepository, EnvironmentRepository, IntegrationRepository } from '@novu/dal';
 import axios, { AxiosError } from 'axios';
+import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import {
   AZURE_SETUP_OAUTH_SCOPES,
   AzureSetupStateData,
   GenerateAzureSetupOauthUrl,
 } from '../generate-azure-setup-oauth-url/generate-azure-setup-oauth-url.usecase';
-import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
 import { splitOAuthState } from '../generate-chat-oath-url/chat-oauth-state.util';
 import { AzureSetupOauthCallbackCommand } from './azure-setup-oauth-callback.command';
 

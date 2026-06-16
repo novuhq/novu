@@ -28,16 +28,17 @@ export class ConfirmToolApproval {
 
     await this.persistTrustIfNeeded(command, parsed);
 
-    await this.managedAgentService.resumeWithToolResults({
+    await this.managedAgentService.sendToolResult({
       conversationId: command.conversationId,
       environmentId: command.environmentId,
       organizationId: command.organizationId,
       agentIdentifier: command.agentIdentifier,
       integrationIdentifier: command.integrationIdentifier,
       subscriberId: command.subscriberId,
-      platform: command.platform,
-      toolUseIds: parsed.toolUseIds,
+      toolUseId: parsed.toolUseId,
       approved: parsed.approved,
+      platform: command.platform,
+      platformThreadId: command.platformThreadId,
     });
 
     this.deleteApprovalCard(command);
@@ -113,28 +114,26 @@ export class ConfirmToolApproval {
 
   private updatePlanProgress(command: ConfirmToolApprovalCommand, parsed: ParsedToolApprovalAction): void {
     if (!parsed.approved) {
-      for (const toolUseId of parsed.toolUseIds) {
-        this.handlePlanProgress
-          .execute(
-            HandlePlanProgressCommand.create({
-              userId: command.userId,
-              environmentId: command.environmentId,
-              organizationId: command.organizationId,
-              conversationId: command.conversationId,
-              agentIdentifier: command.agentIdentifier,
-              integrationIdentifier: command.integrationIdentifier,
-              toolProgress: {
-                action: 'tool-use',
-                toolUseId,
-                status: 'error',
-                details: 'Denied',
-              },
-            })
-          )
-          .catch((err) => {
-            this.logger.warn(err, 'Failed to update plan card after tool denial');
-          });
-      }
+      this.handlePlanProgress
+        .execute(
+          HandlePlanProgressCommand.create({
+            userId: command.userId,
+            environmentId: command.environmentId,
+            organizationId: command.organizationId,
+            conversationId: command.conversationId,
+            agentIdentifier: command.agentIdentifier,
+            integrationIdentifier: command.integrationIdentifier,
+            toolProgress: {
+              action: 'tool-use',
+              toolUseId: parsed.toolUseId,
+              status: 'error',
+              details: 'Denied',
+            },
+          })
+        )
+        .catch((err) => {
+          this.logger.warn(err, 'Failed to update plan card after tool denial');
+        });
 
       return;
     }

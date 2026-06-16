@@ -346,6 +346,79 @@ export class McpConnectionVaultService {
     }
   }
 
+  /**
+   * Resolve the MCP server list for a session turn, filtering to only
+   * the MCPs the subscriber can actually use right now.
+   *
+   * - Non-OAuth MCPs: always included (no per-subscriber auth needed).
+   * - OAuth MCPs: included only when the subscriber has a `Connected` row.
+   *
+   * Returns `undefined` when the agent has no OAuth MCPs (no filtering
+   * needed — the agent definition already carries the full list).
+   */
+  async resolveSubscriberConnectedMcps(params: {
+    agentId: string;
+    environmentId: string;
+    organizationId: string;
+    subscriberMongoId?: string;
+  }): Promise<{ name: string; url: string }[] | undefined> {
+    const enablements = await this.agentMcpServerRepository.findByAgent({
+      organizationId: params.organizationId,
+      environmentId: params.environmentId,
+      agentId: params.agentId,
+      enabledOnly: true,
+    });
+
+    if (enablements.length === 0) {
+      return undefined;
+    }
+
+    const oauthEnablements = enablements.filter((row) =>
+      MCP_SERVERS.some((entry) => entry.id === row.mcpId && entry.oauth)
+    );
+
+    if (oauthEnablements.length === 0) {
+      return undefined;
+    }
+
+    const connectedMcpIds = new Set<string>();
+
+    if (params.subscriberMongoId && oauthEnablements.length > 0) {
+      const connections = await this.mcpConnectionRepository.findSubscriberConnectionsForAgent({
+        organizationId: params.organizationId,
+        environmentId: params.environmentId,
+        subscriberId: params.subscriberMongoId,
+        agentMcpServerIds: oauthEnablements.map((row) => row._id),
+      });
+
+      for (const conn of connections) {
+        if (conn.status === McpConnectionStatusEnum.Connected) {
+          connectedMcpIds.add(conn.mcpId);
+        }
+      }
+    }
+
+    const result: { name: string; url: string }[] = [];
+
+    for (const enablement of enablements) {
+      const catalog = MCP_SERVERS.find((entry) => entry.id === enablement.mcpId);
+
+      if (!catalog) {
+        continue;
+      }
+
+      const isOAuth = !!catalog.oauth;
+
+      if (isOAuth && !connectedMcpIds.has(enablement.mcpId)) {
+        continue;
+      }
+
+      result.push({ name: catalog.name, url: catalog.url });
+    }
+
+    return result;
+  }
+
   private async listAgentMcpServerIds(
     params: {
       agentId: string;

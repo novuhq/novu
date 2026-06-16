@@ -263,7 +263,7 @@ export function trackAgentMcpOAuthCreated(
     authMode: string;
     scope: string;
     subscriberId: string;
-    source: 'api' | 'setup_card';
+    source: 'api' | 'user_chat';
     conversationId?: string;
     reusedPendingSession?: boolean;
   }
@@ -294,7 +294,7 @@ export function trackAgentMcpOAuthCompleted(
     authMode: string;
     scope: string;
     connectionId: string;
-    source: 'api' | 'setup_card';
+    source?: string;
     conversationId?: string;
   }
 ): void {
@@ -322,7 +322,7 @@ export function trackAgentMcpOAuthFailed(
     authMode?: string;
     scope: string;
     errorCode: string;
-    source: 'api' | 'setup_card';
+    source?: string;
     conversationId?: string;
   }
 ): void {

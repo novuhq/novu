@@ -101,6 +101,11 @@ export interface McpConnectionOAuthState {
    * ephemeral `McpConnectionOAuthClient` for vault push.
    */
   authorizationEndpoint?: string;
+
+  /** Platform message ID of the in-chat "Connect" card so the OAuth callback can delete it. */
+  connectCardMessageId?: string;
+  connectCardPlatform?: string;
+  connectCardThreadId?: string;
 }
 
 /**
