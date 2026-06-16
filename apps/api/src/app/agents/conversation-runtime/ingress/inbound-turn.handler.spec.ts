@@ -443,6 +443,36 @@ describe('AgentInboundHandler', () => {
       expect(outboundGateway.replyOnThread.called).to.equal(false);
       expect(managedAgentService.dispatch.calledOnce).to.equal(true);
     });
+
+    it('should still gate keyless managed agents on non-email platforms when subscriber is unresolved', async () => {
+      const keylessSlackConfig = {
+        ...config,
+        platform: AgentPlatformEnum.SLACK,
+        isKeyless: true,
+        isManaged: true,
+      };
+      const { handler, managedAgentService, outboundGateway } = makeHandler({
+        subscriberResolve: sinon.stub().resolves(null),
+        subscriberFindById: sinon.stub().resolves(null),
+        agentFindOne: sinon.stub().resolves(makeManagedAgentStub()),
+      });
+      const thread = makeSlackDmThread();
+      const message = makeSlackDmMessage();
+
+      await handler.handle(
+        'agent1',
+        keylessSlackConfig as any,
+        thread as any,
+        message as any,
+        AgentEventEnum.ON_MESSAGE
+      );
+
+      expect(managedAgentService.dispatch.called).to.equal(false);
+      expect(outboundGateway.replyOnThread.calledOnce).to.equal(true);
+      expect(outboundGateway.replyOnThread.firstCall.args[1]).to.deep.equal({
+        markdown: UNRESOLVED_SUBSCRIBER_ACCESS_REPLY,
+      });
+    });
   });
 
   describe('Telegram /start subscriber-link handling', () => {
