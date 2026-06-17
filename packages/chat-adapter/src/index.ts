@@ -44,8 +44,13 @@ export { AgentEvent } from './types.js';
  *   });
  *
  *   const chat = new Chat({ userName: 'support', adapters: { novu }, state: createMemoryState() });
+ *
+ *   chat.onNewMention(async (thread, message) => {
+ *     if (thread.isDM) await thread.post(`Hi (DM)! You said: ${message.text}`);
+ *     else await thread.post(`Hi! You said: ${message.text}`);
+ *   });
  *   chat.onSubscribedMessage(async (thread, message) => {
- *     await thread.post(`You said: ${message.text}`);
+ *     await thread.post(`echo: ${message.text}`);
  *   });
  */
 export function createNovuAdapter(config: NovuAdapterConfig): NovuAdapter {

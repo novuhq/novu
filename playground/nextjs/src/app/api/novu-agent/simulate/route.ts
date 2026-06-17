@@ -129,7 +129,6 @@ export async function POST(req: Request): Promise<Response> {
 function routeLabel(bridge: AgentBridgeRequest): string {
   if (bridge.event === 'onAction') return 'onAction';
   if (bridge.event === 'onReaction') return 'onReaction';
-  if (bridge.platformContext.isDM) return 'onDirectMessage';
   if (bridge.conversation.messageCount > 1 || bridge.history.length > 0) return 'onSubscribedMessage';
 
   return 'onNewMention';
