@@ -1,6 +1,47 @@
 import { createMemoryState } from '@chat-adapter/state-memory';
 import { createNovuAdapter, getNovuContext } from '@novu/chat-sdk-adapter';
-import { type Adapter, Chat, type StateAdapter } from 'chat';
+import {
+  Actions,
+  type Adapter,
+  Button,
+  Card,
+  type CardElement,
+  CardText,
+  Chat,
+  Divider,
+  Field,
+  Fields,
+  LinkButton,
+  Section,
+  type StateAdapter,
+} from 'chat';
+
+/**
+ * A rich card built with the chat-sdk programmatic builders (no JSX needed).
+ * Posting this via `thread.post(card)` exercises the adapter's card → reply
+ * conversion (`toReplyContent` → `{ card }`), which is what every channel
+ * (Slack, Teams, …) renders natively.
+ */
+function buildDemoCard(platform: string): CardElement {
+  return Card({
+    title: '🎴 Card from chat-sdk',
+    subtitle: `Posted via @novu/chat-sdk-adapter on ${platform}`,
+    children: [
+      CardText('This card was posted with `thread.post(Card(...))` and normalized into an agent reply payload.'),
+      Divider(),
+      Fields([
+        Field({ label: 'Platform', value: platform }),
+        Field({ label: 'Source', value: 'chat-sdk' }),
+      ]),
+      Section([CardText('Buttons below emit `onAction` callbacks back through the bridge.')]),
+      Actions([
+        Button({ id: 'card-approve', label: 'Approve', style: 'primary', value: 'approved' }),
+        Button({ id: 'card-dismiss', label: 'Dismiss', style: 'danger', value: 'dismissed' }),
+        LinkButton({ url: 'https://novu.co', label: 'Open Novu' }),
+      ]),
+    ],
+  });
+}
 
 /**
  * Shared agent definition for the Novu Chat-adapter playground.
@@ -16,6 +57,12 @@ export function registerHandlers(chat: Chat): void {
   // First message in a brand-new conversation. For DMs, Chat SDK routes here only when
   // no onDirectMessage handler is registered (see chat-sdk DirectMessageHandler docs).
   chat.onNewMention(async (thread, message) => {
+    if (message.text.trim().toLowerCase() === 'card') {
+      await thread.post(buildDemoCard(getNovuContext(thread).platform));
+
+      return;
+    }
+
     if (thread.isDM) {
       await thread.post(`👋 Hello! (DM) You said: "${message.text}".`);
 
@@ -37,6 +84,13 @@ export function registerHandlers(chat: Chat): void {
     if (message.text.trim().toLowerCase() === 'resolve') {
       await novu.resolve('Resolved from the playground agent.');
       await thread.post('✅ Marked this conversation as resolved.');
+
+      return;
+    }
+
+    // Post a rich interactive card and let the adapter normalize it for the channel.
+    if (message.text.trim().toLowerCase() === 'card') {
+      await thread.post(buildDemoCard(novu.platform));
 
       return;
     }

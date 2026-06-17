@@ -20,7 +20,7 @@ export default function NovuAgentPlayground() {
   const [result, setResult] = useState<SimResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function run() {
+  async function run(overrides?: { text?: string; event?: SimEvent }) {
     setLoading(true);
     setError(null);
     setResult(null);
@@ -28,7 +28,13 @@ export default function NovuAgentPlayground() {
       const res = await fetch('/api/novu-agent/simulate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ text, platform, event, ongoing, isDM }),
+        body: JSON.stringify({
+          text: overrides?.text ?? text,
+          platform,
+          event: overrides?.event ?? event,
+          ongoing,
+          isDM,
+        }),
       });
       const data = (await res.json()) as SimResult;
       setResult(data);
@@ -39,12 +45,24 @@ export default function NovuAgentPlayground() {
     }
   }
 
+  function hasCardReply(replies: SimResult['replies']): boolean {
+    return replies.some((r) => {
+      const payload = r.payload as { reply?: { card?: unknown } } | null;
+
+      return Boolean(payload?.reply?.card);
+    });
+  }
+
   return (
     <main style={{ maxWidth: 760, margin: '40px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ fontSize: 24, fontWeight: 700 }}>Novu Chat-adapter playground</h1>
       <p style={{ color: '#555', marginTop: 8 }}>
         Craft a signed <code>AgentBridgeRequest</code> and run it through the real <code>@novu/chat-sdk-adapter</code> adapter
         locally. Reply POSTs are captured instead of sent to Novu — no credentials needed.
+      </p>
+      <p style={{ color: '#555', marginTop: 4 }}>
+        Tip: send the message <code>card</code> (or click <em>Send a card reply</em>) to have the agent post a
+        chat-sdk <code>Card</code>; <code>whoami</code> echoes the resolved subscriber.
       </p>
 
       <div style={{ display: 'grid', gap: 12, marginTop: 24 }}>
@@ -88,23 +106,20 @@ export default function NovuAgentPlayground() {
           </label>
         </div>
 
-        <button
-          type="button"
-          onClick={run}
-          disabled={loading}
-          style={{
-            marginTop: 8,
-            padding: '10px 16px',
-            background: '#000',
-            color: '#fff',
-            borderRadius: 8,
-            border: 'none',
-            cursor: 'pointer',
-            width: 'fit-content',
-          }}
-        >
-          {loading ? 'Running…' : 'Send simulated bridge request'}
-        </button>
+        <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+          <button type="button" onClick={() => run()} disabled={loading} style={primaryButtonStyle}>
+            {loading ? 'Running…' : 'Send simulated bridge request'}
+          </button>
+          <button
+            type="button"
+            onClick={() => run({ text: 'card', event: 'onMessage' })}
+            disabled={loading}
+            style={secondaryButtonStyle}
+            title="Posts a chat-sdk Card via thread.post(Card(...)) and shows the normalized reply payload"
+          >
+            🎴 Send a card reply
+          </button>
+        </div>
       </div>
 
       {error && <pre style={{ ...preStyle, color: '#b00' }}>{error}</pre>}
@@ -115,6 +130,22 @@ export default function NovuAgentPlayground() {
             <strong>HTTP status:</strong> {result.status} &nbsp;·&nbsp; <strong>Routed to:</strong>{' '}
             <code>{result.routedTo}</code>
           </p>
+          {hasCardReply(result.replies) && (
+            <p
+              style={{
+                marginTop: 12,
+                padding: '8px 12px',
+                background: '#e8f7ee',
+                border: '1px solid #b7e4c7',
+                borderRadius: 8,
+                color: '#1b6b3a',
+                fontWeight: 600,
+                width: 'fit-content',
+              }}
+            >
+              ✅ Card reply captured — the adapter normalized the chat-sdk Card into <code>reply.card</code>.
+            </p>
+          )}
           <p style={{ marginTop: 12, fontWeight: 600 }}>Captured replies ({result.replies.length}):</p>
           <pre style={preStyle}>{JSON.stringify(result.replies, null, 2)}</pre>
         </div>
@@ -129,6 +160,24 @@ export default function NovuAgentPlayground() {
   );
 }
 
+const primaryButtonStyle: React.CSSProperties = {
+  padding: '10px 16px',
+  background: '#000',
+  color: '#fff',
+  borderRadius: 8,
+  border: 'none',
+  cursor: 'pointer',
+  width: 'fit-content',
+};
+const secondaryButtonStyle: React.CSSProperties = {
+  padding: '10px 16px',
+  background: '#fff',
+  color: '#000',
+  borderRadius: 8,
+  border: '1px solid #000',
+  cursor: 'pointer',
+  width: 'fit-content',
+};
 const labelStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 4, fontSize: 14, fontWeight: 600 };
 const inputStyle: React.CSSProperties = {
   padding: '8px 10px',

@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { createMemoryState } from '@chat-adapter/state-memory';
-import { Chat } from 'chat';
+import { Actions, Button, Card, CardText, Chat } from 'chat';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNovuAdapter, getNovuContext } from './index.js';
 import type { AgentBridgeRequest, AgentSubscriber, NovuRawMessage } from './types.js';
@@ -186,6 +186,38 @@ describe('Novu adapter end-to-end', () => {
     expect(res.status).toBe(401);
     expect(handler).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('normalizes a chat-sdk Card posted by a handler into reply.card', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async (thread) => {
+      await thread.post(
+        Card({
+          title: 'Card title',
+          subtitle: 'Card subtitle',
+          children: [
+            CardText('Hello from a card'),
+            Actions([Button({ id: 'approve', label: 'Approve', style: 'primary', value: 'yes' })]),
+          ],
+        })
+      );
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0];
+    const payload = JSON.parse(init.body as string);
+    expect(payload.reply.markdown).toBeUndefined();
+    expect(payload.reply.card).toMatchObject({
+      type: 'card',
+      title: 'Card title',
+      subtitle: 'Card subtitle',
+    });
+    expect(payload.reply.card.children).toEqual(
+      expect.arrayContaining([expect.objectContaining({ type: 'text', content: 'Hello from a card' })])
+    );
   });
 
   it('exposes the full subscriber via getNovuContext(thread).getSubscriber()', async () => {
