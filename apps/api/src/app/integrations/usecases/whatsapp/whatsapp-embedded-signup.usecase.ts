@@ -9,7 +9,6 @@ import { UpdateIntegrationCommand } from '../update-integration/update-integrati
 import { UpdateIntegration } from '../update-integration/update-integration.usecase';
 import { WhatsAppEmbeddedSignupCommand } from './whatsapp-embedded-signup.command';
 import {
-  createWhatsAppConnectionTestTemplate,
   exchangeEmbeddedSignupCodeForToken,
   extractMetaError,
   generateWhatsAppRegistrationPin,
@@ -195,37 +194,6 @@ export class WhatsAppEmbeddedSignup {
       this.logger.warn(
         { err, integrationId: integration._id, phoneNumberId: command.phoneNumberId },
         'WhatsApp embedded signup: phone registration call failed (best-effort)'
-      );
-    }
-
-    // Best-effort: provision Novu's own UTILITY template on the customer's WABA
-    // so the onboarding "Send test" step can verify outbound delivery without
-    // asking the customer to create or approve anything in WhatsApp Manager.
-    // Meta usually auto-approves a no-variable utility template within a couple
-    // of minutes, so it is typically ready by the time the user reaches the
-    // test step. Failures here never block signup.
-    try {
-      const templateResult = await createWhatsAppConnectionTestTemplate({
-        accessToken,
-        wabaId: command.wabaId.trim(),
-      });
-      const templateError = extractMetaError(templateResult.body);
-
-      if (templateError || templateResult.statusCode >= 400) {
-        this.logger.warn(
-          {
-            integrationId: integration._id,
-            wabaId: command.wabaId,
-            statusCode: templateResult.statusCode,
-            metaError: templateError,
-          },
-          'WhatsApp embedded signup: connection test template provisioning failed (best-effort)'
-        );
-      }
-    } catch (err) {
-      this.logger.warn(
-        { err, integrationId: integration._id, wabaId: command.wabaId },
-        'WhatsApp embedded signup: connection test template provisioning call failed (best-effort)'
       );
     }
 

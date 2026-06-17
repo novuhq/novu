@@ -4,34 +4,16 @@ import { AgentIntegrationRepository, AgentRepository, IntegrationRepository, Sub
 import { ChatProviderIdEnum } from '@novu/shared';
 
 import {
-  countTemplateRequiredBodyParameters,
-  createWhatsAppConnectionTestTemplate,
   debugAccessToken,
   extractMetaError,
-  listWhatsAppMessageTemplates,
   type MetaErrorSummary,
-  NOVU_CONNECTION_TEST_TEMPLATE_LANGUAGE,
-  NOVU_CONNECTION_TEST_TEMPLATE_NAME,
   sendWhatsAppTemplate,
-  type WhatsAppMessageTemplate,
 } from '../../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
 import { normalizePhoneForMeta } from '../../../shared/util/phone-normalization';
 import { SendWhatsAppTestTemplateCommand } from './send-whatsapp-test-template.command';
 
-const MANUAL_CREDENTIALS_TEST_TEMPLATE = {
-  templateName: 'hello_world',
-  languageCode: 'en_US',
-} as const;
-
-type ResolvedTestTemplate = {
-  templateName: string;
-  languageCode: string;
-};
-
-type ManagedTemplateResolution =
-  | { status: 'ready'; template: ResolvedTestTemplate }
-  | { status: 'pending'; message: string }
-  | { status: 'error'; error: SendWhatsAppTestTemplateError };
+const TEMPLATE_NAME = 'hello_world';
+const TEMPLATE_LANGUAGE = 'en_US';
 
 const META_DEV_CONSOLE_URL_BASE = 'https://developers.facebook.com/apps';
 
@@ -41,7 +23,6 @@ export type SendWhatsAppTestTemplateError = {
     | 'recipient_not_allowed'
     | 'token_expired'
     | 'template_unavailable'
-    | 'template_pending_approval'
     | 'invalid_recipient'
     | 'rate_limited'
     | 'meta_rejected'
@@ -60,9 +41,6 @@ export interface SendWhatsAppTestTemplateResult {
   messageId?: string;
   error?: SendWhatsAppTestTemplateError;
 }
-
-const TEMPLATE_PENDING_MESSAGE =
-  'Novu set up a test template on your WhatsApp Business account and Meta is still approving it (usually 1–2 minutes). Your connection is already active — try the test again shortly.';
 
 @Injectable()
 export class SendWhatsAppTestTemplate {
@@ -156,36 +134,14 @@ export class SendWhatsAppTestTemplate {
       };
     }
 
-    const isNovuManaged = credentials.isNovuManaged === true;
-    let testTemplate: ResolvedTestTemplate = MANUAL_CREDENTIALS_TEST_TEMPLATE;
-
-    if (isNovuManaged) {
-      const wabaId = typeof credentials.businessAccountId === 'string' ? credentials.businessAccountId.trim() : '';
-      const resolution = await this.resolveManagedTestTemplate({
-        accessToken,
-        wabaId,
-        integrationId: integration._id,
-      });
-
-      if (resolution.status === 'pending') {
-        return { success: false, error: { code: 'template_pending_approval', message: resolution.message } };
-      }
-
-      if (resolution.status === 'error') {
-        return { success: false, error: resolution.error };
-      }
-
-      testTemplate = resolution.template;
-    }
-
     let response: Awaited<ReturnType<typeof sendWhatsAppTemplate>>;
     try {
       response = await sendWhatsAppTemplate({
         accessToken,
         phoneNumberId,
         to: normalizePhoneForMeta(subscriberPhone),
-        templateName: testTemplate.templateName,
-        languageCode: testTemplate.languageCode,
+        templateName: TEMPLATE_NAME,
+        languageCode: TEMPLATE_LANGUAGE,
       });
     } catch (err) {
       this.logger.warn({ err, integrationId: integration._id }, 'WhatsApp test template send failed');
@@ -201,7 +157,7 @@ export class SendWhatsAppTestTemplate {
 
     const error = extractMetaError(response.body);
     if (error || response.statusCode >= 400) {
-      const failure = this.classifyMetaError(error, response.statusCode, subscriberPhone, testTemplate.templateName);
+      const failure = this.classifyMetaError(error, response.statusCode, subscriberPhone);
 
       if (failure.code === 'recipient_not_allowed') {
         failure.helpUrl = await this.resolveDevConsoleUrl(accessToken);
@@ -218,128 +174,6 @@ export class SendWhatsAppTestTemplate {
     const messageId = response.body.messages?.[0]?.id;
 
     return { success: true, messageId };
-  }
-
-  /**
-   * Resolves a sendable template for Novu-managed (Embedded Signup) integrations
-   * without requiring the customer to create anything in WhatsApp Manager.
-   *
-   * Strategy:
-   *  1. List the WABA's templates and prefer Novu's provisioned
-   *     `novu_connection_test` template when it is APPROVED.
-   *  2. Otherwise fall back to any APPROVED template that needs no body
-   *     variables (so we can send it without per-recipient data).
-   *  3. If nothing is approved yet, make sure our template exists (creating it
-   *     if a previous best-effort attempt during signup failed) and report a
-   *     calm "pending approval" state rather than a hard error — the connection
-   *     itself is already verified via the inbound webhook.
-   */
-  private async resolveManagedTestTemplate(args: {
-    accessToken: string;
-    wabaId: string;
-    integrationId: string;
-  }): Promise<ManagedTemplateResolution> {
-    const { accessToken, wabaId, integrationId } = args;
-
-    if (!wabaId) {
-      return {
-        status: 'error',
-        error: {
-          code: 'missing_credentials',
-          message:
-            'This WhatsApp integration is missing its Business Account ID. Reconnect via WhatsApp Embedded Signup to finish setup.',
-        },
-      };
-    }
-
-    let templates: WhatsAppMessageTemplate[] = [];
-    try {
-      const listResult = await listWhatsAppMessageTemplates({ accessToken, wabaId });
-      const listError = extractMetaError(listResult.body);
-
-      if (listError || listResult.statusCode >= 400) {
-        this.logger.warn(
-          { integrationId, wabaId, statusCode: listResult.statusCode, metaError: listError },
-          'WhatsApp test template: failed to list WABA templates'
-        );
-
-        return {
-          status: 'error',
-          error: {
-            code: 'meta_rejected',
-            message: listError?.message ?? 'Could not read your WhatsApp message templates from Meta. Try again.',
-          },
-        };
-      }
-
-      templates = listResult.body.data ?? [];
-    } catch (err) {
-      this.logger.warn({ err, integrationId, wabaId }, 'WhatsApp test template: list templates call failed');
-
-      return {
-        status: 'error',
-        error: {
-          code: 'unknown',
-          message: 'Could not reach Meta to read your WhatsApp message templates. Try again in a moment.',
-        },
-      };
-    }
-
-    const isApproved = (template: WhatsAppMessageTemplate) => template.status?.toUpperCase() === 'APPROVED';
-
-    const novuTemplate = templates.find((template) => template.name === NOVU_CONNECTION_TEST_TEMPLATE_NAME);
-
-    if (novuTemplate && isApproved(novuTemplate)) {
-      return {
-        status: 'ready',
-        template: {
-          templateName: NOVU_CONNECTION_TEST_TEMPLATE_NAME,
-          languageCode: novuTemplate.language ?? NOVU_CONNECTION_TEST_TEMPLATE_LANGUAGE,
-        },
-      };
-    }
-
-    const approvedZeroVariableTemplate = templates.find(
-      (template) =>
-        isApproved(template) &&
-        template.name !== 'hello_world' &&
-        Boolean(template.name) &&
-        countTemplateRequiredBodyParameters(template) === 0
-    );
-
-    if (approvedZeroVariableTemplate?.name) {
-      return {
-        status: 'ready',
-        template: {
-          templateName: approvedZeroVariableTemplate.name,
-          languageCode: approvedZeroVariableTemplate.language ?? NOVU_CONNECTION_TEST_TEMPLATE_LANGUAGE,
-        },
-      };
-    }
-
-    // Nothing usable is approved yet. If our template was never created (a
-    // best-effort signup attempt may have failed), create it now so it can be
-    // approved and used on the next attempt.
-    if (!novuTemplate) {
-      try {
-        const createResult = await createWhatsAppConnectionTestTemplate({ accessToken, wabaId });
-        const createError = extractMetaError(createResult.body);
-
-        if (createError || createResult.statusCode >= 400) {
-          this.logger.warn(
-            { integrationId, wabaId, statusCode: createResult.statusCode, metaError: createError },
-            'WhatsApp test template: failed to create connection test template'
-          );
-        }
-      } catch (err) {
-        this.logger.warn(
-          { err, integrationId, wabaId },
-          'WhatsApp test template: create connection test template call failed'
-        );
-      }
-    }
-
-    return { status: 'pending', message: TEMPLATE_PENDING_MESSAGE };
   }
 
   /**
@@ -364,15 +198,14 @@ export class SendWhatsAppTestTemplate {
   private classifyMetaError(
     error: MetaErrorSummary | undefined,
     statusCode: number,
-    recipient: string,
-    templateName: string
+    recipient: string
   ): SendWhatsAppTestTemplateError {
     const message = error?.message ?? `Meta returned HTTP ${statusCode}`;
 
     if (error?.code === 131058) {
       return {
         code: 'template_unavailable',
-        message: `The "${templateName}" template can only be sent from a Meta public test number. Connect via WhatsApp Embedded Signup to send from your own business number.`,
+        message: `The "${TEMPLATE_NAME}" template can only be sent from a Meta public test number. Connect via WhatsApp Embedded Signup to send from your own business number.`,
       };
     }
 
@@ -393,8 +226,8 @@ export class SendWhatsAppTestTemplate {
 
     if (error?.code === 132001 || error?.code === 132000 || error?.code === 132005) {
       return {
-        code: 'template_pending_approval',
-        message: TEMPLATE_PENDING_MESSAGE,
+        code: 'template_unavailable',
+        message: `The "${TEMPLATE_NAME}" template is not available on this WhatsApp Business account. Use WhatsApp Embedded Signup or add an approved template in Meta.`,
       };
     }
 

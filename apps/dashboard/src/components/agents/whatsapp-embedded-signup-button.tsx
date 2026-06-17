@@ -46,6 +46,8 @@ function loadFacebookSdk(appId: string): Promise<void> {
   }
 
   facebookSdkLoadPromise = new Promise<void>((resolve, reject) => {
+    // Always set fbAsyncInit so we handle the case where the script tag already
+    // exists but FB.init hasn't fired yet (e.g. navigating back to the page).
     window.fbAsyncInit = () => {
       window.FB?.init({
         appId,
@@ -58,6 +60,8 @@ function loadFacebookSdk(appId: string): Promise<void> {
 
     const existingScript = document.getElementById('facebook-jssdk');
     if (existingScript) {
+      // Script injected previously — if FB is ready resolve immediately,
+      // otherwise fbAsyncInit above will resolve when it fires.
       if (window.FB) {
         resolve();
       }

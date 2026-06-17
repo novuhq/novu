@@ -23,10 +23,6 @@ export function resolveWhatsAppAppId(credentials: ICredentials): string | undefi
   return undefined;
 }
 
-export function isNovuManagedWhatsAppIntegration(credentials: ICredentials | undefined): boolean {
-  return credentials?.isNovuManaged === true;
-}
-
 /**
  * For WhatsApp Business agent integrations Novu manages the webhook Verify
  * Token automatically: it's just a shared secret echoed back to Meta during

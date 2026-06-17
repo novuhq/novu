@@ -6,6 +6,7 @@ import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
@@ -451,5 +452,23 @@ export function IntegrationCredentialsSidebar({
         </Button>
       </div>
     </IntegrationSheet>
+  );
+}
+
+export function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex w-full max-w-[320px] flex-col gap-1.5">
+      <p className="text-text-sub text-label-xs font-medium leading-5">{label}</p>
+      <div className="border-stroke-soft bg-bg-white flex h-7 items-center overflow-hidden rounded-md border shadow-xs">
+        <input
+          type="text"
+          readOnly
+          value={value}
+          aria-label={label}
+          className="text-text-soft min-w-0 flex-1 truncate bg-transparent px-2 font-mono text-[12px] leading-4 outline-none"
+        />
+        <CopyButton valueToCopy={value} size="xs" className="border-stroke-soft shrink-0 border-l" />
+      </div>
+    </div>
   );
 }

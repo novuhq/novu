@@ -4,7 +4,6 @@ import { expect } from 'chai';
 import { restore, stub } from 'sinon';
 
 import * as whatsappGraphApi from '../../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
-import { NOVU_CONNECTION_TEST_TEMPLATE_NAME } from '../../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
 import { SendWhatsAppTestTemplateCommand } from './send-whatsapp-test-template.command';
 import { SendWhatsAppTestTemplate } from './send-whatsapp-test-template.usecase';
 
@@ -33,8 +32,6 @@ describe('SendWhatsAppTestTemplate usecase', () => {
   let subscriberRepository: { findBySubscriberId: sinon.SinonStub };
   let logger: { setContext: sinon.SinonStub; warn: sinon.SinonStub };
   let sendWhatsAppTemplateStub: sinon.SinonStub;
-  let listTemplatesStub: sinon.SinonStub;
-  let createTemplateStub: sinon.SinonStub;
 
   function buildUsecase() {
     return new SendWhatsAppTestTemplate(
@@ -73,14 +70,6 @@ describe('SendWhatsAppTestTemplate usecase', () => {
     sendWhatsAppTemplateStub = stub(whatsappGraphApi, 'sendWhatsAppTemplate').resolves({
       statusCode: 200,
       body: { messages: [{ id: 'wamid.test' }] },
-    });
-    listTemplatesStub = stub(whatsappGraphApi, 'listWhatsAppMessageTemplates').resolves({
-      statusCode: 200,
-      body: { data: [] },
-    });
-    createTemplateStub = stub(whatsappGraphApi, 'createWhatsAppConnectionTestTemplate').resolves({
-      statusCode: 200,
-      body: { id: 'template-id', status: 'PENDING' },
     });
   });
 
@@ -121,76 +110,5 @@ describe('SendWhatsAppTestTemplate usecase', () => {
     expect(sendWhatsAppTemplateStub.calledOnce).to.equal(true);
     expect(sendWhatsAppTemplateStub.firstCall.args[0].to).to.equal('14155551234');
     expect(sendWhatsAppTemplateStub.firstCall.args[0].templateName).to.equal('hello_world');
-    expect(sendWhatsAppTemplateStub.firstCall.args[0].bodyParameters).to.equal(undefined);
-  });
-
-  function buildManagedIntegration() {
-    return {
-      _id: INTEGRATION_ID,
-      providerId: ChatProviderIdEnum.WhatsAppBusiness,
-      credentials: {
-        apiToken: 'token',
-        phoneNumberIdentification: 'phone-number-id',
-        businessAccountId: 'waba-id',
-        isNovuManaged: true,
-      },
-    };
-  }
-
-  it('sends Novu’s approved connection test template for Novu-managed integrations', async () => {
-    integrationRepository.findOne.resolves(buildManagedIntegration());
-    listTemplatesStub.resolves({
-      statusCode: 200,
-      body: {
-        data: [
-          {
-            name: NOVU_CONNECTION_TEST_TEMPLATE_NAME,
-            status: 'APPROVED',
-            language: 'en_US',
-            components: [{ type: 'BODY', text: 'This is a connection test from Novu.' }],
-          },
-        ],
-      },
-    });
-
-    const result = await buildUsecase().execute(buildCommand());
-
-    expect(result.success).to.equal(true);
-    expect(sendWhatsAppTemplateStub.calledOnce).to.equal(true);
-    expect(sendWhatsAppTemplateStub.firstCall.args[0].templateName).to.equal(NOVU_CONNECTION_TEST_TEMPLATE_NAME);
-  });
-
-  it('returns a pending state (and provisions the template) when nothing is approved yet', async () => {
-    integrationRepository.findOne.resolves(buildManagedIntegration());
-    listTemplatesStub.resolves({ statusCode: 200, body: { data: [] } });
-
-    const result = await buildUsecase().execute(buildCommand());
-
-    expect(result.success).to.equal(false);
-    expect(result.error?.code).to.equal('template_pending_approval');
-    expect(createTemplateStub.calledOnce).to.equal(true);
-    expect(sendWhatsAppTemplateStub.called).to.equal(false);
-  });
-
-  it('falls back to an approved zero-variable template when Novu’s is not ready', async () => {
-    integrationRepository.findOne.resolves(buildManagedIntegration());
-    listTemplatesStub.resolves({
-      statusCode: 200,
-      body: {
-        data: [
-          {
-            name: 'account_alert',
-            status: 'APPROVED',
-            language: 'en_US',
-            components: [{ type: 'BODY', text: 'Your account has been updated.' }],
-          },
-        ],
-      },
-    });
-
-    const result = await buildUsecase().execute(buildCommand());
-
-    expect(result.success).to.equal(true);
-    expect(sendWhatsAppTemplateStub.firstCall.args[0].templateName).to.equal('account_alert');
   });
 });
