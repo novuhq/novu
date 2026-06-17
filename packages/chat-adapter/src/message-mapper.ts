@@ -6,8 +6,8 @@ import type {
   Message as ChatMessage,
   MessageData,
   Root,
-} from "chat";
-import { mapReplyFiles } from "./reply-files.js";
+} from 'chat';
+import { mapReplyFiles } from './reply-files.js';
 import type {
   AgentAttachment,
   AgentHistoryEntry,
@@ -15,9 +15,9 @@ import type {
   AgentMessageAuthor,
   NovuRawMessage,
   ReplyContent,
-} from "./types.js";
+} from './types.js';
 
-const ATTACHMENT_TYPES = new Set(["image", "file", "video", "audio"]);
+const ATTACHMENT_TYPES = new Set(['image', 'file', 'video', 'audio']);
 
 /** Chat-module functions the mapper needs, injected after the dynamic `import('chat')`. */
 export interface ChatModuleParts {
@@ -43,7 +43,7 @@ export class MessageMapper {
       conversationId: string;
       integrationIdentifier: string;
       platform: string;
-    },
+    }
   ): NovuRawMessage {
     return {
       id: message.platformMessageId,
@@ -69,7 +69,7 @@ export class MessageMapper {
   buildMessage(
     raw: NovuRawMessage,
     threadId: string,
-    authorOverride?: AgentMessageAuthor,
+    authorOverride?: AgentMessageAuthor
   ): ChatMessage<NovuRawMessage> {
     const dateSent = parseDate(raw.timestamp);
 
@@ -77,7 +77,7 @@ export class MessageMapper {
       id: raw.id,
       threadId,
       text: raw.text,
-      formatted: this.parts.parseMarkdown(raw.text ?? ""),
+      formatted: this.parts.parseMarkdown(raw.text ?? ''),
       raw,
       author: this.toAuthor(authorOverride ?? raw.author),
       metadata: { dateSent, edited: false },
@@ -96,22 +96,22 @@ export class MessageMapper {
     index: number,
     threadId: string,
     integrationIdentifier: string,
-    platform: string,
+    platform: string
   ): ChatMessage<NovuRawMessage> {
-    const isAssistant = entry.role === "assistant" || entry.role === "system";
+    const isAssistant = entry.role === 'assistant' || entry.role === 'system';
     const historyAttachments = attachmentsFromRichContent(entry.richContent);
     const raw: NovuRawMessage = {
       id: `novu-history:${index}`,
       text: entry.content,
       author: {
-        userId: isAssistant ? "novu-agent" : "novu-subscriber",
-        fullName: entry.senderName ?? (isAssistant ? "Agent" : "User"),
+        userId: isAssistant ? 'novu-agent' : 'novu-subscriber',
+        fullName: entry.senderName ?? (isAssistant ? 'Agent' : 'User'),
         userName: entry.senderName ?? entry.role,
         isBot: isAssistant,
       },
       timestamp: entry.createdAt,
       attachments: historyAttachments,
-      conversationId: "",
+      conversationId: '',
       integrationIdentifier,
       platform,
       history: {
@@ -126,7 +126,7 @@ export class MessageMapper {
       id: raw.id,
       threadId,
       text: entry.content,
-      formatted: this.parts.parseMarkdown(entry.content ?? ""),
+      formatted: this.parts.parseMarkdown(entry.content ?? ''),
       raw,
       author: this.toAuthor(raw.author, isAssistant),
       metadata: { dateSent: parseDate(entry.createdAt), edited: false },
@@ -147,22 +147,20 @@ export class MessageMapper {
   // -- outbound: AdapterPostableMessage -> ReplyContent --
 
   async toReplyContent(message: AdapterPostableMessage): Promise<ReplyContent> {
-    if (typeof message === "string") {
+    if (typeof message === 'string') {
       return { markdown: message };
     }
     if (this.parts.isCardElement(message)) {
       return { card: message };
     }
-    if (typeof message === "object" && message !== null) {
+    if (typeof message === 'object' && message !== null) {
       const obj = message as unknown as Record<string, unknown>;
       const files = await mapReplyFiles(obj.files ?? obj.attachments);
 
-      if (typeof obj.markdown === "string") {
-        return files
-          ? { markdown: obj.markdown, files }
-          : { markdown: obj.markdown };
+      if (typeof obj.markdown === 'string') {
+        return files ? { markdown: obj.markdown, files } : { markdown: obj.markdown };
       }
-      if (typeof obj.raw === "string") {
+      if (typeof obj.raw === 'string') {
         return files ? { markdown: obj.raw, files } : { markdown: obj.raw };
       }
       if (obj.ast) {
@@ -175,20 +173,18 @@ export class MessageMapper {
 
         return files ? { card, files } : { card };
       }
-      if (obj.type === "card") {
+      if (obj.type === 'card') {
         const card = this.toCard(message);
 
         return files ? { card, files } : { card };
       }
     }
 
-    throw new Error("Unsupported message content passed to Novu adapter");
+    throw new Error('Unsupported message content passed to Novu adapter');
   }
 
   private toCard(value: unknown): CardElement {
-    return this.parts.isCardElement(value)
-      ? value
-      : this.parts.toCardElement(value);
+    return this.parts.isCardElement(value) ? value : this.parts.toCardElement(value);
   }
 }
 
@@ -201,9 +197,7 @@ function parseDate(value: string | undefined): Date {
   return Number.isNaN(date.getTime()) ? new Date(0) : date;
 }
 
-function attachmentsFromRichContent(
-  richContent?: Record<string, unknown>,
-): AgentAttachment[] {
+function attachmentsFromRichContent(richContent?: Record<string, unknown>): AgentAttachment[] {
   const raw = richContent?.attachments;
   if (!Array.isArray(raw)) {
     return [];
@@ -212,17 +206,17 @@ function attachmentsFromRichContent(
   const attachments: AgentAttachment[] = [];
 
   for (const item of raw) {
-    if (!item || typeof item !== "object") {
+    if (!item || typeof item !== 'object') {
       continue;
     }
 
     const att = item as Record<string, unknown>;
     attachments.push({
-      type: typeof att.type === "string" ? att.type : "file",
-      url: typeof att.url === "string" ? att.url : undefined,
-      name: typeof att.name === "string" ? att.name : undefined,
-      mimeType: typeof att.mimeType === "string" ? att.mimeType : undefined,
-      size: typeof att.size === "number" ? att.size : undefined,
+      type: typeof att.type === 'string' ? att.type : 'file',
+      url: typeof att.url === 'string' ? att.url : undefined,
+      name: typeof att.name === 'string' ? att.name : undefined,
+      mimeType: typeof att.mimeType === 'string' ? att.mimeType : undefined,
+      size: typeof att.size === 'number' ? att.size : undefined,
     });
   }
 
@@ -241,16 +235,13 @@ function toChatAttachment(att: AgentAttachment): Attachment {
   };
 }
 
-function normalizeAttachmentType(
-  type: string | undefined,
-  mimeType: string | undefined,
-): Attachment["type"] {
+function normalizeAttachmentType(type: string | undefined, mimeType: string | undefined): Attachment['type'] {
   if (type && ATTACHMENT_TYPES.has(type)) {
-    return type as Attachment["type"];
+    return type as Attachment['type'];
   }
-  if (mimeType?.startsWith("image/")) return "image";
-  if (mimeType?.startsWith("video/")) return "video";
-  if (mimeType?.startsWith("audio/")) return "audio";
+  if (mimeType?.startsWith('image/')) return 'image';
+  if (mimeType?.startsWith('video/')) return 'video';
+  if (mimeType?.startsWith('audio/')) return 'audio';
 
-  return "file";
+  return 'file';
 }
