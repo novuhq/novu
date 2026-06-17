@@ -43,9 +43,11 @@ export function UsageCard({ subscription }: UsageCardProps) {
   // Only show conversations when the tier has a finite included limit
   // (unlimited tiers don't need the nudge).
   if (conversationUsage && conversationUsage.included !== null) {
+    // Keep the raw current value so over-limit usage (e.g. 1,200 / 1,000) is
+    // visible; the progress bar is clamped separately in `getUsagePercentage`.
     metrics.push({
       label: 'Conversations',
-      current: Math.min(conversationUsage.current, conversationUsage.included),
+      current: conversationUsage.current,
       max: conversationUsage.included,
     });
   }
