@@ -20,6 +20,13 @@ export async function install(
   silent = false
 ): Promise<void> {
   const args: string[] = ['install'];
+
+  // Prevent npm from crawling up into a parent monorepo workspace and
+  // trying to resolve workspace packages that don't belong to this project.
+  if (packageManager === 'npm') {
+    args.push('--no-workspaces');
+  }
+
   if (!isOnline) {
     if (!silent) {
       console.log(yellow('You appear to be offline.\nFalling back to the local cache.'));
