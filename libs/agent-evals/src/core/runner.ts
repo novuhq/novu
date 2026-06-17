@@ -2,8 +2,9 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { gradeRun, scoreFromOutcomes } from './graders.js';
 import { configureJudge } from './judge.js';
-import { dryRunAgentScenario, runAgentScenario } from './run-agent.js';
-import type { RegisteredScenario, RunnerOptions, ScenarioScore, Suite } from './types.js';
+import { createGraderProgressReporter } from './reporters.js';
+import { runAgentScenario } from './run-agent.js';
+import type { GraderOutcome, GraderResult, RegisteredScenario, RunnerOptions, ScenarioScore, Suite } from './types.js';
 import { PACKAGE_ROOT } from './types.js';
 
 export function filterScenarios(suite: Suite, filter?: string): RegisteredScenario[] {
@@ -41,15 +42,33 @@ export async function runEvaluation(
 ): Promise<ScenarioScore> {
   configureJudge({ enabled: options.judge, model: options.judgeModel ?? options.model });
 
-  const runResult = options.dry
-    ? await dryRunAgentScenario(entry.scenario)
-    : await runAgentScenario({ suite, scenario: entry.scenario, model: options.model });
+  const runResult = await runAgentScenario({ suite, scenario: entry.scenario, model: options.model });
+  const totalGraders = Object.keys(entry.graders).length;
 
-  const graders = options.dry
-    ? Object.fromEntries(Object.keys(entry.graders).map((name) => [name, 'skip' as const]))
-    : await gradeRun(entry.graders, runResult, { judgeEnabled: options.judge });
+  console.log(`    ↳ ${entry.scenario.id}: grading ${totalGraders} checks${options.judge ? ' (with judge)' : ''}…`);
 
-  const score = options.dry ? 1 : scoreFromOutcomes(graders);
+  const progress = createGraderProgressReporter({ totalGraders, judgeEnabled: options.judge });
+  const outcomes: Record<string, GraderOutcome> = await gradeRun(entry.graders, runResult, {
+    judgeEnabled: options.judge,
+    onGraderStart: progress.onGraderStart,
+    onGraderResult: progress.onGraderResult,
+  });
+
+  const graders = Object.fromEntries(
+    Object.entries(outcomes).map(([name, outcome]) => [name, outcome.status])
+  ) as Record<string, GraderResult>;
+
+  const graderReasons = Object.fromEntries(
+    Object.entries(outcomes)
+      .filter(([, outcome]) => outcome.status === 'fail' && Boolean(outcome.reason))
+      .map(([name, outcome]) => [name, outcome.reason as string])
+  );
+
+  const score = scoreFromOutcomes(outcomes);
+
+  const graderKinds = Object.fromEntries(
+    Object.entries(entry.graders).map(([name, definition]) => [name, definition.kind])
+  ) as Record<string, 'deterministic' | 'judge'>;
 
   const scenarioScore: ScenarioScore = {
     scenarioId: entry.scenario.id,
@@ -57,6 +76,8 @@ export async function runEvaluation(
     model: options.model,
     score,
     graders,
+    graderReasons,
+    graderKinds,
     runResult: options.debug ? runResult : undefined,
   };
 
@@ -73,10 +94,29 @@ export async function runAllEvaluations(suite: Suite, options: RunnerOptions): P
   }
 
   const scores: ScenarioScore[] = [];
+  const total = selected.length;
 
-  for (const entry of selected) {
-    scores.push(await runEvaluation(suite, entry, options));
+  console.log(`Running ${total} scenario${total === 1 ? '' : 's'} for suite "${suite.id}" (model: ${options.model})\n`);
+
+  for (let index = 0; index < selected.length; index += 1) {
+    const entry = selected[index];
+    const position = `[${index + 1}/${total}]`;
+    const startedAt = Date.now();
+
+    console.log(`${position} ${entry.scenario.id} — running…`);
+
+    const score = await runEvaluation(suite, entry, options);
+    scores.push(score);
+
+    const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
+    console.log(`${position} ${entry.scenario.id} — done: ${(score.score * 100).toFixed(1)}% (${elapsed}s)`);
   }
+
+  if (total > 1) {
+    console.log(`Average score: ${(averageScore(scores) * 100).toFixed(1)}%`);
+  }
+
+  console.log('');
 
   return scores;
 }

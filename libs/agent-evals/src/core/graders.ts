@@ -1,4 +1,14 @@
-import type { GraderDefinition, GraderFn, GraderResult, RunResult, ToolCallRecord } from './types.js';
+import { runJudge } from './judge.js';
+import type { GraderDefinition, GraderFn, GraderOutcome, GraderResult, RunResult, ToolCallRecord } from './types.js';
+
+/** Helper for graders that want to explain a failure inline. */
+export function fail(reason: string): GraderOutcome {
+  return { status: 'fail', reason };
+}
+
+function toOutcome(value: GraderResult | GraderOutcome): GraderOutcome {
+  return typeof value === 'string' ? { status: value } : value;
+}
 
 export function defineGraders<T extends Record<string, GraderFn | GraderDefinition>>(
   graders: T
@@ -47,36 +57,58 @@ export function transcriptText(result: RunResult): string {
 export function judge(prompt: string, context: (result: RunResult) => string): GraderDefinition {
   return {
     kind: 'judge',
-    run: async (result) => {
-      const { runJudge } = await import('./judge.js');
-
-      return runJudge(prompt, context(result));
-    },
+    run: async (result) => runJudge(prompt, context(result)),
   };
 }
+
+export type GradeRunOptions = {
+  judgeEnabled: boolean;
+  onGraderStart?: (name: string, kind: GraderDefinition['kind']) => void;
+  onGraderResult?: (name: string, outcome: GraderOutcome, kind: GraderDefinition['kind']) => void;
+};
 
 export async function gradeRun(
   graders: Record<string, GraderDefinition>,
   result: RunResult,
-  options: { judgeEnabled: boolean }
-): Promise<Record<string, GraderResult>> {
-  const outcomes: Record<string, GraderResult> = {};
+  options: GradeRunOptions
+): Promise<Record<string, GraderOutcome>> {
+  const outcomes: Record<string, GraderOutcome> = {};
+  const entries = Object.entries(graders);
 
-  for (const [name, definition] of Object.entries(graders)) {
+  for (const [name, definition] of entries) {
     if (definition.kind === 'judge' && !options.judgeEnabled) {
-      outcomes[name] = 'skip';
+      outcomes[name] = { status: 'skip' };
+      options.onGraderResult?.(name, outcomes[name], definition.kind);
       continue;
     }
 
-    outcomes[name] = await definition.run(result);
+    options.onGraderStart?.(name, definition.kind);
+    outcomes[name] = toOutcome(await definition.run(result));
+    options.onGraderResult?.(name, outcomes[name], definition.kind);
   }
 
   return outcomes;
 }
 
-export function scoreFromOutcomes(outcomes: Record<string, GraderResult>): number {
-  const considered = Object.values(outcomes).filter((value) => value !== 'skip');
-  const passed = considered.filter((value) => value === 'pass').length;
+export function formatGraderStatus(status: string, kind: GraderDefinition['kind'], judgeEnabled: boolean): string {
+  const isJudgeGrader = kind === 'judge';
+
+  if (status.toUpperCase() === 'SKIP' && isJudgeGrader && !judgeEnabled) {
+    return 'SKIP (judge disabled)';
+  }
+
+  if (isJudgeGrader && judgeEnabled) {
+    const label = status === 'evaluating…' ? 'evaluating…' : status.toUpperCase();
+
+    return `${label} (judge)`;
+  }
+
+  return status === 'evaluating…' ? 'evaluating…' : status.toUpperCase();
+}
+
+export function scoreFromOutcomes(outcomes: Record<string, GraderOutcome>): number {
+  const considered = Object.values(outcomes).filter((value) => value.status !== 'skip');
+  const passed = considered.filter((value) => value.status === 'pass').length;
 
   if (considered.length === 0) {
     return 0;

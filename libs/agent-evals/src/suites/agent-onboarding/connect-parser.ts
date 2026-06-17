@@ -13,19 +13,74 @@ export function isConnectCommand(command: string): boolean {
   return /\bnovu(@[\w.-]+)?\s+connect\b/.test(command) || /\bnpx\s+[^\s]*novu[^\s]*\s+connect\b/.test(command);
 }
 
-function resolveDescription(command: string, env: Record<string, string>): string | undefined {
-  const exportMatch = command.match(/export\s+NOVU_AGENT_DESCRIPTION='([^']*)'/);
+/**
+ * Decode a single shell word, honoring single quotes, double quotes, and backslash
+ * escapes (including the `'\''` idiom agents use to embed apostrophes). Reading stops
+ * at the first unquoted whitespace so trailing flags are not absorbed into the value.
+ */
+function unquoteShellWord(input: string): string {
+  let out = '';
+  let i = 0;
 
-  if (exportMatch?.[1]) {
-    return exportMatch[1];
+  while (i < input.length) {
+    const ch = input[i];
+
+    if (ch === "'") {
+      i += 1;
+      while (i < input.length && input[i] !== "'") {
+        out += input[i];
+        i += 1;
+      }
+      i += 1;
+    } else if (ch === '"') {
+      i += 1;
+      while (i < input.length && input[i] !== '"') {
+        if (input[i] === '\\' && i + 1 < input.length) {
+          i += 1;
+        }
+        out += input[i];
+        i += 1;
+      }
+      i += 1;
+    } else if (ch === '\\') {
+      if (i + 1 < input.length) {
+        out += input[i + 1];
+        i += 2;
+      } else {
+        i += 1;
+      }
+    } else if (/\s/.test(ch)) {
+      break;
+    } else {
+      out += ch;
+      i += 1;
+    }
   }
 
-  const positionalMatch = command.match(/\bconnect\s+(['"])(.*?)\1/);
-  const positional = positionalMatch?.[2];
+  return out;
+}
 
-  // A positional that references the env var (e.g. "$NOVU_AGENT_DESCRIPTION") resolves from env.
-  if (positional && !positional.includes('$')) {
-    return positional;
+function resolveDescription(command: string, env: Record<string, string>): string | undefined {
+  const exportMatch = command.match(/export\s+NOVU_AGENT_DESCRIPTION=(.+)/);
+
+  if (exportMatch?.[1]) {
+    const value = unquoteShellWord(exportMatch[1].trimStart());
+
+    if (value && !value.includes('$')) {
+      return value;
+    }
+  }
+
+  // Only treat a quoted token as the positional description; a leading flag means there is none.
+  const positionalMatch = command.match(/\bconnect\s+(['"][\s\S]*)/);
+
+  if (positionalMatch?.[1]) {
+    const positional = unquoteShellWord(positionalMatch[1]);
+
+    // A positional that references the env var (e.g. "$NOVU_AGENT_DESCRIPTION") resolves from env.
+    if (positional && !positional.includes('$')) {
+      return positional;
+    }
   }
 
   return env.NOVU_AGENT_DESCRIPTION;

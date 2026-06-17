@@ -81,6 +81,10 @@ export async function runAgentScenario<TParsed = ParsedCommand>(options: RunAgen
   const maxTurns = followUps.length + 1;
 
   for (let turn = 0; turn < maxTurns; turn += 1) {
+    if (maxTurns > 1) {
+      console.log(`    ↳ ${options.scenario.id}: agent turn ${turn + 1}/${maxTurns}…`);
+    }
+
     const result = await generateText({
       model: anthropic(options.model),
       system,
@@ -88,6 +92,10 @@ export async function runAgentScenario<TParsed = ParsedCommand>(options: RunAgen
       tools,
       stopWhen: stepCountIs(options.maxSteps ?? 40),
     });
+
+    console.log(
+      `    ↳ ${options.scenario.id}: model responded (${result.steps.length} step${result.steps.length === 1 ? '' : 's'})`
+    );
 
     recorder.recordAssistantMessage(result.text);
     messages.push(...result.response.messages);
@@ -104,15 +112,6 @@ export async function runAgentScenario<TParsed = ParsedCommand>(options: RunAgen
 
     break;
   }
-
-  return recorder.build();
-}
-
-export async function dryRunAgentScenario(scenario: EvalScenario): Promise<RunResult> {
-  resetShellCounter();
-
-  const recorder = new RunRecorder(scenario.id, scenario.userPrompt);
-  recorder.recordAssistantMessage(`[dry-run] Would execute scenario "${scenario.id}" with mock CLI tape.`);
 
   return recorder.build();
 }

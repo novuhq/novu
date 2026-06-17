@@ -1,6 +1,6 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
-import type { GraderResult } from './types.js';
+import type { GraderOutcome, GraderResult } from './types.js';
 
 let judgeModel = 'claude-sonnet-4-5';
 let judgeEnabled = false;
@@ -10,16 +10,18 @@ export function configureJudge(options: { enabled: boolean; model?: string }): v
   judgeModel = options.model ?? judgeModel;
 }
 
-export async function runJudge(prompt: string, context: string): Promise<GraderResult> {
+export async function runJudge(prompt: string, context: string): Promise<GraderOutcome> {
   if (!judgeEnabled || !process.env.ANTHROPIC_API_KEY) {
-    return 'skip';
+    return { status: 'skip' };
   }
 
   const result = await generateText({
     model: anthropic(judgeModel),
     prompt: [
       'You are grading an AI agent run against a coding-agent playbook.',
-      'Answer with exactly YES or NO.',
+      'First, write one sentence of reasoning explaining your verdict.',
+      'Then, on the final line, answer with exactly YES, NO, or UNKNOWN.',
+      'Answer UNKNOWN only if the context does not contain enough information to judge the question.',
       '',
       `Question: ${prompt}`,
       '',
@@ -28,5 +30,22 @@ export async function runJudge(prompt: string, context: string): Promise<GraderR
     ].join('\n'),
   });
 
-  return result.text.trim().toUpperCase().startsWith('YES') ? 'pass' : 'fail';
+  const lines = result.text
+    .trim()
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  const verdictLine = lines.at(-1) ?? '';
+  const verdict = verdictLine.toUpperCase();
+  const reason = lines.slice(0, -1).join(' ').trim() || undefined;
+
+  // Escape hatch: a starved judge abstains instead of counting as a failure.
+  if (verdict.startsWith('UNKNOWN')) {
+    return { status: 'skip' };
+  }
+
+  const status: GraderResult = verdict.startsWith('YES') ? 'pass' : 'fail';
+
+  return status === 'fail' ? { status, reason } : { status };
 }

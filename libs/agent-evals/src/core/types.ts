@@ -3,7 +3,13 @@ import { fileURLToPath } from 'node:url';
 
 export type GraderResult = 'pass' | 'fail' | 'skip';
 
-export type GraderFn = (result: RunResult) => GraderResult | Promise<GraderResult>;
+/** A grader can return a bare status, or a status with a human-readable reason (used for fails). */
+export type GraderOutcome = {
+  status: GraderResult;
+  reason?: string;
+};
+
+export type GraderFn = (result: RunResult) => GraderResult | GraderOutcome | Promise<GraderResult | GraderOutcome>;
 
 export type GraderDefinition = {
   kind: 'deterministic' | 'judge';
@@ -78,6 +84,9 @@ export type ScenarioScore = {
   model: string;
   score: number;
   graders: Record<string, GraderResult>;
+  /** Failure explanations keyed by grader name; only populated for failing graders that supply a reason. */
+  graderReasons: Record<string, string>;
+  graderKinds: Record<string, GraderDefinition['kind']>;
   runResult?: RunResult;
 };
 
@@ -140,8 +149,6 @@ export type Suite<TParsed = ParsedCommand> = {
 };
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
-
-export const REPO_ROOT = path.resolve(currentDir, '../../../..');
 
 export const PACKAGE_ROOT = path.resolve(currentDir, '../..');
 

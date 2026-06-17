@@ -1,37 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import type { ScenarioScore } from './types.js';
+import { formatGraderStatus } from './graders.js';
+import type { GraderDefinition, GraderOutcome, ScenarioScore } from './types.js';
 import { PACKAGE_ROOT } from './types.js';
-
-function formatResult(value: 'pass' | 'fail' | 'skip'): string {
-  if (value === 'pass') {
-    return 'PASS';
-  }
-
-  if (value === 'fail') {
-    return 'FAIL';
-  }
-
-  return 'SKIP';
-}
-
-export function printConsoleReport(suiteId: string, scores: ScenarioScore[], judgeEnabled: boolean): void {
-  console.log(`\n${suiteId} eval results\n`);
-
-  for (const score of scores) {
-    console.log(`${score.scenarioId} (${score.category}) — ${(score.score * 100).toFixed(1)}%`);
-
-    for (const [name, result] of Object.entries(score.graders)) {
-      const suffix = result === 'skip' && !judgeEnabled ? ' (judge disabled)' : '';
-      console.log(`  - ${name}: ${formatResult(result)}${suffix}`);
-    }
-
-    console.log('');
-  }
-
-  const average = scores.reduce((sum, item) => sum + item.score, 0) / (scores.length || 1);
-  console.log(`Average score: ${(average * 100).toFixed(1)}%`);
-}
 
 export async function writeScoresFile(suiteId: string, scores: ScenarioScore[]): Promise<string> {
   const outputPath = path.join(PACKAGE_ROOT, `scores-${suiteId}.json`);
@@ -44,4 +15,52 @@ export async function writeScoresFile(suiteId: string, scores: ScenarioScore[]):
   await fs.writeFile(outputPath, JSON.stringify(payload, null, 2), 'utf8');
 
   return outputPath;
+}
+
+type GraderProgressReporterOptions = {
+  totalGraders: number;
+  judgeEnabled: boolean;
+};
+
+export function createGraderProgressReporter(options: GraderProgressReporterOptions) {
+  let graderIndex = 0;
+  let pendingJudgeLineLength = 0;
+
+  const formatGraderLine = (
+    index: number,
+    name: string,
+    status: string,
+    kind: GraderDefinition['kind'],
+    reason?: string
+  ) => {
+    const base = `      • [${index}/${options.totalGraders}] ${name}: ${formatGraderStatus(status, kind, options.judgeEnabled)}`;
+
+    return status === 'fail' && reason ? `${base} — ${reason}` : base;
+  };
+
+  return {
+    onGraderStart(name: string, kind: GraderDefinition['kind']) {
+      if (kind !== 'judge' || !process.stdout.isTTY) {
+        return;
+      }
+
+      graderIndex += 1;
+      const line = formatGraderLine(graderIndex, name, 'evaluating…', kind);
+      pendingJudgeLineLength = line.length;
+      process.stdout.write(line);
+    },
+    onGraderResult(name: string, outcome: GraderOutcome, kind: GraderDefinition['kind']) {
+      if (kind === 'judge' && process.stdout.isTTY && pendingJudgeLineLength > 0) {
+        const line = formatGraderLine(graderIndex, name, outcome.status, kind, outcome.reason);
+        const padding = Math.max(0, pendingJudgeLineLength - line.length);
+        process.stdout.write(`\r${line}${' '.repeat(padding)}\n`);
+        pendingJudgeLineLength = 0;
+
+        return;
+      }
+
+      graderIndex += 1;
+      console.log(formatGraderLine(graderIndex, name, outcome.status, kind, outcome.reason));
+    },
+  };
 }

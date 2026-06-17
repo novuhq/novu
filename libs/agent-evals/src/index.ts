@@ -1,5 +1,5 @@
 import './load-env.js';
-import { printConsoleReport, writeScoresFile } from './core/reporters.js';
+import { writeScoresFile } from './core/reporters.js';
 import { averageScore, filterScenarios, runAllEvaluations } from './core/runner.js';
 import type { RunnerOptions } from './core/types.js';
 import { DEFAULT_SUITE, getSuite, listSuiteIds } from './suites/registry.js';
@@ -110,7 +110,6 @@ async function main(): Promise<void> {
   }
 
   const scores = await runAllEvaluations(suite, options);
-  printConsoleReport(suite.id, scores, options.judge);
   const outputPath = await writeScoresFile(suite.id, scores);
   console.log(`Wrote ${outputPath}`);
 

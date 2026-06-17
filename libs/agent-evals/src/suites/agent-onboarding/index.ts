@@ -1,5 +1,5 @@
-import path from 'node:path';
-import { REPO_ROOT, type Suite } from '../../core/types.js';
+import { resolvePackageFile } from '../../core/resolve-package-file.js';
+import type { Suite } from '../../core/types.js';
 import { type ConnectFlags, connectParser } from './connect-parser.js';
 import { graders as dashboardPromptLoginGraders } from './scenarios/dashboard-prompt-login/graders.js';
 import { scenario as dashboardPromptLoginScenario } from './scenarios/dashboard-prompt-login/scenario.js';
@@ -18,7 +18,7 @@ import { scenario as slackInChatRerunScenario } from './scenarios/slack-in-chat-
 import { graders as telegramSecureQrGraders } from './scenarios/telegram-secure-qr/graders.js';
 import { scenario as telegramSecureQrScenario } from './scenarios/telegram-secure-qr/scenario.js';
 
-export const AGENT_ONBOARDING_DOC_PATH = path.join(REPO_ROOT, 'packages/shared/docs/agent-onboarding.md');
+export const AGENT_ONBOARDING_DOC_PATH = resolvePackageFile('@novu/shared/docs/agent-onboarding.md');
 
 const SYSTEM_PROMPT_PREAMBLE = [
   'You are an AI coding agent executing the Novu agent onboarding playbook exactly.',

@@ -2471,6 +2471,9 @@ importers:
       '@ai-sdk/anthropic':
         specifier: ^3.0.10
         version: 3.0.13(zod@3.25.76)
+      '@novu/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       ai:
         specifier: 6.0.50
         version: 6.0.50(zod@3.25.76)

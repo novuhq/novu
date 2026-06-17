@@ -1,5 +1,6 @@
-import { defineGraders, judge, toolCallsNamed, transcriptText } from '../../core/graders.js';
-import type { RunResult } from '../../core/types.js';
+import { defineGraders, fail, judge, toolCallsNamed, transcriptText } from '../../core/graders.js';
+import { isForbiddenWatcherCommand } from '../../core/recorder.js';
+import type { GraderOutcome, RunResult } from '../../core/types.js';
 
 /** The drafted agent description is captured into metadata by the suite's onTrackedCommand hook. */
 export function descriptionText(result: RunResult): string {
@@ -20,45 +21,57 @@ export const judgePrompts = {
   noInfraMcpSemantic:
     'Does the drafted agent description avoid naming internal infrastructure or backend plumbing (databases, email delivery APIs, queues, caches, dev tooling) even via synonyms?',
   conclusionFirstReport:
-    'Does the final user-facing message lead with the CLI result (success or failure), then give the one next action (claim link for keyless or dashboard for authenticated), kept terse?',
+    'You are given only the final user-facing message. Does its first line/sentence state the CLI result (success or failure), followed by the single next action (claim link for keyless or dashboard for authenticated), without leading with setup steps or process narration?',
 };
 
 export const catalog = {
-  noSecretKeyFlag: (result: RunResult) =>
+  noSecretKeyFlag: (result: RunResult): GraderOutcome | 'pass' =>
     connectCommands(result).every((cmd) => !/--secret-key\b/.test(cmd) && !/\bNOVU_SECRET_KEY=/.test(cmd))
       ? 'pass'
-      : 'fail',
+      : fail('a connect command passed --secret-key or NOVU_SECRET_KEY'),
 
-  usedLoginWhenDashboardPrompt: (result: RunResult) => {
+  usedLoginWhenDashboardPrompt: (result: RunResult): GraderOutcome | 'pass' => {
     if (!/signed in to the Novu dashboard/i.test(result.userPrompt)) {
       return 'pass';
     }
 
-    return connectCommands(result).some((cmd) => /--login\b/.test(cmd)) ? 'pass' : 'fail';
+    return connectCommands(result).some((cmd) => /--login\b/.test(cmd))
+      ? 'pass'
+      : fail('user was signed into the dashboard but no connect command used --login');
   },
 
-  backgroundConnectShell: (result: RunResult) => {
+  backgroundConnectShell: (result: RunResult): GraderOutcome | 'pass' => {
     const connectCall = firstConnectCall(result);
 
     if (!connectCall) {
-      return 'fail';
+      return fail('no connect command was run');
     }
 
-    return Boolean(connectCall.args.run_in_background) && result.polledShellIds.length > 0 ? 'pass' : 'fail';
+    if (!connectCall.args.run_in_background) {
+      return fail('connect command was not run in the background (run_in_background was not set)');
+    }
+
+    return result.polledShellIds.length > 0
+      ? 'pass'
+      : fail('background connect shell was never polled with BashOutput');
   },
 
-  noTimersNoWatchers: (result: RunResult) => {
-    const forbidden = result.toolCalls.some((call) => {
+  noTimersNoWatchers: (result: RunResult): GraderOutcome | 'pass' => {
+    const forbiddenCall = result.toolCalls.find((call) => {
       if (call.name !== 'Bash') {
         return false;
       }
 
-      const command = String(call.args.command ?? '').toLowerCase();
+      const command = String(call.args.command ?? '');
 
-      return /\bsleep\b/.test(command) || /\btail\b/.test(command) || /\bgrep\b/.test(command);
+      return isForbiddenWatcherCommand(command);
     });
 
-    const readLogs = result.toolCalls.some((call) => {
+    if (forbiddenCall) {
+      return fail(`used a timer/watcher command: ${String(forbiddenCall.args.command ?? '')}`);
+    }
+
+    const readLogCall = result.toolCalls.find((call) => {
       if (call.name !== 'Read') {
         return false;
       }
@@ -68,40 +81,53 @@ export const catalog = {
       return filePath.includes('/tmp/') || filePath.endsWith('.log');
     });
 
-    return forbidden || readLogs ? 'fail' : 'pass';
+    return readLogCall
+      ? fail(`tailed a log file instead of polling: ${String(readLogCall.args.file_path ?? '')}`)
+      : 'pass';
   },
 
-  usedPickerForDecisions: (result: RunResult) =>
-    toolCallsNamed(result, 'AskUserQuestion').length >= 1 ? 'pass' : 'fail',
+  usedPickerForDecisions: (result: RunResult): GraderOutcome | 'pass' =>
+    toolCallsNamed(result, 'AskUserQuestion').length >= 1
+      ? 'pass'
+      : fail('no AskUserQuestion picker was used for decisions'),
 
   pastedLiteralUrl:
     (expectedUrl: string) =>
-    (result: RunResult): 'pass' | 'fail' =>
-      result.capturedUrls.includes(expectedUrl) || transcriptText(result).includes(expectedUrl) ? 'pass' : 'fail',
+    (result: RunResult): GraderOutcome | 'pass' =>
+      result.capturedUrls.includes(expectedUrl) || transcriptText(result).includes(expectedUrl)
+        ? 'pass'
+        : fail(`expected URL not surfaced to the user: ${expectedUrl}`),
 
   descriptionExcludesInfraTokens:
     (tokens: string[]) =>
-    (result: RunResult): 'pass' | 'fail' => {
+    (result: RunResult): GraderOutcome | 'pass' => {
       const description = descriptionText(result).toLowerCase();
+      const offending = tokens.filter((token) => description.includes(token.toLowerCase()));
 
-      return tokens.some((token) => description.includes(token.toLowerCase())) ? 'fail' : 'pass';
+      return offending.length > 0 ? fail(`description mentions infra tokens: ${offending.join(', ')}`) : 'pass';
     },
 
   descriptionIncludesTokens:
     (tokens: string[]) =>
-    (result: RunResult): 'pass' | 'fail' => {
+    (result: RunResult): GraderOutcome | 'pass' => {
       const description = descriptionText(result).toLowerCase();
 
-      return tokens.some((token) => description.includes(token.toLowerCase())) ? 'pass' : 'fail';
+      return tokens.some((token) => description.includes(token.toLowerCase()))
+        ? 'pass'
+        : fail(`description is missing all expected tokens: ${tokens.join(', ')}`);
     },
 
-  noConnectOnKeylessWhatsapp: (result: RunResult) =>
-    connectCommands(result).length === 0 &&
-    /dashboard\.novu\.co|dashboard redirect|continue.*dashboard/i.test(transcriptText(result))
-      ? 'pass'
-      : 'fail',
+  noConnectOnKeylessWhatsapp: (result: RunResult): GraderOutcome | 'pass' => {
+    if (connectCommands(result).length > 0) {
+      return fail('ran a connect command on a keyless WhatsApp flow that should redirect to the dashboard');
+    }
 
-  confirmedBeforeRun: (result: RunResult) => {
+    return /dashboard\.novu\.co|dashboard redirect|continue.*dashboard/i.test(transcriptText(result))
+      ? 'pass'
+      : fail('did not direct the user to the dashboard');
+  },
+
+  confirmedBeforeRun: (result: RunResult): GraderOutcome | 'pass' => {
     const approveIndex = result.toolCalls.findIndex(
       (call) =>
         call.name === 'AskUserQuestion' &&
@@ -115,32 +141,43 @@ export const catalog = {
       return 'pass';
     }
 
-    return approveIndex !== -1 && approveIndex < firstConnectIndex ? 'pass' : 'fail';
+    return approveIndex !== -1 && approveIndex < firstConnectIndex
+      ? 'pass'
+      : fail('ran connect without an approved confirmation picker beforehand');
   },
 
-  qrHostAware: (result: RunResult) => (result.openedFiles.some((file) => file.endsWith('.png')) ? 'pass' : 'fail'),
+  qrHostAware: (result: RunResult): GraderOutcome | 'pass' =>
+    result.openedFiles.some((file) => file.endsWith('.png')) ? 'pass' : fail('did not open the QR code image'),
 
-  reranWithSlackToken: (result: RunResult) =>
-    connectCommands(result).some((cmd) => /--slack-config-token\b/.test(cmd)) ? 'pass' : 'fail',
+  reranWithSlackToken: (result: RunResult): GraderOutcome | 'pass' =>
+    connectCommands(result).some((cmd) => /--slack-config-token\b/.test(cmd))
+      ? 'pass'
+      : fail('did not re-run connect with --slack-config-token'),
 
-  killedFirstConnectShell: (result: RunResult) => (result.killedShellIds.length >= 1 ? 'pass' : 'fail'),
+  killedFirstConnectShell: (result: RunResult): GraderOutcome | 'pass' =>
+    result.killedShellIds.length >= 1 ? 'pass' : fail('the first connect shell was never killed'),
 
-  readAuthUrlFile: (result: RunResult) =>
+  readAuthUrlFile: (result: RunResult): GraderOutcome | 'pass' =>
     result.toolCalls.some(
       (call) => call.name === 'Read' && String(call.args.file_path ?? '').includes('novu-connect-auth-url')
     ) ||
     result.capturedUrls.some((url) => url.includes('/oauth/device')) ||
     transcriptText(result).includes('/oauth/device')
       ? 'pass'
-      : 'fail',
+      : fail('never read the auth-url file or surfaced the /oauth/device URL'),
 
-  reportedSuccess: (result: RunResult) =>
-    /your agent is live|agent is live/i.test(transcriptText(result)) ? 'pass' : 'fail',
+  reportedSuccess: (result: RunResult): GraderOutcome | 'pass' =>
+    /your agent is live|agent is live/i.test(transcriptText(result))
+      ? 'pass'
+      : fail('final report did not confirm the agent is live'),
 
-  noConnectCommands: (result: RunResult) => (connectCommands(result).length === 0 ? 'pass' : 'fail'),
+  noConnectCommands: (result: RunResult): GraderOutcome | 'pass' =>
+    connectCommands(result).length === 0 ? 'pass' : fail('ran a connect command when none was expected'),
 
-  usedSecureTokenPath: (result: RunResult) =>
-    connectCommands(result).every((cmd) => !/--slack-config-token\b/.test(cmd)) ? 'pass' : 'fail',
+  usedSecureTokenPath: (result: RunResult): GraderOutcome | 'pass' =>
+    connectCommands(result).every((cmd) => !/--slack-config-token\b/.test(cmd))
+      ? 'pass'
+      : fail('passed --slack-config-token inline instead of the secure token path'),
 };
 
 export const sharedJudgeGraders = defineGraders({
@@ -148,5 +185,5 @@ export const sharedJudgeGraders = defineGraders({
     [descriptionText(result), transcriptText(result)].join('\n')
   ),
   noInfraMcpSemantic: judge(judgePrompts.noInfraMcpSemantic, (result) => descriptionText(result)),
-  conclusionFirstReport: judge(judgePrompts.conclusionFirstReport, (result) => transcriptText(result)),
+  conclusionFirstReport: judge(judgePrompts.conclusionFirstReport, (result) => result.finalText),
 });

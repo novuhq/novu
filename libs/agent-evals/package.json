@@ -14,6 +14,7 @@
     "check:fix": "biome check --write ."
   },
   "dependencies": {
+    "@novu/shared": "workspace:*",
     "@ai-sdk/anthropic": "^3.0.10",
     "ai": "6.0.50",
     "dotenv": "^16.6.1",
