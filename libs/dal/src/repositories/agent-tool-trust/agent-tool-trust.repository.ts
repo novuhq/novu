@@ -1,6 +1,11 @@
 import type { EnforceEnvOrOrgIds } from '../../types';
 import { BaseRepositoryV2 } from '../base-repository-v2';
-import { AgentToolTrustDBModel, AgentToolTrustEntity, type ToolTrustPolicy } from './agent-tool-trust.entity';
+import {
+  AgentToolTrustDBModel,
+  AgentToolTrustEntity,
+  type ToolTrust,
+  type ToolTrustPolicy,
+} from './agent-tool-trust.entity';
 import { AgentToolTrust } from './agent-tool-trust.schema';
 
 export type ToolTrustSource = 'mcp' | 'direct';
@@ -74,6 +79,35 @@ export class AgentToolTrustRepository extends BaseRepositoryV2<
         _subscriberId: params.subscriberId,
       },
       { $set: { [path]: params.policy } },
+      { upsert: true }
+    );
+  }
+
+  /**
+   * Replace an MCP server's entire trust bucket in a single atomic update.
+   * Used by the legacy backfill so a multi-tool copy can never be left partial.
+   */
+  async setMcpServerTrust(params: {
+    organizationId: string;
+    environmentId: string;
+    agentId: string;
+    subscriberId: string;
+    mcpServerName: string;
+    bucket: ToolTrust;
+  }): Promise<void> {
+    assertSafeToolTrustKeySegment(params.mcpServerName);
+    for (const toolName of Object.keys(params.bucket.tools ?? {})) {
+      assertSafeToolTrustKeySegment(toolName);
+    }
+
+    await this.update(
+      {
+        _environmentId: params.environmentId,
+        _organizationId: params.organizationId,
+        _agentId: params.agentId,
+        _subscriberId: params.subscriberId,
+      },
+      { $set: { [`trust.mcp.${params.mcpServerName}`]: params.bucket } },
       { upsert: true }
     );
   }

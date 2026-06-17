@@ -145,7 +145,17 @@ function isToolApprovalVerdict(value: string | undefined): value is ToolApproval
 }
 
 function decodeSegment(segment: string | undefined): string | undefined {
-  return segment ? decodeURIComponent(segment) || undefined : undefined;
+  if (!segment) {
+    return undefined;
+  }
+
+  try {
+    return decodeURIComponent(segment) || undefined;
+  } catch {
+    // Malformed percent-encoding: ignore the segment rather than throwing and
+    // breaking the whole approval action handler.
+    return undefined;
+  }
 }
 
 /**
@@ -162,23 +172,37 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
   const toolName = decodeSegment(rawToolName);
   const mcpServerName = decodeSegment(rawServerName);
   const approved = verdict !== 'deny';
+  // The trust *source* is bound to the action prefix, never inferred from the
+  // segments present. This prevents a forged/mismatched action id (e.g. a
+  // direct prefix with `approve-server`) from persisting MCP server-wide trust.
+  const isMcp = prefix === MCP_TOOL_APPROVAL_ACTION_PREFIX;
 
   switch (verdict) {
     case 'approve':
     case 'deny':
       return { toolUseId, approved };
-    case 'approve-tool':
-      if (!toolName) return { toolUseId, approved };
+    case 'approve-tool': {
+      if (!toolName) {
+        return { toolUseId, approved };
+      }
 
-      return {
-        toolUseId,
-        approved,
-        trust: mcpServerName ? { scope: 'tool', toolName, mcpServerName } : { scope: 'tool', toolName },
-      };
-    case 'approve-server':
-      if (!mcpServerName) return { toolUseId, approved };
+      // MCP per-tool trust must carry its server; direct tool trust must not.
+      if (isMcp) {
+        return mcpServerName
+          ? { toolUseId, approved, trust: { scope: 'tool', toolName, mcpServerName } }
+          : { toolUseId, approved };
+      }
+
+      return { toolUseId, approved, trust: { scope: 'tool', toolName } };
+    }
+    case 'approve-server': {
+      // Server-wide trust only exists on MCP cards.
+      if (!isMcp || !mcpServerName) {
+        return { toolUseId, approved };
+      }
 
       return { toolUseId, approved, trust: { scope: 'server', mcpServerName } };
+    }
     default: {
       const exhaustive: never = verdict;
       throw new Error(`Unhandled tool approval verdict: ${exhaustive}`);

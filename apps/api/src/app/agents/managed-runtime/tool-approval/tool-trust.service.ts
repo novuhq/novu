@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { PendingToolApproval } from '@novu/application-generic';
+import { type PendingToolApproval, PinoLogger } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
   AgentRepository,
@@ -21,8 +21,11 @@ export class ToolTrustService {
     private readonly agentRepository: AgentRepository,
     private readonly subscriberRepository: SubscriberRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly mcpConnectionRepository: McpConnectionRepository
-  ) {}
+    private readonly mcpConnectionRepository: McpConnectionRepository,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
 
   /**
    * Split a batch of pending tool approvals for one `(agent, subscriber)` into
@@ -68,16 +71,22 @@ export class ToolTrustService {
       if (mcpServerName && !trust.mcp?.[mcpServerName] && !legacyMigratedServers.has(mcpServerName)) {
         legacyMigratedServers.add(mcpServerName);
 
-        const bucket = await this.backfillLegacyMcpTrust({
-          environmentId: params.environmentId,
-          organizationId: params.organizationId,
-          agentId: agentMongoId,
-          subscriberId: subscriberMongoId,
-          mcpServerName,
-        });
+        // Best-effort: a failed backfill must never block delivery of the
+        // approval card, so on any error we just leave the tool pending.
+        try {
+          const bucket = await this.backfillLegacyMcpTrust({
+            environmentId: params.environmentId,
+            organizationId: params.organizationId,
+            agentId: agentMongoId,
+            subscriberId: subscriberMongoId,
+            mcpServerName,
+          });
 
-        if (bucket) {
-          trust.mcp = { ...(trust.mcp ?? {}), [mcpServerName]: bucket };
+          if (bucket) {
+            trust.mcp = { ...(trust.mcp ?? {}), [mcpServerName]: bucket };
+          }
+        } catch (error) {
+          this.logger.warn(error, 'Legacy MCP tool trust backfill failed; leaving tool pending approval');
         }
       }
 
@@ -109,17 +118,7 @@ export class ToolTrustService {
     subscriberId: string;
     mcpServerName: string;
   }): Promise<ToolTrust | undefined> {
-    const mcpId = resolveMcpCatalogIdByName(params.mcpServerName);
-    if (!mcpId) {
-      return undefined;
-    }
-
-    const enablement = await this.agentMcpServerRepository.findByAgentAndMcpId({
-      organizationId: params.organizationId,
-      environmentId: params.environmentId,
-      agentId: params.agentId,
-      mcpId,
-    });
+    const enablement = await this.findLegacyEnablement(params);
     if (!enablement) {
       return undefined;
     }
@@ -136,34 +135,44 @@ export class ToolTrustService {
       return undefined;
     }
 
-    if (legacyBucket.serverDefault !== undefined) {
-      await this.agentToolTrustRepository.setToolTrust({
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentId: params.agentId,
-        subscriberId: params.subscriberId,
-        source: 'mcp',
-        mcpServerName: params.mcpServerName,
-        scope: 'server',
-        policy: legacyBucket.serverDefault,
-      });
-    }
+    const bucket: ToolTrust = { serverDefault: legacyBucket.serverDefault, tools: legacyBucket.tools };
 
-    for (const [toolName, policy] of Object.entries(legacyBucket.tools ?? {})) {
-      await this.agentToolTrustRepository.setToolTrust({
-        environmentId: params.environmentId,
-        organizationId: params.organizationId,
-        agentId: params.agentId,
-        subscriberId: params.subscriberId,
-        source: 'mcp',
-        mcpServerName: params.mcpServerName,
-        scope: 'tool',
-        toolName,
-        policy,
-      });
-    }
+    // Single atomic write so a multi-tool bucket can never be left partially copied.
+    await this.agentToolTrustRepository.setMcpServerTrust({
+      environmentId: params.environmentId,
+      organizationId: params.organizationId,
+      agentId: params.agentId,
+      subscriberId: params.subscriberId,
+      mcpServerName: params.mcpServerName,
+      bucket,
+    });
 
-    return { serverDefault: legacyBucket.serverDefault, tools: legacyBucket.tools };
+    return bucket;
+  }
+
+  /**
+   * Match an enabled MCP row for the pending server name. Mirrors the legacy
+   * resolver: prefer the provider-projected name, then fall back to the catalog
+   * name — so renamed/projected servers still migrate their trust.
+   */
+  private async findLegacyEnablement(params: {
+    environmentId: string;
+    organizationId: string;
+    agentId: string;
+    mcpServerName: string;
+  }) {
+    const enablements = await this.agentMcpServerRepository.findOAuthEnablementsForAgent({
+      organizationId: params.organizationId,
+      environmentId: params.environmentId,
+      agentId: params.agentId,
+    });
+    const catalogId = resolveMcpCatalogIdByName(params.mcpServerName);
+
+    return enablements.find(
+      (row) =>
+        row.externalProjection?.mcpServerName === params.mcpServerName ||
+        (catalogId !== undefined && row.mcpId === catalogId)
+    );
   }
 
   /**
