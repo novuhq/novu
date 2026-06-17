@@ -197,14 +197,24 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     },
     confirmScaffold({ projectDir, appName }) {
       return new Promise<boolean>((resolve) => {
-        store.phase.set({ kind: 'confirm-scaffold', projectDir, appName, resolve });
+        store.phase.set({
+          kind: 'confirm-scaffold',
+          projectDir,
+          appName,
+          resolve,
+        });
       });
     },
     scaffoldingChatSdk() {
       store.phase.set({ kind: 'scaffolding-chat-sdk' });
     },
     chatSdkScaffolded({ projectDir, envPath, skippedInstall }) {
-      store.phase.set({ kind: 'chat-sdk-scaffolded', projectDir, envPath, skippedInstall });
+      store.phase.set({
+        kind: 'chat-sdk-scaffolded',
+        projectDir,
+        envPath,
+        skippedInstall,
+      });
     },
     chatSdkEnvWired({ projectDir, envPath, updatedKeys }) {
       store.phase.set({
@@ -214,15 +224,35 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         updatedKeys,
       });
     },
-    chatSdkSkillInstructions({ installCommand, lines, agentIdentifier }) {
-      return new Promise<void>((resolve) => {
+    promptWireChatSdkAdapter({ projectDir, agentIdentifier }) {
+      return new Promise<boolean>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-skill-instructions',
-          installCommand,
-          lines,
+          kind: 'chat-sdk-wire-prompt',
+          projectDir,
           agentIdentifier,
           resolve,
         });
+      });
+    },
+    wiringChatSdkAdapter() {
+      store.phase.set({ kind: 'chat-sdk-wiring' });
+    },
+    chatSdkAdapterWired({
+      projectDir,
+      envPath,
+      adapterInstalled,
+      bridgeFilesAdded,
+      skillDestinations,
+      needsAgentFollowUp,
+    }) {
+      store.phase.set({
+        kind: 'chat-sdk-adapter-wired',
+        projectDir,
+        envPath,
+        adapterInstalled,
+        bridgeFilesAdded,
+        skillDestinations,
+        needsAgentFollowUp,
       });
     },
     pickChannel() {

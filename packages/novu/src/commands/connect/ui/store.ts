@@ -79,11 +79,20 @@ export type Phase =
       updatedKeys: string[];
     }
   | {
-      kind: 'chat-sdk-skill-instructions';
-      installCommand: string;
-      lines: string[];
+      kind: 'chat-sdk-wire-prompt';
+      projectDir: string;
       agentIdentifier: string;
-      resolve: () => void;
+      resolve: (confirmed: boolean) => void;
+    }
+  | { kind: 'chat-sdk-wiring' }
+  | {
+      kind: 'chat-sdk-adapter-wired';
+      projectDir: string;
+      envPath: string;
+      adapterInstalled: boolean;
+      bridgeFilesAdded: string[];
+      skillDestinations: string[];
+      needsAgentFollowUp: boolean;
     }
   | { kind: 'generating' }
   | {

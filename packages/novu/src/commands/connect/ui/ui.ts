@@ -74,7 +74,16 @@ export interface ConnectUI {
   scaffoldingChatSdk(): void;
   chatSdkScaffolded(opts: { projectDir: string; envPath: string; skippedInstall?: boolean }): void;
   chatSdkEnvWired(opts: { projectDir: string; envPath: string; updatedKeys: string[] }): void;
-  chatSdkSkillInstructions(opts: { installCommand: string; lines: string[]; agentIdentifier: string }): Promise<void>;
+  promptWireChatSdkAdapter(opts: { projectDir: string; agentIdentifier: string }): Promise<boolean>;
+  wiringChatSdkAdapter(): void;
+  chatSdkAdapterWired(opts: {
+    projectDir: string;
+    envPath: string;
+    adapterInstalled: boolean;
+    bridgeFilesAdded: string[];
+    skillDestinations: string[];
+    needsAgentFollowUp: boolean;
+  }): void;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;

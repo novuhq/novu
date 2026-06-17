@@ -5,9 +5,9 @@ import type { AgentSummary, ChatSdkConnectOutcome, ConnectCommandOptions } from 
 import type { ConnectUI } from '../../ui/ui';
 import { defaultAgentNameFromDir, deriveAgentIdentifier } from './derive-identifier';
 import { detectChatSdkProject } from './detect-project';
+import { runChatSdkAdapterIntegration } from './integrate-adapter';
 import { runChatSdkBridge } from './run-bridge';
 import { scaffoldChatSdkProject } from './scaffold';
-import { buildChatSdkSkillInstructions, CHAT_SDK_SKILL_INSTALL_COMMAND } from './skill-instructions';
 import { mergeEnvLocal, readEnvSecretKey } from './wire-env';
 
 export type ChatSdkSetupInput = {
@@ -57,23 +57,63 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
     };
   }
 
-  // Existing project without the Novu adapter → show skill install instructions.
+  // Existing project without the Novu adapter → offer to wire automatically.
   if (detected.kind === 'project-no-adapter') {
-    const instructions = buildChatSdkSkillInstructions({
+    const secretKey = requireSecretKey(input.auth);
+    const shouldWire = await input.ui.promptWireChatSdkAdapter({
+      projectDir: detected.projectDir,
       agentIdentifier: input.agent.identifier,
-      secretKey: requireSecretKey(input.auth),
     });
 
-    await input.ui.chatSdkSkillInstructions({
-      installCommand: CHAT_SDK_SKILL_INSTALL_COMMAND,
-      lines: instructions,
+    if (!shouldWire) {
+      return {
+        projectKind: 'project-no-adapter',
+        projectDir: detected.projectDir,
+        scaffolded: false,
+        needsAgentFollowUp: true,
+      };
+    }
+
+    const existingSecret = readEnvSecretKey(detected.projectDir);
+    let overwriteSecretKey = false;
+
+    if (existingSecret && existingSecret !== secretKey) {
+      overwriteSecretKey = await input.ui.confirmEnvSecretOverwrite({
+        envPath: `${detected.projectDir}/.env.local`,
+        existingMasked: maskForUi(existingSecret),
+        nextMasked: maskForUi(secretKey),
+      });
+    }
+
+    input.ui.wiringChatSdkAdapter();
+
+    const integration = await runChatSdkAdapterIntegration({
+      projectDir: detected.projectDir,
+      secretKey,
       agentIdentifier: input.agent.identifier,
+      apiBaseUrl: input.options.apiUrl,
+      overwriteSecretKey,
+      silent: input.ui.interactive,
     });
+
+    input.ui.chatSdkAdapterWired({
+      projectDir: detected.projectDir,
+      envPath: integration.envPath,
+      adapterInstalled: integration.adapterInstalled,
+      bridgeFilesAdded: integration.bridgeFilesAdded,
+      skillDestinations: integration.skillsInstalled.map((skill) => skill.destination),
+      needsAgentFollowUp: integration.needsAgentFollowUp,
+    });
+
+    const bridgeWired = integration.bridgeFilesAdded.length > 0;
 
     return {
-      projectKind: 'project-no-adapter',
+      projectKind: bridgeWired ? 'has-adapter' : 'project-no-adapter',
       projectDir: detected.projectDir,
       scaffolded: false,
+      envPath: integration.envPath,
+      bridgeWired,
+      needsAgentFollowUp: integration.needsAgentFollowUp,
     };
   }
 
@@ -202,6 +242,7 @@ function shouldRunChatSdkTunnel(outcome: ChatSdkConnectOutcome | undefined): out
   if (!outcome) return false;
   if (outcome.skippedInstall) return false;
   if (outcome.scaffolded) return true;
+  if (outcome.bridgeWired) return true;
 
   return outcome.projectKind === 'has-adapter';
 }

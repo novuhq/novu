@@ -2,39 +2,31 @@ import spawn from 'cross-spawn';
 import { yellow } from 'picocolors';
 import type { PackageManager } from './get-pkg-manager';
 
-/**
- * Spawn a package manager installation based on user preference.
- *
- * @returns A Promise that resolves once the installation is finished.
- */
-export async function install(
-  /** Indicate which package manager to use. */
-  packageManager: PackageManager,
-  /** Indicate whether there is an active Internet connection.*/
-  isOnline: boolean,
-  /**
-   * When true, pipe stdout/stderr instead of inheriting them so the caller
-   * controls whether the output is displayed. On failure, captured stderr is
-   * included in the thrown Error so the cause is not lost.
-   */
-  silent = false,
-  /** Working directory for the install subprocess. Defaults to process.cwd(). */
-  cwd?: string
-): Promise<void> {
-  const args: string[] = ['install'];
+type SpawnInstallOptions = {
+  silent: boolean;
+  cwd?: string;
+};
 
-  // Prevent npm from crawling up into a parent monorepo workspace and
-  // trying to resolve workspace packages that don't belong to this project.
+function buildInstallArgs(packageManager: PackageManager, packages: string[], isOnline: boolean): string[] {
   if (packageManager === 'npm') {
-    args.push('--no-workspaces');
+    const args = ['install', ...packages, '--no-workspaces'];
+    if (!isOnline) {
+      args.push('--offline');
+    }
+
+    return args;
   }
 
-  if (!isOnline) {
-    if (!silent) {
-      console.log(yellow('You appear to be offline.\nFalling back to the local cache.'));
-    }
+  const args = ['add', ...packages];
+  if (!isOnline && packageManager === 'yarn') {
     args.push('--offline');
   }
+
+  return args;
+}
+
+function spawnInstall(packageManager: PackageManager, args: string[], options: SpawnInstallOptions): Promise<void> {
+  const { silent, cwd } = options;
 
   return new Promise((resolve, reject) => {
     const stdio: import('child_process').StdioOptions = silent ? ['ignore', 'pipe', 'pipe'] : 'inherit';
@@ -44,7 +36,6 @@ export async function install(
       env: {
         ...process.env,
         ADBLOCK: '1',
-        // we set NODE_ENV to development as pnpm skips dev dependencies when production
         NODE_ENV: 'development',
         DISABLE_OPENCOLLECTIVE: '1',
       },
@@ -64,4 +55,40 @@ export async function install(
       resolve();
     });
   });
+}
+
+/**
+ * Spawn a package manager installation based on user preference.
+ */
+export async function install(
+  packageManager: PackageManager,
+  isOnline: boolean,
+  silent = false,
+  cwd?: string
+): Promise<void> {
+  if (!isOnline && !silent) {
+    console.log(yellow('You appear to be offline.\nFalling back to the local cache.'));
+  }
+
+  const args = buildInstallArgs(packageManager, [], isOnline);
+
+  return spawnInstall(packageManager, args, { silent, cwd });
+}
+
+/** Install one or more packages into a target project directory. */
+export async function installPackages(
+  packageManager: PackageManager,
+  packages: string[],
+  options: { isOnline?: boolean; silent?: boolean; cwd?: string } = {}
+): Promise<void> {
+  const isOnline = options.isOnline ?? true;
+  const silent = options.silent ?? false;
+
+  if (!isOnline && !silent) {
+    console.log(yellow('You appear to be offline.\nFalling back to the local cache.'));
+  }
+
+  const args = buildInstallArgs(packageManager, packages, isOnline);
+
+  return spawnInstall(packageManager, args, { silent: silent, cwd: options.cwd });
 }

@@ -351,7 +351,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     const willRunTunnel =
       chatSdkOutcome !== undefined &&
-      (chatSdkOutcome.scaffolded || chatSdkOutcome.projectKind === 'has-adapter') &&
+      (chatSdkOutcome.scaffolded || chatSdkOutcome.projectKind === 'has-adapter' || chatSdkOutcome.bridgeWired) &&
       !chatSdkOutcome.skippedInstall;
 
     // Tear down Ink before starting the bridge server so its stdout/console

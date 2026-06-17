@@ -232,8 +232,37 @@ export function PhaseContent({
         </Box>
       );
 
-    case 'chat-sdk-skill-instructions':
-      return <ChatSdkSkillInstructionsContent phase={phase} />;
+    case 'chat-sdk-wire-prompt':
+      return <ChatSdkWirePromptContent phase={phase} />;
+
+    case 'chat-sdk-wiring':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text color="cyan">Wiring Novu Chat SDK adapter…</Text>
+          <Text dimColor>Installing @novu/chat-sdk-adapter, updating .env.local, and adding bridge files.</Text>
+        </Box>
+      );
+
+    case 'chat-sdk-adapter-wired':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text color="green">✓ Novu adapter wired.</Text>
+          <Text>
+            <Text bold>Project:</Text> {phase.projectDir}
+          </Text>
+          <Text dimColor>{`Updated ${phase.envPath}`}</Text>
+          {phase.adapterInstalled ? <Text dimColor>Installed @novu/chat-sdk-adapter</Text> : null}
+          {phase.bridgeFilesAdded.map((file) => (
+            <Text key={file} dimColor>{`Added ${file}`}</Text>
+          ))}
+          {phase.skillDestinations.map((dest) => (
+            <Text key={dest} dimColor>{`Skill: ${dest}`}</Text>
+          ))}
+          {phase.needsAgentFollowUp ? (
+            <Text color="yellow">Ask your coding agent to finish wiring using the novu-chat-sdk skill.</Text>
+          ) : null}
+        </Box>
+      );
 
     case 'generating':
       return <GeneratingContent />;
@@ -457,40 +486,37 @@ function renderChatSdkSuccessMessage(
     return <Text color="cyan">Environment wired — starting your app and dev tunnel…</Text>;
   }
 
-  return <Text color="cyan">Install the skill and ask your coding agent to wire the adapter.</Text>;
+  if (outcome.needsAgentFollowUp) {
+    return (
+      <Text color="cyan">Adapter partially wired — ask your coding agent to finish using the novu-chat-sdk skill.</Text>
+    );
+  }
+
+  return null;
 }
 
-function ChatSdkSkillInstructionsContent({
+function ChatSdkWirePromptContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-skill-instructions' }>;
+  phase: Extract<Phase, { kind: 'chat-sdk-wire-prompt' }>;
 }): React.ReactElement {
   useInput((_input, key) => {
-    if (key.return) phase.resolve();
+    if (key.return) phase.resolve(true);
+    if (key.escape) phase.resolve(false);
   });
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Wire the Novu adapter into your project</Text>
+      <Text bold>Wire the Novu adapter into your project?</Text>
       <Text dimColor>
-        Your project uses Chat SDK but is missing <Text color="white">@novu/chat-sdk-adapter</Text>. Install the skill,
-        then ask your coding agent to wire it:
+        We'll install <Text color="white">@novu/chat-sdk-adapter</Text>, update <Text color="white">.env.local</Text>,
+        install the <Text color="white">novu-chat-sdk</Text> skill, and add bridge route files when we detect Next.js
+        App Router.
       </Text>
-      <Box flexDirection="column" borderStyle="round" paddingX={1}>
-        <Text color="cyan">{phase.installCommand}</Text>
-      </Box>
-      <Text dimColor>Then prompt your coding agent:</Text>
-      <Text color="white">
-        {'"Integrate the Novu Chat SDK adapter into this project using the novu-chat-sdk skill."'}
+      <Text dimColor>
+        Agent identifier: <Text color="cyan">{phase.agentIdentifier}</Text>
       </Text>
-      <Box flexDirection="column" gap={0}>
-        <Text dimColor>
-          Agent identifier: <Text color="cyan">{phase.agentIdentifier}</Text>
-        </Text>
-      </Box>
-      <Text dimColor color="cyan">
-        Press Enter when ready to continue →
-      </Text>
+      <Text color="cyan">Enter · wire now · Esc · skip</Text>
     </Box>
   );
 }

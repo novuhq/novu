@@ -22,6 +22,10 @@ export type ChatSdkConnectOutcome = {
   envPath?: string;
   /** True when npm install was skipped (e.g. scaffolding inside a monorepo). */
   skippedInstall?: boolean;
+  /** True when bridge route files were added and the project can run the dev tunnel. */
+  bridgeWired?: boolean;
+  /** True when automatic wiring could not finish — user should prompt their coding agent. */
+  needsAgentFollowUp?: boolean;
 };
 
 export interface ConnectCommandOptions {
