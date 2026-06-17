@@ -42,6 +42,10 @@ const novu = createNovuAdapter({
   // bridgeUrl:  'https://my-app.com/api/novu', // optional boot-time bridge registration
 });
 
+// Or rely on env vars — NOVU_SECRET_KEY, NOVU_AGENT_IDENTIFIER,
+// NOVU_API_BASE_URL, NOVU_BRIDGE_URL (explicit config wins):
+// const novu = createNovuAdapter();
+
 const chat = new Chat({
   userName: 'support',
   adapters: { novu },

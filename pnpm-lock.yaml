@@ -3396,8 +3396,11 @@ importers:
 
   packages/chat-adapter:
     dependencies:
+      '@chat-adapter/shared':
+        specifier: 4.30.0
+        version: 4.30.0(zod@4.3.6)
       chat:
-        specifier: '>=4.30.0'
+        specifier: ^4.30.0
         version: 4.30.0(zod@4.3.6)
       react:
         specifier: '>=18.0.0 || >=19.0.0'
@@ -31700,7 +31703,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       '@opentelemetry/semantic-conventions': 1.39.0
       '@standard-schema/spec': 1.1.0
-      better-call: 1.3.2(zod@4.3.5)
+      better-call: 1.3.2(zod@4.3.6)
       jose: 6.1.3
       kysely: 0.28.17
       nanostores: 1.2.0
@@ -31826,6 +31829,14 @@ snapshots:
   '@chat-adapter/shared@4.30.0(zod@3.25.20)':
     dependencies:
       chat: 4.30.0(zod@3.25.20)
+    transitivePeerDependencies:
+      - ai
+      - supports-color
+      - zod
+
+  '@chat-adapter/shared@4.30.0(zod@4.3.6)':
+    dependencies:
+      chat: 4.30.0(zod@4.3.6)
     transitivePeerDependencies:
       - ai
       - supports-color
@@ -45537,7 +45548,7 @@ snapshots:
       '@better-fetch/fetch': 1.1.21
       '@noble/ciphers': 2.1.1
       '@noble/hashes': 2.0.1
-      better-call: 1.3.2(zod@4.3.5)
+      better-call: 1.3.2(zod@4.3.6)
       defu: 6.1.6
       jose: 6.1.3
       kysely: 0.28.17
@@ -45555,15 +45566,6 @@ snapshots:
     transitivePeerDependencies:
       - '@cloudflare/workers-types'
       - '@opentelemetry/api'
-
-  better-call@1.3.2(zod@4.3.5):
-    dependencies:
-      '@better-auth/utils': 0.3.1
-      '@better-fetch/fetch': 1.1.21
-      rou3: 0.7.12
-      set-cookie-parser: 3.1.0
-    optionalDependencies:
-      zod: 4.3.5
 
   better-call@1.3.2(zod@4.3.6):
     dependencies:
