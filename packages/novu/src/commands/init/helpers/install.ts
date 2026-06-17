@@ -17,7 +17,10 @@ function buildInstallArgs(packageManager: PackageManager, packages: string[], is
     return args;
   }
 
-  const args = ['add', ...packages];
+  // yarn/pnpm/bun use `add` only when installing specific packages; with an
+  // empty list they need `install` to install from the generated package.json.
+  const command = packages.length > 0 ? 'add' : 'install';
+  const args = [command, ...packages];
   if (!isOnline && packageManager === 'yarn') {
     args.push('--offline');
   }

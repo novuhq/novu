@@ -255,7 +255,7 @@ export function createLoggingUI(): ConnectUI {
       console.log(chalk.bold('Paste this into your coding agent:'));
       console.log(chalk.cyan(agentPrompt));
       console.log('');
-      console.log(chalk.dim('Press Enter when done…'));
+      console.log(chalk.gray('Non-interactive mode: continuing automatically.'));
 
       return Promise.resolve();
     },

@@ -54,6 +54,9 @@ export async function scaffoldChatSdkProject(
 ): Promise<ScaffoldChatSdkProjectResult> {
   const parentDir = path.resolve(input.parentDir);
   const appName = input.appName?.trim() || defaultScaffoldDirName(input.agentIdentifier);
+  if (path.isAbsolute(appName) || path.basename(appName) !== appName || appName === '.' || appName === '..') {
+    throw new Error(`Invalid scaffold directory name "${appName}". Use a single relative directory name.`);
+  }
   const root = path.join(parentDir, appName);
 
   if (fs.existsSync(root) && !isFolderEmpty(root, appName)) {

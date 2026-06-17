@@ -11,18 +11,20 @@ export type DetectedChatSdkProject = {
   packageJsonPath?: string;
 };
 
-function readPackageJson(projectDir: string): Record<string, unknown> | null {
+type PackageJsonRead = { kind: 'missing' } | { kind: 'invalid' } | { kind: 'ok'; pkg: Record<string, unknown> };
+
+function readPackageJson(projectDir: string): PackageJsonRead {
   const packageJsonPath = path.join(projectDir, 'package.json');
   if (!fs.existsSync(packageJsonPath)) {
-    return null;
+    return { kind: 'missing' };
   }
 
   try {
     const raw = fs.readFileSync(packageJsonPath, 'utf8');
 
-    return JSON.parse(raw) as Record<string, unknown>;
+    return { kind: 'ok', pkg: JSON.parse(raw) as Record<string, unknown> };
   } catch {
-    return null;
+    return { kind: 'invalid' };
   }
 }
 
@@ -43,11 +45,14 @@ export function detectChatSdkProject(projectDir: string): DetectedChatSdkProject
   const resolvedDir = path.resolve(projectDir);
   const packageJson = readPackageJson(resolvedDir);
 
-  if (!packageJson) {
+  // Only a truly missing package.json counts as empty (scaffold-eligible). A
+  // malformed one means a real project is present — treat it as existing so we
+  // wire it rather than scaffold over it.
+  if (packageJson.kind === 'missing') {
     return { kind: 'empty', projectDir: resolvedDir };
   }
 
-  if (hasDependency(packageJson, CHAT_SDK_ADAPTER_PACKAGE)) {
+  if (packageJson.kind === 'ok' && hasDependency(packageJson.pkg, CHAT_SDK_ADAPTER_PACKAGE)) {
     return {
       kind: 'has-adapter',
       projectDir: resolvedDir,

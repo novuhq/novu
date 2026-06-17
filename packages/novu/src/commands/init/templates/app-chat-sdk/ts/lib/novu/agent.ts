@@ -29,7 +29,7 @@ export function registerHandlers(chat: Chat): void {
       const subscriber = await novu.getSubscriber();
       const user = await thread.adapter.getUser?.(message.author.userId);
       await thread.post(
-        `👤 subscriber: ${subscriber?.subscriberId ?? "unknown"} (${subscriber?.email ?? "no email"})` +
+        `👤 subscriber: ${subscriber?.subscriberId ?? "unknown"}` +
           (user ? ` · userInfo: ${user.fullName}` : ""),
       );
 
