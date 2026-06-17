@@ -3394,6 +3394,28 @@ importers:
         specifier: 5.6.2
         version: 5.6.2
 
+  packages/chat-adapter:
+    dependencies:
+      react:
+        specifier: '>=18.0.0 || >=19.0.0'
+        version: 19.2.3
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.8
+      chat:
+        specifier: 4.30.0
+        version: 4.30.0(zod@4.3.6)
+      rimraf:
+        specifier: ~3.0.2
+        version: 3.0.2
+      typescript:
+        specifier: 5.6.2
+        version: 5.6.2
+      vitest:
+        specifier: ^4.1.0
+        version: 4.1.7(@edge-runtime/vm@3.0.3)(@opentelemetry/api@1.9.0)(@types/node@22.15.13)(happy-dom@20.8.9)(jsdom@20.0.3)(vite@6.4.2(@types/node@22.15.13)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.31.6)(tsx@4.21.0)(yaml@2.8.3))
+
   packages/chat-adapter-email:
     dependencies:
       '@novu/shared':
@@ -4286,6 +4308,9 @@ importers:
       '@ai-sdk/react':
         specifier: ^3.0.0
         version: 3.0.51(react@18.3.1)(zod@4.3.5)
+      '@chat-adapter/novu':
+        specifier: workspace:*
+        version: link:../../packages/chat-adapter
       '@clerk/react':
         specifier: ^6.6.6
         version: 6.6.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4382,6 +4407,9 @@ importers:
       ansi-to-react:
         specifier: ^6.2.6
         version: 6.2.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      chat:
+        specifier: 4.30.0
+        version: 4.30.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -45939,6 +45967,21 @@ snapshots:
   chardet@0.7.0: {}
 
   chardet@2.1.1: {}
+
+  chat@4.30.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5):
+    dependencies:
+      '@workflow/serde': 4.1.0-beta.2
+      mdast-util-to-string: 4.0.0
+      remark-gfm: 4.0.1
+      remark-parse: 11.0.0
+      remark-stringify: 11.0.0
+      remend: 1.3.0
+      unified: 11.0.5
+    optionalDependencies:
+      ai: 6.0.50(zod@4.3.5)
+      zod: 4.3.5
+    transitivePeerDependencies:
+      - supports-color
 
   chat@4.30.0(zod@3.25.20):
     dependencies:

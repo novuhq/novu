@@ -1,0 +1,43 @@
+{
+  "name": "@chat-adapter/novu",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "Novu adapter for the Chat SDK — expose all of Novu's normalized chat channels (Slack, WhatsApp, Teams, Telegram, Email) as a single Chat SDK platform adapter",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "afterinstall": "pnpm build",
+    "prebuild": "rimraf dist tsconfig.tsbuildinfo",
+    "build": "tsc -p tsconfig.json",
+    "watch:build": "tsc -p tsconfig.json -w",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "peerDependencies": {
+    "chat": ">=4.30.0",
+    "react": ">=18.0.0 || >=19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "chat": "4.30.0",
+    "rimraf": "~3.0.2",
+    "typescript": "5.6.2",
+    "vitest": "^1.2.1"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}
