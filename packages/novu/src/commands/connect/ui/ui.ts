@@ -74,7 +74,7 @@ export interface ConnectUI {
   scaffoldingChatSdk(): void;
   chatSdkScaffolded(opts: { projectDir: string; envPath: string; skippedInstall?: boolean }): void;
   chatSdkEnvWired(opts: { projectDir: string; envPath: string; updatedKeys: string[] }): void;
-  chatSdkSkillInstructions(opts: { installCommand: string; lines: string[]; agentIdentifier: string }): void;
+  chatSdkSkillInstructions(opts: { installCommand: string; lines: string[]; agentIdentifier: string }): Promise<void>;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;

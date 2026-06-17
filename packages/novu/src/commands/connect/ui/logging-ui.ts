@@ -227,6 +227,7 @@ export function createLoggingUI(): ConnectUI {
         console.log(line ? `  ${line}` : '');
       }
       console.log(chalk.gray(`  Agent identifier: ${agentIdentifier}`));
+      return Promise.resolve();
     },
     pickChannel() {
       stop();

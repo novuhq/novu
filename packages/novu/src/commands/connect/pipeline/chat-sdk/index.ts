@@ -64,7 +64,7 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
       secretKey: requireSecretKey(input.auth),
     });
 
-    input.ui.chatSdkSkillInstructions({
+    await input.ui.chatSdkSkillInstructions({
       installCommand: CHAT_SDK_SKILL_INSTALL_COMMAND,
       lines: instructions,
       agentIdentifier: input.agent.identifier,

@@ -8,7 +8,7 @@ import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import type { AgentConnectMode, ChannelChoice, ChatSdkConnectOutcome } from '../types';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
-import type { ConnectStore } from './store';
+import type { ConnectStore, Phase } from './store';
 import { WelcomeContent } from './welcome-content';
 
 const NEW_AGENT_VALUE = '__new__';
@@ -233,19 +233,7 @@ export function PhaseContent({
       );
 
     case 'chat-sdk-skill-instructions':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold>Install the Novu Chat SDK skill</Text>
-          <Text dimColor>Your project needs the adapter wired in. Run this, then ask your coding agent:</Text>
-          <Text color="cyan">{phase.installCommand}</Text>
-          {phase.lines.map((line) => (
-            <Text key={line} dimColor={line.length > 0}>
-              {line || ' '}
-            </Text>
-          ))}
-          <Text dimColor>{`Agent identifier: ${phase.agentIdentifier}`}</Text>
-        </Box>
-      );
+      return <ChatSdkSkillInstructionsContent phase={phase} />;
 
     case 'generating':
       return <GeneratingContent />;
@@ -470,6 +458,41 @@ function renderChatSdkSuccessMessage(
   }
 
   return <Text color="cyan">Install the skill and ask your coding agent to wire the adapter.</Text>;
+}
+
+function ChatSdkSkillInstructionsContent({
+  phase,
+}: {
+  phase: Extract<Phase, { kind: 'chat-sdk-skill-instructions' }>;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return) phase.resolve();
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Wire the Novu adapter into your project</Text>
+      <Text dimColor>
+        Your project uses Chat SDK but is missing <Text color="white">@novu/chat-sdk-adapter</Text>. Install the skill,
+        then ask your coding agent to wire it:
+      </Text>
+      <Box flexDirection="column" borderStyle="round" paddingX={1}>
+        <Text color="cyan">{phase.installCommand}</Text>
+      </Box>
+      <Text dimColor>Then prompt your coding agent:</Text>
+      <Text color="white">
+        {'"Integrate the Novu Chat SDK adapter into this project using the novu-chat-sdk skill."'}
+      </Text>
+      <Box flexDirection="column" gap={0}>
+        <Text dimColor>
+          Agent identifier: <Text color="cyan">{phase.agentIdentifier}</Text>
+        </Text>
+      </Box>
+      <Text dimColor color="cyan">
+        Press Enter when ready to continue →
+      </Text>
+    </Box>
+  );
 }
 
 function ConfirmScaffoldContent({

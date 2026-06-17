@@ -83,6 +83,7 @@ export type Phase =
       installCommand: string;
       lines: string[];
       agentIdentifier: string;
+      resolve: () => void;
     }
   | { kind: 'generating' }
   | {

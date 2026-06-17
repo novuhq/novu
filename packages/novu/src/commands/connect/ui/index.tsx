@@ -215,11 +215,14 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       });
     },
     chatSdkSkillInstructions({ installCommand, lines, agentIdentifier }) {
-      store.phase.set({
-        kind: 'chat-sdk-skill-instructions',
-        installCommand,
-        lines,
-        agentIdentifier,
+      return new Promise<void>((resolve) => {
+        store.phase.set({
+          kind: 'chat-sdk-skill-instructions',
+          installCommand,
+          lines,
+          agentIdentifier,
+          resolve,
+        });
       });
     },
     pickChannel() {
