@@ -57,7 +57,8 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
     };
   }
 
-  if (input.options.noScaffold) {
+  // Existing project without the Novu adapter → show skill install instructions.
+  if (detected.kind === 'project-no-adapter') {
     const instructions = buildChatSdkSkillInstructions({
       agentIdentifier: input.agent.identifier,
       secretKey: requireSecretKey(input.auth),
@@ -70,7 +71,16 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
     });
 
     return {
-      projectKind: detected.kind === 'empty' ? 'empty' : 'project-no-adapter',
+      projectKind: 'project-no-adapter',
+      projectDir: detected.projectDir,
+      scaffolded: false,
+    };
+  }
+
+  // Empty directory → offer to scaffold (unless --no-scaffold).
+  if (input.options.noScaffold) {
+    return {
+      projectKind: 'empty',
       projectDir: detected.projectDir,
       scaffolded: false,
     };
@@ -84,7 +94,7 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
 
   if (!confirmed) {
     return {
-      projectKind: detected.kind === 'empty' ? 'empty' : 'project-no-adapter',
+      projectKind: 'empty',
       projectDir: detected.projectDir,
       scaffolded: false,
     };
@@ -94,7 +104,7 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
     setup: input,
     parentDir: detected.projectDir,
     appName,
-    projectKind: detected.kind === 'empty' ? 'empty' : 'project-no-adapter',
+    projectKind: 'empty',
   });
 }
 
