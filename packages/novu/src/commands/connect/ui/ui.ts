@@ -70,6 +70,7 @@ export interface ConnectUI {
   // Chat SDK project wiring
   promptForAgentName(defaultName: string): Promise<string>;
   confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
+  confirmScaffold(opts: { projectDir: string; appName: string }): Promise<boolean>;
   scaffoldingChatSdk(): void;
   chatSdkScaffolded(opts: { projectDir: string; envPath: string }): void;
   chatSdkEnvWired(opts: { projectDir: string; envPath: string; updatedKeys: string[] }): void;

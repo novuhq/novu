@@ -59,6 +59,12 @@ export type Phase =
       nextMasked: string;
       resolve: (overwrite: boolean) => void;
     }
+  | {
+      kind: 'confirm-scaffold';
+      projectDir: string;
+      appName: string;
+      resolve: (confirmed: boolean) => void;
+    }
   | { kind: 'scaffolding-chat-sdk' }
   | {
       kind: 'chat-sdk-scaffolded';

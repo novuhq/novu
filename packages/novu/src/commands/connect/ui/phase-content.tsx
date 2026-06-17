@@ -194,11 +194,14 @@ export function PhaseContent({
         />
       );
 
+    case 'confirm-scaffold':
+      return <ConfirmScaffoldContent projectDir={phase.projectDir} appName={phase.appName} onResolve={phase.resolve} />;
+
     case 'scaffolding-chat-sdk':
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="cyan">Scaffolding your Chat SDK app…</Text>
-          <Text dimColor>Installing dependencies and wiring Novu env vars.</Text>
+          <Text dimColor>Installing dependencies — this may take a minute.</Text>
         </Box>
       );
 
@@ -452,6 +455,37 @@ function renderChatSdkSuccessMessage(
   }
 
   return <Text color="cyan">Install the skill and ask your coding agent to wire the adapter.</Text>;
+}
+
+function ConfirmScaffoldContent({
+  projectDir,
+  appName,
+  onResolve,
+}: {
+  projectDir: string;
+  appName: string;
+  onResolve: (confirmed: boolean) => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return) onResolve(true);
+    if (key.escape) onResolve(false);
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Scaffold a Chat SDK app?</Text>
+      <Text dimColor>No Chat SDK project was found here. We'll create one at:</Text>
+      <Text>
+        <Text bold>{projectDir}/</Text>
+        <Text color="cyan">{appName}</Text>
+      </Text>
+      <Text dimColor>
+        This installs <Text color="white">chat</Text>, <Text color="white">@novu/chat-sdk-adapter</Text>, and wires your
+        Novu credentials into <Text color="white">.env.local</Text>.
+      </Text>
+      <Text color="cyan">Enter · scaffold · Esc · cancel</Text>
+    </Box>
+  );
 }
 
 function ConfirmEnvSecretOverwriteContent({

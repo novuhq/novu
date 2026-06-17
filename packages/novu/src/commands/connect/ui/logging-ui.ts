@@ -200,6 +200,11 @@ export function createLoggingUI(): ConnectUI {
     confirmEnvSecretOverwrite() {
       return Promise.resolve(false);
     },
+    confirmScaffold({ projectDir, appName }) {
+      console.log(chalk.cyan(`→ Scaffolding Chat SDK app "${appName}" in ${projectDir}`));
+
+      return Promise.resolve(true);
+    },
     scaffoldingChatSdk() {
       start('Scaffolding Chat SDK project…');
     },

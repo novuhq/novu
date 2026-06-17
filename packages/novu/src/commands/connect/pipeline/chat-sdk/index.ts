@@ -76,27 +76,63 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
     };
   }
 
+  const appName = input.options.scaffoldDir?.trim() || defaultScaffoldAppName(input.agent.identifier);
+  const confirmed = await input.ui.confirmScaffold({
+    projectDir: detected.projectDir,
+    appName,
+  });
+
+  if (!confirmed) {
+    return {
+      projectKind: detected.kind === 'empty' ? 'empty' : 'project-no-adapter',
+      projectDir: detected.projectDir,
+      scaffolded: false,
+    };
+  }
+
   return scaffoldChatSdkApp({
     setup: input,
     parentDir: detected.projectDir,
+    appName,
     projectKind: detected.kind === 'empty' ? 'empty' : 'project-no-adapter',
   });
+}
+
+function defaultScaffoldAppName(agentIdentifier: string): string {
+  return `${agentIdentifier}-chat-sdk`;
 }
 
 async function scaffoldChatSdkApp(opts: {
   setup: ChatSdkSetupInput;
   parentDir: string;
+  appName: string;
   projectKind: ChatSdkConnectOutcome['projectKind'];
 }): Promise<ChatSdkConnectOutcome> {
   opts.setup.ui.scaffoldingChatSdk();
 
-  const scaffolded = await scaffoldChatSdkProject({
-    parentDir: opts.parentDir,
-    appName: opts.setup.options.scaffoldDir?.trim(),
-    secretKey: requireSecretKey(opts.setup.auth),
-    apiUrl: opts.setup.options.apiUrl,
-    agentIdentifier: opts.setup.agent.identifier,
-  });
+  const noop = (): undefined => undefined;
+  const originalLog = console.log;
+  const originalError = console.error;
+  if (opts.setup.ui.interactive) {
+    console.log = noop;
+    console.error = noop;
+  }
+
+  let scaffolded: { root: string; appName: string };
+  try {
+    scaffolded = await scaffoldChatSdkProject({
+      parentDir: opts.parentDir,
+      appName: opts.appName,
+      secretKey: requireSecretKey(opts.setup.auth),
+      apiUrl: opts.setup.options.apiUrl,
+      agentIdentifier: opts.setup.agent.identifier,
+    });
+  } finally {
+    if (opts.setup.ui.interactive) {
+      console.log = originalLog;
+      console.error = originalError;
+    }
+  }
 
   const merge = mergeEnvLocal({
     projectDir: scaffolded.root,

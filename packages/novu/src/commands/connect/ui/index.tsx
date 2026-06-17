@@ -195,6 +195,11 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         });
       });
     },
+    confirmScaffold({ projectDir, appName }) {
+      return new Promise<boolean>((resolve) => {
+        store.phase.set({ kind: 'confirm-scaffold', projectDir, appName, resolve });
+      });
+    },
     scaffoldingChatSdk() {
       store.phase.set({ kind: 'scaffolding-chat-sdk' });
     },
