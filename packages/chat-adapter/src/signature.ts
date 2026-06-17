@@ -55,7 +55,13 @@ export function verifyNovuSignature(
     return false;
   }
 
-  return timingSafeEqual(Buffer.from(receivedHmac, 'hex'), Buffer.from(expectedHmac, 'hex'));
+  const received = Buffer.from(receivedHmac, 'hex');
+  const expected = Buffer.from(expectedHmac, 'hex');
+  if (received.length !== expected.length) {
+    return false;
+  }
+
+  return timingSafeEqual(received, expected);
 }
 
 export function getSignatureHeader(request: Request): string | null {

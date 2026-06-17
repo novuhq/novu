@@ -48,4 +48,10 @@ describe('verifyNovuSignature', () => {
       expect(verifyNovuSignature(header, body, SECRET, { now: () => now })).toBe(false);
     }
   });
+
+  it('rejects invalid hex HMAC without throwing', () => {
+    const header = `t=${now},v1=${'g'.repeat(64)}`;
+
+    expect(verifyNovuSignature(header, body, SECRET, { now: () => now })).toBe(false);
+  });
 });
