@@ -93,3 +93,11 @@ export const CURSOR_AGENT_AUTO_LOGIN = getEnvVar('VITE_CURSOR_AGENT_AUTO_LOGIN')
 export const CURSOR_AGENT_SEED_EMAIL = getEnvVar('VITE_AGENT_SEED_EMAIL');
 
 export const CURSOR_AGENT_SEED_PASSWORD = getEnvVar('VITE_AGENT_SEED_PASSWORD');
+
+export const NOVU_WHATSAPP_APP_ID = getEnvVar('VITE_NOVU_WHATSAPP_APP_ID');
+
+export const NOVU_WHATSAPP_CONFIG_ID = getEnvVar('VITE_NOVU_WHATSAPP_CONFIG_ID');
+
+export function isWhatsAppEmbeddedSignupConfigured(): boolean {
+  return Boolean(NOVU_WHATSAPP_APP_ID && NOVU_WHATSAPP_CONFIG_ID);
+}

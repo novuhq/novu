@@ -1,0 +1,270 @@
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { decryptCredentials, FeatureFlagsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
+import { IntegrationRepository } from '@novu/dal';
+import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
+import { ConfigureWhatsAppWebhookCommand } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
+import { ConfigureWhatsAppWebhook } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
+import type { WhatsAppEmbeddedSignupResponseDto } from '../../dtos/whatsapp-embedded-signup.dto';
+import { UpdateIntegrationCommand } from '../update-integration/update-integration.command';
+import { UpdateIntegration } from '../update-integration/update-integration.usecase';
+import { WhatsAppEmbeddedSignupCommand } from './whatsapp-embedded-signup.command';
+import {
+  createWhatsAppConnectionTestTemplate,
+  exchangeEmbeddedSignupCodeForToken,
+  extractMetaError,
+  generateWhatsAppRegistrationPin,
+  getPhoneNumberDetails,
+  registerWhatsAppPhoneNumber,
+} from './whatsapp-graph-api.utils';
+
+function getNovuWhatsAppPlatformConfig(): { appId: string; appSecret: string } | undefined {
+  const appId = process.env.NOVU_WHATSAPP_APP_ID?.trim();
+  const appSecret = process.env.NOVU_WHATSAPP_APP_SECRET?.trim();
+
+  if (!appId || !appSecret) {
+    return undefined;
+  }
+
+  return { appId, appSecret };
+}
+
+@Injectable()
+export class WhatsAppEmbeddedSignup {
+  constructor(
+    private readonly featureFlagsService: FeatureFlagsService,
+    private readonly integrationRepository: IntegrationRepository,
+    private readonly updateIntegration: UpdateIntegration,
+    private readonly configureWhatsAppWebhook: ConfigureWhatsAppWebhook,
+    private readonly logger: PinoLogger
+  ) {
+    this.logger.setContext(this.constructor.name);
+  }
+
+  @InstrumentUsecase()
+  async execute(command: WhatsAppEmbeddedSignupCommand): Promise<WhatsAppEmbeddedSignupResponseDto> {
+    const isEnabled = await this.featureFlagsService.getFlag({
+      key: FeatureFlagsKeysEnum.IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED,
+      defaultValue: false,
+      environment: { _id: command.environmentId },
+      organization: { _id: command.organizationId },
+    });
+
+    if (!isEnabled) {
+      throw new ForbiddenException({
+        statusCode: 403,
+        message: 'WhatsApp Embedded Signup is not enabled for this organization.',
+        error: 'whatsapp_embedded_signup_disabled',
+      });
+    }
+
+    const platformConfig = getNovuWhatsAppPlatformConfig();
+    if (!platformConfig) {
+      return {
+        success: false,
+        error: {
+          code: 'missing_platform_config',
+          message: 'WhatsApp Tech Provider credentials are not configured on this deployment.',
+        },
+      };
+    }
+
+    const integration = await this.integrationRepository.findOne({
+      _environmentId: command.environmentId,
+      _organizationId: command.organizationId,
+      identifier: command.integrationIdentifier,
+    });
+
+    if (!integration) {
+      throw new NotFoundException(`Integration with identifier "${command.integrationIdentifier}" was not found.`);
+    }
+
+    if (integration.providerId !== ChatProviderIdEnum.WhatsAppBusiness) {
+      throw new NotFoundException(
+        `Integration "${command.integrationIdentifier}" is not a WhatsApp Business integration.`
+      );
+    }
+
+    let accessToken: string;
+    try {
+      const exchange = await exchangeEmbeddedSignupCodeForToken({
+        appId: platformConfig.appId,
+        appSecret: platformConfig.appSecret,
+        code: command.code,
+      });
+      const exchangeError = extractMetaError(exchange.body);
+      accessToken = typeof exchange.body.access_token === 'string' ? exchange.body.access_token.trim() : '';
+
+      if (exchangeError || exchange.statusCode >= 400 || !accessToken) {
+        this.logger.warn(
+          {
+            integrationId: integration._id,
+            statusCode: exchange.statusCode,
+            metaError: exchangeError,
+          },
+          'WhatsApp embedded signup: token exchange failed'
+        );
+
+        return {
+          success: false,
+          error: {
+            code: 'token_exchange_failed',
+            message: exchangeError?.message ?? 'Meta rejected the authorization code. Try connecting again.',
+          },
+        };
+      }
+    } catch (err) {
+      this.logger.warn({ err, integrationId: integration._id }, 'WhatsApp embedded signup: token exchange call failed');
+
+      return {
+        success: false,
+        error: {
+          code: 'token_exchange_failed',
+          message: 'Could not reach Meta to exchange the authorization code. Try again.',
+        },
+      };
+    }
+
+    const existingCredentials = integration.credentials ? decryptCredentials(integration.credentials) : undefined;
+
+    let businessDisplayPhone: string | undefined;
+    try {
+      const phoneDetails = await getPhoneNumberDetails(accessToken, command.phoneNumberId.trim());
+      const phoneDetailsError = extractMetaError(phoneDetails.body);
+
+      if (!phoneDetailsError && phoneDetails.statusCode < 400) {
+        businessDisplayPhone = phoneDetails.body.display_phone_number?.trim() || undefined;
+      }
+    } catch (err) {
+      this.logger.warn(
+        { err, integrationId: integration._id, phoneNumberId: command.phoneNumberId },
+        'WhatsApp embedded signup: failed to fetch business display phone (best-effort)'
+      );
+    }
+
+    const nextCredentials: ICredentials = {
+      ...(existingCredentials ?? {}),
+      apiToken: accessToken,
+      phoneNumberIdentification: command.phoneNumberId.trim(),
+      businessAccountId: command.wabaId.trim(),
+      isNovuManaged: true,
+      ...(businessDisplayPhone ? { from: businessDisplayPhone } : {}),
+    };
+    delete nextCredentials.secretKey;
+
+    await this.updateIntegration.execute(
+      UpdateIntegrationCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        userEnvironmentId: command.environmentId,
+        integrationId: integration._id,
+        credentials: nextCredentials,
+        check: false,
+      })
+    );
+
+    let phoneRegistrationWarning: string | undefined;
+    try {
+      const pin = generateWhatsAppRegistrationPin();
+      const registration = await registerWhatsAppPhoneNumber({
+        accessToken,
+        phoneNumberId: command.phoneNumberId.trim(),
+        pin,
+      });
+      const registrationError = extractMetaError(registration.body);
+
+      if (registrationError || registration.statusCode >= 400 || registration.body.success === false) {
+        phoneRegistrationWarning =
+          registrationError?.message ??
+          'Phone number registration with Meta did not succeed. You may need to register the number manually before sending messages.';
+
+        this.logger.warn(
+          {
+            integrationId: integration._id,
+            phoneNumberId: command.phoneNumberId,
+            statusCode: registration.statusCode,
+            metaError: registrationError,
+          },
+          'WhatsApp embedded signup: phone registration failed (best-effort)'
+        );
+      }
+    } catch (err) {
+      phoneRegistrationWarning =
+        'Could not register the phone number with Meta automatically. You may need to register it manually before sending messages.';
+
+      this.logger.warn(
+        { err, integrationId: integration._id, phoneNumberId: command.phoneNumberId },
+        'WhatsApp embedded signup: phone registration call failed (best-effort)'
+      );
+    }
+
+    // Best-effort: provision Novu's own UTILITY template on the customer's WABA
+    // so the onboarding "Send test" step can verify outbound delivery without
+    // asking the customer to create or approve anything in WhatsApp Manager.
+    // Meta usually auto-approves a no-variable utility template within a couple
+    // of minutes, so it is typically ready by the time the user reaches the
+    // test step. Failures here never block signup.
+    try {
+      const templateResult = await createWhatsAppConnectionTestTemplate({
+        accessToken,
+        wabaId: command.wabaId.trim(),
+      });
+      const templateError = extractMetaError(templateResult.body);
+
+      if (templateError || templateResult.statusCode >= 400) {
+        this.logger.warn(
+          {
+            integrationId: integration._id,
+            wabaId: command.wabaId,
+            statusCode: templateResult.statusCode,
+            metaError: templateError,
+          },
+          'WhatsApp embedded signup: connection test template provisioning failed (best-effort)'
+        );
+      }
+    } catch (err) {
+      this.logger.warn(
+        { err, integrationId: integration._id, wabaId: command.wabaId },
+        'WhatsApp embedded signup: connection test template provisioning call failed (best-effort)'
+      );
+    }
+
+    const webhookResult = await this.configureWhatsAppWebhook.execute(
+      ConfigureWhatsAppWebhookCommand.create({
+        userId: command.userId,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        agentIdentifier: command.agentIdentifier,
+        integrationIdentifier: command.integrationIdentifier,
+      })
+    );
+
+    if (!webhookResult.success) {
+      return {
+        success: false,
+        integrationId: integration._id,
+        integrationIdentifier: integration.identifier,
+        callbackUrl: webhookResult.callbackUrl,
+        wabaId: command.wabaId,
+        phoneRegistrationWarning,
+        error: {
+          code: 'webhook_configuration_failed',
+          message:
+            webhookResult.reason?.message ??
+            'Credentials were saved, but Novu could not register the webhook with Meta automatically.',
+        },
+        webhookReason: webhookResult.reason,
+      };
+    }
+
+    return {
+      success: true,
+      integrationId: integration._id,
+      integrationIdentifier: integration.identifier,
+      callbackUrl: webhookResult.callbackUrl,
+      wabaId: command.wabaId,
+      displayPhoneNumber: businessDisplayPhone,
+      phoneRegistrationWarning,
+    };
+  }
+}

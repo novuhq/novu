@@ -1,4 +1,4 @@
-import { ChatProviderIdEnum } from '@novu/shared';
+import { ChatProviderIdEnum, CredentialsKeyEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { RiArrowRightUpLine, RiCheckLine, RiErrorWarningLine, RiKey2Line, RiSendPlaneFill } from 'react-icons/ri';
@@ -10,9 +10,10 @@ import { Button } from '@/components/primitives/button';
 import { CopyButton } from '@/components/primitives/copy-button';
 import { InlineToast } from '@/components/primitives/inline-toast';
 import { InputPure, InputRoot, InputWrapper } from '@/components/primitives/input';
-import { getAgentApiBaseUrl } from '@/config';
+import { getAgentApiBaseUrl, isWhatsAppEmbeddedSignupConfigured } from '@/config';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useConfigureWhatsAppWebhook } from '@/hooks/use-configure-whatsapp-webhook';
+import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
 import { useSendWhatsAppTestTemplate } from '@/hooks/use-send-whatsapp-test-template';
@@ -20,6 +21,7 @@ import { QueryKeys } from '@/utils/query-keys';
 import { cn } from '@/utils/ui';
 import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus, hasWhatsAppUserCredentials } from './setup-guide-step-utils';
+import { WhatsAppEmbeddedSignupButton } from './whatsapp-embedded-signup-button';
 
 export type WhatsAppSetupGuideProps = {
   agent: AgentResponse;
@@ -33,6 +35,144 @@ const PHONE_PATTERN = /^\+[1-9]\d{6,14}$/;
 
 function buildAgentWebhookUrl(agentId: string, integrationIdentifier: string): string {
   return `${getAgentApiBaseUrl()}/v1/agents/${agentId}/webhook/${integrationIdentifier}`;
+}
+
+function buildWhatsAppDeepLink(displayPhoneNumber: string): string {
+  const digits = displayPhoneNumber.replace(/\D/g, '');
+
+  if (!digits) {
+    return '';
+  }
+
+  return `https://wa.me/${digits}?text=${encodeURIComponent('Hi')}`;
+}
+
+function EmbeddedSignupInboundTestPanel({
+  connectSubscriberId,
+  credentials,
+}: {
+  connectSubscriberId: string;
+  credentials: ICredentials | undefined;
+}) {
+  const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
+  const [phone, setPhone] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  const { data: subscriber } = useFetchSubscriber({
+    subscriberId: connectSubscriberId,
+    options: { enabled: Boolean(connectSubscriberId) },
+  });
+
+  const savedPhone = subscriber?.phone?.trim() ?? '';
+  const isPhoneSaved = Boolean(savedPhone);
+
+  useEffect(() => {
+    if (savedPhone) {
+      setPhone(savedPhone);
+    }
+  }, [savedPhone, connectSubscriberId]);
+
+  const businessDisplayPhone =
+    typeof credentials?.[CredentialsKeyEnum.From] === 'string' ? credentials[CredentialsKeyEnum.From].trim() : '';
+  const whatsAppUrl = businessDisplayPhone ? buildWhatsAppDeepLink(businessDisplayPhone) : '';
+
+  const handleSavePhone = useCallback(async () => {
+    if (!PHONE_PATTERN.test(phone.trim())) {
+      setSaveError('Enter a phone number in international format, including the country code.');
+
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveError(null);
+
+    try {
+      const environment = requireEnvironment(currentEnvironment, 'No environment selected');
+
+      await patchSubscriber({
+        environment,
+        subscriberId: connectSubscriberId,
+        subscriber: { phone: phone.trim() },
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: [QueryKeys.fetchSubscriber, environment._id, connectSubscriberId],
+      });
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Something went wrong saving your phone number.');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [connectSubscriberId, currentEnvironment, phone, queryClient]);
+
+  if (!isPhoneSaved) {
+    return (
+      <div className="border-stroke-soft flex w-full max-w-[400px] flex-col gap-2 rounded-md border p-3">
+        <p className="text-text-strong text-label-xs font-medium leading-4">Your phone number</p>
+        <p className="text-text-soft text-label-xs leading-4">
+          Enter the number you&rsquo;ll message from so Novu can link inbound replies to your account.
+        </p>
+        <div className="flex items-stretch gap-2">
+          <InputRoot size="xs" hasError={Boolean(saveError)} className="flex-1">
+            <InputWrapper>
+              <InputPure
+                value={phone}
+                onChange={(event) => {
+                  setPhone(event.target.value);
+                  if (saveError) {
+                    setSaveError(null);
+                  }
+                }}
+                type="tel"
+                inputMode="tel"
+                placeholder="+14155551234"
+                autoComplete="tel"
+                disabled={isSaving}
+              />
+            </InputWrapper>
+          </InputRoot>
+          <Button
+            type="button"
+            variant="secondary"
+            size="xs"
+            className="px-2"
+            onClick={() => {
+              void handleSavePhone();
+            }}
+            disabled={!phone || isSaving}
+            isLoading={isSaving}
+          >
+            Save
+          </Button>
+        </div>
+        {saveError ? <p className="text-error-base text-label-xs leading-4">{saveError}</p> : null}
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-stroke-soft flex w-full max-w-[400px] flex-col gap-3 rounded-md border p-3">
+      <p className="text-text-strong text-label-xs font-medium leading-4">Send a message to your business number</p>
+      {businessDisplayPhone && whatsAppUrl ? (
+        <>
+          <ReadOnlyValueRow label="Your WhatsApp business number" value={businessDisplayPhone} />
+          <SetupButton href={whatsAppUrl} leadingIcon={<RiSendPlaneFill className="size-3.5" />}>
+            Open in WhatsApp
+          </SetupButton>
+        </>
+      ) : (
+        <p className="text-text-soft text-label-xs leading-4">
+          Send any WhatsApp message to your connected business number to confirm Novu receives it.
+        </p>
+      )}
+      <p className="text-text-soft text-label-xs leading-4">
+        Message from <span className="text-text-sub font-medium">{savedPhone}</span> — Novu is listening and will
+        confirm as soon as it arrives.
+      </p>
+    </div>
+  );
 }
 
 function ReadOnlyValueRow({ label, value }: { label: string; value: string }) {
@@ -76,6 +216,7 @@ type TestStatus =
   | { state: 'idle' }
   | { state: 'sending' }
   | { state: 'sent' }
+  | { state: 'pending'; message: string }
   | { state: 'error'; message: string; helpUrl?: string };
 
 function ConnectAndTestPanel({
@@ -86,6 +227,8 @@ function ConnectAndTestPanel({
   verifyToken,
   isCredentialsSaved,
   onConnected,
+  skipConnectStep = false,
+  usesMetaSampleTemplate = false,
 }: {
   agent: AgentResponse;
   integrationIdentifier: string;
@@ -94,8 +237,12 @@ function ConnectAndTestPanel({
   verifyToken: string;
   isCredentialsSaved: boolean;
   onConnected: () => void;
+  skipConnectStep?: boolean;
+  usesMetaSampleTemplate?: boolean;
 }) {
-  const [connectStatus, setConnectStatus] = useState<ConnectStatus>({ state: 'idle' });
+  const [connectStatus, setConnectStatus] = useState<ConnectStatus>(
+    skipConnectStep ? { state: 'connected' } : { state: 'idle' }
+  );
   const [manualMarkedConfigured, setManualMarkedConfigured] = useState(false);
   const [testStatus, setTestStatus] = useState<TestStatus>({ state: 'idle' });
   const [phone, setPhone] = useState('');
@@ -111,10 +258,10 @@ function ConnectAndTestPanel({
   });
 
   useEffect(() => {
-    setConnectStatus({ state: 'idle' });
+    setConnectStatus(skipConnectStep ? { state: 'connected' } : { state: 'idle' });
     setManualMarkedConfigured(false);
     setTestStatus({ state: 'idle' });
-  }, [integrationIdentifier]);
+  }, [integrationIdentifier, skipConnectStep]);
 
   useEffect(() => {
     const savedPhone = subscriber?.phone?.trim();
@@ -209,6 +356,15 @@ function ConnectAndTestPanel({
         return;
       }
 
+      if (result.error?.code === 'template_pending_approval') {
+        setTestStatus({
+          state: 'pending',
+          message: result.error.message,
+        });
+
+        return;
+      }
+
       setTestStatus({
         state: 'error',
         message: result.error?.message ?? "Meta didn't accept the test message.",
@@ -277,8 +433,17 @@ function ConnectAndTestPanel({
         <div className="border-stroke-soft mt-2 flex w-full flex-col gap-2 rounded-md border p-3">
           <p className="text-text-strong text-label-xs font-medium leading-4">Send yourself a test message</p>
           <p className="text-text-soft text-label-xs leading-4">
-            We&rsquo;ll send the WhatsApp <span className="font-mono">hello_world</span> template from your business
-            number to confirm everything is wired up.
+            {usesMetaSampleTemplate ? (
+              <>
+                We&rsquo;ll send a test message from your business number using a template Novu set up for you — no
+                custom template setup required.
+              </>
+            ) : (
+              <>
+                We&rsquo;ll send the WhatsApp <span className="font-mono">hello_world</span> template from your business
+                number to confirm everything is wired up.
+              </>
+            )}
           </p>
           <div className="flex items-stretch gap-2">
             <InputRoot size="xs" hasError={testStatus.state === 'error'} className="flex-1">
@@ -287,7 +452,7 @@ function ConnectAndTestPanel({
                   value={phone}
                   onChange={(event) => {
                     setPhone(event.target.value);
-                    if (testStatus.state === 'error') {
+                    if (testStatus.state === 'error' || testStatus.state === 'pending') {
                       setTestStatus({ state: 'idle' });
                     }
                   }}
@@ -316,6 +481,9 @@ function ConnectAndTestPanel({
             <p className="text-success-base text-label-xs leading-4">
               Sent — check your WhatsApp inbox. Reply to that message to confirm inbound delivery.
             </p>
+          ) : null}
+          {testStatus.state === 'pending' ? (
+            <p className="text-text-soft text-label-xs leading-4">{testStatus.message}</p>
           ) : null}
           {testStatus.state === 'error' ? (
             <div className="flex flex-col gap-1.5">
@@ -391,17 +559,26 @@ export function WhatsAppSetupGuide({
   const [isCredentialsSidebarOpen, setIsCredentialsSidebarOpen] = useState(false);
   const [credentialsSavedLocally, setCredentialsSavedLocally] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [useManualCredentialsFlow, setUseManualCredentialsFlow] = useState(false);
+  const isEmbeddedSignupFlagEnabled = useFeatureFlag(FeatureFlagsKeysEnum.IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED, false);
+  const showEmbeddedSignupFlow =
+    isEmbeddedSignupFlagEnabled && isWhatsAppEmbeddedSignupConfigured() && !useManualCredentialsFlow;
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when the watched integration changes
   useEffect(() => {
     setIsConnected(false);
     setCredentialsSavedLocally(false);
+    setUseManualCredentialsFlow(false);
   }, [integrationId]);
 
   const handleConnected = useCallback(() => {
     setIsConnected(true);
     onStepsCompleted?.();
   }, [onStepsCompleted]);
+
+  const handleEmbeddedSignupSuccess = useCallback(() => {
+    setCredentialsSavedLocally(true);
+  }, []);
 
   const { integrations } = useFetchIntegrations();
 
@@ -413,25 +590,93 @@ export function WhatsAppSetupGuide({
   const selectedIntegrationIdentifier = selectedIntegration?.identifier ?? '';
   const hasCredentials = hasWhatsAppUserCredentials(selectedIntegration?.credentials);
   const isCredentialsSaved = hasCredentials || credentialsSavedLocally;
+  const embeddedListeningMessage =
+    isCredentialsSaved && !isConnected
+      ? 'Send a message to your WhatsApp business number — we’ll confirm as soon as it arrives.'
+      : 'Waiting for Meta to confirm the webhook subscription…';
 
   const verifyToken = (selectedIntegration?.credentials?.token as string | undefined) ?? '';
   const webhookUrl = buildAgentWebhookUrl(agent._id, selectedIntegrationIdentifier || 'YOUR_INTEGRATION_IDENTIFIER');
 
   const base = stepOffset;
+  const completionStep = showEmbeddedSignupFlow ? base + 2 : base + 3;
 
   const firstIncompleteStep = useMemo(() => {
     if (isConnected) {
-      return base + 3;
+      return completionStep;
     }
 
     if (!isCredentialsSaved) {
-      return base + 1;
+      return showEmbeddedSignupFlow ? base : base + 1;
     }
 
-    return base + 2;
-  }, [base, isCredentialsSaved, isConnected]);
+    return showEmbeddedSignupFlow ? base + 1 : base + 2;
+  }, [base, completionStep, isConnected, isCredentialsSaved, showEmbeddedSignupFlow]);
 
-  const stepsColumn = (
+  const embeddedSignupSteps = (
+    <>
+      <SetupStep
+        index={base}
+        status={deriveStepStatus(base, firstIncompleteStep)}
+        title="Connect your WhatsApp Business account"
+        description={
+          <span>
+            {
+              'Click Log in with Facebook to share your WhatsApp Business account with Novu. We’ll save your credentials and register the webhook automatically.'
+            }
+          </span>
+        }
+        rightContent={
+          <div className="flex flex-col gap-2">
+            {isCredentialsSaved ? (
+              <div className="text-success-base flex items-center gap-1.5">
+                <RiCheckLine className="size-4" />
+                <span className="text-label-xs font-medium">WhatsApp Business account connected</span>
+              </div>
+            ) : (
+              <>
+                {isConnectSubscriberReady && selectedIntegrationIdentifier ? (
+                  <WhatsAppEmbeddedSignupButton
+                    agentIdentifier={agent.identifier}
+                    integrationIdentifier={selectedIntegrationIdentifier}
+                    onSuccess={handleEmbeddedSignupSuccess}
+                  />
+                ) : null}
+                <button
+                  type="button"
+                  className="text-text-sub hover:text-text-strong text-label-xs w-fit font-medium underline"
+                  onClick={() => setUseManualCredentialsFlow(true)}
+                >
+                  Enter credentials manually instead
+                </button>
+              </>
+            )}
+          </div>
+        }
+      />
+
+      <SetupStep
+        index={base + 1}
+        status={deriveStepStatus(base + 1, firstIncompleteStep)}
+        title="Send a test message"
+        description={
+          isCredentialsSaved
+            ? 'Save your phone number, then open WhatsApp and send any message to your business number. Novu confirms the connection as soon as it arrives.'
+            : 'Complete WhatsApp Embedded Signup above first, then save your phone number and send a test message.'
+        }
+        rightContent={
+          isConnectSubscriberReady && isCredentialsSaved && selectedIntegration?.credentials ? (
+            <EmbeddedSignupInboundTestPanel
+              connectSubscriberId={connectSubscriberId}
+              credentials={selectedIntegration.credentials}
+            />
+          ) : null
+        }
+      />
+    </>
+  );
+
+  const manualSetupSteps = (
     <>
       <SetupStep
         index={base}
@@ -576,13 +821,17 @@ export function WhatsAppSetupGuide({
     </>
   );
 
+  const stepsColumn = showEmbeddedSignupFlow ? embeddedSignupSteps : manualSetupSteps;
+
   const listening = (
     <ListeningStatus
       agentIdentifier={agent.identifier}
       watchedIntegrationId={integrationId}
       onConnected={handleConnected}
       connectedMessage="WhatsApp is connected — your agent is ready to receive messages."
-      listeningMessage="Waiting for Meta to confirm the webhook subscription…"
+      listeningMessage={
+        showEmbeddedSignupFlow ? embeddedListeningMessage : 'Waiting for Meta to confirm the webhook subscription…'
+      }
     />
   );
 

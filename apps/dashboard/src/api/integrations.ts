@@ -110,6 +110,44 @@ export async function slackQuickSetup(
   });
 }
 
+export type WhatsAppEmbeddedSignupParams = {
+  code: string;
+  wabaId: string;
+  phoneNumberId: string;
+  integrationIdentifier: string;
+  agentIdentifier: string;
+};
+
+export type WhatsAppEmbeddedSignupResult = {
+  success: boolean;
+  integrationId?: string;
+  integrationIdentifier?: string;
+  callbackUrl?: string;
+  wabaId?: string;
+  displayPhoneNumber?: string;
+  phoneRegistrationWarning?: string;
+  error?: {
+    code: string;
+    message: string;
+  };
+  webhookReason?: {
+    code: string;
+    message: string;
+  };
+};
+
+export async function completeWhatsAppEmbeddedSignup(
+  params: WhatsAppEmbeddedSignupParams,
+  environment: IEnvironment
+): Promise<WhatsAppEmbeddedSignupResult> {
+  const response = await post<{ data: WhatsAppEmbeddedSignupResult }>('/integrations/whatsapp/embedded-signup', {
+    body: params,
+    environment,
+  });
+
+  return response.data;
+}
+
 export async function getMsTeamsArmTemplateDeployUrl(
   integrationId: string,
   environment: IEnvironment

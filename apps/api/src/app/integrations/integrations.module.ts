@@ -12,6 +12,7 @@ import {
 } from '@novu/application-generic';
 import { CommunityOrganizationRepository, CommunityUserRepository } from '@novu/dal';
 import { TelegramMobileLinkTokenService } from '../agents/channels/telegram-linking/telegram-mobile-link-token.service';
+import { AgentsModule } from '../agents/agents.module';
 import { AuthModule } from '../auth/auth.module';
 import { ChannelConnectionsModule } from '../channel-connections/channel-connections.module';
 import { ChannelEndpointsModule } from '../channel-endpoints/channel-endpoints.module';
@@ -29,7 +30,7 @@ const PROVIDERS = [
 ];
 
 @Module({
-  imports: [SharedModule, forwardRef(() => AuthModule), ChannelConnectionsModule, ChannelEndpointsModule],
+  imports: [SharedModule, forwardRef(() => AuthModule), ChannelConnectionsModule, ChannelEndpointsModule, forwardRef(() => AgentsModule)],
   controllers: [IntegrationsController, IntegrationsPublicController],
   providers: [
     ...USE_CASES,

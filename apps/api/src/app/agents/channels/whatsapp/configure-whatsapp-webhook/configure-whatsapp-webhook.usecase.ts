@@ -11,6 +11,10 @@ import {
   subscribeWabaMessagesField,
   WHATSAPP_BUSINESS_MANAGEMENT_SCOPE,
 } from '../../../../integrations/usecases/whatsapp/whatsapp-graph-api.utils';
+import {
+  resolveWhatsAppAppId,
+  resolveWhatsAppAppSecret,
+} from '../../../../integrations/usecases/whatsapp/whatsapp-credentials.utils';
 import { ConfigureWhatsAppWebhookCommand } from './configure-whatsapp-webhook.command';
 
 export type ConfigureWhatsAppWebhookFailure = {
@@ -117,7 +121,7 @@ export class ConfigureWhatsAppWebhook {
     const accessToken = typeof credentials.apiToken === 'string' ? credentials.apiToken.trim() : '';
     const verifyToken = typeof credentials.token === 'string' ? credentials.token.trim() : '';
     const wabaId = typeof credentials.businessAccountId === 'string' ? credentials.businessAccountId.trim() : '';
-    const appSecret = typeof credentials.secretKey === 'string' ? credentials.secretKey.trim() : '';
+    const appSecret = resolveWhatsAppAppSecret(credentials) ?? '';
 
     if (!accessToken || !wabaId) {
       return {
@@ -160,24 +164,24 @@ export class ConfigureWhatsAppWebhook {
         fallbackToManual: true,
         reason: {
           code: 'missing_app_secret',
-          message:
-            'Save the App Secret in the credentials form — Novu needs it to subscribe your Meta app to WhatsApp webhooks.',
+          message: credentials.isNovuManaged
+            ? 'Novu WhatsApp Tech Provider app secret is not configured on this deployment. Contact support.'
+            : 'Save the App Secret in the credentials form — Novu needs it to subscribe your Meta app to WhatsApp webhooks.',
         },
       };
     }
 
-    // Look up the Meta App ID from the access token. Required for the
-    // app-level subscription Meta demands before per-WABA `subscribed_apps`
-    // accepts an `override_callback_uri`.
-    let appId: string | undefined;
-    try {
-      const debug = await debugAccessToken(accessToken);
-      appId = debug.body.data?.app_id;
-    } catch (err) {
-      this.logger.warn(
-        { err, agentId: agent._id, integrationId: integration._id },
-        'WhatsApp auto-configure: debug_token call failed'
-      );
+    let appId = resolveWhatsAppAppId(credentials);
+    if (!appId) {
+      try {
+        const debug = await debugAccessToken(accessToken);
+        appId = debug.body.data?.app_id;
+      } catch (err) {
+        this.logger.warn(
+          { err, agentId: agent._id, integrationId: integration._id },
+          'WhatsApp auto-configure: debug_token call failed'
+        );
+      }
     }
 
     if (!appId) {

@@ -64,6 +64,10 @@ import { IssueIntegrationStoreTelegramMobileLinkResponseDto } from './dtos/issue
 import { SlackQuickSetupRequestDto, SlackQuickSetupResponseDto } from './dtos/slack-quick-setup.dto';
 import { UpdateIntegrationRequestDto } from './dtos/update-integration.dto';
 import { WhatsAppValidateTokenRequestDto, WhatsAppValidateTokenResponseDto } from './dtos/whatsapp-validate-token.dto';
+import {
+  WhatsAppEmbeddedSignupRequestDto,
+  WhatsAppEmbeddedSignupResponseDto,
+} from './dtos/whatsapp-embedded-signup.dto';
 import { AutoConfigureIntegrationCommand } from './usecases/auto-configure-integration/auto-configure-integration.command';
 import { AutoConfigureIntegration } from './usecases/auto-configure-integration/auto-configure-integration.usecase';
 import { AzureSetupOauthCallbackCommand } from './usecases/azure-setup-oauth-callback/azure-setup-oauth-callback.command';
@@ -107,6 +111,8 @@ import { UpdateIntegrationCommand } from './usecases/update-integration/update-i
 import { UpdateIntegration } from './usecases/update-integration/update-integration.usecase';
 import { WhatsAppValidateTokenCommand } from './usecases/whatsapp/whatsapp-validate-token.command';
 import { WhatsAppValidateToken } from './usecases/whatsapp/whatsapp-validate-token.usecase';
+import { WhatsAppEmbeddedSignupCommand } from './usecases/whatsapp/whatsapp-embedded-signup.command';
+import { WhatsAppEmbeddedSignup } from './usecases/whatsapp/whatsapp-embedded-signup.usecase';
 
 @ApiCommonResponses()
 @Controller('/integrations')
@@ -137,6 +143,7 @@ export class IntegrationsController {
     private azureSetupOauthCallbackUsecase: AzureSetupOauthCallback,
     private msTeamsHealthCheckUsecase: MsTeamsHealthCheck,
     private whatsAppValidateTokenUsecase: WhatsAppValidateToken,
+    private whatsAppEmbeddedSignupUsecase: WhatsAppEmbeddedSignup,
     private issueIntegrationStoreTelegramMobileLinkUsecase: IssueIntegrationStoreTelegramMobileLink,
     private logger: PinoLogger
   ) {
@@ -821,6 +828,35 @@ export class IntegrationsController {
         accessToken: body.accessToken,
         phoneNumberIdentification: body.phoneNumberIdentification,
         businessAccountId: body.businessAccountId,
+      })
+    );
+  }
+
+  @Post('/whatsapp/embedded-signup')
+  @ApiResponse(WhatsAppEmbeddedSignupResponseDto, 200)
+  @ApiOperation({
+    summary: 'Complete WhatsApp Embedded Signup',
+    description:
+      'Exchanges a Meta Embedded Signup authorization code for a business integration token, saves WhatsApp credentials on the integration, registers the phone number when possible, and configures the agent webhook with Meta.',
+  })
+  @ApiExcludeEndpoint()
+  @RequireAuthentication()
+  @RequirePermissions(PermissionsEnum.INTEGRATION_WRITE)
+  @HttpCode(HttpStatus.OK)
+  async completeWhatsAppEmbeddedSignup(
+    @UserSession() user: UserSessionData,
+    @Body() body: WhatsAppEmbeddedSignupRequestDto
+  ): Promise<WhatsAppEmbeddedSignupResponseDto> {
+    return this.whatsAppEmbeddedSignupUsecase.execute(
+      WhatsAppEmbeddedSignupCommand.create({
+        userId: user._id,
+        environmentId: user.environmentId,
+        organizationId: user.organizationId,
+        code: body.code,
+        wabaId: body.wabaId,
+        phoneNumberId: body.phoneNumberId,
+        integrationIdentifier: body.integrationIdentifier,
+        agentIdentifier: body.agentIdentifier,
       })
     );
   }

@@ -92,6 +92,8 @@ export enum FeatureFlagsKeysEnum {
   IS_ACTION_STEP_RESOLVER_ENABLED = 'IS_ACTION_STEP_RESOLVER_ENABLED',
   /** Enable conversational Agents UI in the dashboard; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_CONVERSATIONAL_AGENTS_ENABLED` when self-hosted. */
   IS_CONVERSATIONAL_AGENTS_ENABLED = 'IS_CONVERSATIONAL_AGENTS_ENABLED',
+  /** Enable WhatsApp Embedded Signup (Meta Tech Provider) in the agent onboarding guide; create the boolean in LaunchDarkly for cloud, or set `VITE_IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED` when self-hosted. */
+  IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED = 'IS_WHATSAPP_EMBEDDED_SIGNUP_ENABLED',
   /** Enable managed-runtime mode for Agents (e.g. Claude Platform). Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_MANAGED_AGENT_RUNTIME_ENABLED` when self-hosted. */
   IS_MANAGED_AGENT_RUNTIME_ENABLED = 'IS_MANAGED_AGENT_RUNTIME_ENABLED',
   /** Enable Novu-managed demo Claude provider auto-provisioned on dev environments. Create the boolean in LaunchDarkly for cloud, or set `VITE_IS_DEMO_MANAGED_CLAUDE_ENABLED` when self-hosted. */

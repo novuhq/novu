@@ -5,7 +5,7 @@ export class SendWhatsAppTestTemplateRequestDto {
   @ApiProperty({
     type: String,
     description:
-      'Novu subscriber ID whose phone field receives the hello_world WhatsApp template. The dashboard patches subscriber.phone before calling this endpoint.',
+      'Novu subscriber ID whose phone field receives the WhatsApp test template (sample_order_confirmation for Embedded Signup, hello_world for manual credentials). The dashboard patches subscriber.phone before calling this endpoint.',
     example: 'connect:user-123',
   })
   @IsString()
@@ -22,6 +22,7 @@ export class SendWhatsAppTestTemplateErrorDto {
       'recipient_not_allowed',
       'token_expired',
       'template_unavailable',
+      'template_pending_approval',
       'invalid_recipient',
       'rate_limited',
       'meta_rejected',

@@ -35,6 +35,7 @@ import { SetIntegrationAsPrimary } from './set-integration-as-primary/set-integr
 import { SlackQuickSetup } from './slack-quick-setup/slack-quick-setup.usecase';
 import { UpdateIntegration } from './update-integration/update-integration.usecase';
 import { WhatsAppValidateToken } from './whatsapp/whatsapp-validate-token.usecase';
+import { WhatsAppEmbeddedSignup } from './whatsapp/whatsapp-embedded-signup.usecase';
 
 export const USE_CASES = [
   GetInAppActivated,
@@ -69,6 +70,7 @@ export const USE_CASES = [
   MsTeamsHealthCheck,
   SlackQuickSetup,
   WhatsAppValidateToken,
+  WhatsAppEmbeddedSignup,
   IssueIntegrationStoreTelegramMobileLink,
   GetIntegrationStoreTelegramMobileLinkStatus,
   ConsumeIntegrationStoreTelegramMobileLink,

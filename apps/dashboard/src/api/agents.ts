@@ -754,6 +754,7 @@ export type SendWhatsAppTestTemplateError = {
     | 'recipient_not_allowed'
     | 'token_expired'
     | 'template_unavailable'
+    | 'template_pending_approval'
     | 'invalid_recipient'
     | 'rate_limited'
     | 'meta_rejected'

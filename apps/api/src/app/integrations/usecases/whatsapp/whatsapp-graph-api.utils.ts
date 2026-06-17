@@ -224,6 +224,7 @@ export interface SendTemplateArgs {
   to: string;
   templateName: string;
   languageCode: string;
+  bodyParameters?: string[];
 }
 
 export type SendTemplateResponse = {
@@ -236,6 +237,21 @@ export async function sendWhatsAppTemplate(args: SendTemplateArgs): Promise<{
   body: SendTemplateResponse;
   statusCode: number;
 }> {
+  const bodyParameters = args.bodyParameters?.filter((value) => value.trim().length > 0) ?? [];
+  const template: Record<string, unknown> = {
+    name: args.templateName,
+    language: { code: args.languageCode },
+  };
+
+  if (bodyParameters.length > 0) {
+    template.components = [
+      {
+        type: 'body',
+        parameters: bodyParameters.map((text) => ({ type: 'text', text })),
+      },
+    ];
+  }
+
   return metaGraphPostJson<SendTemplateResponse>(
     `/${encodeURIComponent(args.phoneNumberId)}/messages`,
     args.accessToken,
@@ -243,12 +259,141 @@ export async function sendWhatsAppTemplate(args: SendTemplateArgs): Promise<{
       messaging_product: 'whatsapp',
       to: args.to,
       type: 'template',
-      template: {
-        name: args.templateName,
-        language: { code: args.languageCode },
-      },
+      template,
     }
   );
+}
+
+export type ExchangeCodeForTokenResponse = {
+  access_token?: string;
+  token_type?: string;
+} & MetaErrorBody;
+
+export async function exchangeEmbeddedSignupCodeForToken(args: {
+  appId: string;
+  appSecret: string;
+  code: string;
+}): Promise<{ body: ExchangeCodeForTokenResponse; statusCode: number }> {
+  const url = new URL(`${META_GRAPH_API_BASE}/oauth/access_token`);
+  url.searchParams.set('client_id', args.appId);
+  url.searchParams.set('client_secret', args.appSecret);
+  url.searchParams.set('code', args.code);
+
+  const response = await safeOutboundJsonRequest<ExchangeCodeForTokenResponse>({
+    url,
+    method: 'GET',
+    timeoutMs: 10_000,
+  });
+
+  return { body: response.body, statusCode: response.statusCode };
+}
+
+export type RegisterPhoneNumberResponse = {
+  success?: boolean;
+} & MetaErrorBody;
+
+export async function registerWhatsAppPhoneNumber(args: {
+  accessToken: string;
+  phoneNumberId: string;
+  pin: string;
+}): Promise<{ body: RegisterPhoneNumberResponse; statusCode: number }> {
+  return metaGraphPostJson<RegisterPhoneNumberResponse>(
+    `/${encodeURIComponent(args.phoneNumberId)}/register`,
+    args.accessToken,
+    {
+      messaging_product: 'whatsapp',
+      pin: args.pin,
+    }
+  );
+}
+
+export function generateWhatsAppRegistrationPin(): string {
+  return String(Math.floor(100_000 + Math.random() * 900_000));
+}
+
+/**
+ * Name of the UTILITY template Novu provisions on a customer's WABA during
+ * Embedded Signup so we can verify outbound delivery without asking the
+ * customer to create or approve anything in WhatsApp Manager. A no-variable
+ * utility body keeps Meta's automated review fast (typically 1–2 minutes).
+ */
+export const NOVU_CONNECTION_TEST_TEMPLATE_NAME = 'novu_connection_test';
+export const NOVU_CONNECTION_TEST_TEMPLATE_LANGUAGE = 'en_US';
+const NOVU_CONNECTION_TEST_TEMPLATE_BODY =
+  'This is a connection test from Novu confirming your WhatsApp Business number is set up correctly and can deliver notifications.';
+
+export type WhatsAppTemplateComponent = {
+  type?: string;
+  text?: string;
+  format?: string;
+};
+
+export type WhatsAppMessageTemplate = {
+  id?: string;
+  name?: string;
+  status?: string;
+  language?: string;
+  category?: string;
+  components?: WhatsAppTemplateComponent[];
+};
+
+export type ListMessageTemplatesResponse = {
+  data?: WhatsAppMessageTemplate[];
+  paging?: unknown;
+} & MetaErrorBody;
+
+export async function listWhatsAppMessageTemplates(args: {
+  accessToken: string;
+  wabaId: string;
+}): Promise<{ body: ListMessageTemplatesResponse; statusCode: number }> {
+  return metaGraphGet<ListMessageTemplatesResponse>(
+    `/${encodeURIComponent(args.wabaId)}/message_templates`,
+    args.accessToken,
+    { searchParams: { fields: 'name,status,language,category,components', limit: '200' } }
+  );
+}
+
+export type CreateMessageTemplateResponse = {
+  id?: string;
+  status?: string;
+  category?: string;
+} & MetaErrorBody;
+
+export async function createWhatsAppConnectionTestTemplate(args: {
+  accessToken: string;
+  wabaId: string;
+}): Promise<{ body: CreateMessageTemplateResponse; statusCode: number }> {
+  return metaGraphPostJson<CreateMessageTemplateResponse>(
+    `/${encodeURIComponent(args.wabaId)}/message_templates`,
+    args.accessToken,
+    {
+      name: NOVU_CONNECTION_TEST_TEMPLATE_NAME,
+      category: 'UTILITY',
+      language: NOVU_CONNECTION_TEST_TEMPLATE_LANGUAGE,
+      components: [{ type: 'BODY', text: NOVU_CONNECTION_TEST_TEMPLATE_BODY }],
+    }
+  );
+}
+
+/**
+ * Counts the distinct positional/named body variables in a template so callers
+ * can pick a template they can actually fill. A zero-variable template can be
+ * sent without any per-recipient data, which is what we want for a test send.
+ */
+export function countTemplateRequiredBodyParameters(template: WhatsAppMessageTemplate): number {
+  const body = template.components?.find((component) => component.type?.toUpperCase() === 'BODY');
+
+  if (!body?.text) {
+    return 0;
+  }
+
+  const matches = body.text.match(/\{\{\s*[\w]+\s*\}\}/g);
+
+  if (!matches) {
+    return 0;
+  }
+
+  return new Set(matches.map((match) => match.replace(/\s/g, ''))).size;
 }
 
 export function flattenScopes(debug: DebugTokenResponse): string[] {
