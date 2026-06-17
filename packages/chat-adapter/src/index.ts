@@ -34,7 +34,7 @@ export { AgentEvent } from './types.js';
  *
  * @example
  *   import { Chat } from 'chat';
- *   import { createNovuAdapter, createMemoryState } from '@chat-adapter/novu';
+ *   import { createNovuAdapter, createMemoryState } from '@novu/chat-sdk-adapter';
  *
  *   const novu = createNovuAdapter({
  *     apiKey: process.env.NOVU_SECRET_KEY!,

@@ -3,7 +3,7 @@ import {
   type AgentBridgeRequest,
   createMemoryState,
   createNovuAdapter,
-} from '@chat-adapter/novu';
+} from '@novu/chat-sdk-adapter';
 import { Chat } from 'chat';
 import { registerHandlers } from '../agent';
 

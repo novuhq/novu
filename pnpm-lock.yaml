@@ -4308,9 +4308,6 @@ importers:
       '@ai-sdk/react':
         specifier: ^3.0.0
         version: 3.0.51(react@18.3.1)(zod@4.3.5)
-      '@chat-adapter/novu':
-        specifier: workspace:*
-        version: link:../../packages/chat-adapter
       '@clerk/react':
         specifier: ^6.6.6
         version: 6.6.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -4320,6 +4317,9 @@ importers:
       '@novu/api':
         specifier: workspace:*
         version: link:../../libs/internal-sdk
+      '@novu/chat-sdk-adapter':
+        specifier: workspace:*
+        version: link:../../packages/chat-adapter
       '@novu/nextjs':
         specifier: workspace:*
         version: link:../../packages/nextjs

@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.0",
-    "@chat-adapter/novu": "workspace:*",
+    "@novu/chat-sdk-adapter": "workspace:*",
     "@novu/api": "workspace:*",
     "@ai-sdk/react": "^3.0.0",
     "@clerk/react": "^6.6.6",

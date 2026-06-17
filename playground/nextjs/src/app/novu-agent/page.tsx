@@ -43,7 +43,7 @@ export default function NovuAgentPlayground() {
     <main style={{ maxWidth: 760, margin: '40px auto', padding: '0 20px', fontFamily: 'system-ui, sans-serif' }}>
       <h1 style={{ fontSize: 24, fontWeight: 700 }}>Novu Chat-adapter playground</h1>
       <p style={{ color: '#555', marginTop: 8 }}>
-        Craft a signed <code>AgentBridgeRequest</code> and run it through the real <code>@chat-adapter/novu</code> adapter
+        Craft a signed <code>AgentBridgeRequest</code> and run it through the real <code>@novu/chat-sdk-adapter</code> adapter
         locally. Reply POSTs are captured instead of sent to Novu — no credentials needed.
       </p>
 

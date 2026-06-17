@@ -1,4 +1,4 @@
-import { createMemoryState, createNovuAdapter, getNovuContext, type NovuAdapter } from '@chat-adapter/novu';
+import { createMemoryState, createNovuAdapter, getNovuContext, type NovuAdapter } from '@novu/chat-sdk-adapter';
 import { Chat } from 'chat';
 
 /**

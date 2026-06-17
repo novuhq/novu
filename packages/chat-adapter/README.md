@@ -1,4 +1,4 @@
-# @chat-adapter/novu
+# @novu/chat-sdk-adapter
 
 A [Chat SDK](https://www.npmjs.com/package/chat) platform adapter that exposes **all of Novu's
 normalized chat channels — Slack, WhatsApp, Microsoft Teams, Telegram, and Email — as a single
@@ -8,13 +8,13 @@ per-channel code.
 
 ```
 End-user channels ──platform webhooks──▶ NOVU (normalize) ──POST AgentBridgeRequest (HMAC)──▶
-  your Chat SDK app (@chat-adapter/novu) ──AgentReplyPayload → POST /v1/agents/:id/reply──▶ NOVU ──▶ channel
+  your Chat SDK app (@novu/chat-sdk-adapter) ──AgentReplyPayload → POST /v1/agents/:id/reply──▶ NOVU ──▶ channel
 ```
 
 ## Install
 
 ```bash
-npm install @chat-adapter/novu chat
+npm install @novu/chat-sdk-adapter chat
 ```
 
 `chat` is a peer dependency. `react` is an optional peer (only needed for JSX cards).
@@ -23,7 +23,7 @@ npm install @chat-adapter/novu chat
 
 ```ts
 import { Chat } from 'chat';
-import { createNovuAdapter, createMemoryState, getNovuContext } from '@chat-adapter/novu';
+import { createNovuAdapter, createMemoryState, getNovuContext } from '@novu/chat-sdk-adapter';
 
 const novu = createNovuAdapter({
   apiKey: process.env.NOVU_SECRET_KEY!,        // Authorization for reply POSTs
