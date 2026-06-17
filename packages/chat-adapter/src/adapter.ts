@@ -10,16 +10,22 @@ import type {
   ThreadInfo,
   UserInfo,
   WebhookOptions,
-} from 'chat';
-import { type ChatModuleParts, MessageMapper } from './message-mapper.js';
-import { ReplyClient } from './reply-client.js';
-import { channelIdFromThreadId, decodeThreadId, encodeThreadId, isDMThreadId } from './thread-id.js';
+} from "chat";
+import { type ChatModuleParts, MessageMapper } from "./message-mapper.js";
+import { ReplyClient } from "./reply-client.js";
+import {
+  patchSnapshotFromSignals,
+  patchSnapshotResolved,
+} from "./snapshot-store.js";
+import {
+  channelIdFromThreadId,
+  decodeThreadId,
+  encodeThreadId,
+  isDMThreadId,
+} from "./thread-id.js";
 import {
   type AgentBridgeRequest,
-  type AgentConversation,
-  type AgentEmailContext,
   AgentEvent,
-  type AgentHistoryEntry,
   type AgentMessageAuthor,
   type AgentReplyPayload,
   type AgentSubscriber,
@@ -29,8 +35,8 @@ import {
   type NovuTypedAdapter,
   type Signal,
   type ThreadSnapshot,
-} from './types.js';
-import { WebhookHandler } from './webhook-handler.js';
+} from "./types.js";
+import { WebhookHandler } from "./webhook-handler.js";
 
 const SNAPSHOT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 const DEDUPE_TTL_MS = 60 * 60 * 1000; // 1 hour
@@ -38,16 +44,18 @@ const DEDUPE_TTL_MS = 60 * 60 * 1000; // 1 hour
 class NotImplementedError extends Error {
   constructor(method: string) {
     super(`${method} is not supported by the Novu adapter`);
-    this.name = 'NotImplementedError';
+    this.name = "NotImplementedError";
   }
 }
 
-const deliveryKey = (deliveryId: string): string => `novu:delivery:${deliveryId}`;
+const deliveryKey = (deliveryId: string): string =>
+  `novu:delivery:${deliveryId}`;
 const snapshotKey = (threadId: string): string => `novu:snapshot:${threadId}`;
-const subscriberKey = (subscriberId: string): string => `novu:subscriber:${subscriberId}`;
+const subscriberKey = (subscriberId: string): string =>
+  `novu:subscriber:${subscriberId}`;
 
 export class NovuAdapterImpl implements NovuTypedAdapter {
-  readonly name = 'novu';
+  readonly name = "novu";
   readonly userName: string;
   readonly persistMessageHistory = false;
 
@@ -60,27 +68,34 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   private getEmojiFn!: (name: string) => EmojiValue;
 
   constructor(config: NovuAdapterConfig) {
-    if (!config.apiKey) throw new Error('createNovuAdapter: `apiKey` is required');
-    if (!config.agentIdentifier) throw new Error('createNovuAdapter: `agentIdentifier` is required');
-    if (!config.bridgeSecret) throw new Error('createNovuAdapter: `bridgeSecret` is required');
+    if (!config.apiKey)
+      throw new Error("createNovuAdapter: `apiKey` is required");
+    if (!config.agentIdentifier)
+      throw new Error("createNovuAdapter: `agentIdentifier` is required");
+    if (!config.bridgeSecret)
+      throw new Error("createNovuAdapter: `bridgeSecret` is required");
 
     this.config = config;
     this.userName = `novu-agent-${config.agentIdentifier}`;
-    this.webhookHandler = new WebhookHandler(config.bridgeSecret, config.maxSignatureAgeMs);
+    this.webhookHandler = new WebhookHandler(
+      config.bridgeSecret,
+      config.maxSignatureAgeMs,
+    );
     this.replyClient = new ReplyClient(config);
   }
 
   async initialize(chat: ChatInstance): Promise<void> {
     this.chat = chat;
 
-    const chatModule = await import('chat');
+    const chatModule = await import("chat");
     this.stringifyMarkdown = chatModule.stringifyMarkdown;
     this.getEmojiFn = chatModule.getEmoji;
     this.mapper.setChatModule({
-      Message: chatModule.Message as unknown as ChatModuleParts['Message'],
+      Message: chatModule.Message as unknown as ChatModuleParts["Message"],
       parseMarkdown: chatModule.parseMarkdown,
       stringifyMarkdown: chatModule.stringifyMarkdown,
-      toCardElement: chatModule.toCardElement as unknown as ChatModuleParts['toCardElement'],
+      toCardElement:
+        chatModule.toCardElement as unknown as ChatModuleParts["toCardElement"],
       isCardElement: chatModule.isCardElement,
     });
 
@@ -90,14 +105,16 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       try {
         await this.replyClient.registerBridge(this.config.bridgeUrl);
       } catch (err) {
-        this.chat?.getLogger('novu-adapter').warn('Failed to register bridge URL with Novu', { err });
+        this.chat
+          ?.getLogger("novu-adapter")
+          .warn("Failed to register bridge URL with Novu", { err });
       }
     }
   }
 
   private state(): StateAdapter {
     if (!this.chat) {
-      throw new Error('Adapter not initialized. Call initialize() first.');
+      throw new Error("Adapter not initialized. Call initialize() first.");
     }
 
     return this.chat.getState();
@@ -123,12 +140,16 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
 
   // -- Inbound --
 
-  async handleWebhook(request: Request, options?: WebhookOptions): Promise<Response> {
+  async handleWebhook(
+    request: Request,
+    options?: WebhookOptions,
+  ): Promise<Response> {
     if (!this.chat) {
-      throw new Error('Adapter not initialized. Call initialize() first.');
+      throw new Error("Adapter not initialized. Call initialize() first.");
     }
 
-    const { request: bridge, status } = await this.webhookHandler.parseAndVerify(request);
+    const { request: bridge, status } =
+      await this.webhookHandler.parseAndVerify(request);
     if (!bridge) {
       return new Response(null, { status });
     }
@@ -136,7 +157,11 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     const state = this.state();
 
     // Dedupe replayed deliveries (platform retries, at-least-once bridge delivery).
-    const fresh = await state.setIfNotExists(deliveryKey(bridge.deliveryId), '1', DEDUPE_TTL_MS);
+    const fresh = await state.setIfNotExists(
+      deliveryKey(bridge.deliveryId),
+      "1",
+      DEDUPE_TTL_MS,
+    );
     if (!fresh) {
       return new Response(null, { status: 200 });
     }
@@ -164,13 +189,15 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
         await this.dispatchAction(threadId, bridge, options);
         break;
       case AgentEvent.ON_REACTION:
-        this.dispatchReaction(threadId, bridge, options);
+        await this.dispatchReaction(threadId, bridge, options);
         break;
       case AgentEvent.ON_RESOLVE:
         // ACK only in v1.
         break;
       default:
-        this.chat.getLogger('novu-adapter').warn('Unknown bridge event', { event: bridge.event });
+        this.chat
+          .getLogger("novu-adapter")
+          .warn("Unknown bridge event", { event: bridge.event });
     }
 
     return new Response(null, { status: 200 });
@@ -185,7 +212,10 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     });
   }
 
-  private async cacheSnapshot(threadId: string, bridge: AgentBridgeRequest): Promise<void> {
+  private async cacheSnapshot(
+    threadId: string,
+    bridge: AgentBridgeRequest,
+  ): Promise<void> {
     const snapshot: ThreadSnapshot = {
       history: bridge.history,
       conversation: bridge.conversation,
@@ -194,18 +224,28 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       platformContext: bridge.platformContext,
     };
     const state = this.state();
-    const writes: Promise<void>[] = [state.set(snapshotKey(threadId), snapshot, SNAPSHOT_TTL_MS)];
+    const writes: Promise<void>[] = [this.saveSnapshot(threadId, snapshot)];
 
     // Also index the subscriber by id so the SDK-native `getUser(userId)` can
     // resolve it (the inbound author's `userId` is the `subscriberId`).
     if (bridge.subscriber) {
-      writes.push(state.set(subscriberKey(bridge.subscriber.subscriberId), bridge.subscriber, SNAPSHOT_TTL_MS));
+      writes.push(
+        state.set(
+          subscriberKey(bridge.subscriber.subscriberId),
+          bridge.subscriber,
+          SNAPSHOT_TTL_MS,
+        ),
+      );
     }
 
     await Promise.all(writes);
   }
 
-  private async dispatchMessage(threadId: string, bridge: AgentBridgeRequest, options?: WebhookOptions): Promise<void> {
+  private async dispatchMessage(
+    threadId: string,
+    bridge: AgentBridgeRequest,
+    options?: WebhookOptions,
+  ): Promise<void> {
     if (!bridge.message || !this.chat) return;
 
     const raw = this.mapper.toRawMessage(bridge.message, {
@@ -213,28 +253,40 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       integrationIdentifier: bridge.integrationIdentifier,
       platform: bridge.platform,
     });
-    const message = this.mapper.buildMessage(raw, threadId, this.humanAuthor(bridge));
+    const message = this.mapper.buildMessage(
+      raw,
+      threadId,
+      this.humanAuthor(bridge),
+    );
     await this.chat.processMessage(this, threadId, message, options);
   }
 
-  private async dispatchAction(threadId: string, bridge: AgentBridgeRequest, options?: WebhookOptions): Promise<void> {
+  private async dispatchAction(
+    threadId: string,
+    bridge: AgentBridgeRequest,
+    options?: WebhookOptions,
+  ): Promise<void> {
     if (!bridge.action || !this.chat) return;
 
     await this.chat.processAction(
       {
         actionId: bridge.action.id,
-        messageId: bridge.action.sourceMessageId ?? '',
+        messageId: bridge.action.sourceMessageId ?? "",
         value: bridge.action.value,
         raw: bridge,
         threadId,
         user: this.mapper.toAuthor(this.humanAuthor(bridge)),
         adapter: this,
       },
-      options
+      options,
     );
   }
 
-  private dispatchReaction(threadId: string, bridge: AgentBridgeRequest, options?: WebhookOptions): void {
+  private async dispatchReaction(
+    threadId: string,
+    bridge: AgentBridgeRequest,
+    options?: WebhookOptions,
+  ): Promise<void> {
     if (!bridge.reaction || !this.chat) return;
 
     const reactedMessage = bridge.reaction.message
@@ -244,11 +296,11 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
             integrationIdentifier: bridge.integrationIdentifier,
             platform: bridge.platform,
           }),
-          threadId
+          threadId,
         )
       : undefined;
 
-    this.chat.processReaction(
+    await this.chat.processReaction(
       {
         added: bridge.reaction.added,
         emoji: this.getEmojiFn(bridge.reaction.emoji.name),
@@ -260,7 +312,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
         user: this.mapper.toAuthor(this.humanAuthor(bridge)),
         adapter: this,
       },
-      options
+      options,
     );
   }
 
@@ -280,15 +332,15 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     if (!sub) {
       return (
         platformAuthor ?? {
-          userId: 'novu-subscriber',
-          userName: 'novu-subscriber',
-          fullName: 'Subscriber',
+          userId: "novu-subscriber",
+          userName: "novu-subscriber",
+          fullName: "Subscriber",
           isBot: false,
         }
       );
     }
 
-    const fullName = [sub.firstName, sub.lastName].filter(Boolean).join(' ');
+    const fullName = [sub.firstName, sub.lastName].filter(Boolean).join(" ");
 
     return {
       userId: sub.subscriberId,
@@ -311,38 +363,55 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
 
   // -- Outbound --
 
-  async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<NovuRawMessage>> {
+  async postMessage(
+    threadId: string,
+    message: AdapterPostableMessage,
+  ): Promise<RawMessage<NovuRawMessage>> {
     const decoded = decodeThreadId(threadId);
     const info = await this.replyClient.send(
-      this.replyPayload(decoded, { reply: await this.mapper.toReplyContent(message) })
+      this.replyPayload(decoded, {
+        reply: await this.mapper.toReplyContent(message),
+      }),
     );
     const messageId = info?.messageId ?? `novu-reply:${decoded.conversationId}`;
 
-    return { id: messageId, raw: this.outboundRaw(decoded, messageId), threadId };
+    return {
+      id: messageId,
+      raw: this.outboundRaw(decoded, messageId),
+      threadId,
+    };
   }
 
   async editMessage(
     threadId: string,
     messageId: string,
-    message: AdapterPostableMessage
+    message: AdapterPostableMessage,
   ): Promise<RawMessage<NovuRawMessage>> {
     const decoded = decodeThreadId(threadId);
     const info = await this.replyClient.send(
       this.replyPayload(decoded, {
         edit: { messageId, content: await this.mapper.toReplyContent(message) },
-      })
+      }),
     );
     const resolvedId = info?.messageId ?? messageId;
 
-    return { id: resolvedId, raw: this.outboundRaw(decoded, resolvedId), threadId };
+    return {
+      id: resolvedId,
+      raw: this.outboundRaw(decoded, resolvedId),
+      threadId,
+    };
   }
 
-  async addReaction(threadId: string, messageId: string, emoji: EmojiValue | string): Promise<void> {
+  async addReaction(
+    threadId: string,
+    messageId: string,
+    emoji: EmojiValue | string,
+  ): Promise<void> {
     const decoded = decodeThreadId(threadId);
     await this.replyClient.send(
       this.replyPayload(decoded, {
         addReactions: [{ messageId, emojiName: this.emojiName(emoji) }],
-      })
+      }),
     );
   }
 
@@ -350,12 +419,20 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   async emitSignals(threadId: string, signals: Signal[]): Promise<void> {
     const decoded = decodeThreadId(threadId);
     await this.replyClient.send(this.replyPayload(decoded, { signals }));
+    await this.patchSnapshotAfterSignals(threadId, signals);
   }
 
   /** Emit a resolve (used by `getNovuContext().resolve`). */
   async emitResolve(threadId: string, summary?: string): Promise<void> {
     const decoded = decodeThreadId(threadId);
-    await this.replyClient.send(this.replyPayload(decoded, { resolve: { summary } }));
+    await this.replyClient.send(
+      this.replyPayload(decoded, { resolve: { summary } }),
+    );
+
+    const snapshot = await this.getSnapshot(threadId);
+    if (snapshot) {
+      await this.saveSnapshot(threadId, patchSnapshotResolved(snapshot));
+    }
   }
 
   renderFormatted(content: FormattedContent): string {
@@ -365,7 +442,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   // -- Thread metadata --
 
   async fetchThread(threadId: string): Promise<ThreadInfo> {
-    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
+    const snapshot = await this.getSnapshot(threadId);
     const decoded = decodeThreadId(threadId);
 
     return {
@@ -379,54 +456,35 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
             platform: snapshot.platform,
             ...snapshot.conversation.metadata,
           }
-        : { conversationId: decoded.conversationId, platform: decoded.platform },
+        : {
+            conversationId: decoded.conversationId,
+            platform: decoded.platform,
+          },
     };
   }
 
   async fetchMessages(threadId: string): Promise<FetchResult<NovuRawMessage>> {
-    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
+    const snapshot = await this.getSnapshot(threadId);
     if (!snapshot) {
       return { messages: [] };
     }
     const decoded = decodeThreadId(threadId);
     const messages = snapshot.history.map((entry, index) =>
-      this.mapper.buildHistoryMessage(entry, index, threadId, decoded.integrationIdentifier, decoded.platform)
+      this.mapper.buildHistoryMessage(
+        entry,
+        index,
+        threadId,
+        decoded.integrationIdentifier,
+        decoded.platform,
+      ),
     );
 
     return { messages };
   }
 
-  /**
-   * Full Novu subscriber for a thread (Novu-only escape hatch, surfaced via
-   * `getNovuContext(thread).getSubscriber()`). Reads the cached bridge snapshot,
-   * so it carries the rich profile (`email`, `phone`, `avatar`, `locale`,
-   * custom `data`) — unlike the portable `Author` on each message.
-   */
-  async getSubscriber(threadId: string): Promise<AgentSubscriber | null> {
-    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
-
-    return snapshot?.subscriber ?? null;
-  }
-
-  /** Novu conversation state for a thread (status, metadata, messageCount, timestamps). */
-  async getConversation(threadId: string): Promise<AgentConversation | null> {
-    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
-
-    return snapshot?.conversation ?? null;
-  }
-
-  /** Full Novu history transcript for a thread — best source for LLM context. */
-  async getHistory(threadId: string): Promise<AgentHistoryEntry[]> {
-    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
-
-    return snapshot?.history ?? [];
-  }
-
-  /** Inbound email routing metadata when the thread arrived on the email platform. */
-  async getEmailContext(threadId: string): Promise<AgentEmailContext | null> {
-    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
-
-    return snapshot?.platformContext?.email ?? null;
+  /** Cached bridge snapshot for a thread (single source for NovuContext reads). */
+  async getSnapshot(threadId: string): Promise<ThreadSnapshot | null> {
+    return this.state().get<ThreadSnapshot>(snapshotKey(threadId));
   }
 
   /**
@@ -437,11 +495,15 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
    * `getNovuContext(thread).getSubscriber()` for those.
    */
   async getUser(userId: string): Promise<UserInfo | null> {
-    const subscriber = await this.state().get<AgentSubscriber>(subscriberKey(userId));
+    const subscriber = await this.state().get<AgentSubscriber>(
+      subscriberKey(userId),
+    );
     if (!subscriber) {
       return null;
     }
-    const fullName = [subscriber.firstName, subscriber.lastName].filter(Boolean).join(' ');
+    const fullName = [subscriber.firstName, subscriber.lastName]
+      .filter(Boolean)
+      .join(" ");
 
     return {
       userId: subscriber.subscriberId,
@@ -464,12 +526,37 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   }
 
   async deleteMessage(): Promise<void> {
-    throw new NotImplementedError('deleteMessage');
+    throw new NotImplementedError("deleteMessage");
   }
 
   // -- helpers --
 
-  private replyPayload(decoded: NovuThreadId, rest: Partial<AgentReplyPayload>): AgentReplyPayload {
+  private async saveSnapshot(
+    threadId: string,
+    snapshot: ThreadSnapshot,
+  ): Promise<void> {
+    await this.state().set(snapshotKey(threadId), snapshot, SNAPSHOT_TTL_MS);
+  }
+
+  private async patchSnapshotAfterSignals(
+    threadId: string,
+    signals: Signal[],
+  ): Promise<void> {
+    const snapshot = await this.getSnapshot(threadId);
+    if (!snapshot) {
+      return;
+    }
+
+    const patched = patchSnapshotFromSignals(snapshot, signals);
+    if (patched) {
+      await this.saveSnapshot(threadId, patched);
+    }
+  }
+
+  private replyPayload(
+    decoded: NovuThreadId,
+    rest: Partial<AgentReplyPayload>,
+  ): AgentReplyPayload {
     return {
       conversationId: decoded.conversationId,
       integrationIdentifier: decoded.integrationIdentifier,
@@ -477,11 +564,19 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     };
   }
 
-  private outboundRaw(decoded: NovuThreadId, messageId: string): NovuRawMessage {
+  private outboundRaw(
+    decoded: NovuThreadId,
+    messageId: string,
+  ): NovuRawMessage {
     return {
       id: messageId,
-      text: '',
-      author: { userId: this.userName, userName: this.userName, fullName: this.userName, isBot: true },
+      text: "",
+      author: {
+        userId: this.userName,
+        userName: this.userName,
+        fullName: this.userName,
+        isBot: true,
+      },
       timestamp: new Date().toISOString(),
       conversationId: decoded.conversationId,
       integrationIdentifier: decoded.integrationIdentifier,
@@ -490,7 +585,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   }
 
   private emojiName(emoji: EmojiValue | string): string {
-    if (typeof emoji === 'string') {
+    if (typeof emoji === "string") {
       return emoji;
     }
 

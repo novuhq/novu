@@ -1,4 +1,4 @@
-import type { Adapter, CardElement, Emoji, Thread } from 'chat';
+import type { Adapter, CardElement, Emoji, Thread } from "chat";
 
 // ---------------------------------------------------------------------------
 // Adapter configuration
@@ -47,17 +47,17 @@ export interface NovuAdapterConfig {
 // ---------------------------------------------------------------------------
 
 export enum AgentEvent {
-  ON_MESSAGE = 'onMessage',
-  ON_ACTION = 'onAction',
-  ON_RESOLVE = 'onResolve',
-  ON_REACTION = 'onReaction',
+  ON_MESSAGE = "onMessage",
+  ON_ACTION = "onAction",
+  ON_RESOLVE = "onResolve",
+  ON_REACTION = "onReaction",
 }
 
 export interface AgentMessageAuthor {
   userId: string;
   fullName: string;
   userName: string;
-  isBot: boolean | 'unknown';
+  isBot: boolean | "unknown";
 }
 
 export interface AgentAttachment {
@@ -205,12 +205,12 @@ export interface AddReactionPayload {
 }
 
 export type MetadataSignal =
-  | { type: 'metadata'; action: 'set'; key: string; value: unknown }
-  | { type: 'metadata'; action: 'delete'; key: string }
-  | { type: 'metadata'; action: 'clear' };
+  | { type: "metadata"; action: "set"; key: string; value: unknown }
+  | { type: "metadata"; action: "delete"; key: string }
+  | { type: "metadata"; action: "clear" };
 
 export type TriggerSignal = {
-  type: 'trigger';
+  type: "trigger";
   workflowId: string;
   to?: TriggerRecipientsPayload;
   payload?: Record<string, unknown>;
@@ -311,7 +311,7 @@ export interface NovuContext {
   /** Trigger a Novu workflow for this conversation's subscriber (or explicit recipients). */
   trigger(
     workflowId: string,
-    opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }
+    opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> },
   ): Promise<void>;
   /** Persist a key/value into `conversation.metadata`. */
   setMetadata(key: string, value: unknown): Promise<void>;
@@ -337,10 +337,7 @@ export interface NovuContextSource {
   emitSignals(threadId: string, signals: Signal[]): Promise<void>;
   emitResolve(threadId: string, summary?: string): Promise<void>;
   decodeThreadId(threadId: string): NovuThreadId;
-  getSubscriber(threadId: string): Promise<AgentSubscriber | null>;
-  getConversation(threadId: string): Promise<AgentConversation | null>;
-  getHistory(threadId: string): Promise<AgentHistoryEntry[]>;
-  getEmailContext(threadId: string): Promise<AgentEmailContext | null>;
+  getSnapshot(threadId: string): Promise<ThreadSnapshot | null>;
 }
 
 export type AdapterThread = Thread;
