@@ -349,18 +349,25 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
       ...sessionProps,
     });
 
-    const ranTunnel = await maybeRunChatSdkTunnel({
-      outcome: chatSdkOutcome,
-      options,
-      client: session.client,
-      agent,
-    });
+    const willRunTunnel =
+      chatSdkOutcome !== undefined &&
+      (chatSdkOutcome.scaffolded || chatSdkOutcome.projectKind === 'has-adapter') &&
+      !chatSdkOutcome.skippedInstall;
 
-    if (ranTunnel) {
+    // Tear down Ink before starting the bridge server so its stdout/console
+    // output does not trigger a second orb render while the TUI is still mounted.
+    const exitCode = await ui.shutdown();
+
+    if (willRunTunnel) {
+      await maybeRunChatSdkTunnel({
+        outcome: chatSdkOutcome,
+        options,
+        client: session.client,
+        agent,
+      });
+
       return { exitCode: 0 };
     }
-
-    const exitCode = await ui.shutdown();
 
     return { exitCode };
   } catch (err) {
