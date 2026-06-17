@@ -119,13 +119,44 @@ export interface AgentReaction {
   message: AgentMessage | null;
 }
 
+/** Resolved inbound email domain metadata (present when `platform === 'email'`). */
+export interface AgentEmailDomainContext {
+  id: string;
+  name: string;
+  data?: Record<string, string>;
+}
+
+/** Resolved inbound email route metadata (present when `platform === 'email'`). */
+export interface AgentEmailRouteContext {
+  address: string;
+  data?: Record<string, string>;
+}
+
+/** Resolved inbound email envelope (present when `platform === 'email'`). */
+export interface AgentEmailContext {
+  domain?: AgentEmailDomainContext;
+  route?: AgentEmailRouteContext;
+  /** Platform-native Message-ID of the message that started this email thread. */
+  rootMessageId?: string;
+}
+
 export interface AgentPlatformContext {
   threadId: string;
   channelId: string;
   isDM: boolean;
   message?: unknown;
-  email?: Record<string, unknown>;
+  email?: AgentEmailContext;
 }
+
+/** Workflow trigger recipient (mirrors @novu/shared TriggerRecipientsPayload). */
+export type TriggerRecipientSubscriber = string | { subscriberId: string };
+
+export type TriggerRecipientTopic = { type: string; topicKey: string };
+
+export type TriggerRecipientsPayload =
+  | TriggerRecipientSubscriber
+  | TriggerRecipientTopic
+  | Array<TriggerRecipientSubscriber | TriggerRecipientTopic>;
 
 export interface AgentBridgeRequest {
   version: number;
@@ -181,7 +212,7 @@ export type MetadataSignal =
 export type TriggerSignal = {
   type: 'trigger';
   workflowId: string;
-  to?: unknown;
+  to?: TriggerRecipientsPayload;
   payload?: Record<string, unknown>;
 };
 
@@ -215,6 +246,14 @@ export interface NovuThreadId {
   isDM: boolean;
 }
 
+/** Novu history fields preserved on messages reconstructed from bridge history. */
+export interface NovuHistoryFields {
+  role: string;
+  type: string;
+  richContent?: Record<string, unknown>;
+  signalData?: { type: string; payload?: Record<string, unknown> };
+}
+
 /** Platform-native raw message carried on `RawMessage.raw` / `platformContext.message`. */
 export interface NovuRawMessage {
   id: string;
@@ -225,6 +264,8 @@ export interface NovuRawMessage {
   conversationId: string;
   integrationIdentifier: string;
   platform: string;
+  /** Set when this message was built from Novu conversation history. */
+  history?: NovuHistoryFields;
 }
 
 /** Cached snapshot of the latest bridge request for a thread (for fetchThread/fetchMessages). */
@@ -249,12 +290,35 @@ export interface NovuContext {
    * `adapter.getUser(userId)` / `message.author`.
    */
   getSubscriber(): Promise<AgentSubscriber | null>;
+  /**
+   * Live Novu conversation state for this thread (status, metadata, messageCount,
+   * timestamps). Resolved from the cached bridge snapshot.
+   */
+  getConversation(): Promise<AgentConversation | null>;
+  /**
+   * Full Novu conversation history as delivered on the bridge — the best source
+   * for LLM context (`role`, `content`, `richContent`, `signalData`). Prefer this
+   * over iterating `fetchMessages` when you need the canonical Novu transcript.
+   */
+  getHistory(): Promise<AgentHistoryEntry[]>;
+  /**
+   * Inbound email routing metadata when `platform === 'email'` (domain, route,
+   * rootMessageId for threading). `null` on other platforms or when absent.
+   */
+  getEmailContext(): Promise<AgentEmailContext | null>;
+  /** Read a key from the current `conversation.metadata` snapshot. */
+  getMetadata(key: string): Promise<unknown>;
   /** Trigger a Novu workflow for this conversation's subscriber (or explicit recipients). */
-  trigger(workflowId: string, opts?: { to?: unknown; payload?: Record<string, unknown> }): Promise<void>;
+  trigger(
+    workflowId: string,
+    opts?: { to?: TriggerRecipientsPayload; payload?: Record<string, unknown> }
+  ): Promise<void>;
   /** Persist a key/value into `conversation.metadata`. */
   setMetadata(key: string, value: unknown): Promise<void>;
   /** Delete a key from `conversation.metadata`. */
   deleteMetadata(key: string): Promise<void>;
+  /** Reset `conversation.metadata` to `{}`. */
+  clearMetadata(): Promise<void>;
   /** Mark the conversation resolved, with an optional summary. */
   resolve(summary?: string): Promise<void>;
 }
@@ -274,6 +338,9 @@ export interface NovuContextSource {
   emitResolve(threadId: string, summary?: string): Promise<void>;
   decodeThreadId(threadId: string): NovuThreadId;
   getSubscriber(threadId: string): Promise<AgentSubscriber | null>;
+  getConversation(threadId: string): Promise<AgentConversation | null>;
+  getHistory(threadId: string): Promise<AgentHistoryEntry[]>;
+  getEmailContext(threadId: string): Promise<AgentEmailContext | null>;
 }
 
 export type AdapterThread = Thread;

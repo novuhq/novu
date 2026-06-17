@@ -7,6 +7,7 @@ import type {
   MessageData,
   Root,
 } from 'chat';
+import { mapReplyFiles } from './reply-files.js';
 import type {
   AgentAttachment,
   AgentHistoryEntry,
@@ -81,7 +82,11 @@ export class MessageMapper {
     });
   }
 
-  /** Build a chat `Message` from a history entry (used by `fetchMessages`). */
+  /**
+   * Build a chat `Message` from a Novu history entry (used by `fetchMessages`).
+   * Preserves `role`, `type`, `richContent`, and `signalData` on `message.raw.history`
+   * and maps signed attachments from `richContent.attachments` when present.
+   */
   buildHistoryMessage(
     entry: AgentHistoryEntry,
     index: number,
@@ -90,6 +95,7 @@ export class MessageMapper {
     platform: string
   ): ChatMessage<NovuRawMessage> {
     const isAssistant = entry.role === 'assistant' || entry.role === 'system';
+    const historyAttachments = attachmentsFromRichContent(entry.richContent);
     const raw: NovuRawMessage = {
       id: `novu-history:${index}`,
       text: entry.content,
@@ -100,9 +106,16 @@ export class MessageMapper {
         isBot: isAssistant,
       },
       timestamp: entry.createdAt,
+      attachments: historyAttachments,
       conversationId: '',
       integrationIdentifier,
       platform,
+      history: {
+        role: entry.role,
+        type: entry.type,
+        richContent: entry.richContent,
+        signalData: entry.signalData,
+      },
     };
 
     return new this.parts.Message<NovuRawMessage>({
@@ -113,7 +126,7 @@ export class MessageMapper {
       raw,
       author: this.toAuthor(raw.author, isAssistant),
       metadata: { dateSent: parseDate(entry.createdAt), edited: false },
-      attachments: [],
+      attachments: historyAttachments.map(toChatAttachment),
     });
   }
 
@@ -129,7 +142,7 @@ export class MessageMapper {
 
   // -- outbound: AdapterPostableMessage -> ReplyContent --
 
-  toReplyContent(message: AdapterPostableMessage): ReplyContent {
+  async toReplyContent(message: AdapterPostableMessage): Promise<ReplyContent> {
     if (typeof message === 'string') {
       return { markdown: message };
     }
@@ -138,20 +151,28 @@ export class MessageMapper {
     }
     if (typeof message === 'object' && message !== null) {
       const obj = message as unknown as Record<string, unknown>;
+      const files = await mapReplyFiles(obj.files ?? obj.attachments);
+
       if (typeof obj.markdown === 'string') {
-        return { markdown: obj.markdown };
+        return files ? { markdown: obj.markdown, files } : { markdown: obj.markdown };
       }
       if (typeof obj.raw === 'string') {
-        return { markdown: obj.raw };
+        return files ? { markdown: obj.raw, files } : { markdown: obj.raw };
       }
       if (obj.ast) {
-        return { markdown: this.parts.stringifyMarkdown(obj.ast as Root) };
+        const markdown = this.parts.stringifyMarkdown(obj.ast as Root);
+
+        return files ? { markdown, files } : { markdown };
       }
       if (obj.card !== undefined) {
-        return { card: this.toCard(obj.card) };
+        const card = this.toCard(obj.card);
+
+        return files ? { card, files } : { card };
       }
       if (obj.type !== undefined) {
-        return { card: this.toCard(message) };
+        const card = this.toCard(message);
+
+        return files ? { card, files } : { card };
       }
     }
 
@@ -170,6 +191,32 @@ function parseDate(value: string | undefined): Date {
   const date = new Date(value);
 
   return Number.isNaN(date.getTime()) ? new Date(0) : date;
+}
+
+function attachmentsFromRichContent(richContent?: Record<string, unknown>): AgentAttachment[] {
+  const raw = richContent?.attachments;
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const attachments: AgentAttachment[] = [];
+
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') {
+      continue;
+    }
+
+    const att = item as Record<string, unknown>;
+    attachments.push({
+      type: typeof att.type === 'string' ? att.type : 'file',
+      url: typeof att.url === 'string' ? att.url : undefined,
+      name: typeof att.name === 'string' ? att.name : undefined,
+      mimeType: typeof att.mimeType === 'string' ? att.mimeType : undefined,
+      size: typeof att.size === 'number' ? att.size : undefined,
+    });
+  }
+
+  return attachments;
 }
 
 function toChatAttachment(att: AgentAttachment): Attachment {

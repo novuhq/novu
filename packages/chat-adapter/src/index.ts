@@ -10,6 +10,9 @@ export type {
   AgentAttachment,
   AgentBridgeRequest,
   AgentConversation,
+  AgentEmailContext,
+  AgentEmailDomainContext,
+  AgentEmailRouteContext,
   AgentHistoryEntry,
   AgentMessage,
   AgentMessageAuthor,
@@ -19,11 +22,14 @@ export type {
   NovuAdapter,
   NovuAdapterConfig,
   NovuContext,
+  NovuHistoryFields,
   NovuRawMessage,
   NovuThreadId,
   NovuTypedAdapter,
   ReplyContent,
+  ReplyFileRef,
   Signal,
+  TriggerRecipientsPayload,
 } from './types.js';
 export { AgentEvent } from './types.js';
 

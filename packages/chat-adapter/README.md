@@ -59,6 +59,11 @@ chat.onSubscribedMessage(async (thread, message) => {
 
   // Full Novu subscriber (email, phone, avatar, locale, custom `data`):
   const subscriber = await ctx.getSubscriber();
+
+  // Canonical transcript for LLM context:
+  const history = await ctx.getHistory();
+  const ticketId = await ctx.getMetadata('ticketId');
+
   if (subscriber?.data?.plan === 'enterprise') {
     await thread.post('Priority support enabled.');
   }
@@ -66,6 +71,12 @@ chat.onSubscribedMessage(async (thread, message) => {
   if (ctx.platform === 'whatsapp') {
     await ctx.trigger('escalation-email', { payload: { text: message.text } });
   }
+});
+
+// Post markdown with a file attachment:
+await thread.post({
+  markdown: 'See attached report',
+  files: [{ filename: 'report.txt', data: Buffer.from('...'), mimeType: 'text/plain' }],
 });
 
 // Portable, SDK-native identity lookup — works for any Chat SDK code,
@@ -86,8 +97,11 @@ Next.js route handlers, Hono, etc.).
   `adapter.getUser(userId)` maps the subscriber to `UserInfo` (id/name/email/avatar); and the full
   rich profile (`phone`, `locale`, custom `data`) is available via
   `getNovuContext(thread).getSubscriber()`.
-- **Out:** markdown, cards, edits (in-place), reaction adds, edit-based streaming (via the chat
-  package's built-in cadence), plus opt-in `getNovuContext().trigger / setMetadata / resolve`.
+- **Conversation & history:** `getNovuContext(thread).getConversation()` for status/metadata;
+  `getHistory()` for the canonical Novu transcript (best for LLM context); `getMetadata(key)` to
+  read conversation metadata; `getEmailContext()` on email threads.
+- **Out:** markdown, cards, **files** (via postable `files`/`attachments`), edits (in-place), reaction adds, edit-based streaming (via the chat
+  package's built-in cadence), plus opt-in `getNovuContext().trigger / setMetadata / clearMetadata / resolve`.
 - **Routing (recommended):** do **not** register `onDirectMessage` — use `onNewMention` for the
   first message (`thread.isDM` for DM vs channel) and `onSubscribedMessage` for all follow-ups.
   The adapter pre-subscribes when `messageCount > 1` (Novu history always includes the

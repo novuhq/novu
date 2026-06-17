@@ -16,7 +16,10 @@ import { ReplyClient } from './reply-client.js';
 import { channelIdFromThreadId, decodeThreadId, encodeThreadId, isDMThreadId } from './thread-id.js';
 import {
   type AgentBridgeRequest,
+  type AgentConversation,
+  type AgentEmailContext,
   AgentEvent,
+  type AgentHistoryEntry,
   type AgentMessageAuthor,
   type AgentReplyPayload,
   type AgentSubscriber,
@@ -311,7 +314,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
   async postMessage(threadId: string, message: AdapterPostableMessage): Promise<RawMessage<NovuRawMessage>> {
     const decoded = decodeThreadId(threadId);
     const info = await this.replyClient.send(
-      this.replyPayload(decoded, { reply: this.mapper.toReplyContent(message) })
+      this.replyPayload(decoded, { reply: await this.mapper.toReplyContent(message) })
     );
     const messageId = info?.messageId ?? `novu-reply:${decoded.conversationId}`;
 
@@ -326,7 +329,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     const decoded = decodeThreadId(threadId);
     const info = await this.replyClient.send(
       this.replyPayload(decoded, {
-        edit: { messageId, content: this.mapper.toReplyContent(message) },
+        edit: { messageId, content: await this.mapper.toReplyContent(message) },
       })
     );
     const resolvedId = info?.messageId ?? messageId;
@@ -403,6 +406,27 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
 
     return snapshot?.subscriber ?? null;
+  }
+
+  /** Novu conversation state for a thread (status, metadata, messageCount, timestamps). */
+  async getConversation(threadId: string): Promise<AgentConversation | null> {
+    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
+
+    return snapshot?.conversation ?? null;
+  }
+
+  /** Full Novu history transcript for a thread — best source for LLM context. */
+  async getHistory(threadId: string): Promise<AgentHistoryEntry[]> {
+    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
+
+    return snapshot?.history ?? [];
+  }
+
+  /** Inbound email routing metadata when the thread arrived on the email platform. */
+  async getEmailContext(threadId: string): Promise<AgentEmailContext | null> {
+    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
+
+    return snapshot?.platformContext?.email ?? null;
   }
 
   /**

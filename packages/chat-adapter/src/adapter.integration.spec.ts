@@ -3,6 +3,7 @@ import { createMemoryState } from '@chat-adapter/state-memory';
 import { Actions, Button, Card, CardText, Chat } from 'chat';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNovuAdapter, getNovuContext } from './index.js';
+import { encodeThreadId } from './thread-id.js';
 import type { AgentBridgeRequest, AgentSubscriber, NovuRawMessage } from './types.js';
 
 const BRIDGE_SECRET = 'bridge-secret';
@@ -300,6 +301,149 @@ describe('Novu adapter end-to-end', () => {
       isBot: false,
     });
     expect(await adapter.getUser?.('unknown')).toBeNull();
+  });
+
+  it('exposes conversation, history, metadata, and email context via getNovuContext', async () => {
+    const { adapter, chat } = buildChat();
+    let ctx: ReturnType<typeof getNovuContext> | null = null;
+    chat.onSubscribedMessage(async (thread) => {
+      ctx = getNovuContext(thread);
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        platform: 'email',
+        conversation: {
+          identifier: 'conv-1',
+          status: 'open',
+          metadata: { ticketId: 'T-42' },
+          messageCount: 2,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          lastActivityAt: '2026-01-02T00:00:00.000Z',
+        },
+        history: [
+          {
+            role: 'user',
+            type: 'text',
+            content: 'earlier with attachment',
+            richContent: {
+              attachments: [{ type: 'image', url: 'https://cdn.example.com/a.png', name: 'a.png' }],
+            },
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+        platformContext: {
+          threadId: 'email-thread',
+          channelId: 'email-channel',
+          isDM: false,
+          email: {
+            domain: { id: 'dom-1', name: 'support.example.com' },
+            route: { address: 'help@support.example.com' },
+            rootMessageId: '<root@example.com>',
+          },
+        },
+      })
+    );
+
+    expect(ctx).not.toBeNull();
+    const novu = ctx!;
+
+    expect(await novu.getConversation()).toMatchObject({
+      identifier: 'conv-1',
+      status: 'open',
+      messageCount: 2,
+      metadata: { ticketId: 'T-42' },
+    });
+    expect(await novu.getMetadata('ticketId')).toBe('T-42');
+    expect(await novu.getHistory()).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          role: 'user',
+          content: 'earlier with attachment',
+          richContent: expect.objectContaining({
+            attachments: expect.arrayContaining([expect.objectContaining({ url: 'https://cdn.example.com/a.png' })]),
+          }),
+        }),
+      ])
+    );
+    expect(await novu.getEmailContext()).toMatchObject({
+      domain: { id: 'dom-1', name: 'support.example.com' },
+      route: { address: 'help@support.example.com' },
+      rootMessageId: '<root@example.com>',
+    });
+
+    await novu.clearMetadata();
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        body: expect.stringContaining('"action":"clear"'),
+      })
+    );
+  });
+
+  it('preserves Novu history fields on fetchMessages', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async () => {});
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        history: [
+          {
+            role: 'assistant',
+            type: 'card',
+            content: 'Card fallback text',
+            richContent: { card: { type: 'card', title: 'Saved card', children: [] } },
+            senderName: 'Agent',
+            createdAt: '2026-01-01T00:00:00.000Z',
+          },
+        ],
+      })
+    );
+
+    const threadId = encodeThreadId({
+      platform: 'slack',
+      integrationIdentifier: 'slack-prod',
+      conversationId: 'conv-1',
+      isDM: false,
+    });
+    const { messages } = await adapter.fetchMessages(threadId);
+    const historyMsg = messages[0]!;
+
+    expect(historyMsg.text).toBe('Card fallback text');
+    expect((historyMsg.raw as NovuRawMessage).history).toMatchObject({
+      role: 'assistant',
+      type: 'card',
+      richContent: expect.objectContaining({ card: expect.objectContaining({ title: 'Saved card' }) }),
+    });
+  });
+
+  it('normalizes outbound files on markdown replies into reply.files', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async (thread) => {
+      await thread.post({
+        markdown: 'See attached',
+        files: [{ filename: 'note.txt', data: Buffer.from('hello'), mimeType: 'text/plain' }],
+      });
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest());
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [, init] = fetchMock.mock.calls[0]!;
+    const payload = JSON.parse(init.body as string);
+    expect(payload.reply.markdown).toBe('See attached');
+    expect(payload.reply.files).toEqual([
+      expect.objectContaining({
+        filename: 'note.txt',
+        mimeType: 'text/plain',
+        data: Buffer.from('hello').toString('base64'),
+      }),
+    ]);
   });
 
   it('dedupes a replayed deliveryId (same delivery processed once)', async () => {
