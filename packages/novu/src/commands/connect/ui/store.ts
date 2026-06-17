@@ -1,12 +1,6 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
-import type {
-  AgentBrainChoice,
-  AgentRuntimeChoice,
-  AgentSummary,
-  ChannelChoice,
-  ChatSdkConnectOutcome,
-} from '../types';
+import type { AgentConnectMode, AgentSummary, ChannelChoice, ChatSdkConnectOutcome } from '../types';
 import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResult } from './ui';
 
 export type Phase =
@@ -18,16 +12,15 @@ export type Phase =
   | { kind: 'auth'; dashboardUrl: string | null; status: string }
   | { kind: 'listing-agents' }
   | { kind: 'loading-integrations' }
-  | { kind: 'pick'; agents: AgentSummary[]; resolve: (pick: PickResult) => void }
   | {
-      kind: 'pick-brain';
-      preselected?: AgentBrainChoice;
-      resolve: (brain: AgentBrainChoice) => void;
+      kind: 'pick';
+      agents: AgentSummary[];
+      resolve: (pick: PickResult) => void;
     }
   | {
-      kind: 'pick-runtime';
-      preselected?: AgentRuntimeChoice;
-      resolve: (runtime: AgentRuntimeChoice) => void;
+      kind: 'pick-connect-mode';
+      preselected?: AgentConnectMode;
+      resolve: (mode: AgentConnectMode) => void;
     }
   | {
       kind: 'pick-integration';
@@ -49,7 +42,11 @@ export type Phase =
       resolve: (region: string) => void;
     }
   | { kind: 'verifying-credentials' }
-  | { kind: 'describe'; previousPrompt?: string; resolve: (prompt: string) => void }
+  | {
+      kind: 'describe';
+      previousPrompt?: string;
+      resolve: (prompt: string) => void;
+    }
   | {
       kind: 'prompt-agent-name';
       defaultName: string;
@@ -165,7 +162,7 @@ export type Phase =
       dashboardRedirectChannel: ChannelChoice | null;
       isKeyless: boolean;
       claimUrl: string | null;
-      brain?: AgentBrainChoice;
+      connectMode?: AgentConnectMode;
       chatSdkOutcome?: ChatSdkConnectOutcome;
     }
   | { kind: 'error'; message: string };

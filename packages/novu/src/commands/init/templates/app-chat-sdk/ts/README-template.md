@@ -9,7 +9,7 @@ npm install
 npm run dev:novu
 ```
 
-Open http://localhost:4000 and connect a channel with `npx novu connect --brain chat-sdk`.
+Open http://localhost:4000 and connect a channel with `npx novu connect --runtime chat-sdk`.
 
 ## Environment
 

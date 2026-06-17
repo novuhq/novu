@@ -5,7 +5,7 @@ import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
-import type { AgentBrainChoice, AgentRuntimeChoice, ChannelChoice, ChatSdkConnectOutcome } from '../types';
+import type { AgentConnectMode, ChannelChoice, ChatSdkConnectOutcome } from '../types';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore } from './store';
@@ -52,25 +52,14 @@ export function PhaseContent({
     case 'loading-integrations':
       return <Text color="cyan">Looking up agent runtime integrations…</Text>;
 
-    case 'pick-brain':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Box flexDirection="column">
-            <Text bold>How should your agent think?</Text>
-            <Text dimColor>Managed AI runs on Novu. Chat SDK uses your own app as the brain.</Text>
-          </Box>
-          <BrainSelect onChange={(value) => phase.resolve(value)} />
-        </Box>
-      );
-
-    case 'pick-runtime':
+    case 'pick-connect-mode':
       return (
         <Box flexDirection="column" gap={1}>
           <Box flexDirection="column">
             <Text bold>Where do you want the agent to run?</Text>
             <Text dimColor>Choose the agent runtime. Novu connects it to Slack, email, and more.</Text>
           </Box>
-          <RuntimeSelect onChange={(value) => phase.resolve(value)} />
+          <ConnectModeSelect onChange={(value) => phase.resolve(value)} />
         </Box>
       );
 
@@ -206,7 +195,12 @@ export function PhaseContent({
       );
 
     case 'scaffolding-chat-sdk':
-      return <Text color="cyan">Scaffolding your Chat SDK project…</Text>;
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text color="cyan">Scaffolding your Chat SDK app…</Text>
+          <Text dimColor>Installing dependencies and wiring Novu env vars.</Text>
+        </Box>
+      );
 
     case 'chat-sdk-scaffolded':
       return (
@@ -442,31 +436,22 @@ export function PhaseContent({
 }
 
 function renderChatSdkSuccessMessage(
-  brain: AgentBrainChoice | undefined,
+  connectMode: AgentConnectMode | undefined,
   outcome: ChatSdkConnectOutcome | undefined
 ): React.ReactElement | null {
-  if (brain !== 'chat-sdk' || !outcome) {
+  if (connectMode !== 'chat-sdk' || !outcome) {
     return null;
   }
 
   if (outcome.scaffolded) {
-    return <Text color="cyan">Project scaffolded at {outcome.projectDir}. Starting dev server and tunnel next…</Text>;
+    return <Text color="cyan">Chat SDK app ready at {outcome.projectDir}. Starting dev server and tunnel…</Text>;
   }
 
   if (outcome.projectKind === 'has-adapter') {
-    return <Text color="cyan">Environment wired — start your app and point Novu at your bridge URL.</Text>;
+    return <Text color="cyan">Environment wired — starting your app and dev tunnel…</Text>;
   }
 
   return <Text color="cyan">Install the skill and ask your coding agent to wire the adapter.</Text>;
-}
-
-function BrainSelect({ onChange }: { onChange: (value: AgentBrainChoice) => void }): React.ReactElement {
-  const options: Array<{ label: string; value: AgentBrainChoice }> = [
-    { label: 'Managed AI (Novu runs the brain)', value: 'managed' },
-    { label: 'Chat SDK (your own app is the brain)', value: 'chat-sdk' },
-  ];
-
-  return <Select options={options} onChange={(value) => onChange(value as AgentBrainChoice)} />;
 }
 
 function ConfirmEnvSecretOverwriteContent({
@@ -497,11 +482,24 @@ function ConfirmEnvSecretOverwriteContent({
   );
 }
 
-function RuntimeSelect({ onChange }: { onChange: (value: AgentRuntimeChoice) => void }): React.ReactElement {
-  const options: Array<{ value: AgentRuntimeChoice; title: string; detail?: string }> = [
-    { value: 'demo', title: 'Demo Credentials', detail: '10 conversations per month' },
+function ConnectModeSelect({ onChange }: { onChange: (value: AgentConnectMode) => void }): React.ReactElement {
+  const options: Array<{
+    value: AgentConnectMode;
+    title: string;
+    detail?: string;
+  }> = [
+    {
+      value: 'demo',
+      title: 'Demo Credentials',
+      detail: '10 conversations per month',
+    },
     { value: 'claude', title: 'Claude Managed Agents' },
     { value: 'claude-aws', title: 'AWS Claude Managed Agents' },
+    {
+      value: 'chat-sdk',
+      title: 'Chat SDK',
+      detail: 'your own app is the brain',
+    },
   ];
   const [idx, setIdx] = React.useState(0);
 
@@ -814,7 +812,7 @@ function SuccessView({
     dashboardRedirectChannel,
     isKeyless,
     claimUrl,
-    brain,
+    connectMode,
     chatSdkOutcome,
   } = phase;
   const agentUrl = environmentSlug
@@ -838,7 +836,7 @@ function SuccessView({
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
-        {renderChatSdkSuccessMessage(brain, chatSdkOutcome)}
+        {renderChatSdkSuccessMessage(connectMode, chatSdkOutcome)}
         {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
       </Box>
     </Box>

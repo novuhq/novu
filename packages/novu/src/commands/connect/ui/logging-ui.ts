@@ -96,26 +96,22 @@ export function createLoggingUI(): ConnectUI {
     loadingIntegrations() {
       start('Looking up agent runtime integrations…');
     },
-    pickAgentBrain({ preselected }) {
+    pickAgentConnectMode({ preselected }) {
       stop();
-      const brain = preselected ?? 'managed';
-      console.log(chalk.gray(`Non-interactive mode: using "${brain}" agent brain.`));
+      const mode = preselected ?? 'demo';
+      console.log(chalk.gray(`Non-interactive mode: using "${mode}" connect mode.`));
 
-      return Promise.resolve(brain);
-    },
-    pickAgentRuntime({ preselected }) {
-      stop();
-      const runtime = preselected ?? 'demo';
-      console.log(chalk.gray(`Non-interactive mode: using "${runtime}" agent runtime.`));
-
-      return Promise.resolve(runtime);
+      return Promise.resolve(mode);
     },
     pickAgentIntegration({ integrations }) {
       stop();
       if (integrations.length === 1) {
         console.log(chalk.gray(`Non-interactive mode: reusing integration "${integrations[0].name}".`));
 
-        return Promise.resolve({ kind: 'existing', integrationId: integrations[0]._id });
+        return Promise.resolve({
+          kind: 'existing',
+          integrationId: integrations[0]._id,
+        });
       }
 
       return Promise.reject(
@@ -183,7 +179,10 @@ export function createLoggingUI(): ConnectUI {
       stop();
       logGeneratedAgentPreview(spec);
 
-      return Promise.resolve<GeneratedAgentPreviewResult>({ action: 'confirm', spec });
+      return Promise.resolve<GeneratedAgentPreviewResult>({
+        action: 'confirm',
+        spec,
+      });
     },
     creatingAgent(name) {
       start(`Creating agent "${name}"…`);
@@ -373,14 +372,12 @@ export function createLoggingUI(): ConnectUI {
       } else {
         console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
       }
-      if (result.brain === 'chat-sdk' && result.chatSdkOutcome) {
+      if (result.connectMode === 'chat-sdk' && result.chatSdkOutcome) {
         if (result.chatSdkOutcome.scaffolded) {
           console.log(`  ${chalk.bold('Project:')} ${result.chatSdkOutcome.projectDir}`);
-          console.log(
-            `  ${chalk.cyan('→')} Run ${chalk.bold('npm run dev:novu')} in the project to keep the tunnel alive.`
-          );
+          console.log(`  ${chalk.cyan('→')} Starting dev server and tunnel…`);
         } else if (result.chatSdkOutcome.projectKind === 'has-adapter') {
-          console.log(`  ${chalk.cyan('→')} Start your app and register the bridge URL with Novu.`);
+          console.log(`  ${chalk.cyan('→')} Starting your app and dev tunnel…`);
         } else {
           console.log(`  ${chalk.cyan('→')} Install the skill and ask your coding agent to wire the adapter.`);
         }

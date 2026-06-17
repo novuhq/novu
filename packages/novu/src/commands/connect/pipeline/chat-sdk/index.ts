@@ -22,34 +22,6 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
   const projectDir = input.options.projectDir?.trim() || process.cwd();
   const detected = detectChatSdkProject(projectDir);
 
-  if (detected.kind === 'empty' && !input.options.noScaffold) {
-    input.ui.scaffoldingChatSdk();
-
-    const scaffolded = await scaffoldChatSdkProject({
-      parentDir: projectDir,
-      appName: input.options.scaffoldDir?.trim(),
-      secretKey: requireSecretKey(input.auth),
-      apiUrl: input.options.apiUrl,
-      agentIdentifier: input.agent.identifier,
-    });
-
-    const merge = mergeEnvLocal({
-      projectDir: scaffolded.root,
-      secretKey: requireSecretKey(input.auth),
-      agentIdentifier: input.agent.identifier,
-      apiBaseUrl: input.options.apiUrl,
-    });
-
-    input.ui.chatSdkScaffolded({ projectDir: scaffolded.root, envPath: merge.envPath });
-
-    return {
-      projectKind: 'empty',
-      projectDir: scaffolded.root,
-      scaffolded: true,
-      envPath: merge.envPath,
-    };
-  }
-
   if (detected.kind === 'has-adapter') {
     const existingSecret = readEnvSecretKey(detected.projectDir);
     const secretKey = requireSecretKey(input.auth);
@@ -85,21 +57,64 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
     };
   }
 
-  const instructions = buildChatSdkSkillInstructions({
-    agentIdentifier: input.agent.identifier,
-    secretKey: requireSecretKey(input.auth),
+  if (input.options.noScaffold) {
+    const instructions = buildChatSdkSkillInstructions({
+      agentIdentifier: input.agent.identifier,
+      secretKey: requireSecretKey(input.auth),
+    });
+
+    input.ui.chatSdkSkillInstructions({
+      installCommand: CHAT_SDK_SKILL_INSTALL_COMMAND,
+      lines: instructions,
+      agentIdentifier: input.agent.identifier,
+    });
+
+    return {
+      projectKind: detected.kind === 'empty' ? 'empty' : 'project-no-adapter',
+      projectDir: detected.projectDir,
+      scaffolded: false,
+    };
+  }
+
+  return scaffoldChatSdkApp({
+    setup: input,
+    parentDir: detected.projectDir,
+    projectKind: detected.kind === 'empty' ? 'empty' : 'project-no-adapter',
+  });
+}
+
+async function scaffoldChatSdkApp(opts: {
+  setup: ChatSdkSetupInput;
+  parentDir: string;
+  projectKind: ChatSdkConnectOutcome['projectKind'];
+}): Promise<ChatSdkConnectOutcome> {
+  opts.setup.ui.scaffoldingChatSdk();
+
+  const scaffolded = await scaffoldChatSdkProject({
+    parentDir: opts.parentDir,
+    appName: opts.setup.options.scaffoldDir?.trim(),
+    secretKey: requireSecretKey(opts.setup.auth),
+    apiUrl: opts.setup.options.apiUrl,
+    agentIdentifier: opts.setup.agent.identifier,
   });
 
-  input.ui.chatSdkSkillInstructions({
-    installCommand: CHAT_SDK_SKILL_INSTALL_COMMAND,
-    lines: instructions,
-    agentIdentifier: input.agent.identifier,
+  const merge = mergeEnvLocal({
+    projectDir: scaffolded.root,
+    secretKey: requireSecretKey(opts.setup.auth),
+    agentIdentifier: opts.setup.agent.identifier,
+    apiBaseUrl: opts.setup.options.apiUrl,
+  });
+
+  opts.setup.ui.chatSdkScaffolded({
+    projectDir: scaffolded.root,
+    envPath: merge.envPath,
   });
 
   return {
-    projectKind: 'project-no-adapter',
-    projectDir: detected.projectDir,
-    scaffolded: false,
+    projectKind: opts.projectKind,
+    projectDir: scaffolded.root,
+    scaffolded: true,
+    envPath: merge.envPath,
   };
 }
 
@@ -137,17 +152,29 @@ export async function maybeRunChatSdkTunnel(input: {
   client: ConnectApiClient;
   agent: AgentSummary;
 }): Promise<boolean> {
-  if (!input.outcome?.scaffolded) {
+  if (!shouldRunChatSdkTunnel(input.outcome)) {
     return false;
   }
 
   await runChatSdkBridge({
-    projectDir: input.outcome.projectDir,
+    projectDir: input.outcome!.projectDir,
     agentIdentifier: input.agent.identifier,
     client: input.client,
   });
 
   return true;
+}
+
+function shouldRunChatSdkTunnel(outcome: ChatSdkConnectOutcome | undefined): outcome is ChatSdkConnectOutcome {
+  if (!outcome) {
+    return false;
+  }
+
+  if (outcome.scaffolded) {
+    return true;
+  }
+
+  return outcome.projectKind === 'has-adapter';
 }
 
 function requireSecretKey(auth: ResolvedConnectAuth): string {

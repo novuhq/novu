@@ -1,11 +1,5 @@
 import type { GeneratedAgentSpec } from '../api/agents';
-import type {
-  AgentBrainChoice,
-  AgentRuntimeChoice,
-  AgentSummary,
-  ChannelChoice,
-  ChatSdkConnectOutcome,
-} from '../types';
+import type { AgentConnectMode, AgentSummary, ChannelChoice, ChatSdkConnectOutcome } from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
@@ -39,9 +33,8 @@ export interface ConnectUI {
   loadingIntegrations(): void;
   pickExistingOrCreate(agents: AgentSummary[]): Promise<PickResult>;
 
-  // Agent runtime / credentials (new-agent path)
-  pickAgentBrain(opts: { preselected?: AgentBrainChoice }): Promise<AgentBrainChoice>;
-  pickAgentRuntime(opts: { preselected?: AgentRuntimeChoice }): Promise<AgentRuntimeChoice>;
+  // Agent connect mode (managed runtime or Chat SDK)
+  pickAgentConnectMode(opts: { preselected?: AgentConnectMode }): Promise<AgentConnectMode>;
   pickAgentIntegration(opts: {
     providerLabel: string;
     integrations: Array<{ _id: string; name: string; identifier: string }>;
@@ -183,7 +176,7 @@ export interface ConnectUI {
     dashboardRedirectChannel: ChannelChoice | null;
     isKeyless: boolean;
     claimUrl: string | null;
-    brain?: AgentBrainChoice;
+    connectMode?: AgentConnectMode;
     chatSdkOutcome?: ChatSdkConnectOutcome;
   }): void;
   failure(message: string): void;

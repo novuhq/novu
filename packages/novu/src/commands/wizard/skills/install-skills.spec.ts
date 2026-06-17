@@ -27,10 +27,17 @@ describe('installSkills', () => {
     const { installed } = installSkills(tempDir, ['claude', 'cursor']);
 
     const gapFillers = installed.filter((skill) => skill.source === 'bundled' && skill.name !== 'legacy-novu-cleanup');
-    expect(gapFillers.map((skill) => skill.name).sort()).toEqual(['env-setup', 'env-setup']);
+    expect(gapFillers.map((skill) => skill.name).sort()).toEqual([
+      'env-setup',
+      'env-setup',
+      'novu-chat-sdk',
+      'novu-chat-sdk',
+    ]);
 
     expect(fs.existsSync(path.join(tempDir, '.claude/skills/env-setup/SKILL.md'))).toBe(true);
     expect(fs.existsSync(path.join(tempDir, '.cursor/skills/env-setup/SKILL.md'))).toBe(true);
+    expect(fs.existsSync(path.join(tempDir, '.claude/skills/novu-chat-sdk/SKILL.md'))).toBe(true);
+    expect(fs.existsSync(path.join(tempDir, '.cursor/skills/novu-chat-sdk/SKILL.md'))).toBe(true);
   });
 
   it('installs into the requested hosts', () => {
@@ -49,7 +56,10 @@ describe('installSkills', () => {
   });
 
   it('honors a custom officialBranch option', () => {
-    const result = installSkills(tempDir, { hosts: ['claude'], officialBranch: 'does-not-exist-xyz' });
+    const result = installSkills(tempDir, {
+      hosts: ['claude'],
+      officialBranch: 'does-not-exist-xyz',
+    });
 
     expect(result.officialBranch).toBe('does-not-exist-xyz');
     expect(result.officialFetched).toBe(false);

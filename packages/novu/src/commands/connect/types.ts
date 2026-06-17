@@ -8,9 +8,10 @@ export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
 export const AGENT_RUNTIME_CHOICES: readonly AgentRuntimeChoice[] = ['demo', 'claude', 'claude-aws'];
 
-export type AgentBrainChoice = 'managed' | 'chat-sdk';
+/** Unified agent setup mode — managed runtimes plus self-hosted Chat SDK. */
+export type AgentConnectMode = AgentRuntimeChoice | 'chat-sdk';
 
-export const AGENT_BRAIN_CHOICES: readonly AgentBrainChoice[] = ['managed', 'chat-sdk'];
+export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [...AGENT_RUNTIME_CHOICES, 'chat-sdk'];
 
 export type ChatSdkProjectKind = 'has-adapter' | 'project-no-adapter' | 'empty';
 
@@ -31,10 +32,10 @@ export interface ConnectCommandOptions {
   /** Pre-fill the agent description, skipping the input screen. Enables non-interactive runs. */
   prompt?: string;
   /**
-   * Agent runtime for new agents. `demo` uses Novu's demo Claude integration (default).
-   * `claude` and `claude-aws` require your own credentials unless an integration already exists.
+   * Agent runtime for new managed agents, or `chat-sdk` for a self-hosted bridge agent.
+   * `demo` uses Novu's demo Claude integration (default).
    */
-  runtime?: AgentRuntimeChoice;
+  runtime?: AgentConnectMode;
   /** Use an existing agent-runtime integration instead of creating one. */
   agentIntegrationId?: string;
   /** Anthropic API key for `--runtime claude` non-interactive runs. */
@@ -65,11 +66,12 @@ export interface ConnectCommandOptions {
   /** Use a temporary keyless workspace instead of dashboard OAuth (the default). */
   keyless?: boolean;
   /**
-   * Agent brain for new agents. `managed` uses Novu's AI runtime (default).
+   * Agent connect mode. Managed values (`demo`, `claude`, `claude-aws`) use Novu's AI runtime;
    * `chat-sdk` provisions a self-hosted bridge agent backed by your Chat SDK app.
+   * @deprecated Prefer `--runtime chat-sdk` or selecting Chat SDK in the connect-mode picker.
    */
-  brain?: AgentBrainChoice;
-  /** Shorthand for `--brain chat-sdk`. */
+  brain?: 'chat-sdk';
+  /** Shorthand for `--runtime chat-sdk`. */
   chatSdk?: boolean;
   /** Project directory to inspect for an existing Chat SDK app (defaults to cwd). */
   projectDir?: string;

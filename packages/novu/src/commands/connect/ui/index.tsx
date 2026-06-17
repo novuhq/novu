@@ -76,7 +76,11 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       });
     },
     authStarted() {
-      store.phase.set({ kind: 'auth', dashboardUrl: null, status: 'Authorizing via the Novu Dashboard…' });
+      store.phase.set({
+        kind: 'auth',
+        dashboardUrl: null,
+        status: 'Authorizing via the Novu Dashboard…',
+      });
     },
     authDashboardUrl(url) {
       const current = store.phase.get();
@@ -104,23 +108,23 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'pick', agents, resolve });
       });
     },
-    pickAgentBrain({ preselected }) {
+    pickAgentConnectMode({ preselected }) {
       if (preselected) {
         return Promise.resolve(preselected);
       }
 
       return new Promise((resolve) => {
-        store.phase.set({ kind: 'pick-brain', preselected, resolve });
-      });
-    },
-    pickAgentRuntime({ preselected }) {
-      return new Promise((resolve) => {
-        store.phase.set({ kind: 'pick-runtime', preselected, resolve });
+        store.phase.set({ kind: 'pick-connect-mode', preselected, resolve });
       });
     },
     pickAgentIntegration({ providerLabel, integrations }) {
       return new Promise((resolve) => {
-        store.phase.set({ kind: 'pick-integration', providerLabel, integrations, resolve });
+        store.phase.set({
+          kind: 'pick-integration',
+          providerLabel,
+          integrations,
+          resolve,
+        });
       });
     },
     promptForSecretInput({ title, placeholder, hint, secret, verificationError }) {
@@ -198,10 +202,20 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       store.phase.set({ kind: 'chat-sdk-scaffolded', projectDir, envPath });
     },
     chatSdkEnvWired({ projectDir, envPath, updatedKeys }) {
-      store.phase.set({ kind: 'chat-sdk-env-wired', projectDir, envPath, updatedKeys });
+      store.phase.set({
+        kind: 'chat-sdk-env-wired',
+        projectDir,
+        envPath,
+        updatedKeys,
+      });
     },
     chatSdkSkillInstructions({ installCommand, lines, agentIdentifier }) {
-      store.phase.set({ kind: 'chat-sdk-skill-instructions', installCommand, lines, agentIdentifier });
+      store.phase.set({
+        kind: 'chat-sdk-skill-instructions',
+        installCommand,
+        lines,
+        agentIdentifier,
+      });
     },
     pickChannel() {
       return new Promise((resolve) => {
@@ -210,7 +224,12 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     },
     awaitDashboardChannelOpen({ channel, agentDetailsUrl }) {
       return new Promise<void>((resolve) => {
-        store.phase.set({ kind: 'dashboard-channel-ready', channel, agentDetailsUrl, resolve });
+        store.phase.set({
+          kind: 'dashboard-channel-ready',
+          channel,
+          agentDetailsUrl,
+          resolve,
+        });
       });
     },
     addingEmailIntegration() {
@@ -255,7 +274,12 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
       store.phase.set({ kind: 'adding-telegram' });
     },
     showTelegramTest({ deepLinkQr, deepLinkUrl, botUsername }) {
-      store.phase.set({ kind: 'telegram-test', deepLinkQr, deepLinkUrl, botUsername });
+      store.phase.set({
+        kind: 'telegram-test',
+        deepLinkQr,
+        deepLinkUrl,
+        botUsername,
+      });
     },
     telegramConnected() {
       // Transition handled by sendingWelcome / success.
@@ -274,11 +298,20 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     },
     awaitSlackOAuthOpen({ authorizeUrl, appCreated }) {
       return new Promise<void>((resolve) => {
-        store.phase.set({ kind: 'slack-oauth-ready', authorizeUrl, appCreated, resolve });
+        store.phase.set({
+          kind: 'slack-oauth-ready',
+          authorizeUrl,
+          appCreated,
+          resolve,
+        });
       });
     },
     showSlackWaiting({ authorizeUrl }) {
-      store.phase.set({ kind: 'waiting-slack', authorizeUrl, pollingStartedAt: Date.now() });
+      store.phase.set({
+        kind: 'waiting-slack',
+        authorizeUrl,
+        pollingStartedAt: Date.now(),
+      });
     },
     slackConnected() {
       // Transition handled by sendingWelcome / success.
@@ -300,7 +333,7 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         dashboardRedirectChannel: result.dashboardRedirectChannel,
         isKeyless: result.isKeyless,
         claimUrl: result.claimUrl,
-        brain: result.brain,
+        connectMode: result.connectMode,
         chatSdkOutcome: result.chatSdkOutcome,
       });
     },

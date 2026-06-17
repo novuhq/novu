@@ -48,14 +48,14 @@ Examples (non-interactive / agent / CI):
 
   Chat SDK bridge agent (no AI prompt required):
     npx novu connect \\
-      --brain chat-sdk \\
+      --runtime chat-sdk \\
       --secret-key "$NOVU_SECRET_KEY" \\
       --channel telegram
 
   Chat SDK in CI:
     npx novu connect \\
       --ci \\
-      --chat-sdk \\
+      --runtime chat-sdk \\
       --secret-key "$NOVU_SECRET_KEY" \\
       --channel slack
 

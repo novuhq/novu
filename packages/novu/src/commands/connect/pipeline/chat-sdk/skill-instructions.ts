@@ -4,7 +4,7 @@ export const CHAT_SDK_SKILL_INSTALL_COMMAND = 'npx skills add novuhq/skills --sk
 
 export function buildChatSdkSkillInstructions(input: { agentIdentifier: string; secretKey: string }): string[] {
   return [
-    'This project has a package.json but no Chat SDK adapter yet.',
+    'Chat SDK scaffolding was skipped (--no-scaffold).',
     'Install the Novu Chat SDK integration skill, then ask your coding agent to wire the bridge:',
     '',
     `  ${CHAT_SDK_SKILL_INSTALL_COMMAND}`,
