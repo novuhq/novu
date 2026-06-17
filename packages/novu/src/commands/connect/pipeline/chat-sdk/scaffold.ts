@@ -19,7 +19,35 @@ export type ScaffoldChatSdkProjectInput = {
 export type ScaffoldChatSdkProjectResult = {
   root: string;
   appName: string;
+  /** True when npm install was skipped because we're inside a monorepo workspace. */
+  skippedInstall: boolean;
 };
+
+/**
+ * Walk up from `dir` looking for a package.json with a `workspaces` field or
+ * a `pnpm-workspace.yaml`. Returns the workspace root path, or null if none found.
+ */
+function findWorkspaceRoot(dir: string): string | null {
+  let current = path.resolve(dir);
+  const root = path.parse(current).root;
+
+  while (current !== root) {
+    const pkgPath = path.join(current, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8')) as Record<string, unknown>;
+        if (pkg.workspaces) return current;
+      } catch {
+        // ignore malformed package.json
+      }
+    }
+    if (fs.existsSync(path.join(current, 'pnpm-workspace.yaml'))) return current;
+
+    current = path.dirname(current);
+  }
+
+  return null;
+}
 
 export async function scaffoldChatSdkProject(
   input: ScaffoldChatSdkProjectInput
@@ -34,7 +62,10 @@ export async function scaffoldChatSdkProject(
 
   fs.mkdirSync(root, { recursive: true });
 
-  const isOnline = await getOnline();
+  const workspaceRoot = findWorkspaceRoot(parentDir);
+  const skippedInstall = workspaceRoot !== null;
+
+  const isOnline = skippedInstall ? true : await getOnline();
 
   await installTemplate({
     appName,
@@ -51,10 +82,13 @@ export async function scaffoldChatSdkProject(
     applicationId: '',
     userId: '',
     agentIdentifier: input.agentIdentifier,
+    // Skip install when inside a monorepo — workspace: specifiers in sibling
+    // packages cause npm to fail with EUNSUPPORTEDPROTOCOL.
+    skipInstall: skippedInstall,
     silent: input.silent,
   });
 
   tryGitInit(root);
 
-  return { root, appName };
+  return { root, appName, skippedInstall };
 }

@@ -35,4 +35,10 @@ export interface InstallTemplateArgs {
   agentIdentifier?: string;
   /** Suppress all stdout/stderr from the package-manager install subprocess. */
   silent?: boolean;
+  /**
+   * When true, skip running the package-manager install entirely.
+   * Use when scaffolding inside a monorepo where workspace: specifiers in
+   * sibling packages would cause npm to fail.
+   */
+  skipInstall?: boolean;
 }

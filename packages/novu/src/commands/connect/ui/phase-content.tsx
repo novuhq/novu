@@ -208,11 +208,18 @@ export function PhaseContent({
     case 'chat-sdk-scaffolded':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="green">✓ Chat SDK project ready.</Text>
+          <Text color="green">✓ Chat SDK project scaffolded.</Text>
           <Text>
             <Text bold>Project:</Text> {phase.projectDir}
           </Text>
           <Text dimColor>{`Wrote ${phase.envPath}`}</Text>
+          {phase.skippedInstall ? (
+            <Box flexDirection="column">
+              <Text color="yellow">⚠ Detected a parent workspace — npm install was skipped.</Text>
+              <Text dimColor>Run this to install dependencies before starting the app:</Text>
+              <Text color="cyan">{`  cd ${phase.projectDir} && npm install`}</Text>
+            </Box>
+          ) : null}
         </Box>
       );
 
@@ -447,6 +454,14 @@ function renderChatSdkSuccessMessage(
   }
 
   if (outcome.scaffolded) {
+    if (outcome.skippedInstall) {
+      return (
+        <Box flexDirection="column">
+          <Text color="cyan">Chat SDK app scaffolded — run npm install first, then npm run dev:novu.</Text>
+        </Box>
+      );
+    }
+
     return <Text color="cyan">Chat SDK app ready at {outcome.projectDir}. Starting dev server and tunnel…</Text>;
   }
 

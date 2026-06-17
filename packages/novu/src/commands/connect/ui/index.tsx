@@ -203,8 +203,8 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     scaffoldingChatSdk() {
       store.phase.set({ kind: 'scaffolding-chat-sdk' });
     },
-    chatSdkScaffolded({ projectDir, envPath }) {
-      store.phase.set({ kind: 'chat-sdk-scaffolded', projectDir, envPath });
+    chatSdkScaffolded({ projectDir, envPath, skippedInstall }) {
+      store.phase.set({ kind: 'chat-sdk-scaffolded', projectDir, envPath, skippedInstall });
     },
     chatSdkEnvWired({ projectDir, envPath, updatedKeys }) {
       store.phase.set({

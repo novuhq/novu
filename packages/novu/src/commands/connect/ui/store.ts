@@ -70,6 +70,7 @@ export type Phase =
       kind: 'chat-sdk-scaffolded';
       projectDir: string;
       envPath: string;
+      skippedInstall?: boolean;
     }
   | {
       kind: 'chat-sdk-env-wired';

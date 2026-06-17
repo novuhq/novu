@@ -70,6 +70,7 @@ export const installTemplate = async ({
   userId,
   agentIdentifier,
   silent,
+  skipInstall,
 }: InstallTemplateArgs) => {
   if (!silent) console.log(bold(`Using ${packageManager}.`));
 
@@ -119,7 +120,11 @@ export const installTemplate = async ({
 
   if (renameAgent) {
     const camelName = agentIdentifier.replace(/[-_]([a-z0-9])/g, (_, c) => c.toUpperCase());
-    const files = await glob('**/*.{tsx,ts,md}', { cwd: root, absolute: true, followSymbolicLinks: false });
+    const files = await glob('**/*.{tsx,ts,md}', {
+      cwd: root,
+      absolute: true,
+      followSymbolicLinks: false,
+    });
     await Promise.all(
       files.map(async (file) => {
         const before = await fs.readFile(file, 'utf8');
@@ -209,7 +214,10 @@ export const installTemplate = async ({
   /* write .env file */
   const envVars =
     template === TemplateTypeEnum.APP_AGENT
-      ? { NOVU_SECRET_KEY: secretKey, NOVU_API_URL: apiUrl ?? 'https://api.novu.co' }
+      ? {
+          NOVU_SECRET_KEY: secretKey,
+          NOVU_API_URL: apiUrl ?? 'https://api.novu.co',
+        }
       : template === TemplateTypeEnum.APP_CHAT_SDK
         ? {
             NOVU_SECRET_KEY: secretKey,
@@ -351,7 +359,9 @@ export const installTemplate = async ({
     console.log();
   }
 
-  await install(packageManager, isOnline, silent);
+  if (!skipInstall) {
+    await install(packageManager, isOnline, silent);
+  }
 };
 
 export * from './types';

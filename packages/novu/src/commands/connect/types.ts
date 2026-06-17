@@ -20,6 +20,8 @@ export type ChatSdkConnectOutcome = {
   projectDir: string;
   scaffolded: boolean;
   envPath?: string;
+  /** True when npm install was skipped (e.g. scaffolding inside a monorepo). */
+  skippedInstall?: boolean;
 };
 
 export interface ConnectCommandOptions {

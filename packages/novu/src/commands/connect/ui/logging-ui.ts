@@ -380,7 +380,14 @@ export function createLoggingUI(): ConnectUI {
       if (result.connectMode === 'chat-sdk' && result.chatSdkOutcome) {
         if (result.chatSdkOutcome.scaffolded) {
           console.log(`  ${chalk.bold('Project:')} ${result.chatSdkOutcome.projectDir}`);
-          console.log(`  ${chalk.cyan('→')} Starting dev server and tunnel…`);
+          if (result.chatSdkOutcome.skippedInstall) {
+            console.log(`  ${chalk.yellow('⚠')} Inside a monorepo — npm install was skipped.`);
+            console.log(
+              `  ${chalk.cyan('→')} cd ${result.chatSdkOutcome.projectDir} && npm install && npm run dev:novu`
+            );
+          } else {
+            console.log(`  ${chalk.cyan('→')} Starting dev server and tunnel…`);
+          }
         } else if (result.chatSdkOutcome.projectKind === 'has-adapter') {
           console.log(`  ${chalk.cyan('→')} Starting your app and dev tunnel…`);
         } else {

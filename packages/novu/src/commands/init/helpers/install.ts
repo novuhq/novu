@@ -1,6 +1,6 @@
-import spawn from 'cross-spawn';
-import { yellow } from 'picocolors';
-import type { PackageManager } from './get-pkg-manager';
+import spawn from "cross-spawn";
+import { yellow } from "picocolors";
+import type { PackageManager } from "./get-pkg-manager";
 
 /**
  * Spawn a package manager installation based on user preference.
@@ -17,45 +17,56 @@ export async function install(
    * controls whether the output is displayed. On failure, captured stderr is
    * included in the thrown Error so the cause is not lost.
    */
-  silent = false
+  silent = false,
 ): Promise<void> {
-  const args: string[] = ['install'];
+  const args: string[] = ["install"];
 
   // Prevent npm from crawling up into a parent monorepo workspace and
   // trying to resolve workspace packages that don't belong to this project.
-  if (packageManager === 'npm') {
-    args.push('--no-workspaces');
+  if (packageManager === "npm") {
+    args.push("--no-workspaces");
   }
 
   if (!isOnline) {
     if (!silent) {
-      console.log(yellow('You appear to be offline.\nFalling back to the local cache.'));
+      console.log(
+        yellow("You appear to be offline.\nFalling back to the local cache."),
+      );
     }
-    args.push('--offline');
+    args.push("--offline");
   }
 
   return new Promise((resolve, reject) => {
-    const stdio: import('child_process').StdioOptions = silent ? ['ignore', 'pipe', 'pipe'] : 'inherit';
+    const stdio: import("child_process").StdioOptions = silent
+      ? ["ignore", "pipe", "pipe"]
+      : "inherit";
     const child = spawn(packageManager, args, {
       stdio,
       env: {
         ...process.env,
-        ADBLOCK: '1',
+        ADBLOCK: "1",
         // we set NODE_ENV to development as pnpm skips dev dependencies when production
-        NODE_ENV: 'development',
-        DISABLE_OPENCOLLECTIVE: '1',
+        NODE_ENV: "development",
+        DISABLE_OPENCOLLECTIVE: "1",
       },
     });
 
     const chunks: Buffer[] = [];
     if (silent && child.stderr) {
-      child.stderr.on('data', (chunk: Buffer) => chunks.push(chunk));
+      child.stderr.on("data", (chunk: Buffer) => chunks.push(chunk));
     }
 
-    child.on('close', (code) => {
+    child.on("close", (code) => {
       if (code !== 0) {
-        const detail = chunks.length > 0 ? `\n${Buffer.concat(chunks).toString().trim()}` : '';
-        reject(new Error(`\`${packageManager} ${args.join(' ')}\` exited with code ${code ?? 1}${detail}`));
+        const detail =
+          chunks.length > 0
+            ? `\n${Buffer.concat(chunks).toString().trim()}`
+            : "";
+        reject(
+          new Error(
+            `\`${packageManager} ${args.join(" ")}\` exited with code ${code ?? 1}${detail}`,
+          ),
+        );
         return;
       }
       resolve();
