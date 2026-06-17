@@ -44,7 +44,11 @@ const chat = new Chat({
 });
 
 chat.onNewMention(async (thread, message) => {
-  await thread.post(`Hi! You said: ${message.text}`);
+  if (thread.isDM) {
+    await thread.post(`Hi (DM)! You said: ${message.text}`);
+  } else {
+    await thread.post(`Hi! You said: ${message.text}`);
+  }
 });
 
 chat.onSubscribedMessage(async (thread, message) => {
@@ -52,10 +56,21 @@ chat.onSubscribedMessage(async (thread, message) => {
 
   // Opt-in, Novu-only capabilities:
   const ctx = getNovuContext(thread);
+
+  // Full Novu subscriber (email, phone, avatar, locale, custom `data`):
+  const subscriber = await ctx.getSubscriber();
+  if (subscriber?.data?.plan === 'enterprise') {
+    await thread.post('Priority support enabled.');
+  }
+
   if (ctx.platform === 'whatsapp') {
     await ctx.trigger('escalation-email', { payload: { text: message.text } });
   }
 });
+
+// Portable, SDK-native identity lookup — works for any Chat SDK code,
+// returns the standard `UserInfo` shape (id, name, email, avatarUrl):
+const user = await novu.getUser(message.author.userId);
 
 await chat.initialize();
 ```
@@ -67,11 +82,17 @@ Next.js route handlers, Hono, etc.).
 
 - **In:** messages, button actions, reactions, full Novu history, subscriber identity, platform
   awareness, dedup (per `deliveryId`).
+- **Subscriber:** portable identity rides each message's `author`; the SDK-native
+  `adapter.getUser(userId)` maps the subscriber to `UserInfo` (id/name/email/avatar); and the full
+  rich profile (`phone`, `locale`, custom `data`) is available via
+  `getNovuContext(thread).getSubscriber()`.
 - **Out:** markdown, cards, edits (in-place), reaction adds, edit-based streaming (via the chat
   package's built-in cadence), plus opt-in `getNovuContext().trigger / setMetadata / resolve`.
-- **Routing:** an ongoing conversation (`messageCount > 1` or non-empty history) is pre-subscribed →
-  `onSubscribedMessage`; a brand-new conversation routes to `onNewMention` (channels) or
-  `onDirectMessage` (DMs, via `platformContext.isDM`).
+- **Routing (recommended):** do **not** register `onDirectMessage` — use `onNewMention` for the
+  first message (`thread.isDM` for DM vs channel) and `onSubscribedMessage` for all follow-ups.
+  The adapter pre-subscribes when `messageCount > 1` (Novu history always includes the
+  current message, so history length is not used). If you register
+  `onDirectMessage`, Chat SDK sends **every** DM there and `onSubscribedMessage` never runs for DMs.
 - **Security:** the inbound HMAC (`novu-signature`) is verified over the raw body; the reply URL is
   **derived from your config** and the request's `replyUrl` is ignored, so a forged request can never
   exfiltrate your `apiKey`.

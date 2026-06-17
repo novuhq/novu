@@ -8,6 +8,7 @@ import type {
   RawMessage,
   StateAdapter,
   ThreadInfo,
+  UserInfo,
   WebhookOptions,
 } from 'chat';
 import { type ChatModuleParts, MessageMapper } from './message-mapper.js';
@@ -18,10 +19,11 @@ import {
   AgentEvent,
   type AgentMessageAuthor,
   type AgentReplyPayload,
+  type AgentSubscriber,
   type NovuAdapterConfig,
-  type NovuTypedAdapter,
   type NovuRawMessage,
   type NovuThreadId,
+  type NovuTypedAdapter,
   type Signal,
   type ThreadSnapshot,
 } from './types.js';
@@ -39,6 +41,7 @@ class NotImplementedError extends Error {
 
 const deliveryKey = (deliveryId: string): string => `novu:delivery:${deliveryId}`;
 const snapshotKey = (threadId: string): string => `novu:snapshot:${threadId}`;
+const subscriberKey = (subscriberId: string): string => `novu:subscriber:${subscriberId}`;
 
 export class NovuAdapterImpl implements NovuTypedAdapter {
   readonly name = 'novu';
@@ -140,9 +143,13 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     await this.cacheSnapshot(threadId, bridge);
 
     // Pre-seed subscription from server truth so an ongoing conversation routes to
-    // `onSubscribedMessage`; a brand-new conversation (messageCount === 1, empty
-    // history) stays unsubscribed and routes to `onNewMention` / `onDirectMessage`.
-    if (bridge.conversation.messageCount > 1 || bridge.history.length > 0) {
+    // `onSubscribedMessage`. Novu persists inbound before building the bridge, so
+    // `history` already includes the current message on the first turn — use
+    // `messageCount` only. A brand-new conversation (messageCount === 1) stays
+    // unsubscribed and routes to `onNewMention` (use `thread.isDM` for first DM vs
+    // channel — do not register `onDirectMessage` if you want ongoing DMs on
+    // `onSubscribedMessage`).
+    if (bridge.conversation.messageCount > 1) {
       await state.subscribe(threadId);
     }
 
@@ -183,7 +190,16 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       platform: bridge.platform,
       platformContext: bridge.platformContext,
     };
-    await this.state().set(snapshotKey(threadId), snapshot, SNAPSHOT_TTL_MS);
+    const state = this.state();
+    const writes: Promise<void>[] = [state.set(snapshotKey(threadId), snapshot, SNAPSHOT_TTL_MS)];
+
+    // Also index the subscriber by id so the SDK-native `getUser(userId)` can
+    // resolve it (the inbound author's `userId` is the `subscriberId`).
+    if (bridge.subscriber) {
+      writes.push(state.set(subscriberKey(bridge.subscriber.subscriberId), bridge.subscriber, SNAPSHOT_TTL_MS));
+    }
+
+    await Promise.all(writes);
   }
 
   private async dispatchMessage(threadId: string, bridge: AgentBridgeRequest, options?: WebhookOptions): Promise<void> {
@@ -194,7 +210,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       integrationIdentifier: bridge.integrationIdentifier,
       platform: bridge.platform,
     });
-    const message = this.mapper.buildMessage(raw, threadId);
+    const message = this.mapper.buildMessage(raw, threadId, this.humanAuthor(bridge));
     await this.chat.processMessage(this, threadId, message, options);
   }
 
@@ -208,7 +224,7 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
         value: bridge.action.value,
         raw: bridge,
         threadId,
-        user: this.mapper.toAuthor(this.authorFor(bridge)),
+        user: this.mapper.toAuthor(this.humanAuthor(bridge)),
         adapter: this,
       },
       options
@@ -238,25 +254,43 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
         rawEmoji: bridge.reaction.emoji.name,
         raw: bridge,
         threadId,
-        user: this.mapper.toAuthor(this.authorFor(bridge)),
+        user: this.mapper.toAuthor(this.humanAuthor(bridge)),
         adapter: this,
       },
       options
     );
   }
 
-  /** Best-effort author identity for action/reaction events (no author on the wire). */
-  private authorFor(bridge: AgentBridgeRequest): AgentMessageAuthor {
-    if (bridge.message?.author) {
-      return bridge.message.author;
-    }
+  /**
+   * Canonical human-actor identity for inbound messages, actions, and reactions.
+   * The Novu subscriber is the source of truth, so `userId` is the
+   * `subscriberId` — this keeps `message.author`, `getParticipants()`, and
+   * `adapter.getUser(userId)` consistent. The platform-native `userName` /
+   * `fullName` are preserved (the raw platform author stays on
+   * `message.raw.author`). Falls back to the platform author when no subscriber
+   * is present.
+   */
+  private humanAuthor(bridge: AgentBridgeRequest): AgentMessageAuthor {
+    const platformAuthor = bridge.message?.author;
     const sub = bridge.subscriber;
-    const fullName = [sub?.firstName, sub?.lastName].filter(Boolean).join(' ');
+
+    if (!sub) {
+      return (
+        platformAuthor ?? {
+          userId: 'novu-subscriber',
+          userName: 'novu-subscriber',
+          fullName: 'Subscriber',
+          isBot: false,
+        }
+      );
+    }
+
+    const fullName = [sub.firstName, sub.lastName].filter(Boolean).join(' ');
 
     return {
-      userId: sub?.subscriberId ?? 'novu-subscriber',
-      userName: sub?.subscriberId ?? 'novu-subscriber',
-      fullName: fullName || sub?.subscriberId || 'Subscriber',
+      userId: sub.subscriberId,
+      userName: platformAuthor?.userName ?? sub.subscriberId,
+      fullName: fullName || platformAuthor?.fullName || sub.subscriberId,
       isBot: false,
     };
   }
@@ -357,6 +391,42 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     );
 
     return { messages };
+  }
+
+  /**
+   * Full Novu subscriber for a thread (Novu-only escape hatch, surfaced via
+   * `getNovuContext(thread).getSubscriber()`). Reads the cached bridge snapshot,
+   * so it carries the rich profile (`email`, `phone`, `avatar`, `locale`,
+   * custom `data`) — unlike the portable `Author` on each message.
+   */
+  async getSubscriber(threadId: string): Promise<AgentSubscriber | null> {
+    const snapshot = await this.state().get<ThreadSnapshot>(snapshotKey(threadId));
+
+    return snapshot?.subscriber ?? null;
+  }
+
+  /**
+   * SDK-native user lookup. Resolves the Novu subscriber indexed by id (the
+   * inbound author's `userId` is the `subscriberId`) and maps it to the
+   * portable `UserInfo` shape. Returns `null` for unknown ids. Novu-specific
+   * fields (`phone`, `locale`, `data`) are not part of `UserInfo` — use
+   * `getNovuContext(thread).getSubscriber()` for those.
+   */
+  async getUser(userId: string): Promise<UserInfo | null> {
+    const subscriber = await this.state().get<AgentSubscriber>(subscriberKey(userId));
+    if (!subscriber) {
+      return null;
+    }
+    const fullName = [subscriber.firstName, subscriber.lastName].filter(Boolean).join(' ');
+
+    return {
+      userId: subscriber.subscriberId,
+      userName: subscriber.subscriberId,
+      fullName: fullName || subscriber.subscriberId,
+      email: subscriber.email,
+      avatarUrl: subscriber.avatar,
+      isBot: false,
+    };
   }
 
   // -- Unsupported / no-op operations --

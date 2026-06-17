@@ -26,6 +26,7 @@ export function getNovuContext(thread: { id: string; adapter: unknown }): NovuCo
 
   return {
     platform,
+    getSubscriber: () => source.getSubscriber(threadId),
     trigger: (workflowId, opts) => emit({ type: 'trigger', workflowId, to: opts?.to, payload: opts?.payload }),
     setMetadata: (key, value) => emit({ type: 'metadata', action: 'set', key, value }),
     deleteMetadata: (key) => emit({ type: 'metadata', action: 'delete', key }),

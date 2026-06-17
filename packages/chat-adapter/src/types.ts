@@ -240,6 +240,15 @@ export interface ThreadSnapshot {
 export interface NovuContext {
   /** Novu platform this thread arrived on (e.g. `'slack'`, `'whatsapp'`). */
   readonly platform: string;
+  /**
+   * The Novu subscriber for this conversation, with the full rich profile
+   * (`email`, `phone`, `avatar`, `locale`, custom `data`). Resolved from the
+   * cached bridge snapshot for the thread; `null` if no snapshot is cached yet
+   * (e.g. before the first inbound message) or the conversation has no
+   * subscriber. For just the portable identity fields, prefer the SDK-native
+   * `adapter.getUser(userId)` / `message.author`.
+   */
+  getSubscriber(): Promise<AgentSubscriber | null>;
   /** Trigger a Novu workflow for this conversation's subscriber (or explicit recipients). */
   trigger(workflowId: string, opts?: { to?: unknown; payload?: Record<string, unknown> }): Promise<void>;
   /** Persist a key/value into `conversation.metadata`. */
@@ -264,6 +273,7 @@ export interface NovuContextSource {
   emitSignals(threadId: string, signals: Signal[]): Promise<void>;
   emitResolve(threadId: string, summary?: string): Promise<void>;
   decodeThreadId(threadId: string): NovuThreadId;
+  getSubscriber(threadId: string): Promise<AgentSubscriber | null>;
 }
 
 export type AdapterThread = Thread;

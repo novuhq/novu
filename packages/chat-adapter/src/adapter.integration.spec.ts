@@ -2,8 +2,8 @@ import { createHmac } from 'node:crypto';
 import { createMemoryState } from '@chat-adapter/state-memory';
 import { Chat } from 'chat';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createNovuAdapter } from './index.js';
-import type { AgentBridgeRequest } from './types.js';
+import { createNovuAdapter, getNovuContext } from './index.js';
+import type { AgentBridgeRequest, AgentSubscriber, NovuRawMessage } from './types.js';
 
 const BRIDGE_SECRET = 'bridge-secret';
 const API_KEY = 'api-key';
@@ -125,6 +125,50 @@ describe('Novu adapter end-to-end', () => {
     expect(mentions).toEqual(['hello']);
   });
 
+  it('routes first channel mention to onNewMention when history includes the current message', async () => {
+    const { adapter, chat } = buildChat();
+    const mentions: string[] = [];
+    chat.onNewMention(async (_thread, message) => {
+      mentions.push(message.text);
+    });
+    chat.onSubscribedMessage(async () => {
+      throw new Error('first mention should not route to onSubscribedMessage');
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        conversation: { ...bridgeRequest().conversation, messageCount: 1 },
+        history: [{ role: 'user', type: 'text', content: 'hello', createdAt: new Date().toISOString() }],
+      })
+    );
+
+    expect(mentions).toEqual(['hello']);
+  });
+
+  it('routes an ongoing DM conversation to onSubscribedMessage (not onDirectMessage)', async () => {
+    const { adapter, chat } = buildChat();
+    const subscribed: string[] = [];
+    chat.onNewMention(async () => {
+      throw new Error('ongoing DM should not route to onNewMention');
+    });
+    chat.onSubscribedMessage(async (_thread, message) => {
+      subscribed.push(message.text);
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        platformContext: { threadId: 'dm-thread', channelId: 'dm-channel', isDM: true },
+        conversation: { ...bridgeRequest().conversation, messageCount: 3 },
+      })
+    );
+
+    expect(subscribed).toEqual(['hello']);
+  });
+
   it('rejects an invalid signature with 401 and does not dispatch', async () => {
     const { adapter, chat } = buildChat();
     const handler = vi.fn();
@@ -142,6 +186,88 @@ describe('Novu adapter end-to-end', () => {
     expect(res.status).toBe(401);
     expect(handler).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('exposes the full subscriber via getNovuContext(thread).getSubscriber()', async () => {
+    const { adapter, chat } = buildChat();
+    const richSubscriber: AgentSubscriber = {
+      subscriberId: 'sub-1',
+      firstName: 'Alice',
+      lastName: 'Smith',
+      email: 'alice@example.com',
+      phone: '+15550001111',
+      avatar: 'https://cdn.example.com/alice.png',
+      locale: 'en-US',
+      data: { plan: 'enterprise' },
+    };
+    let captured: AgentSubscriber | null = null;
+    chat.onSubscribedMessage(async (thread) => {
+      captured = await getNovuContext(thread).getSubscriber();
+    });
+    await chat.initialize();
+
+    await deliver(adapter, bridgeRequest({ subscriber: richSubscriber }));
+
+    expect(captured).toEqual(richSubscriber);
+  });
+
+  it('presents the subscriber as the message author so getUser(author.userId) resolves', async () => {
+    const { adapter, chat } = buildChat();
+    let authorUserId = '';
+    let resolvedFullName: string | undefined;
+    chat.onSubscribedMessage(async (_thread, message) => {
+      authorUserId = message.author.userId;
+      // The platform-native author is still available on the raw escape hatch.
+      expect((message.raw as NovuRawMessage).author.userId).toBe('u1');
+      const user = await adapter.getUser?.(message.author.userId);
+      resolvedFullName = user?.fullName;
+    });
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        message: {
+          text: 'hello',
+          platformMessageId: 'pm-1',
+          author: { userId: 'u1', userName: 'alice', fullName: 'Alice', isBot: false },
+          timestamp: new Date().toISOString(),
+        },
+        subscriber: { subscriberId: 'sub-1', firstName: 'Alice', lastName: 'Smith' },
+      })
+    );
+
+    expect(authorUserId).toBe('sub-1');
+    expect(resolvedFullName).toBe('Alice Smith');
+  });
+
+  it('resolves the subscriber as portable UserInfo via getUser(subscriberId)', async () => {
+    const { adapter, chat } = buildChat();
+    chat.onSubscribedMessage(async () => {});
+    await chat.initialize();
+
+    await deliver(
+      adapter,
+      bridgeRequest({
+        subscriber: {
+          subscriberId: 'sub-1',
+          firstName: 'Alice',
+          lastName: 'Smith',
+          email: 'alice@example.com',
+          avatar: 'https://cdn.example.com/alice.png',
+        },
+      })
+    );
+
+    expect(await adapter.getUser?.('sub-1')).toEqual({
+      userId: 'sub-1',
+      userName: 'sub-1',
+      fullName: 'Alice Smith',
+      email: 'alice@example.com',
+      avatarUrl: 'https://cdn.example.com/alice.png',
+      isBot: false,
+    });
+    expect(await adapter.getUser?.('unknown')).toBeNull();
   });
 
   it('dedupes a replayed deliveryId (same delivery processed once)', async () => {

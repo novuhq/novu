@@ -56,8 +56,16 @@ export class MessageMapper {
    * Build a chat `Message`. `isMention` is forced `true`: Novu only bridges
    * messages already directed at the agent, so first-message routing must reach
    * `onNewMention` (for channel messages) rather than being dropped.
+   *
+   * `authorOverride` lets the adapter present the Novu subscriber as the message
+   * author (so `author.userId === subscriberId` and `adapter.getUser(userId)`
+   * resolves). The platform-native author is preserved on `message.raw.author`.
    */
-  buildMessage(raw: NovuRawMessage, threadId: string): ChatMessage<NovuRawMessage> {
+  buildMessage(
+    raw: NovuRawMessage,
+    threadId: string,
+    authorOverride?: AgentMessageAuthor
+  ): ChatMessage<NovuRawMessage> {
     const dateSent = parseDate(raw.timestamp);
 
     return new this.parts.Message<NovuRawMessage>({
@@ -66,7 +74,7 @@ export class MessageMapper {
       text: raw.text,
       formatted: this.parts.parseMarkdown(raw.text ?? ''),
       raw,
-      author: this.toAuthor(raw.author),
+      author: this.toAuthor(authorOverride ?? raw.author),
       metadata: { dateSent, edited: false },
       attachments: (raw.attachments ?? []).map(toChatAttachment),
       isMention: true,

@@ -13,24 +13,43 @@ import { type Adapter, Chat, type StateAdapter } from 'chat';
  *    replies in the browser without any channel or Novu credentials.
  */
 export function registerHandlers(chat: Chat): void {
-  // First message in a brand-new channel conversation.
+  // First message in a brand-new conversation. For DMs, Chat SDK routes here only when
+  // no onDirectMessage handler is registered (see chat-sdk DirectMessageHandler docs).
   chat.onNewMention(async (thread, message) => {
+    if (thread.isDM) {
+      await thread.post(`👋 Hello! (DM) You said: "${message.text}".`);
+
+      return;
+    }
+
     await thread.post(`👋 Hi! You said: "${message.text}". I'll remember this conversation.`);
   });
 
-  // First message in a DM.
-  chat.onDirectMessage(async (thread, message) => {
-    await thread.post(`👋 Hello! (DM) You said: "${message.text}".`);
-  });
-
-  // Every subsequent message in an ongoing conversation.
+  // Every subsequent message in an ongoing conversation (channels and DMs). The Novu
+  // adapter pre-subscribes when messageCount > 1 or history is non-empty.
   chat.onSubscribedMessage(async (thread, message) => {
+    console.log('onSubscribedMessage', JSON.stringify(thread, null, 2), JSON.stringify(message, null, 2));
+    const user = thread.adapter.getUser?.(message.author.userId);
+    console.log('user', JSON.stringify(user, null, 2));
     const novu = getNovuContext(thread);
 
     // Demonstrate the opt-in, Novu-only escape hatch.
     if (message.text.trim().toLowerCase() === 'resolve') {
       await novu.resolve('Resolved from the playground agent.');
       await thread.post('✅ Marked this conversation as resolved.');
+
+      return;
+    }
+
+    // Demonstrate subscriber access: the full Novu profile via the escape hatch
+    // and the portable SDK-native identity via getUser.
+    if (message.text.trim().toLowerCase() === 'whoami') {
+      const subscriber = await novu.getSubscriber();
+      const user = await thread.adapter.getUser?.(message.author.userId);
+      await thread.post(
+        `👤 subscriber: ${subscriber?.subscriberId ?? 'unknown'} (${subscriber?.email ?? 'no email'})` +
+          (user ? ` · userInfo: ${user.fullName}` : '')
+      );
 
       return;
     }
