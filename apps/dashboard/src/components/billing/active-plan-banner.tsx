@@ -137,9 +137,13 @@ function getUsageData(
     case 'conversations':
       return {
         current: conversationUsage?.current ?? 0,
+        // `null` is the API's explicit "unlimited" contract — keep it unlimited (∞) rather than
+        // coalescing to the local tier table. Only `undefined` (not loaded yet) uses the fallback.
         included:
-          conversationUsage?.included ??
-          getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS, currentPlan, false),
+          conversationUsage?.included === null
+            ? UNLIMITED_VALUE
+            : (conversationUsage?.included ??
+              getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS, currentPlan, false)),
         label: 'included',
       };
     case 'teammates':
