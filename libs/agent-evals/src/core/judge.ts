@@ -2,21 +2,17 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 import type { GraderOutcome, GraderResult } from './types.js';
 
-let judgeModel = 'claude-sonnet-4-5';
-let judgeEnabled = false;
+const DEFAULT_JUDGE_MODEL = 'claude-sonnet-4-5';
 
-export function configureJudge(options: { enabled: boolean; model?: string }): void {
-  judgeEnabled = options.enabled;
-  judgeModel = options.model ?? judgeModel;
-}
-
-export async function runJudge(prompt: string, context: string): Promise<GraderOutcome> {
-  if (!judgeEnabled || !process.env.ANTHROPIC_API_KEY) {
+export async function runJudge(prompt: string, context: string, options?: { model?: string }): Promise<GraderOutcome> {
+  if (!process.env.ANTHROPIC_API_KEY) {
     return { status: 'skip' };
   }
 
+  const model = options?.model ?? process.env.NOVU_EVAL_JUDGE_MODEL ?? DEFAULT_JUDGE_MODEL;
+
   const result = await generateText({
-    model: anthropic(judgeModel),
+    model: anthropic(model),
     prompt: [
       'You are grading an AI agent run against a coding-agent playbook.',
       'First, write one sentence of reasoning explaining your verdict.',

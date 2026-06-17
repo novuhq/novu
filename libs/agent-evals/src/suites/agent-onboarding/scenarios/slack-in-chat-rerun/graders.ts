@@ -1,10 +1,16 @@
-import { catalog, defineGraders, sharedJudgeGraders } from '../../kit.js';
+import { catalog, defineGraders, labeled, sharedJudgeGraders } from '../../kit.js';
 
 export const graders = defineGraders({
-  usedLoginWhenDashboardPrompt: catalog.usedLoginWhenDashboardPrompt,
-  killedFirstConnectShell: catalog.killedFirstConnectShell,
-  reranWithSlackToken: catalog.reranWithSlackToken,
-  pastedAuthorizeUrl: catalog.pastedLiteralUrl('https://slack.test/oauth/rerun-token'),
-  reportedSuccess: catalog.reportedSuccess,
+  usedLoginWhenDashboardPrompt: labeled(
+    'uses --login when the user is signed into the dashboard',
+    catalog.usedLoginWhenDashboardPrompt
+  ),
+  killedFirstConnectShell: labeled('kills the first connect shell before re-running', catalog.killedFirstConnectShell),
+  reranWithSlackToken: labeled('re-runs connect with --slack-config-token', catalog.reranWithSlackToken),
+  pastedAuthorizeUrl: labeled(
+    'surfaces the Slack authorize URL to the user',
+    catalog.pastedLiteralUrl('https://slack.test/oauth/rerun-token')
+  ),
+  reportedSuccess: labeled('confirms the agent is live in the final report', catalog.reportedSuccess),
   ...sharedJudgeGraders,
 });

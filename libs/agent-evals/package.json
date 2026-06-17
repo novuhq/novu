@@ -4,12 +4,10 @@
   "private": true,
   "description": "Behavioral eval harness for Novu coding-agent playbooks (suite-based).",
   "type": "module",
-  "bin": {
-    "agent-evals": "./src/index.ts"
-  },
   "scripts": {
-    "start": "tsx src/index.ts",
-    "test": "tsx src/self-test.ts",
+    "eval": "vitest run --config vitest.evals.config.ts",
+    "eval:watch": "vitest --config vitest.evals.config.ts",
+    "test": "vitest run --config vitest.config.ts",
     "check": "biome check .",
     "check:fix": "biome check --write ."
   },
@@ -22,7 +20,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
-    "tsx": "4.16.2",
-    "typescript": "5.6.2"
+    "typescript": "5.6.2",
+    "vitest": "^4.1.8",
+    "vitest-evals": "0.12.0"
   }
 }

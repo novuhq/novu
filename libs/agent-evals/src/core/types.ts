@@ -14,6 +14,8 @@ export type GraderFn = (result: RunResult) => GraderResult | GraderOutcome | Pro
 export type GraderDefinition = {
   kind: 'deterministic' | 'judge';
   run: GraderFn;
+  /** Human-readable label shown in eval reports (defaults to the grader key). */
+  label?: string;
 };
 
 export type ToolCallRecord = {
@@ -76,30 +78,6 @@ export type RunResult = {
   trackedCommands: string[];
   /** Suite-owned captures (e.g. the drafted agent description). */
   metadata: Record<string, unknown>;
-};
-
-export type ScenarioScore = {
-  scenarioId: string;
-  category: string;
-  model: string;
-  score: number;
-  graders: Record<string, GraderResult>;
-  /** Failure explanations keyed by grader name; only populated for failing graders that supply a reason. */
-  graderReasons: Record<string, string>;
-  graderKinds: Record<string, GraderDefinition['kind']>;
-  runResult?: RunResult;
-};
-
-export type RunnerOptions = {
-  suite: string;
-  model: string;
-  judge: boolean;
-  judgeModel?: string;
-  debug: boolean;
-  dry: boolean;
-  smoke: boolean;
-  failUnder?: number;
-  scenarioFilter?: string;
 };
 
 export type MockShellState<TParsed = ParsedCommand> = {

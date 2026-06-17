@@ -45,12 +45,5 @@ jobs:
       - name: Run agent evals
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          JUDGE_FLAG=""
-          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            if [[ "${{ github.event_name }}" != "workflow_dispatch" || "${{ inputs.enable_judge }}" == "true" ]]; then
-              JUDGE_FLAG="--judge"
-            fi
-          fi
-
-          pnpm --filter @novu/agent-evals start -- --suite agent-onboarding --fail-under 80 ${JUDGE_FLAG}
+          NOVU_EVAL_JUDGE: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.enable_judge)) && 'true' || 'false' }}
+        run: pnpm --filter @novu/agent-evals eval

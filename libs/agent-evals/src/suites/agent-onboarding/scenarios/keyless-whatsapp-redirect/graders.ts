@@ -1,7 +1,10 @@
-import { catalog, defineGraders } from '../../kit.js';
+import { catalog, defineGraders, labeled } from '../../kit.js';
 
 export const graders = defineGraders({
-  noConnectCommands: catalog.noConnectCommands,
-  noConnectOnKeylessWhatsapp: catalog.noConnectOnKeylessWhatsapp,
-  usedPickerForDecisions: catalog.usedPickerForDecisions,
+  noConnectCommands: labeled('does not run a connect command', catalog.noConnectCommands),
+  noConnectOnKeylessWhatsapp: labeled(
+    'redirects the user to the dashboard instead of running connect',
+    catalog.noConnectOnKeylessWhatsapp
+  ),
+  usedPickerForDecisions: labeled('uses AskUserQuestion for channel decisions', catalog.usedPickerForDecisions),
 });

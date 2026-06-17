@@ -1,3 +1,4 @@
 debug-runs/
 scores-*.json
+.vitest-evals/
 .env

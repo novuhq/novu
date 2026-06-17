@@ -1,11 +1,5 @@
 import type { CommandParser, EvalScenario, MockShellState, ParsedCommand, Tape } from './types.js';
 
-let shellCounter = 0;
-
-export function resetShellCounter(): void {
-  shellCounter = 0;
-}
-
 function selectTapeChunks<TParsed>(tape: Tape<TParsed>, parsed: TParsed): string[] {
   const selected: string[] = [];
 
@@ -28,6 +22,7 @@ function selectTapeChunks<TParsed>(tape: Tape<TParsed>, parsed: TParsed): string
  */
 export class MockShellEngine<TParsed = ParsedCommand> {
   private shells = new Map<string, MockShellState<TParsed>>();
+  private shellCounter = 0;
 
   constructor(
     private readonly scenario: EvalScenario<TParsed>,
@@ -35,7 +30,8 @@ export class MockShellEngine<TParsed = ParsedCommand> {
   ) {}
 
   createShell(command: string, runInBackground: boolean, env: Record<string, string>): MockShellState<TParsed> {
-    const id = `shell-${++shellCounter}`;
+    this.shellCounter += 1;
+    const id = `shell-${this.shellCounter}`;
     const isTracked = this.parser.matches(command);
     const parsed = isTracked ? this.parser.parse(command, env) : null;
 

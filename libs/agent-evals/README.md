@@ -2,163 +2,130 @@
 
 Behavioral eval harness for Novu coding-agent playbooks. Runs a real LLM agent against scripted scenarios with a mocked CLI, then grades whether the agent follows the playbook using deterministic structural checks plus optional LLM-as-judge graders for fuzzy criteria.
 
-The harness is **suite-based**: `src/core/` is playbook-agnostic, and each suite under `src/suites/` plugs in its own system prompt, command parser, scenarios, and grader catalog. The first suite, `agent-onboarding`, tests `@novu/shared/docs/agent-onboarding.md` (the `npx novu connect` flow), resolved via the `@novu/shared` package export.
+The harness is **suite-based**: `src/core/` holds the playbook-agnostic simulation layer (mock tools, tape replay, recorder), and each suite under `src/suites/` plugs in its system prompt, command parser, scenarios, and grader catalog. Scoring and reporting are handled by [vitest-evals](https://vitest-evals.sentry.dev/).
+
+The first suite, `agent-onboarding`, tests `@novu/shared/docs/agent-onboarding.md` (the `npx novu connect` flow), resolved via the `@novu/shared` package export.
 
 ## Architecture
 
 ### Layer overview
 
-The package splits into three layers: a CLI entrypoint, a playbook-agnostic **core harness**, and pluggable **suites** that supply scenarios, tapes, and graders.
-
 ```mermaid
 flowchart TB
-  subgraph entry["Entry (src/index.ts)"]
-    CLI["CLI flags\n(--suite, --scenario, --judge, …)"]
-    Registry["suites/registry.ts"]
+  subgraph entry["Entry (vitest)"]
+    Eval["onboarding.eval.ts\ndescribeEval per scenario"]
+    Adapters["adapters.ts\ngrader → judge"]
   end
 
-  subgraph core["Core harness (src/core/)"]
-    Runner["runner.ts\nload → run → grade → score"]
-    RunAgent["run-agent.ts\nAI SDK tool-calling loop"]
+  subgraph core["Core simulation (src/core/)"]
+    Harness["harness.ts\ncreateHarness + AI SDK loop"]
     Tools["tools.ts\nBash · BashOutput · AskUserQuestion · Read"]
     MockShell["mock-shell.ts\nTape replay engine"]
     Recorder["recorder.ts\nRunResult builder"]
-    Graders["graders.ts\ncontains · matches · judge"]
+    Graders["graders.ts\ndefineGraders · contains · judge"]
     Judge["judge.ts\nLLM-as-judge"]
-    Reporters["reporters.ts\nconsole + scores JSON"]
   end
 
-  subgraph suite["Suite (src/suites/{name}/)"]
-    SuiteObj["Suite contract\nsystem prompt · parser · hooks"]
+  subgraph suite["Suite (src/suites/agent-onboarding/)"]
+    SuiteObj["index.ts\nSuite contract"]
     Scenarios["scenarios/{id}/\nscenario.ts · graders.ts · project/"]
-    Parser["CommandParser\n(e.g. connect-parser.ts)"]
-    Tape["Tape\nscripted CLI stdout chunks"]
+    Parser["connect-parser.ts"]
+    Tape["tape.ts"]
+    Catalog["catalog.ts"]
   end
 
-  CLI --> Registry
-  Registry --> Runner
-  Runner --> RunAgent
-  RunAgent --> Tools
+  Eval --> Harness
+  Eval --> Adapters
+  Adapters --> Graders
+  Adapters --> Judge
+  Harness --> Tools
   Tools --> MockShell
   Tools --> Recorder
-  RunAgent --> Recorder
-  Runner --> Graders
-  Graders --> Judge
-  Runner --> Reporters
-
-  SuiteObj --> RunAgent
+  Harness --> Recorder
+  SuiteObj --> Harness
   Parser --> MockShell
   Tape --> MockShell
-  Scenarios --> Runner
-  Scenarios --> Graders
+  Scenarios --> Eval
+  Catalog --> Scenarios
 ```
 
 ### Execution flow
 
-Each scenario runs the real agent against a mocked environment, then grades the recorded behavior.
+Each scenario is a vitest-evals `describeEval` block: one harness run, then automatic judges score the resulting `RunResult`.
 
 ```mermaid
 sequenceDiagram
-  participant User as CLI
-  participant Runner as runner.ts
-  participant Agent as run-agent.ts
+  participant Vitest as vitest-evals
+  participant Harness as harness.ts
   participant LLM as Anthropic model
   participant Tools as Harness tools
   participant Shell as MockShellEngine
   participant Rec as RunRecorder
-  participant Grade as graders.ts
-  participant Out as reporters.ts
+  participant Judges as adapters.ts
 
-  User->>Runner: runAllEvaluations(suite, options)
-  loop each scenario
-    Runner->>Agent: runAgentScenario(suite, scenario)
-    Agent->>Agent: resolveSystemPrompt(playbook doc)
-    Agent->>LLM: generateText(system + user prompt, tools)
-    loop tool-calling steps
-      LLM->>Tools: Bash / BashOutput / AskUserQuestion / Read
-      alt tracked command (e.g. novu connect)
-        Tools->>Shell: createShell → replay tape chunks
-        Shell-->>Tools: scripted stdout
-        Tools->>Rec: record tracked command, URLs, polls
-      else AskUserQuestion
-        Tools->>Rec: pick scriptedAnswers[answerIndex]
-      else Read fixture
-        Tools->>Rec: read scenario project/ files
-      end
-      Tools-->>LLM: tool result
+  Vitest->>Harness: run(userPrompt)
+  Harness->>Harness: resolveSystemPrompt(playbook doc)
+  Harness->>LLM: generateText(system + user prompt, tools)
+  loop tool-calling steps
+    LLM->>Tools: Bash / BashOutput / AskUserQuestion / Read
+    alt tracked command (e.g. novu connect)
+      Tools->>Shell: createShell → replay tape chunks
+      Shell-->>Tools: scripted stdout
+      Tools->>Rec: record tracked command, URLs, polls
+    else AskUserQuestion
+      Tools->>Rec: pick scriptedAnswers[answerIndex]
+    else Read fixture
+      Tools->>Rec: read scenario project/ files
     end
-    opt followUpMessages / followUpOnOptionId
-      Agent->>LLM: inject scripted user follow-up
-    end
-    Agent->>Rec: build() → RunResult
-    Runner->>Grade: gradeRun(scenario graders, RunResult)
-    alt deterministic grader
-      Grade->>Grade: contains / matches on transcript and toolCalls
-    else judge grader (--judge)
-      Grade->>LLM: runJudge(prompt, context)
-    end
-    Grade-->>Runner: pass / fail / skip per grader
-    Runner->>Runner: scoreFromOutcomes → ScenarioScore
+    Tools-->>LLM: tool result
   end
-  Runner->>Out: printConsoleReport + writeScoresFile
-  Out-->>User: matrix and scores-{suite}.json
+  opt followUpMessages / followUpOnOptionId
+    Harness->>LLM: inject scripted user follow-up
+  end
+  Harness->>Rec: build() → RunResult
+  Harness-->>Vitest: HarnessRun with output
+  Vitest->>Judges: assess each grader as judge (threshold 0.8)
+  alt judge grader (NOVU_EVAL_JUDGE)
+    Judges->>LLM: runJudge(prompt, context)
+  end
+  Judges-->>Vitest: pass / fail per judge
 ```
 
 ### Key concepts
 
 | Concept | Role |
 | --- | --- |
-| **Suite** | Plugs a playbook (system prompt), `CommandParser`, scenario list, and optional hooks (`onTrackedCommand`, sentinel URL patterns) into the generic harness. |
+| **Suite** | Plugs a playbook (system prompt), `CommandParser`, scenario list, and optional hooks into the harness. |
 | **Scenario** | One eval case: user prompt, fixture `project/`, scripted user answers, optional CLI **tape**, and follow-up messages. |
 | **Tape** | Ordered stdout chunks replayed when the agent runs a tracked command; `when(parsed)` can branch on parsed flags. |
 | **CommandParser** | Decides which shell commands are tracked (e.g. `novu connect`) and parses them for tape selection and validation. |
 | **RunResult** | Everything the agent did: tool calls, assistant text, captured URLs, polled/killed shells, suite metadata. |
-| **Graders** | **Deterministic** checks on `RunResult` structure, or **judge** graders that call a second LLM pass for fuzzy criteria. |
-
-### Mock CLI model
-
-The harness simulates a Claude Code–like environment without running real `novu connect`:
-
-```mermaid
-stateDiagram-v2
-  [*] --> Bash: agent runs command
-  Bash --> Tracked: parser.matches(command)
-  Bash --> Untracked: other commands
-  Tracked --> TapeReplay: scenario.tape supplies chunks
-  TapeReplay --> Background: run_in_background=true
-  TapeReplay --> Foreground: synchronous run
-  Background --> BashOutput: agent polls shell id
-  BashOutput --> TapeReplay: emit next chunk until exitCode
-  Untracked --> Stub: generic stdout or reject watchers
-  note right of TapeReplay
-    connect-parser validates flags;
-    validate() can fail the command
-  end note
-```
+| **Graders / judges** | **Deterministic** checks on `RunResult`, or **judge** graders that call a second LLM pass. Adapted to vitest-evals `createJudge` via `adapters.ts`. |
 
 ## Structure
 
 ```
 src/
-  core/                 # suite-agnostic harness
+  core/                 # suite-agnostic simulation
     types.ts            # Suite contract, RunResult, Tape, CommandParser
-    run-agent.ts        # AI SDK tool-calling loop
     tools.ts            # Bash / BashOutput / AskUserQuestion / Read
-    mock-shell.ts       # tape replay engine (pluggable command parser)
+    mock-shell.ts       # tape replay engine
     recorder.ts         # RunResult builder
-    graders.ts          # defineGraders, contains, matches, judge, gradeRun
-    judge.ts            # LLM-as-judge runner
-    runner.ts           # load -> run -> grade -> score
-    reporters.ts        # console matrix + scores-<suite>.json
+    graders.ts          # defineGraders, contains, matches, judge
+    judge.ts            # LLM-as-judge (Anthropic via AI SDK)
   suites/
-    registry.ts         # suite id -> Suite
-    agent-onboarding/   # the connect-flow suite
+    agent-onboarding/
       index.ts          # the Suite object
-      connect-parser.ts # novu connect flag parser + validation
-      tape.ts           # connectTape / buildDefaultTape helpers
-      catalog.ts        # connect grader catalog + judge prompts
-      kit.ts            # stable import surface for scenario files
+      harness.ts        # createHarness + multi-turn agent loop
+      adapters.ts       # grader → vitest-evals judge
+      onboarding.eval.ts # describeEval per scenario
+      connect-parser.ts
+      tape.ts
+      catalog.ts
+      graders.test.ts   # synthetic RunResult unit tests
       scenarios/<name>/ # scenario.ts + graders.ts + project/ fixtures
+vitest.config.ts        # unit tests (*.test.ts)
+vitest.evals.config.ts  # evals (*.eval.ts) + vitest-evals reporter
 ```
 
 ## Setup
@@ -168,49 +135,54 @@ cp .env.example .env   # from libs/agent-evals/
 pnpm install
 ```
 
-Set `ANTHROPIC_API_KEY` in `.env` before running real evals. Judge graders also use this key when enabled.
+Set `ANTHROPIC_API_KEY` in `.env` before running evals. Eval suites skip automatically when the key is missing.
 
-## Local testing
+## Local commands
 
-**No API key** — verify the harness without calling any LLM:
-
-```bash
-pnpm --filter @novu/agent-evals test              # deterministic grader self-test
-pnpm --filter @novu/agent-evals start -- --dry    # list scenarios; no agent run
-pnpm --filter @novu/agent-evals start -- --smoke --dry
-```
-
-**With API key** — runs the agent (and optionally the judge) against scenarios:
+**Unit tests** (no API key — synthetic `RunResult` grader checks):
 
 ```bash
-pnpm --filter @novu/agent-evals start
-pnpm --filter @novu/agent-evals start -- --scenario keyless-slack-secure
-pnpm --filter @novu/agent-evals start -- --smoke          # first scenario only
-pnpm --filter @novu/agent-evals start -- --judge          # enable LLM judge graders
-pnpm --filter @novu/agent-evals start -- --fail-under 80  # CI gate
+pnpm --filter @novu/agent-evals test
 ```
 
-## Flags
+**Evals** (requires `ANTHROPIC_API_KEY`):
 
-| Flag | Description |
+```bash
+pnpm --filter @novu/agent-evals eval
+pnpm --filter @novu/agent-evals eval:watch
+
+# Single scenario
+pnpm --filter @novu/agent-evals exec vitest run --config vitest.evals.config.ts -t keyless-slack-secure
+
+# Enable LLM judge graders (also enabled on scheduled CI runs)
+NOVU_EVAL_JUDGE=true pnpm --filter @novu/agent-evals eval
+```
+
+## Environment variables
+
+| Variable | Description |
 | --- | --- |
-| `--suite <id>` | Suite to run (default: `agent-onboarding`) |
-| `--scenario <id\|category>` | Filter evals by id or category |
-| `--model <name>` | Agent model (default: `claude-sonnet-4-5`) |
-| `--judge` / `--no-judge` | LLM-as-judge graders (auto-on when `ANTHROPIC_API_KEY` is set) |
-| `--judge-model <name>` | Judge model (defaults to agent model) |
-| `--smoke` | First scenario only |
-| `--dry` | Print summary only; does not run the agent or call any LLM |
-| `--debug` | Save run artifacts to `debug-runs/<suite>/` |
-| `--fail-under <pct>` | Exit non-zero if average score is below threshold |
+| `ANTHROPIC_API_KEY` | Required for eval runs (suites skip when unset) |
+| `NOVU_EVAL_JUDGE` | Set to `true` or `1` to include LLM judge graders |
+| `NOVU_EVAL_MODEL` | Agent model (default: `claude-sonnet-4-5`) |
+| `NOVU_EVAL_JUDGE_MODEL` | Judge model (default: `claude-sonnet-4-5`) |
+| `NOVU_EVAL_CONCURRENCY` | Max scenarios run in parallel (default: `4`) |
+| `NOVU_EVAL_MAX_STEPS` | Max agent steps per scenario run (default: `40`) |
+
+Scenarios are independent and dominated by live-model latency, so they run concurrently (`sequence.concurrent`). Raise `NOVU_EVAL_CONCURRENCY` for faster runs or lower it if you hit Anthropic rate limits.
+
+## Threshold semantics
+
+Each scenario uses `judgeThreshold: 0.8` — the average judge score for that scenario must be ≥ 80%. This is stricter than the old global `--fail-under 80` (which gated on the average across all scenarios): every scenario must pass individually.
+
+Judge graders run only when `NOVU_EVAL_JUDGE=true` (PR/push CI runs deterministic graders only; scheduled and workflow-dispatch CI enable judges by default).
 
 ## Adding a new suite
 
-1. Create `src/suites/<name>/` with a `CommandParser`, scenario folders, and a grader catalog.
-2. Export a `Suite` object from its `index.ts` (system prompt source, parser, scenarios, optional hooks).
-3. Register it in `src/suites/registry.ts`.
+1. Create `src/suites/<name>/` with a `CommandParser`, scenario folders, grader catalog, and `harness.ts`.
+2. Export a `Suite` object from `index.ts`.
+3. Add `<name>.eval.ts` that loops scenarios and registers `describeEval` blocks.
 
-## Output
+## CI
 
-- Console: scenario × grader matrix
-- `scores-<suite>.json`: structured results for CI
+GitHub Actions workflow `.github/workflows/agent-evals.yml` runs `pnpm --filter @novu/agent-evals eval` on playbook or harness changes, with `NOVU_EVAL_JUDGE` enabled on schedule and workflow-dispatch.

@@ -1,4 +1,4 @@
-import { defineGraders, fail, judge, toolCallsNamed, transcriptText } from '../../core/graders.js';
+import { defineGraders, fail, judge, labeled, toolCallsNamed, transcriptText } from '../../core/graders.js';
 import { isForbiddenWatcherCommand } from '../../core/recorder.js';
 import type { GraderOutcome, RunResult } from '../../core/types.js';
 
@@ -181,9 +181,16 @@ export const catalog = {
 };
 
 export const sharedJudgeGraders = defineGraders({
-  personaAudienceFit: judge(judgePrompts.personaAudienceFit, (result) =>
-    [descriptionText(result), transcriptText(result)].join('\n')
+  personaAudienceFit: labeled(
+    'frames the agent for the product end-user audience in domain language',
+    judge(judgePrompts.personaAudienceFit, (result) => [descriptionText(result), transcriptText(result)].join('\n'))
   ),
-  noInfraMcpSemantic: judge(judgePrompts.noInfraMcpSemantic, (result) => descriptionText(result)),
-  conclusionFirstReport: judge(judgePrompts.conclusionFirstReport, (result) => result.finalText),
+  noInfraMcpSemantic: labeled(
+    'avoids naming internal infrastructure in the drafted agent description',
+    judge(judgePrompts.noInfraMcpSemantic, (result) => descriptionText(result))
+  ),
+  conclusionFirstReport: labeled(
+    'leads the final report with the CLI result and next action',
+    judge(judgePrompts.conclusionFirstReport, (result) => result.finalText)
+  ),
 });
