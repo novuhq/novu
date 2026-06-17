@@ -13,6 +13,7 @@ import {
   extractMetaError,
   generateWhatsAppRegistrationPin,
   getPhoneNumberDetails,
+  type PhoneNumberDetailsResponse,
   registerWhatsAppPhoneNumber,
 } from './whatsapp-graph-api.utils';
 
@@ -133,7 +134,8 @@ export class WhatsAppEmbeddedSignup {
       const phoneDetailsError = extractMetaError(phoneDetails.body);
 
       if (!phoneDetailsError && phoneDetails.statusCode < 400) {
-        businessDisplayPhone = phoneDetails.body.display_phone_number?.trim() || undefined;
+        const details = phoneDetails.body as PhoneNumberDetailsResponse;
+        businessDisplayPhone = details.display_phone_number?.trim() || undefined;
       }
     } catch (err) {
       this.logger.warn(
