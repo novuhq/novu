@@ -51,13 +51,23 @@ export class ConfirmToolApproval {
     }
 
     try {
-      await this.toolTrustService.persist({
+      const persisted = await this.toolTrustService.persist({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
         agentIdentifier: command.agentIdentifier,
         subscriberExternalId: command.subscriberId,
         target: parsed.trust,
       });
+
+      if (!persisted) {
+        // No subscriber/agent to attach the preference to: the approval proceeds
+        // as a one-off, so the card will reappear next time. Logged to make that
+        // (otherwise silent) miss diagnosable.
+        this.logger.debug(
+          { agentIdentifier: command.agentIdentifier, subscriberId: command.subscriberId },
+          'Tool trust preference not persisted (no subscriber/agent); approval is one-off'
+        );
+      }
     } catch (err) {
       // A failed preference write must not block the approval itself.
       this.logger.warn(err, 'Failed to persist tool trust preference; approval will proceed as a one-off');

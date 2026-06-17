@@ -181,16 +181,22 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
     case 'approve':
     case 'deny':
       return { toolUseId, approved };
+    // Persist verdicts are only ever emitted by our cards with all required
+    // segments present. A missing/undecodable segment therefore means a
+    // malformed or forged id, so we reject it (fail closed: no approval, no
+    // persist) rather than downgrading it to a one-off approval.
     case 'approve-tool': {
-      if (!toolName) {
-        return { toolUseId, approved };
-      }
-
       // MCP per-tool trust must carry its server; direct tool trust must not.
       if (isMcp) {
-        return mcpServerName
-          ? { toolUseId, approved, trust: { scope: 'tool', toolName, mcpServerName } }
-          : { toolUseId, approved };
+        if (!toolName || !mcpServerName) {
+          return null;
+        }
+
+        return { toolUseId, approved, trust: { scope: 'tool', toolName, mcpServerName } };
+      }
+
+      if (!toolName) {
+        return null;
       }
 
       return { toolUseId, approved, trust: { scope: 'tool', toolName } };
@@ -198,7 +204,7 @@ export function parseToolApprovalActionId(id: string | undefined): ParsedToolApp
     case 'approve-server': {
       // Server-wide trust only exists on MCP cards.
       if (!isMcp || !mcpServerName) {
-        return { toolUseId, approved };
+        return null;
       }
 
       return { toolUseId, approved, trust: { scope: 'server', mcpServerName } };
