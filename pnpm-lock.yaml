@@ -40,9 +40,9 @@ overrides:
   '@babel/core@>7.0.0 <8.0.0': 7.28.0
   prismjs@<=1.29.0: 1.30.0
   mongodb@>=4.0.0 <5.0.0: 5.9.2
-  form-data@<2.5.4: 2.5.5
-  form-data@>=3.0.0 <3.0.4: 3.0.4
-  form-data@>=4.0.0 <4.0.4: 4.0.5
+  form-data@<2.5.6: ^2.5.6
+  form-data@>=3.0.0 <3.0.5: ^3.0.5
+  form-data@>=4.0.0 <4.0.6: ^4.0.6
   vite@<4.5.10: ^4.5.10
   vite@>=5.0.0 <6.4.2: ^6.4.2
   node-forge@<1.4.0: ^1.4.0
@@ -3770,8 +3770,8 @@ importers:
         specifier: 6.1.0
         version: 6.1.0
       form-data:
-        specifier: ^4.0.5
-        version: 4.0.5
+        specifier: ^4.0.6
+        version: 4.0.6
       get-port:
         specifier: ^5.1.1
         version: 5.1.1
@@ -3960,8 +3960,8 @@ importers:
         specifier: ^13.3.0
         version: 13.3.0(encoding@0.1.13)
       form-data:
-        specifier: ^4.0.5
-        version: 4.0.5
+        specifier: ^4.0.6
+        version: 4.0.6
       mailersend:
         specifier: ^2.6.0
         version: 2.6.0(encoding@0.1.13)
@@ -18981,16 +18981,16 @@ packages:
   form-data-encoder@1.7.2:
     resolution: {integrity: sha512-qfqtYan3rxrnCk1VYaA4H+Ms9xdpPqvLZa6xmMgFvhO32x7/3J/ExcTd6qpxM0vH2GdMI+poehyBZvqfMTto8A==}
 
-  form-data@2.5.5:
-    resolution: {integrity: sha512-jqdObeR2rxZZbPSGL+3VckHMYtu+f9//KXBsVny6JSX/pa38Fy+bGjuG8eW/H6USNQWhLi8Num++cU2yOCNz4A==}
+  form-data@2.5.6:
+    resolution: {integrity: sha512-Ogz/E85h9tlfJzpI6TuFpGcHZFhLrb9Gw8wq9v40CxSCPnv7ahKr6Xgtkn0KYCDQJ8DNn5VoMO8EXr9V5PadyA==}
     engines: {node: '>= 0.12'}
 
-  form-data@3.0.4:
-    resolution: {integrity: sha512-f0cRzm6dkyVYV3nPoooP8XlccPQukegwhAnpoLcXy+X+A8KfpGOoXwDr9FLZd3wzgLaBGQBE3lY93Zm/i1JvIQ==}
+  form-data@3.0.5:
+    resolution: {integrity: sha512-j23EibVLnp4zNXGW7LjryXYa2X6U/M96yoOX+ybZxwkYajdxRNEqYY3zhh7y0i6kfISKS2jr+EJq1YTUDEv5+w==}
     engines: {node: '>= 6'}
 
-  form-data@4.0.5:
-    resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
+  form-data@4.0.6:
+    resolution: {integrity: sha512-vKatAh4SlVfgbv+YtmhiRjhEMJsYpsG1Y2rMQtR+SVSbytsSD1YGzDIcrAJmdFec88u/+VoGmxnl+80gL1tRCQ==}
     engines: {node: '>= 6'}
 
   format-util@1.0.5:
@@ -19529,6 +19529,10 @@ packages:
 
   hasown@2.0.2:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
+    engines: {node: '>= 0.4'}
+
+  hasown@2.0.4:
+    resolution: {integrity: sha512-T2UbfbBEF32wiepXIsMlTW9+dDYC6wMh/t/vYA4tuOMKqWz/n3vr1NFSxQiyP+zk2mXsoMA/i/7qV6LKut1t1A==}
     engines: {node: '>= 0.4'}
 
   hast-util-from-dom@5.0.1:
@@ -30447,7 +30451,7 @@ snapshots:
       '@azure/logger': 1.0.4
       '@types/node-fetch': 2.6.6
       '@types/tunnel': 0.0.1
-      form-data: 3.0.4
+      form-data: 3.0.5
       node-fetch: 2.7.0(encoding@0.1.13)
       process: 0.11.10
       tough-cookie: 4.1.4
@@ -30467,7 +30471,7 @@ snapshots:
       '@azure/logger': 1.0.4
       '@types/node-fetch': 2.6.6
       '@types/tunnel': 0.0.3
-      form-data: 4.0.5
+      form-data: 4.0.6
       node-fetch: 2.7.0(encoding@0.1.13)
       process: 0.11.10
       tough-cookie: 4.1.4
@@ -30487,7 +30491,7 @@ snapshots:
       '@azure/logger': 1.0.4
       '@types/node-fetch': 2.6.6
       '@types/tunnel': 0.0.3
-      form-data: 4.0.5
+      form-data: 4.0.6
       node-fetch: 2.7.0(encoding@0.1.13)
       process: 0.11.10
       tslib: 2.8.1
@@ -31641,7 +31645,7 @@ snapshots:
       '@apimatic/schema': 0.6.0
       axios: 1.17.0
       detect-node: 2.1.0
-      form-data: 3.0.4
+      form-data: 3.0.5
       json-bigint: 1.0.0
       lodash.flatmap: 4.5.0
       tiny-warning: 1.0.3
@@ -32646,7 +32650,7 @@ snapshots:
       combined-stream: 1.0.8
       extend: 3.0.2
       forever-agent: 0.6.1
-      form-data: 2.5.5
+      form-data: 2.5.6
       http-signature: 1.3.6
       is-typedarray: 1.0.0
       isstream: 0.1.2
@@ -33404,7 +33408,7 @@ snapshots:
   '@infobip-api/sdk@0.3.2':
     dependencies:
       axios: 1.17.0
-      form-data: 4.0.5
+      form-data: 4.0.6
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -40397,7 +40401,7 @@ snapshots:
       '@types/retry': 0.12.0
       axios: 1.17.0
       eventemitter3: 5.0.4
-      form-data: 4.0.5
+      form-data: 4.0.6
       is-electron: 2.2.2
       is-stream: 2.0.1
       p-queue: 6.6.2
@@ -43159,7 +43163,7 @@ snapshots:
     dependencies:
       '@types/node': 22.15.13
       '@types/tough-cookie': 4.0.2
-      form-data: 2.5.5
+      form-data: 2.5.6
 
   '@types/graceful-fs@4.1.6':
     dependencies:
@@ -43332,12 +43336,12 @@ snapshots:
   '@types/node-fetch@2.6.3':
     dependencies:
       '@types/node': 22.15.13
-      form-data: 3.0.4
+      form-data: 3.0.5
 
   '@types/node-fetch@2.6.6':
     dependencies:
       '@types/node': 22.15.13
-      form-data: 4.0.5
+      form-data: 4.0.6
 
   '@types/node-mailjet@4.0.0':
     dependencies:
@@ -43489,7 +43493,7 @@ snapshots:
       '@types/caseless': 0.12.2
       '@types/node': 22.15.13
       '@types/tough-cookie': 4.0.2
-      form-data: 2.5.5
+      form-data: 2.5.6
 
   '@types/responselike@1.0.3':
     dependencies:
@@ -45156,7 +45160,7 @@ snapshots:
   axios@1.17.0:
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.0)
-      form-data: 4.0.5
+      form-data: 4.0.6
       https-proxy-agent: 5.0.1
       proxy-from-env: 2.1.0
     transitivePeerDependencies:
@@ -48558,29 +48562,29 @@ snapshots:
 
   form-data-encoder@1.7.2: {}
 
-  form-data@2.5.5:
+  form-data@2.5.6:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       es-set-tostringtag: 2.1.0
-      hasown: 2.0.2
+      hasown: 2.0.4
       mime-types: 2.1.35
       safe-buffer: 5.2.1
 
-  form-data@3.0.4:
+  form-data@3.0.5:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       es-set-tostringtag: 2.1.0
-      hasown: 2.0.2
+      hasown: 2.0.4
       mime-types: 2.1.35
 
-  form-data@4.0.5:
+  form-data@4.0.6:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
       es-set-tostringtag: 2.1.0
-      hasown: 2.0.2
+      hasown: 2.0.4
       mime-types: 2.1.35
 
   format-util@1.0.5: {}
@@ -49294,6 +49298,10 @@ snapshots:
       type-fest: 0.8.1
 
   hasown@2.0.2:
+    dependencies:
+      function-bind: 1.1.2
+
+  hasown@2.0.4:
     dependencies:
       function-bind: 1.1.2
 
@@ -51356,7 +51364,7 @@ snapshots:
       decimal.js: 10.4.3
       domexception: 2.0.1
       escodegen: 2.1.0
-      form-data: 3.0.4
+      form-data: 3.0.5
       html-encoding-sniffer: 2.0.1
       http-proxy-agent: 4.0.1
       https-proxy-agent: 5.0.1
@@ -51390,7 +51398,7 @@ snapshots:
       decimal.js: 10.4.3
       domexception: 4.0.0
       escodegen: 2.1.0
-      form-data: 4.0.5
+      form-data: 4.0.6
       html-encoding-sniffer: 3.0.0
       http-proxy-agent: 5.0.0
       https-proxy-agent: 5.0.1
@@ -54604,7 +54612,7 @@ snapshots:
       axios: 1.17.0
       base-64: 0.1.0
       build-url: 1.3.3
-      form-data: 4.0.5
+      form-data: 4.0.6
       https-proxy-agent: 5.0.1
       joi: 18.2.1
       jsonwebtoken: 9.0.3
@@ -57444,7 +57452,7 @@ snapshots:
       cookiejar: 2.1.4
       debug: 4.4.3
       fast-safe-stringify: 2.1.1
-      form-data: 4.0.5
+      form-data: 4.0.6
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
@@ -57458,7 +57466,7 @@ snapshots:
       cookiejar: 2.1.4
       debug: 4.4.3
       fast-safe-stringify: 2.1.1
-      form-data: 4.0.5
+      form-data: 4.0.6
       formidable: 2.1.5
       methods: 1.1.2
       mime: 2.6.0
@@ -57473,7 +57481,7 @@ snapshots:
       cookiejar: 2.1.4
       debug: 4.4.3
       fast-safe-stringify: 2.1.1
-      form-data: 4.0.5
+      form-data: 4.0.6
       formidable: 3.5.4
       methods: 1.1.2
       mime: 2.6.0
