@@ -11,6 +11,7 @@ export * from './repositories/channel-endpoint';
 export * from './repositories/context';
 export * from './repositories/control-values';
 export * from './repositories/conversation';
+export * from './repositories/conversation-activation';
 export * from './repositories/conversation-activity';
 export * from './repositories/domain';
 export * from './repositories/domain-route';

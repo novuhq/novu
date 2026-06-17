@@ -39,8 +39,11 @@ export const FEATURE_SECTIONS: FeatureSectionConfig[] = [
   {
     title: 'Agents',
     features: [
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
+      FeatureNameEnum.AGENT_COST_PER_ADDITIONAL_CONVERSATION,
       FeatureNameEnum.AGENT_MAX_AGENTS,
       FeatureNameEnum.AGENT_MAX_ACTIVE_CHANNELS,
+      FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN,
       FeatureNameEnum.AGENT_MAX_CUSTOM_EMAIL_DOMAINS,
     ],
   },
@@ -66,8 +69,6 @@ export const FEATURE_SECTIONS: FeatureSectionConfig[] = [
     features: [
       FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
       FeatureNameEnum.ACCOUNT_ROLE_BASED_ACCESS_CONTROL_BOOLEAN,
-      FeatureNameEnum.COMPLIANCE_GDPR_BOOLEAN,
-      FeatureNameEnum.COMPLIANCE_HIPAA_BAA_BOOLEAN,
       FeatureNameEnum.ACCOUNT_CUSTOM_SAML_SSO_OIDC_BOOLEAN,
     ],
   },
@@ -78,24 +79,36 @@ export const FEATURE_SECTIONS: FeatureSectionConfig[] = [
   {
     title: 'Legal & Vendor management',
     features: [
+      FeatureNameEnum.COMPLIANCE_GDPR_BOOLEAN,
       FeatureNameEnum.PAYMENT_METHOD,
       FeatureNameEnum.COMPLIANCE_CUSTOM_SECURITY_REVIEWS,
+      FeatureNameEnum.COMPLIANCE_HIPAA_BAA_BOOLEAN,
       FeatureNameEnum.PLATFORM_TERMS_OF_SERVICE,
       FeatureNameEnum.COMPLIANCE_DATA_PROCESSING_AGREEMENTS,
     ],
   },
 ];
 
-const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfig[]; excluded: FeatureConfig[] }> = {
+const PLAN_FEATURES_CONFIG: Record<
+  ApiServiceLevelEnum,
+  { highlights: FeatureConfig[]; included: FeatureConfig[]; excluded: FeatureConfig[] }
+> = {
   [ApiServiceLevelEnum.FREE]: {
+    highlights: [
+      FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
+      FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
+    ],
     included: [
       FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       FeatureNameEnum.PLATFORM_SUBSCRIBERS,
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
     ],
     excluded: [
       '30,000 workflow runs & more',
+      'More active conversations',
       'Unlimited workflows',
       FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
       'Dedicated support',
@@ -103,14 +116,21 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
     ],
   },
   [ApiServiceLevelEnum.PRO]: {
+    highlights: [
+      FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
+      FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
+    ],
     included: [
       FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       FeatureNameEnum.PLATFORM_REMOVE_NOVU_BRANDING_BOOLEAN,
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
     ],
     excluded: [
       '250,000 workflow runs & more',
+      'More active conversations',
       'Unlimited workflows',
       FeatureNameEnum.CUSTOM_ENVIRONMENTS_BOOLEAN,
       FeatureNameEnum.WEBHOOKS,
@@ -118,8 +138,14 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
     ],
   },
   [ApiServiceLevelEnum.BUSINESS]: {
+    highlights: [
+      FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
+      FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
+    ],
     included: [
       FeatureNameEnum.PLATFORM_MONTHLY_EVENTS_INCLUDED,
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
@@ -133,8 +159,10 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
     ],
   },
   [ApiServiceLevelEnum.ENTERPRISE]: {
+    highlights: ['Custom workflow runs', FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS, 'SAML SSO'],
     included: [
       'Volume discounts',
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
@@ -142,8 +170,10 @@ const PLAN_FEATURES_CONFIG: Record<ApiServiceLevelEnum, { included: FeatureConfi
     excluded: ['Being told "you need to upgrade"'],
   },
   [ApiServiceLevelEnum.UNLIMITED]: {
+    highlights: ['Custom workflow runs', FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS, 'SAML SSO'],
     included: [
       'Custom workflow runs',
+      FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS,
       FeatureNameEnum.PLATFORM_MAX_WORKFLOWS,
       FeatureNameEnum.ACCOUNT_MAX_TEAM_MEMBERS,
       FeatureNameEnum.PLATFORM_ACTIVITY_FEED_RETENTION,
@@ -185,9 +215,9 @@ export function getPlanFeatures(plan: ApiServiceLevelEnum): { included: PlanFeat
   return { included, excluded };
 }
 
-// Get just the included features for plan highlights (for plan cards)
+// Get just the highlight features for plan cards (compact 3-line summary)
 export function getPlanHighlightFeatures(plan: ApiServiceLevelEnum): string[] {
   const config = PLAN_FEATURES_CONFIG[plan];
 
-  return config.included.map((feature: FeatureConfig) => getFeatureDisplayText(feature, plan));
+  return config.highlights.map((feature: FeatureConfig) => getFeatureDisplayText(feature, plan));
 }

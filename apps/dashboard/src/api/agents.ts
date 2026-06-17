@@ -242,6 +242,23 @@ export async function getAgentDemoQuota(
   return 'data' in response ? response.data : response;
 }
 
+export type ConversationUsage = {
+  current: number;
+  /** `null` when the tier is unlimited. */
+  included: number | null;
+  periodStart: string;
+  periodEnd: string;
+};
+
+export async function getConversationUsage(environment: IEnvironment, signal?: AbortSignal): Promise<ConversationUsage> {
+  const response = await get<{ data: ConversationUsage } | ConversationUsage>('/agents/usage/conversations', {
+    environment,
+    signal,
+  });
+
+  return 'data' in response ? response.data : response;
+}
+
 export async function migrateAgentRuntime(
   environment: IEnvironment,
   agentIdentifier: string,

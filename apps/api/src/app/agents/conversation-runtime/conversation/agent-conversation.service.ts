@@ -57,6 +57,8 @@ export interface CreateOrGetConversationParams {
   participantType: ConversationParticipantTypeEnum;
   platformUserId: string;
   firstMessageText: string;
+  /** Whether the thread is a direct message — persisted for active-conversation window selection. */
+  isDirectMessage?: boolean;
 }
 
 export interface PersistInboundMessageParams {
@@ -175,6 +177,7 @@ export class AgentConversationService {
       status: ConversationStatusEnum.ACTIVE,
       title: getConversationTitle(params.firstMessageText),
       metadata: {},
+      isDirectMessage: params.isDirectMessage,
       _environmentId: environmentId,
       _organizationId: organizationId,
       lastActivityAt: new Date().toISOString(),
@@ -421,6 +424,14 @@ export class AgentConversationService {
         params.organizationId,
         params.conversationId,
         ConversationStatusEnum.RESOLVED
+      ),
+      // Mark for billing so the next agent engagement is counted as a reopen
+      // activation (a closed thread ends the active conversation episode).
+      this.conversationRepository.markBillingResolved(
+        params.environmentId,
+        params.organizationId,
+        params.conversationId,
+        new Date().toISOString()
       ),
       this.conversationRepository.clearExternalSessionId(params.environmentId, params.conversationId),
       this.activityRepository.createSignalActivity({
