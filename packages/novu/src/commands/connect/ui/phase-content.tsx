@@ -7,7 +7,7 @@ import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
 import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
 import type { AgentConnectMode, ChannelChoice } from '../types';
-import { ChatSdkPhaseContent } from './chat-sdk-phase-content';
+import { ChatSdkPhaseContent, isChatSdkPhase } from './chat-sdk-phase-content';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore } from './store';
@@ -34,9 +34,8 @@ export function PhaseContent({
   onChannelHover: (channel: ChannelChoice | null) => void;
   previewMorphComplete: boolean;
 }): React.ReactElement {
-  const chatSdkView = ChatSdkPhaseContent({ phase });
-  if (chatSdkView) {
-    return chatSdkView;
+  if (isChatSdkPhase(phase)) {
+    return ChatSdkPhaseContent({ phase });
   }
 
   switch (phase.kind) {

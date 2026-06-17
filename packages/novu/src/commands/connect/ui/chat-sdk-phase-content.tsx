@@ -3,7 +3,26 @@ import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import type { Phase } from './store';
 
-export function ChatSdkPhaseContent({ phase }: { phase: Phase }): React.ReactElement | null {
+const CHAT_SDK_PHASE_KINDS = [
+  'confirm-env-secret-overwrite',
+  'confirm-scaffold',
+  'scaffolding-chat-sdk',
+  'chat-sdk-scaffolded',
+  'chat-sdk-env-wired',
+  'chat-sdk-skill-prompt',
+  'chat-sdk-installing-skill',
+  'chat-sdk-agent-prompt',
+] as const;
+
+type ChatSdkPhaseKind = (typeof CHAT_SDK_PHASE_KINDS)[number];
+
+export type ChatSdkPhase = Extract<Phase, { kind: ChatSdkPhaseKind }>;
+
+export function isChatSdkPhase(phase: Phase): phase is ChatSdkPhase {
+  return (CHAT_SDK_PHASE_KINDS as readonly string[]).includes(phase.kind);
+}
+
+export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.ReactElement {
   switch (phase.kind) {
     case 'confirm-env-secret-overwrite':
       return (
@@ -71,8 +90,11 @@ export function ChatSdkPhaseContent({ phase }: { phase: Phase }): React.ReactEle
     case 'chat-sdk-agent-prompt':
       return <ChatSdkAgentPromptContent phase={phase} />;
 
-    default:
-      return null;
+    default: {
+      const _exhaustive: never = phase;
+
+      return <Text />;
+    }
   }
 }
 
