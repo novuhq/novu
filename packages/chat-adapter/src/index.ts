@@ -3,7 +3,6 @@ import type { NovuAdapter, NovuAdapterConfig } from './types.js';
 
 export { getNovuContext } from './novu-context.js';
 export { verifyNovuSignature } from './signature.js';
-export { createMemoryState, InMemoryStateAdapter } from './state-memory.js';
 
 export type {
   AddReactionPayload,
@@ -22,6 +21,7 @@ export type {
   NovuContext,
   NovuRawMessage,
   NovuThreadId,
+  NovuTypedAdapter,
   ReplyContent,
   Signal,
 } from './types.js';
@@ -34,7 +34,8 @@ export { AgentEvent } from './types.js';
  *
  * @example
  *   import { Chat } from 'chat';
- *   import { createNovuAdapter, createMemoryState } from '@novu/chat-sdk-adapter';
+ *   import { createNovuAdapter } from '@novu/chat-sdk-adapter';
+ *   import { createMemoryState } from '@chat-adapter/state-memory';
  *
  *   const novu = createNovuAdapter({
  *     apiKey: process.env.NOVU_SECRET_KEY!,
@@ -48,5 +49,5 @@ export { AgentEvent } from './types.js';
  *   });
  */
 export function createNovuAdapter(config: NovuAdapterConfig): NovuAdapter {
-  return new NovuAdapterImpl(config);
+  return new NovuAdapterImpl(config) as NovuAdapter;
 }

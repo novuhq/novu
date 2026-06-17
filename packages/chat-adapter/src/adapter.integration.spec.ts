@@ -1,8 +1,8 @@
 import { createHmac } from 'node:crypto';
+import { createMemoryState } from '@chat-adapter/state-memory';
 import { Chat } from 'chat';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createNovuAdapter } from './index.js';
-import { createMemoryState } from './state-memory.js';
 import type { AgentBridgeRequest } from './types.js';
 
 const BRIDGE_SECRET = 'bridge-secret';

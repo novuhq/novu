@@ -18,8 +18,8 @@ import {
   AgentEvent,
   type AgentMessageAuthor,
   type AgentReplyPayload,
-  type NovuAdapter,
   type NovuAdapterConfig,
+  type NovuTypedAdapter,
   type NovuRawMessage,
   type NovuThreadId,
   type Signal,
@@ -40,7 +40,7 @@ class NotImplementedError extends Error {
 const deliveryKey = (deliveryId: string): string => `novu:delivery:${deliveryId}`;
 const snapshotKey = (threadId: string): string => `novu:snapshot:${threadId}`;
 
-export class NovuAdapterImpl implements NovuAdapter {
+export class NovuAdapterImpl implements NovuTypedAdapter {
   readonly name = 'novu';
   readonly userName: string;
   readonly persistMessageHistory = false;

@@ -1,10 +1,7 @@
 import { createHmac } from 'node:crypto';
-import {
-  type AgentBridgeRequest,
-  createMemoryState,
-  createNovuAdapter,
-} from '@novu/chat-sdk-adapter';
-import { Chat } from 'chat';
+import { createMemoryState } from '@chat-adapter/state-memory';
+import { type AgentBridgeRequest, createNovuAdapter } from '@novu/chat-sdk-adapter';
+import { type Adapter, Chat, type StateAdapter } from 'chat';
 import { registerHandlers } from '../agent';
 
 export const runtime = 'nodejs';
@@ -45,7 +42,10 @@ function buildBridge(input: SimulateBody): AgentBridgeRequest {
     replyUrl: 'https://api.novu.co/v1/agents/playground-agent/reply',
     conversationId: 'sim-conversation',
     integrationIdentifier: `${platform}-playground`,
-    action: input.event === 'onAction' ? { id: input.actionId ?? 'approve', value: 'sim-value', sourceMessageId: 'sim-msg' } : null,
+    action:
+      input.event === 'onAction'
+        ? { id: input.actionId ?? 'approve', value: 'sim-value', sourceMessageId: 'sim-msg' }
+        : null,
     message:
       input.event === 'onAction' || input.event === 'onReaction'
         ? null
@@ -101,7 +101,11 @@ export async function POST(req: Request): Promise<Response> {
     bridgeSecret: SIM_SECRET,
     fetch: capturingFetch,
   });
-  const chat = new Chat({ userName: 'novu-playground-sim', adapters: { novu }, state: createMemoryState() });
+  const chat = new Chat({
+    userName: 'novu-playground-sim',
+    adapters: { novu: novu as unknown as Adapter },
+    state: createMemoryState() as unknown as StateAdapter,
+  });
   registerHandlers(chat);
   await chat.initialize();
 

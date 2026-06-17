@@ -1,4 +1,4 @@
-import type { AdapterThread, NovuContext, NovuContextSource, Signal } from './types.js';
+import type { NovuContext, NovuContextSource, Signal } from './types.js';
 
 /**
  * Opt-in Novu-only capabilities for a thread. Ported Chat SDK bots ignore this;
@@ -13,7 +13,7 @@ import type { AdapterThread, NovuContext, NovuContextSource, Signal } from './ty
  *     }
  *   });
  */
-export function getNovuContext(thread: AdapterThread): NovuContext {
+export function getNovuContext(thread: { id: string; adapter: unknown }): NovuContext {
   const source = thread.adapter as unknown as NovuContextSource;
   if (typeof source?.emitSignals !== 'function' || typeof source?.decodeThreadId !== 'function') {
     throw new Error('getNovuContext() requires a thread owned by the Novu adapter');

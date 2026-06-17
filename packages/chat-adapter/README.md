@@ -14,16 +14,20 @@ End-user channels ──platform webhooks──▶ NOVU (normalize) ──POST A
 ## Install
 
 ```bash
-npm install @novu/chat-sdk-adapter chat
+npm install @novu/chat-sdk-adapter chat @chat-adapter/state-memory
 ```
 
 `chat` is a peer dependency. `react` is an optional peer (only needed for JSX cards).
+A `StateAdapter` is required by the Chat SDK — use the official `@chat-adapter/state-memory`
+for local/single-instance, or a shared adapter (`@chat-adapter/state-redis`,
+`@chat-adapter/state-ioredis`, `@chat-adapter/state-pg`) for production.
 
 ## Usage
 
 ```ts
 import { Chat } from 'chat';
-import { createNovuAdapter, createMemoryState, getNovuContext } from '@novu/chat-sdk-adapter';
+import { createMemoryState } from '@chat-adapter/state-memory';
+import { createNovuAdapter, getNovuContext } from '@novu/chat-sdk-adapter';
 
 const novu = createNovuAdapter({
   apiKey: process.env.NOVU_SECRET_KEY!,        // Authorization for reply POSTs
@@ -36,7 +40,7 @@ const novu = createNovuAdapter({
 const chat = new Chat({
   userName: 'support',
   adapters: { novu },
-  state: createMemoryState(), // zero-deps, single-instance; use a shared state adapter for multi-instance
+  state: createMemoryState(), // official @chat-adapter/state-memory; single-instance only
 });
 
 chat.onNewMention(async (thread, message) => {
@@ -76,6 +80,9 @@ Next.js route handlers, Hono, etc.).
 
 ## State
 
-`createMemoryState()` is in-process and safe for a single instance. For horizontally-scaled or
-serverless bridges with more than one warm instance, pass a shared state adapter
-(e.g. `@chat-adapter/state-ioredis`) to `new Chat({ state })` so locks and dedup are correct.
+This adapter does not ship its own state layer — it relies on the Chat SDK's standard
+`StateAdapter`. Use the official memory adapter `@chat-adapter/state-memory`
+(`createMemoryState()`), which is in-process and safe for a single instance. For
+horizontally-scaled or serverless bridges with more than one warm instance, pass a shared
+state adapter (`@chat-adapter/state-redis`, `@chat-adapter/state-ioredis`, or
+`@chat-adapter/state-pg`) to `new Chat({ state })` so locks and dedup are correct.

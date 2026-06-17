@@ -250,7 +250,14 @@ export interface NovuContext {
   resolve(summary?: string): Promise<void>;
 }
 
-export type NovuAdapter = Adapter<NovuThreadId, NovuRawMessage>;
+/**
+ * Consumer-facing adapter type — widened to the base `Adapter` so instances are
+ * assignable to `new Chat({ adapters: { novu } })` without generic variance errors.
+ */
+export type NovuAdapter = Adapter;
+
+/** Adapter with Novu-specific thread/message generics (implementation / advanced use). */
+export type NovuTypedAdapter = Adapter<NovuThreadId, NovuRawMessage>;
 
 /** Subset of the adapter surface `getNovuContext` needs — avoids a circular import. */
 export interface NovuContextSource {
@@ -259,4 +266,4 @@ export interface NovuContextSource {
   decodeThreadId(threadId: string): NovuThreadId;
 }
 
-export type AdapterThread = Thread<NovuRawMessage>;
+export type AdapterThread = Thread;

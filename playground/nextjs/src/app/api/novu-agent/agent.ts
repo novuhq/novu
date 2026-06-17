@@ -1,5 +1,6 @@
-import { createMemoryState, createNovuAdapter, getNovuContext, type NovuAdapter } from '@novu/chat-sdk-adapter';
-import { Chat } from 'chat';
+import { createMemoryState } from '@chat-adapter/state-memory';
+import { createNovuAdapter, getNovuContext } from '@novu/chat-sdk-adapter';
+import { type Adapter, Chat, type StateAdapter } from 'chat';
 
 /**
  * Shared agent definition for the Novu Chat-adapter playground.
@@ -49,14 +50,14 @@ export function registerHandlers(chat: Chat): void {
   });
 }
 
-let agentPromise: Promise<{ chat: Chat; novu: NovuAdapter }> | null = null;
+let agentPromise: Promise<{ chat: Chat; novu: Adapter }> | null = null;
 
 /**
  * Build (once) and return the live bridge agent. Requires `NOVU_SECRET_KEY` and
  * `NOVU_AGENT_IDENTIFIER`. Uses the zero-deps in-memory state adapter — fine for
  * a single playground instance; swap in a shared state adapter for multi-instance.
  */
-export function getNovuAgent(): Promise<{ chat: Chat; novu: NovuAdapter }> {
+export function getNovuAgent(): Promise<{ chat: Chat; novu: Adapter }> {
   if (!agentPromise) {
     agentPromise = (async () => {
       const apiKey = process.env.NOVU_SECRET_KEY;
@@ -74,14 +75,14 @@ export function getNovuAgent(): Promise<{ chat: Chat; novu: NovuAdapter }> {
 
       const chat = new Chat({
         userName: 'novu-playground-agent',
-        adapters: { novu },
-        state: createMemoryState(),
+        adapters: { novu: novu as unknown as Adapter },
+        state: createMemoryState() as unknown as StateAdapter,
       });
 
       registerHandlers(chat);
       await chat.initialize();
 
-      return { chat, novu };
+      return { chat, novu: novu as unknown as Adapter };
     })();
   }
 

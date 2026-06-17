@@ -3396,16 +3396,19 @@ importers:
 
   packages/chat-adapter:
     dependencies:
+      chat:
+        specifier: '>=4.30.0'
+        version: 4.30.0(zod@4.3.6)
       react:
         specifier: '>=18.0.0 || >=19.0.0'
         version: 19.2.3
     devDependencies:
+      '@chat-adapter/state-memory':
+        specifier: 4.30.0
+        version: 4.30.0(zod@4.3.6)
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.8
-      chat:
-        specifier: 4.30.0
-        version: 4.30.0(zod@4.3.6)
       rimraf:
         specifier: ~3.0.2
         version: 3.0.2
@@ -4308,6 +4311,9 @@ importers:
       '@ai-sdk/react':
         specifier: ^3.0.0
         version: 3.0.51(react@18.3.1)(zod@4.3.5)
+      '@chat-adapter/state-memory':
+        specifier: 4.30.0
+        version: 4.30.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5)
       '@clerk/react':
         specifier: ^6.6.6
         version: 6.6.6(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -6533,6 +6539,10 @@ packages:
 
   '@chat-adapter/state-ioredis@4.30.0':
     resolution: {integrity: sha512-IJSNT3cx+QPRhvPSEDO8WfZBW/6L1SNheWO9nXkPQ43nalXagioSqJrpExqnQrfyv2CYtG4Hen29ORwRdbOSTw==}
+    engines: {node: '>=20'}
+
+  '@chat-adapter/state-memory@4.30.0':
+    resolution: {integrity: sha512-huYnGBKBiY6s/GaYgtAmr0zM6ihvGl8/NOEV9oqY89jr6Zdnm/ZXdpXvDKdXoaxmDXCiZr2U54DbSDzpvGQ6fA==}
     engines: {node: '>=20'}
 
   '@chat-adapter/teams@4.30.0':
@@ -31839,6 +31849,22 @@ snapshots:
     dependencies:
       chat: 4.30.0(zod@3.25.20)
       ioredis: 5.11.0
+    transitivePeerDependencies:
+      - ai
+      - supports-color
+      - zod
+
+  '@chat-adapter/state-memory@4.30.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5)':
+    dependencies:
+      chat: 4.30.0(ai@6.0.50(zod@4.3.5))(zod@4.3.5)
+    transitivePeerDependencies:
+      - ai
+      - supports-color
+      - zod
+
+  '@chat-adapter/state-memory@4.30.0(zod@4.3.6)':
+    dependencies:
+      chat: 4.30.0(zod@4.3.6)
     transitivePeerDependencies:
       - ai
       - supports-color
