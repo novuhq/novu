@@ -8,6 +8,19 @@ export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
 export const AGENT_RUNTIME_CHOICES: readonly AgentRuntimeChoice[] = ['demo', 'claude', 'claude-aws'];
 
+export type AgentBrainChoice = 'managed' | 'chat-sdk';
+
+export const AGENT_BRAIN_CHOICES: readonly AgentBrainChoice[] = ['managed', 'chat-sdk'];
+
+export type ChatSdkProjectKind = 'has-adapter' | 'project-no-adapter' | 'empty';
+
+export type ChatSdkConnectOutcome = {
+  projectKind: ChatSdkProjectKind;
+  projectDir: string;
+  scaffolded: boolean;
+  envPath?: string;
+};
+
 export interface ConnectCommandOptions {
   secretKey?: string;
   region: CloudRegionEnum;
@@ -51,6 +64,19 @@ export interface ConnectCommandOptions {
   ci?: boolean;
   /** Use a temporary keyless workspace instead of dashboard OAuth (the default). */
   keyless?: boolean;
+  /**
+   * Agent brain for new agents. `managed` uses Novu's AI runtime (default).
+   * `chat-sdk` provisions a self-hosted bridge agent backed by your Chat SDK app.
+   */
+  brain?: AgentBrainChoice;
+  /** Shorthand for `--brain chat-sdk`. */
+  chatSdk?: boolean;
+  /** Project directory to inspect for an existing Chat SDK app (defaults to cwd). */
+  projectDir?: string;
+  /** When scaffolding into a non-empty parent, use this subdirectory name. */
+  scaffoldDir?: string;
+  /** Skip scaffolding even when the target directory is empty. */
+  noScaffold?: boolean;
 }
 
 export interface AgentSummary {

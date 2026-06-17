@@ -1,6 +1,12 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
-import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
+import type {
+  AgentBrainChoice,
+  AgentRuntimeChoice,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+} from '../types';
 import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResult } from './ui';
 
 export type Phase =
@@ -13,6 +19,11 @@ export type Phase =
   | { kind: 'listing-agents' }
   | { kind: 'loading-integrations' }
   | { kind: 'pick'; agents: AgentSummary[]; resolve: (pick: PickResult) => void }
+  | {
+      kind: 'pick-brain';
+      preselected?: AgentBrainChoice;
+      resolve: (brain: AgentBrainChoice) => void;
+    }
   | {
       kind: 'pick-runtime';
       preselected?: AgentRuntimeChoice;
@@ -39,6 +50,36 @@ export type Phase =
     }
   | { kind: 'verifying-credentials' }
   | { kind: 'describe'; previousPrompt?: string; resolve: (prompt: string) => void }
+  | {
+      kind: 'prompt-agent-name';
+      defaultName: string;
+      resolve: (name: string) => void;
+    }
+  | {
+      kind: 'confirm-env-secret-overwrite';
+      envPath: string;
+      existingMasked: string;
+      nextMasked: string;
+      resolve: (overwrite: boolean) => void;
+    }
+  | { kind: 'scaffolding-chat-sdk' }
+  | {
+      kind: 'chat-sdk-scaffolded';
+      projectDir: string;
+      envPath: string;
+    }
+  | {
+      kind: 'chat-sdk-env-wired';
+      projectDir: string;
+      envPath: string;
+      updatedKeys: string[];
+    }
+  | {
+      kind: 'chat-sdk-skill-instructions';
+      installCommand: string;
+      lines: string[];
+      agentIdentifier: string;
+    }
   | { kind: 'generating' }
   | {
       kind: 'preview-generated';
@@ -124,6 +165,8 @@ export type Phase =
       dashboardRedirectChannel: ChannelChoice | null;
       isKeyless: boolean;
       claimUrl: string | null;
+      brain?: AgentBrainChoice;
+      chatSdkOutcome?: ChatSdkConnectOutcome;
     }
   | { kind: 'error'; message: string };
 

@@ -5,7 +5,7 @@ import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
-import type { AgentRuntimeChoice, ChannelChoice } from '../types';
+import type { AgentBrainChoice, AgentRuntimeChoice, ChannelChoice, ChatSdkConnectOutcome } from '../types';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore } from './store';
@@ -51,6 +51,17 @@ export function PhaseContent({
 
     case 'loading-integrations':
       return <Text color="cyan">Looking up agent runtime integrations…</Text>;
+
+    case 'pick-brain':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Box flexDirection="column">
+            <Text bold>How should your agent think?</Text>
+            <Text dimColor>Managed AI runs on Novu. Chat SDK uses your own app as the brain.</Text>
+          </Box>
+          <BrainSelect onChange={(value) => phase.resolve(value)} />
+        </Box>
+      );
 
     case 'pick-runtime':
       return (
@@ -165,6 +176,70 @@ export function PhaseContent({
             <TextInput placeholder="Describe what your agent should do…" onSubmit={(value) => phase.resolve(value)} />
           </Box>
           <Text dimColor>Press Enter to submit. Minimum 8 characters.</Text>
+        </Box>
+      );
+
+    case 'prompt-agent-name':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>Name your Chat SDK agent</Text>
+          <Text dimColor>This creates a self-hosted bridge agent in Novu — your app is the brain.</Text>
+          <Box borderStyle="round" paddingX={1}>
+            <TextInput
+              defaultValue={phase.defaultName}
+              placeholder="My Chat SDK Agent"
+              onSubmit={(value) => phase.resolve(value.trim() || phase.defaultName)}
+            />
+          </Box>
+          <Text dimColor>Press Enter to continue.</Text>
+        </Box>
+      );
+
+    case 'confirm-env-secret-overwrite':
+      return (
+        <ConfirmEnvSecretOverwriteContent
+          envPath={phase.envPath}
+          existingMasked={phase.existingMasked}
+          nextMasked={phase.nextMasked}
+          onResolve={phase.resolve}
+        />
+      );
+
+    case 'scaffolding-chat-sdk':
+      return <Text color="cyan">Scaffolding your Chat SDK project…</Text>;
+
+    case 'chat-sdk-scaffolded':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text color="green">✓ Chat SDK project ready.</Text>
+          <Text>
+            <Text bold>Project:</Text> {phase.projectDir}
+          </Text>
+          <Text dimColor>{`Wrote ${phase.envPath}`}</Text>
+        </Box>
+      );
+
+    case 'chat-sdk-env-wired':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text color="green">✓ Environment updated.</Text>
+          <Text dimColor>{`Updated ${phase.envPath}`}</Text>
+          {phase.updatedKeys.length > 0 ? <Text dimColor>{`Keys: ${phase.updatedKeys.join(', ')}`}</Text> : null}
+        </Box>
+      );
+
+    case 'chat-sdk-skill-instructions':
+      return (
+        <Box flexDirection="column" gap={1}>
+          <Text bold>Install the Novu Chat SDK skill</Text>
+          <Text dimColor>Your project needs the adapter wired in. Run this, then ask your coding agent:</Text>
+          <Text color="cyan">{phase.installCommand}</Text>
+          {phase.lines.map((line) => (
+            <Text key={line} dimColor={line.length > 0}>
+              {line || ' '}
+            </Text>
+          ))}
+          <Text dimColor>{`Agent identifier: ${phase.agentIdentifier}`}</Text>
         </Box>
       );
 
@@ -364,6 +439,62 @@ export function PhaseContent({
     default:
       return <Text />;
   }
+}
+
+function renderChatSdkSuccessMessage(
+  brain: AgentBrainChoice | undefined,
+  outcome: ChatSdkConnectOutcome | undefined
+): React.ReactElement | null {
+  if (brain !== 'chat-sdk' || !outcome) {
+    return null;
+  }
+
+  if (outcome.scaffolded) {
+    return <Text color="cyan">Project scaffolded at {outcome.projectDir}. Starting dev server and tunnel next…</Text>;
+  }
+
+  if (outcome.projectKind === 'has-adapter') {
+    return <Text color="cyan">Environment wired — start your app and point Novu at your bridge URL.</Text>;
+  }
+
+  return <Text color="cyan">Install the skill and ask your coding agent to wire the adapter.</Text>;
+}
+
+function BrainSelect({ onChange }: { onChange: (value: AgentBrainChoice) => void }): React.ReactElement {
+  const options: Array<{ label: string; value: AgentBrainChoice }> = [
+    { label: 'Managed AI (Novu runs the brain)', value: 'managed' },
+    { label: 'Chat SDK (your own app is the brain)', value: 'chat-sdk' },
+  ];
+
+  return <Select options={options} onChange={(value) => onChange(value as AgentBrainChoice)} />;
+}
+
+function ConfirmEnvSecretOverwriteContent({
+  envPath,
+  existingMasked,
+  nextMasked,
+  onResolve,
+}: {
+  envPath: string;
+  existingMasked: string;
+  nextMasked: string;
+  onResolve: (overwrite: boolean) => void;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return) onResolve(true);
+    if (key.escape) onResolve(false);
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Overwrite NOVU_SECRET_KEY?</Text>
+      <Text dimColor>{envPath} already has a secret key.</Text>
+      <Text>
+        Existing: <Text color="yellow">{existingMasked}</Text> → New: <Text color="cyan">{nextMasked}</Text>
+      </Text>
+      <Text color="cyan">Enter · overwrite · Esc · keep existing</Text>
+    </Box>
+  );
 }
 
 function RuntimeSelect({ onChange }: { onChange: (value: AgentRuntimeChoice) => void }): React.ReactElement {
@@ -683,6 +814,8 @@ function SuccessView({
     dashboardRedirectChannel,
     isKeyless,
     claimUrl,
+    brain,
+    chatSdkOutcome,
   } = phase;
   const agentUrl = environmentSlug
     ? `${connectDashboardUrl}/env/${environmentSlug}/connect/agents/${encodeURIComponent(agent.identifier)}`
@@ -705,6 +838,7 @@ function SuccessView({
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
+        {renderChatSdkSuccessMessage(brain, chatSdkOutcome)}
         {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
       </Box>
     </Box>

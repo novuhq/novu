@@ -1,5 +1,11 @@
 import type { GeneratedAgentSpec } from '../api/agents';
-import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
+import type {
+  AgentBrainChoice,
+  AgentRuntimeChoice,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+} from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
@@ -34,6 +40,7 @@ export interface ConnectUI {
   pickExistingOrCreate(agents: AgentSummary[]): Promise<PickResult>;
 
   // Agent runtime / credentials (new-agent path)
+  pickAgentBrain(opts: { preselected?: AgentBrainChoice }): Promise<AgentBrainChoice>;
   pickAgentRuntime(opts: { preselected?: AgentRuntimeChoice }): Promise<AgentRuntimeChoice>;
   pickAgentIntegration(opts: {
     providerLabel: string;
@@ -66,6 +73,14 @@ export interface ConnectUI {
   previewGeneratedAgent(spec: GeneratedAgentSpec): Promise<GeneratedAgentPreviewResult>;
   creatingAgent(name: string): void;
   agentCreated(agent: AgentSummary): void;
+
+  // Chat SDK project wiring
+  promptForAgentName(defaultName: string): Promise<string>;
+  confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
+  scaffoldingChatSdk(): void;
+  chatSdkScaffolded(opts: { projectDir: string; envPath: string }): void;
+  chatSdkEnvWired(opts: { projectDir: string; envPath: string; updatedKeys: string[] }): void;
+  chatSdkSkillInstructions(opts: { installCommand: string; lines: string[]; agentIdentifier: string }): void;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;
@@ -168,6 +183,8 @@ export interface ConnectUI {
     dashboardRedirectChannel: ChannelChoice | null;
     isKeyless: boolean;
     claimUrl: string | null;
+    brain?: AgentBrainChoice;
+    chatSdkOutcome?: ChatSdkConnectOutcome;
   }): void;
   failure(message: string): void;
 

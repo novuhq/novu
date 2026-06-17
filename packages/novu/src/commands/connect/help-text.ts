@@ -46,6 +46,19 @@ Examples (non-interactive / agent / CI):
       --secret-key "$NOVU_SECRET_KEY" \\
       --channel slack
 
+  Chat SDK bridge agent (no AI prompt required):
+    npx novu connect \\
+      --brain chat-sdk \\
+      --secret-key "$NOVU_SECRET_KEY" \\
+      --channel telegram
+
+  Chat SDK in CI:
+    npx novu connect \\
+      --ci \\
+      --chat-sdk \\
+      --secret-key "$NOVU_SECRET_KEY" \\
+      --channel slack
+
 Non-interactive (agent / CI) contract:
 
   Required for --ci mode:

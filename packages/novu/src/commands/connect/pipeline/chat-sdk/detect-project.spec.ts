@@ -1,0 +1,45 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import { detectChatSdkProject } from './detect-project';
+
+const tempDirs: string[] = [];
+
+afterEach(() => {
+  for (const dir of tempDirs.splice(0)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+function makeTempDir(): string {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-chat-sdk-detect-'));
+  tempDirs.push(dir);
+
+  return dir;
+}
+
+describe('detectChatSdkProject', () => {
+  it('classifies an empty directory as empty', () => {
+    const dir = makeTempDir();
+
+    expect(detectChatSdkProject(dir)).toEqual({ kind: 'empty', projectDir: dir });
+  });
+
+  it('classifies a project with the adapter as has-adapter', () => {
+    const dir = makeTempDir();
+    fs.writeFileSync(
+      path.join(dir, 'package.json'),
+      JSON.stringify({ dependencies: { '@novu/chat-sdk-adapter': 'latest' } })
+    );
+
+    expect(detectChatSdkProject(dir).kind).toBe('has-adapter');
+  });
+
+  it('classifies a project without the adapter as project-no-adapter', () => {
+    const dir = makeTempDir();
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { next: '16.2.1' } }));
+
+    expect(detectChatSdkProject(dir).kind).toBe('project-no-adapter');
+  });
+});

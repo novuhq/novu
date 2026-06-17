@@ -104,6 +104,15 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         store.phase.set({ kind: 'pick', agents, resolve });
       });
     },
+    pickAgentBrain({ preselected }) {
+      if (preselected) {
+        return Promise.resolve(preselected);
+      }
+
+      return new Promise((resolve) => {
+        store.phase.set({ kind: 'pick-brain', preselected, resolve });
+      });
+    },
     pickAgentRuntime({ preselected }) {
       return new Promise((resolve) => {
         store.phase.set({ kind: 'pick-runtime', preselected, resolve });
@@ -165,6 +174,34 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     },
     agentCreated(_agent: AgentSummary) {
       // Visible after Slack completes via the final success screen.
+    },
+    promptForAgentName(defaultName) {
+      return new Promise<string>((resolve) => {
+        store.phase.set({ kind: 'prompt-agent-name', defaultName, resolve });
+      });
+    },
+    confirmEnvSecretOverwrite({ envPath, existingMasked, nextMasked }) {
+      return new Promise<boolean>((resolve) => {
+        store.phase.set({
+          kind: 'confirm-env-secret-overwrite',
+          envPath,
+          existingMasked,
+          nextMasked,
+          resolve,
+        });
+      });
+    },
+    scaffoldingChatSdk() {
+      store.phase.set({ kind: 'scaffolding-chat-sdk' });
+    },
+    chatSdkScaffolded({ projectDir, envPath }) {
+      store.phase.set({ kind: 'chat-sdk-scaffolded', projectDir, envPath });
+    },
+    chatSdkEnvWired({ projectDir, envPath, updatedKeys }) {
+      store.phase.set({ kind: 'chat-sdk-env-wired', projectDir, envPath, updatedKeys });
+    },
+    chatSdkSkillInstructions({ installCommand, lines, agentIdentifier }) {
+      store.phase.set({ kind: 'chat-sdk-skill-instructions', installCommand, lines, agentIdentifier });
     },
     pickChannel() {
       return new Promise((resolve) => {
@@ -263,6 +300,8 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         dashboardRedirectChannel: result.dashboardRedirectChannel,
         isKeyless: result.isKeyless,
         claimUrl: result.claimUrl,
+        brain: result.brain,
+        chatSdkOutcome: result.chatSdkOutcome,
       });
     },
     failure(message) {

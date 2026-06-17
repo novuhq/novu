@@ -66,6 +66,36 @@ export async function generateAgent(client: ConnectApiClient, prompt: string): P
   return 'data' in body && body.data ? body.data : (body as GeneratedAgentSpec);
 }
 
+export interface CreateBridgeAgentInput {
+  name: string;
+  identifier: string;
+}
+
+export async function createBridgeAgent(client: ConnectApiClient, input: CreateBridgeAgentInput): Promise<AgentRecord> {
+  const res = await client.axios.post<{ data?: AgentRecord } | AgentRecord>('/v1/agents', {
+    name: input.name,
+    identifier: input.identifier,
+    runtime: 'self-hosted',
+  });
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as AgentRecord);
+}
+
+export async function updateAgentBridge(
+  client: ConnectApiClient,
+  agentIdentifier: string,
+  input: { bridgeUrl?: string; devBridgeUrl?: string; devBridgeActive?: boolean }
+): Promise<AgentRecord> {
+  const res = await client.axios.put<{ data?: AgentRecord } | AgentRecord>(
+    `/v1/agents/${encodeURIComponent(agentIdentifier)}/bridge`,
+    input
+  );
+  const body = res.data;
+
+  return 'data' in body && body.data ? body.data : (body as AgentRecord);
+}
+
 export async function createManagedAgent(
   client: ConnectApiClient,
   input: CreateManagedAgentInput

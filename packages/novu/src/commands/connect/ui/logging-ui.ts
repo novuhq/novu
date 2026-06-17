@@ -96,6 +96,13 @@ export function createLoggingUI(): ConnectUI {
     loadingIntegrations() {
       start('Looking up agent runtime integrations…');
     },
+    pickAgentBrain({ preselected }) {
+      stop();
+      const brain = preselected ?? 'managed';
+      console.log(chalk.gray(`Non-interactive mode: using "${brain}" agent brain.`));
+
+      return Promise.resolve(brain);
+    },
     pickAgentRuntime({ preselected }) {
       stop();
       const runtime = preselected ?? 'demo';
@@ -183,6 +190,39 @@ export function createLoggingUI(): ConnectUI {
     },
     agentCreated(agent: AgentSummary) {
       succeed(`Created agent "${agent.name}" (${agent.identifier})`);
+    },
+    promptForAgentName(defaultName) {
+      stop();
+      const name = defaultName.trim() || 'My Chat SDK Agent';
+      console.log(chalk.gray(`Non-interactive mode: using agent name "${name}".`));
+
+      return Promise.resolve(name);
+    },
+    confirmEnvSecretOverwrite() {
+      return Promise.resolve(false);
+    },
+    scaffoldingChatSdk() {
+      start('Scaffolding Chat SDK project…');
+    },
+    chatSdkScaffolded({ projectDir, envPath }) {
+      succeed(`Scaffolded Chat SDK project at ${projectDir}`);
+      console.log(chalk.gray(`  Wrote ${envPath}`));
+    },
+    chatSdkEnvWired({ envPath, updatedKeys }) {
+      succeed(`Updated ${envPath}`);
+      if (updatedKeys.length > 0) {
+        console.log(chalk.gray(`  Keys: ${updatedKeys.join(', ')}`));
+      }
+    },
+    chatSdkSkillInstructions({ installCommand, lines, agentIdentifier }) {
+      stop();
+      console.log('');
+      console.log(chalk.bold('Install the Novu Chat SDK skill'));
+      console.log(chalk.cyan(`  ${installCommand}`));
+      for (const line of lines) {
+        console.log(line ? `  ${line}` : '');
+      }
+      console.log(chalk.gray(`  Agent identifier: ${agentIdentifier}`));
     },
     pickChannel() {
       stop();
@@ -332,6 +372,18 @@ export function createLoggingUI(): ConnectUI {
         console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
       } else {
         console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
+      }
+      if (result.brain === 'chat-sdk' && result.chatSdkOutcome) {
+        if (result.chatSdkOutcome.scaffolded) {
+          console.log(`  ${chalk.bold('Project:')} ${result.chatSdkOutcome.projectDir}`);
+          console.log(
+            `  ${chalk.cyan('→')} Run ${chalk.bold('npm run dev:novu')} in the project to keep the tunnel alive.`
+          );
+        } else if (result.chatSdkOutcome.projectKind === 'has-adapter') {
+          console.log(`  ${chalk.cyan('→')} Start your app and register the bridge URL with Novu.`);
+        } else {
+          console.log(`  ${chalk.cyan('→')} Install the skill and ask your coding agent to wire the adapter.`);
+        }
       }
     },
     failure(message) {
