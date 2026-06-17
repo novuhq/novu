@@ -123,11 +123,13 @@ export class WhatsAppEmbeddedSignup {
       };
     }
 
+    const phoneNumberId = command.phoneNumberId.trim();
+    const wabaId = command.wabaId.trim();
     const existingCredentials = integration.credentials ? decryptCredentials(integration.credentials) : undefined;
 
     let businessDisplayPhone: string | undefined;
     try {
-      const phoneDetails = await getPhoneNumberDetails(accessToken, command.phoneNumberId.trim());
+      const phoneDetails = await getPhoneNumberDetails(accessToken, phoneNumberId);
       const phoneDetailsError = extractMetaError(phoneDetails.body);
 
       if (!phoneDetailsError && phoneDetails.statusCode < 400) {
@@ -135,7 +137,7 @@ export class WhatsAppEmbeddedSignup {
       }
     } catch (err) {
       this.logger.warn(
-        { err, integrationId: integration._id, phoneNumberId: command.phoneNumberId },
+        { err, integrationId: integration._id, phoneNumberId },
         'WhatsApp embedded signup: failed to fetch business display phone (best-effort)'
       );
     }
@@ -143,8 +145,8 @@ export class WhatsAppEmbeddedSignup {
     const nextCredentials: ICredentials = {
       ...(existingCredentials ?? {}),
       apiToken: accessToken,
-      phoneNumberIdentification: command.phoneNumberId.trim(),
-      businessAccountId: command.wabaId.trim(),
+      phoneNumberIdentification: phoneNumberId,
+      businessAccountId: wabaId,
       isNovuManaged: true,
       ...(businessDisplayPhone ? { from: businessDisplayPhone } : {}),
     };
@@ -167,7 +169,7 @@ export class WhatsAppEmbeddedSignup {
       const pin = generateWhatsAppRegistrationPin();
       const registration = await registerWhatsAppPhoneNumber({
         accessToken,
-        phoneNumberId: command.phoneNumberId.trim(),
+        phoneNumberId,
         pin,
       });
       const registrationError = extractMetaError(registration.body);
@@ -180,7 +182,7 @@ export class WhatsAppEmbeddedSignup {
         this.logger.warn(
           {
             integrationId: integration._id,
-            phoneNumberId: command.phoneNumberId,
+            phoneNumberId,
             statusCode: registration.statusCode,
             metaError: registrationError,
           },
@@ -213,7 +215,7 @@ export class WhatsAppEmbeddedSignup {
         integrationId: integration._id,
         integrationIdentifier: integration.identifier,
         callbackUrl: webhookResult.callbackUrl,
-        wabaId: command.wabaId,
+        wabaId,
         phoneRegistrationWarning,
         error: {
           code: 'webhook_configuration_failed',
@@ -230,7 +232,7 @@ export class WhatsAppEmbeddedSignup {
       integrationId: integration._id,
       integrationIdentifier: integration.identifier,
       callbackUrl: webhookResult.callbackUrl,
-      wabaId: command.wabaId,
+      wabaId,
       displayPhoneNumber: businessDisplayPhone,
       phoneRegistrationWarning,
     };

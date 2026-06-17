@@ -224,7 +224,6 @@ export interface SendTemplateArgs {
   to: string;
   templateName: string;
   languageCode: string;
-  bodyParameters?: string[];
 }
 
 export type SendTemplateResponse = {
@@ -237,21 +236,6 @@ export async function sendWhatsAppTemplate(args: SendTemplateArgs): Promise<{
   body: SendTemplateResponse;
   statusCode: number;
 }> {
-  const bodyParameters = args.bodyParameters?.filter((value) => value.trim().length > 0) ?? [];
-  const template: Record<string, unknown> = {
-    name: args.templateName,
-    language: { code: args.languageCode },
-  };
-
-  if (bodyParameters.length > 0) {
-    template.components = [
-      {
-        type: 'body',
-        parameters: bodyParameters.map((text) => ({ type: 'text', text })),
-      },
-    ];
-  }
-
   return metaGraphPostJson<SendTemplateResponse>(
     `/${encodeURIComponent(args.phoneNumberId)}/messages`,
     args.accessToken,
@@ -259,7 +243,10 @@ export async function sendWhatsAppTemplate(args: SendTemplateArgs): Promise<{
       messaging_product: 'whatsapp',
       to: args.to,
       type: 'template',
-      template,
+      template: {
+        name: args.templateName,
+        language: { code: args.languageCode },
+      },
     }
   );
 }

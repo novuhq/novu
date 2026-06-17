@@ -60,8 +60,6 @@ function loadFacebookSdk(appId: string): Promise<void> {
 
     const existingScript = document.getElementById('facebook-jssdk');
     if (existingScript) {
-      // Script injected previously — if FB is ready resolve immediately,
-      // otherwise fbAsyncInit above will resolve when it fires.
       if (window.FB) {
         resolve();
       }

@@ -257,7 +257,7 @@ export class AgentIntegrationsController {
   @ApiOperation({
     summary: 'Send a WhatsApp test template from the agent integration',
     description:
-      'Sends a Meta test template via the configured WhatsApp Business phone number to a recipient supplied by the user. Novu-managed (Embedded Signup) integrations use Meta’s pre-approved `sample_order_confirmation` template; manual integrations use `hello_world`.',
+      'Sends the `hello_world` template via the configured WhatsApp Business phone number to verify outbound delivery.',
   })
   @ApiNotFoundResponse({ description: 'The agent or integration was not found.' })
   @RequirePermissions(PermissionsEnum.AGENT_WRITE)
