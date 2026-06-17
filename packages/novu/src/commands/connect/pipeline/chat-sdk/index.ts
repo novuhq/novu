@@ -1,30 +1,15 @@
-import { createBridgeAgent, listAgents } from "../../api/agents";
-import type { ConnectApiClient } from "../../api/client";
-import type { ResolvedConnectAuth } from "../../auth/resolve-connect-auth";
-import type {
-  AgentSummary,
-  ChatSdkConnectOutcome,
-  ConnectCommandOptions,
-} from "../../types";
-import type { ConnectUI } from "../../ui/ui";
-import {
-  CHAT_SDK_PROMPT_FILE_ENV,
-  writeChatSdkAgentPromptFile,
-} from "./agent-prompt-file";
-import {
-  defaultAgentNameFromDir,
-  deriveAgentIdentifier,
-} from "./derive-identifier";
-import { detectChatSdkProject } from "./detect-project";
-import { runChatSdkSkillSetup } from "./integrate-adapter";
-import { runChatSdkBridge } from "./run-bridge";
-import { scaffoldChatSdkProject } from "./scaffold";
-import {
-  maskSecretKey,
-  mergeProjectEnv,
-  readEnvSecretKey,
-  resolveProjectEnvPaths,
-} from "./wire-env";
+import { createBridgeAgent, listAgents } from '../../api/agents';
+import type { ConnectApiClient } from '../../api/client';
+import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
+import type { AgentSummary, ChatSdkConnectOutcome, ConnectCommandOptions } from '../../types';
+import type { ConnectUI } from '../../ui/ui';
+import { CHAT_SDK_PROMPT_FILE_ENV, writeChatSdkAgentPromptFile } from './agent-prompt-file';
+import { defaultAgentNameFromDir, deriveAgentIdentifier } from './derive-identifier';
+import { detectChatSdkProject } from './detect-project';
+import { runChatSdkSkillSetup } from './integrate-adapter';
+import { runChatSdkBridge } from './run-bridge';
+import { scaffoldChatSdkProject } from './scaffold';
+import { maskSecretKey, mergeProjectEnv, readEnvSecretKey, resolveProjectEnvPaths } from './wire-env';
 
 export type ChatSdkSetupInput = {
   options: ConnectCommandOptions;
@@ -34,17 +19,15 @@ export type ChatSdkSetupInput = {
   agent: AgentSummary;
 };
 
-export async function runChatSdkProjectSetup(
-  input: ChatSdkSetupInput,
-): Promise<ChatSdkConnectOutcome> {
+export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<ChatSdkConnectOutcome> {
   const projectDir = input.options.projectDir?.trim() || process.cwd();
   const detected = detectChatSdkProject(projectDir);
 
-  if (detected.kind === "has-adapter") {
+  if (detected.kind === 'has-adapter') {
     return runHasAdapterEnvSetup({ input, projectDir: detected.projectDir });
   }
 
-  if (detected.kind === "existing") {
+  if (detected.kind === 'existing') {
     return runExistingProjectSkillSetup({
       input,
       projectDir: detected.projectDir,
@@ -53,15 +36,13 @@ export async function runChatSdkProjectSetup(
 
   if (input.options.noScaffold) {
     return {
-      projectKind: "empty",
+      projectKind: 'empty',
       projectDir: detected.projectDir,
       scaffolded: false,
     };
   }
 
-  const appName =
-    input.options.scaffoldDir?.trim() ||
-    defaultScaffoldAppName(input.agent.identifier);
+  const appName = input.options.scaffoldDir?.trim() || defaultScaffoldAppName(input.agent.identifier);
   const confirmed = await input.ui.confirmScaffold({
     projectDir: detected.projectDir,
     appName,
@@ -69,7 +50,7 @@ export async function runChatSdkProjectSetup(
 
   if (!confirmed) {
     return {
-      projectKind: "empty",
+      projectKind: 'empty',
       projectDir: detected.projectDir,
       scaffolded: false,
     };
@@ -79,7 +60,7 @@ export async function runChatSdkProjectSetup(
     setup: input,
     parentDir: detected.projectDir,
     appName,
-    projectKind: "empty",
+    projectKind: 'empty',
   });
 }
 
@@ -115,7 +96,7 @@ async function runHasAdapterEnvSetup(opts: {
   });
 
   return {
-    projectKind: "has-adapter",
+    projectKind: 'has-adapter',
     projectDir: opts.projectDir,
     scaffolded: false,
     envPaths: merge.envPaths,
@@ -135,7 +116,7 @@ async function runExistingProjectSkillSetup(opts: {
 
   if (!shouldInstall) {
     return {
-      projectKind: "existing",
+      projectKind: 'existing',
       projectDir: opts.projectDir,
       scaffolded: false,
       needsAgentFollowUp: true,
@@ -179,7 +160,7 @@ async function runExistingProjectSkillSetup(opts: {
   });
 
   return {
-    projectKind: "existing",
+    projectKind: 'existing',
     projectDir: opts.projectDir,
     scaffolded: false,
     envPaths: setup.envPaths,
@@ -196,7 +177,7 @@ async function resolveEnvSecretOverwrite(opts: {
   if (opts.input.options.ci) {
     throw new Error(
       `${resolveProjectEnvPaths(opts.projectDir)[0]} already has a different NOVU_SECRET_KEY. ` +
-        "Remove it or align the key before re-running connect in --ci mode.",
+        'Remove it or align the key before re-running connect in --ci mode.'
     );
   }
 
@@ -215,7 +196,7 @@ async function scaffoldChatSdkApp(opts: {
   setup: ChatSdkSetupInput;
   parentDir: string;
   appName: string;
-  projectKind: ChatSdkConnectOutcome["projectKind"];
+  projectKind: ChatSdkConnectOutcome['projectKind'];
 }): Promise<ChatSdkConnectOutcome> {
   opts.setup.ui.scaffoldingChatSdk();
 
@@ -253,25 +234,21 @@ async function scaffoldChatSdkApp(opts: {
 export async function createBridgeAgentFlow(
   client: ConnectApiClient,
   ui: ConnectUI,
-  options: ConnectCommandOptions,
-): Promise<{ agent: AgentSummary; flow: "created" | "reused" }> {
+  options: ConnectCommandOptions
+): Promise<{ agent: AgentSummary; flow: 'created' | 'reused' }> {
   const existingAgents = await listAgents(client);
-  const bridgeAgents = existingAgents.filter(
-    (agent) => agent.runtime !== "managed",
-  );
+  const bridgeAgents = existingAgents.filter((agent) => agent.runtime !== 'managed');
 
   if (bridgeAgents.length > 0 && !options.prompt) {
     const pick = await ui.pickExistingOrCreate(bridgeAgents.map(toSummary));
 
-    if (pick.action === "use") {
-      return { agent: pick.agent, flow: "reused" };
+    if (pick.action === 'use') {
+      return { agent: pick.agent, flow: 'reused' };
     }
   }
 
   const defaultName = defaultAgentNameFromDir(
-    options.scaffoldDir?.trim() ||
-      options.projectDir?.trim() ||
-      pathBasename(process.cwd()),
+    options.scaffoldDir?.trim() || options.projectDir?.trim() || pathBasename(process.cwd())
   );
   const name = await ui.promptForAgentName(defaultName);
   const identifier = deriveAgentIdentifier(name);
@@ -279,12 +256,10 @@ export async function createBridgeAgentFlow(
   ui.creatingAgent(name);
   const created = await createBridgeAgent(client, { name, identifier });
 
-  return { agent: toSummary(created), flow: "created" };
+  return { agent: toSummary(created), flow: 'created' };
 }
 
-export async function maybeRunChatSdkTunnel(input: {
-  outcome: ChatSdkConnectOutcome | undefined;
-}): Promise<boolean> {
+export async function maybeRunChatSdkTunnel(input: { outcome: ChatSdkConnectOutcome | undefined }): Promise<boolean> {
   const { outcome } = input;
   if (!shouldRunChatSdkTunnel(outcome)) {
     return false;
@@ -297,9 +272,7 @@ export async function maybeRunChatSdkTunnel(input: {
   return true;
 }
 
-function shouldRunChatSdkTunnel(
-  outcome: ChatSdkConnectOutcome | undefined,
-): outcome is ChatSdkConnectOutcome {
+function shouldRunChatSdkTunnel(outcome: ChatSdkConnectOutcome | undefined): outcome is ChatSdkConnectOutcome {
   if (!outcome) return false;
   if (outcome.skippedInstall) return false;
 
@@ -309,24 +282,20 @@ function shouldRunChatSdkTunnel(
 function requireSecretKey(auth: ResolvedConnectAuth): string {
   const secretKey = auth.secretKey?.trim();
   if (!secretKey) {
-    throw new Error(
-      "Chat SDK connect requires an authenticated Novu session with a secret key.",
-    );
+    throw new Error('Chat SDK connect requires an authenticated Novu session with a secret key.');
   }
 
   return secretKey;
 }
 
 function pathBasename(dir: string): string {
-  const parts = dir.replace(/[/\\]+$/, "").split(/[/\\]/);
+  const parts = dir.replace(/[/\\]+$/, '').split(/[/\\]/);
 
-  return parts[parts.length - 1] || "my-chat-sdk-agent";
+  return parts[parts.length - 1] || 'my-chat-sdk-agent';
 }
 
-function toSummary(
-  agent: { _id: string; identifier: string; name: string } | AgentSummary,
-): AgentSummary {
-  const id = "_id" in agent ? agent._id : agent.id;
+function toSummary(agent: { _id: string; identifier: string; name: string } | AgentSummary): AgentSummary {
+  const id = '_id' in agent ? agent._id : agent.id;
 
   return { id, identifier: agent.identifier, name: agent.name };
 }

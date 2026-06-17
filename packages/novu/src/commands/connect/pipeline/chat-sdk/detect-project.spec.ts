@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import os from "node:os";
-import path from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
-import { detectChatSdkProject } from "./detect-project";
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
+import { detectChatSdkProject } from './detect-project';
 
 const tempDirs: string[] = [];
 
@@ -13,49 +13,43 @@ afterEach(() => {
 });
 
 function makeTempDir(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "novu-chat-sdk-detect-"));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'novu-chat-sdk-detect-'));
   tempDirs.push(dir);
 
   return dir;
 }
 
-describe("detectChatSdkProject", () => {
-  it("classifies an empty directory as empty", () => {
+describe('detectChatSdkProject', () => {
+  it('classifies an empty directory as empty', () => {
     const dir = makeTempDir();
 
     expect(detectChatSdkProject(dir)).toEqual({
-      kind: "empty",
+      kind: 'empty',
       projectDir: dir,
     });
   });
 
-  it("classifies a project with the adapter as has-adapter", () => {
+  it('classifies a project with the adapter as has-adapter', () => {
     const dir = makeTempDir();
     fs.writeFileSync(
-      path.join(dir, "package.json"),
-      JSON.stringify({ dependencies: { "@novu/chat-sdk-adapter": "latest" } }),
+      path.join(dir, 'package.json'),
+      JSON.stringify({ dependencies: { '@novu/chat-sdk-adapter': 'latest' } })
     );
 
-    expect(detectChatSdkProject(dir).kind).toBe("has-adapter");
+    expect(detectChatSdkProject(dir).kind).toBe('has-adapter');
   });
 
-  it("classifies a Chat SDK project without the Novu adapter as existing", () => {
+  it('classifies a Chat SDK project without the Novu adapter as existing', () => {
     const dir = makeTempDir();
-    fs.writeFileSync(
-      path.join(dir, "package.json"),
-      JSON.stringify({ dependencies: { chat: "4.30.0" } }),
-    );
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { chat: '4.30.0' } }));
 
-    expect(detectChatSdkProject(dir).kind).toBe("existing");
+    expect(detectChatSdkProject(dir).kind).toBe('existing');
   });
 
-  it("classifies any other package.json project as existing", () => {
+  it('classifies any other package.json project as existing', () => {
     const dir = makeTempDir();
-    fs.writeFileSync(
-      path.join(dir, "package.json"),
-      JSON.stringify({ dependencies: { next: "16.2.1" } }),
-    );
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { next: '16.2.1' } }));
 
-    expect(detectChatSdkProject(dir).kind).toBe("existing");
+    expect(detectChatSdkProject(dir).kind).toBe('existing');
   });
 });

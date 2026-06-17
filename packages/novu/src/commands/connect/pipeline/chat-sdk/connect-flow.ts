@@ -1,22 +1,10 @@
-import type { ConnectApiClient } from "../../api/client";
-import type { ResolvedConnectAuth } from "../../auth/resolve-connect-auth";
-import type {
-  AgentSummary,
-  ChatSdkConnectOutcome,
-  ConnectCommandOptions,
-} from "../../types";
-import type { ConnectUI } from "../../ui/ui";
-import {
-  createBridgeAgentFlow,
-  maybeRunChatSdkTunnel,
-  runChatSdkProjectSetup,
-} from "./index";
+import type { ConnectApiClient } from '../../api/client';
+import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
+import type { AgentSummary, ChatSdkConnectOutcome, ConnectCommandOptions } from '../../types';
+import type { ConnectUI } from '../../ui/ui';
+import { createBridgeAgentFlow, maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './index';
 
-export async function createChatSdkAgent(
-  client: ConnectApiClient,
-  ui: ConnectUI,
-  options: ConnectCommandOptions,
-) {
+export async function createChatSdkAgent(client: ConnectApiClient, ui: ConnectUI, options: ConnectCommandOptions) {
   return createBridgeAgentFlow(client, ui, options);
 }
 
@@ -30,9 +18,7 @@ export async function finalizeChatSdkProjectSetup(input: {
   return runChatSdkProjectSetup(input);
 }
 
-export function shouldAutoRunChatSdkTunnel(
-  outcome: ChatSdkConnectOutcome | undefined,
-): boolean {
+export function shouldAutoRunChatSdkTunnel(outcome: ChatSdkConnectOutcome | undefined): boolean {
   if (!outcome) {
     return false;
   }
@@ -44,9 +30,7 @@ export function shouldAutoRunChatSdkTunnel(
   return outcome.scaffolded === true;
 }
 
-export async function runChatSdkTunnelIfNeeded(
-  outcome: ChatSdkConnectOutcome | undefined,
-): Promise<void> {
+export async function runChatSdkTunnelIfNeeded(outcome: ChatSdkConnectOutcome | undefined): Promise<void> {
   if (!shouldAutoRunChatSdkTunnel(outcome)) {
     return;
   }

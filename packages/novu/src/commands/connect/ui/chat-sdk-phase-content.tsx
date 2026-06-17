@@ -1,32 +1,28 @@
-import { Box, Text, useInput } from "ink";
+import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
-import React from "react";
-import { resolveChatSdkOutcomeMessage } from "../pipeline/chat-sdk/outcome-message";
-import type { AgentConnectMode, ChatSdkConnectOutcome } from "../types";
-import type { Phase } from "./store";
+import React from 'react';
+import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
+import type { AgentConnectMode, ChatSdkConnectOutcome } from '../types';
+import type { Phase } from './store';
 
-const CHAT_SDK_PHASE_KINDS: ReadonlySet<Phase["kind"]> = new Set([
-  "confirm-env-secret-overwrite",
-  "confirm-scaffold",
-  "scaffolding-chat-sdk",
-  "chat-sdk-scaffolded",
-  "chat-sdk-env-wired",
-  "chat-sdk-skill-prompt",
-  "chat-sdk-installing-skill",
-  "chat-sdk-agent-prompt",
+const CHAT_SDK_PHASE_KINDS: ReadonlySet<Phase['kind']> = new Set([
+  'confirm-env-secret-overwrite',
+  'confirm-scaffold',
+  'scaffolding-chat-sdk',
+  'chat-sdk-scaffolded',
+  'chat-sdk-env-wired',
+  'chat-sdk-skill-prompt',
+  'chat-sdk-installing-skill',
+  'chat-sdk-agent-prompt',
 ]);
 
 export function isChatSdkPhase(phase: Phase): boolean {
   return CHAT_SDK_PHASE_KINDS.has(phase.kind);
 }
 
-export function ChatSdkPhaseContent({
-  phase,
-}: {
-  phase: Phase;
-}): React.ReactElement | null {
+export function ChatSdkPhaseContent({ phase }: { phase: Phase }): React.ReactElement | null {
   switch (phase.kind) {
-    case "confirm-env-secret-overwrite":
+    case 'confirm-env-secret-overwrite':
       return (
         <ConfirmEnvSecretOverwriteContent
           envPath={phase.envPath}
@@ -36,26 +32,18 @@ export function ChatSdkPhaseContent({
         />
       );
 
-    case "confirm-scaffold":
-      return (
-        <ConfirmScaffoldContent
-          projectDir={phase.projectDir}
-          appName={phase.appName}
-          onResolve={phase.resolve}
-        />
-      );
+    case 'confirm-scaffold':
+      return <ConfirmScaffoldContent projectDir={phase.projectDir} appName={phase.appName} onResolve={phase.resolve} />;
 
-    case "scaffolding-chat-sdk":
+    case 'scaffolding-chat-sdk':
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="cyan">Scaffolding your Chat SDK app…</Text>
-          <Text dimColor>
-            Installing dependencies — this may take a minute.
-          </Text>
+          <Text dimColor>Installing dependencies — this may take a minute.</Text>
         </Box>
       );
 
-    case "chat-sdk-scaffolded":
+    case 'chat-sdk-scaffolded':
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="green">✓ Chat SDK project scaffolded.</Text>
@@ -67,35 +55,29 @@ export function ChatSdkPhaseContent({
           ))}
           {phase.skippedInstall ? (
             <Box flexDirection="column">
-              <Text color="yellow">
-                ⚠ Detected a parent workspace — npm install was skipped.
-              </Text>
-              <Text dimColor>
-                Run this to install dependencies before starting the app:
-              </Text>
+              <Text color="yellow">⚠ Detected a parent workspace — npm install was skipped.</Text>
+              <Text dimColor>Run this to install dependencies before starting the app:</Text>
               <Text color="cyan">{`  cd ${phase.projectDir} && npm install`}</Text>
             </Box>
           ) : null}
         </Box>
       );
 
-    case "chat-sdk-env-wired":
+    case 'chat-sdk-env-wired':
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="green">✓ Environment updated.</Text>
           {phase.envPaths.map((envPath) => (
             <Text key={envPath} dimColor>{`Updated ${envPath}`}</Text>
           ))}
-          {phase.updatedKeys.length > 0 ? (
-            <Text dimColor>{`Keys: ${phase.updatedKeys.join(", ")}`}</Text>
-          ) : null}
+          {phase.updatedKeys.length > 0 ? <Text dimColor>{`Keys: ${phase.updatedKeys.join(', ')}`}</Text> : null}
         </Box>
       );
 
-    case "chat-sdk-skill-prompt":
+    case 'chat-sdk-skill-prompt':
       return <ChatSdkSkillPromptContent phase={phase} />;
 
-    case "chat-sdk-installing-skill":
+    case 'chat-sdk-installing-skill':
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="cyan">Installing novu-chat-sdk skill…</Text>
@@ -103,7 +85,7 @@ export function ChatSdkPhaseContent({
         </Box>
       );
 
-    case "chat-sdk-agent-prompt":
+    case 'chat-sdk-agent-prompt':
       return <ChatSdkAgentPromptContent phase={phase} />;
 
     default:
@@ -129,7 +111,7 @@ export function ChatSdkSuccessMessage({
 function ChatSdkSkillPromptContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: "chat-sdk-skill-prompt" }>;
+  phase: Extract<Phase, { kind: 'chat-sdk-skill-prompt' }>;
 }): React.ReactElement {
   useInput((_input, key) => {
     if (key.return) phase.resolve(true);
@@ -140,9 +122,8 @@ function ChatSdkSkillPromptContent({
     <Box flexDirection="column" gap={1}>
       <Text bold>Install the novu-chat-sdk skill?</Text>
       <Text dimColor>
-        We'll update <Text color="white">.env.local</Text> and install the{" "}
-        <Text color="white">novu-chat-sdk</Text> skill into your project. You'll
-        then get a prompt to paste into your coding agent to wire the adapter.
+        We'll update <Text color="white">.env.local</Text> and install the <Text color="white">novu-chat-sdk</Text>{' '}
+        skill into your project. You'll then get a prompt to paste into your coding agent to wire the adapter.
       </Text>
       <Text dimColor>
         Agent identifier: <Text color="cyan">{phase.agentIdentifier}</Text>
@@ -155,7 +136,7 @@ function ChatSdkSkillPromptContent({
 function ChatSdkAgentPromptContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: "chat-sdk-agent-prompt" }>;
+  phase: Extract<Phase, { kind: 'chat-sdk-agent-prompt' }>;
 }): React.ReactElement {
   useInput((_input, key) => {
     if (key.return) phase.resolve();
@@ -196,17 +177,14 @@ function ConfirmScaffoldContent({
   return (
     <Box flexDirection="column" gap={1}>
       <Text bold>Scaffold a Chat SDK app?</Text>
-      <Text dimColor>
-        No Chat SDK project was found here. We'll create one at:
-      </Text>
+      <Text dimColor>No Chat SDK project was found here. We'll create one at:</Text>
       <Text>
         <Text bold>{projectDir}/</Text>
         <Text color="cyan">{appName}</Text>
       </Text>
       <Text dimColor>
-        This installs <Text color="white">chat</Text>,{" "}
-        <Text color="white">@novu/chat-sdk-adapter</Text>, and wires your Novu
-        credentials into <Text color="white">.env.local</Text>.
+        This installs <Text color="white">chat</Text>, <Text color="white">@novu/chat-sdk-adapter</Text>, and wires your
+        Novu credentials into <Text color="white">.env.local</Text>.
       </Text>
       <Text color="cyan">Enter · scaffold · Esc · cancel</Text>
     </Box>
@@ -234,8 +212,7 @@ function ConfirmEnvSecretOverwriteContent({
       <Text bold>Overwrite NOVU_SECRET_KEY?</Text>
       <Text dimColor>{envPath} already has a secret key.</Text>
       <Text>
-        Existing: <Text color="yellow">{existingMasked}</Text> → New:{" "}
-        <Text color="cyan">{nextMasked}</Text>
+        Existing: <Text color="yellow">{existingMasked}</Text> → New: <Text color="cyan">{nextMasked}</Text>
       </Text>
       <Text color="cyan">Enter · overwrite · Esc · keep existing</Text>
     </Box>
