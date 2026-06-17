@@ -231,76 +231,57 @@ export function createLoggingUI(): ConnectUI {
     scaffoldingChatSdk() {
       start("Scaffolding Chat SDK project…");
     },
-    chatSdkScaffolded({ projectDir, envPath }) {
+    chatSdkScaffolded({ projectDir, envPaths }) {
       succeed(`Scaffolded Chat SDK project at ${projectDir}`);
-      console.log(chalk.gray(`  Wrote ${envPath}`));
+      for (const envPath of envPaths) {
+        console.log(chalk.gray(`  Wrote ${envPath}`));
+      }
     },
-    chatSdkEnvWired({ envPath, updatedKeys }) {
-      succeed(`Updated ${envPath}`);
+    chatSdkEnvWired({ envPaths, updatedKeys }) {
+      for (const envPath of envPaths) {
+        succeed(`Updated ${envPath}`);
+      }
       if (updatedKeys.length > 0) {
         console.log(chalk.gray(`  Keys: ${updatedKeys.join(", ")}`));
       }
     },
-    promptWireChatSdkAdapter({ projectDir, agentIdentifier }) {
+    promptInstallChatSdkSkill({ projectDir, agentIdentifier }) {
       console.log("");
-      console.log(chalk.bold("Wire the Novu adapter into your project?"));
+      console.log(chalk.bold("Install the novu-chat-sdk skill?"));
       console.log(
         chalk.dim(
-          `We'll install @novu/chat-sdk-adapter, wire .env.local, add the novu-chat-sdk skill, and merge into your existing bot when detected.`,
+          "We'll update .env.local, install the novu-chat-sdk skill, and show a prompt for your coding agent.",
         ),
       );
       console.log(chalk.gray(`  Project: ${projectDir}`));
       console.log(chalk.gray(`  Agent: ${agentIdentifier}`));
+
       return Promise.resolve(true);
     },
-    wiringChatSdkAdapter() {
-      start("Wiring Novu Chat SDK adapter…");
+    installingChatSdkSkill() {
+      start("Installing novu-chat-sdk skill…");
     },
-    chatSdkAdapterWired({
+    awaitChatSdkAgentPrompt({
       projectDir,
-      envPath,
-      adapterInstalled,
-      bridgeFilesAdded,
-      botFilePatched,
-      integrationMode,
-      duplicateNovuModuleDetected,
+      envPaths,
       skillDestinations,
-      needsAgentFollowUp,
+      agentPrompt,
     }) {
-      succeed("Novu adapter wired");
+      succeed("Skill installed");
       console.log(chalk.gray(`  Project: ${projectDir}`));
-      console.log(chalk.gray(`  Env: ${envPath}`));
-      if (adapterInstalled) {
-        console.log(chalk.gray("  Installed @novu/chat-sdk-adapter"));
-      }
-      if (integrationMode === "merged-existing-bot" && botFilePatched) {
-        console.log(chalk.gray(`  Merged Novu adapter into ${botFilePatched}`));
-        console.log(
-          chalk.gray(
-            "  Bridge route: POST /api/webhooks/novu via [platform] route",
-          ),
-        );
-      }
-      for (const file of bridgeFilesAdded) {
-        console.log(chalk.gray(`  Added ${file}`));
+      for (const envPath of envPaths) {
+        console.log(chalk.gray(`  Env: ${envPath}`));
       }
       for (const dest of skillDestinations) {
         console.log(chalk.gray(`  Skill: ${dest}`));
       }
-      if (duplicateNovuModuleDetected) {
-        console.log(
-          chalk.yellow(
-            "  Remove lib/novu/agent.ts and app/api/webhooks/novu/route.ts if present — use your existing bot instead.",
-          ),
-        );
-      }
-      if (needsAgentFollowUp) {
-        console.log(
-          chalk.cyan(
-            "→ Ask your coding agent to finish wiring using the novu-chat-sdk skill.",
-          ),
-        );
-      }
+      console.log("");
+      console.log(chalk.bold("Paste this into your coding agent:"));
+      console.log(chalk.cyan(agentPrompt));
+      console.log("");
+      console.log(chalk.dim("Press Enter when done…"));
+
+      return Promise.resolve();
     },
     pickChannel() {
       stop();
@@ -490,14 +471,9 @@ export function createLoggingUI(): ConnectUI {
           } else {
             console.log(`  ${chalk.cyan("→")} Starting dev server and tunnel…`);
           }
-        } else if (
-          result.chatSdkOutcome.projectKind === "has-adapter" ||
-          result.chatSdkOutcome.bridgeWired
-        ) {
-          console.log(`  ${chalk.cyan("→")} Starting your app and dev tunnel…`);
         } else if (result.chatSdkOutcome.needsAgentFollowUp) {
           console.log(
-            `  ${chalk.cyan("→")} Ask your coding agent to finish wiring using the novu-chat-sdk skill.`,
+            `  ${chalk.cyan("→")} Prompt your coding agent with the instructions above to wire the Novu adapter.`,
           );
         } else {
           console.log(`  ${chalk.gray("No Chat SDK wiring changes made.")}`);

@@ -5,7 +5,6 @@ import type {
   AgentSummary,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ChatSdkIntegrationMode,
 } from "../types";
 import type {
   GeneratedAgentPreviewResult,
@@ -79,33 +78,29 @@ export type Phase =
   | {
       kind: "chat-sdk-scaffolded";
       projectDir: string;
-      envPath: string;
+      envPaths: string[];
       skippedInstall?: boolean;
     }
   | {
       kind: "chat-sdk-env-wired";
       projectDir: string;
-      envPath: string;
+      envPaths: string[];
       updatedKeys: string[];
     }
   | {
-      kind: "chat-sdk-wire-prompt";
+      kind: "chat-sdk-skill-prompt";
       projectDir: string;
       agentIdentifier: string;
       resolve: (confirmed: boolean) => void;
     }
-  | { kind: "chat-sdk-wiring" }
+  | { kind: "chat-sdk-installing-skill" }
   | {
-      kind: "chat-sdk-adapter-wired";
+      kind: "chat-sdk-agent-prompt";
       projectDir: string;
-      envPath: string;
-      adapterInstalled: boolean;
-      bridgeFilesAdded: string[];
-      botFilePatched?: string;
-      integrationMode: ChatSdkIntegrationMode;
-      duplicateNovuModuleDetected: boolean;
+      envPaths: string[];
       skillDestinations: string[];
-      needsAgentFollowUp: boolean;
+      agentPrompt: string;
+      resolve: () => void;
     }
   | { kind: "generating" }
   | {

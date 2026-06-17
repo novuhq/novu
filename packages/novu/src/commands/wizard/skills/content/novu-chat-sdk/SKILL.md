@@ -10,11 +10,11 @@ triggers:
 
 # Novu Chat SDK integration
 
-Use this skill when a project already has `package.json` but needs the Novu bridge wired. The Novu Connect CLI has already provisioned a self-hosted bridge agent — your job is to wire the app.
+Use this skill when a project already has `package.json` but needs the Novu bridge wired. Novu Connect has already provisioned the bridge agent and written `NOVU_SECRET_KEY` / `NOVU_AGENT_IDENTIFIER` to the project's `.env` files — do not edit those unless the user asks.
 
-## Required environment variables
+## Environment variables
 
-Add to `.env.local` (server only — never expose on the client):
+Novu Connect should have already set these in `.env.local` and/or `.env`:
 
 | Variable | Purpose |
 |---|---|
@@ -22,7 +22,7 @@ Add to `.env.local` (server only — never expose on the client):
 | `NOVU_AGENT_IDENTIFIER` | Agent id from `npx novu connect` |
 | `NOVU_API_BASE_URL` | Optional — only for EU/dev cloud (default `https://api.novu.co`) |
 
-Register the bridge URL manually via `npx novu connect` (dev tunnel) or set it in the Novu dashboard — the adapter does not auto-publish on boot.
+Do not ask the user to re-enter or duplicate these values.
 
 ## Dependencies
 
@@ -38,7 +38,17 @@ When the project already has a single `new Chat({ adapters: { ... } })` bot and 
 
 1. Add `createNovuAdapter` to the **existing** `adapters` object in `lib/bot.ts` or `src/lib/bot.ts` — do **not** create a second `Chat` instance.
 2. Reuse `app/api/webhooks/[platform]/route.ts` — `/api/webhooks/novu` is served automatically via `bot.webhooks.novu`.
-3. Point Novu at `POST /api/webhooks/novu` via dev tunnel (`npx novu dev --route /api/webhooks/novu`) or dashboard bridge URL.
+3. Add a `dev:novu` script and use it for local dev so Novu can reach the bridge:
+
+```json
+{
+  "scripts": {
+    "dev:novu": "npx novu dev -p 4000 --no-studio --route /api/webhooks/novu --run \"next dev --port=4000\""
+  }
+}
+```
+
+`npx novu dev` creates a public tunnel to localhost and registers the tunneled `POST /api/webhooks/novu` URL with Novu on start. Match `-p` and the `--run` command to this project's dev server.
 
 ```ts
 import { createNovuAdapter } from '@novu/chat-sdk-adapter';
@@ -81,10 +91,10 @@ If connect added `lib/novu/agent.ts` and `app/api/webhooks/novu/route.ts` alongs
 
 ## Verification checklist
 
-- [ ] `.env.local` has `NOVU_SECRET_KEY` and `NOVU_AGENT_IDENTIFIER`
 - [ ] Single `Chat` instance with `novu` in `adapters`
 - [ ] Bridge route uses Node.js runtime (not Edge)
-- [ ] Dev: `npm run dev` + `npx novu dev --route /api/webhooks/novu`
+- [ ] `dev:novu` script runs `npx novu dev --route /api/webhooks/novu --run "<dev command>"`
+- [ ] `npm run dev:novu` starts the app and syncs the tunneled bridge URL to Novu
 - [ ] Send a test message on a connected channel and confirm the bot replies
 
 ## Learn more

@@ -1,7 +1,9 @@
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from "node:fs";
+import path from "node:path";
 
-const DEFAULT_API_BASE_URL = 'https://api.novu.co';
+const DEFAULT_API_BASE_URL = "https://api.novu.co";
+
+const ENV_FILE_NAMES = [".env.local", ".env"] as const;
 
 export type EnvMergeInput = {
   projectDir: string;
@@ -12,7 +14,7 @@ export type EnvMergeInput = {
 };
 
 export type EnvMergeResult = {
-  envPath: string;
+  envPaths: string[];
   created: boolean;
   updatedKeys: string[];
   secretKeyOverwritten: boolean;
@@ -23,11 +25,11 @@ function parseEnvFile(contents: string): Map<string, string> {
 
   for (const line of contents.split(/\r?\n/)) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) {
+    if (!trimmed || trimmed.startsWith("#")) {
       continue;
     }
 
-    const eq = trimmed.indexOf('=');
+    const eq = trimmed.indexOf("=");
     if (eq <= 0) {
       continue;
     }
@@ -48,22 +50,24 @@ function serializeEnvFile(entries: Map<string, string>): string {
     lines.push(`${key}=${value}`);
   }
 
-  return `${lines.join('\n')}\n`;
+  return `${lines.join("\n")}\n`;
 }
 
 export function maskSecretKey(secretKey: string): string {
   const trimmed = secretKey.trim();
   if (trimmed.length <= 8) {
-    return '••••••••';
+    return "••••••••";
   }
 
   return `${trimmed.slice(0, 4)}…${trimmed.slice(-4)}`;
 }
 
-export function mergeEnvLocal(input: EnvMergeInput): EnvMergeResult {
-  const envPath = path.join(input.projectDir, '.env.local');
+function mergeEnvFileAtPath(
+  envPath: string,
+  input: EnvMergeInput,
+): Pick<EnvMergeResult, "created" | "updatedKeys" | "secretKeyOverwritten"> {
   const created = !fs.existsSync(envPath);
-  const existingContents = created ? '' : fs.readFileSync(envPath, 'utf8');
+  const existingContents = created ? "" : fs.readFileSync(envPath, "utf8");
   const entries = parseEnvFile(existingContents);
   const updatedKeys: string[] = [];
   let secretKeyOverwritten = false;
@@ -74,11 +78,11 @@ export function mergeEnvLocal(input: EnvMergeInput): EnvMergeResult {
       return;
     }
 
-    if (key === 'NOVU_SECRET_KEY' && current && current !== value && !force) {
+    if (key === "NOVU_SECRET_KEY" && current && current !== value && !force) {
       return;
     }
 
-    if (key === 'NOVU_SECRET_KEY' && current && current !== value && force) {
+    if (key === "NOVU_SECRET_KEY" && current && current !== value && force) {
       secretKeyOverwritten = true;
     }
 
@@ -86,15 +90,15 @@ export function mergeEnvLocal(input: EnvMergeInput): EnvMergeResult {
     updatedKeys.push(key);
   };
 
-  if (input.overwriteSecretKey || !entries.get('NOVU_SECRET_KEY')) {
-    setKey('NOVU_SECRET_KEY', input.secretKey, input.overwriteSecretKey);
+  if (input.overwriteSecretKey || !entries.get("NOVU_SECRET_KEY")) {
+    setKey("NOVU_SECRET_KEY", input.secretKey, input.overwriteSecretKey);
   }
 
-  setKey('NOVU_AGENT_IDENTIFIER', input.agentIdentifier);
+  setKey("NOVU_AGENT_IDENTIFIER", input.agentIdentifier);
 
   const apiBaseUrl = input.apiBaseUrl?.trim();
   if (apiBaseUrl && apiBaseUrl !== DEFAULT_API_BASE_URL) {
-    setKey('NOVU_API_BASE_URL', apiBaseUrl);
+    setKey("NOVU_API_BASE_URL", apiBaseUrl);
   }
 
   if (updatedKeys.length > 0 || created) {
@@ -102,20 +106,79 @@ export function mergeEnvLocal(input: EnvMergeInput): EnvMergeResult {
   }
 
   return {
-    envPath,
     created,
     updatedKeys,
     secretKeyOverwritten,
   };
 }
 
-export function readEnvSecretKey(projectDir: string): string | undefined {
-  const envPath = path.join(projectDir, '.env.local');
-  if (!fs.existsSync(envPath)) {
-    return undefined;
+export function resolveProjectEnvPaths(projectDir: string): string[] {
+  const resolvedDir = path.resolve(projectDir);
+  const existing = ENV_FILE_NAMES.map((name) =>
+    path.join(resolvedDir, name),
+  ).filter((envPath) => fs.existsSync(envPath));
+
+  if (existing.length > 0) {
+    return existing;
   }
 
-  const entries = parseEnvFile(fs.readFileSync(envPath, 'utf8'));
+  return [path.join(resolvedDir, ".env.local")];
+}
 
-  return entries.get('NOVU_SECRET_KEY');
+export function mergeProjectEnv(input: EnvMergeInput): EnvMergeResult {
+  const envPaths = resolveProjectEnvPaths(input.projectDir);
+  const updatedKeys = new Set<string>();
+  let created = false;
+  let secretKeyOverwritten = false;
+
+  for (const envPath of envPaths) {
+    const result = mergeEnvFileAtPath(envPath, input);
+    if (result.created) {
+      created = true;
+    }
+
+    if (result.secretKeyOverwritten) {
+      secretKeyOverwritten = true;
+    }
+
+    for (const key of result.updatedKeys) {
+      updatedKeys.add(key);
+    }
+  }
+
+  return {
+    envPaths,
+    created,
+    updatedKeys: [...updatedKeys],
+    secretKeyOverwritten,
+  };
+}
+
+/** @deprecated Use mergeProjectEnv */
+export function mergeEnvLocal(
+  input: EnvMergeInput,
+): EnvMergeResult & { envPath: string } {
+  const merge = mergeProjectEnv(input);
+
+  return {
+    ...merge,
+    envPath: merge.envPaths[0],
+  };
+}
+
+export function readEnvSecretKey(projectDir: string): string | undefined {
+  for (const name of ENV_FILE_NAMES) {
+    const envPath = path.join(projectDir, name);
+    if (!fs.existsSync(envPath)) {
+      continue;
+    }
+
+    const entries = parseEnvFile(fs.readFileSync(envPath, "utf8"));
+    const secretKey = entries.get("NOVU_SECRET_KEY");
+    if (secretKey) {
+      return secretKey;
+    }
+  }
+
+  return undefined;
 }

@@ -12,6 +12,7 @@ import type {
   UserInfo,
   WebhookOptions,
 } from "chat";
+import { handleBridgeProbe } from "./bridge-probe.js";
 import { type ChatModuleParts, MessageMapper } from "./message-mapper.js";
 import { ReplyClient } from "./reply-client.js";
 import {
@@ -178,6 +179,14 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
     request: Request,
     options?: WebhookOptions,
   ): Promise<Response> {
+    const probeResponse = handleBridgeProbe(
+      request,
+      this.config.agentIdentifier,
+    );
+    if (probeResponse) {
+      return probeResponse;
+    }
+
     if (!this.chat) {
       throw new Error("Adapter not initialized. Call initialize() first.");
     }

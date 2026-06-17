@@ -228,57 +228,50 @@ function createUiController(
     scaffoldingChatSdk() {
       store.phase.set({ kind: "scaffolding-chat-sdk" });
     },
-    chatSdkScaffolded({ projectDir, envPath, skippedInstall }) {
+    chatSdkScaffolded({ projectDir, envPaths, skippedInstall }) {
       store.phase.set({
         kind: "chat-sdk-scaffolded",
         projectDir,
-        envPath,
+        envPaths,
         skippedInstall,
       });
     },
-    chatSdkEnvWired({ projectDir, envPath, updatedKeys }) {
+    chatSdkEnvWired({ projectDir, envPaths, updatedKeys }) {
       store.phase.set({
         kind: "chat-sdk-env-wired",
         projectDir,
-        envPath,
+        envPaths,
         updatedKeys,
       });
     },
-    promptWireChatSdkAdapter({ projectDir, agentIdentifier }) {
+    promptInstallChatSdkSkill({ projectDir, agentIdentifier }) {
       return new Promise<boolean>((resolve) => {
         store.phase.set({
-          kind: "chat-sdk-wire-prompt",
+          kind: "chat-sdk-skill-prompt",
           projectDir,
           agentIdentifier,
           resolve,
         });
       });
     },
-    wiringChatSdkAdapter() {
-      store.phase.set({ kind: "chat-sdk-wiring" });
+    installingChatSdkSkill() {
+      store.phase.set({ kind: "chat-sdk-installing-skill" });
     },
-    chatSdkAdapterWired({
+    awaitChatSdkAgentPrompt({
       projectDir,
-      envPath,
-      adapterInstalled,
-      bridgeFilesAdded,
-      botFilePatched,
-      integrationMode,
-      duplicateNovuModuleDetected,
+      envPaths,
       skillDestinations,
-      needsAgentFollowUp,
+      agentPrompt,
     }) {
-      store.phase.set({
-        kind: "chat-sdk-adapter-wired",
-        projectDir,
-        envPath,
-        adapterInstalled,
-        bridgeFilesAdded,
-        botFilePatched,
-        integrationMode,
-        duplicateNovuModuleDetected,
-        skillDestinations,
-        needsAgentFollowUp,
+      return new Promise<void>((resolve) => {
+        store.phase.set({
+          kind: "chat-sdk-agent-prompt",
+          projectDir,
+          envPaths,
+          skillDestinations,
+          agentPrompt,
+          resolve,
+        });
       });
     },
     pickChannel() {

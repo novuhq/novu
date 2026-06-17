@@ -12,10 +12,14 @@ import {
   deriveAgentIdentifier,
 } from "./derive-identifier";
 import { detectChatSdkProject } from "./detect-project";
-import { runChatSdkAdapterIntegration } from "./integrate-adapter";
+import { runChatSdkSkillSetup } from "./integrate-adapter";
 import { runChatSdkBridge } from "./run-bridge";
 import { scaffoldChatSdkProject } from "./scaffold";
-import { mergeEnvLocal, readEnvSecretKey } from "./wire-env";
+import {
+  mergeProjectEnv,
+  readEnvSecretKey,
+  resolveProjectEnvPaths,
+} from "./wire-env";
 
 export type ChatSdkSetupInput = {
   options: ConnectCommandOptions;
@@ -31,126 +35,19 @@ export async function runChatSdkProjectSetup(
   const projectDir = input.options.projectDir?.trim() || process.cwd();
   const detected = detectChatSdkProject(projectDir);
 
-  if (detected.kind === "has-adapter") {
-    const existingSecret = readEnvSecretKey(detected.projectDir);
-    const secretKey = requireSecretKey(input.auth);
-    let overwriteSecretKey = false;
-
-    if (existingSecret && existingSecret !== secretKey) {
-      overwriteSecretKey = await input.ui.confirmEnvSecretOverwrite({
-        envPath: `${detected.projectDir}/.env.local`,
-        existingMasked: maskForUi(existingSecret),
-        nextMasked: maskForUi(secretKey),
-      });
-    }
-
-    input.ui.wiringChatSdkAdapter();
-
-    const integration = await runChatSdkAdapterIntegration({
-      projectDir: detected.projectDir,
-      secretKey,
-      agentIdentifier: input.agent.identifier,
-      apiBaseUrl: input.options.apiUrl,
-      overwriteSecretKey,
-      silent: input.ui.interactive,
-    });
-
-    input.ui.chatSdkAdapterWired({
-      projectDir: detected.projectDir,
-      envPath: integration.envPath,
-      adapterInstalled: integration.adapterInstalled,
-      bridgeFilesAdded: integration.bridgeFilesAdded,
-      botFilePatched: integration.botFilePatched,
-      integrationMode: integration.integrationMode,
-      duplicateNovuModuleDetected: integration.duplicateNovuModuleDetected,
-      skillDestinations: integration.skillsInstalled.map(
-        (skill) => skill.destination,
-      ),
-      needsAgentFollowUp: integration.needsAgentFollowUp,
-    });
-
-    return {
-      projectKind: "has-adapter",
-      projectDir: detected.projectDir,
-      scaffolded: false,
-      envPath: integration.envPath,
-      bridgeWired: integration.bridgeWired,
-      integrationMode: integration.integrationMode,
-      botFilePatched: integration.botFilePatched,
-      duplicateNovuModuleDetected: integration.duplicateNovuModuleDetected,
-      needsAgentFollowUp: integration.needsAgentFollowUp,
-    };
-  }
-
-  // Existing project without the Novu adapter → offer to wire automatically.
-  if (detected.kind === "project-no-adapter") {
-    const secretKey = requireSecretKey(input.auth);
-    const shouldWire = await input.ui.promptWireChatSdkAdapter({
-      projectDir: detected.projectDir,
-      agentIdentifier: input.agent.identifier,
-    });
-
-    if (!shouldWire) {
-      return {
-        projectKind: "project-no-adapter",
+  if (
+    detected.kind === "has-adapter" ||
+    detected.kind === "project-no-adapter"
+  ) {
+    return runExistingProjectSkillSetup({
+      input,
+      detected: {
+        kind: detected.kind,
         projectDir: detected.projectDir,
-        scaffolded: false,
-        needsAgentFollowUp: true,
-      };
-    }
-
-    const existingSecret = readEnvSecretKey(detected.projectDir);
-    let overwriteSecretKey = false;
-
-    if (existingSecret && existingSecret !== secretKey) {
-      overwriteSecretKey = await input.ui.confirmEnvSecretOverwrite({
-        envPath: `${detected.projectDir}/.env.local`,
-        existingMasked: maskForUi(existingSecret),
-        nextMasked: maskForUi(secretKey),
-      });
-    }
-
-    input.ui.wiringChatSdkAdapter();
-
-    const integration = await runChatSdkAdapterIntegration({
-      projectDir: detected.projectDir,
-      secretKey,
-      agentIdentifier: input.agent.identifier,
-      apiBaseUrl: input.options.apiUrl,
-      overwriteSecretKey,
-      silent: input.ui.interactive,
+      },
     });
-
-    input.ui.chatSdkAdapterWired({
-      projectDir: detected.projectDir,
-      envPath: integration.envPath,
-      adapterInstalled: integration.adapterInstalled,
-      bridgeFilesAdded: integration.bridgeFilesAdded,
-      botFilePatched: integration.botFilePatched,
-      integrationMode: integration.integrationMode,
-      duplicateNovuModuleDetected: integration.duplicateNovuModuleDetected,
-      skillDestinations: integration.skillsInstalled.map(
-        (skill) => skill.destination,
-      ),
-      needsAgentFollowUp: integration.needsAgentFollowUp,
-    });
-
-    return {
-      projectKind: integration.bridgeWired
-        ? "has-adapter"
-        : "project-no-adapter",
-      projectDir: detected.projectDir,
-      scaffolded: false,
-      envPath: integration.envPath,
-      bridgeWired: integration.bridgeWired,
-      integrationMode: integration.integrationMode,
-      botFilePatched: integration.botFilePatched,
-      duplicateNovuModuleDetected: integration.duplicateNovuModuleDetected,
-      needsAgentFollowUp: integration.needsAgentFollowUp,
-    };
   }
 
-  // Empty directory → offer to scaffold (unless --no-scaffold).
   if (input.options.noScaffold) {
     return {
       projectKind: "empty",
@@ -183,6 +80,65 @@ export async function runChatSdkProjectSetup(
   });
 }
 
+async function runExistingProjectSkillSetup(opts: {
+  input: ChatSdkSetupInput;
+  detected: {
+    kind: "has-adapter" | "project-no-adapter";
+    projectDir: string;
+  };
+}): Promise<ChatSdkConnectOutcome> {
+  const secretKey = requireSecretKey(opts.input.auth);
+  const shouldInstall = await opts.input.ui.promptInstallChatSdkSkill({
+    projectDir: opts.detected.projectDir,
+    agentIdentifier: opts.input.agent.identifier,
+  });
+
+  if (!shouldInstall) {
+    return {
+      projectKind: opts.detected.kind,
+      projectDir: opts.detected.projectDir,
+      scaffolded: false,
+      needsAgentFollowUp: true,
+    };
+  }
+
+  const existingSecret = readEnvSecretKey(opts.detected.projectDir);
+  let overwriteSecretKey = false;
+
+  if (existingSecret && existingSecret !== secretKey) {
+    overwriteSecretKey = await opts.input.ui.confirmEnvSecretOverwrite({
+      envPath: resolveProjectEnvPaths(opts.detected.projectDir)[0],
+      existingMasked: maskForUi(existingSecret),
+      nextMasked: maskForUi(secretKey),
+    });
+  }
+
+  opts.input.ui.installingChatSdkSkill();
+
+  const setup = await runChatSdkSkillSetup({
+    projectDir: opts.detected.projectDir,
+    secretKey,
+    agentIdentifier: opts.input.agent.identifier,
+    apiBaseUrl: opts.input.options.apiUrl,
+    overwriteSecretKey,
+  });
+
+  await opts.input.ui.awaitChatSdkAgentPrompt({
+    projectDir: opts.detected.projectDir,
+    envPaths: setup.envPaths,
+    skillDestinations: setup.skillsInstalled.map((skill) => skill.destination),
+    agentPrompt: setup.agentPrompt,
+  });
+
+  return {
+    projectKind: opts.detected.kind,
+    projectDir: opts.detected.projectDir,
+    scaffolded: false,
+    envPaths: setup.envPaths,
+    needsAgentFollowUp: true,
+  };
+}
+
 function defaultScaffoldAppName(agentIdentifier: string): string {
   return `${agentIdentifier}-chat-sdk`;
 }
@@ -204,7 +160,7 @@ async function scaffoldChatSdkApp(opts: {
     silent: opts.setup.ui.interactive,
   });
 
-  const merge = mergeEnvLocal({
+  const merge = mergeProjectEnv({
     projectDir: scaffolded.root,
     secretKey: requireSecretKey(opts.setup.auth),
     agentIdentifier: opts.setup.agent.identifier,
@@ -213,7 +169,7 @@ async function scaffoldChatSdkApp(opts: {
 
   opts.setup.ui.chatSdkScaffolded({
     projectDir: scaffolded.root,
-    envPath: merge.envPath,
+    envPaths: merge.envPaths,
     skippedInstall: scaffolded.skippedInstall,
   });
 
@@ -221,7 +177,7 @@ async function scaffoldChatSdkApp(opts: {
     projectKind: opts.projectKind,
     projectDir: scaffolded.root,
     scaffolded: true,
-    envPath: merge.envPath,
+    envPaths: merge.envPaths,
     skippedInstall: scaffolded.skippedInstall,
   };
 }
@@ -282,10 +238,8 @@ function shouldRunChatSdkTunnel(
 ): outcome is ChatSdkConnectOutcome {
   if (!outcome) return false;
   if (outcome.skippedInstall) return false;
-  if (outcome.scaffolded) return true;
-  if (outcome.bridgeWired) return true;
 
-  return outcome.projectKind === "has-adapter";
+  return outcome.scaffolded === true;
 }
 
 function requireSecretKey(auth: ResolvedConnectAuth): string {

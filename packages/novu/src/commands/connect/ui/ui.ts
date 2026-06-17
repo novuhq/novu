@@ -4,7 +4,6 @@ import type {
   AgentSummary,
   ChannelChoice,
   ChatSdkConnectOutcome,
-  ChatSdkIntegrationMode,
 } from "../types";
 
 export type PickResult =
@@ -97,30 +96,25 @@ export interface ConnectUI {
   scaffoldingChatSdk(): void;
   chatSdkScaffolded(opts: {
     projectDir: string;
-    envPath: string;
+    envPaths: string[];
     skippedInstall?: boolean;
   }): void;
   chatSdkEnvWired(opts: {
     projectDir: string;
-    envPath: string;
+    envPaths: string[];
     updatedKeys: string[];
   }): void;
-  promptWireChatSdkAdapter(opts: {
+  promptInstallChatSdkSkill(opts: {
     projectDir: string;
     agentIdentifier: string;
   }): Promise<boolean>;
-  wiringChatSdkAdapter(): void;
-  chatSdkAdapterWired(opts: {
+  installingChatSdkSkill(): void;
+  awaitChatSdkAgentPrompt(opts: {
     projectDir: string;
-    envPath: string;
-    adapterInstalled: boolean;
-    bridgeFilesAdded: string[];
-    botFilePatched?: string;
-    integrationMode: ChatSdkIntegrationMode;
-    duplicateNovuModuleDetected: boolean;
+    envPaths: string[];
     skillDestinations: string[];
-    needsAgentFollowUp: boolean;
-  }): void;
+    agentPrompt: string;
+  }): Promise<void>;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;

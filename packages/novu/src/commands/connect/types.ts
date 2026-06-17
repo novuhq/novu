@@ -35,24 +35,14 @@ export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [
 
 export type ChatSdkProjectKind = "has-adapter" | "project-no-adapter" | "empty";
 
-export type ChatSdkIntegrationMode =
-  | "merged-existing-bot"
-  | "scaffolded-novu-module"
-  | "skill-only";
-
 export type ChatSdkConnectOutcome = {
   projectKind: ChatSdkProjectKind;
   projectDir: string;
   scaffolded: boolean;
-  envPath?: string;
+  envPaths?: string[];
   /** True when npm install was skipped (e.g. scaffolding inside a monorepo). */
   skippedInstall?: boolean;
-  /** True when the bridge route is ready (merged bot, scaffolded route, or existing [platform] route). */
-  bridgeWired?: boolean;
-  integrationMode?: ChatSdkIntegrationMode;
-  botFilePatched?: string;
-  duplicateNovuModuleDetected?: boolean;
-  /** True when automatic wiring could not finish — user should prompt their coding agent. */
+  /** True when the user should prompt their coding agent to finish wiring. */
   needsAgentFollowUp?: boolean;
 };
 

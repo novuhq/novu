@@ -262,7 +262,9 @@ export function PhaseContent({
           <Text>
             <Text bold>Project:</Text> {phase.projectDir}
           </Text>
-          <Text dimColor>{`Wrote ${phase.envPath}`}</Text>
+          {phase.envPaths.map((envPath) => (
+            <Text key={envPath} dimColor>{`Wrote ${envPath}`}</Text>
+          ))}
           {phase.skippedInstall ? (
             <Box flexDirection="column">
               <Text color="yellow">
@@ -281,69 +283,28 @@ export function PhaseContent({
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="green">✓ Environment updated.</Text>
-          <Text dimColor>{`Updated ${phase.envPath}`}</Text>
+          {phase.envPaths.map((envPath) => (
+            <Text key={envPath} dimColor>{`Updated ${envPath}`}</Text>
+          ))}
           {phase.updatedKeys.length > 0 ? (
             <Text dimColor>{`Keys: ${phase.updatedKeys.join(", ")}`}</Text>
           ) : null}
         </Box>
       );
 
-    case "chat-sdk-wire-prompt":
-      return <ChatSdkWirePromptContent phase={phase} />;
+    case "chat-sdk-skill-prompt":
+      return <ChatSdkSkillPromptContent phase={phase} />;
 
-    case "chat-sdk-wiring":
+    case "chat-sdk-installing-skill":
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="cyan">Wiring Novu Chat SDK adapter…</Text>
-          <Text dimColor>
-            Installing @novu/chat-sdk-adapter, updating .env.local, and merging
-            into your existing bot when detected.
-          </Text>
+          <Text color="cyan">Installing novu-chat-sdk skill…</Text>
+          <Text dimColor>Updating .env.local with your Novu credentials.</Text>
         </Box>
       );
 
-    case "chat-sdk-adapter-wired":
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text color="green">✓ Novu adapter wired.</Text>
-          <Text>
-            <Text bold>Project:</Text> {phase.projectDir}
-          </Text>
-          <Text dimColor>{`Updated ${phase.envPath}`}</Text>
-          {phase.adapterInstalled ? (
-            <Text dimColor>Installed @novu/chat-sdk-adapter</Text>
-          ) : null}
-          {phase.integrationMode === "merged-existing-bot" &&
-          phase.botFilePatched ? (
-            <Text
-              dimColor
-            >{`Merged Novu adapter into ${phase.botFilePatched}`}</Text>
-          ) : null}
-          {phase.integrationMode === "merged-existing-bot" ? (
-            <Text dimColor>
-              Bridge route: POST /api/webhooks/novu via [platform] route
-            </Text>
-          ) : null}
-          {phase.bridgeFilesAdded.map((file) => (
-            <Text key={file} dimColor>{`Added ${file}`}</Text>
-          ))}
-          {phase.skillDestinations.map((dest) => (
-            <Text key={dest} dimColor>{`Skill: ${dest}`}</Text>
-          ))}
-          {phase.duplicateNovuModuleDetected ? (
-            <Text color="yellow">
-              Remove lib/novu/agent.ts and app/api/webhooks/novu/route.ts if
-              present — use your existing bot instead.
-            </Text>
-          ) : null}
-          {phase.needsAgentFollowUp ? (
-            <Text color="yellow">
-              Ask your coding agent to finish wiring using the novu-chat-sdk
-              skill.
-            </Text>
-          ) : null}
-        </Box>
-      );
+    case "chat-sdk-agent-prompt":
+      return <ChatSdkAgentPromptContent phase={phase} />;
 
     case "generating":
       return <GeneratingContent />;
@@ -611,31 +572,11 @@ function renderChatSdkSuccessMessage(
     );
   }
 
-  if (outcome.projectKind === "has-adapter") {
-    if (
-      outcome.integrationMode === "merged-existing-bot" &&
-      outcome.botFilePatched
-    ) {
-      return (
-        <Text color="cyan">
-          Merged Novu adapter into {outcome.botFilePatched} — starting your app
-          and dev tunnel…
-        </Text>
-      );
-    }
-
-    return (
-      <Text color="cyan">
-        Environment wired — starting your app and dev tunnel…
-      </Text>
-    );
-  }
-
   if (outcome.needsAgentFollowUp) {
     return (
       <Text color="cyan">
-        Adapter partially wired — ask your coding agent to finish using the
-        novu-chat-sdk skill.
+        Skill installed — prompt your coding agent with the instructions above
+        to wire the Novu adapter.
       </Text>
     );
   }
@@ -643,10 +584,10 @@ function renderChatSdkSuccessMessage(
   return null;
 }
 
-function ChatSdkWirePromptContent({
+function ChatSdkSkillPromptContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: "chat-sdk-wire-prompt" }>;
+  phase: Extract<Phase, { kind: "chat-sdk-skill-prompt" }>;
 }): React.ReactElement {
   useInput((_input, key) => {
     if (key.return) phase.resolve(true);
@@ -655,17 +596,43 @@ function ChatSdkWirePromptContent({
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Wire the Novu adapter into your project?</Text>
+      <Text bold>Install the novu-chat-sdk skill?</Text>
       <Text dimColor>
-        We'll install <Text color="white">@novu/chat-sdk-adapter</Text>, update{" "}
-        <Text color="white">.env.local</Text>, install the{" "}
-        <Text color="white">novu-chat-sdk</Text> skill, and merge into your
-        existing bot when we detect a Chat SDK layout.
+        We'll update <Text color="white">.env.local</Text> and install the{" "}
+        <Text color="white">novu-chat-sdk</Text> skill into your project. You'll
+        then get a prompt to paste into your coding agent to wire the adapter.
       </Text>
       <Text dimColor>
         Agent identifier: <Text color="cyan">{phase.agentIdentifier}</Text>
       </Text>
-      <Text color="cyan">Enter · wire now · Esc · skip</Text>
+      <Text color="cyan">Enter · install skill · Esc · skip</Text>
+    </Box>
+  );
+}
+
+function ChatSdkAgentPromptContent({
+  phase,
+}: {
+  phase: Extract<Phase, { kind: "chat-sdk-agent-prompt" }>;
+}): React.ReactElement {
+  useInput((_input, key) => {
+    if (key.return) phase.resolve();
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text color="green">✓ Skill installed.</Text>
+      {phase.envPaths.map((envPath) => (
+        <Text key={envPath} dimColor>{`Updated ${envPath}`}</Text>
+      ))}
+      {phase.skillDestinations.map((dest) => (
+        <Text key={dest} dimColor>{`Skill: ${dest}`}</Text>
+      ))}
+      <Text bold>Paste this into your coding agent:</Text>
+      <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={0}>
+        <Text wrap="wrap">{phase.agentPrompt}</Text>
+      </Box>
+      <Text color="cyan">Enter · continue when you've prompted your agent</Text>
     </Box>
   );
 }
