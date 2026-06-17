@@ -1,9 +1,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useState } from 'react';
 import { patchSubscriber } from '@/api/subscribers';
+import { PHONE_PATTERN } from '@/components/agents/whatsapp-setup-guide-utils';
 import { requireEnvironment, useEnvironment } from '@/context/environment/hooks';
 import { useFetchSubscriber } from '@/hooks/use-fetch-subscriber';
-import { PHONE_PATTERN } from '@/components/agents/whatsapp-setup-guide-utils';
 import { QueryKeys } from '@/utils/query-keys';
 
 type UseConnectSubscriberPhoneResult = {

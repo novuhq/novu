@@ -9,16 +9,11 @@ import { isWhatsAppEmbeddedSignupConfigured } from '@/config';
 import { useFeatureFlag } from '@/hooks/use-feature-flag';
 import { useFetchIntegrations } from '@/hooks/use-fetch-integrations';
 import { cn } from '@/utils/ui';
-import {
-  IntegrationCredentialsSidebar,
-  ListeningStatus,
-  SetupButton,
-  SetupStep,
-} from './setup-guide-primitives';
+import { IntegrationCredentialsSidebar, ListeningStatus, SetupButton, SetupStep } from './setup-guide-primitives';
 import { deriveStepStatus, hasWhatsAppUserCredentials } from './setup-guide-step-utils';
 import { ConnectAndTestPanel } from './whatsapp-connect-and-test-panel';
-import { EmbeddedSignupInboundTestPanel } from './whatsapp-embedded-signup-inbound-test-panel';
 import { WhatsAppEmbeddedSignupButton } from './whatsapp-embedded-signup-button';
+import { EmbeddedSignupInboundTestPanel } from './whatsapp-embedded-signup-inbound-test-panel';
 import { buildAgentWebhookUrl } from './whatsapp-setup-guide-utils';
 
 export type WhatsAppSetupGuideProps = {
@@ -142,8 +137,8 @@ export function WhatsAppSetupGuide({
         title="Send a test message"
         description={
           isCredentialsSaved
-            ? "Save your phone number, then open WhatsApp and send any message to your business number. Novu confirms the connection as soon as it arrives."
-            : "Complete WhatsApp Embedded Signup above first, then save your phone number and send a test message."
+            ? 'Save your phone number, then open WhatsApp and send any message to your business number. Novu confirms the connection as soon as it arrives.'
+            : 'Complete WhatsApp Embedded Signup above first, then save your phone number and send a test message.'
         }
         rightContent={
           isConnectSubscriberReady && isCredentialsSaved && selectedIntegration?.credentials ? (

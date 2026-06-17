@@ -6,7 +6,6 @@ import ReactConfetti from 'react-confetti';
 import { createPortal } from 'react-dom';
 import { RiArrowRightUpLine, RiFlashlightLine, RiListCheck2 } from 'react-icons/ri';
 import { useSearchParams } from 'react-router-dom';
-import { CopyButton } from '@/components/primitives/copy-button';
 import { getAgentIntegrationsQueryKey, listAgentIntegrations } from '@/api/agents';
 import { IntegrationSettings } from '@/components/integrations/components/integration-settings';
 import { IntegrationSheet } from '@/components/integrations/components/integration-sheet';
@@ -14,6 +13,7 @@ import { handleIntegrationError } from '@/components/integrations/components/uti
 import { cleanCredentials } from '@/components/integrations/components/utils/helpers';
 import type { IntegrationFormData } from '@/components/integrations/types';
 import { Button, buttonVariants } from '@/components/primitives/button';
+import { CopyButton } from '@/components/primitives/copy-button';
 import { showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { ExternalLink } from '@/components/shared/external-link';
 import { useEnvironment } from '@/context/environment/hooks';
