@@ -34,9 +34,7 @@ export function useConnectSubscriberPhone(subscriberId: string): UseConnectSubsc
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: reset when subscriberId changes
   useEffect(() => {
-    if (savedPhone) {
-      setPhone(savedPhone);
-    }
+    setPhone(savedPhone);
   }, [savedPhone, subscriberId]);
 
   const handleSavePhone = useCallback(async () => {

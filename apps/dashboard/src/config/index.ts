@@ -99,5 +99,5 @@ export const NOVU_WHATSAPP_APP_ID = getEnvVar('VITE_NOVU_WHATSAPP_APP_ID');
 export const NOVU_WHATSAPP_CONFIG_ID = getEnvVar('VITE_NOVU_WHATSAPP_CONFIG_ID');
 
 export function isWhatsAppEmbeddedSignupConfigured(): boolean {
-  return Boolean(NOVU_WHATSAPP_APP_ID && NOVU_WHATSAPP_CONFIG_ID);
+  return Boolean(NOVU_WHATSAPP_APP_ID?.trim() && NOVU_WHATSAPP_CONFIG_ID?.trim());
 }

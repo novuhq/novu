@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { decryptCredentials, FeatureFlagsService, InstrumentUsecase, PinoLogger } from '@novu/application-generic';
-import { IntegrationRepository } from '@novu/dal';
+import { AgentIntegrationRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { ChatProviderIdEnum, FeatureFlagsKeysEnum, type ICredentials } from '@novu/shared';
 import { ConfigureWhatsAppWebhookCommand } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.command';
 import { ConfigureWhatsAppWebhook } from '../../../agents/channels/whatsapp/configure-whatsapp-webhook/configure-whatsapp-webhook.usecase';
@@ -13,6 +13,7 @@ import {
   extractMetaError,
   generateWhatsAppRegistrationPin,
   getPhoneNumberDetails,
+  listWabaPhoneNumbers,
   type PhoneNumberDetailsResponse,
   registerWhatsAppPhoneNumber,
 } from './whatsapp-graph-api.utils';
@@ -32,6 +33,8 @@ function getNovuWhatsAppPlatformConfig(): { appId: string; appSecret: string } |
 export class WhatsAppEmbeddedSignup {
   constructor(
     private readonly featureFlagsService: FeatureFlagsService,
+    private readonly agentRepository: AgentRepository,
+    private readonly agentIntegrationRepository: AgentIntegrationRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly updateIntegration: UpdateIntegration,
     private readonly configureWhatsAppWebhook: ConfigureWhatsAppWebhook,
@@ -84,6 +87,35 @@ export class WhatsAppEmbeddedSignup {
       );
     }
 
+    const agent = await this.agentRepository.findOne(
+      {
+        identifier: command.agentIdentifier,
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+      },
+      ['_id', 'identifier']
+    );
+
+    if (!agent) {
+      throw new NotFoundException(`Agent with identifier "${command.agentIdentifier}" was not found.`);
+    }
+
+    const agentIntegrationLink = await this.agentIntegrationRepository.findOne(
+      {
+        _environmentId: command.environmentId,
+        _organizationId: command.organizationId,
+        _agentId: agent._id,
+        _integrationId: integration._id,
+      },
+      ['_id']
+    );
+
+    if (!agentIntegrationLink) {
+      throw new NotFoundException(
+        `Integration "${command.integrationIdentifier}" is not linked to agent "${command.agentIdentifier}".`
+      );
+    }
+
     let accessToken: string;
     try {
       const exchange = await exchangeEmbeddedSignupCodeForToken({
@@ -133,15 +165,78 @@ export class WhatsAppEmbeddedSignup {
       const phoneDetails = await getPhoneNumberDetails(accessToken, phoneNumberId);
       const phoneDetailsError = extractMetaError(phoneDetails.body);
 
-      if (!phoneDetailsError && phoneDetails.statusCode < 400) {
-        const details = phoneDetails.body as PhoneNumberDetailsResponse;
-        businessDisplayPhone = details.display_phone_number?.trim() || undefined;
+      if (phoneDetailsError || phoneDetails.statusCode >= 400) {
+        return {
+          success: false,
+          error: {
+            code: 'meta_validation_failed',
+            message:
+              phoneDetailsError?.message ??
+              `Meta could not verify phone number "${phoneNumberId}". Try connecting again.`,
+          },
+        };
       }
+
+      const details = phoneDetails.body as PhoneNumberDetailsResponse;
+      businessDisplayPhone = details.display_phone_number?.trim() || undefined;
     } catch (err) {
       this.logger.warn(
         { err, integrationId: integration._id, phoneNumberId },
-        'WhatsApp embedded signup: failed to fetch business display phone (best-effort)'
+        'WhatsApp embedded signup: phone number lookup failed'
       );
+
+      return {
+        success: false,
+        error: {
+          code: 'meta_validation_failed',
+          message: 'Could not verify the WhatsApp phone number with Meta. Try again.',
+        },
+      };
+    }
+
+    try {
+      const wabaPhones = await listWabaPhoneNumbers(accessToken, wabaId);
+      const wabaError = extractMetaError(wabaPhones.body);
+
+      if (wabaError || wabaPhones.statusCode >= 400) {
+        return {
+          success: false,
+          error: {
+            code: 'meta_validation_failed',
+            message:
+              wabaError?.message ??
+              `Meta could not verify WhatsApp Business Account "${wabaId}". Try connecting again.`,
+          },
+        };
+      }
+
+      const matchedPhone = wabaPhones.body.data?.find((entry) => entry.id === phoneNumberId);
+      if (!matchedPhone) {
+        return {
+          success: false,
+          error: {
+            code: 'meta_validation_failed',
+            message: `Phone Number ID "${phoneNumberId}" is not part of WhatsApp Business Account "${wabaId}". Try connecting again.`,
+          },
+        };
+      }
+
+      if (!businessDisplayPhone) {
+        businessDisplayPhone = matchedPhone.display_phone_number?.trim() || undefined;
+      }
+    } catch (err) {
+      this.logger.warn(
+        { err, integrationId: integration._id, wabaId, phoneNumberId },
+        'WhatsApp embedded signup: WABA phone lookup failed'
+      );
+
+      return {
+        success: false,
+        error: {
+          code: 'meta_validation_failed',
+          message: 'Could not verify the WhatsApp Business Account with Meta. Try again.',
+        },
+      };
     }
 
     const nextCredentials: ICredentials = {
@@ -150,9 +245,14 @@ export class WhatsAppEmbeddedSignup {
       phoneNumberIdentification: phoneNumberId,
       businessAccountId: wabaId,
       isNovuManaged: true,
-      ...(businessDisplayPhone ? { from: businessDisplayPhone } : {}),
     };
     delete nextCredentials.secretKey;
+
+    if (businessDisplayPhone) {
+      nextCredentials.from = businessDisplayPhone;
+    } else {
+      delete nextCredentials.from;
+    }
 
     await this.updateIntegration.execute(
       UpdateIntegrationCommand.create({

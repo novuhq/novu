@@ -79,11 +79,8 @@ export function ConnectAndTestPanel({
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: seed phone from subscriber, reset when integration changes
   useEffect(() => {
-    const savedPhone = subscriber?.phone?.trim();
-
-    if (savedPhone) {
-      setPhone(savedPhone);
-    }
+    const savedPhone = subscriber?.phone?.trim() ?? '';
+    setPhone(savedPhone);
   }, [subscriber?.phone, integrationIdentifier]);
 
   useEffect(() => {

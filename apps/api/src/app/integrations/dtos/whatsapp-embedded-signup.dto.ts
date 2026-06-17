@@ -38,6 +38,7 @@ export type WhatsAppEmbeddedSignupFailure = {
     | 'feature_disabled'
     | 'missing_platform_config'
     | 'token_exchange_failed'
+    | 'meta_validation_failed'
     | 'integration_not_found'
     | 'phone_registration_failed'
     | 'webhook_configuration_failed'

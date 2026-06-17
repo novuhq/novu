@@ -9,11 +9,14 @@ import { cn } from '@/utils/ui';
 const META_GRAPH_API_VERSION = 'v22.0';
 const FACEBOOK_SDK_URL = 'https://connect.facebook.net/en_US/sdk.js';
 const META_FACEBOOK_LOGIN_BLUE = '#1877F2';
+const FACEBOOK_SDK_INIT_TIMEOUT_MS = 15_000;
 
 type EmbeddedSignupSession = {
   wabaId: string;
   phoneNumberId: string;
 };
+
+type EmbeddedSignupEventResult = EmbeddedSignupSession | 'waba_only' | null;
 
 type FacebookLoginResponse = {
   authResponse?: {
@@ -46,6 +49,16 @@ function loadFacebookSdk(appId: string): Promise<void> {
   }
 
   facebookSdkLoadPromise = new Promise<void>((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      facebookSdkLoadPromise = undefined;
+      reject(new Error('Facebook SDK failed to initialize. Refresh the page and try again.'));
+    }, FACEBOOK_SDK_INIT_TIMEOUT_MS);
+
+    const finish = () => {
+      clearTimeout(timeoutId);
+      resolve();
+    };
+
     // Always set fbAsyncInit so we handle the case where the script tag already
     // exists but FB.init hasn't fired yet (e.g. navigating back to the page).
     window.fbAsyncInit = () => {
@@ -55,13 +68,13 @@ function loadFacebookSdk(appId: string): Promise<void> {
         cookie: true,
         xfbml: false,
       });
-      resolve();
+      finish();
     };
 
     const existingScript = document.getElementById('facebook-jssdk');
     if (existingScript) {
       if (window.FB) {
-        resolve();
+        finish();
       }
 
       return;
@@ -73,6 +86,7 @@ function loadFacebookSdk(appId: string): Promise<void> {
     script.async = true;
     script.defer = true;
     script.onerror = () => {
+      clearTimeout(timeoutId);
       facebookSdkLoadPromise = undefined;
       reject(new Error('Failed to load the Facebook SDK.'));
     };
@@ -82,8 +96,24 @@ function loadFacebookSdk(appId: string): Promise<void> {
   return facebookSdkLoadPromise;
 }
 
-function parseEmbeddedSignupEvent(event: MessageEvent): EmbeddedSignupSession | null {
-  if (!event.origin.endsWith('facebook.com')) {
+function isTrustedFacebookOrigin(origin: string): boolean {
+  let parsedOrigin: URL;
+
+  try {
+    parsedOrigin = new URL(origin);
+  } catch {
+    return false;
+  }
+
+  const hostname = parsedOrigin.hostname.toLowerCase();
+
+  return (
+    parsedOrigin.protocol === 'https:' && (hostname === 'facebook.com' || hostname.endsWith('.facebook.com'))
+  );
+}
+
+function parseEmbeddedSignupEvent(event: MessageEvent): EmbeddedSignupEventResult {
+  if (!isTrustedFacebookOrigin(event.origin)) {
     return null;
   }
 
@@ -98,7 +128,11 @@ function parseEmbeddedSignupEvent(event: MessageEvent): EmbeddedSignupSession | 
       return null;
     }
 
-    if (data.event !== 'FINISH' && data.event !== 'FINISH_ONLY_WABA') {
+    if (data.event === 'FINISH_ONLY_WABA') {
+      return 'waba_only';
+    }
+
+    if (data.event !== 'FINISH') {
       return null;
     }
 
@@ -281,6 +315,20 @@ export function WhatsAppEmbeddedSignupButton({
 
       const listener = (event: MessageEvent) => {
         const session = parseEmbeddedSignupEvent(event);
+
+        if (session === 'waba_only') {
+          cleanupMessageListener();
+          pendingSessionRef.current = null;
+          pendingCodeRef.current = null;
+          setIsLaunching(false);
+          const message =
+            'WhatsApp signup finished without a phone number. Add a phone number in Meta Business Manager and try again.';
+          showErrorToast(message);
+          onError?.(message);
+
+          return;
+        }
+
         if (!session) {
           return;
         }
