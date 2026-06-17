@@ -39,11 +39,10 @@ const novu = createNovuAdapter({
   agentIdentifier: 'support-agent',
   bridgeSecret: process.env.NOVU_SECRET_KEY!, // verifies inbound HMAC
   // apiBaseUrl: 'https://eu.api.novu.co',     // defaults to https://api.novu.co
-  // bridgeUrl:  'https://my-app.com/api/novu', // optional boot-time bridge registration
 });
 
 // Or rely on env vars — NOVU_SECRET_KEY, NOVU_AGENT_IDENTIFIER,
-// NOVU_API_BASE_URL, NOVU_BRIDGE_URL (explicit config wins):
+// NOVU_API_BASE_URL (explicit config wins):
 // const novu = createNovuAdapter();
 
 const chat = new Chat({

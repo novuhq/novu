@@ -1,13 +1,25 @@
-import type { GeneratedAgentSpec } from '../api/agents';
-import type { AgentConnectMode, AgentSummary, ChannelChoice, ChatSdkConnectOutcome } from '../types';
+import type { GeneratedAgentSpec } from "../api/agents";
+import type {
+  AgentConnectMode,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+  ChatSdkIntegrationMode,
+} from "../types";
 
-export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
+export type PickResult =
+  | { action: "new" }
+  | { action: "use"; agent: AgentSummary };
 
-export type GeneratedAgentPreviewResult = { action: 'confirm'; spec: GeneratedAgentSpec } | { action: 'refine' };
+export type GeneratedAgentPreviewResult =
+  | { action: "confirm"; spec: GeneratedAgentSpec }
+  | { action: "refine" };
 
-export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: string } | { kind: 'new' };
+export type PickAgentIntegrationResult =
+  | { kind: "existing"; integrationId: string }
+  | { kind: "new" };
 
-export type TelegramTokenDelivery = 'setup-page' | 'terminal';
+export type TelegramTokenDelivery = "setup-page" | "terminal";
 
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
@@ -34,7 +46,9 @@ export interface ConnectUI {
   pickExistingOrCreate(agents: AgentSummary[]): Promise<PickResult>;
 
   // Agent connect mode (managed runtime or Chat SDK)
-  pickAgentConnectMode(opts: { preselected?: AgentConnectMode }): Promise<AgentConnectMode>;
+  pickAgentConnectMode(opts: {
+    preselected?: AgentConnectMode;
+  }): Promise<AgentConnectMode>;
   pickAgentIntegration(opts: {
     providerLabel: string;
     integrations: Array<{ _id: string; name: string; identifier: string }>;
@@ -63,24 +77,47 @@ export interface ConnectUI {
    * Preview and optionally edit the AI-generated agent spec before provisioning.
    * Resolves with the confirmed spec or a request to refine the source description.
    */
-  previewGeneratedAgent(spec: GeneratedAgentSpec): Promise<GeneratedAgentPreviewResult>;
+  previewGeneratedAgent(
+    spec: GeneratedAgentSpec,
+  ): Promise<GeneratedAgentPreviewResult>;
   creatingAgent(name: string): void;
   agentCreated(agent: AgentSummary): void;
 
   // Chat SDK project wiring
   promptForAgentName(defaultName: string): Promise<string>;
-  confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
-  confirmScaffold(opts: { projectDir: string; appName: string }): Promise<boolean>;
+  confirmEnvSecretOverwrite(opts: {
+    envPath: string;
+    existingMasked: string;
+    nextMasked: string;
+  }): Promise<boolean>;
+  confirmScaffold(opts: {
+    projectDir: string;
+    appName: string;
+  }): Promise<boolean>;
   scaffoldingChatSdk(): void;
-  chatSdkScaffolded(opts: { projectDir: string; envPath: string; skippedInstall?: boolean }): void;
-  chatSdkEnvWired(opts: { projectDir: string; envPath: string; updatedKeys: string[] }): void;
-  promptWireChatSdkAdapter(opts: { projectDir: string; agentIdentifier: string }): Promise<boolean>;
+  chatSdkScaffolded(opts: {
+    projectDir: string;
+    envPath: string;
+    skippedInstall?: boolean;
+  }): void;
+  chatSdkEnvWired(opts: {
+    projectDir: string;
+    envPath: string;
+    updatedKeys: string[];
+  }): void;
+  promptWireChatSdkAdapter(opts: {
+    projectDir: string;
+    agentIdentifier: string;
+  }): Promise<boolean>;
   wiringChatSdkAdapter(): void;
   chatSdkAdapterWired(opts: {
     projectDir: string;
     envPath: string;
     adapterInstalled: boolean;
     bridgeFilesAdded: string[];
+    botFilePatched?: string;
+    integrationMode: ChatSdkIntegrationMode;
+    duplicateNovuModuleDetected: boolean;
     skillDestinations: string[];
     needsAgentFollowUp: boolean;
   }): void;
@@ -92,7 +129,10 @@ export interface ConnectUI {
    * user can finish setup there. Resolves when the user hits Enter — the
    * pipeline then runs `open(agentDetailsUrl)`.
    */
-  awaitDashboardChannelOpen(opts: { channel: ChannelChoice; agentDetailsUrl: string }): Promise<void>;
+  awaitDashboardChannelOpen(opts: {
+    channel: ChannelChoice;
+    agentDetailsUrl: string;
+  }): Promise<void>;
 
   // Email path
   addingEmailIntegration(): void;
@@ -112,7 +152,10 @@ export interface ConnectUI {
    * Transitions to the "we're polling for your email to arrive" view. Fired
    * by the pipeline right after `open()` returns.
    */
-  showEmailWaiting(opts: { inboundAddress: string; sendFromEmail?: string }): void;
+  showEmailWaiting(opts: {
+    inboundAddress: string;
+    sendFromEmail?: string;
+  }): void;
   emailConnected(): void;
 
   // Telegram path
@@ -122,7 +165,10 @@ export interface ConnectUI {
    * scannable QR pointing at `t.me/botfather`. Resolves when the user hits
    * Enter to advance.
    */
-  showTelegramIntro(opts: { botfatherQr: string; botfatherUrl: string }): Promise<void>;
+  showTelegramIntro(opts: {
+    botfatherQr: string;
+    botfatherUrl: string;
+  }): Promise<void>;
   /** Interactive only: choose between the QR/setup page or pasting the token in the terminal. */
   pickTelegramTokenDelivery(): Promise<TelegramTokenDelivery>;
   /**
@@ -141,7 +187,11 @@ export interface ConnectUI {
    * Step 3: render the `t.me/<bot>?start=<code>` deep-link QR. Pipeline polls
    * the agent's Telegram integration link for `connectedAt`.
    */
-  showTelegramTest(opts: { deepLinkQr: string; deepLinkUrl: string; botUsername: string }): void;
+  showTelegramTest(opts: {
+    deepLinkQr: string;
+    deepLinkUrl: string;
+    botUsername: string;
+  }): void;
   telegramConnected(): void;
 
   // Slack path
@@ -165,7 +215,10 @@ export interface ConnectUI {
    * in their workspace. Resolves when the user hits Enter — the pipeline then
    * runs `open()`.
    */
-  awaitSlackOAuthOpen(opts: { authorizeUrl: string; appCreated: boolean }): Promise<void>;
+  awaitSlackOAuthOpen(opts: {
+    authorizeUrl: string;
+    appCreated: boolean;
+  }): Promise<void>;
   /**
    * Transitions to the polling view. Fired by the pipeline right after `open()`.
    */

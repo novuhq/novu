@@ -1,11 +1,11 @@
-import { unlink } from 'node:fs/promises';
-import chalk from 'chalk';
-import ora, { type Ora } from 'ora';
-import type { GeneratedAgentSpec } from '../api/agents';
-import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
-import { channelDisplayName } from '../dashboard-urls';
-import type { AgentSummary } from '../types';
-import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
+import { unlink } from "node:fs/promises";
+import chalk from "chalk";
+import ora, { type Ora } from "ora";
+import type { GeneratedAgentSpec } from "../api/agents";
+import { SEND_FROM_ACCOUNT_LABEL } from "../copy/email-onboarding";
+import { channelDisplayName } from "../dashboard-urls";
+import type { AgentSummary } from "../types";
+import { resolveGeneratedAgentSpecLabels } from "./agent-spec-labels";
 import {
   logAuthUrlFileHandoffEvent,
   logEmailHandoffEvents,
@@ -17,9 +17,9 @@ import {
   logTelegramSetupLinkHandoffEvent,
   logTelegramSetupLinkQrPngHandoffEvent,
   writeAuthUrlHandoffFile,
-} from './handoff-events';
-import { renderQRPngFile } from './qr';
-import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from './ui';
+} from "./handoff-events";
+import { renderQRPngFile } from "./qr";
+import type { ConnectUI, GeneratedAgentPreviewResult, PickResult } from "./ui";
 
 export function createLoggingUI(): ConnectUI {
   let spinner: Ora | undefined;
@@ -38,7 +38,7 @@ export function createLoggingUI(): ConnectUI {
       spinner.succeed(text);
       spinner = undefined;
     } else {
-      console.log(`${chalk.green('✓')} ${text}`);
+      console.log(`${chalk.green("✓")} ${text}`);
     }
   };
 
@@ -48,13 +48,15 @@ export function createLoggingUI(): ConnectUI {
       // Non-interactive: skip the welcome prompt; the run is unattended by
       // definition (--ci or piped stdin) so there's nobody to press Enter.
       stop();
-      console.log(chalk.bold('Welcome to Novu Connect.'));
-      console.log(chalk.gray('Authorizing automatically (non-interactive mode).'));
+      console.log(chalk.bold("Welcome to Novu Connect."));
+      console.log(
+        chalk.gray("Authorizing automatically (non-interactive mode)."),
+      );
 
       return Promise.resolve();
     },
     authStarted() {
-      start('Authorizing via the Novu Dashboard…');
+      start("Authorizing via the Novu Dashboard…");
     },
     authDashboardUrl(url) {
       if (!url) {
@@ -81,86 +83,103 @@ export function createLoggingUI(): ConnectUI {
 
       if (spinner) {
         spinner.text =
-          'Authorizing via the Novu Dashboard… (read NOVU_CONNECT_AUTH_URL_FILE and deliver the URL to the user)';
+          "Authorizing via the Novu Dashboard… (read NOVU_CONNECT_AUTH_URL_FILE and deliver the URL to the user)";
       }
     },
     authStatus(message) {
       if (spinner) spinner.text = message;
     },
     authCompleted(envName) {
-      succeed(envName ? `Authorized for environment "${envName}"` : 'Authorized');
+      succeed(
+        envName ? `Authorized for environment "${envName}"` : "Authorized",
+      );
     },
     listingAgents() {
-      start('Checking for existing agents…');
+      start("Checking for existing agents…");
     },
     loadingIntegrations() {
-      start('Looking up agent runtime integrations…');
+      start("Looking up agent runtime integrations…");
     },
     pickAgentConnectMode({ preselected }) {
       stop();
-      const mode = preselected ?? 'demo';
-      console.log(chalk.gray(`Non-interactive mode: using "${mode}" connect mode.`));
+      const mode = preselected ?? "demo";
+      console.log(
+        chalk.gray(`Non-interactive mode: using "${mode}" connect mode.`),
+      );
 
       return Promise.resolve(mode);
     },
     pickAgentIntegration({ integrations }) {
       stop();
       if (integrations.length === 1) {
-        console.log(chalk.gray(`Non-interactive mode: reusing integration "${integrations[0].name}".`));
+        console.log(
+          chalk.gray(
+            `Non-interactive mode: reusing integration "${integrations[0].name}".`,
+          ),
+        );
 
         return Promise.resolve({
-          kind: 'existing',
+          kind: "existing",
           integrationId: integrations[0]._id,
         });
       }
 
       return Promise.reject(
         new Error(
-          'Non-interactive mode: pass --agent-integration-id or BYOK credential flags to create a new integration.'
-        )
+          "Non-interactive mode: pass --agent-integration-id or BYOK credential flags to create a new integration.",
+        ),
       );
     },
     promptForSecretInput({ title, verificationError }) {
       stop();
       if (verificationError) {
-        console.error(chalk.yellow(`Credentials were rejected: ${verificationError}`));
+        console.error(
+          chalk.yellow(`Credentials were rejected: ${verificationError}`),
+        );
       }
 
       return Promise.reject(
         new Error(
-          `Non-interactive mode: credential input required for "${title}". Pass the matching --anthropic-api-key or AWS Claude flags.`
-        )
+          `Non-interactive mode: credential input required for "${title}". Pass the matching --anthropic-api-key or AWS Claude flags.`,
+        ),
       );
     },
     pickAwsClaudeRegion() {
       stop();
 
-      return Promise.reject(new Error('Non-interactive mode: pass --aws-claude-region for AWS Claude managed agents.'));
+      return Promise.reject(
+        new Error(
+          "Non-interactive mode: pass --aws-claude-region for AWS Claude managed agents.",
+        ),
+      );
     },
     verifyingCredentials() {
-      start('Verifying credentials…');
+      start("Verifying credentials…");
     },
     credentialsVerified() {
-      succeed('Credentials verified');
+      succeed("Credentials verified");
     },
     pickExistingOrCreate(_agents) {
       stop();
       // In non-interactive mode we always create a new agent. Users who want
       // to pick an existing one must run interactively.
-      console.log(chalk.gray('Non-interactive mode: creating a new agent.'));
+      console.log(chalk.gray("Non-interactive mode: creating a new agent."));
 
-      return Promise.resolve<PickResult>({ action: 'new' });
+      return Promise.resolve<PickResult>({ action: "new" });
     },
     promptForDescription(defaultPrompt) {
       stop();
-      if (typeof defaultPrompt === 'string' && defaultPrompt.trim().length > 0) {
+      if (
+        typeof defaultPrompt === "string" &&
+        defaultPrompt.trim().length > 0
+      ) {
         return Promise.resolve(defaultPrompt);
       }
 
       return Promise.reject(
         new Error(
-          'Non-interactive mode requires --prompt "<agent description>" so the CLI can generate the agent unattended.'
-        )
+          'Non-interactive mode requires --prompt "<agent description>" so the CLI can generate the agent unattended.',
+        ),
       );
     },
     refineDescription(previousPrompt) {
@@ -168,19 +187,19 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.reject(
         new Error(
-          `Non-interactive mode cannot refine the agent description. Original prompt: "${previousPrompt.slice(0, 80)}${previousPrompt.length > 80 ? '…' : ''}"`
-        )
+          `Non-interactive mode cannot refine the agent description. Original prompt: "${previousPrompt.slice(0, 80)}${previousPrompt.length > 80 ? "…" : ""}"`,
+        ),
       );
     },
     generatingAgent() {
-      start('Generating agent configuration…');
+      start("Generating agent configuration…");
     },
     previewGeneratedAgent(spec: GeneratedAgentSpec) {
       stop();
       logGeneratedAgentPreview(spec);
 
       return Promise.resolve<GeneratedAgentPreviewResult>({
-        action: 'confirm',
+        action: "confirm",
         spec,
       });
     },
@@ -192,8 +211,10 @@ export function createLoggingUI(): ConnectUI {
     },
     promptForAgentName(defaultName) {
       stop();
-      const name = defaultName.trim() || 'My Chat SDK Agent';
-      console.log(chalk.gray(`Non-interactive mode: using agent name "${name}".`));
+      const name = defaultName.trim() || "My Chat SDK Agent";
+      console.log(
+        chalk.gray(`Non-interactive mode: using agent name "${name}".`),
+      );
 
       return Promise.resolve(name);
     },
@@ -201,12 +222,14 @@ export function createLoggingUI(): ConnectUI {
       return Promise.resolve(false);
     },
     confirmScaffold({ projectDir, appName }) {
-      console.log(chalk.cyan(`→ Scaffolding Chat SDK app "${appName}" in ${projectDir}`));
+      console.log(
+        chalk.cyan(`→ Scaffolding Chat SDK app "${appName}" in ${projectDir}`),
+      );
 
       return Promise.resolve(true);
     },
     scaffoldingChatSdk() {
-      start('Scaffolding Chat SDK project…');
+      start("Scaffolding Chat SDK project…");
     },
     chatSdkScaffolded({ projectDir, envPath }) {
       succeed(`Scaffolded Chat SDK project at ${projectDir}`);
@@ -215,37 +238,48 @@ export function createLoggingUI(): ConnectUI {
     chatSdkEnvWired({ envPath, updatedKeys }) {
       succeed(`Updated ${envPath}`);
       if (updatedKeys.length > 0) {
-        console.log(chalk.gray(`  Keys: ${updatedKeys.join(', ')}`));
+        console.log(chalk.gray(`  Keys: ${updatedKeys.join(", ")}`));
       }
     },
     promptWireChatSdkAdapter({ projectDir, agentIdentifier }) {
-      console.log('');
-      console.log(chalk.bold('Wire the Novu adapter into your project?'));
+      console.log("");
+      console.log(chalk.bold("Wire the Novu adapter into your project?"));
       console.log(
         chalk.dim(
-          `We'll install @novu/chat-sdk-adapter, wire .env.local, add the novu-chat-sdk skill, and scaffold bridge files when possible.`
-        )
+          `We'll install @novu/chat-sdk-adapter, wire .env.local, add the novu-chat-sdk skill, and merge into your existing bot when detected.`,
+        ),
       );
       console.log(chalk.gray(`  Project: ${projectDir}`));
       console.log(chalk.gray(`  Agent: ${agentIdentifier}`));
       return Promise.resolve(true);
     },
     wiringChatSdkAdapter() {
-      start('Wiring Novu Chat SDK adapter…');
+      start("Wiring Novu Chat SDK adapter…");
     },
     chatSdkAdapterWired({
       projectDir,
       envPath,
       adapterInstalled,
       bridgeFilesAdded,
+      botFilePatched,
+      integrationMode,
+      duplicateNovuModuleDetected,
       skillDestinations,
       needsAgentFollowUp,
     }) {
-      succeed('Novu adapter wired');
+      succeed("Novu adapter wired");
       console.log(chalk.gray(`  Project: ${projectDir}`));
       console.log(chalk.gray(`  Env: ${envPath}`));
       if (adapterInstalled) {
-        console.log(chalk.gray('  Installed @novu/chat-sdk-adapter'));
+        console.log(chalk.gray("  Installed @novu/chat-sdk-adapter"));
+      }
+      if (integrationMode === "merged-existing-bot" && botFilePatched) {
+        console.log(chalk.gray(`  Merged Novu adapter into ${botFilePatched}`));
+        console.log(
+          chalk.gray(
+            "  Bridge route: POST /api/webhooks/novu via [platform] route",
+          ),
+        );
       }
       for (const file of bridgeFilesAdded) {
         console.log(chalk.gray(`  Added ${file}`));
@@ -253,35 +287,52 @@ export function createLoggingUI(): ConnectUI {
       for (const dest of skillDestinations) {
         console.log(chalk.gray(`  Skill: ${dest}`));
       }
+      if (duplicateNovuModuleDetected) {
+        console.log(
+          chalk.yellow(
+            "  Remove lib/novu/agent.ts and app/api/webhooks/novu/route.ts if present — use your existing bot instead.",
+          ),
+        );
+      }
       if (needsAgentFollowUp) {
-        console.log(chalk.cyan('→ Ask your coding agent to finish wiring using the novu-chat-sdk skill.'));
+        console.log(
+          chalk.cyan(
+            "→ Ask your coding agent to finish wiring using the novu-chat-sdk skill.",
+          ),
+        );
       }
     },
     pickChannel() {
       stop();
       // Non-interactive default: Slack.
-      console.log(chalk.gray('Non-interactive mode: defaulting to Slack.'));
+      console.log(chalk.gray("Non-interactive mode: defaulting to Slack."));
 
-      return Promise.resolve('slack');
+      return Promise.resolve("slack");
     },
     awaitDashboardChannelOpen({ channel, agentDetailsUrl }) {
       stop();
       console.log(
-        `${chalk.cyan('→')} ${channelDisplayName(channel)} continues in Novu Connect: ${chalk.underline(agentDetailsUrl)}`
+        `${chalk.cyan("→")} ${channelDisplayName(channel)} continues in Novu Connect: ${chalk.underline(agentDetailsUrl)}`,
       );
 
       return Promise.resolve();
     },
     addingEmailIntegration() {
-      start('Linking Email to your agent…');
+      start("Linking Email to your agent…");
     },
     awaitEmailOpen({ inboundAddress, mailtoUrl, sendFromEmail }) {
       stop();
-      console.log(`${chalk.cyan('→')} Your agent's inbound address: ${chalk.bold(inboundAddress)}`);
+      console.log(
+        `${chalk.cyan("→")} Your agent's inbound address: ${chalk.bold(inboundAddress)}`,
+      );
       if (sendFromEmail) {
-        console.log(`${chalk.cyan('→')} ${SEND_FROM_ACCOUNT_LABEL} ${chalk.bold(sendFromEmail)}`);
+        console.log(
+          `${chalk.cyan("→")} ${SEND_FROM_ACCOUNT_LABEL} ${chalk.bold(sendFromEmail)}`,
+        );
       }
-      console.log(`${chalk.cyan('→')} Open in your mail client: ${chalk.underline(mailtoUrl)}`);
+      console.log(
+        `${chalk.cyan("→")} Open in your mail client: ${chalk.underline(mailtoUrl)}`,
+      );
       logEmailHandoffEvents({ inboundAddress, mailtoUrl, sendFromEmail });
       // Non-interactive: nothing to await — the user will copy/paste the
       // address themselves. Resolve immediately so the pipeline can move on
@@ -292,50 +343,60 @@ export function createLoggingUI(): ConnectUI {
       start(`Waiting for your email at ${inboundAddress}…`);
     },
     emailConnected() {
-      succeed('Email connected');
+      succeed("Email connected");
     },
     addingTelegramIntegration() {
-      start('Linking Telegram to your agent…');
+      start("Linking Telegram to your agent…");
     },
     showTelegramIntro({ botfatherUrl }) {
       stop();
-      console.log(`${chalk.cyan('→')} Create a bot with @BotFather: ${chalk.underline(botfatherUrl)}`);
+      console.log(
+        `${chalk.cyan("→")} Create a bot with @BotFather: ${chalk.underline(botfatherUrl)}`,
+      );
       logTelegramBotfatherHandoffEvent({ botfatherUrl });
 
       return Promise.resolve();
     },
     pickTelegramTokenDelivery() {
-      return Promise.resolve('setup-page');
+      return Promise.resolve("setup-page");
     },
     showTelegramLinkToken({ mobileUrl }) {
       stop();
-      console.log(`${chalk.cyan('→')} Paste your BotFather token on this secure page: ${chalk.underline(mobileUrl)}`);
+      console.log(
+        `${chalk.cyan("→")} Paste your BotFather token on this secure page: ${chalk.underline(mobileUrl)}`,
+      );
       logTelegramSetupLinkHandoffEvent({ setupUrl: mobileUrl });
       void renderQRPngFile(mobileUrl)
-        .then((setupQrPngPath) => logTelegramSetupLinkQrPngHandoffEvent({ setupQrPngPath }))
+        .then((setupQrPngPath) =>
+          logTelegramSetupLinkQrPngHandoffEvent({ setupQrPngPath }),
+        )
         .catch(() => undefined);
     },
     savingTelegramBotToken() {
-      start('Saving your Telegram bot token…');
+      start("Saving your Telegram bot token…");
     },
     showTelegramTest({ deepLinkUrl, botUsername }) {
       stop();
-      console.log(`${chalk.cyan('→')} Open Telegram and tap Start on @${botUsername}: ${chalk.underline(deepLinkUrl)}`);
+      console.log(
+        `${chalk.cyan("→")} Open Telegram and tap Start on @${botUsername}: ${chalk.underline(deepLinkUrl)}`,
+      );
       logTelegramDeepLinkHandoffEvents({ deepLinkUrl, botUsername });
       void renderQRPngFile(deepLinkUrl)
-        .then((deepLinkQrPngPath) => logTelegramDeepLinkQrPngHandoffEvent({ deepLinkQrPngPath }))
+        .then((deepLinkQrPngPath) =>
+          logTelegramDeepLinkQrPngHandoffEvent({ deepLinkQrPngPath }),
+        )
         .catch(() => undefined);
     },
     telegramConnected() {
-      succeed('Telegram connected');
+      succeed("Telegram connected");
     },
     addingSlackIntegration() {
-      start('Linking Slack to your agent…');
+      start("Linking Slack to your agent…");
     },
     showSlackSetupLink({ setupUrl }) {
       stop();
       console.log(
-        `${chalk.cyan('→')} Paste your Slack App Configuration Token on this secure page: ${chalk.underline(setupUrl)}`
+        `${chalk.cyan("→")} Paste your Slack App Configuration Token on this secure page: ${chalk.underline(setupUrl)}`,
       );
       logSlackSetupLinkHandoffEvent({ setupUrl });
     },
@@ -344,34 +405,36 @@ export function createLoggingUI(): ConnectUI {
 
       return Promise.reject(
         new Error(
-          'Slack integration has no OAuth credentials. Omit --slack-config-token to use the secure setup page, or pass the token for headless CI.'
-        )
+          "Slack integration has no OAuth credentials. Omit --slack-config-token to use the secure setup page, or pass the token for headless CI.",
+        ),
       );
     },
     runningSlackQuickSetup() {
-      start('Creating Slack app from manifest…');
+      start("Creating Slack app from manifest…");
     },
     awaitSlackOAuthOpen({ authorizeUrl, appCreated }) {
       stop();
       if (appCreated) {
-        console.log(`${chalk.green('✓')} Slack app created successfully.`);
+        console.log(`${chalk.green("✓")} Slack app created successfully.`);
       }
-      console.log(`${chalk.cyan('→')} Authorize Slack here: ${chalk.underline(authorizeUrl)}`);
+      console.log(
+        `${chalk.cyan("→")} Authorize Slack here: ${chalk.underline(authorizeUrl)}`,
+      );
       logSlackHandoffEvents({ authorizeUrl });
 
       return Promise.resolve();
     },
     showSlackWaiting(_opts) {
-      start('Waiting for Slack authorization…');
+      start("Waiting for Slack authorization…");
     },
     slackConnected() {
-      succeed('Slack connected');
+      succeed("Slack connected");
     },
     slackSkipped() {
-      console.log(chalk.gray('Slack step skipped (--skip-slack).'));
+      console.log(chalk.gray("Slack step skipped (--skip-slack)."));
     },
     sendingWelcome() {
-      start('Asking your agent to say hello in Slack…');
+      start("Asking your agent to say hello in Slack…");
     },
     success(result) {
       stop();
@@ -379,56 +442,71 @@ export function createLoggingUI(): ConnectUI {
         ? `${result.connectDashboardUrl}/env/${result.environmentSlug}/connect/agents/${encodeURIComponent(result.agent.identifier)}`
         : `${result.connectDashboardUrl}/connect/agents/${encodeURIComponent(result.agent.identifier)}`;
       const channelLabel = (() => {
-        if (result.connectedChannel === 'slack') return 'Slack';
-        if (result.connectedChannel === 'telegram') return 'Telegram';
-        if (result.connectedChannel === 'email') return 'Email';
+        if (result.connectedChannel === "slack") return "Slack";
+        if (result.connectedChannel === "telegram") return "Telegram";
+        if (result.connectedChannel === "email") return "Email";
 
         return null;
       })();
       const redirectChannelLabel = result.dashboardRedirectChannel
         ? channelDisplayName(result.dashboardRedirectChannel)
         : null;
-      console.log('');
-      console.log(`${chalk.green('✓')} Your agent is live.`);
-      console.log(`  ${chalk.bold('Agent:')} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`);
+      console.log("");
+      console.log(`${chalk.green("✓")} Your agent is live.`);
+      console.log(
+        `  ${chalk.bold("Agent:")} ${result.agent.name} ${chalk.gray(`(${result.agent.identifier})`)}`,
+      );
       if (channelLabel) {
-        console.log(`  ${chalk.cyan('→')} Check ${channelLabel} — your agent just messaged you.`);
+        console.log(
+          `  ${chalk.cyan("→")} Check ${channelLabel} — your agent just messaged you.`,
+        );
       } else if (redirectChannelLabel) {
         console.log(
-          `  ${chalk.cyan('→')} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`
+          `  ${chalk.cyan("→")} Finish ${redirectChannelLabel} setup in Novu Connect — we opened it for you.`,
         );
       } else {
-        console.log(`  ${chalk.gray('No channel connected.')}`);
+        console.log(`  ${chalk.gray("No channel connected.")}`);
       }
       if (result.isKeyless && result.claimUrl) {
-        console.log(`  ${chalk.bold('Claim your agent:')} ${result.claimUrl}`);
-        console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
+        console.log(`  ${chalk.bold("Claim your agent:")} ${result.claimUrl}`);
+        console.log(
+          `  ${chalk.gray("Sign up to move your agent and conversation into your own account.")}`,
+        );
       } else {
-        console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
+        console.log(`  ${chalk.bold("Dashboard:")} ${agentUrl}`);
       }
-      if (result.connectMode === 'chat-sdk' && result.chatSdkOutcome) {
+      if (result.connectMode === "chat-sdk" && result.chatSdkOutcome) {
         if (result.chatSdkOutcome.scaffolded) {
-          console.log(`  ${chalk.bold('Project:')} ${result.chatSdkOutcome.projectDir}`);
+          console.log(
+            `  ${chalk.bold("Project:")} ${result.chatSdkOutcome.projectDir}`,
+          );
           if (result.chatSdkOutcome.skippedInstall) {
-            console.log(`  ${chalk.yellow('⚠')} Inside a monorepo — npm install was skipped.`);
             console.log(
-              `  ${chalk.cyan('→')} cd ${result.chatSdkOutcome.projectDir} && npm install && npm run dev:novu`
+              `  ${chalk.yellow("⚠")} Inside a monorepo — npm install was skipped.`,
+            );
+            console.log(
+              `  ${chalk.cyan("→")} cd ${result.chatSdkOutcome.projectDir} && npm install && npm run dev:novu`,
             );
           } else {
-            console.log(`  ${chalk.cyan('→')} Starting dev server and tunnel…`);
+            console.log(`  ${chalk.cyan("→")} Starting dev server and tunnel…`);
           }
-        } else if (result.chatSdkOutcome.projectKind === 'has-adapter' || result.chatSdkOutcome.bridgeWired) {
-          console.log(`  ${chalk.cyan('→')} Starting your app and dev tunnel…`);
+        } else if (
+          result.chatSdkOutcome.projectKind === "has-adapter" ||
+          result.chatSdkOutcome.bridgeWired
+        ) {
+          console.log(`  ${chalk.cyan("→")} Starting your app and dev tunnel…`);
         } else if (result.chatSdkOutcome.needsAgentFollowUp) {
-          console.log(`  ${chalk.cyan('→')} Ask your coding agent to finish wiring using the novu-chat-sdk skill.`);
+          console.log(
+            `  ${chalk.cyan("→")} Ask your coding agent to finish wiring using the novu-chat-sdk skill.`,
+          );
         } else {
-          console.log(`  ${chalk.gray('No Chat SDK wiring changes made.')}`);
+          console.log(`  ${chalk.gray("No Chat SDK wiring changes made.")}`);
         }
       }
     },
     failure(message) {
       stop();
-      console.error(`${chalk.red('✗')} ${message}`);
+      console.error(`${chalk.red("✗")} ${message}`);
     },
     shutdown() {
       stop();
@@ -440,20 +518,29 @@ export function createLoggingUI(): ConnectUI {
 
 function logGeneratedAgentPreview(spec: GeneratedAgentSpec): void {
   const labels = resolveGeneratedAgentSpecLabels(spec);
-  const promptPreview = spec.systemPrompt.replace(/\s+/g, ' ').trim().slice(0, 160);
+  const promptPreview = spec.systemPrompt
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 160);
 
-  console.log('');
-  console.log(chalk.bold('Generated agent preview'));
-  console.log(`  ${chalk.bold('Name:')} ${spec.name} ${chalk.gray(`(${spec.identifier})`)}`);
-  console.log(`  ${chalk.bold('System prompt:')} ${promptPreview}${spec.systemPrompt.length > 160 ? '…' : ''}`);
+  console.log("");
+  console.log(chalk.bold("Generated agent preview"));
+  console.log(
+    `  ${chalk.bold("Name:")} ${spec.name} ${chalk.gray(`(${spec.identifier})`)}`,
+  );
+  console.log(
+    `  ${chalk.bold("System prompt:")} ${promptPreview}${spec.systemPrompt.length > 160 ? "…" : ""}`,
+  );
   if (labels.tools.length > 0) {
-    console.log(`  ${chalk.bold('Tools:')} ${labels.tools.join(', ')}`);
+    console.log(`  ${chalk.bold("Tools:")} ${labels.tools.join(", ")}`);
   }
   if (labels.mcpServers.length > 0) {
-    console.log(`  ${chalk.bold('MCP:')} ${labels.mcpServers.join(', ')}`);
+    console.log(`  ${chalk.bold("MCP:")} ${labels.mcpServers.join(", ")}`);
   }
   if (labels.skills.length > 0) {
-    console.log(`  ${chalk.bold('Skills:')} ${labels.skills.join(', ')}`);
+    console.log(`  ${chalk.bold("Skills:")} ${labels.skills.join(", ")}`);
   }
-  console.log(chalk.gray('Non-interactive mode: continuing without confirmation.'));
+  console.log(
+    chalk.gray("Non-interactive mode: continuing without confirmation."),
+  );
 }

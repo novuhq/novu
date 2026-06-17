@@ -1,26 +1,30 @@
-import { Select, TextInput } from '@inkjs/ui';
-import { AWS_CLAUDE_COMMERCIAL_REGIONS } from '@novu/shared';
-import { Box, Text, useInput } from 'ink';
+import { Select, TextInput } from "@inkjs/ui";
+import { AWS_CLAUDE_COMMERCIAL_REGIONS } from "@novu/shared";
+import { Box, Text, useInput } from "ink";
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
-import React from 'react';
-import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
-import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
-import type { AgentConnectMode, ChannelChoice, ChatSdkConnectOutcome } from '../types';
-import { CopyableLink } from './copyable-link';
-import { PreviewGeneratedContent } from './preview-generated-content';
-import type { ConnectStore, Phase } from './store';
-import { WelcomeContent } from './welcome-content';
+import React from "react";
+import { SEND_FROM_ACCOUNT_LABEL } from "../copy/email-onboarding";
+import { channelDisplayName, isDashboardOnlyChannel } from "../dashboard-urls";
+import type {
+  AgentConnectMode,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+} from "../types";
+import { CopyableLink } from "./copyable-link";
+import { PreviewGeneratedContent } from "./preview-generated-content";
+import type { ConnectStore, Phase } from "./store";
+import { WelcomeContent } from "./welcome-content";
 
-const NEW_AGENT_VALUE = '__new__';
-const NEW_INTEGRATION_VALUE = '__new_integration__';
+const NEW_AGENT_VALUE = "__new__";
+const NEW_INTEGRATION_VALUE = "__new_integration__";
 
 const TAGLINES: ReadonlyArray<string> = [
-  'Listening for your idea…',
-  'Tuning the system prompt…',
-  'Picking the right tools…',
-  'Wiring up MCP servers…',
-  'Reaching for Anthropic skills…',
-  'Adding finishing sparkles…',
+  "Listening for your idea…",
+  "Tuning the system prompt…",
+  "Picking the right tools…",
+  "Wiring up MCP servers…",
+  "Reaching for Anthropic skills…",
+  "Adding finishing sparkles…",
 ];
 
 export function PhaseContent({
@@ -28,86 +32,99 @@ export function PhaseContent({
   onChannelHover,
   previewMorphComplete,
 }: {
-  phase: ReturnType<ConnectStore['phase']['get']>;
+  phase: ReturnType<ConnectStore["phase"]["get"]>;
   onChannelHover: (channel: ChannelChoice | null) => void;
   previewMorphComplete: boolean;
 }): React.ReactElement {
   switch (phase.kind) {
-    case 'welcome':
+    case "welcome":
       return <WelcomeContent onContinue={phase.resolve} />;
 
-    case 'auth':
+    case "auth":
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="cyan">{phase.status}</Text>
           {phase.dashboardUrl ? (
-            <CopyableLink url={phase.dashboardUrl} hint="If your browser didn't open, visit:" />
+            <CopyableLink
+              url={phase.dashboardUrl}
+              hint="If your browser didn't open, visit:"
+            />
           ) : null}
         </Box>
       );
 
-    case 'listing-agents':
+    case "listing-agents":
       return <Text color="cyan">Checking for existing agents…</Text>;
 
-    case 'loading-integrations':
+    case "loading-integrations":
       return <Text color="cyan">Looking up agent runtime integrations…</Text>;
 
-    case 'pick-connect-mode':
+    case "pick-connect-mode":
       return (
         <Box flexDirection="column" gap={1}>
           <Box flexDirection="column">
             <Text bold>Where do you want the agent to run?</Text>
-            <Text dimColor>Choose the agent runtime. Novu connects it to Slack, email, and more.</Text>
+            <Text dimColor>
+              Choose the agent runtime. Novu connects it to Slack, email, and
+              more.
+            </Text>
           </Box>
           <ConnectModeSelect onChange={(value) => phase.resolve(value)} />
         </Box>
       );
 
-    case 'pick-integration': {
+    case "pick-integration": {
       const options = [
         ...phase.integrations.map((integration) => ({
           label: `${integration.name} (${integration.identifier})`,
           value: integration._id,
         })),
-        { label: '+ Set up new credentials', value: NEW_INTEGRATION_VALUE },
+        { label: "+ Set up new credentials", value: NEW_INTEGRATION_VALUE },
       ];
 
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>{`Select a ${phase.providerLabel} integration`}</Text>
-          <Text dimColor>Reuse saved credentials or add new ones for this run.</Text>
+          <Text dimColor>
+            Reuse saved credentials or add new ones for this run.
+          </Text>
           <Select
             options={options}
             onChange={(value) => {
               if (value === NEW_INTEGRATION_VALUE) {
-                phase.resolve({ kind: 'new' });
+                phase.resolve({ kind: "new" });
 
                 return;
               }
 
-              phase.resolve({ kind: 'existing', integrationId: value });
+              phase.resolve({ kind: "existing", integrationId: value });
             }}
           />
         </Box>
       );
     }
 
-    case 'prompt-secret':
+    case "prompt-secret":
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>{phase.title}</Text>
           {phase.hint ? <Text dimColor>{phase.hint}</Text> : null}
           {phase.verificationError ? (
-            <Text color="yellow">Credentials were rejected: {phase.verificationError}</Text>
+            <Text color="yellow">
+              Credentials were rejected: {phase.verificationError}
+            </Text>
           ) : null}
           <Box borderStyle="round" paddingX={1}>
-            <TextInput placeholder={phase.placeholder} onSubmit={(value) => phase.resolve(value)} />
+            <TextInput
+              placeholder={phase.placeholder}
+              onSubmit={(value) => phase.resolve(value)}
+            />
           </Box>
           <Text dimColor>Press Enter to submit.</Text>
         </Box>
       );
 
-    case 'pick-aws-region': {
+    case "pick-aws-region": {
       const options = AWS_CLAUDE_COMMERCIAL_REGIONS.map((region) => ({
         label: region,
         value: region,
@@ -116,75 +133,100 @@ export function PhaseContent({
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>AWS Claude region</Text>
-          <Text dimColor>Select the commercial region for your AWS Claude Platform workspace.</Text>
-          <Select options={options} onChange={(value) => phase.resolve(value)} />
+          <Text dimColor>
+            Select the commercial region for your AWS Claude Platform workspace.
+          </Text>
+          <Select
+            options={options}
+            onChange={(value) => phase.resolve(value)}
+          />
         </Box>
       );
     }
 
-    case 'verifying-credentials':
+    case "verifying-credentials":
       return <Text color="cyan">Verifying credentials…</Text>;
 
-    case 'pick': {
+    case "pick": {
       const options = [
         ...phase.agents.map((agent) => ({
           label: `${agent.name} (${agent.identifier})`,
           value: agent.id,
         })),
-        { label: '+ Create a new agent', value: NEW_AGENT_VALUE },
+        { label: "+ Create a new agent", value: NEW_AGENT_VALUE },
       ];
 
       return (
         <Box flexDirection="column" gap={1}>
-          <Text>You already have agents in this environment. What would you like to do?</Text>
+          <Text>
+            You already have agents in this environment. What would you like to
+            do?
+          </Text>
           <Select
             options={options}
             onChange={(value) => {
               if (value === NEW_AGENT_VALUE) {
-                phase.resolve({ action: 'new' });
+                phase.resolve({ action: "new" });
 
                 return;
               }
               const agent = phase.agents.find((a) => a.id === value);
-              if (agent) phase.resolve({ action: 'use', agent });
+              if (agent) phase.resolve({ action: "use", agent });
             }}
           />
         </Box>
       );
     }
 
-    case 'describe':
+    case "describe":
       return (
         <Box flexDirection="column" gap={1}>
-          <Text bold>{phase.previousPrompt ? 'Refine your description' : 'Describe your agent'}</Text>
+          <Text bold>
+            {phase.previousPrompt
+              ? "Refine your description"
+              : "Describe your agent"}
+          </Text>
           {phase.previousPrompt ? (
-            <Text dimColor>{`Previous: "${truncateInline(phase.previousPrompt, 72)}"`}</Text>
+            <Text
+              dimColor
+            >{`Previous: "${truncateInline(phase.previousPrompt, 72)}"`}</Text>
           ) : null}
-          <Text dimColor>e.g. a customer-support agent that books demos and escalates billing questions.</Text>
+          <Text dimColor>
+            e.g. a customer-support agent that books demos and escalates billing
+            questions.
+          </Text>
           <Box borderStyle="round" paddingX={1}>
-            <TextInput placeholder="Describe what your agent should do…" onSubmit={(value) => phase.resolve(value)} />
+            <TextInput
+              placeholder="Describe what your agent should do…"
+              onSubmit={(value) => phase.resolve(value)}
+            />
           </Box>
           <Text dimColor>Press Enter to submit. Minimum 8 characters.</Text>
         </Box>
       );
 
-    case 'prompt-agent-name':
+    case "prompt-agent-name":
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>Name your Chat SDK agent</Text>
-          <Text dimColor>This creates a self-hosted bridge agent in Novu — your app is the brain.</Text>
+          <Text dimColor>
+            This creates a self-hosted bridge agent in Novu — your app is the
+            brain.
+          </Text>
           <Box borderStyle="round" paddingX={1}>
             <TextInput
               defaultValue={phase.defaultName}
               placeholder="My Chat SDK Agent"
-              onSubmit={(value) => phase.resolve(value.trim() || phase.defaultName)}
+              onSubmit={(value) =>
+                phase.resolve(value.trim() || phase.defaultName)
+              }
             />
           </Box>
           <Text dimColor>Press Enter to continue.</Text>
         </Box>
       );
 
-    case 'confirm-env-secret-overwrite':
+    case "confirm-env-secret-overwrite":
       return (
         <ConfirmEnvSecretOverwriteContent
           envPath={phase.envPath}
@@ -194,18 +236,26 @@ export function PhaseContent({
         />
       );
 
-    case 'confirm-scaffold':
-      return <ConfirmScaffoldContent projectDir={phase.projectDir} appName={phase.appName} onResolve={phase.resolve} />;
+    case "confirm-scaffold":
+      return (
+        <ConfirmScaffoldContent
+          projectDir={phase.projectDir}
+          appName={phase.appName}
+          onResolve={phase.resolve}
+        />
+      );
 
-    case 'scaffolding-chat-sdk':
+    case "scaffolding-chat-sdk":
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="cyan">Scaffolding your Chat SDK app…</Text>
-          <Text dimColor>Installing dependencies — this may take a minute.</Text>
+          <Text dimColor>
+            Installing dependencies — this may take a minute.
+          </Text>
         </Box>
       );
 
-    case 'chat-sdk-scaffolded':
+    case "chat-sdk-scaffolded":
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="green">✓ Chat SDK project scaffolded.</Text>
@@ -215,35 +265,44 @@ export function PhaseContent({
           <Text dimColor>{`Wrote ${phase.envPath}`}</Text>
           {phase.skippedInstall ? (
             <Box flexDirection="column">
-              <Text color="yellow">⚠ Detected a parent workspace — npm install was skipped.</Text>
-              <Text dimColor>Run this to install dependencies before starting the app:</Text>
+              <Text color="yellow">
+                ⚠ Detected a parent workspace — npm install was skipped.
+              </Text>
+              <Text dimColor>
+                Run this to install dependencies before starting the app:
+              </Text>
               <Text color="cyan">{`  cd ${phase.projectDir} && npm install`}</Text>
             </Box>
           ) : null}
         </Box>
       );
 
-    case 'chat-sdk-env-wired':
+    case "chat-sdk-env-wired":
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="green">✓ Environment updated.</Text>
           <Text dimColor>{`Updated ${phase.envPath}`}</Text>
-          {phase.updatedKeys.length > 0 ? <Text dimColor>{`Keys: ${phase.updatedKeys.join(', ')}`}</Text> : null}
+          {phase.updatedKeys.length > 0 ? (
+            <Text dimColor>{`Keys: ${phase.updatedKeys.join(", ")}`}</Text>
+          ) : null}
         </Box>
       );
 
-    case 'chat-sdk-wire-prompt':
+    case "chat-sdk-wire-prompt":
       return <ChatSdkWirePromptContent phase={phase} />;
 
-    case 'chat-sdk-wiring':
+    case "chat-sdk-wiring":
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="cyan">Wiring Novu Chat SDK adapter…</Text>
-          <Text dimColor>Installing @novu/chat-sdk-adapter, updating .env.local, and adding bridge files.</Text>
+          <Text dimColor>
+            Installing @novu/chat-sdk-adapter, updating .env.local, and merging
+            into your existing bot when detected.
+          </Text>
         </Box>
       );
 
-    case 'chat-sdk-adapter-wired':
+    case "chat-sdk-adapter-wired":
       return (
         <Box flexDirection="column" gap={1}>
           <Text color="green">✓ Novu adapter wired.</Text>
@@ -251,38 +310,64 @@ export function PhaseContent({
             <Text bold>Project:</Text> {phase.projectDir}
           </Text>
           <Text dimColor>{`Updated ${phase.envPath}`}</Text>
-          {phase.adapterInstalled ? <Text dimColor>Installed @novu/chat-sdk-adapter</Text> : null}
+          {phase.adapterInstalled ? (
+            <Text dimColor>Installed @novu/chat-sdk-adapter</Text>
+          ) : null}
+          {phase.integrationMode === "merged-existing-bot" &&
+          phase.botFilePatched ? (
+            <Text
+              dimColor
+            >{`Merged Novu adapter into ${phase.botFilePatched}`}</Text>
+          ) : null}
+          {phase.integrationMode === "merged-existing-bot" ? (
+            <Text dimColor>
+              Bridge route: POST /api/webhooks/novu via [platform] route
+            </Text>
+          ) : null}
           {phase.bridgeFilesAdded.map((file) => (
             <Text key={file} dimColor>{`Added ${file}`}</Text>
           ))}
           {phase.skillDestinations.map((dest) => (
             <Text key={dest} dimColor>{`Skill: ${dest}`}</Text>
           ))}
+          {phase.duplicateNovuModuleDetected ? (
+            <Text color="yellow">
+              Remove lib/novu/agent.ts and app/api/webhooks/novu/route.ts if
+              present — use your existing bot instead.
+            </Text>
+          ) : null}
           {phase.needsAgentFollowUp ? (
-            <Text color="yellow">Ask your coding agent to finish wiring using the novu-chat-sdk skill.</Text>
+            <Text color="yellow">
+              Ask your coding agent to finish wiring using the novu-chat-sdk
+              skill.
+            </Text>
           ) : null}
         </Box>
       );
 
-    case 'generating':
+    case "generating":
       return <GeneratingContent />;
 
-    case 'preview-generated':
+    case "preview-generated":
       return (
-        <PreviewGeneratedContent spec={phase.spec} onResolve={phase.resolve} morphComplete={previewMorphComplete} />
+        <PreviewGeneratedContent
+          spec={phase.spec}
+          onResolve={phase.resolve}
+          morphComplete={previewMorphComplete}
+        />
       );
 
-    case 'creating':
+    case "creating":
       return <Text color="cyan">{`Creating agent "${phase.name}"…`}</Text>;
 
-    case 'pick-channel': {
+    case "pick-channel": {
       const options: Array<{ label: string; value: ChannelChoice }> = [
-        { label: 'Slack (recommended)', value: 'slack' },
-        { label: 'Telegram', value: 'telegram' },
-        { label: 'Email', value: 'email' },
-        { label: 'WhatsApp', value: 'whatsapp' },
-        { label: 'Microsoft Teams', value: 'teams' },
-        { label: 'Skip — set up later in dashboard', value: 'skip' },
+        { label: "Slack (recommended)", value: "slack" },
+        { label: "Telegram", value: "telegram" },
+        { label: "Email", value: "email" },
+        { label: "WhatsApp", value: "whatsapp" },
+        { label: "Microsoft Teams", value: "teams" },
+        { label: "Skip — set up later in dashboard", value: "skip" },
       ];
 
       return (
@@ -290,31 +375,41 @@ export function PhaseContent({
           <Text bold wrap="wrap">
             Pick a channel to connect this agent to
           </Text>
-          <ChannelSelect options={options} onChange={(value) => phase.resolve(value)} onHighlight={onChannelHover} />
+          <ChannelSelect
+            options={options}
+            onChange={(value) => phase.resolve(value)}
+            onHighlight={onChannelHover}
+          />
         </Box>
       );
     }
 
-    case 'adding-slack':
+    case "adding-slack":
       return <Text color="cyan">Linking Slack to your agent…</Text>;
 
-    case 'paste-slack-token':
+    case "paste-slack-token":
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>Paste a Slack App Configuration Token</Text>
           <Text dimColor>
-            Your Slack integration has no OAuth credentials yet. Novu can create the Slack app for you from a manifest
-            if you paste a short-lived configuration token.
+            Your Slack integration has no OAuth credentials yet. Novu can create
+            the Slack app for you from a manifest if you paste a short-lived
+            configuration token.
           </Text>
           <Box flexDirection="column">
             <Text dimColor>1. Open </Text>
             <Text color="cyan">https://api.slack.com/apps</Text>
             <Text dimColor>2. Scroll to the bottom of the page</Text>
             <Text dimColor>3. Generate an App Configuration Token</Text>
-            <Text dimColor>4. Copy the access token (starts with xoxe.xoxp-)</Text>
+            <Text dimColor>
+              4. Copy the access token (starts with xoxe.xoxp-)
+            </Text>
           </Box>
           {phase.retry ? (
-            <Text color="yellow">Previous token was rejected by Slack. Generate a fresh one and try again.</Text>
+            <Text color="yellow">
+              Previous token was rejected by Slack. Generate a fresh one and try
+              again.
+            </Text>
           ) : null}
           <Box borderStyle="round" paddingX={1}>
             <TextInput
@@ -322,7 +417,9 @@ export function PhaseContent({
               onSubmit={(value) => {
                 const trimmed = value.trim();
                 if (!trimmed) {
-                  phase.reject(new Error('No Slack App Configuration Token provided.'));
+                  phase.reject(
+                    new Error("No Slack App Configuration Token provided."),
+                  );
 
                   return;
                 }
@@ -330,14 +427,17 @@ export function PhaseContent({
               }}
             />
           </Box>
-          <Text dimColor>The token is sent to your Novu API once, used to create the Slack app, then discarded.</Text>
+          <Text dimColor>
+            The token is sent to your Novu API once, used to create the Slack
+            app, then discarded.
+          </Text>
         </Box>
       );
 
-    case 'running-slack-quick-setup':
+    case "running-slack-quick-setup":
       return <Text color="cyan">Creating Slack app from manifest…</Text>;
 
-    case 'slack-oauth-ready':
+    case "slack-oauth-ready":
       return (
         <SlackOAuthReadyContent
           appCreated={phase.appCreated}
@@ -346,19 +446,22 @@ export function PhaseContent({
         />
       );
 
-    case 'waiting-slack':
+    case "waiting-slack":
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>Authorize Slack to finish setup</Text>
-          <CopyableLink url={phase.authorizeUrl} hint="Opened in your browser. If nothing happened, visit:" />
+          <CopyableLink
+            url={phase.authorizeUrl}
+            hint="Opened in your browser. If nothing happened, visit:"
+          />
           <Text dimColor>Waiting for Slack authorization…</Text>
         </Box>
       );
 
-    case 'adding-email':
+    case "adding-email":
       return <Text color="cyan">Linking Email to your agent…</Text>;
 
-    case 'email-ready':
+    case "email-ready":
       return (
         <EmailReadyContent
           inboundAddress={phase.inboundAddress}
@@ -369,7 +472,7 @@ export function PhaseContent({
         />
       );
 
-    case 'email-waiting':
+    case "email-waiting":
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold color="cyan">
@@ -380,58 +483,76 @@ export function PhaseContent({
           </Box>
           {phase.sendFromEmail ? (
             <Text dimColor>
-              {SEND_FROM_ACCOUNT_LABEL} <Text color="white">{phase.sendFromEmail}</Text>
+              {SEND_FROM_ACCOUNT_LABEL}{" "}
+              <Text color="white">{phase.sendFromEmail}</Text>
             </Text>
           ) : null}
           <Text dimColor>Waiting for your email to arrive…</Text>
         </Box>
       );
 
-    case 'adding-telegram':
+    case "adding-telegram":
       return <Text color="cyan">Linking Telegram to your agent…</Text>;
 
-    case 'telegram-intro':
-      return <TelegramIntroContent botfatherQr={phase.botfatherQr} onContinue={phase.resolve} />;
+    case "telegram-intro":
+      return (
+        <TelegramIntroContent
+          botfatherQr={phase.botfatherQr}
+          onContinue={phase.resolve}
+        />
+      );
 
-    case 'pick-telegram-token-delivery': {
+    case "pick-telegram-token-delivery": {
       const options = [
-        { label: 'Scan QR / open setup page', value: 'setup-page' as const },
-        { label: 'Paste the bot token here', value: 'terminal' as const },
+        { label: "Scan QR / open setup page", value: "setup-page" as const },
+        { label: "Paste the bot token here", value: "terminal" as const },
       ];
 
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold>How do you want to save your bot token?</Text>
-          <Text dimColor>Scan the QR on your phone, or paste the token directly in this terminal.</Text>
-          <Select options={options} onChange={(value) => phase.resolve(value as 'setup-page' | 'terminal')} />
+          <Text dimColor>
+            Scan the QR on your phone, or paste the token directly in this
+            terminal.
+          </Text>
+          <Select
+            options={options}
+            onChange={(value) =>
+              phase.resolve(value as "setup-page" | "terminal")
+            }
+          />
         </Box>
       );
     }
 
-    case 'telegram-link-token':
+    case "telegram-link-token":
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold color="cyan">
             Step 2 of 3 · Save your bot token
           </Text>
           <Text dimColor>
-            Scan with your phone to open a page where you can paste the BotFather token. We'll handle registering the
-            webhook for you.
+            Scan with your phone to open a page where you can paste the
+            BotFather token. We'll handle registering the webhook for you.
           </Text>
           <Text>{phase.mobileQr}</Text>
-          <CopyableLink url={phase.mobileUrl} hint="Or open this on your phone:" />
+          <CopyableLink
+            url={phase.mobileUrl}
+            hint="Or open this on your phone:"
+          />
           <Text dimColor>Waiting for your bot token…</Text>
         </Box>
       );
 
-    case 'telegram-test':
+    case "telegram-test":
       return (
         <Box flexDirection="column" gap={1}>
           <Text bold color="cyan">
             Step 3 of 3 · Say hello to your bot
           </Text>
           <Text dimColor>
-            Scan to open <Text color="white">@{phase.botUsername}</Text> in Telegram and tap Start.
+            Scan to open <Text color="white">@{phase.botUsername}</Text> in
+            Telegram and tap Start.
           </Text>
           <Text>{phase.deepLinkQr}</Text>
           <CopyableLink url={phase.deepLinkUrl} hint="Or open this link:" />
@@ -439,10 +560,10 @@ export function PhaseContent({
         </Box>
       );
 
-    case 'sending-welcome':
+    case "sending-welcome":
       return <Text color="cyan">Asking your agent to say hello…</Text>;
 
-    case 'dashboard-channel-ready':
+    case "dashboard-channel-ready":
       return (
         <DashboardChannelReadyContent
           channel={phase.channel}
@@ -451,10 +572,10 @@ export function PhaseContent({
         />
       );
 
-    case 'success':
+    case "success":
       return <SuccessView phase={phase} />;
 
-    case 'error':
+    case "error":
       return <Text color="red">✗ {phase.message}</Text>;
 
     default:
@@ -464,9 +585,9 @@ export function PhaseContent({
 
 function renderChatSdkSuccessMessage(
   connectMode: AgentConnectMode | undefined,
-  outcome: ChatSdkConnectOutcome | undefined
+  outcome: ChatSdkConnectOutcome | undefined,
 ): React.ReactElement | null {
-  if (connectMode !== 'chat-sdk' || !outcome) {
+  if (connectMode !== "chat-sdk" || !outcome) {
     return null;
   }
 
@@ -474,21 +595,48 @@ function renderChatSdkSuccessMessage(
     if (outcome.skippedInstall) {
       return (
         <Box flexDirection="column">
-          <Text color="cyan">Chat SDK app scaffolded — run npm install first, then npm run dev:novu.</Text>
+          <Text color="cyan">
+            Chat SDK app scaffolded — run npm install first, then npm run
+            dev:novu.
+          </Text>
         </Box>
       );
     }
 
-    return <Text color="cyan">Chat SDK app ready at {outcome.projectDir}. Starting dev server and tunnel…</Text>;
+    return (
+      <Text color="cyan">
+        Chat SDK app ready at {outcome.projectDir}. Starting dev server and
+        tunnel…
+      </Text>
+    );
   }
 
-  if (outcome.projectKind === 'has-adapter') {
-    return <Text color="cyan">Environment wired — starting your app and dev tunnel…</Text>;
+  if (outcome.projectKind === "has-adapter") {
+    if (
+      outcome.integrationMode === "merged-existing-bot" &&
+      outcome.botFilePatched
+    ) {
+      return (
+        <Text color="cyan">
+          Merged Novu adapter into {outcome.botFilePatched} — starting your app
+          and dev tunnel…
+        </Text>
+      );
+    }
+
+    return (
+      <Text color="cyan">
+        Environment wired — starting your app and dev tunnel…
+      </Text>
+    );
   }
 
   if (outcome.needsAgentFollowUp) {
     return (
-      <Text color="cyan">Adapter partially wired — ask your coding agent to finish using the novu-chat-sdk skill.</Text>
+      <Text color="cyan">
+        Adapter partially wired — ask your coding agent to finish using the
+        novu-chat-sdk skill.
+      </Text>
     );
   }
 
@@ -498,7 +646,7 @@ function renderChatSdkSuccessMessage(
 function ChatSdkWirePromptContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-wire-prompt' }>;
+  phase: Extract<Phase, { kind: "chat-sdk-wire-prompt" }>;
 }): React.ReactElement {
   useInput((_input, key) => {
     if (key.return) phase.resolve(true);
@@ -509,9 +657,10 @@ function ChatSdkWirePromptContent({
     <Box flexDirection="column" gap={1}>
       <Text bold>Wire the Novu adapter into your project?</Text>
       <Text dimColor>
-        We'll install <Text color="white">@novu/chat-sdk-adapter</Text>, update <Text color="white">.env.local</Text>,
-        install the <Text color="white">novu-chat-sdk</Text> skill, and add bridge route files when we detect Next.js
-        App Router.
+        We'll install <Text color="white">@novu/chat-sdk-adapter</Text>, update{" "}
+        <Text color="white">.env.local</Text>, install the{" "}
+        <Text color="white">novu-chat-sdk</Text> skill, and merge into your
+        existing bot when we detect a Chat SDK layout.
       </Text>
       <Text dimColor>
         Agent identifier: <Text color="cyan">{phase.agentIdentifier}</Text>
@@ -538,14 +687,17 @@ function ConfirmScaffoldContent({
   return (
     <Box flexDirection="column" gap={1}>
       <Text bold>Scaffold a Chat SDK app?</Text>
-      <Text dimColor>No Chat SDK project was found here. We'll create one at:</Text>
+      <Text dimColor>
+        No Chat SDK project was found here. We'll create one at:
+      </Text>
       <Text>
         <Text bold>{projectDir}/</Text>
         <Text color="cyan">{appName}</Text>
       </Text>
       <Text dimColor>
-        This installs <Text color="white">chat</Text>, <Text color="white">@novu/chat-sdk-adapter</Text>, and wires your
-        Novu credentials into <Text color="white">.env.local</Text>.
+        This installs <Text color="white">chat</Text>,{" "}
+        <Text color="white">@novu/chat-sdk-adapter</Text>, and wires your Novu
+        credentials into <Text color="white">.env.local</Text>.
       </Text>
       <Text color="cyan">Enter · scaffold · Esc · cancel</Text>
     </Box>
@@ -573,30 +725,35 @@ function ConfirmEnvSecretOverwriteContent({
       <Text bold>Overwrite NOVU_SECRET_KEY?</Text>
       <Text dimColor>{envPath} already has a secret key.</Text>
       <Text>
-        Existing: <Text color="yellow">{existingMasked}</Text> → New: <Text color="cyan">{nextMasked}</Text>
+        Existing: <Text color="yellow">{existingMasked}</Text> → New:{" "}
+        <Text color="cyan">{nextMasked}</Text>
       </Text>
       <Text color="cyan">Enter · overwrite · Esc · keep existing</Text>
     </Box>
   );
 }
 
-function ConnectModeSelect({ onChange }: { onChange: (value: AgentConnectMode) => void }): React.ReactElement {
+function ConnectModeSelect({
+  onChange,
+}: {
+  onChange: (value: AgentConnectMode) => void;
+}): React.ReactElement {
   const options: Array<{
     value: AgentConnectMode;
     title: string;
     detail?: string;
   }> = [
     {
-      value: 'demo',
-      title: 'Demo Credentials',
-      detail: '10 conversations per month',
+      value: "demo",
+      title: "Demo Credentials",
+      detail: "10 conversations per month",
     },
-    { value: 'claude', title: 'Claude Managed Agents' },
-    { value: 'claude-aws', title: 'AWS Claude Managed Agents' },
+    { value: "claude", title: "Claude Managed Agents" },
+    { value: "claude-aws", title: "AWS Claude Managed Agents" },
     {
-      value: 'chat-sdk',
-      title: 'Chat SDK',
-      detail: 'your own app is the brain',
+      value: "chat-sdk",
+      title: "Chat SDK",
+      detail: "your own app is the brain",
     },
   ];
   const [idx, setIdx] = React.useState(0);
@@ -618,8 +775,8 @@ function ConnectModeSelect({ onChange }: { onChange: (value: AgentConnectMode) =
 
         return (
           <Text key={opt.value}>
-            <Text color={isSelected ? 'cyan' : undefined}>
-              {isSelected ? '› ' : '  '}
+            <Text color={isSelected ? "cyan" : undefined}>
+              {isSelected ? "› " : "  "}
               {opt.title}
             </Text>
             {opt.detail ? <Text dimColor>{` · ${opt.detail}`}</Text> : null}
@@ -630,7 +787,8 @@ function ConnectModeSelect({ onChange }: { onChange: (value: AgentConnectMode) =
   );
 }
 
-const DASHBOARD_CHANNEL_HINT = 'Onboarding for this channel is currently only available in the Novu Connect UI.';
+const DASHBOARD_CHANNEL_HINT =
+  "Onboarding for this channel is currently only available in the Novu Connect UI.";
 /** Keeps the picker + hint from widening the centered layout when the hint appears. */
 const CHANNEL_PICKER_WIDTH = 48;
 
@@ -668,7 +826,8 @@ function ChannelSelect({
   });
 
   const highlighted = options[idx]?.value ?? null;
-  const showDashboardHint = highlighted !== null && isDashboardOnlyChannel(highlighted);
+  const showDashboardHint =
+    highlighted !== null && isDashboardOnlyChannel(highlighted);
 
   return (
     <Box flexDirection="column" gap={1} alignItems="flex-start">
@@ -676,10 +835,10 @@ function ChannelSelect({
         {options.map((opt, i) => {
           const isSelected = i === idx;
           const opensInDashboard = isDashboardOnlyChannel(opt.value);
-          const prefix = isSelected ? '› ' : '  ';
+          const prefix = isSelected ? "› " : "  ";
 
           return (
-            <Text key={opt.value} color={isSelected ? 'cyan' : undefined}>
+            <Text key={opt.value} color={isSelected ? "cyan" : undefined}>
               {prefix}
               {opt.label}
               {opensInDashboard ? <Text dimColor> ↗</Text> : null}
@@ -707,7 +866,10 @@ function GeneratingContent(): React.ReactElement {
 
   React.useEffect(() => {
     const startedAt = Date.now();
-    const t = setInterval(() => setElapsed(Math.floor((Date.now() - startedAt) / 1000)), 1000);
+    const t = setInterval(
+      () => setElapsed(Math.floor((Date.now() - startedAt) / 1000)),
+      1000,
+    );
 
     return () => clearInterval(t);
   }, []);
@@ -746,7 +908,7 @@ function SlackOAuthReadyContent({
   onContinue: () => void;
 }): React.ReactElement {
   useInput((_input, key) => {
-    if (key.return || _input === ' ') onContinue();
+    if (key.return || _input === " ") onContinue();
   });
 
   return (
@@ -757,8 +919,8 @@ function SlackOAuthReadyContent({
             Slack app created successfully
           </Text>
           <Text dimColor>
-            Novu created a Slack app for your agent. Next, add it to your workspace so your team can talk to the agent
-            in Slack.
+            Novu created a Slack app for your agent. Next, add it to your
+            workspace so your team can talk to the agent in Slack.
           </Text>
         </>
       ) : (
@@ -766,11 +928,17 @@ function SlackOAuthReadyContent({
           <Text bold color="cyan">
             Connect Slack to your agent
           </Text>
-          <Text dimColor>Authorize Novu to install the Slack app in your workspace.</Text>
+          <Text dimColor>
+            Authorize Novu to install the Slack app in your workspace.
+          </Text>
         </>
       )}
-      <Text dimColor>{`OAuth link: ${authorizeUrl.slice(0, 80)}${authorizeUrl.length > 80 ? '…' : ''}`}</Text>
-      <Text color="cyan">Press Enter to open Slack and add the app to your workspace →</Text>
+      <Text
+        dimColor
+      >{`OAuth link: ${authorizeUrl.slice(0, 80)}${authorizeUrl.length > 80 ? "…" : ""}`}</Text>
+      <Text color="cyan">
+        Press Enter to open Slack and add the app to your workspace →
+      </Text>
     </Box>
   );
 }
@@ -791,7 +959,7 @@ function EmailReadyContent({
   useInput((_input, key) => {
     if (key.escape && onBack) {
       onBack();
-    } else if (key.return || _input === ' ') {
+    } else if (key.return || _input === " ") {
       onContinue();
     }
   });
@@ -802,8 +970,8 @@ function EmailReadyContent({
         Your agent has an inbox
       </Text>
       <Text dimColor>
-        Unlike Slack or Telegram, email starts with you sending the first message. Your agent reads it and replies to
-        the same inbox.
+        Unlike Slack or Telegram, email starts with you sending the first
+        message. Your agent reads it and replies to the same inbox.
       </Text>
       <Box flexDirection="column" paddingY={1}>
         <Text dimColor>Inbound address:</Text>
@@ -811,14 +979,21 @@ function EmailReadyContent({
       </Box>
       {sendFromEmail ? (
         <Text dimColor>
-          Email agents reply to the address you send from. Use your Novu account email:{' '}
+          Email agents reply to the address you send from. Use your Novu account
+          email:{" "}
           <Text color="white" bold>
             {sendFromEmail}
           </Text>
         </Text>
       ) : null}
-      <CopyableLink url={mailtoUrl} hint="Pre-filled draft email:" color="white" />
-      <Text color="cyan">Press Enter to open a pre-filled draft in your default mail client →</Text>
+      <CopyableLink
+        url={mailtoUrl}
+        hint="Pre-filled draft email:"
+        color="white"
+      />
+      <Text color="cyan">
+        Press Enter to open a pre-filled draft in your default mail client →
+      </Text>
       {onBack ? <Text dimColor>Esc · back to channel list</Text> : null}
     </Box>
   );
@@ -832,7 +1007,7 @@ function TelegramIntroContent({
   onContinue: () => void;
 }): React.ReactElement {
   useInput((_input, key) => {
-    if (key.return || _input === ' ') {
+    if (key.return || _input === " ") {
       onContinue();
     }
   });
@@ -846,20 +1021,21 @@ function TelegramIntroContent({
         <Text>
           <Text color="white" bold>
             1.
-          </Text>{' '}
+          </Text>{" "}
           Open Telegram and message <Text color="cyan">@BotFather</Text>.
         </Text>
         <Text>
           <Text color="white" bold>
             2.
-          </Text>{' '}
+          </Text>{" "}
           Run <Text color="magenta">/newbot</Text>, choose a name and username.
         </Text>
         <Text>
           <Text color="white" bold>
             3.
-          </Text>{' '}
-          Keep the BotFather chat open — you'll paste the token from there in the next step.
+          </Text>{" "}
+          Keep the BotFather chat open — you'll paste the token from there in
+          the next step.
         </Text>
       </Box>
       <Text dimColor>Or scan to open BotFather on your phone:</Text>
@@ -879,7 +1055,7 @@ function DashboardChannelReadyContent({
   onContinue: () => void;
 }): React.ReactElement {
   useInput((_input, key) => {
-    if (key.return || _input === ' ') onContinue();
+    if (key.return || _input === " ") onContinue();
   });
 
   const channelLabel = channelDisplayName(channel);
@@ -888,8 +1064,8 @@ function DashboardChannelReadyContent({
     <Box flexDirection="column" gap={1}>
       <Text bold>Continue in Novu Connect</Text>
       <Text dimColor>
-        {channelLabel} setup is not available in the CLI yet. Press Enter to open your agent in Novu Connect and finish
-        connecting there.
+        {channelLabel} setup is not available in the CLI yet. Press Enter to
+        open your agent in Novu Connect and finish connecting there.
       </Text>
       <CopyableLink url={agentDetailsUrl} hint="Or open this link:" />
       <Text dimColor>Press Enter to open Novu Connect →</Text>
@@ -900,7 +1076,7 @@ function DashboardChannelReadyContent({
 function SuccessView({
   phase,
 }: {
-  phase: Extract<ReturnType<ConnectStore['phase']['get']>, { kind: 'success' }>;
+  phase: Extract<ReturnType<ConnectStore["phase"]["get"]>, { kind: "success" }>;
 }): React.ReactElement {
   const {
     agent,
@@ -918,20 +1094,23 @@ function SuccessView({
     : `${connectDashboardUrl}/connect/agents/${encodeURIComponent(agent.identifier)}`;
 
   const channelLabel = (() => {
-    if (connectedChannel === 'slack') return 'Slack';
-    if (connectedChannel === 'telegram') return 'Telegram';
-    if (connectedChannel === 'email') return 'Email';
+    if (connectedChannel === "slack") return "Slack";
+    if (connectedChannel === "telegram") return "Telegram";
+    if (connectedChannel === "email") return "Email";
 
     return null;
   })();
-  const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
+  const redirectChannelLabel = dashboardRedirectChannel
+    ? channelDisplayName(dashboardRedirectChannel)
+    : null;
 
   return (
     <Box flexDirection="column" gap={1}>
       <Text color="green">✓ Your agent is live.</Text>
       <Box flexDirection="column">
         <Text>
-          <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
+          <Text bold>Agent:</Text> {agent.name}{" "}
+          <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
         {renderChatSdkSuccessMessage(connectMode, chatSdkOutcome)}
@@ -952,7 +1131,9 @@ function renderSuccessNextStep(input: {
         <Text>
           <Text bold>Claim your agent:</Text> {input.claimUrl}
         </Text>
-        <Text dimColor>Sign up to move your agent and conversation into your own account.</Text>
+        <Text dimColor>
+          Sign up to move your agent and conversation into your own account.
+        </Text>
       </>
     );
   }
@@ -966,15 +1147,28 @@ function renderSuccessNextStep(input: {
 
 function renderSuccessChannelMessage(
   channelLabel: string | null,
-  redirectChannelLabel: string | null
+  redirectChannelLabel: string | null,
 ): React.ReactElement {
   if (channelLabel) {
-    return <Text color="cyan">Check {channelLabel} — your agent just messaged you.</Text>;
+    return (
+      <Text color="cyan">
+        Check {channelLabel} — your agent just messaged you.
+      </Text>
+    );
   }
 
   if (redirectChannelLabel) {
-    return <Text color="cyan">Finish {redirectChannelLabel} setup in Novu Connect — we opened it for you.</Text>;
+    return (
+      <Text color="cyan">
+        Finish {redirectChannelLabel} setup in Novu Connect — we opened it for
+        you.
+      </Text>
+    );
   }
 
-  return <Text dimColor>No channel connected. Run `npx novu connect` again to wire one up.</Text>;
+  return (
+    <Text dimColor>
+      No channel connected. Run `npx novu connect` again to wire one up.
+    </Text>
+  );
 }

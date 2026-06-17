@@ -1,19 +1,44 @@
-import type { CloudRegionEnum } from '../dev/enums';
+import type { CloudRegionEnum } from "../dev/enums";
 
-export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams' | 'skip';
+export type ChannelChoice =
+  | "slack"
+  | "email"
+  | "whatsapp"
+  | "telegram"
+  | "teams"
+  | "skip";
 
-export const CHANNEL_CHOICES: readonly ChannelChoice[] = ['slack', 'email', 'whatsapp', 'telegram', 'teams', 'skip'];
+export const CHANNEL_CHOICES: readonly ChannelChoice[] = [
+  "slack",
+  "email",
+  "whatsapp",
+  "telegram",
+  "teams",
+  "skip",
+];
 
-export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
+export type AgentRuntimeChoice = "demo" | "claude" | "claude-aws";
 
-export const AGENT_RUNTIME_CHOICES: readonly AgentRuntimeChoice[] = ['demo', 'claude', 'claude-aws'];
+export const AGENT_RUNTIME_CHOICES: readonly AgentRuntimeChoice[] = [
+  "demo",
+  "claude",
+  "claude-aws",
+];
 
 /** Unified agent setup mode — managed runtimes plus self-hosted Chat SDK. */
-export type AgentConnectMode = AgentRuntimeChoice | 'chat-sdk';
+export type AgentConnectMode = AgentRuntimeChoice | "chat-sdk";
 
-export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [...AGENT_RUNTIME_CHOICES, 'chat-sdk'];
+export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [
+  ...AGENT_RUNTIME_CHOICES,
+  "chat-sdk",
+];
 
-export type ChatSdkProjectKind = 'has-adapter' | 'project-no-adapter' | 'empty';
+export type ChatSdkProjectKind = "has-adapter" | "project-no-adapter" | "empty";
+
+export type ChatSdkIntegrationMode =
+  | "merged-existing-bot"
+  | "scaffolded-novu-module"
+  | "skill-only";
 
 export type ChatSdkConnectOutcome = {
   projectKind: ChatSdkProjectKind;
@@ -22,8 +47,11 @@ export type ChatSdkConnectOutcome = {
   envPath?: string;
   /** True when npm install was skipped (e.g. scaffolding inside a monorepo). */
   skippedInstall?: boolean;
-  /** True when bridge route files were added and the project can run the dev tunnel. */
+  /** True when the bridge route is ready (merged bot, scaffolded route, or existing [platform] route). */
   bridgeWired?: boolean;
+  integrationMode?: ChatSdkIntegrationMode;
+  botFilePatched?: string;
+  duplicateNovuModuleDetected?: boolean;
   /** True when automatic wiring could not finish — user should prompt their coding agent. */
   needsAgentFollowUp?: boolean;
 };
@@ -76,7 +104,7 @@ export interface ConnectCommandOptions {
    * `chat-sdk` provisions a self-hosted bridge agent backed by your Chat SDK app.
    * @deprecated Prefer `--runtime chat-sdk` or selecting Chat SDK in the connect-mode picker.
    */
-  brain?: 'chat-sdk';
+  brain?: "chat-sdk";
   /** Shorthand for `--runtime chat-sdk`. */
   chatSdk?: boolean;
   /** Project directory to inspect for an existing Chat SDK app (defaults to cwd). */
@@ -95,6 +123,6 @@ export interface AgentSummary {
 
 export interface ConnectFlowResult {
   agent: AgentSummary;
-  flow: 'created' | 'reused';
+  flow: "created" | "reused";
   slackConnected: boolean;
 }

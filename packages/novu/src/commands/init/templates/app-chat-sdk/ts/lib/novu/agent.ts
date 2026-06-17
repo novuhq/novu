@@ -1,6 +1,6 @@
-import { createMemoryState } from '@chat-adapter/state-memory';
-import { createNovuAdapter, getNovuContext } from '@novu/chat-sdk-adapter';
-import { type Adapter, Chat, type StateAdapter } from 'chat';
+import { createMemoryState } from "@chat-adapter/state-memory";
+import { createNovuAdapter, getNovuContext } from "@novu/chat-sdk-adapter";
+import { type Adapter, Chat, type StateAdapter } from "chat";
 
 export function registerHandlers(chat: Chat): void {
   chat.onNewMention(async (thread, message) => {
@@ -10,25 +10,27 @@ export function registerHandlers(chat: Chat): void {
       return;
     }
 
-    await thread.post(`👋 Hi! You said: "${message.text}". I'll remember this conversation.`);
+    await thread.post(
+      `👋 Hi! You said: "${message.text}". I'll remember this conversation.`,
+    );
   });
 
   chat.onSubscribedMessage(async (thread, message) => {
     const novu = getNovuContext(thread);
 
-    if (message.text.trim().toLowerCase() === 'resolve') {
-      await novu.resolve('Resolved from the Chat SDK agent.');
-      await thread.post('✅ Marked this conversation as resolved.');
+    if (message.text.trim().toLowerCase() === "resolve") {
+      await novu.resolve("Resolved from the Chat SDK agent.");
+      await thread.post("✅ Marked this conversation as resolved.");
 
       return;
     }
 
-    if (message.text.trim().toLowerCase() === 'whoami') {
+    if (message.text.trim().toLowerCase() === "whoami") {
       const subscriber = await novu.getSubscriber();
       const user = await thread.adapter.getUser?.(message.author.userId);
       await thread.post(
-        `👤 subscriber: ${subscriber?.subscriberId ?? 'unknown'} (${subscriber?.email ?? 'no email'})` +
-          (user ? ` · userInfo: ${user.fullName}` : '')
+        `👤 subscriber: ${subscriber?.subscriberId ?? "unknown"} (${subscriber?.email ?? "no email"})` +
+          (user ? ` · userInfo: ${user.fullName}` : ""),
       );
 
       return;
@@ -38,7 +40,9 @@ export function registerHandlers(chat: Chat): void {
   });
 
   chat.onAction(async (event) => {
-    await event.thread?.post(`You clicked **${event.actionId}**${event.value ? ` (value: ${event.value})` : ''}.`);
+    await event.thread?.post(
+      `You clicked **${event.actionId}**${event.value ? ` (value: ${event.value})` : ""}.`,
+    );
   });
 
   chat.onReaction(async (event) => {
@@ -54,15 +58,16 @@ export function getNovuAgent(): Promise<{ chat: Chat; novu: Adapter }> {
     agentPromise = (async () => {
       const apiKey = process.env.NOVU_SECRET_KEY;
       const agentIdentifier = process.env.NOVU_AGENT_IDENTIFIER;
-      if (!apiKey) throw new Error('NOVU_SECRET_KEY is not set');
-      if (!agentIdentifier) throw new Error('NOVU_AGENT_IDENTIFIER is not set');
+      if (!apiKey) throw new Error("NOVU_SECRET_KEY is not set");
+      if (!agentIdentifier) throw new Error("NOVU_AGENT_IDENTIFIER is not set");
 
       const novu = createNovuAdapter({
         apiKey,
         agentIdentifier,
         bridgeSecret: apiKey,
-        ...(process.env.NOVU_API_BASE_URL ? { apiBaseUrl: process.env.NOVU_API_BASE_URL } : {}),
-        ...(process.env.NOVU_BRIDGE_URL ? { bridgeUrl: process.env.NOVU_BRIDGE_URL } : {}),
+        ...(process.env.NOVU_API_BASE_URL
+          ? { apiBaseUrl: process.env.NOVU_API_BASE_URL }
+          : {}),
       });
 
       const chat = new Chat({
@@ -72,7 +77,6 @@ export function getNovuAgent(): Promise<{ chat: Chat; novu: Adapter }> {
       });
 
       registerHandlers(chat);
-      await chat.initialize();
 
       return { chat, novu: novu as unknown as Adapter };
     })();
