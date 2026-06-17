@@ -1,12 +1,8 @@
-import fs from "node:fs";
-import path from "node:path";
-import {
-  type InstalledSkill,
-  installSkills,
-  resolveSkillHosts,
-} from "../../../wizard/skills/install-skills";
-import { buildChatSdkAgentPrompt } from "./skill-instructions";
-import { mergeProjectEnv } from "./wire-env";
+import fs from 'node:fs';
+import path from 'node:path';
+import { type InstalledSkill, installSkills, resolveSkillHosts } from '../../../wizard/skills/install-skills';
+import { buildChatSdkAgentPrompt } from './skill-instructions';
+import { mergeProjectEnv } from './wire-env';
 
 export type SkillSetupInput = {
   projectDir: string;
@@ -23,9 +19,7 @@ export type SkillSetupResult = {
   agentPrompt: string;
 };
 
-export async function runChatSdkSkillSetup(
-  input: SkillSetupInput,
-): Promise<SkillSetupResult> {
+export async function runChatSdkSkillSetup(input: SkillSetupInput): Promise<SkillSetupResult> {
   const projectDir = path.resolve(input.projectDir);
 
   const merge = mergeProjectEnv({
@@ -46,9 +40,7 @@ export async function runChatSdkSkillSetup(
   return {
     envPaths: merge.envPaths,
     updatedKeys: merge.updatedKeys,
-    skillsInstalled: skillsInstalled.filter(
-      (skill) => skill.name === "novu-chat-sdk",
-    ),
+    skillsInstalled: skillsInstalled.filter((skill) => skill.name === 'novu-chat-sdk'),
     agentPrompt,
   };
 }

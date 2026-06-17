@@ -14,7 +14,6 @@ import { maskSecretKey, mergeProjectEnv, readEnvSecretKey, resolveProjectEnvPath
 export type ChatSdkSetupInput = {
   options: ConnectCommandOptions;
   ui: ConnectUI;
-  client: ConnectApiClient;
   auth: ResolvedConnectAuth;
   agent: AgentSummary;
 };
@@ -299,5 +298,3 @@ function toSummary(agent: { _id: string; identifier: string; name: string } | Ag
 
   return { id, identifier: agent.identifier, name: agent.name };
 }
-
-export { CHAT_SDK_PROMPT_FILE_ENV };

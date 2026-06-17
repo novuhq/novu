@@ -5,8 +5,9 @@ import { Box, Text, useInput } from 'ink';
 import React from 'react';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName, isDashboardOnlyChannel } from '../dashboard-urls';
+import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
 import type { AgentConnectMode, ChannelChoice } from '../types';
-import { ChatSdkPhaseContent, ChatSdkSuccessMessage, isChatSdkPhase } from './chat-sdk-phase-content';
+import { ChatSdkPhaseContent } from './chat-sdk-phase-content';
 import { CopyableLink } from './copyable-link';
 import { PreviewGeneratedContent } from './preview-generated-content';
 import type { ConnectStore } from './store';
@@ -33,11 +34,9 @@ export function PhaseContent({
   onChannelHover: (channel: ChannelChoice | null) => void;
   previewMorphComplete: boolean;
 }): React.ReactElement {
-  if (isChatSdkPhase(phase)) {
-    const content = ChatSdkPhaseContent({ phase });
-    if (content) {
-      return content;
-    }
+  const chatSdkView = ChatSdkPhaseContent({ phase });
+  if (chatSdkView) {
+    return chatSdkView;
   }
 
   switch (phase.kind) {
@@ -738,6 +737,7 @@ function SuccessView({
     return null;
   })();
   const redirectChannelLabel = dashboardRedirectChannel ? channelDisplayName(dashboardRedirectChannel) : null;
+  const chatSdkMessage = resolveChatSdkOutcomeMessage(connectMode, chatSdkOutcome);
 
   return (
     <Box flexDirection="column" gap={1}>
@@ -747,7 +747,7 @@ function SuccessView({
           <Text bold>Agent:</Text> {agent.name} <Text dimColor>({agent.identifier})</Text>
         </Text>
         {renderSuccessChannelMessage(channelLabel, redirectChannelLabel)}
-        <ChatSdkSuccessMessage connectMode={connectMode} outcome={chatSdkOutcome} />
+        {chatSdkMessage ? <Text color="cyan">{chatSdkMessage}</Text> : null}
         {renderSuccessNextStep({ isKeyless, claimUrl, agentUrl })}
       </Box>
     </Box>

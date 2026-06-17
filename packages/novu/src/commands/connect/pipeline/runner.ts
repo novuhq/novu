@@ -26,12 +26,7 @@ import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
-import {
-  createChatSdkAgent,
-  finalizeChatSdkProjectSetup,
-  runChatSdkTunnelIfNeeded,
-  shouldAutoRunChatSdkTunnel,
-} from './chat-sdk/connect-flow';
+import { createBridgeAgentFlow, maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
 
 export interface ConnectPipelineInput {
@@ -130,7 +125,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let chatSdkOutcome: ChatSdkConnectOutcome | undefined;
 
     if (connectMode === 'chat-sdk') {
-      const bridgeResult = await createChatSdkAgent(session.client, ui, options);
+      const bridgeResult = await createBridgeAgentFlow(session.client, ui, options);
       agent = bridgeResult.agent;
       flow = bridgeResult.flow;
       track(CONNECT_EVENTS.AGENT_CREATED, {
@@ -322,10 +317,9 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
         : null;
 
     if (connectMode === 'chat-sdk') {
-      chatSdkOutcome = await finalizeChatSdkProjectSetup({
+      chatSdkOutcome = await runChatSdkProjectSetup({
         options,
         ui,
-        client: session.client,
         auth: session.auth,
         agent,
       });
@@ -358,9 +352,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     // output does not trigger a second orb render while the TUI is still mounted.
     const exitCode = await ui.shutdown();
 
-    if (shouldAutoRunChatSdkTunnel(chatSdkOutcome)) {
-      await runChatSdkTunnelIfNeeded(chatSdkOutcome);
-
+    if (await maybeRunChatSdkTunnel({ outcome: chatSdkOutcome })) {
       return { exitCode: 0 };
     }
 

@@ -7,7 +7,7 @@ import { connectCommand } from './commands/connect';
 import { isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
 import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
 import type { ConnectCommandInput } from './commands/connect/resolve-options';
-import { isChatSdkRuntime, resolveConnectCommandOptions } from './commands/connect/resolve-options';
+import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
 import {
   AGENT_CONNECT_MODES,
   type AgentConnectMode,
@@ -218,7 +218,7 @@ program
       const channel = options.skipSlack ? 'skip' : options.channel;
       const connectMode = options.chatSdk ? 'chat-sdk' : options.brain === 'chat-sdk' ? 'chat-sdk' : options.runtime;
 
-      if (!prompt && !isChatSdkRuntime(connectMode)) {
+      if (!prompt && connectMode !== 'chat-sdk') {
         console.error(
           'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime chat-sdk.\n(run `novu connect --help` for the non-interactive contract and examples)'
         );

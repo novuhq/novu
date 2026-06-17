@@ -1,24 +1,7 @@
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
-import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
-import type { AgentConnectMode, ChatSdkConnectOutcome } from '../types';
 import type { Phase } from './store';
-
-const CHAT_SDK_PHASE_KINDS: ReadonlySet<Phase['kind']> = new Set([
-  'confirm-env-secret-overwrite',
-  'confirm-scaffold',
-  'scaffolding-chat-sdk',
-  'chat-sdk-scaffolded',
-  'chat-sdk-env-wired',
-  'chat-sdk-skill-prompt',
-  'chat-sdk-installing-skill',
-  'chat-sdk-agent-prompt',
-]);
-
-export function isChatSdkPhase(phase: Phase): boolean {
-  return CHAT_SDK_PHASE_KINDS.has(phase.kind);
-}
 
 export function ChatSdkPhaseContent({ phase }: { phase: Phase }): React.ReactElement | null {
   switch (phase.kind) {
@@ -91,21 +74,6 @@ export function ChatSdkPhaseContent({ phase }: { phase: Phase }): React.ReactEle
     default:
       return null;
   }
-}
-
-export function ChatSdkSuccessMessage({
-  connectMode,
-  outcome,
-}: {
-  connectMode: AgentConnectMode | undefined;
-  outcome: ChatSdkConnectOutcome | undefined;
-}): React.ReactElement | null {
-  const message = resolveChatSdkOutcomeMessage(connectMode, outcome);
-  if (!message) {
-    return null;
-  }
-
-  return <Text color="cyan">{message}</Text>;
 }
 
 function ChatSdkSkillPromptContent({

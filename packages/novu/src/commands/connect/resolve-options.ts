@@ -41,7 +41,3 @@ export function resolveConnectCommandOptions(input: ConnectCommandInput): Connec
     connectDashboardUrl: urls.connectDashboardUrl,
   };
 }
-
-export function isChatSdkRuntime(runtime: AgentConnectMode | undefined): boolean {
-  return runtime === 'chat-sdk';
-}
