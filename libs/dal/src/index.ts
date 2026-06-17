@@ -2,6 +2,7 @@ export * from './dal.service';
 export * from './repositories/agent';
 export * from './repositories/agent-integration';
 export * from './repositories/agent-mcp-server';
+export * from './repositories/agent-tool-trust';
 export * from './repositories/ai-chat';
 export * from './repositories/base-repository';
 export * from './repositories/base-repository-v2';
