@@ -38,7 +38,7 @@ export async function install(
     });
     child.on('close', (code) => {
       if (code !== 0) {
-        reject({ command: `${packageManager} ${args.join(' ')}` });
+        reject(new Error(`\`${packageManager} ${args.join(' ')}\` exited with code ${code ?? 1}`));
         return;
       }
       resolve();

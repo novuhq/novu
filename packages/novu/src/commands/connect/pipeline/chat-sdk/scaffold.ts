@@ -12,6 +12,8 @@ export type ScaffoldChatSdkProjectInput = {
   secretKey: string;
   apiUrl: string;
   agentIdentifier: string;
+  /** When true, suppress all stdout/stderr during template installation (Ink TUI is active). */
+  silent?: boolean;
 };
 
 export type ScaffoldChatSdkProjectResult = {
@@ -34,26 +36,46 @@ export async function scaffoldChatSdkProject(
 
   const isOnline = await getOnline();
 
-  await installTemplate({
-    appName,
-    root,
-    template: TemplateTypeEnum.APP_CHAT_SDK,
-    mode: 'ts',
-    packageManager: 'npm',
-    isOnline,
-    eslint: true,
-    srcDir: false,
-    importAlias: '@/*',
-    secretKey: input.secretKey,
-    apiUrl: input.apiUrl,
-    applicationId: '',
-    userId: '',
-    agentIdentifier: input.agentIdentifier,
-  });
+  const noop: typeof process.stdout.write = () => true;
+  const origStdoutWrite = process.stdout.write.bind(process.stdout);
+  const origStderrWrite = process.stderr.write.bind(process.stderr);
+  const origLog = console.log;
+  const origError = console.error;
 
-  if (tryGitInit(root)) {
-    console.log('Initialized a git repository.');
+  if (input.silent) {
+    process.stdout.write = noop;
+    process.stderr.write = noop;
+    console.log = () => undefined;
+    console.error = () => undefined;
   }
+
+  try {
+    await installTemplate({
+      appName,
+      root,
+      template: TemplateTypeEnum.APP_CHAT_SDK,
+      mode: 'ts',
+      packageManager: 'npm',
+      isOnline,
+      eslint: true,
+      srcDir: false,
+      importAlias: '@/*',
+      secretKey: input.secretKey,
+      apiUrl: input.apiUrl,
+      applicationId: '',
+      userId: '',
+      agentIdentifier: input.agentIdentifier,
+    });
+  } finally {
+    if (input.silent) {
+      process.stdout.write = origStdoutWrite;
+      process.stderr.write = origStderrWrite;
+      console.log = origLog;
+      console.error = origError;
+    }
+  }
+
+  tryGitInit(root);
 
   return { root, appName };
 }

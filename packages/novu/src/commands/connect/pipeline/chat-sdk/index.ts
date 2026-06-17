@@ -110,29 +110,14 @@ async function scaffoldChatSdkApp(opts: {
 }): Promise<ChatSdkConnectOutcome> {
   opts.setup.ui.scaffoldingChatSdk();
 
-  const noop = (): undefined => undefined;
-  const originalLog = console.log;
-  const originalError = console.error;
-  if (opts.setup.ui.interactive) {
-    console.log = noop;
-    console.error = noop;
-  }
-
-  let scaffolded: { root: string; appName: string };
-  try {
-    scaffolded = await scaffoldChatSdkProject({
-      parentDir: opts.parentDir,
-      appName: opts.appName,
-      secretKey: requireSecretKey(opts.setup.auth),
-      apiUrl: opts.setup.options.apiUrl,
-      agentIdentifier: opts.setup.agent.identifier,
-    });
-  } finally {
-    if (opts.setup.ui.interactive) {
-      console.log = originalLog;
-      console.error = originalError;
-    }
-  }
+  const scaffolded = await scaffoldChatSdkProject({
+    parentDir: opts.parentDir,
+    appName: opts.appName,
+    secretKey: requireSecretKey(opts.setup.auth),
+    apiUrl: opts.setup.options.apiUrl,
+    agentIdentifier: opts.setup.agent.identifier,
+    silent: opts.setup.ui.interactive,
+  });
 
   const merge = mergeEnvLocal({
     projectDir: scaffolded.root,
