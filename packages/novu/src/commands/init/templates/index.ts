@@ -360,7 +360,7 @@ export const installTemplate = async ({
   }
 
   if (!skipInstall) {
-    await install(packageManager, isOnline, silent);
+    await install(packageManager, isOnline, silent, root);
   }
 };
 
