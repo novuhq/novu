@@ -36,44 +36,23 @@ export async function scaffoldChatSdkProject(
 
   const isOnline = await getOnline();
 
-  const noop: typeof process.stdout.write = () => true;
-  const origStdoutWrite = process.stdout.write.bind(process.stdout);
-  const origStderrWrite = process.stderr.write.bind(process.stderr);
-  const origLog = console.log;
-  const origError = console.error;
-
-  if (input.silent) {
-    process.stdout.write = noop;
-    process.stderr.write = noop;
-    console.log = () => undefined;
-    console.error = () => undefined;
-  }
-
-  try {
-    await installTemplate({
-      appName,
-      root,
-      template: TemplateTypeEnum.APP_CHAT_SDK,
-      mode: 'ts',
-      packageManager: 'npm',
-      isOnline,
-      eslint: true,
-      srcDir: false,
-      importAlias: '@/*',
-      secretKey: input.secretKey,
-      apiUrl: input.apiUrl,
-      applicationId: '',
-      userId: '',
-      agentIdentifier: input.agentIdentifier,
-    });
-  } finally {
-    if (input.silent) {
-      process.stdout.write = origStdoutWrite;
-      process.stderr.write = origStderrWrite;
-      console.log = origLog;
-      console.error = origError;
-    }
-  }
+  await installTemplate({
+    appName,
+    root,
+    template: TemplateTypeEnum.APP_CHAT_SDK,
+    mode: 'ts',
+    packageManager: 'npm',
+    isOnline,
+    eslint: true,
+    srcDir: false,
+    importAlias: '@/*',
+    secretKey: input.secretKey,
+    apiUrl: input.apiUrl,
+    applicationId: '',
+    userId: '',
+    agentIdentifier: input.agentIdentifier,
+    silent: input.silent,
+  });
 
   tryGitInit(root);
 

@@ -69,13 +69,14 @@ export const installTemplate = async ({
   applicationId,
   userId,
   agentIdentifier,
+  silent,
 }: InstallTemplateArgs) => {
-  console.log(bold(`Using ${packageManager}.`));
+  if (!silent) console.log(bold(`Using ${packageManager}.`));
 
   /**
    * Copy the template files to the target directory.
    */
-  console.log('\nInitializing project with template:', template, '\n');
+  if (!silent) console.log('\nInitializing project with template:', template, '\n');
   const templatePath = path.join(__dirname, template, mode);
   const copySource = ['**'];
   if (!eslint) copySource.push('!eslintrc.json');
@@ -338,17 +339,19 @@ export const installTemplate = async ({
 
   await fs.writeFile(path.join(root, 'package.json'), JSON.stringify(packageJson, null, 2) + os.EOL);
 
-  console.log('\nInstalling dependencies:');
-  for (const dependency in packageJson.dependencies) console.log(`- ${cyan(dependency)}`);
+  if (!silent) {
+    console.log('\nInstalling dependencies:');
+    for (const dependency in packageJson.dependencies) console.log(`- ${cyan(dependency)}`);
 
-  if (devDeps) {
-    console.log('\nInstalling devDependencies:');
-    for (const dependency in packageJson.devDependencies) console.log(`- ${cyan(dependency)}`);
+    if (devDeps) {
+      console.log('\nInstalling devDependencies:');
+      for (const dependency in packageJson.devDependencies) console.log(`- ${cyan(dependency)}`);
+    }
+
+    console.log();
   }
 
-  console.log();
-
-  await install(packageManager, isOnline);
+  await install(packageManager, isOnline, silent);
 };
 
 export * from './types';

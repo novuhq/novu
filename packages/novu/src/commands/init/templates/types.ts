@@ -33,4 +33,6 @@ export interface InstallTemplateArgs {
   applicationId: string;
   userId: string;
   agentIdentifier?: string;
+  /** Suppress all stdout/stderr from the package-manager install subprocess. */
+  silent?: boolean;
 }

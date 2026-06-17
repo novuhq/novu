@@ -11,34 +11,44 @@ export async function install(
   /** Indicate which package manager to use. */
   packageManager: PackageManager,
   /** Indicate whether there is an active Internet connection.*/
-  isOnline: boolean
+  isOnline: boolean,
+  /**
+   * When true, pipe stdout/stderr instead of inheriting them so the caller
+   * controls whether the output is displayed. On failure, captured stderr is
+   * included in the thrown Error so the cause is not lost.
+   */
+  silent = false
 ): Promise<void> {
   const args: string[] = ['install'];
   if (!isOnline) {
-    console.log(yellow('You appear to be offline.\nFalling back to the local cache.'));
+    if (!silent) {
+      console.log(yellow('You appear to be offline.\nFalling back to the local cache.'));
+    }
     args.push('--offline');
   }
-  /**
-   * Return a Promise that resolves once the installation is finished.
-   */
+
   return new Promise((resolve, reject) => {
-    /**
-     * Spawn the installation process.
-     */
+    const stdio: import('child_process').StdioOptions = silent ? ['ignore', 'pipe', 'pipe'] : 'inherit';
     const child = spawn(packageManager, args, {
-      stdio: 'inherit',
+      stdio,
       env: {
         ...process.env,
         ADBLOCK: '1',
-        // we set NODE_ENV to development as pnpm skips dev
-        // dependencies when production
+        // we set NODE_ENV to development as pnpm skips dev dependencies when production
         NODE_ENV: 'development',
         DISABLE_OPENCOLLECTIVE: '1',
       },
     });
+
+    const chunks: Buffer[] = [];
+    if (silent && child.stderr) {
+      child.stderr.on('data', (chunk: Buffer) => chunks.push(chunk));
+    }
+
     child.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(`\`${packageManager} ${args.join(' ')}\` exited with code ${code ?? 1}`));
+        const detail = chunks.length > 0 ? `\n${Buffer.concat(chunks).toString().trim()}` : '';
+        reject(new Error(`\`${packageManager} ${args.join(' ')}\` exited with code ${code ?? 1}${detail}`));
         return;
       }
       resolve();
