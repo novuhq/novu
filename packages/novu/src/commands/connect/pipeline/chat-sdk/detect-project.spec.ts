@@ -36,7 +36,14 @@ describe('detectChatSdkProject', () => {
     expect(detectChatSdkProject(dir).kind).toBe('has-adapter');
   });
 
-  it('classifies a project without the adapter as project-no-adapter', () => {
+  it('classifies a project with chat but no Novu adapter as project-no-adapter', () => {
+    const dir = makeTempDir();
+    fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { chat: '4.30.0' } }));
+
+    expect(detectChatSdkProject(dir).kind).toBe('project-no-adapter');
+  });
+
+  it('classifies a project with no chat-related deps as project-no-adapter', () => {
     const dir = makeTempDir();
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { next: '16.2.1' } }));
 

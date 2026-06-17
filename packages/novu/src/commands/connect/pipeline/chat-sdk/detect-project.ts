@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { ChatSdkProjectKind } from '../../types';
 
 const CHAT_SDK_ADAPTER_PACKAGE = '@novu/chat-sdk-adapter';
+/** Presence of the base `chat` package classifies a project as a Chat SDK project, but does NOT mean the Novu adapter is wired. */
 const CHAT_SDK_PACKAGE = 'chat';
 
 export type DetectedChatSdkProject = {
@@ -40,8 +41,12 @@ function hasDependency(pkg: Record<string, unknown>, name: string): boolean {
   });
 }
 
-function hasChatSdkAdapter(pkg: Record<string, unknown>): boolean {
-  return hasDependency(pkg, CHAT_SDK_ADAPTER_PACKAGE) || hasDependency(pkg, CHAT_SDK_PACKAGE);
+function hasNovuAdapter(pkg: Record<string, unknown>): boolean {
+  return hasDependency(pkg, CHAT_SDK_ADAPTER_PACKAGE);
+}
+
+function hasChatSdk(pkg: Record<string, unknown>): boolean {
+  return hasDependency(pkg, CHAT_SDK_PACKAGE);
 }
 
 export function detectChatSdkProject(projectDir: string): DetectedChatSdkProject {
@@ -52,9 +57,20 @@ export function detectChatSdkProject(projectDir: string): DetectedChatSdkProject
     return { kind: 'empty', projectDir: resolvedDir };
   }
 
-  if (hasChatSdkAdapter(packageJson)) {
+  // Has the Novu adapter — the bridge route is already (or can be) wired.
+  if (hasNovuAdapter(packageJson)) {
     return {
       kind: 'has-adapter',
+      projectDir: resolvedDir,
+      packageJsonPath: path.join(resolvedDir, 'package.json'),
+    };
+  }
+
+  // Has the base `chat` package but not the Novu adapter — needs wiring via the skill.
+  // Also catches plain package.json projects with no chat dependency at all.
+  if (hasChatSdk(packageJson)) {
+    return {
+      kind: 'project-no-adapter',
       projectDir: resolvedDir,
       packageJsonPath: path.join(resolvedDir, 'package.json'),
     };
