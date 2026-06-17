@@ -40,7 +40,7 @@ export const ACTIVATION_WINDOW_MS = {
 } as const;
 
 export interface BillingPeriod {
-  /** Month-anchored key (YYYY-MM, UTC) derived from `periodStart` — the identity activations are counted against. */
+  /** Period identity activations are counted against: `stripe:<ISO start>` for billed orgs, `YYYY-MM` (UTC) otherwise. */
   periodKey: string;
   /** Inclusive UTC start of the period (Stripe period start for billed orgs, month start otherwise). */
   periodStart: Date;
@@ -192,8 +192,7 @@ export class ConversationActivationService {
     }
 
     // Cold start with no cached period (rare) — fall back to calendar without
-    // caching, so the next engagement retries Stripe. The month-anchored key
-    // keeps this consistent with a same-month Stripe period.
+    // caching, so the next engagement retries Stripe and adopts the real period.
     return calendar;
   }
 
@@ -223,7 +222,11 @@ export class ConversationActivationService {
       const periodStart = new Date(subscription.currentPeriodStart);
       const periodEnd = new Date(subscription.currentPeriodEnd);
 
-      return { periodKey: this.monthKey(periodStart), periodStart, periodEnd };
+      // Key on the Stripe period start so two periods starting in the same UTC month
+      // (plan change, trial conversion, cycle reset, short custom cycle) never collide
+      // and overcount. Transient-failure protection comes from the sticky cache fallback
+      // in `resolveBillingPeriod`, not from month-anchoring this key.
+      return { periodKey: `stripe:${periodStart.toISOString()}`, periodStart, periodEnd };
     } catch (err) {
       this.logger.warn(
         { err: err instanceof Error ? err.message : String(err), organizationId },
