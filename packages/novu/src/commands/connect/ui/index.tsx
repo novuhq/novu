@@ -262,6 +262,7 @@ function createUiController(
       envPaths,
       skillDestinations,
       agentPrompt,
+      agentPromptFile: _agentPromptFile,
     }) {
       return new Promise<void>((resolve) => {
         store.phase.set({

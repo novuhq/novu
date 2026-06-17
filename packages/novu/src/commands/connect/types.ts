@@ -33,7 +33,7 @@ export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [
   "chat-sdk",
 ];
 
-export type ChatSdkProjectKind = "has-adapter" | "project-no-adapter" | "empty";
+export type ChatSdkProjectKind = "empty" | "existing" | "has-adapter";
 
 export type ChatSdkConnectOutcome = {
   projectKind: ChatSdkProjectKind;

@@ -114,6 +114,7 @@ export interface ConnectUI {
     envPaths: string[];
     skillDestinations: string[];
     agentPrompt: string;
+    agentPromptFile?: string;
   }): Promise<void>;
 
   // Channel selection

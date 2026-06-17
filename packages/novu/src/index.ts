@@ -1,47 +1,50 @@
 #!/usr/bin/env node
 
-import { Command } from 'commander';
-import { v4 as uuidv4 } from 'uuid';
-import { DevCommandOptions, devCommand } from './commands';
-import { connectCommand } from './commands/connect';
-import { isDashboardOnlyChannel } from './commands/connect/dashboard-urls';
-import { CONNECT_HELP_TEXT } from './commands/connect/help-text';
-import type { ConnectCommandInput } from './commands/connect/resolve-options';
-import { resolveConnectCommandOptions } from './commands/connect/resolve-options';
+import { Command } from "commander";
+import { v4 as uuidv4 } from "uuid";
+import { DevCommandOptions, devCommand } from "./commands";
+import { connectCommand } from "./commands/connect";
+import { isDashboardOnlyChannel } from "./commands/connect/dashboard-urls";
+import { CONNECT_HELP_TEXT } from "./commands/connect/help-text";
+import type { ConnectCommandInput } from "./commands/connect/resolve-options";
+import {
+  isChatSdkRuntime,
+  resolveConnectCommandOptions,
+} from "./commands/connect/resolve-options";
 import {
   AGENT_CONNECT_MODES,
   type AgentConnectMode,
   CHANNEL_CHOICES,
   type ChannelChoice,
-} from './commands/connect/types';
-import { CloudRegionEnum } from './commands/dev/enums';
-import { IInitCommandOptions, init } from './commands/init';
-import { stepPublish } from './commands/step';
-import { sync } from './commands/sync';
-import { pullTranslations, pushTranslations } from './commands/translations';
+} from "./commands/connect/types";
+import { CloudRegionEnum } from "./commands/dev/enums";
+import { IInitCommandOptions, init } from "./commands/init";
+import { stepPublish } from "./commands/step";
+import { sync } from "./commands/sync";
+import { pullTranslations, pushTranslations } from "./commands/translations";
 // Wizard command is parked while we ship Connect. Re-enable by uncommenting
 // these imports + the `program.command('wizard')` block below.
 // import { wizardCommand } from './commands/wizard';
 // import { WizardCommandOptions } from './commands/wizard/types';
-import { NOVU_API_URL, NOVU_SECRET_KEY } from './constants';
-import { AnalyticService, ConfigService } from './services';
+import { NOVU_API_URL, NOVU_SECRET_KEY } from "./constants";
+import { AnalyticService, ConfigService } from "./services";
 
 const analytics = new AnalyticService();
 export const config = new ConfigService();
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === "development") {
   config.clearStore();
 }
-const anonymousIdLocalState = config.getValue('anonymousId');
+const anonymousIdLocalState = config.getValue("anonymousId");
 const anonymousId = anonymousIdLocalState || uuidv4();
 if (!anonymousIdLocalState) {
-  config.setValue('anonymousId', anonymousId);
+  config.setValue("anonymousId", anonymousId);
 }
 const program = new Command();
 
-program.name('novu').description(`A CLI tool to interact with Novu Cloud`);
+program.name("novu").description(`A CLI tool to interact with Novu Cloud`);
 
 program
-  .command('sync')
+  .command("sync")
   .description(
     `Sync your state with Novu Cloud
 
@@ -49,18 +52,22 @@ program
   (e.g., npx novu@latest sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY)
 
   Sync with Novu Cloud in Europe:
-  (e.g., npx novu@latest sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY -a https://eu.api.novu.co)`
+  (e.g., npx novu@latest sync -b https://acme.org/api/novu -s NOVU_SECRET_KEY -a https://eu.api.novu.co)`,
   )
-  .usage('-b <url> -s <secret-key> [-a <url>]')
-  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
-  .requiredOption(
-    '-b, --bridge-url <url>',
-    'The Novu endpoint URL hosted in the Bridge application, by convention ends in /api/novu'
+  .usage("-b <url> -s <secret-key> [-a <url>]")
+  .option(
+    "-a, --api-url <url>",
+    "The Novu Cloud API URL",
+    NOVU_API_URL || "https://api.novu.co",
   )
   .requiredOption(
-    '-s, --secret-key <secret-key>',
-    'The Novu Secret Key. Obtainable at https://dashboard.novu.co/api-keys',
-    NOVU_SECRET_KEY || ''
+    "-b, --bridge-url <url>",
+    "The Novu endpoint URL hosted in the Bridge application, by convention ends in /api/novu",
+  )
+  .requiredOption(
+    "-s, --secret-key <secret-key>",
+    "The Novu Secret Key. Obtainable at https://dashboard.novu.co/api-keys",
+    NOVU_SECRET_KEY || "",
   )
   .action(async (options) => {
     analytics.track({
@@ -68,13 +75,13 @@ program
         anonymousId,
       },
       data: {},
-      event: 'Sync Novu Endpoint State',
+      event: "Sync Novu Endpoint State",
     });
     await sync(options.bridgeUrl, options.secretKey, options.apiUrl);
   });
 
 program
-  .command('dev')
+  .command("dev")
   .description(
     `Start Novu Studio and a local tunnel
 
@@ -85,26 +92,46 @@ program
   (e.g., npx novu@latest dev -r /v1/api/novu)
   
   Running with a custom tunnel:
-  (e.g., npx novu@latest dev --tunnel https://my-tunnel.ngrok.app)`
+  (e.g., npx novu@latest dev --tunnel https://my-tunnel.ngrok.app)`,
   )
-  .usage('[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-sp <studio-port>] [-t <url>] [-H]')
-  .option('-p, --port <port>', 'The local Bridge endpoint port', '4000')
-  .option('-r, --route <route>', 'The Bridge endpoint route', '/api/novu')
-  .option('-o, --origin <origin>', 'The Bridge endpoint origin')
-  .option('-d, --dashboard-url <url>', 'The Novu Cloud Dashboard URL', 'https://dashboard.novu.co')
-  .option('-sp, --studio-port <port>', 'The Local Studio server port', '2022')
-  .option('-sh, --studio-host <host>', 'The Local Studio server host', 'localhost')
-  .option('-t, --tunnel <url>', 'Self hosted tunnel. e.g. https://my-tunnel.ngrok.app')
-  .option('-H, --headless', 'Run the Bridge in headless mode without opening the browser', false)
-  .option('--no-studio', 'Skip starting the local Studio server')
-  .option('--run <command>', 'Spawn a local app server before opening the tunnel')
+  .usage(
+    "[-p <port>] [-r <route>] [-o <origin>] [-d <dashboard-url>] [-sp <studio-port>] [-t <url>] [-H]",
+  )
+  .option("-p, --port <port>", "The local Bridge endpoint port", "4000")
+  .option("-r, --route <route>", "The Bridge endpoint route", "/api/novu")
+  .option("-o, --origin <origin>", "The Bridge endpoint origin")
+  .option(
+    "-d, --dashboard-url <url>",
+    "The Novu Cloud Dashboard URL",
+    "https://dashboard.novu.co",
+  )
+  .option("-sp, --studio-port <port>", "The Local Studio server port", "2022")
+  .option(
+    "-sh, --studio-host <host>",
+    "The Local Studio server host",
+    "localhost",
+  )
+  .option(
+    "-t, --tunnel <url>",
+    "Self hosted tunnel. e.g. https://my-tunnel.ngrok.app",
+  )
+  .option(
+    "-H, --headless",
+    "Run the Bridge in headless mode without opening the browser",
+    false,
+  )
+  .option("--no-studio", "Skip starting the local Studio server")
+  .option(
+    "--run <command>",
+    "Spawn a local app server before opening the tunnel",
+  )
   .action(async (options: DevCommandOptions) => {
     analytics.track({
       identity: {
         anonymousId,
       },
       data: {},
-      event: 'Open Dev Server',
+      event: "Open Dev Server",
     });
 
     return await devCommand(options, anonymousId);
@@ -138,217 +165,320 @@ program
 //   });
 
 program
-  .command('connect')
+  .command("connect")
   .description(
-    `Create a managed agent and connect it to a channel (dashboard OAuth by default; use --ci for non-interactive agent/CI runs)`
+    `Create a managed agent and connect it to a channel (dashboard OAuth by default; use --ci for non-interactive agent/CI runs)`,
   )
-  .usage('[prompt] [--ci] [--channel <name>] [options]')
+  .usage("[prompt] [--ci] [--channel <name>] [options]")
   .argument(
-    '[prompt]',
-    'Agent description. Required in --ci mode. When provided, skips the picker and creates a new agent from this prompt.'
+    "[prompt]",
+    "Agent description. Required in --ci mode. When provided, skips the picker and creates a new agent from this prompt.",
   )
   .option(
-    '-s, --secret-key <secret-key>',
-    'Use an existing Novu account via secret key instead of dashboard OAuth (the default)'
+    "-s, --secret-key <secret-key>",
+    "Use an existing Novu account via secret key instead of dashboard OAuth (the default)",
   )
   .option(
-    '--keyless',
-    'Use a temporary keyless workspace instead of dashboard OAuth (creates a demo agent the user can claim later)',
-    false
-  )
-  .option('-a, --api-url <url>', 'Override the Novu API URL (default follows --region)')
-  .option('-d, --dashboard-url <url>', 'Override the Novu Dashboard URL (default follows --region)')
-  .option(
-    '--connect-dashboard-url <url>',
-    'Override the Connect browser-auth URL (default follows --region, e.g. dashboard.novu.co)'
-  )
-  .option('--region <region>', `Novu region (${Object.values(CloudRegionEnum).join(' | ')})`, CloudRegionEnum.US)
-  .option(
-    '--prompt <text>',
-    'Pre-fill the agent description (alternative to positional <prompt>; positional wins when both are set)'
+    "--keyless",
+    "Use a temporary keyless workspace instead of dashboard OAuth (creates a demo agent the user can claim later)",
+    false,
   )
   .option(
-    '--runtime <runtime>',
-    `Agent connect mode (${AGENT_CONNECT_MODES.join(' | ')}). Defaults to demo — omit in --ci authenticated runs`
-  )
-  .option('--chat-sdk', 'Shorthand for --runtime chat-sdk', false)
-  .option('--project-dir <path>', 'Project directory to inspect for an existing Chat SDK app (defaults to cwd)')
-  .option('--scaffold-dir <name>', 'Subdirectory name when scaffolding a Chat SDK project into a non-empty parent')
-  .option('--no-scaffold', 'Skip scaffolding even when the target directory is empty')
-  .option(
-    '--agent-integration-id <id>',
-    'Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)'
-  )
-  .option('--anthropic-api-key <key>', 'Anthropic API key for --runtime claude non-interactive runs')
-  .option('--aws-claude-api-key <key>', 'AWS Claude API key for --runtime claude-aws non-interactive runs')
-  .option('--aws-claude-region <region>', 'AWS Claude commercial region for --runtime claude-aws')
-  .option('--aws-claude-workspace-id <id>', 'AWS Claude workspace ID for --runtime claude-aws')
-  .option(
-    '--channel <name>',
-    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(', ')}. whatsapp/teams require dashboard OAuth (omit --keyless)`
-  )
-  .option('--skip-slack', 'Create the agent and exit; do not connect any channel (equivalent to --channel skip)', false)
-  .option(
-    '--slack-config-token <token>',
-    'Slack App Configuration Token (xoxe.xoxp-…). CI-only escape hatch — omit to use the secure setup page'
+    "-a, --api-url <url>",
+    "Override the Novu API URL (default follows --region)",
   )
   .option(
-    '--telegram-bot-token <token>',
-    'Telegram bot token from @BotFather (123456:ABC-…). CI-only escape hatch — omit to use the secure setup page'
+    "-d, --dashboard-url <url>",
+    "Override the Novu Dashboard URL (default follows --region)",
   )
   .option(
-    '--ci',
-    'Non-interactive mode (no Ink TUI). Requires a prompt (positional <prompt> or --prompt) and --channel; see examples below',
-    false
+    "--connect-dashboard-url <url>",
+    "Override the Connect browser-auth URL (default follows --region, e.g. dashboard.novu.co)",
   )
-  .addHelpText('after', CONNECT_HELP_TEXT)
-  .showHelpAfterError('(run `novu connect --help` for the non-interactive contract and examples)')
-  .action(async (positionalPrompt: string | undefined, options: ConnectCommandInput) => {
-    analytics.track({
-      identity: {
-        anonymousId,
-      },
-      data: {},
-      event: 'Run Novu Connect Command',
-    });
-    // Positional `prompt` wins over `--prompt` (the positional form is the
-    // primary surface; the flag exists for parity with `--ci` workflows).
-    if (options.ci) {
-      const prompt = (positionalPrompt ?? options.prompt)?.trim();
-      const channel = options.skipSlack ? 'skip' : options.channel;
-      const connectMode = options.chatSdk ? 'chat-sdk' : options.runtime;
-
-      if (!prompt && connectMode !== 'chat-sdk') {
-        console.error(
-          'Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime chat-sdk.\n(run `novu connect --help` for the non-interactive contract and examples)'
-        );
-        process.exit(1);
-      }
-
-      if (!channel) {
-        console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
-        );
-        process.exit(1);
-      }
-
-      if (options.channel && isDashboardOnlyChannel(options.channel as ChannelChoice) && options.keyless) {
-        console.error(
-          'Non-interactive mode does not support --channel whatsapp or --channel teams with --keyless. Omit --keyless to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)'
-        );
-        process.exit(1);
-      }
-    }
-
-    if (options.keyless && options.secretKey) {
-      console.error(
-        'Cannot use --keyless together with --secret-key. Omit --secret-key for keyless mode, or omit --keyless to authenticate with your account.'
-      );
-      process.exit(1);
-    }
-    if (options.channel && !(CHANNEL_CHOICES as readonly string[]).includes(options.channel)) {
-      console.error(`Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(', ')}.`);
-      process.exit(1);
-    }
-    if (options.runtime && !(AGENT_CONNECT_MODES as readonly string[]).includes(options.runtime)) {
-      console.error(
-        `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_CONNECT_MODES.join(', ')}.`
-      );
-      process.exit(1);
-    }
-    let resolved: ReturnType<typeof resolveConnectCommandOptions>;
-    try {
-      resolved = resolveConnectCommandOptions({
-        ...options,
-        region: options.region as CloudRegionEnum,
-        prompt: positionalPrompt ?? options.prompt,
-        channel: options.channel as ChannelChoice | undefined,
-        runtime: options.runtime as AgentConnectMode | undefined,
-        chatSdk: options.chatSdk,
-        apiUrl: options.apiUrl ?? NOVU_API_URL,
+  .option(
+    "--region <region>",
+    `Novu region (${Object.values(CloudRegionEnum).join(" | ")})`,
+    CloudRegionEnum.US,
+  )
+  .option(
+    "--prompt <text>",
+    "Pre-fill the agent description (alternative to positional <prompt>; positional wins when both are set)",
+  )
+  .option(
+    "--runtime <runtime>",
+    `Agent connect mode (${AGENT_CONNECT_MODES.join(" | ")}). Defaults to demo — omit in --ci authenticated runs`,
+  )
+  .option("--chat-sdk", "Shorthand for --runtime chat-sdk", false)
+  .option(
+    "--project-dir <path>",
+    "Project directory to inspect for an existing Chat SDK app (defaults to cwd)",
+  )
+  .option(
+    "--scaffold-dir <name>",
+    "Subdirectory name when scaffolding a Chat SDK project into a non-empty parent",
+  )
+  .option(
+    "--no-scaffold",
+    "Skip scaffolding even when the target directory is empty",
+  )
+  .option(
+    "--agent-integration-id <id>",
+    "Use an existing agent-runtime integration (skips credential setup for BYOK runtimes)",
+  )
+  .option(
+    "--anthropic-api-key <key>",
+    "Anthropic API key for --runtime claude non-interactive runs",
+  )
+  .option(
+    "--aws-claude-api-key <key>",
+    "AWS Claude API key for --runtime claude-aws non-interactive runs",
+  )
+  .option(
+    "--aws-claude-region <region>",
+    "AWS Claude commercial region for --runtime claude-aws",
+  )
+  .option(
+    "--aws-claude-workspace-id <id>",
+    "AWS Claude workspace ID for --runtime claude-aws",
+  )
+  .option(
+    "--channel <name>",
+    `Channel to connect (required in --ci mode). One of: ${CHANNEL_CHOICES.join(", ")}. whatsapp/teams require dashboard OAuth (omit --keyless)`,
+  )
+  .option(
+    "--skip-slack",
+    "Create the agent and exit; do not connect any channel (equivalent to --channel skip)",
+    false,
+  )
+  .option(
+    "--slack-config-token <token>",
+    "Slack App Configuration Token (xoxe.xoxp-…). CI-only escape hatch — omit to use the secure setup page",
+  )
+  .option(
+    "--telegram-bot-token <token>",
+    "Telegram bot token from @BotFather (123456:ABC-…). CI-only escape hatch — omit to use the secure setup page",
+  )
+  .option(
+    "--ci",
+    "Non-interactive mode (no Ink TUI). Requires a prompt (positional <prompt> or --prompt) and --channel; see examples below",
+    false,
+  )
+  .addHelpText("after", CONNECT_HELP_TEXT)
+  .showHelpAfterError(
+    "(run `novu connect --help` for the non-interactive contract and examples)",
+  )
+  .action(
+    async (
+      positionalPrompt: string | undefined,
+      options: ConnectCommandInput,
+    ) => {
+      analytics.track({
+        identity: {
+          anonymousId,
+        },
+        data: {},
+        event: "Run Novu Connect Command",
       });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      console.error(message);
-      process.exit(1);
-    }
-    await connectCommand(resolved, anonymousId);
-  });
+      // Positional `prompt` wins over `--prompt` (the positional form is the
+      // primary surface; the flag exists for parity with `--ci` workflows).
+      if (options.ci) {
+        const prompt = (positionalPrompt ?? options.prompt)?.trim();
+        const channel = options.skipSlack ? "skip" : options.channel;
+        const connectMode = options.chatSdk
+          ? "chat-sdk"
+          : options.brain === "chat-sdk"
+            ? "chat-sdk"
+            : options.runtime;
+
+        if (!prompt && !isChatSdkRuntime(connectMode)) {
+          console.error(
+            "Non-interactive mode requires a prompt (positional <prompt> or --prompt), unless --runtime chat-sdk.\n(run `novu connect --help` for the non-interactive contract and examples)",
+          );
+          process.exit(1);
+        }
+
+        if (!channel) {
+          console.error(
+            "Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)",
+          );
+          process.exit(1);
+        }
+
+        if (
+          options.channel &&
+          isDashboardOnlyChannel(options.channel as ChannelChoice) &&
+          options.keyless
+        ) {
+          console.error(
+            "Non-interactive mode does not support --channel whatsapp or --channel teams with --keyless. Omit --keyless to authenticate via the dashboard, or use the Novu dashboard instead.\n(run `novu connect --help` for the non-interactive contract and examples)",
+          );
+          process.exit(1);
+        }
+      }
+
+      if (options.keyless && options.secretKey) {
+        console.error(
+          "Cannot use --keyless together with --secret-key. Omit --secret-key for keyless mode, or omit --keyless to authenticate with your account.",
+        );
+        process.exit(1);
+      }
+      if (
+        options.channel &&
+        !(CHANNEL_CHOICES as readonly string[]).includes(options.channel)
+      ) {
+        console.error(
+          `Invalid --channel value: "${options.channel}". Expected one of: ${CHANNEL_CHOICES.join(", ")}.`,
+        );
+        process.exit(1);
+      }
+      if (
+        options.runtime &&
+        !(AGENT_CONNECT_MODES as readonly string[]).includes(options.runtime)
+      ) {
+        console.error(
+          `Invalid --runtime value: "${options.runtime}". Expected one of: ${AGENT_CONNECT_MODES.join(", ")}.`,
+        );
+        process.exit(1);
+      }
+      let resolved: ReturnType<typeof resolveConnectCommandOptions>;
+      try {
+        resolved = resolveConnectCommandOptions({
+          ...options,
+          region: options.region as CloudRegionEnum,
+          prompt: positionalPrompt ?? options.prompt,
+          channel: options.channel as ChannelChoice | undefined,
+          runtime: options.runtime as AgentConnectMode | undefined,
+          chatSdk: options.chatSdk,
+          apiUrl: options.apiUrl ?? NOVU_API_URL,
+        });
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error(message);
+        process.exit(1);
+      }
+      await connectCommand(resolved, anonymousId);
+    },
+  );
 
 program
-  .command('init')
+  .command("init")
   .description(`Create a new Novu application`)
   .option(
-    '-s, --secret-key <secret-key>',
-    `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`
+    "-s, --secret-key <secret-key>",
+    `The Novu development environment Secret Key. Note that your Novu app won't work outside of local mode without it.`,
   )
-  .option('-a, --api-url <url>', 'The Novu Cloud API URL', 'https://api.novu.co')
-  .option('-t, --template <name>', 'The template to use (notifications, agent, or chat-sdk)')
-  .option('--agent-identifier <id>', 'Agent identifier to use in the scaffolded template')
+  .option(
+    "-a, --api-url <url>",
+    "The Novu Cloud API URL",
+    "https://api.novu.co",
+  )
+  .option(
+    "-t, --template <name>",
+    "The template to use (notifications, agent, or chat-sdk)",
+  )
+  .option(
+    "--agent-identifier <id>",
+    "Agent identifier to use in the scaffolded template",
+  )
   .action(async (options: IInitCommandOptions) => {
     return await init(options, anonymousId);
   });
 
-const translationsCommand = program.command('translations').description('Manage Novu translations');
+const translationsCommand = program
+  .command("translations")
+  .description("Manage Novu translations");
 
 translationsCommand
-  .command('pull')
-  .description('Pull all translation files from Novu Cloud')
-  .option('-s, --secret-key <secret-key>', 'The Novu Secret Key', NOVU_SECRET_KEY || '')
-  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
-  .option('-d, --directory <path>', 'Directory to save translation files', './translations')
+  .command("pull")
+  .description("Pull all translation files from Novu Cloud")
+  .option(
+    "-s, --secret-key <secret-key>",
+    "The Novu Secret Key",
+    NOVU_SECRET_KEY || "",
+  )
+  .option(
+    "-a, --api-url <url>",
+    "The Novu Cloud API URL",
+    NOVU_API_URL || "https://api.novu.co",
+  )
+  .option(
+    "-d, --directory <path>",
+    "Directory to save translation files",
+    "./translations",
+  )
   .action(async (options) => {
     analytics.track({
       identity: {
         anonymousId,
       },
       data: {},
-      event: 'Pull Translations',
+      event: "Pull Translations",
     });
     await pullTranslations(options);
   });
 
 translationsCommand
-  .command('push')
-  .description('Push translation files to Novu Cloud')
-  .option('-s, --secret-key <secret-key>', 'The Novu Secret Key', NOVU_SECRET_KEY || '')
-  .option('-a, --api-url <url>', 'The Novu Cloud API URL', NOVU_API_URL || 'https://api.novu.co')
-  .option('-d, --directory <path>', 'Directory containing translation files', './translations')
+  .command("push")
+  .description("Push translation files to Novu Cloud")
+  .option(
+    "-s, --secret-key <secret-key>",
+    "The Novu Secret Key",
+    NOVU_SECRET_KEY || "",
+  )
+  .option(
+    "-a, --api-url <url>",
+    "The Novu Cloud API URL",
+    NOVU_API_URL || "https://api.novu.co",
+  )
+  .option(
+    "-d, --directory <path>",
+    "Directory containing translation files",
+    "./translations",
+  )
   .action(async (options) => {
     analytics.track({
       identity: {
         anonymousId,
       },
       data: {},
-      event: 'Push Translations',
+      event: "Push Translations",
     });
     await pushTranslations(options);
   });
 
-const stepCommand = program.command('step').description('Manage Novu step resolvers');
+const stepCommand = program
+  .command("step")
+  .description("Manage Novu step resolvers");
 
 stepCommand
-  .command('publish')
-  .description('Bundle and deploy step handlers to Novu')
-  .option('-s, --secret-key <key>', 'Novu API secret key', NOVU_SECRET_KEY || '')
-  .option('-a, --api-url <url>', 'Novu API URL')
-  .option('-c, --config <path>', 'Path to config file')
-  .option('--out <path>', 'Directory containing step handlers')
-  .option('--workflow <id...>', 'Deploy only specific workflows')
-  .option('--step <id...>', 'Deploy only specific steps (requires --workflow)')
+  .command("publish")
+  .description("Bundle and deploy step handlers to Novu")
   .option(
-    '--template <path>',
-    'Path to React Email template; scaffolds a React Email email handler if it does not exist'
+    "-s, --secret-key <key>",
+    "Novu API secret key",
+    NOVU_SECRET_KEY || "",
   )
-  .option('--bundle-out-dir [path]', 'Write bundled workflow artifacts to a directory for debugging')
-  .option('--dry-run', 'Bundle without deploying')
+  .option("-a, --api-url <url>", "Novu API URL")
+  .option("-c, --config <path>", "Path to config file")
+  .option("--out <path>", "Directory containing step handlers")
+  .option("--workflow <id...>", "Deploy only specific workflows")
+  .option("--step <id...>", "Deploy only specific steps (requires --workflow)")
+  .option(
+    "--template <path>",
+    "Path to React Email template; scaffolds a React Email email handler if it does not exist",
+  )
+  .option(
+    "--bundle-out-dir [path]",
+    "Write bundled workflow artifacts to a directory for debugging",
+  )
+  .option("--dry-run", "Bundle without deploying")
   .action(async (options) => {
     analytics.track({
       identity: {
         anonymousId,
       },
       data: {},
-      event: 'Step Publish Command',
+      event: "Step Publish Command",
     });
     await stepPublish(options);
   });

@@ -4,6 +4,8 @@ import ora, { type Ora } from "ora";
 import type { GeneratedAgentSpec } from "../api/agents";
 import { SEND_FROM_ACCOUNT_LABEL } from "../copy/email-onboarding";
 import { channelDisplayName } from "../dashboard-urls";
+import { CHAT_SDK_PROMPT_FILE_ENV } from "../pipeline/chat-sdk/agent-prompt-file";
+import { resolveChatSdkOutcomeMessage } from "../pipeline/chat-sdk/outcome-message";
 import type { AgentSummary } from "../types";
 import { resolveGeneratedAgentSpecLabels } from "./agent-spec-labels";
 import {
@@ -238,8 +240,9 @@ export function createLoggingUI(): ConnectUI {
       }
     },
     chatSdkEnvWired({ envPaths, updatedKeys }) {
+      succeed("Environment updated");
       for (const envPath of envPaths) {
-        succeed(`Updated ${envPath}`);
+        console.log(chalk.gray(`  Updated ${envPath}`));
       }
       if (updatedKeys.length > 0) {
         console.log(chalk.gray(`  Keys: ${updatedKeys.join(", ")}`));
@@ -266,6 +269,7 @@ export function createLoggingUI(): ConnectUI {
       envPaths,
       skillDestinations,
       agentPrompt,
+      agentPromptFile,
     }) {
       succeed("Skill installed");
       console.log(chalk.gray(`  Project: ${projectDir}`));
@@ -274,6 +278,9 @@ export function createLoggingUI(): ConnectUI {
       }
       for (const dest of skillDestinations) {
         console.log(chalk.gray(`  Skill: ${dest}`));
+      }
+      if (agentPromptFile) {
+        console.log(`${CHAT_SDK_PROMPT_FILE_ENV}=${agentPromptFile}`);
       }
       console.log("");
       console.log(chalk.bold("Paste this into your coding agent:"));
@@ -468,14 +475,19 @@ export function createLoggingUI(): ConnectUI {
             console.log(
               `  ${chalk.cyan("→")} cd ${result.chatSdkOutcome.projectDir} && npm install && npm run dev:novu`,
             );
-          } else {
-            console.log(`  ${chalk.cyan("→")} Starting dev server and tunnel…`);
           }
-        } else if (result.chatSdkOutcome.needsAgentFollowUp) {
-          console.log(
-            `  ${chalk.cyan("→")} Prompt your coding agent with the instructions above to wire the Novu adapter.`,
-          );
-        } else {
+        }
+
+        const followUp = resolveChatSdkOutcomeMessage(
+          result.connectMode,
+          result.chatSdkOutcome,
+        );
+        if (followUp) {
+          console.log(`  ${chalk.cyan("→")} ${followUp}`);
+        } else if (
+          !result.chatSdkOutcome.scaffolded &&
+          !result.chatSdkOutcome.needsAgentFollowUp
+        ) {
           console.log(`  ${chalk.gray("No Chat SDK wiring changes made.")}`);
         }
       }

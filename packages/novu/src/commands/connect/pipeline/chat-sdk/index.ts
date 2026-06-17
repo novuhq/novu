@@ -8,6 +8,10 @@ import type {
 } from "../../types";
 import type { ConnectUI } from "../../ui/ui";
 import {
+  CHAT_SDK_PROMPT_FILE_ENV,
+  writeChatSdkAgentPromptFile,
+} from "./agent-prompt-file";
+import {
   defaultAgentNameFromDir,
   deriveAgentIdentifier,
 } from "./derive-identifier";
@@ -16,6 +20,7 @@ import { runChatSdkSkillSetup } from "./integrate-adapter";
 import { runChatSdkBridge } from "./run-bridge";
 import { scaffoldChatSdkProject } from "./scaffold";
 import {
+  maskSecretKey,
   mergeProjectEnv,
   readEnvSecretKey,
   resolveProjectEnvPaths,
@@ -35,16 +40,14 @@ export async function runChatSdkProjectSetup(
   const projectDir = input.options.projectDir?.trim() || process.cwd();
   const detected = detectChatSdkProject(projectDir);
 
-  if (
-    detected.kind === "has-adapter" ||
-    detected.kind === "project-no-adapter"
-  ) {
+  if (detected.kind === "has-adapter") {
+    return runHasAdapterEnvSetup({ input, projectDir: detected.projectDir });
+  }
+
+  if (detected.kind === "existing") {
     return runExistingProjectSkillSetup({
       input,
-      detected: {
-        kind: detected.kind,
-        projectDir: detected.projectDir,
-      },
+      projectDir: detected.projectDir,
     });
   }
 
@@ -80,63 +83,128 @@ export async function runChatSdkProjectSetup(
   });
 }
 
-async function runExistingProjectSkillSetup(opts: {
+async function runHasAdapterEnvSetup(opts: {
   input: ChatSdkSetupInput;
-  detected: {
-    kind: "has-adapter" | "project-no-adapter";
-    projectDir: string;
-  };
+  projectDir: string;
 }): Promise<ChatSdkConnectOutcome> {
   const secretKey = requireSecretKey(opts.input.auth);
-  const shouldInstall = await opts.input.ui.promptInstallChatSdkSkill({
-    projectDir: opts.detected.projectDir,
-    agentIdentifier: opts.input.agent.identifier,
-  });
-
-  if (!shouldInstall) {
-    return {
-      projectKind: opts.detected.kind,
-      projectDir: opts.detected.projectDir,
-      scaffolded: false,
-      needsAgentFollowUp: true,
-    };
-  }
-
-  const existingSecret = readEnvSecretKey(opts.detected.projectDir);
+  const existingSecret = readEnvSecretKey(opts.projectDir);
   let overwriteSecretKey = false;
 
   if (existingSecret && existingSecret !== secretKey) {
-    overwriteSecretKey = await opts.input.ui.confirmEnvSecretOverwrite({
-      envPath: resolveProjectEnvPaths(opts.detected.projectDir)[0],
-      existingMasked: maskForUi(existingSecret),
-      nextMasked: maskForUi(secretKey),
+    overwriteSecretKey = await resolveEnvSecretOverwrite({
+      input: opts.input,
+      projectDir: opts.projectDir,
+      existingSecret,
+      secretKey,
     });
   }
 
-  opts.input.ui.installingChatSdkSkill();
-
-  const setup = await runChatSdkSkillSetup({
-    projectDir: opts.detected.projectDir,
+  const merge = mergeProjectEnv({
+    projectDir: opts.projectDir,
     secretKey,
     agentIdentifier: opts.input.agent.identifier,
     apiBaseUrl: opts.input.options.apiUrl,
     overwriteSecretKey,
   });
 
-  await opts.input.ui.awaitChatSdkAgentPrompt({
-    projectDir: opts.detected.projectDir,
-    envPaths: setup.envPaths,
-    skillDestinations: setup.skillsInstalled.map((skill) => skill.destination),
-    agentPrompt: setup.agentPrompt,
+  opts.input.ui.chatSdkEnvWired({
+    projectDir: opts.projectDir,
+    envPaths: merge.envPaths,
+    updatedKeys: merge.updatedKeys,
   });
 
   return {
-    projectKind: opts.detected.kind,
-    projectDir: opts.detected.projectDir,
+    projectKind: "has-adapter",
+    projectDir: opts.projectDir,
+    scaffolded: false,
+    envPaths: merge.envPaths,
+    needsAgentFollowUp: false,
+  };
+}
+
+async function runExistingProjectSkillSetup(opts: {
+  input: ChatSdkSetupInput;
+  projectDir: string;
+}): Promise<ChatSdkConnectOutcome> {
+  const secretKey = requireSecretKey(opts.input.auth);
+  const shouldInstall = await opts.input.ui.promptInstallChatSdkSkill({
+    projectDir: opts.projectDir,
+    agentIdentifier: opts.input.agent.identifier,
+  });
+
+  if (!shouldInstall) {
+    return {
+      projectKind: "existing",
+      projectDir: opts.projectDir,
+      scaffolded: false,
+      needsAgentFollowUp: true,
+    };
+  }
+
+  const existingSecret = readEnvSecretKey(opts.projectDir);
+  let overwriteSecretKey = false;
+
+  if (existingSecret && existingSecret !== secretKey) {
+    overwriteSecretKey = await resolveEnvSecretOverwrite({
+      input: opts.input,
+      projectDir: opts.projectDir,
+      existingSecret,
+      secretKey,
+    });
+  }
+
+  opts.input.ui.installingChatSdkSkill();
+
+  const setup = await runChatSdkSkillSetup({
+    projectDir: opts.projectDir,
+    secretKey,
+    agentIdentifier: opts.input.agent.identifier,
+    apiBaseUrl: opts.input.options.apiUrl,
+    overwriteSecretKey,
+  });
+
+  opts.input.ui.chatSdkEnvWired({
+    projectDir: opts.projectDir,
+    envPaths: setup.envPaths,
+    updatedKeys: setup.updatedKeys,
+  });
+
+  await opts.input.ui.awaitChatSdkAgentPrompt({
+    projectDir: opts.projectDir,
+    envPaths: setup.envPaths,
+    skillDestinations: setup.skillsInstalled.map((skill) => skill.destination),
+    agentPrompt: setup.agentPrompt,
+    agentPromptFile: writeChatSdkAgentPromptFile(setup.agentPrompt),
+  });
+
+  return {
+    projectKind: "existing",
+    projectDir: opts.projectDir,
     scaffolded: false,
     envPaths: setup.envPaths,
     needsAgentFollowUp: true,
   };
+}
+
+async function resolveEnvSecretOverwrite(opts: {
+  input: ChatSdkSetupInput;
+  projectDir: string;
+  existingSecret: string;
+  secretKey: string;
+}): Promise<boolean> {
+  if (opts.input.options.ci) {
+    throw new Error(
+      `${resolveProjectEnvPaths(opts.projectDir)[0]} already has a different NOVU_SECRET_KEY. ` +
+        "Remove it or align the key before re-running connect in --ci mode.",
+    );
+  }
+
+  return opts.input.ui.confirmEnvSecretOverwrite({
+    envPath: resolveProjectEnvPaths(opts.projectDir)[0],
+    existingMasked: maskSecretKey(opts.existingSecret),
+    nextMasked: maskSecretKey(opts.secretKey),
+  });
 }
 
 function defaultScaffoldAppName(agentIdentifier: string): string {
@@ -216,18 +284,14 @@ export async function createBridgeAgentFlow(
 
 export async function maybeRunChatSdkTunnel(input: {
   outcome: ChatSdkConnectOutcome | undefined;
-  options: ConnectCommandOptions;
-  client: ConnectApiClient;
-  agent: AgentSummary;
 }): Promise<boolean> {
-  if (!shouldRunChatSdkTunnel(input.outcome)) {
+  const { outcome } = input;
+  if (!shouldRunChatSdkTunnel(outcome)) {
     return false;
   }
 
   await runChatSdkBridge({
-    projectDir: input.outcome!.projectDir,
-    agentIdentifier: input.agent.identifier,
-    client: input.client,
+    projectDir: outcome.projectDir,
   });
 
   return true;
@@ -253,14 +317,6 @@ function requireSecretKey(auth: ResolvedConnectAuth): string {
   return secretKey;
 }
 
-function maskForUi(secretKey: string): string {
-  if (secretKey.length <= 8) {
-    return "••••••••";
-  }
-
-  return `${secretKey.slice(0, 4)}…${secretKey.slice(-4)}`;
-}
-
 function pathBasename(dir: string): string {
   const parts = dir.replace(/[/\\]+$/, "").split(/[/\\]/);
 
@@ -274,3 +330,5 @@ function toSummary(
 
   return { id, identifier: agent.identifier, name: agent.name };
 }
+
+export { CHAT_SDK_PROMPT_FILE_ENV };

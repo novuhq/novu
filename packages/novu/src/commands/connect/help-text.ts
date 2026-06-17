@@ -116,6 +116,9 @@ Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
     NOVU_CONNECT_TELEGRAM_BOT_USERNAME=<name>
     NOVU_CONNECT_TELEGRAM_DEEPLINK_QR_PNG=<absolute png path>   (only when present)
 
+  Chat SDK (existing project wiring prompt):
+    NOVU_CONNECT_CHAT_SDK_PROMPT_FILE=<absolute path to multi-line agent prompt file>
+
   Success:
     ✓ Your agent is live.
 

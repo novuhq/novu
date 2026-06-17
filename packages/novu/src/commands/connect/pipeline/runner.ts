@@ -41,10 +41,11 @@ import { connectEmailForAgent } from "./channels/email";
 import { connectSlackForAgent } from "./channels/slack";
 import { connectTelegramForAgent } from "./channels/telegram";
 import {
-  createBridgeAgentFlow,
-  maybeRunChatSdkTunnel,
-  runChatSdkProjectSetup,
-} from "./chat-sdk";
+  createChatSdkAgent,
+  finalizeChatSdkProjectSetup,
+  runChatSdkTunnelIfNeeded,
+  shouldAutoRunChatSdkTunnel,
+} from "./chat-sdk/connect-flow";
 import {
   resolveAgentRuntimeIntegration,
   resolveRuntimeFromOptions,
@@ -154,7 +155,7 @@ export async function runConnectPipeline(
     let chatSdkOutcome: ChatSdkConnectOutcome | undefined;
 
     if (connectMode === "chat-sdk") {
-      const bridgeResult = await createBridgeAgentFlow(
+      const bridgeResult = await createChatSdkAgent(
         session.client,
         ui,
         options,
@@ -366,7 +367,7 @@ export async function runConnectPipeline(
         : null;
 
     if (connectMode === "chat-sdk") {
-      chatSdkOutcome = await runChatSdkProjectSetup({
+      chatSdkOutcome = await finalizeChatSdkProjectSetup({
         options,
         ui,
         client: session.client,
@@ -398,22 +399,12 @@ export async function runConnectPipeline(
       ...sessionProps,
     });
 
-    const willRunTunnel =
-      chatSdkOutcome !== undefined &&
-      chatSdkOutcome.scaffolded &&
-      !chatSdkOutcome.skippedInstall;
-
     // Tear down Ink before starting the bridge server so its stdout/console
     // output does not trigger a second orb render while the TUI is still mounted.
     const exitCode = await ui.shutdown();
 
-    if (willRunTunnel) {
-      await maybeRunChatSdkTunnel({
-        outcome: chatSdkOutcome,
-        options,
-        client: session.client,
-        agent,
-      });
+    if (shouldAutoRunChatSdkTunnel(chatSdkOutcome)) {
+      await runChatSdkTunnelIfNeeded(chatSdkOutcome);
 
       return { exitCode: 0 };
     }
@@ -459,10 +450,6 @@ async function resolveAgentConnectMode(
 function resolveConnectModeFromOptions(
   options: ConnectCommandOptions,
 ): AgentConnectMode | undefined {
-  if (options.chatSdk || options.brain === "chat-sdk") {
-    return "chat-sdk";
-  }
-
   return options.runtime;
 }
 

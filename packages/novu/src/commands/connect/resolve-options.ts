@@ -1,19 +1,38 @@
-import { CloudRegionEnum } from '../dev/enums';
-import { resolveRegionUrls } from '../dev/resolve-region-urls';
-import type { ConnectCommandOptions } from './types';
+import { CloudRegionEnum } from "../dev/enums";
+import { resolveRegionUrls } from "../dev/resolve-region-urls";
+import type { AgentConnectMode, ConnectCommandOptions } from "./types";
 
-export const CONNECT_REGION_VALUES = Object.values(CloudRegionEnum) as CloudRegionEnum[];
+export const CONNECT_REGION_VALUES = Object.values(
+  CloudRegionEnum,
+) as CloudRegionEnum[];
 
-export type ConnectCommandInput = Omit<ConnectCommandOptions, 'apiUrl' | 'dashboardUrl' | 'connectDashboardUrl'> & {
+export type ConnectCommandInput = Omit<
+  ConnectCommandOptions,
+  "apiUrl" | "dashboardUrl" | "connectDashboardUrl"
+> & {
   apiUrl?: string;
   dashboardUrl?: string;
   connectDashboardUrl?: string;
 };
 
-export function resolveConnectCommandOptions(input: ConnectCommandInput): ConnectCommandOptions {
+function resolveRuntimeFromFlags(
+  input: ConnectCommandInput,
+): AgentConnectMode | undefined {
+  if (input.chatSdk || input.brain === "chat-sdk") {
+    return "chat-sdk";
+  }
+
+  return input.runtime;
+}
+
+export function resolveConnectCommandOptions(
+  input: ConnectCommandInput,
+): ConnectCommandOptions {
   const region = input.region;
   if (!CONNECT_REGION_VALUES.includes(region)) {
-    throw new Error(`Invalid --region "${region}". Expected one of: ${CONNECT_REGION_VALUES.join(', ')}.`);
+    throw new Error(
+      `Invalid --region "${region}". Expected one of: ${CONNECT_REGION_VALUES.join(", ")}.`,
+    );
   }
 
   const urls = resolveRegionUrls(region, {
@@ -22,11 +41,20 @@ export function resolveConnectCommandOptions(input: ConnectCommandInput): Connec
     connectDashboardUrl: input.connectDashboardUrl,
   });
 
+  const runtime = resolveRuntimeFromFlags(input);
+
   return {
     ...input,
     region,
+    runtime,
     apiUrl: urls.apiUrl,
     dashboardUrl: urls.dashboardUrl,
     connectDashboardUrl: urls.connectDashboardUrl,
   };
+}
+
+export function isChatSdkRuntime(
+  runtime: AgentConnectMode | undefined,
+): boolean {
+  return runtime === "chat-sdk";
 }
