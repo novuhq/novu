@@ -116,40 +116,60 @@ type CardContentProps = {
   resetDate: string | null;
 };
 
+function UpgradeButton() {
+  return (
+    <Button className="h-[24px] w-full" variant="secondary" mode="lighter" size="2xs">
+      Upgrade now
+    </Button>
+  );
+}
+
+function ResetDateLabel({ formattedResetDate }: { formattedResetDate: string }) {
+  return (
+    <span className="text-text-soft text-label-xs flex items-center gap-1 leading-[16px]">
+      <RiCalendarEventLine className="size-3.5" />
+      Usage resets on {formattedResetDate}
+    </span>
+  );
+}
+
 function CardContent({ metrics, resetDate }: CardContentProps) {
   const anyComplete = metrics.some((metric) => getUsageStatus(metric.current, metric.max).isComplete);
   const formattedResetDate = resetDate ? format(new Date(resetDate), 'MMM d yyyy') : '';
 
+  if (anyComplete) {
+    return (
+      <div className="flex flex-col p-2">
+        <div className="space-y-2">
+          {metrics.map((metric) => (
+            <UsageMetricRow key={metric.label} {...metric} />
+          ))}
+          {formattedResetDate && <ResetDateLabel formattedResetDate={formattedResetDate} />}
+        </div>
+        <div className="mt-2">
+          <UpgradeButton />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex flex-col overflow-hidden p-2">
-      <div
-        className={
-          anyComplete
-            ? 'space-y-2'
-            : 'space-y-2 transition-all duration-200 ease-out group-hover:translate-y-[-8px] group-hover:opacity-0'
-        }
-      >
+      <div className="space-y-2 transition-transform duration-200 ease-out group-hover:-translate-y-1">
         {metrics.map((metric) => (
           <UsageMetricRow key={metric.label} {...metric} />
         ))}
-        {formattedResetDate && (
-          <span className="text-text-soft text-label-xs flex items-center gap-1 leading-[16px]">
-            <RiCalendarEventLine className="size-3.5" />
-            Usage resets on {formattedResetDate}
-          </span>
-        )}
       </div>
 
-      <div
-        className={
-          anyComplete
-            ? 'mt-2'
-            : 'absolute bottom-2 left-2 right-2 translate-y-[10px] opacity-0 transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100'
-        }
-      >
-        <Button className="h-[24px] w-full" variant="secondary" mode="lighter" size="2xs">
-          Upgrade now
-        </Button>
+      <div className="relative mt-2 h-6">
+        {formattedResetDate && (
+          <div className="absolute inset-0 flex items-center transition-all duration-200 ease-out group-hover:-translate-y-1 group-hover:opacity-0">
+            <ResetDateLabel formattedResetDate={formattedResetDate} />
+          </div>
+        )}
+        <div className="absolute inset-0 flex items-center translate-y-1 opacity-0 transition-all duration-200 ease-out group-hover:translate-y-0 group-hover:opacity-100">
+          <UpgradeButton />
+        </div>
       </div>
     </div>
   );
