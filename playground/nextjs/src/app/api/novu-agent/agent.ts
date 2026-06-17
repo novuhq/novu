@@ -76,7 +76,7 @@ export function registerHandlers(chat: Chat): void {
   // adapter pre-subscribes when messageCount > 1 or history is non-empty.
   chat.onSubscribedMessage(async (thread, message) => {
     console.log('onSubscribedMessage', JSON.stringify(thread, null, 2), JSON.stringify(message, null, 2));
-    const user = thread.adapter.getUser?.(message.author.userId);
+    const user = await thread.adapter.getUser?.(message.author.userId);
     console.log('user', JSON.stringify(user, null, 2));
     const novu = getNovuContext(thread);
 
