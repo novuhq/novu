@@ -30,14 +30,20 @@ export const catalog = {
       ? 'pass'
       : fail('a connect command passed --secret-key or NOVU_SECRET_KEY'),
 
-  usedLoginWhenDashboardPrompt: (result: RunResult): GraderOutcome | 'pass' => {
+  usedDashboardOAuthWhenPrompted: (result: RunResult): GraderOutcome | 'pass' => {
     if (!/signed in to the Novu dashboard/i.test(result.userPrompt)) {
       return 'pass';
     }
 
-    return connectCommands(result).some((cmd) => /--login\b/.test(cmd))
+    const commands = connectCommands(result);
+
+    if (commands.length === 0) {
+      return fail('user was signed into the dashboard but connect was never run');
+    }
+
+    return commands.every((cmd) => !/--keyless\b/.test(cmd))
       ? 'pass'
-      : fail('user was signed into the dashboard but no connect command used --login');
+      : fail('user was signed into the dashboard but a connect command used --keyless instead of dashboard OAuth');
   },
 
   backgroundConnectShell: (result: RunResult): GraderOutcome | 'pass' => {
@@ -122,9 +128,13 @@ export const catalog = {
       return fail('ran a connect command on a keyless WhatsApp flow that should redirect to the dashboard');
     }
 
-    return /dashboard\.novu\.co|dashboard redirect|continue.*dashboard/i.test(transcriptText(result))
-      ? 'pass'
-      : fail('did not direct the user to the dashboard');
+    const text = transcriptText(result);
+    const mentionsDashboard = /dashboard\.novu\.co|\bdashboard\b/i.test(text);
+    const directsThere = /dashboard\.novu\.co|redirect|continue|sign[\s-]?(in|up)|head (over )?to|go to|open/i.test(
+      text
+    );
+
+    return mentionsDashboard && directsThere ? 'pass' : fail('did not direct the user to the dashboard');
   },
 
   confirmedBeforeRun: (result: RunResult): GraderOutcome | 'pass' => {
@@ -167,7 +177,7 @@ export const catalog = {
       : fail('never read the auth-url file or surfaced the /oauth/device URL'),
 
   reportedSuccess: (result: RunResult): GraderOutcome | 'pass' =>
-    /your agent is live|agent is live/i.test(transcriptText(result))
+    /agent is (now )?live|✓ your agent/i.test(transcriptText(result))
       ? 'pass'
       : fail('final report did not confirm the agent is live'),
 

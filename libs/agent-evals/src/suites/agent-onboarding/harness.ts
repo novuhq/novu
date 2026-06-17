@@ -77,6 +77,7 @@ export type ScenarioHarnessOptions<TParsed = ParsedCommand> = {
   system: string;
   model?: string;
   maxSteps?: number;
+  temperature?: number;
 };
 
 function resolveMaxSteps(explicit?: number): number {
@@ -89,9 +90,25 @@ function resolveMaxSteps(explicit?: number): number {
   return Number.isFinite(fromEnv) && fromEnv > 0 ? fromEnv : 40;
 }
 
+/**
+ * Default to 0 for deterministic, reproducible grading. A non-zero default would make
+ * run-to-run results depend on sampling noise, so a flaky prompt and a real regression
+ * become indistinguishable. Override via NOVU_EVAL_TEMPERATURE only for robustness sampling.
+ */
+function resolveTemperature(explicit?: number): number {
+  if (explicit !== undefined) {
+    return explicit;
+  }
+
+  const fromEnv = Number.parseFloat(process.env.NOVU_EVAL_TEMPERATURE ?? '');
+
+  return Number.isFinite(fromEnv) && fromEnv >= 0 ? fromEnv : 0;
+}
+
 export function scenarioHarness<TParsed = ParsedCommand>(options: ScenarioHarnessOptions<TParsed>) {
   const modelName = options.model ?? process.env.NOVU_EVAL_MODEL ?? 'claude-sonnet-4-5';
   const maxSteps = resolveMaxSteps(options.maxSteps);
+  const temperature = resolveTemperature(options.temperature);
 
   return createHarness({
     name: `agent-onboarding/${options.scenario.id}`,
@@ -110,6 +127,7 @@ export function scenarioHarness<TParsed = ParsedCommand>(options: ScenarioHarnes
           system: options.system,
           messages,
           tools,
+          temperature,
           stopWhen: stepCountIs(maxSteps),
         });
 

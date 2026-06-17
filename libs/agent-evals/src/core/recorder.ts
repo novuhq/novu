@@ -79,7 +79,7 @@ export class RunRecorder {
 }
 
 export function extractUrls(text: string): string[] {
-  const matches = text.match(/https?:\/\/[^\s)>\]"']+/g) ?? [];
+  const matches = text.match(/(?:https?:\/\/|mailto:)[^\s)>\]"']+/g) ?? [];
 
   return matches.map((url) => url.replace(/[.,;]+$/, ''));
 }
@@ -99,6 +99,7 @@ export function isForbiddenWatcherCommand(command: string): boolean {
     /\bsleep\b/.test(normalized) ||
     /\btail\b/.test(normalized) ||
     /\bgrep\b/.test(normalized) ||
+    /\bps\b/.test(normalized) ||
     /\bschedulewakeup\b/.test(normalized)
   );
 }

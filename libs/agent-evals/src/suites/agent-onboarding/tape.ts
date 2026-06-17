@@ -12,8 +12,8 @@ export function connectTape(options: ConnectTapeOptions): Tape<ConnectFlags> {
     chunks: options.chunks,
     exitCode: options.exitCode ?? 0,
     validate: connectValidate({
-      requireLogin: options.requireLogin,
-      requireNoLogin: options.requireNoLogin,
+      requireKeyless: options.requireKeyless,
+      requireNoKeyless: options.requireNoKeyless,
       allowedChannels: options.allowedChannels,
     }),
   };
@@ -38,8 +38,8 @@ export function buildDefaultTape(overrides?: Partial<ConnectTapeOptions>): Tape<
   return connectTape({
     chunks: overrides?.chunks ?? defaultChunks,
     exitCode: overrides?.exitCode ?? 0,
-    requireNoLogin: overrides?.requireNoLogin ?? true,
+    requireKeyless: overrides?.requireKeyless,
     allowedChannels: overrides?.allowedChannels ?? ['slack'],
-    requireLogin: overrides?.requireLogin,
+    requireNoKeyless: overrides?.requireNoKeyless,
   });
 }

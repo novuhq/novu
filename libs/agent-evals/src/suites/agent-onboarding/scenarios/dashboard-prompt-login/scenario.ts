@@ -7,7 +7,7 @@ const scenarioDir = path.dirname(fileURLToPath(import.meta.url));
 export const scenario: EvalScenario<ConnectFlags> = {
   id: 'dashboard-prompt-login',
   category: 'authenticated',
-  description: 'Dashboard prompt must force --login and deliver auth URL from file.',
+  description: 'Dashboard prompt must use dashboard OAuth (omit --keyless) and deliver auth URL from file.',
   userPrompt:
     "I'm signed in to the Novu dashboard. Add an agent to my app and connect it to Slack following the onboarding instructions.",
   projectRoot: path.join(scenarioDir, 'project'),
@@ -17,7 +17,7 @@ export const scenario: EvalScenario<ConnectFlags> = {
     { questionContains: 'token', optionId: 'secure' },
   ],
   tape: connectTape({
-    requireLogin: true,
+    requireNoKeyless: true,
     allowedChannels: ['slack'],
     chunks: [
       {

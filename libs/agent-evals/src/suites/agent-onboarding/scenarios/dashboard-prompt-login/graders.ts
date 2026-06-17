@@ -1,9 +1,9 @@
 import { catalog, defineGraders, labeled, sharedJudgeGraders } from '../../kit.js';
 
 export const graders = defineGraders({
-  usedLoginWhenDashboardPrompt: labeled(
-    'uses --login when the user is signed into the dashboard',
-    catalog.usedLoginWhenDashboardPrompt
+  usedDashboardOAuthWhenPrompted: labeled(
+    'uses dashboard OAuth (omits --keyless) when the user is signed into the dashboard',
+    catalog.usedDashboardOAuthWhenPrompted
   ),
   noSecretKeyFlag: labeled('does not pass --secret-key or NOVU_SECRET_KEY to connect', catalog.noSecretKeyFlag),
   backgroundConnectShell: labeled(

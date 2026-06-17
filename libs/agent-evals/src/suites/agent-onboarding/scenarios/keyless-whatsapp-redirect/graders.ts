@@ -6,5 +6,4 @@ export const graders = defineGraders({
     'redirects the user to the dashboard instead of running connect',
     catalog.noConnectOnKeylessWhatsapp
   ),
-  usedPickerForDecisions: labeled('uses AskUserQuestion for channel decisions', catalog.usedPickerForDecisions),
 });

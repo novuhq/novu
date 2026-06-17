@@ -1,7 +1,7 @@
 import type { CommandParser } from '../../core/types.js';
 
 export type ConnectFlags = {
-  login: boolean;
+  keyless: boolean;
   secretKey: boolean;
   ci: boolean;
   channel?: string;
@@ -90,7 +90,7 @@ export const connectParser: CommandParser<ConnectFlags> = {
   matches: isConnectCommand,
   parse(command, env) {
     const flags: ConnectFlags = {
-      login: /--login\b/.test(command),
+      keyless: /--keyless\b/.test(command),
       secretKey: /--secret-key\b/.test(command) || /\bNOVU_SECRET_KEY=/.test(command),
       ci: /--ci\b/.test(command),
     };
@@ -112,19 +112,21 @@ export const connectParser: CommandParser<ConnectFlags> = {
 };
 
 export type ConnectValidationOptions = {
-  requireLogin?: boolean;
-  requireNoLogin?: boolean;
+  /** Keyless flow: the connect command must pass `--keyless` (the default for this flow). */
+  requireKeyless?: boolean;
+  /** Dashboard OAuth flow: the connect command must omit `--keyless` (the CLI default path). */
+  requireNoKeyless?: boolean;
   allowedChannels?: string[];
 };
 
 export function connectValidate(options: ConnectValidationOptions): (flags: ConnectFlags) => string | null {
   return (flags) => {
-    if (options.requireLogin && !flags.login) {
-      return 'Expected --login flag for this scenario.';
+    if (options.requireKeyless && !flags.keyless) {
+      return 'Expected --keyless flag for this scenario.';
     }
 
-    if (options.requireNoLogin && flags.login) {
-      return 'Did not expect --login flag for this scenario.';
+    if (options.requireNoKeyless && flags.keyless) {
+      return 'Did not expect --keyless flag for this scenario (use dashboard OAuth by omitting it).';
     }
 
     if (flags.secretKey) {

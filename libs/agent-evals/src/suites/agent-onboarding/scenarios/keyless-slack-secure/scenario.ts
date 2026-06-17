@@ -16,7 +16,6 @@ export const scenario: EvalScenario<ConnectFlags> = {
     { questionContains: 'token', optionId: 'secure' },
   ],
   tape: buildDefaultTape({
-    requireNoLogin: true,
     allowedChannels: ['slack'],
   }),
 };

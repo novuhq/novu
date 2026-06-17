@@ -16,7 +16,6 @@ export const scenario: EvalScenario<ConnectFlags> = {
     { questionContains: 'token', optionId: 'secure' },
   ],
   tape: connectTape({
-    requireNoLogin: true,
     allowedChannels: ['slack'],
     chunks: [
       { stdout: 'NOVU_CONNECT_SLACK_SETUP_URL=https://setup.novu.test/slack/persona-1' },

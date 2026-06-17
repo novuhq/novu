@@ -127,10 +127,15 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
 
       if (runInBackground) {
         context.engine.pollShell(shell.id);
+        const backgroundStdout = shell.emittedStdout.join('\n');
+
+        for (const url of extractUrls(backgroundStdout)) {
+          context.recorder.recordUrl(url);
+        }
 
         return {
           shellId: shell.id,
-          stdout: shell.emittedStdout.join('\n'),
+          stdout: backgroundStdout,
           stderr: '',
           running: !shell.completed,
         };

@@ -18,7 +18,7 @@ export const scenario: EvalScenario<ConnectFlags> = {
   followUpMessages: ['Here is my Slack App Configuration Token: xoxe.xoxp-test-token'],
   followUpOnOptionId: 'in_chat',
   tape: connectTape({
-    requireLogin: true,
+    requireNoKeyless: true,
     allowedChannels: ['slack'],
     chunks: [
       {

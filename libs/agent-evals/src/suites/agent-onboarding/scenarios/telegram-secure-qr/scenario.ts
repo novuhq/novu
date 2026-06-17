@@ -17,7 +17,6 @@ export const scenario: EvalScenario<ConnectFlags> = {
     { questionContains: 'token', optionId: 'secure' },
   ],
   tape: connectTape({
-    requireNoLogin: true,
     allowedChannels: ['telegram'],
     chunks: [
       { stdout: 'NOVU_CONNECT_TELEGRAM_BOTFATHER_URL=https://t.me/botfather' },

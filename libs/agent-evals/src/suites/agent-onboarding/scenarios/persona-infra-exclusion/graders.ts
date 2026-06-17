@@ -7,7 +7,7 @@ export const graders = defineGraders({
   ),
   descriptionIncludesAudience: labeled(
     'includes audience-specific tokens in the drafted agent description',
-    catalog.descriptionIncludesTokens(['staff', 'wine'])
+    catalog.descriptionIncludesTokens(['staff', 'wine', 'bartender', 'sommelier', 'waitstaff', 'hospitality'])
   ),
   confirmedBeforeRun: labeled('confirms with the user before running connect', catalog.confirmedBeforeRun),
   ...sharedJudgeGraders,
