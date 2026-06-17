@@ -138,12 +138,16 @@ export class PlanLimitGateService {
    * conversations are never blocked — only new ones — so an organization at its
    * limit keeps serving its current threads. Posts the upgrade card before
    * returning. Keyless/demo orgs are governed by their own caps and skipped.
+   *
+   * `conversation` is omitted for a brand-new thread (not yet persisted); the
+   * caller invokes this before creating it so a block can't orphan a
+   * Conversation/participants. A brand-new thread is always a NEW activation.
    */
   async maybeBlockConversation(
     agentId: string,
     config: ResolvedAgentConfig,
     thread: Thread,
-    conversation: ConversationEntity
+    conversation?: ConversationEntity
   ): Promise<boolean> {
     if (config.isKeyless) {
       return false;
@@ -153,6 +157,8 @@ export class PlanLimitGateService {
       conversation,
       platform: config.platform,
       organizationId: config.organizationId,
+      environmentId: config.environmentId,
+      agentId,
       isDirectMessage: thread.isDM,
     });
 

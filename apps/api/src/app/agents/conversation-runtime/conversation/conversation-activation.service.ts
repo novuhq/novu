@@ -79,9 +79,17 @@ interface EngagementContext {
 }
 
 interface LimitCheckContext {
-  conversation: ConversationEntity;
+  /**
+   * The conversation being engaged, or `undefined` for a brand-new thread that
+   * hasn't been persisted yet — the gate evaluates it as a NEW activation so the
+   * caller can block before creating an orphaned conversation.
+   */
+  conversation?: ConversationEntity;
   platform: AgentPlatformEnum;
   organizationId: string;
+  /** Used for analytics when there is no conversation yet; otherwise taken from the conversation. */
+  environmentId?: string;
+  agentId?: string;
   isDirectMessage?: boolean;
   now?: Date;
 }
@@ -305,7 +313,7 @@ export class ConversationActivationService {
    * Delegates the decision to the shared `classifyActivationReason` rules.
    */
   classifyActivation(
-    conversation: ConversationEntity,
+    conversation: ConversationEntity | undefined,
     platform: AgentPlatformEnum,
     periodKey: string,
     options: { isDirectMessage?: boolean; now?: Date } = {}
@@ -315,7 +323,8 @@ export class ConversationActivationService {
     const windowMs = this.resolveWindowMs(platform, this.deriveThreadKind(isDirectMessage));
     const windowThresholdIso = new Date(now.getTime() - windowMs).toISOString();
 
-    return classifyActivationReason(conversation.billing, { periodKey, windowThresholdIso });
+    // No conversation yet → no billing state → the shared rules classify it as NEW.
+    return classifyActivationReason(conversation?.billing, { periodKey, windowThresholdIso });
   }
 
   /**
@@ -481,9 +490,9 @@ export class ConversationActivationService {
         try {
           trackAgentActiveConversationLimitReached(this.analyticsService, {
             organizationId: context.organizationId,
-            environmentId: context.conversation._environmentId,
-            agentId: context.conversation._agentId,
-            conversationId: context.conversation._id,
+            environmentId: context.conversation?._environmentId ?? context.environmentId ?? '',
+            agentId: context.conversation?._agentId ?? context.agentId ?? '',
+            conversationId: context.conversation?._id ?? '',
             platform: context.platform,
             apiServiceLevel,
             limit,
@@ -562,8 +571,8 @@ export class ConversationActivationService {
     );
   }
 
-  /** Live hint takes precedence; otherwise the value persisted on the conversation. */
-  private resolveIsDirectMessage(conversation: ConversationEntity, hint?: boolean): boolean | undefined {
-    return hint ?? conversation.isDirectMessage;
+  /** Live hint takes precedence; otherwise the value persisted on the conversation (if any). */
+  private resolveIsDirectMessage(conversation: ConversationEntity | undefined, hint?: boolean): boolean | undefined {
+    return hint ?? conversation?.isDirectMessage;
   }
 }

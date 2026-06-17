@@ -267,6 +267,8 @@ describe('Active Conversations metering - inbound flow #novu-v2', () => {
       expect(await countActivations(), 'blocked conversation must not be counted').to.equal(1);
       expect(bridgeCalls.length, 'blocked conversation must not dispatch').to.equal(1);
       expect(cardSpy.called, 'an upgrade card should be posted').to.equal(true);
+      // Gate runs before persistence — a blocked brand-new thread leaves no orphan.
+      expect(await findConversation(threadB), 'blocked new conversation must not be persisted').to.equal(null);
 
       // The already-counted conversation keeps working.
       await invokeSlack(threadA, 'follow up');

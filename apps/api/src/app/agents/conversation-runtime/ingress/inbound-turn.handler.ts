@@ -325,6 +325,30 @@ export class AgentInboundHandler implements OnModuleInit {
     }
 
     const platformThreadId = getInboundPlatformThreadId(config.platform, thread, message);
+
+    // Resolve whether this thread already has a conversation *before* creating
+    // one. The free-tier active-conversations gate must run before persistence
+    // so a blocked brand-new thread never leaves an orphaned Conversation and
+    // participants. Existing threads pass their entity so reopen / new-cycle
+    // activations are still gated (and they carry no orphan risk).
+    const existingConversation = await this.conversationService.findByPlatformThread(
+      config.environmentId,
+      config.organizationId,
+      agentId,
+      config.integrationId,
+      platformThreadId
+    );
+
+    // Free-tier active-conversations short-circuit: block engagements that would
+    // start a *new* active conversation once the included limit is reached.
+    // Existing (already-counted) conversations keep working.
+    if (await this.planLimitGate.maybeBlockConversation(agentId, config, thread, existingConversation ?? undefined)) {
+      return;
+    }
+
+    // Persist only after the gate. For an existing thread this reconciles
+    // participants and reopens a RESOLVED conversation; for a brand-new one it
+    // creates the Conversation that the gate just cleared.
     const conversation = await this.openConversation(
       agentId,
       config,
@@ -352,13 +376,6 @@ export class AgentInboundHandler implements OnModuleInit {
 
         return;
       }
-    }
-
-    // Free-tier active-conversations short-circuit: block engagements that would
-    // start a *new* active conversation once the included limit is reached.
-    // Existing (already-counted) conversations keep working.
-    if (await this.planLimitGate.maybeBlockConversation(agentId, config, thread, conversation)) {
-      return;
     }
 
     const storedAttachments = await this.storeInboundAttachments(config, conversation, message);
