@@ -4,11 +4,7 @@ import path from 'node:path';
 const SOURCE_DIRS = ['lib', 'src', 'app'] as const;
 
 const ADAPTER_PATTERN = /createNovuAdapter\s*\(/;
-const BRIDGE_ROUTE_PATTERNS = [
-  /webhooks[/\\]novu[/\\]route\.(ts|tsx|js|jsx|mjs)$/,
-  /webhooks\.novu/,
-  /handleWebhook\s*\(/,
-];
+const BRIDGE_ROUTE_PATTERNS = [/webhooks[/\\]novu[/\\]route\.(ts|tsx|js|jsx|mjs)$/, /webhooks\.novu/];
 
 export type WiringDetection = {
   hasAdapterCall: boolean;

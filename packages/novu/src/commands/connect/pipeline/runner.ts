@@ -26,7 +26,7 @@ import type { ConnectUI } from '../ui/ui';
 import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
-import { createBridgeAgentFlow, maybeRunChatSdkTunnel, runChatSdkProjectSetup } from './chat-sdk';
+import { createBridgeAgentFlow, runChatSdkProjectSetup, shutdownConnectUiAndMaybeRunChatSdkTunnel } from './chat-sdk';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
 
 export interface ConnectPipelineInput {
@@ -350,20 +350,19 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
 
     // Tear down Ink before starting the bridge server so its stdout/console
     // output does not trigger a second orb render while the TUI is still mounted.
-    const exitCode = await ui.shutdown();
-
-    if (await maybeRunChatSdkTunnel({ outcome: chatSdkOutcome, ci: options.ci })) {
-      return { exitCode: 0 };
-    }
-
-    return { exitCode };
+    return {
+      exitCode: await shutdownConnectUiAndMaybeRunChatSdkTunnel({
+        ui,
+        outcome: chatSdkOutcome,
+        ci: options.ci,
+      }),
+    };
   } catch (err) {
     const message = describeError(err);
     ui.failure(message);
     track(CONNECT_EVENTS.ERROR, { message, ...sessionProps });
-    const exitCode = await ui.shutdown();
 
-    return { exitCode: exitCode || 1 };
+    return { exitCode: (await ui.shutdown()) || 1 };
   }
 }
 
@@ -373,14 +372,13 @@ async function resolveAgentConnectMode(
   track: (event: string, data?: Record<string, unknown>) => void,
   sessionProps: Record<string, unknown>
 ): Promise<AgentConnectMode> {
-  const fromOptions = resolveConnectModeFromOptions(options);
-  if (fromOptions) {
+  if (options.runtime) {
     track(CONNECT_EVENTS.RUNTIME_SELECTED, {
-      connectMode: fromOptions,
+      connectMode: options.runtime,
       ...sessionProps,
     });
 
-    return fromOptions;
+    return options.runtime;
   }
 
   const picked = await ui.pickAgentConnectMode({
@@ -392,10 +390,6 @@ async function resolveAgentConnectMode(
   });
 
   return picked;
-}
-
-function resolveConnectModeFromOptions(options: ConnectCommandOptions): AgentConnectMode | undefined {
-  return options.runtime;
 }
 
 async function createAgentFlow(

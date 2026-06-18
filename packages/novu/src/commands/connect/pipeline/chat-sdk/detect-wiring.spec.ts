@@ -48,4 +48,19 @@ describe('detectChatSdkWiring', () => {
       isWired: false,
     });
   });
+
+  it('does not treat a bare handleWebhook reference as a bridge route', () => {
+    const dir = makeTempDir();
+    fs.mkdirSync(path.join(dir, 'lib'), { recursive: true });
+    fs.writeFileSync(
+      path.join(dir, 'lib/bot.ts'),
+      "import { createNovuAdapter } from '@novu/chat-sdk-adapter';\nexport const novu = createNovuAdapter();\n// handleWebhook(request)"
+    );
+
+    expect(detectChatSdkWiring(dir)).toEqual({
+      hasAdapterCall: true,
+      hasBridgeRoute: false,
+      isWired: false,
+    });
+  });
 });

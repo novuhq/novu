@@ -175,22 +175,6 @@ export function PhaseContent({
         </Box>
       );
 
-    case 'prompt-agent-name':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text bold>Name your Chat SDK agent</Text>
-          <Text dimColor>This creates a self-hosted bridge agent in Novu — your app is the brain.</Text>
-          <Box borderStyle="round" paddingX={1}>
-            <TextInput
-              defaultValue={phase.defaultName}
-              placeholder="My Chat SDK Agent"
-              onSubmit={(value) => phase.resolve(value.trim() || phase.defaultName)}
-            />
-          </Box>
-          <Text dimColor>Press Enter to continue.</Text>
-        </Box>
-      );
-
     case 'generating':
       return <GeneratingContent />;
 

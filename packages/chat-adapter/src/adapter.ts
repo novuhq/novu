@@ -8,6 +8,8 @@ import type {
   FormattedContent,
   RawMessage,
   StateAdapter,
+  StreamChunk,
+  StreamOptions,
   ThreadInfo,
   UserInfo,
   WebhookOptions,
@@ -16,6 +18,7 @@ import { handleBridgeProbe } from './bridge-probe.js';
 import { type ChatModuleParts, MessageMapper } from './message-mapper.js';
 import { ReplyClient } from './reply-client.js';
 import { patchSnapshotFromSignals, patchSnapshotResolved } from './snapshot-store.js';
+import { deliverBufferedStream, deliverStreamingWithEdits, shouldBufferStream } from './stream-delivery.js';
 import { channelIdFromThreadId, decodeThreadId, encodeThreadId, isDMThreadId } from './thread-id.js';
 import {
   type AgentBridgeRequest,
@@ -362,6 +365,25 @@ export class NovuAdapterImpl implements NovuTypedAdapter {
       raw: this.outboundRaw(decoded, messageId),
       threadId,
     };
+  }
+
+  async stream(
+    threadId: string,
+    textStream: AsyncIterable<string | StreamChunk>,
+    options?: StreamOptions
+  ): Promise<RawMessage<NovuRawMessage>> {
+    const decoded = decodeThreadId(threadId);
+    const deps = {
+      postMessage: (id: string, message: AdapterPostableMessage) => this.postMessage(id, message),
+      editMessage: (id: string, messageId: string, message: AdapterPostableMessage) =>
+        this.editMessage(id, messageId, message),
+    };
+
+    if (shouldBufferStream(decoded.platform)) {
+      return deliverBufferedStream(threadId, textStream, deps);
+    }
+
+    return deliverStreamingWithEdits(threadId, textStream, deps, options);
   }
 
   async editMessage(

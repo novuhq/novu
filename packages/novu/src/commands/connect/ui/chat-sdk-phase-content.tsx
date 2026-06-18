@@ -1,3 +1,4 @@
+import { TextInput } from '@inkjs/ui';
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
@@ -7,6 +8,7 @@ import type { Phase } from './store';
 const CHAT_SDK_PHASE_KINDS = [
   'confirm-env-secret-overwrite',
   'confirm-scaffold',
+  'prompt-agent-name',
   'scaffolding-chat-sdk',
   'chat-sdk-scaffolded',
   'chat-sdk-install-deps-confirm',
@@ -37,6 +39,9 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
 
     case 'confirm-scaffold':
       return <ConfirmScaffoldContent projectDir={phase.projectDir} appName={phase.appName} onResolve={phase.resolve} />;
+
+    case 'prompt-agent-name':
+      return <PromptAgentNameContent defaultName={phase.defaultName} onResolve={phase.resolve} />;
 
     case 'scaffolding-chat-sdk':
       return (
@@ -182,6 +187,29 @@ function ChatSdkTunnelOfferContent({
       <Text dimColor>Runs your app and registers a public bridge URL with Novu.</Text>
       <Text color="cyan">{phase.devCommand}</Text>
       <Text color="cyan">Enter · start tunnel · s · skip</Text>
+    </Box>
+  );
+}
+
+function PromptAgentNameContent({
+  defaultName,
+  onResolve,
+}: {
+  defaultName: string;
+  onResolve: (name: string) => void;
+}): React.ReactElement {
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Name your Chat SDK agent</Text>
+      <Text dimColor>This creates a self-hosted bridge agent in Novu — your app is the brain.</Text>
+      <Box borderStyle="round" paddingX={1}>
+        <TextInput
+          defaultValue={defaultName}
+          placeholder="My Chat SDK Agent"
+          onSubmit={(value) => onResolve(value.trim() || defaultName)}
+        />
+      </Box>
+      <Text dimColor>Press Enter to continue.</Text>
     </Box>
   );
 }

@@ -4,7 +4,7 @@ import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
 import type { AgentSummary, ChatSdkConnectOutcome, ChatSdkRequirementId, ConnectCommandOptions } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 import { defaultAgentNameFromDir, deriveAgentIdentifier } from './derive-identifier';
-import { detectChatSdkProject } from './detect-project';
+import { defaultScaffoldDirName, detectChatSdkProject } from './detect-project';
 import { applyDevNovuScript, buildDevNovuScript } from './dev-script';
 import {
   buildChatSdkInstallCommand,
@@ -49,7 +49,7 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
       };
     }
 
-    const appName = input.options.scaffoldDir?.trim() || defaultScaffoldAppName(input.agent.identifier);
+    const appName = input.options.scaffoldDir?.trim() || defaultScaffoldDirName(input.agent.identifier);
     const confirmed = await input.ui.confirmScaffold({
       projectDir: detected.projectDir,
       appName,
@@ -123,7 +123,10 @@ async function reconcileChatSdkProject(
     });
   }
 
-  snapshot.coreReady = recomputeCoreReady(snapshot.requirements);
+  snapshot = {
+    ...snapshot,
+    coreReady: recomputeCoreReady(snapshot.requirements),
+  };
 
   const wiringReq = snapshot.requirements.find((req) => req.id === 'code-wiring');
   const wiringInstructions =
@@ -241,7 +244,13 @@ async function applyPackageRequirement(opts: ApplyAutofixInput): Promise<ChatSdk
   return {
     ...opts.snapshot,
     requirements: opts.snapshot.requirements.map((req) =>
-      req.id === 'package' ? { ...req, status: 'manual', detail: `Skipped — run: ${installCommand}` } : req
+      req.id === 'package'
+        ? {
+            ...req,
+            status: 'manual',
+            detail: `Skipped — run: ${installCommand}`,
+          }
+        : req
     ),
   };
 }
@@ -294,10 +303,6 @@ async function resolveEnvSecretOverwrite(opts: {
   });
 }
 
-function defaultScaffoldAppName(agentIdentifier: string): string {
-  return `${agentIdentifier}-chat-sdk`;
-}
-
 type ChatSdkReconcilePlanInput = Parameters<ConnectUI['showChatSdkReconcilePlan']>[0];
 
 async function promptChatSdkTunnelIfReady(opts: {
@@ -329,7 +334,7 @@ export async function createBridgeAgentFlow(
   const existingAgents = await listAgents(client);
   const bridgeAgents = existingAgents.filter((agent) => agent.runtime !== 'managed');
 
-  if (bridgeAgents.length > 0 && !options.prompt) {
+  if (bridgeAgents.length > 0) {
     const pick = await ui.pickExistingOrCreate(bridgeAgents.map(toSummary));
 
     if (pick.action === 'use') {
@@ -386,6 +391,20 @@ function shouldRunChatSdkTunnel(
   }
 
   return outcome.tunnelAccepted === true;
+}
+
+export async function shutdownConnectUiAndMaybeRunChatSdkTunnel(input: {
+  ui: ConnectUI;
+  outcome: ChatSdkConnectOutcome | undefined;
+  ci?: boolean;
+}): Promise<number> {
+  const exitCode = await input.ui.shutdown();
+
+  if (await maybeRunChatSdkTunnel({ outcome: input.outcome, ci: input.ci })) {
+    return 0;
+  }
+
+  return exitCode;
 }
 
 function requireSecretKey(auth: ResolvedConnectAuth): string {

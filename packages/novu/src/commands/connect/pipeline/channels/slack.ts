@@ -55,7 +55,10 @@ export async function connectSlackForAgent(
   const baselineConnections = await countChannelConnectionsForIntegration(client, slackIntegration.identifier);
   if (baselineConnections > 0) {
     ui.slackConnected();
-    track(CONNECT_EVENTS.SLACK_CONNECTED, { agent: agent.identifier, alreadyConnected: true });
+    track(CONNECT_EVENTS.SLACK_CONNECTED, {
+      agent: agent.identifier,
+      alreadyConnected: true,
+    });
 
     return { connected: true, integration: slackIntegration };
   }
@@ -70,7 +73,10 @@ export async function connectSlackForAgent(
   );
 
   await ui.awaitSlackOAuthOpen({ authorizeUrl, appCreated });
-  track(CONNECT_EVENTS.SLACK_OAUTH_OPENED, { agent: agent.identifier, appCreated });
+  track(CONNECT_EVENTS.SLACK_OAUTH_OPENED, {
+    agent: agent.identifier,
+    appCreated,
+  });
   void open(authorizeUrl).catch(() => undefined);
   ui.showSlackWaiting({ authorizeUrl });
   const connected = await pollUntil(
@@ -79,7 +85,10 @@ export async function connectSlackForAgent(
 
       return count > baselineConnections ? 'done' : 'pending';
     },
-    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+    {
+      intervalMs: CHANNEL_POLL_INTERVAL_MS,
+      timeoutMs: CHANNEL_POLL_TIMEOUT_MS,
+    }
   );
   if (!connected) {
     throw new Error(
@@ -89,7 +98,10 @@ export async function connectSlackForAgent(
   }
 
   ui.slackConnected();
-  track(CONNECT_EVENTS.SLACK_CONNECTED, { agent: agent.identifier, alreadyConnected: false });
+  track(CONNECT_EVENTS.SLACK_CONNECTED, {
+    agent: agent.identifier,
+    alreadyConnected: false,
+  });
 
   return { connected: true, integration: slackIntegration };
 }
@@ -116,7 +128,9 @@ async function getAuthorizeUrlWithQuickSetupFallback(
   } catch (err) {
     if (!isMissingSlackCredentialsError(err)) throw err;
 
-    await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: false });
+    await runSlackQuickSetup(client, agent, slackIntegration, ui, options, {
+      retry: false,
+    });
 
     // The token was saved and the Slack app created, so the credentials exist —
     // retry the URL build until they become readable rather than re-issuing a
@@ -132,7 +146,9 @@ async function getAuthorizeUrlWithQuickSetupFallback(
       // Credentials never became readable within the window — the saved token was
       // likely invalid, so re-run quick setup (re-prompting where interactive)
       // before one final attempt.
-      await runSlackQuickSetup(client, agent, slackIntegration, ui, options, { retry: true });
+      await runSlackQuickSetup(client, agent, slackIntegration, ui, options, {
+        retry: true,
+      });
 
       const authorizeUrl = await buildAuthorizeUrlWithCredentialRetry(buildUrl);
 
@@ -210,7 +226,10 @@ async function runSlackQuickSetup(
 
       return 'pending';
     },
-    { intervalMs: CHANNEL_POLL_INTERVAL_MS, timeoutMs: CHANNEL_POLL_TIMEOUT_MS }
+    {
+      intervalMs: CHANNEL_POLL_INTERVAL_MS,
+      timeoutMs: CHANNEL_POLL_TIMEOUT_MS,
+    }
   );
   if (tokenSaved) {
     logSlackConfigTokenSavedHandoffEvent();
@@ -240,17 +259,18 @@ async function promptAndRunSlackQuickSetup(
   flags: { retry: boolean }
 ): Promise<void> {
   let verificationError: string | undefined;
+  let showRetryHint = flags.retry;
 
   for (let attempt = 1; attempt <= MAX_SLACK_CONFIG_TOKEN_ATTEMPTS; attempt++) {
     const token = await ui.promptForSlackConfigToken({
-      retry: flags.retry || attempt > 1,
+      retry: showRetryHint || attempt > 1,
       verificationError,
     });
 
     const formatError = validateSlackConfigTokenFormat(token);
     if (formatError) {
       verificationError = formatError;
-      flags.retry = true;
+      showRetryHint = true;
       continue;
     }
 
@@ -268,7 +288,7 @@ async function promptAndRunSlackQuickSetup(
       }
 
       verificationError = describeSlackConfigTokenError(err);
-      flags.retry = true;
+      showRetryHint = true;
     }
   }
 
