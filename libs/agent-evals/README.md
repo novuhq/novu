@@ -104,7 +104,7 @@ sequenceDiagram
 
 ## Structure
 
-```
+```text
 src/
   core/                 # suite-agnostic simulation
     types.ts            # Suite contract, RunResult, Tape, CommandParser

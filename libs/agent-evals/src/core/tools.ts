@@ -46,9 +46,17 @@ function pickScriptedAnswer<T>(
 
 async function readFixtureFile(projectRoot: string, filePath: string): Promise<string> {
   const normalized = normalizePath(filePath);
-  const absolutePath = path.isAbsolute(normalized) ? path.normalize(normalized) : path.resolve(projectRoot, normalized);
+  const resolvedRoot = path.resolve(projectRoot);
+  const absolutePath = path.isAbsolute(normalized)
+    ? path.normalize(normalized)
+    : path.resolve(resolvedRoot, normalized);
 
-  if (!absolutePath.startsWith(projectRoot)) {
+  // Segment-safe containment: `path.relative` yields a `..`-prefixed (or absolute)
+  // result when the target escapes the root, so sibling roots like `<root>-evil`
+  // no longer pass a naive prefix check.
+  const relative = path.relative(resolvedRoot, absolutePath);
+
+  if (relative === '' || relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new Error(`Refusing to read path outside fixture project: ${filePath}`);
   }
 
@@ -92,7 +100,9 @@ function readShellValue(input: string): { value: string; consumed: number } {
       } else {
         i += 1;
       }
-    } else if (/\s/.test(ch)) {
+    } else if (/\s/.test(ch) || ch === ';' || ch === '&') {
+      // Unquoted shell separators end the value so a one-line
+      // `export X=foo;npx novu connect …` leaves the connect command as the residual.
       break;
     } else {
       out += ch;
@@ -234,13 +244,14 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
     }),
     execute: async ({ shellId }) => {
       context.recorder.recordToolCall('BashOutput', { shellId });
-      context.recorder.recordPoll(shellId);
 
       const shell = context.engine.pollShell(shellId);
 
       if (!shell) {
         return { error: `Unknown shell id: ${shellId}`, stdout: '', completed: true, exitCode: 1 };
       }
+
+      context.recorder.recordPoll(shellId);
 
       const stdout = shellSummary(shell);
 
@@ -253,13 +264,16 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
 
         if (match?.[1]) {
           try {
-            const fileContents = await fs.readFile(match[1], 'utf8');
+            // Route through the fixture-root guard: the path is captured from
+            // agent-controlled shell output, so an injected absolute path must not
+            // escape the scenario workspace.
+            const fileContents = await readFixtureFile(context.scenario.projectRoot, match[1]);
 
             for (const url of extractUrls(fileContents)) {
               context.recorder.recordUrl(url);
             }
           } catch {
-            // Sentinel file may not exist in a fixture; ignore.
+            // Sentinel file may not exist (or sits outside the fixture root); ignore.
           }
         }
       }

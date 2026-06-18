@@ -131,5 +131,5 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url));
 export const PACKAGE_ROOT = path.resolve(currentDir, '../..');
 
 export function normalizePath(input: string): string {
-  return input.replace(/^\.\//, '').replace(/\\/g, '/');
+  return input.replace(/\\/g, '/').replace(/^\.\/+/, '');
 }

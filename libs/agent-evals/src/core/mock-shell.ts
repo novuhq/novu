@@ -33,12 +33,25 @@ export class MockShellEngine<TParsed = ParsedCommand> {
     this.shellCounter += 1;
     const id = `shell-${this.shellCounter}`;
     const isTracked = this.parser.matches(command);
-    const parsed = isTracked ? this.parser.parse(command, env) : null;
+
+    let parsed: TParsed | null = null;
+    let parseError: string | null = null;
+
+    if (isTracked) {
+      try {
+        parsed = this.parser.parse(command, env);
+      } catch (error) {
+        parseError = error instanceof Error ? error.message : String(error);
+      }
+    }
 
     let chunks: string[] = [];
     let exitCode: number | null = null;
 
-    if (isTracked && parsed && this.scenario.tape) {
+    if (isTracked && parseError) {
+      chunks = [`✗ Failed to parse tracked command: ${parseError}`];
+      exitCode = 1;
+    } else if (isTracked && parsed !== null && this.scenario.tape) {
       const validationError = this.scenario.tape.validate?.(parsed) ?? null;
 
       if (validationError) {

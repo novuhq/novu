@@ -85,7 +85,7 @@ export function extractUrls(text: string): string[] {
 }
 
 export function isKillCommand(command: string): boolean {
-  return /\b(kill|pkill|killall)\b/.test(command);
+  return /^\s*(kill|pkill|killall)\b/.test(command);
 }
 
 export function isOpenCommand(command: string): boolean {
@@ -93,7 +93,10 @@ export function isOpenCommand(command: string): boolean {
 }
 
 export function isForbiddenWatcherCommand(command: string): boolean {
-  const normalized = command.toLowerCase();
+  // Strip quoted argument values so a legitimate agent description such as
+  // `novu connect "A sleep coaching assistant"` is not rejected for the word "sleep".
+  const withoutQuotes = command.replace(/'[^']*'/g, ' ').replace(/"[^"]*"/g, ' ');
+  const normalized = withoutQuotes.toLowerCase();
 
   return (
     /\bsleep\b/.test(normalized) ||
