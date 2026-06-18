@@ -70,6 +70,7 @@ export function getNovuAgent(): Promise<{ chat: Chat; novu: Adapter }> {
       });
 
       registerHandlers(chat);
+      await chat.initialize();
 
       return { chat, novu: novu as unknown as Adapter };
     })();

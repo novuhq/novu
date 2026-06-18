@@ -62,7 +62,7 @@ export function detectChatSdkWiring(projectDir: string): WiringDetection {
       hasAdapterCall = true;
     }
 
-    if (BRIDGE_ROUTE_PATTERNS.some((pattern) => pattern.test(relative) || pattern.test(contents))) {
+    if (BRIDGE_ROUTE_PATTERNS.some((pattern) => pattern.test(relative))) {
       hasBridgeRoute = true;
     }
   }

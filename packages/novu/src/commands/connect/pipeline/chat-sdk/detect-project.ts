@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 import type { ChatSdkProjectKind } from '../../types';
@@ -11,19 +12,23 @@ export type DetectedChatSdkProject = {
 
 export function detectChatSdkProject(projectDir: string): DetectedChatSdkProject {
   const resolvedDir = path.resolve(projectDir);
-  const pkg = readProjectPackageJson(resolvedDir);
+  const packageJsonPath = path.join(resolvedDir, 'package.json');
 
-  // Only a truly missing package.json counts as empty (scaffold-eligible). A
-  // malformed one means a real project is present — treat it as project so we
-  // wire it rather than scaffold over it.
-  if (!pkg) {
+  if (!fs.existsSync(packageJsonPath)) {
     return { kind: 'empty', projectDir: resolvedDir };
+  }
+
+  const pkg = readProjectPackageJson(resolvedDir);
+  if (!pkg) {
+    throw new Error(
+      `Found package.json but could not parse it (${packageJsonPath}). Fix the JSON syntax before running novu connect.`
+    );
   }
 
   return {
     kind: 'project',
     projectDir: resolvedDir,
-    packageJsonPath: path.join(resolvedDir, 'package.json'),
+    packageJsonPath,
   };
 }
 

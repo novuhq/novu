@@ -1,10 +1,17 @@
 import { createBridgeAgent, listAgents } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
-import type { AgentSummary, ChatSdkConnectOutcome, ChatSdkRequirementId, ConnectCommandOptions } from '../../types';
+import type {
+  AgentSummary,
+  ChatSdkConnectOutcome,
+  ChatSdkRequirement,
+  ChatSdkRequirementId,
+  ConnectCommandOptions,
+} from '../../types';
 import type { ConnectUI } from '../../ui/ui';
 import { defaultAgentNameFromDir, deriveAgentIdentifier } from './derive-identifier';
 import { defaultScaffoldDirName, detectChatSdkProject } from './detect-project';
+import { detectChatSdkWiring } from './detect-wiring';
 import { applyDevNovuScript, buildDevNovuScript } from './dev-script';
 import {
   buildChatSdkInstallCommand,
@@ -317,6 +324,10 @@ async function promptChatSdkTunnelIfReady(opts: {
     return false;
   }
 
+  if (!isChatSdkWiringReadyForTunnel(opts.reconcilePlan.requirements, opts.reconcilePlan.projectDir)) {
+    return false;
+  }
+
   const devCommand = buildDevNovuScript(opts.projectDir);
   const choice = await opts.input.ui.offerChatSdkTunnel({
     projectDir: opts.projectDir,
@@ -390,7 +401,28 @@ function shouldRunChatSdkTunnel(
     return false;
   }
 
+  if (!isChatSdkWiringReadyForTunnel(outcome.requirements, outcome.projectDir, outcome.scaffolded)) {
+    return false;
+  }
+
   return outcome.tunnelAccepted === true;
+}
+
+function isChatSdkWiringReadyForTunnel(
+  requirements: ChatSdkRequirement[] | undefined,
+  projectDir: string,
+  scaffolded = false
+): boolean {
+  if (scaffolded) {
+    return true;
+  }
+
+  const wiring = requirements?.find((req) => req.id === 'code-wiring');
+  if (wiring) {
+    return wiring.status === 'ok';
+  }
+
+  return detectChatSdkWiring(projectDir).isWired;
 }
 
 export async function shutdownConnectUiAndMaybeRunChatSdkTunnel(input: {

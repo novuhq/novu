@@ -25,7 +25,7 @@ describe('dev-script', () => {
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ scripts: { dev: 'next dev --port=3001' } }));
 
     expect(buildDevNovuScript(dir)).toBe(
-      'PORT=3001 npx novu dev -p 3001 --no-studio --route /api/webhooks/novu --run "next dev --port=3001"'
+      'npx novu dev -p 3001 --no-studio --route /api/webhooks/novu --run "next dev --port=3001"'
     );
   });
 
@@ -34,7 +34,7 @@ describe('dev-script', () => {
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ scripts: { dev: 'next dev' } }));
 
     expect(buildDevNovuScript(dir)).toBe(
-      'PORT=4005 npx novu dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"'
+      'npx novu dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"'
     );
   });
 
@@ -44,7 +44,7 @@ describe('dev-script', () => {
     fs.writeFileSync(path.join(dir, '.env.local'), 'PORT=3005\n');
 
     expect(buildDevNovuScript(dir)).toBe(
-      'PORT=3005 npx novu dev -p 3005 --no-studio --route /api/webhooks/novu --run "next dev --port=3005"'
+      'npx novu dev -p 3005 --no-studio --route /api/webhooks/novu --run "next dev --port=3005"'
     );
   });
 
@@ -71,7 +71,7 @@ describe('dev-script', () => {
     const result = applyDevNovuScript(dir);
 
     expect(result.applied).toBe(true);
-    expect(result.script).toContain('PORT=4005');
+    expect(result.script).toContain('npx novu dev -p 4005');
     expect(result.script).toContain('-p 4005');
   });
 

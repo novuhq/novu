@@ -2,6 +2,7 @@ import { type ChildProcess, execSync, spawn } from 'node:child_process';
 import chalk from 'chalk';
 
 import { buildDevNovuScript } from './dev-script';
+import { readEnvAgentIdentifier, readEnvSecretKey, readProjectEnvValue } from './wire-env';
 
 export type RunChatSdkBridgeInput = {
   projectDir: string;
@@ -21,6 +22,27 @@ function killProcessTree(child: ChildProcess): void {
   } catch {
     child.kill('SIGTERM');
   }
+}
+
+function buildBridgeSpawnEnv(projectDir: string): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { ...process.env };
+  const secretKey = readEnvSecretKey(projectDir);
+  const agentIdentifier = readEnvAgentIdentifier(projectDir);
+  const apiBaseUrl = readProjectEnvValue(projectDir, 'NOVU_API_BASE_URL');
+
+  if (secretKey) {
+    env.NOVU_SECRET_KEY = secretKey;
+  }
+
+  if (agentIdentifier) {
+    env.NOVU_AGENT_IDENTIFIER = agentIdentifier;
+  }
+
+  if (apiBaseUrl) {
+    env.NOVU_API_BASE_URL = apiBaseUrl;
+  }
+
+  return env;
 }
 
 export async function runChatSdkBridge(input: RunChatSdkBridgeInput): Promise<void> {
@@ -57,7 +79,8 @@ export async function runChatSdkBridge(input: RunChatSdkBridgeInput): Promise<vo
   child = spawn(shell, [shellFlag, devCommand], {
     cwd: input.projectDir,
     stdio: 'inherit',
-    detached: false,
+    detached: !isWindows,
+    env: buildBridgeSpawnEnv(input.projectDir),
   });
 
   child.on('error', (err) => {

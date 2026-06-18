@@ -31,14 +31,16 @@ describe('computeChatSdkRequirements', () => {
           '@chat-adapter/state-memory': '4.30.0',
         },
         scripts: {
-          'dev:novu':
-            'PORT=4005 npx novu dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"',
+          'dev:novu': 'npx novu dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"',
         },
       })
     );
     fs.writeFileSync(path.join(dir, '.env.local'), 'NOVU_SECRET_KEY=sk_test_key\nNOVU_AGENT_IDENTIFIER=my-agent\n');
     fs.mkdirSync(path.join(dir, 'lib'), { recursive: true });
-    fs.writeFileSync(path.join(dir, 'lib/bot.ts'), 'createNovuAdapter({});');
+    fs.writeFileSync(
+      path.join(dir, 'lib/bot.ts'),
+      "import { createNovuAdapter } from '@novu/chat-sdk-adapter';\nexport const novu = createNovuAdapter();"
+    );
     fs.mkdirSync(path.join(dir, 'app/api/webhooks/novu'), { recursive: true });
     fs.writeFileSync(path.join(dir, 'app/api/webhooks/novu/route.ts'), 'export async function POST() {}');
 

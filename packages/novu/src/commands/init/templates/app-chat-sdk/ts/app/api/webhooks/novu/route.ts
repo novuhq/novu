@@ -4,9 +4,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 async function handleNovuWebhook(req: Request): Promise<Response> {
-  const { novu } = await getNovuAgent();
+  try {
+    const { novu } = await getNovuAgent();
 
-  return novu.handleWebhook(req);
+    return novu.handleWebhook(req);
+  } catch {
+    return new Response(null, { status: 500 });
+  }
 }
 
 export const GET = handleNovuWebhook;

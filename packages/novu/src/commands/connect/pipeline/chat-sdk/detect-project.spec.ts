@@ -52,4 +52,11 @@ describe('detectChatSdkProject', () => {
 
     expect(detectChatSdkProject(dir).kind).toBe('project');
   });
+
+  it('throws when package.json exists but is invalid JSON', () => {
+    const dir = makeTempDir();
+    fs.writeFileSync(path.join(dir, 'package.json'), '{not-json');
+
+    expect(() => detectChatSdkProject(dir)).toThrow(/could not parse it/i);
+  });
 });

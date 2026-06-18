@@ -142,7 +142,7 @@ export function shouldRefreshDevNovuScript(projectDir: string): boolean {
 export function buildDevNovuScript(projectDir: string): string {
   const { port, runCommand } = inferDevRunCommand(projectDir);
 
-  return `PORT=${port} npx novu dev -p ${port} --no-studio --route /api/webhooks/novu --run "${runCommand}"`;
+  return `npx novu dev -p ${port} --no-studio --route /api/webhooks/novu --run "${runCommand}"`;
 }
 
 export function applyDevNovuScript(projectDir: string): DevScriptApplyResult {
