@@ -39,8 +39,6 @@ chat.onSubscribedMessage(async (thread, message) => {
 await chat.initialize();
 ```
 
-Expose `novu.handleWebhook(request)` on your webhook route — Novu POSTs signed bridge events there and routes every channel through the same handlers.
-
 Then connect your agent to a real channel:
 
 ```bash
