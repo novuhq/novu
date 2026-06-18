@@ -1,5 +1,5 @@
-import { areTagsEqual, checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
-import { useEffect, useState } from 'react';
+import { checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
+import { useCallback, useEffect, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { useNovu, useRealtime } from './NovuProvider';
@@ -9,89 +9,13 @@ type Count = {
   filter: NotificationFilter;
 };
 
-type CountMutation = 'read' | 'unread' | 'seen';
-
-function getCountDelta(filter: NotificationFilter, notification: Notification, mutation: CountMutation): number {
-  if (mutation === 'read') {
-    if (filter.read === false) {
-      if (checkNotificationMatchesFilter({ ...notification, isRead: false } as Notification, filter)) {
-        return -1;
-      }
-
-      return 0;
-    }
-
-    if (filter.read === true && checkNotificationMatchesFilter(notification, filter)) {
-      return 1;
-    }
-
-    return 0;
-  }
-
-  if (mutation === 'unread') {
-    if (filter.read === false && checkNotificationMatchesFilter(notification, filter)) {
-      return 1;
-    }
-
-    if (filter.read === true) {
-      if (checkNotificationMatchesFilter({ ...notification, isRead: true } as Notification, filter)) {
-        return -1;
-      }
-
-      return 0;
-    }
-
-    return 0;
-  }
-
-  if (filter.seen === false) {
-    if (checkNotificationMatchesFilter({ ...notification, isSeen: false } as Notification, filter)) {
-      return -1;
-    }
-
-    return 0;
-  }
-
-  if (filter.seen === true && checkNotificationMatchesFilter(notification, filter)) {
-    return 1;
-  }
-
-  return 0;
-}
-
-function adjustCountsForBulkMutation(
-  counts: Count[] | undefined,
-  notifications: Notification[],
-  mutation: 'read' | 'seen'
-): Count[] | undefined {
-  if (!counts) {
-    return counts;
-  }
-
-  return counts.map((countItem) => {
-    if (mutation === 'read' && countItem.filter.read !== false) {
-      return countItem;
-    }
-
-    if (mutation === 'seen' && countItem.filter.seen !== false) {
-      return countItem;
-    }
-
-    const matchedCount = notifications.filter((notification) => {
-      if (mutation === 'read') {
-        return checkNotificationMatchesFilter({ ...notification, isRead: false } as Notification, countItem.filter);
-      }
-
-      return checkNotificationMatchesFilter({ ...notification, isSeen: false } as Notification, countItem.filter);
-    }).length;
-
-    if (matchedCount === 0) {
-      return countItem;
-    }
-
-    return { ...countItem, count: Math.max(0, countItem.count - matchedCount) };
-  });
-}
+const COUNT_INVALIDATION_EVENTS = [
+  'notification.read.pending',
+  'notification.unread.pending',
+  'notification.seen.pending',
+  'notifications.read_all.pending',
+  'notifications.seen_all.pending',
+] as const;
 
 /**
  * Props for the useCounts hook.
@@ -153,65 +77,64 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
   const providerRealtime = useRealtime();
   const realtime = propsRealtime ?? providerRealtime;
   const filtersRef = useDataRef<NotificationFilter[]>(filters);
+  const onSuccessRef = useDataRef(onSuccess);
+  const onErrorRef = useDataRef(onError);
   const [error, setError] = useState<NovuError>();
   const [counts, setCounts] = useState<Count[]>();
   const [isLoading, setIsLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
 
-  const sync = async (notification?: Notification, overrideFilters?: NotificationFilter[]) => {
-    const currentFilters = overrideFilters || filtersRef.current;
-    const existingCounts = currentFilters.map((filter) => ({ count: 0, filter }));
-    let countFiltersToFetch: NotificationFilter[] = [];
-    if (notification) {
-      for (let i = 0; i < existingCounts.length; i++) {
-        const filter = currentFilters[i];
-        const isSeverityMatches =
-          !filter.severity ||
-          (Array.isArray(filter.severity) && filter.severity.length === 0) ||
-          (Array.isArray(filter.severity) && filter.severity.includes(notification.severity)) ||
-          (!Array.isArray(filter.severity) && filter.severity === notification.severity);
+  const sync = useCallback(
+    async (notification?: Notification, overrideFilters?: NotificationFilter[]) => {
+      const currentFilters = overrideFilters || filtersRef.current;
+      const existingCounts = currentFilters.map((filter) => ({ count: 0, filter }));
+      let countFiltersToFetch: NotificationFilter[] = [];
 
-        if (areTagsEqual(filter.tags, notification.tags) && isSeverityMatches) {
-          countFiltersToFetch.push(filter);
-        }
-      }
-    } else {
-      countFiltersToFetch = currentFilters;
-    }
-
-    if (countFiltersToFetch.length === 0) {
-      return;
-    }
-
-    setIsFetching(true);
-    const countsRes = await notifications.count({ filters: countFiltersToFetch });
-    setIsFetching(false);
-    setIsLoading(false);
-    if (countsRes.error) {
-      setError(countsRes.error);
-      onError?.(countsRes.error);
-
-      return;
-    }
-    const data = countsRes.data!;
-    onSuccess?.(data.counts);
-
-    setCounts((oldCounts) => {
-      const newCounts: Count[] = [];
-      const countsReceived = data.counts;
-
-      for (let i = 0; i < existingCounts.length; i++) {
-        const existingFilter = existingCounts[i].filter;
-        const countReceived = countsReceived.find((c) => isSameFilter(c.filter, existingFilter));
-        const count = countReceived || oldCounts?.[i];
-        if (count) {
-          newCounts.push(count);
-        }
+      if (notification) {
+        countFiltersToFetch = currentFilters.filter((filter) =>
+          checkNotificationMatchesFilter(notification, filter)
+        );
+      } else {
+        countFiltersToFetch = currentFilters;
       }
 
-      return newCounts;
-    });
-  };
+      if (countFiltersToFetch.length === 0) {
+        return;
+      }
+
+      setIsFetching(true);
+      const countsRes = await notifications.count({ filters: countFiltersToFetch });
+      setIsFetching(false);
+      setIsLoading(false);
+
+      if (countsRes.error) {
+        setError(countsRes.error);
+        onErrorRef.current?.(countsRes.error);
+
+        return;
+      }
+
+      const data = countsRes.data!;
+      onSuccessRef.current?.(data.counts);
+
+      setCounts((oldCounts) => {
+        const newCounts: Count[] = [];
+        const countsReceived = data.counts;
+
+        for (let i = 0; i < existingCounts.length; i++) {
+          const existingFilter = existingCounts[i].filter;
+          const countReceived = countsReceived.find((c) => isSameFilter(c.filter, existingFilter));
+          const count = countReceived || oldCounts?.[i];
+          if (count) {
+            newCounts.push(count);
+          }
+        }
+
+        return newCounts;
+      });
+    },
+    [notifications, filtersRef, onErrorRef, onSuccessRef]
+  );
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
@@ -230,81 +153,23 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
   });
 
   useEffect(() => {
-    const applyDelta = (notification: Notification, mutation: CountMutation) => {
-      setCounts((oldCounts) => {
-        if (!oldCounts) {
-          return oldCounts;
-        }
-
-        return oldCounts.map((countItem) => {
-          const delta = getCountDelta(countItem.filter, notification, mutation);
-          if (delta === 0) {
-            return countItem;
-          }
-
-          return { ...countItem, count: Math.max(0, countItem.count + delta) };
-        });
-      });
-    };
-
-    const cleanups = [
-      novu.on('notification.read.pending', ({ data }) => {
-        if (!data) {
-          return;
-        }
-
-        applyDelta(data, 'read');
-        sync(data);
-      }),
-      novu.on('notification.unread.pending', ({ data }) => {
-        if (!data) {
-          return;
-        }
-
-        applyDelta(data, 'unread');
-        sync(data);
-      }),
-      novu.on('notification.seen.pending', ({ data }) => {
-        if (!data) {
-          return;
-        }
-
-        applyDelta(data, 'seen');
-        sync(data);
-      }),
-      novu.on('notifications.read_all.pending', ({ data }) => {
-        if (!Array.isArray(data)) {
-          return;
-        }
-
-        setCounts((oldCounts) => adjustCountsForBulkMutation(oldCounts, data, 'read'));
-        sync();
-      }),
-      novu.on('notifications.seen_all.pending', ({ data }) => {
-        if (!Array.isArray(data)) {
-          return;
-        }
-
-        setCounts((oldCounts) => adjustCountsForBulkMutation(oldCounts, data, 'seen'));
-        sync();
-      }),
-    ];
+    const cleanups = COUNT_INVALIDATION_EVENTS.map((event) => novu.on(event, () => sync()));
 
     return () => {
       cleanups.forEach((cleanup) => cleanup());
     };
-  }, [novu]);
+  }, [novu, sync]);
 
   useEffect(() => {
     setError(undefined);
     setIsLoading(true);
     setIsFetching(false);
     sync(undefined, filters);
-  }, [JSON.stringify(filters)]);
+  }, [JSON.stringify(filters), sync]);
 
-  const refetch = async () => {
+  const refetch = useCallback(async () => {
     await sync();
-  };
+  }, [sync]);
 
   return { counts, error, refetch, isLoading, isFetching };
 };

@@ -1,4 +1,4 @@
-import { Accessor, createContext, createEffect, createMemo, createSignal, ParentProps, useContext } from 'solid-js';
+import { Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, ParentProps, useContext } from 'solid-js';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
 import { checkNotificationDataFilter, checkNotificationTagFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
@@ -76,6 +76,22 @@ export const CountProvider = (props: ParentProps) => {
       setUnreadCount(data.result);
       updateTabCounts();
     },
+  });
+
+  createEffect(() => {
+    const novu = novuAccessor();
+    const invalidationEvents = [
+      'notification.read.pending',
+      'notification.unread.pending',
+      'notification.seen.pending',
+      'notifications.read_all.pending',
+      'notifications.seen_all.pending',
+    ] as const;
+    const cleanups = invalidationEvents.map((event) => novu.on(event, updateTabCounts));
+
+    onCleanup(() => {
+      cleanups.forEach((cleanup) => cleanup());
+    });
   });
 
   useNovuEvent({

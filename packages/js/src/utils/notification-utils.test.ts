@@ -3,7 +3,9 @@ import {
   checkNotificationDataFilter,
   checkNotificationTagFilter,
   normalizeTagGroups,
+  notificationMatchesCacheBucket,
 } from './notification-utils';
+import { Notification } from '../notifications/notification';
 
 describe('normalizeTagGroups', () => {
   it('wraps flat tags as one OR-group', () => {
@@ -125,5 +127,30 @@ describe('areTagsEqual', () => {
         }
       )
     ).toBe(true);
+  });
+});
+
+describe('notificationMatchesCacheBucket', () => {
+  const baseNotification = {
+    isRead: false,
+    isSeen: false,
+    isArchived: false,
+    isSnoozed: false,
+    tags: ['tag1'],
+    createdAt: new Date().toISOString(),
+  } as Notification;
+
+  it('returns false when read status no longer matches the bucket filter', () => {
+    const readNotification = { ...baseNotification, isRead: true } as Notification;
+
+    expect(notificationMatchesCacheBucket(readNotification, { read: false })).toBe(false);
+  });
+
+  it('returns false when tags no longer match the bucket filter', () => {
+    expect(notificationMatchesCacheBucket(baseNotification, { tags: ['tag2'] })).toBe(false);
+  });
+
+  it('returns true when status and tags still match the bucket filter', () => {
+    expect(notificationMatchesCacheBucket(baseNotification, { read: false, tags: ['tag1'] })).toBe(true);
   });
 });

@@ -17,7 +17,12 @@ import type {
 } from '../notifications';
 import type { InboxNotification, NotificationFilter, TagsFilter } from '../types';
 import { createNotification } from '../ui/internal/createNotification';
-import { areDataEqual, areTagsEqual, checkBasicFilters, checkNotificationTagFilter, isSameFilter } from '../utils/notification-utils';
+import {
+  areDataEqual,
+  areTagsEqual,
+  isSameFilter,
+  notificationMatchesCacheBucket,
+} from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
@@ -157,9 +162,7 @@ export class NotificationsCache {
     }
 
     const bucketFilter = getFilter(key);
-    const matchesFilter =
-      checkBasicFilters(notification, bucketFilter) &&
-      checkNotificationTagFilter(notification.tags, bucketFilter.tags);
+    const matchesFilter = notificationMatchesCacheBucket(notification, bucketFilter);
     const index = notificationsResponse.notifications.findIndex((el) => el.id === notification.id);
     const existsInBucket = index !== -1;
 
