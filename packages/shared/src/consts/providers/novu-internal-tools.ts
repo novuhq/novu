@@ -25,6 +25,6 @@ export const NOVU_TOOLS_SCHEMA = {
   },
 } as const;
 
-export const NOVU_TOOLS_TOOL_NAME = NOVU_TOOLS_SCHEMA.name;
+const NOVU_TOOLS_TOOL_NAME = NOVU_TOOLS_SCHEMA.name;
 
 export const NOVU_INTERNAL_TOOLS: readonly string[] = [NOVU_TOOLS_TOOL_NAME];

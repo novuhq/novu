@@ -6,7 +6,7 @@ import {
   type ConversationChannel,
   ConversationRepository,
 } from '@novu/dal';
-import { NOVU_TOOLS_TOOL_NAME } from '@novu/shared';
+import { NOVU_INTERNAL_TOOLS } from '@novu/shared';
 import type { PlanModel, PlanTaskStatus } from 'chat';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
 import { PLAN_THINKING_TASK_ID, type PlanPhase, planTitleForPhase } from '../../egress/plan-phase';
@@ -85,7 +85,7 @@ export class HandlePlanProgress {
 
   private isInternalToolEvent(command: HandlePlanProgressCommand): boolean {
     // dont show internal tool events in the plan card
-    return command.toolProgress?.toolName === NOVU_TOOLS_TOOL_NAME;
+    return NOVU_INTERNAL_TOOLS.includes(command.toolProgress?.toolName ?? '');
   }
 
   private async handleToolUse(
