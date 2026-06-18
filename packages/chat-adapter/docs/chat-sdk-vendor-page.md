@@ -12,12 +12,15 @@ npm install @novu/chat-sdk-adapter chat @chat-adapter/state-memory
 
 ## Quick start
 
+1. **Install** the adapter (see above).
+2. **Wire the adapter** in your Chat SDK app
+3. **Connect a channel** — run `npx novu connect --runtime chat-sdk` and pick Slack, Email, Telegram, WhatsApp, or Microsoft Teams.
+
 ```typescript
 import { Chat } from "chat";
 import { createMemoryState } from "@chat-adapter/state-memory";
 import { createNovuAdapter } from "@novu/chat-sdk-adapter";
 
-// Reads NOVU_SECRET_KEY and NOVU_AGENT_IDENTIFIER from the environment.
 const novu = createNovuAdapter();
 
 const chat = new Chat({
@@ -26,12 +29,10 @@ const chat = new Chat({
   state: createMemoryState(),
 });
 
-// First message on any channel.
 chat.onNewMention(async (thread, message) => {
   await thread.post(`Hi! You said: ${message.text}`);
 });
 
-// Every follow-up in a subscribed thread.
 chat.onSubscribedMessage(async (thread, message) => {
   await thread.post(`echo: ${message.text}`);
 });
@@ -45,7 +46,7 @@ Then connect your agent to a real channel:
 npx novu connect --runtime chat-sdk
 ```
 
-The CLI authenticates your Novu account, wires your env and `dev:novu` script, and opens an interactive channel picker (Slack, Email, Telegram, WhatsApp, Microsoft Teams). It provisions the provider integration and stores credentials in Novu — nothing sensitive lives in your app.
+The CLI authenticates your Novu account, creates your bridge agent, writes `NOVU_SECRET_KEY` and `NOVU_AGENT_IDENTIFIER` to your env, adds the `dev:novu` script, and opens an interactive channel picker (Slack, Email, Telegram, WhatsApp, Microsoft Teams). It provisions the provider integration and stores credentials in Novu — nothing sensitive lives in your app.
 
 ## Why Novu
 
@@ -63,9 +64,9 @@ Set via the environment (the CLI writes these for you) or pass them to `createNo
 
 | Variable                | Description                                                                               |
 | ----------------------- | ----------------------------------------------------------------------------------------- |
-| `NOVU_SECRET_KEY`       | Novu API key — authorizes replies and verifies the inbound HMAC.                          |
-| `NOVU_AGENT_IDENTIFIER` | The agent identifier from Novu                                                            |
-| `NOVU_API_BASE_URL`     | Region base URL. Defaults to `https://api.novu.co` (use `https://eu.api.novu.co` for EU). |
+| `NOVU_SECRET_KEY`       | Novu API key — authorizes replies and verifies the inbound HMAC. Set automatically by `npx novu connect`. |
+| `NOVU_AGENT_IDENTIFIER` | Your bridge agent ID — set automatically by `npx novu connect`.              |
+| `NOVU_API_BASE_URL`     | API base URL. Defaults to `https://api.novu.co`.                                                          |
 
 
 ## Novu context
@@ -212,5 +213,3 @@ Handler coverage: `onNewMention`, `onSubscribedMessage`, `onAction` (button clic
 | Delete message                                           | ❌ Not in v1                   |
 | Outbound-initiated DM (`openDM`)                         | ❌ Not in v1                   |
 | Modals                                                   | ❌ Not in v1                   |
-
-

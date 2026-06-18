@@ -15,6 +15,12 @@ import { logSlackConfigTokenSavedHandoffEvent } from '../../ui/handoff-events';
 import type { ConnectUI } from '../../ui/ui';
 import { ensureAgentIntegrationLinked, resolveIntegrationForAgent } from '../integration-helpers';
 import { CHANNEL_POLL_INTERVAL_MS, CHANNEL_POLL_TIMEOUT_MS, pollUntil, sleep } from '../poll-until';
+import {
+  describeSlackConfigTokenError,
+  isRepromptableSlackConfigTokenError,
+  MAX_SLACK_CONFIG_TOKEN_ATTEMPTS,
+  validateSlackConfigTokenFormat,
+} from './slack-config-token';
 
 const SLACK_PROVIDER_ID = 'slack';
 
@@ -159,12 +165,17 @@ async function runSlackQuickSetup(
   options: ConnectCommandOptions,
   flags: { retry: boolean }
 ): Promise<void> {
-  const configToken = options.slackConfigToken?.trim();
+  const configTokenFromOptions = options.slackConfigToken?.trim();
 
-  if (configToken) {
+  if (configTokenFromOptions) {
+    const formatError = validateSlackConfigTokenFormat(configTokenFromOptions);
+    if (formatError) {
+      throw new Error(formatError);
+    }
+
     ui.runningSlackQuickSetup();
     await slackQuickSetup(client, slackIntegration._id, {
-      configToken,
+      configToken: configTokenFromOptions,
       agentId: agent.id,
     });
 
@@ -172,12 +183,7 @@ async function runSlackQuickSetup(
   }
 
   if (ui.interactive) {
-    const token = await ui.promptForSlackConfigToken({ retry: flags.retry });
-    ui.runningSlackQuickSetup();
-    await slackQuickSetup(client, slackIntegration._id, {
-      configToken: token,
-      agentId: agent.id,
-    });
+    await promptAndRunSlackQuickSetup(client, agent, slackIntegration, ui, flags);
 
     return;
   }
@@ -224,6 +230,52 @@ async function runSlackQuickSetup(
         'Re-run `npx novu connect` to get a fresh setup link.'
     );
   }
+}
+
+async function promptAndRunSlackQuickSetup(
+  client: ConnectApiClient,
+  agent: AgentSummary,
+  slackIntegration: IntegrationRecord,
+  ui: ConnectUI,
+  flags: { retry: boolean }
+): Promise<void> {
+  let verificationError: string | undefined;
+
+  for (let attempt = 1; attempt <= MAX_SLACK_CONFIG_TOKEN_ATTEMPTS; attempt++) {
+    const token = await ui.promptForSlackConfigToken({
+      retry: flags.retry || attempt > 1,
+      verificationError,
+    });
+
+    const formatError = validateSlackConfigTokenFormat(token);
+    if (formatError) {
+      verificationError = formatError;
+      flags.retry = true;
+      continue;
+    }
+
+    try {
+      ui.runningSlackQuickSetup();
+      await slackQuickSetup(client, slackIntegration._id, {
+        configToken: token,
+        agentId: agent.id,
+      });
+
+      return;
+    } catch (err) {
+      if (!isRepromptableSlackConfigTokenError(err)) {
+        throw err;
+      }
+
+      verificationError = describeSlackConfigTokenError(err);
+      flags.retry = true;
+    }
+  }
+
+  throw new Error(
+    `Slack didn't accept the App Configuration Token after ${MAX_SLACK_CONFIG_TOKEN_ATTEMPTS} attempts. ` +
+      'Generate a fresh token at api.slack.com/apps and re-run `npx novu connect`.'
+  );
 }
 
 function isMissingSlackCredentialsError(err: unknown): boolean {

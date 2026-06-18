@@ -159,7 +159,7 @@ export interface ConnectUI {
    * configured yet. `retry` is true when this prompt is following an earlier
    * failed quick-setup (so the UI can hint at the cause).
    */
-  promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
+  promptForSlackConfigToken(opts: { retry: boolean; verificationError?: string }): Promise<string>;
   /**
    * Show the signed Slack setup-link URL. Fire-and-forget — the pipeline
    * polls until the user pastes their config token on the secure page.

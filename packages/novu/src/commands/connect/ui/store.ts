@@ -124,6 +124,7 @@ export type Phase =
   | {
       kind: 'paste-slack-token';
       retry: boolean;
+      verificationError?: string;
       resolve: (token: string) => void;
       reject: (reason: Error) => void;
     }

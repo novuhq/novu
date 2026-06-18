@@ -329,9 +329,9 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
     addingSlackIntegration() {
       store.phase.set({ kind: 'adding-slack' });
     },
-    promptForSlackConfigToken({ retry }) {
+    promptForSlackConfigToken({ retry, verificationError }) {
       return new Promise<string>((resolve, reject) => {
-        store.phase.set({ kind: 'paste-slack-token', retry, resolve, reject });
+        store.phase.set({ kind: 'paste-slack-token', retry, verificationError, resolve, reject });
       });
     },
     showSlackSetupLink(_opts) {},
