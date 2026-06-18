@@ -1,9 +1,7 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
+import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerEntity, AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { MCP_SERVERS, McpConnectionScopeEnum } from '@novu/shared';
-
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../shared/resolve-managed-agent-always-allow-tool-permissions';
 
 export type CatalogProjection = { externalId: string; name: string; url: string };
 
@@ -49,7 +47,6 @@ export class AgentMcpDefinitionService {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -120,17 +117,10 @@ export class AgentMcpDefinitionService {
     });
 
     const runtimeProvider = resolved.provider;
-    const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
-      featureFlagsService: this.featureFlagsService,
-      environmentId: params.environmentId,
-      organizationId: params.organizationId,
-    });
-
     try {
       // Empty list is normal when only per-subscriber OAuth MCPs are enabled.
       await runtimeProvider.updateConfig(externalAgentId, {
         mcpServers: projection,
-        useAlwaysAllowToolPermissions,
       });
     } catch (err) {
       const code = err instanceof Error ? err.name || 'sync_error' : 'sync_error';

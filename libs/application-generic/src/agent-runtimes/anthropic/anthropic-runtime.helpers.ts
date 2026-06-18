@@ -221,22 +221,6 @@ export const MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG = {
   permission_policy: { type: 'always_ask' },
 } as const;
 
-export const MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG = {
-  permission_policy: { type: 'always_allow' },
-} as const;
-
-export type ManagedAgentPermissionConfig =
-  | typeof MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG
-  | typeof MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG;
-
-export function resolveManagedAgentPermissionConfig(useAlwaysAllow: boolean | undefined): ManagedAgentPermissionConfig {
-  if (useAlwaysAllow) {
-    return MANAGED_AGENT_ALWAYS_ALLOW_PERMISSION_CONFIG;
-  }
-
-  return MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG;
-}
-
 /**
  * The agent response `tools` array contains toolset objects, not plain tool entries.
  * Flatten builtin toolset configs into individual AgentToolDto entries.
@@ -270,8 +254,7 @@ export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
  */
 export function buildToolsPayload(
   toolTypes?: string[],
-  mcpServers?: Array<{ name: string; url: string }>,
-  permissionConfig: ManagedAgentPermissionConfig = MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG
+  mcpServers?: Array<{ name: string; url: string }>
 ): Record<string, unknown>[] {
   const hasTools = Array.isArray(toolTypes) && toolTypes.length > 0;
   const hasMcpServers = Array.isArray(mcpServers) && mcpServers.length > 0;
@@ -287,7 +270,7 @@ export function buildToolsPayload(
 
   payload.push({
     type: 'agent_toolset_20260401',
-    default_config: permissionConfig,
+    default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
     configs: allToolNames.map((name) => ({ name, enabled: enabledSet.has(name) })),
   });
 
@@ -296,7 +279,7 @@ export function buildToolsPayload(
       payload.push({
         type: 'mcp_toolset',
         mcp_server_name: server.name,
-        default_config: permissionConfig,
+        default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
       });
     }
   }

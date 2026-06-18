@@ -3,7 +3,6 @@ import {
   areNovuManagedClaudeCredentialsSet,
   decryptCredentials,
   encryptCredentials,
-  FeatureFlagsService,
   getAgentRuntimeProvider,
   getNovuManagedClaudeApiKey,
   PinoLogger,
@@ -20,7 +19,6 @@ import {
 } from '@novu/shared';
 import type { ClientSession } from 'mongoose';
 import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/shared/resolve-managed-agent-always-allow-tool-permissions';
 import { resolveMcpServersById, resolveProviderMcpServerIds } from '../../../mcp/shared/resolve-mcp-servers';
 import { sanitizeUrlForLogging } from '../../../mcp/shared/sanitize-url-for-logging';
 import { ProvisionManagedAgentCommand } from './provision-managed-agent.command';
@@ -43,7 +41,6 @@ export class ProvisionManagedAgent {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
     private readonly logger: PinoLogger
   ) {}
@@ -158,12 +155,6 @@ export class ProvisionManagedAgent {
       const resolvedMcpServers = agentDefinitionMcpIds?.length
         ? resolveMcpServersById(agentDefinitionMcpIds)
         : undefined;
-      const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
-        featureFlagsService: this.featureFlagsService,
-        environmentId: command.environmentId,
-        organizationId: command.organizationId,
-      });
-
       const response = await runtimeProvider.createAgent({
         name: command.name ?? '',
         model: command.model,
@@ -171,7 +162,6 @@ export class ProvisionManagedAgent {
         tools: command.tools,
         mcpServers: resolvedMcpServers,
         skills: command.skills,
-        useAlwaysAllowToolPermissions,
       });
 
       externalAgentId = response.externalAgentId;

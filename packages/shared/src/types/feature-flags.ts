@@ -121,12 +121,6 @@ export enum FeatureFlagsKeysEnum {
    * button is disabled.
    */
   IS_MCP_PROVIDER_MANAGED_ENABLED = 'IS_MCP_PROVIDER_MANAGED_ENABLED',
-  /**
-   * When enabled, managed agents are provisioned with `always_allow` permission
-   * policies on builtin toolsets and MCP toolsets instead of the default
-   * `always_ask`. Gates org-by-org rollout of permissive MCP defaults.
-   */
-  IS_AGENT_DEFAULT_MCP_ALWAYS_ALLOW_ENABLED = 'IS_AGENT_DEFAULT_MCP_ALWAYS_ALLOW_ENABLED',
 
   // String flags
   CF_SCHEDULER_MODE = 'CF_SCHEDULER_MODE', // Values: "off" | "shadow" | "live" | "complete"

@@ -54,7 +54,6 @@ import {
   mapSkill,
   mapToolset,
   parseRetryAfter,
-  resolveManagedAgentPermissionConfig,
   sleep,
   toSkillParam,
   truncateWithEllipsis,
@@ -180,8 +179,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // Not retried: agent creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable agent upstream.
     try {
-      const permissionConfig = resolveManagedAgentPermissionConfig(input.useAlwaysAllowToolPermissions);
-      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, permissionConfig);
+      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
@@ -294,8 +292,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
             patch.mcpServers !== undefined
               ? patch.mcpServers.map((s) => ({ name: s.name, url: s.url }))
               : currentMcpServers.map((s) => ({ name: s.name, url: s.url }));
-          const permissionConfig = resolveManagedAgentPermissionConfig(patch.useAlwaysAllowToolPermissions);
-          const toolsPayload = buildToolsPayload(toolTypes, mcpServers, permissionConfig);
+          const toolsPayload = buildToolsPayload(toolTypes, mcpServers);
 
           if (toolsPayload.length > 0) updatePayload.tools = toolsPayload;
         }

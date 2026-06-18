@@ -1,9 +1,8 @@
 import { Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
-import { FeatureFlagsService, PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
+import { PinoLogger, resolveAgentRuntime } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import { AGENT_RUNTIME_PROVIDERS } from '@novu/shared';
 import { AgentMcpDefinitionService } from '../../../mcp/runtime/agent-mcp-definition.service';
-import { resolveManagedAgentAlwaysAllowToolPermissions } from '../../../mcp/shared/resolve-managed-agent-always-allow-tool-permissions';
 import type {
   AgentRuntimeCapabilitiesDto,
   AgentRuntimeConfigResponseDto,
@@ -16,7 +15,6 @@ export class UpdateAgentRuntimeConfig {
     private readonly agentRepository: AgentRepository,
     private readonly integrationRepository: IntegrationRepository,
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly featureFlagsService: FeatureFlagsService,
     private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
     private readonly logger: PinoLogger
   ) {
@@ -65,18 +63,11 @@ export class UpdateAgentRuntimeConfig {
     }
 
     const runtimeProvider = resolved.provider;
-    const useAlwaysAllowToolPermissions = await resolveManagedAgentAlwaysAllowToolPermissions({
-      featureFlagsService: this.featureFlagsService,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-    });
-
     const updated = await runtimeProvider.updateConfig(externalAgentId, {
       model: command.model,
       systemPrompt: command.systemPrompt,
       tools: command.tools,
       skills: command.skills,
-      useAlwaysAllowToolPermissions,
     });
 
     // Same as get runtime config: shared agent MCPs only.
