@@ -26,6 +26,7 @@ import type { Message } from 'chat';
 import { ResolvedAgentConfig } from '../../channels/agent-config-resolver.service';
 import { captureAgentException, captureAgentWarning } from '../../shared/errors/capture-agent-sentry';
 import { AgentAttachmentStorage, type StoredAttachment } from '../conversation/agent-attachment-storage.service';
+import { AgentConversationService } from '../conversation/agent-conversation.service';
 
 const MAX_RETRIES = 2;
 
@@ -85,7 +86,6 @@ export interface AgentExecutionParams {
   config: ResolvedAgentConfig;
   conversation: ConversationEntity;
   subscriber: SubscriberEntity | null;
-  history: ConversationActivityEntity[];
   message: Message | null;
   platformContext: AgentPlatformContext;
   action?: AgentAction;
@@ -107,7 +107,8 @@ export class BridgeExecutorService {
   constructor(
     private readonly getDecryptedSecretKey: GetDecryptedSecretKey,
     private readonly logger: PinoLogger,
-    private readonly attachmentStorage: AgentAttachmentStorage
+    private readonly attachmentStorage: AgentAttachmentStorage,
+    private readonly conversationService: AgentConversationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -260,8 +261,10 @@ export class BridgeExecutorService {
   }
 
   private async buildPayload(params: AgentExecutionParams): Promise<AgentBridgeRequest> {
-    const { event, config, conversation, subscriber, history, message, platformContext, action, reaction } = params;
+    const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
+
+    const history = await this.conversationService.getHistory(config.environmentId, conversation._id);
 
     const replyUrl = `${resolveAgentReplyApiOrigin()}/v1/agents/${agentIdentifier}/reply`;
 

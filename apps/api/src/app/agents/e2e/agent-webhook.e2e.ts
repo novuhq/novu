@@ -382,7 +382,6 @@ describe('Agent Webhook - inbound flow #novu-v2', () => {
       expect(call.subscriber!.firstName).to.equal('Bridge');
       expect(call.subscriber!.email).to.equal('bridge@test.com');
 
-      expect(call.history).to.be.an('array');
       expect(call.message).to.exist;
       expect(call.message!.text).to.equal('Bridge test');
 
