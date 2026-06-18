@@ -9,7 +9,6 @@ const CHAT_SDK_PHASE_KINDS = [
   'confirm-scaffold',
   'scaffolding-chat-sdk',
   'chat-sdk-scaffolded',
-  'chat-sdk-env-wired',
   'chat-sdk-install-deps-confirm',
   'chat-sdk-install-deps',
   'chat-sdk-reconcile-plan',
@@ -67,17 +66,6 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
         </Box>
       );
 
-    case 'chat-sdk-env-wired':
-      return (
-        <Box flexDirection="column" gap={1}>
-          <Text color="green">✓ Environment updated.</Text>
-          {phase.envPaths.map((envPath) => (
-            <Text key={envPath} dimColor>{`Updated ${envPath}`}</Text>
-          ))}
-          {phase.updatedKeys.length > 0 ? <Text dimColor>{`Keys: ${phase.updatedKeys.join(', ')}`}</Text> : null}
-        </Box>
-      );
-
     case 'chat-sdk-install-deps-confirm':
       return <ChatSdkInstallDepsConfirmContent phase={phase} />;
 
@@ -104,7 +92,7 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
 
 function requirementIcon(req: ChatSdkRequirement): string {
   if (req.status === 'ok') {
-    return req.fixed ? '✓' : '✓';
+    return '✓';
   }
 
   if (req.status === 'manual') {
@@ -183,9 +171,6 @@ function ChatSdkTunnelOfferContent({
     if (key.return) {
       phase.resolve('accept');
     }
-    if (key.escape) {
-      phase.resolve('back');
-    }
     if (input === 's' || input === 'S') {
       phase.resolve('skip');
     }
@@ -196,7 +181,7 @@ function ChatSdkTunnelOfferContent({
       <Text bold>Start the dev tunnel?</Text>
       <Text dimColor>Runs your app and registers a public bridge URL with Novu.</Text>
       <Text color="cyan">{phase.devCommand}</Text>
-      <Text color="cyan">Enter · start tunnel · Esc · back · s · skip</Text>
+      <Text color="cyan">Enter · start tunnel · s · skip</Text>
     </Box>
   );
 }

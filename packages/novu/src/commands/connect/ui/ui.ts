@@ -15,7 +15,7 @@ export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: stri
 
 export type TelegramTokenDelivery = 'setup-page' | 'terminal';
 
-export type ChatSdkTunnelOfferResult = 'accept' | 'skip' | 'back';
+export type ChatSdkTunnelOfferResult = 'accept' | 'skip';
 
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
@@ -81,12 +81,7 @@ export interface ConnectUI {
   confirmScaffold(opts: { projectDir: string; appName: string }): Promise<boolean>;
   scaffoldingChatSdk(): void;
   chatSdkScaffolded(opts: { projectDir: string; envPaths: string[]; skippedInstall?: boolean }): void;
-  chatSdkEnvWired(opts: { projectDir: string; envPaths: string[]; updatedKeys: string[] }): void;
-  confirmInstallChatSdkDeps(opts: {
-    projectDir: string;
-    installCommand: string;
-    packages: string[];
-  }): Promise<boolean>;
+  confirmInstallChatSdkDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
   installingChatSdkDeps(): void;
   showChatSdkReconcilePlan(opts: {
     projectDir: string;

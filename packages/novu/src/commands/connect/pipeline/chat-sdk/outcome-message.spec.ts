@@ -5,7 +5,7 @@ describe('resolveChatSdkOutcomeMessage', () => {
   it('returns null for non-chat-sdk connect mode', () => {
     expect(
       resolveChatSdkOutcomeMessage('demo', {
-        projectKind: 'existing',
+        projectKind: 'project',
         projectDir: '/tmp',
         scaffolded: false,
         coreReady: false,
@@ -26,7 +26,7 @@ describe('resolveChatSdkOutcomeMessage', () => {
 
   it('describes remaining setup when core is not ready', () => {
     const message = resolveChatSdkOutcomeMessage('chat-sdk', {
-      projectKind: 'existing',
+      projectKind: 'project',
       projectDir: '/tmp/app',
       scaffolded: false,
       coreReady: false,
@@ -38,7 +38,7 @@ describe('resolveChatSdkOutcomeMessage', () => {
 
   it('describes ready projects without tunnel', () => {
     const message = resolveChatSdkOutcomeMessage('chat-sdk', {
-      projectKind: 'has-adapter',
+      projectKind: 'project',
       projectDir: '/tmp/app',
       scaffolded: false,
       coreReady: true,

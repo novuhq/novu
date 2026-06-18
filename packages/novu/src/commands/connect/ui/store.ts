@@ -7,7 +7,12 @@ import type {
   ChatSdkConnectOutcome,
   ChatSdkRequirement,
 } from '../types';
-import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResult, ChatSdkTunnelOfferResult } from './ui';
+import type {
+  ChatSdkTunnelOfferResult,
+  GeneratedAgentPreviewResult,
+  PickAgentIntegrationResult,
+  PickResult,
+} from './ui';
 
 export type Phase =
   | {
@@ -77,12 +82,6 @@ export type Phase =
       projectDir: string;
       envPaths: string[];
       skippedInstall?: boolean;
-    }
-  | {
-      kind: 'chat-sdk-env-wired';
-      projectDir: string;
-      envPaths: string[];
-      updatedKeys: string[];
     }
   | {
       kind: 'chat-sdk-reconcile-plan';

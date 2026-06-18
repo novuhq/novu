@@ -42,8 +42,8 @@ export async function runChatSdkBridge(input: RunChatSdkBridgeInput): Promise<vo
     process.exit(exitCode);
   };
 
-  process.on('SIGINT', () => shutdown(0));
-  process.on('SIGTERM', () => shutdown(0));
+  process.once('SIGINT', () => shutdown(0));
+  process.once('SIGTERM', () => shutdown(0));
 
   console.log(chalk.cyan('\nStarting your Chat SDK app and dev tunnel…'));
   console.log(chalk.green(`  ▶ ${devCommand}`));

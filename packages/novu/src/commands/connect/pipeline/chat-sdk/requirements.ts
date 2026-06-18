@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import type { ChatSdkRequirement } from '../../types';
+import type { ChatSdkRequirement, ChatSdkRequirementId } from '../../types';
 import { detectChatSdkWiring } from './detect-wiring';
 import { hasDevNovuScript, shouldRefreshDevNovuScript } from './dev-script';
 import { resolveChatSdkPackagesToInstall } from './package-install';
+import { readProjectPackageJson } from './project-package';
 import { readEnvAgentIdentifier, readEnvSecretKey } from './wire-env';
 
 export type ComputeRequirementsInput = {
@@ -19,21 +20,8 @@ export type ChatSdkRequirementsSnapshot = {
   coreReady: boolean;
 };
 
-function readPackageJson(projectDir: string): Record<string, unknown> | null {
-  const packageJsonPath = path.join(projectDir, 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
 function computePackageRequirement(projectDir: string): ChatSdkRequirement {
-  const pkg = readPackageJson(projectDir);
+  const pkg = readProjectPackageJson(projectDir);
   if (!pkg) {
     return {
       id: 'package',
@@ -169,16 +157,9 @@ export function computeChatSdkRequirements(input: ComputeRequirementsInput): Cha
     computeCodeWiringRequirement(projectDir),
   ];
 
-  const coreReady = requirements.filter((req) => req.id !== 'code-wiring').every((req) => req.status === 'ok');
+  const coreReady = recomputeCoreReady(requirements);
 
   return { requirements, coreReady };
-}
-
-export function markRequirementFixed(
-  requirements: ChatSdkRequirement[],
-  id: ChatSdkRequirement['id']
-): ChatSdkRequirement[] {
-  return requirements.map((req) => (req.id === id ? { ...req, status: 'ok', fixed: true } : req));
 }
 
 export function recomputeCoreReady(requirements: ChatSdkRequirement[]): boolean {
@@ -186,6 +167,8 @@ export function recomputeCoreReady(requirements: ChatSdkRequirement[]): boolean 
 }
 
 export const CHAT_SDK_REQUIREMENTS_FILE_ENV = 'NOVU_CONNECT_CHAT_SDK_REQUIREMENTS_FILE';
+
+export const AUTOFIX_REQUIREMENT_ORDER: readonly ChatSdkRequirementId[] = ['env', 'dev-script', 'package'];
 
 export async function writeChatSdkRequirementsFile(opts: {
   projectDir: string;

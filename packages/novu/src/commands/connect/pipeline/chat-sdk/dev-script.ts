@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { readProjectPackageJson } from './project-package';
 import { readProjectEnvValue } from './wire-env';
 
 /** Default local port for Chat SDK connect — avoids 3000/4000 collisions. */
@@ -11,21 +12,8 @@ export type DevScriptApplyResult = {
   script: string;
 };
 
-function readPackageJson(projectDir: string): Record<string, unknown> | null {
-  const packageJsonPath = path.join(projectDir, 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
 function readDevScript(projectDir: string): string {
-  const pkg = readPackageJson(projectDir);
+  const pkg = readProjectPackageJson(projectDir);
   const scripts = pkg?.scripts;
 
   if (!scripts || typeof scripts !== 'object') {
@@ -107,7 +95,7 @@ function normalizeRunCommandForPort(runCommand: string, port: number): string {
 }
 
 export function hasDevNovuScript(projectDir: string): boolean {
-  const pkg = readPackageJson(projectDir);
+  const pkg = readProjectPackageJson(projectDir);
   const scripts = pkg?.scripts;
 
   if (!scripts || typeof scripts !== 'object') {
@@ -118,7 +106,7 @@ export function hasDevNovuScript(projectDir: string): boolean {
 }
 
 function readDevNovuScript(projectDir: string): string | undefined {
-  const pkg = readPackageJson(projectDir);
+  const pkg = readProjectPackageJson(projectDir);
   const scripts = pkg?.scripts;
 
   if (!scripts || typeof scripts !== 'object') {
@@ -159,7 +147,7 @@ export function buildDevNovuScript(projectDir: string): string {
 
 export function applyDevNovuScript(projectDir: string): DevScriptApplyResult {
   const packageJsonPath = path.join(projectDir, 'package.json');
-  const pkg = readPackageJson(projectDir);
+  const pkg = readProjectPackageJson(projectDir);
 
   if (!pkg) {
     throw new Error(`Cannot add dev:novu script — missing package.json in ${projectDir}`);

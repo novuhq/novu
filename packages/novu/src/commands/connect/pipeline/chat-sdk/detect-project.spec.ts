@@ -29,27 +29,27 @@ describe('detectChatSdkProject', () => {
     });
   });
 
-  it('classifies a project with the adapter as has-adapter', () => {
+  it('classifies any package.json project as project', () => {
     const dir = makeTempDir();
     fs.writeFileSync(
       path.join(dir, 'package.json'),
       JSON.stringify({ dependencies: { '@novu/chat-sdk-adapter': 'latest' } })
     );
 
-    expect(detectChatSdkProject(dir).kind).toBe('has-adapter');
+    expect(detectChatSdkProject(dir).kind).toBe('project');
   });
 
-  it('classifies a Chat SDK project without the Novu adapter as existing', () => {
+  it('classifies a Chat SDK project without the Novu adapter as project', () => {
     const dir = makeTempDir();
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { chat: '4.30.0' } }));
 
-    expect(detectChatSdkProject(dir).kind).toBe('existing');
+    expect(detectChatSdkProject(dir).kind).toBe('project');
   });
 
-  it('classifies any other package.json project as existing', () => {
+  it('classifies any other package.json project as project', () => {
     const dir = makeTempDir();
     fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ dependencies: { next: '16.2.1' } }));
 
-    expect(detectChatSdkProject(dir).kind).toBe('existing');
+    expect(detectChatSdkProject(dir).kind).toBe('project');
   });
 });

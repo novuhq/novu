@@ -1,7 +1,7 @@
-import fs from 'node:fs';
 import path from 'node:path';
 import { installPackages } from '../../../init/helpers/install';
 import { detectPackageManager } from '../../../step/utils/package-manager';
+import { hasDependency, readProjectPackageJson } from './project-package';
 
 const CHAT_SDK_ADAPTER_PACKAGE = '@novu/chat-sdk-adapter';
 const CHAT_PACKAGE = 'chat';
@@ -14,32 +14,6 @@ export type PackageInstallResult = {
   command: string;
   packages: string[];
 };
-
-function readPackageJson(projectDir: string): Record<string, unknown> | null {
-  const packageJsonPath = path.join(projectDir, 'package.json');
-  if (!fs.existsSync(packageJsonPath)) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as Record<string, unknown>;
-  } catch {
-    return null;
-  }
-}
-
-function hasDependency(pkg: Record<string, unknown>, name: string): boolean {
-  const sections = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const;
-
-  return sections.some((section) => {
-    const deps = pkg[section];
-    if (!deps || typeof deps !== 'object') {
-      return false;
-    }
-
-    return Object.prototype.hasOwnProperty.call(deps, name);
-  });
-}
 
 export function hasStateAdapter(pkg: Record<string, unknown>): boolean {
   const sections = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const;
@@ -56,7 +30,7 @@ export function hasStateAdapter(pkg: Record<string, unknown>): boolean {
 
 /** Packages the connect flow should offer to install for this project. */
 export function resolveChatSdkPackagesToInstall(projectDir: string): string[] {
-  const pkg = readPackageJson(projectDir);
+  const pkg = readProjectPackageJson(projectDir);
   if (!pkg) {
     return [CHAT_SDK_ADAPTER_PACKAGE, CHAT_PACKAGE_SPEC, DEFAULT_STATE_ADAPTER_SPEC];
   }

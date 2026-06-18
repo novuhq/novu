@@ -216,15 +216,6 @@ export function createLoggingUI(): ConnectUI {
         console.log(chalk.gray(`  Wrote ${envPath}`));
       }
     },
-    chatSdkEnvWired({ envPaths, updatedKeys }) {
-      succeed('Environment updated');
-      for (const envPath of envPaths) {
-        console.log(chalk.gray(`  Updated ${envPath}`));
-      }
-      if (updatedKeys.length > 0) {
-        console.log(chalk.gray(`  Keys: ${updatedKeys.join(', ')}`));
-      }
-    },
     confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       console.log('');
       console.log(chalk.bold('Install Chat SDK packages?'));

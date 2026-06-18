@@ -222,14 +222,6 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         skippedInstall,
       });
     },
-    chatSdkEnvWired({ projectDir, envPaths, updatedKeys }) {
-      store.phase.set({
-        kind: 'chat-sdk-env-wired',
-        projectDir,
-        envPaths,
-        updatedKeys,
-      });
-    },
     confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       return new Promise<boolean>((resolve) => {
         store.phase.set({

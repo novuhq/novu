@@ -13,7 +13,7 @@ export type AgentConnectMode = AgentRuntimeChoice | 'chat-sdk';
 
 export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [...AGENT_RUNTIME_CHOICES, 'chat-sdk'];
 
-export type ChatSdkProjectKind = 'empty' | 'existing' | 'has-adapter';
+export type ChatSdkProjectKind = 'empty' | 'project';
 
 export type ChatSdkRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring';
 
@@ -23,8 +23,6 @@ export type ChatSdkRequirement = {
   id: ChatSdkRequirementId;
   status: ChatSdkReqStatus;
   detail: string;
-  /** True when this requirement was auto-fixed during this connect run. */
-  fixed?: boolean;
 };
 
 export type ChatSdkConnectOutcome = {
