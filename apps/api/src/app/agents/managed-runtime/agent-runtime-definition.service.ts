@@ -30,49 +30,52 @@ export class AgentRuntimeDefinitionService {
    * logged and swallowed so message dispatch is never blocked.
    */
   async reconcileIfStale(params: AgentRuntimeDefinitionReconcileParams): Promise<void> {
-    const agent = await this.loadManagedAgent(params);
-
-    if (!agent || !this.isDefinitionStale(agent)) {
-      return;
-    }
-
-    const { providerId, _integrationId, externalAgentId } = agent.managedRuntime;
-
-    const integration = await this.integrationRepository.findOne(
-      {
-        _id: _integrationId,
-        _environmentId: params.environmentId,
-        _organizationId: params.organizationId,
-      },
-      ['credentials']
-    );
-
-    if (!integration) {
-      this.logger.warn(
-        { agentId: params.agentId, integrationId: _integrationId },
-        'Managed definition reconcile skipped: runtime integration not found'
-      );
-
-      return;
-    }
-
-    const resolved = resolveAgentRuntime(providerId, integration.credentials);
-
-    if (!resolved) {
-      this.logger.warn(
-        { agentId: params.agentId, providerId },
-        'Managed definition reconcile skipped: integration has no API key configured'
-      );
-
-      return;
-    }
-
+    // Fail-open across the whole flow: a transient DB/credential error must never block
+    // the user's message. Any failure (load, integration lookup, resolve, provider push,
+    // stamp) is logged and swallowed.
     try {
+      const agent = await this.loadManagedAgent(params);
+
+      if (!agent || !this.isDefinitionStale(agent)) {
+        return;
+      }
+
+      const { providerId, _integrationId, externalAgentId } = agent.managedRuntime;
+
+      const integration = await this.integrationRepository.findOne(
+        {
+          _id: _integrationId,
+          _environmentId: params.environmentId,
+          _organizationId: params.organizationId,
+        },
+        ['credentials']
+      );
+
+      if (!integration) {
+        this.logger.warn(
+          { agentId: params.agentId, integrationId: _integrationId },
+          'Managed definition reconcile skipped: runtime integration not found'
+        );
+
+        return;
+      }
+
+      const resolved = resolveAgentRuntime(providerId, integration.credentials);
+
+      if (!resolved) {
+        this.logger.warn(
+          { agentId: params.agentId, providerId },
+          'Managed definition reconcile skipped: integration has no API key configured'
+        );
+
+        return;
+      }
+
       await resolved.provider.refreshPlatformDefinition(externalAgentId);
       await this.markDefinitionSynced(agent, params);
     } catch (err) {
       this.logger.warn(
-        { err, agentId: params.agentId, providerId },
+        { err, agentId: params.agentId },
         'Managed definition reconcile failed; continuing without blocking the message'
       );
     }
