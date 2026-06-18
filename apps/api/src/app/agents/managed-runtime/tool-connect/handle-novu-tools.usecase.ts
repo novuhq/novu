@@ -4,9 +4,9 @@ import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository
 import { MCP_SERVERS, McpConnectionStatusEnum } from '@novu/shared';
 import { HandleAgentReplyCommand } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.command';
 import { HandleAgentReply } from '../../conversation-runtime/reply/handle-agent-reply/handle-agent-reply.usecase';
+import { McpConnectRedirectService } from '../../mcp/connections/mcp-connect-redirect.service';
 import { GenerateMcpOAuthUrlCommand } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.command';
 import { GenerateMcpOAuthUrl } from '../../mcp/oauth/generate-mcp-oauth-url/generate-mcp-oauth-url.usecase';
-import { McpConnectRedirectService } from '../../mcp/connections/mcp-connect-redirect.service';
 import { ManagedAgentService } from '../managed-agent.service';
 import { buildConnectCardDelivery } from './connect-card.builder';
 import { HandleNovuToolsCommand, NovuToolsActionEnum } from './handle-novu-tools.command';

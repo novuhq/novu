@@ -56,6 +56,7 @@ import { AgentEmailActionsController } from './email/agent-email-actions.control
 import { AgentEmailSender } from './email/agent-email-sender.service';
 import { NovuEmailCleanupService } from './email/novu-email/cleanup-novu-email/cleanup-novu-email.service';
 import { NovuEmailProvisioningService } from './email/novu-email/find-or-create-novu-email/find-or-create-novu-email.service';
+import { AgentRuntimeDefinitionService } from './managed-runtime/agent-runtime-definition.service';
 import { DemoClaudeQuotaPolicy } from './managed-runtime/demo-claude-quota-policy.service';
 import { ManagedRuntime } from './managed-runtime/managed.runtime';
 import { ManagedAgentService } from './managed-runtime/managed-agent.service';
@@ -131,6 +132,7 @@ import { USE_CASES } from './usecases';
     McpConnectionVaultService,
     McpConnectRedirectService,
     AgentMcpDefinitionService,
+    AgentRuntimeDefinitionService,
     AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,

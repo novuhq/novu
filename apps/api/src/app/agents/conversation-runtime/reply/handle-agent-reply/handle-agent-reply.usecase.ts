@@ -487,19 +487,15 @@ export class HandleAgentReply {
     const subscriberParticipant = conversation.participants.find(
       (p) => p.type === ConversationParticipantTypeEnum.SUBSCRIBER
     );
-    const [subscriber, history] = await Promise.all([
-      subscriberParticipant
-        ? this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberParticipant.id)
-        : Promise.resolve(null),
-      this.conversationService.getHistory(command.environmentId, conversation._id),
-    ]);
+    const subscriber = subscriberParticipant
+      ? await this.subscriberRepository.findBySubscriberId(command.environmentId, subscriberParticipant.id)
+      : null;
 
     await this.bridgeExecutor.execute({
       event: AgentEventEnum.ON_RESOLVE,
       config,
       conversation,
       subscriber,
-      history,
       message: null,
       platformContext: buildAgentPlatformContext({
         platformThreadId: channel.platformThreadId,
