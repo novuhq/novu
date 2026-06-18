@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - packages/shared/docs/agent-onboarding.md
+      - libs/agent-evals/**
+      - .github/workflows/agent-evals.yml
 
 jobs:
   evals:
