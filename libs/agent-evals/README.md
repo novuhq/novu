@@ -177,6 +177,10 @@ Each scenario uses `judgeThreshold: 0.8` — the average judge score for that sc
 
 Judge graders run only when `NOVU_EVAL_JUDGE=true` (PR/push CI runs deterministic graders only; scheduled and workflow-dispatch CI enable judges by default).
 
+## Triage failing scenarios
+
+When a scenario fails, use the Cursor skill `triage-agent-eval-failures` (`.cursor/skills/triage-agent-eval-failures/`) to decide whether the failure is real (playbook regression), a test bug (grader / tape / judge), or flaky (model non-determinism). The skill walks through re-run checks, `RunResult` evidence, and a fix target — playbook vs test scaffolding. Worked examples are in `reference.md` inside that skill directory.
+
 ## Adding a new suite
 
 1. Create `src/suites/<name>/` with a `CommandParser`, scenario folders, grader catalog, and `harness.ts`.

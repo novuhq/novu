@@ -55,16 +55,82 @@ async function readFixtureFile(projectRoot: string, filePath: string): Promise<s
   return fs.readFile(absolutePath, 'utf8');
 }
 
-function captureExportedEnv(command: string, env: Record<string, string>): boolean {
-  const match = command.match(/^export\s+([A-Z_][A-Z0-9_]*)='([^']*)'/);
+/**
+ * Read a single shell value, honoring single quotes, double quotes, and backslash
+ * escapes (including the `'\''` idiom agents use to embed apostrophes). Reading stops
+ * at the first unquoted whitespace. Returns the decoded value and how many characters
+ * were consumed so the caller can find the residual command.
+ */
+function readShellValue(input: string): { value: string; consumed: number } {
+  let out = '';
+  let i = 0;
 
-  if (match?.[1]) {
-    env[match[1]] = match[2] ?? '';
+  while (i < input.length) {
+    const ch = input[i];
 
-    return true;
+    if (ch === "'") {
+      i += 1;
+      while (i < input.length && input[i] !== "'") {
+        out += input[i];
+        i += 1;
+      }
+      i += 1;
+    } else if (ch === '"') {
+      i += 1;
+      while (i < input.length && input[i] !== '"') {
+        if (input[i] === '\\' && i + 1 < input.length) {
+          i += 1;
+        }
+        out += input[i];
+        i += 1;
+      }
+      i += 1;
+    } else if (ch === '\\') {
+      if (i + 1 < input.length) {
+        out += input[i + 1];
+        i += 2;
+      } else {
+        i += 1;
+      }
+    } else if (/\s/.test(ch)) {
+      break;
+    } else {
+      out += ch;
+      i += 1;
+    }
   }
 
-  return false;
+  return { value: out, consumed: i };
+}
+
+/**
+ * Capture any leading `export VAR=<value>` assignments into the harness env, then return
+ * the residual command (e.g. the `npx novu connect …` that follows). Agents commonly run
+ * the playbook's Step 3 block — an `export` plus the connect command — in a single shell
+ * call (joined by a newline, `;`, or `&&`); the residual must still execute so the connect
+ * command is tracked and streamed. Returns the original command unchanged when it does not
+ * start with an export.
+ */
+function captureLeadingExports(command: string, env: Record<string, string>): string {
+  let rest = command;
+  let capturedAny = false;
+
+  for (;;) {
+    const stripped = rest.replace(/^[\s;&]+/, '');
+    const match = stripped.match(/^export\s+([A-Z_][A-Z0-9_]*)=/);
+
+    if (!match?.[1]) {
+      break;
+    }
+
+    capturedAny = true;
+    const afterEq = stripped.slice(match[0].length);
+    const { value, consumed } = readShellValue(afterEq);
+    env[match[1]] = value;
+    rest = afterEq.slice(consumed);
+  }
+
+  return capturedAny ? rest.replace(/^[\s;&]+/, '') : command;
 }
 
 export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessContext<TParsed>) {
@@ -76,10 +142,10 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
       run_in_background: z.boolean().optional().describe('Run the command in the background.'),
       description: z.string().optional().describe('Short description of what the command does.'),
     }),
-    execute: async ({ command, run_in_background: runInBackground }) => {
-      context.recorder.recordToolCall('Bash', { command, run_in_background: runInBackground });
+    execute: async ({ command: rawCommand, run_in_background: runInBackground }) => {
+      context.recorder.recordToolCall('Bash', { command: rawCommand, run_in_background: runInBackground });
 
-      if (isForbiddenWatcherCommand(command)) {
+      if (isForbiddenWatcherCommand(rawCommand)) {
         return {
           error: 'Command rejected by harness.',
           stdout: '',
@@ -88,7 +154,11 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
         };
       }
 
-      if (captureExportedEnv(command, context.env)) {
+      // Capture leading `export VAR=…` assignments, then continue with whatever follows
+      // (e.g. the connect command in the same block). A pure export block has no residual.
+      const command = captureLeadingExports(rawCommand, context.env);
+
+      if (!command) {
         return { stdout: '', stderr: '', exitCode: 0 };
       }
 
