@@ -1,6 +1,11 @@
-import { CLAUDE_BUILTIN_TOOLS } from '@novu/shared';
+import { CLAUDE_BUILTIN_TOOLS, NOVU_TOOLS_SCHEMA } from '@novu/shared';
 import { expect } from 'chai';
-import { buildToolsPayload, MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG, mapToolset } from './anthropic-runtime.helpers';
+import {
+  buildPlatformToolsPayload,
+  buildToolsPayload,
+  MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
+  mapToolset,
+} from './anthropic-runtime.helpers';
 
 describe('mapToolset', () => {
   it('maps enabled builtin toolset configs to AgentToolDto entries', () => {
@@ -55,5 +60,20 @@ describe('buildToolsPayload', () => {
       mcp_server_name: 'GitHub',
       default_config: MANAGED_AGENT_DEFAULT_PERMISSION_CONFIG,
     });
+  });
+
+  it('includes platform tools when the user has no tools or MCP servers', () => {
+    const payload = buildToolsPayload(undefined, undefined);
+    const toolset = payload.find((entry) => entry.type === 'agent_toolset_20260401') as {
+      configs: Array<{ name: string; enabled: boolean }>;
+    };
+    const platformTool = payload.find((entry) => entry.type === 'custom');
+
+    expect(toolset.configs.every((c) => c.enabled === false)).to.equal(true);
+    expect(platformTool).to.deep.equal({ type: 'custom', ...NOVU_TOOLS_SCHEMA });
+  });
+
+  it('buildPlatformToolsPayload returns novu_tools only', () => {
+    expect(buildPlatformToolsPayload()).to.deep.equal([{ type: 'custom', ...NOVU_TOOLS_SCHEMA }]);
   });
 });

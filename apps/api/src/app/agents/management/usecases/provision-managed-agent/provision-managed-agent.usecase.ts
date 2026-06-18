@@ -11,6 +11,7 @@ import {
 } from '@novu/application-generic';
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository } from '@novu/dal';
 import {
+  AGENT_MANAGED_DEFINITION_VERSION,
   AgentRuntimeProviderIdEnum,
   filterDemoConfigurableMcpIds,
   type ICredentialsDto,
@@ -201,6 +202,8 @@ export class ProvisionManagedAgent {
               providerId: runtimeProviderId,
               _integrationId: resolvedIntegrationId,
               externalAgentId,
+              // Set managedDefinitionVersion only for provisioned agents
+              ...(command.externalAgentId ? {} : { managedDefinitionVersion: AGENT_MANAGED_DEFINITION_VERSION }),
             },
           },
         },

@@ -315,6 +315,37 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     });
   }
 
+  async refreshPlatformDefinition(externalAgentId: string): Promise<void> {
+    const client = await this.getClient();
+
+    await this.withRetry(async () => {
+      try {
+        // Read the agent's current user-selected tools/MCP and re-emit them through
+        // buildToolsPayload, which always appends Novu-owned platform tools (e.g.
+        // novu_tools). Nothing the user chose changes — this only backfills the overlay.
+        const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
+        const currentTools = ((currentAgent.tools as any[]) ?? []).flatMap(mapToolset);
+        const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
+
+        const toolsPayload = buildToolsPayload(
+          currentTools.map((t) => t.externalId),
+          currentMcpServers.map((s) => ({ name: s.name, url: s.url }))
+        );
+
+        if (toolsPayload.length === 0) {
+          return;
+        }
+
+        await (client as any).beta.agents.update(externalAgentId, {
+          version: currentAgent.version,
+          tools: toolsPayload,
+        });
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
   async provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult> {
     const client = await this.getClient();
     const resourceStem = input.resourceName ?? input.integrationName;

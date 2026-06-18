@@ -234,6 +234,14 @@ export interface IAgentRuntimeProvider {
   updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto>;
 
   /**
+   * Re-assert Novu-owned platform config (e.g. the `novu_tools` custom tool) on
+   * an existing agent without changing user-selected tools, MCP servers, model,
+   * system prompt, or skills. Idempotent — used to backfill agents created
+   * before a platform-definition change so they pick up the latest overlay.
+   */
+  refreshPlatformDefinition(externalAgentId: string): Promise<void>;
+
+  /**
    * Provision any provider-side resources needed for an AGENT_RUNTIME integration
    * (e.g. a Claude environment). Called by CreateIntegration after the integration
    * record is saved. Returns a credentialsUpdate that is merged into the integration.

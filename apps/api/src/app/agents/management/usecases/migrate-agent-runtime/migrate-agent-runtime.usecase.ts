@@ -7,7 +7,7 @@ import {
   resolveAgentRuntime,
 } from '@novu/application-generic';
 import { AgentRepository, ConversationRepository, IntegrationRepository } from '@novu/dal';
-import { AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
+import { AGENT_MANAGED_DEFINITION_VERSION, AgentRuntimeProviderIdEnum, IntegrationKindEnum } from '@novu/shared';
 import { MigrateAgentRuntimeCommand } from './migrate-agent-runtime.command';
 
 @Injectable()
@@ -114,6 +114,7 @@ export class MigrateAgentRuntime {
                 providerId: AgentRuntimeProviderIdEnum.Anthropic,
                 _integrationId: targetIntegration._id,
                 externalAgentId: created.externalAgentId,
+                managedDefinitionVersion: AGENT_MANAGED_DEFINITION_VERSION,
               },
             },
           },

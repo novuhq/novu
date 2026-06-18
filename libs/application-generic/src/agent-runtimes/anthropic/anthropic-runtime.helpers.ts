@@ -244,27 +244,17 @@ export function mapToolset(raw: Record<string, unknown>): AgentToolDto[] {
 }
 
 /**
- * Build the Anthropic `tools` payload array from builtin tool type strings
- * and optional MCP server entries.
- *
- * We always emit the full toolset with every known tool explicitly set to
- * enabled or disabled. Sending only the enabled subset causes the Anthropic
- * API to default all omitted tools to enabled, which means the agent ends up
- * with every tool regardless of what the user selected.
+ * Novu-owned tools always attached to managed agents (independent of user tool/MCP selections).
  */
-export function buildToolsPayload(
+export function buildPlatformToolsPayload(): Record<string, unknown>[] {
+  return [{ type: 'custom', ...NOVU_TOOLS_SCHEMA }];
+}
+
+function buildUserToolsetPayload(
   toolTypes?: string[],
   mcpServers?: Array<{ name: string; url: string }>
 ): Record<string, unknown>[] {
-  const hasTools = Array.isArray(toolTypes) && toolTypes.length > 0;
-  const hasMcpServers = Array.isArray(mcpServers) && mcpServers.length > 0;
-
-  if (!hasTools && !hasMcpServers) {
-    return [];
-  }
-
   const payload: Record<string, unknown>[] = [];
-
   const enabledSet = new Set(toolTypes ?? []);
   const allToolNames = CLAUDE_BUILTIN_TOOLS.map((t) => t.type);
 
@@ -284,9 +274,26 @@ export function buildToolsPayload(
     }
   }
 
-  payload.push({ type: 'custom', ...NOVU_TOOLS_SCHEMA });
-
   return payload;
+}
+
+/**
+ * Build the Anthropic `tools` payload array from builtin tool type strings
+ * and optional MCP server entries.
+ *
+ * We always emit the full toolset with every known tool explicitly set to
+ * enabled or disabled. Sending only the enabled subset causes the Anthropic
+ * API to default all omitted tools to enabled, which means the agent ends up
+ * with every tool regardless of what the user selected.
+ *
+ * Platform tools (e.g. `novu_tools`) are always included, even when the user
+ * has no builtin tools or MCP servers enabled.
+ */
+export function buildToolsPayload(
+  toolTypes?: string[],
+  mcpServers?: Array<{ name: string; url: string }>
+): Record<string, unknown>[] {
+  return [...buildUserToolsetPayload(toolTypes, mcpServers), ...buildPlatformToolsPayload()];
 }
 
 /**
