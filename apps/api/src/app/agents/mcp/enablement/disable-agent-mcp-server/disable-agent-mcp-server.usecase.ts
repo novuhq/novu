@@ -3,8 +3,7 @@ import { AnalyticsService, PinoLogger, resolveAgentRuntime } from '@novu/applica
 import { AgentMcpServerRepository, AgentRepository, IntegrationRepository, McpConnectionRepository } from '@novu/dal';
 
 import { trackAgentMcpServerDisabled } from '../../../shared/analytics/agent-analytics';
-import { SyncAgentMcpServersCommand } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.command';
-import { SyncAgentMcpServers } from '../sync-agent-mcp-servers/sync-agent-mcp-servers.usecase';
+import { AgentMcpDefinitionService } from '../../runtime/agent-mcp-definition.service';
 import { DisableAgentMcpServerCommand } from './disable-agent-mcp-server.command';
 
 /**
@@ -21,15 +20,13 @@ import { DisableAgentMcpServerCommand } from './disable-agent-mcp-server.command
  *   2. Soft-disable the enablement row by flipping `enabled: false` +
  *      `status: 'syncing'`. The row is intentionally kept so a failed sync
  *      can be retried without losing the enablement record.
- *   3. Project the new (smaller) enabled set onto the runtime provider via
- *      `SyncAgentMcpServers`. The soft-disabled row is excluded from the
- *      projection (`findByAgent({ enabledOnly: true })`), so the upstream
- *      `agent.mcp_servers` set converges to the desired state.
- *   4. Only after the sync succeeds: cascade-delete connections and the
+ *   3. Update Anthropic's shared agent MCP list. The soft-disabled row is
+ *      excluded (`enabledOnly: true`), so it drops off the shared agent.
+ *   4. Only after that succeeds: cascade-delete connections and the
  *      enablement row. If step 3 throws, the disabled row + its connections
  *      are left in place — a retry of this same endpoint will pick up where
  *      we left off (revoke is best-effort, soft-disable is idempotent, and
- *      re-running the projection is safe).
+ *      re-running step 3 is safe).
  */
 @Injectable()
 export class DisableAgentMcpServer {
@@ -38,7 +35,7 @@ export class DisableAgentMcpServer {
     private readonly agentMcpServerRepository: AgentMcpServerRepository,
     private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly integrationRepository: IntegrationRepository,
-    private readonly syncAgentMcpServers: SyncAgentMcpServers,
+    private readonly agentMcpDefinitionService: AgentMcpDefinitionService,
     private readonly analyticsService: AnalyticsService,
     private readonly logger: PinoLogger
   ) {
@@ -90,20 +87,14 @@ export class DisableAgentMcpServer {
     );
 
     try {
-      await this.syncAgentMcpServers.execute(
-        SyncAgentMcpServersCommand.create({
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-          agentId: agent._id,
-        })
-      );
+      await this.agentMcpDefinitionService.reconcile({
+        environmentId: command.environmentId,
+        organizationId: command.organizationId,
+        agentId: agent._id,
+      });
     } catch (err) {
-      // The soft-disabled row was excluded from the projection (sync reads
-      // `enabledOnly: true`), so the sync failure is unrelated to this MCP
-      // — typically a transport error or the provider rejecting an UNRELATED
-      // row. Record an error on this row so callers / dashboards see it and
-      // a retry can converge. Re-throw so the HTTP response surfaces the
-      // failure (caller will retry, which is now safe to repeat).
+      // This row is already soft-disabled and excluded from the push above.
+      // Mark error so the dashboard shows a failed disable and retry is safe.
       const code = err instanceof Error ? err.name || 'sync_error' : 'sync_error';
       const message = err instanceof Error ? err.message : 'Unknown provider error';
       await this.agentMcpServerRepository.update(

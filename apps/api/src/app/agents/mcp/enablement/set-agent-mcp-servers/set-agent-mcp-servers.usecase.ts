@@ -35,7 +35,7 @@ import { SetAgentMcpServersCommand } from './set-agent-mcp-servers.command';
  * Future optimisation:
  *   Today this orchestrates the existing per-row `EnableAgentMcpServer` /
  *   `DisableAgentMcpServer` usecases sequentially, which means one
- *   `SyncAgentMcpServers` projection per row. Extracting a "mongo-only"
+ *   shared-agent MCP update per row. Extracting a "mongo-only"
  *   variant from each and running a single sync at the end would cut
  *   provider round-trips from O(changes) to O(1). Deferred to keep this
  *   change focused — correctness is identical either way.

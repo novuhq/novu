@@ -1,0 +1,75 @@
+{
+  "name": "@novu/chat-sdk-adapter",
+  "version": "0.0.2",
+  "type": "module",
+  "description": "Novu adapter for the Chat SDK — expose all of Novu's normalized chat channels (Slack, WhatsApp, Teams, Telegram, Email) as a single Chat SDK platform adapter",
+  "license": "MIT",
+  "homepage": "https://github.com/novuhq/novu/tree/next/packages/chat-adapter#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/novuhq/novu.git",
+    "directory": "packages/chat-adapter"
+  },
+  "bugs": {
+    "url": "https://github.com/novuhq/novu/issues"
+  },
+  "keywords": [
+    "chat-sdk",
+    "chat-adapter",
+    "novu",
+    "slack",
+    "whatsapp",
+    "telegram",
+    "teams",
+    "agent"
+  ],
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ],
+  "scripts": {
+    "prepublishOnly": "pnpm build",
+    "prebuild": "rimraf dist tsconfig.tsbuildinfo",
+    "build": "tsc -p tsconfig.json",
+    "watch:build": "tsc -p tsconfig.json -w",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "biome check .",
+    "check:fix": "biome check --write ."
+  },
+  "dependencies": {
+    "@chat-adapter/shared": "4.30.0"
+  },
+  "peerDependencies": {
+    "chat": "^4.30.0",
+    "react": ">=18.0.0 || >=19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@chat-adapter/state-memory": "4.30.0",
+    "@types/react": "^19.0.0",
+    "rimraf": "~3.0.2",
+    "typescript": "5.6.2",
+    "vitest": "^1.2.1"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "nx": {
+    "tags": [
+      "type:package"
+    ]
+  }
+}

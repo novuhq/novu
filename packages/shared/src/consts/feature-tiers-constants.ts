@@ -75,6 +75,8 @@ export enum FeatureNameEnum {
   AGENT_MAX_AGENTS = 'agentMaxAgents',
   AGENT_MAX_ACTIVE_CHANNELS = 'agentMaxActiveChannels',
   AGENT_MAX_CUSTOM_EMAIL_DOMAINS = 'agentMaxCustomEmailDomains',
+  AGENT_MAX_ACTIVE_CONVERSATIONS = 'agentMaxActiveConversations',
+  AGENT_COST_PER_ADDITIONAL_CONVERSATION = 'agentCostPerAdditionalConversation',
 }
 
 /**
@@ -474,14 +476,14 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
     [ApiServiceLevelEnum.UNLIMITED]: 1,
   },
   [FeatureNameEnum.COMPLIANCE_HIPAA_BAA_BOOLEAN]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'HIPAA compliance', value: false },
-    [ApiServiceLevelEnum.PRO]: { label: 'HIPAA compliance', value: false },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'HIPAA compliance', value: false },
+    [ApiServiceLevelEnum.FREE]: { label: 'No HIPAA compliance', value: false },
+    [ApiServiceLevelEnum.PRO]: { label: 'No HIPAA compliance', value: false },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'No HIPAA compliance', value: false },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'HIPAA compliance', value: true },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'HIPAA compliance', value: true },
   },
   [FeatureNameEnum.COMPLIANCE_CUSTOM_SECURITY_REVIEWS]: {
-    [ApiServiceLevelEnum.FREE]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: true },
+    [ApiServiceLevelEnum.FREE]: { label: 'No security reviews', value: false },
     [ApiServiceLevelEnum.PRO]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: true },
     [ApiServiceLevelEnum.BUSINESS]: { label: 'Security reviews: SOC 2 and ISO 27001 upon request', value: true },
     [ApiServiceLevelEnum.ENTERPRISE]: {
@@ -531,9 +533,24 @@ const novuServiceTiers: Record<FeatureNameEnum, Record<ApiServiceLevelEnum, Feat
   [FeatureNameEnum.AGENT_MAX_CUSTOM_EMAIL_DOMAINS]: {
     [ApiServiceLevelEnum.FREE]: { label: 'No custom email domains', value: 0 },
     [ApiServiceLevelEnum.PRO]: { label: 'No custom email domains', value: 0 },
-    [ApiServiceLevelEnum.BUSINESS]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.BUSINESS]: { label: 'Custom email domains', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
     [ApiServiceLevelEnum.UNLIMITED]: { label: 'Unlimited custom email domains', value: UNLIMITED_VALUE },
+  },
+  [FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS]: {
+    [ApiServiceLevelEnum.FREE]: { label: '100 active conversations included', value: 100 },
+    [ApiServiceLevelEnum.PRO]: { label: '1,000 active conversations included', value: 1000 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '5,000 active conversations included', value: 5000 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom active conversations', value: UNLIMITED_VALUE },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom active conversations', value: UNLIMITED_VALUE },
+  },
+  // TODO: Product is in beta phase, Backend is not yet implemented for overage pricing.
+  [FeatureNameEnum.AGENT_COST_PER_ADDITIONAL_CONVERSATION]: {
+    [ApiServiceLevelEnum.FREE]: { label: 'No additional conversations', value: null },
+    [ApiServiceLevelEnum.PRO]: { label: '$0.03 per extra conversation', value: 0.03 },
+    [ApiServiceLevelEnum.BUSINESS]: { label: '$0.02 per extra conversation', value: 0.02 },
+    [ApiServiceLevelEnum.ENTERPRISE]: { label: 'Custom pricing for additional conversations', value: 0.015 },
+    [ApiServiceLevelEnum.UNLIMITED]: { label: 'Custom pricing for additional conversations', value: 0.015 },
   },
 };
 

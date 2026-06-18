@@ -3,7 +3,7 @@ import type { Block } from '@slack/types';
 
 import type { SlackNativeDelivery } from '../../conversation-runtime/egress/slack-native-delivery';
 import type { ReplyContentDto } from '../../shared/dtos/agent-reply-payload.dto';
-import { AgentPlatformEnum } from '../../shared/enums/agent-platform.enum';
+import { AgentPlatformEnum, requiresShortConnectUrl } from '../../shared/enums/agent-platform.enum';
 
 type SlackCardBlock = Block & {
   type: 'card';
@@ -24,6 +24,18 @@ const SLACK_CARD_BODY_MAX = 200;
 export type ConnectCardDelivery = {
   content: ReplyContentDto;
   slackNative?: SlackNativeDelivery;
+};
+
+type ConnectRedirectIssuer = {
+  issue(authorizeUrl: string): Promise<string>;
+};
+
+type BuildConnectCardParams = {
+  platform: AgentPlatformEnum;
+  mcpId: string;
+  mcpName: string;
+  authorizeUrl: string;
+  authorizeUrlWithAutoApprove?: string;
 };
 
 function resolveDashboardBaseUrl(): string {
@@ -102,13 +114,7 @@ function buildConnectCardSlackBlocks(params: {
   };
 }
 
-export function buildConnectCard(params: {
-  platform: AgentPlatformEnum;
-  mcpId: string;
-  mcpName: string;
-  authorizeUrl: string;
-  authorizeUrlWithAutoApprove?: string;
-}): ConnectCardDelivery {
+export function buildConnectCard(params: BuildConnectCardParams): ConnectCardDelivery {
   const content: ReplyContentDto = {
     card: {
       type: 'card',
@@ -141,4 +147,16 @@ export function buildConnectCard(params: {
   }
 
   return { content };
+}
+
+export async function buildConnectCardDelivery(
+  params: BuildConnectCardParams,
+  deps: { connectRedirect: ConnectRedirectIssuer }
+): Promise<ConnectCardDelivery> {
+  return buildConnectCard({
+    ...params,
+    authorizeUrl: requiresShortConnectUrl(params.platform)
+      ? await deps.connectRedirect.issue(params.authorizeUrl)
+      : params.authorizeUrl,
+  });
 }

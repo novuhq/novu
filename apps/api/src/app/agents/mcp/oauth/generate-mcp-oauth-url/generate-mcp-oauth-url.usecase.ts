@@ -32,11 +32,11 @@ import {
 } from '@novu/shared';
 import { trackAgentMcpOAuthCreated } from '../../../shared/analytics/agent-analytics';
 import { GenerateMcpOAuthUrlResponseDto } from '../../../shared/dtos/mcp-server.dto';
-import { assertMcpNovuAppFlagEnabled } from '../../assert-mcp-novu-app-flag-enabled';
 import {
   McpNovuAppCredentialsService,
   type NovuAppCredentials,
 } from '../../connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
+import { assertMcpNovuAppFlagEnabled } from '../../shared/assert-mcp-novu-app-flag-enabled';
 import {
   AuthorizationServerMetadata,
   buildTokenEndpointAuthMethodsToTry,

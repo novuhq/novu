@@ -9,9 +9,11 @@ import {
 } from '@novu/application-generic';
 import {
   AgentMcpServerRepository,
+  AgentToolTrustRepository,
   ChannelConnectionRepository,
   ChannelEndpointRepository,
   CommunityOrganizationRepository,
+  ConversationActivationRepository,
   ConversationActivityRepository,
   ConversationRepository,
   IntegrationRepository,
@@ -37,6 +39,7 @@ import { AgentActionTokenService } from './conversation-runtime/action-token/age
 import { AgentAttachmentStorage } from './conversation-runtime/conversation/agent-attachment-storage.service';
 import { AgentConversationService } from './conversation-runtime/conversation/agent-conversation.service';
 import { AgentSubscriberResolver } from './conversation-runtime/conversation/agent-subscriber-resolver.service';
+import { ConversationActivationService } from './conversation-runtime/conversation/conversation-activation.service';
 import { FileMaterializer } from './conversation-runtime/egress/file-materializer.service';
 import { OutboundGateway } from './conversation-runtime/egress/outbound.gateway';
 import { AgentInboundController } from './conversation-runtime/ingress/agent-inbound.controller';
@@ -59,12 +62,16 @@ import { ManagedAgentService } from './managed-runtime/managed-agent.service';
 import { ManagedAgentEventHandler } from './managed-runtime/managed-agent-event-handler.service';
 import { ManagedAgentProviderFactory } from './managed-runtime/managed-agent-provider-factory.service';
 import { ManagedRuntimeController } from './managed-runtime/managed-runtime.controller';
+import { ToolTrustService } from './managed-runtime/tool-approval/tool-trust.service';
 import { AgentRuntimeController } from './management/agent-runtime.controller';
 import { AgentsController } from './management/agents.controller';
 import { McpNovuAppCredentialsService } from './mcp/connections/get-mcp-novu-app-credentials/get-mcp-novu-app-credentials.service';
+import { McpConnectRedirectService } from './mcp/connections/mcp-connect-redirect.service';
 import { McpConnectionVaultService } from './mcp/connections/mcp-connection-vault.service';
 import { AgentsMcpOAuthController } from './mcp/oauth/agents-mcp-oauth.controller';
 import { McpOAuthDiscoveryService } from './mcp/oauth/mcp-oauth-discovery.service';
+import { AgentMcpDefinitionService } from './mcp/runtime/agent-mcp-definition.service';
+import { AgentMcpSessionService } from './mcp/runtime/agent-mcp-session.service';
 import { AgentRuntimeExceptionFilter } from './shared/agent-runtime-exception.filter';
 import { USE_CASES } from './usecases';
 
@@ -93,10 +100,12 @@ import { USE_CASES } from './usecases';
     ...USE_CASES,
     AgentRuntimeExceptionFilter,
     AgentMcpServerRepository,
+    AgentToolTrustRepository,
     ChannelConnectionRepository,
     ChannelEndpointRepository,
     CommunityOrganizationRepository,
     ConversationRepository,
+    ConversationActivationRepository,
     ConversationActivityRepository,
     IntegrationRepository,
     McpConnectionRepository,
@@ -106,6 +115,7 @@ import { USE_CASES } from './usecases';
     AgentConfigResolver,
     AgentSubscriberResolver,
     AgentConversationService,
+    ConversationActivationService,
     InboundAckService,
     AgentEmailActionTokenService,
     AgentActionTokenService,
@@ -117,7 +127,11 @@ import { USE_CASES } from './usecases';
     ManagedAgentProviderFactory,
     ManagedAgentEventHandler,
     ManagedAgentService,
+    ToolTrustService,
     McpConnectionVaultService,
+    McpConnectRedirectService,
+    AgentMcpDefinitionService,
+    AgentMcpSessionService,
     NovuEmailCleanupService,
     NovuEmailProvisioningService,
     McpNovuAppCredentialsService,

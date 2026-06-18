@@ -231,7 +231,7 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.body.data.managedRuntime.externalAgentId).to.equal(FAKE_EXTERNAL_AGENT_ID);
     });
 
-    it('should forward model, systemPrompt, tools, and resolved mcpServers to createAgent', async () => {
+    it('should forward model, systemPrompt, and tools to createAgent without subscriber OAuth MCPs', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-managed-full-${Date.now()}`;
       createdAgentIdentifiers.push(identifier);
@@ -255,9 +255,10 @@ describe('Managed Agents API #novu-v2', () => {
       expect(createAgentArg.model).to.equal('claude-opus-4-5');
       expect(createAgentArg.systemPrompt).to.equal('You are a helpful assistant');
       expect(createAgentArg.tools).to.deep.equal(['web_search']);
-      expect(createAgentArg.mcpServers).to.be.an('array').with.length(1);
-      expect(createAgentArg.mcpServers[0].name).to.equal('Slack');
-      expect(createAgentArg.mcpServers[0].url).to.equal('https://mcp.slack.com/mcp');
+      expect(
+        createAgentArg.mcpServers ?? [],
+        'subscriber OAuth MCPs are persisted in Mongo but not on the shared agent at create'
+      ).to.deep.equal([]);
     });
 
     it('should return 422 when runtime=managed but managedRuntime is omitted', async () => {
@@ -518,17 +519,13 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.body.data.tools).to.be.an('array');
     });
 
-    it('returns mcpServers from the Novu-authoritative enablement table (provider mcpServers ignored)', async () => {
+    it('returns shared-agent mcpServers only (subscriber OAuth enabled in Mongo is session-only)', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-cfg-full-${Date.now()}`;
       createdAgentIdentifiers.push(identifier);
 
       await session.testAgent.post('/v1/agents').send(managedBody(identifier, integrationId));
 
-      // Enable a catalog MCP via the new authoritative endpoint. Mongo
-      // (`agent_mcp_server`) is now the source of truth for the agent's MCP
-      // list; the provider's `getConfig().mcpServers` is intentionally
-      // ignored to avoid trusting upstream drift.
       const enableRes = await session.testAgent
         .post(`/v1/agents/${encodeURIComponent(identifier)}/mcp-servers`)
         .send({ mcpId: 'linear' });
@@ -537,8 +534,6 @@ describe('Managed Agents API #novu-v2', () => {
       mockProvider.getConfig.resolves({
         model: 'claude-opus-4-5',
         systemPrompt: 'You are a helpful assistant',
-        // Provider returns its own (potentially drifted) mcpServers shape; the
-        // runtime-config endpoint MUST ignore it and project from Mongo.
         mcpServers: [
           {
             externalId: 'should-be-ignored',
@@ -570,13 +565,7 @@ describe('Managed Agents API #novu-v2', () => {
       expect(model).to.equal('claude-opus-4-5');
       expect(systemPrompt).to.equal('You are a helpful assistant');
 
-      expect(mcpServers).to.have.length(1);
-      // Projection comes from the shared catalog for `linear`, NOT the
-      // provider's stub. The `externalId` mirrors the catalog id; the name
-      // and url are the canonical Linear catalog values.
-      expect(mcpServers[0].externalId).to.equal('linear');
-      expect(mcpServers[0].name).to.equal('Linear');
-      expect(mcpServers[0].url).to.equal('https://mcp.linear.app/mcp');
+      expect(mcpServers, 'Linear is enabled in Mongo but not on the shared agent definition').to.deep.equal([]);
 
       expect(tools).to.have.length(2);
       expect(tools[0].externalId).to.equal('tool-1');
@@ -878,7 +867,7 @@ describe('Managed Agents API #novu-v2', () => {
       expect(rows).to.have.length(1);
       expect(rows[0].mcpId).to.equal('linear');
       expect(rows[0].enabled).to.equal(true);
-      expect(rows[0].externalProjection?.providerId).to.equal(AgentRuntimeProviderIdEnum.Anthropic);
+      expect(rows[0].externalProjection, 'adopted subscriber OAuth rows are session-only').to.equal(undefined);
 
       // Both endpoints must have been called during adoption — the parallel
       // getAgent + getConfig round-trips are the contract the usecase relies
@@ -921,7 +910,7 @@ describe('Managed Agents API #novu-v2', () => {
       expect(res.body.data.managedRuntime.mcpServers).to.be.an('array').with.length(0);
     });
 
-    it('should project mcpServers from the Novu-authoritative enablement table on GET /v1/agents/:id', async () => {
+    it('should project shared-agent mcpServers on GET /v1/agents/:id (subscriber OAuth excluded)', async () => {
       const integrationId = await createAgentRuntimeIntegration();
       const identifier = `e2e-get-view-${Date.now()}`;
       createdAgentIdentifiers.push(identifier);
@@ -933,8 +922,6 @@ describe('Managed Agents API #novu-v2', () => {
         .send({ mcpId: 'linear' });
       expect(enableRes.status, `enable linear failed: ${JSON.stringify(enableRes.body)}`).to.equal(201);
 
-      // Provider returns drifted mcpServers — the agent-view projection must
-      // ignore them and emit the catalog values for the Mongo-enabled MCP.
       mockProvider.getConfig.resolves({
         model: 'claude-opus-4-5',
         systemPrompt: 'sp',
@@ -949,10 +936,7 @@ describe('Managed Agents API #novu-v2', () => {
       const view = res.body.data.managedRuntime;
       expect(view).to.exist;
 
-      expect(view.mcpServers).to.have.length(1);
-      expect(view.mcpServers[0].externalId).to.equal('linear');
-      expect(view.mcpServers[0].name).to.equal('Linear');
-      expect(view.mcpServers[0].url).to.equal('https://mcp.linear.app/mcp');
+      expect(view.mcpServers, 'runtime config view is shared-agent projection only').to.deep.equal([]);
 
       expect(view.tools).to.have.length(1);
       expect(view.tools[0].externalId).to.equal('bash');

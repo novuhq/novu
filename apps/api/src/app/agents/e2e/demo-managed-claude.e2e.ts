@@ -322,7 +322,7 @@ describe('Demo Managed Claude #novu-v2', () => {
     expect(agent).to.equal(null);
   });
 
-  it('should drop provider-managed MCPs when provisioning on the novu-anthropic demo integration', async () => {
+  it('should drop demo-unavailable MCPs from Mongo and send no MCPs to createAgent', async () => {
     const integrationId = await createNovuAnthropicIntegration();
     const identifier = `e2e-demo-mcp-filter-${Date.now()}`;
     createdAgentIdentifiers.push(identifier);
@@ -344,10 +344,10 @@ describe('Demo Managed Claude #novu-v2', () => {
     expect(res.status, `create failed: ${JSON.stringify(res.body)}`).to.equal(201);
     expect(mockProvider.createAgent.calledOnce, 'createAgent should run once').to.equal(true);
 
-    const sentToProvider = mockProvider.createAgent.firstCall.args[0].mcpServers as Array<{ name: string }>;
-    const providerMcpNames = sentToProvider.map((server) => server.name);
-    expect(providerMcpNames).to.deep.equal(['Sentry']);
-    expect(providerMcpNames).to.not.include('Slack');
+    // Demo integration filters provider-managed Slack from Mongo; both sentry and
+    // slack are subscriber OAuth so neither belongs on the shared agent at create.
+    const sentToProvider = mockProvider.createAgent.firstCall.args[0].mcpServers as Array<{ name: string }> | undefined;
+    expect(sentToProvider ?? []).to.deep.equal([]);
 
     const agent = await agentRepository.findOne(
       {

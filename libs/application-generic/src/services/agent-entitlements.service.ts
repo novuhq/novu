@@ -225,6 +225,26 @@ export class AgentEntitlementsService {
   }
 
   /**
+   * Resolves the organization's active-conversations / month limit straight from
+   * the plan tier table — no platform/system cap and no per-org LaunchDarkly
+   * override. A value `>= UNLIMITED_VALUE` means unlimited (Enterprise/Unlimited
+   * tiers): paid customers are never capped, only Free is short-circuited.
+   * Counting still runs self-hosted, but the limit is never binding there.
+   */
+  async getActiveConversationsLimit(
+    organizationId: string,
+    knownApiServiceLevel?: ApiServiceLevelEnum
+  ): Promise<number> {
+    if (this.isSelfHosted) {
+      return UNLIMITED_VALUE;
+    }
+
+    const apiServiceLevel = knownApiServiceLevel ?? (await this.getApiServiceLevel(organizationId));
+
+    return getFeatureForTierAsNumber(FeatureNameEnum.AGENT_MAX_ACTIVE_CONVERSATIONS, apiServiceLevel);
+  }
+
+  /**
    * Snapshot of the environment's agent usage against the organization's plan
    * limit, including which agents are within limit when the environment is over
    * it. Limits resolve at the organization level; usage counts per environment
@@ -402,7 +422,7 @@ export class AgentEntitlementsService {
     this.runtimeLimitCache.set(cacheKey, { value, expiresAt: Date.now() + RUNTIME_LIMIT_CACHE_TTL_MS });
   }
 
-  private async getApiServiceLevel(organizationId: string): Promise<ApiServiceLevelEnum> {
+  async getApiServiceLevel(organizationId: string): Promise<ApiServiceLevelEnum> {
     const organization = await this.organizationRepository.findById(organizationId, '_id apiServiceLevel');
 
     return organization?.apiServiceLevel || ApiServiceLevelEnum.FREE;

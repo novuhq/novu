@@ -16,9 +16,11 @@ import { trackAgentReplyProcessed } from '../../../shared/analytics/agent-analyt
 import type { EditPayloadDto, ReplyContentDto } from '../../../shared/dtos/agent-reply-payload.dto';
 import { isValidMetadataSignalKey } from '../../../shared/dtos/agent-reply-payload.dto';
 import { AgentEventEnum } from '../../../shared/enums/agent-event.enum';
+import { AgentPlatformEnum } from '../../../shared/enums/agent-platform.enum';
 import { InboundAckService } from '../../ack/inbound-ack.service';
 import type { MetadataOp } from '../../conversation/agent-conversation.service';
 import { AgentConversationService } from '../../conversation/agent-conversation.service';
+import { ConversationActivationService } from '../../conversation/conversation-activation.service';
 import { OutboundGateway } from '../../egress/outbound.gateway';
 import { BridgeExecutorService } from '../../runtime/bridge-executor.service';
 import { buildAgentPlatformContext, buildEmailPlatformContext } from '../../runtime/build-platform-context.util';
@@ -36,7 +38,8 @@ export class HandleAgentReply {
     private readonly parseEventRequest: ParseEventRequest,
     private readonly analyticsService: AnalyticsService,
     private readonly outboundGateway: OutboundGateway,
-    private readonly inboundAck: InboundAckService
+    private readonly inboundAck: InboundAckService,
+    private readonly conversationActivation: ConversationActivationService
   ) {
     this.logger.setContext(this.constructor.name);
   }
@@ -88,7 +91,19 @@ export class HandleAgentReply {
 
     let replyInfo: SentMessageInfo | undefined;
     if (command.reply) {
+      // Free-tier short-circuit: an agent-initiated reply that would start a new
+      // active conversation is rejected once the included limit is reached
+      // (covers proactive/outbound-only threads). Replies inside an already-counted
+      // conversation pass through.
+      await this.conversationActivation.assertOutboundWithinLimit({
+        conversation,
+        platform: channel.platform as AgentPlatformEnum,
+        organizationId: command.organizationId,
+      });
+
       replyInfo = await this.deliverMessage(command, conversation, channel, command.reply, agentName);
+
+      await this.registerConversationEngagement(command, conversation, channel);
 
       if (!config!.isManaged) {
         void this.inboundAck.onBridgeReplyDelivered({
@@ -173,6 +188,33 @@ export class HandleAgentReply {
     }
 
     return agent.name;
+  }
+
+  /**
+   * Counts the active conversation for an agent-initiated reply. Idempotent per
+   * activation (a reply following a counted inbound dispatch only slides the
+   * rolling window). Fail-soft — billing accounting must never fail a delivered
+   * reply.
+   */
+  private async registerConversationEngagement(
+    command: HandleAgentReplyCommand,
+    conversation: ConversationEntity,
+    channel: ConversationChannel
+  ): Promise<void> {
+    try {
+      await this.conversationActivation.registerEngagement({
+        conversation,
+        platform: channel.platform as AgentPlatformEnum,
+        organizationId: command.organizationId,
+        environmentId: command.environmentId,
+        agentId: conversation._agentId,
+      });
+    } catch (err) {
+      this.logger.warn(
+        err,
+        `[agent:${command.agentIdentifier}] Failed to register active-conversation engagement for reply`
+      );
+    }
   }
 
   private async deliverMessage(
