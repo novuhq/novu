@@ -17,7 +17,7 @@ import type {
 } from '../notifications';
 import type { InboxNotification, NotificationFilter, TagsFilter } from '../types';
 import { createNotification } from '../ui/internal/createNotification';
-import { areDataEqual, areTagsEqual, isSameFilter } from '../utils/notification-utils';
+import { areDataEqual, areTagsEqual, checkBasicFilters, checkNotificationTagFilter, isSameFilter } from '../utils/notification-utils';
 import { InMemoryCache } from './in-memory-cache';
 import type { Cache } from './types';
 
@@ -90,12 +90,16 @@ const updateEvents: NotificationEvents[] = [
   'notification.read.resolved',
   'notification.unread.pending',
   'notification.unread.resolved',
+  'notification.seen.pending',
+  'notification.seen.resolved',
   'notification.complete_action.pending',
   'notification.complete_action.resolved',
   'notification.revert_action.pending',
   'notification.revert_action.resolved',
   'notifications.read_all.pending',
   'notifications.read_all.resolved',
+  'notifications.seen_all.pending',
+  'notifications.seen_all.resolved',
 ];
 
 // these events should remove the notification from the cache
@@ -146,23 +150,33 @@ export class NotificationsCache {
     this.#cache = new InMemoryCache();
   }
 
-  private updateNotification = (key: string, data: Notification): boolean => {
+  private syncNotificationInBucket = (key: string, notification: Notification): boolean => {
     const notificationsResponse = this.#cache.get(key);
     if (!notificationsResponse) {
       return false;
     }
 
-    const index = notificationsResponse.notifications.findIndex((el) => el.id === data.id);
-    if (index === -1) {
-      return false;
+    const bucketFilter = getFilter(key);
+    const matchesFilter =
+      checkBasicFilters(notification, bucketFilter) &&
+      checkNotificationTagFilter(notification.tags, bucketFilter.tags);
+    const index = notificationsResponse.notifications.findIndex((el) => el.id === notification.id);
+    const existsInBucket = index !== -1;
+
+    if (matchesFilter && existsInBucket) {
+      const updatedNotifications = [...notificationsResponse.notifications];
+      updatedNotifications[index] = notification;
+
+      this.#cache.set(key, { ...notificationsResponse, notifications: updatedNotifications });
+
+      return true;
     }
 
-    const updatedNotifications = [...notificationsResponse.notifications];
-    updatedNotifications[index] = data;
+    if (!matchesFilter && existsInBucket) {
+      return this.removeNotification(key, notification);
+    }
 
-    this.#cache.set(key, { ...notificationsResponse, notifications: updatedNotifications });
-
-    return true;
+    return false;
   };
 
   private removeNotification = (key: string, data: Notification): boolean => {
@@ -232,7 +246,7 @@ export class NotificationsCache {
           if (remove) {
             isNotificationFound = this.removeNotification(key, notification);
           } else {
-            isNotificationFound = this.updateNotification(key, notification);
+            isNotificationFound = this.syncNotificationInBucket(key, notification);
           }
 
           if (isNotificationFound) {
@@ -257,22 +271,27 @@ export class NotificationsCache {
       return isSameFilter(parsedFilter, filter);
     });
 
-    return cacheKeys
-      .map((key) => this.#cache.get(key))
-      .reduce<ListNotificationsResponse>(
-        (acc, el) => {
-          if (!el) {
-            return acc;
-          }
+    const uniqueNotifications = new Map<string, Notification>();
+    let hasMore = false;
 
-          return {
-            hasMore: el.hasMore,
-            filter: el.filter,
-            notifications: [...acc.notifications, ...el.notifications],
-          };
-        },
-        { hasMore: false, filter: {}, notifications: [] }
-      );
+    for (const key of cacheKeys) {
+      const cachedResponse = this.#cache.get(key);
+      if (!cachedResponse) {
+        continue;
+      }
+
+      hasMore = hasMore || cachedResponse.hasMore;
+
+      for (const notification of cachedResponse.notifications) {
+        uniqueNotifications.set(notification.id, notification);
+      }
+    }
+
+    return {
+      hasMore,
+      filter,
+      notifications: Array.from(uniqueNotifications.values()),
+    };
   }
 
   get(args: ListNotificationsArgs): ListNotificationsResponse | undefined {

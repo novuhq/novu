@@ -1,4 +1,4 @@
-import { areTagsEqual, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
+import { areTagsEqual, checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
 import { useEffect, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
@@ -8,6 +8,90 @@ type Count = {
   count: number;
   filter: NotificationFilter;
 };
+
+type CountMutation = 'read' | 'unread' | 'seen';
+
+function getCountDelta(filter: NotificationFilter, notification: Notification, mutation: CountMutation): number {
+  if (mutation === 'read') {
+    if (filter.read === false) {
+      if (checkNotificationMatchesFilter({ ...notification, isRead: false } as Notification, filter)) {
+        return -1;
+      }
+
+      return 0;
+    }
+
+    if (filter.read === true && checkNotificationMatchesFilter(notification, filter)) {
+      return 1;
+    }
+
+    return 0;
+  }
+
+  if (mutation === 'unread') {
+    if (filter.read === false && checkNotificationMatchesFilter(notification, filter)) {
+      return 1;
+    }
+
+    if (filter.read === true) {
+      if (checkNotificationMatchesFilter({ ...notification, isRead: true } as Notification, filter)) {
+        return -1;
+      }
+
+      return 0;
+    }
+
+    return 0;
+  }
+
+  if (filter.seen === false) {
+    if (checkNotificationMatchesFilter({ ...notification, isSeen: false } as Notification, filter)) {
+      return -1;
+    }
+
+    return 0;
+  }
+
+  if (filter.seen === true && checkNotificationMatchesFilter(notification, filter)) {
+    return 1;
+  }
+
+  return 0;
+}
+
+function adjustCountsForBulkMutation(
+  counts: Count[] | undefined,
+  notifications: Notification[],
+  mutation: 'read' | 'seen'
+): Count[] | undefined {
+  if (!counts) {
+    return counts;
+  }
+
+  return counts.map((countItem) => {
+    if (mutation === 'read' && countItem.filter.read !== false) {
+      return countItem;
+    }
+
+    if (mutation === 'seen' && countItem.filter.seen !== false) {
+      return countItem;
+    }
+
+    const matchedCount = notifications.filter((notification) => {
+      if (mutation === 'read') {
+        return checkNotificationMatchesFilter({ ...notification, isRead: false } as Notification, countItem.filter);
+      }
+
+      return checkNotificationMatchesFilter({ ...notification, isSeen: false } as Notification, countItem.filter);
+    }).length;
+
+    if (matchedCount === 0) {
+      return countItem;
+    }
+
+    return { ...countItem, count: Math.max(0, countItem.count - matchedCount) };
+  });
+}
 
 /**
  * Props for the useCounts hook.
@@ -64,7 +148,8 @@ export type UseCountsResult = {
 
 export const useCounts = (props: UseCountsProps): UseCountsResult => {
   const { filters, realtime: propsRealtime, onSuccess, onError } = props;
-  const { notifications } = useNovu();
+  const novu = useNovu();
+  const { notifications } = novu;
   const providerRealtime = useRealtime();
   const realtime = propsRealtime ?? providerRealtime;
   const filtersRef = useDataRef<NotificationFilter[]>(filters);
@@ -143,6 +228,72 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
       sync();
     },
   });
+
+  useEffect(() => {
+    const applyDelta = (notification: Notification, mutation: CountMutation) => {
+      setCounts((oldCounts) => {
+        if (!oldCounts) {
+          return oldCounts;
+        }
+
+        return oldCounts.map((countItem) => {
+          const delta = getCountDelta(countItem.filter, notification, mutation);
+          if (delta === 0) {
+            return countItem;
+          }
+
+          return { ...countItem, count: Math.max(0, countItem.count + delta) };
+        });
+      });
+    };
+
+    const cleanups = [
+      novu.on('notification.read.pending', ({ data }) => {
+        if (!data) {
+          return;
+        }
+
+        applyDelta(data, 'read');
+        sync(data);
+      }),
+      novu.on('notification.unread.pending', ({ data }) => {
+        if (!data) {
+          return;
+        }
+
+        applyDelta(data, 'unread');
+        sync(data);
+      }),
+      novu.on('notification.seen.pending', ({ data }) => {
+        if (!data) {
+          return;
+        }
+
+        applyDelta(data, 'seen');
+        sync(data);
+      }),
+      novu.on('notifications.read_all.pending', ({ data }) => {
+        if (!Array.isArray(data)) {
+          return;
+        }
+
+        setCounts((oldCounts) => adjustCountsForBulkMutation(oldCounts, data, 'read'));
+        sync();
+      }),
+      novu.on('notifications.seen_all.pending', ({ data }) => {
+        if (!Array.isArray(data)) {
+          return;
+        }
+
+        setCounts((oldCounts) => adjustCountsForBulkMutation(oldCounts, data, 'seen'));
+        sync();
+      }),
+    ];
+
+    return () => {
+      cleanups.forEach((cleanup) => cleanup());
+    };
+  }, [novu]);
 
   useEffect(() => {
     setError(undefined);
