@@ -374,7 +374,14 @@ export interface AgentHandlers {
 export interface Agent {
   id: string;
   handlers: AgentHandlers;
+  name?: string;
+  description?: string;
 }
+
+export type AgentMetadata = {
+  name?: string;
+  description?: string;
+};
 
 // ---------------------------------------------------------------------------
 // Internal types (bridge protocol — not exposed to SDK consumers)

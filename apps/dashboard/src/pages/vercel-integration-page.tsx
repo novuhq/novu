@@ -5,6 +5,7 @@ import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { VercelIntegrationForm } from '@/components/vercel-integration-form';
+import { VercelIntegrationOnboarding } from '@/components/vercel-integration-onboarding';
 import { useEnvironment } from '@/context/environment/hooks';
 import { useCreateVercelIntegration } from '@/hooks/use-create-vercel-integration';
 import { useFetchVercelIntegration } from '@/hooks/use-fetch-vercel-integration';
@@ -45,6 +46,8 @@ export const VercelIntegrationPage = () => {
     [userMemberships]
   );
 
+  const linkedProjectId = vercelIntegration?.[0]?.projectIds?.[0];
+
   if (
     isCreateVercelIntegrationPending ||
     isFetchVercelIntegrationProjectsLoading ||
@@ -58,14 +61,15 @@ export const VercelIntegrationPage = () => {
           <Card className="max-w-[700px] overflow-hidden shadow-none">
             <CardHeader>
               <h1 className="text-foreground-950 flex items-center gap-1">
-                <span>Link Vercel Projects to Novu</span>
+                <span>Deploy your Novu agent on Vercel</span>
               </h1>
             </CardHeader>
             <CardContent className="h-fit rounded-b-xl border-t bg-neutral-50 bg-white p-4">
               <p className="text-foreground-500 mb-6 mt-1 text-xs font-normal">
-                Choose the projects to link with your organizations. This action will perform a sync of the projects
-                with your Novu environments as their bridge url.
+                Link Vercel projects to Novu environments. Production deploys register your agent bridge once; preview
+                deploys auto-wire to Development.
               </p>
+              <VercelIntegrationOnboarding linkedProjectId={linkedProjectId} />
               <div className="flex flex-col">
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-[1fr_max-content_1fr_max-content] items-center gap-4">
@@ -91,14 +95,15 @@ export const VercelIntegrationPage = () => {
         <Card className="max-w-[700px] overflow-hidden shadow-none">
           <CardHeader>
             <h1 className="text-foreground-950 flex items-center gap-1">
-              <span>Link Vercel Projects to Novu</span>
+              <span>Deploy your Novu agent on Vercel</span>
             </h1>
           </CardHeader>
           <CardContent className="h-fit rounded-b-xl border-t bg-neutral-50 bg-white p-4">
             <p className="text-foreground-500 mb-6 mt-1 text-xs font-normal">
-              Choose the projects to link with your organizations. This action will perform a sync of the projects with
-              your Novu environments as their bridge url.
+              Link Vercel projects to Novu environments. Production deploys register your agent bridge once; preview
+              deploys auto-wire to Development.
             </p>
+            <VercelIntegrationOnboarding linkedProjectId={linkedProjectId} />
             <VercelIntegrationForm
               vercelIntegrationDetails={vercelIntegration}
               organizations={organizations}

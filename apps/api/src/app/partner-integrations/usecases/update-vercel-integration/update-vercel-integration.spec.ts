@@ -8,6 +8,7 @@ import { expect } from 'chai';
 import { of } from 'rxjs';
 import { assert, restore, stub } from 'sinon';
 import { Sync } from '../../../bridge/usecases/sync';
+import { SyncAgentsFromBridge } from '../sync-agents-from-bridge/sync-agents-from-bridge.usecase';
 import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
 
 describe('UpdateVercelIntegration', () => {
@@ -18,12 +19,13 @@ describe('UpdateVercelIntegration', () => {
   let organizationRepositoryMock;
   let analyticsServiceMock;
   let syncMock;
+  let syncAgentsFromBridgeMock;
   let memberRepositoryMock;
   let communityUserRepositoryMock;
   let loggerMock;
 
   beforeEach(async () => {
-    // @ts-ignore
+    // @ts-expect-error
     process.env.VERCEL_BASE_URL = 'https://api.vercel.com';
 
     httpServiceMock = {
@@ -90,6 +92,10 @@ describe('UpdateVercelIntegration', () => {
       execute: stub().resolves(),
     };
 
+    syncAgentsFromBridgeMock = {
+      execute: stub().resolves(undefined),
+    };
+
     environmentRepositoryMock = {
       find: stub().resolves([
         {
@@ -135,6 +141,7 @@ describe('UpdateVercelIntegration', () => {
         { provide: OrganizationRepository, useValue: organizationRepositoryMock },
         { provide: AnalyticsService, useValue: analyticsServiceMock },
         { provide: Sync, useValue: syncMock },
+        { provide: SyncAgentsFromBridge, useValue: syncAgentsFromBridgeMock },
         { provide: MemberRepository, useValue: memberRepositoryMock },
         { provide: CommunityUserRepository, useValue: communityUserRepositoryMock },
         { provide: PinoLogger, useValue: loggerMock },
@@ -268,6 +275,8 @@ describe('UpdateVercelIntegration', () => {
       bridgeUrl: 'https://prod-alias.vercel.app/api/novu',
       source: 'vercel',
     });
+
+    assert.called(syncAgentsFromBridgeMock.execute);
 
     // Verify analytics
     assert.calledWith(

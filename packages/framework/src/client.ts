@@ -208,7 +208,11 @@ export class Client {
   public discover(): DiscoverOutput {
     return {
       workflows: this.getRegisteredWorkflows(),
-      agents: Array.from(this.registeredAgents.keys()).map((id) => ({ agentId: id })),
+      agents: Array.from(this.registeredAgents.values()).map((registeredAgent) => ({
+        agentId: registeredAgent.id,
+        ...(registeredAgent.name ? { name: registeredAgent.name } : {}),
+        ...(registeredAgent.description ? { description: registeredAgent.description } : {}),
+      })),
     };
   }
 

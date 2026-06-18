@@ -10,6 +10,9 @@ import {
 } from '@novu/dal';
 import { lastValueFrom } from 'rxjs';
 import { Sync } from '../../../bridge/usecases/sync';
+import { buildNovuBridgeUrl, resolveVercelProjectAlias } from '../../utils/vercel-bridge-url.util';
+import { SyncAgentsFromBridgeCommand } from '../sync-agents-from-bridge/sync-agents-from-bridge.command';
+import { SyncAgentsFromBridge } from '../sync-agents-from-bridge/sync-agents-from-bridge.usecase';
 import { UpdateVercelIntegrationCommand } from './update-vercel-integration.command';
 
 interface ISetEnvironment {
@@ -45,6 +48,7 @@ export class UpdateVercelIntegration {
     private communityUserRepository: CommunityUserRepository,
     private environmentRepository: EnvironmentRepository,
     private syncUsecase: Sync,
+    private syncAgentsFromBridge: SyncAgentsFromBridge,
     private analyticsService: AnalyticsService,
     private logger: PinoLogger
   ) {
@@ -129,16 +133,7 @@ export class UpdateVercelIntegration {
         })
       );
 
-      const vercelAvailableTargets = getDomainsResponse.data?.targets;
-      let vercelTarget;
-      if (environmentName.toLowerCase() === 'production') {
-        vercelTarget = vercelAvailableTargets?.production;
-      } else {
-        vercelTarget = vercelAvailableTargets?.development;
-      }
-
-      const alias = vercelTarget?.alias?.sort((a, b) => a.length - b.length)[0];
-      const bridgeAlias = alias || vercelTarget?.meta?.branchAlias || vercelTarget?.automaticAliases[0];
+      const bridgeAlias = resolveVercelProjectAlias(getDomainsResponse.data?.targets, environmentName);
       if (!bridgeAlias) {
         return;
       }
@@ -153,13 +148,26 @@ export class UpdateVercelIntegration {
         throw new BadRequestException('User not found');
       }
 
+      const bridgeUrl = buildNovuBridgeUrl(bridgeAlias);
+      const isProduction = environmentName.toLowerCase() === 'production';
+
       await this.syncUsecase.execute({
         organizationId,
         userId: internalUser?._id as string,
         environmentId,
-        bridgeUrl: `https://${bridgeAlias}/api/novu`,
+        bridgeUrl,
         source: 'vercel',
       });
+
+      await this.syncAgentsFromBridge.execute(
+        SyncAgentsFromBridgeCommand.create({
+          organizationId,
+          userId: internalUser?._id as string,
+          environmentId,
+          bridgeUrl,
+          isProduction,
+        })
+      );
     } catch (error) {
       this.logger.error({ err: error }, 'Error updating bridge url');
     }

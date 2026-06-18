@@ -1,0 +1,28 @@
+{
+  "name": "novu-agent-starter",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node warn-no-tunnel.mjs npm && next dev --port=4005",
+    "dev:novu": "PORT=4005 npx novu@latest dev -p 4005 --no-studio --run \"next dev --port=4005\"",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@novu/framework": "latest",
+    "next": "16.2.1",
+    "react": "^19",
+    "react-dom": "^19",
+    "zod": "^3.23.8",
+    "zod-to-json-schema": "^3.23.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.1",
+    "typescript": "^5"
+  }
+}

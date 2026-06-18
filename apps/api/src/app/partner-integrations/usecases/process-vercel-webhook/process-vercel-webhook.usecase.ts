@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { HttpService } from '@nestjs/axios';
 import { BadRequestException, HttpException, Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
 import {
@@ -8,8 +9,12 @@ import {
   EnvironmentRepository,
   MemberRepository,
 } from '@novu/dal';
+import { lastValueFrom } from 'rxjs';
 import { Sync } from '../../../bridge/usecases/sync';
 import { areHexDigestsEqual } from '../../../shared/helpers/timing-safe-equal';
+import { buildNovuBridgeUrl, resolveVercelProjectAlias } from '../../utils/vercel-bridge-url.util';
+import { SyncAgentsFromBridgeCommand } from '../sync-agents-from-bridge/sync-agents-from-bridge.command';
+import { SyncAgentsFromBridge } from '../sync-agents-from-bridge/sync-agents-from-bridge.usecase';
 import { ProcessVercelWebhookCommand } from './process-vercel-webhook.command';
 
 @Injectable()
@@ -18,6 +23,8 @@ export class ProcessVercelWebhook {
     private organizationRepository: CommunityOrganizationRepository,
     private environmentRepository: EnvironmentRepository,
     private syncUsecase: Sync,
+    private syncAgentsFromBridge: SyncAgentsFromBridge,
+    private httpService: HttpService,
     private memberRepository: MemberRepository,
     private communityUserRepository: CommunityUserRepository,
     private logger: PinoLogger
@@ -44,6 +51,7 @@ export class ProcessVercelWebhook {
     const projectId = payload.project.id;
     const deploymentUrl = payload.deployment.url;
     const vercelEnvironment = payload.target || 'preview';
+    const isProduction = vercelEnvironment === 'production';
 
     this.logger.info(
       {
@@ -70,8 +78,7 @@ export class ProcessVercelWebhook {
     for (const organization of organizations) {
       let environment: EnvironmentEntity | null;
 
-      // TODO: we should think about how to handle different Vercel environments that are not production or development
-      if (vercelEnvironment === 'production') {
+      if (isProduction) {
         environment = await this.environmentRepository.findOne({
           _organizationId: organization._id,
           name: 'Production',
@@ -99,13 +106,46 @@ export class ProcessVercelWebhook {
           throw new BadRequestException('User not found');
         }
 
+        const partnerConfiguration = organization.partnerConfigurations?.[0];
+        const bridgeUrl = await this.resolveBridgeUrl({
+          isProduction,
+          environmentName: environment.name,
+          projectId,
+          teamId,
+          deploymentUrl,
+          accessToken: partnerConfiguration?.accessToken,
+        });
+
+        if (!bridgeUrl) {
+          this.logger.warn(
+            {
+              organizationId: organization._id,
+              projectId,
+              vercelEnvironment,
+            },
+            'Skipping Vercel bridge registration because bridge URL could not be resolved'
+          );
+
+          continue;
+        }
+
         await this.syncUsecase.execute({
           organizationId: environment._organizationId,
           userId: internalUser?._id as string,
           environmentId: environment._id,
-          bridgeUrl: `https://${deploymentUrl}/api/novu`,
+          bridgeUrl,
           source: 'vercel',
         });
+
+        await this.syncAgentsFromBridge.execute(
+          SyncAgentsFromBridgeCommand.create({
+            organizationId: environment._organizationId,
+            userId: internalUser?._id as string,
+            environmentId: environment._id,
+            bridgeUrl,
+            isProduction,
+          })
+        );
       } catch (error) {
         if (error instanceof HttpException) {
           throw error;
@@ -128,6 +168,60 @@ export class ProcessVercelWebhook {
     }
 
     return true;
+  }
+
+  private async resolveBridgeUrl({
+    isProduction,
+    environmentName,
+    projectId,
+    teamId,
+    deploymentUrl,
+    accessToken,
+  }: {
+    isProduction: boolean;
+    environmentName: string;
+    projectId: string;
+    teamId: string;
+    deploymentUrl: string;
+    accessToken?: string;
+  }): Promise<string | undefined> {
+    if (!isProduction) {
+      return buildNovuBridgeUrl(deploymentUrl);
+    }
+
+    if (!accessToken) {
+      return buildNovuBridgeUrl(deploymentUrl);
+    }
+
+    try {
+      const getDomainsResponse = await lastValueFrom(
+        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${projectId}?teamId=${teamId}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      );
+
+      const alias = resolveVercelProjectAlias(getDomainsResponse.data?.targets, environmentName);
+
+      if (!alias) {
+        return buildNovuBridgeUrl(deploymentUrl);
+      }
+
+      return buildNovuBridgeUrl(alias);
+    } catch (error) {
+      this.logger.warn(
+        {
+          err: error,
+          projectId,
+          teamId,
+        },
+        'Failed to resolve stable Vercel production alias; falling back to deployment URL'
+      );
+
+      return buildNovuBridgeUrl(deploymentUrl);
+    }
   }
 
   private verifySignature(signature: string, body: any): void {

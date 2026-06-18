@@ -101,6 +101,8 @@ export type Workflow<T_Payload = never> = {
 
 export type DiscoverAgentOutput = {
   agentId: string;
+  name?: string;
+  description?: string;
 };
 
 export type DiscoverOutput = {
