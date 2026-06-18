@@ -6,6 +6,10 @@ on:
       - packages/shared/docs/agent-onboarding.md
       - libs/agent-evals/**
       - .github/workflows/agent-evals.yml
+  schedule:
+    # Nightly regression run (06:00 UTC) catches model/playbook drift outside PRs.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
 
 jobs:
   evals:
@@ -32,5 +36,6 @@ jobs:
       - name: Run agent evals
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          NOVU_EVAL_JUDGE: 'true'
+          # Judge graders only on scheduled/manual runs; PRs run deterministic graders.
+          NOVU_EVAL_JUDGE: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && 'true' || 'false' }}
         run: pnpm --filter @novu/agent-evals eval src/suites/agent-onboarding

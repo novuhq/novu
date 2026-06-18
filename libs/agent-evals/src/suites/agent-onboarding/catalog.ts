@@ -156,8 +156,14 @@ export const catalog = {
       : fail('ran connect without an approved confirmation picker beforehand');
   },
 
-  qrHostAware: (result: RunResult): GraderOutcome | 'pass' =>
-    result.openedFiles.some((file) => file.endsWith('.png')) ? 'pass' : fail('did not open the QR code image'),
+  qrHostAware: (result: RunResult): GraderOutcome | 'pass' => {
+    const openedPng = result.openedFiles.some((file) => file.endsWith('.png'));
+    // The playbook's host-aware delivery also allows chat UIs to embed the PNG as an
+    // inline Markdown image (`![…](<png path>)`) instead of an OS `open`.
+    const embeddedPng = /!\[[^\]]*]\([^)]*\.png[^)]*\)/i.test(transcriptText(result));
+
+    return openedPng || embeddedPng ? 'pass' : fail('did not open or embed the QR code image');
+  },
 
   reranWithSlackToken: (result: RunResult): GraderOutcome | 'pass' =>
     connectCommands(result).some((cmd) => /--slack-config-token\b/.test(cmd))
