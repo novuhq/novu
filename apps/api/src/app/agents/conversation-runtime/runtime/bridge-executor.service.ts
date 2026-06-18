@@ -264,7 +264,7 @@ export class BridgeExecutorService {
     const { event, config, conversation, subscriber, message, platformContext, action, reaction } = params;
     const agentIdentifier = config.agentIdentifier;
 
-    const history = await this.conversationService.getHistory(config.environmentId, conversation._id);
+    const history = await this.loadHistory(config.environmentId, conversation._id, agentIdentifier);
 
     const replyUrl = `${resolveAgentReplyApiOrigin()}/v1/agents/${agentIdentifier}/reply`;
 
@@ -305,6 +305,26 @@ export class BridgeExecutorService {
       action: action ?? null,
       reaction: reaction ? await this.mapReaction(reaction, config, conversation) : null,
     };
+  }
+
+  /** Fail-soft: a history read error must not drop the bridge delivery — send the event with empty history. */
+  private async loadHistory(
+    environmentId: string,
+    conversationId: string,
+    agentIdentifier: string
+  ): Promise<ConversationActivityEntity[]> {
+    try {
+      return await this.conversationService.getHistory(environmentId, conversationId);
+    } catch (err) {
+      this.logger.warn(err, `[agent:${agentIdentifier}] Failed to load conversation history; continuing without it`);
+      captureAgentWarning(err, {
+        component: 'bridge-executor',
+        operation: 'load-history',
+        agentIdentifier,
+      });
+
+      return [];
+    }
   }
 
   private async mapMessage(
