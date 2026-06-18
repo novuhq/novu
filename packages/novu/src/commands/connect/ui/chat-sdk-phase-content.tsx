@@ -1,6 +1,7 @@
 import { Box, Text, useInput } from 'ink';
 // biome-ignore lint/correctness/noUnusedImports: classic-JSX linter falls back here because tsconfig.json excludes ui/.
 import React from 'react';
+import type { ChatSdkRequirement } from '../types';
 import type { Phase } from './store';
 
 const CHAT_SDK_PHASE_KINDS = [
@@ -9,9 +10,10 @@ const CHAT_SDK_PHASE_KINDS = [
   'scaffolding-chat-sdk',
   'chat-sdk-scaffolded',
   'chat-sdk-env-wired',
-  'chat-sdk-skill-prompt',
-  'chat-sdk-installing-skill',
-  'chat-sdk-agent-prompt',
+  'chat-sdk-install-deps-confirm',
+  'chat-sdk-install-deps',
+  'chat-sdk-reconcile-plan',
+  'chat-sdk-tunnel-offer',
 ] as const;
 
 type ChatSdkPhaseKind = (typeof CHAT_SDK_PHASE_KINDS)[number];
@@ -76,19 +78,21 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
         </Box>
       );
 
-    case 'chat-sdk-skill-prompt':
-      return <ChatSdkSkillPromptContent phase={phase} />;
+    case 'chat-sdk-install-deps-confirm':
+      return <ChatSdkInstallDepsConfirmContent phase={phase} />;
 
-    case 'chat-sdk-installing-skill':
+    case 'chat-sdk-install-deps':
       return (
         <Box flexDirection="column" gap={1}>
-          <Text color="cyan">Installing novu-chat-sdk skill…</Text>
-          <Text dimColor>Updating .env.local with your Novu credentials.</Text>
+          <Text color="cyan">Installing Chat SDK packages…</Text>
         </Box>
       );
 
-    case 'chat-sdk-agent-prompt':
-      return <ChatSdkAgentPromptContent phase={phase} />;
+    case 'chat-sdk-reconcile-plan':
+      return <ChatSdkReconcilePlanContent phase={phase} />;
+
+    case 'chat-sdk-tunnel-offer':
+      return <ChatSdkTunnelOfferContent phase={phase} />;
 
     default: {
       const _exhaustive: never = phase;
@@ -98,54 +102,101 @@ export function ChatSdkPhaseContent({ phase }: { phase: ChatSdkPhase }): React.R
   }
 }
 
-function ChatSdkSkillPromptContent({
+function requirementIcon(req: ChatSdkRequirement): string {
+  if (req.status === 'ok') {
+    return req.fixed ? '✓' : '✓';
+  }
+
+  if (req.status === 'manual') {
+    return '☐';
+  }
+
+  return '…';
+}
+
+function ChatSdkReconcilePlanContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-skill-prompt' }>;
+  phase: Extract<Phase, { kind: 'chat-sdk-reconcile-plan' }>;
 }): React.ReactElement {
   useInput((_input, key) => {
-    if (key.return) phase.resolve(true);
-    if (key.escape) phase.resolve(false);
+    if (key.return) {
+      phase.resolve();
+    }
   });
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text bold>Install the novu-chat-sdk skill?</Text>
-      <Text dimColor>
-        We'll update <Text color="white">.env.local</Text> and install the <Text color="white">novu-chat-sdk</Text>{' '}
-        skill into your project. You'll then get a prompt to paste into your coding agent to wire the adapter.
-      </Text>
-      <Text dimColor>
-        Agent identifier: <Text color="cyan">{phase.agentIdentifier}</Text>
-      </Text>
-      <Text color="cyan">Enter · install skill · Esc · skip</Text>
+      <Text bold>Chat SDK project setup</Text>
+      <Text dimColor>{phase.projectDir}</Text>
+      {phase.requirements.map((req) => (
+        <Text key={req.id}>
+          {requirementIcon(req)} {req.id}: {req.detail}
+        </Text>
+      ))}
+      {phase.envPaths.map((envPath) => (
+        <Text key={envPath} dimColor>{`Env: ${envPath}`}</Text>
+      ))}
+      {phase.wiringInstructions ? (
+        <Box flexDirection="column" marginTop={1}>
+          <Text bold>Code wiring (manual)</Text>
+          <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={0}>
+            <Text wrap="wrap">{phase.wiringInstructions}</Text>
+          </Box>
+        </Box>
+      ) : null}
+      <Text color="cyan">Enter · continue</Text>
     </Box>
   );
 }
 
-function ChatSdkAgentPromptContent({
+function ChatSdkInstallDepsConfirmContent({
   phase,
 }: {
-  phase: Extract<Phase, { kind: 'chat-sdk-agent-prompt' }>;
+  phase: Extract<Phase, { kind: 'chat-sdk-install-deps-confirm' }>;
 }): React.ReactElement {
   useInput((_input, key) => {
-    if (key.return) phase.resolve();
+    if (key.return) {
+      phase.resolve(true);
+    }
+    if (key.escape) {
+      phase.resolve(false);
+    }
   });
 
   return (
     <Box flexDirection="column" gap={1}>
-      <Text color="green">✓ Skill installed.</Text>
-      {phase.envPaths.map((envPath) => (
-        <Text key={envPath} dimColor>{`Updated ${envPath}`}</Text>
-      ))}
-      {phase.skillDestinations.map((dest) => (
-        <Text key={dest} dimColor>{`Skill: ${dest}`}</Text>
-      ))}
-      <Text bold>Paste this into your coding agent:</Text>
-      <Box borderStyle="round" borderColor="gray" paddingX={1} paddingY={0}>
-        <Text wrap="wrap">{phase.agentPrompt}</Text>
-      </Box>
-      <Text color="cyan">Enter · continue when you've prompted your agent</Text>
+      <Text bold>Install Chat SDK packages?</Text>
+      <Text dimColor>We'll add: {phase.packages.join(', ')}</Text>
+      <Text color="cyan">{phase.installCommand}</Text>
+      <Text color="cyan">Enter · install · Esc · skip</Text>
+    </Box>
+  );
+}
+
+function ChatSdkTunnelOfferContent({
+  phase,
+}: {
+  phase: Extract<Phase, { kind: 'chat-sdk-tunnel-offer' }>;
+}): React.ReactElement {
+  useInput((input, key) => {
+    if (key.return) {
+      phase.resolve('accept');
+    }
+    if (key.escape) {
+      phase.resolve('back');
+    }
+    if (input === 's' || input === 'S') {
+      phase.resolve('skip');
+    }
+  });
+
+  return (
+    <Box flexDirection="column" gap={1}>
+      <Text bold>Start the dev tunnel?</Text>
+      <Text dimColor>Runs your app and registers a public bridge URL with Novu.</Text>
+      <Text color="cyan">{phase.devCommand}</Text>
+      <Text color="cyan">Enter · start tunnel · Esc · back · s · skip</Text>
     </Box>
   );
 }

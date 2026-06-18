@@ -1,5 +1,11 @@
 import type { GeneratedAgentSpec } from '../api/agents';
-import type { AgentConnectMode, AgentSummary, ChannelChoice, ChatSdkConnectOutcome } from '../types';
+import type {
+  AgentConnectMode,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+  ChatSdkRequirement,
+} from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
@@ -8,6 +14,8 @@ export type GeneratedAgentPreviewResult = { action: 'confirm'; spec: GeneratedAg
 export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: string } | { kind: 'new' };
 
 export type TelegramTokenDelivery = 'setup-page' | 'terminal';
+
+export type ChatSdkTunnelOfferResult = 'accept' | 'skip' | 'back';
 
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
@@ -74,15 +82,20 @@ export interface ConnectUI {
   scaffoldingChatSdk(): void;
   chatSdkScaffolded(opts: { projectDir: string; envPaths: string[]; skippedInstall?: boolean }): void;
   chatSdkEnvWired(opts: { projectDir: string; envPaths: string[]; updatedKeys: string[] }): void;
-  promptInstallChatSdkSkill(opts: { projectDir: string; agentIdentifier: string }): Promise<boolean>;
-  installingChatSdkSkill(): void;
-  awaitChatSdkAgentPrompt(opts: {
+  confirmInstallChatSdkDeps(opts: {
     projectDir: string;
+    installCommand: string;
+    packages: string[];
+  }): Promise<boolean>;
+  installingChatSdkDeps(): void;
+  showChatSdkReconcilePlan(opts: {
+    projectDir: string;
+    requirements: ChatSdkRequirement[];
     envPaths: string[];
-    skillDestinations: string[];
-    agentPrompt: string;
-    agentPromptFile?: string;
+    wiringInstructions?: string;
+    requirementsFile?: string;
   }): Promise<void>;
+  offerChatSdkTunnel(opts: { projectDir: string; devCommand: string }): Promise<ChatSdkTunnelOfferResult>;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;

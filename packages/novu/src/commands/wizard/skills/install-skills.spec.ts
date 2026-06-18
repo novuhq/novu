@@ -27,17 +27,10 @@ describe('installSkills', () => {
     const { installed } = installSkills(tempDir, ['claude', 'cursor']);
 
     const gapFillers = installed.filter((skill) => skill.source === 'bundled' && skill.name !== 'legacy-novu-cleanup');
-    expect(gapFillers.map((skill) => skill.name).sort()).toEqual([
-      'env-setup',
-      'env-setup',
-      'novu-chat-sdk',
-      'novu-chat-sdk',
-    ]);
+    expect(gapFillers.map((skill) => skill.name).sort()).toEqual(['env-setup', 'env-setup']);
 
     expect(fs.existsSync(path.join(tempDir, '.claude/skills/env-setup/SKILL.md'))).toBe(true);
     expect(fs.existsSync(path.join(tempDir, '.cursor/skills/env-setup/SKILL.md'))).toBe(true);
-    expect(fs.existsSync(path.join(tempDir, '.claude/skills/novu-chat-sdk/SKILL.md'))).toBe(true);
-    expect(fs.existsSync(path.join(tempDir, '.cursor/skills/novu-chat-sdk/SKILL.md'))).toBe(true);
   });
 
   it('installs into the requested hosts', () => {

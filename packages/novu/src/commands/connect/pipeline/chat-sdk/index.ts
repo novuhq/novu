@@ -1,15 +1,17 @@
 import { createBridgeAgent, listAgents } from '../../api/agents';
 import type { ConnectApiClient } from '../../api/client';
 import type { ResolvedConnectAuth } from '../../auth/resolve-connect-auth';
-import type { AgentSummary, ChatSdkConnectOutcome, ConnectCommandOptions } from '../../types';
+import type { AgentSummary, ChatSdkConnectOutcome, ChatSdkRequirement, ConnectCommandOptions } from '../../types';
 import type { ConnectUI } from '../../ui/ui';
-import { CHAT_SDK_PROMPT_FILE_ENV, writeChatSdkAgentPromptFile } from './agent-prompt-file';
 import { defaultAgentNameFromDir, deriveAgentIdentifier } from './derive-identifier';
 import { detectChatSdkProject } from './detect-project';
-import { runChatSdkSkillSetup } from './integrate-adapter';
+import { applyDevNovuScript, buildDevNovuScript } from './dev-script';
+import { buildChatSdkInstallCommand, resolveChatSdkPackagesToInstall, runChatSdkPackageInstall } from './package-install';
+import { computeChatSdkRequirements, recomputeCoreReady, writeChatSdkRequirementsFile } from './requirements';
 import { runChatSdkBridge } from './run-bridge';
 import { scaffoldChatSdkProject } from './scaffold';
 import { maskSecretKey, mergeProjectEnv, readEnvSecretKey, resolveProjectEnvPaths } from './wire-env';
+import { buildCodeWiringInstructions } from './wiring-instructions';
 
 export type ChatSdkSetupInput = {
   options: ConnectCommandOptions;
@@ -22,149 +24,194 @@ export async function runChatSdkProjectSetup(input: ChatSdkSetupInput): Promise<
   const projectDir = input.options.projectDir?.trim() || process.cwd();
   const detected = detectChatSdkProject(projectDir);
 
-  if (detected.kind === 'has-adapter') {
-    return runHasAdapterEnvSetup({ input, projectDir: detected.projectDir });
-  }
+  if (detected.kind === 'empty') {
+    if (input.options.noScaffold) {
+      return {
+        projectKind: 'empty',
+        projectDir: detected.projectDir,
+        scaffolded: false,
+        coreReady: false,
+      };
+    }
 
-  if (detected.kind === 'existing') {
-    return runExistingProjectSkillSetup({
-      input,
+    const appName = input.options.scaffoldDir?.trim() || defaultScaffoldAppName(input.agent.identifier);
+    const confirmed = await input.ui.confirmScaffold({
       projectDir: detected.projectDir,
+      appName,
+    });
+
+    if (!confirmed) {
+      return {
+        projectKind: 'empty',
+        projectDir: detected.projectDir,
+        scaffolded: false,
+        coreReady: false,
+      };
+    }
+
+    return scaffoldChatSdkApp({
+      setup: input,
+      parentDir: detected.projectDir,
+      appName,
+      projectKind: 'empty',
     });
   }
 
-  if (input.options.noScaffold) {
-    return {
-      projectKind: 'empty',
-      projectDir: detected.projectDir,
-      scaffolded: false,
-    };
-  }
-
-  const appName = input.options.scaffoldDir?.trim() || defaultScaffoldAppName(input.agent.identifier);
-  const confirmed = await input.ui.confirmScaffold({
-    projectDir: detected.projectDir,
-    appName,
-  });
-
-  if (!confirmed) {
-    return {
-      projectKind: 'empty',
-      projectDir: detected.projectDir,
-      scaffolded: false,
-    };
-  }
-
-  return scaffoldChatSdkApp({
-    setup: input,
-    parentDir: detected.projectDir,
-    appName,
-    projectKind: 'empty',
-  });
+  return reconcileChatSdkProject(input, detected.projectDir, detected.kind);
 }
 
-async function runHasAdapterEnvSetup(opts: {
-  input: ChatSdkSetupInput;
-  projectDir: string;
-}): Promise<ChatSdkConnectOutcome> {
-  const secretKey = requireSecretKey(opts.input.auth);
-  const existingSecret = readEnvSecretKey(opts.projectDir);
+async function reconcileChatSdkProject(
+  input: ChatSdkSetupInput,
+  projectDir: string,
+  projectKind: ChatSdkConnectOutcome['projectKind']
+): Promise<ChatSdkConnectOutcome> {
+  const secretKey = requireSecretKey(input.auth);
+  let snapshot = computeChatSdkRequirements({
+    projectDir,
+    secretKey,
+    agentIdentifier: input.agent.identifier,
+  });
+
+  const envPaths: string[] = [];
+
+  const envReq = snapshot.requirements.find((req) => req.id === 'env');
+  if (envReq && envReq.status !== 'ok') {
+    const merge = await applyEnvRequirement(input, projectDir, secretKey);
+    envPaths.push(...merge.envPaths);
+    snapshot = refreshRequirements(input, projectDir, snapshot.requirements, 'env');
+  }
+
+  const devScriptReq = snapshot.requirements.find((req) => req.id === 'dev-script');
+  if (devScriptReq && devScriptReq.status !== 'ok') {
+    applyDevNovuScript(projectDir);
+    snapshot = refreshRequirements(input, projectDir, snapshot.requirements, 'dev-script');
+  }
+
+  const packageReq = snapshot.requirements.find((req) => req.id === 'package');
+  if (packageReq && packageReq.status !== 'ok') {
+    const packagesToInstall = resolveChatSdkPackagesToInstall(projectDir);
+    const installCommand = buildChatSdkInstallCommand(projectDir);
+
+    if (input.options.ci) {
+      snapshot.requirements = snapshot.requirements.map((req) =>
+        req.id === 'package' ? { ...req, status: 'manual', detail: `Run: ${installCommand}` } : req
+      );
+    } else {
+      const shouldInstall = await input.ui.confirmInstallChatSdkDeps({
+        projectDir,
+        installCommand,
+        packages: packagesToInstall,
+      });
+
+      if (shouldInstall) {
+        input.ui.installingChatSdkDeps();
+        await runChatSdkPackageInstall({
+          projectDir,
+          silent: input.ui.interactive,
+        });
+        snapshot = refreshRequirements(input, projectDir, snapshot.requirements, 'package');
+      } else {
+        snapshot.requirements = snapshot.requirements.map((req) =>
+          req.id === 'package' ? { ...req, status: 'manual', detail: `Skipped — run: ${installCommand}` } : req
+        );
+      }
+    }
+  }
+
+  snapshot.coreReady = recomputeCoreReady(snapshot.requirements);
+
+  const wiringReq = snapshot.requirements.find((req) => req.id === 'code-wiring');
+  const wiringInstructions =
+    wiringReq && wiringReq.status !== 'ok' ? buildCodeWiringInstructions(projectDir) : undefined;
+
+  const requirementsFile = await writeChatSdkRequirementsFile({
+    projectDir,
+    requirements: snapshot.requirements,
+    wiringInstructions,
+  });
+
+  const tunnelAccepted = await promptChatSdkTunnelIfReady({
+    input,
+    projectDir,
+    coreReady: snapshot.coreReady,
+    reconcilePlan: {
+      projectDir,
+      requirements: snapshot.requirements,
+      envPaths,
+      wiringInstructions,
+      requirementsFile,
+    },
+  });
+
+  return {
+    projectKind,
+    projectDir,
+    scaffolded: false,
+    envPaths: envPaths.length > 0 ? envPaths : undefined,
+    requirements: snapshot.requirements,
+    requirementsFile,
+    coreReady: snapshot.coreReady,
+    tunnelAccepted,
+    wiringInstructions,
+  };
+}
+
+function refreshRequirements(
+  input: ChatSdkSetupInput,
+  projectDir: string,
+  previous: ChatSdkRequirement[],
+  fixedId: ChatSdkRequirement['id']
+): ReturnType<typeof computeChatSdkRequirements> {
+  const next = computeChatSdkRequirements({
+    projectDir,
+    secretKey: requireSecretKey(input.auth),
+    agentIdentifier: input.agent.identifier,
+  });
+
+  next.requirements = next.requirements.map((req) => {
+    if (req.id === fixedId && req.status === 'ok') {
+      return { ...req, fixed: true };
+    }
+
+    const prev = previous.find((entry) => entry.id === req.id);
+    if (prev?.fixed) {
+      return { ...req, fixed: true };
+    }
+
+    return req;
+  });
+
+  next.coreReady = recomputeCoreReady(next.requirements);
+
+  return next;
+}
+
+async function applyEnvRequirement(
+  input: ChatSdkSetupInput,
+  projectDir: string,
+  secretKey: string
+): Promise<{ envPaths: string[] }> {
+  const existingSecret = readEnvSecretKey(projectDir);
   let overwriteSecretKey = false;
 
   if (existingSecret && existingSecret !== secretKey) {
     overwriteSecretKey = await resolveEnvSecretOverwrite({
-      input: opts.input,
-      projectDir: opts.projectDir,
+      input,
+      projectDir,
       existingSecret,
       secretKey,
     });
   }
 
   const merge = mergeProjectEnv({
-    projectDir: opts.projectDir,
+    projectDir,
     secretKey,
-    agentIdentifier: opts.input.agent.identifier,
-    apiBaseUrl: opts.input.options.apiUrl,
+    agentIdentifier: input.agent.identifier,
+    apiBaseUrl: input.options.apiUrl,
     overwriteSecretKey,
   });
 
-  opts.input.ui.chatSdkEnvWired({
-    projectDir: opts.projectDir,
-    envPaths: merge.envPaths,
-    updatedKeys: merge.updatedKeys,
-  });
-
-  return {
-    projectKind: 'has-adapter',
-    projectDir: opts.projectDir,
-    scaffolded: false,
-    envPaths: merge.envPaths,
-    needsAgentFollowUp: false,
-  };
-}
-
-async function runExistingProjectSkillSetup(opts: {
-  input: ChatSdkSetupInput;
-  projectDir: string;
-}): Promise<ChatSdkConnectOutcome> {
-  const secretKey = requireSecretKey(opts.input.auth);
-  const shouldInstall = await opts.input.ui.promptInstallChatSdkSkill({
-    projectDir: opts.projectDir,
-    agentIdentifier: opts.input.agent.identifier,
-  });
-
-  if (!shouldInstall) {
-    return {
-      projectKind: 'existing',
-      projectDir: opts.projectDir,
-      scaffolded: false,
-      needsAgentFollowUp: true,
-    };
-  }
-
-  const existingSecret = readEnvSecretKey(opts.projectDir);
-  let overwriteSecretKey = false;
-
-  if (existingSecret && existingSecret !== secretKey) {
-    overwriteSecretKey = await resolveEnvSecretOverwrite({
-      input: opts.input,
-      projectDir: opts.projectDir,
-      existingSecret,
-      secretKey,
-    });
-  }
-
-  opts.input.ui.installingChatSdkSkill();
-
-  const setup = await runChatSdkSkillSetup({
-    projectDir: opts.projectDir,
-    secretKey,
-    agentIdentifier: opts.input.agent.identifier,
-    apiBaseUrl: opts.input.options.apiUrl,
-    overwriteSecretKey,
-  });
-
-  opts.input.ui.chatSdkEnvWired({
-    projectDir: opts.projectDir,
-    envPaths: setup.envPaths,
-    updatedKeys: setup.updatedKeys,
-  });
-
-  await opts.input.ui.awaitChatSdkAgentPrompt({
-    projectDir: opts.projectDir,
-    envPaths: setup.envPaths,
-    skillDestinations: setup.skillsInstalled.map((skill) => skill.destination),
-    agentPrompt: setup.agentPrompt,
-    agentPromptFile: writeChatSdkAgentPromptFile(setup.agentPrompt),
-  });
-
-  return {
-    projectKind: 'existing',
-    projectDir: opts.projectDir,
-    scaffolded: false,
-    envPaths: setup.envPaths,
-    needsAgentFollowUp: true,
-  };
+  return { envPaths: merge.envPaths };
 }
 
 async function resolveEnvSecretOverwrite(opts: {
@@ -221,13 +268,83 @@ async function scaffoldChatSdkApp(opts: {
     skippedInstall: scaffolded.skippedInstall,
   });
 
+  const snapshot = computeChatSdkRequirements({
+    projectDir: scaffolded.root,
+    secretKey: requireSecretKey(opts.setup.auth),
+    agentIdentifier: opts.setup.agent.identifier,
+  });
+
+  const requirementsFile = await writeChatSdkRequirementsFile({
+    projectDir: scaffolded.root,
+    requirements: snapshot.requirements,
+  });
+
+  let tunnelAccepted = false;
+  if (snapshot.coreReady && !opts.setup.options.ci && !scaffolded.skippedInstall) {
+    tunnelAccepted = await promptChatSdkTunnelIfReady({
+      input: opts.setup,
+      projectDir: scaffolded.root,
+      coreReady: snapshot.coreReady,
+      reconcilePlan: {
+        projectDir: scaffolded.root,
+        requirements: snapshot.requirements,
+        envPaths: merge.envPaths,
+        requirementsFile,
+      },
+    });
+  } else {
+    await opts.setup.ui.showChatSdkReconcilePlan({
+      projectDir: scaffolded.root,
+      requirements: snapshot.requirements,
+      envPaths: merge.envPaths,
+      wiringInstructions: undefined,
+      requirementsFile,
+    });
+  }
+
   return {
     projectKind: opts.projectKind,
     projectDir: scaffolded.root,
     scaffolded: true,
     envPaths: merge.envPaths,
     skippedInstall: scaffolded.skippedInstall,
+    requirements: snapshot.requirements,
+    requirementsFile,
+    coreReady: snapshot.coreReady,
+    tunnelAccepted,
   };
+}
+
+type ChatSdkReconcilePlanInput = Parameters<ConnectUI['showChatSdkReconcilePlan']>[0];
+
+async function promptChatSdkTunnelIfReady(opts: {
+  input: ChatSdkSetupInput;
+  projectDir: string;
+  coreReady: boolean;
+  reconcilePlan: ChatSdkReconcilePlanInput;
+}): Promise<boolean> {
+  if (!opts.coreReady || opts.input.options.ci) {
+    await opts.input.ui.showChatSdkReconcilePlan(opts.reconcilePlan);
+
+    return false;
+  }
+
+  const devCommand = buildDevNovuScript(opts.projectDir);
+
+  while (true) {
+    await opts.input.ui.showChatSdkReconcilePlan(opts.reconcilePlan);
+
+    const choice = await opts.input.ui.offerChatSdkTunnel({
+      projectDir: opts.projectDir,
+      devCommand,
+    });
+
+    if (choice === 'back') {
+      continue;
+    }
+
+    return choice === 'accept';
+  }
 }
 
 export async function createBridgeAgentFlow(
@@ -258,9 +375,12 @@ export async function createBridgeAgentFlow(
   return { agent: toSummary(created), flow: 'created' };
 }
 
-export async function maybeRunChatSdkTunnel(input: { outcome: ChatSdkConnectOutcome | undefined }): Promise<boolean> {
+export async function maybeRunChatSdkTunnel(input: {
+  outcome: ChatSdkConnectOutcome | undefined;
+  ci?: boolean;
+}): Promise<boolean> {
   const { outcome } = input;
-  if (!shouldRunChatSdkTunnel(outcome)) {
+  if (!shouldRunChatSdkTunnel(outcome, input.ci)) {
     return false;
   }
 
@@ -271,11 +391,27 @@ export async function maybeRunChatSdkTunnel(input: { outcome: ChatSdkConnectOutc
   return true;
 }
 
-function shouldRunChatSdkTunnel(outcome: ChatSdkConnectOutcome | undefined): outcome is ChatSdkConnectOutcome {
-  if (!outcome) return false;
-  if (outcome.skippedInstall) return false;
+function shouldRunChatSdkTunnel(
+  outcome: ChatSdkConnectOutcome | undefined,
+  ci?: boolean
+): outcome is ChatSdkConnectOutcome {
+  if (!outcome) {
+    return false;
+  }
 
-  return outcome.scaffolded === true;
+  if (ci) {
+    return false;
+  }
+
+  if (outcome.skippedInstall) {
+    return false;
+  }
+
+  if (!outcome.coreReady) {
+    return false;
+  }
+
+  return outcome.tunnelAccepted === true;
 }
 
 function requireSecretKey(auth: ResolvedConnectAuth): string {

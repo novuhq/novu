@@ -6,7 +6,13 @@ import { ConnectChannelBackError } from '../errors';
 import type { AgentSummary, ConnectCommandOptions } from '../types';
 import { App } from './app';
 import { type ConnectStore, createConnectStore } from './store';
-import type { ConnectUI, GeneratedAgentPreviewResult, PickResult, TelegramTokenDelivery } from './ui';
+import type {
+  ChatSdkTunnelOfferResult,
+  ConnectUI,
+  GeneratedAgentPreviewResult,
+  PickResult,
+  TelegramTokenDelivery,
+} from './ui';
 
 export interface MountConnectUIParams {
   options: ConnectCommandOptions;
@@ -224,33 +230,39 @@ function createUiController(store: ConnectStore, shutdown: () => Promise<number>
         updatedKeys,
       });
     },
-    promptInstallChatSdkSkill({ projectDir, agentIdentifier }) {
+    confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       return new Promise<boolean>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-skill-prompt',
+          kind: 'chat-sdk-install-deps-confirm',
           projectDir,
-          agentIdentifier,
+          installCommand,
+          packages,
           resolve,
         });
       });
     },
-    installingChatSdkSkill() {
-      store.phase.set({ kind: 'chat-sdk-installing-skill' });
+    installingChatSdkDeps() {
+      store.phase.set({ kind: 'chat-sdk-install-deps' });
     },
-    awaitChatSdkAgentPrompt({
-      projectDir,
-      envPaths,
-      skillDestinations,
-      agentPrompt,
-      agentPromptFile: _agentPromptFile,
-    }) {
+    showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
       return new Promise<void>((resolve) => {
         store.phase.set({
-          kind: 'chat-sdk-agent-prompt',
+          kind: 'chat-sdk-reconcile-plan',
           projectDir,
+          requirements,
           envPaths,
-          skillDestinations,
-          agentPrompt,
+          wiringInstructions,
+          requirementsFile,
+          resolve,
+        });
+      });
+    },
+    offerChatSdkTunnel({ projectDir, devCommand }) {
+      return new Promise<ChatSdkTunnelOfferResult>((resolve) => {
+        store.phase.set({
+          kind: 'chat-sdk-tunnel-offer',
+          projectDir,
+          devCommand,
           resolve,
         });
       });

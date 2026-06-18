@@ -352,7 +352,7 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     // output does not trigger a second orb render while the TUI is still mounted.
     const exitCode = await ui.shutdown();
 
-    if (await maybeRunChatSdkTunnel({ outcome: chatSdkOutcome })) {
+    if (await maybeRunChatSdkTunnel({ outcome: chatSdkOutcome, ci: options.ci })) {
       return { exitCode: 0 };
     }
 

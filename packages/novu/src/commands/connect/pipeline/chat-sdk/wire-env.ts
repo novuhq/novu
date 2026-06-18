@@ -154,7 +154,7 @@ export function mergeProjectEnv(input: EnvMergeInput): EnvMergeResult {
   };
 }
 
-export function readEnvSecretKey(projectDir: string): string | undefined {
+export function readProjectEnvValue(projectDir: string, key: string): string | undefined {
   for (const name of ENV_FILE_NAMES) {
     const envPath = path.join(projectDir, name);
     if (!fs.existsSync(envPath)) {
@@ -162,11 +162,19 @@ export function readEnvSecretKey(projectDir: string): string | undefined {
     }
 
     const entries = parseEnvFile(fs.readFileSync(envPath, 'utf8'));
-    const secretKey = entries.get('NOVU_SECRET_KEY');
-    if (secretKey) {
-      return secretKey;
+    const value = entries.get(key);
+    if (value) {
+      return value;
     }
   }
 
   return undefined;
+}
+
+export function readEnvSecretKey(projectDir: string): string | undefined {
+  return readProjectEnvValue(projectDir, 'NOVU_SECRET_KEY');
+}
+
+export function readEnvAgentIdentifier(projectDir: string): string | undefined {
+  return readProjectEnvValue(projectDir, 'NOVU_AGENT_IDENTIFIER');
 }

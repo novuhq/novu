@@ -1,7 +1,13 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
-import type { AgentConnectMode, AgentSummary, ChannelChoice, ChatSdkConnectOutcome } from '../types';
-import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResult } from './ui';
+import type {
+  AgentConnectMode,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+  ChatSdkRequirement,
+} from '../types';
+import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResult, ChatSdkTunnelOfferResult } from './ui';
 
 export type Phase =
   | {
@@ -79,19 +85,27 @@ export type Phase =
       updatedKeys: string[];
     }
   | {
-      kind: 'chat-sdk-skill-prompt';
+      kind: 'chat-sdk-reconcile-plan';
       projectDir: string;
-      agentIdentifier: string;
+      requirements: ChatSdkRequirement[];
+      envPaths: string[];
+      wiringInstructions?: string;
+      requirementsFile?: string;
+      resolve: () => void;
+    }
+  | { kind: 'chat-sdk-install-deps' }
+  | {
+      kind: 'chat-sdk-install-deps-confirm';
+      projectDir: string;
+      installCommand: string;
+      packages: string[];
       resolve: (confirmed: boolean) => void;
     }
-  | { kind: 'chat-sdk-installing-skill' }
   | {
-      kind: 'chat-sdk-agent-prompt';
+      kind: 'chat-sdk-tunnel-offer';
       projectDir: string;
-      envPaths: string[];
-      skillDestinations: string[];
-      agentPrompt: string;
-      resolve: () => void;
+      devCommand: string;
+      resolve: (result: ChatSdkTunnelOfferResult) => void;
     }
   | { kind: 'generating' }
   | {

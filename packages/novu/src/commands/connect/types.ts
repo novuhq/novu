@@ -15,6 +15,18 @@ export const AGENT_CONNECT_MODES: readonly AgentConnectMode[] = [...AGENT_RUNTIM
 
 export type ChatSdkProjectKind = 'empty' | 'existing' | 'has-adapter';
 
+export type ChatSdkRequirementId = 'package' | 'env' | 'dev-script' | 'code-wiring';
+
+export type ChatSdkReqStatus = 'ok' | 'autofixable' | 'manual';
+
+export type ChatSdkRequirement = {
+  id: ChatSdkRequirementId;
+  status: ChatSdkReqStatus;
+  detail: string;
+  /** True when this requirement was auto-fixed during this connect run. */
+  fixed?: boolean;
+};
+
 export type ChatSdkConnectOutcome = {
   projectKind: ChatSdkProjectKind;
   projectDir: string;
@@ -22,8 +34,15 @@ export type ChatSdkConnectOutcome = {
   envPaths?: string[];
   /** True when npm install was skipped (e.g. scaffolding inside a monorepo). */
   skippedInstall?: boolean;
-  /** True when the user should prompt their coding agent to finish wiring. */
-  needsAgentFollowUp?: boolean;
+  requirements?: ChatSdkRequirement[];
+  /** Absolute path to a requirements summary file (CI / logging handoff). */
+  requirementsFile?: string;
+  /** package + env + dev-script satisfied after reconcile. */
+  coreReady?: boolean;
+  /** User accepted starting the dev tunnel at the end of connect. */
+  tunnelAccepted?: boolean;
+  /** Instructions for manual code wiring when adapter is not wired in source. */
+  wiringInstructions?: string;
 };
 
 export interface ConnectCommandOptions {

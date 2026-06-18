@@ -4,8 +4,8 @@ import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
-import { CHAT_SDK_PROMPT_FILE_ENV } from '../pipeline/chat-sdk/agent-prompt-file';
 import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
+import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import {
@@ -225,39 +225,48 @@ export function createLoggingUI(): ConnectUI {
         console.log(chalk.gray(`  Keys: ${updatedKeys.join(', ')}`));
       }
     },
-    promptInstallChatSdkSkill({ projectDir, agentIdentifier }) {
+    confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
       console.log('');
-      console.log(chalk.bold('Install the novu-chat-sdk skill?'));
-      console.log(
-        chalk.dim("We'll update .env.local, install the novu-chat-sdk skill, and show a prompt for your coding agent.")
-      );
+      console.log(chalk.bold('Install Chat SDK packages?'));
+      console.log(chalk.dim(`Adding: ${packages.join(', ')}`));
       console.log(chalk.gray(`  Project: ${projectDir}`));
-      console.log(chalk.gray(`  Agent: ${agentIdentifier}`));
+      console.log(chalk.cyan(`  ${installCommand}`));
 
       return Promise.resolve(true);
     },
-    installingChatSdkSkill() {
-      start('Installing novu-chat-sdk skill…');
+    installingChatSdkDeps() {
+      start('Installing Chat SDK packages…');
     },
-    awaitChatSdkAgentPrompt({ projectDir, envPaths, skillDestinations, agentPrompt, agentPromptFile }) {
-      succeed('Skill installed');
+    showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+      succeed('Chat SDK project reconciled');
       console.log(chalk.gray(`  Project: ${projectDir}`));
+      for (const req of requirements) {
+        const marker =
+          req.status === 'ok' ? chalk.green('✓') : req.status === 'manual' ? chalk.yellow('☐') : chalk.cyan('…');
+        console.log(`  ${marker} ${req.id}: ${req.detail}`);
+      }
       for (const envPath of envPaths) {
         console.log(chalk.gray(`  Env: ${envPath}`));
       }
-      for (const dest of skillDestinations) {
-        console.log(chalk.gray(`  Skill: ${dest}`));
+      if (requirementsFile) {
+        console.log(`${CHAT_SDK_REQUIREMENTS_FILE_ENV}=${requirementsFile}`);
       }
-      if (agentPromptFile) {
-        console.log(`${CHAT_SDK_PROMPT_FILE_ENV}=${agentPromptFile}`);
+      if (wiringInstructions) {
+        console.log('');
+        console.log(chalk.bold('Code wiring (manual):'));
+        console.log(chalk.cyan(wiringInstructions));
       }
-      console.log('');
-      console.log(chalk.bold('Paste this into your coding agent:'));
-      console.log(chalk.cyan(agentPrompt));
-      console.log('');
       console.log(chalk.gray('Non-interactive mode: continuing automatically.'));
 
       return Promise.resolve();
+    },
+    offerChatSdkTunnel({ devCommand }) {
+      console.log('');
+      console.log(chalk.bold('Start the dev tunnel?'));
+      console.log(chalk.cyan(`  ${devCommand}`));
+      console.log(chalk.gray('Non-interactive mode: skipping tunnel launch.'));
+
+      return Promise.resolve('skip');
     },
     pickChannel() {
       stop();
@@ -422,8 +431,8 @@ export function createLoggingUI(): ConnectUI {
         const followUp = resolveChatSdkOutcomeMessage(result.connectMode, result.chatSdkOutcome);
         if (followUp) {
           console.log(`  ${chalk.cyan('→')} ${followUp}`);
-        } else if (!result.chatSdkOutcome.scaffolded && !result.chatSdkOutcome.needsAgentFollowUp) {
-          console.log(`  ${chalk.gray('No Chat SDK wiring changes made.')}`);
+        } else if (!result.chatSdkOutcome.scaffolded && !result.chatSdkOutcome.coreReady) {
+          console.log(`  ${chalk.gray('Finish the remaining setup steps above.')}`);
         }
       }
     },

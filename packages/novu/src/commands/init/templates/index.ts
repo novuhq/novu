@@ -273,7 +273,7 @@ export const installTemplate = async ({
   }
 
   const scripts: Record<string, string> = {
-    dev: 'next dev --port=4000',
+    dev: 'next dev --port=3000',
     build: 'next build',
     start: 'next start',
     lint: 'next lint',
@@ -281,15 +281,15 @@ export const installTemplate = async ({
 
   if (isAgentTemplate) {
     const cliTag = resolveCliTag();
-    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4000`;
-    scripts['dev:novu'] = `npx novu@${cliTag} dev -p 4000 --no-studio --run "next dev --port=4000"`;
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4005`;
+    scripts['dev:novu'] = `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --run "next dev --port=4005"`;
   }
 
   if (isChatSdkTemplate) {
     const cliTag = resolveCliTag();
-    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4000`;
+    scripts['dev'] = `node warn-no-tunnel.mjs ${packageManager} && next dev --port=4005`;
     scripts['dev:novu'] =
-      `npx novu@${cliTag} dev -p 4000 --no-studio --route /api/webhooks/novu --run "next dev --port=4000"`;
+      `PORT=4005 npx novu@${cliTag} dev -p 4005 --no-studio --route /api/webhooks/novu --run "next dev --port=4005"`;
   }
 
   const packageJson: any = {

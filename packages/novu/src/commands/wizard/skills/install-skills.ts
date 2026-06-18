@@ -7,7 +7,7 @@ const OFFICIAL_SKILLS_REPO = 'https://github.com/novuhq/skills.git';
 const DEFAULT_OFFICIAL_SKILLS_BRANCH = 'main';
 const OFFICIAL_SKILLS_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 
-const BUNDLED_GAP_FILLER_DIRS = ['env-setup', 'novu-chat-sdk'];
+const BUNDLED_GAP_FILLER_DIRS = ['env-setup'];
 
 const IGNORED_ENTRIES_FROM_OFFICIAL = new Set(['.git', 'node_modules']);
 

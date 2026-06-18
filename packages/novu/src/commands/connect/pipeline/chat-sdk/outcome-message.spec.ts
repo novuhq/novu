@@ -8,7 +8,7 @@ describe('resolveChatSdkOutcomeMessage', () => {
         projectKind: 'existing',
         projectDir: '/tmp',
         scaffolded: false,
-        needsAgentFollowUp: true,
+        coreReady: false,
       })
     ).toBeNull();
   });
@@ -24,25 +24,27 @@ describe('resolveChatSdkOutcomeMessage', () => {
     expect(message).toContain('npm install');
   });
 
-  it('describes follow-up wiring for existing projects', () => {
+  it('describes remaining setup when core is not ready', () => {
     const message = resolveChatSdkOutcomeMessage('chat-sdk', {
       projectKind: 'existing',
       projectDir: '/tmp/app',
       scaffolded: false,
-      needsAgentFollowUp: true,
+      coreReady: false,
+      requirements: [{ id: 'package', status: 'manual', detail: 'Run npm install' }],
     });
 
-    expect(message).toContain('coding agent');
+    expect(message).toContain('Finish setup');
   });
 
-  it('describes has-adapter reconnects', () => {
+  it('describes ready projects without tunnel', () => {
     const message = resolveChatSdkOutcomeMessage('chat-sdk', {
       projectKind: 'has-adapter',
       projectDir: '/tmp/app',
       scaffolded: false,
-      needsAgentFollowUp: false,
+      coreReady: true,
+      tunnelAccepted: false,
     });
 
-    expect(message).toContain('adapter dependency detected');
+    expect(message).toContain('npm run dev:novu');
   });
 });
