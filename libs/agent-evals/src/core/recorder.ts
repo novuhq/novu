@@ -92,11 +92,53 @@ export function isOpenCommand(command: string): boolean {
   return /^\s*(open|xdg-open|start)\b/.test(command.trim());
 }
 
+/**
+ * Drop shell string-literal content (single/double quoted spans and backslash-escaped
+ * characters) while preserving unquoted command words. A single-pass lexer is required
+ * because the `'\''` idiom agents use to embed apostrophes — e.g. `'Bob'\''s sleep coach'` —
+ * splits a value across multiple quote runs that a naive `'...'` regex cannot follow.
+ */
+function stripShellStringLiterals(command: string): string {
+  let out = '';
+  let i = 0;
+
+  while (i < command.length) {
+    const ch = command[i];
+
+    if (ch === "'") {
+      i += 1;
+      while (i < command.length && command[i] !== "'") {
+        i += 1;
+      }
+      i += 1;
+      out += ' ';
+    } else if (ch === '"') {
+      i += 1;
+      while (i < command.length && command[i] !== '"') {
+        if (command[i] === '\\' && i + 1 < command.length) {
+          i += 1;
+        }
+        i += 1;
+      }
+      i += 1;
+      out += ' ';
+    } else if (ch === '\\') {
+      i += 2;
+      out += ' ';
+    } else {
+      out += ch;
+      i += 1;
+    }
+  }
+
+  return out;
+}
+
 export function isForbiddenWatcherCommand(command: string): boolean {
-  // Strip quoted argument values so a legitimate agent description such as
-  // `novu connect "A sleep coaching assistant"` is not rejected for the word "sleep".
-  const withoutQuotes = command.replace(/'[^']*'/g, ' ').replace(/"[^"]*"/g, ' ');
-  const normalized = withoutQuotes.toLowerCase();
+  // Scan only unquoted command words so a legitimate agent description such as
+  // `novu connect "A sleep coaching assistant"` (or `'Bob'\''s sleep coach'`) is not
+  // rejected for an embedded "sleep"/"tail"/"grep".
+  const normalized = stripShellStringLiterals(command).toLowerCase();
 
   return (
     /\bsleep\b/.test(normalized) ||
