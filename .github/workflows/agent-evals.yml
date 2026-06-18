@@ -1,24 +1,9 @@
 name: Agent evals
 
 on:
-  push:
-    branches:
-      - next
-    paths:
-      - packages/shared/docs/agent-onboarding.md
-      - libs/agent-evals/**
   pull_request:
     paths:
       - packages/shared/docs/agent-onboarding.md
-      - libs/agent-evals/**
-  schedule:
-    - cron: '0 4 * * *'
-  workflow_dispatch:
-    inputs:
-      enable_judge:
-        description: Enable LLM judge graders
-        type: boolean
-        default: true
 
 jobs:
   evals:
@@ -45,5 +30,5 @@ jobs:
       - name: Run agent evals
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          NOVU_EVAL_JUDGE: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.enable_judge)) && 'true' || 'false' }}
-        run: pnpm --filter @novu/agent-evals eval
+          NOVU_EVAL_JUDGE: 'true'
+        run: pnpm --filter @novu/agent-evals eval src/suites/agent-onboarding
