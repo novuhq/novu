@@ -29,6 +29,7 @@ import { GetAgentRuntimeConfig } from '../management/usecases/get-agent-runtime-
 import { ListAgents } from '../management/usecases/list-agents/list-agents.usecase';
 import { MigrateAgentRuntime } from '../management/usecases/migrate-agent-runtime/migrate-agent-runtime.usecase';
 import { ProvisionManagedAgent } from '../management/usecases/provision-managed-agent/provision-managed-agent.usecase';
+import { RegisterDiscoveredAgent } from '../management/usecases/register-discovered-agent/register-discovered-agent.usecase';
 import { SyncAgentToEnvironment } from '../management/usecases/sync-agent-to-environment/sync-agent-to-environment.usecase';
 import { UpdateAgent } from '../management/usecases/update-agent/update-agent.usecase';
 import { UpdateAgentInboxShared } from '../management/usecases/update-agent-inbox-shared/update-agent-inbox-shared.usecase';
@@ -60,6 +61,7 @@ export {
 
 export const USE_CASES = [
   CreateAgent,
+  RegisterDiscoveredAgent,
   ConfigureTelegramAgentWebhook,
   ConsumeSlackSetupLink,
   ConsumeTelegramMobileLink,

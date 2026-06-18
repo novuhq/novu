@@ -59,7 +59,7 @@ export class Sync {
     this.assertSafeBridgeUrl(command.bridgeUrl);
 
     const environment = await this.findEnvironment(command);
-    const discover = await this.executeDiscover(command);
+    const discover = command.discoverResult ?? (await this.executeDiscover(command));
     this.sendAnalytics(command, environment, discover);
     const persistedWorkflowsInBridge = await this.processWorkflows(command, discover.workflows ?? []);
 

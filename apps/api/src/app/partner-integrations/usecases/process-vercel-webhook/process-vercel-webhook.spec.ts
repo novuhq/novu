@@ -1,20 +1,13 @@
 import crypto from 'node:crypto';
-import { HttpService } from '@nestjs/axios';
 import { BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { PinoLogger } from '@novu/application-generic';
-import {
-  CommunityOrganizationRepository,
-  CommunityUserRepository,
-  EnvironmentRepository,
-  MemberRepository,
-} from '@novu/dal';
+import { CommunityOrganizationRepository, EnvironmentRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
-import { of } from 'rxjs';
 import { assert, restore, stub } from 'sinon';
-import { Sync } from '../../../bridge/usecases/sync';
-import { SyncAgentsFromBridge } from '../sync-agents-from-bridge/sync-agents-from-bridge.usecase';
+import { VercelBridgeSyncService } from '../../services/vercel-bridge-sync.service';
+import { SyncVercelBridge } from '../sync-vercel-bridge/sync-vercel-bridge.usecase';
 import { ProcessVercelWebhook } from './process-vercel-webhook.usecase';
 
 describe('ProcessVercelWebhook', () => {
@@ -22,11 +15,8 @@ describe('ProcessVercelWebhook', () => {
   let session: UserSession;
   let organizationRepositoryMock;
   let environmentRepositoryMock;
-  let memberRepositoryMock;
-  let communityUserRepositoryMock;
-  let syncUsecaseMock;
-  let syncAgentsFromBridgeMock;
-  let httpServiceMock;
+  let syncVercelBridgeMock;
+  let vercelBridgeSyncServiceMock;
   let loggerMock;
 
   beforeEach(async () => {
@@ -47,38 +37,13 @@ describe('ProcessVercelWebhook', () => {
       }),
     };
 
-    memberRepositoryMock = {
-      getOrganizationOwnerAccount: stub().resolves({
-        _userId: 'test-user-id',
-      }),
-    };
-
-    communityUserRepositoryMock = {
-      findOne: stub().resolves({
-        _id: 'test-internal-user-id',
-      }),
-    };
-
-    syncUsecaseMock = {
-      execute: stub().resolves(true),
-    };
-
-    syncAgentsFromBridgeMock = {
+    syncVercelBridgeMock = {
       execute: stub().resolves(undefined),
     };
 
-    httpServiceMock = {
-      get: stub().returns(
-        of({
-          data: {
-            targets: {
-              production: {
-                alias: ['stable-app.vercel.app'],
-              },
-            },
-          },
-        })
-      ),
+    vercelBridgeSyncServiceMock = {
+      resolveSyncUserId: stub().resolves('test-internal-user-id'),
+      resolveBridgeUrl: stub().resolves('https://stable-app.vercel.app/api/novu'),
     };
 
     loggerMock = {
@@ -102,24 +67,12 @@ describe('ProcessVercelWebhook', () => {
           useValue: environmentRepositoryMock,
         },
         {
-          provide: MemberRepository,
-          useValue: memberRepositoryMock,
+          provide: SyncVercelBridge,
+          useValue: syncVercelBridgeMock,
         },
         {
-          provide: CommunityUserRepository,
-          useValue: communityUserRepositoryMock,
-        },
-        {
-          provide: Sync,
-          useValue: syncUsecaseMock,
-        },
-        {
-          provide: SyncAgentsFromBridge,
-          useValue: syncAgentsFromBridgeMock,
-        },
-        {
-          provide: HttpService,
-          useValue: httpServiceMock,
+          provide: VercelBridgeSyncService,
+          useValue: vercelBridgeSyncServiceMock,
         },
         {
           provide: PinoLogger,
@@ -130,8 +83,6 @@ describe('ProcessVercelWebhook', () => {
 
     // @ts-expect-error
     process.env.VERCEL_CLIENT_SECRET = 'test-secret';
-    // @ts-expect-error
-    process.env.VERCEL_BASE_URL = 'https://api.vercel.com';
     session = new UserSession();
     await session.initialize();
     processVercelWebhook = moduleRef.get<ProcessVercelWebhook>(ProcessVercelWebhook);
@@ -176,15 +127,15 @@ describe('ProcessVercelWebhook', () => {
 
     expect(result).to.equal(true);
 
-    assert.calledWith(syncUsecaseMock.execute, {
-      organizationId: 'test-org-id',
-      userId: 'test-internal-user-id',
-      environmentId: 'test-env-id',
-      bridgeUrl: 'https://stable-app.vercel.app/api/novu',
-      source: 'vercel',
+    assert.calledOnce(syncVercelBridgeMock.execute);
+    assert.calledWith(vercelBridgeSyncServiceMock.resolveBridgeUrl, {
+      isProduction: true,
+      environmentName: 'Production',
+      projectId: 'project-id',
+      teamId: 'team-id',
+      deploymentUrl: 'ephemeral.vercel.app',
+      accessToken: 'vercel-token',
     });
-
-    assert.calledOnce(syncAgentsFromBridgeMock.execute);
   });
 
   it('should use deployment URL for preview deployments', async () => {
@@ -193,6 +144,8 @@ describe('ProcessVercelWebhook', () => {
       _organizationId: 'test-org-id',
       name: 'Development',
     });
+
+    vercelBridgeSyncServiceMock.resolveBridgeUrl.resolves('https://preview-branch.vercel.app/api/novu');
 
     const body = {
       type: 'deployment.succeeded',
@@ -214,12 +167,13 @@ describe('ProcessVercelWebhook', () => {
       signatureHeader: hmac,
     });
 
-    assert.calledWith(syncUsecaseMock.execute, {
-      organizationId: 'test-org-id',
-      userId: 'test-internal-user-id',
-      environmentId: 'test-env-id',
-      bridgeUrl: 'https://preview-branch.vercel.app/api/novu',
-      source: 'vercel',
+    assert.calledWith(vercelBridgeSyncServiceMock.resolveBridgeUrl, {
+      isProduction: false,
+      environmentName: 'Development',
+      projectId: 'project-id',
+      teamId: 'team-id',
+      deploymentUrl: 'preview-branch.vercel.app',
+      accessToken: 'vercel-token',
     });
   });
 

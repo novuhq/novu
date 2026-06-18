@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ExecuteBridgeRequest, FeatureFlagsService, PinoLogger } from '@novu/application-generic';
 import { AgentRepository } from '@novu/dal';
-import { DiscoverOutput, GetActionEnum, ResourceOriginEnum } from '@novu/framework/internal';
-import { FeatureFlagsKeysEnum } from '@novu/shared';
-import { CreateAgentCommand } from '../../../agents/management/usecases/create-agent/create-agent.command';
-import { CreateAgent } from '../../../agents/management/usecases/create-agent/create-agent.usecase';
+import { DiscoverOutput, GetActionEnum } from '@novu/framework/internal';
+import { FeatureFlagsKeysEnum, ResourceOriginEnum } from '@novu/shared';
+import { RegisterDiscoveredAgentCommand } from '../../../agents/management/usecases/register-discovered-agent/register-discovered-agent.command';
+import { RegisterDiscoveredAgent } from '../../../agents/management/usecases/register-discovered-agent/register-discovered-agent.usecase';
 import { UpdateAgentCommand } from '../../../agents/management/usecases/update-agent/update-agent.command';
 import { UpdateAgent } from '../../../agents/management/usecases/update-agent/update-agent.usecase';
 import { SyncAgentsFromBridgeCommand } from './sync-agents-from-bridge.command';
@@ -14,7 +14,7 @@ export class SyncAgentsFromBridge {
   constructor(
     private readonly executeBridgeRequest: ExecuteBridgeRequest,
     private readonly agentRepository: AgentRepository,
-    private readonly createAgent: CreateAgent,
+    private readonly registerDiscoveredAgent: RegisterDiscoveredAgent,
     private readonly updateAgent: UpdateAgent,
     private readonly featureFlagsService: FeatureFlagsService,
     private readonly logger: PinoLogger
@@ -34,41 +34,27 @@ export class SyncAgentsFromBridge {
       return;
     }
 
-    const discover = await this.discoverAgents(command);
+    const discover = command.discoverResult ?? (await this.discoverAgents(command));
 
     if (!discover?.agents?.length) {
       return;
     }
 
-    for (const agent of discover.agents) {
-      await this.syncAgentBridge(command, agent);
-    }
+    await Promise.all(discover.agents.map((agent) => this.syncAgentBridge(command, agent)));
   }
 
-  private async discoverAgents(command: SyncAgentsFromBridgeCommand): Promise<DiscoverOutput | null> {
-    try {
-      return (await this.executeBridgeRequest.execute({
-        organizationId: command.organizationId,
-        environmentId: command.environmentId,
-        statelessBridgeUrl: command.bridgeUrl,
-        action: GetActionEnum.DISCOVER,
-        retriesLimit: 1,
-        workflowOrigin: ResourceOriginEnum.EXTERNAL,
-        enforceSsrfProtection: true,
-      })) as DiscoverOutput;
-    } catch (error) {
-      this.logger.warn(
-        {
-          err: error,
-          bridgeUrl: command.bridgeUrl,
-          environmentId: command.environmentId,
-          organizationId: command.organizationId,
-        },
-        'Could not discover agents from Vercel bridge URL'
-      );
+  private async discoverAgents(command: SyncAgentsFromBridgeCommand): Promise<DiscoverOutput> {
+    const discover = (await this.executeBridgeRequest.execute({
+      organizationId: command.organizationId,
+      environmentId: command.environmentId,
+      statelessBridgeUrl: command.bridgeUrl,
+      action: GetActionEnum.DISCOVER,
+      retriesLimit: 1,
+      workflowOrigin: ResourceOriginEnum.EXTERNAL,
+      enforceSsrfProtection: true,
+    })) as DiscoverOutput;
 
-      return null;
-    }
+    return discover;
   }
 
   private async syncAgentBridge(
@@ -85,8 +71,8 @@ export class SyncAgentsFromBridge {
     );
 
     if (!existing && command.isProduction) {
-      await this.createAgent.execute(
-        CreateAgentCommand.create({
+      existing = await this.registerDiscoveredAgent.execute(
+        RegisterDiscoveredAgentCommand.create({
           userId: command.userId,
           organizationId: command.organizationId,
           environmentId: command.environmentId,
@@ -94,15 +80,6 @@ export class SyncAgentsFromBridge {
           identifier: agent.agentId,
           description: agent.description,
         })
-      );
-
-      existing = await this.agentRepository.findOne(
-        {
-          identifier: agent.agentId,
-          _environmentId: command.environmentId,
-          _organizationId: command.organizationId,
-        },
-        '*'
       );
     }
 

@@ -21,6 +21,7 @@ import { connectEmailForAgent } from './channels/email';
 import { connectSlackForAgent } from './channels/slack';
 import { connectTelegramForAgent } from './channels/telegram';
 import { resolveAgentRuntimeIntegration, resolveRuntimeFromOptions } from './resolve-agent-runtime-integration';
+import { isCustomCodeConnect, resolveCustomCodeAgent } from './resolve-custom-code-agent';
 
 export interface ConnectPipelineInput {
   options: ConnectCommandOptions;
@@ -81,7 +82,11 @@ export async function runConnectPipeline(input: ConnectPipelineInput): Promise<C
     let agent: AgentSummary;
     let flow: 'created' | 'reused';
 
-    if (existingAgents.length > 0 && !options.prompt) {
+    if (isCustomCodeConnect(options)) {
+      agent = await resolveCustomCodeAgent(existingAgents, options, ui);
+      flow = 'reused';
+      track(CONNECT_EVENTS.AGENT_REUSED, { identifier: agent.identifier, ...sessionProps });
+    } else if (existingAgents.length > 0 && !options.prompt) {
       const pick = await ui.pickExistingOrCreate(existingAgents.map(toSummary));
       if (pick.action === 'use') {
         agent = pick.agent;

@@ -1,25 +1,29 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { updateVercelIntegration } from '@/api/partner-integrations';
 import { showErrorToast, showSuccessToast } from '@/components/primitives/sonner-helpers';
 import { useEnvironment } from '@/context/environment/hooks';
 
-export const useUpdateVercelIntegration = ({ next }: { next?: string | null }) => {
+export const useUpdateVercelIntegration = ({ configurationId }: { configurationId?: string | null }) => {
   const { currentEnvironment } = useEnvironment();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ data, configurationId }: { data: Record<string, string[]>; configurationId: string }) =>
-      updateVercelIntegration({ data, configurationId, environment: currentEnvironment }),
+    mutationFn: ({ data, configurationId: configId }: { data: Record<string, string[]>; configurationId: string }) =>
+      updateVercelIntegration({ data, configurationId: configId, environment: currentEnvironment }),
     onSuccess: () => {
-      showSuccessToast('Vercel integration updated successfully');
-
-      if (next) {
-        window.location.replace(next);
+      if (configurationId) {
+        queryClient.invalidateQueries({ queryKey: ['configurationDetails', configurationId] });
       }
+
+      showSuccessToast(
+        'Novu credentials were added to Vercel. Redeploy production, then return to Vercel when you are done.',
+        'Project linked'
+      );
     },
-    onError: (err: any) => {
-      if (err?.message) {
-        showErrorToast(`Failed to update Vercel integration: ${err?.message}`);
+    onError: (error: Error) => {
+      if (error?.message) {
+        showErrorToast(`Failed to update Vercel integration: ${error.message}`);
       }
     },
   });

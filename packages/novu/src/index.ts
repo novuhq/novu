@@ -14,6 +14,7 @@ import {
   CHANNEL_CHOICES,
   type ChannelChoice,
 } from './commands/connect/types';
+import { validateConnectCiInput, validateCustomCodeConnectFlags } from './commands/connect/validate-connect-options';
 import { CloudRegionEnum } from './commands/dev/enums';
 import { IInitCommandOptions, init } from './commands/init';
 import { stepPublish } from './commands/step';
@@ -169,7 +170,11 @@ program
   )
   .option(
     '--runtime <runtime>',
-    `Agent runtime for new agents (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo — omit in --ci authenticated runs`
+    `Agent runtime (${AGENT_RUNTIME_CHOICES.join(' | ')}). Defaults to demo for new managed agents; custom-code reuses a self-hosted agent`
+  )
+  .option(
+    '--agent-identifier <id>',
+    'Existing self-hosted agent identifier to connect channels to (required with --runtime custom-code in --ci mode)'
   )
   .option(
     '--agent-integration-id <id>',
@@ -210,20 +215,10 @@ program
     // Positional `prompt` wins over `--prompt` (the positional form is the
     // primary surface; the flag exists for parity with `--ci` workflows).
     if (options.ci) {
-      const prompt = (positionalPrompt ?? options.prompt)?.trim();
-      const channel = options.skipSlack ? 'skip' : options.channel;
+      const ciError = validateConnectCiInput(options, positionalPrompt);
 
-      if (!prompt) {
-        console.error(
-          'Non-interactive mode requires a prompt (positional <prompt> or --prompt).\n(run `novu connect --help` for the non-interactive contract and examples)'
-        );
-        process.exit(1);
-      }
-
-      if (!channel) {
-        console.error(
-          'Non-interactive mode requires --channel <slack|email|telegram|skip> (or <whatsapp|teams> without --keyless).\n(run `novu connect --help` for the non-interactive contract and examples)'
-        );
+      if (ciError) {
+        console.error(ciError);
         process.exit(1);
       }
 
@@ -233,6 +228,13 @@ program
         );
         process.exit(1);
       }
+    }
+
+    const customCodeError = validateCustomCodeConnectFlags(options);
+
+    if (customCodeError) {
+      console.error(customCodeError);
+      process.exit(1);
     }
 
     if (options.keyless && options.secretKey) {
@@ -259,6 +261,7 @@ program
         prompt: positionalPrompt ?? options.prompt,
         channel: options.channel as ChannelChoice | undefined,
         runtime: options.runtime as AgentRuntimeChoice | undefined,
+        agentIdentifier: options.agentIdentifier,
         apiUrl: options.apiUrl ?? NOVU_API_URL,
       });
     } catch (error) {

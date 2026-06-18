@@ -1,4 +1,5 @@
 import { EnvironmentWithUserCommand, IStepControl } from '@novu/application-generic';
+import type { DiscoverOutput } from '@novu/framework/internal';
 import type { CustomDataType, IPreferenceChannels, JSONSchemaDto, StepType } from '@novu/shared';
 import { Type } from 'class-transformer';
 import { IsDefined, IsOptional, IsString, ValidateNested } from 'class-validator';
@@ -87,4 +88,7 @@ export class SyncCommand extends EnvironmentWithUserCommand implements ICreateBr
   @IsOptional()
   @IsString()
   source?: string;
+
+  @IsOptional()
+  discoverResult?: DiscoverOutput;
 }

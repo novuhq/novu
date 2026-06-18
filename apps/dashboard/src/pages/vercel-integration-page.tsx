@@ -1,5 +1,5 @@
 import { useOrganization, useOrganizationList } from '@clerk/react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import { DashboardLayout } from '@/components/dashboard-layout';
 import { Card, CardContent, CardHeader } from '@/components/primitives/card';
@@ -19,15 +19,17 @@ export const VercelIntegrationPage = () => {
     userMemberships: { infinite: true },
   });
   const { configurationId, next, isEditMode } = useVercelParams();
-  const { isPending: isCreateVercelIntegrationPending, data } = useCreateVercelIntegration();
+  const { isPending: isCreateVercelIntegrationPending, data: createIntegrationResult } = useCreateVercelIntegration();
+  const canFetchIntegration =
+    !!configurationId && !!currentEnvironment && (isEditMode || !!createIntegrationResult?.success);
   const { data: vercelIntegration, isLoading: isFetchVercelIntegrationLoading } = useFetchVercelIntegration({
     configurationId,
-    options: { enabled: !!configurationId && isEditMode && !!currentEnvironment },
+    options: { enabled: canFetchIntegration },
   });
   const { data: vercelIntegrationProjects, isLoading: isFetchVercelIntegrationProjectsLoading } =
     useFetchVercelIntegrationProjects({
       configurationId,
-      enabled: !isEditMode ? !!data?.success : true,
+      enabled: !isEditMode ? !!createIntegrationResult?.success : true,
     });
   const projects = useMemo(
     () =>
@@ -46,12 +48,13 @@ export const VercelIntegrationPage = () => {
     [userMemberships]
   );
 
-  const linkedProjectId = vercelIntegration?.[0]?.projectIds?.[0];
+  const currentOrganizationId = organization?.publicMetadata.externalOrgId as string | undefined;
+  const [linkedProjectIds, setLinkedProjectIds] = useState<string[]>([]);
 
   if (
     isCreateVercelIntegrationPending ||
     isFetchVercelIntegrationProjectsLoading ||
-    isFetchVercelIntegrationLoading ||
+    (canFetchIntegration && isFetchVercelIntegrationLoading) ||
     organizations.length === 0 ||
     !organization
   ) {
@@ -69,7 +72,6 @@ export const VercelIntegrationPage = () => {
                 Link Vercel projects to Novu environments. Production deploys register your agent bridge once; preview
                 deploys auto-wire to Development.
               </p>
-              <VercelIntegrationOnboarding linkedProjectId={linkedProjectId} />
               <div className="flex flex-col">
                 <div className="flex flex-col gap-4">
                   <div className="grid grid-cols-[1fr_max-content_1fr_max-content] items-center gap-4">
@@ -103,14 +105,23 @@ export const VercelIntegrationPage = () => {
               Link Vercel projects to Novu environments. Production deploys register your agent bridge once; preview
               deploys auto-wire to Development.
             </p>
-            <VercelIntegrationOnboarding linkedProjectId={linkedProjectId} />
             <VercelIntegrationForm
               vercelIntegrationDetails={vercelIntegration}
               organizations={organizations}
-              currentOrganizationId={organization.publicMetadata.externalOrgId as string}
+              currentOrganizationId={currentOrganizationId ?? ''}
               projects={projects}
               configurationId={configurationId}
-              next={next}
+              onProjectLinked={(projectIds) => {
+                setLinkedProjectIds(projectIds);
+              }}
+            />
+            <VercelIntegrationOnboarding
+              vercelIntegrationDetails={vercelIntegration}
+              vercelProjects={vercelIntegrationProjects?.projects}
+              currentOrganizationId={currentOrganizationId}
+              vercelReturnUrl={next}
+              hasJustLinkedProject={linkedProjectIds.length > 0}
+              linkedProjectIdOverride={linkedProjectIds[0]}
             />
           </CardContent>
         </Card>

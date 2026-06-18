@@ -1,18 +1,11 @@
 import { HttpService } from '@nestjs/axios';
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { AnalyticsService, decryptApiKey, PinoLogger } from '@novu/application-generic';
-import {
-  CommunityUserRepository,
-  EnvironmentEntity,
-  EnvironmentRepository,
-  MemberRepository,
-  OrganizationRepository,
-} from '@novu/dal';
+import { EnvironmentEntity, EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { lastValueFrom } from 'rxjs';
-import { Sync } from '../../../bridge/usecases/sync';
-import { buildNovuBridgeUrl, resolveVercelProjectAlias } from '../../utils/vercel-bridge-url.util';
-import { SyncAgentsFromBridgeCommand } from '../sync-agents-from-bridge/sync-agents-from-bridge.command';
-import { SyncAgentsFromBridge } from '../sync-agents-from-bridge/sync-agents-from-bridge.usecase';
+import { VercelBridgeSyncService } from '../../services/vercel-bridge-sync.service';
+import { SyncVercelBridgeCommand } from '../sync-vercel-bridge/sync-vercel-bridge.command';
+import { SyncVercelBridge } from '../sync-vercel-bridge/sync-vercel-bridge.usecase';
 import { UpdateVercelIntegrationCommand } from './update-vercel-integration.command';
 
 interface ISetEnvironment {
@@ -44,11 +37,9 @@ export class UpdateVercelIntegration {
   constructor(
     private httpService: HttpService,
     private organizationRepository: OrganizationRepository,
-    private memberRepository: MemberRepository,
-    private communityUserRepository: CommunityUserRepository,
     private environmentRepository: EnvironmentRepository,
-    private syncUsecase: Sync,
-    private syncAgentsFromBridge: SyncAgentsFromBridge,
+    private syncVercelBridge: SyncVercelBridge,
+    private vercelBridgeSyncService: VercelBridgeSyncService,
     private analyticsService: AnalyticsService,
     private logger: PinoLogger
   ) {
@@ -123,54 +114,31 @@ export class UpdateVercelIntegration {
     teamId: string,
     organizationId: string
   ) {
-    try {
-      const getDomainsResponse = await lastValueFrom(
-        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v9/projects/${projectId}?teamId=${teamId}`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-        })
-      );
+    const isProduction = environmentName.toLowerCase() === 'production';
+    const bridgeUrl = await this.vercelBridgeSyncService.resolveBridgeUrl({
+      isProduction,
+      environmentName,
+      projectId,
+      teamId,
+      accessToken,
+      requireStableAlias: true,
+    });
 
-      const bridgeAlias = resolveVercelProjectAlias(getDomainsResponse.data?.targets, environmentName);
-      if (!bridgeAlias) {
-        return;
-      }
+    if (!bridgeUrl) {
+      return;
+    }
 
-      const orgOwner = await this.memberRepository.getOrganizationOwnerAccount(organizationId);
-      if (!orgOwner) {
-        throw new BadRequestException('Organization owner not found');
-      }
+    const userId = await this.vercelBridgeSyncService.resolveSyncUserId(organizationId);
 
-      const internalUser = await this.communityUserRepository.findOne({ externalId: orgOwner?._userId });
-      if (!internalUser) {
-        throw new BadRequestException('User not found');
-      }
-
-      const bridgeUrl = buildNovuBridgeUrl(bridgeAlias);
-      const isProduction = environmentName.toLowerCase() === 'production';
-
-      await this.syncUsecase.execute({
+    await this.syncVercelBridge.execute(
+      SyncVercelBridgeCommand.create({
         organizationId,
-        userId: internalUser?._id as string,
+        userId,
         environmentId,
         bridgeUrl,
-        source: 'vercel',
-      });
-
-      await this.syncAgentsFromBridge.execute(
-        SyncAgentsFromBridgeCommand.create({
-          organizationId,
-          userId: internalUser?._id as string,
-          environmentId,
-          bridgeUrl,
-          isProduction,
-        })
-      );
-    } catch (error) {
-      this.logger.error({ err: error }, 'Error updating bridge url');
-    }
+        isProduction,
+      })
+    );
   }
 
   private async getEnvironments(organizationIds: string[]): Promise<EnvironmentEntity[]> {

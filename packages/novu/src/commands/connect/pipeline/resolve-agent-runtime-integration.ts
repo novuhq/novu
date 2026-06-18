@@ -32,10 +32,21 @@ export function resolveRuntimeProviderId(runtime: AgentRuntimeChoice): AgentRunt
       return AgentRuntimeProviderIdEnum.Anthropic;
     case 'claude-aws':
       return AgentRuntimeProviderIdEnum.AnthropicAws;
+    case 'custom-code': {
+      const unreachable: never = runtime;
+
+      throw new Error(`Managed runtime integration is not applicable for ${unreachable}`);
+    }
   }
 }
 
-export function resolveRuntimeFromOptions(options: ConnectCommandOptions): AgentRuntimeChoice | undefined {
+export function resolveRuntimeFromOptions(
+  options: ConnectCommandOptions
+): Exclude<AgentRuntimeChoice, 'custom-code'> | undefined {
+  if (!options.runtime || options.runtime === 'custom-code') {
+    return undefined;
+  }
+
   return options.runtime;
 }
 

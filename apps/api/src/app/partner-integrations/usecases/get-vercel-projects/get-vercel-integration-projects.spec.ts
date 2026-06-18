@@ -16,19 +16,27 @@ describe('GetVercelIntegrationProjects', () => {
 
   beforeEach(async () => {
     httpServiceMock = {
-      get: stub().returns(
-        of({
+      get: stub().callsFake((url: string) => {
+        if (url.includes('/v2/teams/')) {
+          return of({
+            data: {
+              slug: 'dima-grossmans-projects',
+            },
+          });
+        }
+
+        return of({
           data: {
             projects: [
-              { id: 'project-1', name: 'Project One' },
+              { id: 'project-1', name: 'novu-vercel-agents-starter' },
               { id: 'project-2', name: 'Project Two' },
             ],
             pagination: {
               next: 'next-page-token',
             },
           },
-        })
-      ),
+        });
+      }),
     };
 
     organizationRepositoryMock = {
@@ -80,8 +88,9 @@ describe('GetVercelIntegrationProjects', () => {
 
     expect(result.projects).to.have.length(2);
     expect(result.projects[0]).to.deep.equal({
-      name: 'Project One',
+      name: 'novu-vercel-agents-starter',
       id: 'project-1',
+      dashboardUrl: 'https://vercel.com/dima-grossmans-projects/novu-vercel-agents-starter/deployments',
     });
     expect(result.pagination).to.deep.equal({
       next: 'next-page-token',

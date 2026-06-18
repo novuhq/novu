@@ -46,10 +46,23 @@ Examples (non-interactive / agent / CI):
       --secret-key "$NOVU_SECRET_KEY" \\
       --channel slack
 
+  Self-hosted agent (reuse existing bridge agent — no prompt):
+    npx novu connect \\
+      --runtime custom-code \\
+      --agent-identifier support-agent \\
+      --secret-key "$NOVU_SECRET_KEY" \\
+      --ci \\
+      --channel slack
+
 Non-interactive (agent / CI) contract:
 
-  Required for --ci mode:
+  Required for --ci mode (managed agents):
     - Pass the agent description as the positional <prompt> argument or --prompt.
+    - Pass --channel <slack|email|telegram|skip> (or whatsapp/teams without --keyless).
+
+  Required for --ci mode (--runtime custom-code):
+    - Pass --runtime custom-code and --agent-identifier <id> (no prompt).
+    - Pass --secret-key (or set NOVU_SECRET_KEY in non-interactive shells).
     - Pass --channel <slack|email|telegram|skip> (or whatsapp/teams without --keyless).
 
   Authentication (pick one):
@@ -78,7 +91,8 @@ Non-interactive (agent / CI) contract:
   Not supported headlessly in keyless mode:
     - whatsapp and teams → use the Novu dashboard instead; do not pass --channel whatsapp or --channel teams with --keyless
 
-  One run = one new agent + one channel. Re-running creates another agent.
+  One run = one new managed agent + one channel. Re-running creates another managed agent.
+  With --runtime custom-code, the CLI reuses an existing self-hosted agent instead of creating one.
 
 Machine-readable stdout (plain text, no ANSI — watch these in --ci mode):
 

@@ -24,15 +24,15 @@ export const VercelIntegrationForm = ({
   organizations,
   projects,
   configurationId,
-  next,
   currentOrganizationId,
+  onProjectLinked,
 }: {
   vercelIntegrationDetails?: GetVercelConfigurationDetails[];
   organizations: Option[];
   projects: Option[];
   configurationId: string | null;
-  next: string | null;
   currentOrganizationId: string;
+  onProjectLinked?: (projectIds: string[]) => void;
 }) => {
   const [projectRowCount, setProjectRowCount] = useState(1);
   const form = useForm<ProjectLinkFormValues>({
@@ -51,7 +51,7 @@ export const VercelIntegrationForm = ({
   });
 
   const { mutate: updateVercelIntegration, isPending: isUpdateVercelIntegrationPending } = useUpdateVercelIntegration({
-    next,
+    configurationId,
   });
 
   const onSubmit = (data: ProjectLinkFormValues) => {
@@ -63,10 +63,18 @@ export const VercelIntegrationForm = ({
     }, {});
 
     if (configurationId) {
-      updateVercelIntegration({
-        data: payload,
-        configurationId,
-      });
+      updateVercelIntegration(
+        {
+          data: payload,
+          configurationId,
+        },
+        {
+          onSuccess: () => {
+            const linkedProjectIds = data.projectLinkState.flatMap((row) => row.projectIds);
+            onProjectLinked?.(linkedProjectIds);
+          },
+        }
+      );
     }
   };
 
@@ -99,6 +107,12 @@ export const VercelIntegrationForm = ({
         id="link-vercel-projects"
       >
         <div className="flex flex-col gap-4">
+          <p className="text-foreground-500 rounded-lg border border-neutral-100 bg-neutral-50 px-3 py-2 text-xs">
+            Create Links adds these encrypted variables to your Vercel project:{' '}
+            <code className="text-foreground-950">NOVU_SECRET_KEY</code>,{' '}
+            <code className="text-foreground-950">NEXT_PUBLIC_NOVU_APPLICATION_IDENTIFIER</code>. Redeploy production
+            after linking for the agent bridge to register.
+          </p>
           {fields.map((row, index) => {
             const rowOrg = organizations.find((el) => row.organizationId === el.value);
 

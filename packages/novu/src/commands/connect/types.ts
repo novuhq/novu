@@ -4,9 +4,11 @@ export type ChannelChoice = 'slack' | 'email' | 'whatsapp' | 'telegram' | 'teams
 
 export const CHANNEL_CHOICES: readonly ChannelChoice[] = ['slack', 'email', 'whatsapp', 'telegram', 'teams', 'skip'];
 
-export type AgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
+export type ManagedAgentRuntimeChoice = 'demo' | 'claude' | 'claude-aws';
 
-export const AGENT_RUNTIME_CHOICES: readonly AgentRuntimeChoice[] = ['demo', 'claude', 'claude-aws'];
+export type AgentRuntimeChoice = ManagedAgentRuntimeChoice | 'custom-code';
+
+export const AGENT_RUNTIME_CHOICES: readonly AgentRuntimeChoice[] = ['demo', 'claude', 'claude-aws', 'custom-code'];
 
 export interface ConnectCommandOptions {
   secretKey?: string;
@@ -20,8 +22,11 @@ export interface ConnectCommandOptions {
   /**
    * Agent runtime for new agents. `demo` uses Novu's demo Claude integration (default).
    * `claude` and `claude-aws` require your own credentials unless an integration already exists.
+   * `custom-code` reuses an existing self-hosted agent and skips managed agent creation.
    */
   runtime?: AgentRuntimeChoice;
+  /** Existing self-hosted agent to connect channels to (required with `--runtime custom-code` in --ci mode). */
+  agentIdentifier?: string;
   /** Use an existing agent-runtime integration instead of creating one. */
   agentIntegrationId?: string;
   /** Anthropic API key for `--runtime claude` non-interactive runs. */

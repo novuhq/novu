@@ -13,6 +13,7 @@ export type GetVercelProjects = {
   projects: {
     id: string;
     name: string;
+    dashboardUrl: string;
   }[];
   pagination: {
     next: number;

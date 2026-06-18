@@ -2,13 +2,13 @@ import { HttpService } from '@nestjs/axios';
 import { BadRequestException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AnalyticsService, PinoLogger } from '@novu/application-generic';
-import { CommunityUserRepository, EnvironmentRepository, MemberRepository, OrganizationRepository } from '@novu/dal';
+import { EnvironmentRepository, OrganizationRepository } from '@novu/dal';
 import { UserSession } from '@novu/testing';
 import { expect } from 'chai';
 import { of } from 'rxjs';
 import { assert, restore, stub } from 'sinon';
-import { Sync } from '../../../bridge/usecases/sync';
-import { SyncAgentsFromBridge } from '../sync-agents-from-bridge/sync-agents-from-bridge.usecase';
+import { VercelBridgeSyncService } from '../../services/vercel-bridge-sync.service';
+import { SyncVercelBridge } from '../sync-vercel-bridge/sync-vercel-bridge.usecase';
 import { UpdateVercelIntegration } from './update-vercel-integration.usecase';
 
 describe('UpdateVercelIntegration', () => {
@@ -18,10 +18,8 @@ describe('UpdateVercelIntegration', () => {
   let environmentRepositoryMock;
   let organizationRepositoryMock;
   let analyticsServiceMock;
-  let syncMock;
-  let syncAgentsFromBridgeMock;
-  let memberRepositoryMock;
-  let communityUserRepositoryMock;
+  let syncVercelBridgeMock;
+  let vercelBridgeSyncServiceMock;
   let loggerMock;
 
   beforeEach(async () => {
@@ -88,12 +86,13 @@ describe('UpdateVercelIntegration', () => {
       track: stub().resolves(),
     };
 
-    syncMock = {
-      execute: stub().resolves(),
+    syncVercelBridgeMock = {
+      execute: stub().resolves(undefined),
     };
 
-    syncAgentsFromBridgeMock = {
-      execute: stub().resolves(undefined),
+    vercelBridgeSyncServiceMock = {
+      resolveSyncUserId: stub().resolves('internal-user-id'),
+      resolveBridgeUrl: stub().resolves('https://prod-alias.vercel.app/api/novu'),
     };
 
     environmentRepositoryMock = {
@@ -115,14 +114,6 @@ describe('UpdateVercelIntegration', () => {
       ]),
     };
 
-    memberRepositoryMock = {
-      getOrganizationOwnerAccount: stub().resolves({ _userId: 'admin-id' }),
-    };
-
-    communityUserRepositoryMock = {
-      findOne: stub().resolves({ _id: 'internal-user-id' }),
-    };
-
     loggerMock = {
       log: stub(),
       error: stub(),
@@ -140,10 +131,8 @@ describe('UpdateVercelIntegration', () => {
         { provide: EnvironmentRepository, useValue: environmentRepositoryMock },
         { provide: OrganizationRepository, useValue: organizationRepositoryMock },
         { provide: AnalyticsService, useValue: analyticsServiceMock },
-        { provide: Sync, useValue: syncMock },
-        { provide: SyncAgentsFromBridge, useValue: syncAgentsFromBridgeMock },
-        { provide: MemberRepository, useValue: memberRepositoryMock },
-        { provide: CommunityUserRepository, useValue: communityUserRepositoryMock },
+        { provide: SyncVercelBridge, useValue: syncVercelBridgeMock },
+        { provide: VercelBridgeSyncService, useValue: vercelBridgeSyncServiceMock },
         { provide: PinoLogger, useValue: loggerMock },
       ],
     }).compile();
@@ -259,24 +248,9 @@ describe('UpdateVercelIntegration', () => {
       }
     );
 
-    // Verify bridge URL update
-    assert.calledWith(httpServiceMock.get, 'https://api.vercel.com/v9/projects/project-1?teamId=test-team-id', {
-      headers: {
-        Authorization: 'Bearer test-token',
-        'Content-Type': 'application/json',
-      },
-    });
-
-    // Verify sync execution
-    assert.calledWith(syncMock.execute, {
-      organizationId: 'org-id',
-      userId: 'internal-user-id',
-      environmentId: 'env-id',
-      bridgeUrl: 'https://prod-alias.vercel.app/api/novu',
-      source: 'vercel',
-    });
-
-    assert.called(syncAgentsFromBridgeMock.execute);
+    // Verify bridge sync orchestration
+    assert.called(vercelBridgeSyncServiceMock.resolveBridgeUrl);
+    assert.called(syncVercelBridgeMock.execute);
 
     // Verify analytics
     assert.calledWith(

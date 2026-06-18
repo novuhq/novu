@@ -3,6 +3,7 @@ import { GetVercelIntegration } from './get-vercel-integration/get-vercel-integr
 import { GetVercelIntegrationProjects } from './get-vercel-projects/get-vercel-integration-projects.usecase';
 import { ProcessVercelWebhook } from './process-vercel-webhook/process-vercel-webhook.usecase';
 import { SyncAgentsFromBridge } from './sync-agents-from-bridge/sync-agents-from-bridge.usecase';
+import { SyncVercelBridge } from './sync-vercel-bridge/sync-vercel-bridge.usecase';
 import { UpdateVercelIntegration } from './update-vercel-integration/update-vercel-integration.usecase';
 
 export const USE_CASES = [
@@ -12,4 +13,5 @@ export const USE_CASES = [
   UpdateVercelIntegration,
   ProcessVercelWebhook,
   SyncAgentsFromBridge,
+  SyncVercelBridge,
 ];

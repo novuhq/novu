@@ -3,6 +3,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { OrganizationRepository } from '@novu/dal';
 import { lastValueFrom } from 'rxjs';
 
+import { buildVercelProjectDashboardUrl } from '../../utils/vercel-dashboard-url.util';
 import { GetVercelIntegrationProjectsCommand } from './get-vercel-integration-projects.command';
 
 @Injectable()
@@ -26,7 +27,13 @@ export class GetVercelIntegrationProjects {
         });
       }
 
-      const projects = await this.getVercelProjects(configuration.accessToken, configuration.teamId, command.nextPage);
+      const scopeSlug = await this.getScopeSlug(configuration.accessToken, configuration.teamId);
+      const projects = await this.getVercelProjects(
+        configuration.accessToken,
+        configuration.teamId,
+        scopeSlug,
+        command.nextPage
+      );
 
       return projects;
     } catch (error) {
@@ -59,7 +66,31 @@ export class GetVercelIntegrationProjects {
     return configuration;
   }
 
-  private async getVercelProjects(accessToken: string, teamId: string | null, until?: string) {
+  private async getScopeSlug(accessToken: string, teamId: string | null): Promise<string> {
+    if (teamId) {
+      const response = await lastValueFrom(
+        this.httpService.get(`${process.env.VERCEL_BASE_URL}/v2/teams/${teamId}`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        })
+      );
+
+      return response.data.slug as string;
+    }
+
+    const response = await lastValueFrom(
+      this.httpService.get(`${process.env.VERCEL_BASE_URL}/v2/user`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      })
+    );
+
+    return response.data.user.username as string;
+  }
+
+  private async getVercelProjects(accessToken: string, teamId: string | null, scopeSlug: string, until?: string) {
     const queryParams = new URLSearchParams();
     queryParams.set('limit', '100');
 
@@ -79,14 +110,18 @@ export class GetVercelIntegrationProjects {
       })
     );
 
-    return { projects: this.mapProjects(response.data.projects), pagination: response.data.pagination };
+    return {
+      projects: this.mapProjects(response.data.projects, scopeSlug),
+      pagination: response.data.pagination,
+    };
   }
 
-  private mapProjects(projects) {
+  private mapProjects(projects: Array<{ id: string; name: string }>, scopeSlug: string) {
     return projects.map((project) => {
       return {
         name: project.name,
         id: project.id,
+        dashboardUrl: buildVercelProjectDashboardUrl(scopeSlug, project.name),
       };
     });
   }
