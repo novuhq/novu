@@ -1,9 +1,10 @@
 import { defineChannel, POST, type Channel, type ChannelEvents } from 'eve/channels';
-import type { AgentBridgeRequest, ReplyContent } from '@novu/framework';
+import type { AgentAction, AgentBridgeRequest, ReplyContent } from '@novu/framework';
 import { resolveNovuCredentials, type NovuCredentialsSource } from './credentials.js';
 import { NovuApiClient, type TriggerRecipient } from './reply-client.js';
 import { getSignatureHeader, verifyNovuSignature } from './signature.js';
 import { encodeContinuationToken } from './token.js';
+import { decodeHitlActionId, renderInputRequests, toInputResponse, type RenderableInputRequest } from './hitl.js';
 
 /**
  * Durable per-session state seeded from the inbound bridge request. Carries the
@@ -40,6 +41,17 @@ export interface NovuChannelContext {
   readonly novu: NovuChannelApi;
 }
 
+/**
+ * Handler for tier-2 (custom, non-HITL) card actions — snooze, unsubscribe,
+ * quick-reply, etc. Receives the clicked action plus the channel surface and
+ * the conversation's `continuationToken`. HITL actions never reach here; they
+ * are auto-mapped to `inputResponses` and resume the session.
+ */
+export type NovuOnAction = (
+  action: AgentAction,
+  channel: NovuChannelContext & { readonly continuationToken: string },
+) => void | Promise<void>;
+
 export interface NovuChannelOptions {
   /** Credentials source. Defaults to env (`NOVU_SECRET_KEY` / `NOVU_AGENT_IDENTIFIER` / `NOVU_API_BASE_URL`). */
   readonly credentials?: NovuCredentialsSource;
@@ -49,6 +61,8 @@ export interface NovuChannelOptions {
   readonly resolveOn?: 'session.completed' | 'never';
   /** Override or extend the default event handlers. */
   readonly events?: ChannelEvents<NovuChannelContext>;
+  /** Handle custom (non-HITL) card action clicks. */
+  readonly onAction?: NovuOnAction;
   /** Injectable fetch (tests). */
   readonly fetch?: typeof fetch;
 }
@@ -112,6 +126,11 @@ export function novuChannel(
       if (data.finishReason === 'tool-calls') return;
       if (data.message) await channel.thread.post(data.message);
     },
+    async 'input.requested'(data, channel) {
+      // Cast decouples us from Eve's exact InputRequest shape; renderInputRequests
+      // reads only the structural subset it needs.
+      await channel.thread.post(renderInputRequests(data.requests as unknown as RenderableInputRequest[]));
+    },
     async 'session.completed'(_data, channel) {
       if (resolveOn === 'session.completed') await channel.novu.resolve();
     },
@@ -136,10 +155,6 @@ export function novuChannel(
           return new Response('invalid body', { status: 400 });
         }
 
-        // First cut handles inbound messages; actions/reactions are a follow-up.
-        const text = bridge.message?.text ?? '';
-        if (!text) return Response.json({ ok: true, skipped: 'no-message' });
-
         const state: NovuSessionState = {
           conversationId: bridge.conversationId,
           integrationIdentifier: bridge.integrationIdentifier,
@@ -154,13 +169,29 @@ export function novuChannel(
               attributes: {} as Record<string, string | readonly string[]>,
             }
           : null;
-
         const continuationToken = encodeContinuationToken({
           conversationId: bridge.conversationId,
           integrationIdentifier: bridge.integrationIdentifier,
           platform: bridge.platform,
         });
 
+        // Tier-1/tier-2 action round-trip.
+        if (bridge.action) {
+          const decoded = decodeHitlActionId(bridge.action.id);
+          if (decoded) {
+            // HITL: resume the parked session with the user's response.
+            const response = toInputResponse(decoded, bridge.action.value);
+            waitUntil(send({ inputResponses: [response] }, { auth, continuationToken, state }));
+            return Response.json({ ok: true });
+          }
+          if (options.onAction) {
+            await options.onAction(bridge.action, { ...buildContext(state, client), continuationToken });
+          }
+          return Response.json({ ok: true });
+        }
+
+        const text = bridge.message?.text ?? '';
+        if (!text) return Response.json({ ok: true, skipped: 'no-message' });
         waitUntil(send(text, { auth, continuationToken, state }));
         return Response.json({ ok: true });
       }),

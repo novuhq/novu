@@ -18,8 +18,17 @@ export {
   type NovuChannelOptions,
   type NovuChannelContext,
   type NovuChannelApi,
+  type NovuOnAction,
   type NovuSessionState,
 } from './channel.js';
+
+// Human-in-the-loop card rendering + action-id codec (advanced / testing).
+export {
+  renderInputRequests,
+  encodeHitlActionId,
+  decodeHitlActionId,
+  type RenderableInputRequest,
+} from './hitl.js';
 
 // Model-driven workflow trigger tool.
 export { novuTool, type NovuToolOptions } from './tool.js';
