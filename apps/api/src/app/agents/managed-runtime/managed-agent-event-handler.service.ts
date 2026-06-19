@@ -181,10 +181,9 @@ export class ManagedAgentEventHandler {
             return;
           }
 
-          // Rollout compat shim: a pre-messages[] observer still sends `response.content`
-          // and no `message` parts, so reply from it. The current observer never emits
-          // `content`, so this never fires (and never double-sends) once both are deployed.
-          // Remove after the observer is upgraded everywhere.
+          // TODO: remove after the observer is fully rolled out.
+          // Old observers still send `response.content`; new ones reply via `onMessage`
+          // and never set `content`, so this only runs against an old observer.
           const legacyContent = (event.response as { content?: string }).content?.trim();
           if (legacyContent) {
             await this.handleAgentReply.execute(
