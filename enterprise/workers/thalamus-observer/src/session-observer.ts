@@ -241,6 +241,8 @@ export class SessionObserver extends Agent<Env, State> {
     sequence: number,
     acc: import('./parsers').EdgeAccumulator
   ): number {
+    // Override acc.messages with the DB-reconstructed list: it includes messages
+    // from before a fiber recovery, where the in-memory accumulator is recreated empty.
     const messages = this.reconstructMessages(sessionId);
     const finish: StreamPart = {
       type: 'finish',

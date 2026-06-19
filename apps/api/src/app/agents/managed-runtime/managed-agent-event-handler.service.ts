@@ -154,6 +154,9 @@ export class ManagedAgentEventHandler {
             operation: 'on-message',
             sessionId,
           });
+          // Re-throw so the webhook returns 5xx and the observer retries delivery,
+          // otherwise a failed reply is acked as complete and silently lost.
+          throw err;
         }
       },
 
