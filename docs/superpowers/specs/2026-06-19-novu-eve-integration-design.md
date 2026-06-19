@@ -291,20 +291,20 @@ the docs-inferred names): `turn.started`, `actions.requested`, `action.result`,
 
 ## Implementation status (2026-06-19)
 
-**Done + verified** (`pnpm --filter @novu/eve build` green; 24 tests pass):
+**Done + verified** (`pnpm --filter @novu/eve build` green; 32 tests pass; 3 commits on `feat/novu-eve-integration`):
 - `packages/eve` scaffolded (`@novu/eve`, tsconfig, project.json, vitest.config) mirroring `chat-adapter`; `eve@0.11.6` added as dev + peer dependency; workspace install green.
-- `token.ts` (continuation-token ⇄ conversation codec) + tests.
-- `credentials.ts` (env-first resolution + `connectNovuCredentials`) + tests.
-- `signature.ts` (Novu `novu-signature` HMAC verify) + tests.
+- `token.ts` — continuation-token ⇄ conversation codec + tests.
+- `credentials.ts` — env-first resolution + `connectNovuCredentials` + tests.
+- `signature.ts` — Novu `novu-signature` HMAC verify + tests.
 - `reply-client.ts` — `NovuApiClient` (`reply()` → `/v1/agents/:id/reply`, `trigger()` → `/v1/events/trigger`).
-- `channel.ts` — **`novuChannel()`**: `defineChannel` with one POST webhook (verify → parse `AgentBridgeRequest` → `send()`), the `context()` factory exposing `channel.thread.post` + `channel.novu.{trigger,setMetadata,resolve,reply,subscriberId}`, and zero-config default delivery (`message.completed` → reply; `session.completed` → resolve when `resolveOn` set). Typechecks against real Eve + `@novu/framework` types.
+- `channel.ts` — **`novuChannel()`**: `defineChannel` with one POST webhook (verify → parse `AgentBridgeRequest` → `send()`); `context()` factory exposing `channel.thread.post` + `channel.novu.{trigger,setMetadata,resolve,reply,subscriberId}`; zero-config default delivery (`message.completed` → reply; `session.completed` → resolve).
+- `tool.ts` — **`novuTool()`**: model-driven workflow trigger; pure execute + ack; recipient defaults to the conversation subscriber + tests.
+- `hitl.ts` + channel wiring — **cross-platform human-in-the-loop**: render `input.requested` → Novu cards (shared Chat SDK builders); two-tier inbound round-trip (HITL click → `inputResponses` resume; custom action id → `onAction`) + tests.
 - `index.ts` exports the above + re-exports the `@novu/framework` surface.
 
 **Remaining follow-ups:**
-- `tool.ts` (`novuTool` — `defineTool` wrapper; deferred over the `StandardSchema` generic).
-- `hitl.ts` — map `input.requested`/`actions.requested` → cards; inbound `action`/`reaction` handling + two-tier round-trip (`inputResponses` vs `onAction`).
-- `views.ts` (`novuView` co-located renderer discovery), streaming (`stream:true` via `ReplyHandle`), inbound attachments (`UserContent`).
-- `channel.integration.spec.ts` (mock reply/trigger; multi-platform single-route; HITL round-trip) + `examples/` agent + README.
+- `views.ts` (`novuView` co-located renderer discovery), streaming (`stream:true` via `ReplyHandle`), inbound attachments (`UserContent`), freeform HITL text capture.
+- `channel.integration.spec.ts` (mock reply/trigger; multi-platform single-route; HITL round-trip end-to-end) + `examples/` agent + README.
 
 ## Package shape
 
