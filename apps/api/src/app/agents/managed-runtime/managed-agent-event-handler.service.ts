@@ -181,6 +181,17 @@ export class ManagedAgentEventHandler {
             return;
           }
 
+          // Rollout compat shim: a pre-messages[] observer still sends `response.content`
+          // and no `message` parts, so reply from it. The current observer never emits
+          // `content`, so this never fires (and never double-sends) once both are deployed.
+          // Remove after the observer is upgraded everywhere.
+          const legacyContent = (event.response as { content?: string }).content?.trim();
+          if (legacyContent) {
+            await this.handleAgentReply.execute(
+              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: legacyContent } })
+            );
+          }
+
           await this.inboundAck.onManagedTurnComplete(metadata);
 
           await this.demoQuota.recordUsage(
