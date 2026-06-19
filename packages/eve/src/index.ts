@@ -21,6 +21,9 @@ export {
   type NovuSessionState,
 } from './channel.js';
 
+// Model-driven workflow trigger tool.
+export { novuTool, type NovuToolOptions } from './tool.js';
+
 // Connecting Novu: env-first credentials + the Vercel-native helper.
 export {
   connectNovuCredentials,
