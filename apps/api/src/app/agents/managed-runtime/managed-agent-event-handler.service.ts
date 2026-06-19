@@ -137,6 +137,26 @@ export class ManagedAgentEventHandler {
         }
       },
 
+      onMessage: async (event: { text: string }) => {
+        try {
+          if (metadata.suppressReply === 'true') {
+            return;
+          }
+          const markdown = event.text?.trim();
+          if (!markdown) {
+            return;
+          }
+          await this.handleAgentReply.execute(HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown } }));
+        } catch (err) {
+          this.logger.error(err, `onMessage failed: session=${sessionId}`);
+          captureAgentException(err, {
+            component: 'managed-agent-event-handler',
+            operation: 'on-message',
+            sessionId,
+          });
+        }
+      },
+
       onFinish: async (event: { response: ThalamusResponse }) => {
         try {
           if (event.response.finishReason === 'requires-action') {
@@ -159,13 +179,6 @@ export class ManagedAgentEventHandler {
             await this.inboundAck.onManagedTurnComplete(metadata);
 
             return;
-          }
-
-          const replyMarkdown = event.response.content?.trim();
-          if (replyMarkdown) {
-            await this.handleAgentReply.execute(
-              HandleAgentReplyCommand.create({ ...baseFields, reply: { markdown: replyMarkdown } })
-            );
           }
 
           await this.inboundAck.onManagedTurnComplete(metadata);
