@@ -61,6 +61,12 @@ describe('AgentInboundHandler', () => {
       setFirstPlatformMessageId: sinon.stub().resolves(undefined),
       findByPlatformThread: sinon.stub().resolves(conversation),
       getHistory: sinon.stub().resolves(overrides.history ?? []),
+      findSourceActivity: sinon
+        .stub()
+        .callsFake(
+          async (_environmentId: string, _conversationId: string, platformMessageId: string) =>
+            (overrides.history ?? []).find((activity: any) => activity?.platformMessageId === platformMessageId) ?? null
+        ),
       countAgentMessages: sinon.stub().resolves(0),
     };
     const bridgeExecutor = {
@@ -144,6 +150,10 @@ describe('AgentInboundHandler', () => {
     };
     const planLimitGate = {
       maybeBlock: sinon.stub().resolves(false),
+      maybeBlockConversation: sinon.stub().resolves(false),
+    };
+    const conversationActivation = {
+      registerEngagement: sinon.stub().resolves(false),
     };
     const handler = new AgentInboundHandler(
       logger as any,
@@ -162,7 +172,8 @@ describe('AgentInboundHandler', () => {
       connectClaimTokenService as any,
       keylessAbuseGuard as any,
       planLimitGate as any,
-      inboundAck as any
+      inboundAck as any,
+      conversationActivation as any
     );
 
     return {

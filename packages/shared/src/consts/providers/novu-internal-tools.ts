@@ -1,3 +1,6 @@
+/** Increment when Novu-owned managed-agent config changes (e.g. novu_tools). Agents below this version are re-synced to the provider on the next message. */
+export const AGENT_MANAGED_DEFINITION_VERSION = 1;
+
 /**
  * Provider-agnostic schema for the novu_tools custom tool.
  * Each runtime provider wraps this with its own type tag
@@ -25,6 +28,6 @@ export const NOVU_TOOLS_SCHEMA = {
   },
 } as const;
 
-export const NOVU_TOOLS_TOOL_NAME = NOVU_TOOLS_SCHEMA.name;
+const NOVU_TOOLS_TOOL_NAME = NOVU_TOOLS_SCHEMA.name;
 
 export const NOVU_INTERNAL_TOOLS: readonly string[] = [NOVU_TOOLS_TOOL_NAME];

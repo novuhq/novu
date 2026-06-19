@@ -1,23 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { PinoLogger } from '@novu/application-generic';
-import { AgentMcpServerRepository, McpConnectionRepository, SubscriberRepository } from '@novu/dal';
 import { OutboundGateway } from '../../conversation-runtime/egress/outbound.gateway';
 import { HandlePlanProgressCommand } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.command';
 import { HandlePlanProgress } from '../../conversation-runtime/reply/handle-plan-progress/handle-plan-progress.usecase';
 import { ManagedAgentService } from '../managed-agent.service';
 import { type ParsedToolApprovalAction } from './approval-card.builder';
 import { ConfirmToolApprovalCommand } from './confirm-tool-approval.command';
-import { mergeToolTrustPatch, resolveTrustForPendingTool } from './tool-trust.helper';
+import { ToolTrustService } from './tool-trust.service';
 
 @Injectable()
 export class ConfirmToolApproval {
   constructor(
-    private readonly subscriberRepository: SubscriberRepository,
-    private readonly agentMcpServerRepository: AgentMcpServerRepository,
-    private readonly mcpConnectionRepository: McpConnectionRepository,
     private readonly managedAgentService: ManagedAgentService,
     private readonly outboundGateway: OutboundGateway,
     private readonly handlePlanProgress: HandlePlanProgress,
+    private readonly toolTrustService: ToolTrustService,
     private readonly logger: PinoLogger
   ) {
     this.logger.setContext(this.constructor.name);
@@ -49,49 +46,32 @@ export class ConfirmToolApproval {
     command: ConfirmToolApprovalCommand,
     parsed: ParsedToolApprovalAction
   ): Promise<void> {
-    if (!parsed.approved || !parsed.persistScope || !command.subscriberId) {
+    if (!parsed.trust) {
       return;
     }
 
-    const toolName = parsed.toolName;
-    const mcpServerName = parsed.mcpServerName;
-
-    if (!toolName || !mcpServerName) {
-      return;
-    }
-
-    const subscriber = await this.subscriberRepository.findBySubscriberId(command.environmentId, command.subscriberId);
-
-    if (!subscriber) {
-      return;
-    }
-
-    const resolution = await resolveTrustForPendingTool({
-      findOAuthEnablementsForAgent: (params) => this.agentMcpServerRepository.findOAuthEnablementsForAgent(params),
-      findSubscriberConnection: (params) => this.mcpConnectionRepository.findSubscriberConnection(params),
-      params: {
+    try {
+      const persisted = await this.toolTrustService.persist({
         environmentId: command.environmentId,
         organizationId: command.organizationId,
-        agentId: command.agentId,
-        subscriberMongoId: subscriber._id,
-        mcpServerName,
-        toolName,
-      },
-    });
+        agentIdentifier: command.agentIdentifier,
+        subscriberExternalId: command.subscriberId,
+        target: parsed.trust,
+      });
 
-    if (!resolution) {
-      return;
+      if (!persisted) {
+        // No subscriber/agent to attach the preference to: the approval proceeds
+        // as a one-off, so the card will reappear next time. Logged to make that
+        // (otherwise silent) miss diagnosable.
+        this.logger.debug(
+          { agentIdentifier: command.agentIdentifier, subscriberId: command.subscriberId },
+          'Tool trust preference not persisted (no subscriber/agent); approval is one-off'
+        );
+      }
+    } catch (err) {
+      // A failed preference write must not block the approval itself.
+      this.logger.warn(err, 'Failed to persist tool trust preference; approval will proceed as a one-off');
     }
-
-    await this.mcpConnectionRepository.mergeToolTrust({
-      connectionId: resolution.connection._id,
-      environmentId: command.environmentId,
-      organizationId: command.organizationId,
-      patch: mergeToolTrustPatch({
-        scope: parsed.persistScope,
-        toolName,
-      }),
-    });
   }
 
   private deleteApprovalCard(command: ConfirmToolApprovalCommand): void {

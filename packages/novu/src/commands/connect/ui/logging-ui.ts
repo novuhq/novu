@@ -4,6 +4,8 @@ import ora, { type Ora } from 'ora';
 import type { GeneratedAgentSpec } from '../api/agents';
 import { SEND_FROM_ACCOUNT_LABEL } from '../copy/email-onboarding';
 import { channelDisplayName } from '../dashboard-urls';
+import { resolveChatSdkOutcomeMessage } from '../pipeline/chat-sdk/outcome-message';
+import { CHAT_SDK_REQUIREMENTS_FILE_ENV } from '../pipeline/chat-sdk/requirements';
 import type { AgentSummary } from '../types';
 import { resolveGeneratedAgentSpecLabels } from './agent-spec-labels';
 import {
@@ -96,19 +98,22 @@ export function createLoggingUI(): ConnectUI {
     loadingIntegrations() {
       start('Looking up agent runtime integrations…');
     },
-    pickAgentRuntime({ preselected }) {
+    pickAgentConnectMode({ preselected }) {
       stop();
-      const runtime = preselected ?? 'demo';
-      console.log(chalk.gray(`Non-interactive mode: using "${runtime}" agent runtime.`));
+      const mode = preselected ?? 'demo';
+      console.log(chalk.gray(`Non-interactive mode: using "${mode}" connect mode.`));
 
-      return Promise.resolve(runtime);
+      return Promise.resolve(mode);
     },
     pickAgentIntegration({ integrations }) {
       stop();
       if (integrations.length === 1) {
         console.log(chalk.gray(`Non-interactive mode: reusing integration "${integrations[0].name}".`));
 
-        return Promise.resolve({ kind: 'existing', integrationId: integrations[0]._id });
+        return Promise.resolve({
+          kind: 'existing',
+          integrationId: integrations[0]._id,
+        });
       }
 
       return Promise.reject(
@@ -176,13 +181,83 @@ export function createLoggingUI(): ConnectUI {
       stop();
       logGeneratedAgentPreview(spec);
 
-      return Promise.resolve<GeneratedAgentPreviewResult>({ action: 'confirm', spec });
+      return Promise.resolve<GeneratedAgentPreviewResult>({
+        action: 'confirm',
+        spec,
+      });
     },
     creatingAgent(name) {
       start(`Creating agent "${name}"…`);
     },
     agentCreated(agent: AgentSummary) {
       succeed(`Created agent "${agent.name}" (${agent.identifier})`);
+    },
+    promptForAgentName(defaultName) {
+      stop();
+      const name = defaultName.trim() || 'My Chat SDK Agent';
+      console.log(chalk.gray(`Non-interactive mode: using agent name "${name}".`));
+
+      return Promise.resolve(name);
+    },
+    confirmEnvSecretOverwrite() {
+      return Promise.resolve(false);
+    },
+    confirmScaffold({ projectDir, appName }) {
+      console.log(chalk.cyan(`→ Scaffolding Chat SDK app "${appName}" in ${projectDir}`));
+
+      return Promise.resolve(true);
+    },
+    scaffoldingChatSdk() {
+      start('Scaffolding Chat SDK project…');
+    },
+    chatSdkScaffolded({ projectDir, envPaths }) {
+      succeed(`Scaffolded Chat SDK project at ${projectDir}`);
+      for (const envPath of envPaths) {
+        console.log(chalk.gray(`  Wrote ${envPath}`));
+      }
+    },
+    confirmInstallChatSdkDeps({ projectDir, installCommand, packages }) {
+      console.log('');
+      console.log(chalk.bold('Install Chat SDK packages?'));
+      console.log(chalk.dim(`Adding: ${packages.join(', ')}`));
+      console.log(chalk.gray(`  Project: ${projectDir}`));
+      console.log(chalk.cyan(`  ${installCommand}`));
+
+      return Promise.resolve(true);
+    },
+    installingChatSdkDeps() {
+      start('Installing Chat SDK packages…');
+    },
+    showChatSdkReconcilePlan({ projectDir, requirements, envPaths, wiringInstructions, requirementsFile }) {
+      succeed('Chat SDK project reconciled');
+      console.log(chalk.gray(`  Project: ${projectDir}`));
+      for (const req of requirements) {
+        const marker =
+          req.status === 'ok' ? chalk.green('✓') : req.status === 'manual' ? chalk.yellow('☐') : chalk.cyan('…');
+        console.log(`  ${marker} ${req.id}: ${req.detail}`);
+      }
+      for (const envPath of envPaths) {
+        console.log(chalk.gray(`  Env: ${envPath}`));
+      }
+      if (requirementsFile) {
+        console.log(`${CHAT_SDK_REQUIREMENTS_FILE_ENV}=${requirementsFile}`);
+      }
+      if (wiringInstructions) {
+        console.log('');
+        console.log(chalk.bold('Code wiring (manual):'));
+        console.log(chalk.cyan(wiringInstructions));
+      }
+      console.log(chalk.gray('Non-interactive mode: continuing automatically.'));
+
+      return Promise.resolve();
+    },
+    offerChatSdkTunnel({ devCommand }) {
+      console.log('');
+      console.log(chalk.bold('Start the dev tunnel?'));
+      console.log(chalk.cyan(`  ${devCommand}`));
+      console.log(chalk.gray('Non-interactive mode: skipping tunnel launch.'));
+
+      return Promise.resolve('skip');
     },
     pickChannel() {
       stop();
@@ -332,6 +407,24 @@ export function createLoggingUI(): ConnectUI {
         console.log(`  ${chalk.gray('Sign up to move your agent and conversation into your own account.')}`);
       } else {
         console.log(`  ${chalk.bold('Dashboard:')} ${agentUrl}`);
+      }
+      if (result.connectMode === 'chat-sdk' && result.chatSdkOutcome) {
+        if (result.chatSdkOutcome.scaffolded) {
+          console.log(`  ${chalk.bold('Project:')} ${result.chatSdkOutcome.projectDir}`);
+          if (result.chatSdkOutcome.skippedInstall) {
+            console.log(`  ${chalk.yellow('⚠')} Inside a monorepo — npm install was skipped.`);
+            console.log(
+              `  ${chalk.cyan('→')} cd ${result.chatSdkOutcome.projectDir} && npm install && npm run dev:novu`
+            );
+          }
+        }
+
+        const followUp = resolveChatSdkOutcomeMessage(result.connectMode, result.chatSdkOutcome);
+        if (followUp) {
+          console.log(`  ${chalk.cyan('→')} ${followUp}`);
+        } else if (!result.chatSdkOutcome.scaffolded && !result.chatSdkOutcome.coreReady) {
+          console.log(`  ${chalk.gray('Finish the remaining setup steps above.')}`);
+        }
       }
     },
     failure(message) {

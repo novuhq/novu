@@ -151,7 +151,7 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
     process.exit(1);
   }
 
-  const supportedTemplates = ['notifications', 'agent'] as const;
+  const supportedTemplates = ['notifications', 'agent', 'chat-sdk'] as const;
   let templateChoice = program.template;
 
   if (templateChoice && !supportedTemplates.includes(templateChoice as (typeof supportedTemplates)[number])) {
@@ -168,6 +168,11 @@ export async function init(program: IInitCommandOptions, anonymousId?: string): 
       choices: [
         { title: 'Notifications', value: 'notifications', description: 'Workflows, email templates, and in-app inbox' },
         { title: 'Agent', value: 'agent', description: 'Conversational AI agent with chat platform support' },
+        {
+          title: 'Chat SDK',
+          value: 'chat-sdk',
+          description: 'Multi-channel chat bot with Chat SDK and @novu/chat-sdk-adapter',
+        },
       ],
       initial: 0,
     });

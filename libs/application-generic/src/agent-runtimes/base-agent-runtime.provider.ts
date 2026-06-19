@@ -47,6 +47,8 @@ export abstract class BaseAgentRuntimeProvider implements IAgentRuntimeProvider 
 
   abstract updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto>;
 
+  abstract refreshPlatformDefinition(externalAgentId: string): Promise<void>;
+
   abstract provisionIntegration(input: ProvisionIntegrationInput): Promise<ProvisionIntegrationResult>;
 
   abstract deprovisionIntegration(credentialsUpdate: Record<string, unknown>): Promise<void>;

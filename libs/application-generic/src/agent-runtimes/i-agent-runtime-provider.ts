@@ -18,11 +18,6 @@ export type CreateAgentInput = {
   mcpServers?: Array<{ name: string; url: string }>;
   /** Skills to attach to the agent at creation time. Maximum 20. */
   skills?: AgentSkillDto[];
-  /**
-   * When true, builtin and MCP toolsets are provisioned with `always_allow`
-   * permission policies instead of the default `always_ask`.
-   */
-  useAlwaysAllowToolPermissions?: boolean;
 };
 
 export type CreateAgentResult = {
@@ -45,11 +40,6 @@ export type UpdateAgentRuntimeConfigInput = {
   mcpServers?: AgentMcpServerDto[];
   tools?: AgentToolDto[];
   skills?: AgentSkillDto[];
-  /**
-   * When true, rebuilt toolset payloads use `always_allow` permission policies
-   * instead of the default `always_ask`.
-   */
-  useAlwaysAllowToolPermissions?: boolean;
 };
 
 export type ProvisionIntegrationInput = {
@@ -242,6 +232,14 @@ export interface IAgentRuntimeProvider {
    * Returns the full updated config.
    */
   updateConfig(externalAgentId: string, patch: UpdateAgentRuntimeConfigInput): Promise<AgentRuntimeConfigDto>;
+
+  /**
+   * Re-assert Novu-owned platform config (e.g. the `novu_tools` custom tool) on
+   * an existing agent without changing user-selected tools, MCP servers, model,
+   * system prompt, or skills. Idempotent — used to backfill agents created
+   * before a platform-definition change so they pick up the latest overlay.
+   */
+  refreshPlatformDefinition(externalAgentId: string): Promise<void>;
 
   /**
    * Provision any provider-side resources needed for an AGENT_RUNTIME integration
