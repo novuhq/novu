@@ -1,0 +1,28 @@
+{
+  "name": "@novu/eve",
+  "sourceRoot": "packages/eve/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/eve run build",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "test": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "pnpm --filter @novu/eve run test",
+        "cwd": "{workspaceRoot}"
+      }
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx biome lint packages/eve"
+      }
+    }
+  },
+  "tags": ["type:package"]
+}
