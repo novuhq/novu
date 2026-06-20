@@ -69,8 +69,8 @@ overrides:
   rollup@>=3.0.0 <3.30.0: ^3.30.0
   rollup@<2.80.0: ^2.80.0
   glob@>=10.2.0 <10.5.0: ^10.5.0
-  undici@>=7.0.0 <7.24.0: ^7.24.0
-  undici@>=6.0.0 <6.24.0: ^6.24.0
+  undici@>=7.0.0 <7.28.0: ^7.28.0
+  undici@>=6.0.0 <6.27.0: ^6.27.0
   jose@>=3.0.0 <4.15.5: ^4.15.5
   qs@<6.15.2: ^6.15.2
   js-yaml@<3.14.2: ^3.14.2
@@ -91,7 +91,7 @@ overrides:
   '@octokit/plugin-paginate-rest@<9.2.2': ^9.2.2
   '@octokit/request@<8.4.1': ^8.4.1
   kysely@>=0.26.0 <0.28.17: 0.28.17
-  undici@>=5.0.0 <5.30.0: ^6.24.0
+  undici@>=5.0.0 <5.30.0: ^6.27.0
   markdown-it@>=13.0.0 <14.1.1: ^14.1.1
   mdast-util-to-hast@>=13.0.0 <13.2.1: ^13.2.1
   webpack@>=5.49.0 <5.104.1: ^5.104.1
@@ -22558,7 +22558,7 @@ packages:
   native-fetch@4.0.2:
     resolution: {integrity: sha512-4QcVlKFtv2EYVS5MBgsGX5+NWKtbDbIECdUXDBGDMAZXq3Jkv9zf+y8iS7Ub8fEdga3GpYeazp9gauNqXHJOCg==}
     peerDependencies:
-      undici: ^7.24.0
+      undici: ^7.28.0
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
@@ -26821,12 +26821,12 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
-  undici@6.24.1:
-    resolution: {integrity: sha512-sC+b0tB1whOCzbtlx20fx3WgCXwkW627p4EA9uM+/tNNPkSS+eSEld6pAs9nDv7WbY1UUljBMYPtu9BCOrCWKA==}
+  undici@6.27.0:
+    resolution: {integrity: sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==}
     engines: {node: '>=18.17'}
 
-  undici@7.24.3:
-    resolution: {integrity: sha512-eJdUmK/Wrx2d+mnWWmwwLRyA7OQCkLap60sk3dOK4ViZR7DKwwptwuIvFBg2HaiP9ESaEdhtpSymQPvytpmkCA==}
+  undici@7.28.0:
+    resolution: {integrity: sha512-cRZYrTDwWznlnRiPjggAGxZXanty6M8RV1ff8Wm4LWXBp7/IG8v5DnOm74DtUBp9OONpK75YlPnIjQqX0dBDtA==}
     engines: {node: '>=20.18.1'}
 
   unenv@2.0.0-rc.24:
@@ -35350,7 +35350,7 @@ snapshots:
       request-ip: 3.3.0
       ringbufferjs: 2.0.0
       semver: 7.7.4
-      undici: 7.24.3
+      undici: 7.28.0
       unescape: 1.0.1
       unescape-js: 1.1.4
       uuid: 11.1.1
@@ -35775,7 +35775,7 @@ snapshots:
       '@octokit/plugin-paginate-rest': 9.2.2(@octokit/core@5.2.0)
       '@octokit/plugin-rest-endpoint-methods': 10.4.1(@octokit/core@5.2.0)
       '@octokit/types': 12.6.0
-      undici: 6.24.1
+      undici: 6.27.0
 
   '@octokit/auth-action@4.1.0':
     dependencies:
@@ -37085,9 +37085,9 @@ snapshots:
 
   '@plunk/node@2.0.0':
     dependencies:
-      native-fetch: 4.0.2(undici@6.24.1)
+      native-fetch: 4.0.2(undici@6.27.0)
       tslib: 2.8.1
-      undici: 6.24.1
+      undici: 6.27.0
 
   '@pnpm/cli-meta@5.0.0':
     dependencies:
@@ -46074,7 +46074,7 @@ snapshots:
       parse5: 7.1.2
       parse5-htmlparser2-tree-adapter: 7.0.0
       parse5-parser-stream: 7.1.2
-      undici: 6.24.1
+      undici: 6.27.0
       whatwg-mimetype: 4.0.0
 
   cheerio@1.0.0-rc.12:
@@ -53063,7 +53063,7 @@ snapshots:
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       sharp: 0.34.5
-      undici: 7.24.3
+      undici: 7.28.0
       workerd: 1.20260302.0
       ws: 8.21.0
       youch: 4.1.0-beta.10
@@ -53416,9 +53416,9 @@ snapshots:
 
   napi-postinstall@0.3.3: {}
 
-  native-fetch@4.0.2(undici@6.24.1):
+  native-fetch@4.0.2(undici@6.27.0):
     dependencies:
-      undici: 6.24.1
+      undici: 6.27.0
 
   natural-compare@1.4.0: {}
 
@@ -58662,9 +58662,9 @@ snapshots:
 
   undici-types@6.21.0: {}
 
-  undici@6.24.1: {}
+  undici@6.27.0: {}
 
-  undici@7.24.3: {}
+  undici@7.28.0: {}
 
   unenv@2.0.0-rc.24:
     dependencies:
