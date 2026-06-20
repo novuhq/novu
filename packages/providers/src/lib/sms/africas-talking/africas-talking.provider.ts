@@ -6,7 +6,7 @@ import { WithPassthrough } from '../../../utils/types';
 
 export class AfricasTalkingSmsProvider extends BaseProvider implements ISmsProvider {
   protected casing = CasingEnum.CAMEL_CASE;
-  id: SmsProviderIdEnum.AfricasTalking;
+  id = SmsProviderIdEnum.AfricasTalking;
   channelType = ChannelTypeEnum.SMS as ChannelTypeEnum.SMS;
   private africasTalkingClient: AfricasTalking;
 
