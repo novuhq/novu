@@ -1,13 +1,11 @@
 name: Notify Cursor Automation on Agent Onboarding Change
 
 on:
-  # Fires after a PR is merged to next (merge creates a push to the branch).
   push:
     branches:
       - next
     paths:
-      - packages/shared/docs/agent-onboarding.md
-      - .github/workflows/agent-onboarding-webhook.yml
+      - "packages/shared/docs/agent-onboarding.md"
 
 permissions:
   contents: read
