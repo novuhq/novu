@@ -59,7 +59,9 @@ export class MockShellEngine<TParsed = ParsedCommand> {
         exitCode = 1;
       } else {
         chunks = selectTapeChunks(this.scenario.tape, parsed);
-        exitCode = this.scenario.tape.exitCode ?? 0;
+        // A pending branch keeps the shell running (exitCode null) until it is killed,
+        // so `pollShell` never marks it completed on its own.
+        exitCode = this.scenario.tape.pendingWhen?.(parsed) ? null : (this.scenario.tape.exitCode ?? 0);
       }
     } else if (isTracked && !this.scenario.tape) {
       chunks = ['✗ Tracked command was not expected for this scenario.'];

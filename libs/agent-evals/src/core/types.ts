@@ -38,6 +38,13 @@ export type Tape<TParsed = ParsedCommand> = {
   exitCode?: number;
   /** Optional suite-defined validation; return an error string to make the tracked command fail. */
   validate?: (parsed: TParsed) => string | null;
+  /**
+   * When this returns true for a parsed command, the shell stays running (no exit code)
+   * after emitting its chunks and only completes when the agent kills it. Models real
+   * long-running CLI branches (e.g. the no-token Slack connect that waits for a config
+   * token) so a "kill before re-run" requirement is genuinely enforceable.
+   */
+  pendingWhen?: (parsed: TParsed) => boolean;
 };
 
 export type ScriptedAnswer = {

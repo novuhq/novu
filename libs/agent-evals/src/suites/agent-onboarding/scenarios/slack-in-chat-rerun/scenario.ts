@@ -20,6 +20,10 @@ export const scenario: EvalScenario<ConnectFlags> = {
   tape: connectTape({
     requireNoKeyless: true,
     allowedChannels: ['slack'],
+    // The first (no-token) connect run mirrors the real CLI: it prints the Slack setup
+    // URL and then waits for the config token, so it stays running until the agent kills
+    // it. Only the re-run that supplies `--slack-config-token` exits on its own.
+    pendingWhen: (flags) => !flags.slackConfigToken,
     chunks: [
       {
         stdout: `NOVU_CONNECT_AUTH_URL_FILE=${path.join(scenarioDir, 'project/novu-connect-auth-url.txt')}`,
