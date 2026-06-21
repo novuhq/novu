@@ -1,7 +1,8 @@
 name: Notify Cursor Automation on Agent Onboarding Change
 
 on:
-  pull_request:
+  # Fires after a PR is merged to next (merge creates a push to the branch).
+  push:
     branches:
       - next
     paths:
