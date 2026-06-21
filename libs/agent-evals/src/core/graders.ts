@@ -55,7 +55,16 @@ export function toolCallsNamed(result: RunResult, name: string): ToolCallRecord[
 }
 
 export function transcriptText(result: RunResult): string {
-  return [result.finalText, ...result.assistantMessages].join('\n');
+  // The recorder mirrors the last assistant turn into `finalText`, so appending it again
+  // would duplicate that turn in judge prompts and regex-match contexts. Only include
+  // `finalText` when it is not already the last recorded message.
+  const messages = [...result.assistantMessages];
+
+  if (result.finalText && messages[messages.length - 1] !== result.finalText) {
+    messages.push(result.finalText);
+  }
+
+  return messages.join('\n');
 }
 
 export function judge(prompt: string, context: (result: RunResult) => string): GraderDefinition {
