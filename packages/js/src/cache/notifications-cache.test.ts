@@ -81,6 +81,61 @@ describe('NotificationsCache', () => {
     jest.clearAllMocks();
   });
 
+  it('should normalize plain notification objects when storing in cache', () => {
+    const args = { tags: ['tag1'], limit: 10, offset: 0 };
+    const plainNotification = {
+      id: '1',
+      transactionId: 'tx-1',
+      body: 'test1',
+      isRead: false,
+      isArchived: false,
+      isSeen: false,
+      isSnoozed: false,
+      to: { id: '1', subscriberId: '1' },
+      createdAt: new Date().toISOString(),
+      channelType: ChannelType.IN_APP,
+      workflow: {
+        id: 'test-workflow-1',
+        critical: true,
+        identifier: 'test-workflow-1',
+        name: 'Test Workflow 1',
+        tags: ['tag1'],
+        severity: SeverityLevelEnum.NONE,
+      },
+      severity: SeverityLevelEnum.NONE,
+    };
+    const data = {
+      hasMore: false,
+      filter: {},
+      notifications: [plainNotification],
+    };
+
+    notificationsCache.set(args, data as unknown as ListNotificationsResponse);
+    const result = notificationsCache.getAll(args);
+
+    expect(result?.notifications[0]).toBeInstanceOf(Notification);
+    expect(typeof result?.notifications[0].read).toBe('function');
+  });
+
+  it('should normalize plain notification objects when updating cache', () => {
+    const args: ListNotificationsArgs = { limit: 10, offset: 0, tags: ['tag1'], read: false, archived: false };
+    const plainNotification = {
+      ...notification1,
+      isRead: true,
+      readAt: new Date().toISOString(),
+    };
+    const data: ListNotificationsResponse = { hasMore: false, filter: {}, notifications: [notification1] };
+
+    notificationsCache.set(args, data);
+    (notificationsCache as any).handleNotificationEvent()({ data: plainNotification });
+
+    const result = notificationsCache.getAll(args);
+
+    expect(result?.notifications[0]).toBeInstanceOf(Notification);
+    expect(typeof result?.notifications[0].read).toBe('function');
+    expect(result?.notifications[0].isRead).toBe(true);
+  });
+
   it('should set and get notifications from the cache', () => {
     const args = { tags: ['tag1'], limit: 10, offset: 0 };
     const data = {
