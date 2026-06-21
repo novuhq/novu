@@ -1,0 +1,248 @@
+import type {
+  TelegramSubscriberLinkOptions,
+  TelegramSubscriberLinkResponse,
+  TelegramSubscriberLinkState,
+} from './types';
+
+const DEFAULT_API_URL = 'https://api.novu.co';
+const DEFAULT_POLL_INTERVAL_MS = 2_000;
+
+type StateListener = (state: TelegramSubscriberLinkState) => void;
+
+/**
+ * Framework-agnostic helper that manages the full Telegram subscriber-link
+ * lifecycle: issue a deep link, poll for the subscriber's `/start` tap, and
+ * re-issue automatically when the 10-minute code expires.
+ *
+ * **Important:** The subscriber-link endpoint requires `AGENT_WRITE` permission
+ * and must be called from a trusted server or via a backend proxy — never
+ * directly from an untrusted browser with end-user credentials.
+ *
+ * @example
+ * ```ts
+ * import { TelegramSubscriberLink } from '@novu/js';
+ *
+ * const link = new TelegramSubscriberLink({
+ *   secretKey: process.env.NOVU_SECRET_KEY,
+ *   agentIdentifier: 'my-agent',
+ *   integrationId: '<telegram-integration-id>',
+ *   subscriberId: 'user-42',
+ * });
+ *
+ * link.onStateChange((state) => {
+ *   console.log(state.status, state.deepLinkUrl);
+ * });
+ *
+ * await link.start();
+ * // … later …
+ * link.stop();
+ * ```
+ */
+export class TelegramSubscriberLink {
+  readonly #options: Required<
+    Pick<
+      TelegramSubscriberLinkOptions,
+      'apiUrl' | 'agentIdentifier' | 'integrationId' | 'subscriberId' | 'pollIntervalMs'
+    >
+  > & { secretKey?: string; fetchFn: typeof fetch };
+
+  #state: TelegramSubscriberLinkState = {
+    status: 'pending',
+    deepLinkUrl: null,
+    botUsername: null,
+    expiresAt: null,
+    error: null,
+  };
+
+  #listeners: Set<StateListener> = new Set();
+  #pollTimer: ReturnType<typeof setTimeout> | null = null;
+  #expiryTimer: ReturnType<typeof setTimeout> | null = null;
+  #stopped = false;
+
+  constructor(options: TelegramSubscriberLinkOptions) {
+    this.#options = {
+      apiUrl: options.apiUrl ?? DEFAULT_API_URL,
+      secretKey: options.secretKey,
+      agentIdentifier: options.agentIdentifier,
+      integrationId: options.integrationId,
+      subscriberId: options.subscriberId,
+      pollIntervalMs: options.pollIntervalMs ?? DEFAULT_POLL_INTERVAL_MS,
+      fetchFn: options.fetchFn ?? fetch,
+    };
+  }
+
+  get state(): Readonly<TelegramSubscriberLinkState> {
+    return this.#state;
+  }
+
+  onStateChange(listener: StateListener): () => void {
+    this.#listeners.add(listener);
+
+    return () => {
+      this.#listeners.delete(listener);
+    };
+  }
+
+  /**
+   * Issue the subscriber-link deep link and begin polling for connection.
+   * Call {@link stop} to cancel polling and timers.
+   */
+  async start(): Promise<void> {
+    this.#stopped = false;
+    await this.#issueAndPoll();
+  }
+
+  /** Re-issue a fresh deep link (e.g. after expiry or on-demand refresh). */
+  async refresh(): Promise<void> {
+    this.#clearTimers();
+    this.#stopped = false;
+    await this.#issueAndPoll();
+  }
+
+  /** Stop all polling and expiry timers. */
+  stop(): void {
+    this.#stopped = true;
+    this.#clearTimers();
+  }
+
+  async #issueAndPoll(): Promise<void> {
+    try {
+      const response = await this.#issueSubscriberLink();
+
+      if (this.#stopped) return;
+
+      this.#setState({
+        status: 'pending',
+        deepLinkUrl: response.deepLinkUrl,
+        botUsername: response.botUsername,
+        expiresAt: response.expiresAt,
+        error: null,
+      });
+
+      this.#scheduleExpiry(response.expiresAt);
+      this.#startPolling();
+    } catch (err) {
+      if (this.#stopped) return;
+
+      this.#setState({
+        ...this.#state,
+        status: 'pending',
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
+    }
+  }
+
+  async #issueSubscriberLink(): Promise<TelegramSubscriberLinkResponse> {
+    const { apiUrl, agentIdentifier, integrationId, subscriberId, secretKey, fetchFn } = this.#options;
+
+    const url = `${apiUrl}/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations/${encodeURIComponent(integrationId)}/telegram/subscriber-link`;
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (secretKey) {
+      headers.Authorization = `ApiKey ${secretKey}`;
+    }
+
+    const res = await fetchFn(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ subscriberId }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      throw new Error(`Failed to issue Telegram subscriber link (HTTP ${res.status}): ${body}`);
+    }
+
+    const json = await res.json();
+
+    return (json.data ?? json) as TelegramSubscriberLinkResponse;
+  }
+
+  #scheduleExpiry(expiresAt: string): void {
+    const msUntilExpiry = new Date(expiresAt).getTime() - Date.now();
+    if (msUntilExpiry <= 0) {
+      this.#handleExpiry();
+
+      return;
+    }
+
+    this.#expiryTimer = setTimeout(() => this.#handleExpiry(), msUntilExpiry);
+  }
+
+  #handleExpiry(): void {
+    if (this.#stopped) return;
+
+    this.#clearTimers();
+
+    this.#setState({
+      ...this.#state,
+      status: 'expired',
+    });
+
+    void this.#issueAndPoll();
+  }
+
+  #startPolling(): void {
+    if (this.#stopped) return;
+
+    const poll = async () => {
+      if (this.#stopped) return;
+
+      try {
+        const connected = await this.#checkConnection();
+        if (connected) {
+          this.#clearTimers();
+          this.#setState({ ...this.#state, status: 'connected', error: null });
+
+          return;
+        }
+      } catch {
+        // transient — keep polling
+      }
+
+      if (!this.#stopped) {
+        this.#pollTimer = setTimeout(poll, this.#options.pollIntervalMs);
+      }
+    };
+
+    this.#pollTimer = setTimeout(poll, this.#options.pollIntervalMs);
+  }
+
+  async #checkConnection(): Promise<boolean> {
+    const { apiUrl, agentIdentifier, integrationId, secretKey, fetchFn } = this.#options;
+
+    const url = `${apiUrl}/v1/agents/${encodeURIComponent(agentIdentifier)}/integrations?integrationIdentifier=${encodeURIComponent(integrationId)}&limit=1`;
+
+    const headers: Record<string, string> = {};
+    if (secretKey) {
+      headers.Authorization = `ApiKey ${secretKey}`;
+    }
+
+    const res = await fetchFn(url, { method: 'GET', headers });
+
+    if (!res.ok) return false;
+
+    const json = await res.json();
+    const links: Array<{ connectedAt?: string | null }> = json.data ?? json;
+
+    return Boolean(links[0]?.connectedAt);
+  }
+
+  #setState(next: TelegramSubscriberLinkState): void {
+    this.#state = next;
+    for (const listener of this.#listeners) {
+      listener(next);
+    }
+  }
+
+  #clearTimers(): void {
+    if (this.#pollTimer) {
+      clearTimeout(this.#pollTimer);
+      this.#pollTimer = null;
+    }
+    if (this.#expiryTimer) {
+      clearTimeout(this.#expiryTimer);
+      this.#expiryTimer = null;
+    }
+  }
+}
