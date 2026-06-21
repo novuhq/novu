@@ -1,5 +1,5 @@
-import { checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
-import { useCallback, useEffect, useState } from 'react';
+import { COUNT_MUTATION_RESOLVED_EVENTS, checkNotificationMatchesFilter, isSameFilter, Notification, NotificationFilter, NovuError } from '@novu/js';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDataRef } from './internal/useDataRef';
 import { useWebSocketEvent } from './internal/useWebsocketEvent';
 import { useNovu, useRealtime } from './NovuProvider';
@@ -8,14 +8,6 @@ type Count = {
   count: number;
   filter: NotificationFilter;
 };
-
-const COUNT_INVALIDATION_EVENTS = [
-  'notification.read.pending',
-  'notification.unread.pending',
-  'notification.seen.pending',
-  'notifications.read_all.pending',
-  'notifications.seen_all.pending',
-] as const;
 
 /**
  * Props for the useCounts hook.
@@ -79,6 +71,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
   const filtersRef = useDataRef<NotificationFilter[]>(filters);
   const onSuccessRef = useDataRef(onSuccess);
   const onErrorRef = useDataRef(onError);
+  const syncGenerationRef = useRef(0);
   const [error, setError] = useState<NovuError>();
   const [counts, setCounts] = useState<Count[]>();
   const [isLoading, setIsLoading] = useState(true);
@@ -102,8 +95,15 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
         return;
       }
 
+      const generation = ++syncGenerationRef.current;
       setIsFetching(true);
+
       const countsRes = await notifications.count({ filters: countFiltersToFetch });
+
+      if (generation !== syncGenerationRef.current) {
+        return;
+      }
+
       setIsFetching(false);
       setIsLoading(false);
 
@@ -153,7 +153,7 @@ export const useCounts = (props: UseCountsProps): UseCountsResult => {
   });
 
   useEffect(() => {
-    const cleanups = COUNT_INVALIDATION_EVENTS.map((event) => novu.on(event, () => sync()));
+    const cleanups = COUNT_MUTATION_RESOLVED_EVENTS.map((event) => novu.on(event, () => sync()));
 
     return () => {
       cleanups.forEach((cleanup) => cleanup());

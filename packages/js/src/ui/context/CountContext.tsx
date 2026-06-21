@@ -1,4 +1,5 @@
 import { Accessor, createContext, createEffect, createMemo, createSignal, onCleanup, ParentProps, useContext } from 'solid-js';
+import { COUNT_MUTATION_RESOLVED_EVENTS } from '../../notifications/count-invalidation-events';
 import { Notification, NotificationFilter, SeverityLevelEnum } from '../../types';
 import { checkNotificationDataFilter, checkNotificationTagFilter } from '../../utils/notification-utils';
 import { getTagsFromTab } from '../helpers';
@@ -32,62 +33,103 @@ export const CountProvider = (props: ParentProps) => {
   });
   const [unreadCounts, setUnreadCounts] = createSignal(new Map<string, number>());
   const [newNotificationCounts, setNewNotificationCounts] = createSignal(new Map<string, number>());
+  let refreshGeneration = 0;
 
-  const updateTabCounts = async () => {
-    if (tabs().length === 0) {
-      return;
-    }
-    const filters = tabs().map((tab) => ({
-      tags: getTagsFromTab(tab),
+  const emptySeverityCounts = (): Record<string, number> => ({
+    [SeverityLevelEnum.HIGH]: 0,
+    [SeverityLevelEnum.MEDIUM]: 0,
+    [SeverityLevelEnum.LOW]: 0,
+    [SeverityLevelEnum.NONE]: 0,
+  });
+
+  const refreshCounts = async () => {
+    const generation = ++refreshGeneration;
+    const novu = novuAccessor();
+    const bellFilters = [
+      SeverityLevelEnum.HIGH,
+      SeverityLevelEnum.MEDIUM,
+      SeverityLevelEnum.LOW,
+      SeverityLevelEnum.NONE,
+    ].map((severity) => ({
       read: false,
       archived: false,
       snoozed: false,
-      data: tab.filter?.data,
-      severity: tab.filter?.severity,
+      severity,
     }));
-    const { data } = await novuAccessor().notifications.count({ filters });
-    if (!data) {
+
+    const currentTabs = tabs();
+    const tabFilters =
+      currentTabs.length > 0
+        ? currentTabs.map((tab) => ({
+            tags: getTagsFromTab(tab),
+            read: false,
+            archived: false,
+            snoozed: false,
+            data: tab.filter?.data,
+            severity: tab.filter?.severity,
+          }))
+        : null;
+
+    const [bellResult, tabResult] = await Promise.all([
+      novu.notifications.count({ filters: bellFilters }),
+      tabFilters ? novu.notifications.count({ filters: tabFilters }) : Promise.resolve(null),
+    ]);
+
+    if (generation !== refreshGeneration) {
       return;
     }
 
-    const newMap = new Map();
-    const { counts } = data;
-    for (let i = 0; i < counts.length; i += 1) {
-      const tagsKey = createKey({
-        tags: counts[i].filter.tags,
-        data: counts[i].filter.data,
-        severity: counts[i].filter.severity,
-      });
-      newMap.set(tagsKey, data?.counts[i].count);
+    if (bellResult.data) {
+      const severity = emptySeverityCounts();
+      let total = 0;
+
+      for (const item of bellResult.data.counts) {
+        const filterSeverity = item.filter.severity;
+        const severityKey = Array.isArray(filterSeverity) ? filterSeverity[0] : filterSeverity;
+
+        if (severityKey && severityKey in severity) {
+          severity[severityKey] = item.count;
+          total += item.count;
+        }
+      }
+
+      setUnreadCount({ total, severity });
     }
 
-    setUnreadCounts(newMap);
+    if (tabResult?.data) {
+      const newMap = new Map<string, number>();
+
+      for (let i = 0; i < tabResult.data.counts.length; i += 1) {
+        const countItem = tabResult.data.counts[i];
+        const tagsKey = createKey({
+          tags: countItem.filter.tags,
+          data: countItem.filter.data,
+          severity: countItem.filter.severity,
+        });
+        newMap.set(tagsKey, countItem.count);
+      }
+
+      setUnreadCounts(newMap);
+    }
   };
 
   createEffect(() => {
     // read the novu instance to trigger the effect
     novuAccessor();
-    updateTabCounts();
+    refreshCounts();
   });
 
   useWebSocketEvent({
     event: 'notifications.unread_count_changed',
     eventHandler: (data) => {
       setUnreadCount(data.result);
-      updateTabCounts();
+      refreshCounts();
     },
   });
 
   createEffect(() => {
     const novu = novuAccessor();
-    const invalidationEvents = [
-      'notification.read.pending',
-      'notification.unread.pending',
-      'notification.seen.pending',
-      'notifications.read_all.pending',
-      'notifications.seen_all.pending',
-    ] as const;
-    const cleanups = invalidationEvents.map((event) => novu.on(event, updateTabCounts));
+    const cleanups = COUNT_MUTATION_RESOLVED_EVENTS.map((event) => novu.on(event, refreshCounts));
 
     onCleanup(() => {
       cleanups.forEach((cleanup) => cleanup());
@@ -205,7 +247,7 @@ export const CountProvider = (props: ParentProps) => {
 
   useWebSocketEvent({
     event: 'notifications.notification_received',
-    eventHandler: updateTabCounts,
+    eventHandler: refreshCounts,
   });
 
   const resetNewNotificationCounts = (key: string) => {
