@@ -153,6 +153,7 @@ overrides:
   sanitize-html@<2.17.4: ^2.17.4
   samlify@<2.13.0: ^2.13.0
   better-auth: 1.5.6
+  nodemailer@<9.0.1: ^9.0.1
   shell-quote@<1.8.4: ^1.8.4
   vitest@<4.1.0: ^4.1.0
   js-cookie@<3.0.7: ^3.0.7
@@ -3998,7 +3999,7 @@ importers:
         version: 8.2.1
       mailtrap:
         specifier: ^3.1.1
-        version: 3.2.0(@types/nodemailer@8.0.0)(nodemailer@8.0.5)
+        version: 3.2.0(@types/nodemailer@8.0.0)(nodemailer@9.0.1)
       messagebird:
         specifier: ^4.0.1
         version: 4.0.1
@@ -4012,8 +4013,8 @@ importers:
         specifier: ^6.0.8
         version: 6.0.8
       nodemailer:
-        specifier: ^8.0.5
-        version: 8.0.5
+        specifier: ^9.0.1
+        version: 9.0.1
       plivo:
         specifier: ^4.70.0
         version: 4.70.0
@@ -4447,8 +4448,8 @@ importers:
         specifier: 15.5.18
         version: 15.5.18(@babel/core@7.28.0)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-macros@3.1.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       nodemailer:
-        specifier: ^8.0.5
-        version: 8.0.5
+        specifier: ^9.0.1
+        version: 9.0.1
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -21774,7 +21775,7 @@ packages:
     engines: {node: '>=16.20.1', yarn: '>=1.22.17'}
     peerDependencies:
       '@types/nodemailer': ^6.4.9
-      nodemailer: ^6.9.4
+      nodemailer: ^9.0.1
     peerDependenciesMeta:
       '@types/nodemailer':
         optional: true
@@ -22797,8 +22798,8 @@ packages:
     resolution: {integrity: sha512-1uiY543L+N7Og4yswvlm5NCKgPKDEXd9AUR9Jh3gen6oOeBsesr6LqhXom1er3eRzSUcVRWXzhv8tSNrIfGHKw==}
     engines: {node: '>=18'}
 
-  nodemailer@8.0.5:
-    resolution: {integrity: sha512-0PF8Yb1yZuQfQbq+5/pZJrtF6WQcjTd5/S4JOHs9PGFxuTqoB/icwuB44pOdURHJbRKX1PPoJZtY7R4VUoCC8w==}
+  nodemailer@9.0.1:
+    resolution: {integrity: sha512-Gwv8SQewT616ZM/URn0H54b8PWo/Wum7md3EW2aWy1lO27+WZCX+Xyak3J+NlmHUjDh5ME+uesJUDRbR3Ye8Bw==}
     engines: {node: '>=6.0.0'}
 
   nodemon@3.0.1:
@@ -52396,12 +52397,12 @@ snapshots:
       mimelib: 0.3.1
       uue: 3.1.2
 
-  mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@8.0.5):
+  mailtrap@3.2.0(@types/nodemailer@8.0.0)(nodemailer@9.0.1):
     dependencies:
       axios: 1.17.0
     optionalDependencies:
       '@types/nodemailer': 8.0.0
-      nodemailer: 8.0.5
+      nodemailer: 9.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -53758,7 +53759,7 @@ snapshots:
     dependencies:
       '@babel/parser': 7.29.0
 
-  nodemailer@8.0.5: {}
+  nodemailer@9.0.1: {}
 
   nodemon@3.0.1:
     dependencies:
@@ -56923,7 +56924,7 @@ snapshots:
   smtp-server@3.18.4:
     dependencies:
       ipv6-normalize: 1.0.1
-      nodemailer: 8.0.5
+      nodemailer: 9.0.1
       punycode.js: 2.3.1
 
   snake-case@2.1.0:
