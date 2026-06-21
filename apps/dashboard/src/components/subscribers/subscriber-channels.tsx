@@ -5,8 +5,8 @@ import { Badge } from '@/components/primitives/badge';
 import { Skeleton } from '@/components/primitives/skeleton';
 import { SidebarContent } from '@/components/side-navigation/sidebar';
 import { useSubscriberChannelGraph } from '@/hooks/use-subscriber-channel-graph';
-import { getConnectionModeLabel, getEndpointDisplayLabel, getEndpointPrimaryValue } from '@/utils/channel-delivery';
 import { itemVariants, listVariants } from '@/utils/animation';
+import { getConnectionModeLabel, getEndpointDisplayLabel, getEndpointPrimaryValue } from '@/utils/channel-delivery';
 
 type SubscriberChannelsProps = {
   subscriberId: string;
@@ -24,7 +24,9 @@ export function SubscriberChannels({ subscriberId }: SubscriberChannelsProps) {
       <SidebarContent>
         <div className="flex flex-col items-center justify-center gap-2 py-10 text-center">
           <RiLinkUnlink className="text-foreground-400 size-8" />
-          <p className="text-foreground-600 text-sm">No channel connections or endpoints configured for this subscriber.</p>
+          <p className="text-foreground-600 text-sm">
+            No channel connections or endpoints configured for this subscriber.
+          </p>
         </div>
       </SidebarContent>
     );
@@ -72,9 +74,7 @@ export function SubscriberChannels({ subscriberId }: SubscriberChannelsProps) {
                     key={ep.identifier}
                     className="border-border flex items-center gap-2 rounded-md border px-3 py-2"
                   >
-                    <span className="text-foreground-600 text-xs font-medium">
-                      {getEndpointDisplayLabel(ep.type)}
-                    </span>
+                    <span className="text-foreground-600 text-xs font-medium">{getEndpointDisplayLabel(ep.type)}</span>
                     <span className="text-foreground-950 ml-auto text-xs font-mono">
                       {getEndpointPrimaryValue(ep.type, ep.endpoint)}
                     </span>

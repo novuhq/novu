@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { useEnvironment } from '../context/environment/hooks';
-import { QueryKeys } from '../utils/query-keys';
 import { ChannelConnectionDto, listChannelConnections } from '@/api/channel-connections';
 import { ChannelEndpointDto, listChannelEndpoints } from '@/api/channel-endpoints';
+import { useEnvironment } from '../context/environment/hooks';
+import { QueryKeys } from '../utils/query-keys';
 
 export type ChannelGraphGroup = {
   integrationIdentifier: string;
@@ -10,10 +10,7 @@ export type ChannelGraphGroup = {
   endpoints: ChannelEndpointDto[];
 };
 
-function buildChannelGraph(
-  connections: ChannelConnectionDto[],
-  endpoints: ChannelEndpointDto[]
-): ChannelGraphGroup[] {
+function buildChannelGraph(connections: ChannelConnectionDto[], endpoints: ChannelEndpointDto[]): ChannelGraphGroup[] {
   const groupMap = new Map<string, ChannelGraphGroup>();
 
   for (const conn of connections) {
@@ -61,9 +58,8 @@ export function useSubscriberChannelGraph(subscriberId: string) {
   const isPending = connectionsQuery.isPending || endpointsQuery.isPending;
   const isError = connectionsQuery.isError || endpointsQuery.isError;
 
-  const channelGraph = !isPending && !isError
-    ? buildChannelGraph(connectionsQuery.data?.data ?? [], endpointsQuery.data?.data ?? [])
-    : [];
+  const channelGraph =
+    !isPending && !isError ? buildChannelGraph(connectionsQuery.data?.data ?? [], endpointsQuery.data?.data ?? []) : [];
 
   return {
     channelGraph,
