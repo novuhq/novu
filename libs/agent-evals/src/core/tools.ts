@@ -324,13 +324,18 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
       file_path: z.string(),
     }),
     execute: async ({ file_path: filePath }) => {
-      context.recorder.recordToolCall('Read', { file_path: filePath });
-
+      // Record exactly once per call, inside each branch, so a successful read is not
+      // logged twice (which would double every `toolCallsNamed(result, 'Read')` count
+      // and corrupt the tool-call timeline).
       if (filePath.includes('/tmp/') || filePath.endsWith('.log')) {
+        context.recorder.recordToolCall('Read', { file_path: filePath });
+
         return { error: 'Reading log files is discouraged in this flow.' };
       }
 
       if (filePath.endsWith('.png')) {
+        context.recorder.recordToolCall('Read', { file_path: filePath });
+
         return { content: '[PNG image omitted by harness]' };
       }
 
@@ -340,6 +345,8 @@ export function createHarnessTools<TParsed = ParsedCommand>(context: HarnessCont
 
         return { content };
       } catch (error) {
+        context.recorder.recordToolCall('Read', { file_path: filePath });
+
         return { error: error instanceof Error ? error.message : 'Failed to read file.' };
       }
     },
