@@ -1,6 +1,6 @@
 import '../../load-env.js';
 import { describeEval } from 'vitest-evals';
-import { gradersToJudges, isJudgeEnabled } from './adapters.js';
+import { gradersToJudges } from './adapters.js';
 import { loadSuiteSystemPrompt, scenarioHarness } from './harness.js';
 import { agentOnboardingSuite } from './index.js';
 
@@ -18,7 +18,7 @@ for (const entry of agentOnboardingSuite.scenarios) {
     entry.scenario.id,
     {
       harness,
-      judges: gradersToJudges(entry.graders, { judgeEnabled: isJudgeEnabled() }),
+      judges: gradersToJudges(entry.graders),
       judgeThreshold: JUDGE_THRESHOLD,
       skipIf: () => !process.env.ANTHROPIC_API_KEY,
     },

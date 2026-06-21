@@ -85,7 +85,7 @@ sequenceDiagram
   Harness->>Rec: build() → RunResult
   Harness-->>Vitest: HarnessRun with output
   Vitest->>Judges: assess each grader as judge (threshold 0.8)
-  alt judge grader (NOVU_EVAL_JUDGE)
+  alt judge grader
     Judges->>LLM: runJudge(prompt, context)
   end
   Judges-->>Vitest: pass / fail per judge
@@ -153,9 +153,6 @@ pnpm --filter @novu/agent-evals eval:watch
 
 # Single scenario
 pnpm --filter @novu/agent-evals exec vitest run --config vitest.evals.config.ts -t keyless-slack-secure
-
-# Enable LLM judge graders locally
-NOVU_EVAL_JUDGE=true pnpm --filter @novu/agent-evals eval
 ```
 
 ## Environment variables
@@ -163,7 +160,6 @@ NOVU_EVAL_JUDGE=true pnpm --filter @novu/agent-evals eval
 | Variable | Description |
 | --- | --- |
 | `ANTHROPIC_API_KEY` | Required for eval runs (suites skip when unset) |
-| `NOVU_EVAL_JUDGE` | Set to `true` or `1` to include LLM judge graders |
 | `NOVU_EVAL_MODEL` | Agent model (default: `claude-sonnet-4-5`) |
 | `NOVU_EVAL_JUDGE_MODEL` | Judge model (default: `claude-sonnet-4-5`) |
 | `NOVU_EVAL_CONCURRENCY` | Max scenarios run in parallel (default: `4`) |
@@ -175,7 +171,7 @@ Scenarios are independent and dominated by live-model latency, so they run concu
 
 Each scenario uses `judgeThreshold: 0.8` — the average judge score for that scenario must be ≥ 80%. This is stricter than the old global `--fail-under 80` (which gated on the average across all scenarios): every scenario must pass individually.
 
-Judge graders run only when `NOVU_EVAL_JUDGE=true` (CI runs deterministic graders only).
+Judge graders (LLM-as-judge) always run alongside deterministic graders.
 
 ## Triage failing scenarios
 

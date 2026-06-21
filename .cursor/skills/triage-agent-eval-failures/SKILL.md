@@ -20,10 +20,10 @@ pnpm --filter @novu/agent-evals exec vitest run --config vitest.evals.config.ts 
 - Fails **every** run → deterministic failure, continue triage.
 - Fails **intermittently** → flaky. The cause is usually a non-deterministic judge grader or an over-strict regex. Do not edit the playbook. Tighten the grader/judge prompt or accept variance; consider pass@k rather than single-run gating.
 
-To reproduce judge graders locally (PR/push CI runs deterministic graders only):
+To reproduce judge graders locally:
 
 ```bash
-NOVU_EVAL_JUDGE=true pnpm --filter @novu/agent-evals exec vitest run --config vitest.evals.config.ts -t <scenario-id>
+pnpm --filter @novu/agent-evals exec vitest run --config vitest.evals.config.ts -t <scenario-id>
 ```
 
 ## Step 1: identify which grader failed and its kind
@@ -73,7 +73,7 @@ A scenario passes only when every active grader averages ≥ `0.8` (`JUDGE_THRES
 ## Step 4: apply one bounded fix, then verify
 
 1. Change **only** the layer the verdict points to — playbook **or** test, never both to chase green.
-2. Re-run the single scenario (Step 0 command), with `NOVU_EVAL_JUDGE=true` if a judge grader was involved.
+2. Re-run the single scenario (Step 0 command).
 3. Confirm the fix holds across the 3–5 re-runs and that no other scenario regressed.
 4. If editing a deterministic grader, also run the synthetic unit tests so you don't break grader contracts:
 

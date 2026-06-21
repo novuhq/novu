@@ -24,23 +24,6 @@ export function graderToJudge(name: string, definition: GraderDefinition): Judge
   });
 }
 
-export function gradersToJudges(
-  graders: Record<string, GraderDefinition>,
-  options: { judgeEnabled: boolean }
-): Judge[] {
-  const judges: Judge[] = [];
-
-  for (const [name, definition] of Object.entries(graders)) {
-    if (definition.kind === 'judge' && !options.judgeEnabled) {
-      continue;
-    }
-
-    judges.push(graderToJudge(name, definition));
-  }
-
-  return judges;
-}
-
-export function isJudgeEnabled(): boolean {
-  return process.env.NOVU_EVAL_JUDGE === 'true' || process.env.NOVU_EVAL_JUDGE === '1';
+export function gradersToJudges(graders: Record<string, GraderDefinition>): Judge[] {
+  return Object.entries(graders).map(([name, definition]) => graderToJudge(name, definition));
 }
