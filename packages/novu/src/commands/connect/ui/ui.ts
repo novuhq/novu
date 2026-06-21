@@ -1,5 +1,11 @@
 import type { GeneratedAgentSpec } from '../api/agents';
-import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
+import type {
+  AgentConnectMode,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+  ChatSdkRequirement,
+} from '../types';
 
 export type PickResult = { action: 'new' } | { action: 'use'; agent: AgentSummary };
 
@@ -8,6 +14,8 @@ export type GeneratedAgentPreviewResult = { action: 'confirm'; spec: GeneratedAg
 export type PickAgentIntegrationResult = { kind: 'existing'; integrationId: string } | { kind: 'new' };
 
 export type TelegramTokenDelivery = 'setup-page' | 'terminal';
+
+export type ChatSdkTunnelOfferResult = 'accept' | 'skip';
 
 export interface ConnectUI {
   /** True when running the Ink TUI; false for CI / non-TTY logging mode. */
@@ -33,8 +41,8 @@ export interface ConnectUI {
   loadingIntegrations(): void;
   pickExistingOrCreate(agents: AgentSummary[]): Promise<PickResult>;
 
-  // Agent runtime / credentials (new-agent path)
-  pickAgentRuntime(opts: { preselected?: AgentRuntimeChoice }): Promise<AgentRuntimeChoice>;
+  // Agent connect mode (managed runtime or Chat SDK)
+  pickAgentConnectMode(opts: { preselected?: AgentConnectMode }): Promise<AgentConnectMode>;
   pickAgentIntegration(opts: {
     providerLabel: string;
     integrations: Array<{ _id: string; name: string; identifier: string }>;
@@ -66,6 +74,23 @@ export interface ConnectUI {
   previewGeneratedAgent(spec: GeneratedAgentSpec): Promise<GeneratedAgentPreviewResult>;
   creatingAgent(name: string): void;
   agentCreated(agent: AgentSummary): void;
+
+  // Chat SDK project wiring
+  promptForAgentName(defaultName: string): Promise<string>;
+  confirmEnvSecretOverwrite(opts: { envPath: string; existingMasked: string; nextMasked: string }): Promise<boolean>;
+  confirmScaffold(opts: { projectDir: string; appName: string }): Promise<boolean>;
+  scaffoldingChatSdk(): void;
+  chatSdkScaffolded(opts: { projectDir: string; envPaths: string[]; skippedInstall?: boolean }): void;
+  confirmInstallChatSdkDeps(opts: { projectDir: string; installCommand: string; packages: string[] }): Promise<boolean>;
+  installingChatSdkDeps(): void;
+  showChatSdkReconcilePlan(opts: {
+    projectDir: string;
+    requirements: ChatSdkRequirement[];
+    envPaths: string[];
+    wiringInstructions?: string;
+    requirementsFile?: string;
+  }): Promise<void>;
+  offerChatSdkTunnel(opts: { projectDir: string; devCommand: string }): Promise<ChatSdkTunnelOfferResult>;
 
   // Channel selection
   pickChannel(): Promise<ChannelChoice>;
@@ -134,7 +159,7 @@ export interface ConnectUI {
    * configured yet. `retry` is true when this prompt is following an earlier
    * failed quick-setup (so the UI can hint at the cause).
    */
-  promptForSlackConfigToken(opts: { retry: boolean }): Promise<string>;
+  promptForSlackConfigToken(opts: { retry: boolean; verificationError?: string }): Promise<string>;
   /**
    * Show the signed Slack setup-link URL. Fire-and-forget — the pipeline
    * polls until the user pastes their config token on the secure page.
@@ -168,6 +193,8 @@ export interface ConnectUI {
     dashboardRedirectChannel: ChannelChoice | null;
     isKeyless: boolean;
     claimUrl: string | null;
+    connectMode?: AgentConnectMode;
+    chatSdkOutcome?: ChatSdkConnectOutcome;
   }): void;
   failure(message: string): void;
 

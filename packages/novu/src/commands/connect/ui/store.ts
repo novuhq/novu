@@ -1,7 +1,18 @@
 import { atom, type WritableAtom } from 'nanostores';
 import type { GeneratedAgentSpec } from '../api/agents';
-import type { AgentRuntimeChoice, AgentSummary, ChannelChoice } from '../types';
-import type { GeneratedAgentPreviewResult, PickAgentIntegrationResult, PickResult } from './ui';
+import type {
+  AgentConnectMode,
+  AgentSummary,
+  ChannelChoice,
+  ChatSdkConnectOutcome,
+  ChatSdkRequirement,
+} from '../types';
+import type {
+  ChatSdkTunnelOfferResult,
+  GeneratedAgentPreviewResult,
+  PickAgentIntegrationResult,
+  PickResult,
+} from './ui';
 
 export type Phase =
   | {
@@ -12,11 +23,15 @@ export type Phase =
   | { kind: 'auth'; dashboardUrl: string | null; status: string }
   | { kind: 'listing-agents' }
   | { kind: 'loading-integrations' }
-  | { kind: 'pick'; agents: AgentSummary[]; resolve: (pick: PickResult) => void }
   | {
-      kind: 'pick-runtime';
-      preselected?: AgentRuntimeChoice;
-      resolve: (runtime: AgentRuntimeChoice) => void;
+      kind: 'pick';
+      agents: AgentSummary[];
+      resolve: (pick: PickResult) => void;
+    }
+  | {
+      kind: 'pick-connect-mode';
+      preselected?: AgentConnectMode;
+      resolve: (mode: AgentConnectMode) => void;
     }
   | {
       kind: 'pick-integration';
@@ -38,7 +53,59 @@ export type Phase =
       resolve: (region: string) => void;
     }
   | { kind: 'verifying-credentials' }
-  | { kind: 'describe'; previousPrompt?: string; resolve: (prompt: string) => void }
+  | {
+      kind: 'describe';
+      previousPrompt?: string;
+      resolve: (prompt: string) => void;
+    }
+  | {
+      kind: 'prompt-agent-name';
+      defaultName: string;
+      resolve: (name: string) => void;
+    }
+  | {
+      kind: 'confirm-env-secret-overwrite';
+      envPath: string;
+      existingMasked: string;
+      nextMasked: string;
+      resolve: (overwrite: boolean) => void;
+    }
+  | {
+      kind: 'confirm-scaffold';
+      projectDir: string;
+      appName: string;
+      resolve: (confirmed: boolean) => void;
+    }
+  | { kind: 'scaffolding-chat-sdk' }
+  | {
+      kind: 'chat-sdk-scaffolded';
+      projectDir: string;
+      envPaths: string[];
+      skippedInstall?: boolean;
+    }
+  | {
+      kind: 'chat-sdk-reconcile-plan';
+      projectDir: string;
+      requirements: ChatSdkRequirement[];
+      envPaths: string[];
+      wiringInstructions?: string;
+      requirementsFile?: string;
+      resolve: () => void;
+    }
+  | { kind: 'chat-sdk-install-deps' }
+  | {
+      kind: 'chat-sdk-install-deps-confirm';
+      projectDir: string;
+      installCommand: string;
+      packages: string[];
+      resolve: (confirmed: boolean) => void;
+    }
+  | {
+      kind: 'chat-sdk-tunnel-offer';
+      projectDir: string;
+      devCommand: string;
+      resolve: (result: ChatSdkTunnelOfferResult) => void;
+    }
   | { kind: 'generating' }
   | {
       kind: 'preview-generated';
@@ -57,6 +124,7 @@ export type Phase =
   | {
       kind: 'paste-slack-token';
       retry: boolean;
+      verificationError?: string;
       resolve: (token: string) => void;
       reject: (reason: Error) => void;
     }
@@ -124,6 +192,8 @@ export type Phase =
       dashboardRedirectChannel: ChannelChoice | null;
       isKeyless: boolean;
       claimUrl: string | null;
+      connectMode?: AgentConnectMode;
+      chatSdkOutcome?: ChatSdkConnectOutcome;
     }
   | { kind: 'error'; message: string };
 

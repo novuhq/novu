@@ -15,8 +15,8 @@ import type {
   UnreadArgs,
   UnsnoozeArgs,
 } from '../notifications';
+import { ensureNotificationInstance } from '../notifications/helpers';
 import type { InboxNotification, NotificationFilter, TagsFilter } from '../types';
-import { createNotification } from '../ui/internal/createNotification';
 import {
   areDataEqual,
   areTagsEqual,
@@ -155,7 +155,20 @@ export class NotificationsCache {
     this.#cache = new InMemoryCache();
   }
 
-  private syncNotificationInBucket = (key: string, notification: Notification): boolean => {
+  #toNotificationInstance = (notification: Notification | InboxNotification): Notification => {
+    return ensureNotificationInstance({
+      notification,
+      emitter: this.#emitter,
+      inboxService: this.#inboxService,
+    });
+  };
+
+  #normalizeNotifications = (notifications: Array<Notification | InboxNotification>): Notification[] => {
+    return notifications.map((notification) => this.#toNotificationInstance(notification));
+  };
+
+  private syncNotificationInBucket = (key: string, data: Notification | InboxNotification): boolean => {
+    const notification = this.#toNotificationInstance(data);
     const notificationsResponse = this.#cache.get(key);
     if (!notificationsResponse) {
       return false;
@@ -214,15 +227,15 @@ export class NotificationsCache {
       if (data !== undefined && data !== null) {
         if (
           Array.isArray(data) &&
-          data.every((item): item is Notification => typeof item === 'object' && 'id' in item)
+          data.every((item): item is Notification | InboxNotification => typeof item === 'object' && 'id' in item)
         ) {
-          notifications = data;
+          notifications = this.#normalizeNotifications(data);
         } else if (typeof data === 'object' && 'id' in data) {
-          notifications = [data as Notification];
+          notifications = [this.#toNotificationInstance(data as Notification | InboxNotification)];
         }
       } else if (remove && args) {
         if ('notification' in args && args.notification) {
-          notifications = [args.notification];
+          notifications = [this.#toNotificationInstance(args.notification)];
         } else if ('notificationId' in args && args.notificationId) {
           const foundNotifications: Notification[] = [];
           this.#cache.keys().forEach((key) => {
@@ -306,7 +319,10 @@ export class NotificationsCache {
   }
 
   set(args: ListNotificationsArgs, data: ListNotificationsResponse): void {
-    this.#cache.set(getCacheKey(args), data);
+    this.#cache.set(getCacheKey(args), {
+      ...data,
+      notifications: this.#normalizeNotifications(data.notifications),
+    });
   }
 
   unshift(args: ListNotificationsArgs, notification: InboxNotification): void {
@@ -317,11 +333,7 @@ export class NotificationsCache {
       notifications: [],
     };
 
-    const notificationInstance = createNotification({
-      notification: { ...notification },
-      emitter: this.#emitter,
-      inboxService: this.#inboxService,
-    });
+    const notificationInstance = this.#toNotificationInstance({ ...notification });
 
     this.update(args, {
       ...cachedData,

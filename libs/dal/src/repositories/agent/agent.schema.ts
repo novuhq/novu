@@ -45,6 +45,7 @@ const agentSchema = new Schema<AgentDBModel>(
         ref: 'Integration',
       },
       externalAgentId: Schema.Types.String,
+      managedDefinitionVersion: Schema.Types.Number,
     },
     _organizationId: {
       type: Schema.Types.ObjectId,

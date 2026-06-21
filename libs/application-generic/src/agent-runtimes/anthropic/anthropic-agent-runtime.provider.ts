@@ -5,6 +5,7 @@ import {
   AgentRuntimeCapabilities,
   AgentRuntimeProviderIdEnum,
   isAnthropicAwsProvider,
+  NOVU_TOOLS_SCHEMA,
 } from '@novu/shared';
 import { BaseAgentRuntimeProvider } from '../base-agent-runtime.provider';
 import {
@@ -54,7 +55,6 @@ import {
   mapSkill,
   mapToolset,
   parseRetryAfter,
-  resolveManagedAgentPermissionConfig,
   sleep,
   toSkillParam,
   truncateWithEllipsis,
@@ -180,8 +180,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
     // Not retried: agent creation is not idempotent and a retry after a
     // dropped response would create a duplicate billable agent upstream.
     try {
-      const permissionConfig = resolveManagedAgentPermissionConfig(input.useAlwaysAllowToolPermissions);
-      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers, permissionConfig);
+      const toolsPayload = buildToolsPayload(input.tools, input.mcpServers);
       const agent = await (client as any).beta.agents.create({
         name: input.name,
         model: input.model ?? DEFAULT_MODEL,
@@ -294,8 +293,7 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
             patch.mcpServers !== undefined
               ? patch.mcpServers.map((s) => ({ name: s.name, url: s.url }))
               : currentMcpServers.map((s) => ({ name: s.name, url: s.url }));
-          const permissionConfig = resolveManagedAgentPermissionConfig(patch.useAlwaysAllowToolPermissions);
-          const toolsPayload = buildToolsPayload(toolTypes, mcpServers, permissionConfig);
+          const toolsPayload = buildToolsPayload(toolTypes, mcpServers);
 
           if (toolsPayload.length > 0) updatePayload.tools = toolsPayload;
         }
@@ -312,6 +310,47 @@ export class AnthropicAgentRuntimeProvider extends BaseAgentRuntimeProvider {
           tools: ((updated.tools as any[]) ?? []).flatMap(mapToolset),
           skills: ((updated.skills as any[]) ?? []).map(mapSkill),
         };
+      } catch (err) {
+        this.normaliseError(err);
+      }
+    });
+  }
+
+  async refreshPlatformDefinition(externalAgentId: string): Promise<void> {
+    const client = await this.getClient();
+
+    await this.withRetry(async () => {
+      try {
+        // Read the agent's current user-selected tools/MCP and re-emit them through
+        // buildToolsPayload, which always appends Novu-owned platform tools (e.g.
+        // novu_tools). Nothing the user chose changes — this only backfills the overlay.
+        const currentAgent = await (client as any).beta.agents.retrieve(externalAgentId);
+        const rawTools = (currentAgent.tools as any[]) ?? [];
+        const currentTools = rawTools.flatMap(mapToolset);
+        const currentMcpServers = ((currentAgent.mcp_servers as any[]) ?? []).map(mapMcpServer);
+
+        // Preserve any provider-side custom tools we don't own (e.g. on an adopted agent).
+        // buildToolsPayload re-emits Novu's own novu_tools, so drop it here to avoid a duplicate.
+        const foreignCustomTools = rawTools.filter(
+          (tool) => tool?.type === 'custom' && tool?.name !== NOVU_TOOLS_SCHEMA.name
+        );
+
+        const toolsPayload = [
+          ...buildToolsPayload(
+            currentTools.map((t) => t.externalId),
+            currentMcpServers.map((s) => ({ name: s.name, url: s.url }))
+          ),
+          ...foreignCustomTools,
+        ];
+
+        if (toolsPayload.length === 0) {
+          return;
+        }
+
+        await (client as any).beta.agents.update(externalAgentId, {
+          version: currentAgent.version,
+          tools: toolsPayload,
+        });
       } catch (err) {
         this.normaliseError(err);
       }
